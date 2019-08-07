@@ -15,6 +15,8 @@ package tech.pegasys.pantheon.config;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
@@ -29,7 +31,40 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.Test;
 
 public class JsonUtilTest {
-  private ObjectMapper mapper = new ObjectMapper();
+  private final ObjectMapper mapper = new ObjectMapper();
+
+  @Test
+  public void normalizeKeys_cases() {
+    final List<String> cases =
+        List.of(
+            "lower",
+            "CAPS",
+            "Proper",
+            "camelCase",
+            "snake_case",
+            "SHOUT_CASE",
+            "dash-case",
+            "!@#$%^&*(){}[]\\|-=_+;':\",.<>/?`~");
+    final ObjectNode base = mapper.createObjectNode();
+    for (final String s : cases) {
+      base.put(s, s);
+    }
+
+    final ObjectNode normalized = JsonUtil.normalizeKeys(base);
+    for (final String s : cases) {
+      assertThat(base.get(s).asText()).isEqualTo(normalized.get(s.toLowerCase(Locale.US)).asText());
+    }
+  }
+
+  @Test
+  public void normalizeKeys_depth() {
+    final ObjectNode base = mapper.createObjectNode();
+    base.putObject("DEEP").putObject("deeper").put("deeperER", "DEEPEST");
+
+    final ObjectNode normalized = JsonUtil.normalizeKeys(base);
+    assertThat(base.get("DEEP").get("deeper").get("deeperER").asText())
+        .isEqualTo(normalized.get("deep").get("deeper").get("deeperer").asText());
+  }
 
   @Test
   public void getLong_nonExistentKey() {
@@ -413,7 +448,7 @@ public class JsonUtilTest {
     subMap.put("d", 2L);
     map.put("subtree", subMap);
 
-    ObjectNode node = JsonUtil.objectNodeFromMap(map);
+    final ObjectNode node = JsonUtil.objectNodeFromMap(map);
     assertThat(node.get("a").asInt()).isEqualTo(1);
     assertThat(node.get("b").asInt()).isEqualTo(2);
     assertThat(node.get("subtree").get("c").asText()).isEqualTo("bla");

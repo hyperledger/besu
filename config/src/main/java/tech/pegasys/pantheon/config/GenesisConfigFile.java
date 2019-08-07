@@ -13,13 +13,12 @@
 package tech.pegasys.pantheon.config;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static tech.pegasys.pantheon.config.JsonUtil.normalizeKeys;
 
 import java.io.IOException;
-import java.util.Locale;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Streams;
 import com.google.common.io.Resources;
@@ -132,26 +131,5 @@ public class GenesisConfigFile {
               + value
               + "'");
     }
-  }
-
-  /* Converts all to lowercase for easier lookup since the keys in a 'genesis.json' file are assumed
-   * case insensitive.
-   */
-  private static ObjectNode normalizeKeys(final ObjectNode genesis) {
-    final ObjectNode normalized = JsonUtil.createEmptyObjectNode();
-    genesis
-        .fields()
-        .forEachRemaining(
-            entry -> {
-              final String key = entry.getKey();
-              final JsonNode value = entry.getValue();
-              final String normalizedKey = key.toLowerCase(Locale.US);
-              if (value instanceof ObjectNode) {
-                normalized.set(normalizedKey, normalizeKeys((ObjectNode) value));
-              } else {
-                normalized.set(normalizedKey, value);
-              }
-            });
-    return normalized;
   }
 }

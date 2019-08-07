@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.config;
 
 import java.io.IOException;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
@@ -27,6 +28,32 @@ import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class JsonUtil {
+
+  /**
+   * Converts all the object keys (but none of the string values) to lowercase for easier lookup.
+   * This is useful in cases such as the 'genesis.json' file where all keys are assumed to be case
+   * insensitive.
+   *
+   * @param objectNode The ObjectNode to be normalized
+   * @return a copy of the json object with all keys in lower case.
+   */
+  public static ObjectNode normalizeKeys(final ObjectNode objectNode) {
+    final ObjectNode normalized = JsonUtil.createEmptyObjectNode();
+    objectNode
+        .fields()
+        .forEachRemaining(
+            entry -> {
+              final String key = entry.getKey();
+              final JsonNode value = entry.getValue();
+              final String normalizedKey = key.toLowerCase(Locale.US);
+              if (value instanceof ObjectNode) {
+                normalized.set(normalizedKey, normalizeKeys((ObjectNode) value));
+              } else {
+                normalized.set(normalizedKey, value);
+              }
+            });
+    return normalized;
+  }
 
   /**
    * Get the string representation of the value at {@code key}. For example, a numeric value like 5
@@ -120,7 +147,7 @@ public class JsonUtil {
   }
 
   public static ObjectNode createEmptyObjectNode() {
-    ObjectMapper mapper = getObjectMapper();
+    final ObjectMapper mapper = getObjectMapper();
     return mapper.createObjectNode();
   }
 
@@ -140,7 +167,7 @@ public class JsonUtil {
       final JsonNode jsonNode = objectMapper.readTree(jsonData);
       validateType(jsonNode, JsonNodeType.OBJECT);
       return (ObjectNode) jsonNode;
-    } catch (IOException e) {
+    } catch (final IOException e) {
       // Reading directly from a string should not raise an IOException, just catch and rethrow
       throw new RuntimeException(e);
     }
@@ -152,7 +179,7 @@ public class JsonUtil {
 
   public static String getJson(final Object objectNode, final boolean prettyPrint)
       throws JsonProcessingException {
-    ObjectMapper mapper = getObjectMapper();
+    final ObjectMapper mapper = getObjectMapper();
     if (prettyPrint) {
       return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(objectNode);
     } else {
@@ -209,7 +236,7 @@ public class JsonUtil {
   }
 
   private static Optional<JsonNode> getValue(final ObjectNode node, final String key) {
-    JsonNode jsonNode = node.get(key);
+    final JsonNode jsonNode = node.get(key);
     if (jsonNode == null || jsonNode.isNull()) {
       return Optional.empty();
     }
