@@ -16,7 +16,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -51,20 +50,19 @@ public class FlatFileTaskCollectionTest
       final List<BytesValue> tasks = new ArrayList<>();
 
       addItem(queue, tasks, 0);
-      final File[] currentFiles = getCurrentFiles(dataDir);
-      assertThat(currentFiles).hasSize(1);
-      final File firstFile = currentFiles[0];
+      assertThat(queue.getWriteFileNumber()).isEqualTo(0);
       int tasksInFirstFile = 1;
-      while (getCurrentFiles(dataDir).length == 1) {
+      while (queue.getWriteFileNumber() == 0) {
         addItem(queue, tasks, tasksInFirstFile);
         tasksInFirstFile++;
       }
 
-      assertThat(getCurrentFiles(dataDir)).hasSizeGreaterThan(1);
-      assertThat(getCurrentFiles(dataDir)).contains(firstFile);
+      assertThat(queue.getWriteFileNumber()).isGreaterThan(0);
+      assertThat(queue.getReadFileNumber()).isEqualTo(0);
 
-      // Add an extra item to be sure we have at least one in a later file
+      // Add extra items to be sure we have at least one in a later file
       addItem(queue, tasks, 123);
+      addItem(queue, tasks, 124);
 
       final List<BytesValue> removedTasks = new ArrayList<>();
       // Read through all the items in the first file.
@@ -72,8 +70,9 @@ public class FlatFileTaskCollectionTest
         removedTasks.add(queue.remove().getData());
       }
 
-      // Fully read files should have been removed.
-      assertThat(getCurrentFiles(dataDir)).doesNotContain(firstFile);
+      // read one more to make sure we are reading from the next file
+      removedTasks.add(queue.remove().getData());
+      assertThat(queue.getReadFileNumber()).isEqualTo(1);
 
       // Check that all tasks were read correctly.
       removedTasks.add(queue.remove().getData());
@@ -88,11 +87,5 @@ public class FlatFileTaskCollectionTest
       final int value) {
     tasks.add(BytesValue.of(value));
     queue.add(BytesValue.of(value));
-  }
-
-  private File[] getCurrentFiles(final Path dataDir) {
-    return dataDir
-        .toFile()
-        .listFiles((dir, name) -> name.startsWith(FlatFileTaskCollection.FILENAME_PREFIX));
   }
 }

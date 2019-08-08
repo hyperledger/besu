@@ -25,6 +25,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -39,7 +40,7 @@ public class FlatFileTaskCollection<T> implements TaskCollection<T> {
   private final Function<BytesValue, T> deserializer;
   private final long rollWhenFileSizeExceedsBytes;
 
-  private final ByteBuffer lengthBuffer = ByteBuffer.allocate(Integer.SIZE);
+  private final ByteBuffer lengthBuffer = ByteBuffer.allocate(Integer.BYTES);
 
   private FileChannel readFileChannel;
   private FileChannel writeFileChannel;
@@ -135,13 +136,13 @@ public class FlatFileTaskCollection<T> implements TaskCollection<T> {
   private void writeTaskData(final BytesValue data) throws IOException {
     final long offset = writeFileChannel.size();
     writeDataLength(data.size(), offset);
-    writeFileChannel.write(ByteBuffer.wrap(data.getArrayUnsafe()), offset + Integer.SIZE);
+    writeFileChannel.write(ByteBuffer.wrap(data.getArrayUnsafe()), offset + Integer.BYTES);
   }
 
   private int readDataLength() throws IOException {
     lengthBuffer.position(0);
-    lengthBuffer.limit(Integer.SIZE);
-    readBytes(lengthBuffer, Integer.SIZE);
+    lengthBuffer.limit(Integer.BYTES);
+    readBytes(lengthBuffer, Integer.BYTES);
     return lengthBuffer.getInt(0);
   }
 
@@ -180,6 +181,16 @@ public class FlatFileTaskCollection<T> implements TaskCollection<T> {
   @Override
   public synchronized boolean isEmpty() {
     return size() == 0;
+  }
+
+  @VisibleForTesting
+  int getReadFileNumber() {
+    return readFileNumber;
+  }
+
+  @VisibleForTesting
+  int getWriteFileNumber() {
+    return writeFileNumber;
   }
 
   @Override
