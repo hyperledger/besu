@@ -58,9 +58,12 @@ public class PrometheusMetricsSystem implements MetricsSystem {
       cachedTimers = new ConcurrentHashMap<>();
 
   private final Set<MetricCategory> enabledCategories;
+  private final boolean timersEnabled;
 
-  PrometheusMetricsSystem(final Set<MetricCategory> enabledCategories) {
+  PrometheusMetricsSystem(
+      final Set<MetricCategory> enabledCategories, final boolean timersEnabled) {
     this.enabledCategories = ImmutableSet.copyOf(enabledCategories);
+    this.timersEnabled = timersEnabled;
   }
 
   public static MetricsSystem init(final MetricsConfiguration metricsConfiguration) {
@@ -68,7 +71,8 @@ public class PrometheusMetricsSystem implements MetricsSystem {
       return new NoOpMetricsSystem();
     }
     final PrometheusMetricsSystem metricsSystem =
-        new PrometheusMetricsSystem(metricsConfiguration.getMetricCategories());
+        new PrometheusMetricsSystem(
+            metricsConfiguration.getMetricCategories(), metricsConfiguration.isTimersEnabled());
     if (metricsSystem.isCategoryEnabled(StandardMetricCategory.PROCESS)) {
       metricsSystem.collectors.put(
           StandardMetricCategory.PROCESS,
@@ -117,7 +121,7 @@ public class PrometheusMetricsSystem implements MetricsSystem {
     return cachedTimers.computeIfAbsent(
         metricName,
         (k) -> {
-          if (isCategoryEnabled(category)) {
+          if (timersEnabled && isCategoryEnabled(category)) {
             final Summary summary =
                 Summary.build(metricName, help)
                     .quantile(0.2, 0.02)

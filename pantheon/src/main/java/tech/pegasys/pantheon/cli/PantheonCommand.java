@@ -41,6 +41,7 @@ import tech.pegasys.pantheon.cli.custom.JsonRPCWhitelistHostsProperty;
 import tech.pegasys.pantheon.cli.custom.RpcAuthFileValidator;
 import tech.pegasys.pantheon.cli.error.PantheonExceptionHandler;
 import tech.pegasys.pantheon.cli.options.EthProtocolOptions;
+import tech.pegasys.pantheon.cli.options.MetricsCLIOptions;
 import tech.pegasys.pantheon.cli.options.NetworkingOptions;
 import tech.pegasys.pantheon.cli.options.RocksDBOptions;
 import tech.pegasys.pantheon.cli.options.SynchronizerOptions;
@@ -160,6 +161,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   final NetworkingOptions networkingOptions = NetworkingOptions.create();
   final SynchronizerOptions synchronizerOptions = SynchronizerOptions.create();
   final EthProtocolOptions ethProtocolOptions = EthProtocolOptions.create();
+  final MetricsCLIOptions metricsCLIOptions = MetricsCLIOptions.create();
   final RocksDBOptions rocksDBOptions = RocksDBOptions.create();
   final TransactionPoolOptions transactionPoolOptions = TransactionPoolOptions.create();
   private final RunnerBuilder runnerBuilder;
@@ -715,19 +717,18 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
 
   private PantheonCommand handleUnstableOptions() {
     // Add unstable options
-    UnstableOptionsSubCommand.createUnstableOptions(
-        commandLine,
-        ImmutableMap.of(
-            "P2P Network",
-            networkingOptions,
-            "Synchronizer",
-            synchronizerOptions,
-            "RocksDB",
-            rocksDBOptions,
-            "Ethereum Wire Protocol",
-            ethProtocolOptions,
-            "TransactionPool",
-            transactionPoolOptions));
+    final ImmutableMap.Builder<String, Object> unstableOptionsBuild = ImmutableMap.builder();
+    final ImmutableMap<String, Object> unstableOptions =
+        unstableOptionsBuild
+            .put("Ethereum Wire Protocol", ethProtocolOptions)
+            .put("Metrics", metricsCLIOptions)
+            .put("P2P Network", networkingOptions)
+            .put("RocksDB", rocksDBOptions)
+            .put("Synchronizer", synchronizerOptions)
+            .put("TransactionPool", transactionPoolOptions)
+            .build();
+
+    UnstableOptionsSubCommand.createUnstableOptions(commandLine, unstableOptions);
     return this;
   }
 
@@ -1006,7 +1007,8 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
             "--metrics-push-interval",
             "--metrics-push-prometheus-job"));
 
-    return MetricsConfiguration.builder()
+    return metricsCLIOptions
+        .toDomainObject()
         .enabled(isMetricsEnabled)
         .host(metricsHost)
         .port(metricsPort)

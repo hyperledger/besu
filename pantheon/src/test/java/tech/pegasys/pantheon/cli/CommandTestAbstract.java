@@ -25,6 +25,7 @@ import tech.pegasys.pantheon.Runner;
 import tech.pegasys.pantheon.RunnerBuilder;
 import tech.pegasys.pantheon.cli.config.EthNetworkConfig;
 import tech.pegasys.pantheon.cli.options.EthProtocolOptions;
+import tech.pegasys.pantheon.cli.options.MetricsCLIOptions;
 import tech.pegasys.pantheon.cli.options.NetworkingOptions;
 import tech.pegasys.pantheon.cli.options.RocksDBOptions;
 import tech.pegasys.pantheon.cli.options.SynchronizerOptions;
@@ -287,6 +288,10 @@ public abstract class CommandTestAbstract {
 
     public TransactionPoolOptions getTransactionPoolOptions() {
       return transactionPoolOptions;
+    }
+
+    public MetricsCLIOptions getMetricsCLIOptions() {
+      return metricsCLIOptions;
     }
   }
 }

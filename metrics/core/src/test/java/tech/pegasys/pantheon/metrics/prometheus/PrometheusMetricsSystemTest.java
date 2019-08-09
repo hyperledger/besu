@@ -45,7 +45,7 @@ public class PrometheusMetricsSystemTest {
           .thenComparing((o1, o2) -> o1.getLabels().equals(o2.getLabels()) ? 0 : 1);
 
   private final MetricsSystem metricsSystem =
-      new PrometheusMetricsSystem(DEFAULT_METRIC_CATEGORIES);
+      new PrometheusMetricsSystem(DEFAULT_METRIC_CATEGORIES, true);
 
   @Test
   public void shouldCreateObservationFromCounter() {
@@ -153,6 +153,19 @@ public class PrometheusMetricsSystemTest {
             new Observation(RPC, "request", null, asList("method", "quantile", "1.0")),
             new Observation(RPC, "request", null, asList("method", "sum")),
             new Observation(RPC, "request", null, asList("method", "count")));
+  }
+
+  @Test
+  public void shouldNotCreateObservationsFromTimerWhenTimersDisabled() {
+    final MetricsSystem metricsSystem =
+        new PrometheusMetricsSystem(DEFAULT_METRIC_CATEGORIES, false);
+    final LabelledMetric<OperationTimer> timer =
+        metricsSystem.createLabelledTimer(RPC, "request", "Some help", "methodName");
+
+    //noinspection EmptyTryBlock
+    try (final TimingContext ignored = timer.labels("method").startTimer()) {}
+
+    assertThat(metricsSystem.streamObservations()).isEmpty();
   }
 
   @Test

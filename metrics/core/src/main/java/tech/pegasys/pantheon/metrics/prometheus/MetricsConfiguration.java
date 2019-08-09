@@ -31,6 +31,7 @@ public class MetricsConfiguration {
 
   private static final String DEFAULT_METRICS_PUSH_HOST = "127.0.0.1";
   public static final int DEFAULT_METRICS_PUSH_PORT = 9001;
+  public static final Boolean DEFAULT_TIMERS_ENABLED = true;
 
   private final boolean enabled;
   private final int port;
@@ -42,6 +43,7 @@ public class MetricsConfiguration {
   private final int pushInterval;
   private final String prometheusJob;
   private final List<String> hostsWhitelist;
+  private final boolean timersEnabled;
 
   public static Builder builder() {
     return new Builder();
@@ -57,7 +59,8 @@ public class MetricsConfiguration {
       final String pushHost,
       final int pushInterval,
       final String prometheusJob,
-      final List<String> hostsWhitelist) {
+      final List<String> hostsWhitelist,
+      final boolean timersEnabled) {
     this.enabled = enabled;
     this.port = port;
     this.host = host;
@@ -68,6 +71,7 @@ public class MetricsConfiguration {
     this.pushInterval = pushInterval;
     this.prometheusJob = prometheusJob;
     this.hostsWhitelist = hostsWhitelist;
+    this.timersEnabled = timersEnabled;
   }
 
   public boolean isEnabled() {
@@ -108,6 +112,10 @@ public class MetricsConfiguration {
 
   Collection<String> getHostsWhitelist() {
     return Collections.unmodifiableCollection(this.hostsWhitelist);
+  }
+
+  public boolean isTimersEnabled() {
+    return timersEnabled;
   }
 
   @Override
@@ -173,6 +181,7 @@ public class MetricsConfiguration {
     private int pushInterval = 15;
     private String prometheusJob = "pantheon-client";
     private List<String> hostsWhitelist = Arrays.asList("localhost", "127.0.0.1");
+    private boolean timersEnabled = DEFAULT_TIMERS_ENABLED;
 
     private Builder() {}
 
@@ -226,6 +235,11 @@ public class MetricsConfiguration {
       return this;
     }
 
+    public Builder timersEnabled(final boolean timersEnabled) {
+      this.timersEnabled = timersEnabled;
+      return this;
+    }
+
     public MetricsConfiguration build() {
       return new MetricsConfiguration(
           enabled,
@@ -237,7 +251,8 @@ public class MetricsConfiguration {
           pushHost,
           pushInterval,
           prometheusJob,
-          hostsWhitelist);
+          hostsWhitelist,
+          timersEnabled);
     }
   }
 }
