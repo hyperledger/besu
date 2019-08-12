@@ -16,6 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 import tech.pegasys.pantheon.crypto.SECP256K1;
@@ -80,7 +81,7 @@ public class EeaSendRawTransactionTest {
           + "200e885ff29e973e2576b6600181d1b0a2b5294e30d9be4a1981"
           + "ffb33a0b8c8a72657374726963746564";
 
-  private static final String VALID_PRIVATE_TRANSACTION_RLP_PRIVACY_GROUP_NO_PRIVATE_FROM =
+  private static final String PRIVATE_TRANSACTION_RLP_PRIVACY_GROUP_NO_PRIVATE_FROM =
       "0xf88b800182520894095e7baea6a6c7c4c2dfeb977efac326af55"
           + "2d8780801ba048b55bfa915ac795c431978d8a6a992b628d55"
           + "7da5ff759b307d495a36649353a01fffd310ac743f371de3b9"
@@ -124,9 +125,6 @@ public class EeaSendRawTransactionTest {
   @Before
   public void before() {
     when(transactionPool.getPendingTransactions()).thenReturn(pendingTransactions);
-    when(privateTxHandler.getEnclaveKey())
-        .thenReturn("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=");
-
     method =
         new EeaSendRawTransaction(blockchainQueries, privateTxHandler, transactionPool, parameter);
   }
@@ -278,42 +276,23 @@ public class EeaSendRawTransactionTest {
   }
 
   @Test
-  public void validTransactionPrivacyGroupNoPrivateFromIsSentToTransactionPool() throws Exception {
+  public void transactionPrivacyGroupNoPrivateFromReturnsError() throws Exception {
     when(parameter.required(any(Object[].class), anyInt(), any()))
-        .thenReturn(VALID_PRIVATE_TRANSACTION_RLP_PRIVACY_GROUP_NO_PRIVATE_FROM);
-    when(privateTxHandler.sendToOrion(any(PrivateTransaction.class))).thenReturn(MOCK_ORION_KEY);
-    when(privateTxHandler.getPrivacyGroup(any(String.class), any(PrivateTransaction.class)))
-        .thenReturn(MOCK_PRIVACY_GROUP);
-    when(privateTxHandler.validatePrivateTransaction(
-            any(PrivateTransaction.class), any(String.class)))
-        .thenReturn(ValidationResult.valid());
-    when(privateTxHandler.createPrivacyMarkerTransaction(
-            any(String.class), any(PrivateTransaction.class), any(Long.class)))
-        .thenReturn(PUBLIC_TRANSACTION);
-    when(transactionPool.addLocalTransaction(any(Transaction.class)))
-        .thenReturn(ValidationResult.valid());
+        .thenReturn(PRIVATE_TRANSACTION_RLP_PRIVACY_GROUP_NO_PRIVATE_FROM);
 
     final JsonRpcRequest request =
         new JsonRpcRequest(
             "2.0",
             "eea_sendRawTransaction",
-            new String[] {VALID_PRIVATE_TRANSACTION_RLP_PRIVACY_GROUP_NO_PRIVATE_FROM});
+            new String[] {PRIVATE_TRANSACTION_RLP_PRIVACY_GROUP_NO_PRIVATE_FROM});
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcSuccessResponse(
-            request.getId(), "0x221e930a2c18d91fca4d509eaa3512f3e01fef266f660e32473de67474b36c15");
+        new JsonRpcErrorResponse(request.getId(), JsonRpcError.DECODE_ERROR);
 
     final JsonRpcResponse actualResponse = method.response(request);
 
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
-    verify(privateTxHandler).sendToOrion(any(PrivateTransaction.class));
-    verify(privateTxHandler).getPrivacyGroup(any(String.class), any(PrivateTransaction.class));
-    verify(privateTxHandler)
-        .validatePrivateTransaction(any(PrivateTransaction.class), any(String.class));
-    verify(privateTxHandler)
-        .createPrivacyMarkerTransaction(
-            any(String.class), any(PrivateTransaction.class), any(Long.class));
-    verify(transactionPool).addLocalTransaction(any(Transaction.class));
+    verifyZeroInteractions(privateTxHandler);
   }
 
   @Test

@@ -90,13 +90,8 @@ public class PrivateTransaction {
     return new Builder();
   }
 
-  public static PrivateTransaction readFrom(final RLPInput input) throws RLPException {
-    return readFrom(input, null);
-  }
-
   @SuppressWarnings({"unchecked"})
-  public static PrivateTransaction readFrom(final RLPInput input, final BytesValue enclavePublicKey)
-      throws RLPException {
+  public static PrivateTransaction readFrom(final RLPInput input) throws RLPException {
     input.enterList();
 
     final Builder builder =
@@ -124,22 +119,9 @@ public class PrivateTransaction {
     final BigInteger s = BytesValues.asUnsignedBigInteger(input.readUInt256Scalar().getBytes());
     final SECP256K1.Signature signature = SECP256K1.Signature.create(r, s, recId);
 
-    final RLPInput item1 = input.readAsRlp(); // privateFrom or privateFor/PrivacyGroupId
-    final RLPInput item2 = input.readAsRlp(); // privateFor/PrivacyGroupId or restriction
-
-    final BytesValue privateFrom;
-    final Object privateForOrPrivacyGroupId;
-    final Restriction restriction;
-
-    if (input.isEndOfCurrentList()) {
-      privateFrom = enclavePublicKey;
-      privateForOrPrivacyGroupId = resolvePrivateForOrPrivacyGroupId(item1);
-      restriction = convertToEnum(item2.readBytesValue());
-    } else {
-      privateFrom = item1.readBytesValue();
-      privateForOrPrivacyGroupId = resolvePrivateForOrPrivacyGroupId(item2);
-      restriction = convertToEnum(input.readBytesValue());
-    }
+    final BytesValue privateFrom = input.readBytesValue();
+    final Object privateForOrPrivacyGroupId = resolvePrivateForOrPrivacyGroupId(input.readAsRlp());
+    final Restriction restriction = convertToEnum(input.readBytesValue());
 
     input.leaveList();
 

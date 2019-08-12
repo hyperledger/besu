@@ -35,7 +35,6 @@ import tech.pegasys.pantheon.ethereum.privacy.Restriction;
 import tech.pegasys.pantheon.ethereum.rlp.RLP;
 import tech.pegasys.pantheon.ethereum.rlp.RLPException;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
-import tech.pegasys.pantheon.util.bytes.BytesValues;
 
 import java.util.OptionalLong;
 
@@ -134,9 +133,7 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
   private PrivateTransaction decodeRawTransaction(final String hash)
       throws InvalidJsonRpcRequestException {
     try {
-      return PrivateTransaction.readFrom(
-          RLP.input(BytesValue.fromHexString(hash)),
-          BytesValues.fromBase64(privateTransactionHandler.getEnclaveKey()));
+      return PrivateTransaction.readFrom(RLP.input(BytesValue.fromHexString(hash)));
     } catch (final IllegalArgumentException | RLPException e) {
       LOG.debug(e);
       throw new InvalidJsonRpcRequestException("Invalid raw private transaction hex", e);
