@@ -21,6 +21,7 @@ import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.util.Subscribers;
 
 import java.util.Optional;
+import java.util.function.Function;
 
 /**
  * Provides the EthHash specific aspects of the mining operation - i.e. getting the work definition,
@@ -32,7 +33,7 @@ import java.util.Optional;
 public class EthHashBlockMiner extends BlockMiner<Void, EthHashBlockCreator> {
 
   public EthHashBlockMiner(
-      final EthHashBlockCreator blockCreator,
+      final Function<BlockHeader, EthHashBlockCreator> blockCreator,
       final ProtocolSchedule<Void> protocolSchedule,
       final ProtocolContext<Void> protocolContext,
       final Subscribers<MinedBlockObserver> observers,
@@ -42,14 +43,14 @@ public class EthHashBlockMiner extends BlockMiner<Void, EthHashBlockCreator> {
   }
 
   public Optional<EthHashSolverInputs> getWorkDefinition() {
-    return blockCreator.getWorkDefinition();
+    return minerBlockCreator.getWorkDefinition();
   }
 
   public Optional<Long> getHashesPerSecond() {
-    return blockCreator.getHashesPerSecond();
+    return minerBlockCreator.getHashesPerSecond();
   }
 
   public boolean submitWork(final EthHashSolution solution) {
-    return blockCreator.submitWork(solution);
+    return minerBlockCreator.submitWork(solution);
   }
 }

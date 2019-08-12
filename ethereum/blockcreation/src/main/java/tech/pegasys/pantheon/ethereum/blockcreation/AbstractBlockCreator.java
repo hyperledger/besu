@@ -24,6 +24,7 @@ import tech.pegasys.pantheon.ethereum.core.MutableAccount;
 import tech.pegasys.pantheon.ethereum.core.MutableWorldState;
 import tech.pegasys.pantheon.ethereum.core.ProcessableBlockHeader;
 import tech.pegasys.pantheon.ethereum.core.SealableBlockHeader;
+import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.core.WorldUpdater;
 import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactions;
@@ -39,6 +40,7 @@ import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
@@ -112,6 +114,19 @@ public abstract class AbstractBlockCreator<C> implements AsyncBlockCreator {
    */
   @Override
   public Block createBlock(final long timestamp) {
+    return createBlock(Optional.empty(), Optional.empty(), timestamp);
+  }
+
+  @Override
+  public Block createBlock(
+      final List<Transaction> transactions, final List<BlockHeader> ommers, final long timestamp) {
+    return createBlock(Optional.of(transactions), Optional.of(ommers), timestamp);
+  }
+
+  private Block createBlock(
+      final Optional<List<Transaction>> maybeTransactions,
+      final Optional<List<BlockHeader>> maybeOmmers,
+      final long timestamp) {
     try {
       final ProcessableBlockHeader processableBlockHeader = createPendingBlockHeader(timestamp);
 
@@ -121,12 +136,12 @@ public abstract class AbstractBlockCreator<C> implements AsyncBlockCreator {
 
       throwIfStopped();
 
-      final List<BlockHeader> ommers = selectOmmers();
+      final List<BlockHeader> ommers = maybeOmmers.orElse(selectOmmers());
 
       throwIfStopped();
 
       final BlockTransactionSelector.TransactionSelectionResults transactionResults =
-          selectTransactions(processableBlockHeader, disposableWorldState);
+          selectTransactions(processableBlockHeader, disposableWorldState, maybeTransactions);
 
       throwIfStopped();
 
@@ -174,7 +189,8 @@ public abstract class AbstractBlockCreator<C> implements AsyncBlockCreator {
 
   private BlockTransactionSelector.TransactionSelectionResults selectTransactions(
       final ProcessableBlockHeader processableBlockHeader,
-      final MutableWorldState disposableWorldState)
+      final MutableWorldState disposableWorldState,
+      final Optional<List<Transaction>> transactions)
       throws RuntimeException {
     final long blockNumber = processableBlockHeader.getNumber();
 
@@ -196,7 +212,11 @@ public abstract class AbstractBlockCreator<C> implements AsyncBlockCreator {
             isCancelled::get,
             miningBeneficiary);
 
-    return selector.buildTransactionListForBlock();
+    if (transactions.isPresent()) {
+      return selector.evaluateTransactions(transactions.get());
+    } else {
+      return selector.buildTransactionListForBlock();
+    }
   }
 
   private MutableWorldState duplicateWorldStateAtParent() {

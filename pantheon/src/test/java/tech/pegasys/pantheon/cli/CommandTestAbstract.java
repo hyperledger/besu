@@ -23,6 +23,7 @@ import static org.mockito.Mockito.when;
 
 import tech.pegasys.pantheon.Runner;
 import tech.pegasys.pantheon.RunnerBuilder;
+import tech.pegasys.pantheon.chainimport.ChainImporter;
 import tech.pegasys.pantheon.cli.config.EthNetworkConfig;
 import tech.pegasys.pantheon.cli.options.EthProtocolOptions;
 import tech.pegasys.pantheon.cli.options.MetricsCLIOptions;
@@ -31,6 +32,7 @@ import tech.pegasys.pantheon.cli.options.RocksDBOptions;
 import tech.pegasys.pantheon.cli.options.SynchronizerOptions;
 import tech.pegasys.pantheon.cli.options.TransactionPoolOptions;
 import tech.pegasys.pantheon.cli.subcommands.PublicKeySubCommand.KeyLoader;
+import tech.pegasys.pantheon.cli.subcommands.blocks.BlocksSubCommand.ChainImporterFactory;
 import tech.pegasys.pantheon.controller.PantheonController;
 import tech.pegasys.pantheon.controller.PantheonControllerBuilder;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
@@ -101,6 +103,7 @@ public abstract class CommandTestAbstract {
   @Mock protected PantheonController<Object> mockController;
   @Mock protected BlockImporter mockBlockImporter;
   @Mock protected BlockExporter mockBlockExporter;
+  @Mock protected ChainImporter<?> chainImporter;
 
   @Mock protected Logger mockLogger;
   @Mock protected PantheonPluginContextImpl mockPantheonPluginContext;
@@ -211,6 +214,11 @@ public abstract class CommandTestAbstract {
     return parseCommand(f -> KeyPair.generate(), in, args);
   }
 
+  @SuppressWarnings("unchecked")
+  private <T> ChainImporter<T> chainImporterFactory(final PantheonController<T> controller) {
+    return (ChainImporter<T>) chainImporter;
+  }
+
   private TestPantheonCommand parseCommand(
       final KeyLoader keyLoader, final InputStream in, final String... args) {
     // turn off ansi usage globally in picocli
@@ -221,6 +229,7 @@ public abstract class CommandTestAbstract {
             mockLogger,
             mockBlockImporter,
             mockBlockExporter,
+            this::chainImporterFactory,
             mockRunnerBuilder,
             mockControllerBuilderFactory,
             keyLoader,
@@ -250,6 +259,7 @@ public abstract class CommandTestAbstract {
         final Logger mockLogger,
         final BlockImporter mockBlockImporter,
         final BlockExporter mockBlockExporter,
+        final ChainImporterFactory chainImporterFactory,
         final RunnerBuilder mockRunnerBuilder,
         final PantheonController.Builder controllerBuilderFactory,
         final KeyLoader keyLoader,
@@ -259,6 +269,7 @@ public abstract class CommandTestAbstract {
           mockLogger,
           mockBlockImporter,
           mockBlockExporter,
+          chainImporterFactory,
           mockRunnerBuilder,
           controllerBuilderFactory,
           pantheonPluginContext,

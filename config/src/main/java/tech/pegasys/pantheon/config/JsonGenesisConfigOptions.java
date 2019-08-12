@@ -24,7 +24,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
 
 public class JsonGenesisConfigOptions implements GenesisConfigOptions {
-
   private static final String ETHASH_CONFIG_KEY = "ethash";
   private static final String IBFT_LEGACY_CONFIG_KEY = "ibft";
   private static final String IBFT2_CONFIG_KEY = "ibft2";
@@ -37,6 +36,21 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
 
   JsonGenesisConfigOptions(final ObjectNode maybeConfig) {
     this.configRoot = isNull(maybeConfig) ? JsonUtil.createEmptyObjectNode() : maybeConfig;
+  }
+
+  @Override
+  public String getConsensusEngine() {
+    if (isEthHash()) {
+      return ETHASH_CONFIG_KEY;
+    } else if (isIbft2()) {
+      return IBFT2_CONFIG_KEY;
+    } else if (isIbftLegacy()) {
+      return IBFT_LEGACY_CONFIG_KEY;
+    } else if (isClique()) {
+      return CLIQUE_CONFIG_KEY;
+    } else {
+      return "unknown";
+    }
   }
 
   @Override

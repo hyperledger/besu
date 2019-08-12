@@ -23,6 +23,7 @@ import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.chain.MinedBlockObserver;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockBody;
+import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
 import tech.pegasys.pantheon.ethereum.core.BlockImporter;
 import tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode;
@@ -33,6 +34,7 @@ import tech.pegasys.pantheon.util.Subscribers;
 
 import java.math.BigInteger;
 import java.util.Optional;
+import java.util.function.Function;
 
 import com.google.common.collect.Lists;
 import org.junit.Test;
@@ -51,6 +53,8 @@ public class BlockMinerTest {
     final ProtocolContext<Void> protocolContext = new ProtocolContext<>(null, null, null);
 
     final EthHashBlockCreator blockCreator = mock(EthHashBlockCreator.class);
+    final Function<BlockHeader, EthHashBlockCreator> blockCreatorSupplier =
+        (parentHeader) -> blockCreator;
     when(blockCreator.createBlock(anyLong())).thenReturn(blockToCreate);
 
     final BlockImporter<Void> blockImporter = mock(BlockImporter.class);
@@ -66,7 +70,7 @@ public class BlockMinerTest {
     when(scheduler.waitUntilNextBlockCanBeMined(any())).thenReturn(5L);
     final BlockMiner<Void, EthHashBlockCreator> miner =
         new EthHashBlockMiner(
-            blockCreator,
+            blockCreatorSupplier,
             protocolSchedule,
             protocolContext,
             subscribersContaining(observer),
@@ -90,6 +94,8 @@ public class BlockMinerTest {
     final ProtocolContext<Void> protocolContext = new ProtocolContext<>(null, null, null);
 
     final EthHashBlockCreator blockCreator = mock(EthHashBlockCreator.class);
+    final Function<BlockHeader, EthHashBlockCreator> blockCreatorSupplier =
+        (parentHeader) -> blockCreator;
     when(blockCreator.createBlock(anyLong())).thenReturn(blockToCreate);
 
     final BlockImporter<Void> blockImporter = mock(BlockImporter.class);
@@ -104,7 +110,7 @@ public class BlockMinerTest {
     when(scheduler.waitUntilNextBlockCanBeMined(any())).thenReturn(5L);
     final BlockMiner<Void, EthHashBlockCreator> miner =
         new EthHashBlockMiner(
-            blockCreator,
+            blockCreatorSupplier,
             protocolSchedule,
             protocolContext,
             subscribersContaining(observer),

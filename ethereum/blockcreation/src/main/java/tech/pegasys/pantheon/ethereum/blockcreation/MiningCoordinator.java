@@ -13,11 +13,15 @@
 package tech.pegasys.pantheon.ethereum.blockcreation;
 
 import tech.pegasys.pantheon.ethereum.core.Address;
+import tech.pegasys.pantheon.ethereum.core.Block;
+import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.mainnet.EthHashSolution;
 import tech.pegasys.pantheon.ethereum.mainnet.EthHashSolverInputs;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface MiningCoordinator {
@@ -52,4 +56,17 @@ public interface MiningCoordinator {
     throw new UnsupportedOperationException(
         "Current consensus mechanism prevents submission of work solutions.");
   }
+
+  /**
+   * Creates a block if possible, otherwise return an empty result
+   *
+   * @param parentHeader The parent block's header
+   * @param transactions The list of transactions to include
+   * @param ommers The list of ommers to include
+   * @return If supported, returns the block that was created, otherwise an empty response.
+   */
+  Optional<Block> createBlock(
+      final BlockHeader parentHeader,
+      final List<Transaction> transactions,
+      final List<BlockHeader> ommers);
 }

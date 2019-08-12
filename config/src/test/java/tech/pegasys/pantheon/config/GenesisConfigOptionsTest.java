@@ -28,6 +28,7 @@ public class GenesisConfigOptionsTest {
   public void shouldUseEthHashWhenEthHashInConfig() {
     final GenesisConfigOptions config = fromConfigOptions(singletonMap("ethash", emptyMap()));
     assertThat(config.isEthHash()).isTrue();
+    assertThat(config.getConsensusEngine()).isEqualTo("ethash");
   }
 
   @Test
@@ -41,6 +42,7 @@ public class GenesisConfigOptionsTest {
     final GenesisConfigOptions config = fromConfigOptions(singletonMap("ibft", emptyMap()));
     assertThat(config.isIbftLegacy()).isTrue();
     assertThat(config.getIbftLegacyConfigOptions()).isNotSameAs(IbftConfigOptions.DEFAULT);
+    assertThat(config.getConsensusEngine()).isEqualTo("ibft");
   }
 
   @Test
@@ -51,10 +53,19 @@ public class GenesisConfigOptionsTest {
   }
 
   @Test
+  public void shouldUseIbft2WhenIbft2InConfig() {
+    final GenesisConfigOptions config = fromConfigOptions(singletonMap("ibft2", emptyMap()));
+    assertThat(config.isIbftLegacy()).isFalse();
+    assertThat(config.isIbft2()).isTrue();
+    assertThat(config.getConsensusEngine()).isEqualTo("ibft2");
+  }
+
+  @Test
   public void shouldUseCliqueWhenCliqueInConfig() {
     final GenesisConfigOptions config = fromConfigOptions(singletonMap("clique", emptyMap()));
     assertThat(config.isClique()).isTrue();
     assertThat(config.getCliqueConfigOptions()).isNotSameAs(CliqueConfigOptions.DEFAULT);
+    assertThat(config.getConsensusEngine()).isEqualTo("clique");
   }
 
   @Test

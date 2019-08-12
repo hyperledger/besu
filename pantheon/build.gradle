@@ -46,6 +46,8 @@ dependencies {
   implementation project(':nat')
   implementation project(':services:kvstore')
 
+  implementation 'com.fasterxml.jackson.core:jackson-databind'
+  compile group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jdk8', version: '2.9.8'
   implementation 'com.graphql-java:graphql-java'
   implementation 'com.google.guava:guava'
   implementation 'info.picocli:picocli'

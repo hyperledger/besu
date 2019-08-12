@@ -14,6 +14,7 @@ package tech.pegasys.pantheon;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
+import tech.pegasys.pantheon.chainimport.ChainImporter;
 import tech.pegasys.pantheon.cli.PantheonCommand;
 import tech.pegasys.pantheon.controller.PantheonController;
 import tech.pegasys.pantheon.services.PantheonPluginContextImpl;
@@ -37,6 +38,7 @@ public final class Pantheon {
             logger,
             new BlockImporter(),
             new BlockExporter(),
+            ChainImporter::new,
             new RunnerBuilder(),
             new PantheonController.Builder(),
             new PantheonPluginContextImpl(),

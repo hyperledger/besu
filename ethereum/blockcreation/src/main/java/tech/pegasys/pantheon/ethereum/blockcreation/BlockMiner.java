@@ -17,12 +17,15 @@ import tech.pegasys.pantheon.ethereum.chain.MinedBlockObserver;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.BlockImporter;
+import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.util.Subscribers;
 
+import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import com.google.common.base.Stopwatch;
 import org.apache.logging.log4j.LogManager;
@@ -42,7 +45,9 @@ public class BlockMiner<C, M extends AbstractBlockCreator<C>> implements Runnabl
 
   private static final Logger LOG = LogManager.getLogger();
 
-  protected final M blockCreator;
+  protected final Function<BlockHeader, M> blockCreatorFactory;
+  protected final M minerBlockCreator;
+
   protected final ProtocolContext<C> protocolContext;
   protected final BlockHeader parentHeader;
 
@@ -51,13 +56,14 @@ public class BlockMiner<C, M extends AbstractBlockCreator<C>> implements Runnabl
   private final AbstractBlockScheduler scheduler;
 
   public BlockMiner(
-      final M blockCreator,
+      final Function<BlockHeader, M> blockCreatorFactory,
       final ProtocolSchedule<C> protocolSchedule,
       final ProtocolContext<C> protocolContext,
       final Subscribers<MinedBlockObserver> observers,
       final AbstractBlockScheduler scheduler,
       final BlockHeader parentHeader) {
-    this.blockCreator = blockCreator;
+    this.blockCreatorFactory = blockCreatorFactory;
+    this.minerBlockCreator = blockCreatorFactory.apply(parentHeader);
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
     this.observers = observers;
@@ -69,7 +75,7 @@ public class BlockMiner<C, M extends AbstractBlockCreator<C>> implements Runnabl
   public void run() {
 
     boolean blockMined = false;
-    while (!blockMined && !blockCreator.isCancelled()) {
+    while (!blockMined && !minerBlockCreator.isCancelled()) {
       try {
         blockMined = mineBlock();
       } catch (final CancellationException ex) {
@@ -84,6 +90,25 @@ public class BlockMiner<C, M extends AbstractBlockCreator<C>> implements Runnabl
     }
   }
 
+  /**
+   * Create a block with the given transactions and ommers. The list of transactions are validated
+   * as they are processed, and are not guaranteed to be included in the final block. If
+   * transactions must match exactly, the caller must verify they were all able to be included.
+   *
+   * @param parentHeader The header of the parent of the block to be produced
+   * @param transactions The list of transactions which may be included.
+   * @param ommers The list of ommers to include.
+   * @return the newly created block.
+   */
+  public Block createBlock(
+      final BlockHeader parentHeader,
+      final List<Transaction> transactions,
+      final List<BlockHeader> ommers) {
+    final BlockCreator blockCreator = this.blockCreatorFactory.apply(parentHeader);
+    final long timestamp = scheduler.getNextTimestamp(parentHeader).getTimestampForHeader();
+    return blockCreator.createBlock(transactions, ommers, timestamp);
+  }
+
   protected boolean mineBlock() throws InterruptedException {
     // Ensure the block is allowed to be mined - i.e. the timestamp on the new block is sufficiently
     // ahead of the parent, and still within allowable clock tolerance.
@@ -93,7 +118,7 @@ public class BlockMiner<C, M extends AbstractBlockCreator<C>> implements Runnabl
 
     final Stopwatch stopwatch = Stopwatch.createStarted();
     LOG.trace("Mining a new block with timestamp {}", newBlockTimestamp);
-    final Block block = blockCreator.createBlock(newBlockTimestamp);
+    final Block block = minerBlockCreator.createBlock(newBlockTimestamp);
     LOG.trace(
         "Block created, importing to local chain, block includes {} transactions",
         block.getBody().getTransactions().size());
@@ -123,7 +148,7 @@ public class BlockMiner<C, M extends AbstractBlockCreator<C>> implements Runnabl
   }
 
   public void cancel() {
-    blockCreator.cancel();
+    minerBlockCreator.cancel();
   }
 
   private void notifyNewBlockListeners(final Block block) {

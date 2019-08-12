@@ -130,6 +130,17 @@ public class BlockTransactionSelector {
     return transactionSelectionResult;
   }
 
+  /**
+   * Evaluate the given transactions and return the result of that evaluation.
+   *
+   * @param transactions The set of transactions to evaluate.
+   * @return The {@code TransactionSelectionResults} results of transaction evaluation.
+   */
+  public TransactionSelectionResults evaluateTransactions(final List<Transaction> transactions) {
+    transactions.forEach(this::evaluateTransaction);
+    return transactionSelectionResult;
+  }
+
   /*
    * Passed into the PendingTransactions, and is called on each transaction until sufficient
    * transactions are found which fill a block worth of gas.

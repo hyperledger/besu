@@ -25,6 +25,7 @@ import tech.pegasys.pantheon.util.Subscribers;
 
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
+import java.util.function.Function;
 
 public class EthHashMinerExecutor extends AbstractMinerExecutor<Void, EthHashBlockMiner> {
 
@@ -53,31 +54,36 @@ public class EthHashMinerExecutor extends AbstractMinerExecutor<Void, EthHashBlo
     if (!coinbase.isPresent()) {
       throw new CoinbaseNotSetException("Unable to start mining without a coinbase.");
     } else {
-      final EthHashSolver solver =
-          new EthHashSolver(new RandomNonceGenerator(), new EthHasher.Light());
-      final EthHashBlockCreator blockCreator =
-          new EthHashBlockCreator(
-              coinbase.get(),
-              parent -> extraData,
-              pendingTransactions,
-              protocolContext,
-              protocolSchedule,
-              (gasLimit) -> gasLimit,
-              solver,
-              minTransactionGasPrice,
-              parentHeader);
-
-      final EthHashBlockMiner currentRunningMiner =
-          new EthHashBlockMiner(
-              blockCreator,
-              protocolSchedule,
-              protocolContext,
-              observers,
-              blockScheduler,
-              parentHeader);
+      final EthHashBlockMiner currentRunningMiner = createMiner(observers, parentHeader);
       executorService.execute(currentRunningMiner);
       return currentRunningMiner;
     }
+  }
+
+  @Override
+  public EthHashBlockMiner createMiner(final BlockHeader parentHeader) {
+    return createMiner(Subscribers.none(), parentHeader);
+  }
+
+  private EthHashBlockMiner createMiner(
+      final Subscribers<MinedBlockObserver> observers, final BlockHeader parentHeader) {
+    final EthHashSolver solver =
+        new EthHashSolver(new RandomNonceGenerator(), new EthHasher.Light());
+    final Function<BlockHeader, EthHashBlockCreator> blockCreator =
+        (header) ->
+            new EthHashBlockCreator(
+                coinbase.get(),
+                parent -> extraData,
+                pendingTransactions,
+                protocolContext,
+                protocolSchedule,
+                (gasLimit) -> gasLimit,
+                solver,
+                minTransactionGasPrice,
+                parentHeader);
+
+    return new EthHashBlockMiner(
+        blockCreator, protocolSchedule, protocolContext, observers, blockScheduler, parentHeader);
   }
 
   public void setCoinbase(final Address coinbase) {

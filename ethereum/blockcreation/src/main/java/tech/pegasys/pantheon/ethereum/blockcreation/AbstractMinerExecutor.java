@@ -57,6 +57,8 @@ public abstract class AbstractMinerExecutor<
   public abstract M startAsyncMining(
       final Subscribers<MinedBlockObserver> observers, final BlockHeader parentHeader);
 
+  public abstract M createMiner(final BlockHeader parentHeader);
+
   public void setExtraData(final BytesValue extraData) {
     this.extraData = extraData.copy();
   }

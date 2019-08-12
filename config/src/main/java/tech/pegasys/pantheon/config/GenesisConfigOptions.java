@@ -28,6 +28,8 @@ public interface GenesisConfigOptions {
 
   boolean isClique();
 
+  String getConsensusEngine();
+
   IbftConfigOptions getIbftLegacyConfigOptions();
 
   CliqueConfigOptions getCliqueConfigOptions();

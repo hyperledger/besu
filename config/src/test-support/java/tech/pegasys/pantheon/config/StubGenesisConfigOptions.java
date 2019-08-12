@@ -35,6 +35,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private OptionalInt stackSizeLimit = OptionalInt.empty();
 
   @Override
+  public String getConsensusEngine() {
+    return "ethash";
+  }
+
+  @Override
   public boolean isEthHash() {
     return true;
   }

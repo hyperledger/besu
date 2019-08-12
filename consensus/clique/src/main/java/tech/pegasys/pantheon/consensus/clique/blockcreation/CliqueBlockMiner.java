@@ -23,12 +23,14 @@ import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.util.Subscribers;
 
+import java.util.function.Function;
+
 public class CliqueBlockMiner extends BlockMiner<CliqueContext, CliqueBlockCreator> {
 
   private final Address localAddress;
 
   public CliqueBlockMiner(
-      final CliqueBlockCreator blockCreator,
+      final Function<BlockHeader, CliqueBlockCreator> blockCreator,
       final ProtocolSchedule<CliqueContext> protocolSchedule,
       final ProtocolContext<CliqueContext> protocolContext,
       final Subscribers<MinedBlockObserver> observers,

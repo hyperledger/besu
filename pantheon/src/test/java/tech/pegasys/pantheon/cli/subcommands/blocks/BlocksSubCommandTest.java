@@ -10,15 +10,18 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.cli;
+package tech.pegasys.pantheon.cli.subcommands.blocks;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.contentOf;
 import static org.assertj.core.util.Arrays.asList;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import tech.pegasys.pantheon.cli.CommandTestAbstract;
 import tech.pegasys.pantheon.config.GenesisConfigFile;
 import tech.pegasys.pantheon.controller.PantheonController;
 import tech.pegasys.pantheon.crypto.SECP256K1;
@@ -38,6 +41,8 @@ import tech.pegasys.pantheon.util.BlockImporter;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Writer;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 import org.junit.Rule;
@@ -45,7 +50,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import picocli.CommandLine.Model.CommandSpec;
 
-public class BlockSubCommandTest extends CommandTestAbstract {
+public class BlocksSubCommandTest extends CommandTestAbstract {
 
   @Rule public final TemporaryFolder folder = new TemporaryFolder();
 
@@ -65,10 +70,16 @@ public class BlockSubCommandTest extends CommandTestAbstract {
 
   private static final String EXPECTED_BLOCK_IMPORT_USAGE =
       "Usage: pantheon blocks import [-hV] --from=<FILE>"
+          //      "Usage: pantheon blocks import [-hV] [--format=<format>] --from=<FILE>"
           + System.lineSeparator()
           + "This command imports blocks from a file into the database."
+          // Hide format for while JSON option is under development
+          //          + System.lineSeparator()
+          //          + "      --format=<format>   The type of data to be imported, possible values
+          // are: RLP,\n"
+          //          + "                            JSON (default: RLP)."
           + System.lineSeparator()
-          + "      --from=<FILE>   File containing blocks to import"
+          + "      --from=<FILE>   File containing blocks to import."
           + System.lineSeparator()
           + "  -h, --help          Show this help message and exit."
           + System.lineSeparator()
@@ -140,7 +151,7 @@ public class BlockSubCommandTest extends CommandTestAbstract {
   @Test
   public void callingBlockImportSubCommandHelpMustDisplayUsage() {
     parseCommand(BLOCK_SUBCOMMAND_NAME, BLOCK_IMPORT_SUBCOMMAND_NAME, "--help");
-    assertThat(commandOutput.toString()).startsWith(EXPECTED_BLOCK_IMPORT_USAGE);
+    assertThat(commandOutput.toString()).isEqualToIgnoringWhitespace(EXPECTED_BLOCK_IMPORT_USAGE);
     assertThat(commandErrorOutput.toString()).isEmpty();
   }
 
@@ -156,6 +167,48 @@ public class BlockSubCommandTest extends CommandTestAbstract {
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void blocksImport_rlpFormat() throws Exception {
+    final File fileToImport = temp.newFile("blocks.file");
+    parseCommand(
+        BLOCK_SUBCOMMAND_NAME,
+        BLOCK_IMPORT_SUBCOMMAND_NAME,
+        "--format",
+        "RLP",
+        "--from",
+        fileToImport.getPath());
+
+    verify(mockBlockImporter).importBlockchain(pathArgumentCaptor.capture(), any());
+
+    assertThat(pathArgumentCaptor.getValue()).isEqualByComparingTo(fileToImport.toPath());
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void blocksImport_jsonFormat() throws Exception {
+    final String fileContent = "test";
+    final File fileToImport = temp.newFile("blocks.file");
+    final Writer fileWriter = Files.newBufferedWriter(fileToImport.toPath(), UTF_8);
+    fileWriter.write(fileContent);
+    fileWriter.close();
+
+    parseCommand(
+        BLOCK_SUBCOMMAND_NAME,
+        BLOCK_IMPORT_SUBCOMMAND_NAME,
+        "--format",
+        "JSON",
+        "--from",
+        fileToImport.getPath());
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+
+    verify(chainImporter, times(1)).importChain(stringArgumentCaptor.capture());
+    assertThat(stringArgumentCaptor.getValue()).isEqualTo(fileContent);
   }
 
   // Export sub-sub-command

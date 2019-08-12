@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.ethereum.core;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import tech.pegasys.pantheon.crypto.SECP256K1.PublicKey;
 import tech.pegasys.pantheon.ethereum.rlp.RLP;
 import tech.pegasys.pantheon.ethereum.rlp.RLPException;
 import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
@@ -80,6 +81,10 @@ public class Address extends DelegatingBytesValue {
    */
   public static Address extract(final Hash hash) {
     return wrap(hash.slice(12, 20));
+  }
+
+  public static Address extract(final PublicKey publicKey) {
+    return Address.extract(Hash.hash(publicKey.getEncodedBytes()));
   }
 
   /**

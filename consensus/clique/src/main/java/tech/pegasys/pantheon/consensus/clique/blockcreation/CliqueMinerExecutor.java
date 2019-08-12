@@ -34,6 +34,7 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
+import java.util.function.Function;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
@@ -68,30 +69,40 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueContext, Cl
   @Override
   public CliqueBlockMiner startAsyncMining(
       final Subscribers<MinedBlockObserver> observers, final BlockHeader parentHeader) {
-    final CliqueBlockCreator blockCreator =
-        new CliqueBlockCreator(
-            localAddress, // TOOD(tmm): This can be removed (used for voting not coinbase).
-            this::calculateExtraData,
-            pendingTransactions,
-            protocolContext,
-            protocolSchedule,
-            (gasLimit) -> gasLimit,
-            nodeKeys,
-            minTransactionGasPrice,
-            parentHeader,
-            epochManager);
-
-    final CliqueBlockMiner currentRunningMiner =
-        new CliqueBlockMiner(
-            blockCreator,
-            protocolSchedule,
-            protocolContext,
-            observers,
-            blockScheduler,
-            parentHeader,
-            localAddress);
+    final CliqueBlockMiner currentRunningMiner = createMiner(observers, parentHeader);
     executorService.execute(currentRunningMiner);
     return currentRunningMiner;
+  }
+
+  @Override
+  public CliqueBlockMiner createMiner(final BlockHeader parentHeader) {
+    return createMiner(Subscribers.none(), parentHeader);
+  }
+
+  private CliqueBlockMiner createMiner(
+      final Subscribers<MinedBlockObserver> observers, final BlockHeader parentHeader) {
+    final Function<BlockHeader, CliqueBlockCreator> blockCreator =
+        (header) ->
+            new CliqueBlockCreator(
+                localAddress, // TOOD(tmm): This can be removed (used for voting not coinbase).
+                this::calculateExtraData,
+                pendingTransactions,
+                protocolContext,
+                protocolSchedule,
+                (gasLimit) -> gasLimit,
+                nodeKeys,
+                minTransactionGasPrice,
+                header,
+                epochManager);
+
+    return new CliqueBlockMiner(
+        blockCreator,
+        protocolSchedule,
+        protocolContext,
+        observers,
+        blockScheduler,
+        parentHeader,
+        localAddress);
   }
 
   @Override

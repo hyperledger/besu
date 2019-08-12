@@ -19,12 +19,15 @@ import tech.pegasys.pantheon.ethereum.chain.BlockAddedObserver;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.chain.MinedBlockObserver;
 import tech.pegasys.pantheon.ethereum.core.Address;
+import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
+import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.util.Subscribers;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.apache.logging.log4j.Logger;
@@ -51,6 +54,15 @@ public abstract class AbstractMiningCoordinator<
     this.syncState = syncState;
     this.blockchain.observeBlockAdded(this);
     syncState.addInSyncListener(this::inSyncChanged);
+  }
+
+  @Override
+  public Optional<Block> createBlock(
+      final BlockHeader parentHeader,
+      final List<Transaction> transactions,
+      final List<BlockHeader> ommers) {
+    M miner = executor.createMiner(parentHeader);
+    return Optional.of(miner.createBlock(parentHeader, transactions, ommers));
   }
 
   @Override
