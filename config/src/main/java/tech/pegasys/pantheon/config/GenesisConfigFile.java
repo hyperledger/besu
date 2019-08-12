@@ -19,11 +19,16 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Streams;
 import com.google.common.io.Resources;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class GenesisConfigFile {
+
+  static final Logger LOG = LogManager.getLogger();
 
   public static final GenesisConfigFile DEFAULT =
       new GenesisConfigFile(JsonUtil.createEmptyObjectNode());
@@ -53,10 +58,23 @@ public class GenesisConfigFile {
   }
 
   public static GenesisConfigFile fromConfig(final String jsonString) {
-    // TODO: Should we disable comments?
-    final boolean allowComments = true;
-    final ObjectNode rootNode = JsonUtil.objectNodeFromString(jsonString, allowComments);
-    return fromConfig(rootNode);
+    try {
+      final ObjectNode rootNode = JsonUtil.objectNodeFromString(jsonString, false);
+      return fromConfig(rootNode);
+    } catch (final RuntimeException re) {
+      if (re.getCause() instanceof JsonParseException) {
+        // we had a runtime exception cause by a jsom parse exception.
+        // try again with comments enabled
+        final ObjectNode rootNode = JsonUtil.objectNodeFromString(jsonString, true);
+        // if we get here comments is what broke things, warn and move on.
+        LOG.warn(
+            "The provided genesis file contains comments. "
+                + "In a future release of Pantheon this will not be supported.");
+        return fromConfig(rootNode);
+      } else {
+        throw re;
+      }
+    }
   }
 
   public static GenesisConfigFile fromConfig(final ObjectNode config) {

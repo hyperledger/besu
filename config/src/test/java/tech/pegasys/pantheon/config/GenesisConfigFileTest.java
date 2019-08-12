@@ -203,6 +203,17 @@ public class GenesisConfigFileTest {
                 "31415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679821480865132823066470938446095"));
   }
 
+  @Test
+  public void acceptComments() {
+    // this test will change in the future to reject comments.
+    final GenesisConfigFile config =
+        GenesisConfigFile.fromConfig(
+            "{\"config\": { \"chainId\": 2017 }\n/* C comment }*/\n//C++ comment }\n}");
+
+    assertThat(config.getConfigOptions().getChainId()).contains(new BigInteger("2017"));
+    // Unfortunately there is no good (non-flakey) way to assert logs.
+  }
+
   private GenesisConfigFile configWithProperty(final String key, final String value) {
     return GenesisConfigFile.fromConfig("{\"" + key + "\":\"" + value + "\"}");
   }
