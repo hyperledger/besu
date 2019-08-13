@@ -13,7 +13,7 @@
 package tech.pegasys.pantheon.ethereum.core;
 
 import tech.pegasys.pantheon.ethereum.chain.BlockchainStorage;
-import tech.pegasys.pantheon.ethereum.chain.DefaultMutableBlockchain;
+import tech.pegasys.pantheon.ethereum.chain.DefaultBlockchain;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
@@ -43,7 +43,7 @@ public class InMemoryStorageProvider implements StorageProvider {
   public static MutableBlockchain createInMemoryBlockchain(
       final Block genesisBlock, final BlockHeaderFunctions blockHeaderFunctions) {
     final InMemoryKeyValueStorage keyValueStorage = new InMemoryKeyValueStorage();
-    return new DefaultMutableBlockchain(
+    return DefaultBlockchain.createMutable(
         genesisBlock,
         new KeyValueStoragePrefixedKeyBlockchainStorage(keyValueStorage, blockHeaderFunctions),
         new NoOpMetricsSystem());

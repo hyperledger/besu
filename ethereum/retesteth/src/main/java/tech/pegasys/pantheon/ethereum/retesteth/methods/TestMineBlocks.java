@@ -14,7 +14,7 @@ package tech.pegasys.pantheon.ethereum.retesteth.methods;
 
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.blockcreation.EthHashBlockCreator;
-import tech.pegasys.pantheon.ethereum.chain.DefaultMutableBlockchain;
+import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockImporter;
 import tech.pegasys.pantheon.ethereum.core.Wei;
@@ -61,7 +61,7 @@ public class TestMineBlocks implements JsonRpcMethod {
     final RetestethClock retesethClock = context.getRetestethClock();
     final ProtocolSchedule<Void> protocolSchedule = context.getProtocolSchedule();
     final ProtocolContext<Void> protocolContext = context.getProtocolContext();
-    final DefaultMutableBlockchain blockchain = context.getBlockchain();
+    final MutableBlockchain blockchain = context.getBlockchain();
     final HeaderValidationMode headerValidationMode = context.getHeaderValidationMode();
     final EthHashBlockCreator blockCreator =
         new EthHashBlockCreator(

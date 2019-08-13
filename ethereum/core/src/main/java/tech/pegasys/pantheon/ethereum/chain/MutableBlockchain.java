@@ -30,4 +30,13 @@ public interface MutableBlockchain extends Blockchain {
    * @param receipts The list of receipts associated with this block's transactions.
    */
   void appendBlock(Block block, List<TransactionReceipt> receipts);
+
+  /**
+   * Rolls back the canonical chainhead to the specified block number.
+   *
+   * @param blockNumber The block number to roll back to.
+   * @return {@code true} on success, {@code false} if the canonical chain height is less than
+   *     {@code blockNumber}
+   */
+  boolean rewindToBlock(final long blockNumber);
 }

@@ -42,7 +42,7 @@ import java.util.Set;
 
 import com.google.common.annotations.VisibleForTesting;
 
-public class DefaultMutableBlockchain implements MutableBlockchain {
+public class DefaultBlockchain implements MutableBlockchain {
 
   protected final BlockchainStorage blockchainStorage;
 
@@ -53,13 +53,16 @@ public class DefaultMutableBlockchain implements MutableBlockchain {
   private volatile int chainHeadTransactionCount;
   private volatile int chainHeadOmmerCount;
 
-  public DefaultMutableBlockchain(
-      final Block genesisBlock,
+  private DefaultBlockchain(
+      final Optional<Block> genesisBlock,
       final BlockchainStorage blockchainStorage,
       final MetricsSystem metricsSystem) {
     checkNotNull(genesisBlock);
+    checkNotNull(blockchainStorage);
+    checkNotNull(metricsSystem);
+
     this.blockchainStorage = blockchainStorage;
-    this.setGenesis(genesisBlock);
+    genesisBlock.ifPresent(this::setGenesis);
 
     final Hash chainHead = blockchainStorage.getChainHead().get();
     chainHeader = blockchainStorage.getBlockHeader(chainHead).get();
@@ -110,6 +113,40 @@ public class DefaultMutableBlockchain implements MutableBlockchain {
         "chain_head_ommer_count",
         "Number of ommers in the current chain head block",
         () -> chainHeadOmmerCount);
+  }
+
+  public static MutableBlockchain createMutable(
+      final Block genesisBlock,
+      final BlockchainStorage blockchainStorage,
+      final MetricsSystem metricsSystem) {
+    checkNotNull(genesisBlock);
+    return new DefaultBlockchain(Optional.of(genesisBlock), blockchainStorage, metricsSystem);
+  }
+
+  public static Blockchain create(
+      final BlockchainStorage blockchainStorage, final MetricsSystem metricsSystem) {
+    checkArgument(
+        validateStorageNonEmpty(blockchainStorage), "Cannot create Blockchain from empty storage");
+    return new DefaultBlockchain(Optional.empty(), blockchainStorage, metricsSystem);
+  }
+
+  private static boolean validateStorageNonEmpty(final BlockchainStorage blockchainStorage) {
+    // Run a few basic checks to make sure data looks available and consistent
+    final Optional<Hash> maybeHead = blockchainStorage.getChainHead();
+    if (maybeHead.isEmpty()) {
+      return false;
+    }
+    final Optional<Hash> genesisHash =
+        blockchainStorage.getBlockHash(BlockHeader.GENESIS_BLOCK_NUMBER);
+    if (genesisHash.isEmpty()) {
+      return false;
+    }
+    final Optional<UInt256> td = blockchainStorage.getTotalDifficulty(maybeHead.get());
+    if (td.isEmpty()) {
+      return false;
+    }
+
+    return true;
   }
 
   @Override
@@ -359,6 +396,7 @@ public class DefaultMutableBlockchain implements MutableBlockchain {
         removedTransactions);
   }
 
+  @Override
   public boolean rewindToBlock(final long blockNumber) {
     final Optional<Hash> blockHash = blockchainStorage.getBlockHash(blockNumber);
     if (blockHash.isEmpty()) {
@@ -413,7 +451,7 @@ public class DefaultMutableBlockchain implements MutableBlockchain {
     return new HashSet<>(blockchainStorage.getForkHeads());
   }
 
-  protected void setGenesis(final Block genesisBlock) {
+  private void setGenesis(final Block genesisBlock) {
     checkArgument(
         genesisBlock.getHeader().getNumber() == BlockHeader.GENESIS_BLOCK_NUMBER,
         "Invalid genesis block.");

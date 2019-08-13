@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.ethereum.chain;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assert.assertEquals;
 
 import tech.pegasys.pantheon.ethereum.core.Block;
@@ -39,7 +40,7 @@ import java.util.stream.Collectors;
 
 import org.junit.Test;
 
-public class DefaultMutableBlockchainTest {
+public class DefaultBlockchainTest {
 
   @Test
   public void initializeNew() {
@@ -47,7 +48,7 @@ public class DefaultMutableBlockchainTest {
 
     final KeyValueStorage kvStore = new InMemoryKeyValueStorage();
     final Block genesisBlock = gen.genesisBlock();
-    final DefaultMutableBlockchain blockchain = createBlockchain(kvStore, genesisBlock);
+    final DefaultBlockchain blockchain = createMutableBlockchain(kvStore, genesisBlock);
 
     assertBlockDataIsStored(blockchain, genesisBlock, Collections.emptyList());
     assertBlockIsHead(blockchain, genesisBlock);
@@ -62,10 +63,10 @@ public class DefaultMutableBlockchainTest {
     // Write to kv store
     final KeyValueStorage kvStore = new InMemoryKeyValueStorage();
     final Block genesisBlock = gen.genesisBlock();
-    createBlockchain(kvStore, genesisBlock);
+    createMutableBlockchain(kvStore, genesisBlock);
 
     // Initialize a new blockchain store with kvStore that already contains data
-    final DefaultMutableBlockchain blockchain = createBlockchain(kvStore, genesisBlock);
+    final DefaultBlockchain blockchain = createMutableBlockchain(kvStore, genesisBlock);
 
     assertBlockDataIsStored(blockchain, genesisBlock, Collections.emptyList());
     assertBlockIsHead(blockchain, genesisBlock);
@@ -73,17 +74,75 @@ public class DefaultMutableBlockchainTest {
     assertThat(blockchain.getForks()).isEmpty();
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void initializeExistingWithWrongGenesisBlock() {
     final BlockDataGenerator gen = new BlockDataGenerator();
 
     // Write to kv store
     final KeyValueStorage kvStore = new InMemoryKeyValueStorage();
     final Block genesisBlock = gen.genesisBlock();
-    createBlockchain(kvStore, genesisBlock);
+    createMutableBlockchain(kvStore, genesisBlock);
 
     // Initialize a new blockchain store with same kvStore, but different genesis block
-    createBlockchain(kvStore, gen.genesisBlock());
+    assertThatThrownBy(() -> createMutableBlockchain(kvStore, gen.genesisBlock()))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining(
+            "Supplied genesis block does not match stored chain data.\n"
+                + "Please specify a different data directory with --data-path or specify the original genesis file with --genesis-file.");
+  }
+
+  @Test
+  public void initializeReadOnly_withGenesisBlock() {
+    final BlockDataGenerator gen = new BlockDataGenerator();
+    final KeyValueStorage kvStore = new InMemoryKeyValueStorage();
+    final Block genesisBlock = gen.genesisBlock();
+
+    // Write genesis block to storage
+    createMutableBlockchain(kvStore, genesisBlock);
+
+    // Create read only chain
+    final Blockchain blockchain = createBlockchain(kvStore);
+
+    assertBlockDataIsStored(blockchain, genesisBlock, Collections.emptyList());
+    assertBlockIsHead(blockchain, genesisBlock);
+    assertTotalDifficultiesAreConsistent(blockchain, genesisBlock);
+  }
+
+  @Test
+  public void initializeReadOnly_withSmallChain() {
+    final BlockDataGenerator gen = new BlockDataGenerator();
+    final KeyValueStorage kvStore = new InMemoryKeyValueStorage();
+    final List<Block> blocks = gen.blockSequence(10);
+    final List<List<TransactionReceipt>> blockReceipts = new ArrayList<>(blocks.size());
+    blockReceipts.add(Collections.emptyList());
+
+    // Write small chain to storage
+    final MutableBlockchain mutableBlockchain = createMutableBlockchain(kvStore, blocks.get(0));
+    for (int i = 1; i < blocks.size(); i++) {
+      final Block block = blocks.get(i);
+      final List<TransactionReceipt> receipts = gen.receipts(block);
+      blockReceipts.add(receipts);
+      mutableBlockchain.appendBlock(block, receipts);
+    }
+
+    // Create read only chain
+    final Blockchain blockchain = createBlockchain(kvStore);
+
+    for (int i = 0; i < blocks.size(); i++) {
+      assertBlockDataIsStored(blockchain, blocks.get(i), blockReceipts.get(i));
+    }
+    final Block lastBlock = blocks.get(blocks.size() - 1);
+    assertBlockIsHead(blockchain, lastBlock);
+    assertTotalDifficultiesAreConsistent(blockchain, lastBlock);
+  }
+
+  @Test
+  public void initializeReadOnly_emptyStorage() {
+    final KeyValueStorage kvStore = new InMemoryKeyValueStorage();
+
+    assertThatThrownBy(() -> createBlockchain(kvStore))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("Cannot create Blockchain from empty storage");
   }
 
   @Test
@@ -92,7 +151,7 @@ public class DefaultMutableBlockchainTest {
 
     final KeyValueStorage kvStore = new InMemoryKeyValueStorage();
     final Block genesisBlock = gen.genesisBlock();
-    final DefaultMutableBlockchain blockchain = createBlockchain(kvStore, genesisBlock);
+    final DefaultBlockchain blockchain = createMutableBlockchain(kvStore, genesisBlock);
 
     final BlockOptions options =
         new BlockOptions().setBlockNumber(1L).setParentHash(genesisBlock.getHash());
@@ -111,7 +170,7 @@ public class DefaultMutableBlockchainTest {
 
     final KeyValueStorage kvStore = new InMemoryKeyValueStorage();
     final Block genesisBlock = gen.genesisBlock();
-    final DefaultMutableBlockchain blockchain = createBlockchain(kvStore, genesisBlock);
+    final DefaultBlockchain blockchain = createMutableBlockchain(kvStore, genesisBlock);
 
     final BlockOptions options = new BlockOptions().setBlockNumber(1L).setParentHash(Hash.ZERO);
     final Block newBlock = gen.block(options);
@@ -125,7 +184,7 @@ public class DefaultMutableBlockchainTest {
 
     final KeyValueStorage kvStore = new InMemoryKeyValueStorage();
     final Block genesisBlock = gen.genesisBlock();
-    final DefaultMutableBlockchain blockchain = createBlockchain(kvStore, genesisBlock);
+    final DefaultBlockchain blockchain = createMutableBlockchain(kvStore, genesisBlock);
 
     final BlockOptions options =
         new BlockOptions().setBlockNumber(1L).setParentHash(genesisBlock.getHash());
@@ -143,7 +202,7 @@ public class DefaultMutableBlockchainTest {
         chain.stream().map(gen::receipts).collect(Collectors.toList());
 
     final KeyValueStorage kvStore = new InMemoryKeyValueStorage();
-    final DefaultMutableBlockchain blockchain = createBlockchain(kvStore, chain.get(0));
+    final DefaultBlockchain blockchain = createMutableBlockchain(kvStore, chain.get(0));
     for (int i = 1; i < chain.size(); i++) {
       blockchain.appendBlock(chain.get(i), blockReceipts.get(i));
     }
@@ -168,7 +227,7 @@ public class DefaultMutableBlockchainTest {
     final List<List<TransactionReceipt>> blockReceipts =
         chain.stream().map(gen::receipts).collect(Collectors.toList());
     final KeyValueStorage kvStore = new InMemoryKeyValueStorage();
-    final DefaultMutableBlockchain blockchain = createBlockchain(kvStore, chain.get(0));
+    final DefaultBlockchain blockchain = createMutableBlockchain(kvStore, chain.get(0));
     for (int i = 1; i < chain.size(); i++) {
       blockchain.appendBlock(chain.get(i), blockReceipts.get(i));
     }
@@ -225,7 +284,7 @@ public class DefaultMutableBlockchainTest {
     final List<List<TransactionReceipt>> blockReceipts =
         chain.stream().map(gen::receipts).collect(Collectors.toList());
     final KeyValueStorage kvStore = new InMemoryKeyValueStorage();
-    final DefaultMutableBlockchain blockchain = createBlockchain(kvStore, chain.get(0));
+    final DefaultBlockchain blockchain = createMutableBlockchain(kvStore, chain.get(0));
     for (int i = 1; i < chain.size(); i++) {
       blockchain.appendBlock(chain.get(i), blockReceipts.get(i));
     }
@@ -323,7 +382,7 @@ public class DefaultMutableBlockchainTest {
     final List<List<TransactionReceipt>> blockReceipts =
         chain.stream().map(gen::receipts).collect(Collectors.toList());
     final KeyValueStorage kvStore = new InMemoryKeyValueStorage();
-    final DefaultMutableBlockchain blockchain = createBlockchain(kvStore, chain.get(0));
+    final DefaultBlockchain blockchain = createMutableBlockchain(kvStore, chain.get(0));
     for (int i = 1; i < chain.size(); i++) {
       blockchain.appendBlock(chain.get(i), blockReceipts.get(i));
     }
@@ -412,7 +471,7 @@ public class DefaultMutableBlockchainTest {
     final List<List<TransactionReceipt>> blockReceipts =
         chain.stream().map(gen::receipts).collect(Collectors.toList());
     final KeyValueStorage kvStore = new InMemoryKeyValueStorage();
-    final DefaultMutableBlockchain blockchain = createBlockchain(kvStore, chain.get(0));
+    final DefaultBlockchain blockchain = createMutableBlockchain(kvStore, chain.get(0));
     for (int i = 1; i < chain.size(); i++) {
       blockchain.appendBlock(chain.get(i), blockReceipts.get(i));
     }
@@ -465,7 +524,7 @@ public class DefaultMutableBlockchainTest {
     final List<List<TransactionReceipt>> blockReceipts =
         chain.stream().map(gen::receipts).collect(Collectors.toList());
     final KeyValueStorage kvStore = new InMemoryKeyValueStorage();
-    final DefaultMutableBlockchain blockchain = createBlockchain(kvStore, chain.get(0));
+    final DefaultBlockchain blockchain = createMutableBlockchain(kvStore, chain.get(0));
     for (int i = 1; i < chain.size(); i++) {
       blockchain.appendBlock(chain.get(i), blockReceipts.get(i));
     }
@@ -503,7 +562,7 @@ public class DefaultMutableBlockchainTest {
     final List<List<TransactionReceipt>> blockReceipts =
         chain.stream().map(gen::receipts).collect(Collectors.toList());
     final KeyValueStorage kvStore = new InMemoryKeyValueStorage();
-    final DefaultMutableBlockchain blockchain = createBlockchain(kvStore, chain.get(0));
+    final DefaultBlockchain blockchain = createMutableBlockchain(kvStore, chain.get(0));
     for (int i = 1; i < chain.size(); i++) {
       blockchain.appendBlock(chain.get(i), blockReceipts.get(i));
     }
@@ -580,7 +639,7 @@ public class DefaultMutableBlockchainTest {
     final BlockDataGenerator gen = new BlockDataGenerator();
     final KeyValueStorage kvStore = new InMemoryKeyValueStorage();
     final Block genesisBlock = gen.genesisBlock();
-    final DefaultMutableBlockchain blockchain = createBlockchain(kvStore, genesisBlock);
+    final DefaultBlockchain blockchain = createMutableBlockchain(kvStore, genesisBlock);
 
     assertThat(blockchain.removeObserver(7)).isFalse();
   }
@@ -591,7 +650,7 @@ public class DefaultMutableBlockchainTest {
 
     final KeyValueStorage kvStore = new InMemoryKeyValueStorage();
     final Block genesisBlock = gen.genesisBlock();
-    final DefaultMutableBlockchain blockchain = createBlockchain(kvStore, genesisBlock);
+    final DefaultBlockchain blockchain = createMutableBlockchain(kvStore, genesisBlock);
 
     final long observerId = blockchain.observeBlockAdded((block, chain) -> {});
     assertThat(blockchain.observerCount()).isEqualTo(1);
@@ -606,7 +665,7 @@ public class DefaultMutableBlockchainTest {
 
     final KeyValueStorage kvStore = new InMemoryKeyValueStorage();
     final Block genesisBlock = gen.genesisBlock();
-    final DefaultMutableBlockchain blockchain = createBlockchain(kvStore, genesisBlock);
+    final DefaultBlockchain blockchain = createMutableBlockchain(kvStore, genesisBlock);
 
     blockchain.observeBlockAdded(null);
   }
@@ -617,7 +676,7 @@ public class DefaultMutableBlockchainTest {
 
     final KeyValueStorage kvStore = new InMemoryKeyValueStorage();
     final Block genesisBlock = gen.genesisBlock();
-    final DefaultMutableBlockchain blockchain = createBlockchain(kvStore, genesisBlock);
+    final DefaultBlockchain blockchain = createMutableBlockchain(kvStore, genesisBlock);
 
     final long observerId1 = blockchain.observeBlockAdded((block, chain) -> {});
     assertThat(blockchain.observerCount()).isEqualTo(1);
@@ -644,7 +703,7 @@ public class DefaultMutableBlockchainTest {
 
     final KeyValueStorage kvStore = new InMemoryKeyValueStorage();
     final Block genesisBlock = gen.genesisBlock();
-    final DefaultMutableBlockchain blockchain = createBlockchain(kvStore, genesisBlock);
+    final DefaultBlockchain blockchain = createMutableBlockchain(kvStore, genesisBlock);
 
     final BlockOptions options =
         new BlockOptions().setBlockNumber(1L).setParentHash(genesisBlock.getHash());
@@ -665,7 +724,7 @@ public class DefaultMutableBlockchainTest {
 
     final KeyValueStorage kvStore = new InMemoryKeyValueStorage();
     final Block genesisBlock = gen.genesisBlock();
-    final DefaultMutableBlockchain blockchain = createBlockchain(kvStore, genesisBlock);
+    final DefaultBlockchain blockchain = createMutableBlockchain(kvStore, genesisBlock);
 
     final BlockOptions options =
         new BlockOptions().setBlockNumber(1L).setParentHash(genesisBlock.getHash());
@@ -734,11 +793,19 @@ public class DefaultMutableBlockchainTest {
     assertEquals(td, blockchain.getChainHead().getTotalDifficulty());
   }
 
-  private DefaultMutableBlockchain createBlockchain(
+  private BlockchainStorage createStorage(final KeyValueStorage kvStore) {
+    return new KeyValueStoragePrefixedKeyBlockchainStorage(
+        kvStore, new MainnetBlockHeaderFunctions());
+  }
+
+  private DefaultBlockchain createMutableBlockchain(
       final KeyValueStorage kvStore, final Block genesisBlock) {
-    return new DefaultMutableBlockchain(
-        genesisBlock,
-        new KeyValueStoragePrefixedKeyBlockchainStorage(kvStore, new MainnetBlockHeaderFunctions()),
-        new NoOpMetricsSystem());
+    return (DefaultBlockchain)
+        DefaultBlockchain.createMutable(
+            genesisBlock, createStorage(kvStore), new NoOpMetricsSystem());
+  }
+
+  private Blockchain createBlockchain(final KeyValueStorage kvStore) {
+    return DefaultBlockchain.create(createStorage(kvStore), new NoOpMetricsSystem());
   }
 }

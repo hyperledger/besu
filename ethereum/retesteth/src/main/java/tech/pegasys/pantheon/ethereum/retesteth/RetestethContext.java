@@ -18,8 +18,9 @@ import tech.pegasys.pantheon.config.JsonGenesisConfigOptions;
 import tech.pegasys.pantheon.config.JsonUtil;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.blockcreation.IncrementingNonceGenerator;
-import tech.pegasys.pantheon.ethereum.chain.DefaultMutableBlockchain;
+import tech.pegasys.pantheon.ethereum.chain.DefaultBlockchain;
 import tech.pegasys.pantheon.ethereum.chain.GenesisState;
+import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
@@ -67,7 +68,7 @@ public class RetestethContext {
 
   private final ReentrantLock contextLock = new ReentrantLock();
   private Address coinbase;
-  private DefaultMutableBlockchain blockchain;
+  private MutableBlockchain blockchain;
   private ProtocolContext<Void> protocolContext;
   private BlockchainQueries blockchainQueries;
   private ProtocolSchedule<Void> protocolSchedule;
@@ -181,14 +182,14 @@ public class RetestethContext {
     return true;
   }
 
-  private static DefaultMutableBlockchain createInMemoryBlockchain(final Block genesisBlock) {
+  private static MutableBlockchain createInMemoryBlockchain(final Block genesisBlock) {
     return createInMemoryBlockchain(genesisBlock, new MainnetBlockHeaderFunctions());
   }
 
-  private static DefaultMutableBlockchain createInMemoryBlockchain(
+  private static MutableBlockchain createInMemoryBlockchain(
       final Block genesisBlock, final BlockHeaderFunctions blockHeaderFunctions) {
     final InMemoryKeyValueStorage keyValueStorage = new InMemoryKeyValueStorage();
-    return new DefaultMutableBlockchain(
+    return DefaultBlockchain.createMutable(
         genesisBlock,
         new KeyValueStoragePrefixedKeyBlockchainStorage(keyValueStorage, blockHeaderFunctions),
         new NoOpMetricsSystem());
@@ -238,7 +239,7 @@ public class RetestethContext {
     return coinbase;
   }
 
-  public DefaultMutableBlockchain getBlockchain() {
+  public MutableBlockchain getBlockchain() {
     return blockchain;
   }
 

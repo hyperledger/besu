@@ -19,7 +19,8 @@ import static org.mockito.Mockito.verify;
 
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.chain.BlockchainStorage;
-import tech.pegasys.pantheon.ethereum.chain.DefaultMutableBlockchain;
+import tech.pegasys.pantheon.ethereum.chain.DefaultBlockchain;
+import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockDataGenerator;
 import tech.pegasys.pantheon.ethereum.core.BlockDataGenerator.BlockOptions;
@@ -56,8 +57,8 @@ public class PrunerTest {
     final BlockchainStorage blockchainStorage =
         new KeyValueStoragePrefixedKeyBlockchainStorage(
             new InMemoryKeyValueStorage(), new MainnetBlockHeaderFunctions());
-    final DefaultMutableBlockchain blockchain =
-        new DefaultMutableBlockchain(genesisBlock, blockchainStorage, metricsSystem);
+    final MutableBlockchain blockchain =
+        DefaultBlockchain.createMutable(genesisBlock, blockchainStorage, metricsSystem);
 
     final Pruner pruner = new Pruner(markSweepPruner, blockchain, mockExecutorService, 0, 0);
     pruner.start();
@@ -77,8 +78,8 @@ public class PrunerTest {
     final BlockchainStorage blockchainStorage =
         new KeyValueStoragePrefixedKeyBlockchainStorage(
             new InMemoryKeyValueStorage(), new MainnetBlockHeaderFunctions());
-    final DefaultMutableBlockchain blockchain =
-        new DefaultMutableBlockchain(genesisBlock, blockchainStorage, metricsSystem);
+    final MutableBlockchain blockchain =
+        DefaultBlockchain.createMutable(genesisBlock, blockchainStorage, metricsSystem);
 
     final Pruner pruner = new Pruner(markSweepPruner, blockchain, mockExecutorService, 1, 2);
     pruner.start();
@@ -103,8 +104,8 @@ public class PrunerTest {
     final BlockchainStorage blockchainStorage =
         new KeyValueStoragePrefixedKeyBlockchainStorage(
             new InMemoryKeyValueStorage(), new MainnetBlockHeaderFunctions());
-    final DefaultMutableBlockchain blockchain =
-        new DefaultMutableBlockchain(genesisBlock, blockchainStorage, metricsSystem);
+    final MutableBlockchain blockchain =
+        DefaultBlockchain.createMutable(genesisBlock, blockchainStorage, metricsSystem);
 
     // start pruner so it can start handling block added events
     final Pruner pruner = new Pruner(markSweepPruner, blockchain, mockExecutorService, 0, 1);
@@ -150,8 +151,8 @@ public class PrunerTest {
     final BlockchainStorage blockchainStorage =
         new KeyValueStoragePrefixedKeyBlockchainStorage(
             new InMemoryKeyValueStorage(), new MainnetBlockHeaderFunctions());
-    final DefaultMutableBlockchain blockchain =
-        new DefaultMutableBlockchain(genesisBlock, blockchainStorage, metricsSystem);
+    final MutableBlockchain blockchain =
+        DefaultBlockchain.createMutable(genesisBlock, blockchainStorage, metricsSystem);
 
     final Pruner pruner = new Pruner(markSweepPruner, blockchain, mockExecutorService, 0, 0);
     pruner.start();
@@ -159,8 +160,7 @@ public class PrunerTest {
     verify(markSweepPruner).cleanup();
   }
 
-  private Block appendBlockWithParent(
-      final DefaultMutableBlockchain blockchain, final Block parent) {
+  private Block appendBlockWithParent(final MutableBlockchain blockchain, final Block parent) {
     BlockOptions options =
         new BlockOptions()
             .setBlockNumber(parent.getHeader().getNumber() + 1)
