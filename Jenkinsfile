@@ -4,7 +4,11 @@ import hudson.model.Result
 import hudson.model.Run
 import jenkins.model.CauseOfInterruption.UserInterruption
 
-if (env.BRANCH_NAME == "master") {
+def shouldPublish() {
+    return env.BRANCH_NAME == 'master' || env.BRANCH_NAME ==~ /^release-\d+\.\d+/
+}
+
+if (shouldPublish()) {
     properties([
         buildDiscarder(
             logRotator(
@@ -25,10 +29,6 @@ if (env.BRANCH_NAME == "master") {
 def docker_image_dind = 'docker:18.06.0-ce-dind'
 def docker_image = 'docker:18.06.0-ce'
 def build_image = 'pegasyseng/pantheon-build:0.0.7-jdk11'
-def registry = 'https://registry.hub.docker.com'
-def userAccount = 'dockerhub-pegasysengci'
-def imageRepos = 'pegasyseng'
-def imageTag = 'develop'
 
 def abortPreviousBuilds() {
     Run previousBuild = currentBuild.rawBuild.getPreviousBuildInProgress()
@@ -48,7 +48,7 @@ def abortPreviousBuilds() {
     }
 }
 
-if (env.BRANCH_NAME != "master") {
+if (shouldPublish()) {
     abortPreviousBuilds()
 }
 
@@ -163,11 +163,11 @@ try {
             }
         }, DockerImage: {
                 def stage_name = 'Docker image node: '
-                def image = imageRepos + '/pantheon:' + imageTag
                 def docker_folder = 'docker'
-                def version_property_file = 'gradle.properties'
                 def reports_folder = docker_folder + '/reports'
                 def dockerfile = docker_folder + '/Dockerfile'
+                def version = ''
+                def image = ''
                 node {
                     checkout scm
                     docker.image(build_image).inside() {
@@ -179,9 +179,15 @@ try {
                             sh './gradlew distDocker'
                         }
 
+                        stage(stage_name + 'Calculate variables') {
+                            def gradleProperties = readProperties file: 'gradle.properties'
+                            version = gradleProperties.version
+                            def imageRepos = 'pegasyseng'
+                            image = "${imageRepos}/pantheon:${version}"
+                        }
+
                         stage(stage_name + "Test image labels") {
                             shortCommit = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%h'").trim()
-                            version = sh(returnStdout: true, script: "grep -oE \"version=(.*)\" ${version_property_file} | cut -d= -f2").trim()
                             sh "docker image inspect \
     --format='{{index .Config.Labels \"org.label-schema.vcs-ref\"}}' \
     ${image} \
@@ -202,10 +208,26 @@ try {
                             sh "rm -rf ${reports_folder}"
                         }
 
-                        if (env.BRANCH_NAME == "master") {
+                        if (shouldPublish()) {
+                            def registry = 'https://registry.hub.docker.com'
+                            def userAccount = 'dockerhub-pegasysengci'
                             stage(stage_name + 'Push image') {
                                 docker.withRegistry(registry, userAccount) {
                                     docker.image(image).push()
+
+                                    def additionalTags = []
+                                    if (env.BRANCH_NAME == 'master') {
+                                        additionalTags.add('develop')
+                                    }
+
+                                    if (! version ==~ /.*-SNAPSHOT/) {
+                                        additionalTags.add('latest')
+                                        additionalTags.add(version.split(/\./)[0..1].join('.'))
+                                    }
+
+                                    additional.each { tag ->
+                                        docker.image(image).push tag.trim()
+                                    }
                                 }
                             }
                         }
@@ -213,7 +235,7 @@ try {
                 }
         }
 
-        if (env.BRANCH_NAME == "master") {
+        if (shouldPublish()) {
             BintrayPublish: {
                 def stage_name = "Bintray publish node: "
                 node {
@@ -245,7 +267,7 @@ try {
     currentBuild.result = 'FAILURE'
 } finally {
     // If we're on master and it failed, notify slack
-    if (env.BRANCH_NAME == "master") {
+    if (shouldPublish()) {
         def currentResult = currentBuild.result ?: 'SUCCESS'
         def channel = '#priv-pegasys-prod-dev'
         if (currentResult == 'SUCCESS') {
