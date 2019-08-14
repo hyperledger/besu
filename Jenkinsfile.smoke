@@ -90,10 +90,12 @@ def createWindowsBuild(dockerImage) {
 
 def builds = [:]
 
+// disabling windows smoke tests till we upgrade ci
+
 if (params.javas != 'all') {
-    builds = builds + (windowsImages.findAll {it.contains(params.javas)}.collectEntries {
-        ["Smoke ${it}", createWindowsBuild(it)]
-    })
+//    builds = builds + (windowsImages.findAll {it.contains(params.javas)}.collectEntries {
+//        ["Smoke ${it}", createWindowsBuild(it)]
+//   })
     builds = builds + (linuxImages.findAll {it.contains(params.javas)}.collectEntries {
         ["Smoke ${it}", createLinuxBuild(it)]
     })
@@ -101,9 +103,9 @@ if (params.javas != 'all') {
         ["Smoke ${it}", createLinuxBuildPrivateImage(it)]
     })
 } else {
-    builds = builds + (windowsImages.collectEntries {
-        ["Smoke ${it}", createWindowsBuild(it)]
-    })
+//    builds = builds + (windowsImages.collectEntries {
+//        ["Smoke ${it}", createWindowsBuild(it)]
+//    })
     builds = builds + (linuxImages.collectEntries {
         ["Smoke ${it}", createLinuxBuild(it)]
     })
