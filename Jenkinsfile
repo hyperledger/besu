@@ -48,7 +48,7 @@ def abortPreviousBuilds() {
     }
 }
 
-if (shouldPublish()) {
+if (!shouldPublish()) {
     abortPreviousBuilds()
 }
 
