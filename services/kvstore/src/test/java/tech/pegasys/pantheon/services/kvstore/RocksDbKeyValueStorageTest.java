@@ -121,9 +121,6 @@ public class RocksDbKeyValueStorageTest extends AbstractKeyValueStorageTest {
   }
 
   private RocksDbConfiguration config() throws Exception {
-    return RocksDbConfiguration.builder()
-        .databaseDir(folder.newFolder().toPath())
-        .useColumns(false)
-        .build();
+    return RocksDbConfiguration.builder().databaseDir(folder.newFolder().toPath()).build();
   }
 }

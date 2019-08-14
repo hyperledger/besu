@@ -27,7 +27,6 @@ public class RocksDbConfiguration {
   private final String label;
   private final int maxBackgroundCompactions;
   private final int backgroundThreadCount;
-  private final boolean useColumns;
   private final long cacheCapacity;
 
   private RocksDbConfiguration(
@@ -35,12 +34,10 @@ public class RocksDbConfiguration {
       final int maxOpenFiles,
       final int maxBackgroundCompactions,
       final int backgroundThreadCount,
-      final boolean useColumns,
       final long cacheCapacity,
       final String label) {
     this.maxBackgroundCompactions = maxBackgroundCompactions;
     this.backgroundThreadCount = backgroundThreadCount;
-    this.useColumns = useColumns;
     RocksDbUtil.loadNativeLibrary();
     this.databaseDir = databaseDir;
     this.maxOpenFiles = maxOpenFiles;
@@ -76,10 +73,6 @@ public class RocksDbConfiguration {
     return label;
   }
 
-  public boolean useColumns() {
-    return useColumns;
-  }
-
   public static class Builder {
 
     Path databaseDir;
@@ -89,7 +82,6 @@ public class RocksDbConfiguration {
     long cacheCapacity = DEFAULT_CACHE_CAPACITY;
     int maxBackgroundCompactions = DEFAULT_MAX_BACKGROUND_COMPACTIONS;
     int backgroundThreadCount = DEFAULT_BACKGROUND_THREAD_COUNT;
-    boolean useColumns = false;
 
     private Builder() {}
 
@@ -123,18 +115,12 @@ public class RocksDbConfiguration {
       return this;
     }
 
-    public Builder useColumns(final boolean useColumns) {
-      this.useColumns = useColumns;
-      return this;
-    }
-
     public RocksDbConfiguration build() {
       return new RocksDbConfiguration(
           databaseDir,
           maxOpenFiles,
           maxBackgroundCompactions,
           backgroundThreadCount,
-          useColumns,
           cacheCapacity,
           label);
     }
