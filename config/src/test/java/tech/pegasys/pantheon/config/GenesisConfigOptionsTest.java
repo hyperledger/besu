@@ -128,7 +128,8 @@ public class GenesisConfigOptionsTest {
   @Test
   public void shouldGetIstanbulBlockNumber() {
     final GenesisConfigOptions config = fromConfigOptions(singletonMap("istanbulBlock", 1000));
-    assertThat(config.getIstanbulBlockNumber()).hasValue(1000);
+    // Disabled until Istanbul is settled
+    assertThat(config.getIstanbulBlockNumber()).isEmpty();
   }
 
   @Test

@@ -22,8 +22,13 @@ import java.util.OptionalLong;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class JsonGenesisConfigOptions implements GenesisConfigOptions {
+
+  private final Logger LOG = LogManager.getLogger();
+
   private static final String ETHASH_CONFIG_KEY = "ethash";
   private static final String IBFT_LEGACY_CONFIG_KEY = "ibft";
   private static final String IBFT2_CONFIG_KEY = "ibft2";
@@ -140,9 +145,13 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     return getOptionalLong("constantinoplefixblock");
   }
 
+  // Disabled until Istanbul is settled
   @Override
   public OptionalLong getIstanbulBlockNumber() {
-    return getOptionalLong("istanbulblock");
+    if (configRoot.has("istanbulblock")) {
+      LOG.warn("IstanbulBlock was requested but configuration is not enabled");
+    }
+    return OptionalLong.empty();
   }
 
   @Override
@@ -188,7 +197,8 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     getByzantiumBlockNumber().ifPresent(l -> builder.put("byzantiumBlock", l));
     getConstantinopleBlockNumber().ifPresent(l -> builder.put("constantinopleBlock", l));
     getConstantinopleFixBlockNumber().ifPresent(l -> builder.put("constantinopleFixBlock", l));
-    getIstanbulBlockNumber().ifPresent(l -> builder.put("istanbulBlock", l));
+    // Disabled until Istanbul is settled
+    // getIstanbulBlockNumber().ifPresent(l -> builder.put("istanbulBlock", l));
     getContractSizeLimit().ifPresent(l -> builder.put("contractSizeLimit", l));
     getEvmStackSize().ifPresent(l -> builder.put("evmstacksize", l));
     if (isClique()) {
