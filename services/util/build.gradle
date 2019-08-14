@@ -14,7 +14,7 @@
 apply plugin: 'java-library'
 
 jar {
-  baseName 'services-util'
+  baseName 'pantheon-services-util'
   manifest {
     attributes(
       'Specification-Title': baseName,
@@ -22,6 +22,14 @@ jar {
       'Implementation-Title': baseName,
       'Implementation-Version': calculateVersion()
       )
+  }
+}
+
+publishing {
+  publications {
+    mavenJava(MavenPublication) {
+      artifactId 'services-util'
+    }
   }
 }
 
