@@ -225,7 +225,7 @@ try {
                                         additionalTags.add(version.split(/\./)[0..1].join('.'))
                                     }
 
-                                    additional.each { tag ->
+                                    additionalTags.each { tag ->
                                         docker.image(image).push tag.trim()
                                     }
                                 }
