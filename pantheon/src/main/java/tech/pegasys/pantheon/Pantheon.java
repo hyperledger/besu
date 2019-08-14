@@ -14,12 +14,12 @@ package tech.pegasys.pantheon;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
-import tech.pegasys.pantheon.chainimport.ChainImporter;
+import tech.pegasys.pantheon.chainexport.RlpBlockExporter;
+import tech.pegasys.pantheon.chainimport.JsonBlockImporter;
+import tech.pegasys.pantheon.chainimport.RlpBlockImporter;
 import tech.pegasys.pantheon.cli.PantheonCommand;
 import tech.pegasys.pantheon.controller.PantheonController;
 import tech.pegasys.pantheon.services.PantheonPluginContextImpl;
-import tech.pegasys.pantheon.util.BlockExporter;
-import tech.pegasys.pantheon.util.BlockImporter;
 
 import org.apache.logging.log4j.Logger;
 import picocli.CommandLine.RunLast;
@@ -36,9 +36,9 @@ public final class Pantheon {
     final PantheonCommand pantheonCommand =
         new PantheonCommand(
             logger,
-            new BlockImporter(),
-            new BlockExporter(),
-            ChainImporter::new,
+            new RlpBlockImporter(),
+            JsonBlockImporter::new,
+            RlpBlockExporter::new,
             new RunnerBuilder(),
             new PantheonController.Builder(),
             new PantheonPluginContextImpl(),

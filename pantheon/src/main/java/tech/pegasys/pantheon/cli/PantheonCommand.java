@@ -31,6 +31,7 @@ import static tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration.DEFA
 import tech.pegasys.pantheon.PantheonInfo;
 import tech.pegasys.pantheon.Runner;
 import tech.pegasys.pantheon.RunnerBuilder;
+import tech.pegasys.pantheon.chainimport.RlpBlockImporter;
 import tech.pegasys.pantheon.cli.config.EthNetworkConfig;
 import tech.pegasys.pantheon.cli.config.NetworkName;
 import tech.pegasys.pantheon.cli.converter.MetricCategoryConverter;
@@ -51,7 +52,8 @@ import tech.pegasys.pantheon.cli.subcommands.PublicKeySubCommand;
 import tech.pegasys.pantheon.cli.subcommands.PublicKeySubCommand.KeyLoader;
 import tech.pegasys.pantheon.cli.subcommands.RetestethSubCommand;
 import tech.pegasys.pantheon.cli.subcommands.blocks.BlocksSubCommand;
-import tech.pegasys.pantheon.cli.subcommands.blocks.BlocksSubCommand.ChainImporterFactory;
+import tech.pegasys.pantheon.cli.subcommands.blocks.BlocksSubCommand.JsonBlockImporterFactory;
+import tech.pegasys.pantheon.cli.subcommands.blocks.BlocksSubCommand.RlpBlockExporterFactory;
 import tech.pegasys.pantheon.cli.subcommands.operator.OperatorSubCommand;
 import tech.pegasys.pantheon.cli.subcommands.rlp.RLPSubCommand;
 import tech.pegasys.pantheon.cli.util.ConfigOptionSearchAndRunHandler;
@@ -93,8 +95,6 @@ import tech.pegasys.pantheon.services.PantheonEventsImpl;
 import tech.pegasys.pantheon.services.PantheonPluginContextImpl;
 import tech.pegasys.pantheon.services.PicoCLIOptionsImpl;
 import tech.pegasys.pantheon.services.kvstore.RocksDbConfiguration;
-import tech.pegasys.pantheon.util.BlockExporter;
-import tech.pegasys.pantheon.util.BlockImporter;
 import tech.pegasys.pantheon.util.PermissioningConfigurationValidator;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.number.Fraction;
@@ -153,12 +153,12 @@ import picocli.CommandLine.ParameterException;
 public class PantheonCommand implements DefaultCommandValues, Runnable {
 
   private final Logger logger;
-  private final ChainImporterFactory chainImporterFactory;
 
   private CommandLine commandLine;
 
-  private final BlockImporter blockImporter;
-  private final BlockExporter blockExporter;
+  private final RlpBlockImporter rlpBlockImporter;
+  private final JsonBlockImporterFactory jsonBlockImporterFactory;
+  private final RlpBlockExporterFactory rlpBlockExporterFactory;
 
   final NetworkingOptions networkingOptions = NetworkingOptions.create();
   final SynchronizerOptions synchronizerOptions = SynchronizerOptions.create();
@@ -633,17 +633,17 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
 
   public PantheonCommand(
       final Logger logger,
-      final BlockImporter blockImporter,
-      final BlockExporter blockExporter,
-      final ChainImporterFactory chainImporterFactory,
+      final RlpBlockImporter rlpBlockImporter,
+      final JsonBlockImporterFactory jsonBlockImporterFactory,
+      final RlpBlockExporterFactory rlpBlockExporterFactory,
       final RunnerBuilder runnerBuilder,
       final PantheonController.Builder controllerBuilderFactory,
       final PantheonPluginContextImpl pantheonPluginContext,
       final Map<String, String> environment) {
     this.logger = logger;
-    this.blockImporter = blockImporter;
-    this.blockExporter = blockExporter;
-    this.chainImporterFactory = chainImporterFactory;
+    this.rlpBlockImporter = rlpBlockImporter;
+    this.rlpBlockExporterFactory = rlpBlockExporterFactory;
+    this.jsonBlockImporterFactory = jsonBlockImporterFactory;
     this.runnerBuilder = runnerBuilder;
     this.controllerBuilderFactory = controllerBuilderFactory;
     this.pantheonPluginContext = pantheonPluginContext;
@@ -690,7 +690,10 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     commandLine.addSubcommand(
         BlocksSubCommand.COMMAND_NAME,
         new BlocksSubCommand(
-            blockImporter, blockExporter, chainImporterFactory, resultHandler.out()));
+            rlpBlockImporter,
+            jsonBlockImporterFactory,
+            rlpBlockExporterFactory,
+            resultHandler.out()));
     commandLine.addSubcommand(
         PublicKeySubCommand.COMMAND_NAME,
         new PublicKeySubCommand(resultHandler.out(), getKeyLoader()));
@@ -1363,7 +1366,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     }
   }
 
-  private Path dataDir() {
+  public Path dataDir() {
     if (isFullInstantiation()) {
       return standaloneCommands.dataPath.toAbsolutePath();
     } else if (isDocker) {

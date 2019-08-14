@@ -14,36 +14,21 @@ package tech.pegasys.pantheon.cli.subcommands.blocks;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.contentOf;
-import static org.assertj.core.util.Arrays.asList;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import tech.pegasys.pantheon.cli.CommandTestAbstract;
-import tech.pegasys.pantheon.config.GenesisConfigFile;
 import tech.pegasys.pantheon.controller.PantheonController;
-import tech.pegasys.pantheon.crypto.SECP256K1;
-import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
-import tech.pegasys.pantheon.ethereum.core.Block;
-import tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider;
-import tech.pegasys.pantheon.ethereum.core.MiningParametersTestBuilder;
-import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
-import tech.pegasys.pantheon.ethereum.eth.EthProtocolConfiguration;
-import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
-import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPoolConfiguration;
-import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
-import tech.pegasys.pantheon.testutil.BlockTestUtil;
-import tech.pegasys.pantheon.testutil.TestClock;
-import tech.pegasys.pantheon.util.BlockExporter;
-import tech.pegasys.pantheon.util.BlockImporter;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Optional;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -87,9 +72,9 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
           + System.lineSeparator();
 
   private static final String EXPECTED_BLOCK_EXPORT_USAGE =
-      "Usage: pantheon blocks export [-hV] [--end-block=<LONG>] --start-block=<LONG>"
+      "Usage: pantheon blocks export [-hV] [--end-block=<LONG>] [--start-block=<LONG>]"
           + System.lineSeparator()
-          + "                              [--to=<FILE>]"
+          + "                              --to=<FILE>"
           + System.lineSeparator()
           + "This command export a specific block from storage"
           + System.lineSeparator()
@@ -161,7 +146,7 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
     parseCommand(
         BLOCK_SUBCOMMAND_NAME, BLOCK_IMPORT_SUBCOMMAND_NAME, "--from", fileToImport.getPath());
 
-    verify(mockBlockImporter).importBlockchain(pathArgumentCaptor.capture(), any());
+    verify(rlpBlockImporter).importBlockchain(pathArgumentCaptor.capture(), any());
 
     assertThat(pathArgumentCaptor.getValue()).isEqualByComparingTo(fileToImport.toPath());
 
@@ -180,7 +165,7 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
         "--from",
         fileToImport.getPath());
 
-    verify(mockBlockImporter).importBlockchain(pathArgumentCaptor.capture(), any());
+    verify(rlpBlockImporter).importBlockchain(pathArgumentCaptor.capture(), any());
 
     assertThat(pathArgumentCaptor.getValue()).isEqualByComparingTo(fileToImport.toPath());
 
@@ -207,17 +192,206 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
 
-    verify(chainImporter, times(1)).importChain(stringArgumentCaptor.capture());
+    verify(jsonBlockImporter, times(1)).importChain(stringArgumentCaptor.capture());
     assertThat(stringArgumentCaptor.getValue()).isEqualTo(fileContent);
   }
 
   // Export sub-sub-command
   @Test
-  public void callingBlockExportSubCommandWithoutStartBlockMustDisplayErrorAndUsage() {
-    parseCommand(BLOCK_SUBCOMMAND_NAME, BLOCK_EXPORT_SUBCOMMAND_NAME);
-    final String expectedErrorOutputStart = "Missing required option '--start-block=<LONG>'";
+  public void blocksExport_missingFileParam() throws IOException {
+    createDbDirectory(true);
+    parseCommand(
+        "--data-path=" + folder.getRoot().getAbsolutePath(),
+        BLOCK_SUBCOMMAND_NAME,
+        BLOCK_EXPORT_SUBCOMMAND_NAME);
+    final String expectedErrorOutputStart = "Missing required option '--to=<FILE>'";
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).startsWith(expectedErrorOutputStart);
+
+    verify(rlpBlockExporter, never()).exportBlocks(any(), any(), any());
+  }
+
+  @Test
+  public void blocksExport_noDbDirectory() throws IOException {
+    final File outputFile = folder.newFile("blocks.bin");
+    parseCommand(
+        "--data-path=" + folder.getRoot().getAbsolutePath(),
+        BLOCK_SUBCOMMAND_NAME,
+        BLOCK_EXPORT_SUBCOMMAND_NAME,
+        "--to",
+        outputFile.getPath());
+    final String expectedErrorOutputStart =
+        "Chain is empty.  Unable to export blocks from specified data directory: "
+            + folder.getRoot().getAbsolutePath()
+            + "/"
+            + PantheonController.DATABASE_PATH;
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).startsWith(expectedErrorOutputStart);
+
+    verify(rlpBlockExporter, never()).exportBlocks(any(), any(), any());
+  }
+
+  @Test
+  public void blocksExport_emptyDbDirectory() throws IOException {
+    createDbDirectory(false);
+    final File outputFile = folder.newFile("blocks.bin");
+    parseCommand(
+        "--data-path=" + folder.getRoot().getAbsolutePath(),
+        BLOCK_SUBCOMMAND_NAME,
+        BLOCK_EXPORT_SUBCOMMAND_NAME,
+        "--to",
+        outputFile.getPath());
+    final String expectedErrorOutputStart =
+        "Chain is empty.  Unable to export blocks from specified data directory: "
+            + folder.getRoot().getAbsolutePath()
+            + "/"
+            + PantheonController.DATABASE_PATH;
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).startsWith(expectedErrorOutputStart);
+
+    verify(rlpBlockExporter, never()).exportBlocks(any(), any(), any());
+  }
+
+  @Test
+  public void blocksExport_noStartOrEnd() throws IOException {
+    createDbDirectory(true);
+    final File outputFile = folder.newFile("blocks.bin");
+    parseCommand(
+        "--data-path=" + folder.getRoot().getAbsolutePath(),
+        BLOCK_SUBCOMMAND_NAME,
+        BLOCK_EXPORT_SUBCOMMAND_NAME,
+        "--to",
+        outputFile.getPath());
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+
+    verify(rlpBlockExporter, times(1)).exportBlocks(outputFile, Optional.empty(), Optional.empty());
+  }
+
+  @Test
+  public void blocksExport_withStartAndNoEnd() throws IOException {
+    createDbDirectory(true);
+    final File outputFile = folder.newFile("blocks.bin");
+    parseCommand(
+        "--data-path=" + folder.getRoot().getAbsolutePath(),
+        BLOCK_SUBCOMMAND_NAME,
+        BLOCK_EXPORT_SUBCOMMAND_NAME,
+        "--to",
+        outputFile.getPath(),
+        "--start-block=1");
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+
+    verify(rlpBlockExporter, times(1)).exportBlocks(outputFile, Optional.of(1L), Optional.empty());
+  }
+
+  @Test
+  public void blocksExport_withEndAndNoStart() throws IOException {
+    createDbDirectory(true);
+    final File outputFile = folder.newFile("blocks.bin");
+    parseCommand(
+        "--data-path=" + folder.getRoot().getAbsolutePath(),
+        BLOCK_SUBCOMMAND_NAME,
+        BLOCK_EXPORT_SUBCOMMAND_NAME,
+        "--to",
+        outputFile.getPath(),
+        "--end-block=10");
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+
+    verify(rlpBlockExporter, times(1)).exportBlocks(outputFile, Optional.empty(), Optional.of(10L));
+  }
+
+  @Test
+  public void blocksExport_withStartAndEnd() throws IOException {
+    createDbDirectory(true);
+    final File outputFile = folder.newFile("blocks.bin");
+    parseCommand(
+        "--data-path=" + folder.getRoot().getAbsolutePath(),
+        BLOCK_SUBCOMMAND_NAME,
+        BLOCK_EXPORT_SUBCOMMAND_NAME,
+        "--to",
+        outputFile.getPath(),
+        "--start-block=1",
+        "--end-block=10");
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+
+    verify(rlpBlockExporter, times(1)).exportBlocks(outputFile, Optional.of(1L), Optional.of(10L));
+  }
+
+  @Test
+  public void blocksExport_withOutOfOrderStartAndEnd() throws IOException {
+    createDbDirectory(true);
+    final File outputFile = folder.newFile("blocks.bin");
+    parseCommand(
+        "--data-path=" + folder.getRoot().getAbsolutePath(),
+        BLOCK_SUBCOMMAND_NAME,
+        BLOCK_EXPORT_SUBCOMMAND_NAME,
+        "--to",
+        outputFile.getPath(),
+        "--start-block=10",
+        "--end-block=1");
+    assertThat(commandErrorOutput.toString())
+        .contains("Parameter --end-block (1) must be greater start block (10)");
+    assertThat(commandOutput.toString()).isEmpty();
+
+    verify(rlpBlockExporter, never()).exportBlocks(any(), any(), any());
+  }
+
+  @Test
+  public void blocksExport_withEmptyRange() throws IOException {
+    createDbDirectory(true);
+    final File outputFile = folder.newFile("blocks.bin");
+    parseCommand(
+        "--data-path=" + folder.getRoot().getAbsolutePath(),
+        BLOCK_SUBCOMMAND_NAME,
+        BLOCK_EXPORT_SUBCOMMAND_NAME,
+        "--to",
+        outputFile.getPath(),
+        "--start-block=10",
+        "--end-block=10");
+    assertThat(commandErrorOutput.toString())
+        .contains("Parameter --end-block (10) must be greater start block (10)");
+    assertThat(commandOutput.toString()).isEmpty();
+
+    verify(rlpBlockExporter, never()).exportBlocks(any(), any(), any());
+  }
+
+  @Test
+  public void blocksExport_withInvalidStart() throws IOException {
+    createDbDirectory(true);
+    final File outputFile = folder.newFile("blocks.bin");
+    parseCommand(
+        "--data-path=" + folder.getRoot().getAbsolutePath(),
+        BLOCK_SUBCOMMAND_NAME,
+        BLOCK_EXPORT_SUBCOMMAND_NAME,
+        "--to",
+        outputFile.getPath(),
+        "--start-block=-1");
+    assertThat(commandErrorOutput.toString())
+        .contains("Parameter --start-block (-1) must be greater than or equal to zero");
+    assertThat(commandOutput.toString()).isEmpty();
+
+    verify(rlpBlockExporter, never()).exportBlocks(any(), any(), any());
+  }
+
+  @Test
+  public void blocksExport_withInvalidEnd() throws IOException {
+    createDbDirectory(true);
+    final File outputFile = folder.newFile("blocks.bin");
+    parseCommand(
+        "--data-path=" + folder.getRoot().getAbsolutePath(),
+        BLOCK_SUBCOMMAND_NAME,
+        BLOCK_EXPORT_SUBCOMMAND_NAME,
+        "--to",
+        outputFile.getPath(),
+        "--end-block=-1");
+    assertThat(commandErrorOutput.toString())
+        .contains("Parameter --end-block (-1) must be greater than or equal to zero");
+    assertThat(commandOutput.toString()).isEmpty();
+
+    verify(rlpBlockExporter, never()).exportBlocks(any(), any(), any());
   }
 
   @Test
@@ -227,87 +401,12 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString()).isEmpty();
   }
 
-  @Test
-  public void callingBlockExportSubCommandWithNegativeStartBlockMustDisplayErrorAndUsage() {
-    final String expectedErrorOutputStart = "--start-block must be greater than or equal to zero";
-    parseCommand(BLOCK_SUBCOMMAND_NAME, BLOCK_EXPORT_SUBCOMMAND_NAME, "--start-block=-1");
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).startsWith(expectedErrorOutputStart);
-  }
-
-  @Test
-  public void
-      callingBlockExportSubCommandWithEndBlockGreaterThanStartBlockMustDisplayErrorMessage() {
-    final String expectedErrorOutputStart = "--end-block must be greater than --start-block";
-    parseCommand(
-        BLOCK_SUBCOMMAND_NAME, BLOCK_EXPORT_SUBCOMMAND_NAME, "--start-block=2", "--end-block=1");
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).startsWith(expectedErrorOutputStart);
-  }
-
-  @Test
-  public void callingBlockExportSubCommandWithEndBlockEqualToStartBlockMustDisplayErrorMessage() {
-    final String expectedErrorOutputStart = "--end-block must be greater than --start-block";
-    parseCommand(
-        BLOCK_SUBCOMMAND_NAME, BLOCK_EXPORT_SUBCOMMAND_NAME, "--start-block=2", "--end-block=2");
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).startsWith(expectedErrorOutputStart);
-  }
-
-  @Test
-  public void callingExportSubCommandWithFilePathMustWriteBlockInThisFile() throws Exception {
-
-    final long startBlock = 0L;
-    final long endBlock = 2L;
-    final PantheonController<?> pantheonController = initPantheonController();
-    final MutableBlockchain blockchain = pantheonController.getProtocolContext().getBlockchain();
-    final File outputFile = File.createTempFile("export", "store");
-
-    mockBlockExporter = new BlockExporter();
-
-    doReturn(pantheonController).when(mockControllerBuilder).build();
-
-    parseCommand(
-        BLOCK_SUBCOMMAND_NAME,
-        BLOCK_EXPORT_SUBCOMMAND_NAME,
-        "--start-block=" + startBlock,
-        "--end-block=" + endBlock,
-        "--to=" + outputFile.getPath());
-
-    final Block blockFromBlockchain =
-        blockchain.getBlockByHash(blockchain.getBlockHashByNumber(startBlock).get());
-
-    final Block secondBlockFromBlockchain =
-        blockchain.getBlockByHash(blockchain.getBlockHashByNumber(endBlock - 1).get());
-
-    assertThat(contentOf(outputFile))
-        .isEqualTo(asList(new Block[] {blockFromBlockchain, secondBlockFromBlockchain}).toString());
-
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
-  }
-
-  private PantheonController<?> initPantheonController() throws IOException {
-    final BlockImporter blockImporter = new BlockImporter();
-    final Path dataDir = folder.newFolder().toPath();
-    final Path source = dataDir.resolve("1000.blocks");
-    BlockTestUtil.write1000Blocks(source);
-    final PantheonController<?> targetController =
-        new PantheonController.Builder()
-            .fromGenesisConfig(GenesisConfigFile.mainnet())
-            .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
-            .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
-            .storageProvider(new InMemoryStorageProvider())
-            .networkId(1)
-            .miningParameters(new MiningParametersTestBuilder().enabled(false).build())
-            .nodeKeys(SECP256K1.KeyPair.generate())
-            .metricsSystem(new NoOpMetricsSystem())
-            .privacyParameters(PrivacyParameters.DEFAULT)
-            .dataDirectory(dataDir)
-            .clock(TestClock.fixed())
-            .transactionPoolConfiguration(TransactionPoolConfiguration.builder().build())
-            .build();
-    blockImporter.importBlockchain(source, targetController);
-    return targetController;
+  private void createDbDirectory(final boolean createDataFiles) throws IOException {
+    File dbDir = folder.newFolder(PantheonController.DATABASE_PATH);
+    if (createDataFiles) {
+      Path dataFilePath = Paths.get(dbDir.getAbsolutePath(), "0000001.sst");
+      final boolean success = new File(dataFilePath.toString()).createNewFile();
+      assertThat(success).isTrue();
+    }
   }
 }

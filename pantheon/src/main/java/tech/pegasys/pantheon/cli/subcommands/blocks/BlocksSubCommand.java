@@ -13,34 +13,33 @@
 package tech.pegasys.pantheon.cli.subcommands.blocks;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static tech.pegasys.pantheon.cli.DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP;
 import static tech.pegasys.pantheon.cli.DefaultCommandValues.MANDATORY_LONG_FORMAT_HELP;
 import static tech.pegasys.pantheon.cli.subcommands.blocks.BlocksSubCommand.COMMAND_NAME;
 
-import tech.pegasys.pantheon.chainimport.ChainImporter;
+import tech.pegasys.pantheon.chainexport.RlpBlockExporter;
+import tech.pegasys.pantheon.chainimport.JsonBlockImporter;
+import tech.pegasys.pantheon.chainimport.RlpBlockImporter;
 import tech.pegasys.pantheon.cli.PantheonCommand;
 import tech.pegasys.pantheon.cli.subcommands.blocks.BlocksSubCommand.ExportSubCommand;
 import tech.pegasys.pantheon.cli.subcommands.blocks.BlocksSubCommand.ImportSubCommand;
 import tech.pegasys.pantheon.controller.PantheonController;
+import tech.pegasys.pantheon.ethereum.ProtocolContext;
+import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.core.Address;
-import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.MiningParameters;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
 import tech.pegasys.pantheon.metrics.prometheus.MetricsService;
-import tech.pegasys.pantheon.util.BlockExporter;
-import tech.pegasys.pantheon.util.BlockImporter;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
+import java.nio.file.Paths;
 import java.util.Optional;
 
 import io.vertx.core.Vertx;
@@ -75,20 +74,21 @@ public class BlocksSubCommand implements Runnable {
   @Spec
   private CommandSpec spec; // Picocli injects reference to command spec
 
-  private final BlockImporter blockImporter;
-  private final BlockExporter blockExporter;
-  private final ChainImporterFactory chainImporterFactory;
+  private final RlpBlockImporter rlpBlockImporter;
+  private final JsonBlockImporterFactory jsonBlockImporterFactory;
+
+  private final RlpBlockExporterFactory rlpBlockExporterFactory;
 
   private final PrintStream out;
 
   public BlocksSubCommand(
-      final BlockImporter blockImporter,
-      final BlockExporter blockExporter,
-      final ChainImporterFactory chainImporterFactory,
+      final RlpBlockImporter rlpBlockImporter,
+      final JsonBlockImporterFactory jsonBlockImporterFactory,
+      final RlpBlockExporterFactory rlpBlockExporterFactory,
       final PrintStream out) {
-    this.blockImporter = blockImporter;
-    this.blockExporter = blockExporter;
-    this.chainImporterFactory = chainImporterFactory;
+    this.rlpBlockImporter = rlpBlockImporter;
+    this.rlpBlockExporterFactory = rlpBlockExporterFactory;
+    this.jsonBlockImporterFactory = jsonBlockImporterFactory;
     this.out = out;
   }
 
@@ -125,7 +125,7 @@ public class BlocksSubCommand implements Runnable {
         description =
             "The type of data to be imported, possible values are: ${COMPLETION-CANDIDATES} (default: ${DEFAULT-VALUE}).",
         arity = "1..1")
-    private final BlockFormat format = BlockFormat.RLP;
+    private final BlockImportFormat format = BlockImportFormat.RLP;
 
     @SuppressWarnings("unused")
     @Spec
@@ -136,7 +136,8 @@ public class BlocksSubCommand implements Runnable {
       LOG.info("Import {} block data from {}", format, blocksImportFile);
 
       checkCommand(parentCommand);
-      checkNotNull(parentCommand.blockImporter);
+      checkNotNull(parentCommand.rlpBlockImporter);
+      checkNotNull(parentCommand.jsonBlockImporterFactory);
 
       Optional<MetricsService> metricsService = initMetrics(parentCommand);
 
@@ -199,14 +200,14 @@ public class BlocksSubCommand implements Runnable {
     private <T> void importJsonBlocks(final PantheonController<T> controller, final Path path)
         throws IOException {
 
-      ChainImporter<T> importer = parentCommand.chainImporterFactory.get(controller);
+      JsonBlockImporter<T> importer = parentCommand.jsonBlockImporterFactory.get(controller);
       final String jsonData = Files.readString(path);
       importer.importChain(jsonData);
     }
 
     private <T> void importRlpBlocks(final PantheonController<T> controller, final Path path)
         throws IOException {
-      parentCommand.blockImporter.importBlockchain(path, controller);
+      parentCommand.rlpBlockImporter.importBlockchain(path, controller);
     }
   }
 
@@ -226,7 +227,6 @@ public class BlocksSubCommand implements Runnable {
 
     @Option(
         names = "--start-block",
-        required = true,
         paramLabel = MANDATORY_LONG_FORMAT_HELP,
         description = "the starting index of the block list to export (inclusive)",
         arity = "1..1")
@@ -242,70 +242,124 @@ public class BlocksSubCommand implements Runnable {
     private final Long endBlock = null;
 
     @Option(
+        names = "--format",
+        hidden = true,
+        description =
+            "The format to export, possible values are: ${COMPLETION-CANDIDATES} (default: ${DEFAULT-VALUE}).",
+        arity = "1..1")
+    private final BlockExportFormat format = BlockExportFormat.RLP;
+
+    @Option(
         names = "--to",
+        required = true,
         paramLabel = MANDATORY_FILE_FORMAT_HELP,
         description = "File to write the block list instead of standard output",
         arity = "1..1")
     private File blocksExportFile = null;
 
+    @SuppressWarnings("unused")
+    @Spec
+    private CommandSpec spec;
+
     @Override
     public void run() {
 
-      LOG.info("Runs export sub command");
+      LOG.info("Export {} block data to file {}", format, blocksExportFile.toPath());
 
       checkCommand(this, startBlock, endBlock);
+      final Optional<MetricsService> metricsService = initMetrics(parentCommand);
 
-      Optional<MetricsService> metricsService = initMetrics(parentCommand);
-
+      final PantheonController<?> controller = createPantheonController();
       try {
-
-        final BlockExporter.ExportResult exportResult =
-            parentCommand.blockExporter.exportBlockchain(
-                parentCommand.parentCommand.buildController(), startBlock, endBlock);
-
-        outputBlock(exportResult.blocks);
-
-        if (exportResult.blocks.isEmpty()) {
-          throw new ExecutionException(new CommandLine(this), "No block found at the given index");
-        } else if (!exportResult.allBlocksAreFound) {
-          throw new ExecutionException(
-              new CommandLine(this),
-              "Partial export due to inability to recover all requested blocks");
+        switch (format) {
+          case RLP:
+            exportRlpFormat(controller);
+            break;
+          default:
+            throw new ParameterException(
+                spec.commandLine(), "Unsupported format: " + format.toString());
         }
-
+      } catch (IOException e) {
+        throw new ExecutionException(
+            spec.commandLine(), "An error occurred while exporting blocks.", e);
       } finally {
         metricsService.ifPresent(MetricsService::stop);
       }
     }
 
-    private static void checkCommand(
+    private PantheonController<?> createPantheonController() {
+      return parentCommand.parentCommand.buildController();
+    }
+
+    private void exportRlpFormat(final PantheonController<?> controller) throws IOException {
+      final ProtocolContext<?> context = controller.getProtocolContext();
+      RlpBlockExporter exporter =
+          parentCommand.rlpBlockExporterFactory.get(context.getBlockchain());
+      exporter.exportBlocks(blocksExportFile, getStartBlock(), getEndBlock());
+    }
+
+    private void checkCommand(
         final ExportSubCommand exportSubCommand, final Long startBlock, final Long endBlock) {
       checkNotNull(exportSubCommand.parentCommand);
-      checkNotNull(exportSubCommand.parentCommand.blockExporter);
-      checkNotNull(startBlock);
-      if (startBlock < 0) {
-        throw new CommandLine.ParameterException(
-            new CommandLine(exportSubCommand),
-            "--start-block must be greater than or equal to zero");
+
+      final Optional<Long> maybeStartBlock = getStartBlock();
+      final Optional<Long> maybeEndBlock = getEndBlock();
+
+      maybeStartBlock
+          .filter(blockNum -> blockNum < 0)
+          .ifPresent(
+              (blockNum) -> {
+                throw new CommandLine.ParameterException(
+                    spec.commandLine(),
+                    "Parameter --start-block ("
+                        + blockNum
+                        + ") must be greater than or equal to zero.");
+              });
+
+      maybeEndBlock
+          .filter(blockNum -> blockNum < 0)
+          .ifPresent(
+              (blockNum) -> {
+                throw new CommandLine.ParameterException(
+                    spec.commandLine(),
+                    "Parameter --end-block ("
+                        + blockNum
+                        + ") must be greater than or equal to zero.");
+              });
+
+      if (maybeStartBlock.isPresent() && maybeEndBlock.isPresent()) {
+        if (endBlock <= startBlock) {
+          throw new CommandLine.ParameterException(
+              spec.commandLine(),
+              "Parameter --end-block ("
+                  + endBlock
+                  + ") must be greater start block ("
+                  + startBlock
+                  + ").");
+        }
       }
-      if (endBlock != null && startBlock >= endBlock) {
+
+      // Error if data directory is empty
+      Path databasePath =
+          Paths.get(
+              parentCommand.parentCommand.dataDir().toAbsolutePath().toString(),
+              PantheonController.DATABASE_PATH);
+      File databaseDirectory = new File(databasePath.toString());
+      if (!databaseDirectory.isDirectory() || databaseDirectory.list().length == 0) {
+        // Empty data directory, nothing to export
         throw new CommandLine.ParameterException(
-            new CommandLine(exportSubCommand), "--end-block must be greater than --start-block");
+            spec.commandLine(),
+            "Chain is empty.  Unable to export blocks from specified data directory: "
+                + databaseDirectory.toString());
       }
     }
 
-    private void outputBlock(final List<Block> blocks) {
-      if (blocksExportFile != null) {
-        final Path path = blocksExportFile.toPath();
-        try (final BufferedWriter fileWriter = Files.newBufferedWriter(path, UTF_8)) {
-          fileWriter.write(blocks.toString());
-        } catch (final IOException e) {
-          throw new ExecutionException(
-              new CommandLine(this), "An error occurred while trying to write the exported blocks");
-        }
-      } else {
-        parentCommand.out.println(blocks.toString());
-      }
+    private Optional<Long> getStartBlock() {
+      return Optional.ofNullable(startBlock);
+    }
+
+    private Optional<Long> getEndBlock() {
+      return Optional.ofNullable(endBlock);
     }
   }
 
@@ -326,7 +380,12 @@ public class BlocksSubCommand implements Runnable {
   }
 
   @FunctionalInterface
-  public interface ChainImporterFactory {
-    <T> ChainImporter<T> get(PantheonController<T> controller);
+  public interface JsonBlockImporterFactory {
+    <T> JsonBlockImporter<T> get(PantheonController<T> controller);
+  }
+
+  @FunctionalInterface
+  public interface RlpBlockExporterFactory {
+    RlpBlockExporter get(Blockchain blockchain);
   }
 }

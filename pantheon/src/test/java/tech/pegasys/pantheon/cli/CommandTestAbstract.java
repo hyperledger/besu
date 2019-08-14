@@ -23,7 +23,9 @@ import static org.mockito.Mockito.when;
 
 import tech.pegasys.pantheon.Runner;
 import tech.pegasys.pantheon.RunnerBuilder;
-import tech.pegasys.pantheon.chainimport.ChainImporter;
+import tech.pegasys.pantheon.chainexport.RlpBlockExporter;
+import tech.pegasys.pantheon.chainimport.JsonBlockImporter;
+import tech.pegasys.pantheon.chainimport.RlpBlockImporter;
 import tech.pegasys.pantheon.cli.config.EthNetworkConfig;
 import tech.pegasys.pantheon.cli.options.EthProtocolOptions;
 import tech.pegasys.pantheon.cli.options.MetricsCLIOptions;
@@ -32,7 +34,8 @@ import tech.pegasys.pantheon.cli.options.RocksDBOptions;
 import tech.pegasys.pantheon.cli.options.SynchronizerOptions;
 import tech.pegasys.pantheon.cli.options.TransactionPoolOptions;
 import tech.pegasys.pantheon.cli.subcommands.PublicKeySubCommand.KeyLoader;
-import tech.pegasys.pantheon.cli.subcommands.blocks.BlocksSubCommand.ChainImporterFactory;
+import tech.pegasys.pantheon.cli.subcommands.blocks.BlocksSubCommand.JsonBlockImporterFactory;
+import tech.pegasys.pantheon.cli.subcommands.blocks.BlocksSubCommand.RlpBlockExporterFactory;
 import tech.pegasys.pantheon.controller.PantheonController;
 import tech.pegasys.pantheon.controller.PantheonControllerBuilder;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
@@ -48,8 +51,6 @@ import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
 import tech.pegasys.pantheon.services.PantheonPluginContextImpl;
-import tech.pegasys.pantheon.util.BlockExporter;
-import tech.pegasys.pantheon.util.BlockImporter;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.io.ByteArrayOutputStream;
@@ -101,9 +102,9 @@ public abstract class CommandTestAbstract {
   @Mock protected ProtocolContext<Object> mockProtocolContext;
   @Mock protected BlockBroadcaster mockBlockBroadcaster;
   @Mock protected PantheonController<Object> mockController;
-  @Mock protected BlockImporter mockBlockImporter;
-  @Mock protected BlockExporter mockBlockExporter;
-  @Mock protected ChainImporter<?> chainImporter;
+  @Mock protected RlpBlockExporter rlpBlockExporter;
+  @Mock protected JsonBlockImporter<?> jsonBlockImporter;
+  @Mock protected RlpBlockImporter rlpBlockImporter;
 
   @Mock protected Logger mockLogger;
   @Mock protected PantheonPluginContextImpl mockPantheonPluginContext;
@@ -215,8 +216,9 @@ public abstract class CommandTestAbstract {
   }
 
   @SuppressWarnings("unchecked")
-  private <T> ChainImporter<T> chainImporterFactory(final PantheonController<T> controller) {
-    return (ChainImporter<T>) chainImporter;
+  private <T> JsonBlockImporter<T> jsonBlockImporterFactory(
+      final PantheonController<T> controller) {
+    return (JsonBlockImporter<T>) jsonBlockImporter;
   }
 
   private TestPantheonCommand parseCommand(
@@ -227,9 +229,9 @@ public abstract class CommandTestAbstract {
     final TestPantheonCommand pantheonCommand =
         new TestPantheonCommand(
             mockLogger,
-            mockBlockImporter,
-            mockBlockExporter,
-            this::chainImporterFactory,
+            rlpBlockImporter,
+            this::jsonBlockImporterFactory,
+            (blockchain) -> rlpBlockExporter,
             mockRunnerBuilder,
             mockControllerBuilderFactory,
             keyLoader,
@@ -257,9 +259,9 @@ public abstract class CommandTestAbstract {
 
     TestPantheonCommand(
         final Logger mockLogger,
-        final BlockImporter mockBlockImporter,
-        final BlockExporter mockBlockExporter,
-        final ChainImporterFactory chainImporterFactory,
+        final RlpBlockImporter mockBlockImporter,
+        final JsonBlockImporterFactory jsonBlockImporterFactory,
+        final RlpBlockExporterFactory rlpBlockExporterFactory,
         final RunnerBuilder mockRunnerBuilder,
         final PantheonController.Builder controllerBuilderFactory,
         final KeyLoader keyLoader,
@@ -268,8 +270,8 @@ public abstract class CommandTestAbstract {
       super(
           mockLogger,
           mockBlockImporter,
-          mockBlockExporter,
-          chainImporterFactory,
+          jsonBlockImporterFactory,
+          rlpBlockExporterFactory,
           mockRunnerBuilder,
           controllerBuilderFactory,
           pantheonPluginContext,

@@ -12,6 +12,8 @@
  */
 package tech.pegasys.pantheon.chainimport;
 
+import tech.pegasys.pantheon.chainimport.internal.BlockData;
+import tech.pegasys.pantheon.chainimport.internal.ChainData;
 import tech.pegasys.pantheon.config.GenesisConfigOptions;
 import tech.pegasys.pantheon.controller.PantheonController;
 import tech.pegasys.pantheon.ethereum.blockcreation.MiningCoordinator;
@@ -39,13 +41,18 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class ChainImporter<C> {
+/**
+ * Tool for importing blocks with transactions from human-readable json.
+ *
+ * @param <C> The consensus algorithm context
+ */
+public class JsonBlockImporter<C> {
   private static final Logger LOG = LogManager.getLogger();
 
   private final ObjectMapper mapper;
   private final PantheonController<C> controller;
 
-  public ChainImporter(final PantheonController<C> controller) {
+  public JsonBlockImporter(final PantheonController<C> controller) {
     this.controller = controller;
     mapper = new ObjectMapper();
     // Jdk8Module allows us to easily parse {@code Optional} values from json

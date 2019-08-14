@@ -10,7 +10,7 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.util;
+package tech.pegasys.pantheon.chainimport;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -39,12 +39,12 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-/** Tests for {@link BlockImporter}. */
-public final class BlockImporterTest {
+/** Tests for {@link RlpBlockImporter}. */
+public final class RlpBlockImporterTest {
 
   @Rule public final TemporaryFolder folder = new TemporaryFolder();
 
-  BlockImporter blockImporter = new BlockImporter();
+  private RlpBlockImporter rlpBlockImporter = new RlpBlockImporter();
 
   @Test
   public void blockImport() throws IOException {
@@ -66,8 +66,8 @@ public final class BlockImporterTest {
             .clock(TestClock.fixed())
             .transactionPoolConfiguration(TransactionPoolConfiguration.builder().build())
             .build();
-    final BlockImporter.ImportResult result =
-        blockImporter.importBlockchain(source, targetController);
+    final RlpBlockImporter.ImportResult result =
+        rlpBlockImporter.importBlockchain(source, targetController);
     // Don't count the Genesis block
     assertThat(result.count).isEqualTo(999);
     assertThat(result.td).isEqualTo(UInt256.of(21991996248790L));
@@ -105,7 +105,8 @@ public final class BlockImporterTest {
             .clock(TestClock.fixed())
             .transactionPoolConfiguration(TransactionPoolConfiguration.builder().build())
             .build();
-    final BlockImporter.ImportResult result = blockImporter.importBlockchain(source, controller);
+    final RlpBlockImporter.ImportResult result =
+        rlpBlockImporter.importBlockchain(source, controller);
 
     // Don't count the Genesis block
     assertThat(result.count).isEqualTo(958);

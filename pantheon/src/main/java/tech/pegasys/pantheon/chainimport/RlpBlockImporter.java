@@ -10,7 +10,7 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.util;
+package tech.pegasys.pantheon.chainimport;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.apache.logging.log4j.LogManager.getLogger;
@@ -41,8 +41,8 @@ import java.util.concurrent.Semaphore;
 import com.google.common.base.MoreObjects;
 import org.apache.logging.log4j.Logger;
 
-/** Pantheon Block Import Util. */
-public class BlockImporter {
+/** Tool for importing rlp-encoded block data from files. */
+public class RlpBlockImporter {
   private static final Logger LOG = getLogger();
 
   private final Semaphore blockBacklog = new Semaphore(2);
@@ -60,7 +60,7 @@ public class BlockImporter {
    * @return the import result
    * @throws IOException On Failure
    */
-  public <C> BlockImporter.ImportResult importBlockchain(
+  public <C> RlpBlockImporter.ImportResult importBlockchain(
       final Path blocks, final PantheonController<C> pantheonController) throws IOException {
     final ProtocolSchedule<C> protocolSchedule = pantheonController.getProtocolSchedule();
     final ProtocolContext<C> context = pantheonController.getProtocolContext();
@@ -125,7 +125,8 @@ public class BlockImporter {
       if (previousBlockFuture != null) {
         previousBlockFuture.join();
       }
-      return new BlockImporter.ImportResult(blockchain.getChainHead().getTotalDifficulty(), count);
+      return new RlpBlockImporter.ImportResult(
+          blockchain.getChainHead().getTotalDifficulty(), count);
     } finally {
       validationExecutor.shutdownNow();
       try {

@@ -54,7 +54,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
-public abstract class ChainImporterTest {
+public abstract class JsonBlockImporterTest {
 
   @Rule public final TemporaryFolder folder = new TemporaryFolder();
 
@@ -62,14 +62,14 @@ public abstract class ChainImporterTest {
   protected final GenesisConfigFile genesisConfigFile;
   protected final boolean isEthash;
 
-  public ChainImporterTest(final String consensusEngine) throws IOException {
+  public JsonBlockImporterTest(final String consensusEngine) throws IOException {
     this.consensusEngine = consensusEngine;
     final String genesisData = getFileContents("genesis.json");
     this.genesisConfigFile = GenesisConfigFile.fromConfig(genesisData);
     this.isEthash = genesisConfigFile.getConfigOptions().isEthHash();
   }
 
-  public static class SingletonTests extends ChainImporterTest {
+  public static class SingletonTests extends JsonBlockImporterTest {
     public SingletonTests() throws IOException {
       super("unsupported");
     }
@@ -77,7 +77,7 @@ public abstract class ChainImporterTest {
     @Test
     public void importChain_unsupportedConsensusAlgorithm() throws IOException {
       final PantheonController<?> controller = createController();
-      final ChainImporter<?> importer = new ChainImporter<>(controller);
+      final JsonBlockImporter<?> importer = new JsonBlockImporter<>(controller);
 
       final String jsonData = getFileContents("clique", "blocks-import-valid.json");
 
@@ -90,7 +90,7 @@ public abstract class ChainImporterTest {
   }
 
   @RunWith(Parameterized.class)
-  public static class ParameterizedTests extends ChainImporterTest {
+  public static class ParameterizedTests extends JsonBlockImporterTest {
 
     public ParameterizedTests(final String consensusEngine) throws IOException {
       super(consensusEngine);
@@ -105,7 +105,7 @@ public abstract class ChainImporterTest {
     @Test
     public void importChain_validJson_withBlockNumbers() throws IOException {
       final PantheonController<?> controller = createController();
-      final ChainImporter<?> importer = new ChainImporter<>(controller);
+      final JsonBlockImporter<?> importer = new JsonBlockImporter<>(controller);
 
       final String jsonData = getFileContents("blocks-import-valid.json");
       importer.importChain(jsonData);
@@ -196,7 +196,7 @@ public abstract class ChainImporterTest {
     @Test
     public void importChain_validJson_noBlockIdentifiers() throws IOException {
       final PantheonController<?> controller = createController();
-      final ChainImporter<?> importer = new ChainImporter<>(controller);
+      final JsonBlockImporter<?> importer = new JsonBlockImporter<>(controller);
 
       final String jsonData = getFileContents("blocks-import-valid-no-block-identifiers.json");
       importer.importChain(jsonData);
@@ -287,7 +287,7 @@ public abstract class ChainImporterTest {
     @Test
     public void importChain_validJson_withParentHashes() throws IOException {
       final PantheonController<?> controller = createController();
-      final ChainImporter<?> importer = new ChainImporter<>(controller);
+      final JsonBlockImporter<?> importer = new JsonBlockImporter<>(controller);
 
       String jsonData = getFileContents("blocks-import-valid.json");
 
@@ -338,7 +338,7 @@ public abstract class ChainImporterTest {
     @Test
     public void importChain_invalidParent() throws IOException {
       final PantheonController<?> controller = createController();
-      final ChainImporter<?> importer = new ChainImporter<>(controller);
+      final JsonBlockImporter<?> importer = new JsonBlockImporter<>(controller);
 
       final String jsonData = getFileContents("blocks-import-invalid-bad-parent.json");
 
@@ -350,7 +350,7 @@ public abstract class ChainImporterTest {
     @Test
     public void importChain_invalidTransaction() throws IOException {
       final PantheonController<?> controller = createController();
-      final ChainImporter<?> importer = new ChainImporter<>(controller);
+      final JsonBlockImporter<?> importer = new JsonBlockImporter<>(controller);
 
       final String jsonData = getFileContents("blocks-import-invalid-bad-tx.json");
 
@@ -363,7 +363,7 @@ public abstract class ChainImporterTest {
     @Test
     public void importChain_specialFields() throws IOException {
       final PantheonController<?> controller = createController();
-      final ChainImporter<?> importer = new ChainImporter<>(controller);
+      final JsonBlockImporter<?> importer = new JsonBlockImporter<>(controller);
 
       final String jsonData = getFileContents("blocks-import-special-fields.json");
 
