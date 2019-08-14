@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ConsenSys AG.
+ * Copyright 2019 ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,13 +14,25 @@ package tech.pegasys.pantheon.ethereum.trie;
 
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
-import java.nio.charset.Charset;
+import java.util.List;
+import java.util.Optional;
 
-public class SimpleMerklePatriciaTrieTest extends AbstractMerklePatriciaTrieTest {
-  @Override
-  protected MerklePatriciaTrie<BytesValue, String> createTrie() {
-    return new SimpleMerklePatriciaTrie<>(
-        value ->
-            (value != null) ? BytesValue.wrap(value.getBytes(Charset.forName("UTF-8"))) : null);
+public class Proof<V> {
+
+  private final Optional<V> value;
+
+  private final List<BytesValue> proofRelatedNodes;
+
+  public Proof(final Optional<V> value, final List<BytesValue> proofRelatedNodes) {
+    this.value = value;
+    this.proofRelatedNodes = proofRelatedNodes;
+  }
+
+  public Optional<V> getValue() {
+    return value;
+  }
+
+  public List<BytesValue> getProofRelatedNodes() {
+    return proofRelatedNodes;
   }
 }

@@ -37,6 +37,14 @@ public interface MerklePatriciaTrie<K, V> {
   Optional<V> get(K key);
 
   /**
+   * Returns value and ordered proof-related nodes mapped to the hash if it exists; otherwise empty.
+   *
+   * @param key The key for the value.
+   * @return value and ordered proof-related nodes
+   */
+  Proof<V> getValueWithProof(K key);
+
+  /**
    * Updates the value mapped to the specified key, creating the mapping if one does not already
    * exist.
    *

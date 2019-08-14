@@ -57,6 +57,7 @@ public enum RpcMethod {
   ETH_GET_FILTER_CHANGES("eth_getFilterChanges"),
   ETH_GET_FILTER_LOGS("eth_getFilterLogs"),
   ETH_GET_LOGS("eth_getLogs"),
+  ETH_GET_PROOF("eth_getProof"),
   ETH_GET_STORAGE_AT("eth_getStorageAt"),
   ETH_GET_TRANSACTION_BY_BLOCK_HASH_AND_INDEX("eth_getTransactionByBlockHashAndIndex"),
   ETH_GET_TRANSACTION_BY_BLOCK_NUMBER_AND_INDEX("eth_getTransactionByBlockNumberAndIndex"),

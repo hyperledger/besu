@@ -48,6 +48,7 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.EthGetCode;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.EthGetFilterChanges;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.EthGetFilterLogs;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.EthGetLogs;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.EthGetProof;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.EthGetStorageAt;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.EthGetTransactionByBlockHashAndIndex;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.EthGetTransactionByBlockNumberAndIndex;
@@ -217,6 +218,7 @@ public class JsonRpcMethodsFactory {
               parameter),
           new EthGetCode(blockchainQueries, parameter),
           new EthGetLogs(blockchainQueries, parameter),
+          new EthGetProof(blockchainQueries, parameter),
           new EthGetUncleCountByBlockHash(blockchainQueries, parameter),
           new EthGetUncleCountByBlockNumber(blockchainQueries, parameter),
           new EthGetUncleByBlockNumberAndIndex(blockchainQueries, parameter),

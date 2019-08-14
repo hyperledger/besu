@@ -60,6 +60,12 @@ public enum JsonRpcError {
   // Wallet errors
   COINBASE_NOT_SPECIFIED(-32000, "Coinbase must be explicitly specified"),
 
+  // Account errors
+  NO_ACCOUNT_FOUND(-32000, "Account not found"),
+
+  // Worldstate erros
+  WORLD_STATE_UNAVAILABLE(-32000, "World state unavailable"),
+
   // Debug failures
   PARENT_BLOCK_NOT_FOUND(-32000, "Parent block not found"),
 
