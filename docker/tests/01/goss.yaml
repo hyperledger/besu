@@ -1,3 +1,5 @@
+---
+# runtime docker tests
 file:
   /opt/pantheon/bin/pantheon:
     exists: true
@@ -20,21 +22,6 @@ file:
     group: root
     filetype: file
     contains: []
-port:
-  tcp:8545:
-    listening: true
-  tcp:8546:
-    listening: true
-  tcp:8547:
-    listening: true
-  tcp:30303:
-    listening: true
-    ip:
-    - 0.0.0.0
-  udp:30303:
-    listening: true
-    ip:
-    - 0.0.0.0
 process:
   java:
     running: true

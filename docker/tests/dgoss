@@ -2,7 +2,7 @@
 
 set -e
 
-USAGE="USAGE: $(basename "$0") [run|edit] <docker_run_params>"
+USAGE="USAGE: $(basename "$0") [run|edit|dockerfile] <docker_params>"
 GOSS_FILES_PATH="${GOSS_FILES_PATH:-.}"
 
 info() {
@@ -23,13 +23,18 @@ cleanup() {
     fi
 }
 
-run(){
-    # Copy in goss
+# Copy goss & any config into a folder which then gets mounted as a volume
+# Run the container and perform the checks
+setup_container(){
+    info "Setting up test dir"
     cp "${GOSS_PATH}" "$tmp_dir/goss"
     chmod 755 "$tmp_dir/goss"
     [[ -e "${GOSS_FILES_PATH}/goss.yaml" ]] && cp "${GOSS_FILES_PATH}/goss.yaml" "$tmp_dir"
     [[ -e "${GOSS_FILES_PATH}/goss_wait.yaml" ]] && cp "${GOSS_FILES_PATH}/goss_wait.yaml" "$tmp_dir"
     [[ ! -z "${GOSS_VARS}" ]] && [[ -e "${GOSS_FILES_PATH}/${GOSS_VARS}" ]] && cp "${GOSS_FILES_PATH}/${GOSS_VARS}" "$tmp_dir"
+    # copy the Dockerfile if path has been provided
+    [[ ! -z "${3}" ]] && [[ "${3}" == *"Dockerfile"* ]] && cp "${3}" "$tmp_dir"
+    info "Setup complete"
 
     # Switch between mount or cp files strategy
     GOSS_FILES_STRATEGY=${GOSS_FILES_STRATEGY:="mount"}
@@ -54,7 +59,7 @@ run(){
     info "Container ID: ${id:0:8}"
 }
 
-get_docker_file() {
+get_file_from_docker() {
     if docker exec "$id" sh -c "test -e $1" > /dev/null;then
         mkdir -p "${GOSS_FILES_PATH}"
         info "Copied '$1' from container to '${GOSS_FILES_PATH}'"
@@ -75,7 +80,8 @@ GOSS_SLEEP=${GOSS_SLEEP:-0.2}
 
 case "$1" in
     run)
-        run "$@"
+        info "Run Docker tests"
+        setup_container "$@"
         if [[ -e "${GOSS_FILES_PATH}/goss_wait.yaml" ]]; then
             info "Found goss_wait.yaml, waiting for it to pass before running tests"
             if [[ -z "${GOSS_VARS}" ]]; then
@@ -100,13 +106,19 @@ case "$1" in
             docker exec "$id" sh -c "/goss/goss -g /goss/goss.yaml --vars='/goss/${GOSS_VARS}' validate $GOSS_OPTS"
         fi
         ;;
+    dockerfile)
+        info "Run Dockerfile tests"
+        setup_container "$@"
+        docker exec "$id" sh -c "cat /goss/goss.yaml"
+        docker exec "$id" sh -c "/goss/goss -g /goss/goss.yaml validate $GOSS_OPTS"
+        ;;
     edit)
-        run "$@"
+        setup_container "$@"
         info "Run goss add/autoadd to add resources"
         docker exec -it "$id" sh -c 'cd /goss; PATH="/goss:$PATH" exec sh'
-        get_docker_file "/goss/goss.yaml"
-        get_docker_file "/goss/goss_wait.yaml"
-        [[ ! -z "${GOSS_VARS}" ]] && get_docker_file "/goss/${GOSS_VARS}"
+        get_file_from_docker "/goss/goss.yaml"
+        get_file_from_docker "/goss/goss_wait.yaml"
+        [[ ! -z "${GOSS_VARS}" ]] && get_file_from_docker "/goss/${GOSS_VARS}"
         ;;
     *)
         error "$USAGE"
