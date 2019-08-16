@@ -92,6 +92,8 @@ public class ProcessPantheonNodeRunner implements PantheonNodeRunner {
       params.add(node.getPrivacyParameters().getEnclavePublicKeyFile().getAbsolutePath());
       params.add("--privacy-precompiled-address");
       params.add(String.valueOf(node.getPrivacyParameters().getPrivacyAddress()));
+      params.add("--privacy-marker-transaction-signing-key-file");
+      params.add(node.homeDirectory().resolve("key").toString());
     }
 
     params.add("--bootnodes");

@@ -23,11 +23,9 @@ import tech.pegasys.pantheon.crypto.SECP256K1;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.core.Wei;
-import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactions;
 import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPool;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.BlockchainQueries;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
@@ -41,7 +39,6 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Optional;
-import java.util.OptionalLong;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -118,15 +115,9 @@ public class EeaSendRawTransactionTest {
 
   @Mock private PrivateTransactionHandler privateTxHandler;
 
-  @Mock private BlockchainQueries blockchainQueries;
-
-  @Mock private PendingTransactions pendingTransactions;
-
   @Before
   public void before() {
-    when(transactionPool.getPendingTransactions()).thenReturn(pendingTransactions);
-    method =
-        new EeaSendRawTransaction(blockchainQueries, privateTxHandler, transactionPool, parameter);
+    method = new EeaSendRawTransaction(privateTxHandler, transactionPool, parameter);
   }
 
   @Test
@@ -211,7 +202,7 @@ public class EeaSendRawTransactionTest {
             any(PrivateTransaction.class), any(String.class)))
         .thenReturn(ValidationResult.valid());
     when(privateTxHandler.createPrivacyMarkerTransaction(
-            any(String.class), any(PrivateTransaction.class), any(Long.class)))
+            any(String.class), any(PrivateTransaction.class)))
         .thenReturn(PUBLIC_TRANSACTION);
     when(transactionPool.addLocalTransaction(any(Transaction.class)))
         .thenReturn(ValidationResult.valid());
@@ -231,8 +222,7 @@ public class EeaSendRawTransactionTest {
     verify(privateTxHandler)
         .validatePrivateTransaction(any(PrivateTransaction.class), any(String.class));
     verify(privateTxHandler)
-        .createPrivacyMarkerTransaction(
-            any(String.class), any(PrivateTransaction.class), any(Long.class));
+        .createPrivacyMarkerTransaction(any(String.class), any(PrivateTransaction.class));
     verify(transactionPool).addLocalTransaction(any(Transaction.class));
   }
 
@@ -247,7 +237,7 @@ public class EeaSendRawTransactionTest {
             any(PrivateTransaction.class), any(String.class)))
         .thenReturn(ValidationResult.valid());
     when(privateTxHandler.createPrivacyMarkerTransaction(
-            any(String.class), any(PrivateTransaction.class), any(Long.class)))
+            any(String.class), any(PrivateTransaction.class)))
         .thenReturn(PUBLIC_TRANSACTION);
     when(transactionPool.addLocalTransaction(any(Transaction.class)))
         .thenReturn(ValidationResult.valid());
@@ -270,8 +260,7 @@ public class EeaSendRawTransactionTest {
     verify(privateTxHandler)
         .validatePrivateTransaction(any(PrivateTransaction.class), any(String.class));
     verify(privateTxHandler)
-        .createPrivacyMarkerTransaction(
-            any(String.class), any(PrivateTransaction.class), any(Long.class));
+        .createPrivacyMarkerTransaction(any(String.class), any(PrivateTransaction.class));
     verify(transactionPool).addLocalTransaction(any(Transaction.class));
   }
 
@@ -370,7 +359,7 @@ public class EeaSendRawTransactionTest {
             any(PrivateTransaction.class), any(String.class)))
         .thenReturn(ValidationResult.valid());
     when(privateTxHandler.createPrivacyMarkerTransaction(
-            any(String.class), any(PrivateTransaction.class), any(Long.class)))
+            any(String.class), any(PrivateTransaction.class)))
         .thenReturn(PUBLIC_TRANSACTION);
     when(transactionPool.addLocalTransaction(any(Transaction.class)))
         .thenReturn(ValidationResult.invalid(transactionInvalidReason));
@@ -389,16 +378,8 @@ public class EeaSendRawTransactionTest {
     verify(privateTxHandler)
         .validatePrivateTransaction(any(PrivateTransaction.class), any(String.class));
     verify(privateTxHandler)
-        .createPrivacyMarkerTransaction(
-            any(String.class), any(PrivateTransaction.class), any(Long.class));
+        .createPrivacyMarkerTransaction(any(String.class), any(PrivateTransaction.class));
     verify(transactionPool).addLocalTransaction(any(Transaction.class));
-  }
-
-  @Test
-  public void nextNonceUsesTxPool() {
-    Address address = PUBLIC_TRANSACTION.getSender();
-    when(pendingTransactions.getNextNonceForSender(address)).thenReturn(OptionalLong.of(123));
-    assertThat(method.getNonce(address)).isEqualTo(123);
   }
 
   @Test

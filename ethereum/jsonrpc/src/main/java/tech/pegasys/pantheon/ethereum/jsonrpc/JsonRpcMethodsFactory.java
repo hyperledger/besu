@@ -16,8 +16,10 @@ import tech.pegasys.pantheon.config.GenesisConfigOptions;
 import tech.pegasys.pantheon.enclave.Enclave;
 import tech.pegasys.pantheon.ethereum.blockcreation.MiningCoordinator;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
+import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.core.Synchronizer;
+import tech.pegasys.pantheon.ethereum.eth.transactions.PendingTransactions;
 import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPool;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.filter.FilterManager;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.AdminAddPeer;
@@ -114,6 +116,9 @@ import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.Capability;
 import tech.pegasys.pantheon.ethereum.permissioning.AccountLocalConfigPermissioningController;
 import tech.pegasys.pantheon.ethereum.permissioning.NodeLocalConfigPermissioningController;
 import tech.pegasys.pantheon.ethereum.privacy.PrivateTransactionHandler;
+import tech.pegasys.pantheon.ethereum.privacy.markertransaction.FixedKeySigningPrivateMarkerTransactionFactory;
+import tech.pegasys.pantheon.ethereum.privacy.markertransaction.PrivateMarkerTransactionFactory;
+import tech.pegasys.pantheon.ethereum.privacy.markertransaction.RandomSigningPrivateMarkerTransactionFactory;
 import tech.pegasys.pantheon.ethereum.transaction.TransactionSimulator;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
@@ -328,15 +333,19 @@ public class JsonRpcMethodsFactory {
 
     boolean eea = rpcApis.contains(RpcApis.EEA), priv = rpcApis.contains(RpcApis.PRIV);
     if (eea || priv) {
+      final PrivateMarkerTransactionFactory markerTransactionFactory =
+          createPrivateMarkerTransactionFactory(
+              privacyParameters, blockchainQueries, transactionPool.getPendingTransactions());
+
       final PrivateTransactionHandler privateTransactionHandler =
-          new PrivateTransactionHandler(privacyParameters, protocolSchedule.getChainId());
+          new PrivateTransactionHandler(
+              privacyParameters, protocolSchedule.getChainId(), markerTransactionFactory);
       final Enclave enclave = new Enclave(privacyParameters.getEnclaveUri());
       if (eea) {
         addMethods(
             enabledMethods,
             new EeaGetTransactionReceipt(blockchainQueries, enclave, parameter, privacyParameters),
-            new EeaSendRawTransaction(
-                blockchainQueries, privateTransactionHandler, transactionPool, parameter));
+            new EeaSendRawTransaction(privateTransactionHandler, transactionPool, parameter));
       }
       if (priv) {
         addMethods(
@@ -361,5 +370,22 @@ public class JsonRpcMethodsFactory {
     for (final JsonRpcMethod rpcMethod : rpcMethods) {
       methods.put(rpcMethod.getName(), rpcMethod);
     }
+  }
+
+  private PrivateMarkerTransactionFactory createPrivateMarkerTransactionFactory(
+      final PrivacyParameters privacyParameters,
+      final BlockchainQueries blockchainQueries,
+      final PendingTransactions pendingTransactions) {
+
+    final Address privateContractAddress =
+        Address.privacyPrecompiled(privacyParameters.getPrivacyAddress());
+
+    if (privacyParameters.getSigningKeyPair().isPresent()) {
+      return new FixedKeySigningPrivateMarkerTransactionFactory(
+          privateContractAddress,
+          new LatestNonceProvider(blockchainQueries, pendingTransactions),
+          privacyParameters.getSigningKeyPair().get());
+    }
+    return new RandomSigningPrivateMarkerTransactionFactory(privateContractAddress);
   }
 }

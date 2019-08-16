@@ -15,6 +15,7 @@ package tech.pegasys.pantheon.ethereum.core;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import tech.pegasys.pantheon.crypto.SECP256K1;
+import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.ethereum.privacy.PrivateStateStorage;
 import tech.pegasys.pantheon.ethereum.privacy.PrivateTransactionStorage;
 import tech.pegasys.pantheon.ethereum.storage.StorageProvider;
@@ -30,6 +31,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
+import java.util.Optional;
 
 import com.google.common.io.Files;
 
@@ -42,7 +44,7 @@ public class PrivacyParameters {
   private URI enclaveUri;
   private String enclavePublicKey;
   private File enclavePublicKeyFile;
-  private SECP256K1.KeyPair signingKeyPair;
+  private Optional<SECP256K1.KeyPair> signingKeyPair = Optional.empty();
   private WorldStateArchive privateWorldStateArchive;
   private StorageProvider privateStorageProvider;
 
@@ -89,12 +91,12 @@ public class PrivacyParameters {
     this.enclavePublicKeyFile = enclavePublicKeyFile;
   }
 
-  public SECP256K1.KeyPair getSigningKeyPair() {
+  public Optional<SECP256K1.KeyPair> getSigningKeyPair() {
     return signingKeyPair;
   }
 
   public void setSigningKeyPair(final SECP256K1.KeyPair signingKeyPair) {
-    this.signingKeyPair = signingKeyPair;
+    this.signingKeyPair = Optional.ofNullable(signingKeyPair);
   }
 
   public WorldStateArchive getPrivateWorldStateArchive() {
@@ -145,6 +147,7 @@ public class PrivacyParameters {
     private Path dataDir;
     private File enclavePublicKeyFile;
     private String enclavePublicKey;
+    private Path privateKeyPath;
 
     public Builder setPrivacyAddress(final Integer privacyAddress) {
       this.privacyAddress = privacyAddress;
@@ -168,6 +171,11 @@ public class PrivacyParameters {
 
     public Builder setDataDir(final Path dataDir) {
       this.dataDir = dataDir;
+      return this;
+    }
+
+    public Builder setPrivateKeyPath(final Path privateKeyPath) {
+      this.privateKeyPath = privateKeyPath;
       return this;
     }
 
@@ -200,6 +208,9 @@ public class PrivacyParameters {
         config.setPrivateStorageProvider(privateStorageProvider);
         config.setPrivateTransactionStorage(privateTransactionStorage);
         config.setPrivateStateStorage(privateStateStorage);
+        if (privateKeyPath != null) {
+          config.setSigningKeyPair(KeyPair.load(privateKeyPath.toFile()));
+        }
       }
       config.setEnabled(enabled);
       config.setEnclaveUri(enclaveUrl);

@@ -182,7 +182,6 @@ public abstract class PantheonControllerBuilder<C> {
     checkArgument(
         storageProvider == null || rocksDbConfiguration == null,
         "Must supply either storage provider or RocksDB confguration, but not both");
-    privacyParameters.setSigningKeyPair(nodeKeys);
 
     if (storageProvider == null && rocksDbConfiguration != null) {
       storageProvider = RocksDbStorageProvider.create(rocksDbConfiguration, metricsSystem);

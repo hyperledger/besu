@@ -35,6 +35,7 @@ import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
 import tech.pegasys.pantheon.ethereum.mainnet.ValidationResult;
+import tech.pegasys.pantheon.ethereum.privacy.markertransaction.FixedKeySigningPrivateMarkerTransactionFactory;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.bytes.BytesValues;
@@ -114,21 +115,21 @@ public class PrivateTransactionHandlerTest {
     privateTransactionHandler =
         new PrivateTransactionHandler(
             mockEnclave(),
-            Address.DEFAULT_PRIVACY,
-            KEY_PAIR,
             OrionKeyUtils.loadKey("orion_key_0.pub"),
             privateStateStorage,
             worldStateArchive,
-            privateTransactionValidator);
+            privateTransactionValidator,
+            new FixedKeySigningPrivateMarkerTransactionFactory(
+                Address.DEFAULT_PRIVACY, (address) -> 0, KEY_PAIR));
     brokenPrivateTransactionHandler =
         new PrivateTransactionHandler(
             brokenMockEnclave(),
-            Address.DEFAULT_PRIVACY,
-            KEY_PAIR,
             OrionKeyUtils.loadKey("orion_key_0.pub"),
             privateStateStorage,
             worldStateArchive,
-            privateTransactionValidator);
+            privateTransactionValidator,
+            new FixedKeySigningPrivateMarkerTransactionFactory(
+                Address.DEFAULT_PRIVACY, (address) -> 0, KEY_PAIR));
   }
 
   @Test
@@ -145,7 +146,7 @@ public class PrivateTransactionHandlerTest {
         privateTransactionHandler.validatePrivateTransaction(transaction, privacyGroupId);
 
     final Transaction markerTransaction =
-        privateTransactionHandler.createPrivacyMarkerTransaction(enclaveKey, transaction, 0L);
+        privateTransactionHandler.createPrivacyMarkerTransaction(enclaveKey, transaction);
 
     assertThat(validationResult).isEqualTo(ValidationResult.valid());
     assertThat(markerTransaction.contractAddress()).isEqualTo(PUBLIC_TRANSACTION.contractAddress());
@@ -167,7 +168,7 @@ public class PrivateTransactionHandlerTest {
             transaction, transaction.getPrivacyGroupId().get().toString());
 
     final Transaction markerTransaction =
-        privateTransactionHandler.createPrivacyMarkerTransaction(enclaveKey, transaction, 0L);
+        privateTransactionHandler.createPrivacyMarkerTransaction(enclaveKey, transaction);
 
     assertThat(validationResult).isEqualTo(ValidationResult.valid());
     assertThat(markerTransaction.contractAddress()).isEqualTo(PUBLIC_TRANSACTION.contractAddress());

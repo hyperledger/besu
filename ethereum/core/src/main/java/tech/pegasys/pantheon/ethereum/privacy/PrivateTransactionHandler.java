@@ -12,7 +12,6 @@
  */
 package tech.pegasys.pantheon.ethereum.privacy;
 
-import tech.pegasys.pantheon.crypto.SECP256K1;
 import tech.pegasys.pantheon.enclave.Enclave;
 import tech.pegasys.pantheon.enclave.types.ReceiveRequest;
 import tech.pegasys.pantheon.enclave.types.ReceiveResponse;
@@ -24,9 +23,9 @@ import tech.pegasys.pantheon.ethereum.core.Account;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
-import tech.pegasys.pantheon.ethereum.core.Util;
 import tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
 import tech.pegasys.pantheon.ethereum.mainnet.ValidationResult;
+import tech.pegasys.pantheon.ethereum.privacy.markertransaction.PrivateMarkerTransactionFactory;
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPOutput;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 import tech.pegasys.pantheon.util.bytes.BytesValues;
@@ -44,42 +43,38 @@ public class PrivateTransactionHandler {
   private static final Logger LOG = LogManager.getLogger();
 
   private final Enclave enclave;
-  private final Address privacyPrecompileAddress;
-  private final SECP256K1.KeyPair nodeKeyPair;
-  private final Address signerAddress;
   private final String enclavePublicKey;
   private final PrivateStateStorage privateStateStorage;
   private final WorldStateArchive privateWorldStateArchive;
   private final PrivateTransactionValidator privateTransactionValidator;
+  private final PrivateMarkerTransactionFactory privateMarkerTransactionFactory;
 
   public PrivateTransactionHandler(
-      final PrivacyParameters privacyParameters, final Optional<BigInteger> chainId) {
+      final PrivacyParameters privacyParameters,
+      final Optional<BigInteger> chainId,
+      final PrivateMarkerTransactionFactory privateMarkerTransactionFactory) {
     this(
         new Enclave(privacyParameters.getEnclaveUri()),
-        Address.privacyPrecompiled(privacyParameters.getPrivacyAddress()),
-        privacyParameters.getSigningKeyPair(),
         privacyParameters.getEnclavePublicKey(),
         privacyParameters.getPrivateStateStorage(),
         privacyParameters.getPrivateWorldStateArchive(),
-        new PrivateTransactionValidator(chainId));
+        new PrivateTransactionValidator(chainId),
+        privateMarkerTransactionFactory);
   }
 
   public PrivateTransactionHandler(
       final Enclave enclave,
-      final Address privacyPrecompileAddress,
-      final SECP256K1.KeyPair nodeKeyPair,
       final String enclavePublicKey,
       final PrivateStateStorage privateStateStorage,
       final WorldStateArchive privateWorldStateArchive,
-      final PrivateTransactionValidator privateTransactionValidator) {
+      final PrivateTransactionValidator privateTransactionValidator,
+      final PrivateMarkerTransactionFactory privateMarkerTransactionFactory) {
     this.enclave = enclave;
-    this.privacyPrecompileAddress = privacyPrecompileAddress;
-    this.nodeKeyPair = nodeKeyPair;
-    this.signerAddress = Util.publicKeyToAddress(nodeKeyPair.getPublicKey());
     this.enclavePublicKey = enclavePublicKey;
     this.privateStateStorage = privateStateStorage;
     this.privateWorldStateArchive = privateWorldStateArchive;
     this.privateTransactionValidator = privateTransactionValidator;
+    this.privateMarkerTransactionFactory = privateMarkerTransactionFactory;
   }
 
   public String sendToOrion(final PrivateTransaction privateTransaction) throws Exception {
@@ -117,19 +112,8 @@ public class PrivateTransactionHandler {
   }
 
   public Transaction createPrivacyMarkerTransaction(
-      final String transactionEnclaveKey,
-      final PrivateTransaction privateTransaction,
-      final Long nonce) {
-
-    return Transaction.builder()
-        .nonce(nonce)
-        .gasPrice(privateTransaction.getGasPrice())
-        .gasLimit(privateTransaction.getGasLimit())
-        .to(privacyPrecompileAddress)
-        .value(privateTransaction.getValue())
-        .payload(BytesValues.fromBase64(transactionEnclaveKey))
-        .sender(signerAddress)
-        .signAndBuild(nodeKeyPair);
+      final String transactionEnclaveKey, final PrivateTransaction privateTransaction) {
+    return privateMarkerTransactionFactory.create(transactionEnclaveKey, privateTransaction);
   }
 
   public ValidationResult<TransactionInvalidReason> validatePrivateTransaction(
@@ -186,13 +170,5 @@ public class PrivateTransactionHandler {
         .orElse(
             // private state does not exist
             Account.DEFAULT_NONCE);
-  }
-
-  public Address getSignerAddress() {
-    return signerAddress;
-  }
-
-  public String getEnclaveKey() {
-    return enclavePublicKey;
   }
 }
