@@ -37,15 +37,22 @@ public class BLAKE2BFPrecompileContract extends AbstractPrecompiledContract {
       // Precompile can't be executed so we set its price to 0.
       return Gas.ZERO;
     }
+    if ((input.get(212) & 0xFE) != 0) {
+      // Input is malformed, F value can be only 0 or 1
+      return Gas.ZERO;
+    }
 
-    byte[] roundsBytes = copyOfRange(input.extractArray(), 0, 4);
-    BigInteger rounds = new BigInteger(1, roundsBytes);
+    final byte[] roundsBytes = copyOfRange(input.extractArray(), 0, 4);
+    final BigInteger rounds = new BigInteger(1, roundsBytes);
     return Gas.of(rounds);
   }
 
   @Override
   public BytesValue compute(final BytesValue input, final MessageFrame messageFrame) {
     if (input.size() != MESSAGE_LENGTH_BYTES) {
+      return BytesValue.EMPTY;
+    }
+    if ((input.get(212) & 0xFE) != 0) {
       return BytesValue.EMPTY;
     }
     return Hash.blake2bf(input);

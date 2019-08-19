@@ -27,21 +27,21 @@ public class Blake2bfMessageDigestTest {
   private Blake2bfMessageDigest messageDigest;
 
   // output when input is all 0
-  private byte[] blake2bfAllZero =
+  private static final byte[] BLAKE2F_ALL_ZERO =
       new byte[] {
-        106, 9, -26, 103, -13, -68, -55, 8, -69, 103, -82, -123, -124, -54, -89, 59, 60, 110, -13,
-        114, -2, -108, -8, 43, -91, 79, -11, 58, 95, 29, 54, -15, 81, 14, 82, 127, -83, -26, -126,
-        -47, -101, 5, 104, -116, 43, 62, 108, 31, 31, -125, -39, -85, -5, 65, -67, 107, 91, -32,
-        -51, 25, 19, 126, 33, 121
+        8, -55, -68, -13, 103, -26, 9, 106, 59, -89, -54, -124, -123, -82, 103, -69, 43, -8, -108,
+        -2, 114, -13, 110, 60, -15, 54, 29, 95, 58, -11, 79, -91, -47, -126, -26, -83, 127, 82, 14,
+        81, 31, 108, 62, 43, -116, 104, 5, -101, 107, -67, 65, -5, -85, -39, -125, 31, 121, 33, 126,
+        19, 25, -51, -32, 91
       };
 
-  // output when input is all 0 for 2147483648 rounds
-  private byte[] blake2bfAllZeroNegativeRounds =
+  // output when input is all 0 for 4294967295 rounds
+  private static final byte[] BLAKE2F_ALL_ZERO_NEGATIVE_ROUNDS =
       new byte[] {
-        118, 127, 109, 29, 115, -124, -99, -111, 81, 112, 35, 60, -89, 75, 21, 18, -97, -73, 19,
-        -102, 40, -8, 78, 110, -43, 124, 66, 83, -89, 69, 69, 57, -25, -105, 123, 117, 115, 115, 78,
-        -92, 123, 87, 14, -127, -94, -1, -74, 25, -125, 48, 54, -78, -82, -75, 84, -26, -38, -42,
-        -93, 120, -61, 7, -58, 38
+        -111, -99, -124, 115, 29, 109, 127, 118, 18, 21, 75, -89, 60, 35, 112, 81, 110, 78, -8, 40,
+        -102, 19, -73, -97, 57, 69, 69, -89, 83, 66, 124, -43, -92, 78, 115, 115, 117, 123, -105,
+        -25, 25, -74, -1, -94, -127, 14, 87, 123, -26, 84, -75, -82, -78, 54, 48, -125, 38, -58, 7,
+        -61, 120, -93, -42, -38
       };
 
   @Before
@@ -54,32 +54,32 @@ public class Blake2bfMessageDigestTest {
     for (int i = 0; i < 213; i++) {
       messageDigest.update((byte) 0);
     }
-    assertThat(messageDigest.digest()).isEqualTo(blake2bfAllZero);
+    assertThat(messageDigest.digest()).isEqualTo(BLAKE2F_ALL_ZERO);
   }
 
   @Test
   public void digestIfUpdatedCorrectlyWithByteArray() {
-    byte[] update = new byte[213];
+    final byte[] update = new byte[213];
     messageDigest.update(update, 0, 213);
-    assertThat(messageDigest.digest()).isEqualTo(blake2bfAllZero);
+    assertThat(messageDigest.digest()).isEqualTo(BLAKE2F_ALL_ZERO);
   }
 
   @Test
   public void digestIfUpdatedCorrectlyMixed() {
-    byte[] update = new byte[213];
+    final byte[] update = new byte[213];
     messageDigest.update((byte) 0);
     messageDigest.update(update, 2, 211);
     messageDigest.update((byte) 0);
-    assertThat(messageDigest.digest()).isEqualTo(blake2bfAllZero);
+    assertThat(messageDigest.digest()).isEqualTo(BLAKE2F_ALL_ZERO);
   }
 
   @Test
-  public void digestWithNegativeRounds() {
-    // equal to Integer.MAX_VALUE + 1 (2147483648) as uint
-    byte[] rounds = Pack.intToBigEndian(Integer.MIN_VALUE);
+  public void digestWithMaxRounds() {
+    // equal to unsigned int max value (4294967295, or signed -1)
+    final byte[] rounds = Pack.intToBigEndian(Integer.MIN_VALUE);
     messageDigest.update(rounds, 0, 4);
     messageDigest.update(new byte[213], 0, 209);
-    assertThat(messageDigest.digest()).isEqualTo(blake2bfAllZeroNegativeRounds);
+    assertThat(messageDigest.digest()).isEqualTo(BLAKE2F_ALL_ZERO_NEGATIVE_ROUNDS);
   }
 
   @Test(expected = IllegalStateException.class)
@@ -99,14 +99,14 @@ public class Blake2bfMessageDigestTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void throwsIfBufferUpdatedLargeByteArray() {
-    byte[] update = new byte[213];
+    final byte[] update = new byte[213];
     messageDigest.update((byte) 0);
     messageDigest.update(update, 0, 213);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void throwsIfEmptyBufferUpdatedLargeByteArray() {
-    byte[] update = new byte[214];
+    final byte[] update = new byte[214];
     messageDigest.update(update, 0, 214);
   }
 }
