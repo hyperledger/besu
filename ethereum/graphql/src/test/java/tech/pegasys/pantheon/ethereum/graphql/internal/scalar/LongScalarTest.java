@@ -14,10 +14,13 @@ package tech.pegasys.pantheon.ethereum.graphql.internal.scalar;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import tech.pegasys.pantheon.ethereum.graphql.internal.Scalars;
+
 import graphql.language.StringValue;
 import graphql.schema.CoercingParseLiteralException;
 import graphql.schema.CoercingParseValueException;
 import graphql.schema.CoercingSerializeException;
+import graphql.schema.GraphQLScalarType;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -28,7 +31,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class LongScalarTest {
 
-  private LongScalar scalar;
+  private GraphQLScalarType scalar;
   @Rule public ExpectedException thrown = ExpectedException.none();
 
   private final String str = "0xf4240";
@@ -88,6 +91,6 @@ public class LongScalarTest {
 
   @Before
   public void before() {
-    scalar = new LongScalar();
+    scalar = Scalars.longScalar();
   }
 }

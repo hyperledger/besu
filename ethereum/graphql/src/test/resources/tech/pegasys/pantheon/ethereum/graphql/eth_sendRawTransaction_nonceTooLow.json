@@ -15,7 +15,8 @@
         ],
         "extensions": {
           "errorCode": -32001,
-          "errorMessage": "Nonce too low"
+          "errorMessage": "Nonce too low",
+          "classification": "DataFetchingException"
         }
       }
     ],

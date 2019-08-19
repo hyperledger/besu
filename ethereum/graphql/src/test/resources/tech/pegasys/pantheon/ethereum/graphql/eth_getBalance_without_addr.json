@@ -9,7 +9,10 @@
             "line": 1,
             "column": 2
           }
-        ]
+        ],
+        "extensions": {
+          "classification": "ValidationError"
+        }
       }
     ]
   },

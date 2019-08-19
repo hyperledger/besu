@@ -1,19 +1,26 @@
 {
   "request": "{account(blockNumber:\"0x21\", address: \"0x6295ee1b4f6dd65047762f924ecd367c17eabf8f\") { balance } }",
   "response": {
-    "data" : null,
-    "errors" : [ {
-      "message" : "Exception while fetching data (/account) : Invalid params",
-      "locations" : [ {
-        "line" : 1,
-        "column" : 2
-      } ],
-      "path" : [ "account" ],
-      "extensions" : {
-        "errorCode" : -32602,
-        "errorMessage" : "Invalid params"
+    "errors": [
+      {
+        "message": "Exception while fetching data (/account) : Invalid params",
+        "locations": [
+          {
+            "line": 1,
+            "column": 2
+          }
+        ],
+        "path": [
+          "account"
+        ],
+        "extensions": {
+          "errorCode": -32602,
+          "errorMessage": "Invalid params",
+          "classification": "DataFetchingException"
+        }
       }
-    } ]
+    ],
+    "data": null
   },
   "statusCode": 400
 }

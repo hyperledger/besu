@@ -1,7 +1,6 @@
 {
   "request": "{account(blockNumber:\"0x19\", address: \"0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef\") { balance } }",
   "response": {
-    "data": null,
     "errors": [
       {
         "message": "Exception while fetching data (/account) : Account with address 0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef does not exist",
@@ -13,9 +12,13 @@
         ],
         "path": [
           "account"
-        ]
+        ],
+        "extensions": {
+          "classification": "DataFetchingException"
+        }
       }
-    ]
+    ],
+    "data": null
   },
   "statusCode": 400
 }

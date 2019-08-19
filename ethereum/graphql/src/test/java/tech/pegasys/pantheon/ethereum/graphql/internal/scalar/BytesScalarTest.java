@@ -14,12 +14,14 @@ package tech.pegasys.pantheon.ethereum.graphql.internal.scalar;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import tech.pegasys.pantheon.ethereum.graphql.internal.Scalars;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import graphql.language.StringValue;
 import graphql.schema.CoercingParseLiteralException;
 import graphql.schema.CoercingParseValueException;
 import graphql.schema.CoercingSerializeException;
+import graphql.schema.GraphQLScalarType;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -30,7 +32,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class BytesScalarTest {
 
-  private BytesScalar scalar;
+  private GraphQLScalarType scalar;
   @Rule public ExpectedException thrown = ExpectedException.none();
 
   private final String str = "0x10";
@@ -82,6 +84,6 @@ public class BytesScalarTest {
 
   @Before
   public void before() {
-    scalar = new BytesScalar();
+    scalar = Scalars.bytesScalar();
   }
 }

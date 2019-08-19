@@ -14,11 +14,7 @@ package tech.pegasys.pantheon.ethereum.graphql;
 
 import static graphql.schema.idl.TypeRuntimeWiring.newTypeWiring;
 
-import tech.pegasys.pantheon.ethereum.graphql.internal.scalar.AddressScalar;
-import tech.pegasys.pantheon.ethereum.graphql.internal.scalar.BigIntScalar;
-import tech.pegasys.pantheon.ethereum.graphql.internal.scalar.Bytes32Scalar;
-import tech.pegasys.pantheon.ethereum.graphql.internal.scalar.BytesScalar;
-import tech.pegasys.pantheon.ethereum.graphql.internal.scalar.LongScalar;
+import tech.pegasys.pantheon.ethereum.graphql.internal.Scalars;
 
 import java.io.IOException;
 import java.net.URL;
@@ -54,11 +50,11 @@ public class GraphQLProvider {
 
   private static RuntimeWiring buildWiring(final GraphQLDataFetchers graphQLDataFetchers) {
     return RuntimeWiring.newRuntimeWiring()
-        .scalar(new AddressScalar())
-        .scalar(new Bytes32Scalar())
-        .scalar(new BytesScalar())
-        .scalar(new LongScalar())
-        .scalar(new BigIntScalar())
+        .scalar(Scalars.addressScalar())
+        .scalar(Scalars.bigIntScalar())
+        .scalar(Scalars.bytesScalar())
+        .scalar(Scalars.bytes32Scalar())
+        .scalar(Scalars.longScalar())
         .type(
             newTypeWiring("Query")
                 .dataFetcher("account", graphQLDataFetchers.getAccountDataFetcher())

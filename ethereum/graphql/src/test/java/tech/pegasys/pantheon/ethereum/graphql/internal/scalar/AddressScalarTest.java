@@ -15,11 +15,13 @@ package tech.pegasys.pantheon.ethereum.graphql.internal.scalar;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.pantheon.ethereum.core.Address;
+import tech.pegasys.pantheon.ethereum.graphql.internal.Scalars;
 
 import graphql.language.StringValue;
 import graphql.schema.CoercingParseLiteralException;
 import graphql.schema.CoercingParseValueException;
 import graphql.schema.CoercingSerializeException;
+import graphql.schema.GraphQLScalarType;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -30,7 +32,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class AddressScalarTest {
 
-  private AddressScalar scalar;
+  private GraphQLScalarType scalar;
   @Rule public ExpectedException thrown = ExpectedException.none();
 
   private final String addrStr = "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f";
@@ -86,6 +88,6 @@ public class AddressScalarTest {
 
   @Before
   public void before() {
-    scalar = new AddressScalar();
+    scalar = Scalars.addressScalar();
   }
 }

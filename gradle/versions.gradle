@@ -24,7 +24,7 @@ dependencyManagement {
     dependency 'com.google.errorprone:error_prone_annotation:2.3.3'
     dependency 'com.google.errorprone:error_prone_test_helpers:2.3.3'
 
-    dependency 'com.graphql-java:graphql-java:12.0'
+    dependency 'com.graphql-java:graphql-java:13.0'
 
     dependency 'com.google.guava:guava:28.0-jre'
 
