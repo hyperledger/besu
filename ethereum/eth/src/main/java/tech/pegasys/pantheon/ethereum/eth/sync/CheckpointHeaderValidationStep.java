@@ -39,16 +39,24 @@ public class CheckpointHeaderValidationStep<C>
 
   @Override
   public Stream<BlockHeader> apply(final CheckpointRangeHeaders checkpointRangeHeaders) {
-    final BlockHeader expectedParent = checkpointRangeHeaders.getCheckpointRange().getStart();
+    final BlockHeader rangeStart = checkpointRangeHeaders.getCheckpointRange().getStart();
     final BlockHeader firstHeaderToImport = checkpointRangeHeaders.getFirstHeaderToImport();
 
-    if (isValid(expectedParent, firstHeaderToImport)) {
+    if (isValid(rangeStart, firstHeaderToImport)) {
       return checkpointRangeHeaders.getHeadersToImport().stream();
     } else {
+      final BlockHeader rangeEnd = checkpointRangeHeaders.getCheckpointRange().getEnd();
+      final String errorMessage =
+          String.format(
+              "Invalid checkpoint headers.  Headers downloaded between #%d (%s) and #%d (%s) do not connect at #%d (%s)",
+              rangeStart.getNumber(),
+              rangeStart.getHash(),
+              rangeEnd.getNumber(),
+              rangeEnd.getHash(),
+              firstHeaderToImport.getNumber(),
+              firstHeaderToImport.getHash());
       throw new InvalidBlockException(
-          "Provided first header does not connect to last header.",
-          expectedParent.getNumber(),
-          expectedParent.getHash());
+          errorMessage, firstHeaderToImport.getNumber(), firstHeaderToImport.getHash());
     }
   }
 

@@ -24,6 +24,7 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.Optional;
 import java.util.Set;
 
 public class MockPeerConnection implements PeerConnection {
@@ -35,6 +36,7 @@ public class MockPeerConnection implements PeerConnection {
   private final BytesValue nodeId;
   private final Peer peer;
   private final PeerInfo peerInfo;
+  private Optional<DisconnectReason> disconnectReason = Optional.empty();
 
   public MockPeerConnection(final Set<Capability> caps, final PeerSendHandler onSend) {
     this.caps = caps;
@@ -84,7 +86,16 @@ public class MockPeerConnection implements PeerConnection {
 
   @Override
   public void disconnect(final DisconnectReason reason) {
+    if (disconnected) {
+      // Already disconnected
+      return;
+    }
+    disconnectReason = Optional.of(reason);
     disconnected = true;
+  }
+
+  public Optional<DisconnectReason> getDisconnectReason() {
+    return disconnectReason;
   }
 
   @Override

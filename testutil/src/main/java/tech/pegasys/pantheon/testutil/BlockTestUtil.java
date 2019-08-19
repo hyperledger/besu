@@ -29,25 +29,67 @@ import com.google.common.io.Resources;
 
 public final class BlockTestUtil {
 
-  private static final Supplier<URL> blockchainURLSupplier =
-      Suppliers.memoize(BlockTestUtil::supplyTestBlockchainURL);
-  private static final Supplier<URL> genesisURLSupplier =
-      Suppliers.memoize(BlockTestUtil::supplyTestGenesisURL);
-
-  private static URL supplyTestBlockchainURL() {
-    return ensureFileUrl(BlockTestUtil.class.getClassLoader().getResource("testBlockchain.blocks"));
-  }
-
-  private static URL supplyTestGenesisURL() {
-    return ensureFileUrl(BlockTestUtil.class.getClassLoader().getResource("testGenesis.json"));
-  }
+  private static final Supplier<ChainResources> testChainSupplier =
+      Suppliers.memoize(BlockTestUtil::supplyTestChainResources);
+  private static final Supplier<ChainResources> forkOutdatedSupplier =
+      Suppliers.memoize(BlockTestUtil::supplyOutdatedForkResources);
+  private static final Supplier<ChainResources> forkUpgradedSupplier =
+      Suppliers.memoize(BlockTestUtil::supplyUpgradedForkResources);
 
   public static URL getTestBlockchainUrl() {
-    return blockchainURLSupplier.get();
+    return getTestChainResources().getBlocksURL();
   }
 
   public static URL getTestGenesisUrl() {
-    return genesisURLSupplier.get();
+    return getTestChainResources().getGenesisURL();
+  }
+
+  public static ChainResources getTestChainResources() {
+    return testChainSupplier.get();
+  }
+
+  public static ChainResources getOutdatedForkResources() {
+    return forkOutdatedSupplier.get();
+  }
+
+  public static ChainResources getUpgradedForkResources() {
+    return forkUpgradedSupplier.get();
+  }
+
+  private static ChainResources supplyTestChainResources() {
+    final URL genesisURL =
+        ensureFileUrl(BlockTestUtil.class.getClassLoader().getResource("testGenesis.json"));
+    final URL blocksURL =
+        ensureFileUrl(BlockTestUtil.class.getClassLoader().getResource("testBlockchain.blocks"));
+    return new ChainResources(genesisURL, blocksURL);
+  }
+
+  private static ChainResources supplyOutdatedForkResources() {
+    final URL genesisURL =
+        ensureFileUrl(
+            BlockTestUtil.class
+                .getClassLoader()
+                .getResource("fork-chain-data/genesis-outdated.json"));
+    final URL blocksURL =
+        ensureFileUrl(
+            BlockTestUtil.class
+                .getClassLoader()
+                .getResource("fork-chain-data/fork-outdated.blocks"));
+    return new ChainResources(genesisURL, blocksURL);
+  }
+
+  private static ChainResources supplyUpgradedForkResources() {
+    final URL genesisURL =
+        ensureFileUrl(
+            BlockTestUtil.class
+                .getClassLoader()
+                .getResource("fork-chain-data/genesis-upgraded.json"));
+    final URL blocksURL =
+        ensureFileUrl(
+            BlockTestUtil.class
+                .getClassLoader()
+                .getResource("fork-chain-data/fork-upgraded.blocks"));
+    return new ChainResources(genesisURL, blocksURL);
   }
 
   /** Take a resource URL and if needed copy it to a temp file and return that URL. */
@@ -82,6 +124,24 @@ public final class BlockTestUtil {
           StandardOpenOption.TRUNCATE_EXISTING);
     } catch (final IOException ex) {
       throw new IllegalStateException(ex);
+    }
+  }
+
+  public static class ChainResources {
+    private final URL genesisURL;
+    private final URL blocksURL;
+
+    public ChainResources(final URL genesisURL, final URL blocksURL) {
+      this.genesisURL = genesisURL;
+      this.blocksURL = blocksURL;
+    }
+
+    public URL getGenesisURL() {
+      return genesisURL;
+    }
+
+    public URL getBlocksURL() {
+      return blocksURL;
     }
   }
 }

@@ -50,11 +50,12 @@ public class CheckpointHeaderValidationStepTest {
   private CheckpointHeaderValidationStep<Void> validationStep;
 
   private final BlockHeader checkpointStart = gen.header(10);
+  private final BlockHeader checkpointEnd = gen.header(13);
   private final BlockHeader firstHeader = gen.header(11);
   private final CheckpointRangeHeaders rangeHeaders =
       new CheckpointRangeHeaders(
-          new CheckpointRange(syncTarget, checkpointStart, gen.header(13)),
-          asList(firstHeader, gen.header(12), gen.header(13)));
+          new CheckpointRange(syncTarget, checkpointStart, checkpointEnd),
+          asList(firstHeader, gen.header(12), checkpointEnd));
 
   @Before
   public void setUp() {
@@ -88,6 +89,20 @@ public class CheckpointHeaderValidationStepTest {
             firstHeader, checkpointStart, protocolContext, DETACHED_ONLY))
         .thenReturn(false);
     assertThatThrownBy(() -> validationStep.apply(rangeHeaders))
-        .isInstanceOf(InvalidBlockException.class);
+        .isInstanceOf(InvalidBlockException.class)
+        .hasMessageContaining(
+            "Invalid checkpoint headers.  Headers downloaded between #"
+                + checkpointStart.getNumber()
+                + " ("
+                + checkpointStart.getHash()
+                + ") and #"
+                + checkpointEnd.getNumber()
+                + " ("
+                + checkpointEnd.getHash()
+                + ") do not connect at #"
+                + firstHeader.getNumber()
+                + " ("
+                + firstHeader.getHash()
+                + ")");
   }
 }

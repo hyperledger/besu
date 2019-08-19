@@ -19,6 +19,7 @@ import tech.pegasys.pantheon.ethereum.core.SyncStatus;
 import tech.pegasys.pantheon.ethereum.core.Synchronizer.SyncStatusListener;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeers;
+import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import tech.pegasys.pantheon.util.Subscribers;
 
 import java.util.Optional;
@@ -104,6 +105,10 @@ public class SyncState {
         .map(EthPeer::chainState)
         .map(chainState -> chainState.getEstimatedHeight() - chainHead.getHeight() <= syncTolerance)
         .orElse(true);
+  }
+
+  public void disconnectSyncTarget(final DisconnectReason reason) {
+    syncTarget.ifPresent(syncTarget -> syncTarget.peer().disconnect(reason));
   }
 
   public void clearSyncTarget() {

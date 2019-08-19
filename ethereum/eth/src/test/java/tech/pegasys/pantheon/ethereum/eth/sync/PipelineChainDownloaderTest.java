@@ -32,7 +32,7 @@ import tech.pegasys.pantheon.ethereum.eth.manager.EthScheduler;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncTarget;
 import tech.pegasys.pantheon.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
-import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
+import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.services.pipeline.Pipeline;
 
@@ -46,7 +46,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -255,20 +254,42 @@ public class PipelineChainDownloaderTest {
   }
 
   @Test
-  public void shouldDisconnectPeerIfInvalidBlockException() {
+  public void shouldDisconnectSyncTargetOnInvalidBlockException_finishedDownloading_cancelled() {
+    testInvalidBlockHandling(true, true);
+  }
+
+  @Test
+  public void
+      shouldDisconnectSyncTargetOnInvalidBlockException_notFinishedDownloading_notCancelled() {
+    testInvalidBlockHandling(false, false);
+  }
+
+  @Test
+  public void shouldDisconnectSyncTargetOnInvalidBlockException_finishedDownloading_notCancelled() {
+    testInvalidBlockHandling(true, false);
+  }
+
+  @Test
+  public void shouldDisconnectSyncTargetOnInvalidBlockException_notFinishedDownloading_cancelled() {
+    testInvalidBlockHandling(false, true);
+  }
+
+  public void testInvalidBlockHandling(
+      final boolean isFinishedDownloading, final boolean isCancelled) {
     final CompletableFuture<SyncTarget> selectTargetFuture = new CompletableFuture<>();
-    when(syncTargetManager.shouldContinueDownloading()).thenReturn(false);
+    when(syncTargetManager.shouldContinueDownloading()).thenReturn(isFinishedDownloading);
     when(syncTargetManager.findSyncTarget(Optional.empty()))
         .thenReturn(selectTargetFuture)
         .thenReturn(new CompletableFuture<>());
-    final EthPeer ethPeer = Mockito.mock(EthPeer.class);
-    final BlockHeader commonAncestor = Mockito.mock(BlockHeader.class);
-    final SyncTarget target = new SyncTarget(ethPeer, commonAncestor);
-    when(syncState.syncTarget()).thenReturn(Optional.of(target));
+
     chainDownloader.start();
     verify(syncTargetManager).findSyncTarget(Optional.empty());
+    if (isCancelled) {
+      chainDownloader.cancel();
+    }
     selectTargetFuture.completeExceptionally(new InvalidBlockException("", 1, null));
-    verify(ethPeer).disconnect(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL);
+
+    verify(syncState, times(1)).disconnectSyncTarget(DisconnectReason.BREACH_OF_PROTOCOL);
   }
 
   private CompletableFuture<Void> expectPipelineStarted(final SyncTarget syncTarget) {

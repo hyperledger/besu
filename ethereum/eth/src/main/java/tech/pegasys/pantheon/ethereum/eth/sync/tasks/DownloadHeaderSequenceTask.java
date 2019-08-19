@@ -204,7 +204,7 @@ public class DownloadHeaderSequenceTask<C> extends AbstractRetryingPeerTask<List
               headersResult.getPeer().disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
               future.completeExceptionally(
                   new InvalidBlockException(
-                      "Invalid header", header.getNumber(), header.getHash()));
+                      "Header failed validation.", child.getNumber(), child.getHash()));
               return future;
             }
             headers[headerIndex] = header;

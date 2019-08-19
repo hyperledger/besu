@@ -21,7 +21,7 @@ import tech.pegasys.pantheon.ethereum.eth.manager.exceptions.EthTaskException;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncTarget;
 import tech.pegasys.pantheon.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
-import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
+import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import tech.pegasys.pantheon.metrics.Counter;
 import tech.pegasys.pantheon.metrics.LabelledMetric;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
@@ -115,21 +115,19 @@ public class PipelineChainDownloader<C> implements ChainDownloader {
 
   private CompletionStage<Void> handleFailedDownload(final Throwable error) {
     pipelineErrorCounter.inc();
+    if (ExceptionUtils.rootCause(error) instanceof InvalidBlockException) {
+      LOG.warn(
+          "Invalid block detected.  Disconnecting from sync target. {}",
+          ExceptionUtils.rootCause(error).getMessage());
+      syncState.disconnectSyncTarget(DisconnectReason.BREACH_OF_PROTOCOL);
+    }
+
     if (!cancelled.get()
         && syncTargetManager.shouldContinueDownloading()
         && !(ExceptionUtils.rootCause(error) instanceof CancellationException)) {
       logDownloadFailure("Chain download failed. Restarting after short delay.", error);
       // Allowing the normal looping logic to retry after a brief delay.
       return scheduler.scheduleFutureTask(() -> completedFuture(null), PAUSE_AFTER_ERROR_DURATION);
-    }
-    if (ExceptionUtils.rootCause(error) instanceof InvalidBlockException) {
-      syncState
-          .syncTarget()
-          .ifPresent(
-              syncTarget ->
-                  syncTarget
-                      .peer()
-                      .disconnect(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL));
     }
 
     logDownloadFailure("Chain download failed.", error);
@@ -141,9 +139,10 @@ public class PipelineChainDownloader<C> implements ChainDownloader {
     final Throwable rootCause = ExceptionUtils.rootCause(error);
     if (rootCause instanceof CancellationException || rootCause instanceof InterruptedException) {
       LOG.trace(message, error);
-    } else if (rootCause instanceof EthTaskException
-        || rootCause instanceof InvalidBlockException) {
+    } else if (rootCause instanceof EthTaskException) {
       LOG.debug(message, error);
+    } else if (rootCause instanceof InvalidBlockException) {
+      LOG.warn(message, error);
     } else {
       LOG.error(message, error);
     }

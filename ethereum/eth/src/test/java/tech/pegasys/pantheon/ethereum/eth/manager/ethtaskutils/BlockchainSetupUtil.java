@@ -16,6 +16,7 @@ import static org.assertj.core.util.Preconditions.checkArgument;
 import static tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider.createInMemoryBlockchain;
 import static tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider.createInMemoryWorldStateArchive;
 
+import tech.pegasys.pantheon.config.GenesisConfigFile;
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.chain.GenesisState;
@@ -32,6 +33,7 @@ import tech.pegasys.pantheon.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import tech.pegasys.pantheon.ethereum.util.RawBlockIterator;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 import tech.pegasys.pantheon.testutil.BlockTestUtil;
+import tech.pegasys.pantheon.testutil.BlockTestUtil.ChainResources;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -91,15 +93,28 @@ public class BlockchainSetupUtil<C> {
   }
 
   public static BlockchainSetupUtil<Void> forTesting() {
-    final ProtocolSchedule<Void> protocolSchedule = MainnetProtocolSchedule.create();
+    return createEthashChain(BlockTestUtil.getTestChainResources());
+  }
+
+  public static BlockchainSetupUtil<Void> forOutdatedFork() {
+    return createEthashChain(BlockTestUtil.getOutdatedForkResources());
+  }
+
+  public static BlockchainSetupUtil<Void> forUpgradedFork() {
+    return createEthashChain(BlockTestUtil.getUpgradedForkResources());
+  }
+
+  private static BlockchainSetupUtil<Void> createEthashChain(final ChainResources chainResources) {
     final TemporaryFolder temp = new TemporaryFolder();
     try {
       temp.create();
-      final String genesisJson =
-          Resources.toString(BlockTestUtil.getTestGenesisUrl(), Charsets.UTF_8);
+      final String genesisJson = Resources.toString(chainResources.getGenesisURL(), Charsets.UTF_8);
+
+      final GenesisConfigFile genesisConfigFile = GenesisConfigFile.fromConfig(genesisJson);
+      final ProtocolSchedule<Void> protocolSchedule =
+          MainnetProtocolSchedule.fromConfig(genesisConfigFile.getConfigOptions());
 
       final GenesisState genesisState = GenesisState.fromJson(genesisJson, protocolSchedule);
-
       final MutableBlockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
       final WorldStateArchive worldArchive = createInMemoryWorldStateArchive();
 
@@ -107,7 +122,7 @@ public class BlockchainSetupUtil<C> {
       final ProtocolContext<Void> protocolContext =
           new ProtocolContext<>(blockchain, worldArchive, null);
 
-      final Path blocksPath = Path.of(BlockTestUtil.getTestBlockchainUrl().toURI());
+      final Path blocksPath = Path.of(chainResources.getBlocksURL().toURI());
       final List<Block> blocks = new ArrayList<>();
       final BlockHeaderFunctions blockHeaderFunctions =
           ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
