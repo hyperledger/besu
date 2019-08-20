@@ -70,8 +70,8 @@ public class EVM {
         frame,
         currentGasCost,
         () -> {
-          checkForExceptionalHalt(frame);
           logState(frame, currentGasCost);
+          checkForExceptionalHalt(frame);
           decrementRemainingGas(frame, currentGasCost);
           frame.getCurrentOperation().execute(frame);
           incrementProgramCounter(frame);
@@ -106,6 +106,7 @@ public class EVM {
   private void checkForExceptionalHalt(final MessageFrame frame) throws ExceptionalHaltException {
     final EnumSet<ExceptionalHaltReason> exceptionalHaltReasons = frame.getExceptionalHaltReasons();
     if (!exceptionalHaltReasons.isEmpty()) {
+      LOG.trace("MessageFrame evaluation halted because of {}", exceptionalHaltReasons);
       frame.setState(State.EXCEPTIONAL_HALT);
       frame.setOutputData(BytesValue.EMPTY);
       throw new ExceptionalHaltException(exceptionalHaltReasons);
