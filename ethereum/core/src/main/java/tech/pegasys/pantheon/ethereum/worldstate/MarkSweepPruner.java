@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.worldstate;
 
+import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.rlp.RLP;
 import tech.pegasys.pantheon.ethereum.trie.MerklePatriciaTrie;
@@ -31,14 +32,18 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class MarkSweepPruner {
+  private static final int DEFAULT_OPS_PER_TRANSACTION = 1000;
   private static final Logger LOG = LogManager.getLogger();
   private static final BytesValue IN_USE = BytesValue.of(1);
-  private static final int MARKS_PER_TRANSACTION = 1000;
+
+  private final int operationsPerTransaction;
   private final WorldStateStorage worldStateStorage;
+  private final MutableBlockchain blockchain;
   private final KeyValueStorage markStorage;
   private final Counter markedNodesCounter;
   private final Counter markOperationCounter;
@@ -50,10 +55,22 @@ public class MarkSweepPruner {
 
   public MarkSweepPruner(
       final WorldStateStorage worldStateStorage,
+      final MutableBlockchain blockchain,
       final KeyValueStorage markStorage,
       final MetricsSystem metricsSystem) {
+    this(worldStateStorage, blockchain, markStorage, metricsSystem, DEFAULT_OPS_PER_TRANSACTION);
+  }
+
+  public MarkSweepPruner(
+      final WorldStateStorage worldStateStorage,
+      final MutableBlockchain blockchain,
+      final KeyValueStorage markStorage,
+      final MetricsSystem metricsSystem,
+      final int operationsPerTransaction) {
     this.worldStateStorage = worldStateStorage;
     this.markStorage = markStorage;
+    this.blockchain = blockchain;
+    this.operationsPerTransaction = operationsPerTransaction;
 
     markedNodesCounter =
         metricsSystem.createCounter(
@@ -104,11 +121,34 @@ public class MarkSweepPruner {
     LOG.info("Completed marking used nodes for pruning");
   }
 
-  public void sweep() {
+  public void sweepBefore(final long markedBlockNumber) {
     flushPendingMarks();
     sweepOperationCounter.inc();
     LOG.info("Sweeping unused nodes");
-    final long prunedNodeCount = worldStateStorage.prune(markStorage::containsKey);
+    // Sweep state roots first, walking backwards until we get to a state root that isn't in the
+    // storage
+    long prunedNodeCount = 0;
+    WorldStateStorage.Updater updater = worldStateStorage.updater();
+    for (long blockNumber = markedBlockNumber - 1; blockNumber >= 0; blockNumber--) {
+      final Hash candidateStateRootHash =
+          blockchain.getBlockHeader(blockNumber).get().getStateRoot();
+
+      if (!worldStateStorage.isWorldStateAvailable(candidateStateRootHash)) {
+        break;
+      }
+
+      if (!markStorage.containsKey(candidateStateRootHash)) {
+        updater.removeAccountStateTrieNode(candidateStateRootHash);
+        prunedNodeCount++;
+        if (prunedNodeCount % operationsPerTransaction == 0) {
+          updater.commit();
+          updater = worldStateStorage.updater();
+        }
+      }
+    }
+    updater.commit();
+    // Sweep non-state-root nodes
+    prunedNodeCount += worldStateStorage.prune(markStorage::containsKey);
     sweptNodesCounter.inc(prunedNodeCount);
     worldStateStorage.removeNodeAddedListener(nodeAddedListenerId);
     markStorage.clear();
@@ -139,7 +179,8 @@ public class MarkSweepPruner {
         .visitAll(storageNode -> markNode(storageNode.getHash()));
   }
 
-  private void markNode(final Bytes32 hash) {
+  @VisibleForTesting
+  void markNode(final Bytes32 hash) {
     markedNodesCounter.inc();
     markLock.lock();
     try {
@@ -151,7 +192,7 @@ public class MarkSweepPruner {
   }
 
   private void maybeFlushPendingMarks() {
-    if (pendingMarks.size() > MARKS_PER_TRANSACTION) {
+    if (pendingMarks.size() > operationsPerTransaction) {
       flushPendingMarks();
     }
   }

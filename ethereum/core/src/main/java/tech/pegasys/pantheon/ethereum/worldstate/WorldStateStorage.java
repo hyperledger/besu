@@ -46,6 +46,8 @@ public interface WorldStateStorage {
 
   interface Updater {
 
+    Updater removeAccountStateTrieNode(Bytes32 nodeHash);
+
     Updater putCode(Bytes32 nodeHash, BytesValue code);
 
     default Updater putCode(final BytesValue code) {

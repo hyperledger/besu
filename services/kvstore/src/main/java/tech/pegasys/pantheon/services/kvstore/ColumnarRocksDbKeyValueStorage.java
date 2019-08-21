@@ -171,7 +171,7 @@ public class ColumnarRocksDbKeyValueStorage
         rocksIterator.next();
       }
     } catch (final RocksDBException e) {
-      throw new KeyValueStorage.StorageException(e);
+      throw new StorageException(e);
     }
     return removedNodeCounter;
   }
@@ -188,7 +188,7 @@ public class ColumnarRocksDbKeyValueStorage
         }
       }
     } catch (final RocksDBException e) {
-      throw new KeyValueStorage.StorageException(e);
+      throw new StorageException(e);
     }
   }
 

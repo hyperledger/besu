@@ -14,7 +14,6 @@ package tech.pegasys.pantheon.services.kvstore;
 
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -27,8 +26,16 @@ import java.util.function.Predicate;
 
 public class InMemoryKeyValueStorage implements KeyValueStorage {
 
-  private final Map<BytesValue, BytesValue> hashValueStore = new HashMap<>();
+  private final Map<BytesValue, BytesValue> hashValueStore;
   private final ReadWriteLock rwLock = new ReentrantReadWriteLock();
+
+  public InMemoryKeyValueStorage() {
+    this(new HashMap<>());
+  }
+
+  protected InMemoryKeyValueStorage(final Map<BytesValue, BytesValue> hashValueStore) {
+    this.hashValueStore = hashValueStore;
+  }
 
   @Override
   public void clear() {
@@ -68,8 +75,15 @@ public class InMemoryKeyValueStorage implements KeyValueStorage {
 
   @Override
   public long removeUnless(final Predicate<BytesValue> inUseCheck) {
-    hashValueStore.keySet().removeIf(key -> !inUseCheck.test(key));
-    return 0;
+    final Lock lock = rwLock.writeLock();
+    lock.lock();
+    try {
+      long initialSize = hashValueStore.keySet().size();
+      hashValueStore.keySet().removeIf(key -> !inUseCheck.test(key));
+      return initialSize - hashValueStore.keySet().size();
+    } finally {
+      lock.unlock();
+    }
   }
 
   @Override
@@ -78,7 +92,7 @@ public class InMemoryKeyValueStorage implements KeyValueStorage {
   }
 
   public Set<BytesValue> keySet() {
-    return Collections.unmodifiableSet(new HashSet<>(hashValueStore.keySet()));
+    return Set.copyOf(hashValueStore.keySet());
   }
 
   private class InMemoryTransaction extends AbstractTransaction {
@@ -104,7 +118,7 @@ public class InMemoryKeyValueStorage implements KeyValueStorage {
       lock.lock();
       try {
         hashValueStore.putAll(updatedValues);
-        removedKeys.forEach(k -> hashValueStore.remove(k));
+        removedKeys.forEach(hashValueStore::remove);
         updatedValues = null;
         removedKeys = null;
       } finally {

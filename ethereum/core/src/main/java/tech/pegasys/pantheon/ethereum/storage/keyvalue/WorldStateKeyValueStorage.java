@@ -111,6 +111,12 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
     }
 
     @Override
+    public Updater removeAccountStateTrieNode(final Bytes32 nodeHash) {
+      transaction.remove(nodeHash);
+      return this;
+    }
+
+    @Override
     public Updater putCode(final Bytes32 codeHash, final BytesValue code) {
       if (code.size() == 0) {
         // Don't save empty values

@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.ethereum.worldstate;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -68,7 +69,7 @@ public class PrunerTest {
     appendBlockWithParent(blockchain, blockchain.getChainHeadBlock());
 
     verify(markSweepPruner).mark(block1.getHeader().getStateRoot());
-    verify(markSweepPruner).sweep();
+    verify(markSweepPruner).sweepBefore(1);
     pruner.stop();
   }
 
@@ -87,14 +88,14 @@ public class PrunerTest {
     final Hash markBlockStateRootHash =
         appendBlockWithParent(blockchain, genesisBlock).getHeader().getStateRoot();
     verify(markSweepPruner, never()).mark(markBlockStateRootHash);
-    verify(markSweepPruner, never()).sweep();
+    verify(markSweepPruner, never()).sweepBefore(anyLong());
 
     appendBlockWithParent(blockchain, blockchain.getChainHeadBlock());
     verify(markSweepPruner).mark(markBlockStateRootHash);
-    verify(markSweepPruner, never()).sweep();
+    verify(markSweepPruner, never()).sweepBefore(anyLong());
 
     appendBlockWithParent(blockchain, blockchain.getChainHeadBlock());
-    verify(markSweepPruner).sweep();
+    verify(markSweepPruner).sweepBefore(1);
     pruner.stop();
   }
 
@@ -113,7 +114,7 @@ public class PrunerTest {
 
     /*
      Set up pre-marking state:
-      O <---- marking of the this block's parent will begin when this block is added
+      O <---- marking of this block's parent will begin when this block is added
       |
       |  O <- this is a fork as of now (non-canonical)
       O  | <- this is the initially canonical block that will be marked
@@ -135,7 +136,7 @@ public class PrunerTest {
     */
     appendBlockWithParent(blockchain, forkBlock);
     verify(markSweepPruner).mark(initiallyCanonicalBlock.getHeader().getStateRoot());
-    verify(markSweepPruner, never()).sweep();
+    verify(markSweepPruner, never()).sweepBefore(anyLong());
     pruner.stop();
   }
 
