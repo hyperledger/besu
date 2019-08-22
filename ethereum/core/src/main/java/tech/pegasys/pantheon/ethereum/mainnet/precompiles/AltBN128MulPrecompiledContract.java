@@ -42,7 +42,7 @@ public class AltBN128MulPrecompiledContract extends AbstractPrecompiledContract 
   }
 
   public static AltBN128MulPrecompiledContract istanbul(final GasCalculator gasCalculator) {
-    return new AltBN128MulPrecompiledContract(gasCalculator, Gas.of(8_000));
+    return new AltBN128MulPrecompiledContract(gasCalculator, Gas.of(6_000));
   }
 
   @Override
