@@ -28,8 +28,10 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+@JsonIgnoreProperties("comment")
 public class BlockData {
 
   private final Optional<Long> number;

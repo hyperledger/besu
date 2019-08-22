@@ -4,7 +4,7 @@
       "number": 7,
       "transactions": [
         {
-          "fromPrivateKey": "0x8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63",
+          "secretKey": "0x8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63",
           "gasLimit": "0xFFFFF2",
           "gasPrice": "0xEF",
           "to": "0x1000000000000000000000000000000000000000",

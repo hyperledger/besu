@@ -24,8 +24,10 @@ import tech.pegasys.pantheon.util.uint.UInt256;
 import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+@JsonIgnoreProperties("comment")
 public class TransactionData {
 
   private final long gasLimit;
@@ -42,13 +44,13 @@ public class TransactionData {
       @JsonProperty("data") final Optional<String> data,
       @JsonProperty("value") final Optional<String> value,
       @JsonProperty("to") final Optional<String> to,
-      @JsonProperty("fromPrivateKey") final String fromPrivateKey) {
+      @JsonProperty("secretKey") final String secretKey) {
     this.gasLimit = UInt256.fromHexString(gasLimit).toLong();
     this.gasPrice = Wei.fromHexString(gasPrice);
     this.data = data.map(BytesValue::fromHexString).orElse(BytesValue.EMPTY);
     this.value = value.map(Wei::fromHexString).orElse(Wei.ZERO);
     this.to = to.map(Address::fromHexString);
-    this.privateKey = PrivateKey.create(Bytes32.fromHexString(fromPrivateKey));
+    this.privateKey = PrivateKey.create(Bytes32.fromHexString(secretKey));
   }
 
   public Transaction getSignedTransaction(final NonceProvider nonceProvider) {

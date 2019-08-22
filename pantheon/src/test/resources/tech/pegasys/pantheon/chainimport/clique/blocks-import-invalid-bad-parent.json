@@ -4,7 +4,7 @@
       "number": "0x0999",
       "transactions": [
         {
-          "fromPrivateKey": "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63",
+          "secretKey": "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63",
           "gasLimit": "0xFFFFF1",
           "gasPrice": "0xFF",
           "value": "0x01",
