@@ -15,6 +15,7 @@ package tech.pegasys.pantheon.ethereum.eth.transactions;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
@@ -159,7 +160,7 @@ public class PendingTransactionsTest {
 
   @Test
   public void shouldNotifyListenerWhenRemoteTransactionAdded() {
-    transactions.addTransactionListener(listener);
+    transactions.subscribePendingTransactions(listener);
 
     transactions.addRemoteTransaction(transaction1);
 
@@ -167,8 +168,23 @@ public class PendingTransactionsTest {
   }
 
   @Test
+  public void shouldNotNotifyListenerAfterUnsubscribe() {
+    final long id = transactions.subscribePendingTransactions(listener);
+
+    transactions.addRemoteTransaction(transaction1);
+
+    verify(listener).onTransactionAdded(transaction1);
+
+    transactions.unsubscribePendingTransactions(id);
+
+    transactions.addRemoteTransaction(transaction2);
+
+    verifyZeroInteractions(listener);
+  }
+
+  @Test
   public void shouldNotifyListenerWhenLocalTransactionAdded() {
-    transactions.addTransactionListener(listener);
+    transactions.subscribePendingTransactions(listener);
 
     transactions.addLocalTransaction(transaction1);
 
@@ -179,7 +195,7 @@ public class PendingTransactionsTest {
   public void shouldNotifyDroppedListenerWhenRemoteTransactionDropped() {
     transactions.addRemoteTransaction(transaction1);
 
-    transactions.addTransactionDroppedListener(droppedListener);
+    transactions.subscribeDroppedTransactions(droppedListener);
 
     transactions.removeTransaction(transaction1);
 
@@ -187,10 +203,28 @@ public class PendingTransactionsTest {
   }
 
   @Test
+  public void shouldNotNotifyDroppedListenerAfterUnsubscribe() {
+    transactions.addRemoteTransaction(transaction1);
+    transactions.addRemoteTransaction(transaction2);
+
+    final long id = transactions.subscribeDroppedTransactions(droppedListener);
+
+    transactions.removeTransaction(transaction1);
+
+    verify(droppedListener).onTransactionDropped(transaction1);
+
+    transactions.unsubscribeDroppedTransactions(id);
+
+    transactions.removeTransaction(transaction2);
+
+    verifyNoMoreInteractions(droppedListener);
+  }
+
+  @Test
   public void shouldNotifyDroppedListenerWhenLocalTransactionDropped() {
     transactions.addLocalTransaction(transaction1);
 
-    transactions.addTransactionDroppedListener(droppedListener);
+    transactions.subscribeDroppedTransactions(droppedListener);
 
     transactions.removeTransaction(transaction1);
 
@@ -201,7 +235,7 @@ public class PendingTransactionsTest {
   public void shouldNotNotifyDroppedListenerWhenTransactionAddedToBlock() {
     transactions.addRemoteTransaction(transaction1);
 
-    transactions.addTransactionDroppedListener(droppedListener);
+    transactions.subscribeDroppedTransactions(droppedListener);
 
     transactions.transactionAddedToBlock(transaction1);
 
@@ -310,7 +344,7 @@ public class PendingTransactionsTest {
     final Transaction transaction1b = transactionWithNonceSenderAndGasPrice(1, KEYS1, 1);
     assertThat(transactions.addRemoteTransaction(transaction1)).isTrue();
 
-    transactions.addTransactionListener(listener);
+    transactions.subscribePendingTransactions(listener);
     assertThat(transactions.addRemoteTransaction(transaction1b)).isFalse();
 
     assertTransactionNotPending(transaction1b);

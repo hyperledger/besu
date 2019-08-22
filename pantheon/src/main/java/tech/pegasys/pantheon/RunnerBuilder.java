@@ -598,8 +598,8 @@ public class RunnerBuilder {
         new PendingTransactionSubscriptionService(subscriptionManager);
     final PendingTransactionDroppedSubscriptionService pendingTransactionsRemoved =
         new PendingTransactionDroppedSubscriptionService(subscriptionManager);
-    transactionPool.addTransactionListener(pendingTransactions);
-    transactionPool.addTransactionDroppedListener(pendingTransactionsRemoved);
+    transactionPool.subscribePendingTransactions(pendingTransactions);
+    transactionPool.subscribeDroppedTransactions(pendingTransactionsRemoved);
     vertx.deployVerticle(subscriptionManager);
 
     return subscriptionManager;

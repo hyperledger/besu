@@ -162,12 +162,20 @@ public class TransactionPool implements BlockAddedObserver {
     }
   }
 
-  public void addTransactionListener(final PendingTransactionListener listener) {
-    pendingTransactions.addTransactionListener(listener);
+  public long subscribePendingTransactions(final PendingTransactionListener listener) {
+    return pendingTransactions.subscribePendingTransactions(listener);
   }
 
-  public void addTransactionDroppedListener(final PendingTransactionDroppedListener listener) {
-    pendingTransactions.addTransactionDroppedListener(listener);
+  public void unsubscribePendingTransactions(final long id) {
+    pendingTransactions.unsubscribePendingTransactions(id);
+  }
+
+  public long subscribeDroppedTransactions(final PendingTransactionDroppedListener listener) {
+    return pendingTransactions.subscribeDroppedTransactions(listener);
+  }
+
+  public void unsubscribeDroppedTransactions(final long id) {
+    pendingTransactions.unsubscribeDroppedTransactions(id);
   }
 
   @Override

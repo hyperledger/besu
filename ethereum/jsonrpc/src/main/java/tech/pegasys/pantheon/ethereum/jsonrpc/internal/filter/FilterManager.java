@@ -48,7 +48,7 @@ public class FilterManager extends AbstractVerticle {
     this.filterRepository = filterRepository;
     checkNotNull(blockchainQueries.getBlockchain());
     blockchainQueries.getBlockchain().observeBlockAdded(this::recordBlockEvent);
-    transactionPool.addTransactionListener(this::recordPendingTransactionEvent);
+    transactionPool.subscribePendingTransactions(this::recordPendingTransactionEvent);
     this.blockchainQueries = blockchainQueries;
   }
 

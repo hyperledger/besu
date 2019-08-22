@@ -63,7 +63,8 @@ public class PendingTransactions {
   private final Map<Address, SortedMap<Long, TransactionInfo>> transactionsBySender =
       new HashMap<>();
 
-  private final Subscribers<PendingTransactionListener> listeners = Subscribers.create();
+  private final Subscribers<PendingTransactionListener> pendingTransactionSubscribers =
+      Subscribers.create();
 
   private final Subscribers<PendingTransactionDroppedListener> transactionDroppedListeners =
       Subscribers.create();
@@ -261,7 +262,7 @@ public class PendingTransactions {
   }
 
   private void notifyTransactionAdded(final Transaction transaction) {
-    listeners.forEach(listener -> listener.onTransactionAdded(transaction));
+    pendingTransactionSubscribers.forEach(listener -> listener.onTransactionAdded(transaction));
   }
 
   private void notifyTransactionDropped(final Transaction transaction) {
@@ -289,12 +290,20 @@ public class PendingTransactions {
     return new HashSet<>(pendingTransactions.values());
   }
 
-  void addTransactionListener(final PendingTransactionListener listener) {
-    listeners.subscribe(listener);
+  long subscribePendingTransactions(final PendingTransactionListener listener) {
+    return pendingTransactionSubscribers.subscribe(listener);
   }
 
-  void addTransactionDroppedListener(final PendingTransactionDroppedListener listener) {
-    transactionDroppedListeners.subscribe(listener);
+  void unsubscribePendingTransactions(final long id) {
+    pendingTransactionSubscribers.unsubscribe(id);
+  }
+
+  long subscribeDroppedTransactions(final PendingTransactionDroppedListener listener) {
+    return transactionDroppedListeners.subscribe(listener);
+  }
+
+  void unsubscribeDroppedTransactions(final long id) {
+    transactionDroppedListeners.unsubscribe(id);
   }
 
   public OptionalLong getNextNonceForSender(final Address sender) {

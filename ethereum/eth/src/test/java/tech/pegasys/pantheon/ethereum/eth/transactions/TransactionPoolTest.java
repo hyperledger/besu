@@ -224,7 +224,7 @@ public class TransactionPoolTest {
     final Block reorgFork1 = appendBlock(UInt256.ONE, commonParent);
     verifyChainHeadIs(originalFork2);
 
-    transactions.addTransactionListener(listener);
+    transactions.subscribePendingTransactions(listener);
     final Block reorgFork2 = appendBlock(UInt256.of(2000), reorgFork1.getHeader());
     verifyChainHeadIs(reorgFork2);
 
