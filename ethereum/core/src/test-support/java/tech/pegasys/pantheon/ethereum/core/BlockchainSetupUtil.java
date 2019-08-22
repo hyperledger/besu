@@ -10,7 +10,7 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.ethereum.eth.manager.ethtaskutils;
+package tech.pegasys.pantheon.ethereum.core;
 
 import static org.assertj.core.util.Preconditions.checkArgument;
 import static tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider.createInMemoryBlockchain;
@@ -21,10 +21,6 @@ import tech.pegasys.pantheon.ethereum.ProtocolContext;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.chain.GenesisState;
 import tech.pegasys.pantheon.ethereum.chain.MutableBlockchain;
-import tech.pegasys.pantheon.ethereum.core.Block;
-import tech.pegasys.pantheon.ethereum.core.BlockHeader;
-import tech.pegasys.pantheon.ethereum.core.BlockHeaderFunctions;
-import tech.pegasys.pantheon.ethereum.core.BlockImporter;
 import tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
@@ -88,12 +84,20 @@ public class BlockchainSetupUtil<C> {
     return blocks.get(index);
   }
 
+  public List<Block> getBlocks() {
+    return blocks;
+  }
+
   public int blockCount() {
     return blocks.size();
   }
 
   public static BlockchainSetupUtil<Void> forTesting() {
     return createEthashChain(BlockTestUtil.getTestChainResources());
+  }
+
+  public static BlockchainSetupUtil<Void> forMainnet() {
+    return createEthashChain(BlockTestUtil.getMainnetResources());
   }
 
   public static BlockchainSetupUtil<Void> forOutdatedFork() {

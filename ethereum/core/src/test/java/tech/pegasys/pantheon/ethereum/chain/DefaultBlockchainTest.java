@@ -529,7 +529,8 @@ public class DefaultBlockchainTest {
       blockchain.appendBlock(chain.get(i), blockReceipts.get(i));
     }
     final Block originalHead = blockchain.getChainHeadBlock();
-    final Block targetHead = blockchain.getBlockByHash(originalHead.getHeader().getParentHash());
+    final Block targetHead =
+        blockchain.getBlockByHash(originalHead.getHeader().getParentHash()).get();
 
     // rewind it by 1 block
     blockchain.rewindToBlock(targetHead.getHeader().getNumber());

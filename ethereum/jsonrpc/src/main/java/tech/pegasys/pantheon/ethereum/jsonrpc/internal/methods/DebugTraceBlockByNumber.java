@@ -29,18 +29,14 @@ import java.util.Optional;
 
 public class DebugTraceBlockByNumber extends AbstractBlockParameterMethod {
 
-  private final JsonRpcParameter parameters;
   private final BlockTracer blockTracer;
-  private final BlockchainQueries blockchain;
 
   public DebugTraceBlockByNumber(
       final JsonRpcParameter parameters,
       final BlockTracer blockTracer,
       final BlockchainQueries blockchain) {
     super(blockchain, parameters);
-    this.parameters = parameters;
     this.blockTracer = blockTracer;
-    this.blockchain = blockchain;
   }
 
   @Override
@@ -50,14 +46,14 @@ public class DebugTraceBlockByNumber extends AbstractBlockParameterMethod {
 
   @Override
   protected BlockParameter blockParameter(final JsonRpcRequest request) {
-    return parameters.required(request.getParams(), 0, BlockParameter.class);
+    return getParameters().required(request.getParams(), 0, BlockParameter.class);
   }
 
   @Override
   protected Object resultByBlockNumber(final JsonRpcRequest request, final long blockNumber) {
-    final Optional<Hash> blockHash = this.blockchain.getBlockHashByNumber(blockNumber);
+    final Optional<Hash> blockHash = getBlockchainQueries().getBlockHashByNumber(blockNumber);
     final TraceOptions traceOptions =
-        parameters
+        getParameters()
             .optional(request.getParams(), 1, TransactionTraceParams.class)
             .map(TransactionTraceParams::traceOptions)
             .orElse(TraceOptions.DEFAULT);

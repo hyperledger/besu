@@ -67,15 +67,17 @@ public interface Blockchain {
     final Hash genesisHash =
         getBlockHashByNumber(BlockHeader.GENESIS_BLOCK_NUMBER)
             .orElseThrow(() -> new IllegalStateException("Missing genesis block."));
-    return getBlockByHash(genesisHash);
+    return getBlockByHash(genesisHash)
+        .orElseThrow(() -> new IllegalStateException("Missing genesis block."));
   }
 
-  default Block getBlockByHash(final Hash blockHash) {
-    final BlockHeader header =
-        getBlockHeader(blockHash).orElseThrow(() -> new IllegalStateException("Missing block."));
-    final BlockBody body =
-        getBlockBody(blockHash).orElseThrow(() -> new IllegalStateException("Missing block."));
-    return new Block(header, body);
+  default Optional<Block> getBlockByHash(final Hash blockHash) {
+    return getBlockHeader(blockHash)
+        .flatMap(header -> getBlockBody(blockHash).map(body -> new Block(header, body)));
+  }
+
+  default Optional<Block> getBlockByNumber(final long number) {
+    return getBlockHashByNumber(number).flatMap(this::getBlockByHash);
   }
 
   /**

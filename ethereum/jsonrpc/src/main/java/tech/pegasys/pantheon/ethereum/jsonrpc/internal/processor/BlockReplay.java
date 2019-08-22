@@ -45,29 +45,30 @@ public class BlockReplay {
     this.worldStateArchive = worldStateArchive;
   }
 
-  public BlockTrace block(final Block block, final TransactionAction<TransactionTrace> action) {
+  public Optional<BlockTrace> block(
+      final Block block, final TransactionAction<TransactionTrace> action) {
     return performActionWithBlock(
-            block.getHeader(),
-            block.getBody(),
-            (body, header, blockchain, mutableWorldState, transactionProcessor) -> {
-              List<TransactionTrace> transactionTraces =
-                  body.getTransactions().stream()
-                      .map(
-                          transaction ->
-                              action.performAction(
-                                  transaction,
-                                  header,
-                                  blockchain,
-                                  mutableWorldState,
-                                  transactionProcessor))
-                      .collect(Collectors.toList());
-              return Optional.of(new BlockTrace(transactionTraces));
-            })
-        .orElse(null);
+        block.getHeader(),
+        block.getBody(),
+        (body, header, blockchain, mutableWorldState, transactionProcessor) -> {
+          List<TransactionTrace> transactionTraces =
+              body.getTransactions().stream()
+                  .map(
+                      transaction ->
+                          action.performAction(
+                              transaction,
+                              header,
+                              blockchain,
+                              mutableWorldState,
+                              transactionProcessor))
+                  .collect(Collectors.toList());
+          return Optional.of(new BlockTrace(transactionTraces));
+        });
   }
 
-  public BlockTrace block(final Hash blockHash, final TransactionAction<TransactionTrace> action) {
-    return getBlock(blockHash).map(block -> block(block, action)).orElse(null);
+  public Optional<BlockTrace> block(
+      final Hash blockHash, final TransactionAction<TransactionTrace> action) {
+    return getBlock(blockHash).flatMap(block -> block(block, action));
   }
 
   public <T> Optional<T> beforeTransactionInBlock(

@@ -17,7 +17,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
-import tech.pegasys.pantheon.ethereum.core.Hash;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -70,13 +69,13 @@ public abstract class BlockExporter {
 
     long blockNumber = 0L;
     for (long i = startBlock; i < endBlock; i++) {
-      Optional<Hash> blockHash = blockchain.getBlockHashByNumber(i);
-      if (blockHash.isEmpty()) {
+      Optional<Block> maybeBlock = blockchain.getBlockByNumber(i);
+      if (maybeBlock.isEmpty()) {
         LOG.warn("Unable to export blocks [{} - {}).  Blocks not found.", i, endBlock);
         break;
       }
 
-      final Block block = blockchain.getBlockByHash(blockHash.get());
+      final Block block = maybeBlock.get();
       blockNumber = block.getHeader().getNumber();
       if (blockNumber % 100 == 0) {
         LOG.info("Export at block {}", blockNumber);

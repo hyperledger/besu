@@ -1,0 +1,20 @@
+{
+  "request": {
+    "id": 415,
+    "jsonrpc": "2.0",
+    "method": "trace_replayBlockTransactions",
+    "params": [
+      "0x01",
+      ["bla"]
+    ]
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 415,
+    "error": {
+      "code": -32602,
+      "message": "Invalid params"
+    }
+  },
+  "statusCode": 400
+}

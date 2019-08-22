@@ -31,6 +31,8 @@ public final class BlockTestUtil {
 
   private static final Supplier<ChainResources> testChainSupplier =
       Suppliers.memoize(BlockTestUtil::supplyTestChainResources);
+  private static final Supplier<ChainResources> mainnetChainSupplier =
+      Suppliers.memoize(BlockTestUtil::supplyMainnetChainResources);
   private static final Supplier<ChainResources> forkOutdatedSupplier =
       Suppliers.memoize(BlockTestUtil::supplyOutdatedForkResources);
   private static final Supplier<ChainResources> forkUpgradedSupplier =
@@ -48,6 +50,10 @@ public final class BlockTestUtil {
     return testChainSupplier.get();
   }
 
+  public static ChainResources getMainnetResources() {
+    return mainnetChainSupplier.get();
+  }
+
   public static ChainResources getOutdatedForkResources() {
     return forkOutdatedSupplier.get();
   }
@@ -61,6 +67,15 @@ public final class BlockTestUtil {
         ensureFileUrl(BlockTestUtil.class.getClassLoader().getResource("testGenesis.json"));
     final URL blocksURL =
         ensureFileUrl(BlockTestUtil.class.getClassLoader().getResource("testBlockchain.blocks"));
+    return new ChainResources(genesisURL, blocksURL);
+  }
+
+  private static ChainResources supplyMainnetChainResources() {
+    final URL genesisURL =
+        ensureFileUrl(
+            BlockTestUtil.class.getClassLoader().getResource("mainnet-data/mainnet.json"));
+    final URL blocksURL =
+        ensureFileUrl(BlockTestUtil.class.getClassLoader().getResource("mainnet-data/1000.blocks"));
     return new ChainResources(genesisURL, blocksURL);
   }
 
@@ -119,7 +134,7 @@ public final class BlockTestUtil {
     try {
       Files.write(
           target,
-          Resources.toByteArray(BlockTestUtil.class.getResource("/1000.blocks")),
+          Resources.toByteArray(getMainnetResources().getBlocksURL()),
           StandardOpenOption.CREATE,
           StandardOpenOption.TRUNCATE_EXISTING);
     } catch (final IOException ex) {

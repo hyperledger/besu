@@ -15,9 +15,10 @@ package tech.pegasys.pantheon.ethereum.jsonrpc.internal.filter;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.pantheon.ethereum.core.Block;
+import tech.pegasys.pantheon.ethereum.core.BlockchainSetupUtil;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
-import tech.pegasys.pantheon.ethereum.jsonrpc.AbstractEthJsonRpcHttpServiceTest;
+import tech.pegasys.pantheon.ethereum.jsonrpc.AbstractJsonRpcHttpServiceTest;
 
 import java.io.IOException;
 
@@ -29,10 +30,10 @@ import okhttp3.Response;
 import okhttp3.ResponseBody;
 import org.junit.Test;
 
-public class EthJsonRpcHttpServiceTest extends AbstractEthJsonRpcHttpServiceTest {
+public class EthJsonRpcHttpServiceTest extends AbstractJsonRpcHttpServiceTest {
 
   private Hash recordPendingTransaction(final int blockNumber, final int transactionIndex) {
-    final Block block = BLOCKS.get(blockNumber);
+    final Block block = blockchainSetupUtil.getBlock(blockNumber);
     final Transaction transaction = block.getBody().getTransactions().get(transactionIndex);
     filterManager.recordPendingTransactionEvent(transaction);
     return transaction.hash();
@@ -40,6 +41,7 @@ public class EthJsonRpcHttpServiceTest extends AbstractEthJsonRpcHttpServiceTest
 
   @Test
   public void getFilterChanges_noBlocks() throws Exception {
+    startService();
     final String expectedRespBody =
         String.format("{%n  \"jsonrpc\" : \"2.0\",%n  \"id\" : 2,%n  \"result\" : [ ]%n}");
     final ResponseBody body = ethNewBlockFilter(1).body();
@@ -52,6 +54,7 @@ public class EthJsonRpcHttpServiceTest extends AbstractEthJsonRpcHttpServiceTest
 
   @Test
   public void getFilterChanges_oneBlock() throws Exception {
+    BlockchainSetupUtil<Void> blockchainSetupUtil = startServiceWithEmptyChain();
     final String expectedRespBody =
         String.format(
             "{%n  \"jsonrpc\" : \"2.0\",%n  \"id\" : 2,%n  \"result\" : [ \"0x10aaf14a53caf27552325374429d3558398a36d3682ede6603c2c6511896e9f9\" ]%n}");
@@ -59,7 +62,8 @@ public class EthJsonRpcHttpServiceTest extends AbstractEthJsonRpcHttpServiceTest
     final String result = getResult(body);
     body.close();
 
-    importBlock(1);
+    // Import genesis + first block
+    blockchainSetupUtil.importFirstBlocks(2);
     final Response resp = ethGetFilterChanges(2, result);
     assertThat(resp.code()).isEqualTo(200);
     assertThat(resp.body().string()).isEqualTo(expectedRespBody);
@@ -67,6 +71,7 @@ public class EthJsonRpcHttpServiceTest extends AbstractEthJsonRpcHttpServiceTest
 
   @Test
   public void getFilterChanges_noTransactions() throws Exception {
+    startService();
     final String expectedRespBody =
         String.format("{%n  \"jsonrpc\" : \"2.0\",%n  \"id\" : 2,%n  \"result\" : [ ]%n}");
     final ResponseBody body = ethNewPendingTransactionFilter(1).body();
@@ -79,6 +84,7 @@ public class EthJsonRpcHttpServiceTest extends AbstractEthJsonRpcHttpServiceTest
 
   @Test
   public void getFilterChanges_oneTransaction() throws Exception {
+    startService();
     final ResponseBody body = ethNewPendingTransactionFilter(1).body();
     final String result = getResult(body);
     body.close();
@@ -96,6 +102,7 @@ public class EthJsonRpcHttpServiceTest extends AbstractEthJsonRpcHttpServiceTest
 
   @Test
   public void uninstallFilter() throws Exception {
+    startService();
     final String expectedRespBody =
         String.format("{%n  \"jsonrpc\" : \"2.0\",%n  \"id\" : 2,%n  \"result\" : true%n}");
     final ResponseBody body = ethNewBlockFilter(1).body();

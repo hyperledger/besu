@@ -31,11 +31,11 @@ public class BlockTracer {
   }
 
   public Optional<BlockTrace> trace(final Hash blockHash, final DebugOperationTracer tracer) {
-    return Optional.of(blockReplay.block(blockHash, prepareReplayAction(tracer)));
+    return blockReplay.block(blockHash, prepareReplayAction(tracer));
   }
 
   public Optional<BlockTrace> trace(final Block block, final DebugOperationTracer tracer) {
-    return Optional.of(blockReplay.block(block, prepareReplayAction(tracer)));
+    return blockReplay.block(block, prepareReplayAction(tracer));
   }
 
   private TransactionAction<TransactionTrace> prepareReplayAction(

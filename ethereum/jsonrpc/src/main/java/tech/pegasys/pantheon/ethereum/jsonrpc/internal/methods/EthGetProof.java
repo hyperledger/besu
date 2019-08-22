@@ -35,27 +35,25 @@ import java.util.stream.Collectors;
 public class EthGetProof extends AbstractBlockParameterMethod {
 
   private final BlockchainQueries blockchain;
-  private final JsonRpcParameter parameters;
 
   public EthGetProof(final BlockchainQueries blockchain, final JsonRpcParameter parameters) {
     super(blockchain, parameters);
     this.blockchain = blockchain;
-    this.parameters = parameters;
   }
 
   private Address getAddress(final JsonRpcRequest request) {
-    return parameters.required(request.getParams(), 0, Address.class);
+    return getParameters().required(request.getParams(), 0, Address.class);
   }
 
   private List<UInt256> getStorageKeys(final JsonRpcRequest request) {
-    return Arrays.stream(parameters.required(request.getParams(), 1, String[].class))
+    return Arrays.stream(getParameters().required(request.getParams(), 1, String[].class))
         .map(UInt256::fromHexString)
         .collect(Collectors.toList());
   }
 
   @Override
   protected BlockParameter blockParameter(final JsonRpcRequest request) {
-    return parameters.required(request.getParams(), 2, BlockParameter.class);
+    return getParameters().required(request.getParams(), 2, BlockParameter.class);
   }
 
   @Override
