@@ -34,6 +34,7 @@ public class KeyValueStorageProvider implements StorageProvider {
   private final KeyValueStorage privateTransactionStorage;
   private final KeyValueStorage privateStateStorage;
   private final KeyValueStorage pruningStorage;
+  private final boolean isWorldStateIterable;
 
   public KeyValueStorageProvider(
       final KeyValueStorage blockchainStorage,
@@ -41,13 +42,15 @@ public class KeyValueStorageProvider implements StorageProvider {
       final KeyValueStorage worldStatePreimageStorage,
       final KeyValueStorage privateTransactionStorage,
       final KeyValueStorage privateStateStorage,
-      final KeyValueStorage pruningStorage) {
+      final KeyValueStorage pruningStorage,
+      final boolean isWorldStateIterable) {
     this.blockchainStorage = blockchainStorage;
     this.worldStateStorage = worldStateStorage;
     this.worldStatePreimageStorage = worldStatePreimageStorage;
     this.privateTransactionStorage = privateTransactionStorage;
     this.privateStateStorage = privateStateStorage;
     this.pruningStorage = pruningStorage;
+    this.isWorldStateIterable = isWorldStateIterable;
   }
 
   @Override
@@ -79,6 +82,11 @@ public class KeyValueStorageProvider implements StorageProvider {
   @Override
   public KeyValueStorage createPruningStorage() {
     return pruningStorage;
+  }
+
+  @Override
+  public boolean isWorldStateIterable() {
+    return isWorldStateIterable;
   }
 
   @Override

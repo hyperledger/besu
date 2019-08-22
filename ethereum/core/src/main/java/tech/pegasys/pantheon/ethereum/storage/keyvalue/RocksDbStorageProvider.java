@@ -94,7 +94,7 @@ public class RocksDbStorageProvider {
     final KeyValueStorage kv = RocksDbKeyValueStorage.create(rocksDbConfiguration, metricsSystem);
     final KeyValueStorage preimageKv =
         new LimitedInMemoryKeyValueStorage(worldStatePreimageCacheSize);
-    return new KeyValueStorageProvider(kv, kv, preimageKv, kv, kv, kv);
+    return new KeyValueStorageProvider(kv, kv, preimageKv, kv, kv, kv, false);
   }
 
   private static StorageProvider ofSegmented(
@@ -114,7 +114,8 @@ public class RocksDbStorageProvider {
         preimageStorage,
         new SegmentedKeyValueStorageAdapter<>(RocksDbSegment.PRIVATE_TRANSACTIONS, columnarStorage),
         new SegmentedKeyValueStorageAdapter<>(RocksDbSegment.PRIVATE_STATE, columnarStorage),
-        new SegmentedKeyValueStorageAdapter<>(RocksDbSegment.PRUNING_STATE, columnarStorage));
+        new SegmentedKeyValueStorageAdapter<>(RocksDbSegment.PRUNING_STATE, columnarStorage),
+        true);
   }
 
   private enum RocksDbSegment implements Segment {

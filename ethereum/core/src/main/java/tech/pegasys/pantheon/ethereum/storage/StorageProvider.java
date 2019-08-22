@@ -35,4 +35,6 @@ public interface StorageProvider extends Closeable {
   PrivateStateStorage createPrivateStateStorage();
 
   KeyValueStorage createPruningStorage();
+
+  boolean isWorldStateIterable();
 }

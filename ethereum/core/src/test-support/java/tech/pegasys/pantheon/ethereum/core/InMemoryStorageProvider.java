@@ -93,5 +93,10 @@ public class InMemoryStorageProvider implements StorageProvider {
   }
 
   @Override
+  public boolean isWorldStateIterable() {
+    return true;
+  }
+
+  @Override
   public void close() {}
 }

@@ -30,29 +30,28 @@ public class Pruner {
   private final MarkSweepPruner pruningStrategy;
   private final Blockchain blockchain;
   private final ExecutorService executorService;
-  private final long retentionPeriodInBlocks;
+  private final long blocksRetained;
   private final AtomicReference<State> state = new AtomicReference<>(State.IDLE);
   private volatile long markBlockNumber = 0;
   private volatile BlockHeader markedBlockHeader;
-  private long transientForkThreshold;
+  private long blockConfirmations;
 
   public Pruner(
       final MarkSweepPruner pruningStrategy,
       final Blockchain blockchain,
       final ExecutorService executorService,
-      final long transientForkThreshold,
-      final long retentionPeriodInBlocks) {
+      final PruningConfiguration pruningConfiguration) {
     this.pruningStrategy = pruningStrategy;
     this.executorService = executorService;
     this.blockchain = blockchain;
-    if (transientForkThreshold < 0 || retentionPeriodInBlocks < 0) {
+    this.blocksRetained = pruningConfiguration.getBlocksRetained();
+    this.blockConfirmations = pruningConfiguration.getBlockConfirmations();
+    if (blockConfirmations < 0 || blocksRetained < 0) {
       throw new IllegalArgumentException(
           String.format(
-              "TransientForkThreshold and RetentionPeriodInBlocks must be non-negative. transientForkThreshold=%d, retentionPeriodInBlocks=%d",
-              transientForkThreshold, retentionPeriodInBlocks));
+              "blockConfirmations and blocksRetained must be non-negative. blockConfirmations=%d, blocksRetained=%d",
+              blockConfirmations, blocksRetained));
     }
-    this.retentionPeriodInBlocks = retentionPeriodInBlocks;
-    this.transientForkThreshold = transientForkThreshold;
   }
 
   public void start() {
@@ -70,14 +69,14 @@ public class Pruner {
     }
 
     final long blockNumber = event.getBlock().getHeader().getNumber();
-    if (state.compareAndSet(State.IDLE, State.TRANSIENT_FORK_OUTLIVING)) {
+    if (state.compareAndSet(State.IDLE, State.MARK_BLOCK_CONFIRMATIONS_AWAITING)) {
       pruningStrategy.prepare();
       markBlockNumber = blockNumber;
-    } else if (blockNumber >= markBlockNumber + transientForkThreshold
-        && state.compareAndSet(State.TRANSIENT_FORK_OUTLIVING, State.MARKING)) {
+    } else if (blockNumber >= markBlockNumber + blockConfirmations
+        && state.compareAndSet(State.MARK_BLOCK_CONFIRMATIONS_AWAITING, State.MARKING)) {
       markedBlockHeader = blockchain.getBlockHeader(markBlockNumber).get();
       mark(markedBlockHeader);
-    } else if (blockNumber >= markBlockNumber + retentionPeriodInBlocks
+    } else if (blockNumber >= markBlockNumber + blocksRetained
         && blockchain.blockIsOnCanonicalChain(markedBlockHeader.getHash())
         && state.compareAndSet(State.MARKING_COMPLETE, State.SWEEPING)) {
       sweep();
@@ -99,8 +98,7 @@ public class Pruner {
   }
 
   private void sweep() {
-    LOG.info(
-        "Begin sweeping unused nodes for pruning. Retention period: {}", retentionPeriodInBlocks);
+    LOG.info("Begin sweeping unused nodes for pruning. Retention period: {}", blocksRetained);
     execute(
         () -> {
           pruningStrategy.sweepBefore(markBlockNumber);
@@ -119,7 +117,7 @@ public class Pruner {
 
   private enum State {
     IDLE,
-    TRANSIENT_FORK_OUTLIVING,
+    MARK_BLOCK_CONFIRMATIONS_AWAITING,
     MARKING,
     MARKING_COMPLETE,
     SWEEPING;

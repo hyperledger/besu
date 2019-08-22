@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.controller;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 import static tech.pegasys.pantheon.controller.KeyPairUtil.loadKeyPair;
 
 import tech.pegasys.pantheon.config.GenesisConfigFile;
@@ -46,6 +47,7 @@ import tech.pegasys.pantheon.ethereum.storage.StorageProvider;
 import tech.pegasys.pantheon.ethereum.storage.keyvalue.RocksDbStorageProvider;
 import tech.pegasys.pantheon.ethereum.worldstate.MarkSweepPruner;
 import tech.pegasys.pantheon.ethereum.worldstate.Pruner;
+import tech.pegasys.pantheon.ethereum.worldstate.PruningConfiguration;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.services.kvstore.RocksDbConfiguration;
@@ -57,6 +59,7 @@ import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.concurrent.Executors;
 
@@ -83,6 +86,8 @@ public abstract class PantheonControllerBuilder<C> {
   private StorageProvider storageProvider;
   private final List<Runnable> shutdownActions = new ArrayList<>();
   private RocksDbConfiguration rocksDbConfiguration;
+  private boolean isPruningEnabled;
+  private PruningConfiguration pruningConfiguration;
 
   public PantheonControllerBuilder<C> rocksDbConfiguration(
       final RocksDbConfiguration rocksDbConfiguration) {
@@ -164,6 +169,17 @@ public abstract class PantheonControllerBuilder<C> {
     return this;
   }
 
+  public PantheonControllerBuilder<C> isPruningEnabled(final boolean pruningEnabled) {
+    this.isPruningEnabled = pruningEnabled;
+    return this;
+  }
+
+  public PantheonControllerBuilder<C> pruningConfiguration(
+      final PruningConfiguration pruningConfiguration) {
+    this.pruningConfiguration = pruningConfiguration;
+    return this;
+  }
+
   public PantheonController<C> build() throws IOException {
     checkNotNull(genesisConfig, "Missing genesis config");
     checkNotNull(syncConfig, "Missing sync config");
@@ -202,30 +218,40 @@ public abstract class PantheonControllerBuilder<C> {
 
     final MutableBlockchain blockchain = protocolContext.getBlockchain();
 
-    final Pruner pruner =
-        new Pruner(
-            new MarkSweepPruner(
-                protocolContext.getWorldStateArchive().getWorldStateStorage(),
-                blockchain,
-                storageProvider.createPruningStorage(),
-                metricsSystem),
-            blockchain,
-            Executors.newSingleThreadExecutor(
-                new ThreadFactoryBuilder()
-                    .setDaemon(true)
-                    .setPriority(Thread.MIN_PRIORITY)
-                    .setNameFormat("StatePruning-%d")
-                    .build()),
-            10,
-            1000);
+    Optional<Pruner> maybePruner = Optional.empty();
+    if (isPruningEnabled) {
+      checkState(
+          storageProvider.isWorldStateIterable(),
+          "Cannot enable pruning with current database version. Resync to get the latest version.");
+      maybePruner =
+          Optional.of(
+              new Pruner(
+                  new MarkSweepPruner(
+                      protocolContext.getWorldStateArchive().getWorldStateStorage(),
+                      blockchain,
+                      storageProvider.createPruningStorage(),
+                      metricsSystem),
+                  blockchain,
+                  Executors.newSingleThreadExecutor(
+                      new ThreadFactoryBuilder()
+                          .setDaemon(true)
+                          .setPriority(Thread.MIN_PRIORITY)
+                          .setNameFormat("StatePruning-%d")
+                          .build()),
+                  pruningConfiguration));
+    }
+
+    Optional<Pruner> finalMaybePruner = maybePruner;
     addShutdownAction(
-        () -> {
-          try {
-            pruner.stop();
-          } catch (InterruptedException ie) {
-            throw new RuntimeException(ie);
-          }
-        });
+        () ->
+            finalMaybePruner.ifPresent(
+                pruner -> {
+                  try {
+                    pruner.stop();
+                  } catch (InterruptedException ie) {
+                    throw new RuntimeException(ie);
+                  }
+                }));
 
     final boolean fastSyncEnabled = syncConfig.getSyncMode().equals(SyncMode.FAST);
     ethProtocolManager = createEthProtocolManager(protocolContext, fastSyncEnabled);
@@ -238,7 +264,7 @@ public abstract class PantheonControllerBuilder<C> {
             protocolContext,
             protocolContext.getWorldStateArchive().getWorldStateStorage(),
             ethProtocolManager.getBlockBroadcaster(),
-            pruner,
+            maybePruner,
             ethProtocolManager.ethContext(),
             syncState,
             dataDirectory,
