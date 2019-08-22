@@ -42,7 +42,6 @@ public class MessageFrameTestFixture {
   private Address sender = DEFAUT_ADDRESS;
   private Address originator = DEFAUT_ADDRESS;
   private Address contract = DEFAUT_ADDRESS;
-  private Wei contractBalance = Wei.of(1);
   private int contractAccountVersion = Account.DEFAULT_VERSION;
   private Wei gasPrice = Wei.ZERO;
   private Wei value = Wei.ZERO;
@@ -110,11 +109,6 @@ public class MessageFrameTestFixture {
     return this;
   }
 
-  public MessageFrameTestFixture contractBalance(final Wei contractBalance) {
-    this.contractBalance = contractBalance;
-    return this;
-  }
-
   public MessageFrameTestFixture contractAccountVersion(final int contractAccountVersion) {
     this.contractAccountVersion = contractAccountVersion;
     return this;
@@ -179,7 +173,6 @@ public class MessageFrameTestFixture {
             .value(value)
             .apparentValue(value)
             .contract(contract)
-            .contractBalance(contractBalance)
             .contractAccountVersion(contractAccountVersion)
             .code(code)
             .blockHeader(blockHeader)

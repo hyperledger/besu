@@ -135,7 +135,6 @@ public class VMReferenceTest extends AbstractRetryingTest {
             .worldState(worldState.updater())
             .initialGas(spec.getExec().getGas())
             .contract(execEnv.getAccountAddress())
-            .contractBalance(execEnv.getAccountBalance())
             .address(execEnv.getAccountAddress())
             .originator(execEnv.getOriginAddress())
             .gasPrice(execEnv.getGasPrice())

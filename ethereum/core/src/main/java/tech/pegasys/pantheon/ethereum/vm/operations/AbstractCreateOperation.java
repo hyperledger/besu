@@ -111,7 +111,6 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
             .address(contractAddress)
             .originator(frame.getOriginatorAddress())
             .contract(contractAddress)
-            .contractBalance(account.getBalance())
             .contractAccountVersion(frame.getContractAccountVersion())
             .gasPrice(frame.getGasPrice())
             .inputData(BytesValue.EMPTY)
