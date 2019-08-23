@@ -30,7 +30,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 /** An operation submitted by an external actor to be applied to the system. */
-public class Transaction {
+public class Transaction implements tech.pegasys.pantheon.plugin.data.Transaction {
 
   // Used for transactions that are not tied to a specific chain
   // (e.g. does not have a chain id associated with it).
@@ -154,6 +154,7 @@ public class Transaction {
    *
    * @return the transaction nonce
    */
+  @Override
   public long getNonce() {
     return nonce;
   }
@@ -163,6 +164,7 @@ public class Transaction {
    *
    * @return the transaction gas price
    */
+  @Override
   public Wei getGasPrice() {
     return gasPrice;
   }
@@ -172,6 +174,7 @@ public class Transaction {
    *
    * @return the transaction gas limit
    */
+  @Override
   public long getGasLimit() {
     return gasLimit;
   }
@@ -184,6 +187,7 @@ public class Transaction {
    *
    * @return the transaction recipient if a message call; otherwise {@code Optional.empty()}
    */
+  @Override
   public Optional<Address> getTo() {
     return to;
   }
@@ -193,6 +197,7 @@ public class Transaction {
    *
    * @return the value transferred in the transaction
    */
+  @Override
   public Wei getValue() {
     return value;
   }
@@ -216,6 +221,26 @@ public class Transaction {
   }
 
   /**
+   * Returns the payload if this is a contract creation transaction.
+   *
+   * @return if present the init code
+   */
+  @Override
+  public Optional<BytesValue> getInit() {
+    return getTo().isPresent() ? Optional.empty() : Optional.of(payload);
+  }
+
+  /**
+   * Returns the payload if this is a message call transaction.
+   *
+   * @return if present the init code
+   */
+  @Override
+  public Optional<BytesValue> getData() {
+    return getTo().isPresent() ? Optional.of(payload) : Optional.empty();
+  }
+
+  /**
    * Return the transaction chain id (if it exists)
    *
    * <p>The {@code OptionalInt} will be {@code OptionalInt.empty()} if the transaction is not tied
@@ -223,6 +248,7 @@ public class Transaction {
    *
    * @return the transaction chain id if it exists; otherwise {@code OptionalInt.empty()}
    */
+  @Override
   public Optional<BigInteger> getChainId() {
     return chainId;
   }
@@ -232,6 +258,7 @@ public class Transaction {
    *
    * @return the transaction sender
    */
+  @Override
   public Address getSender() {
     if (sender == null) {
       final SECP256K1.PublicKey publicKey =
@@ -279,18 +306,21 @@ public class Transaction {
     out.writeBigIntegerScalar(getSignature().getS());
   }
 
+  @Override
   public BigInteger getR() {
     return signature.getR();
   }
 
+  @Override
   public BigInteger getS() {
     return signature.getS();
   }
 
+  @Override
   public BigInteger getV() {
     final BigInteger v;
     final BigInteger recId = BigInteger.valueOf(signature.getRecId());
-    if (!chainId.isPresent()) {
+    if (chainId.isEmpty()) {
       v = recId.add(REPLAY_UNPROTECTED_V_BASE);
     } else {
       v = recId.add(REPLAY_PROTECTED_V_BASE).add(TWO.multiply(chainId.get()));
@@ -317,7 +347,7 @@ public class Transaction {
    * @return {@code true} if this is a contract-creation transaction; otherwise {@code false}
    */
   public boolean isContractCreation() {
-    return !getTo().isPresent();
+    return getTo().isEmpty();
   }
 
   /**
@@ -498,7 +528,7 @@ public class Transaction {
       return build();
     }
 
-    protected SECP256K1.Signature computeSignature(final SECP256K1.KeyPair keys) {
+    SECP256K1.Signature computeSignature(final SECP256K1.KeyPair keys) {
       final Bytes32 hash =
           computeSenderRecoveryHash(nonce, gasPrice, gasLimit, to, value, payload, chainId);
       return SECP256K1.sign(hash, keys);

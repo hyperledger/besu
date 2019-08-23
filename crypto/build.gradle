@@ -29,6 +29,7 @@ dependencies {
   api project(':util')
 
   api 'org.bouncycastle:bcprov-jdk15on'
+  api 'tech.pegasys.pantheon:plugin-api'
 
   implementation 'com.google.guava:guava'
   implementation 'org.apache.logging.log4j:log4j-api'

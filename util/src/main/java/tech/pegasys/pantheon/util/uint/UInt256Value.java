@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.util.uint;
 
 import static com.google.common.base.Preconditions.checkState;
 
+import tech.pegasys.pantheon.plugin.data.Quantity;
 import tech.pegasys.pantheon.util.bytes.Bytes32Backed;
 
 /**
@@ -41,7 +42,8 @@ import tech.pegasys.pantheon.util.bytes.Bytes32Backed;
  * @see BaseUInt256Value for a base class to extend in order to implement a {@link UInt256Value}.
  * @see Counter to obtain a mutable variant of a 256-bits integer.
  */
-public interface UInt256Value<T extends UInt256Value<T>> extends Bytes32Backed, Comparable<T> {
+public interface UInt256Value<T extends UInt256Value<T>>
+    extends Bytes32Backed, Comparable<T>, Quantity {
 
   int SIZE = 32;
 

@@ -24,4 +24,9 @@ public class AbstractBytes32Backed implements Bytes32Backed {
   public Bytes32 getBytes() {
     return bytes;
   }
+
+  @Override
+  public int size() {
+    return bytes.size();
+  }
 }

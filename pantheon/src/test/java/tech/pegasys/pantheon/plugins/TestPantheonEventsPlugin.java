@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.plugins;
 
 import tech.pegasys.pantheon.plugin.PantheonContext;
 import tech.pegasys.pantheon.plugin.PantheonPlugin;
+import tech.pegasys.pantheon.plugin.data.BlockHeader;
 import tech.pegasys.pantheon.plugin.services.PantheonEvents;
 
 import java.io.File;
@@ -63,16 +64,16 @@ public class TestPantheonEventsPlugin implements PantheonPlugin {
     LOG.info("No longer listening with ID#" + subscriptionId);
   }
 
-  private void onBlockAnnounce(final String json) {
+  private void onBlockAnnounce(final BlockHeader header) {
     final int blockCount = blockCounter.incrementAndGet();
-    LOG.info("I got a new block! (I've seen {}) - {}", blockCount, json);
+    LOG.info("I got a new block! (I've seen {}) - {}", blockCount, header);
     try {
       final File callbackFile = new File(callbackDir, "newBlock." + blockCount);
       if (!callbackFile.getParentFile().exists()) {
         callbackFile.getParentFile().mkdirs();
         callbackFile.getParentFile().deleteOnExit();
       }
-      Files.write(callbackFile.toPath(), Collections.singletonList(json));
+      Files.write(callbackFile.toPath(), Collections.singletonList(header.toString()));
       callbackFile.deleteOnExit();
     } catch (final IOException ioe) {
       throw new RuntimeException(ioe);

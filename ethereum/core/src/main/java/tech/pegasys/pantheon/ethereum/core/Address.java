@@ -24,7 +24,8 @@ import tech.pegasys.pantheon.util.bytes.DelegatingBytesValue;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 /** A 160-bits account address. */
-public class Address extends DelegatingBytesValue {
+public class Address extends DelegatingBytesValue
+    implements tech.pegasys.pantheon.plugin.data.Address {
 
   public static final int SIZE = 20;
 

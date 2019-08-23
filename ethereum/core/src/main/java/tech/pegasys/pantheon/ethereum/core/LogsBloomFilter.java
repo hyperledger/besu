@@ -17,6 +17,7 @@ import static tech.pegasys.pantheon.crypto.Hash.keccak256;
 
 import tech.pegasys.pantheon.ethereum.rlp.RLPException;
 import tech.pegasys.pantheon.ethereum.rlp.RLPInput;
+import tech.pegasys.pantheon.plugin.data.UnformattedData;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.bytes.MutableBytesValue;
 
@@ -31,7 +32,7 @@ import java.util.Collection;
  * corresponding double-bytes are: bd2b, 01af, cd27, corresponding to the following bits in the
  * bloom filter: 1323, 431, 1319
  */
-public class LogsBloomFilter {
+public class LogsBloomFilter implements UnformattedData {
 
   public static final int BYTE_SIZE = 256;
   private static final int LEAST_SIGNIFICANT_BYTE = 0xFF;
@@ -148,5 +149,20 @@ public class LogsBloomFilter {
   @Override
   public String toString() {
     return data.toString();
+  }
+
+  @Override
+  public byte[] getByteArray() {
+    return data.getByteArray();
+  }
+
+  @Override
+  public int size() {
+    return data.size();
+  }
+
+  @Override
+  public String getHexString() {
+    return data.getHexString();
   }
 }

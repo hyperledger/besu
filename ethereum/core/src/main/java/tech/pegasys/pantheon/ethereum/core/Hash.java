@@ -22,7 +22,7 @@ import tech.pegasys.pantheon.util.bytes.DelegatingBytes32;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 /** A 32-bytes hash value as used in Ethereum blocks, that is the result of the KEC algorithm. */
-public class Hash extends DelegatingBytes32 {
+public class Hash extends DelegatingBytes32 implements tech.pegasys.pantheon.plugin.data.Hash {
 
   public static final Hash ZERO = new Hash(Bytes32.ZERO);
 
@@ -64,5 +64,15 @@ public class Hash extends DelegatingBytes32 {
 
   public static Hash fromHexStringLenient(final String str) {
     return new Hash(Bytes32.fromHexStringLenient(str));
+  }
+
+  @Override
+  public byte[] getByteArray() {
+    return super.getByteArray();
+  }
+
+  @Override
+  public String getHexString() {
+    return super.getHexString();
   }
 }

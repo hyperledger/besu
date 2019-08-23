@@ -28,6 +28,8 @@ jar {
 dependencies {
   api project(':util')
 
+  api 'tech.pegasys.pantheon:plugin-api'
+
   compileOnly 'org.openjdk.jmh:jmh-generator-annprocess'
 
   implementation project(':metrics:core')

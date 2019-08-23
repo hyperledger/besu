@@ -18,6 +18,7 @@ import tech.pegasys.pantheon.util.bytes.AbstractBytes32Backed;
 import tech.pegasys.pantheon.util.bytes.Bytes32;
 import tech.pegasys.pantheon.util.bytes.Bytes32s;
 
+import java.math.BigInteger;
 import java.util.function.Supplier;
 
 /**
@@ -36,7 +37,7 @@ abstract class AbstractUInt256Value<T extends UInt256Value<T>> extends AbstractB
 
   private final Supplier<Counter<T>> mutableCtor;
 
-  protected AbstractUInt256Value(final Bytes32 bytes, final Supplier<Counter<T>> mutableCtor) {
+  AbstractUInt256Value(final Bytes32 bytes, final Supplier<Counter<T>> mutableCtor) {
     super(bytes);
     this.mutableCtor = mutableCtor;
   }
@@ -47,7 +48,7 @@ abstract class AbstractUInt256Value<T extends UInt256Value<T>> extends AbstractB
     return result.get();
   }
 
-  protected T binaryOp(final UInt256Value<?> value, final UInt256Bytes.BinaryOp op) {
+  T binaryOp(final UInt256Value<?> value, final UInt256Bytes.BinaryOp op) {
     final Counter<T> result = mutableCtor.get();
     op.applyOp(getBytes(), value.getBytes(), result.getBytes());
     return result.get();
@@ -192,5 +193,14 @@ abstract class AbstractUInt256Value<T extends UInt256Value<T>> extends AbstractB
   @Override
   public String toString() {
     return UInt256Bytes.toString(getBytes());
+  }
+
+  @Override
+  public Number getValue() {
+    if (UInt256Bytes.fitsLong(getBytes())) {
+      return toLong();
+    } else {
+      return new BigInteger(getByteArray());
+    }
   }
 }

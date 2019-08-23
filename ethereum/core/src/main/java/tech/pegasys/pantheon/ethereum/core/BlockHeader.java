@@ -23,7 +23,8 @@ import java.util.function.Supplier;
 import com.google.common.base.Suppliers;
 
 /** A mined Ethereum block header. */
-public class BlockHeader extends SealableBlockHeader {
+public class BlockHeader extends SealableBlockHeader
+    implements tech.pegasys.pantheon.plugin.data.BlockHeader {
 
   public static final int MAX_EXTRA_DATA_BYTES = 32;
 
@@ -79,6 +80,7 @@ public class BlockHeader extends SealableBlockHeader {
    *
    * @return the block mixed hash
    */
+  @Override
   public Hash getMixHash() {
     return mixHash;
   }
@@ -88,6 +90,7 @@ public class BlockHeader extends SealableBlockHeader {
    *
    * @return the block nonce
    */
+  @Override
   public long getNonce() {
     return nonce;
   }
@@ -106,6 +109,11 @@ public class BlockHeader extends SealableBlockHeader {
    * @return the block header hash
    */
   public Hash getHash() {
+    return hash.get();
+  }
+
+  @Override
+  public tech.pegasys.pantheon.plugin.data.Hash getBlockHash() {
     return hash.get();
   }
 

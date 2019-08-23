@@ -15,6 +15,8 @@ package tech.pegasys.pantheon.util.bytes;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkElementIndex;
 
+import tech.pegasys.pantheon.plugin.data.UnformattedData;
+
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 
@@ -33,7 +35,7 @@ import io.vertx.core.buffer.Buffer;
  *
  * @see BytesValues for static methods to create and work with {@link BytesValue}.
  */
-public interface BytesValue extends Comparable<BytesValue> {
+public interface BytesValue extends Comparable<BytesValue>, UnformattedData {
 
   /** The empty value (with 0 bytes). */
   BytesValue EMPTY = wrap(new byte[0]);
@@ -303,6 +305,7 @@ public interface BytesValue extends Comparable<BytesValue> {
   }
 
   /** @return The number of bytes this value represents. */
+  @Override
   int size();
 
   /**
@@ -514,6 +517,11 @@ public interface BytesValue extends Comparable<BytesValue> {
     return array;
   }
 
+  @Override
+  default byte[] getByteArray() {
+    return extractArray();
+  }
+
   /**
    * Get the bytes represented by this value as byte array.
    *
@@ -549,6 +557,16 @@ public interface BytesValue extends Comparable<BytesValue> {
    */
   @Override
   String toString();
+
+  /**
+   * Returns the hexadecimal string representation of this value.
+   *
+   * @return The hexadecimal representation of this value, starting with "0x".
+   */
+  @Override
+  default String getHexString() {
+    return toString();
+  }
 
   default String toUnprefixedString() {
     final String prefixedHex = toString();
