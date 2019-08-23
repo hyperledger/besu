@@ -12,13 +12,8 @@
  */
 package tech.pegasys.pantheon.ethereum.jsonrpc;
 
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.DebugAccountRange;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
+import java.net.URL;
 
-import java.util.Collection;
-
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Multimap;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
@@ -26,8 +21,8 @@ import org.junit.runners.Parameterized.Parameters;
 @RunWith(Parameterized.class)
 public class DebugJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpBySpecTest {
 
-  public DebugJsonRpcHttpBySpecTest(final String specFileName) {
-    super(specFileName);
+  public DebugJsonRpcHttpBySpecTest(final String specName, final URL specURL) {
+    super(specName, specURL);
   }
 
   @Override
@@ -36,23 +31,8 @@ public class DebugJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpBySpecTest {
     startService();
   }
 
-  /*
-   Mapping between Json-RPC method class and its spec files
-
-   Formatter will be turned on to make this easier to read (one spec per line)
-   @formatter:off
-  */
   @Parameters(name = "{index}: {0}")
-  public static Collection<String> specs() {
-    final Multimap<Class<? extends JsonRpcMethod>, String> specs = ArrayListMultimap.create();
-
-    specs.put(DebugAccountRange.class, "debug/debug_accountRange_blockHash");
-    specs.put(DebugAccountRange.class, "debug/debug_accountRange_complete");
-    specs.put(DebugAccountRange.class, "debug/debug_accountRange_partial");
-    specs.put(DebugAccountRange.class, "debug/debug_storageRangeAt_blockHash");
-    specs.put(DebugAccountRange.class, "debug/debug_storageRangeAt_blockNumber");
-    specs.put(DebugAccountRange.class, "debug/debug_storageRangeAt_midBlock");
-
-    return specs.values();
+  public static Object[][] specs() {
+    return AbstractJsonRpcHttpBySpecTest.findSpecFiles("debug");
   }
 }

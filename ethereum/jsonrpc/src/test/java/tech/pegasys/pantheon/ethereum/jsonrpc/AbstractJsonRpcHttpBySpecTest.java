@@ -12,9 +12,20 @@
  */
 package tech.pegasys.pantheon.ethereum.jsonrpc;
 
+import static com.google.common.base.Preconditions.checkState;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Stream;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
@@ -29,22 +40,64 @@ import org.junit.runners.Parameterized;
 @RunWith(Parameterized.class)
 public abstract class AbstractJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpServiceTest {
 
-  private final String specFileName;
+  private final URL specURL;
 
-  public AbstractJsonRpcHttpBySpecTest(final String specFileName) {
-    this.specFileName = specFileName;
+  public AbstractJsonRpcHttpBySpecTest(final String specName, final URL specURL) {
+    this.specURL = specURL;
   }
 
   @Test
   public void jsonRPCCallWithSpecFile() throws Exception {
-    jsonRPCCall(specFileName);
+    jsonRPCCall(specURL);
   }
 
-  private void jsonRPCCall(final String name) throws IOException {
-    final String testSpecFile = name + ".json";
-    final String json =
-        Resources.toString(
-            AbstractJsonRpcHttpBySpecTest.class.getResource(testSpecFile), Charsets.UTF_8);
+  /**
+   * Searches the provided subdirectories for spec files containing test cases, and returns
+   * parameters required to run these tests.
+   *
+   * @param subDirectoryPaths The subdirectories to search.
+   * @return Parameters for this test which will contain the name of the test and the url of the
+   *     spec file to run.
+   */
+  public static Object[][] findSpecFiles(final String... subDirectoryPaths) {
+    final List<Object[]> specFiles = new ArrayList<>();
+    for (final String path : subDirectoryPaths) {
+      final URL url = AbstractJsonRpcHttpBySpecTest.class.getResource(path);
+      checkState(url != null, "Cannot find test directory " + path);
+      final Path dir;
+      try {
+        dir = Paths.get(url.toURI());
+      } catch (final URISyntaxException e) {
+        throw new RuntimeException("Problem converting URL to URI " + url, e);
+      }
+      try (final Stream<Path> s = Files.walk(dir)) {
+        s.map(Path::toFile)
+            .filter(f -> f.getPath().endsWith(".json"))
+            .map(AbstractJsonRpcHttpBySpecTest::fileToParams)
+            .forEach(specFiles::add);
+      } catch (final IOException e) {
+        throw new RuntimeException("Problem reading directory " + dir, e);
+      }
+    }
+    final Object[][] result = new Object[specFiles.size()][2];
+    for (int i = 0; i < specFiles.size(); i++) {
+      result[i] = specFiles.get(i);
+    }
+    return result;
+  }
+
+  private static Object[] fileToParams(final File file) {
+    try {
+      final String fileName = file.toPath().getFileName().toString();
+      final URL fileURL = file.toURI().toURL();
+      return new Object[] {fileName, fileURL};
+    } catch (MalformedURLException e) {
+      throw new RuntimeException("Problem reading spec file " + file.getAbsolutePath(), e);
+    }
+  }
+
+  private void jsonRPCCall(final URL specFile) throws IOException {
+    final String json = Resources.toString(specFile, Charsets.UTF_8);
     final JsonObject spec = new JsonObject(json);
 
     final String rawRequestBody = spec.getJsonObject("request").toString();

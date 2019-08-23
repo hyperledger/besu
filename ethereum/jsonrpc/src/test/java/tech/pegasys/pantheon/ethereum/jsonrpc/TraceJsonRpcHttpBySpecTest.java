@@ -20,11 +20,9 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.processor.BlockReplay;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.processor.BlockTracer;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.BlockchainQueries;
 
-import java.util.Collection;
+import java.net.URL;
 import java.util.Map;
 
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Multimap;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
@@ -32,8 +30,8 @@ import org.junit.runners.Parameterized.Parameters;
 @RunWith(Parameterized.class)
 public class TraceJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpBySpecTest {
 
-  public TraceJsonRpcHttpBySpecTest(final String specFileName) {
-    super(specFileName);
+  public TraceJsonRpcHttpBySpecTest(final String specName, final URL specURL) {
+    super(specName, specURL);
   }
 
   @Override
@@ -70,28 +68,8 @@ public class TraceJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpBySpecTest {
     return methods;
   }
 
-  /*
-   Mapping between Json-RPC method class and its spec files
-
-   Formatter will be turned on to make this easier to read (one spec per line)
-   @formatter:off
-  */
   @Parameters(name = "{index}: {0}")
-  public static Collection<String> specs() {
-    final Multimap<Class<? extends JsonRpcMethod>, String> specs = ArrayListMultimap.create();
-
-    specs.put(
-        TraceReplayBlockTransactions.class, "trace/trace_replayBlockTransactions_emptyResult");
-    specs.put(TraceReplayBlockTransactions.class, "trace/trace_replayBlockTransactions_earliest");
-    specs.put(TraceReplayBlockTransactions.class, "trace/trace_replayBlockTransactions_latest");
-    specs.put(TraceReplayBlockTransactions.class, "trace/trace_replayBlockTransactions_pending");
-    specs.put(
-        TraceReplayBlockTransactions.class,
-        "trace/trace_replayBlockTransactions_invalidTraceOptions");
-    specs.put(
-        TraceReplayBlockTransactions.class,
-        "trace/trace_replayBlockTransactions_invalidBlockParam");
-
-    return specs.values();
+  public static Object[][] specs() {
+    return AbstractJsonRpcHttpBySpecTest.findSpecFiles("trace");
   }
 }
