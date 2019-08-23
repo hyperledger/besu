@@ -27,9 +27,7 @@ jar {
 
 publishing {
   publications {
-    mavenJava(MavenPublication) {
-      artifactId 'services-util'
-    }
+    mavenJava(MavenPublication) { artifactId 'services-util' }
   }
 }
 

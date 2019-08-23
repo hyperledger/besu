@@ -27,9 +27,7 @@ jar {
 
 publishing {
   publications {
-    mavenJava(MavenPublication) {
-      artifactId 'metrics-core'
-    }
+    mavenJava(MavenPublication) { artifactId 'metrics-core' }
   }
 }
 
