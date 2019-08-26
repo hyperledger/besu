@@ -25,6 +25,9 @@ import tech.pegasys.pantheon.enclave.types.SendResponse;
 import java.io.IOException;
 import java.net.URI;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -60,47 +63,62 @@ public class Enclave {
     }
   }
 
-  public SendResponse send(final SendRequest content) throws Exception {
+  public SendResponse send(final SendRequest content) {
     return executePost(buildPostRequest(JSON, content, "/send"), SendResponse.class);
   }
 
-  public ReceiveResponse receive(final ReceiveRequest content) throws Exception {
+  public ReceiveResponse receive(final ReceiveRequest content) {
     return executePost(buildPostRequest(ORION, content, "/receive"), ReceiveResponse.class);
   }
 
-  public PrivacyGroup createPrivacyGroup(final CreatePrivacyGroupRequest content) throws Exception {
+  public PrivacyGroup createPrivacyGroup(final CreatePrivacyGroupRequest content) {
     return executePost(buildPostRequest(JSON, content, "/createPrivacyGroup"), PrivacyGroup.class);
   }
 
-  public String deletePrivacyGroup(final DeletePrivacyGroupRequest content) throws Exception {
+  public String deletePrivacyGroup(final DeletePrivacyGroupRequest content) {
     return executePost(buildPostRequest(JSON, content, "/deletePrivacyGroup"), String.class);
   }
 
-  public PrivacyGroup[] findPrivacyGroup(final FindPrivacyGroupRequest content) throws Exception {
+  public PrivacyGroup[] findPrivacyGroup(final FindPrivacyGroupRequest content) {
     Request request = buildPostRequest(JSON, content, "/findPrivacyGroup");
     return executePost(request, PrivacyGroup[].class);
   }
 
   private Request buildPostRequest(
-      final MediaType mediaType, final Object content, final String endpoint) throws Exception {
-    final RequestBody body =
-        RequestBody.create(mediaType, objectMapper.writeValueAsString(content));
+      final MediaType mediaType, final Object content, final String endpoint) {
+    final RequestBody body;
+    try {
+      body = RequestBody.create(mediaType, objectMapper.writeValueAsString(content));
+    } catch (final JsonProcessingException e) {
+      throw new EnclaveException("Failed to serialise request to json body.");
+    }
     final String url = enclaveUri.resolve(endpoint).toString();
     return new Request.Builder().url(url).post(body).build();
   }
 
-  private <T> T executePost(final Request request, final Class<T> responseType) throws Exception {
-    try (Response response = client.newCall(request).execute()) {
+  private <T> T executePost(final Request request, final Class<T> responseType) {
+
+    final Response response;
+    final String responseBody;
+    try {
+      response = client.newCall(request).execute();
+      responseBody = response.body().string();
+    } catch (final IOException e) {
+      throw new EnclaveException("Failed to contact Enclave", e);
+    }
+
+    try {
       if (response.isSuccessful()) {
-        return objectMapper.readValue(response.body().string(), responseType);
+        return objectMapper.readValue(responseBody, responseType);
       } else {
         final ErrorResponse errorResponse =
-            objectMapper.readValue(response.body().string(), ErrorResponse.class);
+            objectMapper.readValue(responseBody, ErrorResponse.class);
         throw new EnclaveException(errorResponse.getError());
       }
-    } catch (Exception e) {
-      LOG.error("Enclave failed to execute {}", request, e);
-      throw e;
+    } catch (final JsonParseException | JsonMappingException e) {
+      throw new EnclaveException("Failed to deserialise received json", e);
+    } catch (final IOException e) {
+      throw new EnclaveException("Decoding json stream failed.", e);
     }
   }
 }

@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.ethereum.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -23,6 +24,7 @@ import tech.pegasys.orion.testutil.OrionKeyUtils;
 import tech.pegasys.pantheon.crypto.SECP256K1;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
 import tech.pegasys.pantheon.enclave.Enclave;
+import tech.pegasys.pantheon.enclave.EnclaveException;
 import tech.pegasys.pantheon.enclave.types.ReceiveRequest;
 import tech.pegasys.pantheon.enclave.types.ReceiveResponse;
 import tech.pegasys.pantheon.enclave.types.SendRequest;
@@ -40,7 +42,6 @@ import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.bytes.BytesValues;
 
-import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Optional;
 
@@ -76,7 +77,7 @@ public class PrivateTransactionHandlerTest {
           .chainId(BigInteger.valueOf(2018))
           .signAndBuild(KEY_PAIR);
 
-  Enclave mockEnclave() throws Exception {
+  Enclave mockEnclave() {
     Enclave mockEnclave = mock(Enclave.class);
     SendResponse response = new SendResponse(TRANSACTION_KEY);
     ReceiveResponse receiveResponse = new ReceiveResponse(new byte[0], "mock");
@@ -85,9 +86,9 @@ public class PrivateTransactionHandlerTest {
     return mockEnclave;
   }
 
-  Enclave brokenMockEnclave() throws Exception {
+  Enclave brokenMockEnclave() {
     Enclave mockEnclave = mock(Enclave.class);
-    when(mockEnclave.send(any(SendRequest.class))).thenThrow(IOException.class);
+    when(mockEnclave.send(any(SendRequest.class))).thenThrow(EnclaveException.class);
     return mockEnclave;
   }
 
@@ -178,9 +179,11 @@ public class PrivateTransactionHandlerTest {
     assertThat(markerTransaction.getValue()).isEqualTo(PUBLIC_TRANSACTION.getValue());
   }
 
-  @Test(expected = IOException.class)
-  public void enclaveIsDownWhileHandling() throws Exception {
-    brokenPrivateTransactionHandler.sendToOrion(buildLegacyPrivateTransaction());
+  @Test
+  public void enclaveIsDownWhileHandling() {
+    assertThatExceptionOfType(EnclaveException.class)
+        .isThrownBy(
+            () -> brokenPrivateTransactionHandler.sendToOrion(buildLegacyPrivateTransaction()));
   }
 
   @Test

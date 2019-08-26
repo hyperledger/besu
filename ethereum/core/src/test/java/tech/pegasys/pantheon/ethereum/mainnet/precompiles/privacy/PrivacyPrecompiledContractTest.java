@@ -20,6 +20,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import tech.pegasys.pantheon.enclave.Enclave;
+import tech.pegasys.pantheon.enclave.EnclaveException;
 import tech.pegasys.pantheon.enclave.types.ReceiveRequest;
 import tech.pegasys.pantheon.enclave.types.ReceiveResponse;
 import tech.pegasys.pantheon.ethereum.chain.Blockchain;
@@ -40,7 +41,6 @@ import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 import tech.pegasys.pantheon.util.bytes.Bytes32;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
-import java.io.IOException;
 import java.util.Base64;
 import java.util.Optional;
 
@@ -76,7 +76,7 @@ public class PrivacyPrecompiledContractTest {
                           + "64")
                   .extractArray());
 
-  private Enclave mockEnclave() throws Exception {
+  private Enclave mockEnclave() {
     Enclave mockEnclave = mock(Enclave.class);
     ReceiveResponse response = new ReceiveResponse(VALID_PRIVATE_TRANSACTION_RLP_BASE64, "");
     when(mockEnclave.receive(any(ReceiveRequest.class))).thenReturn(response);
@@ -105,14 +105,14 @@ public class PrivacyPrecompiledContractTest {
     return mockPrivateTransactionProcessor;
   }
 
-  private Enclave brokenMockEnclave() throws Exception {
+  private Enclave brokenMockEnclave() {
     Enclave mockEnclave = mock(Enclave.class);
-    when(mockEnclave.receive(any(ReceiveRequest.class))).thenThrow(IOException.class);
+    when(mockEnclave.receive(any(ReceiveRequest.class))).thenThrow(EnclaveException.class);
     return mockEnclave;
   }
 
   @Before
-  public void setUp() throws Exception {
+  public void setUp() {
     WorldStateArchive worldStateArchive;
     worldStateArchive = mock(WorldStateArchive.class);
     MutableWorldState mutableWorldState = mock(MutableWorldState.class);
