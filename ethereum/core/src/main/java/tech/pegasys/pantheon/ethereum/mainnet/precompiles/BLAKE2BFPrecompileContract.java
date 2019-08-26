@@ -24,8 +24,14 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.math.BigInteger;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 // https://github.com/keep-network/go-ethereum/pull/4
 public class BLAKE2BFPrecompileContract extends AbstractPrecompiledContract {
+
+  public static Logger LOG = LogManager.getLogger();
+
   public BLAKE2BFPrecompileContract(final GasCalculator gasCalculator) {
     super("BLAKE2f", gasCalculator);
   }
@@ -50,10 +56,13 @@ public class BLAKE2BFPrecompileContract extends AbstractPrecompiledContract {
   @Override
   public BytesValue compute(final BytesValue input, final MessageFrame messageFrame) {
     if (input.size() != MESSAGE_LENGTH_BYTES) {
-      return BytesValue.EMPTY;
+      LOG.trace(
+          "Incorrect input length.  Expected {} and got {}", MESSAGE_LENGTH_BYTES, input.size());
+      return null;
     }
     if ((input.get(212) & 0xFE) != 0) {
-      return BytesValue.EMPTY;
+      LOG.trace("Incorrect finalization flag, expected 0 or 1 and got {}", input.get(212));
+      return null;
     }
     return Hash.blake2bf(input);
   }
