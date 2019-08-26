@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.jsonrpc;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
@@ -40,7 +41,9 @@ import tech.pegasys.pantheon.ethereum.p2p.network.P2PNetwork;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.Capability;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
+import tech.pegasys.pantheon.testutil.BlockTestUtil.ChainResources;
 
+import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -86,6 +89,15 @@ public abstract class AbstractJsonRpcHttpServiceTest {
 
   protected BlockchainSetupUtil<Void> getBlockchainSetupUtil() {
     return BlockchainSetupUtil.forTesting();
+  }
+
+  protected BlockchainSetupUtil<Void> createBlockchainSetupUtil(
+      final String genesisPath, final String blocksPath) {
+    final URL genesisURL = AbstractJsonRpcHttpServiceTest.class.getResource(genesisPath);
+    final URL blocksURL = AbstractJsonRpcHttpServiceTest.class.getResource(blocksPath);
+    checkArgument(genesisURL != null, "Unable to locate genesis file: " + genesisPath);
+    checkArgument(blocksURL != null, "Unable to locate blocks file: " + blocksPath);
+    return BlockchainSetupUtil.createForEthashChain(new ChainResources(genesisURL, blocksURL));
   }
 
   @Before

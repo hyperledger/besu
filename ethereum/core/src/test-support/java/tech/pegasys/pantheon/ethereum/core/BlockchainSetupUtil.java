@@ -93,38 +93,58 @@ public class BlockchainSetupUtil<C> {
   }
 
   public static BlockchainSetupUtil<Void> forTesting() {
-    return createEthashChain(BlockTestUtil.getTestChainResources());
+    return createForEthashChain(BlockTestUtil.getTestChainResources());
   }
 
   public static BlockchainSetupUtil<Void> forMainnet() {
-    return createEthashChain(BlockTestUtil.getMainnetResources());
+    return createForEthashChain(BlockTestUtil.getMainnetResources());
   }
 
   public static BlockchainSetupUtil<Void> forOutdatedFork() {
-    return createEthashChain(BlockTestUtil.getOutdatedForkResources());
+    return createForEthashChain(BlockTestUtil.getOutdatedForkResources());
   }
 
   public static BlockchainSetupUtil<Void> forUpgradedFork() {
-    return createEthashChain(BlockTestUtil.getUpgradedForkResources());
+    return createForEthashChain(BlockTestUtil.getUpgradedForkResources());
   }
 
-  private static BlockchainSetupUtil<Void> createEthashChain(final ChainResources chainResources) {
+  public static BlockchainSetupUtil<Void> createForEthashChain(
+      final ChainResources chainResources) {
+    return create(
+        chainResources,
+        BlockchainSetupUtil::mainnetProtocolScheduleProvider,
+        BlockchainSetupUtil::mainnetProtocolContextProvider);
+  }
+
+  private static ProtocolSchedule<Void> mainnetProtocolScheduleProvider(
+      final GenesisConfigFile genesisConfigFile) {
+    return MainnetProtocolSchedule.fromConfig(genesisConfigFile.getConfigOptions());
+  }
+
+  private static ProtocolContext<Void> mainnetProtocolContextProvider(
+      final MutableBlockchain blockchain, final WorldStateArchive worldStateArchive) {
+    return new ProtocolContext<>(blockchain, worldStateArchive, null);
+  }
+
+  private static <T> BlockchainSetupUtil<T> create(
+      final ChainResources chainResources,
+      final ProtocolScheduleProvider<T> protocolScheduleProvider,
+      final ProtocolContextProvider<T> protocolContextProvider) {
     final TemporaryFolder temp = new TemporaryFolder();
     try {
       temp.create();
       final String genesisJson = Resources.toString(chainResources.getGenesisURL(), Charsets.UTF_8);
 
       final GenesisConfigFile genesisConfigFile = GenesisConfigFile.fromConfig(genesisJson);
-      final ProtocolSchedule<Void> protocolSchedule =
-          MainnetProtocolSchedule.fromConfig(genesisConfigFile.getConfigOptions());
+      final ProtocolSchedule<T> protocolSchedule = protocolScheduleProvider.get(genesisConfigFile);
 
       final GenesisState genesisState = GenesisState.fromJson(genesisJson, protocolSchedule);
       final MutableBlockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
       final WorldStateArchive worldArchive = createInMemoryWorldStateArchive();
 
       genesisState.writeStateTo(worldArchive.getMutable());
-      final ProtocolContext<Void> protocolContext =
-          new ProtocolContext<>(blockchain, worldArchive, null);
+      final ProtocolContext<T> protocolContext =
+          protocolContextProvider.get(blockchain, worldArchive);
 
       final Path blocksPath = Path.of(chainResources.getBlocksURL().toURI());
       final List<Block> blocks = new ArrayList<>();
@@ -137,7 +157,7 @@ public class BlockchainSetupUtil<C> {
           blocks.add(iterator.next());
         }
       }
-      return new BlockchainSetupUtil<>(
+      return new BlockchainSetupUtil<T>(
           genesisState, blockchain, protocolContext, protocolSchedule, worldArchive, blocks);
     } catch (final IOException | URISyntaxException ex) {
       throw new IllegalStateException(ex);
@@ -185,5 +205,13 @@ public class BlockchainSetupUtil<C> {
       }
     }
     this.maxBlockNumber = blockchain.getChainHeadBlockNumber();
+  }
+
+  private interface ProtocolScheduleProvider<T> {
+    ProtocolSchedule<T> get(GenesisConfigFile genesisConfig);
+  }
+
+  private interface ProtocolContextProvider<T> {
+    ProtocolContext<T> get(MutableBlockchain blockchain, WorldStateArchive worldStateArchive);
   }
 }

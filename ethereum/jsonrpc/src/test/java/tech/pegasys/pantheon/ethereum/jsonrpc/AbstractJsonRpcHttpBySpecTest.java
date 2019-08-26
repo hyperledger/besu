@@ -27,9 +27,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
-import io.vertx.core.json.JsonObject;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
@@ -40,6 +41,7 @@ import org.junit.runners.Parameterized;
 @RunWith(Parameterized.class)
 public abstract class AbstractJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpServiceTest {
 
+  private static ObjectMapper objectMapper = new ObjectMapper();
   private final URL specURL;
 
   public AbstractJsonRpcHttpBySpecTest(final String specName, final URL specURL) {
@@ -70,7 +72,7 @@ public abstract class AbstractJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpS
       } catch (final URISyntaxException e) {
         throw new RuntimeException("Problem converting URL to URI " + url, e);
       }
-      try (final Stream<Path> s = Files.walk(dir)) {
+      try (final Stream<Path> s = Files.walk(dir, 1)) {
         s.map(Path::toFile)
             .filter(f -> f.getPath().endsWith(".json"))
             .map(AbstractJsonRpcHttpBySpecTest::fileToParams)
@@ -98,18 +100,50 @@ public abstract class AbstractJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpS
 
   private void jsonRPCCall(final URL specFile) throws IOException {
     final String json = Resources.toString(specFile, Charsets.UTF_8);
-    final JsonObject spec = new JsonObject(json);
+    final ObjectNode specNode = (ObjectNode) objectMapper.readTree(json);
 
-    final String rawRequestBody = spec.getJsonObject("request").toString();
+    final String rawRequestBody = specNode.get("request").toString();
     final RequestBody requestBody = RequestBody.create(JSON, rawRequestBody);
     final Request request = new Request.Builder().post(requestBody).url(baseUrl).build();
 
     try (final Response resp = client.newCall(request).execute()) {
-      final int expectedStatusCode = spec.getInteger("statusCode");
+      final int expectedStatusCode = specNode.get("statusCode").asInt();
       assertThat(resp.code()).isEqualTo(expectedStatusCode);
 
-      final String expectedRespBody = spec.getJsonObject("response").encodePrettily();
-      assertThat(resp.body().string()).isEqualTo(expectedRespBody);
+      final ObjectNode responseBody;
+      try {
+        responseBody = (ObjectNode) objectMapper.readTree(resp.body().string());
+      } catch (Exception e) {
+        throw new RuntimeException("Unable to parse response as json object", e);
+      }
+
+      final ObjectNode expectedResponse = (ObjectNode) specNode.get("response");
+
+      // Check id
+      final String actualId = responseBody.get("id").toString();
+      final String expectedId = expectedResponse.get("id").toString();
+      assertThat(actualId).isEqualTo(expectedId);
+
+      // Check version
+      final String actualVersion = responseBody.get("jsonrpc").toString();
+      final String expectedVersion = expectedResponse.get("jsonrpc").toString();
+      assertThat(actualVersion).isEqualTo(expectedVersion);
+
+      // Check result
+      if (expectedResponse.has("result")) {
+        assertThat(responseBody.has("result")).isTrue();
+        final String expectedResult = expectedResponse.get("result").toString();
+        final String actualResult = responseBody.get("result").toString();
+        assertThat(actualResult).isEqualToIgnoringWhitespace(expectedResult);
+      }
+
+      // Check error
+      if (expectedResponse.has("error")) {
+        assertThat(responseBody.has("error")).isTrue();
+        final String expectedError = expectedResponse.get("error").toString();
+        final String actualError = responseBody.get("error").toString();
+        assertThat(actualError).isEqualToIgnoringWhitespace(expectedError);
+      }
     }
   }
 }

@@ -11,7 +11,7 @@
   "response": {
     "jsonrpc": "2.0",
     "id": 415,
-    "result": null
+    "result": []
   },
   "statusCode": 200
 }

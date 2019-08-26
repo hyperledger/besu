@@ -1,17 +1,21 @@
 {
   "request": {
-    "id": 415,
     "jsonrpc": "2.0",
     "method": "trace_replayBlockTransactions",
     "params": [
-      "latest",
-      ["trace","vmTrace","stateDiff"]
-    ]
+      "0x0",
+      [
+        "trace",
+        "vmTrace",
+        "stateDiff"
+      ]
+    ],
+    "id": 415
   },
   "response": {
     "jsonrpc": "2.0",
-    "id": 415,
-    "result": []
+    "result": [],
+    "id": 415
   },
   "statusCode": 200
 }

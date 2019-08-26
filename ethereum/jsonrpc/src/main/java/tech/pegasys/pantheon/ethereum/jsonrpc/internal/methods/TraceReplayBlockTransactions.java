@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods;
 
 import tech.pegasys.pantheon.ethereum.core.Block;
+import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.debug.TraceOptions;
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
@@ -58,6 +59,11 @@ public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
     final TraceTypeParameter traceTypeParameter =
         getParameters().required(request.getParams(), 1, TraceTypeParameter.class);
 
+    if (blockNumber == BlockHeader.GENESIS_BLOCK_NUMBER) {
+      // Nothing to trace for the genesis block
+      return emptyResult();
+    }
+
     return getBlockchainQueries()
         .getBlockchain()
         .getBlockByNumber(blockNumber)
@@ -89,5 +95,10 @@ public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
     // TODO: generate result
     ObjectMapper mapper = new ObjectMapper();
     return mapper.createObjectNode();
+  }
+
+  private Object emptyResult() {
+    ObjectMapper mapper = new ObjectMapper();
+    return mapper.createArrayNode();
   }
 }
