@@ -36,7 +36,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 })
 /*
  The original deserialised private transaction sent via eea_sendRawTransaction
- This class is used if the original request was sent with privateFrom and privateFor
+ This class is used if the original request was sent with privacyGroupId
 */
 public class PrivateTransactionGroupResult extends PrivateTransactionResult {
   private final String privacyGroupId;
@@ -46,7 +46,7 @@ public class PrivateTransactionGroupResult extends PrivateTransactionResult {
     this.privacyGroupId = BytesValues.asBase64String(tx.getPrivacyGroupId().get());
   }
 
-  @JsonGetter(value = "privateFor")
+  @JsonGetter(value = "privacyGroupId")
   public String getPrivacyGroupId() {
     return privacyGroupId;
   }
