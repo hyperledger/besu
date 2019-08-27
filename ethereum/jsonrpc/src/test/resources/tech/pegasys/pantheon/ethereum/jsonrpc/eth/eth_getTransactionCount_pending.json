@@ -1,0 +1,17 @@
+{
+  "request": {
+    "id": 488,
+    "jsonrpc": "2.0",
+    "method": "eth_getTransactionCount",
+    "params": [
+      "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+      "pending"
+    ]
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 488,
+    "result": "0x20"
+  },
+  "statusCode": 200
+}

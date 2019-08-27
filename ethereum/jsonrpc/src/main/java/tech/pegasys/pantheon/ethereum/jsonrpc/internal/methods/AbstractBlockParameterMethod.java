@@ -54,8 +54,8 @@ public abstract class AbstractBlockParameterMethod implements JsonRpcMethod {
 
   protected Object pendingResult(final JsonRpcRequest request) {
     // TODO: Update once we mine and better understand pending semantics.
-    // This may also be worth always returning null for.
-    return null;
+    // For now act like we are not mining and just return latest.
+    return latestResult(request);
   }
 
   protected Object latestResult(final JsonRpcRequest request) {

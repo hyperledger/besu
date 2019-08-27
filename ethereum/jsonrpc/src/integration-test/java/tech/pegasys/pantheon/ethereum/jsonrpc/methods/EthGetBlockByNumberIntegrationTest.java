@@ -40,7 +40,6 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.TransactionResult;
 import tech.pegasys.pantheon.testutil.BlockTestUtil;
 
@@ -148,8 +147,7 @@ public class EthGetBlockByNumberIntegrationTest {
     assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
   }
 
-  @Test
-  public void latestBlockHashes() {
+  private JsonRpcResponse expectedLatestBlockHashes() {
     final Map<JsonRpcResponseKey, String> out = new EnumMap<>(JsonRpcResponseKey.class);
     out.put(COINBASE, "0x8888f1f195afa192cfee860698584c030f4c9db1");
     out.put(DIFFICULTY, "0x207c0");
@@ -173,7 +171,12 @@ public class EthGetBlockByNumberIntegrationTest {
     final List<TransactionResult> transactions =
         responseUtils.transactions(
             "0xcef53f2311d7c80e9086d661e69ac11a5f3d081e28e02a9ba9b66749407ac310");
-    final JsonRpcResponse expected = responseUtils.response(out, transactions);
+    return responseUtils.response(out, transactions);
+  }
+
+  @Test
+  public void latestBlockHashes() {
+    final JsonRpcResponse expected = expectedLatestBlockHashes();
     final JsonRpcRequest request = requestWithParams("latest", false);
 
     final JsonRpcResponse actual = ethGetBlockNumber().response(request);
@@ -181,8 +184,7 @@ public class EthGetBlockByNumberIntegrationTest {
     assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
   }
 
-  @Test
-  public void latestBlockTransactions() {
+  private JsonRpcResponse expectedLatestBlockTransactions() {
     final Map<JsonRpcResponseKey, String> out = new EnumMap<>(JsonRpcResponseKey.class);
     out.put(COINBASE, "0x8888f1f195afa192cfee860698584c030f4c9db1");
     out.put(DIFFICULTY, "0x207c0");
@@ -220,7 +222,12 @@ public class EthGetBlockByNumberIntegrationTest {
                 "0x1b",
                 "0x705b002a7df60707d33812e0298411721be20ea5a2f533707295140d89263b79",
                 "0x78024390784f24160739533b3ceea2698289a02afd9cc768581b4aa3d5f4b105"));
-    final JsonRpcResponse expected = responseUtils.response(out, transactions);
+    return responseUtils.response(out, transactions);
+  }
+
+  @Test
+  public void latestBlockTransactions() {
+    final JsonRpcResponse expected = expectedLatestBlockTransactions();
     final JsonRpcRequest request = requestWithParams("latest", true);
 
     final JsonRpcResponse actual = ethGetBlockNumber().response(request);
@@ -230,22 +237,22 @@ public class EthGetBlockByNumberIntegrationTest {
 
   @Test
   public void pendingBlockHashes() {
-    final JsonRpcResponse expected = new JsonRpcSuccessResponse(null, null);
+    final JsonRpcResponse expected = expectedLatestBlockHashes();
     final JsonRpcRequest request = requestWithParams("pending", false);
 
     final JsonRpcResponse actual = ethGetBlockNumber().response(request);
 
-    assertThat(actual).isEqualToComparingFieldByField(expected);
+    assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
   }
 
   @Test
   public void pendingBlockTransactions() {
-    final JsonRpcResponse expected = new JsonRpcSuccessResponse(null, null);
+    final JsonRpcResponse expected = expectedLatestBlockTransactions();
     final JsonRpcRequest request = requestWithParams("pending", true);
 
     final JsonRpcResponse actual = ethGetBlockNumber().response(request);
 
-    assertThat(actual).isEqualToComparingFieldByField(expected);
+    assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
   }
 
   @Test

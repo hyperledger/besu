@@ -558,7 +558,7 @@ public class JsonRpcHttpServiceTest {
       final JsonObject json = new JsonObject(resp.body().string());
       testHelper.assertValidJsonRpcResult(json, id);
       // Check result
-      assertThat(json.getString("result")).isNull();
+      assertThat(json.getString("result")).isEqualTo("0x0");
     }
   }
 
@@ -581,7 +581,7 @@ public class JsonRpcHttpServiceTest {
       final JsonObject json = new JsonObject(resp.body().string());
       testHelper.assertValidJsonRpcResult(json, id);
       // Check result
-      assertThat(json.getString("result")).isNull();
+      assertThat(json.getString("result")).isEqualTo("0x0");
     }
   }
 
