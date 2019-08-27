@@ -31,4 +31,5 @@ dependencies {
   implementation 'com.squareup.okhttp3:okhttp'
   implementation 'net.consensys:orion'
   implementation 'org.mockito:mockito-core'
+  implementation 'org.web3j:core'
 }

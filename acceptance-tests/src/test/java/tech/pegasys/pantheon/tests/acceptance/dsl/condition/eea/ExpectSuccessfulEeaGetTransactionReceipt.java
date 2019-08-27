@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.tests.acceptance.dsl.condition.eea;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static tech.pegasys.pantheon.tests.acceptance.dsl.WaitUtils.waitFor;
 
 import tech.pegasys.pantheon.tests.acceptance.dsl.condition.Condition;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
@@ -30,7 +31,10 @@ public class ExpectSuccessfulEeaGetTransactionReceipt implements Condition {
 
   @Override
   public void verify(final Node node) {
-    final PrivateTransactionReceipt response = node.execute(transaction);
-    assertThat(response.getContractAddress()).isNotEqualTo("0x");
+    waitFor(
+        () -> {
+          final PrivateTransactionReceipt response = node.execute(transaction);
+          assertThat(response.getContractAddress()).isNotEqualTo("0x");
+        });
   }
 }
