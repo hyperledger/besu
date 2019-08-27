@@ -27,7 +27,7 @@ import java.util.Optional;
 
 public class PrivateTransactionBuilder {
 
-  public static BytesValue EVENT_EMITTER_CONSTRUCTOR =
+  private static BytesValue EVENT_EMITTER_CONSTRUCTOR =
       BytesValue.fromHexString(
           "0x608060405234801561001057600080fd5b5060008054600160a06"
               + "0020a03191633179055610199806100326000396000f3fe6080"
