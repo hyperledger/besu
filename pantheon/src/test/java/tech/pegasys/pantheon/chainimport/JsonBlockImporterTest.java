@@ -38,6 +38,7 @@ import tech.pegasys.pantheon.testutil.TestClock;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -98,7 +99,7 @@ public abstract class JsonBlockImporterTest {
 
     @Parameters(name = "Name: {0}")
     public static Collection<Object[]> getParameters() {
-      Object[][] params = {{"ethash"}, {"clique"}};
+      final Object[][] params = {{"ethash"}, {"clique"}};
       return Arrays.asList(params);
     }
 
@@ -115,7 +116,7 @@ public abstract class JsonBlockImporterTest {
       // Check blocks were imported
       assertThat(blockchain.getChainHead().getHeight()).isEqualTo(4);
       // Get imported blocks
-      List<Block> blocks = new ArrayList<>(4);
+      final List<Block> blocks = new ArrayList<>(4);
       for (int i = 0; i < 4; i++) {
         blocks.add(getBlockAt(blockchain, i + 1));
       }
@@ -206,7 +207,7 @@ public abstract class JsonBlockImporterTest {
       // Check blocks were imported
       assertThat(blockchain.getChainHead().getHeight()).isEqualTo(4);
       // Get imported blocks
-      List<Block> blocks = new ArrayList<>(4);
+      final List<Block> blocks = new ArrayList<>(4);
       for (int i = 0; i < 4; i++) {
         blocks.add(getBlockAt(blockchain, i + 1));
       }
@@ -298,14 +299,14 @@ public abstract class JsonBlockImporterTest {
       // Check blocks were imported
       assertThat(blockchain.getChainHead().getHeight()).isEqualTo(4);
       // Get imported blocks
-      List<Block> blocks = new ArrayList<>(4);
+      final List<Block> blocks = new ArrayList<>(4);
       for (int i = 0; i < 4; i++) {
         blocks.add(getBlockAt(blockchain, i + 1));
       }
 
       // Run new import based on first file
       jsonData = getFileContents("blocks-import-valid-addendum.json");
-      ObjectNode newImportData = JsonUtil.objectNodeFromString(jsonData);
+      final ObjectNode newImportData = JsonUtil.objectNodeFromString(jsonData);
       final ObjectNode block0 = (ObjectNode) newImportData.get("blocks").get(0);
       final Block parentBlock = blocks.get(3);
       block0.put("parentHash", parentBlock.getHash().toString());
@@ -324,7 +325,7 @@ public abstract class JsonBlockImporterTest {
       }
       assertThat(newBlock.getBody().getTransactions().size()).isEqualTo(1);
       // Check first tx
-      Transaction tx = newBlock.getBody().getTransactions().get(0);
+      final Transaction tx = newBlock.getBody().getTransactions().get(0);
       assertThat(tx.getSender())
           .isEqualTo(Address.fromHexString("fe3b557e8fb62b89f4916b721be55ceb828dbd73"));
       assertThat(tx.getTo())
@@ -412,7 +413,7 @@ public abstract class JsonBlockImporterTest {
         .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
         .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
         .storageProvider(new InMemoryStorageProvider())
-        .networkId(10)
+        .networkId(BigInteger.valueOf(10))
         .miningParameters(
             new MiningParametersTestBuilder()
                 .minTransactionGasPrice(Wei.ZERO)

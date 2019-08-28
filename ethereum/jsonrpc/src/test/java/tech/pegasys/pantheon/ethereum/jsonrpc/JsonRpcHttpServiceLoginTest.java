@@ -95,7 +95,7 @@ public class JsonRpcHttpServiceLoginTest {
   protected static String baseUrl;
   protected static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
   protected static final String CLIENT_VERSION = "TestClientVersion/0.1.0";
-  protected static final int CHAIN_ID = 123;
+  protected static final BigInteger CHAIN_ID = BigInteger.valueOf(123);
   protected static P2PNetwork peerDiscoveryMock;
   protected static BlockchainQueries blockchainQueries;
   protected static Synchronizer synchronizer;
@@ -116,7 +116,7 @@ public class JsonRpcHttpServiceLoginTest {
     supportedCapabilities.add(EthProtocol.ETH63);
 
     final StubGenesisConfigOptions genesisConfigOptions =
-        new StubGenesisConfigOptions().constantinopleBlock(0).chainId(BigInteger.valueOf(CHAIN_ID));
+        new StubGenesisConfigOptions().constantinopleBlock(0).chainId(CHAIN_ID);
     rpcMethods =
         spy(
             new JsonRpcMethodsFactory()
@@ -278,7 +278,7 @@ public class JsonRpcHttpServiceLoginTest {
       synchronized (JWTAuthProviderImpl.class) {
         final Buffer keystore = vertx.fileSystem().readFileBlocking(keyStoreOptions.getPath());
 
-        try (InputStream in = new ByteArrayInputStream(keystore.getBytes())) {
+        try (final InputStream in = new ByteArrayInputStream(keystore.getBytes())) {
           ks.load(in, keyStoreOptions.getPassword().toCharArray());
         }
       }
@@ -396,11 +396,11 @@ public class JsonRpcHttpServiceLoginTest {
       final String token = respBody.getString("token");
       assertThat(token).isNotNull();
 
-      JsonRpcMethod ethAccounts = new EthAccounts();
-      JsonRpcMethod netVersion = new NetVersion(Optional.of(BigInteger.valueOf(123)));
-      JsonRpcMethod ethBlockNumber = new EthBlockNumber(blockchainQueries);
-      JsonRpcMethod web3Sha3 = new Web3Sha3();
-      JsonRpcMethod web3ClientVersion = new Web3ClientVersion("777");
+      final JsonRpcMethod ethAccounts = new EthAccounts();
+      final JsonRpcMethod netVersion = new NetVersion(Optional.of(BigInteger.valueOf(123)));
+      final JsonRpcMethod ethBlockNumber = new EthBlockNumber(blockchainQueries);
+      final JsonRpcMethod web3Sha3 = new Web3Sha3();
+      final JsonRpcMethod web3ClientVersion = new Web3ClientVersion("777");
 
       jwtAuth.authenticate(
           new JsonObject().put("jwt", token),
@@ -437,7 +437,7 @@ public class JsonRpcHttpServiceLoginTest {
 
   @Test
   public void checkPermissionsWithEmptyUser() {
-    JsonRpcMethod ethAccounts = new EthAccounts();
+    final JsonRpcMethod ethAccounts = new EthAccounts();
 
     assertThat(
             AuthenticationUtils.isPermitted(

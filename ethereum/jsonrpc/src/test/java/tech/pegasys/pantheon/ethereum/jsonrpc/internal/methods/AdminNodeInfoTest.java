@@ -78,7 +78,11 @@ public class AdminNodeInfoTest {
 
     method =
         new AdminNodeInfo(
-            "testnet/1.0/this/that", 2018, genesisConfigOptions, p2pNetwork, blockchainQueries);
+            "testnet/1.0/this/that",
+            BigInteger.valueOf(2018),
+            genesisConfigOptions,
+            p2pNetwork,
+            blockchainQueries);
   }
 
   @Test
@@ -112,7 +116,7 @@ public class AdminNodeInfoTest {
                 "head",
                 Hash.EMPTY.toString(),
                 "network",
-                2018)));
+                BigInteger.valueOf(2018))));
 
     final JsonRpcResponse response = method.response(request);
     assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);
@@ -157,7 +161,7 @@ public class AdminNodeInfoTest {
                 "head",
                 Hash.EMPTY.toString(),
                 "network",
-                2018)));
+                BigInteger.valueOf(2018))));
 
     final JsonRpcResponse response = method.response(request);
     assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);
@@ -203,7 +207,7 @@ public class AdminNodeInfoTest {
                 "head",
                 Hash.EMPTY.toString(),
                 "network",
-                2018)));
+                BigInteger.valueOf(2018))));
 
     final JsonRpcResponse response = method.response(request);
     assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);
@@ -250,7 +254,7 @@ public class AdminNodeInfoTest {
                 "head",
                 Hash.EMPTY.toString(),
                 "network",
-                2018)));
+                BigInteger.valueOf(2018))));
 
     final JsonRpcResponse response = method.response(request);
     assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);

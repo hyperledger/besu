@@ -67,6 +67,7 @@ import tech.pegasys.pantheon.testutil.TestClock;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -114,7 +115,7 @@ public final class EthProtocolManagerTest {
         new EthProtocolManager(
             blockchain,
             protocolContext.getWorldStateArchive(),
-            1,
+            BigInteger.ONE,
             true,
             1,
             1,
@@ -136,7 +137,7 @@ public final class EthProtocolManagerTest {
         new EthProtocolManager(
             blockchain,
             protocolContext.getWorldStateArchive(),
-            1,
+            BigInteger.ONE,
             true,
             1,
             1,
@@ -159,7 +160,7 @@ public final class EthProtocolManagerTest {
         new EthProtocolManager(
             blockchain,
             protocolContext.getWorldStateArchive(),
-            1,
+            BigInteger.ONE,
             true,
             1,
             1,
@@ -176,7 +177,7 @@ public final class EthProtocolManagerTest {
       final StatusMessage statusMessage =
           StatusMessage.create(
               EthVersion.V63,
-              2222,
+              BigInteger.valueOf(2222),
               blockchain.getChainHead().getTotalDifficulty(),
               blockchain.getChainHeadHash(),
               blockchain.getBlockHeader(BlockHeader.GENESIS_BLOCK_NUMBER).get().getHash());
@@ -193,7 +194,7 @@ public final class EthProtocolManagerTest {
         new EthProtocolManager(
             blockchain,
             protocolContext.getWorldStateArchive(),
-            1,
+            BigInteger.ONE,
             true,
             1,
             1,
@@ -210,7 +211,7 @@ public final class EthProtocolManagerTest {
       final StatusMessage statusMessage =
           StatusMessage.create(
               EthVersion.V63,
-              1,
+              BigInteger.ONE,
               blockchain.getChainHead().getTotalDifficulty(),
               gen.hash(),
               blockchain.getBlockHeader(BlockHeader.GENESIS_BLOCK_NUMBER).get().getHash());
@@ -227,7 +228,7 @@ public final class EthProtocolManagerTest {
         new EthProtocolManager(
             blockchain,
             protocolContext.getWorldStateArchive(),
-            1,
+            BigInteger.ONE,
             true,
             1,
             1,
@@ -253,7 +254,7 @@ public final class EthProtocolManagerTest {
         new EthProtocolManager(
             blockchain,
             protocolContext.getWorldStateArchive(),
-            1,
+            BigInteger.ONE,
             true,
             1,
             1,
@@ -295,7 +296,7 @@ public final class EthProtocolManagerTest {
         new EthProtocolManager(
             blockchain,
             protocolContext.getWorldStateArchive(),
-            1,
+            BigInteger.ONE,
             true,
             1,
             1,
@@ -336,7 +337,7 @@ public final class EthProtocolManagerTest {
         new EthProtocolManager(
             blockchain,
             protocolContext.getWorldStateArchive(),
-            1,
+            BigInteger.ONE,
             true,
             1,
             1,
@@ -376,7 +377,7 @@ public final class EthProtocolManagerTest {
         new EthProtocolManager(
             blockchain,
             protocolContext.getWorldStateArchive(),
-            1,
+            BigInteger.ONE,
             true,
             1,
             1,
@@ -419,7 +420,7 @@ public final class EthProtocolManagerTest {
         new EthProtocolManager(
             blockchain,
             protocolContext.getWorldStateArchive(),
-            1,
+            BigInteger.ONE,
             true,
             1,
             1,
@@ -460,7 +461,7 @@ public final class EthProtocolManagerTest {
     final StatusMessage statusMessage =
         StatusMessage.create(
             EthVersion.V63,
-            1,
+            BigInteger.ONE,
             blockchain.getChainHead().getTotalDifficulty(),
             blockchain.getChainHeadHash(),
             blockchain.getBlockHeader(BlockHeader.GENESIS_BLOCK_NUMBER).get().getHash());
@@ -483,7 +484,7 @@ public final class EthProtocolManagerTest {
         new EthProtocolManager(
             blockchain,
             protocolContext.getWorldStateArchive(),
-            1,
+            BigInteger.ONE,
             true,
             1,
             1,
@@ -524,7 +525,7 @@ public final class EthProtocolManagerTest {
         new EthProtocolManager(
             blockchain,
             protocolContext.getWorldStateArchive(),
-            1,
+            BigInteger.ONE,
             true,
             1,
             1,
@@ -562,7 +563,7 @@ public final class EthProtocolManagerTest {
         new EthProtocolManager(
             blockchain,
             protocolContext.getWorldStateArchive(),
-            1,
+            BigInteger.ONE,
             true,
             1,
             1,
@@ -616,7 +617,7 @@ public final class EthProtocolManagerTest {
         new EthProtocolManager(
             blockchain,
             protocolContext.getWorldStateArchive(),
-            1,
+            BigInteger.ONE,
             true,
             1,
             1,
@@ -669,7 +670,7 @@ public final class EthProtocolManagerTest {
         new EthProtocolManager(
             blockchain,
             protocolContext.getWorldStateArchive(),
-            1,
+            BigInteger.ONE,
             true,
             1,
             1,
@@ -716,7 +717,7 @@ public final class EthProtocolManagerTest {
         new EthProtocolManager(
             blockchain,
             protocolContext.getWorldStateArchive(),
-            1,
+            BigInteger.ONE,
             true,
             1,
             1,
@@ -769,7 +770,7 @@ public final class EthProtocolManagerTest {
         new EthProtocolManager(
             blockchain,
             protocolContext.getWorldStateArchive(),
-            1,
+            BigInteger.ONE,
             true,
             1,
             1,
@@ -821,7 +822,7 @@ public final class EthProtocolManagerTest {
         new EthProtocolManager(
             blockchain,
             protocolContext.getWorldStateArchive(),
-            1,
+            BigInteger.ONE,
             true,
             1,
             1,
@@ -870,7 +871,7 @@ public final class EthProtocolManagerTest {
         new EthProtocolManager(
             blockchain,
             worldStateArchive,
-            1,
+            BigInteger.ONE,
             true,
             1,
             1,
@@ -922,7 +923,7 @@ public final class EthProtocolManagerTest {
         new EthProtocolManager(
             blockchain,
             protocolContext.getWorldStateArchive(),
-            1,
+            BigInteger.ONE,
             true,
             1,
             1,
@@ -995,7 +996,7 @@ public final class EthProtocolManagerTest {
         new EthProtocolManager(
             blockchain,
             protocolContext.getWorldStateArchive(),
-            1,
+            BigInteger.ONE,
             true,
             1,
             1,
@@ -1031,7 +1032,7 @@ public final class EthProtocolManagerTest {
       final StatusMessage statusMessage =
           StatusMessage.create(
               EthProtocol.EthVersion.V63,
-              1,
+              BigInteger.ONE,
               blockchain.getChainHead().getTotalDifficulty(),
               blockchain.getChainHeadHash(),
               blockchain.getBlockHeader(BlockHeader.GENESIS_BLOCK_NUMBER).get().getHash());
@@ -1064,7 +1065,7 @@ public final class EthProtocolManagerTest {
         new EthProtocolManager(
             blockchain,
             protocolContext.getWorldStateArchive(),
-            1,
+            BigInteger.ONE,
             true,
             ethScheduler,
             EthProtocolConfiguration.defaultConfig(),

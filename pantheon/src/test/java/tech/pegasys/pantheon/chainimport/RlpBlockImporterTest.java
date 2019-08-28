@@ -30,6 +30,7 @@ import tech.pegasys.pantheon.testutil.TestClock;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -44,7 +45,7 @@ public final class RlpBlockImporterTest {
 
   @Rule public final TemporaryFolder folder = new TemporaryFolder();
 
-  private RlpBlockImporter rlpBlockImporter = new RlpBlockImporter();
+  private final RlpBlockImporter rlpBlockImporter = new RlpBlockImporter();
 
   @Test
   public void blockImport() throws IOException {
@@ -57,7 +58,7 @@ public final class RlpBlockImporterTest {
             .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
             .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
             .storageProvider(new InMemoryStorageProvider())
-            .networkId(1)
+            .networkId(BigInteger.ONE)
             .miningParameters(new MiningParametersTestBuilder().enabled(false).build())
             .nodeKeys(KeyPair.generate())
             .metricsSystem(new NoOpMetricsSystem())
@@ -96,7 +97,7 @@ public final class RlpBlockImporterTest {
             .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
             .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
             .storageProvider(new InMemoryStorageProvider())
-            .networkId(10)
+            .networkId(BigInteger.valueOf(10))
             .miningParameters(new MiningParametersTestBuilder().enabled(false).build())
             .nodeKeys(KeyPair.generate())
             .metricsSystem(new NoOpMetricsSystem())

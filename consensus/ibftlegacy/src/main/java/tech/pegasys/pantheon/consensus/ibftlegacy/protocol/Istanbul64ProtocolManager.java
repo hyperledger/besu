@@ -21,6 +21,7 @@ import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.Capability;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 
+import java.math.BigInteger;
 import java.time.Clock;
 import java.util.List;
 
@@ -30,7 +31,7 @@ public class Istanbul64ProtocolManager extends EthProtocolManager {
   public Istanbul64ProtocolManager(
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
-      final int networkId,
+      final BigInteger networkId,
       final boolean fastSyncEnabled,
       final int syncWorkers,
       final int txWorkers,
@@ -54,7 +55,7 @@ public class Istanbul64ProtocolManager extends EthProtocolManager {
   public Istanbul64ProtocolManager(
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
-      final int networkId,
+      final BigInteger networkId,
       final boolean fastSyncEnabled,
       final int syncWorkers,
       final int txWorkers,

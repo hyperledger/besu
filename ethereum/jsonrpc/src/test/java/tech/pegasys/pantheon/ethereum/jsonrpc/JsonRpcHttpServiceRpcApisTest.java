@@ -44,7 +44,7 @@ import tech.pegasys.pantheon.ethereum.permissioning.NodeLocalConfigPermissioning
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
 
-import java.io.IOException;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -81,7 +81,7 @@ public class JsonRpcHttpServiceRpcApisTest {
   private static String baseUrl;
   private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
   private static final String CLIENT_VERSION = "TestClientVersion/0.1.0";
-  private static final int NETWORK_ID = 123;
+  private static final BigInteger NETWORK_ID = BigInteger.valueOf(123);
   private JsonRpcConfiguration configuration;
   private static final List<String> netServices =
       new ArrayList<>(Arrays.asList("jsonrpc", "ws", "p2p", "metrics"));
@@ -314,7 +314,7 @@ public class JsonRpcHttpServiceRpcApisTest {
 
   @Test
   public void netServicesTestWhenJsonrpcWebsocketP2pNetworkAndMatricesIsEnabled() throws Exception {
-    boolean[] servicesStates = new boolean[netServices.size()];
+    final boolean[] servicesStates = new boolean[netServices.size()];
     Arrays.fill(servicesStates, Boolean.TRUE); // All services are enabled
     service = getJsonRpcHttpService(servicesStates);
 
@@ -334,8 +334,8 @@ public class JsonRpcHttpServiceRpcApisTest {
 
     for (int i = 0; i < netServices.size(); i++) {
 
-      boolean[] servicesStates = new boolean[netServices.size()];
-      int enabledServiceIndex = i % netServices.size();
+      final boolean[] servicesStates = new boolean[netServices.size()];
+      final int enabledServiceIndex = i % netServices.size();
       servicesStates[enabledServiceIndex] = true; // enable only one service at a time
       service = getJsonRpcHttpService(servicesStates);
 
@@ -352,10 +352,9 @@ public class JsonRpcHttpServiceRpcApisTest {
   }
 
   private void assertNetService(
-      final boolean[] servicesStates, final JsonObject jsonBody, final String serviceName)
-      throws IOException {
+      final boolean[] servicesStates, final JsonObject jsonBody, final String serviceName) {
 
-    boolean isAssertTrue = servicesStates[netServices.indexOf(serviceName)];
+    final boolean isAssertTrue = servicesStates[netServices.indexOf(serviceName)];
 
     final JsonObject result = jsonBody.getJsonObject("result");
     final JsonObject serviceElement = result.getJsonObject(serviceName);
@@ -373,7 +372,7 @@ public class JsonRpcHttpServiceRpcApisTest {
   }
 
   public RequestBody createNetServicesRequestBody() {
-    String id = "123";
+    final String id = "123";
     return RequestBody.create(
         JSON, "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_services\"}");
   }

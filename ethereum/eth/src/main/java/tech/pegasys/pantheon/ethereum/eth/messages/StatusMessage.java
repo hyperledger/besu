@@ -23,6 +23,8 @@ import tech.pegasys.pantheon.util.bytes.Bytes32;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
+import java.math.BigInteger;
+
 public final class StatusMessage extends AbstractMessageData {
 
   private EthStatus status;
@@ -33,7 +35,7 @@ public final class StatusMessage extends AbstractMessageData {
 
   public static StatusMessage create(
       final int protocolVersion,
-      final int networkId,
+      final BigInteger networkId,
       final UInt256 totalDifficulty,
       final Hash bestHash,
       final Hash genesisHash) {
@@ -68,7 +70,7 @@ public final class StatusMessage extends AbstractMessageData {
   }
 
   /** @return The id of the network the associated node is participating in. */
-  public int networkId() {
+  public BigInteger networkId() {
     return status().networkId;
   }
 
@@ -99,14 +101,14 @@ public final class StatusMessage extends AbstractMessageData {
 
   private static class EthStatus {
     private final int protocolVersion;
-    private final int networkId;
+    private final BigInteger networkId;
     private final UInt256 totalDifficulty;
     private final Hash bestHash;
     private final Hash genesisHash;
 
-    public EthStatus(
+    EthStatus(
         final int protocolVersion,
-        final int networkId,
+        final BigInteger networkId,
         final UInt256 totalDifficulty,
         final Hash bestHash,
         final Hash genesisHash) {
@@ -121,7 +123,7 @@ public final class StatusMessage extends AbstractMessageData {
       out.startList();
 
       out.writeIntScalar(protocolVersion);
-      out.writeIntScalar(networkId);
+      out.writeBigIntegerScalar(networkId);
       out.writeUInt256Scalar(totalDifficulty);
       out.writeBytesValue(bestHash);
       out.writeBytesValue(genesisHash);
@@ -133,7 +135,7 @@ public final class StatusMessage extends AbstractMessageData {
       in.enterList();
 
       final int protocolVersion = in.readIntScalar();
-      final int networkId = in.readIntScalar();
+      final BigInteger networkId = in.readBigIntegerScalar();
       final UInt256 totalDifficulty = in.readUInt256Scalar();
       final Hash bestHash = Hash.wrap(in.readBytes32());
       final Hash genesisHash = Hash.wrap(in.readBytes32());

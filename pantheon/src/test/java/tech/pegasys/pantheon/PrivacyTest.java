@@ -30,6 +30,7 @@ import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.testutil.TestClock;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.nio.file.Path;
 
 import org.junit.Rule;
@@ -57,7 +58,7 @@ public class PrivacyTest {
             .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
             .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
             .storageProvider(new InMemoryStorageProvider())
-            .networkId(1)
+            .networkId(BigInteger.ONE)
             .miningParameters(new MiningParametersTestBuilder().enabled(false).build())
             .nodeKeys(KeyPair.generate())
             .metricsSystem(new NoOpMetricsSystem())

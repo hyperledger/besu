@@ -43,6 +43,7 @@ import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
 
+import java.math.BigInteger;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
@@ -51,7 +52,7 @@ import java.util.Optional;
 public class JsonRpcTestMethodsFactory {
 
   private static final String CLIENT_VERSION = "TestClientVersion/0.1.0";
-  private static final int NETWORK_ID = 123;
+  private static final BigInteger NETWORK_ID = BigInteger.valueOf(123);
 
   private final BlockchainImporter importer;
 

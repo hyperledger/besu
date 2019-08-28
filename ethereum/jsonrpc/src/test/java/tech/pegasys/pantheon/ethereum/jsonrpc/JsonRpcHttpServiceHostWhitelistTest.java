@@ -70,7 +70,7 @@ public class JsonRpcHttpServiceHostWhitelistTest {
   private static String baseUrl;
   private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
   private static final String CLIENT_VERSION = "TestClientVersion/0.1.0";
-  private static final int CHAIN_ID = 123;
+  private static final BigInteger CHAIN_ID = BigInteger.valueOf(123);
   private static final Collection<RpcApi> JSON_RPC_APIS =
       Arrays.asList(RpcApis.ETH, RpcApis.NET, RpcApis.WEB3);
   private final JsonRpcConfiguration jsonRpcConfig = createJsonRpcConfig();
@@ -78,9 +78,9 @@ public class JsonRpcHttpServiceHostWhitelistTest {
 
   @Before
   public void initServerAndClient() throws Exception {
-    P2PNetwork peerDiscoveryMock = mock(P2PNetwork.class);
-    BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
-    Synchronizer synchronizer = mock(Synchronizer.class);
+    final P2PNetwork peerDiscoveryMock = mock(P2PNetwork.class);
+    final BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
+    final Synchronizer synchronizer = mock(Synchronizer.class);
 
     final Set<Capability> supportedCapabilities = new HashSet<>();
     supportedCapabilities.add(EthProtocol.ETH62);
@@ -97,9 +97,7 @@ public class JsonRpcHttpServiceHostWhitelistTest {
                     blockchainQueries,
                     synchronizer,
                     MainnetProtocolSchedule.fromConfig(
-                        new StubGenesisConfigOptions()
-                            .constantinopleBlock(0)
-                            .chainId(BigInteger.valueOf(CHAIN_ID))),
+                        new StubGenesisConfigOptions().constantinopleBlock(0).chainId(CHAIN_ID)),
                     mock(FilterManager.class),
                     mock(TransactionPool.class),
                     mock(EthHashMiningCoordinator.class),
@@ -179,7 +177,7 @@ public class JsonRpcHttpServiceHostWhitelistTest {
             JSON,
             "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode("123") + ",\"method\":\"net_version\"}");
 
-    Request build =
+    final Request build =
         new Request.Builder().post(body).url(baseUrl).addHeader("Host", hostname).build();
     return client.newCall(build).execute().code();
   }

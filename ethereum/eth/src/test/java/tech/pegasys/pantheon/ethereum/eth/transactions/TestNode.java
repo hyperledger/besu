@@ -54,6 +54,7 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -110,7 +111,7 @@ public class TestNode implements Closeable {
         new EthProtocolManager(
             blockchain,
             worldStateArchive,
-            1,
+            BigInteger.ONE,
             false,
             1,
             1,
@@ -140,7 +141,7 @@ public class TestNode implements Closeable {
 
     final EthContext ethContext = ethProtocolManager.ethContext();
 
-    SyncState syncState = mock(SyncState.class);
+    final SyncState syncState = mock(SyncState.class);
     when(syncState.isInSync(anyLong())).thenReturn(true);
 
     transactionPool =

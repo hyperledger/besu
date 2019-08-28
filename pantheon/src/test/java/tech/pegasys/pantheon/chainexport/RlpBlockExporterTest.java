@@ -38,6 +38,7 @@ import tech.pegasys.pantheon.testutil.TestClock;
 
 import java.io.File;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.nio.file.Path;
 import java.util.Optional;
 
@@ -79,7 +80,7 @@ public final class RlpBlockExporterTest {
         .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
         .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
         .storageProvider(new InMemoryStorageProvider())
-        .networkId(1)
+        .networkId(BigInteger.ONE)
         .miningParameters(new MiningParametersTestBuilder().enabled(false).build())
         .nodeKeys(KeyPair.generate())
         .metricsSystem(new NoOpMetricsSystem())
@@ -97,7 +98,7 @@ public final class RlpBlockExporterTest {
     exporter.exportBlocks(outputPath, Optional.empty(), Optional.empty());
 
     // Iterate over blocks and check that they match expectations
-    RawBlockIterator blockIterator = getBlockIterator(outputPath.toPath());
+    final RawBlockIterator blockIterator = getBlockIterator(outputPath.toPath());
     long currentBlockNumber = 0;
     while (blockIterator.hasNext()) {
       final Block actual = blockIterator.next();
@@ -119,7 +120,7 @@ public final class RlpBlockExporterTest {
     exporter.exportBlocks(outputPath, Optional.of(lowerBound), Optional.empty());
 
     // Iterate over blocks and check that they match expectations
-    RawBlockIterator blockIterator = getBlockIterator(outputPath.toPath());
+    final RawBlockIterator blockIterator = getBlockIterator(outputPath.toPath());
     long currentBlockNumber = lowerBound;
     while (blockIterator.hasNext()) {
       final Block actual = blockIterator.next();
@@ -141,7 +142,7 @@ public final class RlpBlockExporterTest {
     exporter.exportBlocks(outputPath, Optional.empty(), Optional.of(upperBound));
 
     // Iterate over blocks and check that they match expectations
-    RawBlockIterator blockIterator = getBlockIterator(outputPath.toPath());
+    final RawBlockIterator blockIterator = getBlockIterator(outputPath.toPath());
     long currentBlockNumber = 0;
     while (blockIterator.hasNext()) {
       final Block actual = blockIterator.next();
@@ -164,7 +165,7 @@ public final class RlpBlockExporterTest {
     exporter.exportBlocks(outputPath, Optional.of(lowerBound), Optional.of(upperBound));
 
     // Iterate over blocks and check that they match expectations
-    RawBlockIterator blockIterator = getBlockIterator(outputPath.toPath());
+    final RawBlockIterator blockIterator = getBlockIterator(outputPath.toPath());
     long currentBlockNumber = lowerBound;
     while (blockIterator.hasNext()) {
       final Block actual = blockIterator.next();
@@ -187,7 +188,7 @@ public final class RlpBlockExporterTest {
     exporter.exportBlocks(outputPath, Optional.of(lowerBound), Optional.of(upperBound));
 
     // Iterate over blocks and check that they match expectations
-    RawBlockIterator blockIterator = getBlockIterator(outputPath.toPath());
+    final RawBlockIterator blockIterator = getBlockIterator(outputPath.toPath());
     long currentBlockNumber = lowerBound;
     while (blockIterator.hasNext()) {
       final Block actual = blockIterator.next();

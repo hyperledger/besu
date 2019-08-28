@@ -43,6 +43,7 @@ import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
 import tech.pegasys.pantheon.testutil.BlockTestUtil.ChainResources;
 
+import java.math.BigInteger;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
@@ -66,7 +67,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
   private static boolean blockchainInitialized = false;
 
   protected static String CLIENT_VERSION = "TestClientVersion/0.1.0";
-  protected static final int NETWORK_ID = 123;
+  protected static final BigInteger NETWORK_ID = BigInteger.valueOf(123);
   protected static final Collection<RpcApi> JSON_RPC_APIS =
       Arrays.asList(RpcApis.ETH, RpcApis.NET, RpcApis.WEB3, RpcApis.DEBUG);
 

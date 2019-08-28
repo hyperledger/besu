@@ -35,6 +35,7 @@ import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
+import java.math.BigInteger;
 import java.time.Clock;
 import java.util.Arrays;
 import java.util.Collections;
@@ -57,7 +58,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   private final AtomicBoolean stopped = new AtomicBoolean(false);
 
   private final Hash genesisHash;
-  private final int networkId;
+  private final BigInteger networkId;
   private final EthPeers ethPeers;
   private final EthMessages ethMessages;
   private final EthContext ethContext;
@@ -69,7 +70,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   public EthProtocolManager(
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
-      final int networkId,
+      final BigInteger networkId,
       final boolean fastSyncEnabled,
       final EthScheduler scheduler,
       final EthProtocolConfiguration ethereumWireProtocolConfiguration,
@@ -96,7 +97,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   public EthProtocolManager(
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
-      final int networkId,
+      final BigInteger networkId,
       final boolean fastSyncEnabled,
       final int syncWorkers,
       final int txWorkers,
@@ -117,7 +118,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   public EthProtocolManager(
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
-      final int networkId,
+      final BigInteger networkId,
       final boolean fastSyncEnabled,
       final int syncWorkers,
       final int txWorkers,
@@ -258,7 +259,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   private void handleStatusMessage(final EthPeer peer, final MessageData data) {
     final StatusMessage status = StatusMessage.readFrom(data);
     try {
-      if (status.networkId() != networkId) {
+      if (!status.networkId().equals(networkId)) {
         LOG.debug("Disconnecting from peer with mismatched network id: {}", status.networkId());
         peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
       } else if (!status.genesisHash().equals(genesisHash)) {

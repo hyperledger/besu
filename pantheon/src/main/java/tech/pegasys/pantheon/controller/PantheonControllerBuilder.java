@@ -54,6 +54,7 @@ import tech.pegasys.pantheon.services.kvstore.RocksDbConfiguration;
 
 import java.io.File;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.util.ArrayList;
@@ -75,7 +76,7 @@ public abstract class PantheonControllerBuilder<C> {
   protected EthProtocolManager ethProtocolManager;
   protected EthProtocolConfiguration ethereumWireProtocolConfiguration;
   protected TransactionPoolConfiguration transactionPoolConfiguration;
-  protected Integer networkId;
+  protected BigInteger networkId;
   protected MiningParameters miningParameters;
   protected MetricsSystem metricsSystem;
   protected PrivacyParameters privacyParameters;
@@ -117,7 +118,7 @@ public abstract class PantheonControllerBuilder<C> {
     return this;
   }
 
-  public PantheonControllerBuilder<C> networkId(final int networkId) {
+  public PantheonControllerBuilder<C> networkId(final BigInteger networkId) {
     this.networkId = networkId;
     return this;
   }
@@ -241,14 +242,14 @@ public abstract class PantheonControllerBuilder<C> {
                   pruningConfiguration));
     }
 
-    Optional<Pruner> finalMaybePruner = maybePruner;
+    final Optional<Pruner> finalMaybePruner = maybePruner;
     addShutdownAction(
         () ->
             finalMaybePruner.ifPresent(
                 pruner -> {
                   try {
                     pruner.stop();
-                  } catch (InterruptedException ie) {
+                  } catch (final InterruptedException ie) {
                     throw new RuntimeException(ie);
                   }
                 }));

@@ -95,7 +95,7 @@ public class JsonRpcHttpServiceTest {
   protected static String baseUrl;
   protected static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
   protected static final String CLIENT_VERSION = "TestClientVersion/0.1.0";
-  protected static final int CHAIN_ID = 123;
+  protected static final BigInteger CHAIN_ID = BigInteger.valueOf(123);
   protected static P2PNetwork peerDiscoveryMock;
   protected static BlockchainQueries blockchainQueries;
   protected static Synchronizer synchronizer;
@@ -124,9 +124,7 @@ public class JsonRpcHttpServiceTest {
                     blockchainQueries,
                     synchronizer,
                     MainnetProtocolSchedule.fromConfig(
-                        new StubGenesisConfigOptions()
-                            .constantinopleBlock(0)
-                            .chainId(BigInteger.valueOf(CHAIN_ID))),
+                        new StubGenesisConfigOptions().constantinopleBlock(0).chainId(CHAIN_ID)),
                     mock(FilterManager.class),
                     mock(TransactionPool.class),
                     mock(EthHashMiningCoordinator.class),
@@ -201,9 +199,7 @@ public class JsonRpcHttpServiceTest {
     service
         .start()
         .whenComplete(
-            (unused, exception) -> {
-              assertThat(exception).isInstanceOf(IllegalStateException.class);
-            });
+            (unused, exception) -> assertThat(exception).isInstanceOf(IllegalStateException.class));
   }
 
   @Test

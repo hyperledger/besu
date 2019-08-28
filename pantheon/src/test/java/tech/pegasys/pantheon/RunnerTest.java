@@ -51,6 +51,7 @@ import tech.pegasys.pantheon.testutil.TestClock;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.net.InetAddress;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -117,7 +118,7 @@ public final class RunnerTest {
     final SynchronizerConfiguration syncConfigAhead =
         SynchronizerConfiguration.builder().syncMode(SyncMode.FULL).build();
     final MetricsSystem noOpMetricsSystem = new NoOpMetricsSystem();
-    final int networkId = 2929;
+    final BigInteger networkId = BigInteger.valueOf(2929);
 
     // Setup state with block data
     try (final PantheonController<Void> controller =

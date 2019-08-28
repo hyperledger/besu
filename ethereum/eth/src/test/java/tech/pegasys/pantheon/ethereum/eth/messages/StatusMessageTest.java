@@ -20,6 +20,7 @@ import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.MessageData;
 import tech.pegasys.pantheon.util.bytes.Bytes32;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
+import java.math.BigInteger;
 import java.util.Random;
 
 import org.junit.Test;
@@ -29,7 +30,7 @@ public class StatusMessageTest {
   @Test
   public void getters() {
     final int version = EthVersion.V62;
-    final int networkId = 1;
+    final BigInteger networkId = BigInteger.ONE;
     final UInt256 td = UInt256.of(1000L);
     final Hash bestHash = randHash(1L);
     final Hash genesisHash = randHash(2L);
@@ -46,7 +47,7 @@ public class StatusMessageTest {
   @Test
   public void serializeDeserialize() {
     final int version = EthVersion.V62;
-    final int networkId = 1;
+    final BigInteger networkId = BigInteger.ONE;
     final UInt256 td = UInt256.of(1000L);
     final Hash bestHash = randHash(1L);
     final Hash genesisHash = randHash(2L);

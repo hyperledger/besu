@@ -21,6 +21,7 @@ import static tech.pegasys.pantheon.ethereum.p2p.config.DiscoveryConfiguration.R
 import tech.pegasys.pantheon.ethereum.p2p.peers.EnodeURL;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -31,22 +32,22 @@ import com.google.common.base.Preconditions;
 import com.google.common.io.Resources;
 
 public class EthNetworkConfig {
-  public static final int MAINNET_NETWORK_ID = 1;
-  public static final int ROPSTEN_NETWORK_ID = 3;
-  public static final int RINKEBY_NETWORK_ID = 4;
-  public static final int GOERLI_NETWORK_ID = 5;
-  public static final int DEV_NETWORK_ID = 2018;
+  public static final BigInteger MAINNET_NETWORK_ID = BigInteger.valueOf(1);
+  public static final BigInteger ROPSTEN_NETWORK_ID = BigInteger.valueOf(3);
+  public static final BigInteger RINKEBY_NETWORK_ID = BigInteger.valueOf(4);
+  public static final BigInteger GOERLI_NETWORK_ID = BigInteger.valueOf(5);
+  public static final BigInteger DEV_NETWORK_ID = BigInteger.valueOf(2018);
   private static final String MAINNET_GENESIS = "/mainnet.json";
   private static final String ROPSTEN_GENESIS = "/ropsten.json";
   private static final String RINKEBY_GENESIS = "/rinkeby.json";
   private static final String GOERLI_GENESIS = "/goerli.json";
   private static final String DEV_GENESIS = "/dev.json";
   private final String genesisConfig;
-  private final int networkId;
+  private final BigInteger networkId;
   private final List<EnodeURL> bootNodes;
 
   public EthNetworkConfig(
-      final String genesisConfig, final int networkId, final List<EnodeURL> bootNodes) {
+      final String genesisConfig, final BigInteger networkId, final List<EnodeURL> bootNodes) {
     Preconditions.checkNotNull(genesisConfig);
     Preconditions.checkNotNull(bootNodes);
     this.genesisConfig = genesisConfig;
@@ -58,7 +59,7 @@ public class EthNetworkConfig {
     return genesisConfig;
   }
 
-  public int getNetworkId() {
+  public BigInteger getNetworkId() {
     return networkId;
   }
 
@@ -75,7 +76,7 @@ public class EthNetworkConfig {
       return false;
     }
     final EthNetworkConfig that = (EthNetworkConfig) o;
-    return networkId == that.networkId
+    return networkId.equals(that.networkId)
         && Objects.equals(genesisConfig, that.genesisConfig)
         && Objects.equals(bootNodes, that.bootNodes);
   }
@@ -146,7 +147,7 @@ public class EthNetworkConfig {
   public static class Builder {
 
     private String genesisConfig;
-    private int networkId;
+    private BigInteger networkId;
     private List<EnodeURL> bootNodes;
 
     public Builder(final EthNetworkConfig ethNetworkConfig) {
@@ -160,7 +161,7 @@ public class EthNetworkConfig {
       return this;
     }
 
-    public Builder setNetworkId(final int networkId) {
+    public Builder setNetworkId(final BigInteger networkId) {
       this.networkId = networkId;
       return this;
     }

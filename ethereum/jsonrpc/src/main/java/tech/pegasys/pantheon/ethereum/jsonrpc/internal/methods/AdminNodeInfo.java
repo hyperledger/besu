@@ -25,6 +25,7 @@ import tech.pegasys.pantheon.ethereum.p2p.network.P2PNetwork;
 import tech.pegasys.pantheon.ethereum.p2p.peers.EnodeURL;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
+import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -34,14 +35,14 @@ import com.google.common.collect.ImmutableMap;
 public class AdminNodeInfo implements JsonRpcMethod {
 
   private final String clientVersion;
-  private final int networkId;
+  private final BigInteger networkId;
   private final GenesisConfigOptions genesisConfigOptions;
   private final P2PNetwork peerNetwork;
   private final BlockchainQueries blockchainQueries;
 
   public AdminNodeInfo(
       final String clientVersion,
-      final int networkId,
+      final BigInteger networkId,
       final GenesisConfigOptions genesisConfigOptions,
       final P2PNetwork peerNetwork,
       final BlockchainQueries blockchainQueries) {
@@ -66,7 +67,7 @@ public class AdminNodeInfo implements JsonRpcMethod {
       return new JsonRpcErrorResponse(req.getId(), JsonRpcError.P2P_DISABLED);
     }
     final Optional<EnodeURL> maybeEnode = peerNetwork.getLocalEnode();
-    if (!maybeEnode.isPresent()) {
+    if (maybeEnode.isEmpty()) {
       return new JsonRpcErrorResponse(req.getId(), JsonRpcError.P2P_NETWORK_NOT_RUNNING);
     }
     final EnodeURL enode = maybeEnode.get();

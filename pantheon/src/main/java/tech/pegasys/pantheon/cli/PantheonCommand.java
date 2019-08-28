@@ -329,11 +329,11 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
 
   @Option(
       names = {"--network-id"},
-      paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
+      paramLabel = "<BIG INTEGER>",
       description =
           "P2P network identifier. (default: the selected network chain ID or custom genesis chain ID)",
       arity = "1")
-  private final Integer networkId = null;
+  private final BigInteger networkId = null;
 
   @Option(
       names = {"--graphql-http-enabled"},
@@ -776,7 +776,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     return this;
   }
 
-  private PantheonCommand parse(
+  private void parse(
       final AbstractParseResultHandler<List<Object>> resultHandler,
       final PantheonExceptionHandler exceptionHandler,
       final String... args) {
@@ -787,10 +787,9 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
         new ConfigOptionSearchAndRunHandler(
             resultHandler, exceptionHandler, CONFIG_FILE_OPTION_NAME, environment, isDocker);
     commandLine.parseWithHandlers(configParsingHandler, exceptionHandler, args);
-    return this;
   }
 
-  private PantheonCommand startSynchronization() {
+  private void startSynchronization() {
     synchronize(
         pantheonController,
         p2pEnabled,
@@ -805,7 +804,6 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
         metricsConfiguration,
         permissioningConfiguration,
         staticNodes);
-    return this;
   }
 
   private PantheonCommand startPlugins() {
@@ -947,7 +945,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
           .isRevertReasonEnabled(isRevertReasonEnabled)
           .isPruningEnabled(isPruningEnabled)
           .pruningConfiguration(buildPruningConfiguration());
-    } catch (IOException e) {
+    } catch (final IOException e) {
       throw new ExecutionException(this.commandLine, "Invalid path", e);
     }
   }
@@ -1353,7 +1351,6 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
               genesisConfigFile
                   .getConfigOptions()
                   .getChainId()
-                  .map(BigInteger::intValueExact)
                   .orElse(EthNetworkConfig.getNetworkConfig(MAINNET).getNetworkId()));
         } catch (final DecodeException e) {
           throw new ParameterException(
