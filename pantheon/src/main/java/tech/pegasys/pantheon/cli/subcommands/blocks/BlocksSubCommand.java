@@ -218,7 +218,7 @@ public class BlocksSubCommand implements Runnable {
    */
   @Command(
       name = "export",
-      description = "This command export a specific block from storage",
+      description = "This command exports a specific block, or list of blocks from storage.",
       mixinStandardHelpOptions = true)
   static class ExportSubCommand implements Runnable {
     @SuppressWarnings("unused")
@@ -228,7 +228,7 @@ public class BlocksSubCommand implements Runnable {
     @Option(
         names = "--start-block",
         paramLabel = MANDATORY_LONG_FORMAT_HELP,
-        description = "the starting index of the block list to export (inclusive)",
+        description = "The starting index of the block, or block list to export.",
         arity = "1..1")
     private final Long startBlock = null;
 
@@ -236,8 +236,7 @@ public class BlocksSubCommand implements Runnable {
         names = "--end-block",
         paramLabel = MANDATORY_LONG_FORMAT_HELP,
         description =
-            "the ending index of the block list to export (exclusive), "
-                + "if not specified a single block will be export",
+            "The ending index of the block list to export (exclusive). If not specified a single block will be exported.",
         arity = "1..1")
     private final Long endBlock = null;
 
@@ -253,7 +252,7 @@ public class BlocksSubCommand implements Runnable {
         names = "--to",
         required = true,
         paramLabel = MANDATORY_FILE_FORMAT_HELP,
-        description = "File to write the block list instead of standard output",
+        description = "File to write the block list to.",
         arity = "1..1")
     private File blocksExportFile = null;
 

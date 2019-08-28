@@ -76,19 +76,19 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
           + System.lineSeparator()
           + "                              --to=<FILE>"
           + System.lineSeparator()
-          + "This command export a specific block from storage"
+          + "This command exports a specific block, or list of blocks from storage."
           + System.lineSeparator()
-          + "      --end-block=<LONG>     the ending index of the block list to export"
+          + "      --end-block=<LONG>     The ending index of the block list to export"
           + System.lineSeparator()
-          + "                               (exclusive), if not specified a single block will be"
+          + "                               (exclusive). If not specified a single block will be"
           + System.lineSeparator()
-          + "                               export"
+          + "                               exported."
           + System.lineSeparator()
-          + "      --start-block=<LONG>   the starting index of the block list to export"
+          + "      --start-block=<LONG>   The starting index of the block, or block list to"
           + System.lineSeparator()
-          + "                               (inclusive)"
+          + "                               export."
           + System.lineSeparator()
-          + "      --to=<FILE>            File to write the block list instead of standard output"
+          + "      --to=<FILE>            File to write the block list to."
           + System.lineSeparator()
           + "  -h, --help                 Show this help message and exit."
           + System.lineSeparator()
@@ -223,7 +223,7 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
     final String expectedErrorOutputStart =
         "Chain is empty.  Unable to export blocks from specified data directory: "
             + folder.getRoot().getAbsolutePath()
-            + "/"
+            + File.separator
             + PantheonController.DATABASE_PATH;
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).startsWith(expectedErrorOutputStart);
@@ -244,7 +244,7 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
     final String expectedErrorOutputStart =
         "Chain is empty.  Unable to export blocks from specified data directory: "
             + folder.getRoot().getAbsolutePath()
-            + "/"
+            + File.separator
             + PantheonController.DATABASE_PATH;
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).startsWith(expectedErrorOutputStart);
