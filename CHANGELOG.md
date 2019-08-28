@@ -9,6 +9,49 @@ From v1.2, Pantheon requires Java 11.  Pantheon on Java 8 is no longer supported
 In v1.2, we removed the entry-point script from our Docker image. Refer to the [migration guide](https://docs.pantheon.pegasys.tech/en/latest/Deploying-Pantheon/High-Availability/)
 for information on options that were previously automatically added to the Pantheon command line. 
 
+## 1.2.2 
+
+### Additions and Improvements
+- Support large numbers for the `--network-id` option [\#1891](https://github.com/PegaSysEng/pantheon/pull/1891)
+- Added eea\_getTransactionCount Json Rpc [\#1861](https://github.com/PegaSysEng/pantheon/pull/1861) 
+- PrivacyMarkerTransaction to be signed with a randomly generated key [\#1844](https://github.com/PegaSysEng/pantheon/pull/1844) 
+- Implement eth\_getproof JSON RPC API [\#1824](https://github.com/PegaSysEng/pantheon/pull/1824) (thanks to [matkt](https://github.com/matkt))
+- Documentation updates include: 
+  - [Improved navigation](https://docs.pantheon.pegasys.tech/en/latest/)
+  - [Added permissioning diagram](https://docs.pantheon.pegasys.tech/en/latest/Concepts/Permissioning/Permissioning-Overview/#onchain)
+  - [Added Responsible Disclosure policy](https://docs.pantheon.pegasys.tech/en/latest/Reference/Responsible-Disclosure/)
+  - [Added `blocks export` subcommand](https://docs.pantheon.pegasys.tech/en/latest/Reference/Pantheon-CLI/Pantheon-CLI-Subcommands/#export)
+
+### Technical Improvements  
+- Update the `pantheon blocks export` command usage [\#1887](https://github.com/PegaSysEng/pantheon/pull/1887) (thanks to [matkt](https://github.com/matkt))
+- Stop Returning null for 'pending' RPC calls [\#1883](https://github.com/PegaSysEng/pantheon/pull/1883) 
+- Blake validation errors are hard errors [\#1882](https://github.com/PegaSysEng/pantheon/pull/1882) 
+- Add test cases for trace\_replayBlockTransactions [\#1881](https://github.com/PegaSysEng/pantheon/pull/1881) 
+- Simplify json rpc spec test setup [\#1880](https://github.com/PegaSysEng/pantheon/pull/1880) 
+- Tweak JSON import format [\#1878](https://github.com/PegaSysEng/pantheon/pull/1878) 
+- Transactions listeners should use the subscriber pattern [\#1877](https://github.com/PegaSysEng/pantheon/pull/1877) 
+- Maven spotless [\#1876](https://github.com/PegaSysEng/pantheon/pull/1876) 
+- Don't cache for localbalance [\#1875](https://github.com/PegaSysEng/pantheon/pull/1875) 
+- EIP-1108 - Reprice alt\_bn128  [\#1874](https://github.com/PegaSysEng/pantheon/pull/1874) 
+- Create stub trace\_replayBlockTransactions json-rpc method  [\#1873](https://github.com/PegaSysEng/pantheon/pull/1873) 
+- Improve trace log [\#1870](https://github.com/PegaSysEng/pantheon/pull/1870)
+- Pruning Command Line Flags [\#1869](https://github.com/PegaSysEng/pantheon/pull/1869) 
+- Re-enable istanbul [\#1865](https://github.com/PegaSysEng/pantheon/pull/1865) 
+- Fix logic to disconnect from peers on fork [\#1863](https://github.com/PegaSysEng/pantheon/pull/1863) 
+- Blake 2b tweaks [\#1862](https://github.com/PegaSysEng/pantheon/pull/1862) 
+- Sweep state roots before child nodes [\#1854](https://github.com/PegaSysEng/pantheon/pull/1854) 
+- Update export subcommand to export blocks in rlp format [\#1852](https://github.com/PegaSysEng/pantheon/pull/1852)
+- Updating docker tests to make it easier to follow & ensure it listens on the right interface on docker [\#1851](https://github.com/PegaSysEng/pantheon/pull/1851) 
+- Disable Istanbul block [\#1849](https://github.com/PegaSysEng/pantheon/pull/1849) 
+- Add read-only blockchain factory method [\#1845](https://github.com/PegaSysEng/pantheon/pull/1845) 
+- Removing the release plugin in favour of the new process with branches [\#1843](https://github.com/PegaSysEng/pantheon/pull/1843) 
+- Update Görli bootnodes [\#1842](https://github.com/PegaSysEng/pantheon/pull/1842) 
+- Upgrade graphql library to version 13.0 [\#1834](https://github.com/PegaSysEng/pantheon/pull/1834) 
+- Database versioning and enable multi-column database [\#1830](https://github.com/PegaSysEng/pantheon/pull/1830) 
+- Fixes invalid JsonGetter, comment [\#1811](https://github.com/PegaSysEng/pantheon/pull/1811) (thanks to [josh-richardson](https://github.com/josh-richardson))
+- Add EthSigner acceptance test [\#1655](https://github.com/PegaSysEng/pantheon/pull/1655) (thanks to [iikirilov](https://github.com/iikirilov))
+- Support plugin Richdata APIs via implementation [\#1581](https://github.com/PegaSysEng/pantheon/pull/1581) 
+
 ## 1.2.1
 
 ### Additions and Improvements
