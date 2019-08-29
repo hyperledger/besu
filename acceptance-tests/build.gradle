@@ -37,6 +37,7 @@ dependencies {
   testImplementation project(':testutil')
   testImplementation project(':util')
 
+  testImplementation 'com.github.tomakehurst:wiremock-jre8'
   testImplementation 'com.google.guava:guava'
   testImplementation 'com.squareup.okhttp3:okhttp'
   testImplementation 'info.picocli:picocli'
@@ -49,8 +50,11 @@ dependencies {
   testImplementation 'org.awaitility:awaitility'
   testImplementation 'org.java-websocket:Java-WebSocket'
   testImplementation 'org.web3j:abi'
-  testImplementation 'org.web3j:core'
+  testImplementation 'org.web3j:eea'
   testImplementation 'org.web3j:crypto'
+  testImplementation 'tech.pegasys.ethsigner.internal:core'
+  testImplementation 'tech.pegasys.ethsigner.internal:file-based'
+  testImplementation 'tech.pegasys.ethsigner.internal:signing-api'
   testImplementation 'tech.pegasys.pantheon:plugin-api'
 }
 
