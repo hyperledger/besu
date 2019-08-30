@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.services.kvstore;
 
 import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.OperationTimer;
+import tech.pegasys.pantheon.services.kvstore.SegmentedKeyValueStorage.StorageException;
 import tech.pegasys.pantheon.services.util.RocksDbUtil;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
@@ -76,16 +77,16 @@ public class RocksDbKeyValueStorage implements KeyValueStorage, Closeable {
   @Override
   public void clear() {
     try (final RocksIterator rocksIterator = db.newIterator()) {
-      if (!rocksIterator.isValid()) {
-        return;
-      }
       rocksIterator.seekToFirst();
-      final byte[] firstKey = rocksIterator.key();
-      rocksIterator.seekToLast();
-      if (!rocksIterator.isValid()) {
-        return;
+      if (rocksIterator.isValid()) {
+        final byte[] firstKey = rocksIterator.key();
+        rocksIterator.seekToLast();
+        if (rocksIterator.isValid()) {
+          final byte[] lastKey = rocksIterator.key();
+          db.deleteRange(firstKey, lastKey);
+          db.delete(lastKey);
+        }
       }
-      db.deleteRange(firstKey, rocksIterator.key());
     } catch (final RocksDBException e) {
       throw new StorageException(e);
     }
