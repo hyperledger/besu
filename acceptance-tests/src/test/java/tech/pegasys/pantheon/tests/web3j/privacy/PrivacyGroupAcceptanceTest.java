@@ -22,6 +22,7 @@ import tech.pegasys.pantheon.tests.acceptance.dsl.privacy.PrivacyNet;
 
 import java.util.List;
 
+import org.awaitility.Awaitility;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -86,7 +87,7 @@ public class PrivacyGroupAcceptanceTest extends PrivacyAcceptanceTestBase {
                     "my group description"));
 
     assertThat(privacyGroupId).isNotNull();
-
+    verifyGroupWasCreated();
     final List<PrivacyGroup> privacyGroups =
         privacyNet
             .getNode("Alice")
@@ -104,6 +105,66 @@ public class PrivacyGroupAcceptanceTest extends PrivacyAcceptanceTestBase {
   }
 
   @Test
+  public void nodeCanCreatePrivacyGroupWithoutName() {
+    final String privacyGroupId =
+        privacyNet
+            .getNode("Alice")
+            .execute(
+                privateTransactions.createPrivacyGroupWithoutName(
+                    List.of(
+                        privacyNet.getEnclave("Alice").getPublicKeys().get(0),
+                        privacyNet.getEnclave("Bob").getPublicKeys().get(0)),
+                    "my group description"));
+
+    assertThat(privacyGroupId).isNotNull();
+    verifyGroupWasCreated();
+    final List<PrivacyGroup> privacyGroups =
+        privacyNet
+            .getNode("Alice")
+            .execute(
+                privateTransactions.findPrivacyGroup(
+                    List.of(
+                        privacyNet.getEnclave("Alice").getPublicKeys().get(0),
+                        privacyNet.getEnclave("Bob").getPublicKeys().get(0))));
+
+    assertThat(privacyGroups.size()).isEqualTo(1);
+    assertThat(privacyGroups.get(0).getPrivacyGroupId()).isEqualTo(privacyGroupId);
+    assertThat(privacyGroups.get(0).getName()).isEqualTo("Default Name");
+    assertThat(privacyGroups.get(0).getDescription()).isEqualTo("my group description");
+    assertThat(privacyGroups.get(0).getMembers().length).isEqualTo(2);
+  }
+
+  @Test
+  public void nodeCanCreatePrivacyGroupWithoutDescription() {
+    final String privacyGroupId =
+        privacyNet
+            .getNode("Alice")
+            .execute(
+                privateTransactions.createPrivacyGroupWithoutDescription(
+                    List.of(
+                        privacyNet.getEnclave("Alice").getPublicKeys().get(0),
+                        privacyNet.getEnclave("Bob").getPublicKeys().get(0)),
+                    "myGroupName"));
+
+    assertThat(privacyGroupId).isNotNull();
+    verifyGroupWasCreated();
+    final List<PrivacyGroup> privacyGroups =
+        privacyNet
+            .getNode("Alice")
+            .execute(
+                privateTransactions.findPrivacyGroup(
+                    List.of(
+                        privacyNet.getEnclave("Alice").getPublicKeys().get(0),
+                        privacyNet.getEnclave("Bob").getPublicKeys().get(0))));
+
+    assertThat(privacyGroups.size()).isEqualTo(1);
+    assertThat(privacyGroups.get(0).getPrivacyGroupId()).isEqualTo(privacyGroupId);
+    assertThat(privacyGroups.get(0).getName()).isEqualTo("myGroupName");
+    assertThat(privacyGroups.get(0).getDescription()).isEqualTo("Default Description");
+    assertThat(privacyGroups.get(0).getMembers().length).isEqualTo(2);
+  }
+
+  @Test
   public void nodeCanCreatePrivacyGroupWithoutOptionalParams() {
     final String privacyGroupId =
         privacyNet
@@ -115,7 +176,7 @@ public class PrivacyGroupAcceptanceTest extends PrivacyAcceptanceTestBase {
                         privacyNet.getEnclave("Bob").getPublicKeys().get(0))));
 
     assertThat(privacyGroupId).isNotNull();
-
+    verifyGroupWasCreated();
     final List<PrivacyGroup> privacyGroups =
         privacyNet
             .getNode("Alice")
@@ -130,5 +191,28 @@ public class PrivacyGroupAcceptanceTest extends PrivacyAcceptanceTestBase {
     assertThat(privacyGroups.get(0).getName()).isEqualTo("Default Name");
     assertThat(privacyGroups.get(0).getDescription()).isEqualTo("Default Description");
     assertThat(privacyGroups.get(0).getMembers().length).isEqualTo(2);
+  }
+
+  private void verifyGroupWasCreated() {
+    privacyNet
+        .getNode("Alice")
+        .verify(
+            node ->
+                Awaitility.await()
+                    .until(
+                        () ->
+                            node.execute(
+                                        privateTransactions.findPrivacyGroup(
+                                            List.of(
+                                                privacyNet
+                                                    .getEnclave("Alice")
+                                                    .getPublicKeys()
+                                                    .get(0),
+                                                privacyNet
+                                                    .getEnclave("Bob")
+                                                    .getPublicKeys()
+                                                    .get(0))))
+                                    .size()
+                                > 0));
   }
 }

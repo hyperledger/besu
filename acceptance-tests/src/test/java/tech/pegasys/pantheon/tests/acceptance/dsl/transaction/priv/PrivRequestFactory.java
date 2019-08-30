@@ -13,6 +13,7 @@
 package tech.pegasys.pantheon.tests.acceptance.dsl.transaction.priv;
 
 import tech.pegasys.pantheon.enclave.types.PrivacyGroup;
+import tech.pegasys.pantheon.ethereum.jsonrpc.internal.privacy.parameters.CreatePrivacyGroupParameter;
 
 import java.util.Collections;
 import java.util.List;
@@ -48,7 +49,28 @@ public class PrivRequestFactory {
       final List<String> addresses, final String name, final String description) {
     return new Request<>(
         "priv_createPrivacyGroup",
-        Lists.newArrayList(addresses, name, description),
+        Lists.newArrayList(
+            new CreatePrivacyGroupParameter(addresses.toArray(new String[] {}), name, description)),
+        web3jService,
+        PrivCreatePrivacyGroupResponse.class);
+  }
+
+  public Request<?, PrivCreatePrivacyGroupResponse> privCreatePrivacyGroupWithoutName(
+      final List<String> addresses, final String description) {
+    return new Request<>(
+        "priv_createPrivacyGroup",
+        Collections.singletonList(
+            new CreatePrivacyGroupParameter(addresses.toArray(new String[] {}), null, description)),
+        web3jService,
+        PrivCreatePrivacyGroupResponse.class);
+  }
+
+  public Request<?, PrivCreatePrivacyGroupResponse> privCreatePrivacyGroupWithoutDescription(
+      final List<String> addresses, final String name) {
+    return new Request<>(
+        "priv_createPrivacyGroup",
+        Collections.singletonList(
+            new CreatePrivacyGroupParameter(addresses.toArray(new String[] {}), name, null)),
         web3jService,
         PrivCreatePrivacyGroupResponse.class);
   }
@@ -57,7 +79,8 @@ public class PrivRequestFactory {
       final List<String> addresses) {
     return new Request<>(
         "priv_createPrivacyGroup",
-        Collections.singletonList(addresses),
+        Collections.singletonList(
+            new CreatePrivacyGroupParameter(addresses.toArray(new String[] {}), null, null)),
         web3jService,
         PrivCreatePrivacyGroupResponse.class);
   }

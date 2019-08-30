@@ -10,9 +10,7 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.privacy.eea;
-
-import static org.apache.logging.log4j.LogManager.getLogger;
+package tech.pegasys.pantheon.ethereum.jsonrpc.internal.privacy.methods.priv;
 
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcMethod;
@@ -24,44 +22,35 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResp
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.Quantity;
+import tech.pegasys.pantheon.ethereum.privacy.PrivateTransactionHandler;
 
-import org.apache.logging.log4j.Logger;
-
-public class EeaGetTransactionCount implements JsonRpcMethod {
-
-  private static final Logger LOG = getLogger();
+public class PrivGetTransactionCount implements JsonRpcMethod {
 
   private final JsonRpcParameter parameters;
-  private final EeaPrivateNonceProvider nonceProvider;
+  private final PrivateTransactionHandler privateTransactionHandler;
 
-  public EeaGetTransactionCount(
-      final JsonRpcParameter parameters, final EeaPrivateNonceProvider nonceProvider) {
+  public PrivGetTransactionCount(
+      final JsonRpcParameter parameters,
+      final PrivateTransactionHandler privateTransactionHandler) {
     this.parameters = parameters;
-    this.nonceProvider = nonceProvider;
+    this.privateTransactionHandler = privateTransactionHandler;
   }
 
   @Override
   public String getName() {
-    return RpcMethod.EEA_GET_TRANSACTION_COUNT.getMethodName();
+    return RpcMethod.PRIV_GET_TRANSACTION_COUNT.getMethodName();
   }
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequest request) {
-    if (request.getParamLength() != 3) {
+    if (request.getParamLength() != 2) {
       return new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
     }
 
     final Address address = parameters.required(request.getParams(), 0, Address.class);
-    final String privateFrom = parameters.required(request.getParams(), 1, String.class);
-    final String[] privateFor = parameters.required(request.getParams(), 2, String[].class);
+    final String privacyGroupId = parameters.required(request.getParams(), 1, String.class);
 
-    try {
-      final long nonce = nonceProvider.determineNonce(privateFrom, privateFor, address);
-      return new JsonRpcSuccessResponse(request.getId(), Quantity.create(nonce));
-    } catch (final Exception e) {
-      LOG.error(e.getMessage(), e);
-      return new JsonRpcErrorResponse(
-          request.getId(), JsonRpcError.GET_PRIVATE_TRANSACTION_NONCE_ERROR);
-    }
+    final long nonce = privateTransactionHandler.getSenderNonce(address, privacyGroupId);
+    return new JsonRpcSuccessResponse(request.getId(), Quantity.create(nonce));
   }
 }

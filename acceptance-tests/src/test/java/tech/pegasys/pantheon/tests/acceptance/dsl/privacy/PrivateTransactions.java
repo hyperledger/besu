@@ -14,6 +14,8 @@ package tech.pegasys.pantheon.tests.acceptance.dsl.privacy;
 
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eea.EeaSendRawTransactionTransaction;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.priv.PrivCreatePrivacyGroupTransaction;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.priv.PrivCreatePrivacyGroupTransactionWithoutDescription;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.priv.PrivCreatePrivacyGroupTransactionWithoutName;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.priv.PrivCreatePrivacyGroupWithoutOptionalParamsTransaction;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.priv.PrivFindPrivacyGroupTransaction;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.priv.PrivGetTransactionCountTransaction;
@@ -42,6 +44,16 @@ public class PrivateTransactions {
   public PrivCreatePrivacyGroupTransaction createPrivacyGroup(
       final List<String> addresses, final String name, final String description) {
     return new PrivCreatePrivacyGroupTransaction(addresses, name, description);
+  }
+
+  public PrivCreatePrivacyGroupTransactionWithoutName createPrivacyGroupWithoutName(
+      final List<String> addresses, final String description) {
+    return new PrivCreatePrivacyGroupTransactionWithoutName(addresses, description);
+  }
+
+  public PrivCreatePrivacyGroupTransactionWithoutDescription createPrivacyGroupWithoutDescription(
+      final List<String> addresses, final String name) {
+    return new PrivCreatePrivacyGroupTransactionWithoutDescription(addresses, name);
   }
 
   public PrivCreatePrivacyGroupWithoutOptionalParamsTransaction
