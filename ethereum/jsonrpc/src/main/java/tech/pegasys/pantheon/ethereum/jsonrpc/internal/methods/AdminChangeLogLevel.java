@@ -21,6 +21,9 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResp
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 
+import java.util.Arrays;
+import java.util.Optional;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -44,11 +47,20 @@ public class AdminChangeLogLevel implements JsonRpcMethod {
   public JsonRpcResponse response(final JsonRpcRequest request) {
     try {
       final Level logLevel = parameters.required(request.getParams(), 0, Level.class);
-      LOG.log(Level.OFF, "Setting logging level to {}", logLevel.name());
-      Configurator.setAllLevels("", logLevel);
+      final Optional<String[]> optionalLogFilters =
+          parameters.optional(request.getParams(), 1, String[].class);
+      optionalLogFilters.ifPresentOrElse(
+          logFilters ->
+              Arrays.stream(logFilters).forEach(logFilter -> setLogLevel(logFilter, logLevel)),
+          () -> setLogLevel("", logLevel));
       return new JsonRpcSuccessResponse(request.getId());
     } catch (InvalidJsonRpcParameters invalidJsonRpcParameters) {
       return new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
     }
+  }
+
+  private void setLogLevel(final String logFilter, final Level logLevel) {
+    LOG.log(Level.OFF, "Setting {} logging level to {} ", logFilter, logLevel.name());
+    Configurator.setAllLevels(logFilter, logLevel);
   }
 }

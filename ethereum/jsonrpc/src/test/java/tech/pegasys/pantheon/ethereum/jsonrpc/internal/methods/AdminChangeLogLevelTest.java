@@ -49,7 +49,7 @@ public class AdminChangeLogLevelTest {
   }
 
   @Test
-  public void shouldReturnCorrectResponse() {
+  public void shouldReturnCorrectResponseWhenRequestHasLogLevel() {
     final JsonRpcRequest request =
         new JsonRpcRequest("2.0", "admin_changeLogLevel", new Object[] {Level.DEBUG});
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(request.getId());
@@ -62,6 +62,29 @@ public class AdminChangeLogLevelTest {
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
     assertEquals(Level.INFO, levelBeforeJsonRpcRequest);
     assertEquals(Level.DEBUG, levelAfterJsonRpcRequest);
+  }
+
+  @Test
+  public void shouldReturnCorrectResponseWhenRequestHasLogLevelAndFilters() {
+    final JsonRpcRequest request =
+        new JsonRpcRequest(
+            "2.0", "admin_changeLogLevel", new Object[] {Level.DEBUG, new String[] {"com"}});
+    final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(request.getId());
+
+    final Level levelOfAllProjectBeforeJsonRpcRequest = LogManager.getLogger().getLevel();
+    final Level levelWithSpecificPackageBeforeJsonRpcRequest =
+        LogManager.getLogger("com").getLevel();
+    final JsonRpcSuccessResponse actualResponse =
+        (JsonRpcSuccessResponse) adminChangeLogLevel.response(request);
+    final Level levelOfAllProjectAfterJsonRpcRequest = LogManager.getLogger().getLevel();
+    final Level levelWithSpecificPackageAfterJsonRpcRequest =
+        LogManager.getLogger("com").getLevel();
+
+    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+    assertEquals(Level.INFO, levelOfAllProjectBeforeJsonRpcRequest);
+    assertEquals(Level.INFO, levelOfAllProjectAfterJsonRpcRequest);
+    assertEquals(Level.INFO, levelWithSpecificPackageBeforeJsonRpcRequest);
+    assertEquals(Level.DEBUG, levelWithSpecificPackageAfterJsonRpcRequest);
   }
 
   @Test
@@ -95,6 +118,17 @@ public class AdminChangeLogLevelTest {
   public void requestHasInvalidStringLogLevelParameter() {
     final JsonRpcRequest request =
         new JsonRpcRequest("2.0", "admin_changeLogLevel", new String[] {"INVALID"});
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
+
+    final JsonRpcResponse actualResponse = adminChangeLogLevel.response(request);
+    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+  }
+
+  @Test
+  public void requestHasInvalidLogFilterParameter() {
+    final JsonRpcRequest request =
+        new JsonRpcRequest("2.0", "admin_changeLogLevel", new Object[] {"DEBUG", "INVALID"});
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
 
