@@ -73,14 +73,6 @@ dependencies {
   testImplementation 'org.apache.commons:commons-text'
 }
 
-task writeInfoFile(type: ProjectPropertiesFile) {
-  destPackage = "tech.pegasys.pantheon"
-  addString("clientIdentity", rootProject.name)
-  addVersion("version", "clientIdentity")
-}
-
-compileJava.dependsOn(writeInfoFile)
-
 task testJar(type: Jar) {
   archiveName 'testPlugins.jar'
   manifest {

@@ -139,7 +139,6 @@ allprojects {
         exclude '**/generalstate/GeneralStateReferenceTest*.java'
         exclude '**/generalstate/GeneralStateRegressionReferenceTest*.java'
         exclude '**/blockchain/BlockchainReferenceTest*.java'
-        exclude '**/pantheon/PantheonInfo.java'
         exclude '**/.gradle/**'
       }
       removeUnusedImports()
