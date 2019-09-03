@@ -17,6 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.junit.Assert.assertTrue;
 
+import tech.pegasys.orion.testutil.OrionKeyConfiguration;
 import tech.pegasys.orion.testutil.OrionTestHarness;
 import tech.pegasys.orion.testutil.OrionTestHarnessFactory;
 import tech.pegasys.pantheon.enclave.types.CreatePrivacyGroupRequest;
@@ -50,19 +51,22 @@ public class EnclaveTest {
   private static OrionTestHarness testHarness;
 
   @Before
-  public void setUpOnce() throws Exception {
+  public void setUp() throws Exception {
     folder.create();
 
     testHarness =
         OrionTestHarnessFactory.create(
-            folder.newFolder().toPath(), "orion_key_0.pub", "orion_key_0.key");
+            folder.newFolder().toPath(),
+            new OrionKeyConfiguration("orion_key_0.pub", "orion_key_0.key"));
+
+    testHarness.start();
 
     enclave = new Enclave(testHarness.clientUrl());
   }
 
   @After
-  public void tearDownOnce() {
-    testHarness.getOrion().stop();
+  public void tearDown() {
+    testHarness.close();
   }
 
   @Test
@@ -71,7 +75,7 @@ public class EnclaveTest {
   }
 
   @Test
-  public void testSendAndReceive() throws Exception {
+  public void testSendAndReceive() {
     final List<String> publicKeys = testHarness.getPublicKeys();
 
     final SendResponse sr =
@@ -85,7 +89,7 @@ public class EnclaveTest {
   }
 
   @Test
-  public void testSendWithPrivacyGroupAndReceive() throws Exception {
+  public void testSendWithPrivacyGroupAndReceive() {
     final List<String> publicKeys = testHarness.getPublicKeys();
 
     final CreatePrivacyGroupRequest privacyGroupRequest =
@@ -104,7 +108,7 @@ public class EnclaveTest {
   }
 
   @Test
-  public void testCreateAndDeletePrivacyGroup() throws Exception {
+  public void testCreateAndDeletePrivacyGroup() {
     final List<String> publicKeys = testHarness.getPublicKeys();
     final String name = "testName";
     final String description = "testDesc";
@@ -128,7 +132,7 @@ public class EnclaveTest {
   }
 
   @Test
-  public void testCreateFindDeleteFindPrivacyGroup() throws Exception {
+  public void testCreateFindDeleteFindPrivacyGroup() {
     List<String> publicKeys = testHarness.getPublicKeys();
     String name = "name";
     String description = "desc";

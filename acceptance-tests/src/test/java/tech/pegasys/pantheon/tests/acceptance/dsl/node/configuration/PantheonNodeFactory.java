@@ -34,11 +34,10 @@ public class PantheonNodeFactory {
   private final GenesisConfigurationFactory genesis = new GenesisConfigurationFactory();
   private final NodeConfigurationFactory node = new NodeConfigurationFactory();
 
-  public PantheonNode create(final PantheonFactoryConfiguration config) throws IOException {
+  public PantheonNode create(final PantheonNodeConfiguration config) throws IOException {
     return new PantheonNode(
         config.getName(),
         config.getMiningParameters(),
-        config.getPrivacyParameters(),
         config.getJsonRpcConfiguration(),
         config.getWebSocketConfiguration(),
         config.getMetricsConfiguration(),
@@ -58,7 +57,7 @@ public class PantheonNodeFactory {
 
   public PantheonNode createMinerNode(final String name) throws IOException {
     return create(
-        new PantheonFactoryConfigurationBuilder()
+        new PantheonNodeConfigurationBuilder()
             .name(name)
             .miningEnabled()
             .jsonRpcEnabled()
@@ -68,7 +67,7 @@ public class PantheonNodeFactory {
 
   public PantheonNode createMinerNodeWithRevertReasonEnabled(final String name) throws IOException {
     return create(
-        new PantheonFactoryConfigurationBuilder()
+        new PantheonNodeConfigurationBuilder()
             .name(name)
             .miningEnabled()
             .jsonRpcEnabled()
@@ -79,7 +78,7 @@ public class PantheonNodeFactory {
 
   public PantheonNode createArchiveNode(final String name) throws IOException {
     return create(
-        new PantheonFactoryConfigurationBuilder()
+        new PantheonNodeConfigurationBuilder()
             .name(name)
             .jsonRpcEnabled()
             .webSocketEnabled()
@@ -88,7 +87,7 @@ public class PantheonNodeFactory {
 
   public Node createArchiveNodeThatMustNotBeTheBootnode(final String name) throws IOException {
     return create(
-        new PantheonFactoryConfigurationBuilder()
+        new PantheonNodeConfigurationBuilder()
             .name(name)
             .jsonRpcEnabled()
             .webSocketEnabled()
@@ -99,7 +98,7 @@ public class PantheonNodeFactory {
   public PantheonNode createArchiveNodeWithDiscoveryDisabledAndAdmin(final String name)
       throws IOException {
     return create(
-        new PantheonFactoryConfigurationBuilder()
+        new PantheonNodeConfigurationBuilder()
             .name(name)
             .jsonRpcConfiguration(node.jsonRpcConfigWithAdmin())
             .webSocketEnabled()
@@ -113,7 +112,7 @@ public class PantheonNodeFactory {
     // metricsConfiguration.setEnabled(true);
     // metricsConfiguration.setPort(0);
     return create(
-        new PantheonFactoryConfigurationBuilder()
+        new PantheonNodeConfigurationBuilder()
             .name(name)
             // .setMetricsConfiguration(metricsConfiguration)
             .jsonRpcConfiguration(node.jsonRpcConfigWithAdmin())
@@ -124,7 +123,7 @@ public class PantheonNodeFactory {
 
   public PantheonNode createArchiveNodeNetServicesDisabled(final String name) throws IOException {
     return create(
-        new PantheonFactoryConfigurationBuilder()
+        new PantheonNodeConfigurationBuilder()
             .name(name)
             .jsonRpcConfiguration(node.jsonRpcConfigWithAdmin())
             .p2pEnabled(false)
@@ -134,7 +133,7 @@ public class PantheonNodeFactory {
   public PantheonNode createArchiveNodeWithAuthentication(final String name)
       throws IOException, URISyntaxException {
     return create(
-        new PantheonFactoryConfigurationBuilder()
+        new PantheonNodeConfigurationBuilder()
             .name(name)
             .jsonRpcEnabled()
             .jsonRpcAuthenticationEnabled()
@@ -145,7 +144,7 @@ public class PantheonNodeFactory {
   public PantheonNode createArchiveNodeWithAuthenticationOverWebSocket(final String name)
       throws IOException, URISyntaxException {
     return create(
-        new PantheonFactoryConfigurationBuilder()
+        new PantheonNodeConfigurationBuilder()
             .name(name)
             .webSocketEnabled()
             .webSocketAuthenticationEnabled()
@@ -154,7 +153,7 @@ public class PantheonNodeFactory {
 
   public PantheonNode createNodeWithP2pDisabled(final String name) throws IOException {
     return create(
-        new PantheonFactoryConfigurationBuilder()
+        new PantheonNodeConfigurationBuilder()
             .name(name)
             .p2pEnabled(false)
             .jsonRpcConfiguration(node.createJsonRpcEnabledConfig())
@@ -162,14 +161,14 @@ public class PantheonNodeFactory {
   }
 
   public PantheonNode createArchiveNodeWithRpcDisabled(final String name) throws IOException {
-    return create(new PantheonFactoryConfigurationBuilder().name(name).build());
+    return create(new PantheonNodeConfigurationBuilder().name(name).build());
   }
 
   public PantheonNode createPluginsNode(
       final String name, final List<String> plugins, final List<String> extraCLIOptions)
       throws IOException {
     return create(
-        new PantheonFactoryConfigurationBuilder()
+        new PantheonNodeConfigurationBuilder()
             .name(name)
             .plugins(plugins)
             .extraCLIOptions(extraCLIOptions)
@@ -184,7 +183,7 @@ public class PantheonNodeFactory {
     webSocketConfig.setRpcApis(asList(enabledRpcApis));
 
     return create(
-        new PantheonFactoryConfigurationBuilder()
+        new PantheonNodeConfigurationBuilder()
             .name(name)
             .jsonRpcConfiguration(jsonRpcConfig)
             .webSocketConfiguration(webSocketConfig)
@@ -193,12 +192,12 @@ public class PantheonNodeFactory {
 
   public PantheonNode createNodeWithNoDiscovery(final String name) throws IOException {
     return create(
-        new PantheonFactoryConfigurationBuilder().name(name).discoveryEnabled(false).build());
+        new PantheonNodeConfigurationBuilder().name(name).discoveryEnabled(false).build());
   }
 
   public PantheonNode createCliqueNode(final String name) throws IOException {
     return create(
-        new PantheonFactoryConfigurationBuilder()
+        new PantheonNodeConfigurationBuilder()
             .name(name)
             .miningEnabled()
             .jsonRpcConfiguration(node.createJsonRpcWithCliqueEnabledConfig())
@@ -210,7 +209,7 @@ public class PantheonNodeFactory {
 
   public PantheonNode createIbft2Node(final String name) throws IOException {
     return create(
-        new PantheonFactoryConfigurationBuilder()
+        new PantheonNodeConfigurationBuilder()
             .name(name)
             .miningEnabled()
             .jsonRpcConfiguration(node.createJsonRpcWithIbft2EnabledConfig())
@@ -232,8 +231,8 @@ public class PantheonNodeFactory {
       final boolean mining)
       throws IOException {
     final String genesisFile = genesis.readGenesisFile(genesisPath);
-    final PantheonFactoryConfigurationBuilder builder =
-        new PantheonFactoryConfigurationBuilder()
+    final PantheonNodeConfigurationBuilder builder =
+        new PantheonNodeConfigurationBuilder()
             .name(name)
             .jsonRpcEnabled()
             .webSocketEnabled()
@@ -252,7 +251,7 @@ public class PantheonNodeFactory {
       throws IOException {
 
     return create(
-        new PantheonFactoryConfigurationBuilder()
+        new PantheonNodeConfigurationBuilder()
             .name(name)
             .miningEnabled()
             .jsonRpcConfiguration(node.createJsonRpcWithCliqueEnabledConfig())
@@ -269,7 +268,7 @@ public class PantheonNodeFactory {
       throws IOException {
 
     return create(
-        new PantheonFactoryConfigurationBuilder()
+        new PantheonNodeConfigurationBuilder()
             .name(name)
             .miningEnabled()
             .jsonRpcConfiguration(node.createJsonRpcWithIbft2EnabledConfig())
@@ -293,7 +292,7 @@ public class PantheonNodeFactory {
             .collect(toList());
 
     return create(
-        new PantheonFactoryConfigurationBuilder()
+        new PantheonNodeConfigurationBuilder()
             .name(name)
             .jsonRpcEnabled()
             .webSocketEnabled()

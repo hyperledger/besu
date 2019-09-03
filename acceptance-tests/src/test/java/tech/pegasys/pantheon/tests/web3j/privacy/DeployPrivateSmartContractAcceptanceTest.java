@@ -13,53 +13,40 @@
 package tech.pegasys.pantheon.tests.web3j.privacy;
 
 import tech.pegasys.pantheon.tests.acceptance.dsl.privacy.PrivacyAcceptanceTestBase;
-import tech.pegasys.pantheon.tests.acceptance.dsl.privacy.PrivacyNet;
+import tech.pegasys.pantheon.tests.acceptance.dsl.privacy.PrivacyNode;
+import tech.pegasys.pantheon.tests.web3j.generated.EventEmitter;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 public class DeployPrivateSmartContractAcceptanceTest extends PrivacyAcceptanceTestBase {
 
-  protected static final String CONTRACT_NAME = "Event Emitter";
+  private static final long POW_CHAIN_ID = 2018;
 
-  private EventEmitterHarness eventEmitterHarness;
-  private PrivacyNet privacyNet;
+  private PrivacyNode minerNode;
 
   @Before
   public void setUp() throws Exception {
-    privacyNet =
-        PrivacyNet.builder(privacy, privacyPantheon, cluster, false).addMinerNode("Alice").build();
-    privacyNet.startPrivacyNet();
-    eventEmitterHarness =
-        new EventEmitterHarness(
-            privateTransactionBuilder,
-            privacyNet,
-            privateTransactions,
-            privateTransactionVerifier,
-            eea);
+    minerNode =
+        privacyPantheon.createPrivateTransactionEnabledMinerNode(
+            "miner-node", privacyAccountResolver.resolve(0));
+    privacyCluster.start(minerNode);
   }
 
   @Test
   public void deployingMustGiveValidReceipt() {
-    eventEmitterHarness.deploy(CONTRACT_NAME, "Alice");
-  }
+    final String contractAddress = "0x89ce396d0f9f937ddfa71113e29b2081c4869555";
 
-  @Test
-  public void privateSmartContractMustEmitEvents() {
-    eventEmitterHarness.deploy(CONTRACT_NAME, "Alice");
-    eventEmitterHarness.store(CONTRACT_NAME, "Alice");
-  }
+    final EventEmitter eventEmitter =
+        minerNode.execute(
+            privateContractTransactions.createSmartContract(
+                EventEmitter.class,
+                minerNode.getTransactionSigningKey(),
+                POW_CHAIN_ID,
+                minerNode.getEnclaveKey()));
 
-  @Test
-  public void privateSmartContractMustReturnValues() {
-    eventEmitterHarness.deploy(CONTRACT_NAME, "Alice");
-    eventEmitterHarness.store(CONTRACT_NAME, "Alice");
-    eventEmitterHarness.get(CONTRACT_NAME, "Alice");
-  }
-
-  @After
-  public void tearDown() {
-    privacyNet.stopPrivacyNet();
+    privateContractVerifier
+        .validPrivateContractDeployed(contractAddress, minerNode.getAddress().toString())
+        .verify(eventEmitter);
   }
 }

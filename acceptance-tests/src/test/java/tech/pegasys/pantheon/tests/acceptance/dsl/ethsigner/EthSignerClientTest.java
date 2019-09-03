@@ -102,7 +102,7 @@ public class EthSignerClientTest {
             BigInteger.ZERO,
             ENCLAVE_PUBLIC_KEY,
             Collections.emptyList(),
-            "");
+            "restricted");
 
     assertEquals(MOCK_RESPONSE, response);
   }

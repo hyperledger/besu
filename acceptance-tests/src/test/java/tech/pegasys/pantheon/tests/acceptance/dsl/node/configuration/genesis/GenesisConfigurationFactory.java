@@ -46,6 +46,13 @@ public class GenesisConfigurationFactory {
         validators, template, IbftExtraData::createGenesisExtraDataString);
   }
 
+  public Optional<String> createPrivacyIbft2GenesisConfig(
+      final Collection<? extends RunnableNode> validators) {
+    final String template = readGenesisFile("/ibft/privacy-ibft.json");
+    return updateGenesisExtraData(
+        validators, template, IbftExtraData::createGenesisExtraDataString);
+  }
+
   private Optional<String> updateGenesisExtraData(
       final Collection<? extends RunnableNode> validators,
       final String genesisTemplate,

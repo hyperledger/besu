@@ -21,6 +21,7 @@ import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import tech.pegasys.orion.testutil.OrionKeyConfiguration;
 import tech.pegasys.orion.testutil.OrionTestHarness;
 import tech.pegasys.orion.testutil.OrionTestHarnessFactory;
 import tech.pegasys.pantheon.enclave.Enclave;
@@ -115,7 +116,10 @@ public class PrivacyPrecompiledContractIntegrationTest {
 
     testHarness =
         OrionTestHarnessFactory.create(
-            folder.newFolder().toPath(), "orion_key_0.pub", "orion_key_1.key");
+            folder.newFolder().toPath(),
+            new OrionKeyConfiguration("orion_key_0.pub", "orion_key_1.key"));
+
+    testHarness.start();
 
     enclave = new Enclave(testHarness.clientUrl());
     messageFrame = mock(MessageFrame.class);

@@ -85,16 +85,16 @@ dependencyManagement {
 
     dependency 'org.springframework.security:spring-security-crypto:5.1.5.RELEASE'
 
-    dependency 'org.web3j:abi:4.3.1'
-    dependency 'org.web3j:core:4.3.1'
-    dependency 'org.web3j:crypto:4.3.1'
-    dependency 'org.web3j:eea:4.3.1'
+    dependency 'org.web3j:abi:4.5.0'
+    dependency 'org.web3j:core:4.5.0'
+    dependency 'org.web3j:crypto:4.5.0'
+    dependency 'org.web3j:pantheon:4.5.0'
 
     dependency 'org.xerial.snappy:snappy-java:1.1.7.3'
 
-    dependency "tech.pegasys.ethsigner.internal:core:0.2.0"
-    dependency "tech.pegasys.ethsigner.internal:file-based:0.2.0"
-    dependency "tech.pegasys.ethsigner.internal:signing-api:0.2.0"
+    dependency "tech.pegasys.ethsigner.internal:core:0.3.0"
+    dependency "tech.pegasys.ethsigner.internal:file-based:0.3.0"
+    dependency "tech.pegasys.ethsigner.internal:signing-api:0.3.0"
 
       dependency "tech.pegasys.pantheon:plugin-api:1.2.3"
   }

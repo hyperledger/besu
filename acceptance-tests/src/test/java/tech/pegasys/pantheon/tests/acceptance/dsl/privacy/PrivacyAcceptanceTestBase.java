@@ -12,31 +12,45 @@
  */
 package tech.pegasys.pantheon.tests.acceptance.dsl.privacy;
 
-import tech.pegasys.pantheon.tests.acceptance.dsl.AcceptanceTestBase;
-import tech.pegasys.pantheon.tests.acceptance.dsl.condition.eea.EeaConditions;
-import tech.pegasys.pantheon.tests.acceptance.dsl.node.configuration.privacy.PrivacyPantheonNodeFactory;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eea.EeaTransactions;
-import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eea.PrivateTransactionBuilder;
+import tech.pegasys.pantheon.tests.acceptance.dsl.condition.net.NetConditions;
+import tech.pegasys.pantheon.tests.acceptance.dsl.node.configuration.privacy.PrivacyNodeFactory;
+import tech.pegasys.pantheon.tests.acceptance.dsl.privacy.account.PrivacyAccountResolver;
+import tech.pegasys.pantheon.tests.acceptance.dsl.privacy.condition.PrivateContractVerifier;
+import tech.pegasys.pantheon.tests.acceptance.dsl.privacy.condition.PrivateTransactionVerifier;
+import tech.pegasys.pantheon.tests.acceptance.dsl.privacy.contract.PrivateContractTransactions;
+import tech.pegasys.pantheon.tests.acceptance.dsl.privacy.transaction.PrivacyTransactions;
+import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.net.NetTransactions;
 
+import org.junit.After;
 import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
 
-public class PrivacyAcceptanceTestBase extends AcceptanceTestBase {
+public class PrivacyAcceptanceTestBase {
   @ClassRule public static final TemporaryFolder privacy = new TemporaryFolder();
 
-  protected final EeaConditions eea;
-  protected final PrivateTransactions privateTransactions;
-  protected final PrivateTransactionBuilder.Builder privateTransactionBuilder;
+  protected final PrivacyTransactions privacyTransactions;
+  protected final PrivateContractVerifier privateContractVerifier;
   protected final PrivateTransactionVerifier privateTransactionVerifier;
-  protected final PrivacyPantheonNodeFactory privacyPantheon;
+  protected final PrivacyNodeFactory privacyPantheon;
+  protected final PrivateContractTransactions privateContractTransactions;
+  protected final PrivacyCluster privacyCluster;
+  protected final PrivacyAccountResolver privacyAccountResolver;
+
+  protected final NetConditions net;
 
   public PrivacyAcceptanceTestBase() {
-    final EeaTransactions eeaTransactions = new EeaTransactions();
+    net = new NetConditions(new NetTransactions());
+    privacyTransactions = new PrivacyTransactions();
+    privateContractVerifier = new PrivateContractVerifier();
+    privateTransactionVerifier = new PrivateTransactionVerifier(privacyTransactions);
+    privacyPantheon = new PrivacyNodeFactory();
+    privateContractTransactions = new PrivateContractTransactions();
+    privacyCluster = new PrivacyCluster(net);
+    privacyAccountResolver = new PrivacyAccountResolver();
+  }
 
-    privateTransactions = new PrivateTransactions();
-    eea = new EeaConditions(eeaTransactions);
-    privateTransactionBuilder = PrivateTransactionBuilder.builder();
-    privateTransactionVerifier = new PrivateTransactionVerifier(eea, eeaTransactions);
-    privacyPantheon = new PrivacyPantheonNodeFactory();
+  @After
+  public void tearDownAcceptanceTestBase() {
+    privacyCluster.close();
   }
 }

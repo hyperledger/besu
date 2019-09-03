@@ -226,6 +226,24 @@ public abstract class MainnetProtocolSpecs {
                     true,
                     stackSizeLimit,
                     Account.DEFAULT_VERSION))
+        .name("SpuriousDragon");
+  }
+
+  public static ProtocolSpecBuilder<Void> byzantiumDefinition(
+      final Optional<BigInteger> chainId,
+      final OptionalInt contractSizeLimit,
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason) {
+    final int stackSizeLimit = configStackSizeLimit.orElse(DEFAULT_MAX_STACK_SIZE);
+    return spuriousDragonDefinition(chainId, contractSizeLimit, configStackSizeLimit)
+        .evmBuilder(MainnetEvmRegistries::byzantium)
+        .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::byzantium)
+        .difficultyCalculator(MainnetDifficultyCalculators.BYZANTIUM)
+        .transactionReceiptFactory(
+            enableRevertReason
+                ? MainnetProtocolSpecs::byzantiumTransactionReceiptFactoryWithReasonEnabled
+                : MainnetProtocolSpecs::byzantiumTransactionReceiptFactory)
+        .blockReward(BYZANTIUM_BLOCK_REWARD)
         .privateTransactionValidatorBuilder(() -> new PrivateTransactionValidator(chainId))
         .privateTransactionProcessorBuilder(
             (gasCalculator,
@@ -242,23 +260,6 @@ public abstract class MainnetProtocolSpecs {
                     stackSizeLimit,
                     Account.DEFAULT_VERSION,
                     privateTransactionValidator))
-        .name("SpuriousDragon");
-  }
-
-  public static ProtocolSpecBuilder<Void> byzantiumDefinition(
-      final Optional<BigInteger> chainId,
-      final OptionalInt contractSizeLimit,
-      final OptionalInt configStackSizeLimit,
-      final boolean enableRevertReason) {
-    return spuriousDragonDefinition(chainId, contractSizeLimit, configStackSizeLimit)
-        .evmBuilder(MainnetEvmRegistries::byzantium)
-        .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::byzantium)
-        .difficultyCalculator(MainnetDifficultyCalculators.BYZANTIUM)
-        .transactionReceiptFactory(
-            enableRevertReason
-                ? MainnetProtocolSpecs::byzantiumTransactionReceiptFactoryWithReasonEnabled
-                : MainnetProtocolSpecs::byzantiumTransactionReceiptFactory)
-        .blockReward(BYZANTIUM_BLOCK_REWARD)
         .name("Byzantium");
   }
 

@@ -12,16 +12,12 @@
  */
 package tech.pegasys.pantheon.tests.web3j.privacy;
 
-import static tech.pegasys.pantheon.tests.acceptance.dsl.transaction.eea.PrivateTransactionBuilder.EVENT_EMITTER_CONSTRUCTOR;
-import static tech.pegasys.pantheon.tests.web3j.privacy.PrivacyGroup.generatePrivacyGroup;
-
-import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.tests.acceptance.dsl.ethsigner.EthSignerClient;
 import tech.pegasys.pantheon.tests.acceptance.dsl.ethsigner.testutil.EthSignerTestHarness;
 import tech.pegasys.pantheon.tests.acceptance.dsl.ethsigner.testutil.EthSignerTestHarnessFactory;
 import tech.pegasys.pantheon.tests.acceptance.dsl.privacy.PrivacyAcceptanceTestBase;
-import tech.pegasys.pantheon.tests.acceptance.dsl.privacy.PrivacyNet;
-import tech.pegasys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.tests.acceptance.dsl.privacy.PrivacyNode;
+import tech.pegasys.pantheon.tests.web3j.generated.EventEmitter;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -29,52 +25,47 @@ import java.util.Collections;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.web3j.protocol.eea.response.PrivateTransactionReceipt;
 
 public class EthSignerAcceptanceTest extends PrivacyAcceptanceTestBase {
-  private PrivacyNet privacyNet;
+
+  private PrivacyNode minerNode;
 
   private EthSignerClient ethSignerClient;
 
   @Before
   public void setUp() throws Exception {
-    privacyNet =
-        PrivacyNet.builder(privacy, privacyPantheon, cluster, false).addMinerNode("Alice").build();
-    privacyNet.startPrivacyNet();
+    minerNode =
+        privacyPantheon.createPrivateTransactionEnabledMinerNode(
+            "miner-node", privacyAccountResolver.resolve(0));
+    privacyCluster.start(minerNode);
 
     final EthSignerTestHarness ethSigner =
         EthSignerTestHarnessFactory.create(
             privacy.newFolder().toPath(),
             "ethSignerKey--fe3b557e8fb62b89f4916b721be55ceb828dbd73.json",
-            privacyNet.getNode("Alice").getJsonRpcSocketPort().orElseThrow(),
+            minerNode.getPantheon().getJsonRpcSocketPort().orElseThrow(),
             2018);
     ethSignerClient = new EthSignerClient(ethSigner.getHttpListeningUrl());
   }
 
   @Test
   public void privateSmartContractMustDeploy() throws IOException {
-    final BytesValue privacyGroupId = generatePrivacyGroup(privacyNet, "Alice");
-    final long nonce = privacyNet.getNode("Alice").nextNonce(privacyGroupId);
-
     final String transactionHash =
         ethSignerClient.eeaSendTransaction(
             null,
             BigInteger.valueOf(63992),
             BigInteger.valueOf(1000),
-            EVENT_EMITTER_CONSTRUCTOR.toString(),
-            BigInteger.valueOf(nonce),
-            privacyNet.getEnclave("Alice").getPublicKeys().get(0),
+            EventEmitter.BINARY,
+            BigInteger.valueOf(0),
+            minerNode.getEnclaveKey(),
             Collections.emptyList(),
             "restricted");
 
-    privacyNet.getNode("Alice").verify(eea.expectSuccessfulTransactionReceipt(transactionHash));
+    final PrivateTransactionReceipt receipt =
+        minerNode.execute(privacyTransactions.getPrivateTransactionReceipt(transactionHash));
 
-    final String expectedContractAddress =
-        Address.privateContractAddress(
-                privacyNet.getNode("Alice").getAddress(), nonce, privacyGroupId)
-            .toString();
-
-    privateTransactionVerifier
-        .validPrivateContractDeployed(expectedContractAddress)
-        .verify(privacyNet.getNode("Alice"), transactionHash);
+    minerNode.verify(
+        privateTransactionVerifier.validPrivateTransactionReceipt(transactionHash, receipt));
   }
 }

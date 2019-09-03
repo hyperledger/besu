@@ -18,6 +18,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import tech.pegasys.orion.testutil.OrionKeyConfiguration;
 import tech.pegasys.orion.testutil.OrionTestHarness;
 import tech.pegasys.orion.testutil.OrionTestHarnessFactory;
 import tech.pegasys.pantheon.crypto.SECP256K1;
@@ -43,7 +44,6 @@ import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPOutput;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.bytes.BytesValues;
 
-import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Base64;
 import java.util.Optional;
@@ -73,19 +73,17 @@ public class PrivGetPrivateTransactionIntegrationTest {
 
     testHarness =
         OrionTestHarnessFactory.create(
-            folder.newFolder().toPath(), "orion_key_0.pub", "orion_key_0.key");
+            folder.newFolder().toPath(),
+            new OrionKeyConfiguration("orion_key_0.pub", "orion_key_0.key"));
+
+    testHarness.start();
 
     enclave = new Enclave(testHarness.clientUrl());
   }
 
   @AfterClass
   public static void tearDownOnce() {
-    testHarness.stopOrion();
-  }
-
-  @Test
-  public void testUpCheck() throws IOException {
-    assertThat(enclave.upCheck()).isTrue();
+    testHarness.close();
   }
 
   private final Address sender =
@@ -132,7 +130,7 @@ public class PrivGetPrivateTransactionIntegrationTest {
   private final BlockchainQueries blockchain = mock(BlockchainQueries.class);
 
   @Test
-  public void returnsStoredPrivateTransaction() throws Exception {
+  public void returnsStoredPrivateTransaction() {
 
     final PrivGetPrivateTransaction privGetPrivateTransaction =
         new PrivGetPrivateTransaction(blockchain, enclave, parameters, privacyParameters);

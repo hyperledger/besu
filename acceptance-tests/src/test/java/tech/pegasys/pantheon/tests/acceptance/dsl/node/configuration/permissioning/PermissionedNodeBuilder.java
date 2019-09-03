@@ -27,7 +27,7 @@ import tech.pegasys.pantheon.ethereum.permissioning.WhitelistPersistor.WHITELIST
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.Node;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.RunnableNode;
-import tech.pegasys.pantheon.tests.acceptance.dsl.node.configuration.PantheonFactoryConfigurationBuilder;
+import tech.pegasys.pantheon.tests.acceptance.dsl.node.configuration.PantheonNodeConfigurationBuilder;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.configuration.PantheonNodeFactory;
 
 import java.io.File;
@@ -171,7 +171,7 @@ public class PermissionedNodeBuilder {
     final PermissioningConfiguration permissioningConfiguration =
         new PermissioningConfiguration(localPermConfig, smartContractPermConfig);
 
-    final PantheonFactoryConfigurationBuilder builder = new PantheonFactoryConfigurationBuilder();
+    final PantheonNodeConfigurationBuilder builder = new PantheonNodeConfigurationBuilder();
     builder
         .name(name)
         .jsonRpcConfiguration(jsonRpcConfigWithPermApiEnabled())

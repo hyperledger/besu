@@ -80,7 +80,6 @@ public class PrivCreatePrivacyGroupTest {
 
   @Test
   public void verifyCreatePrivacyGroupWithoutDescription() {
-
     final String expected = "a wonderful group";
     final PrivacyGroup privacyGroup =
         new PrivacyGroup(expected, PrivacyGroup.Type.PANTHEON, NAME, DESCRIPTION, ADDRESSES);
@@ -115,7 +114,6 @@ public class PrivCreatePrivacyGroupTest {
 
   @Test
   public void verifyCreatePrivacyGroupWithoutName() {
-
     final String expected = "a wonderful group";
     final PrivacyGroup privacyGroup =
         new PrivacyGroup(expected, PrivacyGroup.Type.PANTHEON, NAME, DESCRIPTION, ADDRESSES);
@@ -150,7 +148,6 @@ public class PrivCreatePrivacyGroupTest {
 
   @Test
   public void verifyCreatePrivacyGroupWithoutOptionalParams() {
-
     final String expected = "a wonderful group";
     final PrivacyGroup privacyGroup =
         new PrivacyGroup(expected, PrivacyGroup.Type.PANTHEON, NAME, DESCRIPTION, ADDRESSES);
