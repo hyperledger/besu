@@ -15,10 +15,10 @@ package tech.pegasys.pantheon.ethereum.p2p.network;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.Capability;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.SubProtocol;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
-import tech.pegasys.pantheon.metrics.Counter;
-import tech.pegasys.pantheon.metrics.LabelledMetric;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
+import tech.pegasys.pantheon.plugin.services.MetricsSystem;
+import tech.pegasys.pantheon.plugin.services.metrics.Counter;
+import tech.pegasys.pantheon.plugin.services.metrics.LabelledMetric;
 
 import java.util.ArrayList;
 import java.util.Arrays;

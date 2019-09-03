@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.services.pipeline;
 
-import tech.pegasys.pantheon.metrics.Counter;
+import tech.pegasys.pantheon.plugin.services.metrics.Counter;
 
 import java.util.ArrayList;
 import java.util.Collection;

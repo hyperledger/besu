@@ -18,9 +18,9 @@ import tech.pegasys.pantheon.ethereum.core.SyncStatus;
 import tech.pegasys.pantheon.ethereum.core.Synchronizer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.EnodeURL;
 import tech.pegasys.pantheon.ethereum.permissioning.node.NodePermissioningProvider;
-import tech.pegasys.pantheon.metrics.Counter;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
+import tech.pegasys.pantheon.plugin.services.MetricsSystem;
+import tech.pegasys.pantheon.plugin.services.metrics.Counter;
 
 import java.net.URI;
 import java.util.Collection;

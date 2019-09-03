@@ -15,11 +15,11 @@ package tech.pegasys.pantheon.metrics.noop;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-import tech.pegasys.pantheon.metrics.Counter;
-import tech.pegasys.pantheon.metrics.LabelledMetric;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
-import tech.pegasys.pantheon.metrics.OperationTimer;
 import tech.pegasys.pantheon.metrics.StandardMetricCategory;
+import tech.pegasys.pantheon.plugin.services.MetricsSystem;
+import tech.pegasys.pantheon.plugin.services.metrics.Counter;
+import tech.pegasys.pantheon.plugin.services.metrics.LabelledMetric;
+import tech.pegasys.pantheon.plugin.services.metrics.OperationTimer;
 
 import org.junit.Test;
 

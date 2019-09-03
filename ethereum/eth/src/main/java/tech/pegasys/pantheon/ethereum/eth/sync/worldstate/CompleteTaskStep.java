@@ -14,10 +14,10 @@ package tech.pegasys.pantheon.ethereum.eth.sync.worldstate;
 
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage;
-import tech.pegasys.pantheon.metrics.Counter;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
 import tech.pegasys.pantheon.metrics.RunnableCounter;
+import tech.pegasys.pantheon.plugin.services.MetricsSystem;
+import tech.pegasys.pantheon.plugin.services.metrics.Counter;
 import tech.pegasys.pantheon.services.tasks.Task;
 
 import java.text.DecimalFormat;

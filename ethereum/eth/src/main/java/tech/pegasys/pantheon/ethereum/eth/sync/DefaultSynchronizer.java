@@ -28,8 +28,8 @@ import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.worldstate.Pruner;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
+import tech.pegasys.pantheon.plugin.services.MetricsSystem;
 import tech.pegasys.pantheon.util.ExceptionUtils;
 import tech.pegasys.pantheon.util.Subscribers;
 

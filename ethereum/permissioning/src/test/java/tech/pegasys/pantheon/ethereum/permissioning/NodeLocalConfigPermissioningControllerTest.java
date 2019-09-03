@@ -28,9 +28,9 @@ import static tech.pegasys.pantheon.ethereum.permissioning.NodeLocalConfigPermis
 
 import tech.pegasys.pantheon.ethereum.p2p.peers.EnodeURL;
 import tech.pegasys.pantheon.ethereum.permissioning.node.NodeWhitelistUpdatedEvent;
-import tech.pegasys.pantheon.metrics.Counter;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
+import tech.pegasys.pantheon.plugin.services.MetricsSystem;
+import tech.pegasys.pantheon.plugin.services.metrics.Counter;
 
 import java.io.IOException;
 import java.net.URI;

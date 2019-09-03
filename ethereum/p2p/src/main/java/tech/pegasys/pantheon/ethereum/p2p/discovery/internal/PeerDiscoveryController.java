@@ -28,10 +28,10 @@ import tech.pegasys.pantheon.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.peers.PeerId;
 import tech.pegasys.pantheon.ethereum.p2p.permissions.PeerPermissions;
-import tech.pegasys.pantheon.metrics.Counter;
-import tech.pegasys.pantheon.metrics.LabelledMetric;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
+import tech.pegasys.pantheon.plugin.services.MetricsSystem;
+import tech.pegasys.pantheon.plugin.services.metrics.Counter;
+import tech.pegasys.pantheon.plugin.services.metrics.LabelledMetric;
 import tech.pegasys.pantheon.util.Subscribers;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 

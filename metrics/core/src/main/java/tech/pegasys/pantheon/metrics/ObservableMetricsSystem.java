@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ConsenSys AG.
+ * Copyright 2019 ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,8 +12,14 @@
  */
 package tech.pegasys.pantheon.metrics;
 
-public interface Counter {
-  void inc();
+import tech.pegasys.pantheon.plugin.services.MetricsSystem;
+import tech.pegasys.pantheon.plugin.services.metrics.MetricCategory;
 
-  void inc(long amount);
+import java.util.stream.Stream;
+
+public interface ObservableMetricsSystem extends MetricsSystem {
+
+  Stream<Observation> streamObservations(MetricCategory category);
+
+  Stream<Observation> streamObservations();
 }

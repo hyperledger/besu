@@ -23,7 +23,7 @@ import tech.pegasys.pantheon.ethereum.core.BlockDataGenerator;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
 import tech.pegasys.pantheon.ethereum.eth.messages.TransactionsMessage;
-import tech.pegasys.pantheon.metrics.Counter;
+import tech.pegasys.pantheon.plugin.services.metrics.Counter;
 
 import com.google.common.collect.ImmutableSet;
 import org.junit.Test;

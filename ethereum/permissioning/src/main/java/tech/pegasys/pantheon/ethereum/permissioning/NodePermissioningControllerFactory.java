@@ -18,7 +18,7 @@ import tech.pegasys.pantheon.ethereum.permissioning.node.NodePermissioningContro
 import tech.pegasys.pantheon.ethereum.permissioning.node.NodePermissioningProvider;
 import tech.pegasys.pantheon.ethereum.permissioning.node.provider.SyncStatusNodePermissioningProvider;
 import tech.pegasys.pantheon.ethereum.transaction.TransactionSimulator;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.plugin.services.MetricsSystem;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.ArrayList;

@@ -26,8 +26,8 @@ import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import tech.pegasys.pantheon.ethereum.eth.manager.RespondingEthPeer;
 import tech.pegasys.pantheon.ethereum.eth.manager.RespondingEthPeer.Responder;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
+import tech.pegasys.pantheon.plugin.services.MetricsSystem;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.Optional;

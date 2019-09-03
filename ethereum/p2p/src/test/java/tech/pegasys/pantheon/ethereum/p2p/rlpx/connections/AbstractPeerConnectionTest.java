@@ -27,9 +27,9 @@ import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.PeerInfo;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.messages.PingMessage;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.messages.WireMessageCodes;
-import tech.pegasys.pantheon.metrics.Counter;
-import tech.pegasys.pantheon.metrics.LabelledMetric;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
+import tech.pegasys.pantheon.plugin.services.metrics.Counter;
+import tech.pegasys.pantheon.plugin.services.metrics.LabelledMetric;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.net.InetSocketAddress;

@@ -47,8 +47,8 @@ import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.connections.PeerConnection;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
+import tech.pegasys.pantheon.plugin.services.MetricsSystem;
 import tech.pegasys.pantheon.testutil.TestClock;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 

@@ -38,8 +38,8 @@ import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPoolConfigurat
 import tech.pegasys.pantheon.ethereum.mainnet.BlockHeaderValidator;
 import tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
+import tech.pegasys.pantheon.plugin.services.MetricsSystem;
 import tech.pegasys.pantheon.testutil.TestClock;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 

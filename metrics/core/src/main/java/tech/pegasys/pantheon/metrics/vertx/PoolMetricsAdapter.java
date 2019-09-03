@@ -12,9 +12,9 @@
  */
 package tech.pegasys.pantheon.metrics.vertx;
 
-import tech.pegasys.pantheon.metrics.Counter;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
+import tech.pegasys.pantheon.plugin.services.MetricsSystem;
+import tech.pegasys.pantheon.plugin.services.metrics.Counter;
 
 import io.vertx.core.spi.metrics.PoolMetrics;
 

@@ -14,8 +14,8 @@ package tech.pegasys.pantheon.ethereum.eth.manager;
 
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer.DisconnectCallback;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.connections.PeerConnection;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
+import tech.pegasys.pantheon.plugin.services.MetricsSystem;
 import tech.pegasys.pantheon.util.Subscribers;
 
 import java.time.Clock;

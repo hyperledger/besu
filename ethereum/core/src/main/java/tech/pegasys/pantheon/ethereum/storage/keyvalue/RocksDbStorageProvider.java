@@ -16,7 +16,7 @@ import static java.util.AbstractMap.SimpleEntry;
 import static java.util.Arrays.asList;
 
 import tech.pegasys.pantheon.ethereum.storage.StorageProvider;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.plugin.services.MetricsSystem;
 import tech.pegasys.pantheon.services.kvstore.ColumnarRocksDbKeyValueStorage;
 import tech.pegasys.pantheon.services.kvstore.KeyValueStorage;
 import tech.pegasys.pantheon.services.kvstore.LimitedInMemoryKeyValueStorage;

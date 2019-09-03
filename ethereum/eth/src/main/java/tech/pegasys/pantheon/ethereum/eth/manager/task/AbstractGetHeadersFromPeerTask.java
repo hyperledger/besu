@@ -22,7 +22,7 @@ import tech.pegasys.pantheon.ethereum.eth.messages.EthPV62;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.plugin.services.MetricsSystem;
 
 import java.util.ArrayList;
 import java.util.Collections;

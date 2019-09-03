@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.metrics.vertx;
 
-import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.plugin.services.MetricsSystem;
 
 import io.vertx.core.VertxOptions;
 import io.vertx.core.spi.VertxMetricsFactory;

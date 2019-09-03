@@ -22,7 +22,7 @@ import tech.pegasys.pantheon.ethereum.eth.sync.tasks.exceptions.InvalidBlockExce
 import tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.plugin.services.MetricsSystem;
 
 import java.util.ArrayList;
 import java.util.List;

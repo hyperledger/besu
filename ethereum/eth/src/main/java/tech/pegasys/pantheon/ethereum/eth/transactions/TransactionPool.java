@@ -33,10 +33,10 @@ import tech.pegasys.pantheon.ethereum.mainnet.TransactionValidationParams;
 import tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator;
 import tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
 import tech.pegasys.pantheon.ethereum.mainnet.ValidationResult;
-import tech.pegasys.pantheon.metrics.Counter;
-import tech.pegasys.pantheon.metrics.LabelledMetric;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
+import tech.pegasys.pantheon.plugin.services.MetricsSystem;
+import tech.pegasys.pantheon.plugin.services.metrics.Counter;
+import tech.pegasys.pantheon.plugin.services.metrics.LabelledMetric;
 
 import java.util.Collection;
 import java.util.HashSet;

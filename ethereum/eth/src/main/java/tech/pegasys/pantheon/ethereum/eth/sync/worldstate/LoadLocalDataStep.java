@@ -13,9 +13,9 @@
 package tech.pegasys.pantheon.ethereum.eth.sync.worldstate;
 
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage;
-import tech.pegasys.pantheon.metrics.Counter;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
+import tech.pegasys.pantheon.plugin.services.MetricsSystem;
+import tech.pegasys.pantheon.plugin.services.metrics.Counter;
 import tech.pegasys.pantheon.services.pipeline.Pipe;
 import tech.pegasys.pantheon.services.tasks.Task;
 import tech.pegasys.pantheon.util.bytes.BytesValue;

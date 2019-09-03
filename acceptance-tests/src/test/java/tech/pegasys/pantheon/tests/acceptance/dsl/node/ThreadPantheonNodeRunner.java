@@ -26,7 +26,7 @@ import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPoolConfigurat
 import tech.pegasys.pantheon.ethereum.graphql.GraphQLConfiguration;
 import tech.pegasys.pantheon.ethereum.p2p.peers.EnodeURL;
 import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.metrics.ObservableMetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.plugin.services.PantheonEvents;
 import tech.pegasys.pantheon.plugin.services.PicoCLIOptions;
@@ -90,7 +90,7 @@ public class ThreadPantheonNodeRunner implements PantheonNodeRunner {
 
     commandLine.parseArgs(node.getConfiguration().getExtraCLIOptions().toArray(new String[0]));
 
-    final MetricsSystem noOpMetricsSystem = new NoOpMetricsSystem();
+    final ObservableMetricsSystem noOpMetricsSystem = new NoOpMetricsSystem();
     final List<EnodeURL> bootnodes =
         node.getConfiguration().getBootnodes().stream()
             .map(EnodeURL::fromURI)

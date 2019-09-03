@@ -21,9 +21,9 @@ import tech.pegasys.pantheon.ethereum.permissioning.node.NodePermissioningProvid
 import tech.pegasys.pantheon.ethereum.transaction.CallParameter;
 import tech.pegasys.pantheon.ethereum.transaction.TransactionSimulator;
 import tech.pegasys.pantheon.ethereum.transaction.TransactionSimulatorResult;
-import tech.pegasys.pantheon.metrics.Counter;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
+import tech.pegasys.pantheon.plugin.services.MetricsSystem;
+import tech.pegasys.pantheon.plugin.services.metrics.Counter;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.bytes.BytesValues;
 

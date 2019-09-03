@@ -59,8 +59,8 @@ import tech.pegasys.pantheon.ethereum.mainnet.TransactionValidationParams;
 import tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator;
 import tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
 import tech.pegasys.pantheon.ethereum.mainnet.ValidationResult;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
+import tech.pegasys.pantheon.plugin.services.MetricsSystem;
 import tech.pegasys.pantheon.testutil.TestClock;
 import tech.pegasys.pantheon.util.uint.UInt256;
 

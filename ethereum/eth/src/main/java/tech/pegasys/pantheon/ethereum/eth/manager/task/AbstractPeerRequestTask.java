@@ -21,7 +21,7 @@ import tech.pegasys.pantheon.ethereum.eth.manager.exceptions.PeerBreachedProtoco
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.MessageData;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import tech.pegasys.pantheon.ethereum.rlp.RLPException;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.plugin.services.MetricsSystem;
 import tech.pegasys.pantheon.util.ExceptionUtils;
 
 import java.time.Duration;

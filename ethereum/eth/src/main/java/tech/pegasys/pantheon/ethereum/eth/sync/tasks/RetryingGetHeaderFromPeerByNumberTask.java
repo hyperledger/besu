@@ -19,7 +19,7 @@ import tech.pegasys.pantheon.ethereum.eth.manager.task.AbstractGetHeadersFromPee
 import tech.pegasys.pantheon.ethereum.eth.manager.task.AbstractRetryingPeerTask;
 import tech.pegasys.pantheon.ethereum.eth.manager.task.GetHeadersFromPeerByNumberTask;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.plugin.services.MetricsSystem;
 
 import java.util.Collection;
 import java.util.List;

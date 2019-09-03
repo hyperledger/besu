@@ -24,8 +24,8 @@ import tech.pegasys.pantheon.ethereum.core.BlockchainSetupUtil;
 import tech.pegasys.pantheon.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
 import tech.pegasys.pantheon.ethereum.mainnet.HeaderValidationMode;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
+import tech.pegasys.pantheon.plugin.services.MetricsSystem;
 
 import java.util.Arrays;
 import java.util.Collections;

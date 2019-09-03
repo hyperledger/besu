@@ -16,8 +16,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import tech.pegasys.pantheon.metrics.OperationTimer;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
+import tech.pegasys.pantheon.plugin.services.metrics.OperationTimer;
 
 import java.util.Arrays;
 import java.util.List;

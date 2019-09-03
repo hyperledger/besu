@@ -21,7 +21,7 @@ import tech.pegasys.pantheon.ethereum.eth.manager.PendingPeerRequest;
 import tech.pegasys.pantheon.ethereum.eth.messages.EthPV63;
 import tech.pegasys.pantheon.ethereum.eth.messages.NodeDataMessage;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.MessageData;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.plugin.services.MetricsSystem;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.Collection;

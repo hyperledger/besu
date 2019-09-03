@@ -18,8 +18,8 @@ import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.messages.EthPV62;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
+import tech.pegasys.pantheon.plugin.services.MetricsSystem;
 
 import java.time.Clock;
 

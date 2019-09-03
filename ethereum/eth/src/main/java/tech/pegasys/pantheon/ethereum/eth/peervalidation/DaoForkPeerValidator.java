@@ -21,7 +21,7 @@ import tech.pegasys.pantheon.ethereum.eth.manager.task.AbstractPeerTask;
 import tech.pegasys.pantheon.ethereum.eth.manager.task.GetHeadersFromPeerByNumberTask;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockHeaderValidator;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.plugin.services.MetricsSystem;
 
 import java.time.Duration;
 import java.util.List;

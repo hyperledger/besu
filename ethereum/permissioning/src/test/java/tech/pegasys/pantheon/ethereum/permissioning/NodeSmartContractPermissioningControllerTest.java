@@ -31,9 +31,9 @@ import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.p2p.peers.EnodeURL;
 import tech.pegasys.pantheon.ethereum.transaction.TransactionSimulator;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
-import tech.pegasys.pantheon.metrics.Counter;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
+import tech.pegasys.pantheon.plugin.services.MetricsSystem;
+import tech.pegasys.pantheon.plugin.services.metrics.Counter;
 
 import java.io.IOException;
 

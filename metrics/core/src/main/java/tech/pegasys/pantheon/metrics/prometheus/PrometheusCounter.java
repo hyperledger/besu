@@ -12,8 +12,8 @@
  */
 package tech.pegasys.pantheon.metrics.prometheus;
 
-import tech.pegasys.pantheon.metrics.Counter;
-import tech.pegasys.pantheon.metrics.LabelledMetric;
+import tech.pegasys.pantheon.plugin.services.metrics.Counter;
+import tech.pegasys.pantheon.plugin.services.metrics.LabelledMetric;
 
 class PrometheusCounter implements LabelledMetric<Counter> {
 

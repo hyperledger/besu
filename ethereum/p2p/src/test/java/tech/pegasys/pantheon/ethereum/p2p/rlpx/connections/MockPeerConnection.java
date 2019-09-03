@@ -23,9 +23,9 @@ import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.MockSubProtocol;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.PeerInfo;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.SubProtocol;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
-import tech.pegasys.pantheon.metrics.Counter;
-import tech.pegasys.pantheon.metrics.LabelledMetric;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
+import tech.pegasys.pantheon.plugin.services.metrics.Counter;
+import tech.pegasys.pantheon.plugin.services.metrics.LabelledMetric;
 
 import java.net.InetSocketAddress;
 import java.util.Arrays;

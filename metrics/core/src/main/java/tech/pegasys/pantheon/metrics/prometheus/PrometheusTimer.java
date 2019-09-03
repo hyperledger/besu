@@ -12,8 +12,8 @@
  */
 package tech.pegasys.pantheon.metrics.prometheus;
 
-import tech.pegasys.pantheon.metrics.LabelledMetric;
-import tech.pegasys.pantheon.metrics.OperationTimer;
+import tech.pegasys.pantheon.plugin.services.metrics.LabelledMetric;
+import tech.pegasys.pantheon.plugin.services.metrics.OperationTimer;
 
 import io.prometheus.client.Summary;
 

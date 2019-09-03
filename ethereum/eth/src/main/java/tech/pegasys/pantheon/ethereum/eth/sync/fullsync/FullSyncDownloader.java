@@ -19,7 +19,7 @@ import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.sync.TrailingPeerRequirements;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.plugin.services.MetricsSystem;
 
 public class FullSyncDownloader<C> {
 

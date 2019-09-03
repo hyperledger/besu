@@ -14,7 +14,7 @@ package tech.pegasys.pantheon.ethereum.eth.manager.task;
 
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeers;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.plugin.services.MetricsSystem;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

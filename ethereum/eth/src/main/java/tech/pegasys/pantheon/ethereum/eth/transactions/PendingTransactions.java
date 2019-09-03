@@ -18,10 +18,10 @@ import tech.pegasys.pantheon.ethereum.core.AccountTransactionOrder;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
-import tech.pegasys.pantheon.metrics.Counter;
-import tech.pegasys.pantheon.metrics.LabelledMetric;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
+import tech.pegasys.pantheon.plugin.services.MetricsSystem;
+import tech.pegasys.pantheon.plugin.services.metrics.Counter;
+import tech.pegasys.pantheon.plugin.services.metrics.LabelledMetric;
 import tech.pegasys.pantheon.util.Subscribers;
 
 import java.time.Clock;

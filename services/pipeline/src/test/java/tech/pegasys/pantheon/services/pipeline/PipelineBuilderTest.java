@@ -23,8 +23,8 @@ import static org.assertj.core.api.Assertions.fail;
 import static org.awaitility.Awaitility.waitAtMost;
 import static tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem.NO_OP_LABELLED_2_COUNTER;
 
-import tech.pegasys.pantheon.metrics.Counter;
-import tech.pegasys.pantheon.metrics.LabelledMetric;
+import tech.pegasys.pantheon.plugin.services.metrics.Counter;
+import tech.pegasys.pantheon.plugin.services.metrics.LabelledMetric;
 
 import java.util.ArrayList;
 import java.util.Collection;

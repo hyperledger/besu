@@ -15,7 +15,7 @@ package tech.pegasys.pantheon.metrics.prometheus;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Streams.stream;
 
-import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.plugin.services.MetricsSystem;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

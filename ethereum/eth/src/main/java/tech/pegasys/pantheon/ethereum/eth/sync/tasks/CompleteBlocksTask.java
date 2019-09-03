@@ -27,7 +27,7 @@ import tech.pegasys.pantheon.ethereum.eth.manager.task.AbstractPeerTask.PeerTask
 import tech.pegasys.pantheon.ethereum.eth.manager.task.AbstractRetryingPeerTask;
 import tech.pegasys.pantheon.ethereum.eth.manager.task.GetBodiesFromPeerTask;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.plugin.services.MetricsSystem;
 
 import java.util.Collection;
 import java.util.List;

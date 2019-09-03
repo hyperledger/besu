@@ -49,7 +49,7 @@ import tech.pegasys.pantheon.ethereum.worldstate.MarkSweepPruner;
 import tech.pegasys.pantheon.ethereum.worldstate.Pruner;
 import tech.pegasys.pantheon.ethereum.worldstate.PruningConfiguration;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.plugin.services.MetricsSystem;
 import tech.pegasys.pantheon.services.kvstore.RocksDbConfiguration;
 
 import java.io.File;

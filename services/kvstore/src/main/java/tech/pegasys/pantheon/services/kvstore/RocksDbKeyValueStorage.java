@@ -12,8 +12,8 @@
  */
 package tech.pegasys.pantheon.services.kvstore;
 
-import tech.pegasys.pantheon.metrics.MetricsSystem;
-import tech.pegasys.pantheon.metrics.OperationTimer;
+import tech.pegasys.pantheon.plugin.services.MetricsSystem;
+import tech.pegasys.pantheon.plugin.services.metrics.OperationTimer;
 import tech.pegasys.pantheon.services.kvstore.SegmentedKeyValueStorage.StorageException;
 import tech.pegasys.pantheon.services.util.RocksDbUtil;
 import tech.pegasys.pantheon.util.bytes.BytesValue;

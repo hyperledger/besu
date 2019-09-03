@@ -76,7 +76,7 @@ import tech.pegasys.pantheon.ethereum.permissioning.node.NodePermissioningContro
 import tech.pegasys.pantheon.ethereum.permissioning.node.PeerPermissionsAdapter;
 import tech.pegasys.pantheon.ethereum.transaction.TransactionSimulator;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.metrics.ObservableMetricsSystem;
 import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
 import tech.pegasys.pantheon.metrics.prometheus.MetricsService;
 import tech.pegasys.pantheon.nat.NatMethod;
@@ -121,7 +121,7 @@ public class RunnerBuilder {
   private WebSocketConfiguration webSocketConfiguration;
   private Path dataDir;
   private MetricsConfiguration metricsConfiguration;
-  private MetricsSystem metricsSystem;
+  private ObservableMetricsSystem metricsSystem;
   private Optional<PermissioningConfiguration> permissioningConfiguration = Optional.empty();
   private Collection<EnodeURL> staticNodes = Collections.emptyList();
 
@@ -224,7 +224,7 @@ public class RunnerBuilder {
     return this;
   }
 
-  public RunnerBuilder metricsSystem(final MetricsSystem metricsSystem) {
+  public RunnerBuilder metricsSystem(final ObservableMetricsSystem metricsSystem) {
     this.metricsSystem = metricsSystem;
     return this;
   }
@@ -554,7 +554,7 @@ public class RunnerBuilder {
       final Synchronizer synchronizer,
       final TransactionPool transactionPool,
       final MiningCoordinator miningCoordinator,
-      final MetricsSystem metricsSystem,
+      final ObservableMetricsSystem metricsSystem,
       final Set<Capability> supportedCapabilities,
       final Collection<RpcApi> jsonRpcApis,
       final FilterManager filterManager,

@@ -59,6 +59,17 @@ public class PantheonEventsImpl implements PantheonEvents {
     }
   }
 
+  @Override
+  public Object addNewTransactionDroppedListener(
+      final TransactionDroppedListener newTransactionDroppedListener) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void removeTransactionDroppedListener(final Object listenerIdentifier) {
+    throw new UnsupportedOperationException();
+  }
+
   private void dispatchTransactionAddedMessage(
       final Transaction transaction, final NewTransactionAddedListener listener) {
     listener.newTransactionAdded(transaction);

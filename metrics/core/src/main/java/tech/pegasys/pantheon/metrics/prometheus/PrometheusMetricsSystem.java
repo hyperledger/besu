@@ -15,13 +15,13 @@ package tech.pegasys.pantheon.metrics.prometheus;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
 
-import tech.pegasys.pantheon.metrics.LabelledMetric;
-import tech.pegasys.pantheon.metrics.MetricCategory;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.metrics.ObservableMetricsSystem;
 import tech.pegasys.pantheon.metrics.Observation;
-import tech.pegasys.pantheon.metrics.OperationTimer;
 import tech.pegasys.pantheon.metrics.StandardMetricCategory;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
+import tech.pegasys.pantheon.plugin.services.metrics.LabelledMetric;
+import tech.pegasys.pantheon.plugin.services.metrics.MetricCategory;
+import tech.pegasys.pantheon.plugin.services.metrics.OperationTimer;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -48,14 +48,14 @@ import io.prometheus.client.hotspot.MemoryPoolsExports;
 import io.prometheus.client.hotspot.StandardExports;
 import io.prometheus.client.hotspot.ThreadExports;
 
-public class PrometheusMetricsSystem implements MetricsSystem {
+public class PrometheusMetricsSystem implements ObservableMetricsSystem {
 
   private final Map<MetricCategory, Collection<Collector>> collectors = new ConcurrentHashMap<>();
   private final CollectorRegistry registry = new CollectorRegistry(true);
-  private final Map<String, LabelledMetric<tech.pegasys.pantheon.metrics.Counter>> cachedCounters =
+  private final Map<String, LabelledMetric<tech.pegasys.pantheon.plugin.services.metrics.Counter>>
+      cachedCounters = new ConcurrentHashMap<>();
+  private final Map<String, LabelledMetric<OperationTimer>> cachedTimers =
       new ConcurrentHashMap<>();
-  private final Map<String, LabelledMetric<tech.pegasys.pantheon.metrics.OperationTimer>>
-      cachedTimers = new ConcurrentHashMap<>();
 
   private final Set<MetricCategory> enabledCategories;
   private final boolean timersEnabled;
@@ -66,7 +66,7 @@ public class PrometheusMetricsSystem implements MetricsSystem {
     this.timersEnabled = timersEnabled;
   }
 
-  public static MetricsSystem init(final MetricsConfiguration metricsConfiguration) {
+  public static ObservableMetricsSystem init(final MetricsConfiguration metricsConfiguration) {
     if (!metricsConfiguration.isEnabled() && !metricsConfiguration.isPushEnabled()) {
       return new NoOpMetricsSystem();
     }
@@ -92,11 +92,12 @@ public class PrometheusMetricsSystem implements MetricsSystem {
   }
 
   @Override
-  public LabelledMetric<tech.pegasys.pantheon.metrics.Counter> createLabelledCounter(
-      final MetricCategory category,
-      final String name,
-      final String help,
-      final String... labelNames) {
+  public LabelledMetric<tech.pegasys.pantheon.plugin.services.metrics.Counter>
+      createLabelledCounter(
+          final MetricCategory category,
+          final String name,
+          final String help,
+          final String... labelNames) {
     final String metricName = convertToPrometheusName(category, name);
     return cachedCounters.computeIfAbsent(
         metricName,

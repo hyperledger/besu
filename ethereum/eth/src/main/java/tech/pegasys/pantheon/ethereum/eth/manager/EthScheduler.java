@@ -19,7 +19,7 @@ import static tech.pegasys.pantheon.ethereum.eth.manager.MonitoredExecutors.newS
 import static tech.pegasys.pantheon.util.FutureUtils.propagateResult;
 
 import tech.pegasys.pantheon.ethereum.eth.manager.task.EthTask;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.plugin.services.MetricsSystem;
 import tech.pegasys.pantheon.services.pipeline.Pipeline;
 import tech.pegasys.pantheon.util.ExceptionUtils;
 

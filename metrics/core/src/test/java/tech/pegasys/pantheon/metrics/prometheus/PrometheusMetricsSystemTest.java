@@ -23,14 +23,14 @@ import static tech.pegasys.pantheon.metrics.PantheonMetricCategory.PEERS;
 import static tech.pegasys.pantheon.metrics.PantheonMetricCategory.RPC;
 import static tech.pegasys.pantheon.metrics.StandardMetricCategory.JVM;
 
-import tech.pegasys.pantheon.metrics.Counter;
-import tech.pegasys.pantheon.metrics.LabelledMetric;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.metrics.ObservableMetricsSystem;
 import tech.pegasys.pantheon.metrics.Observation;
-import tech.pegasys.pantheon.metrics.OperationTimer;
-import tech.pegasys.pantheon.metrics.OperationTimer.TimingContext;
 import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
+import tech.pegasys.pantheon.plugin.services.MetricsSystem;
+import tech.pegasys.pantheon.plugin.services.metrics.Counter;
+import tech.pegasys.pantheon.plugin.services.metrics.LabelledMetric;
+import tech.pegasys.pantheon.plugin.services.metrics.OperationTimer;
 
 import java.util.Comparator;
 
@@ -44,7 +44,7 @@ public class PrometheusMetricsSystemTest {
           .thenComparing(Observation::getMetricName)
           .thenComparing((o1, o2) -> o1.getLabels().equals(o2.getLabels()) ? 0 : 1);
 
-  private final MetricsSystem metricsSystem =
+  private final ObservableMetricsSystem metricsSystem =
       new PrometheusMetricsSystem(DEFAULT_METRIC_CATEGORIES, true);
 
   @Test
@@ -109,7 +109,7 @@ public class PrometheusMetricsSystemTest {
   public void shouldCreateObservationsFromTimer() {
     final OperationTimer timer = metricsSystem.createTimer(RPC, "request", "Some help");
 
-    final TimingContext context = timer.startTimer();
+    final OperationTimer.TimingContext context = timer.startTimer();
     context.stopTimer();
 
     assertThat(metricsSystem.streamObservations())
@@ -140,7 +140,7 @@ public class PrometheusMetricsSystemTest {
         metricsSystem.createLabelledTimer(RPC, "request", "Some help", "methodName");
 
     //noinspection EmptyTryBlock
-    try (final TimingContext ignored = timer.labels("method").startTimer()) {}
+    try (final OperationTimer.TimingContext ignored = timer.labels("method").startTimer()) {}
 
     assertThat(metricsSystem.streamObservations())
         .usingElementComparator(IGNORE_VALUES) // We don't know how long it will actually take.
@@ -157,13 +157,13 @@ public class PrometheusMetricsSystemTest {
 
   @Test
   public void shouldNotCreateObservationsFromTimerWhenTimersDisabled() {
-    final MetricsSystem metricsSystem =
+    final ObservableMetricsSystem metricsSystem =
         new PrometheusMetricsSystem(DEFAULT_METRIC_CATEGORIES, false);
     final LabelledMetric<OperationTimer> timer =
         metricsSystem.createLabelledTimer(RPC, "request", "Some help", "methodName");
 
     //noinspection EmptyTryBlock
-    try (final TimingContext ignored = timer.labels("method").startTimer()) {}
+    try (final OperationTimer.TimingContext ignored = timer.labels("method").startTimer()) {}
 
     assertThat(metricsSystem.streamObservations()).isEmpty();
   }
@@ -193,7 +193,8 @@ public class PrometheusMetricsSystemTest {
             .metricCategories(ImmutableSet.of(PantheonMetricCategory.RPC))
             .enabled(true)
             .build();
-    final MetricsSystem localMetricSystem = PrometheusMetricsSystem.init(metricsConfiguration);
+    final ObservableMetricsSystem localMetricSystem =
+        PrometheusMetricsSystem.init(metricsConfiguration);
 
     // do a category we are not watching
     final LabelledMetric<Counter> counterN =

@@ -21,8 +21,8 @@ import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.SubProtocol;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.messages.WireMessageCodes;
-import tech.pegasys.pantheon.metrics.Counter;
-import tech.pegasys.pantheon.metrics.LabelledMetric;
+import tech.pegasys.pantheon.plugin.services.metrics.Counter;
+import tech.pegasys.pantheon.plugin.services.metrics.LabelledMetric;
 
 import java.net.InetSocketAddress;
 import java.util.HashMap;

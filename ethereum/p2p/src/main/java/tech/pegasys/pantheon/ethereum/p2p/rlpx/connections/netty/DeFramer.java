@@ -33,10 +33,10 @@ import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.D
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.messages.HelloMessage;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.messages.WireMessageCodes;
 import tech.pegasys.pantheon.ethereum.rlp.RLPException;
-import tech.pegasys.pantheon.metrics.Counter;
-import tech.pegasys.pantheon.metrics.LabelledMetric;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
+import tech.pegasys.pantheon.plugin.services.MetricsSystem;
+import tech.pegasys.pantheon.plugin.services.metrics.Counter;
+import tech.pegasys.pantheon.plugin.services.metrics.LabelledMetric;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;

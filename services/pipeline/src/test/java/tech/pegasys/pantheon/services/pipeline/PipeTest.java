@@ -17,7 +17,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import tech.pegasys.pantheon.metrics.Counter;
+import tech.pegasys.pantheon.plugin.services.metrics.Counter;
 
 import java.util.ArrayList;
 import java.util.List;

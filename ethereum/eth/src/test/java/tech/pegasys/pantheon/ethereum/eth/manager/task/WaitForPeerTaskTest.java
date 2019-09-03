@@ -17,8 +17,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManager;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManagerTestUtil;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
+import tech.pegasys.pantheon.plugin.services.MetricsSystem;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;

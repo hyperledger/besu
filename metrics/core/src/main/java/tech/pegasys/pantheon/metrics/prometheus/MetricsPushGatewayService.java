@@ -14,7 +14,7 @@ package tech.pegasys.pantheon.metrics.prometheus;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.plugin.services.MetricsSystem;
 
 import java.io.IOException;
 import java.util.Optional;

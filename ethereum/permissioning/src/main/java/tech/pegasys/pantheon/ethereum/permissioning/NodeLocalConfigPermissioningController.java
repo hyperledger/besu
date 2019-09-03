@@ -15,9 +15,9 @@ package tech.pegasys.pantheon.ethereum.permissioning;
 import tech.pegasys.pantheon.ethereum.p2p.peers.EnodeURL;
 import tech.pegasys.pantheon.ethereum.permissioning.node.NodePermissioningProvider;
 import tech.pegasys.pantheon.ethereum.permissioning.node.NodeWhitelistUpdatedEvent;
-import tech.pegasys.pantheon.metrics.Counter;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
+import tech.pegasys.pantheon.plugin.services.MetricsSystem;
+import tech.pegasys.pantheon.plugin.services.metrics.Counter;
 import tech.pegasys.pantheon.util.Subscribers;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 

@@ -12,6 +12,8 @@
  */
 package tech.pegasys.pantheon.metrics;
 
+import tech.pegasys.pantheon.plugin.services.metrics.MetricCategory;
+
 import java.util.EnumSet;
 import java.util.Optional;
 import java.util.Set;

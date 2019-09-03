@@ -20,7 +20,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem.NO_OP_COUNTER;
 
-import tech.pegasys.pantheon.metrics.Counter;
+import tech.pegasys.pantheon.plugin.services.metrics.Counter;
 
 import java.util.ArrayList;
 import java.util.List;

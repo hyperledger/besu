@@ -13,9 +13,9 @@
 package tech.pegasys.pantheon.ethereum.eth.manager;
 
 import tech.pegasys.pantheon.ethereum.eth.manager.bounded.BoundedQueue;
-import tech.pegasys.pantheon.metrics.Counter;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
+import tech.pegasys.pantheon.plugin.services.MetricsSystem;
+import tech.pegasys.pantheon.plugin.services.metrics.Counter;
 
 import java.util.Locale;
 import java.util.concurrent.BlockingQueue;

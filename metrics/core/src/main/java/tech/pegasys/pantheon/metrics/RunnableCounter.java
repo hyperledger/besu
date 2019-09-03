@@ -12,6 +12,8 @@
  */
 package tech.pegasys.pantheon.metrics;
 
+import tech.pegasys.pantheon.plugin.services.metrics.Counter;
+
 import java.util.concurrent.atomic.AtomicLong;
 
 /** Counter that triggers a specific task each time a step is hit. */

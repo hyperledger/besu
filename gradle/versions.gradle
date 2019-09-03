@@ -96,6 +96,6 @@ dependencyManagement {
     dependency "tech.pegasys.ethsigner.internal:file-based:0.2.0"
     dependency "tech.pegasys.ethsigner.internal:signing-api:0.2.0"
 
-    dependency "tech.pegasys.pantheon:plugin-api:1.2.2"
+      dependency "tech.pegasys.pantheon:plugin-api:1.2.3"
   }
 }

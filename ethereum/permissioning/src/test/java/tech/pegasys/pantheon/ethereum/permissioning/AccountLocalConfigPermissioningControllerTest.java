@@ -25,9 +25,9 @@ import static org.mockito.Mockito.when;
 
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
-import tech.pegasys.pantheon.metrics.Counter;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
+import tech.pegasys.pantheon.plugin.services.MetricsSystem;
+import tech.pegasys.pantheon.plugin.services.metrics.Counter;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;

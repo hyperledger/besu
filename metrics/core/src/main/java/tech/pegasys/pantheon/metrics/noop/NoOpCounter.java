@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.metrics.noop;
 
-import tech.pegasys.pantheon.metrics.Counter;
+import tech.pegasys.pantheon.plugin.services.metrics.Counter;
 
 class NoOpCounter implements Counter {
 

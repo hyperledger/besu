@@ -13,10 +13,10 @@
 package tech.pegasys.pantheon.ethereum.p2p.discovery.internal;
 
 import tech.pegasys.pantheon.ethereum.p2p.peers.Peer;
-import tech.pegasys.pantheon.metrics.Counter;
-import tech.pegasys.pantheon.metrics.LabelledMetric;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
+import tech.pegasys.pantheon.plugin.services.MetricsSystem;
+import tech.pegasys.pantheon.plugin.services.metrics.Counter;
+import tech.pegasys.pantheon.plugin.services.metrics.LabelledMetric;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

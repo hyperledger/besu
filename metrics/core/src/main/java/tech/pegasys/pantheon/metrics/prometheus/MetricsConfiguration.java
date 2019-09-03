@@ -14,7 +14,7 @@ package tech.pegasys.pantheon.metrics.prometheus;
 
 import static tech.pegasys.pantheon.metrics.PantheonMetricCategory.DEFAULT_METRIC_CATEGORIES;
 
-import tech.pegasys.pantheon.metrics.MetricCategory;
+import tech.pegasys.pantheon.plugin.services.metrics.MetricCategory;
 
 import java.util.Arrays;
 import java.util.Collection;

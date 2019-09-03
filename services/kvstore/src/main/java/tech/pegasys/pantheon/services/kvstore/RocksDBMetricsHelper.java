@@ -12,12 +12,12 @@
  */
 package tech.pegasys.pantheon.services.kvstore;
 
-import tech.pegasys.pantheon.metrics.Counter;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
-import tech.pegasys.pantheon.metrics.OperationTimer;
 import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
 import tech.pegasys.pantheon.metrics.prometheus.PrometheusMetricsSystem;
 import tech.pegasys.pantheon.metrics.rocksdb.RocksDBStats;
+import tech.pegasys.pantheon.plugin.services.MetricsSystem;
+import tech.pegasys.pantheon.plugin.services.metrics.Counter;
+import tech.pegasys.pantheon.plugin.services.metrics.OperationTimer;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

@@ -17,7 +17,7 @@ import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.sync.tasks.CompleteBlocksTask;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.plugin.services.MetricsSystem;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;

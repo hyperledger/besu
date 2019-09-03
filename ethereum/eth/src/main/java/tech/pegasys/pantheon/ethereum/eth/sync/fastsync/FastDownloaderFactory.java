@@ -23,8 +23,8 @@ import tech.pegasys.pantheon.ethereum.eth.sync.worldstate.WorldStateDownloader;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
+import tech.pegasys.pantheon.plugin.services.MetricsSystem;
 import tech.pegasys.pantheon.services.tasks.CachingTaskCollection;
 import tech.pegasys.pantheon.services.tasks.FlatFileTaskCollection;
 

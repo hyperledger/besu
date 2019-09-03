@@ -19,7 +19,7 @@ import tech.pegasys.pantheon.ethereum.eth.EthProtocolConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManager;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.Capability;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.plugin.services.MetricsSystem;
 
 import java.math.BigInteger;
 import java.time.Clock;

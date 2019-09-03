@@ -12,6 +12,8 @@
  */
 package tech.pegasys.pantheon.metrics;
 
+import tech.pegasys.pantheon.plugin.services.metrics.MetricCategory;
+
 import java.util.List;
 import java.util.Objects;
 

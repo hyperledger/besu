@@ -19,7 +19,7 @@ import tech.pegasys.pantheon.ethereum.p2p.rlpx.connections.PeerConnection;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.connections.PeerConnectionEventDispatcher;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.handshake.Handshaker;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.SubProtocol;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.plugin.services.MetricsSystem;
 
 import java.util.List;
 import java.util.Optional;

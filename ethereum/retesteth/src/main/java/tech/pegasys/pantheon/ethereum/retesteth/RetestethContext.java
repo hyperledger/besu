@@ -49,8 +49,8 @@ import tech.pegasys.pantheon.ethereum.storage.keyvalue.KeyValueStoragePrefixedKe
 import tech.pegasys.pantheon.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import tech.pegasys.pantheon.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
+import tech.pegasys.pantheon.plugin.services.MetricsSystem;
 import tech.pegasys.pantheon.services.kvstore.InMemoryKeyValueStorage;
 
 import java.util.Optional;

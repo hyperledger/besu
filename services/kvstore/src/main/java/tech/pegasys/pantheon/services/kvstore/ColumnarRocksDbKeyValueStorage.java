@@ -14,8 +14,8 @@ package tech.pegasys.pantheon.services.kvstore;
 
 import static java.util.Objects.requireNonNullElse;
 
-import tech.pegasys.pantheon.metrics.MetricsSystem;
-import tech.pegasys.pantheon.metrics.OperationTimer;
+import tech.pegasys.pantheon.plugin.services.MetricsSystem;
+import tech.pegasys.pantheon.plugin.services.metrics.OperationTimer;
 import tech.pegasys.pantheon.services.util.RocksDbUtil;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 

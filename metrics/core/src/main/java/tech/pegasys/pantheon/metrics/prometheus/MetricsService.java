@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.metrics.prometheus;
 
-import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.plugin.services.MetricsSystem;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;

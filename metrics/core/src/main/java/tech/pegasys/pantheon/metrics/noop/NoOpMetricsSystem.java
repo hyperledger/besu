@@ -12,23 +12,22 @@
  */
 package tech.pegasys.pantheon.metrics.noop;
 
-import tech.pegasys.pantheon.metrics.Counter;
-import tech.pegasys.pantheon.metrics.LabelledMetric;
-import tech.pegasys.pantheon.metrics.MetricCategory;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.metrics.ObservableMetricsSystem;
 import tech.pegasys.pantheon.metrics.Observation;
-import tech.pegasys.pantheon.metrics.OperationTimer;
-import tech.pegasys.pantheon.metrics.OperationTimer.TimingContext;
+import tech.pegasys.pantheon.plugin.services.metrics.Counter;
+import tech.pegasys.pantheon.plugin.services.metrics.LabelledMetric;
+import tech.pegasys.pantheon.plugin.services.metrics.MetricCategory;
+import tech.pegasys.pantheon.plugin.services.metrics.OperationTimer;
 
 import java.util.function.DoubleSupplier;
 import java.util.stream.Stream;
 
 import com.google.common.base.Preconditions;
 
-public class NoOpMetricsSystem implements MetricsSystem {
+public class NoOpMetricsSystem implements ObservableMetricsSystem {
 
   public static final Counter NO_OP_COUNTER = new NoOpCounter();
-  private static final TimingContext NO_OP_TIMING_CONTEXT = () -> 0;
+  private static final OperationTimer.TimingContext NO_OP_TIMING_CONTEXT = () -> 0;
   public static final OperationTimer NO_OP_OPERATION_TIMER = () -> NO_OP_TIMING_CONTEXT;
 
   public static final LabelledMetric<Counter> NO_OP_LABELLED_1_COUNTER =

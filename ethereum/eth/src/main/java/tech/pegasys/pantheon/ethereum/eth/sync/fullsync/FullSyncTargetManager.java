@@ -24,7 +24,7 @@ import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncTarget;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.plugin.services.MetricsSystem;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;

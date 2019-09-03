@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.cli.converter;
 
-import tech.pegasys.pantheon.metrics.MetricCategory;
+import tech.pegasys.pantheon.plugin.services.metrics.MetricCategory;
 
 import java.util.EnumSet;
 import java.util.HashMap;

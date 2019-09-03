@@ -24,7 +24,7 @@ import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
 import tech.pegasys.pantheon.ethereum.eth.manager.task.AbstractPeerTask.PeerTaskResult;
 import tech.pegasys.pantheon.ethereum.eth.manager.task.AbstractRetryingPeerTask;
 import tech.pegasys.pantheon.ethereum.eth.manager.task.GetReceiptsFromPeerTask;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.plugin.services.MetricsSystem;
 
 import java.util.HashMap;
 import java.util.List;

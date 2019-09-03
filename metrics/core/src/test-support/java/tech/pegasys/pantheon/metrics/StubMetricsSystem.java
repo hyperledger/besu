@@ -15,6 +15,10 @@ package tech.pegasys.pantheon.metrics;
 import static java.util.Arrays.asList;
 
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
+import tech.pegasys.pantheon.plugin.services.metrics.Counter;
+import tech.pegasys.pantheon.plugin.services.metrics.LabelledMetric;
+import tech.pegasys.pantheon.plugin.services.metrics.MetricCategory;
+import tech.pegasys.pantheon.plugin.services.metrics.OperationTimer;
 
 import java.util.HashMap;
 import java.util.List;
@@ -22,7 +26,7 @@ import java.util.Map;
 import java.util.function.DoubleSupplier;
 import java.util.stream.Stream;
 
-public class StubMetricsSystem implements MetricsSystem {
+public class StubMetricsSystem implements ObservableMetricsSystem {
 
   private final Map<String, StubLabelledCounter> counters = new HashMap<>();
   private final Map<String, DoubleSupplier> gauges = new HashMap<>();

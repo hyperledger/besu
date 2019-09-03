@@ -21,7 +21,7 @@ import static tech.pegasys.pantheon.metrics.PantheonMetricCategory.RPC;
 
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import tech.pegasys.pantheon.metrics.MetricsSystem;
+import tech.pegasys.pantheon.metrics.ObservableMetricsSystem;
 import tech.pegasys.pantheon.metrics.Observation;
 
 import java.util.Collections;
@@ -34,7 +34,7 @@ public class DebugMetricsTest {
 
   private static final JsonRpcRequest REQUEST =
       new JsonRpcRequest("2.0", "debug_metrics", new Object[0]);
-  private final MetricsSystem metricsSystem = mock(MetricsSystem.class);
+  private final ObservableMetricsSystem metricsSystem = mock(ObservableMetricsSystem.class);
 
   private final DebugMetrics method = new DebugMetrics(metricsSystem);
 
