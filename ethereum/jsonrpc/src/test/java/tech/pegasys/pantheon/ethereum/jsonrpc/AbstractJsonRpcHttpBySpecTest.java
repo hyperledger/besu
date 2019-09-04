@@ -102,6 +102,13 @@ public abstract class AbstractJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpS
     final String json = Resources.toString(specFile, Charsets.UTF_8);
     final ObjectNode specNode = (ObjectNode) objectMapper.readTree(json);
 
+    // TODO remove when https://github.com/PegaSysEng/pantheon/pull/1886 is merged
+    // temporary ignore flaky tests
+    if (specNode.has("ignored") && specNode.get("ignored").asBoolean()) {
+      System.err.println("Ignored test.");
+      return;
+    }
+
     final String rawRequestBody = specNode.get("request").toString();
     final RequestBody requestBody = RequestBody.create(JSON, rawRequestBody);
     final Request request = new Request.Builder().post(requestBody).url(baseUrl).build();

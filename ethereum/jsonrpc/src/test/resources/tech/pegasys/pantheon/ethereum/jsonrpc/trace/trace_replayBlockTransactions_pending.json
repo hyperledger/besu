@@ -1,17 +1,24 @@
 {
+  "ignored": true,
   "request": {
     "id": 415,
     "jsonrpc": "2.0",
     "method": "trace_replayBlockTransactions",
     "params": [
       "pending",
-      ["trace","vmTrace","stateDiff"]
+      [
+        "trace",
+        "vmTrace",
+        "stateDiff"
+      ]
     ]
   },
   "response": {
     "jsonrpc": "2.0",
     "id": 415,
-    "result": [{}]
+    "result": [
+      {}
+    ]
   },
   "statusCode": 200
 }
