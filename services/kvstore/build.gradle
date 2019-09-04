@@ -26,9 +26,8 @@ jar {
 }
 
 dependencies {
+  api project(':plugins')
   api project(':util')
-
-  api 'tech.pegasys.pantheon:plugin-api'
 
   implementation project(':metrics:core')
   implementation project(':metrics:rocksdb')

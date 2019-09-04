@@ -26,10 +26,10 @@ jar {
 }
 
 dependencies {
+  implementation project(':plugins')
   implementation 'com.google.guava:guava'
   implementation 'io.vertx:vertx-core'
   implementation 'org.apache.logging.log4j:log4j-api'
-  implementation 'tech.pegasys.pantheon:plugin-api'
 
   runtime 'org.apache.logging.log4j:log4j-core'
 

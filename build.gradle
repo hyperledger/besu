@@ -272,6 +272,9 @@ allprojects {
 
 task deploy() {}
 
+tasks.register('checkPluginAPIChanges', DefaultTask) { }
+checkPluginAPIChanges.dependsOn(':plugins:checkAPIChanges')
+check.dependsOn('checkPluginAPIChanges')
 
 subprojects {
 

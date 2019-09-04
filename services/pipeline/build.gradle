@@ -28,10 +28,10 @@ jar {
 dependencies {
   api project(':util')
   implementation project(':metrics:core')
+  implementation project(':plugins')
 
   implementation 'org.apache.logging.log4j:log4j-api'
   implementation 'com.google.guava:guava'
-  implementation 'tech.pegasys.pantheon:plugin-api'
 
   runtime 'org.apache.logging.log4j:log4j-core'
 

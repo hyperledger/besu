@@ -27,12 +27,11 @@ jar {
 
 dependencies {
   implementation project(':metrics:core')
+  implementation project(':plugins')
   implementation project(':services:util')
 
   implementation 'com.google.guava:guava'
   implementation 'io.prometheus:simpleclient'
   implementation 'org.apache.logging.log4j:log4j-api'
   implementation 'org.rocksdb:rocksdbjni'
-
-  implementation 'tech.pegasys.pantheon:plugin-api'
 }

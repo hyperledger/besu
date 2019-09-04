@@ -26,7 +26,7 @@ jar {
 }
 
 dependencies {
-  api 'tech.pegasys.pantheon:plugin-api'
+  api project(':plugins')
 
   implementation project(':ethereum:core')
   implementation project(':ethereum:jsonrpc')

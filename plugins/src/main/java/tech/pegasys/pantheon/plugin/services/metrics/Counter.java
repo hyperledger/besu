@@ -10,30 +10,21 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
+package tech.pegasys.pantheon.plugin.services.metrics;
 
-apply plugin: 'java-library'
+/**
+ * A counter is a metric to track counts of events or running totals etc. The value of the counter
+ * can only increase.
+ */
+public interface Counter {
 
-jar {
-  baseName 'pantheon-mock-p2p'
-  manifest {
-    attributes(
-      'Specification-Title': baseName,
-      'Specification-Version': project.version,
-      'Implementation-Title': baseName,
-      'Implementation-Version': calculateVersion()
-      )
-  }
-}
+  /** Increment the counter by 1. */
+  void inc();
 
-dependencies {
-  api project(':plugins')
-
-  implementation project(':ethereum:p2p')
-  implementation project(':ethereum:permissioning')
-  implementation project(':util')
-
-  implementation 'io.vertx:vertx-core'
-
-  testImplementation "junit:junit"
-  testImplementation 'org.assertj:assertj-core'
+  /**
+   * Increment the counter by a specified amount.
+   *
+   * @param amount The amount to increment the counter by. Must be greater than or equal to 0.
+   */
+  void inc(long amount);
 }
