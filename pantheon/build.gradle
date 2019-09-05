@@ -44,7 +44,7 @@ dependencies {
   implementation project(':ethereum:rlp')
   implementation project(':metrics:core')
   implementation project(':nat')
-  implementation project(':plugins')
+  implementation project(':plugin-api')
   implementation project(':services:kvstore')
 
   implementation 'com.fasterxml.jackson.core:jackson-databind'

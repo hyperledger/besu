@@ -27,7 +27,7 @@ jar {
 
 dependencies {
   implementation project(':metrics:core')
-  implementation project(':plugins')
+  implementation project(':plugin-api')
   implementation project(':services:util')
 
   implementation 'com.google.guava:guava'

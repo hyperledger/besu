@@ -26,7 +26,7 @@ jar {
 }
 
 dependencies {
-  implementation project(':plugins')
+  implementation project(':plugin-api')
   implementation 'com.google.guava:guava'
   implementation 'io.vertx:vertx-core'
   implementation 'org.apache.logging.log4j:log4j-api'

@@ -26,7 +26,7 @@ jar {
 }
 
 dependencies {
-  api project(':plugins')
+  api project(':plugin-api')
 
   implementation project(':ethereum:p2p')
   implementation project(':ethereum:permissioning')
