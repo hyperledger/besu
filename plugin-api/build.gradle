@@ -11,7 +11,6 @@
  * specific language governing permissions and limitations under the License.
  */
 
-import net.ltgt.gradle.errorprone.CheckSeverity
 import java.security.MessageDigest
 
 apply plugin: 'java-library'
@@ -25,10 +24,6 @@ jar {
       'Implementation-Version': calculateVersion()
       )
   }
-}
-
-
-dependencies {
 }
 
 configurations { testArtifacts }
@@ -45,7 +40,7 @@ class FileStateChecker extends DefaultTask {
     this.files.sort().each {
       digestor.update(it.readBytes())
     }
-    def currentHash = digestor.digest()encodeBase64().toString()
+    def currentHash = digestor.digest().encodeBase64().toString()
     if (this.knownHash != currentHash) {
       throw new GradleException("""For the Plugin APIs the checksum of the project did not match what was expected.
 
