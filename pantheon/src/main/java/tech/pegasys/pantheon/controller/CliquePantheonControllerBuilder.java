@@ -59,7 +59,7 @@ public class CliquePantheonControllerBuilder extends PantheonControllerBuilder<C
   protected void prepForBuild() {
     localAddress = Util.publicKeyToAddress(nodeKeys.getPublicKey());
     final CliqueConfigOptions cliqueConfig =
-        genesisConfig.getConfigOptions().getCliqueConfigOptions();
+        genesisConfig.getConfigOptions(genesisConfigOverrides).getCliqueConfigOptions();
     final long blocksPerEpoch = cliqueConfig.getEpochLength();
     secondsBetweenBlocks = cliqueConfig.getBlockPeriodSeconds();
 
@@ -121,7 +121,10 @@ public class CliquePantheonControllerBuilder extends PantheonControllerBuilder<C
   @Override
   protected ProtocolSchedule<CliqueContext> createProtocolSchedule() {
     return CliqueProtocolSchedule.create(
-        genesisConfig.getConfigOptions(), nodeKeys, privacyParameters, isRevertReasonEnabled);
+        genesisConfig.getConfigOptions(genesisConfigOverrides),
+        nodeKeys,
+        privacyParameters,
+        isRevertReasonEnabled);
   }
 
   @Override

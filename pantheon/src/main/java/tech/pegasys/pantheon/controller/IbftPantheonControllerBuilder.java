@@ -81,7 +81,7 @@ public class IbftPantheonControllerBuilder extends PantheonControllerBuilder<Ibf
 
   @Override
   protected void prepForBuild() {
-    ibftConfig = genesisConfig.getConfigOptions().getIbft2ConfigOptions();
+    ibftConfig = genesisConfig.getConfigOptions(genesisConfigOverrides).getIbft2ConfigOptions();
     ibftEventQueue = new IbftEventQueue(ibftConfig.getMessageQueueLimit());
   }
 
@@ -211,7 +211,9 @@ public class IbftPantheonControllerBuilder extends PantheonControllerBuilder<Ibf
   @Override
   protected ProtocolSchedule<IbftContext> createProtocolSchedule() {
     return IbftProtocolSchedule.create(
-        genesisConfig.getConfigOptions(), privacyParameters, isRevertReasonEnabled);
+        genesisConfig.getConfigOptions(genesisConfigOverrides),
+        privacyParameters,
+        isRevertReasonEnabled);
   }
 
   @Override
@@ -226,7 +228,8 @@ public class IbftPantheonControllerBuilder extends PantheonControllerBuilder<Ibf
   @Override
   protected IbftContext createConsensusContext(
       final Blockchain blockchain, final WorldStateArchive worldStateArchive) {
-    final IbftConfigOptions ibftConfig = genesisConfig.getConfigOptions().getIbft2ConfigOptions();
+    final IbftConfigOptions ibftConfig =
+        genesisConfig.getConfigOptions(genesisConfigOverrides).getIbft2ConfigOptions();
     final EpochManager epochManager = new EpochManager(ibftConfig.getEpochLength());
     return new IbftContext(
         new VoteTallyCache(

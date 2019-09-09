@@ -15,10 +15,12 @@ package tech.pegasys.pantheon.config;
 import static java.util.Objects.isNull;
 
 import java.math.BigInteger;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.OptionalLong;
+import java.util.TreeMap;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
@@ -30,13 +32,22 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   private static final String IBFT2_CONFIG_KEY = "ibft2";
   private static final String CLIQUE_CONFIG_KEY = "clique";
   private final ObjectNode configRoot;
+  private final Map<String, String> configOverrides = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
   public static JsonGenesisConfigOptions fromJsonObject(final ObjectNode configRoot) {
     return new JsonGenesisConfigOptions(configRoot);
   }
 
-  JsonGenesisConfigOptions(final ObjectNode maybeConfig) {
+  private JsonGenesisConfigOptions(final ObjectNode maybeConfig) {
+    this(maybeConfig, Collections.emptyMap());
+  }
+
+  JsonGenesisConfigOptions(
+      final ObjectNode maybeConfig, final Map<String, String> configOverrides) {
     this.configRoot = isNull(maybeConfig) ? JsonUtil.createEmptyObjectNode() : maybeConfig;
+    if (configOverrides != null) {
+      this.configOverrides.putAll(configOverrides);
+    }
   }
 
   @Override
@@ -148,17 +159,17 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
 
   @Override
   public Optional<BigInteger> getChainId() {
-    return JsonUtil.getValueAsString(configRoot, "chainid").map(BigInteger::new);
+    return getOptionalBigInteger("chainid");
   }
 
   @Override
   public OptionalInt getContractSizeLimit() {
-    return JsonUtil.getInt(configRoot, "contractsizelimit");
+    return getOptionalInt("contractsizelimit");
   }
 
   @Override
   public OptionalInt getEvmStackSize() {
-    return JsonUtil.getInt(configRoot, "evmstacksize");
+    return getOptionalInt("evmstacksize");
   }
 
   @Override
@@ -176,9 +187,8 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
         .ifPresent(
             l -> {
               builder.put("eip150Block", l);
-              if (configRoot.has("eip150hash")) {
-                builder.put("eip150Hash", configRoot.get("eip150hash").asText());
-              }
+              getOptionalString("eip150hash")
+                  .ifPresent(eip150hash -> builder.put("eip150Hash", eip150hash));
             });
     getSpuriousDragonBlockNumber()
         .ifPresent(
@@ -207,7 +217,45 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     return builder.build();
   }
 
+  private Optional<String> getOptionalString(final String key) {
+    if (configOverrides.containsKey(key)) {
+      final String value = configOverrides.get(key);
+      return value == null || value.isEmpty() ? Optional.empty() : Optional.of(value);
+    } else {
+      return JsonUtil.getString(configRoot, key);
+    }
+  }
+
   private OptionalLong getOptionalLong(final String key) {
-    return JsonUtil.getLong(configRoot, key);
+    if (configOverrides.containsKey(key)) {
+      final String value = configOverrides.get(key);
+      return value == null || value.isEmpty()
+          ? OptionalLong.empty()
+          : OptionalLong.of(Long.valueOf(configOverrides.get(key), 10));
+    } else {
+      return JsonUtil.getLong(configRoot, key);
+    }
+  }
+
+  private OptionalInt getOptionalInt(final String key) {
+    if (configOverrides.containsKey(key)) {
+      final String value = configOverrides.get(key);
+      return value == null || value.isEmpty()
+          ? OptionalInt.empty()
+          : OptionalInt.of(Integer.valueOf(configOverrides.get(key), 10));
+    } else {
+      return JsonUtil.getInt(configRoot, key);
+    }
+  }
+
+  private Optional<BigInteger> getOptionalBigInteger(final String key) {
+    if (configOverrides.containsKey(key)) {
+      final String value = configOverrides.get(key);
+      return value == null || value.isEmpty()
+          ? Optional.empty()
+          : Optional.of(new BigInteger(value));
+    } else {
+      return JsonUtil.getValueAsString(configRoot, key).map(s -> new BigInteger(s, 10));
+    }
   }
 }

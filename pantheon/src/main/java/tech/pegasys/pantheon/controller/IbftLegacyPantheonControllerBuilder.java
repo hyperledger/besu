@@ -64,14 +64,16 @@ public class IbftLegacyPantheonControllerBuilder extends PantheonControllerBuild
   @Override
   protected ProtocolSchedule<IbftContext> createProtocolSchedule() {
     return IbftProtocolSchedule.create(
-        genesisConfig.getConfigOptions(), privacyParameters, isRevertReasonEnabled);
+        genesisConfig.getConfigOptions(genesisConfigOverrides),
+        privacyParameters,
+        isRevertReasonEnabled);
   }
 
   @Override
   protected IbftContext createConsensusContext(
       final Blockchain blockchain, final WorldStateArchive worldStateArchive) {
     final IbftConfigOptions ibftConfig =
-        genesisConfig.getConfigOptions().getIbftLegacyConfigOptions();
+        genesisConfig.getConfigOptions(genesisConfigOverrides).getIbftLegacyConfigOptions();
     final EpochManager epochManager = new EpochManager(ibftConfig.getEpochLength());
     final VoteTallyCache voteTallyCache =
         new VoteTallyCache(

@@ -29,6 +29,7 @@ import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.p2p.config.SubProtocolConfiguration;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 
 public class PantheonController<C> implements java.io.Closeable {
@@ -129,12 +130,25 @@ public class PantheonController<C> implements java.io.Closeable {
 
     public PantheonControllerBuilder<?> fromEthNetworkConfig(
         final EthNetworkConfig ethNetworkConfig) {
-      return fromGenesisConfig(GenesisConfigFile.fromConfig(ethNetworkConfig.getGenesisConfig()))
+      return fromEthNetworkConfig(ethNetworkConfig, Collections.emptyMap());
+    }
+
+    public PantheonControllerBuilder<?> fromEthNetworkConfig(
+        final EthNetworkConfig ethNetworkConfig, final Map<String, String> genesisConfigOverrides) {
+      return fromGenesisConfig(
+              GenesisConfigFile.fromConfig(ethNetworkConfig.getGenesisConfig()),
+              genesisConfigOverrides)
           .networkId(ethNetworkConfig.getNetworkId());
     }
 
     public PantheonControllerBuilder<?> fromGenesisConfig(final GenesisConfigFile genesisConfig) {
-      final GenesisConfigOptions configOptions = genesisConfig.getConfigOptions();
+      return fromGenesisConfig(genesisConfig, Collections.emptyMap());
+    }
+
+    public PantheonControllerBuilder<?> fromGenesisConfig(
+        final GenesisConfigFile genesisConfig, final Map<String, String> genesisConfigOverrides) {
+      final GenesisConfigOptions configOptions =
+          genesisConfig.getConfigOptions(genesisConfigOverrides);
       final PantheonControllerBuilder<?> builder;
 
       if (configOptions.isEthHash()) {

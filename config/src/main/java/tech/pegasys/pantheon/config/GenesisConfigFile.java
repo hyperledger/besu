@@ -16,6 +16,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static tech.pegasys.pantheon.config.JsonUtil.normalizeKeys;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -82,9 +84,13 @@ public class GenesisConfigFile {
   }
 
   public GenesisConfigOptions getConfigOptions() {
+    return getConfigOptions(Collections.emptyMap());
+  }
+
+  public GenesisConfigOptions getConfigOptions(final Map<String, String> overrides) {
     ObjectNode config =
         JsonUtil.getObjectNode(configRoot, "config").orElse(JsonUtil.createEmptyObjectNode());
-    return new JsonGenesisConfigOptions(config);
+    return new JsonGenesisConfigOptions(config, overrides);
   }
 
   public Stream<GenesisAllocation> streamAllocations() {

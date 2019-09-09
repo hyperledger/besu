@@ -118,6 +118,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -650,6 +651,16 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   private final Integer pendingTxRetentionPeriod =
       TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS;
 
+  @Option(
+      names = {"--override-genesis-config"},
+      paramLabel = "NAME=VALUE",
+      description = "Overrides configuration values in the genesis file.  Use with care.",
+      arity = "*",
+      hidden = true,
+      split = ",")
+  private final Map<String, String> genesisConfigOverrides =
+      new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+
   private EthNetworkConfig ethNetworkConfig;
   private JsonRpcConfiguration jsonRpcConfiguration;
   private GraphQLConfiguration graphQLConfiguration;
@@ -932,7 +943,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   public PantheonControllerBuilder<?> getControllerBuilder() {
     try {
       return controllerBuilderFactory
-          .fromEthNetworkConfig(updateNetworkConfig(getNetwork()))
+          .fromEthNetworkConfig(updateNetworkConfig(getNetwork()), genesisConfigOverrides)
           .synchronizerConfiguration(buildSyncConfig())
           .ethProtocolConfiguration(ethProtocolOptions.toDomainObject())
           .rocksDbConfiguration(buildRocksDbConfiguration())
@@ -946,7 +957,8 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
           .clock(Clock.systemUTC())
           .isRevertReasonEnabled(isRevertReasonEnabled)
           .isPruningEnabled(isPruningEnabled)
-          .pruningConfiguration(buildPruningConfiguration());
+          .pruningConfiguration(buildPruningConfiguration())
+          .genesisConfigOverrides(genesisConfigOverrides);
     } catch (final IOException e) {
       throw new ExecutionException(this.commandLine, "Invalid path", e);
     }
@@ -1351,7 +1363,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
           final GenesisConfigFile genesisConfigFile = GenesisConfigFile.fromConfig(genesisConfig());
           builder.setNetworkId(
               genesisConfigFile
-                  .getConfigOptions()
+                  .getConfigOptions(genesisConfigOverrides)
                   .getChainId()
                   .orElse(EthNetworkConfig.getNetworkConfig(MAINNET).getNetworkId()));
         } catch (final DecodeException e) {
