@@ -43,7 +43,6 @@ import tech.pegasys.pantheon.plugin.services.MetricsSystem;
 import tech.pegasys.pantheon.testutil.TestClock;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
-import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -107,10 +106,11 @@ public class IbftBlockCreatorTest {
             Wei.ZERO,
             parentHeader);
 
-    final Block block = blockCreator.createBlock(Instant.now().getEpochSecond());
+    final int secondsBetweenBlocks = 1;
+    final Block block = blockCreator.createBlock(parentHeader.getTimestamp() + 1);
 
     final BlockHeaderValidator<IbftContext> rules =
-        IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(0);
+        IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(secondsBetweenBlocks);
 
     // NOTE: The header will not contain commit seals, so can only do light validation on header.
     final boolean validationResult =
