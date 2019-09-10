@@ -12,7 +12,9 @@
  */
 package tech.pegasys.pantheon.ethereum.debug;
 
+import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Gas;
+import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.vm.ExceptionalHaltReason;
 import tech.pegasys.pantheon.util.bytes.Bytes32;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
@@ -36,6 +38,32 @@ public class TraceFrame {
   private final Optional<Bytes32[]> memory;
   private final Optional<Map<UInt256, UInt256>> storage;
   private final Optional<BytesValue> revertReason;
+  private final Optional<Map<Address, Wei>> maybeRefunds;
+
+  public TraceFrame(
+      final int pc,
+      final String opcode,
+      final Gas gasRemaining,
+      final Optional<Gas> gasCost,
+      final int depth,
+      final EnumSet<ExceptionalHaltReason> exceptionalHaltReasons,
+      final Optional<Bytes32[]> stack,
+      final Optional<Bytes32[]> memory,
+      final Optional<Map<UInt256, UInt256>> storage,
+      final Optional<BytesValue> revertReason,
+      final Optional<Map<Address, Wei>> maybeRefunds) {
+    this.pc = pc;
+    this.opcode = opcode;
+    this.gasRemaining = gasRemaining;
+    this.gasCost = gasCost;
+    this.depth = depth;
+    this.exceptionalHaltReasons = exceptionalHaltReasons;
+    this.stack = stack;
+    this.memory = memory;
+    this.storage = storage;
+    this.revertReason = revertReason;
+    this.maybeRefunds = maybeRefunds;
+  }
 
   public TraceFrame(
       final int pc,
@@ -48,16 +76,18 @@ public class TraceFrame {
       final Optional<Bytes32[]> memory,
       final Optional<Map<UInt256, UInt256>> storage,
       final Optional<BytesValue> revertReason) {
-    this.pc = pc;
-    this.opcode = opcode;
-    this.gasRemaining = gasRemaining;
-    this.gasCost = gasCost;
-    this.depth = depth;
-    this.exceptionalHaltReasons = exceptionalHaltReasons;
-    this.stack = stack;
-    this.memory = memory;
-    this.storage = storage;
-    this.revertReason = revertReason;
+    this(
+        pc,
+        opcode,
+        gasRemaining,
+        gasCost,
+        depth,
+        exceptionalHaltReasons,
+        stack,
+        memory,
+        storage,
+        revertReason,
+        Optional.empty());
   }
 
   public TraceFrame(
@@ -121,6 +151,10 @@ public class TraceFrame {
 
   public Optional<BytesValue> getRevertReason() {
     return revertReason;
+  }
+
+  public Optional<Map<Address, Wei>> getMaybeRefunds() {
+    return maybeRefunds;
   }
 
   @Override

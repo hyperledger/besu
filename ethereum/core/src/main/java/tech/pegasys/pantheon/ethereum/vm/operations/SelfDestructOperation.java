@@ -54,6 +54,10 @@ public class SelfDestructOperation extends AbstractOperation {
         frame.getWorldState().getOrCreate(Words.toAddress(frame.popStackItem()));
 
     recipient.incrementBalance(account.getBalance());
+
+    // add refund in message frame
+    frame.addRefund(recipient.getAddress(), account.getBalance());
+
     account.setBalance(Wei.ZERO);
 
     frame.setState(MessageFrame.State.CODE_SUCCESS);

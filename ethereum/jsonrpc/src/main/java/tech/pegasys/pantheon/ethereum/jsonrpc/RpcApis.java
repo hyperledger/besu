@@ -28,6 +28,7 @@ public class RpcApis {
   public static final RpcApi EEA = new RpcApi("EEA");
   public static final RpcApi PRIV = new RpcApi("PRIV");
   public static final RpcApi TX_POOL = new RpcApi("TXPOOL");
+  public static final RpcApi TRACE = new RpcApi("TRACE");
 
   public static final List<RpcApi> DEFAULT_JSON_RPC_APIS = Arrays.asList(ETH, NET, WEB3);
 
@@ -52,6 +53,8 @@ public class RpcApis {
       return Optional.of(PRIV);
     } else if (name.equals(TX_POOL.getCliValue())) {
       return Optional.of(TX_POOL);
+    } else if (name.equals(TRACE.getCliValue())) {
+      return Optional.of(TRACE);
     } else {
       return Optional.empty();
     }

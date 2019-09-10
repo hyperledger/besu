@@ -63,7 +63,11 @@ public class TraceJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpBySpecTest {
             blockchainSetupUtil.getWorldArchive());
     final BlockTracer blockTracer = new BlockTracer(blockReplay);
     final TraceReplayBlockTransactions traceReplayBlockTransactions =
-        new TraceReplayBlockTransactions(new JsonRpcParameter(), blockTracer, blockchainQueries);
+        new TraceReplayBlockTransactions(
+            new JsonRpcParameter(),
+            blockTracer,
+            blockchainQueries,
+            blockchainSetupUtil.getProtocolSchedule());
     methods.put(traceReplayBlockTransactions.getName(), traceReplayBlockTransactions);
 
     return methods;

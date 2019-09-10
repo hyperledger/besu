@@ -101,14 +101,6 @@ public abstract class AbstractJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpS
   private void jsonRPCCall(final URL specFile) throws IOException {
     final String json = Resources.toString(specFile, Charsets.UTF_8);
     final ObjectNode specNode = (ObjectNode) objectMapper.readTree(json);
-
-    // TODO remove when https://github.com/PegaSysEng/pantheon/pull/1886 is merged
-    // temporary ignore flaky tests
-    if (specNode.has("ignored") && specNode.get("ignored").asBoolean()) {
-      System.err.println("Ignored test.");
-      return;
-    }
-
     final String rawRequestBody = specNode.get("request").toString();
     final RequestBody requestBody = RequestBody.create(JSON, rawRequestBody);
     final Request request = new Request.Builder().post(requestBody).url(baseUrl).build();
@@ -141,7 +133,8 @@ public abstract class AbstractJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpS
         assertThat(responseBody.has("result")).isTrue();
         final String expectedResult = expectedResponse.get("result").toString();
         final String actualResult = responseBody.get("result").toString();
-        assertThat(actualResult).isEqualToIgnoringWhitespace(expectedResult);
+        final ObjectMapper mapper = new ObjectMapper();
+        assertThat(mapper.readTree(actualResult)).isEqualTo(mapper.readTree(expectedResult));
       }
 
       // Check error

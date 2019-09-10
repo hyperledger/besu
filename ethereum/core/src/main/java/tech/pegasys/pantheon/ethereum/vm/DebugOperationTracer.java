@@ -14,7 +14,9 @@ package tech.pegasys.pantheon.ethereum.vm;
 
 import static tech.pegasys.pantheon.util.uint.UInt256.U_32;
 
+import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.Gas;
+import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.debug.TraceFrame;
 import tech.pegasys.pantheon.ethereum.debug.TraceOptions;
 import tech.pegasys.pantheon.ethereum.vm.ehalt.ExceptionalHaltException;
@@ -56,7 +58,8 @@ public class DebugOperationTracer implements OperationTracer {
       executeOperation.execute();
     } finally {
       final Optional<Map<UInt256, UInt256>> storage = captureStorage(frame);
-
+      final Optional<Map<Address, Wei>> maybeRefunds =
+          frame.getRefunds().isEmpty() ? Optional.empty() : Optional.of(frame.getRefunds());
       traceFrames.add(
           new TraceFrame(
               pc,
@@ -68,7 +71,8 @@ public class DebugOperationTracer implements OperationTracer {
               stack,
               memory,
               storage,
-              frame.getRevertReason()));
+              frame.getRevertReason(),
+              maybeRefunds));
     }
   }
 

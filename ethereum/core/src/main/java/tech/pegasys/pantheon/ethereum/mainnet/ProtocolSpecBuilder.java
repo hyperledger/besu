@@ -331,7 +331,8 @@ public class ProtocolSpecBuilder<T> {
         blockReward,
         miningBeneficiaryCalculator,
         precompileContractRegistry,
-        skipZeroBlockRewards);
+        skipZeroBlockRewards,
+        gasCalculator);
   }
 
   public interface TransactionProcessorBuilder {

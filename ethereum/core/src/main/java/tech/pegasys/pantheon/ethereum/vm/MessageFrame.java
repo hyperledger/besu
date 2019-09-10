@@ -32,7 +32,9 @@ import tech.pegasys.pantheon.util.uint.UInt256Value;
 
 import java.util.Deque;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -202,6 +204,7 @@ public class MessageFrame {
   private final LogSeries logs;
   private Gas gasRefund;
   private final Set<Address> selfDestructs;
+  private final Map<Address, Wei> refunds;
 
   // Execution Environment fields.
   private final Address recipient;
@@ -271,6 +274,7 @@ public class MessageFrame {
     this.logs = LogSeries.empty();
     this.gasRefund = Gas.ZERO;
     this.selfDestructs = new HashSet<>();
+    this.refunds = new HashMap<>();
     this.recipient = recipient;
     this.originator = originator;
     this.contract = contract;
@@ -652,6 +656,25 @@ public class MessageFrame {
    */
   public Set<Address> getSelfDestructs() {
     return selfDestructs;
+  }
+
+  /**
+   * Add refund to the refunds map if not already present.
+   *
+   * @param beneficiary the beneficiary of the refund.
+   * @param amount the amount of the refund.
+   */
+  public void addRefund(final Address beneficiary, final Wei amount) {
+    refunds.put(beneficiary, amount);
+  }
+
+  /**
+   * Returns the refunds map.
+   *
+   * @return the refunds map
+   */
+  public Map<Address, Wei> getRefunds() {
+    return refunds;
   }
 
   /**

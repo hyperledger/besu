@@ -3,7 +3,7 @@
     "jsonrpc": "2.0",
     "method": "trace_replayBlockTransactions",
     "params": [
-      "pending",
+      "0x9",
       [
         "trace"
       ]

@@ -149,4 +149,8 @@ public final class Gas {
   public String toString() {
     return Long.toString(value);
   }
+
+  public String toHexString() {
+    return String.format("0x%s", Long.toHexString(value));
+  }
 }

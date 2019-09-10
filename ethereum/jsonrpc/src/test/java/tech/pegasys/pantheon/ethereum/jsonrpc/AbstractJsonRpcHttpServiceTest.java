@@ -63,8 +63,7 @@ import org.junit.rules.TemporaryFolder;
 public abstract class AbstractJsonRpcHttpServiceTest {
   @ClassRule public static final TemporaryFolder folder = new TemporaryFolder();
 
-  protected static BlockchainSetupUtil<Void> blockchainSetupUtil;
-  private static boolean blockchainInitialized = false;
+  protected BlockchainSetupUtil<Void> blockchainSetupUtil;
 
   protected static String CLIENT_VERSION = "TestClientVersion/0.1.0";
   protected static final BigInteger NETWORK_ID = BigInteger.valueOf(123);
@@ -79,11 +78,6 @@ public abstract class AbstractJsonRpcHttpServiceTest {
   protected FilterManager filterManager;
 
   private void setupBlockchain() {
-    if (blockchainInitialized) {
-      return;
-    }
-
-    blockchainInitialized = true;
     blockchainSetupUtil = getBlockchainSetupUtil();
     blockchainSetupUtil.importAllBlocks();
   }

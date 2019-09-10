@@ -68,7 +68,8 @@ public class NoRewardProtocolScheduleWrapper<C> implements ProtocolSchedule<C> {
         Wei.ZERO, // block reward
         original.getMiningBeneficiaryCalculator(),
         original.getPrecompileContractRegistry(),
-        original.isSkipZeroBlockRewards());
+        original.isSkipZeroBlockRewards(),
+        original.getGasCalculator());
   }
 
   @Override

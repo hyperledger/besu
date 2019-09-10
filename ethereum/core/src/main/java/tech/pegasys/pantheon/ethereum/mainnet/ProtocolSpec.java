@@ -19,12 +19,15 @@ import tech.pegasys.pantheon.ethereum.core.TransactionFilter;
 import tech.pegasys.pantheon.ethereum.core.Wei;
 import tech.pegasys.pantheon.ethereum.mainnet.MainnetBlockProcessor.TransactionReceiptFactory;
 import tech.pegasys.pantheon.ethereum.vm.EVM;
+import tech.pegasys.pantheon.ethereum.vm.GasCalculator;
 
 /** A protocol specification. */
 public class ProtocolSpec<C> {
 
   private final String name;
   private final EVM evm;
+
+  private final GasCalculator gasCalculator;
 
   private final TransactionValidator transactionValidator;
 
@@ -76,6 +79,7 @@ public class ProtocolSpec<C> {
    * @param miningBeneficiaryCalculator determines to whom mining proceeds are paid
    * @param precompileContractRegistry all the pre-compiled contracts added
    * @param skipZeroBlockRewards should rewards be skipped if it is zero
+   * @param gasCalculator the gas calculator to use.
    */
   public ProtocolSpec(
       final String name,
@@ -94,7 +98,8 @@ public class ProtocolSpec<C> {
       final Wei blockReward,
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
       final PrecompileContractRegistry precompileContractRegistry,
-      final boolean skipZeroBlockRewards) {
+      final boolean skipZeroBlockRewards,
+      final GasCalculator gasCalculator) {
     this.name = name;
     this.evm = evm;
     this.transactionValidator = transactionValidator;
@@ -112,6 +117,7 @@ public class ProtocolSpec<C> {
     this.miningBeneficiaryCalculator = miningBeneficiaryCalculator;
     this.precompileContractRegistry = precompileContractRegistry;
     this.skipZeroBlockRewards = skipZeroBlockRewards;
+    this.gasCalculator = gasCalculator;
   }
 
   /**
@@ -257,6 +263,15 @@ public class ProtocolSpec<C> {
 
   public PrecompileContractRegistry getPrecompileContractRegistry() {
     return precompileContractRegistry;
+  }
+
+  /**
+   * Returns the gasCalculator used in this specification.
+   *
+   * @return the gas calculator
+   */
+  public GasCalculator getGasCalculator() {
+    return gasCalculator;
   }
 
   public void setTransactionFilter(final TransactionFilter transactionFilter) {
