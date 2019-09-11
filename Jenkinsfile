@@ -206,6 +206,7 @@ try {
                                 sh "cd ${docker_folder} && bash test.sh ${image}"
                             }
                         } finally {
+                            archiveArtifacts "${reports_folder}/**"
                             junit "${reports_folder}/*.xml"
                             sh "rm -rf ${reports_folder}"
                         }
