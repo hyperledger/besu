@@ -104,7 +104,7 @@ public class Enclave {
       response = client.newCall(request).execute();
       responseBody = response.body().string();
     } catch (final IOException e) {
-      throw new EnclaveException("Failed to contact Enclave", e);
+      throw new RuntimeException("Failed to contact Enclave", e);
     }
 
     try {

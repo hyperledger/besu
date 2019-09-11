@@ -15,6 +15,7 @@ package tech.pegasys.pantheon.ethereum.jsonrpc.internal.privacy.methods.eea;
 import static org.apache.logging.log4j.LogManager.getLogger;
 
 import tech.pegasys.pantheon.enclave.Enclave;
+import tech.pegasys.pantheon.enclave.EnclaveException;
 import tech.pegasys.pantheon.enclave.types.ReceiveRequest;
 import tech.pegasys.pantheon.enclave.types.ReceiveResponse;
 import tech.pegasys.pantheon.ethereum.chain.TransactionLocation;
@@ -24,6 +25,7 @@ import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.core.Log;
 import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.core.Transaction;
+import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcEnclaveErrorConverter;
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
@@ -92,7 +94,7 @@ public class EeaGetTransactionReceipt implements JsonRpcMethod {
     PrivateTransaction privateTransaction;
     String privacyGroupId;
     try {
-      ReceiveResponse receiveResponse = getReceiveResponseFromEnclave(transaction, publicKey);
+      final ReceiveResponse receiveResponse = getReceiveResponseFromEnclave(transaction, publicKey);
       LOG.trace("Received transaction information from Enclave");
 
       final BytesValueRLPInput bytesValueRLPInput =
@@ -100,10 +102,12 @@ public class EeaGetTransactionReceipt implements JsonRpcMethod {
 
       privateTransaction = PrivateTransaction.readFrom(bytesValueRLPInput);
       privacyGroupId = receiveResponse.getPrivacyGroupId();
-    } catch (Exception e) {
-      LOG.error("Failed to fetch transaction from Enclave with error " + e.getMessage());
-      return new JsonRpcSuccessResponse(
-          request.getId(), JsonRpcError.PRIVATE_TRANSACTION_RECEIPT_ERROR);
+    } catch (final EnclaveException e) {
+      if (JsonRpcEnclaveErrorConverter.convertEnclaveInvalidReason(e.getMessage())
+          == JsonRpcError.ENCLAVE_PAYLOAD_NOT_FOUND) {
+        return new JsonRpcSuccessResponse(request.getId(), null);
+      }
+      throw e;
     }
 
     final String contractAddress =
@@ -156,11 +160,11 @@ public class EeaGetTransactionReceipt implements JsonRpcMethod {
   }
 
   private ReceiveResponse getReceiveResponseFromEnclave(
-      final Transaction transaction, final String publicKey) throws Exception {
+      final Transaction transaction, final String publicKey) {
     LOG.trace("Fetching transaction information from Enclave");
     final ReceiveRequest enclaveRequest =
         new ReceiveRequest(BytesValues.asBase64String(transaction.getPayload()), publicKey);
-    ReceiveResponse enclaveResponse = enclave.receive(enclaveRequest);
+    final ReceiveResponse enclaveResponse = enclave.receive(enclaveRequest);
     LOG.trace("Received transaction information from Enclave");
     return enclaveResponse;
   }

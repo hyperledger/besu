@@ -38,4 +38,9 @@ public class PrivateTransactionVerifier {
   public ExpectValidPrivacyGroupCreated validPrivacyGroupCreated(final PrivacyGroup expected) {
     return new ExpectValidPrivacyGroupCreated(transactions, expected);
   }
+
+  public ExpectInternalErrorPrivateTransactionReceipt internalErrorPrivateTransactionReceipt(
+      final String transactionHash) {
+    return new ExpectInternalErrorPrivateTransactionReceipt(transactions, transactionHash);
+  }
 }

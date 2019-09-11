@@ -107,7 +107,6 @@ public enum JsonRpcError {
   PRIVATE_NONCE_TOO_LOW(-50100, "Private transaction nonce too low"),
   INCORRECT_PRIVATE_NONCE(-50100, "Private transaction nonce is incorrect"),
   UNIMPLEMENTED_PRIVATE_TRANSACTION_TYPE(-50100, "Unimplemented private transaction type"),
-  PRIVATE_TRANSACTION_RECEIPT_ERROR(-50100, "Error generating the private transaction receipt"),
   PRIVACY_NOT_ENABLED(-50100, "Privacy is not enabled to get the precompiled address"),
   CREATE_PRIVACY_GROUP_ERROR(-50100, "Error creating privacy group"),
   DELETE_PRIVACY_GROUP_ERROR(-50100, "Error deleting privacy group"),
@@ -139,6 +138,7 @@ public enum JsonRpcError {
   ENCLAVE_UNSUPPORTED_PRIVATE_KEY_TYPE(-50200, "EnclaveUnsupportedPrivateKeyType"),
   ENCLAVE_STORAGE_DECRYPT(-50200, "EnclaveStorageDecrypt"),
   ENCLAVE_PRIVACY_GROUP_CREATION(-50200, "EnclavePrivacyGroupIdCreation"),
+  ENCLAVE_PAYLOAD_NOT_FOUND(-50200, "EnclavePayloadNotFound"),
   CREATE_GROUP_INCLUDE_SELF(-50200, "CreatePrivacyGroupShouldIncludeSelf"),
 
   /** Storing privacy group issue */
@@ -148,7 +148,6 @@ public enum JsonRpcError {
   ENCLAVE_PRIVACY_GROUP_MISSING(-50200, "PrivacyGroupNotFound"),
   ENCLAVE_PRIVACY_QUERY_ERROR(-50200, "PrivacyGroupQueryError"),
   METHOD_UNIMPLEMENTED(-50200, "MethodUnimplemented");
-
   private final int code;
   private final String message;
 

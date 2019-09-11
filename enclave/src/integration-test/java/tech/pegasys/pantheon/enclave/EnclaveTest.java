@@ -46,6 +46,7 @@ public class EnclaveTest {
   @ClassRule public static final TemporaryFolder folder = new TemporaryFolder();
 
   private static final String PAYLOAD = "a wonderful transaction";
+  private static final String MOCK_KEY = "iOCzoGo5kwtZU0J41Z9xnGXHN6ZNukIa9MspvHtu3Jk=";
   private static Enclave enclave;
 
   private static OrionTestHarness testHarness;
@@ -72,6 +73,16 @@ public class EnclaveTest {
   @Test
   public void testUpCheck() throws IOException {
     assertTrue(enclave.upCheck());
+  }
+
+  @Test
+  public void testReceiveThrowsWhenPayloadDoesNotExist() {
+    final String publicKey = testHarness.getDefaultPublicKey();
+
+    final Throwable t =
+        catchThrowable(() -> enclave.receive(new ReceiveRequest(MOCK_KEY, publicKey)));
+
+    assertThat(t.getMessage()).isEqualTo("EnclavePayloadNotFound");
   }
 
   @Test

@@ -13,16 +13,17 @@
 package tech.pegasys.pantheon.tests.acceptance.dsl.privacy.condition;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowable;
 
 import tech.pegasys.pantheon.tests.acceptance.dsl.privacy.PrivacyNode;
 import tech.pegasys.pantheon.tests.acceptance.dsl.privacy.transaction.PrivacyTransactions;
 
-public class ExpectNoPrivateTransactionReceipt implements PrivateCondition {
+import org.web3j.protocol.exceptions.ClientConnectionException;
+
+public class ExpectInternalErrorPrivateTransactionReceipt implements PrivateCondition {
   private final PrivacyTransactions transactions;
   private final String transactionHash;
 
-  public ExpectNoPrivateTransactionReceipt(
+  public ExpectInternalErrorPrivateTransactionReceipt(
       final PrivacyTransactions transactions, final String transactionHash) {
     this.transactions = transactions;
     this.transactionHash = transactionHash;
@@ -30,10 +31,10 @@ public class ExpectNoPrivateTransactionReceipt implements PrivateCondition {
 
   @Override
   public void verify(final PrivacyNode node) {
-    final Throwable t =
-        catchThrowable(
-            () -> node.execute(transactions.getPrivateTransactionReceipt(transactionHash)));
-
-    assertThat(t).hasMessageContaining("TransactionException");
+    try {
+      node.execute(transactions.getPrivateTransactionReceipt(transactionHash));
+    } catch (final ClientConnectionException e) {
+      assertThat(e.getMessage()).contains("Internal error");
+    }
   }
 }

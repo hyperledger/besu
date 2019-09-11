@@ -36,14 +36,14 @@ public class EeaGetTransactionReceiptTransaction implements Transaction<PrivateT
   public PrivateTransactionReceipt execute(final NodeRequests node) {
     final Pantheon pantheon = node.privacy().getPantheonClient();
     final PollingPrivateTransactionReceiptProcessor receiptProcessor =
-        new PollingPrivateTransactionReceiptProcessor(pantheon, 3, 3);
+        new PollingPrivateTransactionReceiptProcessor(pantheon, 3000, 3);
     try {
       final PrivateTransactionReceipt result =
           receiptProcessor.waitForTransactionReceipt(transactionHash);
       assertThat(result).isNotNull();
       return result;
-    } catch (IOException | TransactionException e) {
-      return null;
+    } catch (final IOException | TransactionException e) {
+      throw new RuntimeException(e);
     }
   }
 }
