@@ -31,10 +31,10 @@ import tech.pegasys.pantheon.ethereum.core.BlockBody;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.BlockHeaderTestFixture;
 import tech.pegasys.pantheon.ethereum.core.Hash;
-import tech.pegasys.pantheon.ethereum.core.Synchronizer.SyncStatusListener;
 import tech.pegasys.pantheon.ethereum.eth.manager.ChainState;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeers;
+import tech.pegasys.pantheon.plugin.services.PantheonEvents.SyncStatusListener;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.util.Collections;
@@ -237,7 +237,7 @@ public class SyncStateTest {
                 new BlockBody(Collections.emptyList(), Collections.emptyList()))),
         blockchain);
 
-    verify(syncStatusListener).onSyncStatus(eq(syncState.syncStatus()));
+    verify(syncStatusListener).onSyncStatusChanged(eq(syncState.syncStatus()));
   }
 
   private void setupOutOfSyncState() {

@@ -12,66 +12,65 @@
  */
 package tech.pegasys.pantheon.services;
 
-import tech.pegasys.pantheon.ethereum.core.Block;
-import tech.pegasys.pantheon.ethereum.core.Transaction;
 import tech.pegasys.pantheon.ethereum.eth.sync.BlockBroadcaster;
+import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPool;
 import tech.pegasys.pantheon.plugin.services.PantheonEvents;
 
 public class PantheonEventsImpl implements PantheonEvents {
   private final BlockBroadcaster blockBroadcaster;
   private final TransactionPool transactionPool;
+  private final SyncState syncState;
 
   public PantheonEventsImpl(
-      final BlockBroadcaster blockBroadcaster, final TransactionPool transactionPool) {
+      final BlockBroadcaster blockBroadcaster,
+      final TransactionPool transactionPool,
+      final SyncState syncState) {
     this.blockBroadcaster = blockBroadcaster;
     this.transactionPool = transactionPool;
+    this.syncState = syncState;
   }
 
   @Override
-  public Object addNewBlockPropagatedListener(final NewBlockPropagatedListener listener) {
+  public long addBlockPropagatedListener(final BlockPropagatedListener listener) {
     return blockBroadcaster.subscribePropagateNewBlocks(
-        block -> dispatchNewBlockPropagatedMessage(block, listener));
+        block -> listener.newBlockPropagated(block.getHeader()));
   }
 
   @Override
-  public void removeNewBlockPropagatedListener(final Object listenerIdentifier) {
-    if (listenerIdentifier instanceof Long) {
-      blockBroadcaster.unsubscribePropagateNewBlocks((Long) listenerIdentifier);
-    }
-  }
-
-  private void dispatchNewBlockPropagatedMessage(
-      final Block block, final NewBlockPropagatedListener listener) {
-    listener.newBlockPropagated(block.getHeader());
+  public void removeBlockPropagatedListener(final long listenerIdentifier) {
+    blockBroadcaster.unsubscribePropagateNewBlocks(listenerIdentifier);
   }
 
   @Override
-  public Object addNewTransactionAddedListener(final NewTransactionAddedListener listener) {
-    return transactionPool.subscribePendingTransactions(
-        transaction -> dispatchTransactionAddedMessage(transaction, listener));
+  public long addTransactionAddedListener(final TransactionAddedListener listener) {
+    return transactionPool.subscribePendingTransactions(listener::onTransactionAdded);
   }
 
   @Override
-  public void removeNewTransactionAddedListener(final Object listenerIdentifier) {
-    if (listenerIdentifier instanceof Long) {
-      transactionPool.unsubscribePendingTransactions((Long) listenerIdentifier);
-    }
+  public void removeTransactionAddedListener(final long listenerIdentifier) {
+    transactionPool.unsubscribePendingTransactions(listenerIdentifier);
   }
 
   @Override
-  public Object addNewTransactionDroppedListener(
-      final TransactionDroppedListener newTransactionDroppedListener) {
-    throw new UnsupportedOperationException();
+  public long addTransactionDroppedListener(
+      final TransactionDroppedListener transactionDroppedListener) {
+    return transactionPool.subscribeDroppedTransactions(
+        transactionDroppedListener::onTransactionDropped);
   }
 
   @Override
-  public void removeTransactionDroppedListener(final Object listenerIdentifier) {
-    throw new UnsupportedOperationException();
+  public void removeTransactionDroppedListener(final long listenerIdentifier) {
+    transactionPool.unsubscribeDroppedTransactions(listenerIdentifier);
   }
 
-  private void dispatchTransactionAddedMessage(
-      final Transaction transaction, final NewTransactionAddedListener listener) {
-    listener.newTransactionAdded(transaction);
+  @Override
+  public long addSyncStatusListener(final SyncStatusListener syncStatusListener) {
+    return syncState.addSyncStatusListener(syncStatusListener);
+  }
+
+  @Override
+  public void removeSyncStatusListener(final long listenerIdentifier) {
+    syncState.removeSyncStatusListener(listenerIdentifier);
   }
 }

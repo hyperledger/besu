@@ -16,13 +16,15 @@ import tech.pegasys.pantheon.ethereum.chain.Blockchain;
 import tech.pegasys.pantheon.ethereum.chain.ChainHead;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
 import tech.pegasys.pantheon.ethereum.core.SyncStatus;
-import tech.pegasys.pantheon.ethereum.core.Synchronizer.SyncStatusListener;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeer;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthPeers;
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
+import tech.pegasys.pantheon.plugin.services.PantheonEvents.SyncStatusListener;
 import tech.pegasys.pantheon.util.Subscribers;
 
 import java.util.Optional;
+
+import com.google.common.annotations.VisibleForTesting;
 
 public class SyncState {
   private static final long SYNC_TOLERANCE = 5;
@@ -49,17 +51,22 @@ public class SyncState {
         });
   }
 
-  private void publishSyncStatus() {
+  @VisibleForTesting
+  public void publishSyncStatus() {
     final SyncStatus syncStatus = syncStatus();
-    syncStatusListeners.forEach(c -> c.onSyncStatus(syncStatus));
+    syncStatusListeners.forEach(c -> c.onSyncStatusChanged(syncStatus));
   }
 
   public void addInSyncListener(final InSyncListener observer) {
     inSyncListeners.subscribe(observer);
   }
 
-  public void addSyncStatusListener(final SyncStatusListener observer) {
-    syncStatusListeners.subscribe(observer);
+  public long addSyncStatusListener(final SyncStatusListener observer) {
+    return syncStatusListeners.subscribe(observer);
+  }
+
+  public void removeSyncStatusListener(final long listenerId) {
+    syncStatusListeners.unsubscribe(listenerId);
   }
 
   public SyncStatus syncStatus() {
@@ -141,10 +148,10 @@ public class SyncState {
   }
 
   private synchronized void checkInSync() {
-    final boolean currentSyncStatus = isInSync();
-    if (lastInSync != currentSyncStatus) {
-      lastInSync = currentSyncStatus;
-      inSyncListeners.forEach(c -> c.onSyncStatusChanged(currentSyncStatus));
+    final boolean currentInSync = isInSync();
+    if (lastInSync != currentInSync) {
+      lastInSync = currentInSync;
+      inSyncListeners.forEach(c -> c.onSyncStatusChanged(currentInSync));
     }
   }
 

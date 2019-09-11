@@ -14,7 +14,7 @@ package tech.pegasys.pantheon.ethereum.core;
 
 import java.util.Objects;
 
-public final class SyncStatus {
+public final class SyncStatus implements tech.pegasys.pantheon.plugin.data.SyncStatus {
 
   private final long startingBlock;
   private final long currentBlock;
@@ -26,18 +26,22 @@ public final class SyncStatus {
     this.highestBlock = highestBlock;
   }
 
+  @Override
   public long getStartingBlock() {
     return startingBlock;
   }
 
+  @Override
   public long getCurrentBlock() {
     return currentBlock;
   }
 
+  @Override
   public long getHighestBlock() {
     return highestBlock;
   }
 
+  @Override
   public boolean inSync() {
     return currentBlock == highestBlock;
   }

@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.graphql.internal.pojoadapter;
 
-import tech.pegasys.pantheon.ethereum.core.SyncStatus;
+import tech.pegasys.pantheon.plugin.data.SyncStatus;
 
 import java.util.Optional;
 

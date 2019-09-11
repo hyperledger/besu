@@ -17,12 +17,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-import tech.pegasys.pantheon.ethereum.core.SyncStatus;
 import tech.pegasys.pantheon.ethereum.core.Synchronizer;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.SyncingResult;
+import tech.pegasys.pantheon.plugin.data.SyncStatus;
 
 import java.util.Optional;
 
@@ -66,7 +66,8 @@ public class EthSyncingTest {
   @Test
   public void shouldReturnExpectedValueWhenSyncStatusIsNotEmpty() {
     final JsonRpcRequest request = requestWithParams();
-    final SyncStatus expectedSyncStatus = new SyncStatus(0, 1, 2);
+    final SyncStatus expectedSyncStatus =
+        new tech.pegasys.pantheon.ethereum.core.SyncStatus(0, 1, 2);
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(request.getId(), new SyncingResult(expectedSyncStatus));
     final Optional<SyncStatus> optionalSyncStatus = Optional.of(expectedSyncStatus);

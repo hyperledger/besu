@@ -21,10 +21,10 @@ import static org.mockito.Mockito.when;
 
 import tech.pegasys.pantheon.ethereum.core.SyncStatus;
 import tech.pegasys.pantheon.ethereum.core.Synchronizer;
-import tech.pegasys.pantheon.ethereum.core.Synchronizer.SyncStatusListener;
 import tech.pegasys.pantheon.ethereum.p2p.peers.EnodeURL;
 import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
 import tech.pegasys.pantheon.plugin.services.MetricsSystem;
+import tech.pegasys.pantheon.plugin.services.PantheonEvents.SyncStatusListener;
 import tech.pegasys.pantheon.plugin.services.metrics.Counter;
 
 import java.util.ArrayList;
@@ -104,7 +104,7 @@ public class SyncStatusNodePermissioningProviderTest {
 
   @Test
   public void whenIsNotInSyncHasReachedSyncShouldReturnFalse() {
-    syncStatusListener.onSyncStatus(new SyncStatus(0, 1, 2));
+    syncStatusListener.onSyncStatusChanged(new SyncStatus(0, 1, 2));
 
     assertThat(provider.hasReachedSync()).isFalse();
     assertThat(syncGauge.getAsInt()).isEqualTo(0);
@@ -112,7 +112,7 @@ public class SyncStatusNodePermissioningProviderTest {
 
   @Test
   public void whenInSyncHasReachedSyncShouldReturnTrue() {
-    syncStatusListener.onSyncStatus(new SyncStatus(0, 1, 1));
+    syncStatusListener.onSyncStatusChanged(new SyncStatus(0, 1, 1));
 
     assertThat(provider.hasReachedSync()).isTrue();
     assertThat(syncGauge.getAsInt()).isEqualTo(1);
@@ -120,22 +120,22 @@ public class SyncStatusNodePermissioningProviderTest {
 
   @Test
   public void whenInSyncChangesFromTrueToFalseHasReachedSyncShouldReturnTrue() {
-    syncStatusListener.onSyncStatus(new SyncStatus(0, 1, 2));
+    syncStatusListener.onSyncStatusChanged(new SyncStatus(0, 1, 2));
     assertThat(provider.hasReachedSync()).isFalse();
     assertThat(syncGauge.getAsInt()).isEqualTo(0);
 
-    syncStatusListener.onSyncStatus(new SyncStatus(0, 2, 1));
+    syncStatusListener.onSyncStatusChanged(new SyncStatus(0, 2, 1));
     assertThat(provider.hasReachedSync()).isTrue();
     assertThat(syncGauge.getAsInt()).isEqualTo(1);
 
-    syncStatusListener.onSyncStatus(new SyncStatus(0, 2, 3));
+    syncStatusListener.onSyncStatusChanged(new SyncStatus(0, 2, 3));
     assertThat(provider.hasReachedSync()).isTrue();
     assertThat(syncGauge.getAsInt()).isEqualTo(1);
   }
 
   @Test
   public void whenHasNotSyncedNonBootnodeShouldNotBePermitted() {
-    syncStatusListener.onSyncStatus(new SyncStatus(0, 1, 2));
+    syncStatusListener.onSyncStatusChanged(new SyncStatus(0, 1, 2));
     assertThat(provider.hasReachedSync()).isFalse();
     assertThat(syncGauge.getAsInt()).isEqualTo(0);
 
@@ -149,7 +149,7 @@ public class SyncStatusNodePermissioningProviderTest {
 
   @Test
   public void whenHasNotSyncedBootnodeIncomingConnectionShouldNotBePermitted() {
-    syncStatusListener.onSyncStatus(new SyncStatus(0, 1, 2));
+    syncStatusListener.onSyncStatusChanged(new SyncStatus(0, 1, 2));
     assertThat(provider.hasReachedSync()).isFalse();
     assertThat(syncGauge.getAsInt()).isEqualTo(0);
 
@@ -163,7 +163,7 @@ public class SyncStatusNodePermissioningProviderTest {
 
   @Test
   public void whenHasNotSyncedBootnodeOutgoingConnectionShouldBePermitted() {
-    syncStatusListener.onSyncStatus(new SyncStatus(0, 1, 2));
+    syncStatusListener.onSyncStatusChanged(new SyncStatus(0, 1, 2));
     assertThat(provider.hasReachedSync()).isFalse();
     assertThat(syncGauge.getAsInt()).isEqualTo(0);
 
@@ -177,7 +177,7 @@ public class SyncStatusNodePermissioningProviderTest {
 
   @Test
   public void whenHasSyncedIsPermittedShouldReturnTrue() {
-    syncStatusListener.onSyncStatus(new SyncStatus(0, 1, 1));
+    syncStatusListener.onSyncStatusChanged(new SyncStatus(0, 1, 1));
     assertThat(provider.hasReachedSync()).isTrue();
     assertThat(syncGauge.getAsInt()).isEqualTo(1);
 
@@ -191,7 +191,7 @@ public class SyncStatusNodePermissioningProviderTest {
 
   @Test
   public void syncStatusPermissioningCheckShouldIgnoreEnodeURLDiscoveryPort() {
-    syncStatusListener.onSyncStatus(new SyncStatus(0, 1, 2));
+    syncStatusListener.onSyncStatusChanged(new SyncStatus(0, 1, 2));
     assertThat(provider.hasReachedSync()).isFalse();
 
     final EnodeURL bootnode =

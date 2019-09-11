@@ -16,10 +16,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import tech.pegasys.pantheon.ethereum.core.SyncStatus;
 import tech.pegasys.pantheon.ethereum.core.Synchronizer;
 import tech.pegasys.pantheon.ethereum.jsonrpc.health.HealthService.ParamSource;
 import tech.pegasys.pantheon.ethereum.p2p.network.P2PNetwork;
+import tech.pegasys.pantheon.plugin.data.SyncStatus;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -141,6 +141,7 @@ public class ReadinessCheckTest {
   }
 
   private Optional<SyncStatus> createSyncStatus(final int currentBlock, final int highestBlock) {
-    return Optional.of(new SyncStatus(0, currentBlock, highestBlock));
+    return Optional.of(
+        new tech.pegasys.pantheon.ethereum.core.SyncStatus(0, currentBlock, highestBlock));
   }
 }

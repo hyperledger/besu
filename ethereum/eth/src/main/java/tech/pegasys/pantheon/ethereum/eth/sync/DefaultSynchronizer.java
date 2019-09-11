@@ -15,7 +15,6 @@ package tech.pegasys.pantheon.ethereum.eth.sync;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import tech.pegasys.pantheon.ethereum.ProtocolContext;
-import tech.pegasys.pantheon.ethereum.core.SyncStatus;
 import tech.pegasys.pantheon.ethereum.core.Synchronizer;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthContext;
 import tech.pegasys.pantheon.ethereum.eth.sync.fastsync.FastDownloaderFactory;
@@ -29,7 +28,9 @@ import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.worldstate.Pruner;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage;
 import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
+import tech.pegasys.pantheon.plugin.data.SyncStatus;
 import tech.pegasys.pantheon.plugin.services.MetricsSystem;
+import tech.pegasys.pantheon.plugin.services.PantheonEvents.SyncStatusListener;
 import tech.pegasys.pantheon.util.ExceptionUtils;
 import tech.pegasys.pantheon.util.Subscribers;
 
@@ -176,10 +177,11 @@ public class DefaultSynchronizer<C> implements Synchronizer {
     if (!running.get()) {
       return Optional.empty();
     }
-    if (syncState.syncStatus().getCurrentBlock() == syncState.syncStatus().getHighestBlock()) {
+    final SyncStatus syncStatus = syncState.syncStatus();
+    if (syncStatus.inSync()) {
       return Optional.empty();
     }
-    return Optional.of(syncState.syncStatus());
+    return Optional.of(syncStatus);
   }
 
   @Override
@@ -194,6 +196,6 @@ public class DefaultSynchronizer<C> implements Synchronizer {
   }
 
   private void syncStatusCallback(final SyncStatus status) {
-    syncStatusListeners.forEach(c -> c.onSyncStatus(status));
+    syncStatusListeners.forEach(c -> c.onSyncStatusChanged(status));
   }
 }

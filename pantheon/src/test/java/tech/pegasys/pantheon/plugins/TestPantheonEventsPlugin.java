@@ -34,7 +34,7 @@ public class TestPantheonEventsPlugin implements PantheonPlugin {
 
   private PantheonContext context;
 
-  private Optional<Object> subscriptionId;
+  private Optional<Long> subscriptionId;
   private final AtomicInteger blockCounter = new AtomicInteger();
   private File callbackDir;
 
@@ -50,7 +50,7 @@ public class TestPantheonEventsPlugin implements PantheonPlugin {
     subscriptionId =
         context
             .getService(PantheonEvents.class)
-            .map(events -> events.addNewBlockPropagatedListener(this::onBlockAnnounce));
+            .map(events -> events.addBlockPropagatedListener(this::onBlockAnnounce));
     LOG.info("Listening with ID#" + subscriptionId);
   }
 
@@ -60,7 +60,7 @@ public class TestPantheonEventsPlugin implements PantheonPlugin {
         id ->
             context
                 .getService(PantheonEvents.class)
-                .ifPresent(pantheonEvents -> pantheonEvents.removeNewBlockPropagatedListener(id)));
+                .ifPresent(pantheonEvents -> pantheonEvents.removeBlockPropagatedListener(id)));
     LOG.info("No longer listening with ID#" + subscriptionId);
   }
 

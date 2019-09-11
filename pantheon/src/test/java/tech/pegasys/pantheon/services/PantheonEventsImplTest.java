@@ -42,6 +42,7 @@ import tech.pegasys.pantheon.ethereum.mainnet.ValidationResult;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.plugin.data.BlockHeader;
+import tech.pegasys.pantheon.plugin.data.SyncStatus;
 import tech.pegasys.pantheon.plugin.data.Transaction;
 import tech.pegasys.pantheon.testutil.TestClock;
 import tech.pegasys.pantheon.util.uint.UInt256;
@@ -66,7 +67,7 @@ public class PantheonEventsImplTest {
 
   @Mock private ProtocolSchedule<Void> mockProtocolSchedule;
   @Mock private ProtocolContext<Void> mockProtocolContext;
-  @Mock private SyncState mockSyncState;
+  private SyncState syncState;
   @Mock private EthPeers mockEthPeers;
   @Mock private EthContext mockEthContext;
   @Mock private EthMessages mockEthMessages;
@@ -109,17 +110,40 @@ public class PantheonEventsImplTest {
             mockEthContext,
             TestClock.fixed(),
             new NoOpMetricsSystem(),
-            mockSyncState,
+            syncState,
             Wei.ZERO,
-            TransactionPoolConfiguration.builder().build());
+            TransactionPoolConfiguration.builder().txPoolMaxSize(1).build());
+    syncState = new SyncState(mockBlockchain, mockEthPeers);
 
-    serviceImpl = new PantheonEventsImpl(blockBroadcaster, transactionPool);
+    serviceImpl = new PantheonEventsImpl(blockBroadcaster, transactionPool, syncState);
+  }
+
+  @Test
+  public void syncStatusEventFiresAfterSubscribe() {
+    final AtomicReference<SyncStatus> result = new AtomicReference<>();
+    serviceImpl.addSyncStatusListener(result::set);
+
+    assertThat(result.get()).isNull();
+    syncState.publishSyncStatus();
+    assertThat(result.get()).isNotNull();
+  }
+
+  @Test
+  public void syncStatusEventDoesNotFireAfterUnsubscribe() {
+    final AtomicReference<SyncStatus> result = new AtomicReference<>();
+    final long id = serviceImpl.addSyncStatusListener(result::set);
+    syncState.publishSyncStatus();
+    assertThat(result.get()).isNotNull();
+    result.set(null);
+    serviceImpl.removeSyncStatusListener(id);
+    syncState.publishSyncStatus();
+    assertThat(result.get()).isNull();
   }
 
   @Test
   public void newBlockEventFiresAfterSubscribe() {
     final AtomicReference<BlockHeader> result = new AtomicReference<>();
-    serviceImpl.addNewBlockPropagatedListener(result::set);
+    serviceImpl.addBlockPropagatedListener(result::set);
 
     assertThat(result.get()).isNull();
     blockBroadcaster.propagate(generateBlock(), UInt256.of(1));
@@ -130,12 +154,13 @@ public class PantheonEventsImplTest {
   @Test
   public void newBlockEventDoesNotFireAfterUnsubscribe() {
     final AtomicReference<BlockHeader> result = new AtomicReference<>();
-    final Object id = serviceImpl.addNewBlockPropagatedListener(result::set);
+    final long id = serviceImpl.addBlockPropagatedListener(result::set);
 
     assertThat(result.get()).isNull();
     blockBroadcaster.propagate(generateBlock(), UInt256.of(1));
 
-    serviceImpl.removeNewBlockPropagatedListener(id);
+    assertThat(result.get()).isNotNull();
+    serviceImpl.removeBlockPropagatedListener(id);
     result.set(null);
 
     blockBroadcaster.propagate(generateBlock(), UInt256.of(1));
@@ -149,15 +174,14 @@ public class PantheonEventsImplTest {
 
   @Test
   public void newBlockEventUselessUnsubscribesCompletes() {
-    serviceImpl.removeNewBlockPropagatedListener("doesNotExist");
-    serviceImpl.removeNewBlockPropagatedListener(5);
-    serviceImpl.removeNewBlockPropagatedListener(5L);
+    serviceImpl.removeBlockPropagatedListener(5);
+    serviceImpl.removeBlockPropagatedListener(5L);
   }
 
   @Test
-  public void newTransactionEventFiresAfterSubscribe() {
+  public void transactionAddedEventFiresAfterSubscribe() {
     final AtomicReference<Transaction> result = new AtomicReference<>();
-    serviceImpl.addNewTransactionAddedListener(result::set);
+    serviceImpl.addTransactionAddedListener(result::set);
 
     assertThat(result.get()).isNull();
     transactionPool.addLocalTransaction(TX1);
@@ -166,14 +190,15 @@ public class PantheonEventsImplTest {
   }
 
   @Test
-  public void newTransactionEventDoesNotFireAfterUnsubscribe() {
+  public void transactionAddedEventDoesNotFireAfterUnsubscribe() {
     final AtomicReference<Transaction> result = new AtomicReference<>();
-    final Object id = serviceImpl.addNewTransactionAddedListener(result::set);
+    final long id = serviceImpl.addTransactionAddedListener(result::set);
 
     assertThat(result.get()).isNull();
     transactionPool.addLocalTransaction(TX1);
+    assertThat(result.get()).isNotNull();
 
-    serviceImpl.removeNewTransactionAddedListener(id);
+    serviceImpl.removeTransactionAddedListener(id);
     result.set(null);
 
     transactionPool.addLocalTransaction(TX2);
@@ -181,10 +206,39 @@ public class PantheonEventsImplTest {
   }
 
   @Test
-  public void newTransactionEventUselessUnsubscribesCompletes() {
-    serviceImpl.removeNewTransactionAddedListener("doesNotExist");
-    serviceImpl.removeNewTransactionAddedListener(5);
-    serviceImpl.removeNewTransactionAddedListener(5L);
+  public void transactionAddedEventUselessUnsubscribesCompletes() {
+    serviceImpl.removeTransactionAddedListener(5);
+    serviceImpl.removeTransactionAddedListener(5L);
+  }
+
+  @Test
+  public void transactionDroppedEventFiresAfterSubscribe() {
+    final AtomicReference<Transaction> result = new AtomicReference<>();
+    serviceImpl.addTransactionDroppedListener(result::set);
+
+    assertThat(result.get()).isNull();
+    // The max pool size is configured to 1 so adding two transactions should trigger a drop
+    transactionPool.addLocalTransaction(TX1);
+    transactionPool.addLocalTransaction(TX2);
+
+    assertThat(result.get()).isNotNull();
+  }
+
+  @Test
+  public void transactionDroppedEventDoesNotFireAfterUnsubscribe() {
+    final AtomicReference<Transaction> result = new AtomicReference<>();
+    final long id = serviceImpl.addTransactionDroppedListener(result::set);
+
+    assertThat(result.get()).isNull();
+    transactionPool.addLocalTransaction(TX1);
+    transactionPool.addLocalTransaction(TX2);
+
+    assertThat(result.get()).isNotNull();
+    serviceImpl.removeTransactionAddedListener(id);
+    result.set(null);
+
+    transactionPool.addLocalTransaction(TX2);
+    assertThat(result.get()).isNull();
   }
 
   private Block generateBlock() {

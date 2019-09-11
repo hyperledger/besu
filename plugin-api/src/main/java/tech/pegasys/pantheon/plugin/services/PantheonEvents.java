@@ -14,6 +14,7 @@ package tech.pegasys.pantheon.plugin.services;
 
 import tech.pegasys.pantheon.plugin.Unstable;
 import tech.pegasys.pantheon.plugin.data.BlockHeader;
+import tech.pegasys.pantheon.plugin.data.SyncStatus;
 import tech.pegasys.pantheon.plugin.data.Transaction;
 
 /**
@@ -22,10 +23,13 @@ import tech.pegasys.pantheon.plugin.data.Transaction;
  * <p>Currently supported events
  *
  * <ul>
- *   <li><b>newBlockPropagated</b> - Fired when a new block header has been received and validated
- *       and is about to be sent out to other peers, but before the body of the block has been
- *       evaluated and validated.
- *   <li><b>newTransactionAdded</b> - Fired when a new transaction has been added to the node.
+ *   <li><b>BlockPropagated</b> - Fired when a new block header has been received and validated and
+ *       is about to be sent out to other peers, but before the body of the block has been evaluated
+ *       and validated.
+ *   <li><b>TransactionAdded</b> - Fired when a new transaction has been added to the node.
+ *   <li><b>TransactionDropped</b> - Fired when a new transaction has been dropped from the node.
+ *   <li><b>Logs</b> - Fired when a new block containing logs is received.
+ *   <li><b>SynchronizerStatus </b> - Fired when the status of the synchronizer changes.
  * </ul>
  */
 @Unstable
@@ -34,52 +38,67 @@ public interface PantheonEvents {
   /**
    * Add a listener watching new blocks propagated.
    *
-   * @param newBlockPropagatedListener The listener that will accept a BlockHeader as the event.
+   * @param blockPropagatedListener The listener that will accept a BlockHeader as the event.
    * @return an object to be used as an identifier when de-registering the event.
    */
-  Object addNewBlockPropagatedListener(NewBlockPropagatedListener newBlockPropagatedListener);
+  long addBlockPropagatedListener(BlockPropagatedListener blockPropagatedListener);
 
   /**
    * Remove the blockAdded listener from pantheon notifications.
    *
    * @param listenerIdentifier The instance that was returned from addBlockAddedListener;
    */
-  void removeNewBlockPropagatedListener(Object listenerIdentifier);
+  void removeBlockPropagatedListener(long listenerIdentifier);
 
   /**
    * Add a listener watching new transactions added to the node.
    *
-   * @param newTransactionAddedListener The listener that will accept the Transaction object as the
+   * @param transactionAddedListener The listener that will accept the Transaction object as the
    *     event.
    * @return an object to be used as an identifier when de-registering the event.
    */
-  Object addNewTransactionAddedListener(NewTransactionAddedListener newTransactionAddedListener);
+  long addTransactionAddedListener(TransactionAddedListener transactionAddedListener);
 
   /**
    * Remove the blockAdded listener from pantheon notifications.
    *
-   * @param listenerIdentifier The instance that was returned from addNewTransactionAddedListener;
+   * @param listenerIdentifier The instance that was returned from addTransactionAddedListener;
    */
-  void removeNewTransactionAddedListener(Object listenerIdentifier);
+  void removeTransactionAddedListener(long listenerIdentifier);
 
   /**
    * Add a listener watching dropped transactions.
    *
-   * @param newTransactionDroppedListener The listener that will accept the Transaction object as
-   *     the event.
+   * @param transactionDroppedListener The listener that will accept the Transaction object as the
+   *     event.
    * @return an object to be used as an identifier when de-registering the event.
    */
-  Object addNewTransactionDroppedListener(TransactionDroppedListener newTransactionDroppedListener);
+  long addTransactionDroppedListener(TransactionDroppedListener transactionDroppedListener);
 
   /**
    * Remove the transactionDropped listener from pantheon notifications.
    *
    * @param listenerIdentifier The instance that was returned from addTransactionDroppedListener;
    */
-  void removeTransactionDroppedListener(Object listenerIdentifier);
+  void removeTransactionDroppedListener(long listenerIdentifier);
+
+  /**
+   * Add a listener watching the synchronizer status.
+   *
+   * @param syncStatusListener The listener that will accept the SyncStatus object as the event.
+   * @return an object to be used as an identifier when de-registering the event.
+   */
+  long addSyncStatusListener(SyncStatusListener syncStatusListener);
+
+  /**
+   * Remove the logs listener from pantheon notifications.
+   *
+   * @param listenerIdentifier The instance that was returned from addTransactionDroppedListener;
+   */
+  void removeSyncStatusListener(long listenerIdentifier);
 
   /** The listener interface for receiving new block propagated events. */
-  interface NewBlockPropagatedListener {
+  interface BlockPropagatedListener {
 
     /**
      * Invoked when a new block header has been received and validated and is about to be sent out
@@ -88,20 +107,20 @@ public interface PantheonEvents {
      * <p>The block may not have been imported to the local chain yet and may fail later
      * validations.
      *
-     * @param newBlockHeader the new block header.
+     * @param blockHeader the new block header.
      */
-    void newBlockPropagated(BlockHeader newBlockHeader);
+    void newBlockPropagated(BlockHeader blockHeader);
   }
 
   /** The listener interface for receiving new transaction added events. */
-  interface NewTransactionAddedListener {
+  interface TransactionAddedListener {
 
     /**
      * Invoked when a new transaction has been added to the node.
      *
      * @param transaction the new transaction.
      */
-    void newTransactionAdded(Transaction transaction);
+    void onTransactionAdded(Transaction transaction);
   }
 
   /** The listener interface for receiving transaction dropped events. */
@@ -112,6 +131,17 @@ public interface PantheonEvents {
      *
      * @param transaction the dropped transaction.
      */
-    void newTransactionDropped(Transaction transaction);
+    void onTransactionDropped(Transaction transaction);
+  }
+
+  /** The listener interface for receiving sync status events. */
+  interface SyncStatusListener {
+
+    /**
+     * Invoked when the synchronizer status changes
+     *
+     * @param syncStatus the sync status
+     */
+    void onSyncStatusChanged(SyncStatus syncStatus);
   }
 }

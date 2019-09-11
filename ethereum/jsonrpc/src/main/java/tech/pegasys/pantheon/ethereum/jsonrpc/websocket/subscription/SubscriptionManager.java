@@ -37,7 +37,7 @@ import org.apache.logging.log4j.Logger;
 
 /**
  * The SubscriptionManager is responsible for managing subscriptions and sending messages to the
- * clients that have an active subscription subscription.
+ * clients that have an active subscription.
  */
 public class SubscriptionManager extends AbstractVerticle {
 

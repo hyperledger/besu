@@ -323,8 +323,7 @@ public abstract class PantheonControllerBuilder<C> {
         genesisConfig.getConfigOptions(genesisConfigOverrides),
         subProtocolConfiguration,
         synchronizer,
-        additionalJsonRpcMethodFactory,
-        nodeKeys,
+        syncState,
         transactionPool,
         miningCoordinator,
         privacyParameters,
@@ -338,7 +337,9 @@ public abstract class PantheonControllerBuilder<C> {
           } catch (final IOException e) {
             LOG.error("Failed to close storage provider", e);
           }
-        });
+        },
+        additionalJsonRpcMethodFactory,
+        nodeKeys);
   }
 
   protected void prepForBuild() {}

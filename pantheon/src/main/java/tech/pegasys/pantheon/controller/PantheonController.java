@@ -21,6 +21,7 @@ import tech.pegasys.pantheon.ethereum.blockcreation.MiningCoordinator;
 import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
 import tech.pegasys.pantheon.ethereum.core.Synchronizer;
 import tech.pegasys.pantheon.ethereum.eth.manager.EthProtocolManager;
+import tech.pegasys.pantheon.ethereum.eth.sync.state.SyncState;
 import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPool;
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApi;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
@@ -48,6 +49,7 @@ public class PantheonController<C> implements java.io.Closeable {
   private final MiningCoordinator miningCoordinator;
   private final PrivacyParameters privacyParameters;
   private final Runnable close;
+  private final SyncState syncState;
 
   PantheonController(
       final ProtocolSchedule<C> protocolSchedule,
@@ -56,18 +58,20 @@ public class PantheonController<C> implements java.io.Closeable {
       final GenesisConfigOptions genesisConfigOptions,
       final SubProtocolConfiguration subProtocolConfiguration,
       final Synchronizer synchronizer,
-      final JsonRpcMethodFactory additionalJsonRpcMethodsFactory,
-      final KeyPair keyPair,
+      final SyncState syncState,
       final TransactionPool transactionPool,
       final MiningCoordinator miningCoordinator,
       final PrivacyParameters privacyParameters,
-      final Runnable close) {
+      final Runnable close,
+      final JsonRpcMethodFactory additionalJsonRpcMethodsFactory,
+      final KeyPair keyPair) {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethProtocolManager = ethProtocolManager;
     this.genesisConfigOptions = genesisConfigOptions;
     this.subProtocolConfiguration = subProtocolConfiguration;
     this.synchronizer = synchronizer;
+    this.syncState = syncState;
     this.additionalJsonRpcMethodsFactory = additionalJsonRpcMethodsFactory;
     this.keyPair = keyPair;
     this.transactionPool = transactionPool;
@@ -124,6 +128,10 @@ public class PantheonController<C> implements java.io.Closeable {
   public Map<String, JsonRpcMethod> getAdditionalJsonRpcMethods(
       final Collection<RpcApi> enabledRpcApis) {
     return additionalJsonRpcMethodsFactory.createJsonRpcMethods(enabledRpcApis);
+  }
+
+  public SyncState getSyncState() {
+    return syncState;
   }
 
   public static class Builder {

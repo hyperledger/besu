@@ -12,6 +12,9 @@
  */
 package tech.pegasys.pantheon.ethereum.core;
 
+import tech.pegasys.pantheon.plugin.data.SyncStatus;
+import tech.pegasys.pantheon.plugin.services.PantheonEvents;
+
 import java.util.Optional;
 
 /** Provides an interface to block synchronization processes. */
@@ -27,12 +30,7 @@ public interface Synchronizer {
    */
   Optional<SyncStatus> getSyncStatus();
 
-  long observeSyncStatus(final SyncStatusListener listener);
+  long observeSyncStatus(final PantheonEvents.SyncStatusListener listener);
 
   boolean removeObserver(long observerId);
-
-  @FunctionalInterface
-  interface SyncStatusListener {
-    void onSyncStatus(final SyncStatus status);
-  }
 }
