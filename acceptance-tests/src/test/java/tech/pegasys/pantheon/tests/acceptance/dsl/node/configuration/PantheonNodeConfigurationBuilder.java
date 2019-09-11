@@ -83,6 +83,17 @@ public class PantheonNodeConfigurationBuilder {
     return this;
   }
 
+  public PantheonNodeConfigurationBuilder metricsEnabled() {
+    this.metricsConfiguration =
+        MetricsConfiguration.builder()
+            .enabled(true)
+            .port(0)
+            .hostsWhitelist(singletonList("*"))
+            .build();
+
+    return this;
+  }
+
   public PantheonNodeConfigurationBuilder enablePrivateTransactions() {
     this.jsonRpcConfiguration.addRpcApi(RpcApis.EEA);
     this.jsonRpcConfiguration.addRpcApi(RpcApis.PRIV);

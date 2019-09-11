@@ -18,6 +18,8 @@ import tech.pegasys.pantheon.cli.options.NetworkingOptions;
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApi;
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApis;
 import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
+import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
+import tech.pegasys.pantheon.plugin.services.metrics.MetricCategory;
 import tech.pegasys.pantheon.tests.acceptance.dsl.StaticNodesUtils;
 
 import java.io.BufferedReader;
@@ -137,6 +139,30 @@ public class ProcessPantheonNodeRunner implements PantheonNodeRunner {
       if (node.webSocketConfiguration().getAuthenticationCredentialsFile() != null) {
         params.add("--rpc-ws-authentication-credentials-file");
         params.add(node.webSocketConfiguration().getAuthenticationCredentialsFile());
+      }
+    }
+
+    if (node.isMetricsEnabled()) {
+      final MetricsConfiguration metricsConfiguration = node.getMetricsConfiguration();
+      params.add("--metrics-enabled");
+      params.add("--metrics-host");
+      params.add(metricsConfiguration.getHost());
+      params.add("--metrics-port");
+      params.add(Integer.toString(metricsConfiguration.getPort()));
+      for (final MetricCategory category : metricsConfiguration.getMetricCategories()) {
+        params.add("--metrics-category");
+        params.add(((Enum<?>) category).name());
+      }
+      if (metricsConfiguration.isPushEnabled()) {
+        params.add("--metrics-push-enabled");
+        params.add("--metrics-push-host");
+        params.add(metricsConfiguration.getPushHost());
+        params.add("--metrics-push-port");
+        params.add(Integer.toString(metricsConfiguration.getPushPort()));
+        params.add("--metrics-push-interval");
+        params.add(Integer.toString(metricsConfiguration.getPushInterval()));
+        params.add("--metrics-push-prometheus-job");
+        params.add(metricsConfiguration.getPrometheusJob());
       }
     }
 

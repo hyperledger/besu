@@ -27,7 +27,7 @@ import tech.pegasys.pantheon.ethereum.graphql.GraphQLConfiguration;
 import tech.pegasys.pantheon.ethereum.p2p.peers.EnodeURL;
 import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 import tech.pegasys.pantheon.metrics.ObservableMetricsSystem;
-import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
+import tech.pegasys.pantheon.metrics.prometheus.PrometheusMetricsSystem;
 import tech.pegasys.pantheon.plugin.services.PantheonEvents;
 import tech.pegasys.pantheon.plugin.services.PicoCLIOptions;
 import tech.pegasys.pantheon.services.PantheonEventsImpl;
@@ -90,7 +90,8 @@ public class ThreadPantheonNodeRunner implements PantheonNodeRunner {
 
     commandLine.parseArgs(node.getConfiguration().getExtraCLIOptions().toArray(new String[0]));
 
-    final ObservableMetricsSystem noOpMetricsSystem = new NoOpMetricsSystem();
+    final ObservableMetricsSystem metricsSystem =
+        PrometheusMetricsSystem.init(node.getMetricsConfiguration());
     final List<EnodeURL> bootnodes =
         node.getConfiguration().getBootnodes().stream()
             .map(EnodeURL::fromURI)
@@ -113,7 +114,7 @@ public class ThreadPantheonNodeRunner implements PantheonNodeRunner {
               .miningParameters(node.getMiningParameters())
               .privacyParameters(node.getPrivacyParameters())
               .nodePrivateKeyFile(KeyPairUtil.getDefaultKeyFile(node.homeDirectory()))
-              .metricsSystem(noOpMetricsSystem)
+              .metricsSystem(metricsSystem)
               .transactionPoolConfiguration(TransactionPoolConfiguration.builder().build())
               .rocksDbConfiguration(RocksDbConfiguration.builder().databaseDir(tempDir).build())
               .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
@@ -152,8 +153,8 @@ public class ThreadPantheonNodeRunner implements PantheonNodeRunner {
             .jsonRpcConfiguration(node.jsonRpcConfiguration())
             .webSocketConfiguration(node.webSocketConfiguration())
             .dataDir(node.homeDirectory())
-            .metricsSystem(noOpMetricsSystem)
-            .metricsConfiguration(node.metricsConfiguration())
+            .metricsSystem(metricsSystem)
+            .metricsConfiguration(node.getMetricsConfiguration())
             .p2pEnabled(node.isP2pEnabled())
             .graphQLConfiguration(GraphQLConfiguration.createDefault())
             .staticNodes(

@@ -171,6 +171,10 @@ public class PantheonNode implements NodeConfiguration, RunnableNode, AutoClosea
     return webSocketConfiguration().isEnabled();
   }
 
+  boolean isMetricsEnabled() {
+    return metricsConfiguration.isEnabled();
+  }
+
   @Override
   public String getName() {
     return name;
@@ -232,6 +236,19 @@ public class PantheonNode implements NodeConfiguration, RunnableNode, AutoClosea
               + webSocketConfiguration.getHost()
               + ":"
               + portsProperties.getProperty("ws-rpc"));
+    } else {
+      return Optional.empty();
+    }
+  }
+
+  public Optional<String> metricsHttpUrl() {
+    if (isMetricsEnabled()) {
+      return Optional.of(
+          "http://"
+              + metricsConfiguration.getHost()
+              + ":"
+              + portsProperties.getProperty("metrics")
+              + "/metrics");
     } else {
       return Optional.empty();
     }
@@ -470,7 +487,7 @@ public class PantheonNode implements NodeConfiguration, RunnableNode, AutoClosea
     return Optional.of(webSocketConfiguration().getPort());
   }
 
-  MetricsConfiguration metricsConfiguration() {
+  MetricsConfiguration getMetricsConfiguration() {
     return metricsConfiguration;
   }
 

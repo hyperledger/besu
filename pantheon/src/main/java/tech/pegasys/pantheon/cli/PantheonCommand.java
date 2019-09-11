@@ -784,7 +784,6 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
 
   private PantheonCommand preparePlugins() {
     pantheonPluginContext.addService(PicoCLIOptions.class, new PicoCLIOptionsImpl(commandLine));
-    pantheonPluginContext.addService(MetricsSystem.class, getMetricsSystem());
     pantheonPluginContext.registerPlugins(pluginsDir());
     return this;
   }

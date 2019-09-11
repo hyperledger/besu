@@ -102,9 +102,11 @@ class MetricsHttpService implements MetricsService {
             res -> {
               if (!res.failed()) {
                 resultFuture.complete(null);
+                final int actualPort = httpServer.actualPort();
+                config.setActualPort(actualPort);
                 LOG.info(
                     "Metrics service started and listening on {}:{}",
-                    config.getHost(),
+                    actualPort,
                     httpServer.actualPort());
                 return;
               }
@@ -114,8 +116,11 @@ class MetricsHttpService implements MetricsService {
                 resultFuture.completeExceptionally(
                     new RuntimeException(
                         String.format(
-                            "Failed to bind metrics listener to %s:%s: %s",
-                            config.getHost(), config.getPort(), cause.getMessage())));
+                            "Failed to bind metrics listener to %s:%s (actual port %s): %s",
+                            config.getHost(),
+                            config.getPort(),
+                            config.getActualPort(),
+                            cause.getMessage())));
                 return;
               }
               resultFuture.completeExceptionally(cause);

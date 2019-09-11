@@ -35,6 +35,7 @@ public class MetricsConfiguration {
 
   private final boolean enabled;
   private final int port;
+  private int actualPort;
   private final String host;
   private final Set<MetricCategory> metricCategories;
   private final boolean pushEnabled;
@@ -78,12 +79,20 @@ public class MetricsConfiguration {
     return enabled;
   }
 
+  public String getHost() {
+    return host;
+  }
+
   public int getPort() {
     return port;
   }
 
-  public String getHost() {
-    return host;
+  public int getActualPort() {
+    return actualPort;
+  }
+
+  void setActualPort(final int actualPort) {
+    this.actualPort = actualPort;
   }
 
   public Set<MetricCategory> getMetricCategories() {
