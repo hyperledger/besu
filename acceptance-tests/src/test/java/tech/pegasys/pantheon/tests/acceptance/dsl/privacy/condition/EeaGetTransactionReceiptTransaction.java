@@ -36,7 +36,7 @@ public class EeaGetTransactionReceiptTransaction implements Transaction<PrivateT
   public PrivateTransactionReceipt execute(final NodeRequests node) {
     final Pantheon pantheon = node.privacy().getPantheonClient();
     final PollingPrivateTransactionReceiptProcessor receiptProcessor =
-        new PollingPrivateTransactionReceiptProcessor(pantheon, 3000, 3);
+        new PollingPrivateTransactionReceiptProcessor(pantheon, 15000, 3);
     try {
       final PrivateTransactionReceipt result =
           receiptProcessor.waitForTransactionReceipt(transactionHash);
