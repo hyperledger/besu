@@ -21,6 +21,8 @@ import tech.pegasys.pantheon.cli.PantheonCommand;
 import tech.pegasys.pantheon.controller.PantheonController;
 import tech.pegasys.pantheon.services.PantheonPluginContextImpl;
 
+import io.netty.util.internal.logging.InternalLoggerFactory;
+import io.netty.util.internal.logging.Log4J2LoggerFactory;
 import org.apache.logging.log4j.Logger;
 import picocli.CommandLine.RunLast;
 
@@ -29,10 +31,8 @@ public final class Pantheon {
   private static final int ERROR_EXIT_CODE = 1;
 
   public static void main(final String... args) {
-    final Logger logger = getLogger();
-    Thread.setDefaultUncaughtExceptionHandler(
-        (thread, error) ->
-            logger.error("Uncaught exception in thread \"" + thread.getName() + "\"", error));
+    final Logger logger = setupLogging();
+
     final PantheonCommand pantheonCommand =
         new PantheonCommand(
             logger,
@@ -49,5 +49,24 @@ public final class Pantheon {
         pantheonCommand.exceptionHandler().andExit(ERROR_EXIT_CODE),
         System.in,
         args);
+  }
+
+  private static Logger setupLogging() {
+    InternalLoggerFactory.setDefaultFactory(Log4J2LoggerFactory.INSTANCE);
+    try {
+      System.setProperty(
+          "vertx.logger-delegate-factory-class-name",
+          "io.vertx.core.logging.Log4j2LogDelegateFactory");
+    } catch (SecurityException e) {
+      // if the security
+      System.out.println(
+          "could not set logging system property as the security manager prevented it.");
+    }
+
+    final Logger logger = getLogger();
+    Thread.setDefaultUncaughtExceptionHandler(
+        (thread, error) ->
+            logger.error("Uncaught exception in thread \"" + thread.getName() + "\"", error));
+    return logger;
   }
 }
