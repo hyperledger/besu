@@ -118,4 +118,39 @@ public class EnclaveErrorAcceptanceTest extends PrivacyAcceptanceTestBase {
     alice.verify(
         privateTransactionVerifier.internalErrorPrivateTransactionReceipt(transactionHash));
   }
+
+  @Test
+  public void transactionFailsIfPartyIsOffline() {
+    // Contract address is generated from sender address and transaction nonce
+    final String contractAddress = "0xebf56429e6500e84442467292183d4d621359838";
+
+    final EventEmitter eventEmitter =
+        alice.execute(
+            privateContractTransactions.createSmartContract(
+                EventEmitter.class,
+                alice.getTransactionSigningKey(),
+                IBFT2_CHAIN_ID,
+                alice.getEnclaveKey(),
+                bob.getEnclaveKey()));
+
+    privateContractVerifier
+        .validPrivateContractDeployed(contractAddress, alice.getAddress().toString())
+        .verify(eventEmitter);
+
+    bob.getOrion().stop();
+
+    final Throwable throwable =
+        catchThrowable(
+            () ->
+                alice.execute(
+                    privateContractTransactions.callSmartContract(
+                        eventEmitter.getContractAddress(),
+                        eventEmitter.store(BigInteger.ONE).encodeFunctionCall(),
+                        alice.getTransactionSigningKey(),
+                        IBFT2_CHAIN_ID,
+                        alice.getEnclaveKey(),
+                        bob.getEnclaveKey())));
+
+    assertThat(throwable).hasMessageContaining("NodePushingToPeer");
+  }
 }
