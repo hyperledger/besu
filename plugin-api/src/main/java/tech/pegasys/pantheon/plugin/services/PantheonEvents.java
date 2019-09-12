@@ -109,7 +109,7 @@ public interface PantheonEvents {
      *
      * @param blockHeader the new block header.
      */
-    void newBlockPropagated(BlockHeader blockHeader);
+    void onBlockPropagated(BlockHeader blockHeader);
   }
 
   /** The listener interface for receiving new transaction added events. */

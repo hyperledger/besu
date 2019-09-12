@@ -34,7 +34,7 @@ public class PantheonEventsImpl implements PantheonEvents {
   @Override
   public long addBlockPropagatedListener(final BlockPropagatedListener listener) {
     return blockBroadcaster.subscribePropagateNewBlocks(
-        block -> listener.newBlockPropagated(block.getHeader()));
+        block -> listener.onBlockPropagated(block.getHeader()));
   }
 
   @Override
