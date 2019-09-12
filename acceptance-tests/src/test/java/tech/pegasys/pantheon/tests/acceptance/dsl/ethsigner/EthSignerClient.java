@@ -76,6 +76,57 @@ public class EthSignerClient {
       final BigInteger gas,
       final BigInteger gasPrice,
       final String data,
+      final String privateFrom,
+      final String privacyGroupId,
+      final String restriction)
+      throws IOException {
+    return eeaSendTransaction(
+        to, gas, gasPrice, data, null, privateFrom, privacyGroupId, restriction);
+  }
+
+  public String eeaSendTransaction(
+      final String to,
+      final BigInteger gas,
+      final BigInteger gasPrice,
+      final String data,
+      final BigInteger nonce,
+      final String privateFrom,
+      final String privacyGroupId,
+      final String restriction)
+      throws IOException {
+    final PrivateTransactionRequest transaction =
+        new PrivateTransactionRequest(
+            from,
+            nonce,
+            gasPrice,
+            gas,
+            to,
+            BigInteger.ZERO,
+            data,
+            privateFrom,
+            privacyGroupId,
+            restriction);
+
+    return eeaSendTransaction(transaction);
+  }
+
+  public String eeaSendTransaction(
+      final String to,
+      final BigInteger gas,
+      final BigInteger gasPrice,
+      final String data,
+      final String privateFrom,
+      final List<String> privateFor,
+      final String restriction)
+      throws IOException {
+    return eeaSendTransaction(to, gas, gasPrice, data, null, privateFrom, privateFor, restriction);
+  }
+
+  public String eeaSendTransaction(
+      final String to,
+      final BigInteger gas,
+      final BigInteger gasPrice,
+      final String data,
       final BigInteger nonce,
       final String privateFrom,
       final List<String> privateFor,
@@ -95,6 +146,11 @@ public class EthSignerClient {
             privateFor,
             restriction);
 
+    return eeaSendTransaction(transaction);
+  }
+
+  private String eeaSendTransaction(final PrivateTransactionRequest transaction)
+      throws IOException {
     // temporary until implemented in web3j
     return new Request<>(
             "eea_sendTransaction",

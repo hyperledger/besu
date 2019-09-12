@@ -29,7 +29,8 @@ public class PrivateTransactionRequest {
   private final BigInteger value;
   private final String data;
   private final String privateFrom;
-  private final List<String> privateFor;
+  private List<String> privateFor;
+  private String privacyGroupId;
   private final String restriction;
 
   public PrivateTransactionRequest(
@@ -52,6 +53,29 @@ public class PrivateTransactionRequest {
     this.nonce = nonce;
     this.privateFrom = privateFrom;
     this.privateFor = privateFor;
+    this.restriction = restriction;
+  }
+
+  public PrivateTransactionRequest(
+      final String from,
+      final BigInteger nonce,
+      final BigInteger gasPrice,
+      final BigInteger gasLimit,
+      final String to,
+      final BigInteger value,
+      final String data,
+      final String privateFrom,
+      final String privacyGroupId,
+      final String restriction) {
+    this.from = from;
+    this.to = to;
+    this.gas = gasLimit;
+    this.gasPrice = gasPrice;
+    this.value = value;
+    this.data = data == null ? null : Numeric.prependHexPrefix(data);
+    this.nonce = nonce;
+    this.privateFrom = privateFrom;
+    this.privacyGroupId = privacyGroupId;
     this.restriction = restriction;
   }
 
@@ -93,6 +117,10 @@ public class PrivateTransactionRequest {
 
   public List<String> getPrivateFor() {
     return privateFor;
+  }
+
+  public String getPrivacyGroupId() {
+    return privacyGroupId;
   }
 
   public String getRestriction() {

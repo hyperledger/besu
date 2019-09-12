@@ -64,25 +64,31 @@ public class EeaPrivateNonceProviderTest {
   }
 
   @Test
+  public void noMatchingLegacyGroupsProducesExpectedNonce() {
+    final long reportedNonce = 0L;
+    PrivacyGroup[] returnedGroups = new PrivacyGroup[0];
+
+    final ArgumentCaptor<FindPrivacyGroupRequest> groupMembersCaptor =
+        ArgumentCaptor.forClass(FindPrivacyGroupRequest.class);
+
+    when(enclave.findPrivacyGroup(groupMembersCaptor.capture())).thenReturn(returnedGroups);
+    when(privateTransactionHandler.getSenderNonce(address, "Group1")).thenReturn(reportedNonce);
+
+    final long nonce =
+        nonceProvider.determineNonce("privateFrom", new String[] {"first", "second"}, address);
+
+    assertThat(nonce).isEqualTo(reportedNonce);
+    assertThat(groupMembersCaptor.getValue().addresses())
+        .containsAll(Lists.newArrayList("privateFrom", "first", "second"));
+  }
+
+  @Test
   public void moreThanOneMatchingLegacyGroupThrowsException() {
     PrivacyGroup[] returnedGroups =
         new PrivacyGroup[] {
           new PrivacyGroup("Group1", Type.LEGACY, "Group1_Name", "Group1_Desc", new String[0]),
           new PrivacyGroup("Group2", Type.LEGACY, "Group2_Name", "Group2_Desc", new String[0]),
         };
-
-    when(enclave.findPrivacyGroup(any())).thenReturn(returnedGroups);
-
-    assertThatExceptionOfType(RuntimeException.class)
-        .isThrownBy(
-            () ->
-                nonceProvider.determineNonce(
-                    "privateFrom", new String[] {"first", "second"}, address));
-  }
-
-  @Test
-  public void noMatchingLegacyGroupsReturnsError() {
-    PrivacyGroup[] returnedGroups = new PrivacyGroup[] {};
 
     when(enclave.findPrivacyGroup(any())).thenReturn(returnedGroups);
 

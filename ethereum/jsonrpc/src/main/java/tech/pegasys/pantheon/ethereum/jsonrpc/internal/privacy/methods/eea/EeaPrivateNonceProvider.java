@@ -49,6 +49,11 @@ public class EeaPrivateNonceProvider {
             .filter(group -> group.getType() == Type.LEGACY)
             .collect(Collectors.toList());
 
+    if (legacyGroups.size() == 0) {
+      // the legacy group does not exist yet
+      return 0;
+    }
+
     if (legacyGroups.size() != 1) {
       throw new RuntimeException(
           String.format(

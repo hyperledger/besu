@@ -26,10 +26,13 @@ import java.util.Collections;
 import org.junit.Before;
 import org.junit.Test;
 import org.web3j.protocol.eea.response.PrivateTransactionReceipt;
+import org.web3j.protocol.pantheon.response.privacy.PrivacyGroup;
+import org.web3j.utils.Base64String;
 
 public class EthSignerAcceptanceTest extends PrivacyAcceptanceTestBase {
 
   private PrivacyNode minerNode;
+  private EthSignerTestHarness ethSigner;
 
   private EthSignerClient ethSignerClient;
 
@@ -40,12 +43,13 @@ public class EthSignerAcceptanceTest extends PrivacyAcceptanceTestBase {
             "miner-node", privacyAccountResolver.resolve(0));
     privacyCluster.start(minerNode);
 
-    final EthSignerTestHarness ethSigner =
+    ethSigner =
         EthSignerTestHarnessFactory.create(
             privacy.newFolder().toPath(),
             "ethSignerKey--fe3b557e8fb62b89f4916b721be55ceb828dbd73.json",
             minerNode.getPantheon().getJsonRpcSocketPort().orElseThrow(),
             2018);
+
     ethSignerClient = new EthSignerClient(ethSigner.getHttpListeningUrl());
   }
 
@@ -60,6 +64,88 @@ public class EthSignerAcceptanceTest extends PrivacyAcceptanceTestBase {
             BigInteger.valueOf(0),
             minerNode.getEnclaveKey(),
             Collections.emptyList(),
+            "restricted");
+
+    final PrivateTransactionReceipt receipt =
+        minerNode.execute(privacyTransactions.getPrivateTransactionReceipt(transactionHash));
+
+    minerNode.verify(
+        privateTransactionVerifier.validPrivateTransactionReceipt(transactionHash, receipt));
+  }
+
+  @Test
+  public void privateSmartContractMustDeployNoNonce() throws IOException {
+    final String transactionHash =
+        ethSignerClient.eeaSendTransaction(
+            null,
+            BigInteger.valueOf(63992),
+            BigInteger.valueOf(1000),
+            EventEmitter.BINARY,
+            minerNode.getEnclaveKey(),
+            Collections.emptyList(),
+            "restricted");
+
+    final PrivateTransactionReceipt receipt =
+        minerNode.execute(privacyTransactions.getPrivateTransactionReceipt(transactionHash));
+
+    minerNode.verify(
+        privateTransactionVerifier.validPrivateTransactionReceipt(transactionHash, receipt));
+  }
+
+  @Test
+  public void privateSmartContractMustDeployWithPrivacyGroup() throws IOException {
+    final String privacyGroupId =
+        minerNode.execute(privacyTransactions.createPrivacyGroup(null, null, minerNode));
+
+    minerNode.verify(
+        privateTransactionVerifier.validPrivacyGroupCreated(
+            new PrivacyGroup(
+                privacyGroupId,
+                PrivacyGroup.Type.PANTHEON,
+                "Default Name",
+                "Default Description",
+                Base64String.wrapList(minerNode.getEnclaveKey()))));
+
+    final String transactionHash =
+        ethSignerClient.eeaSendTransaction(
+            null,
+            BigInteger.valueOf(63992),
+            BigInteger.valueOf(1000),
+            EventEmitter.BINARY,
+            BigInteger.valueOf(0),
+            minerNode.getEnclaveKey(),
+            privacyGroupId,
+            "restricted");
+
+    final PrivateTransactionReceipt receipt =
+        minerNode.execute(privacyTransactions.getPrivateTransactionReceipt(transactionHash));
+
+    minerNode.verify(
+        privateTransactionVerifier.validPrivateTransactionReceipt(transactionHash, receipt));
+  }
+
+  @Test
+  public void privateSmartContractMustDeployWithPrivacyGroupNoNonce() throws IOException {
+    final String privacyGroupId =
+        minerNode.execute(privacyTransactions.createPrivacyGroup(null, null, minerNode));
+
+    minerNode.verify(
+        privateTransactionVerifier.validPrivacyGroupCreated(
+            new PrivacyGroup(
+                privacyGroupId,
+                PrivacyGroup.Type.PANTHEON,
+                "Default Name",
+                "Default Description",
+                Base64String.wrapList(minerNode.getEnclaveKey()))));
+
+    final String transactionHash =
+        ethSignerClient.eeaSendTransaction(
+            null,
+            BigInteger.valueOf(63992),
+            BigInteger.valueOf(1000),
+            EventEmitter.BINARY,
+            minerNode.getEnclaveKey(),
+            privacyGroupId,
             "restricted");
 
     final PrivateTransactionReceipt receipt =
