@@ -44,7 +44,6 @@ import tech.pegasys.pantheon.cli.error.PantheonExceptionHandler;
 import tech.pegasys.pantheon.cli.options.EthProtocolOptions;
 import tech.pegasys.pantheon.cli.options.MetricsCLIOptions;
 import tech.pegasys.pantheon.cli.options.NetworkingOptions;
-import tech.pegasys.pantheon.cli.options.RocksDBOptions;
 import tech.pegasys.pantheon.cli.options.SynchronizerOptions;
 import tech.pegasys.pantheon.cli.options.TransactionPoolOptions;
 import tech.pegasys.pantheon.cli.subcommands.PasswordSubCommand;
@@ -81,6 +80,8 @@ import tech.pegasys.pantheon.ethereum.permissioning.LocalPermissioningConfigurat
 import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfigurationBuilder;
 import tech.pegasys.pantheon.ethereum.permissioning.SmartContractPermissioningConfiguration;
+import tech.pegasys.pantheon.ethereum.storage.keyvalue.KeyValueStorageProvider;
+import tech.pegasys.pantheon.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
 import tech.pegasys.pantheon.ethereum.worldstate.PruningConfiguration;
 import tech.pegasys.pantheon.metrics.ObservableMetricsSystem;
 import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
@@ -90,13 +91,16 @@ import tech.pegasys.pantheon.metrics.prometheus.PrometheusMetricsSystem;
 import tech.pegasys.pantheon.metrics.vertx.VertxMetricsAdapterFactory;
 import tech.pegasys.pantheon.nat.NatMethod;
 import tech.pegasys.pantheon.plugin.services.MetricsSystem;
+import tech.pegasys.pantheon.plugin.services.PantheonConfiguration;
 import tech.pegasys.pantheon.plugin.services.PantheonEvents;
 import tech.pegasys.pantheon.plugin.services.PicoCLIOptions;
+import tech.pegasys.pantheon.plugin.services.StorageService;
 import tech.pegasys.pantheon.plugin.services.metrics.MetricCategory;
+import tech.pegasys.pantheon.services.PantheonConfigurationImpl;
 import tech.pegasys.pantheon.services.PantheonEventsImpl;
 import tech.pegasys.pantheon.services.PantheonPluginContextImpl;
 import tech.pegasys.pantheon.services.PicoCLIOptionsImpl;
-import tech.pegasys.pantheon.services.kvstore.RocksDbConfiguration;
+import tech.pegasys.pantheon.services.StorageServiceImpl;
 import tech.pegasys.pantheon.util.PermissioningConfigurationValidator;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.number.Fraction;
@@ -122,6 +126,7 @@ import java.util.TreeMap;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Resources;
@@ -167,11 +172,11 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   final SynchronizerOptions synchronizerOptions = SynchronizerOptions.create();
   final EthProtocolOptions ethProtocolOptions = EthProtocolOptions.create();
   final MetricsCLIOptions metricsCLIOptions = MetricsCLIOptions.create();
-  final RocksDBOptions rocksDBOptions = RocksDBOptions.create();
   final TransactionPoolOptions transactionPoolOptions = TransactionPoolOptions.create();
   private final RunnerBuilder runnerBuilder;
   private final PantheonController.Builder controllerBuilderFactory;
   private final PantheonPluginContextImpl pantheonPluginContext;
+  private final StorageServiceImpl storageService;
   private final Map<String, String> environment;
 
   protected KeyLoader getKeyLoader() {
@@ -651,6 +656,13 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   private final Integer pendingTxRetentionPeriod =
       TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS;
 
+  @SuppressWarnings("FieldMayBeFinal") // Because PicoCLI requires Strings to not be final.
+  @Option(
+      names = {"--key-value-storage"},
+      description = "Identity for the key-value storage to be used.",
+      arity = "1")
+  private String keyValueStorageName = DEFAULT_KEY_VALUE_STORAGE_NAME;
+
   @Option(
       names = {"--override-genesis-config"},
       paramLabel = "NAME=VALUE",
@@ -669,7 +681,8 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   private Optional<PermissioningConfiguration> permissioningConfiguration;
   private Collection<EnodeURL> staticNodes;
   private PantheonController<?> pantheonController;
-
+  private StandaloneCommand standaloneCommands;
+  private PantheonConfiguration pluginCommonConfiguration;
   private final Supplier<ObservableMetricsSystem> metricsSystem =
       Suppliers.memoize(() -> PrometheusMetricsSystem.init(metricsConfiguration()));
 
@@ -682,6 +695,29 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
       final PantheonController.Builder controllerBuilderFactory,
       final PantheonPluginContextImpl pantheonPluginContext,
       final Map<String, String> environment) {
+    this(
+        logger,
+        rlpBlockImporter,
+        jsonBlockImporterFactory,
+        rlpBlockExporterFactory,
+        runnerBuilder,
+        controllerBuilderFactory,
+        pantheonPluginContext,
+        environment,
+        new StorageServiceImpl());
+  }
+
+  @VisibleForTesting
+  protected PantheonCommand(
+      final Logger logger,
+      final RlpBlockImporter rlpBlockImporter,
+      final JsonBlockImporterFactory jsonBlockImporterFactory,
+      final RlpBlockExporterFactory rlpBlockExporterFactory,
+      final RunnerBuilder runnerBuilder,
+      final PantheonController.Builder controllerBuilderFactory,
+      final PantheonPluginContextImpl pantheonPluginContext,
+      final Map<String, String> environment,
+      final StorageServiceImpl storageService) {
     this.logger = logger;
     this.rlpBlockImporter = rlpBlockImporter;
     this.rlpBlockExporterFactory = rlpBlockExporterFactory;
@@ -690,9 +726,8 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     this.controllerBuilderFactory = controllerBuilderFactory;
     this.pantheonPluginContext = pantheonPluginContext;
     this.environment = environment;
+    this.storageService = storageService;
   }
-
-  private StandaloneCommand standaloneCommands;
 
   public void parse(
       final AbstractParseResultHandler<List<Object>> resultHandler,
@@ -712,11 +747,22 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   public void run() {
     try {
       prepareLogging();
+      addConfigurationService();
       logger.info("Starting Pantheon version: {}", PantheonInfo.version());
       checkOptions().configure().controller().startPlugins().startSynchronization();
     } catch (final Exception e) {
       throw new ParameterException(this.commandLine, e.getMessage(), e);
     }
+  }
+
+  private void addConfigurationService() {
+    pluginCommonConfiguration = new PantheonConfigurationImpl(dataDir().resolve(DATABASE_PATH));
+    pantheonPluginContext.addService(PantheonConfiguration.class, pluginCommonConfiguration);
+  }
+
+  @VisibleForTesting
+  void setPantheonConfiguration(final PantheonConfiguration pluginCommonConfiguration) {
+    this.pluginCommonConfiguration = pluginCommonConfiguration;
   }
 
   private PantheonCommand handleStandaloneCommand() {
@@ -773,7 +819,6 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
             .put("Ethereum Wire Protocol", ethProtocolOptions)
             .put("Metrics", metricsCLIOptions)
             .put("P2P Network", networkingOptions)
-            .put("RocksDB", rocksDBOptions)
             .put("Synchronizer", synchronizerOptions)
             .put("TransactionPool", transactionPoolOptions)
             .build();
@@ -784,6 +829,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
 
   private PantheonCommand preparePlugins() {
     pantheonPluginContext.addService(PicoCLIOptions.class, new PicoCLIOptionsImpl(commandLine));
+    pantheonPluginContext.addService(StorageService.class, storageService);
     pantheonPluginContext.registerPlugins(pluginsDir());
     return this;
   }
@@ -825,6 +871,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
             pantheonController.getProtocolManager().getBlockBroadcaster(),
             pantheonController.getTransactionPool(),
             pantheonController.getSyncState()));
+    pantheonPluginContext.addService(MetricsSystem.class, getMetricsSystem());
     pantheonPluginContext.startPlugins();
     return this;
   }
@@ -933,8 +980,6 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   public PantheonController<?> buildController() {
     try {
       return getControllerBuilder().build();
-    } catch (final IOException e) {
-      throw new ExecutionException(this.commandLine, "Invalid path", e);
     } catch (final Exception e) {
       throw new ExecutionException(this.commandLine, e.getMessage(), e);
     }
@@ -943,10 +988,9 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
   public PantheonControllerBuilder<?> getControllerBuilder() {
     try {
       return controllerBuilderFactory
-          .fromEthNetworkConfig(updateNetworkConfig(getNetwork()), genesisConfigOverrides)
+          .fromEthNetworkConfig(updateNetworkConfig(getNetwork()))
           .synchronizerConfiguration(buildSyncConfig())
           .ethProtocolConfiguration(ethProtocolOptions.toDomainObject())
-          .rocksDbConfiguration(buildRocksDbConfiguration())
           .dataDirectory(dataDir())
           .miningParameters(
               new MiningParameters(coinbase, minTransactionGasPrice, extraData, isMiningEnabled))
@@ -956,6 +1000,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
           .privacyParameters(privacyParameters())
           .clock(Clock.systemUTC())
           .isRevertReasonEnabled(isRevertReasonEnabled)
+          .storageProvider(keyStorageProvider(keyValueStorageName))
           .isPruningEnabled(isPruningEnabled)
           .pruningConfiguration(buildPruningConfiguration())
           .genesisConfigOverrides(genesisConfigOverrides);
@@ -1201,11 +1246,20 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
             commandLine, "Please specify Enclave public key file path to enable privacy");
       }
       privacyParametersBuilder.setPrivacyAddress(privacyPrecompiledAddress);
-      privacyParametersBuilder.setMetricsSystem(metricsSystem.get());
-      privacyParametersBuilder.setDataDir(dataDir());
       privacyParametersBuilder.setPrivateKeyPath(privacyMarkerTransactionSigningKeyPath);
+      privacyParametersBuilder.setStorageProvider(
+          keyStorageProvider(keyValueStorageName + "-privacy"));
     }
+
     return privacyParametersBuilder.build();
+  }
+
+  private KeyValueStorageProvider keyStorageProvider(final String name) {
+    return new KeyValueStorageProviderBuilder()
+        .withStorageFactory(storageService.getByName(name))
+        .withCommonConfiguration(pluginCommonConfiguration)
+        .withMetricsSystem(getMetricsSystem())
+        .build();
   }
 
   private SynchronizerConfiguration buildSyncConfig() {
@@ -1214,10 +1268,6 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
         .syncMode(syncMode)
         .fastSyncMinimumPeerCount(fastSyncMinPeerCount)
         .build();
-  }
-
-  private RocksDbConfiguration buildRocksDbConfiguration() {
-    return rocksDBOptions.toDomainObject().databaseDir(dataDir().resolve(DATABASE_PATH)).build();
   }
 
   private TransactionPoolConfiguration buildTransactionPoolConfiguration() {

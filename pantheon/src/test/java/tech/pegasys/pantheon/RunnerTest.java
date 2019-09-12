@@ -42,19 +42,22 @@ import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSpec;
 import tech.pegasys.pantheon.ethereum.p2p.peers.EnodeURL;
 import tech.pegasys.pantheon.ethereum.storage.StorageProvider;
-import tech.pegasys.pantheon.ethereum.storage.keyvalue.RocksDbStorageProvider;
+import tech.pegasys.pantheon.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
+import tech.pegasys.pantheon.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
 import tech.pegasys.pantheon.metrics.ObservableMetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
 import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
-import tech.pegasys.pantheon.services.kvstore.RocksDbConfiguration;
+import tech.pegasys.pantheon.plugin.services.storage.rocksdb.RocksDBKeyValueStorageFactory;
+import tech.pegasys.pantheon.plugin.services.storage.rocksdb.configuration.RocksDBFactoryConfiguration;
+import tech.pegasys.pantheon.services.PantheonConfigurationImpl;
 import tech.pegasys.pantheon.testutil.TestClock;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
-import java.io.IOException;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -79,6 +82,11 @@ import org.junit.rules.TemporaryFolder;
 
 /** Tests for {@link Runner}. */
 public final class RunnerTest {
+
+  private static final int MAX_OPEN_FILES = 1024;
+  private static final long CACHE_CAPACITY = 8388608;
+  private static final int MAX_BACKGROUND_COMPACTIONS = 4;
+  private static final int BACKGROUND_THREAD_COUNT = 4;
 
   @Rule public final TemporaryFolder temp = new TemporaryFolder();
 
@@ -329,9 +337,20 @@ public final class RunnerTest {
     }
   }
 
-  private StorageProvider createKeyValueStorageProvider(final Path dbAhead) throws IOException {
-    return RocksDbStorageProvider.create(
-        RocksDbConfiguration.builder().databaseDir(dbAhead).build(), new NoOpMetricsSystem());
+  private StorageProvider createKeyValueStorageProvider(final Path dbAhead) {
+    return new KeyValueStorageProviderBuilder()
+        .withStorageFactory(
+            new RocksDBKeyValueStorageFactory(
+                () ->
+                    new RocksDBFactoryConfiguration(
+                        MAX_OPEN_FILES,
+                        MAX_BACKGROUND_COMPACTIONS,
+                        BACKGROUND_THREAD_COUNT,
+                        CACHE_CAPACITY),
+                Arrays.asList(KeyValueSegmentIdentifier.values())))
+        .withCommonConfiguration(new PantheonConfigurationImpl(dbAhead))
+        .withMetricsSystem(new NoOpMetricsSystem())
+        .build();
   }
 
   private JsonRpcConfiguration jsonRpcConfiguration() {

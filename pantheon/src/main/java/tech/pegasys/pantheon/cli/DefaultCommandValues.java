@@ -68,6 +68,7 @@ public interface DefaultCommandValues {
   int DEFAULT_MAX_PEERS = 25;
   float DEFAULT_FRACTION_REMOTE_WIRE_CONNECTIONS_ALLOWED =
       RlpxConfiguration.DEFAULT_FRACTION_REMOTE_CONNECTIONS_ALLOWED;
+  String DEFAULT_KEY_VALUE_STORAGE_NAME = "rocksdb";
 
   static Path getDefaultPantheonDataPath(final Object command) {
     // this property is retrieved from Gradle tasks or Pantheon running shell script.

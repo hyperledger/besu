@@ -17,7 +17,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import tech.pegasys.pantheon.ethereum.core.Log;
 import tech.pegasys.pantheon.ethereum.core.LogSeries;
 import tech.pegasys.pantheon.ethereum.rlp.RLP;
-import tech.pegasys.pantheon.services.kvstore.KeyValueStorage;
+import tech.pegasys.pantheon.plugin.services.storage.KeyValueStorage;
+import tech.pegasys.pantheon.plugin.services.storage.KeyValueStorageTransaction;
 import tech.pegasys.pantheon.util.bytes.Bytes32;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.bytes.BytesValues;
@@ -57,7 +58,9 @@ public class PrivateTransactionKeyValueStorage implements PrivateTransactionStor
   }
 
   private Optional<BytesValue> get(final BytesValue key, final BytesValue keySuffix) {
-    return keyValueStorage.get(BytesValues.concatenate(key, keySuffix));
+    return keyValueStorage
+        .get(BytesValues.concatenate(key, keySuffix).getArrayUnsafe())
+        .map(BytesValue::wrap);
   }
 
   @Override
@@ -67,9 +70,9 @@ public class PrivateTransactionKeyValueStorage implements PrivateTransactionStor
 
   public static class Updater implements PrivateTransactionStorage.Updater {
 
-    private final KeyValueStorage.Transaction transaction;
+    private final KeyValueStorageTransaction transaction;
 
-    private Updater(final KeyValueStorage.Transaction transaction) {
+    private Updater(final KeyValueStorageTransaction transaction) {
       this.transaction = transaction;
     }
 
@@ -88,7 +91,8 @@ public class PrivateTransactionKeyValueStorage implements PrivateTransactionStor
     }
 
     private void set(final BytesValue key, final BytesValue keySuffix, final BytesValue value) {
-      transaction.put(BytesValues.concatenate(key, keySuffix), value);
+      transaction.put(
+          BytesValues.concatenate(key, keySuffix).getArrayUnsafe(), value.getArrayUnsafe());
     }
 
     @Override

@@ -14,8 +14,9 @@ package tech.pegasys.pantheon.ethereum.trie;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import tech.pegasys.pantheon.plugin.services.storage.KeyValueStorage;
+import tech.pegasys.pantheon.plugin.services.storage.KeyValueStorageTransaction;
 import tech.pegasys.pantheon.services.kvstore.InMemoryKeyValueStorage;
-import tech.pegasys.pantheon.services.kvstore.KeyValueStorage.Transaction;
 import tech.pegasys.pantheon.util.bytes.Bytes32;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
@@ -36,7 +37,8 @@ public class TrieNodeDecoderTest {
 
     // Build a small trie
     MerklePatriciaTrie<BytesValue, BytesValue> trie =
-        new StoredMerklePatriciaTrie<>(storage::get, Function.identity(), Function.identity());
+        new StoredMerklePatriciaTrie<>(
+            new BytesToByteNodeLoader(storage), Function.identity(), Function.identity());
     trie.put(BytesValue.fromHexString("0x100000"), BytesValue.of(1));
     trie.put(BytesValue.fromHexString("0x200000"), BytesValue.of(2));
     trie.put(BytesValue.fromHexString("0x300000"), BytesValue.of(3));
@@ -49,12 +51,13 @@ public class TrieNodeDecoderTest {
         BytesValue.fromHexString("0x11223344556677889900112233445566778899"));
 
     // Save nodes to storage
-    final Transaction tx = storage.startTransaction();
-    trie.commit(tx::put);
+    final KeyValueStorageTransaction tx = storage.startTransaction();
+    trie.commit((key, value) -> tx.put(key.getArrayUnsafe(), value.getArrayUnsafe()));
     tx.commit();
 
     // Get and flatten root node
-    final BytesValue rootNodeRlp = storage.get(trie.getRootHash()).get();
+    final BytesValue rootNodeRlp =
+        BytesValue.wrap(storage.get(trie.getRootHash().getArrayUnsafe()).get());
     final List<Node<BytesValue>> nodes = TrieNodeDecoder.decodeNodes(rootNodeRlp);
     // The full trie hold 10 nodes, the branch node starting with 0x3... holding 2 values will be a
     // hash
@@ -80,7 +83,8 @@ public class TrieNodeDecoderTest {
 
     // Build a small trie
     MerklePatriciaTrie<BytesValue, BytesValue> trie =
-        new StoredMerklePatriciaTrie<>(storage::get, Function.identity(), Function.identity());
+        new StoredMerklePatriciaTrie<>(
+            new BytesToByteNodeLoader(storage), Function.identity(), Function.identity());
     trie.put(BytesValue.fromHexString("0x100000"), BytesValue.of(1));
     trie.put(BytesValue.fromHexString("0x200000"), BytesValue.of(2));
     trie.put(BytesValue.fromHexString("0x300000"), BytesValue.of(3));
@@ -90,13 +94,14 @@ public class TrieNodeDecoderTest {
     trie.put(BytesValue.fromHexString("0x310000"), BytesValue.of(30));
 
     // Save nodes to storage
-    final Transaction tx = storage.startTransaction();
-    trie.commit(tx::put);
+    final KeyValueStorageTransaction tx = storage.startTransaction();
+    trie.commit((key, value) -> tx.put(key.getArrayUnsafe(), value.getArrayUnsafe()));
     tx.commit();
 
     // First layer should just be the root node
     final List<Node<BytesValue>> depth0Nodes =
-        TrieNodeDecoder.breadthFirstDecoder(storage::get, trie.getRootHash(), 0)
+        TrieNodeDecoder.breadthFirstDecoder(
+                new BytesToByteNodeLoader(storage), trie.getRootHash(), 0)
             .collect(Collectors.toList());
 
     assertThat(depth0Nodes.size()).isEqualTo(1);
@@ -105,7 +110,8 @@ public class TrieNodeDecoderTest {
 
     // Decode first 2 levels
     final List<Node<BytesValue>> depth0And1Nodes =
-        (TrieNodeDecoder.breadthFirstDecoder(storage::get, trie.getRootHash(), 1)
+        (TrieNodeDecoder.breadthFirstDecoder(
+                new BytesToByteNodeLoader(storage), trie.getRootHash(), 1)
             .collect(Collectors.toList()));
     final int secondLevelNodeCount = 3;
     final int expectedNodeCount = secondLevelNodeCount + 1;
@@ -126,7 +132,7 @@ public class TrieNodeDecoderTest {
 
     // Decode full trie
     final List<Node<BytesValue>> allNodes =
-        TrieNodeDecoder.breadthFirstDecoder(storage::get, trie.getRootHash())
+        TrieNodeDecoder.breadthFirstDecoder(new BytesToByteNodeLoader(storage), trie.getRootHash())
             .collect(Collectors.toList());
     assertThat(allNodes.size()).isEqualTo(10);
     // Collect and check values
@@ -153,7 +159,8 @@ public class TrieNodeDecoderTest {
 
     // Build a small trie
     MerklePatriciaTrie<BytesValue, BytesValue> trie =
-        new StoredMerklePatriciaTrie<>(fullStorage::get, Function.identity(), Function.identity());
+        new StoredMerklePatriciaTrie<>(
+            new BytesToByteNodeLoader(fullStorage), Function.identity(), Function.identity());
     final Random random = new Random(1);
     for (int i = 0; i < 30; i++) {
       byte[] key = new byte[4];
@@ -162,20 +169,24 @@ public class TrieNodeDecoderTest {
       random.nextBytes(val);
       trie.put(BytesValue.wrap(key), BytesValue.wrap(val));
     }
-    final Transaction tx = fullStorage.startTransaction();
-    trie.commit(tx::put);
+    final KeyValueStorageTransaction tx = fullStorage.startTransaction();
+    trie.commit((key, value) -> tx.put(key.getArrayUnsafe(), value.getArrayUnsafe()));
     tx.commit();
 
     // Get root node
     Node<BytesValue> rootNode =
-        TrieNodeDecoder.breadthFirstDecoder(fullStorage::get, trie.getRootHash()).findFirst().get();
+        TrieNodeDecoder.breadthFirstDecoder(
+                new BytesToByteNodeLoader(fullStorage), trie.getRootHash())
+            .findFirst()
+            .get();
 
     // Decode partially available trie
-    final Transaction partialTx = partialStorage.startTransaction();
-    partialTx.put(trie.getRootHash(), rootNode.getRlp());
+    final KeyValueStorageTransaction partialTx = partialStorage.startTransaction();
+    partialTx.put(trie.getRootHash().getArrayUnsafe(), rootNode.getRlp().getArrayUnsafe());
     partialTx.commit();
     final List<Node<BytesValue>> allDecodableNodes =
-        TrieNodeDecoder.breadthFirstDecoder(partialStorage::get, trie.getRootHash())
+        TrieNodeDecoder.breadthFirstDecoder(
+                new BytesToByteNodeLoader(partialStorage), trie.getRootHash())
             .collect(Collectors.toList());
     assertThat(allDecodableNodes.size()).isGreaterThanOrEqualTo(1);
     assertThat(allDecodableNodes.get(0).getHash()).isEqualTo(rootNode.getHash());
@@ -195,16 +206,17 @@ public class TrieNodeDecoderTest {
     final InMemoryKeyValueStorage storage = new InMemoryKeyValueStorage();
 
     MerklePatriciaTrie<BytesValue, BytesValue> trie =
-        new StoredMerklePatriciaTrie<>(storage::get, Function.identity(), Function.identity());
+        new StoredMerklePatriciaTrie<>(
+            new BytesToByteNodeLoader(storage), Function.identity(), Function.identity());
     trie.put(BytesValue.fromHexString("0x100000"), BytesValue.of(1));
 
     // Save nodes to storage
-    final Transaction tx = storage.startTransaction();
-    trie.commit(tx::put);
+    final KeyValueStorageTransaction tx = storage.startTransaction();
+    trie.commit((key, value) -> tx.put(key.getArrayUnsafe(), value.getArrayUnsafe()));
     tx.commit();
 
     List<Node<BytesValue>> result =
-        TrieNodeDecoder.breadthFirstDecoder(storage::get, trie.getRootHash())
+        TrieNodeDecoder.breadthFirstDecoder(new BytesToByteNodeLoader(storage), trie.getRootHash())
             .collect(Collectors.toList());
     assertThat(result.size()).isEqualTo(1);
     assertThat(result.get(0).getValue()).contains(BytesValue.of(1));
@@ -220,5 +232,20 @@ public class TrieNodeDecoderTest {
         TrieNodeDecoder.breadthFirstDecoder((h) -> Optional.empty(), randomRootHash)
             .collect(Collectors.toList());
     assertThat(result.size()).isEqualTo(0);
+  }
+
+  private static class BytesToByteNodeLoader implements NodeLoader {
+
+    private final KeyValueStorage storage;
+
+    private BytesToByteNodeLoader(final KeyValueStorage storage) {
+      this.storage = storage;
+    }
+
+    @Override
+    public Optional<BytesValue> getNode(final Bytes32 hash) {
+      final byte[] value = storage.get(hash.getArrayUnsafe()).orElse(null);
+      return value == null ? Optional.empty() : Optional.of(BytesValue.wrap(value));
+    }
   }
 }

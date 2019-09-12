@@ -12,7 +12,8 @@
  */
 package tech.pegasys.pantheon.ethereum.trie;
 
-import tech.pegasys.pantheon.services.kvstore.KeyValueStorage;
+import tech.pegasys.pantheon.plugin.services.storage.KeyValueStorage;
+import tech.pegasys.pantheon.plugin.services.storage.KeyValueStorageTransaction;
 import tech.pegasys.pantheon.util.bytes.Bytes32;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
@@ -34,7 +35,7 @@ public class KeyValueMerkleStorage implements MerkleStorage {
     final Optional<BytesValue> value =
         pendingUpdates.containsKey(hash)
             ? Optional.of(pendingUpdates.get(hash))
-            : keyValueStorage.get(hash);
+            : keyValueStorage.get(hash.getArrayUnsafe()).map(BytesValue::wrap);
     return value;
   }
 
@@ -49,9 +50,9 @@ public class KeyValueMerkleStorage implements MerkleStorage {
       // Nothing to do
       return;
     }
-    final KeyValueStorage.Transaction kvTx = keyValueStorage.startTransaction();
+    final KeyValueStorageTransaction kvTx = keyValueStorage.startTransaction();
     for (final Map.Entry<Bytes32, BytesValue> entry : pendingUpdates.entrySet()) {
-      kvTx.put(entry.getKey(), entry.getValue());
+      kvTx.put(entry.getKey().getArrayUnsafe(), entry.getValue().getArrayUnsafe());
     }
     kvTx.commit();
 

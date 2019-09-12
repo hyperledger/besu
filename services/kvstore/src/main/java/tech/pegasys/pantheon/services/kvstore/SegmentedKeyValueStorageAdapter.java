@@ -12,8 +12,10 @@
  */
 package tech.pegasys.pantheon.services.kvstore;
 
-import tech.pegasys.pantheon.services.kvstore.SegmentedKeyValueStorage.Segment;
-import tech.pegasys.pantheon.util.bytes.BytesValue;
+import tech.pegasys.pantheon.plugin.services.exception.StorageException;
+import tech.pegasys.pantheon.plugin.services.storage.KeyValueStorage;
+import tech.pegasys.pantheon.plugin.services.storage.KeyValueStorageTransaction;
+import tech.pegasys.pantheon.plugin.services.storage.SegmentIdentifier;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -25,7 +27,7 @@ public class SegmentedKeyValueStorageAdapter<S> implements KeyValueStorage {
   private final SegmentedKeyValueStorage<S> storage;
 
   public SegmentedKeyValueStorageAdapter(
-      final Segment segment, final SegmentedKeyValueStorage<S> storage) {
+      final SegmentIdentifier segment, final SegmentedKeyValueStorage<S> storage) {
     this.segmentHandle = storage.getSegmentIdentifierByName(segment);
     this.storage = storage;
   }
@@ -36,36 +38,37 @@ public class SegmentedKeyValueStorageAdapter<S> implements KeyValueStorage {
   }
 
   @Override
+  public boolean containsKey(final byte[] key) throws StorageException {
+    return storage.containsKey(segmentHandle, key);
+  }
+
+  @Override
+  public Optional<byte[]> get(final byte[] key) throws StorageException {
+    return storage.get(segmentHandle, key);
+  }
+
+  @Override
+  public long removeAllKeysUnless(final Predicate<byte[]> retainCondition) throws StorageException {
+    return storage.removeUnless(segmentHandle, retainCondition);
+  }
+
+  @Override
   public void close() throws IOException {
     storage.close();
   }
 
   @Override
-  public boolean containsKey(final BytesValue key) throws StorageException {
-    return storage.containsKey(segmentHandle, key);
-  }
-
-  @Override
-  public Optional<BytesValue> get(final BytesValue key) throws StorageException {
-    return storage.get(segmentHandle, key);
-  }
-
-  @Override
-  public long removeUnless(final Predicate<BytesValue> inUseCheck) {
-    return storage.removeUnless(segmentHandle, inUseCheck);
-  }
-
-  @Override
-  public Transaction startTransaction() throws StorageException {
+  public KeyValueStorageTransaction startTransaction() throws StorageException {
     final SegmentedKeyValueStorage.Transaction<S> transaction = storage.startTransaction();
-    return new Transaction() {
+    return new KeyValueStorageTransaction() {
+
       @Override
-      public void put(final BytesValue key, final BytesValue value) {
+      public void put(final byte[] key, final byte[] value) {
         transaction.put(segmentHandle, key, value);
       }
 
       @Override
-      public void remove(final BytesValue key) {
+      public void remove(final byte[] key) {
         transaction.remove(segmentHandle, key);
       }
 

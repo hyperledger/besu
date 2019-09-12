@@ -13,6 +13,10 @@
 package tech.pegasys.pantheon.ethereum.eth.sync.worldstate;
 
 import static tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider.createInMemoryWorldStateArchive;
+import static tech.pegasys.pantheon.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_BACKGROUND_THREAD_COUNT;
+import static tech.pegasys.pantheon.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_CACHE_CAPACITY;
+import static tech.pegasys.pantheon.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_MAX_BACKGROUND_COMPACTIONS;
+import static tech.pegasys.pantheon.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_MAX_OPEN_FILES;
 
 import tech.pegasys.pantheon.ethereum.core.BlockDataGenerator;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
@@ -27,12 +31,15 @@ import tech.pegasys.pantheon.ethereum.eth.manager.RespondingEthPeer;
 import tech.pegasys.pantheon.ethereum.eth.manager.RespondingEthPeer.Responder;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.storage.StorageProvider;
-import tech.pegasys.pantheon.ethereum.storage.keyvalue.RocksDbStorageProvider;
+import tech.pegasys.pantheon.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
+import tech.pegasys.pantheon.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateArchive;
 import tech.pegasys.pantheon.ethereum.worldstate.WorldStateStorage;
+import tech.pegasys.pantheon.metrics.ObservableMetricsSystem;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
-import tech.pegasys.pantheon.plugin.services.MetricsSystem;
-import tech.pegasys.pantheon.services.kvstore.RocksDbConfiguration;
+import tech.pegasys.pantheon.plugin.services.storage.rocksdb.RocksDBKeyValueStorageFactory;
+import tech.pegasys.pantheon.plugin.services.storage.rocksdb.configuration.RocksDBFactoryConfiguration;
+import tech.pegasys.pantheon.services.PantheonConfigurationImpl;
 import tech.pegasys.pantheon.services.tasks.CachingTaskCollection;
 import tech.pegasys.pantheon.services.tasks.FlatFileTaskCollection;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
@@ -41,6 +48,7 @@ import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
@@ -60,7 +68,7 @@ public class WorldStateDownloaderBenchmark {
   private final BlockDataGenerator dataGen = new BlockDataGenerator();
   private Path tempDir;
   private BlockHeader blockHeader;
-  private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
+  private final ObservableMetricsSystem metricsSystem = new NoOpMetricsSystem();
   private WorldStateDownloader worldStateDownloader;
   private WorldStateStorage worldStateStorage;
   private RespondingEthPeer peer;
@@ -70,7 +78,7 @@ public class WorldStateDownloaderBenchmark {
   private EthProtocolManager ethProtocolManager;
 
   @Setup(Level.Invocation)
-  public void setUpUnchangedState() throws Exception {
+  public void setUpUnchangedState() {
     final SynchronizerConfiguration syncConfig =
         new SynchronizerConfiguration.Builder().worldStateHashCountPerRequest(200).build();
     final Hash stateRoot = createExistingWorldState();
@@ -88,10 +96,9 @@ public class WorldStateDownloaderBenchmark {
     peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, blockHeader.getNumber());
 
     final EthContext ethContext = ethProtocolManager.ethContext();
-    storageProvider =
-        RocksDbStorageProvider.create(
-            RocksDbConfiguration.builder().databaseDir(tempDir.resolve("database")).build(),
-            metricsSystem);
+
+    final StorageProvider storageProvider =
+        createKeyValueStorageProvider(tempDir.resolve("database"));
     worldStateStorage = storageProvider.createWorldStateStorage();
 
     pendingRequests =
@@ -147,5 +154,21 @@ public class WorldStateDownloaderBenchmark {
       throw new IllegalStateException("World state download did not complete.");
     }
     return rootData;
+  }
+
+  private StorageProvider createKeyValueStorageProvider(final Path dbAhead) {
+    return new KeyValueStorageProviderBuilder()
+        .withStorageFactory(
+            new RocksDBKeyValueStorageFactory(
+                () ->
+                    new RocksDBFactoryConfiguration(
+                        DEFAULT_MAX_OPEN_FILES,
+                        DEFAULT_MAX_BACKGROUND_COMPACTIONS,
+                        DEFAULT_BACKGROUND_THREAD_COUNT,
+                        DEFAULT_CACHE_CAPACITY),
+                Arrays.asList(KeyValueSegmentIdentifier.values())))
+        .withCommonConfiguration(new PantheonConfigurationImpl(dbAhead))
+        .withMetricsSystem(new NoOpMetricsSystem())
+        .build();
   }
 }

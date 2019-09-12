@@ -30,7 +30,6 @@ import tech.pegasys.pantheon.cli.config.EthNetworkConfig;
 import tech.pegasys.pantheon.cli.options.EthProtocolOptions;
 import tech.pegasys.pantheon.cli.options.MetricsCLIOptions;
 import tech.pegasys.pantheon.cli.options.NetworkingOptions;
-import tech.pegasys.pantheon.cli.options.RocksDBOptions;
 import tech.pegasys.pantheon.cli.options.SynchronizerOptions;
 import tech.pegasys.pantheon.cli.options.TransactionPoolOptions;
 import tech.pegasys.pantheon.cli.subcommands.PublicKeySubCommand.KeyLoader;
@@ -49,8 +48,12 @@ import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration;
 import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfiguration;
 import tech.pegasys.pantheon.ethereum.mainnet.ProtocolSchedule;
 import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
+import tech.pegasys.pantheon.ethereum.storage.StorageProvider;
 import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
+import tech.pegasys.pantheon.plugin.services.PantheonConfiguration;
+import tech.pegasys.pantheon.plugin.services.storage.KeyValueStorageFactory;
 import tech.pegasys.pantheon.services.PantheonPluginContextImpl;
+import tech.pegasys.pantheon.services.StorageServiceImpl;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.io.ByteArrayOutputStream;
@@ -105,6 +108,10 @@ public abstract class CommandTestAbstract {
   @Mock protected RlpBlockExporter rlpBlockExporter;
   @Mock protected JsonBlockImporter<?> jsonBlockImporter;
   @Mock protected RlpBlockImporter rlpBlockImporter;
+  @Mock protected StorageServiceImpl storageService;
+  @Mock protected PantheonConfiguration commonPluginConfiguration;
+  @Mock protected KeyValueStorageFactory rocksDBStorageFactory;
+  @Mock protected KeyValueStorageFactory rocksDBSPrivacyStorageFactory;
 
   @Mock protected Logger mockLogger;
   @Mock protected PantheonPluginContextImpl mockPantheonPluginContext;
@@ -121,6 +128,7 @@ public abstract class CommandTestAbstract {
   @Captor protected ArgumentCaptor<GraphQLConfiguration> graphQLConfigArgumentCaptor;
   @Captor protected ArgumentCaptor<WebSocketConfiguration> wsRpcConfigArgumentCaptor;
   @Captor protected ArgumentCaptor<MetricsConfiguration> metricsConfigArgumentCaptor;
+  @Captor protected ArgumentCaptor<StorageProvider> storageProviderArgumentCaptor;
 
   @Captor
   protected ArgumentCaptor<PermissioningConfiguration> permissioningConfigurationArgumentCaptor;
@@ -139,12 +147,10 @@ public abstract class CommandTestAbstract {
   public void initMocks() throws Exception {
 
     // doReturn used because of generic PantheonController
-    doReturn(mockControllerBuilder)
-        .when(mockControllerBuilderFactory)
-        .fromEthNetworkConfig(any(), any());
+    doReturn(mockControllerBuilder).when(mockControllerBuilderFactory).fromEthNetworkConfig(any());
+
     when(mockControllerBuilder.synchronizerConfiguration(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.ethProtocolConfiguration(any())).thenReturn(mockControllerBuilder);
-    when(mockControllerBuilder.rocksDbConfiguration(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.transactionPoolConfiguration(any()))
         .thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.dataDirectory(any())).thenReturn(mockControllerBuilder);
@@ -154,6 +160,7 @@ public abstract class CommandTestAbstract {
     when(mockControllerBuilder.privacyParameters(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.clock(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.isRevertReasonEnabled(false)).thenReturn(mockControllerBuilder);
+    when(mockControllerBuilder.storageProvider(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.isPruningEnabled(anyBoolean())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.pruningConfiguration(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.genesisConfigOverrides(any())).thenReturn(mockControllerBuilder);
@@ -189,6 +196,8 @@ public abstract class CommandTestAbstract {
     when(mockRunnerBuilder.metricsConfiguration(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.staticNodes(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.build()).thenReturn(mockRunner);
+
+    when(storageService.getByName("rocksdb")).thenReturn(rocksDBStorageFactory);
   }
 
   // Display outputs for debug purpose
@@ -241,7 +250,10 @@ public abstract class CommandTestAbstract {
             mockControllerBuilderFactory,
             keyLoader,
             mockPantheonPluginContext,
-            environment);
+            environment,
+            storageService);
+
+    pantheonCommand.setPantheonConfiguration(commonPluginConfiguration);
 
     // parse using Ansi.OFF to be able to assert on non formatted output results
     pantheonCommand.parse(
@@ -254,6 +266,7 @@ public abstract class CommandTestAbstract {
 
   @CommandLine.Command
   public static class TestPantheonCommand extends PantheonCommand {
+
     @CommandLine.Spec CommandLine.Model.CommandSpec spec;
     private final KeyLoader keyLoader;
 
@@ -271,7 +284,8 @@ public abstract class CommandTestAbstract {
         final PantheonController.Builder controllerBuilderFactory,
         final KeyLoader keyLoader,
         final PantheonPluginContextImpl pantheonPluginContext,
-        final Map<String, String> environment) {
+        final Map<String, String> environment,
+        final StorageServiceImpl storageService) {
       super(
           mockLogger,
           mockBlockImporter,
@@ -280,16 +294,13 @@ public abstract class CommandTestAbstract {
           mockRunnerBuilder,
           controllerBuilderFactory,
           pantheonPluginContext,
-          environment);
+          environment,
+          storageService);
       this.keyLoader = keyLoader;
     }
 
     public CommandSpec getSpec() {
       return spec;
-    }
-
-    public RocksDBOptions getRocksDBOptions() {
-      return rocksDBOptions;
     }
 
     public NetworkingOptions getNetworkingOptions() {

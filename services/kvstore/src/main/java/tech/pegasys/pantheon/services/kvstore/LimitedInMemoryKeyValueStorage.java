@@ -12,6 +12,9 @@
  */
 package tech.pegasys.pantheon.services.kvstore;
 
+import tech.pegasys.pantheon.plugin.services.exception.StorageException;
+import tech.pegasys.pantheon.plugin.services.storage.KeyValueStorage;
+import tech.pegasys.pantheon.plugin.services.storage.KeyValueStorageTransaction;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.HashMap;
@@ -33,7 +36,7 @@ import com.google.common.cache.CacheBuilder;
  */
 public class LimitedInMemoryKeyValueStorage implements KeyValueStorage {
 
-  private final Cache<BytesValue, BytesValue> storage;
+  private final Cache<BytesValue, byte[]> storage;
   private final ReadWriteLock rwLock = new ReentrantReadWriteLock();
 
   public LimitedInMemoryKeyValueStorage(final long maxSize) {
@@ -52,67 +55,61 @@ public class LimitedInMemoryKeyValueStorage implements KeyValueStorage {
   }
 
   @Override
+  public boolean containsKey(final byte[] key) throws StorageException {
+    final Lock lock = rwLock.readLock();
+    lock.lock();
+    try {
+      return storage.getIfPresent(BytesValue.wrap(key)) != null;
+    } finally {
+      lock.unlock();
+    }
+  }
+
+  @Override
   public void close() {}
 
   @Override
-  public boolean containsKey(final BytesValue key) throws StorageException {
+  public Optional<byte[]> get(final byte[] key) {
     final Lock lock = rwLock.readLock();
     lock.lock();
     try {
-      return storage.getIfPresent(key) != null;
+      return Optional.ofNullable(storage.getIfPresent(BytesValue.wrap(key)));
     } finally {
       lock.unlock();
     }
   }
 
   @Override
-  public Optional<BytesValue> get(final BytesValue key) {
-    final Lock lock = rwLock.readLock();
-    lock.lock();
-    try {
-      return Optional.ofNullable(storage.getIfPresent(key));
-    } finally {
-      lock.unlock();
-    }
+  public long removeAllKeysUnless(final Predicate<byte[]> retainCondition) throws StorageException {
+    final long initialSize = storage.size();
+    storage.asMap().keySet().removeIf(key -> !retainCondition.test(key.getArrayUnsafe()));
+    return initialSize - storage.size();
   }
 
   @Override
-  public long removeUnless(final Predicate<BytesValue> inUseCheck) {
-    final Lock lock = rwLock.writeLock();
-    lock.lock();
-    try {
-      final long initialSize = storage.size();
-      storage.asMap().keySet().removeIf(key -> !inUseCheck.test(key));
-      return initialSize - storage.size();
-    } finally {
-      lock.unlock();
-    }
+  public KeyValueStorageTransaction startTransaction() throws StorageException {
+    return new KeyValueStorageTransactionTransitionValidatorDecorator(new MemoryTransaction());
   }
 
-  @Override
-  public Transaction startTransaction() {
-    return new InMemoryTransaction();
-  }
+  private class MemoryTransaction implements KeyValueStorageTransaction {
 
-  private class InMemoryTransaction extends AbstractTransaction {
-
-    private Map<BytesValue, BytesValue> updatedValues = new HashMap<>();
+    private Map<BytesValue, byte[]> updatedValues = new HashMap<>();
     private Set<BytesValue> removedKeys = new HashSet<>();
 
     @Override
-    protected void doPut(final BytesValue key, final BytesValue value) {
-      updatedValues.put(key, value);
-      removedKeys.remove(key);
+    public void put(final byte[] key, final byte[] value) {
+      updatedValues.put(BytesValue.wrap(key), value);
+      removedKeys.remove(BytesValue.wrap(key));
     }
 
     @Override
-    protected void doRemove(final BytesValue key) {
-      removedKeys.add(key);
-      updatedValues.remove(key);
+    public void remove(final byte[] key) {
+      removedKeys.add(BytesValue.wrap(key));
+      updatedValues.remove(BytesValue.wrap(key));
     }
 
     @Override
-    protected void doCommit() {
+    public void commit() throws StorageException {
       final Lock lock = rwLock.writeLock();
       lock.lock();
       try {
@@ -126,7 +123,7 @@ public class LimitedInMemoryKeyValueStorage implements KeyValueStorage {
     }
 
     @Override
-    protected void doRollback() {
+    public void rollback() {
       updatedValues = null;
       removedKeys = null;
     }

@@ -28,7 +28,6 @@ jar {
 dependencies {
   implementation project(':metrics:core')
   implementation project(':plugin-api')
-  implementation project(':services:util')
 
   implementation 'com.google.guava:guava'
   implementation 'io.prometheus:simpleclient'

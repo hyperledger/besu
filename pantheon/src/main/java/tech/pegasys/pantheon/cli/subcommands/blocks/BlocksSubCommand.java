@@ -182,8 +182,6 @@ public class BlocksSubCommand implements Runnable {
             .getControllerBuilder()
             .miningParameters(getMiningParameters())
             .build();
-      } catch (final IOException e) {
-        throw new ExecutionException(new CommandLine(parentCommand), "Invalid path", e);
       } catch (final Exception e) {
         throw new ExecutionException(new CommandLine(parentCommand), e.getMessage(), e);
       }

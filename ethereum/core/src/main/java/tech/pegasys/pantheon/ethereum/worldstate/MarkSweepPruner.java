@@ -17,11 +17,11 @@ import tech.pegasys.pantheon.ethereum.core.Hash;
 import tech.pegasys.pantheon.ethereum.rlp.RLP;
 import tech.pegasys.pantheon.ethereum.trie.MerklePatriciaTrie;
 import tech.pegasys.pantheon.ethereum.trie.StoredMerklePatriciaTrie;
+import tech.pegasys.pantheon.metrics.ObservableMetricsSystem;
 import tech.pegasys.pantheon.metrics.PantheonMetricCategory;
-import tech.pegasys.pantheon.plugin.services.MetricsSystem;
 import tech.pegasys.pantheon.plugin.services.metrics.Counter;
-import tech.pegasys.pantheon.services.kvstore.KeyValueStorage;
-import tech.pegasys.pantheon.services.kvstore.KeyValueStorage.Transaction;
+import tech.pegasys.pantheon.plugin.services.storage.KeyValueStorage;
+import tech.pegasys.pantheon.plugin.services.storage.KeyValueStorageTransaction;
 import tech.pegasys.pantheon.util.bytes.Bytes32;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
@@ -37,9 +37,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class MarkSweepPruner {
+
   private static final int DEFAULT_OPS_PER_TRANSACTION = 1000;
   private static final Logger LOG = LogManager.getLogger();
-  private static final BytesValue IN_USE = BytesValue.of(1);
+  private static final byte[] IN_USE = BytesValue.of(1).getArrayUnsafe();
 
   private final int operationsPerTransaction;
   private final WorldStateStorage worldStateStorage;
@@ -57,7 +58,7 @@ public class MarkSweepPruner {
       final WorldStateStorage worldStateStorage,
       final MutableBlockchain blockchain,
       final KeyValueStorage markStorage,
-      final MetricsSystem metricsSystem) {
+      final ObservableMetricsSystem metricsSystem) {
     this(worldStateStorage, blockchain, markStorage, metricsSystem, DEFAULT_OPS_PER_TRANSACTION);
   }
 
@@ -65,7 +66,7 @@ public class MarkSweepPruner {
       final WorldStateStorage worldStateStorage,
       final MutableBlockchain blockchain,
       final KeyValueStorage markStorage,
-      final MetricsSystem metricsSystem,
+      final ObservableMetricsSystem metricsSystem,
       final int operationsPerTransaction) {
     this.worldStateStorage = worldStateStorage;
     this.markStorage = markStorage;
@@ -137,7 +138,7 @@ public class MarkSweepPruner {
         break;
       }
 
-      if (!markStorage.containsKey(candidateStateRootHash)) {
+      if (!markStorage.containsKey(candidateStateRootHash.getArrayUnsafe())) {
         updater.removeAccountStateTrieNode(candidateStateRootHash);
         prunedNodeCount++;
         if (prunedNodeCount % operationsPerTransaction == 0) {
@@ -200,8 +201,8 @@ public class MarkSweepPruner {
   void flushPendingMarks() {
     markLock.lock();
     try {
-      final Transaction transaction = markStorage.startTransaction();
-      pendingMarks.forEach(node -> transaction.put(node, IN_USE));
+      final KeyValueStorageTransaction transaction = markStorage.startTransaction();
+      pendingMarks.forEach(node -> transaction.put(node.getArrayUnsafe(), IN_USE));
       transaction.commit();
       pendingMarks.clear();
     } finally {

@@ -14,12 +14,12 @@ package tech.pegasys.pantheon.ethereum.trie;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import tech.pegasys.pantheon.plugin.services.storage.KeyValueStorage;
 import tech.pegasys.pantheon.services.kvstore.InMemoryKeyValueStorage;
-import tech.pegasys.pantheon.services.kvstore.KeyValueStorage;
 import tech.pegasys.pantheon.util.bytes.Bytes32;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -36,8 +36,8 @@ public class StoredMerklePatriciaTrieTest extends AbstractMerklePatriciaTrieTest
     keyValueStore = new InMemoryKeyValueStorage();
     merkleStorage = new KeyValueMerkleStorage(keyValueStore);
     valueSerializer =
-        value -> (value != null) ? BytesValue.wrap(value.getBytes(Charset.forName("UTF-8"))) : null;
-    valueDeserializer = bytes -> new String(bytes.getArrayUnsafe(), Charset.forName("UTF-8"));
+        value -> (value != null) ? BytesValue.wrap(value.getBytes(StandardCharsets.UTF_8)) : null;
+    valueDeserializer = bytes -> new String(bytes.getArrayUnsafe(), StandardCharsets.UTF_8);
     return new StoredMerklePatriciaTrie<>(merkleStorage::get, valueSerializer, valueDeserializer);
   }
 

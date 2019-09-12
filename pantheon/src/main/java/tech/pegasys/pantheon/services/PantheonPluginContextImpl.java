@@ -74,48 +74,31 @@ public class PantheonPluginContextImpl implements PantheonContext {
     checkState(
         state == Lifecycle.UNINITIALIZED,
         "Pantheon plugins have already been registered.  Cannot register additional plugins.");
-    if (pluginsDir == null) {
-      LOG.debug("Plugins are disabled.");
-      return;
-    }
+
+    final ClassLoader pluginLoader =
+        pluginDirectoryLoader(pluginsDir).orElse(this.getClass().getClassLoader());
+
     state = Lifecycle.REGISTERING;
 
-    if (pluginsDir.toFile().isDirectory()) {
-      LOG.debug("Searching for plugins in {}", pluginsDir.toAbsolutePath().toString());
-      try (final Stream<Path> pluginFilesList = Files.list(pluginsDir)) {
-        final URL[] pluginJarURLs =
-            pluginFilesList
-                .filter(p -> p.getFileName().toString().endsWith(".jar"))
-                .map(PantheonPluginContextImpl::pathToURIOrNull)
-                .toArray(URL[]::new);
-        final ServiceLoader<PantheonPlugin> serviceLoader =
-            ServiceLoader.load(
-                PantheonPlugin.class,
-                new URLClassLoader(pluginJarURLs, this.getClass().getClassLoader()));
+    final ServiceLoader<PantheonPlugin> serviceLoader =
+        ServiceLoader.load(PantheonPlugin.class, pluginLoader);
 
-        for (final PantheonPlugin plugin : serviceLoader) {
-          try {
-            plugin.register(this);
-            LOG.debug("Registered plugin of type {}.", plugin.getClass().getName());
-          } catch (final Exception e) {
-            LOG.error(
-                "Error registering plugin of type {}, start and stop will not be called. \n{}",
-                plugin.getClass(),
-                e);
-            continue;
-          }
-          plugins.add(plugin);
-        }
-
-      } catch (final MalformedURLException e) {
-        LOG.error("Error converting files to URLs, could not load plugins", e);
-      } catch (final IOException e) {
-        LOG.error("Error enumerating plugins, could not load plugins", e);
+    for (final PantheonPlugin plugin : serviceLoader) {
+      try {
+        plugin.register(this);
+        LOG.debug("Registered plugin of type {}.", plugin.getClass().getName());
+      } catch (final Exception e) {
+        LOG.error(
+            "Error registering plugin of type {}, start and stop will not be called. \n{}",
+            plugin.getClass(),
+            e);
+        continue;
       }
-      LOG.debug("Plugin registration complete.");
-    } else {
-      LOG.debug("Plugin directory does not exist, skipping registation. - {}", pluginsDir);
+      plugins.add(plugin);
     }
+
+    LOG.debug("Plugin registration complete.");
+
     state = Lifecycle.REGISTERED;
   }
 
@@ -179,5 +162,28 @@ public class PantheonPluginContextImpl implements PantheonContext {
   @VisibleForTesting
   List<PantheonPlugin> getPlugins() {
     return Collections.unmodifiableList(plugins);
+  }
+
+  private Optional<ClassLoader> pluginDirectoryLoader(final Path pluginsDir) {
+    if (pluginsDir != null && pluginsDir.toFile().isDirectory()) {
+      LOG.debug("Searching for plugins in {}", pluginsDir.toAbsolutePath().toString());
+
+      try (final Stream<Path> pluginFilesList = Files.list(pluginsDir)) {
+        final URL[] pluginJarURLs =
+            pluginFilesList
+                .filter(p -> p.getFileName().toString().endsWith(".jar"))
+                .map(PantheonPluginContextImpl::pathToURIOrNull)
+                .toArray(URL[]::new);
+        return Optional.of(new URLClassLoader(pluginJarURLs, this.getClass().getClassLoader()));
+      } catch (final MalformedURLException e) {
+        LOG.error("Error converting files to URLs, could not load plugins", e);
+      } catch (final IOException e) {
+        LOG.error("Error enumerating plugins, could not load plugins", e);
+      }
+    } else {
+      LOG.debug("Plugin directory does not exist, skipping registration. - {}", pluginsDir);
+    }
+
+    return Optional.empty();
   }
 }

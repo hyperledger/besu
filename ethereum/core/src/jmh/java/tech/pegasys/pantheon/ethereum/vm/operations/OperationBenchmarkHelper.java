@@ -22,9 +22,9 @@ import tech.pegasys.pantheon.ethereum.core.ExecutionContextTestFixture;
 import tech.pegasys.pantheon.ethereum.core.MessageFrameTestFixture;
 import tech.pegasys.pantheon.ethereum.vm.MessageFrame;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
-import tech.pegasys.pantheon.services.kvstore.KeyValueStorage;
-import tech.pegasys.pantheon.services.kvstore.RocksDbConfiguration;
-import tech.pegasys.pantheon.services.kvstore.RocksDbKeyValueStorage;
+import tech.pegasys.pantheon.plugin.services.storage.KeyValueStorage;
+import tech.pegasys.pantheon.plugin.services.storage.rocksdb.configuration.RocksDBConfigurationBuilder;
+import tech.pegasys.pantheon.plugin.services.storage.rocksdb.unsegmented.RocksDBKeyValueStorage;
 import tech.pegasys.pantheon.util.uint.UInt256;
 
 import java.io.IOException;
@@ -52,8 +52,8 @@ public class OperationBenchmarkHelper {
   public static OperationBenchmarkHelper create() throws IOException {
     final Path storageDirectory = Files.createTempDirectory("benchmark");
     final KeyValueStorage keyValueStorage =
-        RocksDbKeyValueStorage.create(
-            RocksDbConfiguration.builder().databaseDir(storageDirectory).build(),
+        new RocksDBKeyValueStorage(
+            new RocksDBConfigurationBuilder().databaseDir(storageDirectory).build(),
             new NoOpMetricsSystem());
 
     final ExecutionContextTestFixture executionContext =

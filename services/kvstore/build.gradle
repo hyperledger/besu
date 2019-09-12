@@ -31,7 +31,6 @@ dependencies {
 
   implementation project(':metrics:core')
   implementation project(':metrics:rocksdb')
-  implementation project(':services:util')
 
   implementation 'com.google.guava:guava'
   implementation 'io.prometheus:simpleclient'
@@ -39,6 +38,8 @@ dependencies {
   implementation 'org.rocksdb:rocksdbjni'
 
   runtime 'org.apache.logging.log4j:log4j-core'
+
+  testImplementation project(':testutil')
 
   testImplementation 'junit:junit'
   testImplementation 'org.mockito:mockito-core'

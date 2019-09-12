@@ -26,14 +26,19 @@ import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPoolConfigurat
 import tech.pegasys.pantheon.ethereum.graphql.GraphQLConfiguration;
 import tech.pegasys.pantheon.ethereum.p2p.peers.EnodeURL;
 import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
+import tech.pegasys.pantheon.ethereum.storage.keyvalue.KeyValueStorageProvider;
+import tech.pegasys.pantheon.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
 import tech.pegasys.pantheon.metrics.ObservableMetricsSystem;
 import tech.pegasys.pantheon.metrics.prometheus.PrometheusMetricsSystem;
+import tech.pegasys.pantheon.plugin.services.PantheonConfiguration;
 import tech.pegasys.pantheon.plugin.services.PantheonEvents;
 import tech.pegasys.pantheon.plugin.services.PicoCLIOptions;
+import tech.pegasys.pantheon.plugin.services.StorageService;
+import tech.pegasys.pantheon.services.PantheonConfigurationImpl;
 import tech.pegasys.pantheon.services.PantheonEventsImpl;
 import tech.pegasys.pantheon.services.PantheonPluginContextImpl;
 import tech.pegasys.pantheon.services.PicoCLIOptionsImpl;
-import tech.pegasys.pantheon.services.kvstore.RocksDbConfiguration;
+import tech.pegasys.pantheon.services.StorageServiceImpl;
 
 import java.io.File;
 import java.io.IOException;
@@ -63,8 +68,15 @@ public class ThreadPantheonNodeRunner implements PantheonNodeRunner {
 
   private final Map<Node, PantheonPluginContextImpl> pantheonPluginContextMap = new HashMap<>();
 
-  private PantheonPluginContextImpl buildPluginContext(final PantheonNode node) {
+  private PantheonPluginContextImpl buildPluginContext(
+      final PantheonNode node,
+      final StorageServiceImpl storageService,
+      final PantheonConfiguration commonPluginConfiguration) {
+    final CommandLine commandLine = new CommandLine(CommandSpec.create());
     final PantheonPluginContextImpl pantheonPluginContext = new PantheonPluginContextImpl();
+    pantheonPluginContext.addService(StorageService.class, storageService);
+    pantheonPluginContext.addService(PicoCLIOptions.class, new PicoCLIOptionsImpl(commandLine));
+
     final Path pluginsPath = node.homeDirectory().resolve("plugins");
     final File pluginsDirFile = pluginsPath.toFile();
     if (!pluginsDirFile.isDirectory()) {
@@ -73,22 +85,26 @@ public class ThreadPantheonNodeRunner implements PantheonNodeRunner {
     }
     System.setProperty("pantheon.plugins.dir", pluginsPath.toString());
     pantheonPluginContext.registerPlugins(pluginsPath);
+
+    commandLine.parseArgs(node.getConfiguration().getExtraCLIOptions().toArray(new String[0]));
+
+    pantheonPluginContext.addService(PantheonConfiguration.class, commonPluginConfiguration);
+
     return pantheonPluginContext;
   }
 
   @Override
-  @SuppressWarnings("UnstableApiUsage")
   public void startNode(final PantheonNode node) {
     if (nodeExecutor == null || nodeExecutor.isShutdown()) {
       nodeExecutor = Executors.newCachedThreadPool();
     }
 
-    final CommandLine commandLine = new CommandLine(CommandSpec.create());
+    final StorageServiceImpl storageService = new StorageServiceImpl();
+    final PantheonConfiguration commonPluginConfiguration =
+        new PantheonConfigurationImpl(Files.createTempDir().toPath());
     final PantheonPluginContextImpl pantheonPluginContext =
-        pantheonPluginContextMap.computeIfAbsent(node, n -> buildPluginContext(node));
-    pantheonPluginContext.addService(PicoCLIOptions.class, new PicoCLIOptionsImpl(commandLine));
-
-    commandLine.parseArgs(node.getConfiguration().getExtraCLIOptions().toArray(new String[0]));
+        pantheonPluginContextMap.computeIfAbsent(
+            node, n -> buildPluginContext(node, storageService, commonPluginConfiguration));
 
     final ObservableMetricsSystem metricsSystem =
         PrometheusMetricsSystem.init(node.getMetricsConfiguration());
@@ -103,7 +119,13 @@ public class ThreadPantheonNodeRunner implements PantheonNodeRunner {
     final EthNetworkConfig ethNetworkConfig = networkConfigBuilder.build();
     final PantheonControllerBuilder<?> builder =
         new PantheonController.Builder().fromEthNetworkConfig(ethNetworkConfig);
-    final Path tempDir = Files.createTempDir().toPath();
+
+    final KeyValueStorageProvider storageProvider =
+        new KeyValueStorageProviderBuilder()
+            .withStorageFactory(storageService.getByName("rocksdb"))
+            .withCommonConfiguration(commonPluginConfiguration)
+            .withMetricsSystem(metricsSystem)
+            .build();
 
     final PantheonController<?> pantheonController;
     try {
@@ -116,10 +138,10 @@ public class ThreadPantheonNodeRunner implements PantheonNodeRunner {
               .nodePrivateKeyFile(KeyPairUtil.getDefaultKeyFile(node.homeDirectory()))
               .metricsSystem(metricsSystem)
               .transactionPoolConfiguration(TransactionPoolConfiguration.builder().build())
-              .rocksDbConfiguration(RocksDbConfiguration.builder().databaseDir(tempDir).build())
               .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
               .clock(Clock.systemUTC())
               .isRevertReasonEnabled(node.isRevertReasonEnabled())
+              .storageProvider(storageProvider)
               .build();
     } catch (final IOException e) {
       throw new RuntimeException("Error building PantheonController", e);

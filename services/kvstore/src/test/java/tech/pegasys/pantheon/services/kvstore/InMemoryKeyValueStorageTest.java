@@ -12,10 +12,13 @@
  */
 package tech.pegasys.pantheon.services.kvstore;
 
+import tech.pegasys.pantheon.kvstore.AbstractKeyValueStorageTest;
+import tech.pegasys.pantheon.plugin.services.storage.KeyValueStorage;
+
 public class InMemoryKeyValueStorageTest extends AbstractKeyValueStorageTest {
 
   @Override
-  protected KeyValueStorage createStore() throws Exception {
+  protected KeyValueStorage createStore() {
     return new InMemoryKeyValueStorage();
   }
 }

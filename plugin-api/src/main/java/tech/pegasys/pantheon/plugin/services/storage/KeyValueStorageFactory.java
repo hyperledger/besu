@@ -13,6 +13,8 @@
 package tech.pegasys.pantheon.plugin.services.storage;
 
 import tech.pegasys.pantheon.plugin.Unstable;
+import tech.pegasys.pantheon.plugin.services.MetricsSystem;
+import tech.pegasys.pantheon.plugin.services.PantheonConfiguration;
 import tech.pegasys.pantheon.plugin.services.exception.StorageException;
 
 /** Factory for creating key-value storage instances. */
@@ -38,10 +40,14 @@ public interface KeyValueStorageFactory {
    *
    * @param segment identity of the isolation segment, an identifier for the data set the storage
    *     will contain.
+   * @param configuration common configuration available to plugins, in a populated state.
+   * @param metricsSystem metrics component for recording key-value storage events.
    * @return the storage instance reserved for the given segment.
    * @exception StorageException problem encountered when creating storage for the segment.
    */
-  KeyValueStorage create(SegmentIdentifier segment) throws StorageException;
+  KeyValueStorage create(
+      SegmentIdentifier segment, PantheonConfiguration configuration, MetricsSystem metricsSystem)
+      throws StorageException;
 
   /**
    * Whether storage segment isolation is supported by the factory created instances.

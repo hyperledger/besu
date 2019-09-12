@@ -33,6 +33,7 @@ dependencies {
   testImplementation project(':metrics:core')
   testImplementation project(':pantheon')
   testImplementation project(path: ':pantheon', configuration: 'testArtifacts')
+  testImplementation project(':plugins:rocksdb')
   testImplementation project(':plugin-api')
   testImplementation project(':services:kvstore')
   testImplementation project(':testutil')

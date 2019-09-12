@@ -26,18 +26,30 @@ import tech.pegasys.pantheon.ethereum.eth.EthProtocolConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.sync.SynchronizerConfiguration;
 import tech.pegasys.pantheon.ethereum.eth.transactions.TransactionPoolConfiguration;
 import tech.pegasys.pantheon.ethereum.mainnet.PrecompiledContract;
+import tech.pegasys.pantheon.ethereum.storage.StorageProvider;
+import tech.pegasys.pantheon.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
+import tech.pegasys.pantheon.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
+import tech.pegasys.pantheon.plugin.services.storage.rocksdb.RocksDBKeyValuePrivacyStorageFactory;
+import tech.pegasys.pantheon.plugin.services.storage.rocksdb.configuration.RocksDBFactoryConfiguration;
+import tech.pegasys.pantheon.services.PantheonConfigurationImpl;
 import tech.pegasys.pantheon.testutil.TestClock;
 
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.file.Path;
+import java.util.Arrays;
 
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 public class PrivacyTest {
+
+  private static final int MAX_OPEN_FILES = 1024;
+  private static final long CACHE_CAPACITY = 8388608;
+  private static final int MAX_BACKGROUND_COMPACTIONS = 4;
+  private static final int BACKGROUND_THREAD_COUNT = 4;
 
   private static final Integer ADDRESS = 9;
   @Rule public final TemporaryFolder folder = new TemporaryFolder();
@@ -49,9 +61,8 @@ public class PrivacyTest {
         new PrivacyParameters.Builder()
             .setPrivacyAddress(ADDRESS)
             .setEnabled(true)
-            .setDataDir(dataDir)
+            .setStorageProvider(createKeyValueStorageProvider(dataDir))
             .build();
-
     final PantheonController<?> pantheonController =
         new PantheonController.Builder()
             .fromGenesisConfig(GenesisConfigFile.mainnet())
@@ -75,6 +86,23 @@ public class PrivacyTest {
             .getByBlockNumber(1)
             .getPrecompileContractRegistry()
             .get(privacyContractAddress, Account.DEFAULT_VERSION);
+
     assertThat(precompiledContract.getName()).isEqualTo("Privacy");
+  }
+
+  private StorageProvider createKeyValueStorageProvider(final Path dbAhead) {
+    return new KeyValueStorageProviderBuilder()
+        .withStorageFactory(
+            new RocksDBKeyValuePrivacyStorageFactory(
+                () ->
+                    new RocksDBFactoryConfiguration(
+                        MAX_OPEN_FILES,
+                        MAX_BACKGROUND_COMPACTIONS,
+                        BACKGROUND_THREAD_COUNT,
+                        CACHE_CAPACITY),
+                Arrays.asList(KeyValueSegmentIdentifier.values())))
+        .withCommonConfiguration(new PantheonConfigurationImpl(dbAhead))
+        .withMetricsSystem(new NoOpMetricsSystem())
+        .build();
   }
 }

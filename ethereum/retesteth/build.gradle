@@ -34,7 +34,6 @@ dependencies {
   implementation(project(':ethereum:jsonrpc'))
   implementation(project(':ethereum:rlp'))
   implementation(project(':ethereum:p2p'))
-  //  implementation(project(':pantheon'))
   implementation(project(':metrics:core'))
   implementation(project(':nat'))
   implementation(project(':services:kvstore'))
