@@ -278,7 +278,39 @@ check.dependsOn('checkPluginAPIChanges')
 
 subprojects {
 
-  if (file('src/main/java').directory) {
+  sourceSets {
+    // test-support can be consumed as a library by other projects in their tests
+    testSupport {
+      java {
+        compileClasspath += main.output
+        runtimeClasspath += main.output
+        srcDir file('src/test-support/java')
+      }
+      resources.srcDir file('src/test-support/resources')
+    }
+    integrationTest {
+      java {
+        compileClasspath += main.output
+        runtimeClasspath += main.output
+        srcDir file('src/integration-test/java')
+      }
+      resources.srcDir file('src/integration-test/resources')
+    }
+  }
+
+  task testSupportJar(type: Jar) {
+    baseName = "${project.name}-support-test"
+    classifier = 'test-support'
+    from sourceSets.testSupport.output
+  }
+
+  def sourceSetIsPopulated = { sourceSetName ->
+    def result = project.sourceSets.names.contains(sourceSetName) && !project.sourceSets.getAt(sourceSetName).allSource.empty
+    logger.info("Project = "+ project.name + " Has Source Set (" + sourceSetName + ") = " + result + "(" + project.sourceSets.names + ")")
+    return result
+  }
+
+  if(sourceSetIsPopulated("main") || sourceSetIsPopulated("testSupport")) {
     apply plugin: 'com.jfrog.bintray'
     apply plugin: 'maven-publish'
 
@@ -287,9 +319,15 @@ subprojects {
         mavenJava(MavenPublication) {
           groupId "tech.pegasys.pantheon.internal"
           version "${project.version}"
-          from components.java
-          artifact sourcesJar
-          artifact javadocJar
+          if(sourceSetIsPopulated("main")) {
+            from components.java
+            artifact sourcesJar
+            artifact javadocJar
+          }
+
+          if(sourceSetIsPopulated("testSupport")) {
+            artifact testSupportJar
+          }
           versionMapping {
             usage('java-api') { fromResolutionOf('runtimeClasspath') }
             usage('java-runtime') { fromResolutionResult() }
@@ -336,25 +374,6 @@ subprojects {
     options.incremental = true
   }
 
-  sourceSets {
-    // test-support can be consumed as a library by other projects in their tests
-    testSupport {
-      java {
-        compileClasspath += main.output
-        runtimeClasspath += main.output
-        srcDir file('src/test-support/java')
-      }
-      resources.srcDir file('src/test-support/resources')
-    }
-    integrationTest {
-      java {
-        compileClasspath += main.output
-        runtimeClasspath += main.output
-        srcDir file('src/integration-test/java')
-      }
-      resources.srcDir file('src/integration-test/resources')
-    }
-  }
 
   configurations {
     testSupportImplementation.extendsFrom implementation
@@ -362,10 +381,6 @@ subprojects {
     testSupportArtifacts
   }
 
-  task testSupportJar(type: Jar) {
-    baseName = "${project.name}-support-test"
-    from sourceSets.testSupport.output
-  }
 
   dependencies {
     testImplementation sourceSets.testSupport.output

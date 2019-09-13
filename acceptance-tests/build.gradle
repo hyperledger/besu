@@ -13,50 +13,68 @@
 
 dependencies {
 
-  testRuntime 'org.apache.logging.log4j:log4j-core'
-  testRuntime 'org.apache.logging.log4j:log4j-slf4j-impl'
+  testSupportImplementation 'org.apache.logging.log4j:log4j-core'
+  testSupportImplementation 'org.apache.logging.log4j:log4j-slf4j-impl'
 
-  testImplementation project(':config')
-  testImplementation project(':consensus:clique')
-  testImplementation project(':consensus:ibft')
-  testImplementation project(':crypto')
-  testImplementation project(':enclave')
-  testImplementation project(':ethereum:blockcreation')
-  testImplementation project(':ethereum:core')
-  testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
-  testImplementation project(':ethereum:eth')
-  testImplementation project(':ethereum:graphql')
-  testImplementation project(':ethereum:jsonrpc')
-  testImplementation project(':ethereum:p2p')
-  testImplementation project(':ethereum:permissioning')
-  testImplementation project(':ethereum:rlp')
-  testImplementation project(':metrics:core')
-  testImplementation project(':pantheon')
-  testImplementation project(path: ':pantheon', configuration: 'testArtifacts')
-  testImplementation project(':plugins:rocksdb')
-  testImplementation project(':plugin-api')
-  testImplementation project(':services:kvstore')
-  testImplementation project(':testutil')
-  testImplementation project(':util')
+  testSupportImplementation project(':config')
+  testSupportImplementation project(':consensus:clique')
+  testSupportImplementation project(':consensus:ibft')
+  testSupportImplementation project(':crypto')
+  testSupportImplementation project(':enclave')
+  testSupportImplementation project(':ethereum:blockcreation')
+  testSupportImplementation project(':ethereum:core')
+  testSupportImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
+  testSupportImplementation project(':ethereum:eth')
+  testSupportImplementation project(':ethereum:graphql')
+  testSupportImplementation project(':ethereum:jsonrpc')
+  testSupportImplementation project(':ethereum:p2p')
+  testSupportImplementation project(':ethereum:permissioning')
+  testSupportImplementation project(':ethereum:rlp')
+  testSupportImplementation project(':metrics:core')
+  testSupportImplementation project(':pantheon')
+  testSupportImplementation project(':plugin-api')
+  testSupportImplementation project(':services:kvstore')
+  testSupportImplementation project(':testutil')
+  testSupportImplementation project(':util')
 
-  testImplementation 'com.github.tomakehurst:wiremock-jre8'
-  testImplementation 'com.google.guava:guava'
-  testImplementation 'com.squareup.okhttp3:okhttp'
-  testImplementation 'info.picocli:picocli'
-  testImplementation 'io.reactivex.rxjava2:rxjava'
-  testImplementation 'io.vertx:vertx-core'
+  testSupportImplementation 'com.github.tomakehurst:wiremock-jre8'
+  testSupportImplementation 'com.google.guava:guava'
+  testSupportImplementation 'com.squareup.okhttp3:okhttp'
+  testSupportImplementation 'info.picocli:picocli'
+  testSupportImplementation 'io.reactivex.rxjava2:rxjava'
+  testSupportImplementation 'io.vertx:vertx-core'
+  testSupportImplementation 'junit:junit'
+  testSupportImplementation 'net.consensys:orion'
+  testSupportImplementation 'org.apache.logging.log4j:log4j-api'
+  testSupportImplementation 'org.assertj:assertj-core'
+  testSupportImplementation 'org.awaitility:awaitility'
+  testSupportImplementation 'org.java-websocket:Java-WebSocket'
+  testSupportImplementation 'org.web3j:abi'
+  testSupportImplementation 'org.web3j:pantheon'
+  testSupportImplementation 'org.web3j:crypto'
+  testSupportImplementation 'tech.pegasys.ethsigner.internal:core'
+  testSupportImplementation 'tech.pegasys.ethsigner.internal:file-based'
+  testSupportImplementation 'tech.pegasys.ethsigner.internal:signing-api'
+
+
   testImplementation 'junit:junit'
   testImplementation 'net.consensys:orion'
-  testImplementation 'org.apache.logging.log4j:log4j-api'
   testImplementation 'org.assertj:assertj-core'
-  testImplementation 'org.awaitility:awaitility'
-  testImplementation 'org.java-websocket:Java-WebSocket'
   testImplementation 'org.web3j:abi'
   testImplementation 'org.web3j:pantheon'
-  testImplementation 'org.web3j:crypto'
+  testImplementation project(':ethereum:jsonrpc')
+  testImplementation project(':enclave')
+  testImplementation 'org.awaitility:awaitility'
+  testImplementation project(':consensus:clique')
+  testImplementation project(':ethereum:permissioning')
+  testImplementation project(':util')
+  testImplementation project(':plugin-api')
+  testImplementation project(':pantheon')
+  testImplementation project(':ethereum:core')
+  testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
+  testImplementation project(':testutil')
   testImplementation 'tech.pegasys.ethsigner.internal:core'
   testImplementation 'tech.pegasys.ethsigner.internal:file-based'
-  testImplementation 'tech.pegasys.ethsigner.internal:signing-api'
 }
 
 test.enabled = false
