@@ -27,4 +27,21 @@ public class BannedMethodPositiveCases {
     // java.util.Objects methods instead.
     Objects.hashCode("1", "1");
   }
+
+  public void usesJUnitAssertions() throws Exception {
+    // BUG: Diagnostic contains: Do not use junit assertions. Use assertj assertions instead.
+    org.junit.Assert.assertEquals(1, 1);
+    // BUG: Diagnostic contains: Do not use junit assertions. Use assertj assertions instead.
+    org.junit.Assert.assertNotEquals(1, 2);
+    // BUG: Diagnostic contains: Do not use junit assertions. Use assertj assertions instead.
+    org.junit.Assert.assertTrue(true);
+    // BUG: Diagnostic contains: Do not use junit assertions. Use assertj assertions instead.
+    org.junit.Assert.assertFalse(false);
+    // BUG: Diagnostic contains: Do not use junit assertions. Use assertj assertions instead.
+    org.junit.Assert.assertNull(null);
+    // BUG: Diagnostic contains: Do not use junit assertions. Use assertj assertions instead.
+    org.junit.Assert.assertNotNull("foo");
+    // BUG: Diagnostic contains: Do not use junit assertions. Use assertj assertions instead.
+    org.junit.Assert.assertArrayEquals(new int[] {1}, new int[] {1});
+  }
 }

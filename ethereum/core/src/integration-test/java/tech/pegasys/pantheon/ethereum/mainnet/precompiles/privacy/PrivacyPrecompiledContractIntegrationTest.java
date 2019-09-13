@@ -15,7 +15,6 @@ package tech.pegasys.pantheon.ethereum.mainnet.precompiles.privacy;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.mock;
@@ -149,7 +148,7 @@ public class PrivacyPrecompiledContractIntegrationTest {
 
   @Test
   public void testUpCheck() throws IOException {
-    assertTrue(enclave.upCheck());
+    assertThat(enclave.upCheck()).isTrue();
   }
 
   @Test

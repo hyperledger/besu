@@ -13,7 +13,6 @@
 package tech.pegasys.pantheon.ethereum.api.jsonrpc.internal.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -71,8 +70,9 @@ public class TxPoolPantheonTransactionsTest {
 
     final TransactionInfoResult actualTransactionInfo =
         result.getResults().stream().findFirst().get();
-    assertEquals(TRANSACTION_HASH, actualTransactionInfo.getHash());
-    assertEquals(true, actualTransactionInfo.isReceivedFromLocalSource());
-    assertEquals(addedAt.toString(), actualTransactionInfo.getAddedToPoolAt());
+
+    assertThat(actualTransactionInfo.getHash()).isEqualTo(TRANSACTION_HASH);
+    assertThat(actualTransactionInfo.isReceivedFromLocalSource()).isTrue();
+    assertThat(actualTransactionInfo.getAddedToPoolAt()).isEqualTo(addedAt.toString());
   }
 }

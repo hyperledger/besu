@@ -14,7 +14,7 @@ package tech.pegasys.pantheon.ethereum.api.jsonrpc.internal.methods;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -57,7 +57,7 @@ public class DebugTraceBlockTest {
 
   @Test
   public void nameShouldBeDebugTraceBlock() {
-    assertEquals("debug_traceBlock", debugTraceBlock.getName());
+    assertThat(debugTraceBlock.getName()).isEqualTo("debug_traceBlock");
   }
 
   @Test
@@ -118,7 +118,7 @@ public class DebugTraceBlockTest {
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) debugTraceBlock.response(request);
     final Collection<?> result = (Collection<?>) response.getResult();
-    assertEquals(2, result.size());
+    assertThat(result).hasSize(2);
   }
 
   @Test
@@ -135,6 +135,6 @@ public class DebugTraceBlockTest {
     when(blockchainQueries.blockByHash(any())).thenReturn(Optional.empty());
 
     final JsonRpcErrorResponse response = (JsonRpcErrorResponse) debugTraceBlock.response(request);
-    assertEquals(JsonRpcError.PARENT_BLOCK_NOT_FOUND, response.getError());
+    assertThat(response.getError()).isEqualByComparingTo(JsonRpcError.PARENT_BLOCK_NOT_FOUND);
   }
 }

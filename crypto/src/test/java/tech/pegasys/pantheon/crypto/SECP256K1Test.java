@@ -13,10 +13,7 @@
 package tech.pegasys.pantheon.crypto;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 import static tech.pegasys.pantheon.crypto.Hash.keccak256;
 import static tech.pegasys.pantheon.util.bytes.BytesValue.fromHexString;
 
@@ -62,14 +59,14 @@ public class SECP256K1Test {
     final SECP256K1.PrivateKey privateKey1 = SECP256K1.PrivateKey.create(BigInteger.TEN);
     final SECP256K1.PrivateKey privateKey2 = SECP256K1.PrivateKey.create(BigInteger.TEN);
 
-    assertEquals(privateKey1, privateKey2);
+    assertThat(privateKey2).isEqualTo(privateKey1);
   }
 
   @Test
   public void privateHashCode() {
     final SECP256K1.PrivateKey privateKey = SECP256K1.PrivateKey.create(BigInteger.TEN);
 
-    assertNotEquals(0, privateKey.hashCode());
+    assertThat(privateKey.hashCode()).isNotZero();
   }
 
   @Test(expected = NullPointerException.class)
@@ -98,7 +95,7 @@ public class SECP256K1Test {
             fromHexString(
                 "a0434d9e47f3c86235477c7b1ae6ae5d3442d49b1943c2b752a68e2a47e247c7893aba425419bc27a3b6c7e693a24c696f794c2ed877a1593cbee53b037368d7"));
 
-    assertEquals(publicKey1, publicKey2);
+    assertThat(publicKey2).isEqualTo(publicKey1);
   }
 
   @Test
@@ -108,7 +105,7 @@ public class SECP256K1Test {
             fromHexString(
                 "a0434d9e47f3c86235477c7b1ae6ae5d3442d49b1943c2b752a68e2a47e247c7893aba425419bc27a3b6c7e693a24c696f794c2ed877a1593cbee53b037368d7"));
 
-    assertNotEquals(0, publicKey.hashCode());
+    assertThat(publicKey.hashCode()).isNotZero();
   }
 
   @Test(expected = NullPointerException.class)
@@ -124,9 +121,9 @@ public class SECP256K1Test {
   @Test
   public void keyPairGeneration() {
     final SECP256K1.KeyPair keyPair = SECP256K1.KeyPair.generate();
-    assertNotNull(keyPair);
-    assertNotNull(keyPair.getPrivateKey());
-    assertNotNull(keyPair.getPublicKey());
+    assertThat(keyPair).isNotNull();
+    assertThat(keyPair.getPrivateKey()).isNotNull();
+    assertThat(keyPair.getPublicKey()).isNotNull();
   }
 
   @Test
@@ -145,19 +142,20 @@ public class SECP256K1Test {
     final SECP256K1.KeyPair keyPair1 = new SECP256K1.KeyPair(privateKey1, publicKey1);
     final SECP256K1.KeyPair keyPair2 = new SECP256K1.KeyPair(privateKey2, publicKey2);
 
-    assertEquals(keyPair1, keyPair2);
+    assertThat(keyPair2).isEqualTo(keyPair1);
   }
 
   @Test
   public void keyPairHashCode() {
     final SECP256K1.KeyPair keyPair = SECP256K1.KeyPair.generate();
-    assertNotEquals(0, keyPair.hashCode());
+    assertThat(keyPair.hashCode()).isNotZero();
   }
 
   @Test
   public void keyPairGeneration_PublicKeyRecovery() {
     final SECP256K1.KeyPair keyPair = SECP256K1.KeyPair.generate();
-    assertEquals(keyPair.getPublicKey(), SECP256K1.PublicKey.create(keyPair.getPrivateKey()));
+    assertThat(SECP256K1.PublicKey.create(keyPair.getPrivateKey()))
+        .isEqualTo(keyPair.getPublicKey());
   }
 
   @Test
@@ -169,16 +167,16 @@ public class SECP256K1Test {
                 "a0434d9e47f3c86235477c7b1ae6ae5d3442d49b1943c2b752a68e2a47e247c7893aba425419bc27a3b6c7e693a24c696f794c2ed877a1593cbee53b037368d7"));
 
     final SECP256K1.PublicKey publicKey = SECP256K1.PublicKey.create(privateKey);
-    assertEquals(expectedPublicKey, publicKey);
+    assertThat(publicKey).isEqualTo(expectedPublicKey);
   }
 
   @Test
   public void createSignature() {
     final SECP256K1.Signature signature =
         SECP256K1.Signature.create(BigInteger.ONE, BigInteger.TEN, (byte) 0);
-    assertEquals(BigInteger.ONE, signature.getR());
-    assertEquals(BigInteger.TEN, signature.getS());
-    assertEquals((byte) 0, signature.getRecId());
+    assertThat(signature.getR()).isEqualTo(BigInteger.ONE);
+    assertThat(signature.getS()).isEqualTo(BigInteger.TEN);
+    assertThat(signature.getRecId()).isEqualTo((byte) 0);
   }
 
   @Test(expected = NullPointerException.class)
@@ -205,7 +203,7 @@ public class SECP256K1Test {
 
     final SECP256K1.PublicKey recoveredPublicKey =
         SECP256K1.PublicKey.recoverFromSignature(dataHash, signature).get();
-    assertEquals(keyPair.getPublicKey().toString(), recoveredPublicKey.toString());
+    assertThat(recoveredPublicKey.toString()).isEqualTo(keyPair.getPublicKey().toString());
   }
 
   @Test
@@ -225,7 +223,7 @@ public class SECP256K1Test {
             (byte) 1);
 
     final SECP256K1.Signature actualSignature = SECP256K1.sign(dataHash, keyPair);
-    assertEquals(expectedSignature, actualSignature);
+    assertThat(actualSignature).isEqualTo(expectedSignature);
   }
 
   @Test
@@ -240,7 +238,7 @@ public class SECP256K1Test {
     final Bytes32 dataHash = keccak256(data);
 
     final SECP256K1.Signature signature = SECP256K1.sign(dataHash, keyPair);
-    assertTrue(SECP256K1.verify(data, signature, keyPair.getPublicKey(), Hash::keccak256));
+    assertThat(SECP256K1.verify(data, signature, keyPair.getPublicKey(), Hash::keccak256)).isTrue();
   }
 
   @Test
@@ -251,10 +249,10 @@ public class SECP256K1Test {
                 .getResource("/tech/pegasys/pantheon/crypto/validPrivateKey.txt")
                 .toURI());
     final SECP256K1.PrivateKey privateKey = SECP256K1.PrivateKey.load(file);
-    assertEquals(
-        BytesValue.fromHexString(
-            "000000000000000000000000000000000000000000000000000000000000000A"),
-        privateKey.getEncodedBytes());
+    assertThat(privateKey.getEncodedBytes())
+        .isEqualTo(
+            BytesValue.fromHexString(
+                "000000000000000000000000000000000000000000000000000000000000000A"));
   }
 
   @Test
@@ -265,7 +263,7 @@ public class SECP256K1Test {
     tempFile.deleteOnExit();
     keyPair1.store(tempFile);
     final SECP256K1.KeyPair keyPair2 = SECP256K1.KeyPair.load(tempFile);
-    assertEquals(keyPair1, keyPair2);
+    assertThat(keyPair2).isEqualTo(keyPair1);
   }
 
   @Test(expected = InvalidSEC256K1PrivateKeyStoreException.class)

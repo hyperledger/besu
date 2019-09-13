@@ -13,10 +13,6 @@
 package tech.pegasys.pantheon.ethereum.worldstate;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static tech.pegasys.pantheon.ethereum.core.InMemoryStorageProvider.createInMemoryWorldState;
 
 import tech.pegasys.pantheon.ethereum.core.Account;
@@ -69,16 +65,16 @@ public class DefaultMutableWorldStateTest {
   @Test
   public void rootHash_Empty() {
     final MutableWorldState worldState = createEmpty();
-    assertEquals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH, worldState.rootHash());
+    assertThat(worldState.rootHash()).isEqualTo(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
 
     worldState.persist();
-    assertEquals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH, worldState.rootHash());
+    assertThat(worldState.rootHash()).isEqualTo(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
   }
 
   @Test
   public void containsAccount_AccountDoesNotExist() {
     final WorldState worldState = createEmpty();
-    assertNull(worldState.get(ADDRESS));
+    assertThat(worldState.get(ADDRESS)).isNull();
   }
 
   @Test
@@ -87,10 +83,11 @@ public class DefaultMutableWorldStateTest {
     final WorldUpdater updater = worldState.updater();
     updater.createAccount(ADDRESS).setBalance(Wei.of(100000));
     updater.commit();
-    assertNotNull(worldState.get(ADDRESS));
-    assertEquals(
-        Hash.fromHexString("0xa3e1c133a5a51b03399ed9ad0380f3182e9e18322f232b816dd4b9094f871e1b"),
-        worldState.rootHash());
+    assertThat(worldState.get(ADDRESS)).isNotNull();
+    assertThat(worldState.rootHash())
+        .isEqualTo(
+            Hash.fromHexString(
+                "0xa3e1c133a5a51b03399ed9ad0380f3182e9e18322f232b816dd4b9094f871e1b"));
   }
 
   @Test
@@ -99,10 +96,10 @@ public class DefaultMutableWorldStateTest {
     final WorldUpdater updater = worldState.updater();
     updater.deleteAccount(ADDRESS);
     updater.commit();
-    assertEquals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH, worldState.rootHash());
+    assertThat(worldState.rootHash()).isEqualTo(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
 
     worldState.persist();
-    assertEquals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH, worldState.rootHash());
+    assertThat(worldState.rootHash()).isEqualTo(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
   }
 
   @Test
@@ -112,10 +109,10 @@ public class DefaultMutableWorldStateTest {
     updater.createAccount(ADDRESS).setBalance(Wei.of(100000));
     updater.deleteAccount(ADDRESS);
     updater.commit();
-    assertEquals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH, worldState.rootHash());
+    assertThat(worldState.rootHash()).isEqualTo(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
 
     worldState.persist();
-    assertEquals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH, worldState.rootHash());
+    assertThat(worldState.rootHash()).isEqualTo(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
   }
 
   @Test
@@ -125,18 +122,18 @@ public class DefaultMutableWorldStateTest {
     WorldUpdater updater = worldState.updater();
     updater.createAccount(ADDRESS).setBalance(Wei.of(100000));
     updater.commit();
-    assertNotNull(worldState.get(ADDRESS));
-    assertNotEquals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH, worldState.rootHash());
+    assertThat(worldState.get(ADDRESS)).isNotNull();
+    assertThat(worldState.rootHash()).isNotEqualTo(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
 
     // Delete account
     updater = worldState.updater();
     updater.deleteAccount(ADDRESS);
-    assertNull(updater.get(ADDRESS));
-    assertNull(updater.getMutable(ADDRESS));
+    assertThat(updater.get(ADDRESS)).isNull();
+    assertThat(updater.getMutable(ADDRESS)).isNull();
     updater.commit();
-    assertNull(updater.get(ADDRESS));
+    assertThat(updater.get(ADDRESS)).isNull();
 
-    assertEquals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH, worldState.rootHash());
+    assertThat(worldState.rootHash()).isEqualTo(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
   }
 
   @Test
@@ -147,22 +144,22 @@ public class DefaultMutableWorldStateTest {
     updater.createAccount(ADDRESS).setBalance(Wei.of(100000));
     updater.commit();
     worldState.persist();
-    assertNotNull(worldState.get(ADDRESS));
-    assertNotEquals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH, worldState.rootHash());
+    assertThat(worldState.get(ADDRESS)).isNotNull();
+    assertThat(worldState.rootHash()).isNotEqualTo(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
 
     // Delete account
     updater = worldState.updater();
     updater.deleteAccount(ADDRESS);
-    assertNull(updater.get(ADDRESS));
-    assertNull(updater.getMutable(ADDRESS));
+    assertThat(updater.get(ADDRESS)).isNull();
+    assertThat(updater.getMutable(ADDRESS)).isNull();
     // Check account is gone after committing
     updater.commit();
-    assertNull(updater.get(ADDRESS));
+    assertThat(updater.get(ADDRESS)).isNull();
     // And after persisting
     worldState.persist();
-    assertNull(updater.get(ADDRESS));
+    assertThat(updater.get(ADDRESS)).isNull();
 
-    assertEquals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH, worldState.rootHash());
+    assertThat(worldState.rootHash()).isEqualTo(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
   }
 
   @Test
@@ -251,14 +248,14 @@ public class DefaultMutableWorldStateTest {
 
     // Update account and assert we get the expected response from updater
     updater.createAccount(ADDRESS).setBalance(newBalance);
-    assertNotNull(updater.get(ADDRESS));
-    assertEquals(newBalance, updater.get(ADDRESS).getBalance());
+    assertThat(updater.get(ADDRESS)).isNotNull();
+    assertThat(updater.get(ADDRESS).getBalance()).isEqualTo(newBalance);
 
     // Commit and check assertions
     updater.commit();
-    assertEquals(expectedRootHash, worldState.rootHash());
-    assertNotNull(worldState.get(ADDRESS));
-    assertEquals(newBalance, worldState.get(ADDRESS).getBalance());
+    assertThat(worldState.rootHash()).isEqualTo(expectedRootHash);
+    assertThat(worldState.get(ADDRESS)).isNotNull();
+    assertThat(worldState.get(ADDRESS).getBalance()).isEqualTo(newBalance);
 
     // Check that storage is empty before persisting
     assertThat(kvWorldStateStorage.isWorldStateAvailable(worldState.rootHash())).isFalse();
@@ -267,9 +264,9 @@ public class DefaultMutableWorldStateTest {
     worldState.persist();
 
     assertThat(kvWorldStateStorage.isWorldStateAvailable(worldState.rootHash())).isTrue();
-    assertEquals(expectedRootHash, worldState.rootHash());
-    assertNotNull(worldState.get(ADDRESS));
-    assertEquals(newBalance, worldState.get(ADDRESS).getBalance());
+    assertThat(worldState.rootHash()).isEqualTo(expectedRootHash);
+    assertThat(worldState.get(ADDRESS)).isNotNull();
+    assertThat(worldState.get(ADDRESS).getBalance()).isEqualTo(newBalance);
 
     // Create new world state and check that it can access modified address
     final MutableWorldState newWorldState =
@@ -277,9 +274,9 @@ public class DefaultMutableWorldStateTest {
             expectedRootHash,
             new WorldStateKeyValueStorage(storage),
             new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage()));
-    assertEquals(expectedRootHash, newWorldState.rootHash());
-    assertNotNull(newWorldState.get(ADDRESS));
-    assertEquals(newBalance, newWorldState.get(ADDRESS).getBalance());
+    assertThat(newWorldState.rootHash()).isEqualTo(expectedRootHash);
+    assertThat(newWorldState.get(ADDRESS)).isNotNull();
+    assertThat(newWorldState.get(ADDRESS).getBalance()).isEqualTo(newBalance);
   }
 
   @Test
@@ -288,10 +285,11 @@ public class DefaultMutableWorldStateTest {
     final WorldUpdater updater = worldState.updater();
     updater.createAccount(ADDRESS).setNonce(1L);
     updater.commit();
-    assertEquals(1L, worldState.get(ADDRESS).getNonce());
-    assertEquals(
-        Hash.fromHexString("0x9648b05cc2eef5513ae2edfe16bfcedb3d1c60ffb5dff3fc501bd3e4ae39f536"),
-        worldState.rootHash());
+    assertThat(worldState.get(ADDRESS).getNonce()).isEqualTo(1L);
+    assertThat(worldState.rootHash())
+        .isEqualTo(
+            Hash.fromHexString(
+                "0x9648b05cc2eef5513ae2edfe16bfcedb3d1c60ffb5dff3fc501bd3e4ae39f536"));
   }
 
   @Test
@@ -302,10 +300,11 @@ public class DefaultMutableWorldStateTest {
     account.setNonce(1L);
     account.setNonce(2L);
     updater.commit();
-    assertEquals(2L, worldState.get(ADDRESS).getNonce());
-    assertEquals(
-        Hash.fromHexString("0x7f64d13e61301a5154a5f06483a38572629e977b316cbe5a28b5f0522010a4bf"),
-        worldState.rootHash());
+    assertThat(worldState.get(ADDRESS).getNonce()).isEqualTo(2L);
+    assertThat(worldState.rootHash())
+        .isEqualTo(
+            Hash.fromHexString(
+                "0x7f64d13e61301a5154a5f06483a38572629e977b316cbe5a28b5f0522010a4bf"));
   }
 
   @Test
@@ -314,7 +313,7 @@ public class DefaultMutableWorldStateTest {
     final WorldUpdater updater = worldState.updater();
     updater.createAccount(ADDRESS).setBalance(Wei.of(100000));
     updater.commit();
-    assertEquals(Wei.of(100000), worldState.get(ADDRESS).getBalance());
+    assertThat(worldState.get(ADDRESS).getBalance()).isEqualTo(Wei.of(100000));
   }
 
   @Test
@@ -325,10 +324,11 @@ public class DefaultMutableWorldStateTest {
     account.setBalance(Wei.of(100000));
     account.setBalance(Wei.of(200000));
     updater.commit();
-    assertEquals(Wei.of(200000), worldState.get(ADDRESS).getBalance());
-    assertEquals(
-        Hash.fromHexString("0xbfa4e0598cc2b810a8ccc4a2d9a4c575574d05c9c4a7f915e6b8545953a5051e"),
-        worldState.rootHash());
+    assertThat(worldState.get(ADDRESS).getBalance()).isEqualTo(Wei.of(200000));
+    assertThat(worldState.rootHash())
+        .isEqualTo(
+            Hash.fromHexString(
+                "0xbfa4e0598cc2b810a8ccc4a2d9a4c575574d05c9c4a7f915e6b8545953a5051e"));
   }
 
   @Test
@@ -339,10 +339,11 @@ public class DefaultMutableWorldStateTest {
     account.setBalance(Wei.of(100000));
     account.setStorageValue(UInt256.ZERO, UInt256.ZERO);
     updater.commit();
-    assertEquals(UInt256.ZERO, worldState.get(ADDRESS).getStorageValue(UInt256.ZERO));
-    assertEquals(
-        Hash.fromHexString("0xa3e1c133a5a51b03399ed9ad0380f3182e9e18322f232b816dd4b9094f871e1b"),
-        worldState.rootHash());
+    assertThat(worldState.get(ADDRESS).getStorageValue(UInt256.ZERO)).isEqualTo(UInt256.ZERO);
+    assertThat(worldState.rootHash())
+        .isEqualTo(
+            Hash.fromHexString(
+                "0xa3e1c133a5a51b03399ed9ad0380f3182e9e18322f232b816dd4b9094f871e1b"));
   }
 
   @Test
@@ -353,10 +354,11 @@ public class DefaultMutableWorldStateTest {
     account.setBalance(Wei.of(100000));
     account.setStorageValue(UInt256.ONE, UInt256.of(2));
     updater.commit();
-    assertEquals(UInt256.of(2), worldState.get(ADDRESS).getStorageValue(UInt256.ONE));
-    assertEquals(
-        Hash.fromHexString("0xd31ce0bf3bf8790083a8ebde418244fda3b1cca952d7119ed244f86d03044656"),
-        worldState.rootHash());
+    assertThat(worldState.get(ADDRESS).getStorageValue(UInt256.ONE)).isEqualTo(UInt256.of(2));
+    assertThat(worldState.rootHash())
+        .isEqualTo(
+            Hash.fromHexString(
+                "0xd31ce0bf3bf8790083a8ebde418244fda3b1cca952d7119ed244f86d03044656"));
   }
 
   @Test
@@ -368,10 +370,11 @@ public class DefaultMutableWorldStateTest {
     account.setStorageValue(UInt256.ONE, UInt256.of(2));
     account.setStorageValue(UInt256.ONE, UInt256.of(3));
     updater.commit();
-    assertEquals(UInt256.of(3), worldState.get(ADDRESS).getStorageValue(UInt256.ONE));
-    assertEquals(
-        Hash.fromHexString("0x1d0ddb5079fe5b8689124b68c9e5bb3f4d8e13c2f7489d24f088c78fd45e058d"),
-        worldState.rootHash());
+    assertThat(worldState.get(ADDRESS).getStorageValue(UInt256.ONE)).isEqualTo(UInt256.of(3));
+    assertThat(worldState.rootHash())
+        .isEqualTo(
+            Hash.fromHexString(
+                "0x1d0ddb5079fe5b8689124b68c9e5bb3f4d8e13c2f7489d24f088c78fd45e058d"));
   }
 
   @Test
@@ -383,9 +386,10 @@ public class DefaultMutableWorldStateTest {
     account.setStorageValue(UInt256.ONE, UInt256.of(2));
     account.setStorageValue(UInt256.ONE, UInt256.ZERO);
     updater.commit();
-    assertEquals(
-        Hash.fromHexString("0xa3e1c133a5a51b03399ed9ad0380f3182e9e18322f232b816dd4b9094f871e1b"),
-        worldState.rootHash());
+    assertThat(worldState.rootHash())
+        .isEqualTo(
+            Hash.fromHexString(
+                "0xa3e1c133a5a51b03399ed9ad0380f3182e9e18322f232b816dd4b9094f871e1b"));
   }
 
   @Test
@@ -465,8 +469,8 @@ public class DefaultMutableWorldStateTest {
     account.setStorageValue(storageKey, storageValue);
     updater.commit();
     worldState.persist();
-    assertNotNull(worldState.get(ADDRESS));
-    assertNotEquals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH, worldState.rootHash());
+    assertThat(worldState.get(ADDRESS)).isNotNull();
+    assertThat(worldState.rootHash()).isNotEqualTo(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
 
     // Clear storage
     account = updater.getMutable(ADDRESS);
@@ -572,11 +576,12 @@ public class DefaultMutableWorldStateTest {
     account.setVersion(Account.DEFAULT_VERSION);
     account.setCode(BytesValue.of(3, 2, 1));
     updater.commit();
-    assertEquals(BytesValue.of(3, 2, 1), worldState.get(ADDRESS).getCode());
-    assertEquals(Account.DEFAULT_VERSION, worldState.get(ADDRESS).getVersion());
-    assertEquals(
-        Hash.fromHexString("0xc14f5e30581de9155ea092affa665fad83bcd9f98e45c4a42885b9b36d939702"),
-        worldState.rootHash());
+    assertThat(worldState.get(ADDRESS).getCode()).isEqualByComparingTo(BytesValue.of(3, 2, 1));
+    assertThat(worldState.get(ADDRESS).getVersion()).isEqualTo(Account.DEFAULT_VERSION);
+    assertThat(worldState.rootHash())
+        .isEqualTo(
+            Hash.fromHexString(
+                "0xc14f5e30581de9155ea092affa665fad83bcd9f98e45c4a42885b9b36d939702"));
   }
 
   @Test
@@ -590,17 +595,18 @@ public class DefaultMutableWorldStateTest {
     final WorldUpdater updater2 = worldState.updater();
     final MutableAccount account2 = updater2.getMutable(ADDRESS);
     account2.setBalance(Wei.of(300000));
-    assertEquals(Wei.of(300000), updater2.get(ADDRESS).getBalance());
+    assertThat(updater2.get(ADDRESS).getBalance()).isEqualTo(Wei.of(300000));
 
     updater2.revert();
-    assertEquals(Wei.of(200000), updater2.get(ADDRESS).getBalance());
+    assertThat(updater2.get(ADDRESS).getBalance()).isEqualTo(Wei.of(200000));
 
     updater2.commit();
-    assertEquals(Wei.of(200000), worldState.get(ADDRESS).getBalance());
+    assertThat(worldState.get(ADDRESS).getBalance()).isEqualTo(Wei.of(200000));
 
-    assertEquals(
-        Hash.fromHexString("0xbfa4e0598cc2b810a8ccc4a2d9a4c575574d05c9c4a7f915e6b8545953a5051e"),
-        worldState.rootHash());
+    assertThat(worldState.rootHash())
+        .isEqualTo(
+            Hash.fromHexString(
+                "0xbfa4e0598cc2b810a8ccc4a2d9a4c575574d05c9c4a7f915e6b8545953a5051e"));
   }
 
   @Test

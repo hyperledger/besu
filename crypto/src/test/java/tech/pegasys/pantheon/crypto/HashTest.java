@@ -13,7 +13,7 @@
 package tech.pegasys.pantheon.crypto;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
@@ -37,16 +37,16 @@ public class HashTest {
   @Test
   public void keccak256Hash() {
     final BytesValue resultHorse = Hash.keccak256(BytesValue.wrap("horse".getBytes(UTF_8)));
-    assertEquals(BytesValue.fromHexString(horseKeccak256), resultHorse);
+    assertThat(resultHorse).isEqualTo(BytesValue.fromHexString(horseKeccak256));
 
     final BytesValue resultCow = Hash.keccak256(BytesValue.wrap("cow".getBytes(UTF_8)));
-    assertEquals(BytesValue.fromHexString(cowKeccak256), resultCow);
+    assertThat(resultCow).isEqualTo(BytesValue.fromHexString(cowKeccak256));
   }
 
   /** Validate blake2f compression digest. */
   @Test
   public void blake2bfCompression() {
     final BytesValue result = Hash.blake2bf(BytesValue.wrap(Hex.decode(inputBlake2bf)));
-    assertEquals(BytesValue.fromHexString(outputBlake2bf), result);
+    assertThat(result).isEqualTo(BytesValue.fromHexString(outputBlake2bf));
   }
 }

@@ -12,8 +12,7 @@
  */
 package tech.pegasys.pantheon.util;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.net.InetSocketAddress;
 
@@ -24,9 +23,10 @@ public class NetworkUtilityTest {
   @Test
   public void urlForSocketAddressHandlesIPv6() {
     final InetSocketAddress ipv6All = new InetSocketAddress("::", 80);
-    assertFalse(NetworkUtility.urlForSocketAddress("http", ipv6All).contains("::"));
-    assertFalse(NetworkUtility.urlForSocketAddress("http", ipv6All).contains("0:0:0:0:0:0:0:0"));
+    assertThat(NetworkUtility.urlForSocketAddress("http", ipv6All)).doesNotContain("::");
+    assertThat(NetworkUtility.urlForSocketAddress("http", ipv6All))
+        .doesNotContain("0:0:0:0:0:0:0:0");
     final InetSocketAddress ipv6 = new InetSocketAddress("1:2:3:4:5:6:7:8", 80);
-    assertTrue(NetworkUtility.urlForSocketAddress("http", ipv6).contains("[1:2:3:4:5:6:7:8]"));
+    assertThat(NetworkUtility.urlForSocketAddress("http", ipv6)).contains("[1:2:3:4:5:6:7:8]");
   }
 }

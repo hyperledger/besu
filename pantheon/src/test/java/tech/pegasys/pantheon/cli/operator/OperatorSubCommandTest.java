@@ -19,11 +19,9 @@ import static java.nio.file.Files.createTempDirectory;
 import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
 import static java.util.Collections.singletonList;
-import static java.util.Objects.requireNonNull;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.contentOf;
-import static org.junit.Assert.assertTrue;
 import static tech.pegasys.pantheon.cli.operator.OperatorSubCommandTest.Cmd.cmd;
 import static tech.pegasys.pantheon.cli.subcommands.operator.OperatorSubCommand.COMMAND_NAME;
 import static tech.pegasys.pantheon.cli.subcommands.operator.OperatorSubCommand.GENERATE_BLOCKCHAIN_CONFIG_SUBCOMMAND_NAME;
@@ -219,14 +217,14 @@ public class OperatorSubCommandTest extends CommandTestAbstract {
 
     final Path outputGenesisExpectedPath = outputDirectoryPath.resolve(genesisFileName);
     final File outputGenesisFile = new File(outputGenesisExpectedPath.toUri());
-    assertTrue("Output genesis file must exist.", outputGenesisFile.exists());
+    assertThat(outputGenesisFile).withFailMessage("Output genesis file must exist.").exists();
     final String genesisString = contentOf(outputGenesisFile, UTF_8);
     final JsonObject genesisContent = new JsonObject(genesisString);
-    assertTrue(genesisContent.containsKey("extraData"));
+    assertThat(genesisContent.containsKey("extraData")).isTrue();
 
     final Path expectedKeysPath = outputDirectoryPath.resolve("keys");
     final File keysDirectory = new File(expectedKeysPath.toUri());
-    assertTrue(keysDirectory.exists());
+    assertThat(keysDirectory).exists();
     final File[] nodesKeysFolders = keysDirectory.listFiles();
     assert nodesKeysFolders != null;
     if (generate) {
@@ -240,8 +238,7 @@ public class OperatorSubCommandTest extends CommandTestAbstract {
     final Stream<File> nodesKeysFoldersStream = stream(nodesKeysFolders);
 
     nodesKeysFoldersStream.forEach(
-        nodeFolder ->
-            assertTrue(asList(requireNonNull(nodeFolder.list())).containsAll(expectedKeyFiles)));
+        nodeFolder -> assertThat(nodeFolder.list()).containsAll(expectedKeyFiles));
   }
 
   static class Cmd {

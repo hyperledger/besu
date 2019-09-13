@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.vm.operations;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 import tech.pegasys.pantheon.ethereum.mainnet.ConstantinopleGasCalculator;
@@ -51,6 +51,6 @@ public class RevertOperationTest {
     ArgumentCaptor<BytesValue> arg = ArgumentCaptor.forClass(BytesValue.class);
     operation.execute(messageFrame);
     Mockito.verify(messageFrame).setRevertReason(arg.capture());
-    assertEquals(revertReasonBytes, arg.getValue());
+    assertThat(arg.getValue()).isEqualTo(revertReasonBytes);
   }
 }

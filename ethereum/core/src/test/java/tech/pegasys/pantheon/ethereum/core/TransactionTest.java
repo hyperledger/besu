@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.core;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assume.assumeTrue;
 
 import tech.pegasys.pantheon.ethereum.mainnet.TransactionValidator;
@@ -22,7 +23,6 @@ import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.util.Collection;
 
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -113,14 +113,14 @@ public class TransactionTest {
 
       // Test rlp encoding
       final BytesValue actualRlp = RLP.encode(transaction::writeTo);
-      Assert.assertTrue(expected.isSucceeds());
+      assertThat(expected.isSucceeds()).isTrue();
 
-      Assert.assertEquals(rlp, actualRlp);
+      assertThat(actualRlp).isEqualTo(rlp);
 
-      Assert.assertEquals(expected.getSender(), transaction.getSender());
-      Assert.assertEquals(expected.getHash(), transaction.hash());
+      assertThat(transaction.getSender()).isEqualTo(expected.getSender());
+      assertThat(transaction.hash()).isEqualTo(expected.getHash());
     } catch (final Exception e) {
-      Assert.assertFalse(expected.isSucceeds());
+      assertThat(expected.isSucceeds()).isFalse();
     }
   }
 }

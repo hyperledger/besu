@@ -12,8 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.api.jsonrpc.internal.methods;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -63,7 +62,7 @@ public class DebugTraceTransactionTest {
 
   @Test
   public void nameShouldBeDebugTraceTransaction() {
-    assertEquals("debug_traceTransaction", debugTraceTransaction.getName());
+    assertThat(debugTraceTransaction.getName()).isEqualTo("debug_traceTransaction");
   }
 
   @Test
@@ -105,10 +104,10 @@ public class DebugTraceTransactionTest {
     final DebugTraceTransactionResult transactionResult =
         (DebugTraceTransactionResult) response.getResult();
 
-    assertEquals(73, transactionResult.getGas());
-    assertEquals("1234", transactionResult.getReturnValue());
+    assertThat(transactionResult.getGas()).isEqualTo(73);
+    assertThat(transactionResult.getReturnValue()).isEqualTo("1234");
     final List<StructLog> expectedStructLogs = Collections.singletonList(new StructLog(traceFrame));
-    assertEquals(expectedStructLogs, transactionResult.getStructLogs());
+    assertThat(transactionResult.getStructLogs()).isEqualTo(expectedStructLogs);
   }
 
   @Test
@@ -145,6 +144,6 @@ public class DebugTraceTransactionTest {
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) debugTraceTransaction.response(request);
 
-    assertNull(response.getResult());
+    assertThat(response.getResult()).isNull();
   }
 }

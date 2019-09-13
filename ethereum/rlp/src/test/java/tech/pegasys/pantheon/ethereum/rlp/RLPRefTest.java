@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.rlp;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assume.assumeTrue;
 
 import tech.pegasys.pantheon.ethereum.rlp.util.RLPTestUtil;
@@ -45,11 +45,11 @@ public class RLPRefTest {
 
   @Test
   public void encode() {
-    assertEquals(spec.getOut(), RLPTestUtil.encode(spec.getIn()));
+    assertThat(RLPTestUtil.encode(spec.getIn())).isEqualTo(spec.getOut());
   }
 
   @Test
   public void decode() {
-    assertEquals(spec.getIn(), RLPTestUtil.decode(spec.getOut()));
+    assertThat(RLPTestUtil.decode(spec.getOut())).isEqualTo(spec.getIn());
   }
 }

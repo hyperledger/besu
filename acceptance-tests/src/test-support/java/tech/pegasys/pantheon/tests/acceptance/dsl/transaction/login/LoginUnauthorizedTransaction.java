@@ -13,7 +13,7 @@
 package tech.pegasys.pantheon.tests.acceptance.dsl.transaction.login;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
+import static org.assertj.core.api.Fail.fail;
 
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.NodeRequests;
 import tech.pegasys.pantheon.tests.acceptance.dsl.transaction.Transaction;
@@ -36,7 +36,7 @@ public class LoginUnauthorizedTransaction implements Transaction<Void> {
       assertThat(node.login().send(username, password)).isEqualTo("Unauthorized");
       return null;
     } catch (final IOException e) {
-      fail("Login request failed with exception: " + e.toString());
+      fail("Login request failed with exception: %s", e);
       return null;
     }
   }

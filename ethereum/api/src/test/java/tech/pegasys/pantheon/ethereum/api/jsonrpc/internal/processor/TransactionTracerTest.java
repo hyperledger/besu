@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.api.jsonrpc.internal.processor;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -106,7 +106,7 @@ public class TransactionTracerTest {
   public void traceTransactionShouldReturnNoneWhenBlockHeaderNotFound() {
     final Optional<TransactionTrace> transactionTrace =
         transactionTracer.traceTransaction(invalidBlockHash, transactionHash, tracer);
-    assertEquals(Optional.empty(), transactionTrace);
+    assertThat(transactionTrace).isEmpty();
   }
 
   @Test
@@ -121,7 +121,7 @@ public class TransactionTracerTest {
     final Optional<TransactionTrace> transactionTrace =
         transactionTracer.traceTransaction(blockHash, transactionHash, tracer);
 
-    assertEquals(traceFrames, transactionTrace.get().getTraceFrames());
+    assertThat(transactionTrace.map(TransactionTrace::getTraceFrames)).contains(traceFrames);
   }
 
   @Test
@@ -138,7 +138,7 @@ public class TransactionTracerTest {
     final Optional<TransactionTrace> transactionTrace =
         transactionTracer.traceTransaction(blockHash, transactionHash, tracer);
 
-    assertEquals(traceFrames, transactionTrace.get().getTraceFrames());
+    assertThat(transactionTrace.map(TransactionTrace::getTraceFrames)).contains(traceFrames);
   }
 
   @Test
@@ -167,7 +167,7 @@ public class TransactionTracerTest {
     final Optional<TransactionTrace> transactionTrace =
         transactionTracer.traceTransaction(blockHash, transactionHash, tracer);
 
-    assertEquals(result, transactionTrace.get().getResult());
+    assertThat(transactionTrace.map(TransactionTrace::getResult)).contains(result);
   }
 
   @Test
@@ -182,7 +182,7 @@ public class TransactionTracerTest {
     final Optional<TransactionTrace> transactionTrace =
         transactionTracer.traceTransaction(blockHash, transactionHash, tracer);
 
-    assertEquals(Optional.empty(), transactionTrace);
+    assertThat(transactionTrace).isEmpty();
   }
 
   @Test
@@ -194,6 +194,6 @@ public class TransactionTracerTest {
     final Optional<TransactionTrace> transactionTrace =
         transactionTracer.traceTransaction(blockHash, transactionHash, tracer);
 
-    assertEquals(Optional.empty(), transactionTrace);
+    assertThat(transactionTrace).isEmpty();
   }
 }

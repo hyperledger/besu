@@ -15,7 +15,6 @@ package tech.pegasys.pantheon.enclave;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
-import static org.junit.Assert.assertTrue;
 
 import tech.pegasys.orion.testutil.OrionKeyConfiguration;
 import tech.pegasys.orion.testutil.OrionTestHarness;
@@ -72,7 +71,7 @@ public class EnclaveTest {
 
   @Test
   public void testUpCheck() throws IOException {
-    assertTrue(enclave.upCheck());
+    assertThat(enclave.upCheck()).isTrue();
   }
 
   @Test

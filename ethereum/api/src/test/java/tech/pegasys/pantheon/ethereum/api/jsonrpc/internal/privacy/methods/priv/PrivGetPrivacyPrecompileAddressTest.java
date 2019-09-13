@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -47,7 +47,7 @@ public class PrivGetPrivacyPrecompileAddressTest {
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) privGetPrivacyPrecompileAddress.response(request);
 
-    assertEquals(privacyAddress, response.getResult());
+    assertThat(response.getResult()).isEqualTo(privacyAddress);
   }
 
   @Test
@@ -63,7 +63,8 @@ public class PrivGetPrivacyPrecompileAddressTest {
 
     final JsonRpcResponse response = privGetPrivacyPrecompileAddress.response(request);
 
-    assertEquals(JsonRpcResponseType.ERROR, response.getType());
-    assertEquals(JsonRpcError.PRIVACY_NOT_ENABLED, ((JsonRpcErrorResponse) response).getError());
+    assertThat(response.getType()).isEqualByComparingTo(JsonRpcResponseType.ERROR);
+    assertThat(((JsonRpcErrorResponse) response).getError())
+        .isEqualByComparingTo(JsonRpcError.PRIVACY_NOT_ENABLED);
   }
 }

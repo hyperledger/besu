@@ -13,7 +13,6 @@
 package tech.pegasys.pantheon.ethereum.api.jsonrpc.internal.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -63,9 +62,9 @@ public class TxPoolPantheonStatisticsTest {
     final JsonRpcSuccessResponse actualResponse = (JsonRpcSuccessResponse) method.response(request);
     final PendingTransactionsStatisticsResult result =
         (PendingTransactionsStatisticsResult) actualResponse.getResult();
-    assertEquals(1, result.getRemoteCount());
-    assertEquals(2, result.getLocalCount());
-    assertEquals(123, result.getMaxSize());
+    assertThat(result.getRemoteCount()).isEqualTo(1);
+    assertThat(result.getLocalCount()).isEqualTo(2);
+    assertThat(result.getMaxSize()).isEqualTo(123);
   }
 
   private TransactionInfo createTransactionInfo(final boolean local) {

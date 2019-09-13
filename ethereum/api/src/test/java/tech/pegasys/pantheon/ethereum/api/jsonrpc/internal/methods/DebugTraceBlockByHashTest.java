@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.api.jsonrpc.internal.methods;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
@@ -50,7 +50,7 @@ public class DebugTraceBlockByHashTest {
 
   @Test
   public void nameShouldBeDebugTraceBlockByHash() {
-    assertEquals("debug_traceBlockByHash", debugTraceBlockByHash.getName());
+    assertThat(debugTraceBlockByHash.getName()).isEqualTo("debug_traceBlockByHash");
   }
 
   @Test
@@ -89,6 +89,6 @@ public class DebugTraceBlockByHashTest {
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) debugTraceBlockByHash.response(request);
     final Collection<?> result = (Collection<?>) response.getResult();
-    assertEquals(2, result.size());
+    assertThat(result).hasSize(2);
   }
 }

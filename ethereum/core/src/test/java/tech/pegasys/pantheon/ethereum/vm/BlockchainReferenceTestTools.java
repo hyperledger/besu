@@ -30,8 +30,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import org.junit.Assert;
-
 public class BlockchainReferenceTestTools {
   private static final ReferenceTestProtocolSchedules REFERENCE_TEST_PROTOCOL_SCHEDULES =
       ReferenceTestProtocolSchedules.create();
@@ -106,7 +104,7 @@ public class BlockchainReferenceTestTools {
 
         assertThat(imported).isEqualTo(candidateBlock.isValid());
       } catch (final RLPException e) {
-        Assert.assertFalse(candidateBlock.isValid());
+        assertThat(candidateBlock.isValid()).isFalse();
       }
     }
 

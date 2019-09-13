@@ -14,11 +14,6 @@ package tech.pegasys.pantheon.util.bytes;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
 import static tech.pegasys.pantheon.util.bytes.BytesValue.fromHexString;
 
 import java.math.BigInteger;
@@ -146,7 +141,7 @@ public class BytesValueImplementationsTest {
 
   @Test
   public void createInstance() {
-    assertEquals(BytesValue.EMPTY, creator.create(new byte[0]));
+    assertThat(creator.create(new byte[0])).isEqualTo(BytesValue.EMPTY);
 
     assertCreateInstance(new byte[10]);
     assertCreateInstance(new byte[] {1});
@@ -156,8 +151,8 @@ public class BytesValueImplementationsTest {
 
   private void assertCreateInstance(final byte[] bytes) {
     final BytesValue value = creator.create(bytes);
-    assertEquals(bytes.length, value.size());
-    assertArrayEquals(bytes, value.extractArray());
+    assertThat(value.size()).isEqualTo(bytes.length);
+    assertThat(value.extractArray()).containsExactly(bytes);
   }
 
   @Test(expected = NullPointerException.class)
@@ -167,9 +162,9 @@ public class BytesValueImplementationsTest {
 
   @Test
   public void createSlice() {
-    assertEquals(BytesValue.EMPTY, sliceCreator.create(new byte[0], 0, 0));
-    assertEquals(BytesValue.EMPTY, sliceCreator.create(new byte[] {1, 2, 3}, 0, 0));
-    assertEquals(BytesValue.EMPTY, sliceCreator.create(new byte[] {1, 2, 3}, 2, 0));
+    assertThat(sliceCreator.create(new byte[0], 0, 0)).isEqualTo(BytesValue.EMPTY);
+    assertThat(sliceCreator.create(new byte[] {1, 2, 3}, 0, 0)).isEqualTo(BytesValue.EMPTY);
+    assertThat(sliceCreator.create(new byte[] {1, 2, 3}, 2, 0)).isEqualTo(BytesValue.EMPTY);
 
     assertSliceCreated(new byte[] {1, 2, 3, 4}, 0, 4);
     assertSliceCreated(new byte[] {1, 2, 3, 4}, 0, 2);
@@ -179,8 +174,9 @@ public class BytesValueImplementationsTest {
 
   private void assertSliceCreated(final byte[] bytes, final int offset, final int length) {
     final BytesValue value = sliceCreator.create(bytes, offset, length);
-    assertEquals(length, value.size());
-    assertArrayEquals(Arrays.copyOfRange(bytes, offset, offset + length), value.extractArray());
+    assertThat(value.size()).isEqualTo(length);
+    assertThat(value.extractArray())
+        .containsExactly(Arrays.copyOfRange(bytes, offset, offset + length));
   }
 
   @Test(expected = NullPointerException.class)
@@ -214,18 +210,18 @@ public class BytesValueImplementationsTest {
 
   @Test
   public void sizes() {
-    assertEquals(0, creator.create(new byte[0]).size());
-    assertEquals(1, creator.create(new byte[1]).size());
-    assertEquals(10, creator.create(new byte[10]).size());
+    assertThat(creator.create(new byte[0]).size()).isEqualTo(0);
+    assertThat(creator.create(new byte[1]).size()).isEqualTo(1);
+    assertThat(creator.create(new byte[10]).size()).isEqualTo(10);
   }
 
   @Test
   public void gets() {
     final BytesValue v = creator.create(new byte[] {1, 2, 3, 4});
-    assertEquals(1, v.get(0));
-    assertEquals(2, v.get(1));
-    assertEquals(3, v.get(2));
-    assertEquals(4, v.get(3));
+    assertThat(v.get(0)).isEqualTo((byte) 1);
+    assertThat(v.get(1)).isEqualTo((byte) 2);
+    assertThat(v.get(2)).isEqualTo((byte) 3);
+    assertThat(v.get(3)).isEqualTo((byte) 4);
   }
 
   @Test(expected = IndexOutOfBoundsException.class)
@@ -243,13 +239,13 @@ public class BytesValueImplementationsTest {
     final BytesValue value = creator.create(new byte[] {0, 0, 1, 0, -1, -1, -1, -1});
 
     // 0x00000100 = 256
-    assertEquals(256, value.getInt(0));
+    assertThat(value.getInt(0)).isEqualTo(256);
     // 0x000100FF = 65536 + 255 = 65791
-    assertEquals(65791, value.getInt(1));
+    assertThat(value.getInt(1)).isEqualTo(65791);
     // 0x0100FFFF = 16777216 (2^24) + (65536 - 1) = 16842751
-    assertEquals(16842751, value.getInt(2));
+    assertThat(value.getInt(2)).isEqualTo(16842751);
     // 0xFFFFFFFF = -1
-    assertEquals(-1, value.getInt(4));
+    assertThat(value.getInt(4)).isEqualTo(-1);
   }
 
   @Test(expected = IndexOutOfBoundsException.class)
@@ -273,12 +269,12 @@ public class BytesValueImplementationsTest {
   public void getLong() {
     final BytesValue value1 = creator.create(new byte[] {0, 0, 1, 0, -1, -1, -1, -1, 0, 0});
     // 0x00000100FFFFFFFF = (2^40) + (2^32) - 1 = 1103806595071
-    assertEquals(1103806595071L, value1.getLong(0));
+    assertThat(value1.getLong(0)).isEqualTo(1103806595071L);
     // 0x 000100FFFFFFFF00 = (2^48) + (2^40) - 1 - 255 = 282574488338176
-    assertEquals(282574488338176L, value1.getLong(1));
+    assertThat(value1.getLong(1)).isEqualTo(282574488338176L);
 
     final BytesValue value2 = creator.create(new byte[] {-1, -1, -1, -1, -1, -1, -1, -1});
-    assertEquals(-1L, value2.getLong(0));
+    assertThat(value2.getLong(0)).isEqualTo(-1L);
   }
 
   @Test(expected = IndexOutOfBoundsException.class)
@@ -318,13 +314,13 @@ public class BytesValueImplementationsTest {
 
   @Test
   public void rangedSlice() {
-    assertEquals(fromHex("0x"), fromHex("0x0123456789").slice(0, 0));
-    assertEquals(fromHex("0x"), fromHex("0x0123456789").slice(2, 0));
-    assertEquals(fromHex("0x01"), fromHex("0x0123456789").slice(0, 1));
-    assertEquals(fromHex("0x0123"), fromHex("0x0123456789").slice(0, 2));
+    assertThat(fromHex("0x0123456789").slice(0, 0)).isEqualTo(fromHex("0x"));
+    assertThat(fromHex("0x0123456789").slice(2, 0)).isEqualTo(fromHex("0x"));
+    assertThat(fromHex("0x0123456789").slice(0, 1)).isEqualTo(fromHex("0x01"));
+    assertThat(fromHex("0x0123456789").slice(0, 2)).isEqualTo(fromHex("0x0123"));
 
-    assertEquals(fromHex("0x4567"), fromHex("0x0123456789").slice(2, 2));
-    assertEquals(fromHex("0x23456789"), fromHex("0x0123456789").slice(1, 4));
+    assertThat(fromHex("0x0123456789").slice(2, 2)).isEqualTo(fromHex("0x4567"));
+    assertThat(fromHex("0x0123456789").slice(1, 4)).isEqualTo(fromHex("0x23456789"));
   }
 
   @Test
@@ -338,7 +334,7 @@ public class BytesValueImplementationsTest {
   private void assertAppendToBuffer(
       final BytesValue toAppend, final Buffer buffer, final BytesValue expected) {
     toAppend.appendTo(buffer);
-    assertEquals(expected, BytesValue.wrap(buffer.getBytes()));
+    assertThat(BytesValue.wrap(buffer.getBytes())).isEqualTo(expected);
   }
 
   @Test
@@ -359,7 +355,7 @@ public class BytesValueImplementationsTest {
       final int destPos,
       final BytesValue expected) {
     toAppend.copyTo(dest, srcPos, destPos);
-    assertEquals(expected, BytesValue.wrap(dest));
+    assertThat(BytesValue.wrap(dest)).isEqualTo(expected);
   }
 
   @SuppressWarnings("DoNotInvokeMessageDigestDirectly")
@@ -390,29 +386,30 @@ public class BytesValueImplementationsTest {
     for (int i = 0; i < wrapped.size(); i++) md4.update(wrapped.get(i));
     final byte[] digest4 = md4.digest();
 
-    assertArrayEquals(digest1, digest2);
-    assertArrayEquals(digest1, digest3);
-    assertArrayEquals(digest1, digest4);
+    assertThat(digest2).containsExactly(digest1);
+    assertThat(digest3).containsExactly(digest1);
+    assertThat(digest4).containsExactly(digest1);
   }
 
   @Test
   public void asString() {
-    assertEquals("0x", BytesValue.EMPTY.toString());
+    assertThat(BytesValue.EMPTY.toString()).isEqualTo("0x");
 
-    assertEquals("0x01", creator.create(new byte[] {1}).toString());
-    assertEquals("0x0aff03", creator.create(new byte[] {0x0a, (byte) 0xff, 0x03}).toString());
+    assertThat(creator.create(new byte[] {1}).toString()).isEqualTo("0x01");
+    assertThat(creator.create(new byte[] {0x0a, (byte) 0xff, 0x03}).toString())
+        .isEqualTo("0x0aff03");
   }
 
   @Test
   public void zero() {
-    assertTrue(BytesValue.EMPTY.isZero());
-    assertTrue(creator.create(new byte[] {0}).isZero());
-    assertTrue(creator.create(new byte[] {0, 0, 0}).isZero());
+    assertThat(BytesValue.EMPTY.isZero()).isTrue();
+    assertThat(creator.create(new byte[] {0}).isZero()).isTrue();
+    assertThat(creator.create(new byte[] {0, 0, 0}).isZero()).isTrue();
 
-    assertFalse(creator.create(new byte[] {1}).isZero());
-    assertFalse(creator.create(new byte[] {1, 0, 0}).isZero());
-    assertFalse(creator.create(new byte[] {0, 0, 1}).isZero());
-    assertFalse(creator.create(new byte[] {0, 0, 1, 0, 0}).isZero());
+    assertThat(creator.create(new byte[] {1}).isZero()).isFalse();
+    assertThat(creator.create(new byte[] {1, 0, 0}).isZero()).isFalse();
+    assertThat(creator.create(new byte[] {0, 0, 1}).isZero()).isFalse();
+    assertThat(creator.create(new byte[] {0, 0, 1, 0, 0}).isZero()).isFalse();
   }
 
   @Test
@@ -477,27 +474,27 @@ public class BytesValueImplementationsTest {
     final byte[] orig = new byte[] {1, 2, 3, 4};
     final BytesValue value = creator.create(orig);
     final byte[] extracted = value.extractArray();
-    assertArrayEquals(extracted, orig);
+    assertThat(orig).containsExactly(extracted);
     Arrays.fill(extracted, (byte) -1);
-    assertArrayEquals(new byte[] {-1, -1, -1, -1}, extracted);
-    assertArrayEquals(new byte[] {1, 2, 3, 4}, orig);
-    assertEquals(creator.create(new byte[] {1, 2, 3, 4}), value);
+    assertThat(extracted).containsExactly(new byte[] {-1, -1, -1, -1});
+    assertThat(orig).containsExactly(new byte[] {1, 2, 3, 4});
+    assertThat(value).isEqualByComparingTo(creator.create(new byte[] {1, 2, 3, 4}));
   }
 
   private void assertArrayExtraction(final Function<BytesValue, byte[]> extractor) {
-    assertArrayEquals(new byte[0], extractor.apply(BytesValue.EMPTY));
+    assertThat(extractor.apply(BytesValue.EMPTY)).containsExactly(new byte[0]);
 
     final byte[][] toTest =
         new byte[][] {new byte[] {1}, new byte[] {1, 2, 3, 4, 5, 6}, new byte[] {-1, -1, 0, -1}};
     for (final byte[] array : toTest) {
-      assertArrayEquals(array, extractor.apply(creator.create(array)));
+      assertThat(extractor.apply(creator.create(array))).containsExactly(array);
     }
 
     // Test slightly more complex interactions
-    assertArrayEquals(
-        new byte[] {3, 4}, extractor.apply(creator.create(new byte[] {1, 2, 3, 4, 5}).slice(2, 2)));
-    assertArrayEquals(
-        new byte[] {}, extractor.apply(creator.create(new byte[] {1, 2, 3, 4, 5}).slice(2, 0)));
+    assertThat(extractor.apply(creator.create(new byte[] {1, 2, 3, 4, 5}).slice(2, 2)))
+        .containsExactly(new byte[] {3, 4});
+    assertThat(extractor.apply(creator.create(new byte[] {1, 2, 3, 4, 5}).slice(2, 0)))
+        .containsExactly(new byte[] {});
   }
 
   @Test
@@ -519,13 +516,13 @@ public class BytesValueImplementationsTest {
     final MutableBytesValue mutableCopy = v.mutableCopy();
 
     // Initially, copy must be equal.
-    assertEquals(mutableCopy, v);
+    assertThat(v).isEqualTo(mutableCopy);
 
     // Upon modification, original should not have been modified.
     mutableCopy.set(0, (byte) -1);
-    assertNotEquals(mutableCopy, v);
-    assertEquals(fromHex("0x012345"), v);
-    assertEquals(fromHex("0xFF2345"), mutableCopy);
+    assertThat(v).isNotEqualByComparingTo(mutableCopy);
+    assertThat(v).isEqualTo(fromHex("0x012345"));
+    assertThat(mutableCopy).isEqualTo(fromHex("0xFF2345"));
   }
 
   @Test
@@ -535,23 +532,23 @@ public class BytesValueImplementationsTest {
     // The follow does nothing, but simply making sure it doesn't throw.
     dest = MutableBytesValue.EMPTY;
     BytesValue.EMPTY.copyTo(dest);
-    assertEquals(BytesValue.EMPTY, dest);
+    assertThat(dest).isEqualTo(BytesValue.EMPTY);
 
     dest = MutableBytesValue.create(1);
     creator.create(new byte[] {1}).copyTo(dest);
-    assertEquals(fromHex("0x01"), dest);
+    assertThat(dest).isEqualTo(fromHex("0x01"));
 
     dest = MutableBytesValue.create(1);
     creator.create(new byte[] {10}).copyTo(dest);
-    assertEquals(fromHex("0x0A"), dest);
+    assertThat(dest).isEqualTo(fromHex("0x0A"));
 
     dest = MutableBytesValue.create(2);
     creator.create(new byte[] {(byte) 0xff, 0x03}).copyTo(dest);
-    assertEquals(fromHex("0xFF03"), dest);
+    assertThat(dest).isEqualTo(fromHex("0xFF03"));
 
     dest = MutableBytesValue.create(4);
     creator.create(new byte[] {(byte) 0xff, 0x03}).copyTo(dest.mutableSlice(1, 2));
-    assertEquals(fromHex("0x00FF0300"), dest);
+    assertThat(dest).isEqualTo(fromHex("0x00FF0300"));
   }
 
   @Test
@@ -576,23 +573,23 @@ public class BytesValueImplementationsTest {
 
     dest = MutableBytesValue.wrap(new byte[] {1, 2, 3});
     BytesValue.EMPTY.copyTo(dest, 0);
-    assertEquals(fromHex("0x010203"), dest);
+    assertThat(dest).isEqualTo(fromHex("0x010203"));
 
     dest = MutableBytesValue.wrap(new byte[] {1, 2, 3});
     creator.create(new byte[] {1}).copyTo(dest, 1);
-    assertEquals(fromHex("0x010103"), dest);
+    assertThat(dest).isEqualTo(fromHex("0x010103"));
 
     dest = MutableBytesValue.wrap(new byte[] {1, 2, 3});
     creator.create(new byte[] {2}).copyTo(dest, 0);
-    assertEquals(fromHex("0x020203"), dest);
+    assertThat(dest).isEqualTo(fromHex("0x020203"));
 
     dest = MutableBytesValue.wrap(new byte[] {1, 2, 3});
     creator.create(new byte[] {1, 1}).copyTo(dest, 1);
-    assertEquals(fromHex("0x010101"), dest);
+    assertThat(dest).isEqualTo(fromHex("0x010101"));
 
     dest = MutableBytesValue.create(4);
     creator.create(new byte[] {(byte) 0xff, 0x03}).copyTo(dest, 1);
-    assertEquals(fromHex("0x00FF0300"), dest);
+    assertThat(dest).isEqualTo(fromHex("0x00FF0300"));
   }
 
   @Test

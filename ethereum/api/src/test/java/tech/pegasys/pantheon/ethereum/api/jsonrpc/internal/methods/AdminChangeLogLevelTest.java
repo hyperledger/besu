@@ -13,7 +13,6 @@
 package tech.pegasys.pantheon.ethereum.api.jsonrpc.internal.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
 
 import tech.pegasys.pantheon.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
@@ -60,8 +59,8 @@ public class AdminChangeLogLevelTest {
     final Level levelAfterJsonRpcRequest = LogManager.getLogger().getLevel();
 
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
-    assertEquals(Level.INFO, levelBeforeJsonRpcRequest);
-    assertEquals(Level.DEBUG, levelAfterJsonRpcRequest);
+    assertThat(levelBeforeJsonRpcRequest).isEqualByComparingTo(Level.INFO);
+    assertThat(levelAfterJsonRpcRequest).isEqualByComparingTo(Level.DEBUG);
   }
 
   @Test
@@ -81,10 +80,10 @@ public class AdminChangeLogLevelTest {
         LogManager.getLogger("com").getLevel();
 
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
-    assertEquals(Level.INFO, levelOfAllProjectBeforeJsonRpcRequest);
-    assertEquals(Level.INFO, levelOfAllProjectAfterJsonRpcRequest);
-    assertEquals(Level.INFO, levelWithSpecificPackageBeforeJsonRpcRequest);
-    assertEquals(Level.DEBUG, levelWithSpecificPackageAfterJsonRpcRequest);
+    assertThat(levelOfAllProjectBeforeJsonRpcRequest).isEqualByComparingTo(Level.INFO);
+    assertThat(levelOfAllProjectAfterJsonRpcRequest).isEqualByComparingTo(Level.INFO);
+    assertThat(levelWithSpecificPackageBeforeJsonRpcRequest).isEqualByComparingTo(Level.INFO);
+    assertThat(levelWithSpecificPackageAfterJsonRpcRequest).isEqualByComparingTo(Level.DEBUG);
   }
 
   @Test
@@ -99,8 +98,8 @@ public class AdminChangeLogLevelTest {
     final Level levelAfterJsonRpcRequest = LogManager.getLogger().getLevel();
 
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
-    assertEquals(Level.INFO, levelBeforeJsonRpcRequest);
-    assertEquals(Level.DEBUG, levelAfterJsonRpcRequest);
+    assertThat(levelBeforeJsonRpcRequest).isEqualByComparingTo(Level.INFO);
+    assertThat(levelAfterJsonRpcRequest).isEqualByComparingTo(Level.DEBUG);
   }
 
   @Test

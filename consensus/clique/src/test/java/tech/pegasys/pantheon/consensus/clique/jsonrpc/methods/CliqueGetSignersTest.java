@@ -15,7 +15,6 @@ package tech.pegasys.pantheon.consensus.clique.jsonrpc.methods;
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
 import static tech.pegasys.pantheon.ethereum.core.Address.fromHexString;
 
@@ -91,7 +90,7 @@ public class CliqueGetSignersTest {
     when(voteTally.getValidators()).thenReturn(validators);
 
     final JsonRpcSuccessResponse response = (JsonRpcSuccessResponse) method.response(request);
-    assertEquals(validatorAsStrings, response.getResult());
+    assertThat(response.getResult()).isEqualTo(validatorAsStrings);
   }
 
   @Test
@@ -106,7 +105,7 @@ public class CliqueGetSignersTest {
     when(voteTally.getValidators()).thenReturn(validators);
 
     final JsonRpcSuccessResponse response = (JsonRpcSuccessResponse) method.response(request);
-    assertEquals(validatorAsStrings, response.getResult());
+    assertThat(response.getResult()).isEqualTo(validatorAsStrings);
   }
 
   @Test

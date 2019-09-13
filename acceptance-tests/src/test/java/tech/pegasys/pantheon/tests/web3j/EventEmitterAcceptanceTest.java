@@ -12,10 +12,7 @@
  */
 package tech.pegasys.pantheon.tests.web3j;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.pantheon.tests.acceptance.dsl.AcceptanceTestBase;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
@@ -59,15 +56,15 @@ public class EventEmitterAcceptanceTest extends AcceptanceTestBase {
         storedEventResponseObservable.subscribe(
             storedEventResponse -> {
               subscriptionReceived.set(true);
-              assertEquals(BigInteger.valueOf(12), storedEventResponse._amount);
+              assertThat(storedEventResponse._amount).isEqualTo(BigInteger.valueOf(12));
             });
 
-    assertFalse(subscription.isDisposed());
+    assertThat(subscription.isDisposed()).isFalse();
 
     final TransactionReceipt receipt = eventEmitter.store(BigInteger.valueOf(12)).send();
 
-    assertNotNull(receipt);
-    assertEquals(BigInteger.valueOf(12), eventEmitter.value().send());
-    assertTrue(subscriptionReceived.get());
+    assertThat(receipt).isNotNull();
+    assertThat(eventEmitter.value().send()).isEqualTo(BigInteger.valueOf(12));
+    assertThat(subscriptionReceived.get()).isTrue();
   }
 }

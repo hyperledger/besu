@@ -12,8 +12,7 @@
  */
 package tech.pegasys.pantheon.plugin.services.storage.rocksdb.unsegmented;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.pantheon.kvstore.AbstractKeyValueStorageTest;
 import tech.pegasys.pantheon.metrics.noop.NoOpMetricsSystem;
@@ -52,7 +51,7 @@ public class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValueStorageT
     final Optional<byte[]> result =
         store.get(store.getSegmentIdentifierByName(TestSegment.FOO), bytesFromHexString("0001"));
 
-    assertEquals(Optional.empty(), result);
+    assertThat(result).isEmpty();
   }
 
   @Test
@@ -73,16 +72,16 @@ public class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValueStorageT
     final long removedFromFoo = store.removeUnless(fooSegment, x -> Arrays.equals(x, bytesOf(3)));
     final long removedFromBar = store.removeUnless(barSegment, x -> Arrays.equals(x, bytesOf(4)));
 
-    assertEquals(2, removedFromFoo);
-    assertEquals(2, removedFromBar);
+    assertThat(removedFromFoo).isEqualTo(2);
+    assertThat(removedFromBar).isEqualTo(2);
 
-    assertEquals(Optional.empty(), store.get(fooSegment, bytesOf(1)));
-    assertEquals(Optional.empty(), store.get(fooSegment, bytesOf(2)));
-    assertArrayEquals(bytesOf(3), store.get(fooSegment, bytesOf(3)).get());
+    assertThat(store.get(fooSegment, bytesOf(1))).isEmpty();
+    assertThat(store.get(fooSegment, bytesOf(2))).isEmpty();
+    assertThat(store.get(fooSegment, bytesOf(3))).contains(bytesOf(3));
 
-    assertArrayEquals(bytesOf(4), store.get(barSegment, bytesOf(4)).get());
-    assertEquals(Optional.empty(), store.get(barSegment, bytesOf(5)));
-    assertEquals(Optional.empty(), store.get(barSegment, bytesOf(6)));
+    assertThat(store.get(barSegment, bytesOf(4))).contains(bytesOf(4));
+    assertThat(store.get(barSegment, bytesOf(5))).isEmpty();
+    assertThat(store.get(barSegment, bytesOf(6))).isEmpty();
   }
 
   public enum TestSegment implements SegmentIdentifier {

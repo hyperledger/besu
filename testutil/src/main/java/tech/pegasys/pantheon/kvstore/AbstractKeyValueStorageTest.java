@@ -13,8 +13,6 @@
 package tech.pegasys.pantheon.kvstore;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertTrue;
 
 import tech.pegasys.pantheon.plugin.services.storage.KeyValueStorage;
 import tech.pegasys.pantheon.plugin.services.storage.KeyValueStorageTransaction;
@@ -173,7 +171,7 @@ public abstract class AbstractKeyValueStorageTest {
     for (int i = 0; i < keyCount; i++) {
       final byte[] key = BytesValues.toMinimalBytes(i).getArrayUnsafe();
       final byte[] actual = store.get(key).get();
-      assertTrue(Arrays.equals(actual, a) || Arrays.equals(actual, b));
+      assertThat(Arrays.equals(actual, a) || Arrays.equals(actual, b)).isTrue();
     }
 
     store.close();
@@ -377,10 +375,10 @@ public abstract class AbstractKeyValueStorageTest {
     // Expecting the same value for all entries
     final byte[] expected = finalValues.get(0);
     for (final byte[] actual : finalValues) {
-      assertArrayEquals(expected, actual);
+      assertThat(actual).containsExactly(expected);
     }
 
-    assertTrue(Arrays.equals(expected, a) || Arrays.equals(expected, b));
+    assertThat(Arrays.equals(expected, a) || Arrays.equals(expected, b)).isTrue();
 
     store.close();
   }

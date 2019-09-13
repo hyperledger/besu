@@ -206,9 +206,8 @@ public class BlockchainQueriesTest {
             storageKeys.forEach(
                 storageKey -> {
                   final Account actualAccount0 = worldState0.get(address);
-                  final UInt256 result = queries.storageAt(address, storageKey, 2L).get();
-                  assertThat(result)
-                      .isEqualByComparingTo(actualAccount0.getStorageValue(storageKey));
+                  final Optional<UInt256> result = queries.storageAt(address, storageKey, 2L);
+                  assertThat(result).contains(actualAccount0.getStorageValue(storageKey));
                 }));
 
     final Hash latestStateRoot1 = data.blockData.get(1).block.getHeader().getStateRoot();
@@ -218,9 +217,8 @@ public class BlockchainQueriesTest {
             storageKeys.forEach(
                 storageKey -> {
                   final Account actualAccount1 = worldState1.get(address);
-                  final UInt256 result = queries.storageAt(address, storageKey, 1L).get();
-                  assertThat(result)
-                      .isEqualByComparingTo(actualAccount1.getStorageValue(storageKey));
+                  final Optional<UInt256> result = queries.storageAt(address, storageKey, 1L);
+                  assertThat(result).contains(actualAccount1.getStorageValue(storageKey));
                 }));
   }
 
@@ -235,14 +233,14 @@ public class BlockchainQueriesTest {
       final long curBlockNumber = i;
       final Hash stateRoot = data.blockData.get(i).block.getHeader().getStateRoot();
       final WorldState worldState = data.worldStateArchive.get(stateRoot).get();
-      assertThat(addresses).hasSizeGreaterThan(0);
+      assertThat(addresses).isNotEmpty();
 
       addresses.forEach(
           address -> {
             final Account actualAccount = worldState.get(address);
-            final Wei result = queries.accountBalance(address, curBlockNumber).get();
+            final Optional<Wei> result = queries.accountBalance(address, curBlockNumber);
 
-            assertThat(result).isEqualByComparingTo(actualAccount.getBalance());
+            assertThat(result).contains(actualAccount.getBalance());
           });
     }
   }
@@ -252,7 +250,7 @@ public class BlockchainQueriesTest {
     final List<Address> addresses = Arrays.asList(gen.address(), gen.address(), gen.address());
     final BlockchainWithData data = setupBlockchain(3, addresses);
     final BlockchainQueries queries = data.blockchainQueries;
-    assertThat(addresses).hasSizeGreaterThan(0);
+    assertThat(addresses).isNotEmpty();
 
     // Get random non-existent account
     final Wei result = queries.accountBalance(gen.address(), 1L).get();

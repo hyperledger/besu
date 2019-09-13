@@ -14,7 +14,6 @@ package tech.pegasys.pantheon.ethereum.chain;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.Assert.assertEquals;
 
 import tech.pegasys.pantheon.ethereum.core.Block;
 import tech.pegasys.pantheon.ethereum.core.BlockDataGenerator;
@@ -755,26 +754,28 @@ public class DefaultBlockchainTest {
   private void assertBlockDataIsStored(
       final Blockchain blockchain, final Block block, final List<TransactionReceipt> receipts) {
     final Hash hash = block.getHash();
-    assertEquals(hash, blockchain.getBlockHashByNumber(block.getHeader().getNumber()).get());
-    assertEquals(block.getHeader(), blockchain.getBlockHeader(block.getHeader().getNumber()).get());
-    assertEquals(block.getHeader(), blockchain.getBlockHeader(hash).get());
-    assertEquals(block.getBody(), blockchain.getBlockBody(hash).get());
+    assertThat(blockchain.getBlockHashByNumber(block.getHeader().getNumber()).get())
+        .isEqualTo(hash);
+    assertThat(blockchain.getBlockHeader(block.getHeader().getNumber()).get())
+        .isEqualTo(block.getHeader());
+    assertThat(blockchain.getBlockHeader(hash).get()).isEqualTo(block.getHeader());
+    assertThat(blockchain.getBlockBody(hash).get()).isEqualTo(block.getBody());
     assertThat(blockchain.blockIsOnCanonicalChain(block.getHash())).isTrue();
 
     final List<Transaction> txs = block.getBody().getTransactions();
     for (int i = 0; i < txs.size(); i++) {
       final Transaction expected = txs.get(i);
       final Transaction actual = blockchain.getTransactionByHash(expected.hash()).get();
-      assertEquals(expected, actual);
+      assertThat(actual).isEqualTo(expected);
     }
     final List<TransactionReceipt> actualReceipts = blockchain.getTxReceipts(hash).get();
-    assertEquals(receipts, actualReceipts);
+    assertThat(actualReceipts).isEqualTo(receipts);
   }
 
   private void assertBlockIsHead(final Blockchain blockchain, final Block head) {
-    assertEquals(head.getHash(), blockchain.getChainHeadHash());
-    assertEquals(head.getHeader().getNumber(), blockchain.getChainHeadBlockNumber());
-    assertEquals(head.getHash(), blockchain.getChainHead().getHash());
+    assertThat(blockchain.getChainHeadHash()).isEqualTo(head.getHash());
+    assertThat(blockchain.getChainHeadBlockNumber()).isEqualTo(head.getHeader().getNumber());
+    assertThat(blockchain.getChainHead().getHash()).isEqualTo(head.getHash());
   }
 
   private void assertTotalDifficultiesAreConsistent(final Blockchain blockchain, final Block head) {
@@ -785,13 +786,13 @@ public class DefaultBlockchainTest {
       final Hash curHash = blockchain.getBlockHashByNumber(num).get();
       final BlockHeader curHead = blockchain.getBlockHeader(curHash).get();
       td = td.plus(curHead.getDifficulty());
-      assertEquals(td, blockchain.getTotalDifficultyByHash(curHash).get());
+      assertThat(blockchain.getTotalDifficultyByHash(curHash).get()).isEqualTo(td);
 
       num += 1;
     }
 
     // Check reported chainhead td
-    assertEquals(td, blockchain.getChainHead().getTotalDifficulty());
+    assertThat(blockchain.getChainHead().getTotalDifficulty()).isEqualTo(td);
   }
 
   private BlockchainStorage createStorage(final KeyValueStorage kvStore) {

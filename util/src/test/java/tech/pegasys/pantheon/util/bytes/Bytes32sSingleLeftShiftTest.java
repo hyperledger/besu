@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.util.bytes;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Arrays;
 
@@ -74,6 +74,6 @@ public class Bytes32sSingleLeftShiftTest {
   public void singleLeftShift() {
     final Bytes32 bytes32 =
         Bytes32s.shiftLeft(Bytes32.fromHexStringLenient(startValue), Integer.valueOf(shiftAmount));
-    assertEquals(Bytes32.fromHexStringLenient(expectedValue), bytes32);
+    assertThat(bytes32).isEqualTo(Bytes32.fromHexStringLenient(expectedValue));
   }
 }

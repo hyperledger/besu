@@ -13,8 +13,6 @@
 package tech.pegasys.pantheon.ethereum.eth.messages;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static tech.pegasys.pantheon.ethereum.eth.messages.LimitedTransactionsMessages.LIMIT;
 
 import tech.pegasys.pantheon.ethereum.core.BlockDataGenerator;
@@ -49,11 +47,11 @@ public class LimitedTransactionsMessagesTest {
         LimitedTransactionsMessages.createLimited(txs);
     assertThat(secondMessage.getIncludedTransactions().size()).isBetween(700, 800);
     txs.removeAll(secondMessage.getIncludedTransactions());
-    assertEquals(0, txs.size());
-    assertTrue(
-        (firstMessage.getTransactionsMessage().getSize()
+    assertThat(txs.size()).isEqualTo(0);
+    assertThat(
+            firstMessage.getTransactionsMessage().getSize()
                 + secondMessage.getTransactionsMessage().getSize())
-            < 2 * LIMIT);
+        .isLessThan(2 * LIMIT);
   }
 
   @Test
@@ -63,14 +61,14 @@ public class LimitedTransactionsMessagesTest {
     txs.add(generator.transaction(BytesValue.wrap(new byte[TX_PAYLOAD_LIMIT])));
     txs.add(generator.transaction(BytesValue.wrap(new byte[TX_PAYLOAD_LIMIT])));
     final LimitedTransactionsMessages firstMessage = LimitedTransactionsMessages.createLimited(txs);
-    assertEquals(2, firstMessage.getIncludedTransactions().size());
+    assertThat(firstMessage.getIncludedTransactions().size()).isEqualTo(2);
     txs.removeAll(firstMessage.getIncludedTransactions());
-    assertEquals(1, txs.size());
+    assertThat(txs.size()).isEqualTo(1);
     final LimitedTransactionsMessages secondMessage =
         LimitedTransactionsMessages.createLimited(txs);
-    assertEquals(1, secondMessage.getIncludedTransactions().size());
+    assertThat(secondMessage.getIncludedTransactions().size()).isEqualTo(1);
     txs.removeAll(secondMessage.getIncludedTransactions());
-    assertEquals(0, txs.size());
+    assertThat(txs.size()).isEqualTo(0);
   }
 
   @Test
@@ -82,28 +80,28 @@ public class LimitedTransactionsMessagesTest {
     txs.add(generator.transaction(BytesValue.wrap(new byte[TX_PAYLOAD_LIMIT + 100])));
     txs.add(generator.transaction(BytesValue.wrap(new byte[TX_PAYLOAD_LIMIT])));
     final LimitedTransactionsMessages firstMessage = LimitedTransactionsMessages.createLimited(txs);
-    assertEquals(1, firstMessage.getIncludedTransactions().size());
+    assertThat(firstMessage.getIncludedTransactions().size()).isEqualTo(1);
     txs.removeAll(firstMessage.getIncludedTransactions());
-    assertEquals(2, txs.size());
+    assertThat(txs.size()).isEqualTo(2);
     final LimitedTransactionsMessages secondMessage =
         LimitedTransactionsMessages.createLimited(txs);
-    assertEquals(1, secondMessage.getIncludedTransactions().size());
+    assertThat(secondMessage.getIncludedTransactions().size()).isEqualTo(1);
     txs.removeAll(secondMessage.getIncludedTransactions());
-    assertEquals(1, txs.size());
+    assertThat(txs.size()).isEqualTo(1);
     final LimitedTransactionsMessages thirdMessage = LimitedTransactionsMessages.createLimited(txs);
-    assertEquals(1, thirdMessage.getIncludedTransactions().size());
+    assertThat(thirdMessage.getIncludedTransactions().size()).isEqualTo(1);
     txs.removeAll(thirdMessage.getIncludedTransactions());
-    assertEquals(0, txs.size());
+    assertThat(txs.size()).isEqualTo(0);
   }
 
   @Test
   public void getTransactionsMessage() {
-    assertEquals(
-        sampleTransactionMessages, sampleLimitedTransactionsMessages.getTransactionsMessage());
+    assertThat(sampleLimitedTransactionsMessages.getTransactionsMessage())
+        .isEqualTo(sampleTransactionMessages);
   }
 
   @Test
   public void getIncludedTransactions() {
-    assertEquals(sampleTxs, sampleLimitedTransactionsMessages.getIncludedTransactions());
+    assertThat(sampleLimitedTransactionsMessages.getIncludedTransactions()).isEqualTo(sampleTxs);
   }
 }

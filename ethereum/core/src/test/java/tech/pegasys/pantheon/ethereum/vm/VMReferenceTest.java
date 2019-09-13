@@ -12,9 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.vm;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assume.assumeTrue;
 import static tech.pegasys.pantheon.ethereum.vm.MessageFrame.DEFAULT_MAX_STACK_SIZE;
 import static tech.pegasys.pantheon.ethereum.vm.OperationTracer.NO_TRACING;
@@ -166,20 +164,23 @@ public class VMReferenceTest extends AbstractRetryingTest {
     }
 
     if (spec.isExceptionHaltExpected()) {
-      assertTrue(
-          "VM should have exceptionally halted",
-          frame.getState() == MessageFrame.State.EXCEPTIONAL_HALT);
+      assertThat(frame.getState() == MessageFrame.State.EXCEPTIONAL_HALT)
+          .withFailMessage("VM should have exceptionally halted")
+          .isTrue();
     } else {
       // This is normally performed when the message processor executing the VM
       // executes to completion successfuly.
       frame.getWorldState().commit();
 
-      assertFalse(
-          "VM should not have exceptionally halted",
-          frame.getState() == MessageFrame.State.EXCEPTIONAL_HALT);
-      assertEquals("VM output differs", spec.getOut(), frame.getOutputData());
-      assertEquals(
-          "Final world state differs", spec.getFinalWorldState().rootHash(), worldState.rootHash());
+      assertThat(frame.getState() == MessageFrame.State.EXCEPTIONAL_HALT)
+          .withFailMessage("VM should not have exceptionally halted")
+          .isFalse();
+      assertThat(frame.getOutputData())
+          .withFailMessage("VM output differs")
+          .isEqualTo(spec.getOut());
+      assertThat(worldState.rootHash())
+          .withFailMessage("Final world state differs")
+          .isEqualTo(spec.getFinalWorldState().rootHash());
 
       final Gas actualGas = frame.getRemainingGas();
       final Gas expectedGas = spec.getFinalGas();
@@ -187,8 +188,9 @@ public class VMReferenceTest extends AbstractRetryingTest {
           (expectedGas.compareTo(actualGas) > 0)
               ? expectedGas.minus(actualGas)
               : actualGas.minus(expectedGas);
-      assertEquals(
-          "Final gas does not match, with difference of " + difference, expectedGas, actualGas);
+      assertThat(actualGas)
+          .withFailMessage("Final gas does not match, with difference of %s", difference)
+          .isEqualTo(expectedGas);
     }
   }
 }

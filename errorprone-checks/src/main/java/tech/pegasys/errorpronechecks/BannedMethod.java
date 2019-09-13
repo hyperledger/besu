@@ -15,7 +15,6 @@ package tech.pegasys.errorpronechecks;
 import static com.google.errorprone.BugPattern.SeverityLevel.WARNING;
 import static com.google.errorprone.bugpatterns.BugChecker.MethodInvocationTreeMatcher;
 import static com.google.errorprone.matchers.Description.NO_MATCH;
-import static com.google.errorprone.matchers.Matchers.allOf;
 import static com.google.errorprone.matchers.method.MethodMatchers.staticMethod;
 
 import java.util.Map;
@@ -39,8 +38,10 @@ public class BannedMethod extends BugChecker implements MethodInvocationTreeMatc
 
   private static final ImmutableMap<Matcher<ExpressionTree>, String> BANNED_METHOD_LIST =
       ImmutableMap.of(
-          allOf(staticMethod().onClass("com.google.common.base.Objects").withAnyName()),
-          "Do not use com.google.common.base.Objects methods, use java.util.Objects methods instead.");
+          staticMethod().onClass("com.google.common.base.Objects").withAnyName(),
+          "Do not use com.google.common.base.Objects methods, use java.util.Objects methods instead.",
+          staticMethod().onClass("org.junit.Assert"),
+          "Do not use junit assertions. Use assertj assertions instead.");
 
   @Override
   public Description matchMethodInvocation(

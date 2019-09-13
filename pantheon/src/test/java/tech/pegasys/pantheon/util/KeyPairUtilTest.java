@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.util;
 
-import static org.junit.Assert.assertNotNull;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.pantheon.controller.KeyPairUtil;
 
@@ -24,9 +24,10 @@ public class KeyPairUtilTest {
 
   @Test
   public void shouldLoadValidKeyPair() throws Exception {
-    assertNotNull(
-        KeyPairUtil.loadKeyPair(
-            new File(this.getClass().getResource("/validPrivateKey.txt").toURI())));
+    assertThat(
+            KeyPairUtil.loadKeyPair(
+                new File(this.getClass().getResource("/validPrivateKey.txt").toURI())))
+        .isNotNull();
   }
 
   @Test(expected = IllegalArgumentException.class)

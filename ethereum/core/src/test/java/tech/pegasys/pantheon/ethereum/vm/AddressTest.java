@@ -12,10 +12,11 @@
  */
 package tech.pegasys.pantheon.ethereum.vm;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
-import org.junit.Assert;
 import org.junit.Test;
 
 public class AddressTest {
@@ -24,7 +25,7 @@ public class AddressTest {
   public void accountAddressToString() {
     final Address addr =
         Address.wrap(BytesValue.fromHexString("0x0000000000000000000000000000000000101010"));
-    Assert.assertEquals("0x0000000000000000000000000000000000101010", addr.toString());
+    assertThat(addr.toString()).isEqualTo("0x0000000000000000000000000000000000101010");
   }
 
   @Test
@@ -34,7 +35,7 @@ public class AddressTest {
     final Address addr2 =
         Address.wrap(BytesValue.fromHexString("0x0000000000000000000000000000000000101010"));
 
-    Assert.assertEquals(addr, addr2);
+    assertThat(addr2).isEqualByComparingTo(addr);
   }
 
   @Test
@@ -44,7 +45,7 @@ public class AddressTest {
     final Address addr2 =
         Address.wrap(BytesValue.fromHexString("0x0000000000000000000000000000000000101010"));
 
-    Assert.assertEquals(addr.hashCode(), addr2.hashCode());
+    assertThat(addr2.hashCode()).isEqualTo(addr.hashCode());
   }
 
   @Test(expected = IllegalArgumentException.class)

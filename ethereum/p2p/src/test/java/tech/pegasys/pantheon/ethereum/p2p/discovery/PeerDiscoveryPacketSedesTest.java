@@ -14,7 +14,6 @@ package tech.pegasys.pantheon.ethereum.p2p.discovery;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.Offset.offset;
-import static org.junit.Assert.assertNotNull;
 
 import tech.pegasys.pantheon.crypto.SECP256K1;
 import tech.pegasys.pantheon.ethereum.p2p.discovery.internal.FindNeighborsPacketData;
@@ -46,7 +45,7 @@ public class PeerDiscoveryPacketSedesTest {
     final FindNeighborsPacketData packetData = FindNeighborsPacketData.create(target);
     final Packet packet = Packet.create(PacketType.FIND_NEIGHBORS, packetData, kp);
     final Buffer encoded = packet.encode();
-    assertNotNull(encoded);
+    assertThat(encoded).isNotNull();
 
     final Packet decoded = Packet.decode(encoded);
     assertThat(decoded.getType()).isEqualTo(PacketType.FIND_NEIGHBORS);
@@ -63,7 +62,7 @@ public class PeerDiscoveryPacketSedesTest {
 
     final FindNeighborsPacketData packet = FindNeighborsPacketData.create(target);
     final BytesValue serialized = RLP.encode(packet::writeTo);
-    assertNotNull(serialized);
+    assertThat(serialized).isNotNull();
 
     final FindNeighborsPacketData deserialized =
         FindNeighborsPacketData.readFrom(RLP.input(serialized));
@@ -81,7 +80,7 @@ public class PeerDiscoveryPacketSedesTest {
 
     final NeighborsPacketData packet = NeighborsPacketData.create(peers);
     final BytesValue serialized = RLP.encode(packet::writeTo);
-    assertNotNull(serialized);
+    assertThat(serialized).isNotNull();
 
     final NeighborsPacketData deserialized = NeighborsPacketData.readFrom(RLP.input(serialized));
     assertThat(deserialized.getNodes()).isEqualTo(peers);
@@ -100,7 +99,7 @@ public class PeerDiscoveryPacketSedesTest {
 
     final FindNeighborsPacketData packet = FindNeighborsPacketData.create(target);
     final BytesValue serialized = RLP.encode(packet::writeTo);
-    assertNotNull(serialized);
+    assertThat(serialized).isNotNull();
 
     NeighborsPacketData.readFrom(RLP.input(serialized));
   }

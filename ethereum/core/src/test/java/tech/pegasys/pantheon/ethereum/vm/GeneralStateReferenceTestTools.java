@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.vm;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.pantheon.ethereum.core.Account;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
@@ -128,18 +128,16 @@ public class GeneralStateReferenceTestTools {
 
     // Check the world state root hash.
     final Hash expectedRootHash = spec.expectedRootHash();
-    assertEquals(
-        "Unexpected world state root hash; computed state: " + worldState,
-        expectedRootHash,
-        worldState.rootHash());
+    assertThat(worldState.rootHash())
+        .withFailMessage("Unexpected world state root hash; computed state: %s", worldState)
+        .isEqualByComparingTo(expectedRootHash);
 
     // Check the logs.
     final Hash expectedLogsHash = spec.expectedLogsHash();
     final LogSeries logs = result.getLogs();
-    assertEquals(
-        "Unmatched logs hash. Generated logs: " + logs,
-        expectedLogsHash,
-        Hash.hash(RLP.encode(logs::writeTo)));
+    assertThat(Hash.hash(RLP.encode(logs::writeTo)))
+        .withFailMessage("Unmatched logs hash. Generated logs: %s", logs)
+        .isEqualByComparingTo(expectedLogsHash);
   }
 
   private static boolean shouldClearEmptyAccounts(final String eip) {

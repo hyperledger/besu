@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.core;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.pantheon.ethereum.rlp.RLP;
 
@@ -25,6 +25,6 @@ public class LogTest {
     final BlockDataGenerator gen = new BlockDataGenerator();
     final Log log = gen.log();
     final Log copy = Log.readFrom(RLP.input(RLP.encode(log::writeTo)));
-    assertEquals(log, copy);
+    assertThat(copy).isEqualTo(log);
   }
 }

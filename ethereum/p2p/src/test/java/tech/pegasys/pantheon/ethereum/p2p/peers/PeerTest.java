@@ -12,9 +12,8 @@
  */
 package tech.pegasys.pantheon.ethereum.p2p.peers;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
 import static tech.pegasys.pantheon.util.bytes.BytesValue.fromHexString;
 
 import tech.pegasys.pantheon.ethereum.p2p.discovery.DiscoveryPeer;
@@ -45,7 +44,7 @@ public class PeerTest {
                 .ipAddress("127.0.0.1")
                 .discoveryAndListeningPorts(5001)
                 .build());
-    assertNotEquals(peer, peer2);
+    assertThat(peer).isNotEqualTo(peer2);
   }
 
   @Test
@@ -67,7 +66,7 @@ public class PeerTest {
                 .ipAddress("127.0.0.1")
                 .discoveryAndListeningPorts(5001)
                 .build());
-    assertNotEquals(peer.hashCode(), peer2.hashCode());
+    assertThat(peer.hashCode()).isNotEqualTo(peer2.hashCode());
   }
 
   @Test
@@ -79,7 +78,7 @@ public class PeerTest {
                 .ipAddress("127.0.0.1")
                 .discoveryAndListeningPorts(5000)
                 .build());
-    assertEquals(PeerDiscoveryStatus.KNOWN, peer.getStatus());
+    assertThat(peer.getStatus()).isEqualTo(PeerDiscoveryStatus.KNOWN);
   }
 
   @Test
@@ -87,13 +86,13 @@ public class PeerTest {
     final Peer peer =
         DefaultPeer.fromURI(
             "enode://c7849b663d12a2b5bf05b1ebf5810364f4870d5f1053fbd7500d38bc54c705b453d7511ca8a4a86003d34d4c8ee0bbfcd387aa724f5b240b3ab4bbb994a1e09b@172.20.0.4:30403");
-    assertEquals(
-        fromHexString(
-            "c7849b663d12a2b5bf05b1ebf5810364f4870d5f1053fbd7500d38bc54c705b453d7511ca8a4a86003d34d4c8ee0bbfcd387aa724f5b240b3ab4bbb994a1e09b"),
-        peer.getId());
-    assertEquals("172.20.0.4", peer.getEnodeURL().getIpAsString());
-    assertEquals(30403, peer.getEnodeURL().getListeningPortOrZero());
-    assertEquals(30403, peer.getEnodeURL().getDiscoveryPortOrZero());
+    assertThat(peer.getId())
+        .isEqualTo(
+            fromHexString(
+                "c7849b663d12a2b5bf05b1ebf5810364f4870d5f1053fbd7500d38bc54c705b453d7511ca8a4a86003d34d4c8ee0bbfcd387aa724f5b240b3ab4bbb994a1e09b"));
+    assertThat(peer.getEnodeURL().getIpAsString()).isEqualTo("172.20.0.4");
+    assertThat(peer.getEnodeURL().getListeningPortOrZero()).isEqualTo(30403);
+    assertThat(peer.getEnodeURL().getDiscoveryPortOrZero()).isEqualTo(30403);
   }
 
   @Test
@@ -101,14 +100,14 @@ public class PeerTest {
     final Peer peer =
         DefaultPeer.fromURI(
             "enode://c7849b663d12a2b5bf05b1ebf5810364f4870d5f1053fbd7500d38bc54c705b453d7511ca8a4a86003d34d4c8ee0bbfcd387aa724f5b240b3ab4bbb994a1e09b@[2001:0DB8:85A3:0000::8A2E:370:7334]:30403");
-    assertEquals(
-        fromHexString(
-            "c7849b663d12a2b5bf05b1ebf5810364f4870d5f1053fbd7500d38bc54c705b453d7511ca8a4a86003d34d4c8ee0bbfcd387aa724f5b240b3ab4bbb994a1e09b"),
-        peer.getId());
-    assertEquals(
-        InetAddresses.forString("2001:db8:85a3::8a2e:370:7334"), peer.getEnodeURL().getIp());
-    assertEquals(30403, peer.getEnodeURL().getListeningPortOrZero());
-    assertEquals(30403, peer.getEnodeURL().getDiscoveryPortOrZero());
+    assertThat(peer.getId())
+        .isEqualTo(
+            fromHexString(
+                "c7849b663d12a2b5bf05b1ebf5810364f4870d5f1053fbd7500d38bc54c705b453d7511ca8a4a86003d34d4c8ee0bbfcd387aa724f5b240b3ab4bbb994a1e09b"));
+    assertThat(peer.getEnodeURL().getIp())
+        .isEqualTo(InetAddresses.forString("2001:db8:85a3::8a2e:370:7334"));
+    assertThat(peer.getEnodeURL().getListeningPortOrZero()).isEqualTo(30403);
+    assertThat(peer.getEnodeURL().getDiscoveryPortOrZero()).isEqualTo(30403);
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -132,13 +131,13 @@ public class PeerTest {
     final Peer peer =
         DefaultPeer.fromURI(
             "enode://c7849b663d12a2b5bf05b1ebf5810364f4870d5f1053fbd7500d38bc54c705b453d7511ca8a4a86003d34d4c8ee0bbfcd387aa724f5b240b3ab4bbb994a1e09b@172.20.0.4:12345?discport=22222");
-    assertEquals(
-        fromHexString(
-            "c7849b663d12a2b5bf05b1ebf5810364f4870d5f1053fbd7500d38bc54c705b453d7511ca8a4a86003d34d4c8ee0bbfcd387aa724f5b240b3ab4bbb994a1e09b"),
-        peer.getId());
-    assertEquals("172.20.0.4", peer.getEnodeURL().getIpAsString());
-    assertEquals(22222, peer.getEnodeURL().getDiscoveryPortOrZero());
-    assertEquals(12345, peer.getEnodeURL().getListeningPortOrZero());
+    assertThat(peer.getId())
+        .isEqualTo(
+            fromHexString(
+                "c7849b663d12a2b5bf05b1ebf5810364f4870d5f1053fbd7500d38bc54c705b453d7511ca8a4a86003d34d4c8ee0bbfcd387aa724f5b240b3ab4bbb994a1e09b"));
+    assertThat(peer.getEnodeURL().getIpAsString()).isEqualTo("172.20.0.4");
+    assertThat(peer.getEnodeURL().getDiscoveryPortOrZero()).isEqualTo(22222);
+    assertThat(peer.getEnodeURL().getListeningPortOrZero()).isEqualTo(12345);
   }
 
   @Test

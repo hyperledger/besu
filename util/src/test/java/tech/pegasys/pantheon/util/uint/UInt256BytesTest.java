@@ -21,7 +21,6 @@ import tech.pegasys.pantheon.util.uint.UInt256Bytes.BinaryOp;
 
 import java.math.BigInteger;
 
-import org.junit.Assert;
 import org.junit.Test;
 
 public class UInt256BytesTest {
@@ -247,8 +246,8 @@ public class UInt256BytesTest {
   }
 
   private void bitLength(final String input, final int expectedLength) {
-    Assert.assertEquals(
-        expectedLength, UInt256Bytes.bitLength(Bytes32.fromHexStringLenient(input)));
+    assertThat(UInt256Bytes.bitLength(Bytes32.fromHexStringLenient(input)))
+        .isEqualTo(expectedLength);
   }
 
   private void shiftLeft(final String input, final int shift, final String expected) {
@@ -299,13 +298,13 @@ public class UInt256BytesTest {
 
     final MutableBytes32 r1 = MutableBytes32.create();
     op.applyOp(v1, v2, r1);
-    assertEquals(expected, r1, true);
+    customHexDisplayAssertThat(expected, r1, true);
 
     // Also test in-place.
     final MutableBytes32 r2 = MutableBytes32.create();
     v1.copyTo(r2);
     op.applyOp(r2, v2, r2);
-    assertEquals(expected, r2, true);
+    customHexDisplayAssertThat(expected, r2, true);
   }
 
   private void longOp(
@@ -325,37 +324,36 @@ public class UInt256BytesTest {
       final BinaryLongOp op, final Bytes32 v1, final long v2, final Bytes32 expected) {
     final MutableBytes32 r1 = MutableBytes32.create();
     op.applyOp(v1, v2, r1);
-    assertEquals(expected, r1, false);
+    customHexDisplayAssertThat(expected, r1, false);
 
     // Also test in-place.
     final MutableBytes32 r2 = MutableBytes32.create();
     v1.copyTo(r2);
     op.applyOp(r2, v2, r2);
-    assertEquals(expected, r2, false);
+    customHexDisplayAssertThat(expected, r2, false);
   }
 
   private void op(final BinaryOp op, final Bytes32 v1, final Bytes32 v2, final Bytes32 expected) {
     final MutableBytes32 r1 = MutableBytes32.create();
     op.applyOp(v1, v2, r1);
-    assertEquals(expected, r1, false);
+    customHexDisplayAssertThat(expected, r1, false);
 
     // Also test in-place.
     final MutableBytes32 r2 = MutableBytes32.create();
     v1.copyTo(r2);
     op.applyOp(r2, v2, r2);
-    assertEquals(expected, r2, false);
+    customHexDisplayAssertThat(expected, r2, false);
   }
 
-  private void assertEquals(
+  private void customHexDisplayAssertThat(
       final Bytes32 expected, final Bytes32 actual, final boolean displayAsHex) {
-    if (displayAsHex) {
-      Assert.assertEquals(expected, actual);
-    } else {
-      final String msg =
-          String.format(
+    var assertion = assertThat(actual);
+    if (!displayAsHex) {
+      assertion =
+          assertion.withFailMessage(
               "Expected %s but got %s",
               UInt256Bytes.toString(expected), UInt256Bytes.toString(actual));
-      Assert.assertEquals(msg, expected, actual);
     }
+    assertion.isEqualByComparingTo(expected);
   }
 }

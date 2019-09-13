@@ -14,8 +14,6 @@ package tech.pegasys.pantheon.ethereum.p2p.network;
 
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static tech.pegasys.pantheon.ethereum.p2p.NetworkingTestHelper.configWithRandomPorts;
 
 import tech.pegasys.pantheon.crypto.SECP256K1;
@@ -54,7 +52,7 @@ public class NetworkingServiceLifecycleTest {
       final int udpPort = enode.getDiscoveryPortOrZero();
       final int tcpPort = enode.getListeningPortOrZero();
 
-      assertEquals(config.getDiscovery().getAdvertisedHost(), enode.getIpAsString());
+      assertThat(enode.getIpAsString()).isEqualTo(config.getDiscovery().getAdvertisedHost());
       assertThat(udpPort).isNotZero();
       assertThat(tcpPort).isNotZero();
       assertThat(service.streamDiscoveredPeers()).hasSize(0);
@@ -146,8 +144,8 @@ public class NetworkingServiceLifecycleTest {
   @Test
   public void createP2PNetwork_NoActivePeers() throws IOException {
     try (final P2PNetwork agent = builder().build()) {
-      assertTrue(agent.streamDiscoveredPeers().collect(toList()).isEmpty());
-      assertEquals(0, agent.getPeers().size());
+      assertThat(agent.streamDiscoveredPeers().collect(toList())).isEmpty();
+      assertThat(agent.getPeers()).isEmpty();
     }
   }
 

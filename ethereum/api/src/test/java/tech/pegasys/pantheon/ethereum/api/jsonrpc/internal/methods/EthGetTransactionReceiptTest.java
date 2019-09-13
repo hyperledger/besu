@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.api.jsonrpc.internal.methods;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -142,7 +142,7 @@ public class EthGetTransactionReceiptTest {
     final TransactionReceiptStatusResult result =
         (TransactionReceiptStatusResult) response.getResult();
 
-    assertEquals("0x1", result.getStatus());
+    assertThat(result.getStatus()).isEqualTo("0x1");
   }
 
   @Test
@@ -156,6 +156,6 @@ public class EthGetTransactionReceiptTest {
         (JsonRpcSuccessResponse) ethGetTransactionReceipt.response(request);
     final TransactionReceiptRootResult result = (TransactionReceiptRootResult) response.getResult();
 
-    assertEquals(stateRoot.toString(), result.getRoot());
+    assertThat(result.getRoot()).isEqualTo(stateRoot.toString());
   }
 }

@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.core;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.pantheon.ethereum.rlp.RLP;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
@@ -27,7 +27,7 @@ public class TransactionReceiptTest {
     final TransactionReceipt receipt = gen.receipt();
     final TransactionReceipt copy =
         TransactionReceipt.readFrom(RLP.input(RLP.encode(receipt::writeToWithRevertReason)), false);
-    assertEquals(receipt, copy);
+    assertThat(copy).isEqualTo(receipt);
   }
 
   @Test
@@ -36,6 +36,6 @@ public class TransactionReceiptTest {
     final TransactionReceipt receipt = gen.receipt(BytesValue.fromHexString("0x1122334455667788"));
     final TransactionReceipt copy =
         TransactionReceipt.readFrom(RLP.input(RLP.encode(receipt::writeToWithRevertReason)));
-    assertEquals(receipt, copy);
+    assertThat(copy).isEqualTo(receipt);
   }
 }

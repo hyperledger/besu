@@ -14,8 +14,6 @@ package tech.pegasys.pantheon.ethereum.api.jsonrpc;
 
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
@@ -359,15 +357,17 @@ public class JsonRpcHttpServiceRpcApisTest {
     final JsonObject result = jsonBody.getJsonObject("result");
     final JsonObject serviceElement = result.getJsonObject(serviceName);
     if (isAssertTrue) {
-      assertTrue(
-          serviceElement != null
-              && serviceElement.containsKey("host")
-              && serviceElement.containsKey("port"));
+      assertThat(
+              serviceElement != null
+                  && serviceElement.containsKey("host")
+                  && serviceElement.containsKey("port"))
+          .isTrue();
     } else {
-      assertFalse(
-          serviceElement != null
-              && serviceElement.containsKey("host")
-              && serviceElement.containsKey("port"));
+      assertThat(
+              serviceElement != null
+                  && serviceElement.containsKey("host")
+                  && serviceElement.containsKey("port"))
+          .isFalse();
     }
   }
 
@@ -417,7 +417,7 @@ public class JsonRpcHttpServiceRpcApisTest {
     try (final Response resp = client.newCall(buildRequest(body)).execute()) {
       final JsonObject json = new JsonObject(resp.body().string());
       final JsonObject result = json.getJsonObject("result");
-      assertTrue(result.isEmpty());
+      assertThat(result.isEmpty()).isTrue();
     }
   }
 }

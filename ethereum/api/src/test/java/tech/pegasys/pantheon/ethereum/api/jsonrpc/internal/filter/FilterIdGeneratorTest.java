@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.api.jsonrpc.internal.filter;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.pantheon.util.uint.UInt256;
 
@@ -25,6 +25,6 @@ public class FilterIdGeneratorTest {
     final FilterIdGenerator generator = new FilterIdGenerator();
     final String s = generator.nextId();
     final UInt256 bytesValue = UInt256.fromHexString(s);
-    assertEquals(s, bytesValue.toShortHexString());
+    assertThat(bytesValue.toShortHexString()).isEqualTo(s);
   }
 }

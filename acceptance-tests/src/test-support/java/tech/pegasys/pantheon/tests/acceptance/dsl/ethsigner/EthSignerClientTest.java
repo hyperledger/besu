@@ -16,7 +16,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.pantheon.tests.acceptance.dsl.ethsigner.testutil.EthSignerTestHarness;
 import tech.pegasys.pantheon.tests.acceptance.dsl.ethsigner.testutil.EthSignerTestHarnessFactory;
@@ -73,8 +73,8 @@ public class EthSignerClientTest {
   @Test
   public void testEthAccounts() throws IOException {
     final List<String> accounts = ethSignerClient.ethAccounts();
-    assertEquals(1, accounts.size());
-    assertEquals("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73", accounts.get(0));
+    assertThat(accounts).hasSize(1);
+    assertThat(accounts.get(0)).isEqualTo("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73");
   }
 
   @Test
@@ -88,7 +88,7 @@ public class EthSignerClientTest {
             "",
             BigInteger.ZERO);
 
-    assertEquals(MOCK_RESPONSE, response);
+    assertThat(response).isEqualTo(MOCK_RESPONSE);
   }
 
   @Test
@@ -104,6 +104,6 @@ public class EthSignerClientTest {
             Collections.emptyList(),
             "restricted");
 
-    assertEquals(MOCK_RESPONSE, response);
+    assertThat(response).isEqualTo(MOCK_RESPONSE);
   }
 }

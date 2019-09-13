@@ -13,7 +13,6 @@
 package tech.pegasys.pantheon.services.kvstore;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertFalse;
 
 import tech.pegasys.pantheon.kvstore.AbstractKeyValueStorageTest;
 import tech.pegasys.pantheon.plugin.services.storage.KeyValueStorage;
@@ -48,6 +47,6 @@ public class LimitedInMemoryKeyValueStorageTest extends AbstractKeyValueStorageT
 
     assertThat(hits <= limit).isTrue();
     // Oldest key should've been dropped first
-    assertFalse(storage.containsKey(bytesOf((0))));
+    assertThat(storage.containsKey(bytesOf((0)))).isFalse();
   }
 }

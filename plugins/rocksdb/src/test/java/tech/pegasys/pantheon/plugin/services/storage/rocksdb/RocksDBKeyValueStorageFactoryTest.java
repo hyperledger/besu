@@ -12,9 +12,8 @@
  */
 package tech.pegasys.pantheon.plugin.services.storage.rocksdb;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
 import tech.pegasys.pantheon.metrics.ObservableMetricsSystem;
@@ -61,9 +60,8 @@ public class RocksDBKeyValueStorageFactoryTest {
     // Side effect is creation of the Metadata version file
     storageFactory.create(segment, commonConfiguration, metricsSystem);
 
-    assertEquals(
-        DEFAULT_VERSION,
-        DatabaseMetadata.fromDirectory(commonConfiguration.getStoragePath()).getVersion());
+    assertThat(DatabaseMetadata.fromDirectory(commonConfiguration.getStoragePath()).getVersion())
+        .isEqualTo(DEFAULT_VERSION);
   }
 
   @Test
@@ -78,7 +76,7 @@ public class RocksDBKeyValueStorageFactoryTest {
 
     storageFactory.create(segment, commonConfiguration, metricsSystem);
 
-    assertEquals(0, DatabaseMetadata.fromDirectory(tempDatabaseDir).getVersion());
+    assertThat(DatabaseMetadata.fromDirectory(tempDatabaseDir).getVersion()).isZero();
   }
 
   @Test
@@ -93,8 +91,9 @@ public class RocksDBKeyValueStorageFactoryTest {
 
     storageFactory.create(segment, commonConfiguration, metricsSystem);
 
-    assertEquals(DEFAULT_VERSION, DatabaseMetadata.fromDirectory(tempDatabaseDir).getVersion());
-    assertTrue(storageFactory.isSegmentIsolationSupported());
+    assertThat(DatabaseMetadata.fromDirectory(tempDatabaseDir).getVersion())
+        .isEqualTo(DEFAULT_VERSION);
+    assertThat(storageFactory.isSegmentIsolationSupported()).isTrue();
   }
 
   @Test

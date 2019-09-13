@@ -13,7 +13,7 @@
 package tech.pegasys.pantheon.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -52,6 +52,6 @@ public class PrivGetTransactionCountTest {
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) privGetTransactionCount.response(request);
 
-    assertEquals(String.format("0x%X", NONCE), response.getResult());
+    assertThat(response.getResult()).isEqualTo(String.format("0x%X", NONCE));
   }
 }

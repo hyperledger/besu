@@ -14,7 +14,6 @@ package tech.pegasys.pantheon.ethereum.api.jsonrpc.internal.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
-import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -83,7 +82,7 @@ public class DebugStorageRangeAtTest {
 
   @Test
   public void nameShouldBeDebugStorageRangeAt() {
-    assertEquals("debug_storageRangeAt", debugStorageRangeAt.getName());
+    assertThat(debugStorageRangeAt.getName()).isEqualTo("debug_storageRangeAt");
   }
 
   @Test

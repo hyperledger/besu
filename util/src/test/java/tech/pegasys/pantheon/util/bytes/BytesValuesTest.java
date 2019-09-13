@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.util.bytes;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 import static tech.pegasys.pantheon.util.bytes.BytesValue.fromHexString;
 import static tech.pegasys.pantheon.util.bytes.BytesValues.asSignedBigInteger;
 import static tech.pegasys.pantheon.util.bytes.BytesValues.asUnsignedBigInteger;
@@ -43,57 +43,57 @@ public class BytesValuesTest {
 
   @Test
   public void shouldTrimLeadingZeroes() {
-    assertEquals(h("0x"), trimLeadingZeros(h("0x")));
-    assertEquals(h("0x"), trimLeadingZeros(h("0x00")));
-    assertEquals(h("0x"), trimLeadingZeros(h("0x00000000")));
+    assertThat(trimLeadingZeros(h("0x"))).isEqualTo(h("0x"));
+    assertThat(trimLeadingZeros(h("0x00"))).isEqualTo(h("0x"));
+    assertThat(trimLeadingZeros(h("0x00000000"))).isEqualTo(h("0x"));
 
-    assertEquals(h("0x01"), trimLeadingZeros(h("0x01")));
-    assertEquals(h("0x01"), trimLeadingZeros(h("0x00000001")));
+    assertThat(trimLeadingZeros(h("0x01"))).isEqualTo(h("0x01"));
+    assertThat(trimLeadingZeros(h("0x00000001"))).isEqualTo(h("0x01"));
 
-    assertEquals(h("0x3010"), trimLeadingZeros(h("0x3010")));
-    assertEquals(h("0x3010"), trimLeadingZeros(h("0x00003010")));
+    assertThat(trimLeadingZeros(h("0x3010"))).isEqualTo(h("0x3010"));
+    assertThat(trimLeadingZeros(h("0x00003010"))).isEqualTo(h("0x3010"));
 
-    assertEquals(h("0xFFFFFFFF"), trimLeadingZeros(h("0xFFFFFFFF")));
-    assertEquals(h("0xFFFFFFFF"), trimLeadingZeros(h("0x000000000000FFFFFFFF")));
+    assertThat(trimLeadingZeros(h("0xFFFFFFFF"))).isEqualTo(h("0xFFFFFFFF"));
+    assertThat(trimLeadingZeros(h("0x000000000000FFFFFFFF"))).isEqualTo(h("0xFFFFFFFF"));
   }
 
   @Test
   public void minimalBytes() {
-    assertEquals(h("0x"), toMinimalBytes(0));
+    assertThat(toMinimalBytes(0)).isEqualTo(h("0x"));
 
-    assertEquals(h("0x01"), toMinimalBytes(1));
-    assertEquals(h("0x04"), toMinimalBytes(4));
-    assertEquals(h("0x10"), toMinimalBytes(16));
-    assertEquals(h("0xFF"), toMinimalBytes(255));
+    assertThat(toMinimalBytes(1)).isEqualTo(h("0x01"));
+    assertThat(toMinimalBytes(4)).isEqualTo(h("0x04"));
+    assertThat(toMinimalBytes(16)).isEqualTo(h("0x10"));
+    assertThat(toMinimalBytes(255)).isEqualTo(h("0xFF"));
 
-    assertEquals(h("0x0100"), toMinimalBytes(256));
-    assertEquals(h("0x0200"), toMinimalBytes(512));
+    assertThat(toMinimalBytes(256)).isEqualTo(h("0x0100"));
+    assertThat(toMinimalBytes(512)).isEqualTo(h("0x0200"));
 
-    assertEquals(h("0x010000"), toMinimalBytes(1L << 16));
-    assertEquals(h("0x01000000"), toMinimalBytes(1L << 24));
-    assertEquals(h("0x0100000000"), toMinimalBytes(1L << 32));
-    assertEquals(h("0x010000000000"), toMinimalBytes(1L << 40));
-    assertEquals(h("0x01000000000000"), toMinimalBytes(1L << 48));
-    assertEquals(h("0x0100000000000000"), toMinimalBytes(1L << 56));
-    assertEquals(h("0xFFFFFFFFFFFFFFFF"), toMinimalBytes(-1L));
+    assertThat(toMinimalBytes(1L << 16)).isEqualTo(h("0x010000"));
+    assertThat(toMinimalBytes(1L << 24)).isEqualTo(h("0x01000000"));
+    assertThat(toMinimalBytes(1L << 32)).isEqualTo(h("0x0100000000"));
+    assertThat(toMinimalBytes(1L << 40)).isEqualTo(h("0x010000000000"));
+    assertThat(toMinimalBytes(1L << 48)).isEqualTo(h("0x01000000000000"));
+    assertThat(toMinimalBytes(1L << 56)).isEqualTo(h("0x0100000000000000"));
+    assertThat(toMinimalBytes(-1L)).isEqualTo(h("0xFFFFFFFFFFFFFFFF"));
   }
 
   @Test
   public void hexToInteger() {
-    assertEquals(0, extractInt(h("0x")));
-    assertEquals(0, extractInt(h("0x00")));
-    assertEquals(0, extractInt(h("0x00000000")));
+    assertThat(extractInt(h("0x"))).isEqualTo(0);
+    assertThat(extractInt(h("0x00"))).isEqualTo(0);
+    assertThat(extractInt(h("0x00000000"))).isEqualTo(0);
 
-    assertEquals(1, extractInt(h("0x01")));
-    assertEquals(1, extractInt(h("0x0001")));
-    assertEquals(1, extractInt(h("0x000001")));
-    assertEquals(1, extractInt(h("0x00000001")));
+    assertThat(extractInt(h("0x01"))).isEqualTo(1);
+    assertThat(extractInt(h("0x0001"))).isEqualTo(1);
+    assertThat(extractInt(h("0x000001"))).isEqualTo(1);
+    assertThat(extractInt(h("0x00000001"))).isEqualTo(1);
 
-    assertEquals(256, extractInt(h("0x0100")));
-    assertEquals(256, extractInt(h("0x000100")));
-    assertEquals(256, extractInt(h("0x00000100")));
+    assertThat(extractInt(h("0x0100"))).isEqualTo(256);
+    assertThat(extractInt(h("0x000100"))).isEqualTo(256);
+    assertThat(extractInt(h("0x00000100"))).isEqualTo(256);
 
-    assertEquals(-1, extractInt(h("0xFFFFFFFF")));
+    assertThat(extractInt(h("0xFFFFFFFF"))).isEqualTo(-1);
   }
 
   @Test
@@ -105,29 +105,29 @@ public class BytesValuesTest {
 
   @Test
   public void hexToLong() {
-    assertEquals(0L, extractLong(h("0x")));
-    assertEquals(0L, extractLong(h("0x00")));
-    assertEquals(0L, extractLong(h("0x00000000")));
+    assertThat(extractLong(h("0x"))).isEqualTo(0L);
+    assertThat(extractLong(h("0x00"))).isEqualTo(0L);
+    assertThat(extractLong(h("0x00000000"))).isEqualTo(0L);
 
-    assertEquals(1L, extractLong(h("0x01")));
-    assertEquals(1L, extractLong(h("0x0001")));
-    assertEquals(1L, extractLong(h("0x000001")));
-    assertEquals(1L, extractLong(h("0x00000001")));
-    assertEquals(1L, extractLong(h("0x00000001")));
-    assertEquals(1L, extractLong(h("0x0000000001")));
-    assertEquals(1L, extractLong(h("0x000000000001")));
+    assertThat(extractLong(h("0x01"))).isEqualTo(1L);
+    assertThat(extractLong(h("0x0001"))).isEqualTo(1L);
+    assertThat(extractLong(h("0x000001"))).isEqualTo(1L);
+    assertThat(extractLong(h("0x00000001"))).isEqualTo(1L);
+    assertThat(extractLong(h("0x00000001"))).isEqualTo(1L);
+    assertThat(extractLong(h("0x0000000001"))).isEqualTo(1L);
+    assertThat(extractLong(h("0x000000000001"))).isEqualTo(1L);
 
-    assertEquals(256L, extractLong(h("0x0100")));
-    assertEquals(256L, extractLong(h("0x000100")));
-    assertEquals(256L, extractLong(h("0x00000100")));
-    assertEquals(256L, extractLong(h("0x0000000100")));
-    assertEquals(256L, extractLong(h("0x000000000100")));
-    assertEquals(256L, extractLong(h("0x00000000000100")));
-    assertEquals(256L, extractLong(h("0x0000000000000100")));
+    assertThat(extractLong(h("0x0100"))).isEqualTo(256L);
+    assertThat(extractLong(h("0x000100"))).isEqualTo(256L);
+    assertThat(extractLong(h("0x00000100"))).isEqualTo(256L);
+    assertThat(extractLong(h("0x0000000100"))).isEqualTo(256L);
+    assertThat(extractLong(h("0x000000000100"))).isEqualTo(256L);
+    assertThat(extractLong(h("0x00000000000100"))).isEqualTo(256L);
+    assertThat(extractLong(h("0x0000000000000100"))).isEqualTo(256L);
 
-    assertEquals((1L << 32) - 1, extractLong(h("0xFFFFFFFF")));
+    assertThat(extractLong(h("0xFFFFFFFF"))).isEqualTo((1L << 32) - 1);
 
-    assertEquals(-1, extractLong(h("0xFFFFFFFFFFFFFFFF")));
+    assertThat(extractLong(h("0xFFFFFFFFFFFFFFFF"))).isEqualTo(-1);
   }
 
   @Test
@@ -139,11 +139,11 @@ public class BytesValuesTest {
 
   @Test
   public void unsignedShort() {
-    assertEquals(h("0x0000"), ofUnsignedShort(0));
-    assertEquals(h("0x0001"), ofUnsignedShort(1));
+    assertThat(ofUnsignedShort(0)).isEqualTo(h("0x0000"));
+    assertThat(ofUnsignedShort(1)).isEqualTo(h("0x0001"));
 
-    assertEquals(h("0x0100"), ofUnsignedShort(256));
-    assertEquals(h("0xFFFF"), ofUnsignedShort(65535));
+    assertThat(ofUnsignedShort(256)).isEqualTo(h("0x0100"));
+    assertThat(ofUnsignedShort(65535)).isEqualTo(h("0xFFFF"));
   }
 
   @Test
@@ -162,12 +162,12 @@ public class BytesValuesTest {
 
   @Test
   public void hexConcatenate() {
-    assertEquals(h("0x"), concatenate(h("0x"), h("0x")));
+    assertThat(concatenate(h("0x"), h("0x"))).isEqualTo(h("0x"));
 
-    assertEquals(h("0x1234"), concatenate(h("0x1234"), h("0x")));
-    assertEquals(h("0x1234"), concatenate(h("0x"), h("0x1234")));
+    assertThat(concatenate(h("0x1234"), h("0x"))).isEqualTo(h("0x1234"));
+    assertThat(concatenate(h("0x"), h("0x1234"))).isEqualTo(h("0x1234"));
 
-    assertEquals(h("0x12345678"), concatenate(h("0x1234"), h("0x5678")));
+    assertThat(concatenate(h("0x1234"), h("0x5678"))).isEqualTo(h("0x12345678"));
 
     final int valCount = 10;
     final BytesValue[] values = new BytesValue[valCount];
@@ -177,16 +177,16 @@ public class BytesValuesTest {
       values[i] = h(hex);
       res.append(hex);
     }
-    assertEquals(h(res.toString()), concatenate(values));
+    assertThat(concatenate(values)).isEqualTo(h(res.toString()));
   }
 
   @Test
   public void unsignedBigInteger() {
-    assertEquals(bi("0"), asUnsignedBigInteger(BytesValue.EMPTY));
-    assertEquals(bi("1"), asUnsignedBigInteger(BytesValue.of(1)));
+    assertThat(asUnsignedBigInteger(BytesValue.EMPTY)).isEqualTo(bi("0"));
+    assertThat(asUnsignedBigInteger(BytesValue.of(1))).isEqualTo(bi("1"));
 
     // Make sure things are interpreted unsigned.
-    assertEquals(bi("255"), asUnsignedBigInteger(h("0xFF")));
+    assertThat(asUnsignedBigInteger(h("0xFF"))).isEqualTo(bi("255"));
 
     // Try 2^100 + Long.MAX_VALUE, as an easy to define a big not too special big integer.
     final BigInteger expected =
@@ -197,16 +197,16 @@ public class BytesValuesTest {
     final MutableBytesValue v = MutableBytesValue.create(13);
     v.set(0, (byte) 16);
     v.setLong(v.size() - 8, Long.MAX_VALUE);
-    assertEquals(expected, asUnsignedBigInteger(v));
+    assertThat(asUnsignedBigInteger(v)).isEqualTo(expected);
   }
 
   @Test
   public void signedBigInteger() {
-    assertEquals(bi("0"), asSignedBigInteger(BytesValue.EMPTY));
-    assertEquals(bi("1"), asSignedBigInteger(BytesValue.of(1)));
+    assertThat(asSignedBigInteger(BytesValue.EMPTY)).isEqualTo(bi("0"));
+    assertThat(asSignedBigInteger(BytesValue.of(1))).isEqualTo(bi("1"));
 
     // Make sure things are interpreted signed.
-    assertEquals(bi("-1"), asSignedBigInteger(h("0xFF")));
+    assertThat(asSignedBigInteger(h("0xFF"))).isEqualTo(bi("-1"));
 
     // Try 2^100 + Long.MAX_VALUE, as an easy to define a big but not too special big integer.
     BigInteger expected = BigInteger.valueOf(2).pow(100).add(BigInteger.valueOf(Long.MAX_VALUE));
@@ -216,7 +216,7 @@ public class BytesValuesTest {
     MutableBytesValue v = MutableBytesValue.create(13);
     v.set(0, (byte) 16);
     v.setLong(v.size() - 8, Long.MAX_VALUE);
-    assertEquals(expected, asSignedBigInteger(v));
+    assertThat(asSignedBigInteger(v)).isEqualTo(expected);
 
     // And for a large negative one, we use -(2^100 + Long.MAX_VALUE), which is:
     //  2^100 + Long.MAX_VALUE = 0x10(4 bytes of 0)7F(  7 bytes of 1)
@@ -229,6 +229,6 @@ public class BytesValuesTest {
     v.set(5, (byte) 0x80);
     // 6 bytes of 0
     v.set(12, (byte) 1);
-    assertEquals(expected, asSignedBigInteger(v));
+    assertThat(asSignedBigInteger(v)).isEqualTo(expected);
   }
 }

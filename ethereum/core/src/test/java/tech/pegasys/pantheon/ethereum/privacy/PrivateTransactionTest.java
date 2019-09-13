@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.privacy;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.pantheon.crypto.SECP256K1;
 import tech.pegasys.pantheon.ethereum.core.Address;
@@ -210,28 +210,29 @@ public class PrivateTransactionTest {
   public void testWriteTo() {
     BytesValueRLPOutput bvrlpo = new BytesValueRLPOutput();
     VALID_PRIVATE_TRANSACTION.writeTo(bvrlpo);
-    assertEquals(VALID_PRIVATE_TRANSACTION_RLP, bvrlpo.encoded().toString());
+    assertThat(bvrlpo.encoded().toString()).isEqualTo(VALID_PRIVATE_TRANSACTION_RLP);
   }
 
   @Test
   public void testWriteTo_privacyGroup() {
     BytesValueRLPOutput bvrlpo = new BytesValueRLPOutput();
     VALID_PRIVATE_TRANSACTION_PRIVACY_GROUP.writeTo(bvrlpo);
-    assertEquals(VALID_PRIVATE_TRANSACTION_RLP_PRIVACY_GROUP, bvrlpo.encoded().toString());
+    assertThat(bvrlpo.encoded().toString()).isEqualTo(VALID_PRIVATE_TRANSACTION_RLP_PRIVACY_GROUP);
   }
 
   @Test
   public void testWriteToWithLargeChainId() {
     BytesValueRLPOutput bvrlpo = new BytesValueRLPOutput();
     VALID_SIGNED_PRIVATE_TRANSACTION_LARGE_CHAINID.writeTo(bvrlpo);
-    assertEquals(VALID_SIGNED_PRIVATE_TRANSACTION_LARGE_CHAINID_RLP, bvrlpo.encoded().toString());
+    assertThat(bvrlpo.encoded().toString())
+        .isEqualTo(VALID_SIGNED_PRIVATE_TRANSACTION_LARGE_CHAINID_RLP);
   }
 
   @Test
   public void testSignedWriteTo() {
     BytesValueRLPOutput bvrlpo = new BytesValueRLPOutput();
     VALID_SIGNED_PRIVATE_TRANSACTION.writeTo(bvrlpo);
-    assertEquals(VALID_SIGNED_PRIVATE_TRANSACTION_RLP, bvrlpo.encoded().toString());
+    assertThat(bvrlpo.encoded().toString()).isEqualTo(VALID_SIGNED_PRIVATE_TRANSACTION_RLP);
   }
 
   @Test
@@ -240,7 +241,7 @@ public class PrivateTransactionTest {
         PrivateTransaction.readFrom(
             new BytesValueRLPInput(BytesValue.fromHexString(VALID_PRIVATE_TRANSACTION_RLP), false));
 
-    assertEquals(VALID_PRIVATE_TRANSACTION, p);
+    assertThat(p).isEqualTo(VALID_PRIVATE_TRANSACTION);
   }
 
   @Test
@@ -250,7 +251,7 @@ public class PrivateTransactionTest {
             new BytesValueRLPInput(
                 BytesValue.fromHexString(VALID_PRIVATE_TRANSACTION_RLP_PRIVACY_GROUP), false));
 
-    assertEquals(VALID_PRIVATE_TRANSACTION_PRIVACY_GROUP, p);
+    assertThat(p).isEqualTo(VALID_PRIVATE_TRANSACTION_PRIVACY_GROUP);
   }
 
   @Test
@@ -260,7 +261,7 @@ public class PrivateTransactionTest {
             new BytesValueRLPInput(
                 BytesValue.fromHexString(VALID_SIGNED_PRIVATE_TRANSACTION_RLP), false));
 
-    assertEquals(VALID_SIGNED_PRIVATE_TRANSACTION, p);
+    assertThat(p).isEqualTo(VALID_SIGNED_PRIVATE_TRANSACTION);
   }
 
   @Test(expected = RLPException.class)
@@ -277,7 +278,7 @@ public class PrivateTransactionTest {
                 BytesValue.fromHexString(VALID_SIGNED_PRIVATE_TRANSACTION_LARGE_CHAINID_RLP),
                 false));
 
-    assertEquals(VALID_SIGNED_PRIVATE_TRANSACTION_LARGE_CHAINID, p);
+    assertThat(p).isEqualTo(VALID_SIGNED_PRIVATE_TRANSACTION_LARGE_CHAINID);
   }
 
   @Test(expected = IllegalArgumentException.class)

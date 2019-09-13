@@ -12,10 +12,7 @@
  */
 package tech.pegasys.pantheon.ethereum.core;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.pantheon.ethereum.rlp.BytesValueRLPOutput;
 import tech.pegasys.pantheon.ethereum.rlp.RLP;
@@ -36,12 +33,11 @@ public class TransactionIntegrationTest {
     final BytesValue encoded = BytesValue.fromHexString(encodedString);
     final RLPInput input = RLP.input(encoded);
     final Transaction transaction = Transaction.readFrom(input);
-    assertNotNull(transaction);
-    assertTrue(transaction.isContractCreation());
-    assertEquals(BigInteger.valueOf(2018), transaction.getChainId().get());
-    assertEquals(
-        Address.fromHexString("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"),
-        transaction.getSender());
+    assertThat(transaction).isNotNull();
+    assertThat(transaction.isContractCreation()).isTrue();
+    assertThat(transaction.getChainId()).contains(BigInteger.valueOf(2018));
+    assertThat(transaction.getSender())
+        .isEqualTo(Address.fromHexString("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"));
   }
 
   @Test
@@ -53,7 +49,7 @@ public class TransactionIntegrationTest {
     final Transaction transaction = Transaction.readFrom(input);
     final BytesValueRLPOutput output = new BytesValueRLPOutput();
     transaction.writeTo(output);
-    assertEquals(encodedString, output.encoded().toString());
+    assertThat(output.encoded().toString()).isEqualTo(encodedString);
   }
 
   @Test
@@ -63,14 +59,12 @@ public class TransactionIntegrationTest {
     final BytesValue encoded = BytesValue.fromHexString(encodedString);
     final RLPInput input = RLP.input(encoded);
     final Transaction transaction = Transaction.readFrom(input);
-    assertNotNull(transaction);
-    assertFalse(transaction.isContractCreation());
-    assertEquals(BigInteger.valueOf(2147483647), transaction.getChainId().get());
-    assertEquals(
-        Address.fromHexString("0xdf664d0d2270ef97b48f222e3187bd14c8ca9428"),
-        transaction.getSender());
-    assertEquals(
-        Address.fromHexString("0xd30c3d13b07029deba00de1da369cd69a02c2056"),
-        transaction.getTo().get());
+    assertThat(transaction).isNotNull();
+    assertThat(transaction.isContractCreation()).isFalse();
+    assertThat(transaction.getChainId()).contains(BigInteger.valueOf(2147483647));
+    assertThat(transaction.getSender())
+        .isEqualTo(Address.fromHexString("0xdf664d0d2270ef97b48f222e3187bd14c8ca9428"));
+    assertThat(transaction.getTo())
+        .contains(Address.fromHexString("0xd30c3d13b07029deba00de1da369cd69a02c2056"));
   }
 }
