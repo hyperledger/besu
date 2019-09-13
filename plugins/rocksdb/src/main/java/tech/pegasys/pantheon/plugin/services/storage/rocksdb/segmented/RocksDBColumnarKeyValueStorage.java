@@ -78,7 +78,7 @@ public class RocksDBColumnarKeyValueStorage
     try {
       final List<ColumnFamilyDescriptor> columnDescriptors =
           segments.stream()
-              .map(segment -> new ColumnFamilyDescriptor(getId(segment)))
+              .map(segment -> new ColumnFamilyDescriptor(segment.getId()))
               .collect(Collectors.toList());
       columnDescriptors.add(
           new ColumnFamilyDescriptor(
@@ -111,7 +111,7 @@ public class RocksDBColumnarKeyValueStorage
           segments.stream()
               .collect(
                   Collectors.toMap(
-                      segment -> BytesValue.wrap(getId(segment)), SegmentIdentifier::getName));
+                      segment -> BytesValue.wrap(segment.getId()), SegmentIdentifier::getName));
 
       final ImmutableMap.Builder<String, ColumnFamilyHandle> builder = ImmutableMap.builder();
 
@@ -211,10 +211,6 @@ public class RocksDBColumnarKeyValueStorage
       LOG.error("Attempting to use a closed RocksDbKeyValueStorage");
       throw new IllegalStateException("Storage has been closed");
     }
-  }
-
-  private byte[] getId(final SegmentIdentifier name) {
-    return name.getName().getBytes(StandardCharsets.UTF_8);
   }
 
   private class RocksDbTransaction implements Transaction<ColumnFamilyHandle> {

@@ -51,6 +51,7 @@ import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 import tech.pegasys.pantheon.ethereum.storage.StorageProvider;
 import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
 import tech.pegasys.pantheon.plugin.services.PantheonConfiguration;
+import tech.pegasys.pantheon.plugin.services.PicoCLIOptions;
 import tech.pegasys.pantheon.plugin.services.storage.KeyValueStorageFactory;
 import tech.pegasys.pantheon.services.PantheonPluginContextImpl;
 import tech.pegasys.pantheon.services.StorageServiceImpl;
@@ -65,6 +66,7 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -112,6 +114,7 @@ public abstract class CommandTestAbstract {
   @Mock protected PantheonConfiguration commonPluginConfiguration;
   @Mock protected KeyValueStorageFactory rocksDBStorageFactory;
   @Mock protected KeyValueStorageFactory rocksDBSPrivacyStorageFactory;
+  @Mock protected PicoCLIOptions cliOptions;
 
   @Mock protected Logger mockLogger;
   @Mock protected PantheonPluginContextImpl mockPantheonPluginContext;
@@ -147,8 +150,9 @@ public abstract class CommandTestAbstract {
   public void initMocks() throws Exception {
 
     // doReturn used because of generic PantheonController
-    doReturn(mockControllerBuilder).when(mockControllerBuilderFactory).fromEthNetworkConfig(any());
-
+    doReturn(mockControllerBuilder)
+        .when(mockControllerBuilderFactory)
+        .fromEthNetworkConfig(any(), any());
     when(mockControllerBuilder.synchronizerConfiguration(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.ethProtocolConfiguration(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.transactionPoolConfiguration(any()))
@@ -198,6 +202,9 @@ public abstract class CommandTestAbstract {
     when(mockRunnerBuilder.build()).thenReturn(mockRunner);
 
     when(storageService.getByName("rocksdb")).thenReturn(rocksDBStorageFactory);
+
+    when(mockPantheonPluginContext.getService(PicoCLIOptions.class))
+        .thenReturn(Optional.of(cliOptions));
   }
 
   // Display outputs for debug purpose

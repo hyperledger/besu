@@ -34,6 +34,7 @@ import tech.pegasys.pantheon.plugin.services.PantheonConfiguration;
 import tech.pegasys.pantheon.plugin.services.PantheonEvents;
 import tech.pegasys.pantheon.plugin.services.PicoCLIOptions;
 import tech.pegasys.pantheon.plugin.services.StorageService;
+import tech.pegasys.pantheon.plugin.services.storage.rocksdb.RocksDBPlugin;
 import tech.pegasys.pantheon.services.PantheonConfigurationImpl;
 import tech.pegasys.pantheon.services.PantheonEventsImpl;
 import tech.pegasys.pantheon.services.PantheonPluginContextImpl;
@@ -89,6 +90,9 @@ public class ThreadPantheonNodeRunner implements PantheonNodeRunner {
     commandLine.parseArgs(node.getConfiguration().getExtraCLIOptions().toArray(new String[0]));
 
     pantheonPluginContext.addService(PantheonConfiguration.class, commonPluginConfiguration);
+
+    // register built-in plugins
+    new RocksDBPlugin().register(pantheonPluginContext);
 
     return pantheonPluginContext;
   }

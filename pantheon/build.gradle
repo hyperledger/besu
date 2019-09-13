@@ -45,6 +45,7 @@ dependencies {
   implementation project(':metrics:core')
   implementation project(':nat')
   implementation project(':plugin-api')
+  implementation project(':plugins:rocksdb')
   implementation project(':services:kvstore')
 
   implementation 'com.fasterxml.jackson.core:jackson-databind'
@@ -61,7 +62,6 @@ dependencies {
   runtime 'org.apache.logging.log4j:log4j-core'
   runtime 'org.apache.logging.log4j:log4j-slf4j-impl'
 
-  testImplementation project(':plugins:rocksdb')
   testImplementation project(':testutil')
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
 

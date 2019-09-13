@@ -24,13 +24,11 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
-import com.google.auto.service.AutoService;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-@AutoService(PantheonPlugin.class)
 public class RocksDBPlugin implements PantheonPlugin {
 
   private static final Logger LOG = LogManager.getLogger();

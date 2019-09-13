@@ -59,7 +59,7 @@ public class RocksDBKeyValueStorageFactoryTest {
         new RocksDBKeyValueStorageFactory(() -> rocksDbConfiguration, segments);
 
     // Side effect is creation of the Metadata version file
-    storageFactory.create(() -> "block-chain", commonConfiguration, metricsSystem);
+    storageFactory.create(segment, commonConfiguration, metricsSystem);
 
     assertEquals(
         DEFAULT_VERSION,
@@ -91,7 +91,7 @@ public class RocksDBKeyValueStorageFactoryTest {
     final RocksDBKeyValueStorageFactory storageFactory =
         new RocksDBKeyValueStorageFactory(() -> rocksDbConfiguration, segments);
 
-    storageFactory.create(() -> "block-chain", commonConfiguration, metricsSystem);
+    storageFactory.create(segment, commonConfiguration, metricsSystem);
 
     assertEquals(DEFAULT_VERSION, DatabaseMetadata.fromDirectory(tempDatabaseDir).getVersion());
     assertTrue(storageFactory.isSegmentIsolationSupported());
@@ -108,7 +108,7 @@ public class RocksDBKeyValueStorageFactoryTest {
     assertThatThrownBy(
             () ->
                 new RocksDBKeyValueStorageFactory(() -> rocksDbConfiguration, segments)
-                    .create(() -> "segment-does-not-matter", commonConfiguration, metricsSystem))
+                    .create(segment, commonConfiguration, metricsSystem))
         .isInstanceOf(StorageException.class);
   }
 
@@ -125,7 +125,7 @@ public class RocksDBKeyValueStorageFactoryTest {
     assertThatThrownBy(
             () ->
                 new RocksDBKeyValueStorageFactory(() -> rocksDbConfiguration, segments)
-                    .create(() -> "bad-version", commonConfiguration, metricsSystem))
+                    .create(segment, commonConfiguration, metricsSystem))
         .isInstanceOf(IllegalStateException.class);
 
     final String badValue = "{\"version\":\"iomedae\"}";
@@ -135,7 +135,7 @@ public class RocksDBKeyValueStorageFactoryTest {
     assertThatThrownBy(
             () ->
                 new RocksDBKeyValueStorageFactory(() -> rocksDbConfiguration, segments)
-                    .create(() -> "bad-value", commonConfiguration, metricsSystem))
+                    .create(segment, commonConfiguration, metricsSystem))
         .isInstanceOf(IllegalStateException.class);
   }
 }

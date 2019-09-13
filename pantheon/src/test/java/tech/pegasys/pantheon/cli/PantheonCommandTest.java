@@ -17,6 +17,7 @@ import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNotNull;
 import static org.mockito.Mockito.atLeast;
@@ -165,7 +166,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).ethNetworkConfig(ethNetworkArg.capture());
     verify(mockRunnerBuilder).build();
 
-    verify(mockControllerBuilderFactory).fromEthNetworkConfig(ethNetworkArg.capture());
+    verify(mockControllerBuilderFactory).fromEthNetworkConfig(ethNetworkArg.capture(), any());
     final ArgumentCaptor<MiningParameters> miningArg =
         ArgumentCaptor.forClass(MiningParameters.class);
     verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
@@ -332,7 +333,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
             .setBootNodes(nodes)
             .build();
     verify(mockControllerBuilder).dataDirectory(eq(Paths.get("/opt/pantheon").toAbsolutePath()));
-    verify(mockControllerBuilderFactory).fromEthNetworkConfig(eq(networkConfig));
+    verify(mockControllerBuilderFactory).fromEthNetworkConfig(eq(networkConfig), any());
     verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
 
     assertThat(syncConfigurationCaptor.getValue().getSyncMode()).isEqualTo(SyncMode.FAST);
@@ -890,7 +891,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
 
     parseCommand("--genesis-file", genesisFile.toString());
 
-    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture());
+    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
     verify(mockControllerBuilder).build();
 
     assertThat(networkArg.getValue().getGenesisConfig())
@@ -926,7 +927,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
     final ArgumentCaptor<EthNetworkConfig> networkArg =
         ArgumentCaptor.forClass(EthNetworkConfig.class);
 
-    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture());
+    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
     verify(mockControllerBuilder).build();
 
     assertThat(networkArg.getValue().getGenesisConfig())
@@ -949,7 +950,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
     final ArgumentCaptor<EthNetworkConfig> networkArg =
         ArgumentCaptor.forClass(EthNetworkConfig.class);
 
-    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture());
+    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
     verify(mockControllerBuilder).build();
 
     assertThat(networkArg.getValue().getGenesisConfig())
@@ -2343,7 +2344,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
     final ArgumentCaptor<EthNetworkConfig> networkArg =
         ArgumentCaptor.forClass(EthNetworkConfig.class);
 
-    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture());
+    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
     verify(mockControllerBuilder).build();
 
     assertThat(networkArg.getValue()).isEqualTo(EthNetworkConfig.getNetworkConfig(DEV));
@@ -2359,7 +2360,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
     final ArgumentCaptor<EthNetworkConfig> networkArg =
         ArgumentCaptor.forClass(EthNetworkConfig.class);
 
-    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture());
+    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
     verify(mockControllerBuilder).build();
 
     assertThat(networkArg.getValue()).isEqualTo(EthNetworkConfig.getNetworkConfig(RINKEBY));
@@ -2375,7 +2376,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
     final ArgumentCaptor<EthNetworkConfig> networkArg =
         ArgumentCaptor.forClass(EthNetworkConfig.class);
 
-    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture());
+    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
     verify(mockControllerBuilder).build();
 
     assertThat(networkArg.getValue()).isEqualTo(EthNetworkConfig.getNetworkConfig(ROPSTEN));
@@ -2391,7 +2392,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
     final ArgumentCaptor<EthNetworkConfig> networkArg =
         ArgumentCaptor.forClass(EthNetworkConfig.class);
 
-    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture());
+    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
     verify(mockControllerBuilder).build();
 
     assertThat(networkArg.getValue()).isEqualTo(EthNetworkConfig.getNetworkConfig(GOERLI));
@@ -2432,7 +2433,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
     final ArgumentCaptor<EthNetworkConfig> networkArg =
         ArgumentCaptor.forClass(EthNetworkConfig.class);
 
-    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture());
+    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
     verify(mockControllerBuilder).build();
 
     assertThat(networkArg.getValue().getBootNodes())

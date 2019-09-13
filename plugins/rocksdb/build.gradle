@@ -33,14 +33,11 @@ dependencies {
   implementation project(':services:kvstore')
 
   implementation 'com.fasterxml.jackson.core:jackson-databind'
-  implementation 'com.google.auto.service:auto-service'
   implementation 'com.google.guava:guava'
   implementation 'info.picocli:picocli'
   implementation 'io.prometheus:simpleclient'
   implementation 'org.apache.logging.log4j:log4j-api'
   implementation 'org.rocksdb:rocksdbjni'
-
-  annotationProcessor 'com.google.auto.service:auto-service'
 
   runtime 'org.apache.logging.log4j:log4j-core'
 

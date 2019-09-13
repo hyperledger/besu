@@ -15,14 +15,25 @@ package tech.pegasys.pantheon.ethereum.storage.keyvalue;
 import tech.pegasys.pantheon.plugin.services.storage.SegmentIdentifier;
 
 public enum KeyValueSegmentIdentifier implements SegmentIdentifier {
-  BLOCKCHAIN,
-  WORLD_STATE,
-  PRIVATE_TRANSACTIONS,
-  PRIVATE_STATE,
-  PRUNING_STATE;
+  BLOCKCHAIN((byte) 1),
+  WORLD_STATE((byte) 2),
+  PRIVATE_TRANSACTIONS((byte) 3),
+  PRIVATE_STATE((byte) 4),
+  PRUNING_STATE((byte) 5);
+
+  private final byte[] id;
+
+  KeyValueSegmentIdentifier(final byte... id) {
+    this.id = id;
+  }
 
   @Override
   public String getName() {
     return name();
+  }
+
+  @Override
+  public byte[] getId() {
+    return id;
   }
 }

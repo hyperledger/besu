@@ -89,15 +89,22 @@ public class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValueStorageT
     FOO(new byte[] {1}),
     BAR(new byte[] {2});
 
+    private final byte[] id;
     private final String nameAsUtf8;
 
     TestSegment(final byte[] id) {
+      this.id = id;
       this.nameAsUtf8 = new String(id, StandardCharsets.UTF_8);
     }
 
     @Override
     public String getName() {
       return nameAsUtf8;
+    }
+
+    @Override
+    public byte[] getId() {
+      return id;
     }
   }
 

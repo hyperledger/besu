@@ -22,9 +22,16 @@ import tech.pegasys.pantheon.plugin.Unstable;
 public interface SegmentIdentifier {
 
   /**
-   * Identifier for the segment consistent throughout the lifetime of the segment.
+   * Name for the segment consistent throughout the lifetime of the segment.
    *
    * @return unique name of the segment.
    */
   String getName();
+
+  /**
+   * Identifier for the segment consistent throughout the lifetime of the segment.
+   *
+   * @return unique id of the segment.
+   */
+  byte[] getId();
 }

@@ -12,6 +12,7 @@
  */
 package tech.pegasys.pantheon.services;
 
+import tech.pegasys.pantheon.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import tech.pegasys.pantheon.plugin.services.StorageService;
 import tech.pegasys.pantheon.plugin.services.exception.StorageException;
 import tech.pegasys.pantheon.plugin.services.storage.KeyValueStorageFactory;
@@ -28,7 +29,7 @@ public class StorageServiceImpl implements StorageService {
   private final Map<String, KeyValueStorageFactory> factories;
 
   public StorageServiceImpl() {
-    this.segments = List.of(Segment.values());
+    this.segments = List.of(KeyValueSegmentIdentifier.values());
     this.factories = new ConcurrentHashMap<>();
   }
 
@@ -40,19 +41,6 @@ public class StorageServiceImpl implements StorageService {
   @Override
   public List<SegmentIdentifier> getAllSegmentIdentifiers() {
     return segments;
-  }
-
-  private enum Segment implements SegmentIdentifier {
-    BLOCKCHAIN,
-    WORLD_STATE,
-    PRIVATE_TRANSACTIONS,
-    PRIVATE_STATE,
-    PRUNING_STATE;
-
-    @Override
-    public String getName() {
-      return name();
-    }
   }
 
   public KeyValueStorageFactory getByName(final String name) {
