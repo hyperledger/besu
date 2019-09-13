@@ -41,4 +41,9 @@ public class CliqueDifficultyValidationRule
 
     return expectedDifficulty.equals(actualDifficulty);
   }
+
+  @Override
+  public boolean includeInLightValidation() {
+    return false;
+  }
 }

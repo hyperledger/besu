@@ -31,4 +31,9 @@ public class SignerRateLimitValidationRule
 
     return CliqueHelpers.addressIsAllowedToProduceNextBlock(blockSigner, protocolContext, parent);
   }
+
+  @Override
+  public boolean includeInLightValidation() {
+    return false;
+  }
 }

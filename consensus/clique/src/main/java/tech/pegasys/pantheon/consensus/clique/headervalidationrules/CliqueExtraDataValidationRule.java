@@ -100,4 +100,9 @@ public class CliqueExtraDataValidationRule
 
     return true;
   }
+
+  @Override
+  public boolean includeInLightValidation() {
+    return false;
+  }
 }
