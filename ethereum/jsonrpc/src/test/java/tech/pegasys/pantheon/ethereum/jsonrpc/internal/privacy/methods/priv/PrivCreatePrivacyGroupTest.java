@@ -244,6 +244,6 @@ public class PrivCreatePrivacyGroupTest {
 
     final JsonRpcError result = response.getError();
 
-    assertThat(result).isEqualTo(JsonRpcError.CREATE_PRIVACY_GROUP_ERROR);
+    assertThat(result).isEqualTo(JsonRpcError.ENCLAVE_ERROR);
   }
 }

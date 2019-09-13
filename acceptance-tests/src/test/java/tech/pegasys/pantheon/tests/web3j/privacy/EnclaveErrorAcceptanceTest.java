@@ -153,4 +153,12 @@ public class EnclaveErrorAcceptanceTest extends PrivacyAcceptanceTestBase {
 
     assertThat(throwable).hasMessageContaining("NodePushingToPeer");
   }
+
+  @Test
+  public void createPrivacyGroupReturnsCorrectError() {
+    final Throwable throwable =
+        catchThrowable(() -> alice.execute(privacyTransactions.createPrivacyGroup(null, null)));
+
+    assertThat(throwable).hasMessageContaining(JsonRpcError.CREATE_GROUP_INCLUDE_SELF.getMessage());
+  }
 }

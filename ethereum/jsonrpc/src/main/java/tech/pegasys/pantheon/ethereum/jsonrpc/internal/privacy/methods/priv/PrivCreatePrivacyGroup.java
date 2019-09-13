@@ -18,12 +18,12 @@ import tech.pegasys.pantheon.enclave.Enclave;
 import tech.pegasys.pantheon.enclave.types.CreatePrivacyGroupRequest;
 import tech.pegasys.pantheon.enclave.types.PrivacyGroup;
 import tech.pegasys.pantheon.ethereum.core.PrivacyParameters;
+import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcEnclaveErrorConverter;
 import tech.pegasys.pantheon.ethereum.jsonrpc.RpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.privacy.parameters.CreatePrivacyGroupParameter;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
 import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -74,7 +74,9 @@ public class PrivCreatePrivacyGroup implements JsonRpcMethod {
       response = enclave.createPrivacyGroup(createPrivacyGroupRequest);
     } catch (Exception e) {
       LOG.error("Failed to create privacy group", e);
-      return new JsonRpcErrorResponse(request.getId(), JsonRpcError.CREATE_PRIVACY_GROUP_ERROR);
+      return new JsonRpcErrorResponse(
+          request.getId(),
+          JsonRpcEnclaveErrorConverter.convertEnclaveInvalidReason(e.getMessage()));
     }
     return new JsonRpcSuccessResponse(request.getId(), response.getPrivacyGroupId());
   }
