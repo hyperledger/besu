@@ -17,10 +17,10 @@ import static java.util.stream.Collectors.toList;
 import static tech.pegasys.pantheon.consensus.clique.jsonrpc.CliqueRpcApis.CLIQUE;
 import static tech.pegasys.pantheon.consensus.ibft.jsonrpc.IbftRpcApis.IBFT;
 
-import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration;
-import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApi;
-import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApis;
-import tech.pegasys.pantheon.ethereum.jsonrpc.websocket.WebSocketConfiguration;
+import tech.pegasys.pantheon.ethereum.api.jsonrpc.JsonRpcConfiguration;
+import tech.pegasys.pantheon.ethereum.api.jsonrpc.RpcApi;
+import tech.pegasys.pantheon.ethereum.api.jsonrpc.RpcApis;
+import tech.pegasys.pantheon.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.RunnableNode;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationProvider;
 

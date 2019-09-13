@@ -12,7 +12,7 @@
  */
 package tech.pegasys.pantheon.consensus.clique.jsonrpc;
 
-import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApi;
+import tech.pegasys.pantheon.ethereum.api.jsonrpc.RpcApi;
 
 import java.util.Optional;
 

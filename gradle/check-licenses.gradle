@@ -127,6 +127,7 @@ downloadLicenses {
 
   licenses = [
       (group('pantheon'))            : apache,
+      (group('pantheon.ethereum.api'))   : apache,
       (group('pantheon.consensus'))  : apache,
       (group('pantheon.ethereum'))   : apache,
       (group('pantheon.metrics'))  : apache,

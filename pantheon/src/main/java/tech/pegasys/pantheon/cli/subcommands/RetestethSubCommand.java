@@ -17,11 +17,11 @@ import static tech.pegasys.pantheon.cli.DefaultCommandValues.MANDATORY_PATH_FORM
 import static tech.pegasys.pantheon.cli.DefaultCommandValues.MANDATORY_PORT_FORMAT_HELP;
 import static tech.pegasys.pantheon.cli.DefaultCommandValues.getDefaultPantheonDataPath;
 import static tech.pegasys.pantheon.cli.subcommands.RetestethSubCommand.COMMAND_NAME;
-import static tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration.DEFAULT_JSON_RPC_PORT;
+import static tech.pegasys.pantheon.ethereum.api.jsonrpc.JsonRpcConfiguration.DEFAULT_JSON_RPC_PORT;
 
 import tech.pegasys.pantheon.PantheonInfo;
 import tech.pegasys.pantheon.cli.custom.JsonRPCWhitelistHostsProperty;
-import tech.pegasys.pantheon.ethereum.jsonrpc.JsonRpcConfiguration;
+import tech.pegasys.pantheon.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import tech.pegasys.pantheon.ethereum.retesteth.RetestethConfiguration;
 import tech.pegasys.pantheon.ethereum.retesteth.RetestethService;
 

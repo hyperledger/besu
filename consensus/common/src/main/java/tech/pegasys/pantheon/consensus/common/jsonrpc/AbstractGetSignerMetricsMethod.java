@@ -13,17 +13,17 @@
 package tech.pegasys.pantheon.consensus.common.jsonrpc;
 
 import tech.pegasys.pantheon.consensus.common.BlockInterface;
+import tech.pegasys.pantheon.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import tech.pegasys.pantheon.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
+import tech.pegasys.pantheon.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
+import tech.pegasys.pantheon.ethereum.api.jsonrpc.internal.queries.BlockchainQueries;
+import tech.pegasys.pantheon.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import tech.pegasys.pantheon.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
+import tech.pegasys.pantheon.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
+import tech.pegasys.pantheon.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import tech.pegasys.pantheon.ethereum.api.jsonrpc.internal.results.SignerMetricResult;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.BlockParameter;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.BlockchainQueries;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResponse;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.results.SignerMetricResult;
 
 import java.util.ArrayList;
 import java.util.HashMap;

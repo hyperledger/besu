@@ -16,12 +16,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 import tech.pegasys.pantheon.consensus.ibft.IbftBlockInterface;
+import tech.pegasys.pantheon.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import tech.pegasys.pantheon.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
+import tech.pegasys.pantheon.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
+import tech.pegasys.pantheon.ethereum.api.jsonrpc.internal.queries.BlockchainQueries;
 import tech.pegasys.pantheon.ethereum.core.Address;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.BlockParameter;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.BlockchainQueries;
 
 import java.util.Collections;
 import java.util.List;

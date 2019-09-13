@@ -29,7 +29,7 @@ dependencies {
   api project(':plugin-api')
 
   implementation project(':ethereum:core')
-  implementation project(':ethereum:jsonrpc')
+  implementation project(':ethereum:api')
   implementation project(':util')
 
   implementation 'com.fasterxml.jackson.core:jackson-databind'

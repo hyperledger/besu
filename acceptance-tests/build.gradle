@@ -25,8 +25,7 @@ dependencies {
   testSupportImplementation project(':ethereum:core')
   testSupportImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
   testSupportImplementation project(':ethereum:eth')
-  testSupportImplementation project(':ethereum:graphql')
-  testSupportImplementation project(':ethereum:jsonrpc')
+  testSupportImplementation project(':ethereum:api')
   testSupportImplementation project(':ethereum:p2p')
   testSupportImplementation project(':ethereum:permissioning')
   testSupportImplementation project(':ethereum:rlp')
@@ -57,13 +56,12 @@ dependencies {
   testSupportImplementation 'tech.pegasys.ethsigner.internal:file-based'
   testSupportImplementation 'tech.pegasys.ethsigner.internal:signing-api'
 
-
   testImplementation 'junit:junit'
   testImplementation 'net.consensys:orion'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.web3j:abi'
   testImplementation 'org.web3j:pantheon'
-  testImplementation project(':ethereum:jsonrpc')
+  testImplementation project(':ethereum:api')
   testImplementation project(':enclave')
   testImplementation 'org.awaitility:awaitility'
   testImplementation project(':consensus:clique')

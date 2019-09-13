@@ -15,7 +15,7 @@ package tech.pegasys.pantheon.tests.web3j.privacy;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
+import tech.pegasys.pantheon.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import tech.pegasys.pantheon.tests.acceptance.dsl.privacy.PrivacyAcceptanceTestBase;
 import tech.pegasys.pantheon.tests.acceptance.dsl.privacy.PrivacyNode;
 import tech.pegasys.pantheon.tests.web3j.generated.EventEmitter;

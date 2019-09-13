@@ -14,10 +14,10 @@ package tech.pegasys.pantheon.consensus.clique.jsonrpc.methods;
 
 import tech.pegasys.pantheon.consensus.common.BlockInterface;
 import tech.pegasys.pantheon.consensus.common.jsonrpc.AbstractGetSignerMetricsMethod;
-import tech.pegasys.pantheon.ethereum.jsonrpc.RpcMethod;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.BlockchainQueries;
+import tech.pegasys.pantheon.ethereum.api.jsonrpc.RpcMethod;
+import tech.pegasys.pantheon.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
+import tech.pegasys.pantheon.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
+import tech.pegasys.pantheon.ethereum.api.jsonrpc.internal.queries.BlockchainQueries;
 
 public class CliqueGetSignerMetrics extends AbstractGetSignerMetricsMethod
     implements JsonRpcMethod {

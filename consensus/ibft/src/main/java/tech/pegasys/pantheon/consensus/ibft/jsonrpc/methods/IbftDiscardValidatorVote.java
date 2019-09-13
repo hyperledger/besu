@@ -13,13 +13,13 @@
 package tech.pegasys.pantheon.consensus.ibft.jsonrpc.methods;
 
 import tech.pegasys.pantheon.consensus.common.VoteProposer;
+import tech.pegasys.pantheon.ethereum.api.jsonrpc.RpcMethod;
+import tech.pegasys.pantheon.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import tech.pegasys.pantheon.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
+import tech.pegasys.pantheon.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
+import tech.pegasys.pantheon.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
+import tech.pegasys.pantheon.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import tech.pegasys.pantheon.ethereum.core.Address;
-import tech.pegasys.pantheon.ethereum.jsonrpc.RpcMethod;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

@@ -15,8 +15,8 @@ package tech.pegasys.pantheon.tests.acceptance.dsl.node;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import tech.pegasys.pantheon.cli.options.NetworkingOptions;
-import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApi;
-import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApis;
+import tech.pegasys.pantheon.ethereum.api.jsonrpc.RpcApi;
+import tech.pegasys.pantheon.ethereum.api.jsonrpc.RpcApis;
 import tech.pegasys.pantheon.ethereum.permissioning.PermissioningConfiguration;
 import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
 import tech.pegasys.pantheon.plugin.services.metrics.MetricCategory;

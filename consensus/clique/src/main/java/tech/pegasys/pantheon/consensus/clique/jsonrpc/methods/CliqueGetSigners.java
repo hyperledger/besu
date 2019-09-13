@@ -13,18 +13,18 @@
 package tech.pegasys.pantheon.consensus.clique.jsonrpc.methods;
 
 import tech.pegasys.pantheon.consensus.common.VoteTallyCache;
+import tech.pegasys.pantheon.ethereum.api.BlockWithMetadata;
+import tech.pegasys.pantheon.ethereum.api.jsonrpc.RpcMethod;
+import tech.pegasys.pantheon.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import tech.pegasys.pantheon.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
+import tech.pegasys.pantheon.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
+import tech.pegasys.pantheon.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
+import tech.pegasys.pantheon.ethereum.api.jsonrpc.internal.queries.BlockchainQueries;
+import tech.pegasys.pantheon.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import tech.pegasys.pantheon.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
+import tech.pegasys.pantheon.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
+import tech.pegasys.pantheon.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
-import tech.pegasys.pantheon.ethereum.jsonrpc.RpcMethod;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.BlockParameter;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.parameters.JsonRpcParameter;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.BlockWithMetadata;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.queries.BlockchainQueries;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcError;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcErrorResponse;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcResponse;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 
 import java.util.Objects;
 import java.util.Optional;

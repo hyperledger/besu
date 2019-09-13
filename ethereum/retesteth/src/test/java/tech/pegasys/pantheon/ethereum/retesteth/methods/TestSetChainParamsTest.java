@@ -14,9 +14,9 @@ package tech.pegasys.pantheon.ethereum.retesteth.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import tech.pegasys.pantheon.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import tech.pegasys.pantheon.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import tech.pegasys.pantheon.ethereum.core.BlockHeader;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.JsonRpcRequest;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import tech.pegasys.pantheon.ethereum.retesteth.RetestethContext;
 
 import java.io.IOException;

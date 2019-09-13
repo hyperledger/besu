@@ -15,7 +15,7 @@ package tech.pegasys.pantheon.tests.acceptance;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 
-import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApis;
+import tech.pegasys.pantheon.ethereum.api.jsonrpc.RpcApis;
 import tech.pegasys.pantheon.tests.acceptance.dsl.AcceptanceTestBase;
 import tech.pegasys.pantheon.tests.acceptance.dsl.node.PantheonNode;
 

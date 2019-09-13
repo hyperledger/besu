@@ -14,8 +14,8 @@ package tech.pegasys.pantheon.consensus.clique.jsonrpc.methods;
 
 import tech.pegasys.pantheon.consensus.common.VoteProposer;
 import tech.pegasys.pantheon.consensus.common.jsonrpc.AbstractVoteProposerMethod;
-import tech.pegasys.pantheon.ethereum.jsonrpc.RpcMethod;
-import tech.pegasys.pantheon.ethereum.jsonrpc.internal.methods.JsonRpcMethod;
+import tech.pegasys.pantheon.ethereum.api.jsonrpc.RpcMethod;
+import tech.pegasys.pantheon.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 
 public class CliqueProposals extends AbstractVoteProposerMethod implements JsonRpcMethod {
 

@@ -15,8 +15,8 @@ package tech.pegasys.pantheon.cli.converter;
 import tech.pegasys.pantheon.cli.converter.exception.RpcApisConversionException;
 import tech.pegasys.pantheon.consensus.clique.jsonrpc.CliqueRpcApis;
 import tech.pegasys.pantheon.consensus.ibft.jsonrpc.IbftRpcApis;
-import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApi;
-import tech.pegasys.pantheon.ethereum.jsonrpc.RpcApis;
+import tech.pegasys.pantheon.ethereum.api.jsonrpc.RpcApi;
+import tech.pegasys.pantheon.ethereum.api.jsonrpc.RpcApis;
 
 import java.util.Optional;
 import java.util.function.Function;
