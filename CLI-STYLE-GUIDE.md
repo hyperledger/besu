@@ -137,8 +137,6 @@ Feedback to the user should always be clear, concise and avoid technical jargon.
 
 Warnings should be used when an option has been successfully set but there may be other factors the user should take into consideration.
 
-![Input Warning](docs/images/Warning.png)
-
 **Color/text formatting:**
 
 *   **"WARNING" Label:** Bold, Bright - Yellow - ANSI 33
@@ -152,8 +150,6 @@ There should be a clear line break before and after a warning to call attention 
 
 When a value cannot be applied, show a clear error message and provide context on how the error can be avoided.
 
-![Input Error](docs/images/Error.png)
-
 **Color/text formatting:**
 
 *   **"ERROR" Label:** Bold, Red - ANSI 31
@@ -164,8 +160,6 @@ When a value cannot be applied, show a clear error message and provide context o
 There should be a clear line break before and after an error to help call attention to it. A second line containing a potential solution to fix the error is recommended but optional.
 
 If the error is caused by an unknown option, the following formatting should be followed:
-
-![Input Unknown Error](docs/images/ErrorUnknown.png)
 
 ## Logging in the CLI
 
@@ -217,30 +211,20 @@ Color and formatting is used to help users to easily scan and find relevant info
 
 "Information" (i.e. "INFO")  is status of what is currently happening or has happened. The lack of an error or warning indicates that things are running smoothly. Information should be output with "stdout".
 
-![Warning](docs/images/LogInfo.png)
-
 ### Error
 
 An "error" should be shown if a process cannot be completed. Errors should be output with "stderr". Errors should include a clear reason why the error has occurred.   
-
-![Log Error](docs/images/LogError.png)
 
 ### Warning
 
 A "warning" is shown when a process has been completed but it did not go as expected. Warnings should be output with "stderr". Warnings should include a clear reason why the warning has occured.
 
-![Log Warning](docs/images/LogWarning.png)
-
 ### Failure
 
 A "failure" should be shown if a process cannot be completed. Details about the failure should follow the main failure statement.  Failures should be output with "stderr".
-
-![Log Failure](docs/images/LogFailure.png)
 
 ## Indicating Progress
 
 >  **Note:** The patterns and functionality in this section are not currently implemented.
 
 We should always indicate that progress is being made so the user knows a process has not stalled. Progress indicators should only be included for TTY sessions (not in output) and can be turned off with the `--progress-enabled=false` flag. The progress indicator should appear on a new line below the last line of information. Once the process is complete, the progress indicator will move down to the next empty line. A progress indicator is not needed if a process takes less than a second.
-
-![Log Warning](docs/images/Spinner.gif)
