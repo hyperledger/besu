@@ -1179,7 +1179,7 @@ public class PantheonCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void p2pHostAndPortOptionMustBeUsed() {
+  public void p2pHostAndPortOptionsAreRespected() {
 
     final String host = "1.2.3.4";
     final int port = 1234;
@@ -1194,6 +1194,21 @@ public class PantheonCommandTest extends CommandTestAbstract {
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void p2pInterfaceOptionIsRespected() {
+
+    final String ip = "1.2.3.4";
+    parseCommand("--p2p-interface", ip);
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+
+    verify(mockRunnerBuilder).p2pListenInterface(stringArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(stringArgumentCaptor.getValue()).isEqualTo(ip);
   }
 
   @Test

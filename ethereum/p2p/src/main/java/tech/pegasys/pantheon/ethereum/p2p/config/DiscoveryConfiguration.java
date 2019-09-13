@@ -15,6 +15,7 @@ package tech.pegasys.pantheon.ethereum.p2p.config;
 import static java.util.stream.Collectors.toList;
 
 import tech.pegasys.pantheon.ethereum.p2p.peers.EnodeURL;
+import tech.pegasys.pantheon.util.NetworkUtility;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -78,7 +79,7 @@ public class DiscoveryConfiguration {
               .collect(toList()));
 
   private boolean active = true;
-  private String bindHost = "0.0.0.0";
+  private String bindHost = NetworkUtility.INADDR_ANY;
   private int bindPort = 30303;
   private String advertisedHost = "127.0.0.1";
   private int bucketSize = 16;

@@ -15,6 +15,7 @@ package tech.pegasys.pantheon.ethereum.p2p.config;
 import static com.google.common.base.Preconditions.checkState;
 
 import tech.pegasys.pantheon.ethereum.p2p.rlpx.wire.SubProtocol;
+import tech.pegasys.pantheon.util.NetworkUtility;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -24,7 +25,7 @@ import java.util.Objects;
 public class RlpxConfiguration {
   public static final float DEFAULT_FRACTION_REMOTE_CONNECTIONS_ALLOWED = 0.6f;
   private String clientId = "TestClient/1.0.0";
-  private String bindHost = "0.0.0.0";
+  private String bindHost = NetworkUtility.INADDR_ANY;
   private int bindPort = 30303;
   private int maxPeers = 25;
   private boolean limitRemoteWireConnectionsEnabled = false;

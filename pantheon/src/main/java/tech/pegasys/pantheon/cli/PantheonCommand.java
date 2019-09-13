@@ -103,6 +103,7 @@ import tech.pegasys.pantheon.services.PantheonEventsImpl;
 import tech.pegasys.pantheon.services.PantheonPluginContextImpl;
 import tech.pegasys.pantheon.services.PicoCLIOptionsImpl;
 import tech.pegasys.pantheon.services.StorageServiceImpl;
+import tech.pegasys.pantheon.util.NetworkUtility;
 import tech.pegasys.pantheon.util.PermissioningConfigurationValidator;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 import tech.pegasys.pantheon.util.number.Fraction;
@@ -114,7 +115,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
 import java.net.InetAddress;
+import java.net.SocketException;
 import java.net.URI;
+import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Clock;
@@ -321,6 +324,14 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
       description = "Ip address this node advertises to its peers (default: ${DEFAULT-VALUE})",
       arity = "1")
   private String p2pHost = autoDiscoverDefaultIP().getHostAddress();
+
+  @Option(
+      names = {"--p2p-interface"},
+      paramLabel = MANDATORY_HOST_FORMAT_HELP,
+      description =
+          "The network interface address on which this node listens for p2p communication (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private String p2pInterface = NetworkUtility.INADDR_ANY;
 
   @Option(
       names = {"--p2p-port"},
@@ -750,7 +761,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     try {
       prepareLogging();
       logger.info("Starting Pantheon version: {}", PantheonInfo.version());
-      checkOptions().configure().controller().startPlugins().startSynchronization();
+      validateOptions().configure().controller().startPlugins().startSynchronization();
     } catch (final Exception e) {
       throw new ParameterException(this.commandLine, e.getMessage(), e);
     }
@@ -862,6 +873,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
         ethNetworkConfig,
         maxPeers,
         p2pHost,
+        p2pInterface,
         p2pPort,
         graphQLConfiguration,
         jsonRpcConfiguration,
@@ -891,8 +903,38 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
     }
   }
 
-  private PantheonCommand checkOptions() {
-    // Check that P2P options are able to work or send an error
+  private PantheonCommand validateOptions() {
+    issueOptionWarnings();
+
+    validateP2PInterface(p2pInterface);
+    validateMiningParams();
+
+    return this;
+  }
+
+  private void validateMiningParams() {
+    // noinspection ConstantConditions
+    if (isMiningEnabled && coinbase == null) {
+      throw new ParameterException(
+          this.commandLine,
+          "Unable to mine without a valid coinbase. Either disable mining (remove --miner-enabled)"
+              + "or specify the beneficiary of mining (via --miner-coinbase <Address>)");
+    }
+  }
+
+  protected void validateP2PInterface(final String p2pInterface) {
+    final String failMessage = "The provided --p2p-interface is not available: " + p2pInterface;
+    try {
+      if (!NetworkUtility.isNetworkInterfaceAvailable(p2pInterface)) {
+        throw new ParameterException(commandLine, failMessage);
+      }
+    } catch (UnknownHostException | SocketException e) {
+      throw new ParameterException(commandLine, failMessage, e);
+    }
+  }
+
+  private void issueOptionWarnings() {
+    // Check that P2P options are able to work
     checkOptionDependencies(
         logger,
         commandLine,
@@ -904,8 +946,11 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
             "--max-peers",
             "--banned-node-id",
             "--banned-node-ids",
+            "--p2p-host",
+            "--p2p-interface",
+            "--p2p-port",
             "--remote-connections-max-percentage"));
-    // Check that mining options are able to work or send an error
+    // Check that mining options are able to work
     checkOptionDependencies(
         logger,
         commandLine,
@@ -926,15 +971,6 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
         "--pruning-enabled",
         !isPruningEnabled,
         asList("--pruning-block-confirmations", "--pruning-blocks-retained"));
-
-    // noinspection ConstantConditions
-    if (isMiningEnabled && coinbase == null) {
-      throw new ParameterException(
-          this.commandLine,
-          "Unable to mine without a valid coinbase. Either disable mining (remove --miner-enabled)"
-              + "or specify the beneficiary of mining (via --miner-coinbase <Address>)");
-    }
-    return this;
   }
 
   private PantheonCommand configure() throws Exception {
@@ -1302,6 +1338,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
       final EthNetworkConfig ethNetworkConfig,
       final int maxPeers,
       final String p2pAdvertisedHost,
+      final String p2pListenInterface,
       final int p2pListenPort,
       final GraphQLConfiguration graphQLConfiguration,
       final JsonRpcConfiguration jsonRpcConfiguration,
@@ -1324,6 +1361,7 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
             .discovery(peerDiscoveryEnabled)
             .ethNetworkConfig(ethNetworkConfig)
             .p2pAdvertisedHost(p2pAdvertisedHost)
+            .p2pListenInterface(p2pListenInterface)
             .p2pListenPort(p2pListenPort)
             .maxPeers(maxPeers)
             .limitRemoteWireConnectionsEnabled(isLimitRemoteWireConnectionsEnabled)

@@ -16,12 +16,16 @@ import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.util.Enumeration;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
 
 public class NetworkUtility {
+  public static final String INADDR_ANY = "0.0.0.0";
+  public static final String INADDR6_ANY = "0:0:0:0:0:0:0:0";
 
   private NetworkUtility() {}
 
@@ -74,15 +78,24 @@ public class NetworkUtility {
 
   public static String urlForSocketAddress(final String scheme, final InetSocketAddress address) {
     String hostName = address.getHostName();
-    if ("0.0.0.0".equals(hostName)) {
-      hostName = InetAddress.getLoopbackAddress().getHostName();
-    }
-    if ("0:0:0:0:0:0:0:0".equals(hostName)) {
+    if (isUnspecifiedAddress(hostName)) {
       hostName = InetAddress.getLoopbackAddress().getHostName();
     }
     if (hostName.contains(":")) {
       hostName = "[" + hostName + "]";
     }
     return scheme + "://" + hostName + ":" + address.getPort();
+  }
+
+  public static boolean isNetworkInterfaceAvailable(final String ipAddress)
+      throws SocketException, UnknownHostException {
+    if (isUnspecifiedAddress(ipAddress)) {
+      return true;
+    }
+    return NetworkInterface.getByInetAddress(InetAddress.getByName(ipAddress)) != null;
+  }
+
+  public static boolean isUnspecifiedAddress(final String ipAddress) {
+    return INADDR_ANY.equals(ipAddress) || INADDR6_ANY.equals(ipAddress);
   }
 }

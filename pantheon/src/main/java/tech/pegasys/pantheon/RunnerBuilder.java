@@ -12,6 +12,9 @@
  */
 package tech.pegasys.pantheon;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static java.util.Objects.isNull;
+
 import tech.pegasys.pantheon.cli.config.EthNetworkConfig;
 import tech.pegasys.pantheon.controller.PantheonController;
 import tech.pegasys.pantheon.crypto.SECP256K1.KeyPair;
@@ -81,6 +84,7 @@ import tech.pegasys.pantheon.metrics.prometheus.MetricsConfiguration;
 import tech.pegasys.pantheon.metrics.prometheus.MetricsService;
 import tech.pegasys.pantheon.nat.NatMethod;
 import tech.pegasys.pantheon.nat.upnp.UpnpNatManager;
+import tech.pegasys.pantheon.util.NetworkUtility;
 import tech.pegasys.pantheon.util.bytes.BytesValue;
 
 import java.io.IOException;
@@ -109,6 +113,7 @@ public class RunnerBuilder {
   private boolean p2pEnabled = true;
   private boolean discovery;
   private String p2pAdvertisedHost;
+  private String p2pListenInterface = NetworkUtility.INADDR_ANY;
   private int p2pListenPort;
   private NatMethod natMethod = NatMethod.NONE;
   private int maxPeers;
@@ -158,6 +163,12 @@ public class RunnerBuilder {
 
   public RunnerBuilder p2pAdvertisedHost(final String p2pAdvertisedHost) {
     this.p2pAdvertisedHost = p2pAdvertisedHost;
+    return this;
+  }
+
+  public RunnerBuilder p2pListenInterface(final String ip) {
+    checkArgument(!isNull(ip), "Invalid null value supplied for p2pListenInterface");
+    this.p2pListenInterface = ip;
     return this;
   }
 
@@ -248,6 +259,7 @@ public class RunnerBuilder {
       }
       discoveryConfiguration =
           DiscoveryConfiguration.create()
+              .setBindHost(p2pListenInterface)
               .setBindPort(p2pListenPort)
               .setAdvertisedHost(p2pAdvertisedHost)
               .setBootnodes(bootstrap);
@@ -272,6 +284,7 @@ public class RunnerBuilder {
 
     final RlpxConfiguration rlpxConfiguration =
         RlpxConfiguration.create()
+            .setBindHost(p2pListenInterface)
             .setBindPort(p2pListenPort)
             .setMaxPeers(maxPeers)
             .setSupportedProtocols(subProtocols)

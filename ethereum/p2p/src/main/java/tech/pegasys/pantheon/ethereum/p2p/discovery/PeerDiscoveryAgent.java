@@ -157,6 +157,7 @@ public abstract class PeerDiscoveryAgent {
                             .build());
                 this.localNode = Optional.of(ourNode);
                 isActive = true;
+                LOG.info("P2P peer discovery agent started and listening on {}", localAddress);
                 startController(ourNode);
                 return discoveryPort;
               });

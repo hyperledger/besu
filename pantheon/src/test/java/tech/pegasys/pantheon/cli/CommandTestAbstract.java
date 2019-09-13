@@ -184,6 +184,7 @@ public abstract class CommandTestAbstract {
     when(mockRunnerBuilder.networkingConfiguration(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.p2pAdvertisedHost(anyString())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.p2pListenPort(anyInt())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.p2pListenInterface(anyString())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.maxPeers(anyInt())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.limitRemoteWireConnectionsEnabled(anyBoolean()))
         .thenReturn(mockRunnerBuilder);
@@ -304,6 +305,11 @@ public abstract class CommandTestAbstract {
           environment,
           storageService);
       this.keyLoader = keyLoader;
+    }
+
+    @Override
+    protected void validateP2PInterface(final String p2pInterface) {
+      // For testing, don't actually query for networking interfaces to validate this option
     }
 
     public CommandSpec getSpec() {
