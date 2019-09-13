@@ -201,7 +201,7 @@ public abstract class CommandTestAbstract {
     when(mockRunnerBuilder.staticNodes(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.build()).thenReturn(mockRunner);
 
-    when(storageService.getByName("rocksdb")).thenReturn(rocksDBStorageFactory);
+    when(storageService.getByName("rocksdb")).thenReturn(Optional.of(rocksDBStorageFactory));
 
     when(mockPantheonPluginContext.getService(PicoCLIOptions.class))
         .thenReturn(Optional.of(cliOptions));

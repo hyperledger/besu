@@ -14,7 +14,6 @@ package tech.pegasys.pantheon.services;
 
 import tech.pegasys.pantheon.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import tech.pegasys.pantheon.plugin.services.StorageService;
-import tech.pegasys.pantheon.plugin.services.exception.StorageException;
 import tech.pegasys.pantheon.plugin.services.storage.KeyValueStorageFactory;
 import tech.pegasys.pantheon.plugin.services.storage.SegmentIdentifier;
 
@@ -43,9 +42,8 @@ public class StorageServiceImpl implements StorageService {
     return segments;
   }
 
-  public KeyValueStorageFactory getByName(final String name) {
-    return Optional.ofNullable(factories.get(name))
-        .orElseThrow(
-            () -> new StorageException("No KeyValueStorageFactory found for key: " + name));
+  @Override
+  public Optional<KeyValueStorageFactory> getByName(final String name) {
+    return Optional.ofNullable(factories.get(name));
   }
 }

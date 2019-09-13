@@ -2473,7 +2473,8 @@ public class PantheonCommandTest extends CommandTestAbstract {
 
   @Test
   public void mustUseEnclaveUriAndOptions() {
-    when(storageService.getByName("rocksdb-privacy")).thenReturn(rocksDBSPrivacyStorageFactory);
+    when(storageService.getByName("rocksdb-privacy"))
+        .thenReturn(Optional.of(rocksDBSPrivacyStorageFactory));
     final URL configFile = this.getClass().getResource("/orion_publickey.pub");
 
     parseCommand(

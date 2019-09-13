@@ -17,6 +17,7 @@ import tech.pegasys.pantheon.plugin.services.storage.KeyValueStorageFactory;
 import tech.pegasys.pantheon.plugin.services.storage.SegmentIdentifier;
 
 import java.util.List;
+import java.util.Optional;
 
 /** This service allows plugins to register as an available storage engine. */
 @Unstable
@@ -35,4 +36,13 @@ public interface StorageService {
    * @return full set of possible segments required from the storage service.
    */
   List<SegmentIdentifier> getAllSegmentIdentifiers();
+
+  /**
+   * Retrieves a registered factory corresponding to the supplied factory name
+   *
+   * @param name The name of the factory to retrieve
+   * @return an optional containing the instance of the registered factory, or empty if the factory
+   *     hasn't been registered.
+   */
+  Optional<KeyValueStorageFactory> getByName(String name);
 }

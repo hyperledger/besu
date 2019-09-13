@@ -126,7 +126,7 @@ public class ThreadPantheonNodeRunner implements PantheonNodeRunner {
 
     final KeyValueStorageProvider storageProvider =
         new KeyValueStorageProviderBuilder()
-            .withStorageFactory(storageService.getByName("rocksdb"))
+            .withStorageFactory(storageService.getByName("rocksdb").get())
             .withCommonConfiguration(commonPluginConfiguration)
             .withMetricsSystem(metricsSystem)
             .build();

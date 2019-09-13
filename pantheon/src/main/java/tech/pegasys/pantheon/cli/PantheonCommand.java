@@ -95,6 +95,7 @@ import tech.pegasys.pantheon.plugin.services.PantheonConfiguration;
 import tech.pegasys.pantheon.plugin.services.PantheonEvents;
 import tech.pegasys.pantheon.plugin.services.PicoCLIOptions;
 import tech.pegasys.pantheon.plugin.services.StorageService;
+import tech.pegasys.pantheon.plugin.services.exception.StorageException;
 import tech.pegasys.pantheon.plugin.services.metrics.MetricCategory;
 import tech.pegasys.pantheon.plugin.services.storage.rocksdb.RocksDBPlugin;
 import tech.pegasys.pantheon.services.PantheonConfigurationImpl;
@@ -1263,7 +1264,11 @@ public class PantheonCommand implements DefaultCommandValues, Runnable {
 
   private KeyValueStorageProvider keyStorageProvider(final String name) {
     return new KeyValueStorageProviderBuilder()
-        .withStorageFactory(storageService.getByName(name))
+        .withStorageFactory(
+            storageService
+                .getByName(name)
+                .orElseThrow(
+                    () -> new StorageException("No KeyValueStorageFactory found for key: " + name)))
         .withCommonConfiguration(pluginCommonConfiguration)
         .withMetricsSystem(getMetricsSystem())
         .build();
