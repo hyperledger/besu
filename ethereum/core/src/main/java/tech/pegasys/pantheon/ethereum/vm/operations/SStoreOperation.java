@@ -67,7 +67,7 @@ public class SStoreOperation extends AbstractOperation {
       final EVM evm) {
     if (frame.isStatic()) {
       return Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
-    } else if (frame.getRemainingGas().compareTo(minumumGasRemaining) < 0) {
+    } else if (frame.getRemainingGas().compareTo(minumumGasRemaining) <= 0) {
       return Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS);
     } else {
       return Optional.empty();
