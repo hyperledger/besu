@@ -73,7 +73,7 @@ try {
                             archiveArtifacts 'build/reports/**'
                             archiveArtifacts 'build/distributions/**'
 
-                            stash allowEmpty: true, includes: 'build/distributions/pantheon-*.tar.gz', name: 'distTarBall'
+                            stash allowEmpty: true, includes: 'build/distributions/besu-*.tar.gz', name: 'distTarBall'
 
                             junit '**/build/test-results/**/*.xml'
                         }
