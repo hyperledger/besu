@@ -12,8 +12,10 @@
  */
 package org.hyperledger.besu.plugin.services.storage.rocksdb;
 
-import org.hyperledger.besu.plugin.services.BesuConfiguration;
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.PantheonConfiguration;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageFactory;
@@ -40,22 +42,36 @@ import org.apache.logging.log4j.Logger;
 public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
 
   private static final Logger LOG = LogManager.getLogger();
-  private static final int DEFAULT_VERSION = 1;
-  private static final Set<Integer> SUPPORTED_VERSION = Set.of(0, 1);
+  private final int DEFAULT_VERSION;
+  private static final Set<Integer> SUPPORTED_VERSIONS = Set.of(0, 1);
   private static final String NAME = "rocksdb";
 
-  private boolean isSegmentIsolationSupported;
+  private Integer databaseVersion;
+  private Boolean isSegmentIsolationSupported;
   private SegmentedKeyValueStorage<?> segmentedStorage;
   private KeyValueStorage unsegmentedStorage;
+  private RocksDBConfiguration rocksDBConfiguration;
 
   private final Supplier<RocksDBFactoryConfiguration> configuration;
   private final List<SegmentIdentifier> segments;
 
+  RocksDBKeyValueStorageFactory(
+      final Supplier<RocksDBFactoryConfiguration> configuration,
+      final List<SegmentIdentifier> segments,
+      final int DEFAULT_VERSION) {
+    this.configuration = configuration;
+    this.segments = segments;
+    this.DEFAULT_VERSION = DEFAULT_VERSION;
+  }
+
   public RocksDBKeyValueStorageFactory(
       final Supplier<RocksDBFactoryConfiguration> configuration,
       final List<SegmentIdentifier> segments) {
-    this.configuration = configuration;
-    this.segments = segments;
+    this(
+        configuration,
+        segments,
+        /** Source of truth for the default database version. */
+        1);
   }
 
   @Override
@@ -71,62 +87,61 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
       throws StorageException {
 
     if (requiresInit()) {
-      init(commonConfiguration, metricsSystem);
+      init(commonConfiguration);
     }
 
-    return isSegmentIsolationSupported
-        ? new SegmentedKeyValueStorageAdapter<>(segment, segmentedStorage)
-        : unsegmentedStorage;
-  }
-
-  @Override
-  public boolean isSegmentIsolationSupported() {
-    return isSegmentIsolationSupported;
-  }
-
-  public void close() throws IOException {
-    if (segmentedStorage != null) {
-      segmentedStorage.close();
+    // It's probably a good idea for the creation logic to be entirely dependent on the database
+    // version. Introducing intermediate booleans that represent database properties and dispatching
+    // creation logic based on them is error prone.
+    switch (databaseVersion) {
+      case 0:
+        {
+          segmentedStorage = null;
+          if (unsegmentedStorage == null) {
+            unsegmentedStorage = new RocksDBKeyValueStorage(rocksDBConfiguration, metricsSystem);
+          }
+          return unsegmentedStorage;
+        }
+      case 1:
+        {
+          unsegmentedStorage = null;
+          if (segmentedStorage == null) {
+            segmentedStorage =
+                new RocksDBColumnarKeyValueStorage(rocksDBConfiguration, segments, metricsSystem);
+          }
+          return new SegmentedKeyValueStorageAdapter<>(segment, segmentedStorage);
+        }
+      default:
+        {
+          throw new IllegalStateException(
+              String.format(
+                  "Developer error: A supported database version (%d) was detected but there is no associated creation logic.",
+                  databaseVersion));
+        }
     }
-    if (unsegmentedStorage != null) {
-      unsegmentedStorage.close();
-    }
   }
 
-  protected Path storagePath(final BesuConfiguration commonConfiguration) {
-    return commonConfiguration.getStoragePath();
+  private void init(final PantheonConfiguration commonConfiguration) {
+    try {
+      databaseVersion = readDatabaseVersion(commonConfiguration);
+    } catch (final IOException e) {
+      LOG.error("Failed to retrieve the RocksDB database meta version: {}", e.getMessage());
+      throw new StorageException(e.getMessage(), e);
+    }
+    isSegmentIsolationSupported = databaseVersion >= 1;
+    rocksDBConfiguration =
+        RocksDBConfigurationBuilder.from(configuration.get())
+            .databaseDir(commonConfiguration.getStoragePath())
+            .build();
   }
 
   private boolean requiresInit() {
     return segmentedStorage == null && unsegmentedStorage == null;
   }
 
-  private void init(
-      final BesuConfiguration commonConfiguration, final MetricsSystem metricsSystem) {
-    try {
-      this.isSegmentIsolationSupported = databaseVersion(commonConfiguration) == DEFAULT_VERSION;
-    } catch (final IOException e) {
-      LOG.error("Failed to retrieve the RocksDB database meta version: {}", e.getMessage());
-      throw new StorageException(e.getMessage(), e);
-    }
-
-    final RocksDBConfiguration rocksDBConfiguration =
-        RocksDBConfigurationBuilder.from(configuration.get())
-            .databaseDir(storagePath(commonConfiguration))
-            .build();
-
-    if (isSegmentIsolationSupported) {
-      this.unsegmentedStorage = null;
-      this.segmentedStorage =
-          new RocksDBColumnarKeyValueStorage(rocksDBConfiguration, segments, metricsSystem);
-    } else {
-      this.unsegmentedStorage = new RocksDBKeyValueStorage(rocksDBConfiguration, metricsSystem);
-      this.segmentedStorage = null;
-    }
-  }
-
-  private int databaseVersion(final BesuConfiguration commonConfiguration) throws IOException {
-    final Path databaseDir = storagePath(commonConfiguration);
+  private int readDatabaseVersion(final BesuConfiguration commonConfiguration)
+      throws IOException {
+    final Path databaseDir = commonConfiguration.getStoragePath();
     final boolean databaseExists = databaseDir.resolve("IDENTITY").toFile().exists();
     final int databaseVersion;
     if (databaseExists) {
@@ -140,12 +155,29 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
       new DatabaseMetadata(databaseVersion).writeToDirectory(databaseDir);
     }
 
-    if (!SUPPORTED_VERSION.contains(databaseVersion)) {
+    if (!SUPPORTED_VERSIONS.contains(databaseVersion)) {
       final String message = "Unsupported RocksDB Metadata version of: " + databaseVersion;
       LOG.error(message);
       throw new StorageException(message);
     }
 
     return databaseVersion;
+  }
+
+  @Override
+  public void close() throws IOException {
+    if (unsegmentedStorage != null) {
+      unsegmentedStorage.close();
+    }
+    if (segmentedStorage != null) {
+      segmentedStorage.close();
+    }
+  }
+
+  @Override
+  public boolean isSegmentIsolationSupported() {
+    return checkNotNull(
+        isSegmentIsolationSupported,
+        "Whether segment isolation is supported will be determined during creation. Call a creation method first");
   }
 }
