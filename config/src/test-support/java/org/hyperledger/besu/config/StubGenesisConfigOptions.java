@@ -30,6 +30,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private OptionalLong constantinopleBlockNumber = OptionalLong.empty();
   private OptionalLong constantinopleFixBlockNumber = OptionalLong.empty();
   private OptionalLong istanbulBlockNumber = OptionalLong.empty();
+  private OptionalLong crossChainBlockNumber = OptionalLong.empty();
   private Optional<BigInteger> chainId = Optional.empty();
   private OptionalInt contractSizeLimit = OptionalInt.empty();
   private OptionalInt stackSizeLimit = OptionalInt.empty();
@@ -117,6 +118,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public OptionalLong getIstanbulBlockNumber() {
     return istanbulBlockNumber;
+  }
+
+  @Override
+  public OptionalLong getCrossChainBlockNumber() {
+    return crossChainBlockNumber;
   }
 
   @Override

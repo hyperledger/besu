@@ -27,7 +27,8 @@ public class AltBn128Fq12Pairer {
 
   private static final BigInteger ATE_LOOP_COUNT = new BigInteger("29793968203157093288");
 
-  private static final BigInteger CURVE_ORDER =
+  // SIDECHAINS CROSSCHAIN: make access public
+  public static final BigInteger CURVE_ORDER =
       new BigInteger(
           "21888242871839275222246405745257275088548364400416034343698204186575808495617");
 

@@ -1,0 +1,9 @@
+{
+  "name": "crosschain-helper-scripts",
+  "version": "1.0.0",
+  "dependencies": {
+    "fs-extra": "^8.1.0",
+    "toml-j0.4": "^1.1.1",
+    "tomlify-j0.4": "^3.0.0"
+  }
+}
