@@ -568,6 +568,19 @@ public interface BytesValue extends Comparable<BytesValue>, UnformattedData {
     return toString();
   }
 
+  /** @return This value represented as a minimal hexadecimal string (without any leading zero). */
+  default String toShortHexString() {
+    final String hex = getHexString();
+    // Skipping '0x'
+    if (hex.charAt(2) != '0') return hex;
+
+    int i = 3;
+    while (i < hex.length() - 1 && hex.charAt(i) == '0') {
+      i++;
+    }
+    return "0x" + hex.substring(i);
+  }
+
   default String toUnprefixedString() {
     final String prefixedHex = toString();
     return prefixedHex.startsWith("0x") ? prefixedHex.substring(2) : prefixedHex;

@@ -223,6 +223,7 @@ public class MessageFrame {
   private final Address miningBeneficiary;
   private final Boolean isPersistingState;
   private Optional<BytesValue> revertReason;
+  private boolean isMemoryWritten;
 
   // Miscellaneous fields.
   private final EnumSet<ExceptionalHaltReason> exceptionalHaltReasons =
@@ -541,6 +542,7 @@ public class MessageFrame {
    * @param value The value to set in memory
    */
   public void writeMemory(final UInt256 offset, final byte value) {
+    isMemoryWritten = true;
     memory.setByte(offset, value);
   }
 
@@ -552,6 +554,7 @@ public class MessageFrame {
    * @param value The value to write
    */
   public void writeMemory(final UInt256 offset, final UInt256 length, final BytesValue value) {
+    isMemoryWritten = true;
     memory.setBytes(offset, length, value);
   }
 
@@ -568,6 +571,7 @@ public class MessageFrame {
       final UInt256 sourceOffset,
       final UInt256 length,
       final BytesValue value) {
+    isMemoryWritten = true;
     memory.setBytes(offset, sourceOffset, length, value);
   }
 
@@ -1078,5 +1082,13 @@ public class MessageFrame {
           reason,
           maxStackSize);
     }
+  }
+
+  public boolean isMemoryWritten() {
+    return isMemoryWritten;
+  }
+
+  public void setMemoryWritten(final boolean memoryWritten) {
+    isMemoryWritten = memoryWritten;
   }
 }

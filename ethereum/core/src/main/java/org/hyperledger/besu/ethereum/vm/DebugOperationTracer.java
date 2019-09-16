@@ -72,8 +72,12 @@ public class DebugOperationTracer implements OperationTracer {
               memory,
               storage,
               frame.getRevertReason(),
-              maybeRefunds));
+              maybeRefunds,
+              frame.isMemoryWritten(),
+              Optional.ofNullable(frame.getCode()),
+              frame.getCurrentOperation().getStackItemsProduced()));
     }
+    frame.setMemoryWritten(false);
   }
 
   private Optional<Map<UInt256, UInt256>> captureStorage(final MessageFrame frame) {

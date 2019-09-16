@@ -22,16 +22,19 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.queries.BlockchainQueries;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.FlatTraceGenerator;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.TraceFormatter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.TraceWriter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTraceGenerator;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.vm.VmTraceGenerator;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -75,8 +78,7 @@ public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
 
     // TODO : method returns an error if any option other than “trace” is supplied.
     // remove when others options are implemented
-    if (traceTypeParameter.getTraceTypes().contains(TraceTypeParameter.TraceType.STATE_DIFF)
-        || traceTypeParameter.getTraceTypes().contains(TraceTypeParameter.TraceType.VM_TRACE)) {
+    if (traceTypeParameter.getTraceTypes().contains(TraceTypeParameter.TraceType.STATE_DIFF)) {
       LOG.warn("Unsupported trace option");
       throw new InvalidJsonRpcParameters("Invalid trace types supplied.");
     }
@@ -124,8 +126,6 @@ public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
                   "transactionHash", transactionTrace.getTransaction().hash().getHexString());
               resultNode.put("output", transactionTrace.getResult().getOutput().toString());
             });
-    resultNode.put("stateDiff", (String) null);
-    resultNode.put("vmTrace", (String) null);
 
     if (traceTypes.contains(TraceTypeParameter.TraceType.TRACE)) {
       formatTraces(
@@ -135,6 +135,18 @@ public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
           FlatTraceGenerator::generateFromTransactionTrace,
           traceCounter);
     }
+    if (traceTypes.contains(TraceTypeParameter.TraceType.VM_TRACE)) {
+      formatTraces(
+          blockNumber,
+          trace -> resultNode.putPOJO("vmTrace", trace),
+          traces,
+          (transactionTrace, ignored, gasCalculatorIgnored) ->
+              VmTraceGenerator.generateTraceStream(transactionTrace),
+          traceCounter);
+    }
+
+    setEmptyArrayIfNotPresent(resultNode, "trace");
+    setNullNodesIfNotPresent(resultNode, "vmTrace", "stateDiff");
 
     resultArrayNode.add(resultNode);
     return resultArrayNode;
@@ -154,6 +166,22 @@ public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
                     traceCounter,
                     protocolSchedule.getByBlockNumber(blockNumber).getGasCalculator())
                 .forEachOrdered(writer::write));
+  }
+
+  private void setNullNodesIfNotPresent(final ObjectNode parentNode, final String... keys) {
+    Arrays.asList(keys)
+        .forEach(
+            key ->
+                Optional.ofNullable(parentNode.get(key))
+                    .ifPresentOrElse(ignored -> {}, () -> parentNode.put(key, (String) null)));
+  }
+
+  private void setEmptyArrayIfNotPresent(final ObjectNode parentNode, final String... keys) {
+    Arrays.asList(keys)
+        .forEach(
+            key ->
+                Optional.ofNullable(parentNode.get(key))
+                    .ifPresentOrElse(ignored -> {}, () -> parentNode.putArray(key)));
   }
 
   private Object emptyResult() {

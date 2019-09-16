@@ -15,6 +15,7 @@ package org.hyperledger.besu.ethereum.debug;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.vm.Code;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.util.bytes.Bytes32;
 import org.hyperledger.besu.util.bytes.BytesValue;
@@ -39,6 +40,9 @@ public class TraceFrame {
   private final Optional<Map<UInt256, UInt256>> storage;
   private final Optional<BytesValue> revertReason;
   private final Optional<Map<Address, Wei>> maybeRefunds;
+  private final boolean isMemoryWritten;
+  private final Optional<Code> maybeCode;
+  private final int stackItemsProduced;
 
   public TraceFrame(
       final int pc,
@@ -51,7 +55,10 @@ public class TraceFrame {
       final Optional<Bytes32[]> memory,
       final Optional<Map<UInt256, UInt256>> storage,
       final Optional<BytesValue> revertReason,
-      final Optional<Map<Address, Wei>> maybeRefunds) {
+      final Optional<Map<Address, Wei>> maybeRefunds,
+      final boolean isMemoryWritten,
+      final Optional<Code> maybeCode,
+      final int stackItemsProduced) {
     this.pc = pc;
     this.opcode = opcode;
     this.gasRemaining = gasRemaining;
@@ -63,6 +70,9 @@ public class TraceFrame {
     this.storage = storage;
     this.revertReason = revertReason;
     this.maybeRefunds = maybeRefunds;
+    this.isMemoryWritten = isMemoryWritten;
+    this.maybeCode = maybeCode;
+    this.stackItemsProduced = stackItemsProduced;
   }
 
   public TraceFrame(
@@ -87,7 +97,10 @@ public class TraceFrame {
         memory,
         storage,
         revertReason,
-        Optional.empty());
+        Optional.empty(),
+        false,
+        Optional.empty(),
+        0);
   }
 
   public TraceFrame(
@@ -110,7 +123,11 @@ public class TraceFrame {
         stack,
         memory,
         storage,
-        Optional.empty());
+        Optional.empty(),
+        Optional.empty(),
+        false,
+        Optional.empty(),
+        0);
   }
 
   public int getPc() {
@@ -169,6 +186,19 @@ public class TraceFrame {
         .add("stack", stack)
         .add("memory", memory)
         .add("storage", storage)
+        .add("isMemoryWritten", isMemoryWritten)
         .toString();
+  }
+
+  public boolean isMemoryWritten() {
+    return isMemoryWritten;
+  }
+
+  public Optional<Code> getMaybeCode() {
+    return maybeCode;
+  }
+
+  public int getStackItemsProduced() {
+    return stackItemsProduced;
   }
 }
