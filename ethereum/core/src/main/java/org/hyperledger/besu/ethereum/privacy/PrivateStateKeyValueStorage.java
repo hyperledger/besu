@@ -14,15 +14,25 @@
  */
 package org.hyperledger.besu.ethereum.privacy;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.Log;
+import org.hyperledger.besu.ethereum.core.LogSeries;
+import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.util.bytes.Bytes32;
 import org.hyperledger.besu.util.bytes.BytesValue;
+import org.hyperledger.besu.util.bytes.BytesValues;
 
+import java.util.List;
 import java.util.Optional;
 
 public class PrivateStateKeyValueStorage implements PrivateStateStorage {
+
+  private static final BytesValue EVENTS_KEY_SUFFIX = BytesValue.of("EVENTS".getBytes(UTF_8));
+  private static final BytesValue OUTPUT_KEY_SUFFIX = BytesValue.of("OUTPUT".getBytes(UTF_8));
 
   private final KeyValueStorage keyValueStorage;
 
@@ -42,8 +52,33 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
   }
 
   @Override
+  public Optional<List<Log>> getTransactionLogs(final Bytes32 transactionHash) {
+    return get(transactionHash, EVENTS_KEY_SUFFIX).map(this::rlpDecodeLog);
+  }
+
+  @Override
+  public Optional<BytesValue> getTransactionOutput(final Bytes32 transactionHash) {
+    return get(transactionHash, OUTPUT_KEY_SUFFIX);
+  }
+
+  @Override
+  public boolean isPrivateStateAvailable(final Bytes32 transactionHash) {
+    return false;
+  }
+
+  @Override
   public boolean isWorldStateAvailable(final Bytes32 rootHash) {
     return false;
+  }
+
+  private Optional<BytesValue> get(final BytesValue key, final BytesValue keySuffix) {
+    return keyValueStorage
+        .get(BytesValues.concatenate(key, keySuffix).getArrayUnsafe())
+        .map(BytesValue::wrap);
+  }
+
+  private List<Log> rlpDecodeLog(final BytesValue bytes) {
+    return RLP.input(bytes).readList(Log::readFrom);
   }
 
   @Override
@@ -60,15 +95,36 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
     }
 
     @Override
-    public PrivateStateStorage.Updater putPrivateAccountState(
-        final BytesValue privacyId, final Hash privateStateHash) {
+    public Updater putPrivateAccountState(final BytesValue privacyId, final Hash privateStateHash) {
       transaction.put(privacyId.getArrayUnsafe(), privateStateHash.extractArray());
+      return this;
+    }
+
+    @Override
+    public Updater putTransactionLogs(final Bytes32 transactionHash, final LogSeries logs) {
+      set(transactionHash, EVENTS_KEY_SUFFIX, RLP.encode(logs::writeTo));
+      return this;
+    }
+
+    @Override
+    public Updater putTransactionResult(final Bytes32 transactionHash, final BytesValue events) {
+      set(transactionHash, OUTPUT_KEY_SUFFIX, events);
       return this;
     }
 
     @Override
     public void commit() {
       transaction.commit();
+    }
+
+    @Override
+    public void rollback() {
+      transaction.rollback();
+    }
+
+    private void set(final BytesValue key, final BytesValue keySuffix, final BytesValue value) {
+      transaction.put(
+          BytesValues.concatenate(key, keySuffix).getArrayUnsafe(), value.getArrayUnsafe());
     }
   }
 }

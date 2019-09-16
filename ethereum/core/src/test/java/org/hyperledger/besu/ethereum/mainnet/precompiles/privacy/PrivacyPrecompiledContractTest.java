@@ -35,7 +35,6 @@ import org.hyperledger.besu.ethereum.mainnet.SpuriousDragonGasCalculator;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransactionStorage;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
@@ -122,15 +121,13 @@ public class PrivacyPrecompiledContractTest {
     when(worldStateArchive.getMutable()).thenReturn(mutableWorldState);
     when(worldStateArchive.getMutable(any())).thenReturn(Optional.of(mutableWorldState));
 
-    PrivateTransactionStorage privateTransactionStorage = mock(PrivateTransactionStorage.class);
-    PrivateTransactionStorage.Updater updater = mock(PrivateTransactionStorage.Updater.class);
-    when(updater.putTransactionLogs(nullable(Bytes32.class), any())).thenReturn(updater);
-    when(updater.putTransactionResult(nullable(Bytes32.class), any())).thenReturn(updater);
-    when(privateTransactionStorage.updater()).thenReturn(updater);
-
     PrivateStateStorage privateStateStorage = mock(PrivateStateStorage.class);
     PrivateStateStorage.Updater storageUpdater = mock(PrivateStateStorage.Updater.class);
     when(storageUpdater.putPrivateAccountState(nullable(Bytes32.class), any()))
+        .thenReturn(storageUpdater);
+    when(storageUpdater.putTransactionLogs(nullable(Bytes32.class), any()))
+        .thenReturn(storageUpdater);
+    when(storageUpdater.putTransactionResult(nullable(Bytes32.class), any()))
         .thenReturn(storageUpdater);
     when(privateStateStorage.updater()).thenReturn(storageUpdater);
 
@@ -140,7 +137,6 @@ public class PrivacyPrecompiledContractTest {
             publicKey,
             mockEnclave(),
             worldStateArchive,
-            privateTransactionStorage,
             privateStateStorage);
     privacyPrecompiledContract.setPrivateTransactionProcessor(mockPrivateTxProcessor());
     brokenPrivateTransactionHandler =
@@ -149,7 +145,6 @@ public class PrivacyPrecompiledContractTest {
             publicKey,
             brokenMockEnclave(),
             worldStateArchive,
-            privateTransactionStorage,
             privateStateStorage);
     messageFrame = mock(MessageFrame.class);
   }

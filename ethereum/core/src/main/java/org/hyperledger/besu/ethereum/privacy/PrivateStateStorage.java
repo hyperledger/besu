@@ -15,23 +15,38 @@
 package org.hyperledger.besu.ethereum.privacy;
 
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.Log;
+import org.hyperledger.besu.ethereum.core.LogSeries;
 import org.hyperledger.besu.util.bytes.Bytes32;
 import org.hyperledger.besu.util.bytes.BytesValue;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface PrivateStateStorage {
 
   Optional<Hash> getPrivateAccountState(BytesValue privacyId);
 
+  Optional<List<Log>> getTransactionLogs(Bytes32 transactionHash);
+
+  Optional<BytesValue> getTransactionOutput(Bytes32 transactionHash);
+
+  boolean isPrivateStateAvailable(Bytes32 transactionHash);
+
   boolean isWorldStateAvailable(Bytes32 rootHash);
 
-  PrivateStateStorage.Updater updater();
+  Updater updater();
 
   interface Updater {
 
-    PrivateStateStorage.Updater putPrivateAccountState(BytesValue privacyId, Hash privateStateHash);
+    Updater putPrivateAccountState(BytesValue privacyId, Hash privateStateHash);
+
+    Updater putTransactionLogs(Bytes32 transactionHash, LogSeries logs);
+
+    Updater putTransactionResult(Bytes32 transactionHash, BytesValue events);
 
     void commit();
+
+    void rollback();
   }
 }

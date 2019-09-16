@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.storage;
 import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateStorage;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransactionStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
@@ -31,8 +30,6 @@ public interface StorageProvider extends Closeable {
   WorldStateStorage createWorldStateStorage();
 
   WorldStatePreimageStorage createWorldStatePreimageStorage();
-
-  PrivateTransactionStorage createPrivateTransactionStorage();
 
   PrivateStateStorage createPrivateStateStorage();
 

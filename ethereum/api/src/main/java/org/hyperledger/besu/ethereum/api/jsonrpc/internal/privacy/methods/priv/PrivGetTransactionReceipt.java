@@ -130,16 +130,16 @@ public class PrivGetTransactionReceipt implements JsonRpcMethod {
 
     List<Log> events =
         privacyParameters
-            .getPrivateTransactionStorage()
-            .getEvents(txHash)
+            .getPrivateStateStorage()
+            .getTransactionLogs(txHash)
             .orElse(Collections.emptyList());
 
     LOG.trace("Processed private transaction events");
 
     BytesValue output =
         privacyParameters
-            .getPrivateTransactionStorage()
-            .getOutput(txHash)
+            .getPrivateStateStorage()
+            .getTransactionOutput(txHash)
             .orElse(BytesValue.wrap(new byte[0]));
 
     LOG.trace("Processed private transaction output");
