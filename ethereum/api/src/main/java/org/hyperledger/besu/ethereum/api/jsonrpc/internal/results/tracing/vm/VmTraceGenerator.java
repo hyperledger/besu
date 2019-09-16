@@ -91,7 +91,6 @@ public class VmTraceGenerator {
       return;
     }
 
-    // boolean addOpToTrace = true;
     VmTrace newSubTrace;
     VmTrace currentTrace = parentTraces.getLast();
 
@@ -147,11 +146,12 @@ public class VmTraceGenerator {
     }
 
     if ("CALL".equals(traceFrame.getOpcode())) {
+      maybeNextFrame.ifPresent(
+          nextFrame -> op.setCost(nextFrame.getGasRemaining().toLong() + op.getCost()));
       newSubTrace = new VmTrace();
       parentTraces.addLast(newSubTrace);
       ex.addPush("0x1");
       op.setSub(newSubTrace);
-      // addOpToTrace = false;
     }
 
     // set store from the stack
