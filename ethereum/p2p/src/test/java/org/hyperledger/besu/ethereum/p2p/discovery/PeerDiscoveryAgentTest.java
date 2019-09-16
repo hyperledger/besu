@@ -387,22 +387,24 @@ public class PeerDiscoveryAgentTest {
     assertThat(pongCount).isGreaterThan(0);
 
     // Check that agent has an endpoint matching the restarted node
-    final Optional<DiscoveryPeer> discoveredPeer =
+    final List<DiscoveryPeer> matchingPeers =
         agent
             .streamDiscoveredPeers()
             .filter(peer -> peer.getId().equals(updatedRemotePeer.getId()))
-            .findFirst();
-    assertThat(discoveredPeer).isPresent();
-    assertThat(discoveredPeer.get().getEndpoint().getUdpPort())
+            .collect(toList());
+    // We should have only one peer matching this id
+    assertThat(matchingPeers.size()).isEqualTo(1);
+    final DiscoveryPeer discoveredPeer = matchingPeers.get(0);
+    assertThat(discoveredPeer.getEndpoint().getUdpPort())
         .isEqualTo(updatedRemotePeer.getEndpoint().getUdpPort());
-    assertThat(discoveredPeer.get().getEndpoint().getHost())
+    assertThat(discoveredPeer.getEndpoint().getHost())
         .isEqualTo(updatedRemotePeer.getEndpoint().getHost());
     // Check endpoint is consistent with enodeURL
-    assertThat(discoveredPeer.get().getEnodeURL().getDiscoveryPortOrZero())
+    assertThat(discoveredPeer.getEnodeURL().getDiscoveryPortOrZero())
         .isEqualTo(updatedRemotePeer.getEndpoint().getUdpPort());
-    assertThat(discoveredPeer.get().getEnodeURL().getListeningPortOrZero())
+    assertThat(discoveredPeer.getEnodeURL().getListeningPortOrZero())
         .isEqualTo(updatedRemotePeer.getEndpoint().getFunctionalTcpPort());
-    assertThat(discoveredPeer.get().getEnodeURL().getIpAsString())
+    assertThat(discoveredPeer.getEnodeURL().getIpAsString())
         .isEqualTo(updatedRemotePeer.getEndpoint().getHost());
   }
 
