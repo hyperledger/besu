@@ -10,13 +10,13 @@ this project.
 | Role | Responsibilities | Defined by |
 | -----| ---------------- | ---------- |
 | Everyone | none | anybody with a belly button
-| Member | everyone who contributes - code or otherwise | Pantheon GitHub org member
+| Member | everyone who contributes - code or otherwise | Besu GitHub org member
 | Approver | approve accepting contributions | write permissions on master
-| Project Manager | management of the project | PegaSys
-| Project Sponsor | contribute developer resources | PegaSys
-| Open Source Circle | OSS support | PegaSys
-| Project Evangelist | promote the project | PegaSys
-| Benevolent Dictator | decision tie-breaker | PegaSys
+| Project Manager | management of the project | Hyperledger
+| Project Sponsor | contribute developer resources | Hyperledger
+| Open Source Circle | OSS support | Hyperledger
+| Project Evangelist | promote the project | Hyperledger
+| Benevolent Dictator | decision tie-breaker | Hyperledger
 
 ## Everyone
 Any person from the public is able to access the code.  The standard permissions grant the ability to view the code, view open bugs, access the wiki, download binaries, view CI results and comment on pull requests.
@@ -47,9 +47,9 @@ issues and PRs assigned to them.
     - Authoring or reviewing PRs on GitHub
     - Filing or commenting on issues on GitHub
     - Contributing to community discussions (e.g. meetings, Slack, email discussion forums, Stack Overflow)
-- Subscribed to [pantheon-dev@pegasys.tech]
-- Joined [Pantheon Gitter]
-- Browsed [Pantheon Wiki]
+- Subscribed to [besu-dev@pegasys.tech]
+- Joined [Besu Rocketchat]
+- Browsed [Besu Wiki]
 - Have read the [contributor guide]
 - Signed ICLA, as described in [CLA.md]
 
@@ -90,7 +90,7 @@ Code approvers are members that have signed an ICLA and have been granted additi
 ## Project Manager
 The Project Manager role provides the user with control over management aspects of the project.  
 
-**Defined by:** PegaSys
+**Defined by:** Hyperledger
 
 ### Requirements
 - Includes all of the requirements of a Member user
@@ -107,7 +107,7 @@ The Project Manager role provides the user with control over management aspects 
 ## Project Sponsor
 The Project Sponsor role provides a user with the ability to contribute additional developer resources to the project.  Project Sponsors must sign the ICLA.
 
-**Defined by:** PegaSys
+**Defined by:** Hyperledger
 
 ### Requirements
 - Signed ICLA, as described in [CLA.md]
@@ -119,7 +119,7 @@ The Project Sponsor role provides a user with the ability to contribute addition
 
 ## Open Source Circle
 The Open Source Circle is a group that provides open source software support to projects.
-**Defined by:** PegaSys
+**Defined by:** Hyperledger
 
 ### Requirements
 - Includes all of the requirements of a Member user
@@ -134,7 +134,7 @@ The Open Source Circle is a group that provides open source software support to 
 
 ## Project Evangelist
 The Project Evangelist role is for those who wish to promote the project to the outside world, but not actively contribute to it.  
-**Defined by:** PegaSys
+**Defined by:** Hyperledger
 
 ### Requirements
 - Includes all of the requirements of a Member user
@@ -170,6 +170,6 @@ This document is adapted from the following sources:
 [contributor guide]: /CONTRIBUTING.md
 [New contributors]: /CONTRIBUTING.md
 [two-factor authentication]: https://help.github.com/articles/about-two-factor-authentication
-[pantheon-dev@pegasys.tech]: mailto:pantheon-dev@pegasys.tech
-[Pantheon Gitter]: https://gitter.im/PegaSysEng/pantheon
-[Pantheon Documentation]: https://pantheon.readthedocs.io/
+[besu-dev@pegasys.tech]: mailto:besu-dev@pegasys.tech
+[Besu RocketChat]: https://chat.hyperledger.org/channel/besu
+[Besu Documentation]: https://besu.readthedocs.io/

@@ -11,7 +11,7 @@
  * specific language governing permissions and limitations under the License.
  */
 
-rootProject.name='pantheon'
+rootProject.name='besu'
 include 'acceptance-tests'
 include 'config'
 include 'consensus:clique'
@@ -35,7 +35,7 @@ include 'ethereum:trie'
 include 'metrics:core'
 include 'metrics:rocksdb'
 include 'nat'
-include 'pantheon'
+include 'besu'
 include 'plugin-api'
 include 'plugins:rocksdb'
 include 'services:kvstore'

@@ -1,21 +1,21 @@
 ---
 # runtime docker tests
 file:
-  /opt/pantheon/bin/pantheon:
+  /opt/besu/bin/besu:
     exists: true
     mode: "0755"
     owner: root
     group: root
     filetype: file
     contains: []
-  /opt/pantheon/database:
+  /opt/besu/database:
     exists: true
     mode: "0755"
     owner: root
     group: root
     filetype: directory
     contains: []
-  /opt/pantheon/key:
+  /opt/besu/key:
     exists: true
     mode: "0600"
     owner: root

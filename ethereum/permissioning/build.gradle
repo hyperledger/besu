@@ -14,7 +14,7 @@
 apply plugin: 'java-library'
 
 jar {
-  baseName 'pantheon-permissioning'
+  baseName 'besu-permissioning'
   manifest {
     attributes(
       'Specification-Title': baseName,

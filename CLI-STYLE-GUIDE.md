@@ -1,28 +1,28 @@
-# Pantheon Command Line Interface (CLI) Style Guide
+# Besu Command Line Interface (CLI) Style Guide
 
 ## Purpose of this Document
 
-This document contains guidelines to help the Pantheon command line interface (CLI) remain usable, modular, and extensible as it grows over time. This is a living document and should evolve to better suit end users and those who contribute to Pantheon.
+This document contains guidelines to help the Besu command line interface (CLI) remain usable, modular, and extensible as it grows over time. This is a living document and should evolve to better suit end users and those who contribute to Besu.
 
-> **Note:** Although not every pattern shown in this style guide is currently followed in Pantheon, it is our intention to revise and build new functionality with these guidelines in mind.
+> **Note:** Although not every pattern shown in this style guide is currently followed in Besu, it is our intention to revise and build new functionality with these guidelines in mind.
 
 **The primary audience for this document is:**
 
-*   Members of the Pantheon team
+*   Members of the Besu team
 *   Developers contributing pull requests
 
 ## Mission Statement
 
-The Pantheon CLI should create a consistent and easy to understand experience for end users. We're focused on creating a great developer experience for both new and expert users of Ethereum clients.
+The Besu CLI should create a consistent and easy to understand experience for end users. We're focused on creating a great developer experience for both new and expert users of Ethereum clients.
 
 ## General Guidelines
 
-There are four guiding principles for the Pantheon CLI to help us create a good developer experience for both new and expert users: **_(1) be consistent, (2) keep it simple, (3) be proactive, and (4) be informative (to people and machines)._**
+There are four guiding principles for the Besu CLI to help us create a good developer experience for both new and expert users: **_(1) be consistent, (2) keep it simple, (3) be proactive, and (4) be informative (to people and machines)._**
 
 This section outlines what each of these principles mean and the following sections explain how these principles should be applied in specific scenarios.     
 
 ### 1. Be Consistent
-Consistency is important to help our end users build a mental model of how Pantheon works. By being consistent with our word choices, visual formatting, and style of communication it helps users know what to expect as they interact with Pantheon.  
+Consistency is important to help our end users build a mental model of how Besu works. By being consistent with our word choices, visual formatting, and style of communication it helps users know what to expect as they interact with Besu.  
 
 ### 2. Keep it Simple
 Avoid technical jargon and always assume our end users may have questions. This doesn't mean answering all of those questions in the CLI, but it does mean explaining things in a simple way and when complexity inevitably rises, directing our users to documentation that will help them.
@@ -31,7 +31,7 @@ Avoid technical jargon and always assume our end users may have questions. This 
 Being proactive means anticipating user needs and guiding them through a process. This most often takes the form of solution-oriented warning/error messages. Put yourself in the user's shoes and consider what questions you would have every time we are showing feedback or status to them.
 
 ### 4. Be Informative (to people and machines)
-We seek a balance between providing enough relevant information to help our users develop a solid mental model of how Pantheon works without forcing them to read too much text. In addition, it is important we consider not only the end user of the CLI but to be consistent with formatting and feedback so information is easily interpreted by machines.
+We seek a balance between providing enough relevant information to help our users develop a solid mental model of how Besu works without forcing them to read too much text. In addition, it is important we consider not only the end user of the CLI but to be consistent with formatting and feedback so information is easily interpreted by machines.
 
 ## User Input & Actions
 
@@ -47,9 +47,9 @@ A subcommand is an action that can be taken on a single object (i.e. import, exp
 
 **Examples:**
 
-`pantheon blocks import`
+`besu blocks import`
 
-`pantheon public-key export`
+`besu public-key export`
 
 Although noun-verb formatting seems backwards from a speaking perspective (i.e. blocks import vs. import blocks) it allows us to organize commands the same way users think about completing an action (the topic first, then the action).
 
@@ -58,9 +58,9 @@ Although noun-verb formatting seems backwards from a speaking perspective (i.e. 
 
 Using required options instead of arguments helps users have a clear understanding of the impact of an action. Inputs are most often verbs (from, to, etc.). Other options avoid the use of verbs to help make this distinction.
 
-**Example:** `pantheon blocks import --from=<FILE>`
+**Example:** `besu blocks import --from=<FILE>`
 
-Requiring the `--from` option makes it clear where you are importing from. In the case of a single parameter (as shown in the example above) we should also accept this as an argument (`pantheon blocks import <FILE>`). Although we accept this formatting, it is not encouraged and should be excluded from our documentation.
+Requiring the `--from` option makes it clear where you are importing from. In the case of a single parameter (as shown in the example above) we should also accept this as an argument (`besu blocks import <FILE>`). Although we accept this formatting, it is not encouraged and should be excluded from our documentation.
 
 ### Flags
 
@@ -101,7 +101,7 @@ Options are used for settings, like specifying a configuration file or to provid
 
 ### General Naming Guidelines
 
-Words matter. Most users will not be interacting with Pantheon on a regular basis so we should name things for ease of understanding.
+Words matter. Most users will not be interacting with Besu on a regular basis so we should name things for ease of understanding.
 
 * Don't use abbreviations unless they are widely understood. Optimize for understanding, not number of characters.
 

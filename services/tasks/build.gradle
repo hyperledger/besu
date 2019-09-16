@@ -14,7 +14,7 @@
 apply plugin: 'java-library'
 
 jar {
-  baseName 'pantheon-tasks'
+  baseName 'besu-tasks'
   manifest {
     attributes(
       'Specification-Title': baseName,

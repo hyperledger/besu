@@ -15,7 +15,7 @@ ALL:	All levels including custom levels.
 ```
 
 One mechanism of globally effecting the log output of a running client is though modification the file
-`/pantheon/src/main/resources/log4j2.xml`, where it can be specified under the `<Property name="root.log.level">`.
+`/besu/src/main/resources/log4j2.xml`, where it can be specified under the `<Property name="root.log.level">`.
 As such, corresponding instances of information logs throughout the codebase, e.g. `log.fatal("Fatal Message!");`,
 will be rendered to the console while the client is in use.
 

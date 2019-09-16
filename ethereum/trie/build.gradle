@@ -14,7 +14,7 @@
 apply plugin: 'java-library'
 
 jar {
-  baseName 'pantheon-trie'
+  baseName 'besu-trie'
   manifest {
     attributes(
       'Specification-Title': baseName,
@@ -42,7 +42,7 @@ dependencies {
   testImplementation 'org.mockito:mockito-core'
 }
 
-test { exclude 'tech/pegasys/pantheon/ethereum/trie/TrieRefTest.class' }
+test { exclude 'org/hyperledger/besu/ethereum/trie/TrieRefTest.class' }
 
 task referenceTests(type: Test, dependsOn: ['compileTestJava']) {
   doFirst {
@@ -50,5 +50,5 @@ task referenceTests(type: Test, dependsOn: ['compileTestJava']) {
       throw new GradleException("ethereum/referencetests/src/test/resources/README.md missing: please clone submodules (git submodule update --init --recursive)")
     }
   }
-  include 'tech/pegasys/pantheon/ethereum/trie/TrieRefTest.class'
+  include 'org/hyperledger/besu/ethereum/trie/TrieRefTest.class'
 }

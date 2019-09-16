@@ -1,0 +1,44 @@
+package org.hyperledger.besu.ethereum.vm.generalstate;
+
+import static org.hyperledger.besu.ethereum.vm.GeneralStateReferenceTestTools.executeTest;
+import static org.hyperledger.besu.ethereum.vm.GeneralStateReferenceTestTools.generateTestParametersForConfig;
+
+import org.hyperledger.besu.ethereum.vm.GeneralStateTestCaseEipSpec;
+
+import java.util.Collection;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
+
+import static org.junit.Assume.assumeTrue;
+
+/** The general state test operation testing framework entry point. */
+@RunWith(Parameterized.class)
+public class %%TESTS_NAME%% {
+
+  private static final String[] TEST_CONFIG_FILE_DIR_PATH = new String[] {%%TESTS_FILE%%};
+
+  @Parameters(name = "Name: {0}")
+  public static Collection<Object[]> getTestParametersForConfig() {
+    return generateTestParametersForConfig(TEST_CONFIG_FILE_DIR_PATH);
+  }
+
+  private final String name;
+  private final GeneralStateTestCaseEipSpec spec;
+
+  public %%TESTS_NAME%%(
+      final String name,
+      final GeneralStateTestCaseEipSpec spec,
+      final boolean runTest) {
+    this.name = name;
+    this.spec = spec;
+    assumeTrue("Test was blacklisted", runTest);
+  }
+
+  @Test
+  public void execution() {
+    executeTest(spec);
+  }
+}

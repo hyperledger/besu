@@ -14,7 +14,7 @@
 apply plugin: 'java-library'
 
 jar {
-  baseName 'pantheon-eth'
+  baseName 'besu-eth'
   manifest {
     attributes(
       'Specification-Title': baseName,
@@ -55,7 +55,7 @@ dependencies {
   testImplementation 'org.awaitility:awaitility'
   testImplementation 'org.mockito:mockito-core'
 
-  jmhImplementation project(':pantheon')
+  jmhImplementation project(':besu')
   jmhImplementation project(':plugins:rocksdb')
   jmhImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
 

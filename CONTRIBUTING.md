@@ -1,7 +1,7 @@
-# Contributing to Pantheon
+# Contributing to Besu
 :+1::tada: First off, thanks for taking the time to contribute! :tada::+1:
 
-Welcome to the Pantheon repository!  The following is a set of guidelines for contributing to this 
+Welcome to the Besu repository!  The following is a set of guidelines for contributing to this 
 repo and its packages. These are mostly guidelines, not rules. Use your best judgment, 
 and feel free to propose changes to this document in a pull request.
 
@@ -26,15 +26,15 @@ and feel free to propose changes to this document in a pull request.
 
 ## Code of Conduct
 
-This project and everyone participating in it is governed by the [Pantheon Code of Conduct](CODE-OF-CONDUCT.md).
+This project and everyone participating in it is governed by the [Besu Code of Conduct](CODE-OF-CONDUCT.md).
 By participating, you are expected to uphold this code. Please report unacceptable behavior to [private@pegasys.tech].
 
 ## I just have a quick question
 
 > **Note:** Please don't file an issue to ask a question.  You'll get faster results by using the resources below.
 
-* [Pantheon documentation]
-* [Gitter]
+* [Besu documentation]
+* [Rocketchat]
 
 ## How To Contribute
 ### Reporting Bugs
@@ -51,7 +51,7 @@ open a new issue and include a link to the original issue in the body of your ne
 
 #### Before Submitting A Bug Report
 * **Confirm the problem** is reproducible in the latest version of the software
-* **Check [Pantheon documentation]**. You might be able to find the cause of the problem and fix things yourself. 
+* **Check [Besu documentation]**. You might be able to find the cause of the problem and fix things yourself. 
 * **Perform a [cursory search of project issues](https://pegasys1.atlassian.net/browse/PAN-2502?jql=project%20%3D%20PAN)** 
 to see if the problem has already been reported. If it has **and the issue is still open**, add a comment 
 to the existing issue instead of opening a new one.
@@ -63,7 +63,7 @@ Explain the problem and include additional details to help maintainers reproduce
 
 * **Use a clear and descriptive summary** for the issue to identify the problem.
 * **Describe the exact steps which reproduce the problem** in as many details as possible. For example, 
-start by explaining how you started Pantheon, e.g. which command exactly you used in the terminal, 
+start by explaining how you started Besu, e.g. which command exactly you used in the terminal, 
 or how you started it otherwise. 
 * **Provide specific examples to demonstrate the steps**. Include links to files or GitHub projects, 
 or copy/pasteable snippets, which you use in those examples. If you're providing snippets in the issue, 
@@ -84,14 +84,14 @@ and under which conditions it normally happens.
 
 Include details about your configuration and environment:
 
-* **Which version of the software are you using?** You can get the exact version by running `pantheon -v` in your terminal.
+* **Which version of the software are you using?** You can get the exact version by running `besu -v` in your terminal.
 * **What OS & Version are you running?**
   * **For Linux - What kernel are you running?** You can get the exact version by running `uname -a` in your terminal.
 * **Are you running in a virtual machine?** If so, which VM software are you using and which operating 
 systems and versions are used for the host and the guest?
 * **Are you running in a docker container?** If so, what version of docker?
 * **Are you running in a a Cloud?** If so, which one, and what type/size of VM is it?
-* **What version of Java are you running?** You can get the exact version by looking at the pantheon 
+* **What version of Java are you running?** You can get the exact version by looking at the besu 
 logfile during startup.
 
 ### Suggesting Enhancements
@@ -110,7 +110,7 @@ When you are creating an enhancement suggestion, please
 
 #### Before Submitting An Enhancement Suggestion
 
-* **Check the [Pantheon documentation].** You might be able to find the cause of the problem and fix things yourself. 
+* **Check the [Besu documentation].** You might be able to find the cause of the problem and fix things yourself. 
 * **Perform a [cursory search of project issues](https://pegasys1.atlassian.net/browse/PAN-2502?jql=project%20%3D%20PAN)** 
 to see if the problem has already been reported. If it has **and the issue is still open**, add a comment 
 to the existing issue instead of opening a new one.
@@ -129,7 +129,7 @@ Provide the following information:
 * **Explain why this enhancement would be useful** to most users.
 * **Does this enhancement exist in other clients?**
 * **Specify which version of the software you're using.** You can get the exact version by running 
-`pantheon -v` in your terminal.
+`besu -v` in your terminal.
 * **Specify the name and version of the OS you're using.**
 
 ## Your First Contribution
@@ -138,7 +138,7 @@ Start by looking through the 'good first issue' and 'help wanted' labeled issues
 and a test or two.
 * [Help wanted issues][search-label-help-wanted] - issues which are a bit more involved than `good first issue` issues.
 
-When you've identified an issue you'd like to work on, ping us on [Gitter] and we'll assign it to you. 
+When you've identified an issue you'd like to work on, ping us on [Rocketchat] and we'll assign it to you. 
 
 ### Contribution Workflow
 The codebase and documentation are maintained using the same "*contributor workflow*" where everyone 
@@ -148,7 +148,7 @@ This facilitates social contribution, easy testing, and peer review.
 
 To contribute changes, use the following workflow:
 
-1. [**Fork the repository**](https://github.com/PegaSysEng/pantheon/fork).
+1. [**Fork the repository**](https://github.com/PegaSysEng/besu/fork).
 1. **Clone your fork** to your computer.
 1. **Create a topic branch** and name it appropriately.
 Starting the branch name with the issue number is a good practice and a reminder to fix only one issue in a 
@@ -161,7 +161,7 @@ For this reason do not mix any formatting fixes or code moves with actual code c
 another part of the software. Running the `./gradlew clean check test` command locally will help you
 to be confident that your changes will pass CI tests once pushed as a Pull Request.
 1. **Push your changes** to your remote fork (usually labeled as `origin`).
-1. **Create a pull-request** (PR) on the Pantheon repository. If the PR addresses an existing Jira issue, 
+1. **Create a pull-request** (PR) on the Besu repository. If the PR addresses an existing Jira issue, 
 include the issue number in the PR title in square brackets (for example, `[PAN-2374]`). 
 1. **Add labels** to identify the type of your PR. _For example, if your PR is not ready to validate,
 add the "work-in-progress" label. If it fixes a bug, add the "bug" label._
@@ -172,7 +172,7 @@ If you don't know who to choose, simply select the reviewers proposed by GitHub 
 1. **Make any required changes** on your contribution from the reviewers feedback.
 _Make the changes, commit to your branch, and push to your remote fork._
 1. **When your PR is validated**, all tests passed and your branch has no conflicts with the target branch,
-you can **"squash and merge"** your PR and you're done. You contributed to Pantheon! Thanks !
+you can **"squash and merge"** your PR and you're done. You contributed to Besu! Thanks !
 
 ### Architectural Best Practices
 
@@ -240,8 +240,8 @@ These are not strictly enforced during the build, but should be adhered to and c
 | [`needs engineering approval`][search-label-needs-engineering-approval] | Pull requests which need to be approved from a technical person, mainly documentation PRs. |
 
 [private@pegasys.tech]: mailto:private@pegasys.tech
-[Gitter]: https://gitter.im/PegaSysEng/pantheon
-[Pantheon documentation]: https://docs.pantheon.pegasys.tech/
+[Rocketchat]: https://chat.hyperledger.org/channel/besu
+[Besu documentation]: https://besu.hyperledger.org/
 [CLA.md]: /CLA.md
 [Code Reviews]: /docs/community/code-reviews.md
 [MkDocs]: https://www.mkdocs.org/

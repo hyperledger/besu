@@ -7,8 +7,8 @@
 ## Quick start
 
 ```sh
-git clone --recursive https://github.com/PegasysEng/pantheon
-cd pantheon
+git clone --recursive https://github.com/hyperledger/besu
+cd besu
 ./gradlew build  
 ./gradlew integrationTest
 ```
@@ -16,17 +16,17 @@ cd pantheon
 ## Checkout source code
 
 ```
-git clone --recursive git@github.com:PegasysEng/pantheon.git
+git clone --recursive git@github.com:hyperledger/besu.git
 ```
 OR
 ```
-git clone --recursive https://github.com/PegasysEng/pantheon
+git clone --recursive https://github.com/hyperledger/besu
 ```
 
 ## See what tasks are available
 To see all of the gradle tasks that are available:
 ```
-cd pantheon
+cd besu
 ./gradlew tasks  
 ```
 
@@ -34,7 +34,7 @@ cd pantheon
 ## Build from source
 After you have checked out the code, this will build the distribution binaries.
 ```
-cd pantheon
+cd besu
 ./gradlew build  
 ```
 
@@ -70,11 +70,11 @@ as part of the unit test suite as described above, but for debugging, it is
 often convenient to run only a subset of those tests, for which a few convenience
 as provided. For instance, one can run only "Frontier" general state tests with
 ```
-./gradlew :ethereum:tech.pegasys.pantheon.ethereum.vm:referenceTest -Dtest.single=GeneralStateTest -Dtest.ethereum.state.eip=Frontier
+./gradlew :ethereum:org.hyperledger.besu.ethereum.vm:referenceTest -Dtest.single=GeneralStateTest -Dtest.ethereum.state.eip=Frontier
 ```
 or only the tests that match a particular pattern with something like:
 ```
-gradle :ethereum:tech.pegasys.pantheon.ethereum.vm:test -Dtest.single=GeneralStateTest -Dtest.ethereum.include='^CALLCODE.*-Frontier'
+gradle :ethereum:org.hyperledger.besu.ethereum.vm:test -Dtest.single=GeneralStateTest -Dtest.ethereum.include='^CALLCODE.*-Frontier'
 ```
 Please see the comment on the `test` target in the top level `build.gradle`
 file for more details.

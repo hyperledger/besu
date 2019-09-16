@@ -5,7 +5,7 @@ This project is led by a benevolent dictator (PegaSys) and managed by the commun
 # Principles
 
 The community adheres to the following principles:
-* Open: Pantheon is open source. See repository guidelines and CLA, below.
+* Open: Besu is open source. See repository guidelines and CLA, below.
 * Welcoming and respectful: See Code of Conduct, below.
 * Transparent and accessible: Work and collaboration should be done in public. 
 * Merit: Ideas and contributions are accepted according to their technical merit and alignment with project objectives and design principles.

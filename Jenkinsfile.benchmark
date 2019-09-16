@@ -10,9 +10,9 @@ properties([
                 //  choice(name: 'IMPORT_FILE', choices: ['ropsten-000k-100k.blocks', 'ropsten-0-1M.blocks', '0-999.blocks', '6784590-6785589.blocks'], description: 'The name of the file to import, same ordial position as DATASET', trim: true)
 
                 // For Network Import
-                choice(name: 'PANTHEON_SYNC_MODE', choices: ['FULL', 'FAST'], description: 'The mode of network syncing to perform', trim: true),
-                string(name: 'PANTHEON_MIN_PEERS', defaultValue: '2', description: 'Minimum number of peers to wait for before gathering data', trim: true),
-                string(name: 'PANTHEON_BENCHMARK_DURATION', defaultValue: '30', description: 'Maximum number of minutes to run the benchmark (full sync ends the benchmark early)', trim: true),
+                choice(name: 'BESU_SYNC_MODE', choices: ['FULL', 'FAST'], description: 'The mode of network syncing to perform', trim: true),
+                string(name: 'BESU_MIN_PEERS', defaultValue: '2', description: 'Minimum number of peers to wait for before gathering data', trim: true),
+                string(name: 'BESU_BENCHMARK_DURATION', defaultValue: '30', description: 'Maximum number of minutes to run the benchmark (full sync ends the benchmark early)', trim: true),
         ])
 ])
 
@@ -46,7 +46,7 @@ pipeline {
                 withEnv([
                         "DATA_DIR=/data",
                         "BENCHMARKS_DATA=/benchmarks-data",
-                        "PANTHEON_SRC_DIR=${WORKSPACE}",
+                        "BESU_SRC_DIR=${WORKSPACE}",
                         "DESCRIPTION=automatic"
                 ]) {
                     dir('pantheon-benchmarks') {

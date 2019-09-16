@@ -1,7 +1,7 @@
 apply plugin: 'java-library'
 
 jar {
-  baseName 'pantheon-blockcreation'
+  baseName 'besu-blockcreation'
   manifest {
     attributes(
       'Specification-Title': baseName,

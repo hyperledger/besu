@@ -30,13 +30,13 @@ Simple does not mean the fewest lines of code. Simple code is:
 * Usually the most performant. Without data showing another approach is faster, stick with the simple design 
 * Not simplistic:
 
-  - Ethereum is complex and Pantheon must handle this complexity and operate correctly and securely 
-  - Pantheon code should align with well-established Ethereum abstractions and terminology used in Ethereum specifications 
+  - Ethereum is complex and Besu must handle this complexity and operate correctly and securely 
+  - Besu code should align with well-established Ethereum abstractions and terminology used in Ethereum specifications 
   - Aim to make the code as simple as possible but no simpler
   
 ## 2.2 Idiomatic Java 
 
-Pantheon embraces typical Java idioms including using an Object Oriented approach to design. This includes:   
+Besu embraces typical Java idioms including using an Object Oriented approach to design. This includes:   
 * Providing alternate behaviours via polymorphism instead of having conditional logic scattered through the codebase. For example, `ProtocolSpec` provides a standard interface to blockchain operations and multiple implementations define the different behaviours for each Ethereum milestone. 
 * Encapsulating behaviour and data together in classes. For example, `BytesValue` encapsulates byte data and methods operating on the byte data. `BytesValue.isZero()` is an instance method instead of accepting a `BytesValue` parameter.
 
@@ -47,11 +47,11 @@ Pantheon embraces typical Java idioms including using an Object Oriented approac
    - Don't pass lambdas into executors because it makes it harder to identify the threading interactions. The lambda makes the code shorter but not clearer. Instead use a separate class or extract a method. 
 * For good examples, refer to the APIs the JDK itself exposes. 
 
->**Note** If you're not sure what idiomatic Java looks like, start by following the typical patterns and naming used in Pantheon.
+>**Note** If you're not sure what idiomatic Java looks like, start by following the typical patterns and naming used in Besu.
 
 ## 2.3 You Ain't Gonna Need It (YAGNI)
 
-The Pantheon design prioritizes meeting current requirements in the simplest, clearest way over attempting to anticipate future functionality. As a result, Pantheon’s design:
+The Besu design prioritizes meeting current requirements in the simplest, clearest way over attempting to anticipate future functionality. As a result, Besu’s design:
 * Is not set in stone as a big upfront design. The design is adjusted through constant refactoring as new requirements are added and understood.
 * Uses abstraction only where it aids understanding of the current code. Abstraction is not used where it only supports future needs.
 * Avoids over-engineering.
@@ -100,7 +100,7 @@ So the code can cope with constant refactoring and evolving design, write code t
 
 * Uses dependency injection
   - Constructors should be simple, with dependencies passed in rather than built in the constructor
-  - Pantheon does not use a dependency injection framework
+  - Besu does not use a dependency injection framework
 
 * Validates method parameters for public methods using the Guava `Preconditions` class. Avoid validating parameters in private methods
 
@@ -113,7 +113,7 @@ So the code can cope with constant refactoring and evolving design, write code t
 
 * Use Optional rather than returning null when not having a value is a normal case
 
-* Consider exception and error handling as part of the overall design.   Pantheon avoids checked exceptions
+* Consider exception and error handling as part of the overall design.   Besu avoids checked exceptions
 
 * Give threads meaningful names. For example:
  `Executors.newFixedThreadPool(1, new ThreadFactoryBuilder().setNameFormat(“Ibft”).build())`
@@ -123,7 +123,7 @@ So the code can cope with constant refactoring and evolving design, write code t
 
 ## 4.1 Style Guide 
 
-Pantheon follows the [Google code style](https://google.github.io/styleguide/javaguide.html) and uses spotless to ensure consistency of formatting. 
+Besu follows the [Google code style](https://google.github.io/styleguide/javaguide.html) and uses spotless to ensure consistency of formatting. 
 
 To automatically reformat the code before creating a pull request, run: 
 
@@ -182,7 +182,7 @@ Method parameters must be final.  Class level and local fields should be final w
 
 # 5 Logging
 
-Logging is important for understanding what Pantheon is doing at any given time (for example, progress while synchronizing) and investigating defects.  During development, add logging to aid in these cases. 
+Logging is important for understanding what Besu is doing at any given time (for example, progress while synchronizing) and investigating defects.  During development, add logging to aid in these cases. 
 
 ## 5.1 Log Messages
 
@@ -213,12 +213,12 @@ Make log messages:
 
 * _Warn_ 
 
-  Anything that can potentially cause application oddities but from which Pantheon automatically recovers
+  Anything that can potentially cause application oddities but from which Besu automatically recovers
 
 * _Error_ 
 
-  Any error which is fatal to the operation, but not Pantheon itself (for example, missing data)
+  Any error which is fatal to the operation, but not Besu itself (for example, missing data)
 
 * _Fatal_  
 
-  An error that forces a shutdown of Pantheon
+  An error that forces a shutdown of Besu

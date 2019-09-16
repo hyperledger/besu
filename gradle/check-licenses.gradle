@@ -126,13 +126,13 @@ downloadLicenses {
   ]
 
   licenses = [
-      (group('pantheon'))            : apache,
-      (group('pantheon.ethereum.api'))   : apache,
-      (group('pantheon.consensus'))  : apache,
-      (group('pantheon.ethereum'))   : apache,
-      (group('pantheon.metrics'))  : apache,
-      (group('pantheon.plugins'))   : apache,
-      (group('pantheon.services'))   : apache,
+      (group('besu'))            : apache,
+      (group('besu.ethereum.api'))   : apache,
+      (group('besu.consensus'))  : apache,
+      (group('besu.ethereum'))   : apache,
+      (group('besu.metrics'))  : apache,
+      (group('besu.plugins'))   : apache,
+      (group('besu.services'))   : apache,
 
       // https://checkerframework.org/manual/#license
       // The more permissive MIT License applies to code that you might want

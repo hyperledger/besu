@@ -12,7 +12,7 @@
     </Console>
   </Appenders>
   <Loggers>
-    <Logger name="tech.pegasys.pantheon.SubProcessLog" level="INFO" additivity="false">
+    <Logger name="org.hyperledger.besu.SubProcessLog" level="INFO" additivity="false">
       <AppenderRef ref="SubProcessConsole" />
     </Logger>
     <Root level="${sys:root.log.level}">

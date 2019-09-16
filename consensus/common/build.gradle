@@ -14,7 +14,7 @@
 apply plugin: 'java-library'
 
 jar {
-  baseName 'pantheon-consensus-common'
+  baseName 'besu-consensus-common'
   manifest {
     attributes(
       'Specification-Title': baseName,

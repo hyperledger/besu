@@ -1,0 +1,71 @@
+/*
+ * Copyright 2018 ConsenSys AG.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
+package org.hyperledger.besu.ethereum.mainnet;
+
+import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockBody;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
+import org.hyperledger.besu.ethereum.rlp.RLPInput;
+import org.hyperledger.besu.util.bytes.BytesValue;
+
+import java.io.IOException;
+import java.util.List;
+
+import com.google.common.io.Resources;
+
+public final class ValidationTestUtils {
+
+  public static BlockHeader readHeader(final long num) throws IOException {
+    final RLPInput input =
+        new BytesValueRLPInput(
+            BytesValue.wrap(
+                Resources.toByteArray(
+                    EthHashTest.class.getResource(String.format("block_%d.blocks", num)))),
+            false);
+    input.enterList();
+    return BlockHeader.readFrom(input, new MainnetBlockHeaderFunctions());
+  }
+
+  public static BlockBody readBody(final long num) throws IOException {
+    final RLPInput input =
+        new BytesValueRLPInput(
+            BytesValue.wrap(
+                Resources.toByteArray(
+                    EthHashTest.class.getResource(String.format("block_%d.blocks", num)))),
+            false);
+    input.enterList();
+    input.skipNext();
+    final List<Transaction> transactions = input.readList(Transaction::readFrom);
+    final List<BlockHeader> ommers =
+        input.readList(rlp -> BlockHeader.readFrom(rlp, new MainnetBlockHeaderFunctions()));
+    return new BlockBody(transactions, ommers);
+  }
+
+  public static Block readBlock(final long num) throws IOException {
+    final RLPInput input =
+        new BytesValueRLPInput(
+            BytesValue.wrap(
+                Resources.toByteArray(
+                    EthHashTest.class.getResource(String.format("block_%d.blocks", num)))),
+            false);
+    input.enterList();
+    final BlockHeader header = BlockHeader.readFrom(input, new MainnetBlockHeaderFunctions());
+    final List<Transaction> transactions = input.readList(Transaction::readFrom);
+    final List<BlockHeader> ommers =
+        input.readList(rlp -> BlockHeader.readFrom(rlp, new MainnetBlockHeaderFunctions()));
+    final BlockBody body = new BlockBody(transactions, ommers);
+    return new Block(header, body);
+  }
+}

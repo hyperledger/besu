@@ -1,17 +1,17 @@
 # Running Developer Builds
 
-Build and run Pantheon with default options using:
+Build and run Besu with default options using:
 
 ```
 ./gradlew installDist
 ```
 
-By default this stores all persistent data in `build/install/pantheon`.
+By default this stores all persistent data in `build/install/besu`.
 
-To set custom CLI arguments for the Pantheon execution:
+To set custom CLI arguments for the Besu execution:
 
 ```sh
-cd build/install/pantheon
+cd build/install/besu
 
-./bin/pantheon --discovery-enabled=false --data-path=/tmp/pantheontmp
+./bin/besu --discovery-enabled=false --data-path=/tmp/besutmp
 ```

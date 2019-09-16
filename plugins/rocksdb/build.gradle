@@ -14,7 +14,7 @@
 apply plugin: 'java-library'
 
 jar {
-  baseName 'pantheon-plugin-rocksdb'
+  baseName 'besu-plugin-rocksdb'
   manifest {
     attributes(
       'Specification-Title': baseName,

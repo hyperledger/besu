@@ -1,0 +1,93 @@
+/*
+ * Copyright 2018 ConsenSys AG.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
+
+apply plugin: 'java-library'
+
+jar {
+  baseName 'besu'
+  manifest {
+    attributes(
+      'Specification-Title': baseName,
+      'Specification-Version': project.version,
+      'Implementation-Title': baseName,
+      'Implementation-Version': calculateVersion()
+      )
+  }
+}
+
+dependencies {
+  implementation project(':config')
+  implementation project(':crypto')
+  implementation project(':consensus:common')
+  implementation project(':consensus:clique')
+  implementation project(':consensus:ibft')
+  implementation project(':consensus:ibftlegacy')
+  implementation project(':enclave')
+  implementation project(':ethereum:blockcreation')
+  implementation project(':ethereum:core')
+  implementation project(':ethereum:eth')
+  implementation project(':ethereum:api')
+  implementation project(':ethereum:api')
+  implementation project(':ethereum:permissioning')
+  implementation project(':ethereum:p2p')
+  implementation project(':ethereum:retesteth')
+  implementation project(':ethereum:rlp')
+  implementation project(':metrics:core')
+  implementation project(':nat')
+  implementation project(':plugin-api')
+  implementation project(':plugins:rocksdb')
+  implementation project(':services:kvstore')
+
+  implementation 'com.fasterxml.jackson.core:jackson-databind'
+  compile group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jdk8', version: '2.9.8'
+  implementation 'com.graphql-java:graphql-java'
+  implementation 'com.google.guava:guava'
+  implementation 'info.picocli:picocli'
+  implementation 'io.vertx:vertx-core'
+  implementation 'io.vertx:vertx-web'
+  implementation 'net.consensys.cava:cava-toml'
+  implementation 'org.apache.logging.log4j:log4j-api'
+  implementation 'org.springframework.security:spring-security-crypto'
+
+  runtime 'org.apache.logging.log4j:log4j-core'
+  runtime 'org.apache.logging.log4j:log4j-slf4j-impl'
+
+  testImplementation project(':testutil')
+  testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
+
+  testImplementation 'com.squareup.okhttp3:okhttp'
+  testImplementation 'com.google.auto.service:auto-service'
+  testImplementation 'junit:junit'
+  testImplementation 'org.assertj:assertj-core'
+  testImplementation 'org.awaitility:awaitility'
+  testImplementation 'org.mockito:mockito-core'
+  testImplementation 'org.apache.commons:commons-text'
+}
+
+task testJar(type: Jar) {
+  archiveName 'testPlugins.jar'
+  manifest {
+    attributes(
+      'Specification-Title': baseName,
+      'Specification-Version': project.version,
+      'Implementation-Title': baseName,
+      'Implementation-Version': calculateVersion()
+      )
+  }
+  archiveClassifier = 'tests'
+  from sourceSets.test.output
+}
+
+configurations { testArtifacts }
+
+artifacts { testArtifacts testJar }

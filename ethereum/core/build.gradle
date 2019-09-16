@@ -14,7 +14,7 @@
 apply plugin: 'java-library'
 
 jar {
-  baseName 'pantheon-core'
+  baseName 'besu-core'
   manifest {
     attributes(
       'Specification-Title': baseName,
@@ -88,10 +88,10 @@ task testJar (type: Jar) {
 }
 
 test {
-  exclude 'tech/pegasys/pantheon/ethereum/vm/**ReferenceTest.class'
-  exclude 'tech/pegasys/pantheon/ethereum/vm/blockchain/**.class'
-  exclude 'tech/pegasys/pantheon/ethereum/vm/generalstate/**.class'
-  exclude 'tech/pegasys/pantheon/ethereum/core/TransactionTest.class'
+  exclude 'org/hyperledger/besu/ethereum/vm/**ReferenceTest.class'
+  exclude 'org/hyperledger/besu/ethereum/vm/blockchain/**.class'
+  exclude 'org/hyperledger/besu/ethereum/vm/generalstate/**.class'
+  exclude 'org/hyperledger/besu/ethereum/core/TransactionTest.class'
 }
 
 def generateTestFiles(FileTree jsonPath, File templateFile, String pathstrip, String destination, String namePrefix) {
@@ -128,9 +128,9 @@ def generateTestFiles(FileTree jsonPath, File templateFile, String pathstrip, St
 task blockchainReferenceTestsSetup {
   generateTestFiles(
     fileTree('../referencetests/src/test/resources/BlockchainTests'),
-    file("./src/test/resources/tech/pegasys/pantheon/ethereum/vm/BlockchainReferenceTest.java.template"),
+    file("./src/test/resources/org/hyperledger/besu/ethereum/vm/BlockchainReferenceTest.java.template"),
     "BlockchainTests",
-    "./src/test/java/tech/pegasys/pantheon/ethereum/vm/blockchain",
+    "./src/test/java/org/hyperledger/besu/ethereum/vm/blockchain",
     "BlockchainReferenceTest"
     )
 }
@@ -138,9 +138,9 @@ task blockchainReferenceTestsSetup {
 task generalstateReferenceTestsSetup {
   generateTestFiles(
     fileTree("../referencetests/src/test/resources/GeneralStateTests"),
-    file("./src/test/resources/tech/pegasys/pantheon/ethereum/vm/GeneralStateReferenceTest.java.template"),
+    file("./src/test/resources/org/hyperledger/besu/ethereum/vm/GeneralStateReferenceTest.java.template"),
     "GeneralStateTests",
-    "./src/test/java/tech/pegasys/pantheon/ethereum/vm/generalstate",
+    "./src/test/java/org/hyperledger/besu/ethereum/vm/generalstate",
     "GeneralStateReferenceTest"
     )
 }
@@ -148,19 +148,19 @@ task generalstateReferenceTestsSetup {
 task generalstateRegressionReferenceTestsSetup {
   generateTestFiles(
     fileTree("./src/test/resources/regressions/generalstate"),
-    file("./src/test/resources/tech/pegasys/pantheon/ethereum/vm/GeneralStateReferenceTest.java.template"),
+    file("./src/test/resources/org/hyperledger/besu/ethereum/vm/GeneralStateReferenceTest.java.template"),
     "regressions",
-    "./src/test/java/tech/pegasys/pantheon/ethereum/vm/generalstate",
+    "./src/test/java/org/hyperledger/besu/ethereum/vm/generalstate",
     "GeneralStateRegressionReferenceTest"
     )
 }
 
 task cleanupReferenceTests(type: Delete) {
-  delete fileTree("./src/test/java/tech/pegasys/pantheon/ethereum/vm/generalstate/") {
+  delete fileTree("./src/test/java/org/hyperledger/besu/ethereum/vm/generalstate/") {
     include("**/GeneralStateReferenceTest*.java")
     include("**/GeneralStateRegressionReferenceTest*.java")
   }
-  delete fileTree("./src/test/java/tech/pegasys/pantheon/ethereum/vm/blockchain/") { include("**/BlockchainReferenceTest*.java") }
+  delete fileTree("./src/test/java/org/hyperledger/besu/ethereum/vm/blockchain/") { include("**/BlockchainReferenceTest*.java") }
 }
 
 clean.dependsOn(cleanupReferenceTests)
@@ -181,10 +181,10 @@ task referenceTests(type: Test, dependsOn: [
   }
   scanForTestClasses = false
   enableAssertions = true
-  include 'tech/pegasys/pantheon/ethereum/vm/**ReferenceTest.class'
-  include 'tech/pegasys/pantheon/ethereum/vm/blockchain/**.class'
-  include 'tech/pegasys/pantheon/ethereum/vm/generalstate/**.class'
-  include 'tech/pegasys/pantheon/ethereum/core/TransactionTest.class'
+  include 'org/hyperledger/besu/ethereum/vm/**ReferenceTest.class'
+  include 'org/hyperledger/besu/ethereum/vm/blockchain/**.class'
+  include 'org/hyperledger/besu/ethereum/vm/generalstate/**.class'
+  include 'org/hyperledger/besu/ethereum/core/TransactionTest.class'
 }
 
 artifacts {

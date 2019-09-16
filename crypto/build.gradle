@@ -14,7 +14,7 @@
 apply plugin: 'java-library'
 
 jar {
-  baseName 'pantheon-crypto'
+  baseName 'besu-crypto'
   manifest {
     attributes(
       'Specification-Title': baseName,

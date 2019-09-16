@@ -14,7 +14,7 @@
 apply plugin: 'java-library'
 
 jar {
-  baseName 'pantheon-mock-p2p'
+  baseName 'besu-mock-p2p'
   manifest {
     attributes(
       'Specification-Title': baseName,

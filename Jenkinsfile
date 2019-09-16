@@ -184,20 +184,8 @@ try {
                         stage(stage_name + 'Calculate variables') {
                             def gradleProperties = readProperties file: 'gradle.properties'
                             version = gradleProperties.version
-                            def imageRepos = 'pegasyseng'
-                            image = "${imageRepos}/pantheon:${version}"
-                        }
-
-                        stage(stage_name + "Test image labels") {
-                            shortCommit = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%h'").trim()
-                            sh "docker image inspect \
-    --format='{{index .Config.Labels \"org.label-schema.vcs-ref\"}}' \
-    ${image} \
-    | grep ${shortCommit}"
-                            sh "docker image inspect \
-    --format='{{index .Config.Labels \"org.label-schema.version\"}}' \
-    ${image} \
-    | grep ${version}"
+                            def imageRepos = 'hyperledger'
+                            image = "${imageRepos}/besu:${version}"
                         }
 
                         try {
@@ -236,32 +224,32 @@ try {
                         }
                     }
                 }
-        }, BintrayPublish: {
-            def stage_name = "Bintray publish node: "
-            node {
-                if (shouldPublish()) {
-                    checkout scm
-
-                    docker.image(docker_image_dind).withRun('--privileged') { d ->
-                        docker.image(build_image).inside("--link ${d.id}:docker") {
-                            stage(stage_name + 'Prepare') {
-                                sh './gradlew --no-daemon --parallel clean assemble'
-                            }
-                            stage(stage_name + 'Publish') {
-                                withCredentials([
-                                usernamePassword(
-                                    credentialsId: 'pegasys-bintray',
-                                    usernameVariable: 'BINTRAY_USER',
-                                    passwordVariable: 'BINTRAY_KEY'
-                                )
-                                ]) {
-                                    sh './gradlew --no-daemon --parallel bintrayUpload'
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+//         }, BintrayPublish: {
+//             def stage_name = "Bintray publish node: "
+//             node {
+//                 if (shouldPublish()) {
+//                     checkout scm
+//
+//                     docker.image(docker_image_dind).withRun('--privileged') { d ->
+//                         docker.image(build_image).inside("--link ${d.id}:docker") {
+//                             stage(stage_name + 'Prepare') {
+//                                 sh './gradlew --no-daemon --parallel clean assemble'
+//                             }
+//                             stage(stage_name + 'Publish') {
+//                                 withCredentials([
+//                                 usernamePassword(
+//                                     credentialsId: 'pegasys-bintray',
+//                                     usernameVariable: 'BINTRAY_USER',
+//                                     passwordVariable: 'BINTRAY_KEY'
+//                                 )
+//                                 ]) {
+//                                     sh './gradlew --no-daemon --parallel bintrayUpload'
+//                                 }
+//                             }
+//                         }
+//                     }
+//                 }
+//             }
         }
     }
 } catch (e) {

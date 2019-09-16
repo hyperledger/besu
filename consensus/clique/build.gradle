@@ -14,7 +14,7 @@
 plugins { id 'java' }
 
 jar {
-  baseName 'pantheon-clique'
+  baseName 'besu-clique'
   manifest {
     attributes(
       'Specification-Title': baseName,

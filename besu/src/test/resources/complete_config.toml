@@ -1,0 +1,35 @@
+# this is a valid TOML config file
+
+data-path="/opt/besu" # Path
+
+#invalid-option=true
+
+# network
+discovery-enabled=false
+bootnodes=[
+  "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.1:4567",
+  "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.1:4567",
+  "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.1:4567"
+]
+p2p-host="1.2.3.4"
+p2p-port=1234
+max-peers=42
+rpc-http-host="5.6.7.8"
+rpc-http-port=5678
+graphql-http-host="6.7.8.9"
+graphql-http-port=6789
+rpc-http-api=["ETH","WEB3"]
+rpc-ws-host="9.10.11.12"
+rpc-ws-port=9101
+rpc-ws-api=["ETH","WEB3"]
+metrics-host="8.6.7.5"
+metrics-port=309
+
+# chain
+genesis-file="/opt/besu/genesis.json" # Path
+network-id=42
+sync-mode="fast"# should be FAST or FULL (or fast or full)
+fast-sync-min-peers=13
+
+#mining
+miner-coinbase="0x0000000000000000000000000000000000000002"

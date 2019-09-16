@@ -14,7 +14,7 @@
 apply plugin: 'java-library'
 
 jar {
-  baseName 'pantheon-ethereum-rlp'
+  baseName 'besu-ethereum-rlp'
   manifest {
     attributes(
       'Specification-Title': baseName,
@@ -45,8 +45,8 @@ dependencies {
 }
 
 test {
-  exclude 'tech/pegasys/pantheon/ethereum/rlp/InvalidRLPRefTest.class'
-  exclude 'tech/pegasys/pantheon/ethereum/rlp/RLPRefTest.class'
+  exclude 'org/hyperledger/besu/ethereum/rlp/InvalidRLPRefTest.class'
+  exclude 'org/hyperledger/besu/ethereum/rlp/RLPRefTest.class'
 }
 
 task referenceTests(type: Test, dependsOn: ['compileTestJava']) {
@@ -55,6 +55,6 @@ task referenceTests(type: Test, dependsOn: ['compileTestJava']) {
       throw new GradleException("ethereum/referencetests/src/test/resources/README.md missing: please clone submodules (git submodule update --init --recursive)")
     }
   }
-  include 'tech/pegasys/pantheon/ethereum/rlp/InvalidRLPRefTest.class'
-  include 'tech/pegasys/pantheon/ethereum/rlp/RLPRefTest.class'
+  include 'org/hyperledger/besu/ethereum/rlp/InvalidRLPRefTest.class'
+  include 'org/hyperledger/besu/ethereum/rlp/RLPRefTest.class'
 }

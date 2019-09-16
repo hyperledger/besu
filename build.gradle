@@ -26,11 +26,11 @@ plugins {
 }
 
 if (!JavaVersion.current().java11Compatible) {
-  throw new GradleException("Java 11 or later is required to build Pantheon.\n" +
+  throw new GradleException("Java 11 or later is required to build Besu.\n" +
   "  Detected version ${JavaVersion.current()}")
 }
 
-group = 'tech.pegasys.pantheon'
+group = 'org.hyperledger.besu'
 
 defaultTasks 'build', 'checkLicenses', 'javadoc'
 
@@ -72,13 +72,12 @@ apply plugin: 'com.jfrog.bintray'
 def bintrayUser = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
 def bintrayKey = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_KEY')
 def bintrayPackage = bintray.pkg {
-  repo = 'pegasys-repo'
-  name = 'pantheon'
-  userOrg = 'consensys'
+  repo = 'besu-repo'
+  name = 'besu'
+  userOrg = 'hyperledger'
   licenses = ['Apache-2.0']
-  websiteUrl = 'https://github.com/PegaSysEng/pantheon'
-  issueTrackerUrl = 'https://github.com/PegaSysEng/pantheon/issues'
-  vcsUrl = 'https://github.com/PegaSysEng/pantheon.git'
+  websiteUrl = 'https://github.com/hyperledger/besu'
+  vcsUrl = 'https://github.com/hyperledger/besu.git'
 
   version {
     name = project.version
@@ -143,7 +142,7 @@ allprojects {
       }
       removeUnusedImports()
       googleJavaFormat('1.7')
-      importOrder 'tech.pegasys', 'java', ''
+      importOrder 'org.hyperledger', 'java', ''
       trimTrailingWhitespace()
       endWithNewline()
       licenseHeaderFile "${rootDir}/gradle/spotless.java.license"
@@ -221,7 +220,7 @@ allprojects {
    * The properties passed are:
    * - 'test.ethereum.include': allows to run a single Ethereum reference tests. For instance,
    *   running a single general state test can be done with:
-   *    ./gradlew :ethereum:tech.pegasys.pantheon.ethereum.vm:test -Dtest.single=GeneralStateTest -Dtest.ethereum.include=callcodecallcallcode_101-Frontier
+   *    ./gradlew :ethereum:org.hyperledger.besu.ethereum.vm:test -Dtest.single=GeneralStateTest -Dtest.ethereum.include=callcodecallcallcode_101-Frontier
    *   The meaning being that will be run only the tests for which the value passed as "include"
    *   (which can be a java pattern) matches parts of the test name. Knowing that tests names for
    *   reference tests are of the form:
@@ -232,7 +231,7 @@ allprojects {
    *   multiple variant of that test are run. The variant is a simple number.
    * - 'test.ethereum.state.eip': for general state tests, allows to only run tests for the
    *   milestone specified by this value. So for instance,
-   *    ./gradlew :ethereum:tech.pegasys.pantheon.ethereum.vm:test -Dtest.single=GeneralStateTest -Dtest.ethereum.state.eip=Frontier
+   *    ./gradlew :ethereum:org.hyperledger.besu.ethereum.vm:test -Dtest.single=GeneralStateTest -Dtest.ethereum.state.eip=Frontier
    *   only run general state tests for Frontier. Note that this behavior could be achieved as well
    *   with the 'include' option above since it is a pattern, but this is a slightly more convenient
    *   option.
@@ -317,7 +316,7 @@ subprojects {
     publishing {
       publications {
         mavenJava(MavenPublication) {
-          groupId "tech.pegasys.pantheon.internal"
+          groupId "org.hyperledger.besu.internal"
           version "${project.version}"
           if(sourceSetIsPopulated("main")) {
             from components.java
@@ -333,8 +332,8 @@ subprojects {
             usage('java-runtime') { fromResolutionResult() }
           }
           pom {
-            name = "Pantheon - ${project.name}"
-            url = 'http://github.com/PegaSysEng/pantheon'
+            name = "Besu - ${project.name}"
+            url = 'http://github.com/hyperledger/besu'
             licenses {
               license {
                 name = 'The Apache License, Version 2.0'
@@ -342,9 +341,9 @@ subprojects {
               }
             }
             scm {
-              connection = 'scm:git:git://github.com/PegaSysEng/pantheon.git'
-              developerConnection = 'scm:git:ssh://github.com/PegaSysEng/pantheon.git'
-              url = 'https://github.com/PegaSysEng/pantheon'
+              connection = 'scm:git:git://github.com/hyperledger/besu.git'
+              developerConnection = 'scm:git:ssh://github.com/hyperledger/besu.git'
+              url = 'https://github.com/hyperledger/besu'
             }
           }
         }
@@ -389,7 +388,7 @@ subprojects {
 
   task integrationTest(type: Test, dependsOn: ["compileTestJava"]) {
     group = "verification"
-    description = "Runs the Pantheon integration tests"
+    description = "Runs the Besu integration tests"
 
     testClassesDirs = sourceSets.integrationTest.output.classesDirs
     classpath = sourceSets.integrationTest.runtimeClasspath
@@ -422,10 +421,10 @@ subprojects {
 jar { enabled = false }
 
 apply plugin: 'application'
-mainClassName = 'tech.pegasys.pantheon.Pantheon'
+mainClassName = 'org.hyperledger.besu.Besu'
 applicationDefaultJvmArgs = [
   '-Dvertx.disableFileCPResolving=true',
-  '-Dpantheon.home=PANTHEON_HOME',
+  '-Dbesu.home=BESU_HOME',
   // We shutdown log4j ourselves, as otherwise this shutdown hook runs before our own and whatever
   // happens during shutdown is not logged.
   '-Dlog4j.shutdownHookEnabled=false',
@@ -436,10 +435,10 @@ applicationDefaultJvmArgs = [
 ]
 
 run {
-  args project.hasProperty("pantheon.run.args") ? project.property("pantheon.run.args").toString().split("\\s+") : []
+  args project.hasProperty("besu.run.args") ? project.property("besu.run.args").toString().split("\\s+") : []
   doFirst {
     applicationDefaultJvmArgs = applicationDefaultJvmArgs.collect {
-      it.replace('PANTHEON_HOME', "$buildDir/pantheon")
+      it.replace('BESU_HOME', "$buildDir/besu")
     }
   }
 }
@@ -451,8 +450,8 @@ startScripts {
   }
 
   doLast {
-    unixScript.text = unixScript.text.replace('PANTHEON_HOME', '\$APP_HOME')
-    windowsScript.text = windowsScript.text.replace('PANTHEON_HOME', '%~dp0..')
+    unixScript.text = unixScript.text.replace('BESU_HOME', '\$APP_HOME')
+    windowsScript.text = windowsScript.text.replace('BESU_HOME', '%~dp0..')
 
     // Prevent the error originating from the 8191 chars limit on Windows
     windowsScript.text =
@@ -464,7 +463,7 @@ startScripts {
 }
 
 dependencies {
-  compile project(':pantheon')
+  compile project(':besu')
   errorprone 'com.google.errorprone:error_prone_core'
 }
 
@@ -497,12 +496,12 @@ distZip {
   }
 }
 
-// rename the top level dir from pantheon-<version> to pantheon and this makes it really
+// rename the top level dir from besu-<version> to besu and this makes it really
 // simple for use in docker
 tasks.register("dockerDistUntar") {
   dependsOn distTar
   dependsOn distZip
-  def dockerBuildDir = "build/docker-pantheon/"
+  def dockerBuildDir = "build/docker-besu/"
   def distTarFile = distTar.outputs.files.singleFile
   def distTarFileName = distTar.outputs.files.singleFile.name.replace(".tar.gz", "")
 
@@ -512,15 +511,15 @@ tasks.register("dockerDistUntar") {
       from tarTree(distTarFile)
       into(dockerBuildDir)
     }
-    file("${dockerBuildDir}/${distTarFileName}").renameTo("${dockerBuildDir}/pantheon")
+    file("${dockerBuildDir}/${distTarFileName}").renameTo("${dockerBuildDir}/besu")
   }
 }
 
 task distDocker(type: Exec) {
   dependsOn dockerDistUntar
   def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
-  def image = project.hasProperty('release.releaseVersion') ? "pegasyseng/pantheon:" + project.property('release.releaseVersion') : "pegasyseng/pantheon:${project.version}"
-  def dockerBuildDir = "build/docker-pantheon/"
+  def image = project.hasProperty('release.releaseVersion') ? "hyperledger/besu:" + project.property('release.releaseVersion') : "hyperledger/besu:${project.version}"
+  def dockerBuildDir = "build/docker-besu/"
   workingDir "${dockerBuildDir}"
 
   doFirst {

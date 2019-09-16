@@ -14,7 +14,7 @@
 apply plugin: 'java-library'
 
 jar {
-  baseName 'pantheon-api'
+  baseName 'besu-api'
   manifest {
     attributes(
       'Specification-Title': baseName,
