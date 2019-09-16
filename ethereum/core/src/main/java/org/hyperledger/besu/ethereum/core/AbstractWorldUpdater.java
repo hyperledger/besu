@@ -164,6 +164,8 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
     private long nonce;
     private Wei balance;
     private int version;
+    private boolean lockable;
+
 
     @Nullable private BytesValue updatedCode; // Null if the underlying code has not been updated.
     @Nullable private Hash updatedCodeHash;
@@ -181,6 +183,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
       this.nonce = 0;
       this.balance = Wei.ZERO;
       this.version = Account.DEFAULT_VERSION;
+      this.lockable = false;
 
       this.updatedCode = BytesValue.EMPTY;
       this.updatedStorage = new TreeMap<>();
@@ -195,6 +198,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
       this.nonce = account.getNonce();
       this.balance = account.getBalance();
       this.version = account.getVersion();
+      this.lockable = account.getLockability();
 
       this.updatedStorage = new TreeMap<>();
     }
@@ -257,6 +261,16 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
     @Override
     public void setBalance(final Wei value) {
       this.balance = value;
+    }
+
+    @Override
+    public boolean isLockable() {
+      return this.lockable;
+    }
+
+    @Override
+    public void setLockability(final boolean lockable) {
+      this.lockable = lockable;
     }
 
     @Override
@@ -435,6 +449,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
         if (update.codeWasUpdated()) {
           existing.setCode(update.getCode());
           existing.setVersion(update.getVersion());
+          existing.setLockability(update.isLockable());
         }
         if (update.getStorageWasCleared()) {
           existing.clearStorage();
