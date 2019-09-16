@@ -55,30 +55,6 @@ public class Istanbul64ProtocolManager extends EthProtocolManager {
         ethereumWireProtocolConfiguration);
   }
 
-  public Istanbul64ProtocolManager(
-      final Blockchain blockchain,
-      final WorldStateArchive worldStateArchive,
-      final BigInteger networkId,
-      final List<PeerValidator> peerValidators,
-      final boolean fastSyncEnabled,
-      final int syncWorkers,
-      final int txWorkers,
-      final int computationWorkers,
-      final Clock clock,
-      final MetricsSystem metricsSystem) {
-    super(
-        blockchain,
-        worldStateArchive,
-        networkId,
-        peerValidators,
-        fastSyncEnabled,
-        syncWorkers,
-        txWorkers,
-        computationWorkers,
-        clock,
-        metricsSystem);
-  }
-
   @Override
   public List<Capability> getSupportedCapabilities() {
     return singletonList(Istanbul64Protocol.ISTANBUL64);
