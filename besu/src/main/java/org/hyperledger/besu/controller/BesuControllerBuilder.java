@@ -210,7 +210,7 @@ public abstract class BesuControllerBuilder<C> {
 
     final MutableBlockchain blockchain = protocolContext.getBlockchain();
 
-    Optional<Pruner> maybePruner = Optional.empty();
+    final Optional<Pruner> maybePruner;
     if (isPruningEnabled) {
       checkState(
           storageProvider.isWorldStateIterable(),
@@ -231,12 +231,13 @@ public abstract class BesuControllerBuilder<C> {
                           .setNameFormat("StatePruning-%d")
                           .build()),
                   pruningConfiguration));
+    } else {
+      maybePruner = Optional.empty();
     }
 
-    final Optional<Pruner> finalMaybePruner = maybePruner;
     addShutdownAction(
         () ->
-            finalMaybePruner.ifPresent(
+            maybePruner.ifPresent(
                 pruner -> {
                   try {
                     pruner.stop();
