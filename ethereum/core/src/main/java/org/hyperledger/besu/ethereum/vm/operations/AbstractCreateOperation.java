@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.vm.operations;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
+import org.hyperledger.besu.ethereum.core.ReadOnlyMutableAccount;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.vm.AbstractOperation;
 import org.hyperledger.besu.ethereum.vm.Code;
@@ -91,6 +92,12 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
   private void spawnChildMessage(final MessageFrame frame) {
     final Address address = frame.getRecipientAddress();
     final MutableAccount account = frame.getWorldState().getMutable(address);
+
+    if (account instanceof ReadOnlyMutableAccount) {
+      frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
+      return;
+    }
+
     account.incrementNonce();
 
     final Wei value = Wei.wrap(frame.getStackItem(0));

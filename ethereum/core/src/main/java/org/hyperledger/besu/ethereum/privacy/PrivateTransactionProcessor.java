@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.vm.Code;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
+import org.hyperledger.besu.ethereum.worldstate.DefaultMutablePrivateWorldStateUpdater;
 import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.ArrayDeque;
@@ -211,6 +212,10 @@ public class PrivateTransactionProcessor {
 
     final MessageFrame initialFrame;
     final Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
+
+    final WorldUpdater mutablePrivateWorldStateUpdater =
+        new DefaultMutablePrivateWorldStateUpdater(publicWorldState, privateWorldState.updater());
+
     if (transaction.isContractCreation()) {
       final Address privateContractAddress =
           Address.privateContractAddress(senderAddress, previousNonce, privacyGroupId);
@@ -227,7 +232,7 @@ public class PrivateTransactionProcessor {
               .type(MessageFrame.Type.CONTRACT_CREATION)
               .messageFrameStack(messageFrameStack)
               .blockchain(blockchain)
-              .worldState(privateWorldState.updater())
+              .worldState(mutablePrivateWorldStateUpdater)
               .address(privateContractAddress)
               .originator(senderAddress)
               .contract(privateContractAddress)
@@ -256,7 +261,7 @@ public class PrivateTransactionProcessor {
               .type(MessageFrame.Type.MESSAGE_CALL)
               .messageFrameStack(messageFrameStack)
               .blockchain(blockchain)
-              .worldState(privateWorldState.updater())
+              .worldState(mutablePrivateWorldStateUpdater)
               .address(to)
               .originator(senderAddress)
               .contract(to)

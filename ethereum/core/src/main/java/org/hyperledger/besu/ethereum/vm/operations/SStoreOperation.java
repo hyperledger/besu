@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.vm.operations;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
+import org.hyperledger.besu.ethereum.core.ReadOnlyMutableAccount;
 import org.hyperledger.besu.ethereum.vm.AbstractOperation;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
@@ -71,6 +72,9 @@ public class SStoreOperation extends AbstractOperation {
       return Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
     } else if (frame.getRemainingGas().compareTo(minumumGasRemaining) <= 0) {
       return Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS);
+    } else if (frame.getWorldState().getMutable(frame.getRecipientAddress())
+        instanceof ReadOnlyMutableAccount) {
+      return Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
     } else {
       return Optional.empty();
     }
