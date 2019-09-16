@@ -190,87 +190,99 @@ exit $status
         }
 
         parallel DockerImage: {
-                def stage_name = 'Docker image node: '
-                def docker_folder = 'docker'
-                def reports_folder = docker_folder + '/reports'
-                def dockerfile = docker_folder + '/Dockerfile'
-                def version = ''
-                def image = ''
-                node {
-                    checkout scm
-                    docker.image(build_image).inside() {
-                        stage(stage_name + 'Dockerfile lint') {
-                            sh "docker run --rm -i hadolint/hadolint < ${dockerfile}"
+            def stage_name = 'Docker image node: '
+            def docker_folder = 'docker'
+            def reports_folder = docker_folder + '/reports'
+            def dockerfile = docker_folder + '/Dockerfile'
+            def version = ''
+            def image = ''
+            node {
+                checkout scm
+                docker.image(build_image).inside() {
+                    stage(stage_name + 'Dockerfile lint') {
+                        sh "docker run --rm -i hadolint/hadolint < ${dockerfile}"
+                    }
+
+                    stage(stage_name + 'Build image') {
+                        sh './gradlew distDocker'
+                    }
+
+                    stage(stage_name + 'Calculate variables') {
+                        def gradleProperties = readProperties file: 'gradle.properties'
+                        version = gradleProperties.version
+                        def imageRepos = 'hyperledger'
+                        image = "${imageRepos}/besu:${version}"
+                    }
+
+                    try {
+                        stage(stage_name + 'Test image') {
+                            sh "mkdir -p ${reports_folder}"
+                            sh "cd ${docker_folder} && bash test.sh ${image}"
                         }
+                    } finally {
+                        archiveArtifacts "${reports_folder}/**"
+                        junit "${reports_folder}/*.xml"
+                        sh "rm -rf ${reports_folder}"
+                    }
 
-                        stage(stage_name + 'Build image') {
-                            sh './gradlew distDocker'
-                        }
+                    if (shouldPublish()) {
+                        def registry = 'https://registry.hub.docker.com'
+                        def userAccount = 'dockerhub-pegasysengci'
+                        stage(stage_name + 'Push image') {
+                            docker.withRegistry(registry, userAccount) {
+                                docker.image(image).push()
 
-                        stage(stage_name + 'Calculate variables') {
-                            def gradleProperties = readProperties file: 'gradle.properties'
-                            version = gradleProperties.version
-                            def imageRepos = 'hyperledger'
-                            image = "${imageRepos}/besu:${version}"
-                        }
+                                def additionalTags = []
+                                if (env.BRANCH_NAME == 'master') {
+                                    additionalTags.add('develop')
+                                }
 
-                        try {
-                            stage(stage_name + 'Test image') {
-                                sh "mkdir -p ${reports_folder}"
-                                sh "cd ${docker_folder} && bash test.sh ${image}"
-                            }
-                        } finally {
-                            archiveArtifacts "${reports_folder}/**"
-                            junit "${reports_folder}/*.xml"
-                            sh "rm -rf ${reports_folder}"
-                        }
+                                if (! version ==~ /.*-SNAPSHOT/) {
+                                    additionalTags.add('latest')
+                                    additionalTags.add(version.split(/\./)[0..1].join('.'))
+                                }
 
-                        if (shouldPublish()) {
-                            def registry = 'https://registry.hub.docker.com'
-                            def userAccount = 'dockerhub-pegasysengci'
-                            stage(stage_name + 'Push image') {
-                                docker.withRegistry(registry, userAccount) {
-                                    docker.image(image).push()
-
-                                    def additionalTags = []
-                                    if (env.BRANCH_NAME == 'master') {
-                                        additionalTags.add('develop')
-                                    }
-
-                                    if (! version ==~ /.*-SNAPSHOT/) {
-                                        additionalTags.add('latest')
-                                        additionalTags.add(version.split(/\./)[0..1].join('.'))
-                                    }
-
-                                    additionalTags.each { tag ->
-                                        docker.image(image).push tag.trim()
-                                    }
+                                additionalTags.each { tag ->
+                                    docker.image(image).push tag.trim()
                                 }
                             }
                         }
                     }
                 }
-         }, BintrayPublish: {
+            }
+        }, BintrayPublish: {
              def stage_name = "Bintray publish node: "
+             def version = ''
              node {
                  if (shouldPublish()) {
                      checkout scm
 
                      docker.image(docker_image_dind).withRun('--privileged') { d ->
                          docker.image(build_image).inside("--link ${d.id}:docker") {
-                             stage(stage_name + 'Prepare') {
-                                 sh './gradlew --no-daemon --parallel clean assemble'
+
+                             stage(stage_name + 'Calculate variables') {
+                                 def gradleProperties = readProperties file: 'gradle.properties'
+                                 version = gradleProperties.version
                              }
-                             stage(stage_name + 'Publish') {
-                                 withCredentials([
-                                 usernamePassword(
-                                     credentialsId: 'pegasys-bintray',
-                                     usernameVariable: 'BINTRAY_USER',
-                                     passwordVariable: 'BINTRAY_KEY'
-                                 )
-                                 ]) {
-                                     sh './gradlew --no-daemon --parallel bintrayUpload'
+
+                             // we dont publish snapshots to bintray
+                             if (! version ==~ /.*-SNAPSHOT/) {
+
+                                 stage(stage_name + 'Prepare') {
+                                     sh './gradlew --no-daemon --parallel clean assemble'
                                  }
+                                 stage(stage_name + 'Publish') {
+                                     withCredentials([
+                                     usernamePassword(
+                                         credentialsId: 'pegasys-bintray',
+                                         usernameVariable: 'BINTRAY_USER',
+                                         passwordVariable: 'BINTRAY_KEY'
+                                     )
+                                     ]) {
+                                         sh './gradlew --no-daemon --parallel bintrayUpload'
+                                     }
+                                 }
+
                              }
                          }
                      }
