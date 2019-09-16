@@ -139,8 +139,7 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
     return segmentedStorage == null && unsegmentedStorage == null;
   }
 
-  private int readDatabaseVersion(final BesuConfiguration commonConfiguration)
-      throws IOException {
+  private int readDatabaseVersion(final BesuConfiguration commonConfiguration) throws IOException {
     final Path databaseDir = commonConfiguration.getStoragePath();
     final boolean databaseExists = databaseDir.resolve("IDENTITY").toFile().exists();
     final int databaseVersion;
