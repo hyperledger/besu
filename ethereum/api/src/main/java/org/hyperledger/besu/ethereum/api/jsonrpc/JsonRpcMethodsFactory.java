@@ -95,6 +95,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea.Ee
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea.EeaSendRawTransaction;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivCreatePrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivDeletePrivacyGroup;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivDistributeRawTransaction;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivFindPrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivGetPrivacyPrecompileAddress;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivGetPrivateTransaction;
@@ -378,8 +379,8 @@ public class JsonRpcMethodsFactory {
             new PrivFindPrivacyGroup(new Enclave(privacyParameters.getEnclaveUri()), parameter),
             new PrivGetPrivacyPrecompileAddress(privacyParameters),
             new PrivGetTransactionCount(parameter, privateTransactionHandler),
-            new PrivGetPrivateTransaction(
-                blockchainQueries, enclave, parameter, privacyParameters));
+            new PrivGetPrivateTransaction(blockchainQueries, enclave, parameter, privacyParameters),
+            new PrivDistributeRawTransaction(privateTransactionHandler, parameter));
       }
     }
 
