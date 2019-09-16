@@ -14,8 +14,8 @@ package org.hyperledger.besu.plugin.services.storage.rocksdb;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.plugin.services.PantheonConfiguration;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageFactory;
@@ -121,7 +121,7 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
     }
   }
 
-  private void init(final PantheonConfiguration commonConfiguration) {
+  private void init(final BesuConfiguration commonConfiguration) {
     try {
       databaseVersion = readDatabaseVersion(commonConfiguration);
     } catch (final IOException e) {
