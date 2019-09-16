@@ -1,6 +1,6 @@
 # Besu Ethereum Client
  [![Build Status](https://jenkins.pegasys.tech/job/Besu/job/master/badge/icon)](https://jenkins.pegasys.tech/job/Besu/job/master/)
- [![Documentation Status](https://readthedocs.org/projects/hyperledger-besu/badge/?version=latest)](https://docs.besu.pegasys.tech/en/latest/?badge=latest)
+ [![Documentation Status](https://readthedocs.org/projects/hyperledger-besu/badge/?version=latest)](https://besu.hyperledger.org/en/latest/?badge=latest)
  [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/PegasysEng/besu/blob/master/LICENSE)
  [ ![Download](https://api.bintray.com/packages/hyperledger/besu-repo/besu/images/download.svg) ](https://bintray.com/hyperledger/besu-repo/besu/_latestVersion)
  [![RocketChat chat](https://open.rocket.chat/images/join-chat.svg)](https://chat.hyperledger.org/channel/besu)
@@ -17,7 +17,7 @@ If you've commented on existing issue and have been waiting for a reply, feel fr
 
 ## Besu Users
 
-The process for installing and running Besu as a user is different to when developing. Some processes in our [user documentation](https://docs.besu.pegasys.tech/en/latest/) are different to those described in this Readme.
+The process for installing and running Besu as a user is different to when developing. Some processes in our [user documentation](https://besu.hyperledger.org/en/latest/) are different to those described in this Readme.
 
 ## Besu Developers
 
