@@ -52,7 +52,7 @@ public class PrivacyGroupAcceptanceTest extends PrivacyAcceptanceTestBase {
     final PrivacyGroup expected =
         new PrivacyGroup(
             privacyGroupId,
-            PrivacyGroup.Type.PANTHEON,
+            PrivacyGroup.Type.BESU,
             "myGroupName",
             "my group description",
             Base64String.wrapList(alice.getEnclaveKey(), bob.getEnclaveKey()));
@@ -73,7 +73,7 @@ public class PrivacyGroupAcceptanceTest extends PrivacyAcceptanceTestBase {
     final PrivacyGroup expected =
         new PrivacyGroup(
             privacyGroupId,
-            PrivacyGroup.Type.PANTHEON,
+            PrivacyGroup.Type.BESU,
             "Default Name",
             "my group description",
             Base64String.wrapList(alice.getEnclaveKey(), bob.getEnclaveKey()));
@@ -93,7 +93,7 @@ public class PrivacyGroupAcceptanceTest extends PrivacyAcceptanceTestBase {
     final PrivacyGroup expected =
         new PrivacyGroup(
             privacyGroupId,
-            PrivacyGroup.Type.PANTHEON,
+            PrivacyGroup.Type.BESU,
             "myGroupName",
             "Default Description",
             Base64String.wrapList(alice.getEnclaveKey(), bob.getEnclaveKey()));
@@ -113,7 +113,7 @@ public class PrivacyGroupAcceptanceTest extends PrivacyAcceptanceTestBase {
     final PrivacyGroup expected =
         new PrivacyGroup(
             privacyGroupId,
-            PrivacyGroup.Type.PANTHEON,
+            PrivacyGroup.Type.BESU,
             "Default Name",
             "Default Description",
             Base64String.wrapList(alice.getEnclaveKey(), bob.getEnclaveKey()));

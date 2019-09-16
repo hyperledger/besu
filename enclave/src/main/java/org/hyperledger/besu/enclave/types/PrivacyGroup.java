@@ -79,6 +79,6 @@ public class PrivacyGroup implements Serializable {
 
   public enum Type {
     LEGACY,
-    PANTHEON
+    BESU
   }
 }

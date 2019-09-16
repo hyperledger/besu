@@ -104,7 +104,7 @@ public class EthSignerAcceptanceTest extends PrivacyAcceptanceTestBase {
         privateTransactionVerifier.validPrivacyGroupCreated(
             new PrivacyGroup(
                 privacyGroupId,
-                PrivacyGroup.Type.PANTHEON,
+                PrivacyGroup.Type.BESU,
                 "Default Name",
                 "Default Description",
                 Base64String.wrapList(minerNode.getEnclaveKey()))));
@@ -137,7 +137,7 @@ public class EthSignerAcceptanceTest extends PrivacyAcceptanceTestBase {
         privateTransactionVerifier.validPrivacyGroupCreated(
             new PrivacyGroup(
                 privacyGroupId,
-                PrivacyGroup.Type.PANTHEON,
+                PrivacyGroup.Type.BESU,
                 "Default Name",
                 "Default Description",
                 Base64String.wrapList(minerNode.getEnclaveKey()))));
