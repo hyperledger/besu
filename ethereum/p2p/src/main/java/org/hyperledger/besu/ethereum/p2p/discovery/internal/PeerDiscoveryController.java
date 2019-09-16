@@ -293,7 +293,8 @@ public class PeerDiscoveryController {
     }
 
     // Load the peer from the table, or use the instance that comes in.
-    final Optional<DiscoveryPeer> maybeKnownPeer = peerTable.get(sender);
+    final Optional<DiscoveryPeer> maybeKnownPeer =
+        peerTable.get(sender).filter(known -> known.discoveryEndpointMatches(sender));
     final DiscoveryPeer peer = maybeKnownPeer.orElse(sender);
     final boolean peerKnown = maybeKnownPeer.isPresent();
 
