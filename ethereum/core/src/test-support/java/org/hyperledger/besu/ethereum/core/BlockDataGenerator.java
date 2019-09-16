@@ -41,7 +41,9 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Random;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPrivateKey;
 import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPublicKey;
@@ -352,6 +354,10 @@ public class BlockDataGenerator {
     return receipt(positiveLong());
   }
 
+  public TransactionReceipt receipt(final List<Log> logs) {
+    return new TransactionReceipt(hash(), positiveLong(), logs, Optional.empty());
+  }
+
   public UInt256 storageKey() {
     return uint256();
   }
@@ -368,8 +374,22 @@ public class BlockDataGenerator {
     return receipts;
   }
 
+  public List<Log> logs(final int logsCount, final int topicsPerLog) {
+    return Stream.generate(() -> log(topicsPerLog)).limit(logsCount).collect(Collectors.toList());
+  }
+
   public Log log() {
-    return new Log(address(), bytesValue(5 + random.nextInt(10)), Collections.emptyList());
+    return log(0);
+  }
+
+  public Log log(final int topicCount) {
+    final List<LogTopic> topics =
+        Stream.generate(this::logTopic).limit(topicCount).collect(Collectors.toList());
+    return new Log(address(), bytesValue(5 + random.nextInt(10)), topics);
+  }
+
+  private LogTopic logTopic() {
+    return LogTopic.create(bytesValue(LogTopic.SIZE));
   }
 
   private Bytes32 bytes32() {
