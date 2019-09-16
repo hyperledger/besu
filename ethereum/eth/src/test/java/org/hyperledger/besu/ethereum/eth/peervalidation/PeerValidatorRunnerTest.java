@@ -47,14 +47,14 @@ public class PeerValidatorRunnerTest {
     runner.checkPeer(peer);
 
     verify(runner, times(1)).checkPeer(eq(peer));
-    verify(validator, never()).validatePeer(eq(peer));
+    verify(validator, never()).validatePeer(eq(ethProtocolManager.ethContext()), eq(peer));
     verify(runner, never()).disconnectPeer(eq(peer));
     verify(runner, times(1)).scheduleNextCheck(eq(peer));
 
     // Run pending futures to trigger the next check
     EthProtocolManagerTestUtil.runPendingFutures(ethProtocolManager);
     verify(runner, times(2)).checkPeer(eq(peer));
-    verify(validator, never()).validatePeer(eq(peer));
+    verify(validator, never()).validatePeer(eq(ethProtocolManager.ethContext()), eq(peer));
     verify(runner, never()).disconnectPeer(eq(peer));
     verify(runner, times(2)).scheduleNextCheck(eq(peer));
   }
@@ -75,7 +75,7 @@ public class PeerValidatorRunnerTest {
     runner.checkPeer(peer);
 
     verify(runner, times(1)).checkPeer(eq(peer));
-    verify(validator, never()).validatePeer(eq(peer));
+    verify(validator, never()).validatePeer(eq(ethProtocolManager.ethContext()), eq(peer));
     verify(runner, never()).disconnectPeer(eq(peer));
     verify(runner, times(0)).scheduleNextCheck(eq(peer));
   }
@@ -88,14 +88,15 @@ public class PeerValidatorRunnerTest {
 
     PeerValidator validator = mock(PeerValidator.class);
     when(validator.canBeValidated(eq(peer))).thenReturn(true);
-    when(validator.validatePeer(eq(peer))).thenReturn(CompletableFuture.completedFuture(false));
+    when(validator.validatePeer(eq(ethProtocolManager.ethContext()), eq(peer)))
+        .thenReturn(CompletableFuture.completedFuture(false));
     when(validator.nextValidationCheckTimeout(eq(peer))).thenReturn(Duration.ofSeconds(30));
 
     PeerValidatorRunner runner =
         spy(new PeerValidatorRunner(ethProtocolManager.ethContext(), validator));
     runner.checkPeer(peer);
 
-    verify(validator, times(1)).validatePeer(eq(peer));
+    verify(validator, times(1)).validatePeer(eq(ethProtocolManager.ethContext()), eq(peer));
     verify(runner, times(1)).disconnectPeer(eq(peer));
     verify(runner, never()).scheduleNextCheck(eq(peer));
   }
@@ -108,14 +109,15 @@ public class PeerValidatorRunnerTest {
 
     PeerValidator validator = mock(PeerValidator.class);
     when(validator.canBeValidated(eq(peer))).thenReturn(true);
-    when(validator.validatePeer(eq(peer))).thenReturn(CompletableFuture.completedFuture(true));
+    when(validator.validatePeer(eq(ethProtocolManager.ethContext()), eq(peer)))
+        .thenReturn(CompletableFuture.completedFuture(true));
     when(validator.nextValidationCheckTimeout(eq(peer))).thenReturn(Duration.ofSeconds(30));
 
     PeerValidatorRunner runner =
         spy(new PeerValidatorRunner(ethProtocolManager.ethContext(), validator));
     runner.checkPeer(peer);
 
-    verify(validator, times(1)).validatePeer(eq(peer));
+    verify(validator, times(1)).validatePeer(eq(ethProtocolManager.ethContext()), eq(peer));
     verify(runner, never()).disconnectPeer(eq(peer));
     verify(runner, never()).scheduleNextCheck(eq(peer));
   }

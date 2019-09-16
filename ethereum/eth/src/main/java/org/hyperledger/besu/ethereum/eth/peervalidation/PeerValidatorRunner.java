@@ -39,7 +39,7 @@ public class PeerValidatorRunner {
   public void checkPeer(final EthPeer ethPeer) {
     if (peerValidator.canBeValidated(ethPeer)) {
       peerValidator
-          .validatePeer(ethPeer)
+          .validatePeer(ethContext, ethPeer)
           .whenComplete(
               (validated, err) -> {
                 if (err != null || !validated) {

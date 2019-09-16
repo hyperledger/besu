@@ -33,6 +33,7 @@ import org.hyperledger.besu.testutil.TestClock;
 import org.hyperledger.besu.util.uint.UInt256;
 
 import java.math.BigInteger;
+import java.util.Collections;
 import java.util.OptionalLong;
 
 public class EthProtocolManagerTestUtil {
@@ -53,6 +54,7 @@ public class EthProtocolManagerTestUtil {
         blockchain,
         worldStateArchive,
         networkId,
+        Collections.emptyList(),
         false,
         ethScheduler,
         EthProtocolConfiguration.defaultConfig(),
