@@ -196,7 +196,7 @@ The process described here has several goals:
 
 Please follow these steps to have your contribution considered by the approvers:
 
-1. Complete the CLA, as described in [CLA.md].
+1. Ensure all commits have a Sign-off for DCO, as described in [DCO.md].
 2. Follow all instructions in [PULL-REQUEST-TEMPLATE.md](.github/pull_request_template.md).
 3. Include appropriate test coverage. Testing is 100% automated. There is no such thing as a manual test.
 4. Follow the [Style Guides](#style-guides).
@@ -242,7 +242,7 @@ These are not strictly enforced during the build, but should be adhered to and c
 [private@pegasys.tech]: mailto:private@pegasys.tech
 [Rocketchat]: https://chat.hyperledger.org/channel/besu
 [Besu documentation]: https://besu.hyperledger.org/
-[CLA.md]: /CLA.md
+[DCO.md]: ./DCO.md
 [Code Reviews]: /docs/community/code-reviews.md
 [MkDocs]: https://www.mkdocs.org/
 [How to Write a Git Commit Message]: https://chris.beams.io/posts/git-commit/

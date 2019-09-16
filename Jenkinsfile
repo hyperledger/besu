@@ -54,7 +54,33 @@ if (!shouldPublish()) {
 
 try {
     timeout(time: 1, unit: 'HOURS') {
-        parallel UnitTests: {
+        parallel DCOCheck: {
+            def stage_name = "DCO tests node: "
+            node {
+                checkout scm
+                docker.image(build_image).inside() {
+                    stage(stage_name + 'Check') {
+                        sh '''#!/bin/bash
+status=0
+while IFS= read -r -a line; do
+  my_array+=( "$line" )
+  done < <( git branch -r | grep -v origin/HEAD )
+for branch in "${my_array[@]}"
+do
+  branch=$(echo "$branch" | xargs)
+  echo "Checking commits in branch $branch for commits missing DCO..."
+  while read -r results; do
+    status=1
+    commit_hash="$(echo "$results" | cut -d' ' -f1)"
+    >&2 echo "$commit_hash is missing Signed-off-by line."
+  done < <(git log "$branch" --no-merges --pretty="%H %ae" --grep 'Signed-off-by' --invert-grep -- )
+done
+exit $status
+'''
+                    }
+                }
+            }
+        }, UnitTests: {
             def stage_name = "Unit tests node: "
             node {
                 checkout scm
@@ -73,7 +99,7 @@ try {
                             archiveArtifacts 'build/reports/**'
                             archiveArtifacts 'build/distributions/**'
 
-                            stash allowEmpty: true, includes: 'build/distributions/pantheon-*.tar.gz', name: 'distTarBall'
+                            stash allowEmpty: true, includes: 'build/distributions/besu-*.tar.gz', name: 'distTarBall'
 
                             junit '**/build/test-results/**/*.xml'
                         }
@@ -224,32 +250,32 @@ try {
                         }
                     }
                 }
-//         }, BintrayPublish: {
-//             def stage_name = "Bintray publish node: "
-//             node {
-//                 if (shouldPublish()) {
-//                     checkout scm
-//
-//                     docker.image(docker_image_dind).withRun('--privileged') { d ->
-//                         docker.image(build_image).inside("--link ${d.id}:docker") {
-//                             stage(stage_name + 'Prepare') {
-//                                 sh './gradlew --no-daemon --parallel clean assemble'
-//                             }
-//                             stage(stage_name + 'Publish') {
-//                                 withCredentials([
-//                                 usernamePassword(
-//                                     credentialsId: 'pegasys-bintray',
-//                                     usernameVariable: 'BINTRAY_USER',
-//                                     passwordVariable: 'BINTRAY_KEY'
-//                                 )
-//                                 ]) {
-//                                     sh './gradlew --no-daemon --parallel bintrayUpload'
-//                                 }
-//                             }
-//                         }
-//                     }
-//                 }
-//             }
+         }, BintrayPublish: {
+             def stage_name = "Bintray publish node: "
+             node {
+                 if (shouldPublish()) {
+                     checkout scm
+
+                     docker.image(docker_image_dind).withRun('--privileged') { d ->
+                         docker.image(build_image).inside("--link ${d.id}:docker") {
+                             stage(stage_name + 'Prepare') {
+                                 sh './gradlew --no-daemon --parallel clean assemble'
+                             }
+                             stage(stage_name + 'Publish') {
+                                 withCredentials([
+                                 usernamePassword(
+                                     credentialsId: 'pegasys-bintray',
+                                     usernameVariable: 'BINTRAY_USER',
+                                     passwordVariable: 'BINTRAY_KEY'
+                                 )
+                                 ]) {
+                                     sh './gradlew --no-daemon --parallel bintrayUpload'
+                                 }
+                             }
+                         }
+                     }
+                 }
+             }
         }
     }
 } catch (e) {
@@ -264,20 +290,20 @@ try {
             if (previousResult != null && (previousResult == 'FAILURE' || previousResult == 'UNSTABLE')) {
                 slackSend(
                     color: 'good',
-                    message: "Pantheon branch ${env.BRANCH_NAME} build is back to HEALTHY.\nBuild Number: #${env.BUILD_NUMBER}\n${env.BUILD_URL}",
+                    message: "Besu branch ${env.BRANCH_NAME} build is back to HEALTHY.\nBuild Number: #${env.BUILD_NUMBER}\n${env.BUILD_URL}",
                     channel: channel
                 )
             }
         } else if (currentBuild.result == 'FAILURE') {
             slackSend(
                 color: 'danger',
-                message: "Pantheon branch ${env.BRANCH_NAME} build is FAILING.\nBuild Number: #${env.BUILD_NUMBER}\n${env.BUILD_URL}",
+                message: "Besu branch ${env.BRANCH_NAME} build is FAILING.\nBuild Number: #${env.BUILD_NUMBER}\n${env.BUILD_URL}",
                 channel: channel
             )
         } else if (currentBuild.result == 'UNSTABLE') {
             slackSend(
                 color: 'warning',
-                message: "Pantheon branch ${env.BRANCH_NAME} build is UNSTABLE.\nBuild Number: #${env.BUILD_NUMBER}\n${env.BUILD_URL}",
+                message: "Besu branch ${env.BRANCH_NAME} build is UNSTABLE.\nBuild Number: #${env.BUILD_NUMBER}\n${env.BUILD_URL}",
                 channel: channel
             )
         }

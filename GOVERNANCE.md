@@ -21,9 +21,9 @@ See [community membership]
 Decision making will be handled by the Approvers (see [community membership]).  If consensus cannot be reached, the Benevolent Dictator will provide the final word on the decision.
 
 
-# CLA
+# DCO
 
-All contributors must sign the CLA, as described in [CLA.md].
+All contributors must send commits with sign-off to comply with [DCO](DCO.md)
 ## Attribution
 
 This document was influenced by the following:

@@ -2,14 +2,14 @@
 # The odds are you are reading this because you added a CLI and didn't add it
 # here and a test broke.  To fix the test add your CLI to this file.
 #
-# Please use a plausible value, Pantheon has to at least be able to parse it.
+# Please use a plausible value, Besu has to at least be able to parse it.
 # If it is a multi-valued CLI make it a TOML array.
 # If it is a number or boolean make it a number or boolean
 # All other config options are strings, and must be quoted.
 # Please provide some sensible grouping.
 
 # Node Information
-data-path="~/pantheondata"
+data-path="~/besudata"
 logging="INFO"
 node-private-key-file="./path/to/privateKey"
 
@@ -73,7 +73,7 @@ metrics-push-enabled=false
 metrics-push-host="5.5.5.1"
 metrics-push-port=212
 metrics-push-interval=42
-metrics-push-prometheus-job="pantheon-everything"
+metrics-push-prometheus-job="besu-everything"
 
 # Mining
 miner-enabled=false
