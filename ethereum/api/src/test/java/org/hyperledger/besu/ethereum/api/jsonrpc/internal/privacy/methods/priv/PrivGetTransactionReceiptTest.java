@@ -10,16 +10,9 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea;
+package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowable;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.nullable;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
+import com.google.common.collect.Lists;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveException;
@@ -45,19 +38,25 @@ import org.hyperledger.besu.ethereum.privacy.Restriction;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.util.bytes.Bytes32;
 import org.hyperledger.besu.util.bytes.BytesValue;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import java.math.BigInteger;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.Optional;
 
-import com.google.common.collect.Lists;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.nullable;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
-public class EeaGetTransactionReceiptTest {
+public class PrivGetTransactionReceiptTest {
 
   @Rule public final TemporaryFolder temp = new TemporaryFolder();
 
@@ -161,13 +160,13 @@ public class EeaGetTransactionReceiptTest {
 
   @Test
   public void returnReceiptIfTransactionExists() {
-    final EeaGetTransactionReceipt eeaGetTransactionReceipt =
-        new EeaGetTransactionReceipt(blockchainQueries, enclave, parameters, privacyParameters);
+    final PrevGetTransactionReceipt prevGetTransactionReceipt =
+        new PrevGetTransactionReceipt(blockchainQueries, enclave, parameters, privacyParameters);
     final Object[] params = new Object[] {transaction.hash()};
-    final JsonRpcRequest request = new JsonRpcRequest("1", "eea_getTransactionReceipt", params);
+    final JsonRpcRequest request = new JsonRpcRequest("1", "priv_getTransactionReceipt", params);
 
     final JsonRpcSuccessResponse response =
-        (JsonRpcSuccessResponse) eeaGetTransactionReceipt.response(request);
+        (JsonRpcSuccessResponse) prevGetTransactionReceipt.response(request);
     final PrivateTransactionReceiptResult result =
         (PrivateTransactionReceiptResult) response.getResult();
 
@@ -179,14 +178,14 @@ public class EeaGetTransactionReceiptTest {
     when(failingEnclave.receive(any(ReceiveRequest.class)))
         .thenThrow(new EnclaveException("EnclavePayloadNotFound"));
 
-    final EeaGetTransactionReceipt eeaGetTransactionReceipt =
-        new EeaGetTransactionReceipt(
+    final PrevGetTransactionReceipt prevGetTransactionReceipt =
+        new PrevGetTransactionReceipt(
             blockchainQueries, failingEnclave, parameters, privacyParameters);
     final Object[] params = new Object[] {transaction.hash()};
-    final JsonRpcRequest request = new JsonRpcRequest("1", "eea_getTransactionReceipt", params);
+    final JsonRpcRequest request = new JsonRpcRequest("1", "priv_getTransactionReceipt", params);
 
     final JsonRpcSuccessResponse response =
-        (JsonRpcSuccessResponse) eeaGetTransactionReceipt.response(request);
+        (JsonRpcSuccessResponse) prevGetTransactionReceipt.response(request);
     final PrivateTransactionReceiptResult result =
         (PrivateTransactionReceiptResult) response.getResult();
 
@@ -197,13 +196,13 @@ public class EeaGetTransactionReceiptTest {
   public void markerTransactionNotAvailableResultsInNullResponse() {
     when(blockchain.getTransactionLocation(nullable(Hash.class))).thenReturn(Optional.empty());
 
-    final EeaGetTransactionReceipt eeaGetTransactionReceipt =
-        new EeaGetTransactionReceipt(blockchainQueries, enclave, parameters, privacyParameters);
+    final PrevGetTransactionReceipt prevGetTransactionReceipt =
+        new PrevGetTransactionReceipt(blockchainQueries, enclave, parameters, privacyParameters);
     final Object[] params = new Object[] {transaction.hash()};
-    final JsonRpcRequest request = new JsonRpcRequest("1", "eea_getTransactionReceipt", params);
+    final JsonRpcRequest request = new JsonRpcRequest("1", "priv_getTransactionReceipt", params);
 
     final JsonRpcSuccessResponse response =
-        (JsonRpcSuccessResponse) eeaGetTransactionReceipt.response(request);
+        (JsonRpcSuccessResponse) prevGetTransactionReceipt.response(request);
     final PrivateTransactionReceiptResult result =
         (PrivateTransactionReceiptResult) response.getResult();
 
@@ -212,13 +211,13 @@ public class EeaGetTransactionReceiptTest {
 
   @Test
   public void enclaveConnectionIssueThrowsRuntimeException() {
-    final EeaGetTransactionReceipt eeaGetTransactionReceipt =
-        new EeaGetTransactionReceipt(
+    final PrevGetTransactionReceipt prevGetTransactionReceipt =
+        new PrevGetTransactionReceipt(
             blockchainQueries, failingEnclave, parameters, privacyParameters);
     final Object[] params = new Object[] {transaction.hash()};
-    final JsonRpcRequest request = new JsonRpcRequest("1", "eea_getTransactionReceipt", params);
+    final JsonRpcRequest request = new JsonRpcRequest("1", "priv_getTransactionReceipt", params);
 
-    final Throwable t = catchThrowable(() -> eeaGetTransactionReceipt.response(request));
+    final Throwable t = catchThrowable(() -> prevGetTransactionReceipt.response(request));
     assertThat(t).isInstanceOf(RuntimeException.class);
   }
 }

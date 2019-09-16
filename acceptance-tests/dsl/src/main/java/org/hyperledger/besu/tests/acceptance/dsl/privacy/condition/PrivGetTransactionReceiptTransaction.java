@@ -24,11 +24,11 @@ import org.web3j.protocol.exceptions.TransactionException;
 import org.web3j.protocol.pantheon.Pantheon;
 import org.web3j.tx.response.PollingPrivateTransactionReceiptProcessor;
 
-public class EeaGetTransactionReceiptTransaction implements Transaction<PrivateTransactionReceipt> {
+public class PrivGetTransactionReceiptTransaction implements Transaction<PrivateTransactionReceipt> {
 
   private final String transactionHash;
 
-  public EeaGetTransactionReceiptTransaction(final String transactionHash) {
+  public PrivGetTransactionReceiptTransaction(final String transactionHash) {
     this.transactionHash = transactionHash;
   }
 
