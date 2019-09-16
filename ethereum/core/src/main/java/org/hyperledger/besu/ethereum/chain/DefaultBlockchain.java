@@ -225,9 +225,7 @@ public class DefaultBlockchain implements MutableBlockchain {
     if (blockIsAlreadyTracked(block)) {
       return;
     }
-    if (!blockIsConnected(block)) {
-      throw new IllegalArgumentException("Attempt to append non-connected block.");
-    }
+    checkArgument(blockIsConnected(block), "Attempt to append non-connected block.");
 
     final BlockAddedEvent blockAddedEvent = appendBlockHelper(block, receipts);
     notifyBlockAdded(blockAddedEvent);
