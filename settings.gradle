@@ -12,7 +12,8 @@
  */
 
 rootProject.name='besu'
-include 'acceptance-tests'
+include 'acceptance-tests:dsl'
+include 'acceptance-tests:tests'
 include 'config'
 include 'consensus:clique'
 include 'consensus:common'
