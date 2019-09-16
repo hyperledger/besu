@@ -80,12 +80,14 @@ public class PeerTable {
    * @param peer The peer to query.
    * @return The stored representation.
    */
-  public Optional<DiscoveryPeer> get(final PeerId peer) {
+  public Optional<DiscoveryPeer> get(final DiscoveryPeer peer) {
     if (!idBloom.mightContain(peer.getId())) {
       return Optional.empty();
     }
     final int distance = distanceFrom(peer);
-    return table[distance].getAndTouch(peer.getId());
+    return table[distance]
+        .getAndTouch(peer.getId())
+        .filter(known -> known.discoveryEndpointMatches(peer));
   }
 
   /**
