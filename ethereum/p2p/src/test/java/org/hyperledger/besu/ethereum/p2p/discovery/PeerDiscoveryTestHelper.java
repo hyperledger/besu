@@ -243,7 +243,7 @@ public class PeerDiscoveryTestHelper {
     }
 
     public MockPeerDiscoveryAgent build() {
-      final int port = bindPort.orElse(nextAvailablePort.incrementAndGet());
+      final int port = bindPort.orElseGet(nextAvailablePort::incrementAndGet);
       final DiscoveryConfiguration config = new DiscoveryConfiguration();
       config.setBootnodes(bootnodes);
       config.setAdvertisedHost(advertisedHost);
