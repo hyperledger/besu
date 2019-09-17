@@ -405,8 +405,8 @@ public class JsonRpcHttpService {
     if (response.getType() == JsonRpcResponseType.NONE) {
       return EMPTY_RESPONSE;
     }
-
-    return Json.encodePrettily(response);
+    // external mining software throws error with JSON line breaks
+    return Json.encode(response);
   }
 
   @SuppressWarnings("rawtypes")

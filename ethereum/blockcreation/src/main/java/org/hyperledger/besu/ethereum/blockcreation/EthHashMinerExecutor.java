@@ -30,6 +30,7 @@ import java.util.function.Function;
 public class EthHashMinerExecutor extends AbstractMinerExecutor<Void, EthHashBlockMiner> {
 
   private volatile Optional<Address> coinbase;
+  private Boolean externalMining;
 
   public EthHashMinerExecutor(
       final ProtocolContext<Void> protocolContext,
@@ -37,7 +38,8 @@ public class EthHashMinerExecutor extends AbstractMinerExecutor<Void, EthHashBlo
       final ProtocolSchedule<Void> protocolSchedule,
       final PendingTransactions pendingTransactions,
       final MiningParameters miningParams,
-      final AbstractBlockScheduler blockScheduler) {
+      final AbstractBlockScheduler blockScheduler,
+      final Boolean externalMining) {
     super(
         protocolContext,
         executorService,
@@ -46,6 +48,7 @@ public class EthHashMinerExecutor extends AbstractMinerExecutor<Void, EthHashBlo
         miningParams,
         blockScheduler);
     this.coinbase = miningParams.getCoinbase();
+    this.externalMining = externalMining;
   }
 
   @Override
@@ -55,6 +58,9 @@ public class EthHashMinerExecutor extends AbstractMinerExecutor<Void, EthHashBlo
       throw new CoinbaseNotSetException("Unable to start mining without a coinbase.");
     } else {
       final EthHashBlockMiner currentRunningMiner = createMiner(observers, parentHeader);
+      if (externalMining) {
+        currentRunningMiner.setExternalMining();
+      }
       executorService.execute(currentRunningMiner);
       return currentRunningMiner;
     }

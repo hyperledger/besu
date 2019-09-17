@@ -545,6 +545,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Boolean isMiningEnabled = false;
 
   @Option(
+      names = {"--external-mining-enabled"},
+      description = "Set if node will perform mining (default: ${DEFAULT-VALUE})")
+  private final Boolean isExternalMiningEnabled = false;
+
+  @Option(
       names = {"--miner-coinbase"},
       description =
           "Account to which mining rewards are paid. You must specify a valid coinbase if "
@@ -958,6 +963,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         !isMiningEnabled,
         asList("--miner-coinbase", "--min-gas-price", "--miner-extra-data"));
 
+    // Check that External Mining Software can access Besu
+    CommandLineUtils.checkOptionDependencies(
+        logger,
+        commandLine,
+        "--external-mining-enabled",
+        !isExternalMiningEnabled,
+        asList("--rpc-http-cors-origins", "--rpc-http-enabled"));
+
     CommandLineUtils.checkOptionDependencies(
         logger,
         commandLine,
@@ -1037,7 +1050,19 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           .ethProtocolConfiguration(ethProtocolOptions.toDomainObject())
           .dataDirectory(dataDir())
           .miningParameters(
-              new MiningParameters(coinbase, minTransactionGasPrice, extraData, isMiningEnabled))
+              isExternalMiningEnabled
+                  ? new MiningParameters(
+                      Address.ZERO,
+                      minTransactionGasPrice,
+                      extraData,
+                      isExternalMiningEnabled,
+                      isExternalMiningEnabled)
+                  : new MiningParameters(
+                      coinbase,
+                      minTransactionGasPrice,
+                      extraData,
+                      isMiningEnabled,
+                      isExternalMiningEnabled))
           .transactionPoolConfiguration(buildTransactionPoolConfiguration())
           .nodePrivateKeyFile(nodePrivateKeyFile())
           .metricsSystem(metricsSystem.get())

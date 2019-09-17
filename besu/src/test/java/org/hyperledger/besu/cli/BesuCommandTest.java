@@ -759,6 +759,7 @@ public class BesuCommandTest extends CommandTestAbstract {
                 Address.fromHexString(expectedCoinbase),
                 DefaultCommandValues.DEFAULT_MIN_TRANSACTION_GAS_PRICE,
                 DefaultCommandValues.DEFAULT_EXTRA_DATA,
+                false,
                 false));
   }
 
@@ -777,6 +778,7 @@ public class BesuCommandTest extends CommandTestAbstract {
                 Address.fromHexString(expectedCoinbase),
                 DefaultCommandValues.DEFAULT_MIN_TRANSACTION_GAS_PRICE,
                 DefaultCommandValues.DEFAULT_EXTRA_DATA,
+                false,
                 false));
   }
 

@@ -25,16 +25,19 @@ public class MiningParameters {
   private final Wei minTransactionGasPrice;
   private final BytesValue extraData;
   private final Boolean enabled;
+  private final Boolean externalMiningEnabled;
 
   public MiningParameters(
       final Address coinbase,
       final Wei minTransactionGasPrice,
       final BytesValue extraData,
-      final Boolean enabled) {
+      final Boolean enabled,
+      final Boolean externalMiningEnabled) {
     this.coinbase = Optional.ofNullable(coinbase);
     this.minTransactionGasPrice = minTransactionGasPrice;
     this.extraData = extraData;
     this.enabled = enabled;
+    this.externalMiningEnabled = externalMiningEnabled;
   }
 
   public Optional<Address> getCoinbase() {
@@ -51,6 +54,10 @@ public class MiningParameters {
 
   public Boolean isMiningEnabled() {
     return enabled;
+  }
+
+  public Boolean isExternalMiningEnabled() {
+    return externalMiningEnabled;
   }
 
   @Override
