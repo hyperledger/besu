@@ -10,17 +10,16 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package org.hyperledger.besu.ethereum.eth.peervalidation;
+package org.hyperledger.besu.ethereum.eth.manager;
 
-import org.hyperledger.besu.ethereum.eth.manager.EthContext;
-import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 
 import java.time.Duration;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class PeerValidatorRunner {
+class PeerValidatorRunner {
   private static final Logger LOG = LogManager.getLogger();
   protected final EthContext ethContext;
   private final PeerValidator peerValidator;
@@ -32,7 +31,7 @@ public class PeerValidatorRunner {
     ethContext.getEthPeers().subscribeConnect(this::checkPeer);
   }
 
-  public static void runValidator(final EthContext ethContext, final PeerValidator peerValidator) {
+  static void runValidator(final EthContext ethContext, final PeerValidator peerValidator) {
     new PeerValidatorRunner(ethContext, peerValidator);
   }
 
@@ -45,6 +44,8 @@ public class PeerValidatorRunner {
                 if (err != null || !validated) {
                   // Disconnect invalid peer
                   disconnectPeer(ethPeer);
+                } else {
+                  ethPeer.markValidated(peerValidator);
                 }
               });
     } else if (!ethPeer.isDisconnected()) {

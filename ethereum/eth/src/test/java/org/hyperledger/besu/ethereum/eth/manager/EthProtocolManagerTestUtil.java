@@ -132,39 +132,58 @@ public class EthProtocolManagerTestUtil {
         EthProtocol.ETH63, new DefaultMessage(peer.getPeerConnection(), message));
   }
 
+  public static RespondingEthPeer.Builder peerBuilder() {
+    return RespondingEthPeer.builder();
+  }
+
   public static RespondingEthPeer createPeer(
       final EthProtocolManager ethProtocolManager, final UInt256 td) {
-    return RespondingEthPeer.create(ethProtocolManager, td);
+    return RespondingEthPeer.builder()
+        .ethProtocolManager(ethProtocolManager)
+        .totalDifficulty(td)
+        .build();
   }
 
   public static RespondingEthPeer createPeer(
       final EthProtocolManager ethProtocolManager, final UInt256 td, final long estimatedHeight) {
-    return RespondingEthPeer.create(ethProtocolManager, td, estimatedHeight);
+    return RespondingEthPeer.builder()
+        .ethProtocolManager(ethProtocolManager)
+        .totalDifficulty(td)
+        .estimatedHeight(estimatedHeight)
+        .build();
   }
 
   public static RespondingEthPeer createPeer(
       final EthProtocolManager ethProtocolManager,
       final UInt256 td,
       final OptionalLong estimatedHeight) {
-    return RespondingEthPeer.create(ethProtocolManager, td, estimatedHeight);
+    return RespondingEthPeer.builder()
+        .ethProtocolManager(ethProtocolManager)
+        .totalDifficulty(td)
+        .estimatedHeight(estimatedHeight)
+        .build();
   }
 
   public static RespondingEthPeer createPeer(final EthProtocolManager ethProtocolManager) {
-    return RespondingEthPeer.create(ethProtocolManager, UInt256.of(1000L));
+    return RespondingEthPeer.builder().ethProtocolManager(ethProtocolManager).build();
   }
 
   public static RespondingEthPeer createPeer(
       final EthProtocolManager ethProtocolManager, final long estimatedHeight) {
-    return RespondingEthPeer.create(ethProtocolManager, UInt256.of(1000L), estimatedHeight);
+    return RespondingEthPeer.builder()
+        .ethProtocolManager(ethProtocolManager)
+        .estimatedHeight(estimatedHeight)
+        .build();
   }
 
   public static RespondingEthPeer createPeer(
       final EthProtocolManager ethProtocolManager, final Blockchain blockchain) {
     final ChainHead head = blockchain.getChainHead();
-    return RespondingEthPeer.create(
-        ethProtocolManager,
-        head.getHash(),
-        head.getTotalDifficulty(),
-        blockchain.getChainHeadBlockNumber());
+    return RespondingEthPeer.builder()
+        .ethProtocolManager(ethProtocolManager)
+        .totalDifficulty(head.getTotalDifficulty())
+        .chainHeadHash(head.getHash())
+        .estimatedHeight(blockchain.getChainHeadBlockNumber())
+        .build();
   }
 }

@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.eth.messages.GetBlockBodiesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetBlockHeadersMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetNodeDataMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetReceiptsMessage;
+import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNotConnected;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
@@ -30,9 +31,11 @@ import org.hyperledger.besu.util.uint.UInt256;
 
 import java.time.Clock;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -66,11 +69,13 @@ public class EthPeer {
 
   private final AtomicReference<Consumer<EthPeer>> onStatusesExchanged = new AtomicReference<>();
   private final PeerReputation reputation = new PeerReputation();
+  private final Map<PeerValidator, Optional<Boolean>> validationStatus = new HashMap<>();
 
   EthPeer(
       final PeerConnection connection,
       final String protocolName,
       final Consumer<EthPeer> onStatusesExchanged,
+      final List<PeerValidator> peerValidators,
       final Clock clock) {
     this.connection = connection;
     this.protocolName = protocolName;
@@ -86,6 +91,30 @@ public class EthPeer {
                 }));
     this.chainHeadState = new ChainState();
     this.onStatusesExchanged.set(onStatusesExchanged);
+    for (PeerValidator peerValidator : peerValidators) {
+      validationStatus.put(peerValidator, Optional.empty());
+    }
+  }
+
+  void markValidated(final PeerValidator validator) {
+    if (!validationStatus.containsKey(validator)) {
+      throw new IllegalArgumentException("Attempt to update unknown validation status");
+    }
+    validationStatus.put(validator, Optional.of(true));
+  }
+
+  /**
+   * Check if this peer has been fully validated.
+   *
+   * @return {@code true} if all peer validation logic has run and successfully validated this peer
+   */
+  public boolean isFullyValidated() {
+    for (Optional<Boolean> value : validationStatus.values()) {
+      if (value.isEmpty() || !value.get()) {
+        return false;
+      }
+    }
+    return true;
   }
 
   public boolean isDisconnected() {
