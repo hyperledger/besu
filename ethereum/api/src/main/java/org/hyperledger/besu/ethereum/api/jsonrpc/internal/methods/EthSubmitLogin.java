@@ -26,8 +26,10 @@ public class EthSubmitLogin implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequest req) {
-    // Confirm login request. Mining pools use this method for adding new users/rigs to their database for payouts and fees
-    // Here, this just confirms connection requests by any mining software, allowing mining software to start work
+    // Confirm login request. Mining pools use this method for adding new users/rigs to their
+    // database for payouts and fees
+    // Here, this just confirms connection requests by any mining software, allowing mining software
+    // to start work
     boolean result = true;
     return new JsonRpcSuccessResponse(req.getId(), result);
   }
