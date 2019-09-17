@@ -63,6 +63,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthNewPendingT
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthProtocolVersion;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthSendRawTransaction;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthSendTransaction;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthSubmitLogin;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthSyncing;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthUninstallFilter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -249,6 +250,7 @@ public class JsonRpcMethodsFactory {
           new EthGetStorageAt(blockchainQueries, parameter),
           new EthSendRawTransaction(transactionPool, parameter),
           new EthSendTransaction(),
+          new EthSubmitLogin(),
           new EthEstimateGas(
               blockchainQueries,
               new TransactionSimulator(

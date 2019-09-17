@@ -33,6 +33,8 @@ public class EthGetWork implements JsonRpcMethod {
 
   private final MiningCoordinator miner;
   private static final Logger LOG = getLogger();
+  private Boolean solverWasPresent = false;
+  private String[] storedResult;
 
   public EthGetWork(final MiningCoordinator miner) {
     this.miner = miner;
@@ -54,7 +56,11 @@ public class EthGetWork implements JsonRpcMethod {
         "0x" + BaseEncoding.base16().lowerCase().encode(dagSeed),
         rawResult.getTarget().toHexString()
       };
+      solverWasPresent = true;
+      storedResult = result;
       return new JsonRpcSuccessResponse(req.getId(), result);
+    } else if (solverWasPresent) {
+      return new JsonRpcSuccessResponse(req.getId(), storedResult);
     } else {
       LOG.trace("Mining is not operational, eth_getWork request cannot be processed");
       return new JsonRpcErrorResponse(req.getId(), JsonRpcError.NO_MINING_WORK_FOUND);
