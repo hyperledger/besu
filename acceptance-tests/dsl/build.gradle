@@ -42,6 +42,4 @@ dependencies {
   implementation 'tech.pegasys.ethsigner.internal:core'
   implementation 'tech.pegasys.ethsigner.internal:file-based'
   implementation 'tech.pegasys.ethsigner.internal:signing-api'
-
-
 }

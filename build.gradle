@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ConsenSys AG.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -9,6 +9,8 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 import net.ltgt.gradle.errorprone.CheckSeverity
@@ -90,6 +92,7 @@ allprojects {
   apply plugin: 'io.spring.dependency-management'
   apply plugin: 'jacoco'
   apply plugin: 'net.ltgt.errorprone'
+  apply plugin: 'groovy'
   apply from: "${rootDir}/gradle/versions.gradle"
   apply from: "${rootDir}/gradle/check-licenses.gradle"
 
@@ -145,7 +148,6 @@ allprojects {
       importOrder 'org.hyperledger', 'java', ''
       trimTrailingWhitespace()
       endWithNewline()
-      licenseHeaderFile "${rootDir}/gradle/spotless.java.license"
     }
     groovyGradle {
       target '*.gradle'
@@ -157,11 +159,9 @@ allprojects {
     // Below this line are currently only license header tasks
     format 'groovy', {
       target '**/src/*/grovy/**/*.groovy'
-      licenseHeaderFile "${rootDir}/gradle/spotless.java.license", 'import'
     }
 
     // Currently disabled due to referencetest issues
-
     //  format 'bash', {
     //    target fileTree('.') {
     //      include '**/*.sh'
@@ -462,8 +462,10 @@ startScripts {
   }
 }
 
+
 dependencies {
   compile project(':besu')
+  compile localGroovy()
   errorprone 'com.google.errorprone:error_prone_core'
 }
 
@@ -532,6 +534,18 @@ task distDocker(type: Exec) {
   executable "sh"
   args "-c", "docker build --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${getCheckedOutGitCommitHash()} -t ${image} ."
 }
+
+task checkSpdxHeader(type: JavaExec) {
+  description 'Check SPDX License Header'
+  main = 'org.hyperledger.CheckSpdxHeader'
+  classpath = sourceSets.main.runtimeClasspath
+  args "${projectDir}"
+  systemProperty "checkSpdxHeader.rootPath", "${projectDir}"
+  systemProperty "checkSpdxHeader.spdxHeader", "* SPDX-License-Identifier: Apache-2.0"
+  systemProperty "checkSpdxHeader.filesRegex", ".*.java"
+  systemProperty "checkSpdxHeader.excludeRegex", "(.*generalstate/GeneralStateRegressionReferenceTest.*)|(.*generalstate/GeneralStateReferenceTest.*)"
+}
+
 
 task jacocoRootReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
   additionalSourceDirs.from files(subprojects.sourceSets.main.allSource.srcDirs)
