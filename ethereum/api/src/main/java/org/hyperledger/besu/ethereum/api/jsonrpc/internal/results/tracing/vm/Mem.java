@@ -17,6 +17,10 @@ public class Mem {
   private String data;
   private int off;
 
+  public Mem(final String data) {
+    this(data, 0);
+  }
+
   public Mem(final String data, final int off) {
     this.data = data;
     this.off = off;
