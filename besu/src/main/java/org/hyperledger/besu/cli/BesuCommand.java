@@ -545,6 +545,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Boolean isMiningEnabled = false;
 
   @Option(
+      names = {"--gpu-mining-enabled"},
+      description = "Set if node will perform mining (default: ${DEFAULT-VALUE})")
+  private final Boolean isGpuMiningEnabled = false;
+
+  @Option(
       names = {"--miner-coinbase"},
       description =
           "Account to which mining rewards are paid. You must specify a valid coinbase if "
@@ -958,6 +963,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         !isMiningEnabled,
         asList("--miner-coinbase", "--min-gas-price", "--miner-extra-data"));
 
+    // Check that GPU Mining Software can access Besu
+    CommandLineUtils.checkOptionDependencies(
+        logger,
+        commandLine,
+        "--gpu-mining-enabled",
+        !isMiningEnabled,
+        asList("--rpc-http-cors-origins", "--rpc-http-enabled"));
+    
     CommandLineUtils.checkOptionDependencies(
         logger,
         commandLine,
@@ -1031,23 +1044,44 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   public BesuControllerBuilder<?> getControllerBuilder() {
     try {
       addConfigurationService();
-      return controllerBuilderFactory
-          .fromEthNetworkConfig(updateNetworkConfig(getNetwork()), genesisConfigOverrides)
-          .synchronizerConfiguration(buildSyncConfig())
-          .ethProtocolConfiguration(ethProtocolOptions.toDomainObject())
-          .dataDirectory(dataDir())
-          .miningParameters(
-              new MiningParameters(coinbase, minTransactionGasPrice, extraData, isMiningEnabled))
-          .transactionPoolConfiguration(buildTransactionPoolConfiguration())
-          .nodePrivateKeyFile(nodePrivateKeyFile())
-          .metricsSystem(metricsSystem.get())
-          .privacyParameters(privacyParameters())
-          .clock(Clock.systemUTC())
-          .isRevertReasonEnabled(isRevertReasonEnabled)
-          .storageProvider(keyStorageProvider(keyValueStorageName))
-          .isPruningEnabled(isPruningEnabled)
-          .pruningConfiguration(buildPruningConfiguration())
-          .genesisConfigOverrides(genesisConfigOverrides);
+
+      if (isGpuMiningEnabled) {
+        return controllerBuilderFactory
+            .fromEthNetworkConfig(updateNetworkConfig(getNetwork()), genesisConfigOverrides)
+            .synchronizerConfiguration(buildSyncConfig())
+            .ethProtocolConfiguration(ethProtocolOptions.toDomainObject())
+            .dataDirectory(dataDir())
+            .miningParameters(
+                new MiningParameters(Address.ZERO, minTransactionGasPrice, extraData, isGpuMiningEnabled))
+            .transactionPoolConfiguration(buildTransactionPoolConfiguration())
+            .nodePrivateKeyFile(nodePrivateKeyFile())
+            .metricsSystem(metricsSystem.get())
+            .privacyParameters(privacyParameters())
+            .clock(Clock.systemUTC())
+            .isRevertReasonEnabled(isRevertReasonEnabled)
+            .storageProvider(keyStorageProvider(keyValueStorageName))
+            .isPruningEnabled(isPruningEnabled)
+            .pruningConfiguration(buildPruningConfiguration())
+            .genesisConfigOverrides(genesisConfigOverrides);
+      } else {
+        return controllerBuilderFactory
+            .fromEthNetworkConfig(updateNetworkConfig(getNetwork()), genesisConfigOverrides)
+            .synchronizerConfiguration(buildSyncConfig())
+            .ethProtocolConfiguration(ethProtocolOptions.toDomainObject())
+            .dataDirectory(dataDir())
+            .miningParameters(
+                new MiningParameters(coinbase, minTransactionGasPrice, extraData, isMiningEnabled))
+            .transactionPoolConfiguration(buildTransactionPoolConfiguration())
+            .nodePrivateKeyFile(nodePrivateKeyFile())
+            .metricsSystem(metricsSystem.get())
+            .privacyParameters(privacyParameters())
+            .clock(Clock.systemUTC())
+            .isRevertReasonEnabled(isRevertReasonEnabled)
+            .storageProvider(keyStorageProvider(keyValueStorageName))
+            .isPruningEnabled(isPruningEnabled)
+            .pruningConfiguration(buildPruningConfiguration())
+            .genesisConfigOverrides(genesisConfigOverrides);
+      }
     } catch (final IOException e) {
       throw new ExecutionException(this.commandLine, "Invalid path", e);
     }
