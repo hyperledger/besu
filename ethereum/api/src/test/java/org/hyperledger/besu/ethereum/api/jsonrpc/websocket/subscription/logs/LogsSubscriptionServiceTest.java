@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator.BlockOptions;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.LogTopic;
@@ -380,21 +381,4 @@ public class LogsSubscriptionServiceTest {
         .thenReturn(Lists.newArrayList(subscriptions));
   }
 
-  private static class BlockWithReceipts {
-    private final Block block;
-    private final List<TransactionReceipt> receipts;
-
-    public BlockWithReceipts(final Block block, final List<TransactionReceipt> receipts) {
-      this.block = block;
-      this.receipts = receipts;
-    }
-
-    public Block getBlock() {
-      return block;
-    }
-
-    public List<TransactionReceipt> getReceipts() {
-      return receipts;
-    }
-  }
 }
