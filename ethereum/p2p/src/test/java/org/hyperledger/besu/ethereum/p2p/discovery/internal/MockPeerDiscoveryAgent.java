@@ -34,6 +34,7 @@ public class MockPeerDiscoveryAgent extends PeerDiscoveryAgent {
   // The set of known agents operating on the network
   private final Map<BytesValue, MockPeerDiscoveryAgent> agentNetwork;
   private final Deque<IncomingPacket> incomingPackets = new ArrayDeque<>();
+  private boolean isRunning = false;
 
   public MockPeerDiscoveryAgent(
       final KeyPair keyPair,
@@ -65,9 +66,9 @@ public class MockPeerDiscoveryAgent extends PeerDiscoveryAgent {
 
   @Override
   protected CompletableFuture<InetSocketAddress> listenForConnections() {
+    isRunning = true;
     // Skip network setup for tests
-    InetSocketAddress address =
-        new InetSocketAddress(config.getAdvertisedHost(), config.getBindPort());
+    InetSocketAddress address = new InetSocketAddress(config.getBindHost(), config.getBindPort());
     return CompletableFuture.completedFuture(address);
   }
 
@@ -75,15 +76,35 @@ public class MockPeerDiscoveryAgent extends PeerDiscoveryAgent {
   protected CompletableFuture<Void> sendOutgoingPacket(
       final DiscoveryPeer toPeer, final Packet packet) {
     CompletableFuture<Void> result = new CompletableFuture<>();
+    if (!this.isRunning) {
+      result.completeExceptionally(new Exception("Attempt to send message from an inactive agent"));
+    }
+
     MockPeerDiscoveryAgent toAgent = agentNetwork.get(toPeer.getId());
     if (toAgent == null) {
       result.completeExceptionally(
           new Exception(
               "Attempt to send to unknown peer.  Agents must be constructed through PeerDiscoveryTestHelper."));
+      return result;
+    }
+
+    final DiscoveryPeer agentPeer = toAgent.getAdvertisedPeer().get();
+    if (!toPeer.getEndpoint().getHost().equals(agentPeer.getEndpoint().getHost())) {
+      LOG.warn(
+          "Attempt to send packet to discovery peer using the wrong host address.  Sending to {}, but discovery peer is listening on {}",
+          toPeer.getEndpoint().getHost(),
+          agentPeer.getEndpoint().getHost());
+    } else if (toPeer.getEndpoint().getUdpPort() != agentPeer.getEndpoint().getUdpPort()) {
+      LOG.warn(
+          "Attempt to send packet to discovery peer using the wrong udp port.  Sending to {}, but discovery peer is listening on {}",
+          toPeer.getEndpoint().getUdpPort(),
+          agentPeer.getEndpoint().getUdpPort());
+    } else if (!toAgent.isRunning) {
+      LOG.warn("Attempt to send packet to an inactive peer.");
     } else {
       toAgent.processIncomingPacket(this, packet);
-      result.complete(null);
     }
+    result.complete(null);
     return result;
   }
 
@@ -99,6 +120,7 @@ public class MockPeerDiscoveryAgent extends PeerDiscoveryAgent {
 
   @Override
   public CompletableFuture<?> stop() {
+    isRunning = false;
     return CompletableFuture.completedFuture(null);
   }
 
