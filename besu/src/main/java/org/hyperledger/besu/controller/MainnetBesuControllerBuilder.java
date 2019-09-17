@@ -56,7 +56,8 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder<Void> {
             new DefaultBlockScheduler(
                 MainnetBlockHeaderValidator.MINIMUM_SECONDS_SINCE_PARENT,
                 MainnetBlockHeaderValidator.TIMESTAMP_TOLERANCE_S,
-                clock));
+                clock),
+            miningParameters.isGpuMiningEnabled());
 
     final EthHashMiningCoordinator miningCoordinator =
         new EthHashMiningCoordinator(protocolContext.getBlockchain(), executor, syncState);
