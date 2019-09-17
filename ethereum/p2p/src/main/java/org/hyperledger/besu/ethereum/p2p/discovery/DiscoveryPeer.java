@@ -109,6 +109,11 @@ public class DiscoveryPeer extends DefaultPeer {
     return endpoint;
   }
 
+  public boolean discoveryEndpointMatches(final DiscoveryPeer peer) {
+    return peer.getEndpoint().getHost().equals(endpoint.getHost())
+        && peer.getEndpoint().getUdpPort() == endpoint.getUdpPort();
+  }
+
   @Override
   public String toString() {
     final StringBuilder sb = new StringBuilder("DiscoveryPeer{");
