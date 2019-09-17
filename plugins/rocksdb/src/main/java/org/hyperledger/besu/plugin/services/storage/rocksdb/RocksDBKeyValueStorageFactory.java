@@ -120,7 +120,9 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
         }
     }
   }
-
+  protected Path storagePath(final BesuConfiguration commonConfiguration) {
+	    return commonConfiguration.getStoragePath();
+	  }
   private void init(final BesuConfiguration commonConfiguration) {
     try {
       databaseVersion = readDatabaseVersion(commonConfiguration);
@@ -131,7 +133,7 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
     isSegmentIsolationSupported = databaseVersion >= 1;
     rocksDBConfiguration =
         RocksDBConfigurationBuilder.from(configuration.get())
-            .databaseDir(commonConfiguration.getStoragePath())
+            .databaseDir(storagePath(commonConfiguration))
             .build();
   }
 

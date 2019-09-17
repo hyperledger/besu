@@ -36,8 +36,8 @@ public class RocksDBKeyValuePrivacyStorageFactory extends RocksDBKeyValueStorage
   public String getName() {
     return "rocksdb-privacy";
   }
-
+@Override
   protected Path storagePath(final BesuConfiguration commonConfiguration) {
-    return commonConfiguration.getStoragePath().resolve(PRIVATE_DATABASE_PATH);
+    return super.storagePath(commonConfiguration).resolve(PRIVATE_DATABASE_PATH);
   }
 }
