@@ -170,10 +170,9 @@ public class VmTraceGenerator {
    */
   private static Optional<TraceFrame> findFrameAfterReturn(
       final TransactionTrace trace, final TraceFrame callFrame, final int callIndex) {
-    final int numberOfFrames = trace.getTraceFrames().size();
-    for (int i = callIndex; i < numberOfFrames; i++) {
+    for (int i = callIndex; i < trace.getTraceFrames().size(); i++) {
       final TraceFrame frame = trace.getTraceFrames().get(i);
-      if ("RETURN".equals(frame.getOpcode()) && (i + 1) < numberOfFrames) {
+      if ("RETURN".equals(frame.getOpcode()) && (i + 1) < trace.getTraceFrames().size()) {
         final TraceFrame next = trace.getTraceFrames().get(i + 1);
         if (next.getPc() == (callFrame.getPc() + 1) && next.getDepth() == callFrame.getDepth()) {
           return Optional.of(next);
