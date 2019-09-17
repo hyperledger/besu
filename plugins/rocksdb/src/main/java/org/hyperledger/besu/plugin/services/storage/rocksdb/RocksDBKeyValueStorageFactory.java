@@ -120,9 +120,11 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
         }
     }
   }
+
   protected Path storagePath(final BesuConfiguration commonConfiguration) {
-	    return commonConfiguration.getStoragePath();
-	  }
+    return commonConfiguration.getStoragePath();
+  }
+
   private void init(final BesuConfiguration commonConfiguration) {
     try {
       databaseVersion = readDatabaseVersion(commonConfiguration);

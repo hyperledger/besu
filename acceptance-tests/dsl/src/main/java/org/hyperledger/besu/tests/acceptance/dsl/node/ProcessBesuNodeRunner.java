@@ -234,7 +234,7 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     LOG.info("Creating besu process with params {}", params);
     final ProcessBuilder processBuilder =
         new ProcessBuilder(params)
-            .directory(new File(System.getProperty("user.dir")).getParentFile())
+            .directory(new File(System.getProperty("user.dir")).getParentFile().getParentFile())
             .redirectErrorStream(true)
             .redirectInput(Redirect.INHERIT);
     if (!node.getPlugins().isEmpty()) {

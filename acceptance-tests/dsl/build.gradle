@@ -1,0 +1,45 @@
+dependencies {
+
+  implementation 'org.apache.logging.log4j:log4j-core'
+  implementation 'org.apache.logging.log4j:log4j-slf4j-impl'
+
+  implementation project(':config')
+  implementation project(':consensus:clique')
+  implementation project(':consensus:ibft')
+  implementation project(':crypto')
+  implementation project(':enclave')
+  implementation project(':ethereum:blockcreation')
+  implementation project(':ethereum:core')
+  implementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
+  implementation project(':ethereum:eth')
+  implementation project(':ethereum:api')
+  implementation project(':ethereum:p2p')
+  implementation project(':ethereum:permissioning')
+  implementation project(':ethereum:rlp')
+  implementation project(':metrics:core')
+  implementation project(':besu')
+  implementation project(':plugin-api')
+  implementation project(':plugins:rocksdb')
+  implementation project(':services:kvstore')
+  implementation project(':testutil')
+  implementation project(':util')
+
+  implementation 'com.github.tomakehurst:wiremock-jre8'
+  implementation 'com.google.guava:guava'
+  implementation 'com.squareup.okhttp3:okhttp'
+  implementation 'info.picocli:picocli'
+  implementation 'io.reactivex.rxjava2:rxjava'
+  implementation 'io.vertx:vertx-core'
+  implementation 'junit:junit'
+  implementation 'net.consensys:orion'
+  implementation 'org.apache.logging.log4j:log4j-api'
+  implementation 'org.assertj:assertj-core'
+  implementation 'org.awaitility:awaitility'
+  implementation 'org.java-websocket:Java-WebSocket'
+  implementation 'org.web3j:abi'
+  implementation 'org.web3j:pantheon'
+  implementation 'org.web3j:crypto'
+  implementation 'tech.pegasys.ethsigner.internal:core'
+  implementation 'tech.pegasys.ethsigner.internal:file-based'
+  implementation 'tech.pegasys.ethsigner.internal:signing-api'
+}
