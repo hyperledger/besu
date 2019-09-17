@@ -14,22 +14,13 @@ package org.hyperledger.besu.cli.subcommands.networkcreate;
 
 import static java.lang.String.format;
 import static java.lang.System.currentTimeMillis;
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.Files.createTempDirectory;
-
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Wei;
 
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Path;
 
-import com.fasterxml.jackson.core.JsonParser.Feature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import com.google.common.io.Resources;
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.junit.Before;
@@ -46,24 +37,24 @@ public class NetworkCreateSubCommandTest {
   }
 
   @Test
-  public void jacksonTest() throws IOException {
-    ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-    mapper.configure(Feature.STRICT_DUPLICATE_DETECTION, true);
+  public void jsonTest() throws Exception {
+    generate("/networkcreate/test.json");
+  }
 
-    mapper.registerModule(new Jdk8Module());
+  @Test
+  public void yamlTest() throws Exception {
+    generate("/networkcreate/test.yaml");
+  }
 
-    SimpleModule addressModule = new SimpleModule("CustomAddressSerializer");
-    addressModule.addSerializer(Address.class, new CustomAddressSerializer());
-    mapper.registerModule(addressModule);
+  @Test
+  public void tomlTest() throws Exception {
+    generate("/networkcreate/test.toml");
+  }
 
-    SimpleModule balanceModule = new SimpleModule("CustomBalanceSerializer");
-    balanceModule.addSerializer(Wei.class, new CustomBalanceSerializer());
-    mapper.registerModule(balanceModule);
-
-    final URL initConfigFile = this.getClass().getResource("/networkcreate/test.yaml");
-    final String yaml = Resources.toString(initConfigFile, UTF_8);
-    InitConfiguration initConfig = mapper.readValue(yaml, InitConfiguration.class);
-
+  private void generate(String fileURL) throws Exception {
+    final MapperAdapter mapper = MapperAdapter.getMapper(fileURL);
+    final InitConfiguration initConfig = mapper.map(new TypeReference<>() {
+    });
     initConfig.verify(new InitConfigurationErrorHandler());
     // TODO remove debug print
     System.out.println(mapper.writeValueAsString(initConfig));
