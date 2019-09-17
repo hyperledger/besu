@@ -76,6 +76,13 @@ public interface MutableAccount extends Account {
   void setBalance(Wei value);
 
   /**
+   * Sets whether the contract is lockable.
+   *
+   * @param lockable true if this contract can be locked.
+   */
+  void setLockability(boolean lockable);
+
+  /**
    * Sets the code for the account.
    *
    * @param code the code to set for the account.

@@ -198,7 +198,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
       this.nonce = account.getNonce();
       this.balance = account.getBalance();
       this.version = account.getVersion();
-      this.lockable = account.getLockability();
+      this.lockable = account.isLockable();
 
       this.updatedStorage = new TreeMap<>();
     }

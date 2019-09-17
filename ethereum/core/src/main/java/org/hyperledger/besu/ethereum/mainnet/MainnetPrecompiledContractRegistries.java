@@ -23,6 +23,8 @@ import org.hyperledger.besu.ethereum.mainnet.precompiles.ECRECPrecompiledContrac
 import org.hyperledger.besu.ethereum.mainnet.precompiles.IDPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.RIPEMD160PrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.SHA256PrecompiledContract;
+import org.hyperledger.besu.ethereum.mainnet.precompiles.crosschain.CrossChainSubTransPrecompiledContract;
+import org.hyperledger.besu.ethereum.mainnet.precompiles.crosschain.CrossChainSubViewPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.PrivacyPrecompiledContract;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 
@@ -108,6 +110,22 @@ public abstract class MainnetPrecompiledContractRegistries {
 
     return registry;
   }
+
+  public static PrecompileContractRegistry crosschainPrecompiles(
+          final PrecompiledContractConfiguration precompiledContractConfiguration) {
+    final PrecompileContractRegistry registry = istanbul(precompiledContractConfiguration);
+    registry.put(
+            Address.CROSSCHAIN_SUBTRANS,
+            Account.DEFAULT_VERSION,
+            new CrossChainSubTransPrecompiledContract(precompiledContractConfiguration.getGasCalculator()));
+    registry.put(
+            Address.CROSSCHAIN_SUBVIEW,
+            Account.DEFAULT_VERSION,
+            new CrossChainSubViewPrecompiledContract(precompiledContractConfiguration.getGasCalculator()));
+    return registry;
+  }
+
+
 
   static PrecompileContractRegistry appendPrivacy(
       final PrecompileContractRegistry registry,

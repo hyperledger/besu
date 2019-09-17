@@ -1,7 +1,7 @@
 plugins { id 'java' }
 
 jar {
-  baseName 'besu-crosschain'
+  baseName 'crosschain'
   manifest {
     attributes(
       'Specification-Title': baseName,

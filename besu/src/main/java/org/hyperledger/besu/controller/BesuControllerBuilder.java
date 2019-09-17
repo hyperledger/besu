@@ -19,6 +19,7 @@ import static org.hyperledger.besu.controller.KeyPairUtil.loadKeyPair;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.crosschain.CrosschainProcessor;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethodFactory;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -27,6 +28,7 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
+import org.hyperledger.besu.ethereum.crosschain.SubordinateViewCoordinator;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -43,6 +45,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolFactory;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
+import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.worldstate.MarkSweepPruner;
 import org.hyperledger.besu.ethereum.worldstate.Pruner;
 import org.hyperledger.besu.ethereum.worldstate.PruningConfiguration;
@@ -284,6 +287,13 @@ public abstract class BesuControllerBuilder<C> {
             miningParameters.getMinTransactionGasPrice(),
             transactionPoolConfiguration);
 
+    final int sidechainId = 22;
+    final int numNodes = 5;
+    final TransactionSimulator transactionSimulator = new TransactionSimulator(blockchain, protocolContext.getWorldStateArchive(), protocolSchedule);
+    SubordinateViewCoordinator subordinateViewCoordinator =
+        SubordinateViewCoordinator.createSubordinateViewCoordinatorAndOtherNodes(sidechainId, numNodes, transactionSimulator);
+    CrosschainProcessor crosschainProcessor = new CrosschainProcessor(subordinateViewCoordinator, transactionSimulator, transactionPool);
+
     final MiningCoordinator miningCoordinator =
         createMiningCoordinator(
             protocolSchedule,
@@ -321,7 +331,8 @@ public abstract class BesuControllerBuilder<C> {
           }
         },
         additionalJsonRpcMethodFactory,
-        nodeKeys);
+        nodeKeys,
+        crosschainProcessor);
   }
 
   protected void prepForBuild() {}

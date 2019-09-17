@@ -14,6 +14,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.enclave.Enclave;
+import org.hyperledger.besu.ethereum.api.jsonrpc.crosschain.CrosschainProcessor;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.AdminAddPeer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.AdminChangeLogLevel;
@@ -56,11 +57,14 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetUncleCou
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetUncleCountByBlockNumber;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetWork;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthHashrate;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthIsLockable;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthMining;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthNewBlockFilter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthNewFilter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthNewPendingTransactionFilter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthProcessSubordinateView;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthProtocolVersion;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthSendRawCrosschainTransaction;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthSendRawTransaction;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthSendTransaction;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthSyncing;
@@ -159,7 +163,8 @@ public class JsonRpcMethodsFactory {
       final PrivacyParameters privacyParameters,
       final JsonRpcConfiguration jsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
-      final MetricsConfiguration metricsConfiguration) {
+      final MetricsConfiguration metricsConfiguration,
+      final CrosschainProcessor crosschainProcessor) {
     final BlockchainQueries blockchainQueries =
         new BlockchainQueries(blockchain, worldStateArchive);
     return methods(
@@ -181,7 +186,8 @@ public class JsonRpcMethodsFactory {
         privacyParameters,
         jsonRpcConfiguration,
         webSocketConfiguration,
-        metricsConfiguration);
+        metricsConfiguration,
+        crosschainProcessor);
   }
 
   public Map<String, JsonRpcMethod> methods(
@@ -203,7 +209,8 @@ public class JsonRpcMethodsFactory {
       final PrivacyParameters privacyParameters,
       final JsonRpcConfiguration jsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
-      final MetricsConfiguration metricsConfiguration) {
+      final MetricsConfiguration metricsConfiguration,
+      final CrosschainProcessor crosschainProcessor) {
     final Map<String, JsonRpcMethod> enabledMethods = new HashMap<>();
     if (!rpcApis.isEmpty()) {
       addMethods(enabledMethods, new RpcModules(rpcApis));
@@ -382,6 +389,13 @@ public class JsonRpcMethodsFactory {
                 blockchainQueries, enclave, parameter, privacyParameters));
       }
     }
+
+    if (rpcApis.contains(RpcApis.CC)) {
+      addMethods(enabledMethods, new EthSendRawCrosschainTransaction(crosschainProcessor, parameter));
+      addMethods(enabledMethods, new EthProcessSubordinateView(blockchainQueries, crosschainProcessor, parameter));
+      addMethods(enabledMethods, new EthIsLockable(blockchainQueries, parameter));
+    }
+
 
     return enabledMethods;
   }

@@ -25,7 +25,7 @@ public class TransactionSimulatorResult {
   private final Transaction transaction;
   private final TransactionProcessor.Result result;
 
-  TransactionSimulatorResult(
+  public TransactionSimulatorResult(
       final Transaction transaction, final TransactionProcessor.Result result) {
     this.transaction = transaction;
     this.result = result;
