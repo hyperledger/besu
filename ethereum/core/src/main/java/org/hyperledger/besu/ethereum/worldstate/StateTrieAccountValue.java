@@ -100,7 +100,7 @@ public class StateTrieAccountValue {
 
     if (version != Account.DEFAULT_VERSION) {
       // version of zero is never written out.
-      out.writeLongScalar(version);
+      out.writeIntScalar(version);
     }
 
     out.endList();
