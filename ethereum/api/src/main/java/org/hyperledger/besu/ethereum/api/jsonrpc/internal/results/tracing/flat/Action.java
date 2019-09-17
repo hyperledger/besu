@@ -15,6 +15,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat;
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.Trace;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -73,7 +74,7 @@ public class Action {
     return builder()
         .from(lastContractAddress)
         .to(contractCallAddress.toString())
-        .input(dumpMemory(traceFrame.getMemory()))
+        .input(Trace.dumpMemory(traceFrame.getMemory()))
         .gas(gasRemaining.toHexString())
         .callType("call")
         .value(transaction.getValue().toShortHexString());
@@ -85,18 +86,6 @@ public class Action {
         .address(lastContractAddress)
         .refundAddress(contractCallAddress.toString())
         .balance(balance.toShortHexString());
-  }
-
-  private static String dumpMemory(final Optional<Bytes32[]> memory) {
-    return memory
-        .map(
-            element ->
-                "0x"
-                    .concat(
-                        Arrays.stream(element)
-                            .map(BytesValue::toUnprefixedString)
-                            .collect(Collectors.joining())))
-        .orElse("");
   }
 
   public String getCallType() {

@@ -12,15 +12,44 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing;
 
+import org.hyperledger.besu.util.bytes.Bytes32;
+import org.hyperledger.besu.util.bytes.BytesValue;
+import org.hyperledger.besu.util.bytes.BytesValues;
+
+import java.util.Arrays;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
 /**
  * Trace is a marker interface representing different types of Parity style JSON responses for the
  * trace_replayBlockTransactions RPC API. trace_replayBlockTransactions is part of the trace RPC API
  * group. 3 implementations:
  *
  * <ul>
- *   <li>trace: {@link FlatTrace}
- *   <li>vmTrace:
+ *   <li>trace: {@link
+ *       org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTrace}
+ *   <li>vmTrace: {@link
+ *       org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.vm.VmTrace}
  *   <li>stateDiff:
  * </ul>
  */
-public interface Trace {}
+public interface Trace {
+
+  static String dumpMemory(final Optional<Bytes32[]> maybeMemory) {
+    return maybeMemory.map(Trace::dumpMemory).orElse("");
+  }
+
+  static String dumpMemory(final Bytes32[] memory) {
+    return "0x".concat(dump(memory));
+  }
+
+  static String dump(final Bytes32[] memory) {
+    return Arrays.stream(memory).map(BytesValue::toUnprefixedString).collect(Collectors.joining());
+  }
+
+  static String dumpAndTrimTrailingZeros(final Bytes32[] memory) {
+    final String memoryString = dump(memory);
+    final BytesValue value = BytesValue.fromHexString(memoryString);
+    return "0x".concat(BytesValues.trimTrailingZeros(value).toUnprefixedString());
+  }
+}
