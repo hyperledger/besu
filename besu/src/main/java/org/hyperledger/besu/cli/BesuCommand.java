@@ -1052,7 +1052,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .ethProtocolConfiguration(ethProtocolOptions.toDomainObject())
             .dataDirectory(dataDir())
             .miningParameters(
-                new MiningParameters(Address.ZERO, minTransactionGasPrice, extraData, isGpuMiningEnabled))
+                new MiningParameters(Address.ZERO, minTransactionGasPrice, extraData, isGpuMiningEnabled, isGpuMiningEnabled))
             .transactionPoolConfiguration(buildTransactionPoolConfiguration())
             .nodePrivateKeyFile(nodePrivateKeyFile())
             .metricsSystem(metricsSystem.get())
@@ -1070,7 +1070,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .ethProtocolConfiguration(ethProtocolOptions.toDomainObject())
             .dataDirectory(dataDir())
             .miningParameters(
-                new MiningParameters(coinbase, minTransactionGasPrice, extraData, isMiningEnabled))
+                new MiningParameters(coinbase, minTransactionGasPrice, extraData, isMiningEnabled, isGpuMiningEnabled))
             .transactionPoolConfiguration(buildTransactionPoolConfiguration())
             .nodePrivateKeyFile(nodePrivateKeyFile())
             .metricsSystem(metricsSystem.get())

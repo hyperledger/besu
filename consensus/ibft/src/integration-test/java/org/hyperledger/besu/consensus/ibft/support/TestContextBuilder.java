@@ -257,7 +257,8 @@ public class TestContextBuilder {
             AddressHelpers.ofValue(1),
             Wei.ZERO,
             BytesValue.wrap("Ibft Int tests".getBytes(UTF_8)),
-            true);
+            true,
+            false);
 
     final StubGenesisConfigOptions genesisConfigOptions = new StubGenesisConfigOptions();
     genesisConfigOptions.byzantiumBlock(0);
