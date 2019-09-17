@@ -35,7 +35,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -69,7 +68,7 @@ public class EthPeer {
 
   private final AtomicReference<Consumer<EthPeer>> onStatusesExchanged = new AtomicReference<>();
   private final PeerReputation reputation = new PeerReputation();
-  private final Map<PeerValidator, Optional<Boolean>> validationStatus = new HashMap<>();
+  private final Map<PeerValidator, Boolean> validationStatus = new HashMap<>();
 
   EthPeer(
       final PeerConnection connection,
@@ -92,7 +91,7 @@ public class EthPeer {
     this.chainHeadState = new ChainState();
     this.onStatusesExchanged.set(onStatusesExchanged);
     for (PeerValidator peerValidator : peerValidators) {
-      validationStatus.put(peerValidator, Optional.empty());
+      validationStatus.put(peerValidator, false);
     }
   }
 
@@ -100,7 +99,7 @@ public class EthPeer {
     if (!validationStatus.containsKey(validator)) {
       throw new IllegalArgumentException("Attempt to update unknown validation status");
     }
-    validationStatus.put(validator, Optional.of(true));
+    validationStatus.put(validator, true);
   }
 
   /**
@@ -109,8 +108,8 @@ public class EthPeer {
    * @return {@code true} if all peer validation logic has run and successfully validated this peer
    */
   public boolean isFullyValidated() {
-    for (Optional<Boolean> value : validationStatus.values()) {
-      if (value.isEmpty() || !value.get()) {
+    for (Boolean isValid : validationStatus.values()) {
+      if (!isValid) {
         return false;
       }
     }
