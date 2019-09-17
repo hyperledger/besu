@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -131,7 +132,11 @@ public class EthPeers {
   }
 
   public Optional<EthPeer> bestPeerWithHeightEstimate() {
-    return streamAvailablePeers().filter(p -> p.chainState().hasEstimatedHeight()).max(BEST_CHAIN);
+    return bestPeerMatchingCriteria(p -> p.chainState().hasEstimatedHeight());
+  }
+
+  public Optional<EthPeer> bestPeerMatchingCriteria(final Predicate<EthPeer> matchesCriteria) {
+    return streamAvailablePeers().filter(matchesCriteria::test).max(BEST_CHAIN);
   }
 
   @FunctionalInterface

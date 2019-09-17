@@ -95,7 +95,7 @@ public class EthPeer {
     }
   }
 
-  void markValidated(final PeerValidator validator) {
+  public void markValidated(final PeerValidator validator) {
     if (!validationStatus.containsKey(validator)) {
       throw new IllegalArgumentException("Attempt to update unknown validation status");
     }

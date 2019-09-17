@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.DeterministicEthScheduler.TimeoutPolicy;
+import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.DefaultMessage;
@@ -164,6 +165,19 @@ public class EthProtocolManagerTestUtil {
         .build();
   }
 
+  public static RespondingEthPeer createPeer(
+      final EthProtocolManager ethProtocolManager,
+      final UInt256 td,
+      final OptionalLong estimatedHeight,
+      final PeerValidator... validators) {
+    return RespondingEthPeer.builder()
+        .ethProtocolManager(ethProtocolManager)
+        .totalDifficulty(td)
+        .estimatedHeight(estimatedHeight)
+        .peerValidators(validators)
+        .build();
+  }
+
   public static RespondingEthPeer createPeer(final EthProtocolManager ethProtocolManager) {
     return RespondingEthPeer.builder().ethProtocolManager(ethProtocolManager).build();
   }
@@ -173,6 +187,17 @@ public class EthProtocolManagerTestUtil {
     return RespondingEthPeer.builder()
         .ethProtocolManager(ethProtocolManager)
         .estimatedHeight(estimatedHeight)
+        .build();
+  }
+
+  public static RespondingEthPeer createPeer(
+      final EthProtocolManager ethProtocolManager,
+      final long estimatedHeight,
+      final PeerValidator... validators) {
+    return RespondingEthPeer.builder()
+        .ethProtocolManager(ethProtocolManager)
+        .estimatedHeight(estimatedHeight)
+        .peerValidators(validators)
         .build();
   }
 
