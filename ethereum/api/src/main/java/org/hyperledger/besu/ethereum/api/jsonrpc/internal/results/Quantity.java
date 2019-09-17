@@ -50,6 +50,11 @@ public class Quantity {
     return uint256ToHex(UInt256.of(value));
   }
 
+  public static String create(final boolean value) {
+    int val = (value) ? 1 : 0;
+    return create(val);
+  }
+
   public static String create(final byte[] value) {
     return uint256ToHex(UInt256.wrap(Bytes32.leftPad(BytesValue.wrap(value))));
   }

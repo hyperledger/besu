@@ -20,26 +20,31 @@ import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 /** Represents the raw values associated with an account in the world state trie. */
 public class StateTrieAccountValue {
+  private static final long LOCKABLE_BIT_FLAG = 0x01;
+  private static final long VERSION_FIELD_EXISTS_FLAG = 0x02;
 
   private final long nonce;
   private final Wei balance;
+  private boolean lockable;
   private final Hash storageRoot;
   private final Hash codeHash;
   private final int version;
 
   private StateTrieAccountValue(
-      final long nonce, final Wei balance, final Hash storageRoot, final Hash codeHash) {
-    this(nonce, balance, storageRoot, codeHash, Account.DEFAULT_VERSION);
+      final long nonce, final Wei balance, final boolean lockable, final Hash storageRoot, final Hash codeHash) {
+    this(nonce, balance, lockable, storageRoot, codeHash, Account.DEFAULT_VERSION);
   }
 
   public StateTrieAccountValue(
       final long nonce,
       final Wei balance,
+      final boolean lockable,
       final Hash storageRoot,
       final Hash codeHash,
       final int version) {
     this.nonce = nonce;
     this.balance = balance;
+    this.lockable = lockable;
     this.storageRoot = storageRoot;
     this.codeHash = codeHash;
     this.version = version;
@@ -61,6 +66,15 @@ public class StateTrieAccountValue {
    */
   public Wei getBalance() {
     return balance;
+  }
+
+  /**
+   * Indicates whether this contract can be locked.
+   *
+   * @return true if the contract can be locked.
+   */
+  public boolean isLockable() {
+    return this.lockable;
   }
 
   /**
@@ -98,8 +112,19 @@ public class StateTrieAccountValue {
     out.writeBytesValue(storageRoot);
     out.writeBytesValue(codeHash);
 
-    if (version != Account.DEFAULT_VERSION) {
-      // version of zero is never written out.
+    boolean writerVersion = version != Account.DEFAULT_VERSION;
+    // Only write out the flags if at least one of them is set.
+    long flags = 0;
+    if (this.lockable) {
+      flags |= LOCKABLE_BIT_FLAG;
+      if (writerVersion) {
+        flags |= VERSION_FIELD_EXISTS_FLAG;
+      }
+    }
+    if (flags != 0) {
+      out.writeLongScalar(flags);
+    }
+    if (writerVersion) {
       out.writeLongScalar(version);
     }
 
@@ -114,14 +139,22 @@ public class StateTrieAccountValue {
     final Hash storageRoot = Hash.wrap(in.readBytes32());
     final Hash codeHash = Hash.wrap(in.readBytes32());
     final int version;
+
+    // Only read in the flags if they exist. By default, all flags are "false".
+    boolean isLockable = false;
+    boolean versionExists = false;
     if (!in.isEndOfCurrentList()) {
+      final long flags = in.readLongScalar();
+      isLockable = (flags & LOCKABLE_BIT_FLAG) == LOCKABLE_BIT_FLAG;
+      versionExists = (flags & VERSION_FIELD_EXISTS_FLAG) == VERSION_FIELD_EXISTS_FLAG;
+    }
+    if (versionExists) {
       version = in.readIntScalar();
     } else {
       version = Account.DEFAULT_VERSION;
     }
-
     in.leaveList();
 
-    return new StateTrieAccountValue(nonce, balance, storageRoot, codeHash, version);
+    return new StateTrieAccountValue(nonce, balance, isLockable, storageRoot, codeHash, version);
   }
 }

@@ -177,6 +177,9 @@ public class MessageFrame {
 
     /** A message call message. */
     MESSAGE_CALL,
+
+    /** A contract creation message, and the contract will be a lockable contract. */
+    CONTRACT_CREATION_LOCKABLE_CONTRACT
   }
 
   public static final int DEFAULT_MAX_STACK_SIZE = 1024;

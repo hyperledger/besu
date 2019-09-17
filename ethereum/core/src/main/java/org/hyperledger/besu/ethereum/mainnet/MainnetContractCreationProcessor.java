@@ -116,6 +116,7 @@ public class MainnetContractCreationProcessor extends AbstractMessageProcessor {
     } else {
       contract.incrementBalance(frame.getValue());
       contract.setNonce(initialContractNonce);
+      contract.setLockability(frame.getType() == MessageFrame.Type.CONTRACT_CREATION_LOCKABLE_CONTRACT);
       contract.clearStorage();
       frame.setState(MessageFrame.State.CODE_EXECUTING);
     }

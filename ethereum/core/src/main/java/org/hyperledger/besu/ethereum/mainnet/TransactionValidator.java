@@ -72,6 +72,9 @@ public interface TransactionValidator {
     PRIVATE_TRANSACTION_FAILED,
     PRIVATE_NONCE_TOO_LOW,
     INCORRECT_PRIVATE_NONCE,
-    GAS_PRICE_TOO_LOW;
+    GAS_PRICE_TOO_LOW,
+    // Crosschain Transaction or View Invalid Reasons
+    FAILED_SUBORDINATE_VIEW,
+    UNKNOWN_FAILURE;
   }
 }

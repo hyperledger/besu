@@ -76,6 +76,11 @@ public interface WorldState extends WorldView {
     }
 
     @Override
+    public boolean isLockable() {
+      return accountState.isLockable();
+    }
+
+    @Override
     public BytesValue getCode() {
       return accountState.getCode();
     }

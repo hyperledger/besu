@@ -15,6 +15,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.CrosschainTransaction;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.LogSeries;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
@@ -22,6 +23,7 @@ import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
+import org.hyperledger.besu.ethereum.crosschain.CrosschainThreadLocalDataHolder;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.Code;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
@@ -223,9 +225,15 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
       final Address contractAddress =
           Address.contractAddress(senderAddress, sender.getNonce() - 1L);
 
+      MessageFrame.Type contractCreationType = MessageFrame.Type.CONTRACT_CREATION;
+      if ((transaction instanceof CrosschainTransaction) &&
+              ((CrosschainTransaction)transaction).getType().isLockableContractDeploy()) {
+        contractCreationType = MessageFrame.Type.CONTRACT_CREATION_LOCKABLE_CONTRACT;
+      }
+
       initialFrame =
           MessageFrame.builder()
-              .type(MessageFrame.Type.CONTRACT_CREATION)
+              .type(contractCreationType)
               .messageFrameStack(messageFrameStack)
               .blockchain(blockchain)
               .worldState(worldUpdater.updater())
@@ -279,12 +287,50 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
               .maxStackSize(maxStackSize)
               .isPersistingState(isPersistingState)
               .build();
+
+      // If the contract is lockable, and this is a crosschain transaction, then lock the contract.
+      //TODO if (contract.isLocked()) {
+      // TODO do something to fail the transaction.
+      if (transaction instanceof CrosschainTransaction) {
+        if (contract.isLockable()) {
+          // TODO
+//          contract.lock();
+        }
+        else {
+          // TODO fail because trying to do a cross chain transaction on an unlockable contract
+        }
+      }
+
+
+      //}
     }
+
+
+    // If we are processing a crosschain transaction, then add the transaction context such that
+    // the precompile can access it.
+    if (transaction instanceof CrosschainTransaction) {
+      // Add to thread local storage.
+      CrosschainThreadLocalDataHolder.setCrosschainTransaciton((CrosschainTransaction) transaction);
+      // Rewind to the first subordinate transaction or view for each execution.
+      ((CrosschainTransaction)transaction).resetSubordinateTransactionsAndViewsList();
+    }
+
 
     messageFrameStack.addFirst(initialFrame);
 
     while (!messageFrameStack.isEmpty()) {
       process(messageFrameStack.peekFirst(), operationTracer);
+    }
+
+    // Clean-up steps for crosschain transactions post execution:
+    // Check that all of the subordinate transactions and views were used in the transaction execution.
+    // Remove the transaction context from thread local storage.
+    if (transaction instanceof CrosschainTransaction) {
+      if (((CrosschainTransaction)transaction).getNextSubordinateTransactionOrView() != null) {
+        LOG.trace("Crosschain transaction ended prior to all Subordinate Transactions and Views being consumed.");
+        initialFrame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
+      }
+      CrosschainThreadLocalDataHolder.removeCrosschainTransaction();
     }
 
     if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
@@ -346,6 +392,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
       case MESSAGE_CALL:
         return messageCallProcessor;
       case CONTRACT_CREATION:
+      case CONTRACT_CREATION_LOCKABLE_CONTRACT:
         return contractCreationProcessor;
       default:
         throw new IllegalStateException("Request for unsupported message processor type " + type);

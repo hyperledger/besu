@@ -28,6 +28,7 @@ jar {
 dependencies {
   implementation project(':config')
   implementation project(':crypto')
+  implementation project(':crosschain')
   implementation project(':consensus:common')
   implementation project(':consensus:clique')
   implementation project(':consensus:ibft')

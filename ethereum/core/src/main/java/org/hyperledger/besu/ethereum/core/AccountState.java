@@ -89,6 +89,13 @@ public interface AccountState {
   }
 
   /**
+   * Indicates whether this contract can be locked.
+   *
+   * @return true if the contract can be locked.
+   */
+  boolean isLockable();
+
+  /**
    * The version of the EVM bytecode associated with this account.
    *
    * @return the version of the account code. Default is zero.

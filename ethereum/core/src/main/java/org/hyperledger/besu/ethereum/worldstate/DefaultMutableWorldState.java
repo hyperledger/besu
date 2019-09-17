@@ -121,11 +121,12 @@ public class DefaultMutableWorldState implements MutableWorldState {
   private static BytesValue serializeAccount(
       final long nonce,
       final Wei balance,
+      final boolean lockable,
       final Hash storageRoot,
       final Hash codeHash,
       final int version) {
     final StateTrieAccountValue accountValue =
-        new StateTrieAccountValue(nonce, balance, storageRoot, codeHash, version);
+        new StateTrieAccountValue(nonce, balance, lockable, storageRoot, codeHash, version);
     return RLP.encode(accountValue::writeTo);
   }
 
@@ -251,6 +252,11 @@ public class DefaultMutableWorldState implements MutableWorldState {
     @Override
     public Wei getBalance() {
       return accountValue.getBalance();
+    }
+
+    @Override
+    public boolean isLockable() {
+      return accountValue.isLockable();
     }
 
     Hash getStorageRoot() {
@@ -420,6 +426,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
             serializeAccount(
                 updated.getNonce(),
                 updated.getBalance(),
+                updated.isLockable(),
                 storageRoot,
                 codeHash,
                 updated.getVersion());

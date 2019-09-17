@@ -73,8 +73,18 @@ public class TransactionSimulator {
     return process(callParams, header);
   }
 
+  public Optional<TransactionSimulatorResult> process(
+          final Transaction transaction, final long blockNumber) {
+    final BlockHeader header = blockchain.getBlockHeader(blockNumber).orElse(null);
+    return process(transaction, header);
+  }
+
   public Optional<TransactionSimulatorResult> processAtHead(final CallParameter callParams) {
     return process(callParams, blockchain.getChainHeadHeader());
+  }
+
+  public Optional<TransactionSimulatorResult> processAtHead(final Transaction transaction) {
+    return process(transaction, blockchain.getChainHeadHeader());
   }
 
   private Optional<TransactionSimulatorResult> process(
@@ -110,7 +120,24 @@ public class TransactionSimulator {
             .payload(payload)
             .signature(FAKE_SIGNATURE)
             .build();
+    return process(transaction, header, worldState);
+  }
 
+  private Optional<TransactionSimulatorResult> process(
+          final Transaction transaction, final BlockHeader header) {
+    if (header == null) {
+      return Optional.empty();
+    }
+    final MutableWorldState worldState =
+            worldStateArchive.getMutable(header.getStateRoot()).orElse(null);
+    if (worldState == null) {
+      return Optional.empty();
+    }
+    return process(transaction, header, worldState);
+  }
+
+  private Optional<TransactionSimulatorResult> process(
+          final Transaction transaction, final BlockHeader header, final MutableWorldState worldState) {
     final ProtocolSpec<?> protocolSpec = protocolSchedule.getByBlockNumber(header.getNumber());
 
     final TransactionProcessor transactionProcessor =

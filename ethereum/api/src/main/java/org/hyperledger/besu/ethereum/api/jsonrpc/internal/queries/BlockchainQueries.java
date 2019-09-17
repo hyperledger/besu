@@ -106,6 +106,19 @@ public class BlockchainQueries {
   }
 
   /**
+   * Returns true of the account is lockable at a specific block number. Note that a
+   * contract's lockability status can not change. However, prior to the contract
+   * existing, the address is deemed non-lockable.
+   *
+   * @param address The address of the account being queried.
+   * @param blockNumber The block number being queried.
+   * @return true if the account is lockable.
+   */
+  public Optional <Boolean> isContractLockable(final Address address, final long blockNumber) {
+    return fromAccount(address, blockNumber, Account::isLockable, Boolean.FALSE);
+  }
+
+  /**
    * Retrieves the code associated with the given account at a particular block number.
    *
    * @param address The account address being queried.

@@ -1,0 +1,31 @@
+{
+  "config": {
+    "chainId": "read the crosschains README!",
+    "crosschainblock": 0,
+    "ibft2": {
+      "blockperiodseconds": 2,
+      "epochlength": 30000,
+      "requesttimeoutseconds": 10
+    }
+  },
+  "nonce": "0x0",
+  "timestamp": "0x58ee40ba",
+  "extraData": "read the crosschains README!",
+  "gasLimit": "0x1fffffffffffff",
+  "difficulty": "0x1",
+  "mixHash": "0x63746963616c2062797a616e74696e65206661756c7420746f6c6572616e6365",
+  "alloc": {
+    "0000000000000000000000000000000000000001": {
+      "balance": "1"
+    },
+    "0000000000000000000000000000000000000002": {
+      "balance": "1"
+    },
+    "0000000000000000000000000000000000000003": {
+      "balance": "1"
+    },
+    "0000000000000000000000000000000000000004": {
+      "balance": "1"
+    }
+  }
+}

@@ -45,6 +45,9 @@ public class Address extends DelegatingBytesValue
   public static final Integer PRIVACY = Byte.MAX_VALUE - 1;
   public static final Address DEFAULT_PRIVACY = Address.precompiled(PRIVACY);
 
+  public static final Address CROSSCHAIN_SUBTRANS = Address.precompiled(10);
+  public static final Address CROSSCHAIN_SUBVIEW = Address.precompiled(11);
+
   public static final Address ZERO = Address.fromHexString("0x0");
 
   protected Address(final BytesValue bytes) {

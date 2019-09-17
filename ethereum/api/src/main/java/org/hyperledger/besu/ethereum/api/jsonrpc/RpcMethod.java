@@ -109,7 +109,10 @@ public enum RpcMethod {
   TX_POOL_BESU_STATISTICS("txpool_besuStatistics"),
   TX_POOL_BESU_TRANSACTIONS("txpool_besuTransactions"),
   WEB3_CLIENT_VERSION("web3_clientVersion"),
-  WEB3_SHA3("web3_sha3");
+  WEB3_SHA3("web3_sha3"),
+  ETH_IS_LOCKABLE("eth_isLockable"),
+  ETH_SEND_RAW_CROSSCHAIN_TRANSACTION("eth_sendRawCrosschainTransaction"),
+  ETH_PROCESS_RAW_SUBORDINATE_VIEW("eth_processSubordinateView");
 
   private final String methodName;
 

@@ -312,6 +312,17 @@ public abstract class MainnetProtocolSpecs {
         .name("Istanbul");
   }
 
+  public static ProtocolSpecBuilder<Void> crossChainDefinition(
+          final Optional<BigInteger> chainId,
+          final OptionalInt contractSizeLimit,
+          final OptionalInt configStackSizeLimit,
+          final boolean enableRevertReason) {
+    return istanbulDefinition(chainId, contractSizeLimit, configStackSizeLimit, enableRevertReason)
+            .precompileContractRegistryBuilder(
+                    MainnetPrecompiledContractRegistries::crosschainPrecompiles)
+            .name("CrossChain");
+  }
+
   private static TransactionReceipt frontierTransactionReceiptFactory(
       final TransactionProcessor.Result result, final WorldState worldState, final long gasUsed) {
     return new TransactionReceipt(

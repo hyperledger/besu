@@ -34,38 +34,38 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
 
   // Used for transactions that are not tied to a specific chain
   // (e.g. does not have a chain id associated with it).
-  private static final BigInteger REPLAY_UNPROTECTED_V_BASE = BigInteger.valueOf(27);
-  private static final BigInteger REPLAY_UNPROTECTED_V_BASE_PLUS_1 = BigInteger.valueOf(28);
+  protected static final BigInteger REPLAY_UNPROTECTED_V_BASE = BigInteger.valueOf(27);
+  protected static final BigInteger REPLAY_UNPROTECTED_V_BASE_PLUS_1 = BigInteger.valueOf(28);
 
-  private static final BigInteger REPLAY_PROTECTED_V_BASE = BigInteger.valueOf(35);
+  protected static final BigInteger REPLAY_PROTECTED_V_BASE = BigInteger.valueOf(35);
 
   // The v signature parameter starts at 36 because 1 is the first valid chainId so:
   // chainId > 1 implies that 2 * chainId + V_BASE > 36.
-  private static final BigInteger REPLAY_PROTECTED_V_MIN = BigInteger.valueOf(36);
+  protected static final BigInteger REPLAY_PROTECTED_V_MIN = BigInteger.valueOf(36);
 
-  private static final BigInteger TWO = BigInteger.valueOf(2);
+  protected static final BigInteger TWO = BigInteger.valueOf(2);
 
-  private final long nonce;
+  protected final long nonce;
 
-  private final Wei gasPrice;
+  protected final Wei gasPrice;
 
-  private final long gasLimit;
+  protected final long gasLimit;
 
-  private final Optional<Address> to;
+  protected final Optional<Address> to;
 
-  private final Wei value;
+  protected final Wei value;
 
-  private final SECP256K1.Signature signature;
+  protected final SECP256K1.Signature signature;
 
-  private final BytesValue payload;
+  protected final BytesValue payload;
 
-  private final Optional<BigInteger> chainId;
+  protected final Optional<BigInteger> chainId;
 
   // Caches a "hash" of a portion of the transaction used for sender recovery.
   // Note that this hash does not include the transaction signature so it does not
   // fully identify the transaction (use the result of the {@code hash()} for that).
   // It is only used to compute said signature and recover the sender from it.
-  private volatile Bytes32 hashNoSignature;
+  protected volatile Bytes32 hashNoSignature;
 
   // Caches the transaction sender.
   protected volatile Address sender;
@@ -78,37 +78,45 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
   }
 
   public static Transaction readFrom(final RLPInput input) throws RLPException {
-    input.enterList();
+    try {
+      input.enterList();
 
-    final Builder builder =
-        builder()
-            .nonce(input.readLongScalar())
-            .gasPrice(input.readUInt256Scalar(Wei::wrap))
-            .gasLimit(input.readLongScalar())
-            .to(input.readBytesValue(v -> v.size() == 0 ? null : Address.wrap(v)))
-            .value(input.readUInt256Scalar(Wei::wrap))
-            .payload(input.readBytesValue());
+      final Builder builder =
+          builder()
+              .nonce(input.readLongScalar())
+              .gasPrice(input.readUInt256Scalar(Wei::wrap))
+              .gasLimit(input.readLongScalar())
+              .to(input.readBytesValue(v -> v.size() == 0 ? null : Address.wrap(v)))
+              .value(input.readUInt256Scalar(Wei::wrap))
+              .payload(input.readBytesValue());
 
-    final BigInteger v = input.readBigIntegerScalar();
-    final byte recId;
-    Optional<BigInteger> chainId = Optional.empty();
-    if (v.equals(REPLAY_UNPROTECTED_V_BASE) || v.equals(REPLAY_UNPROTECTED_V_BASE_PLUS_1)) {
-      recId = v.subtract(REPLAY_UNPROTECTED_V_BASE).byteValueExact();
-    } else if (v.compareTo(REPLAY_PROTECTED_V_MIN) > 0) {
-      chainId = Optional.of(v.subtract(REPLAY_PROTECTED_V_BASE).divide(TWO));
-      recId = v.subtract(TWO.multiply(chainId.get()).add(REPLAY_PROTECTED_V_BASE)).byteValueExact();
-    } else {
-      throw new RuntimeException(
-          String.format("An unsupported encoded `v` value of %s was found", v));
+      final BigInteger v = input.readBigIntegerScalar();
+      final byte recId;
+      Optional<BigInteger> chainId = Optional.empty();
+      if (v.equals(REPLAY_UNPROTECTED_V_BASE) || v.equals(REPLAY_UNPROTECTED_V_BASE_PLUS_1)) {
+        recId = v.subtract(REPLAY_UNPROTECTED_V_BASE).byteValueExact();
+      } else if (v.compareTo(REPLAY_PROTECTED_V_MIN) > 0) {
+        chainId = Optional.of(v.subtract(REPLAY_PROTECTED_V_BASE).divide(TWO));
+        recId = v.subtract(TWO.multiply(chainId.get()).add(REPLAY_PROTECTED_V_BASE)).byteValueExact();
+      } else {
+        throw new RuntimeException(
+            String.format("An unsupported encoded `v` value of %s was found", v));
+      }
+      final BigInteger r = BytesValues.asUnsignedBigInteger(input.readUInt256Scalar().getBytes());
+      final BigInteger s = BytesValues.asUnsignedBigInteger(input.readUInt256Scalar().getBytes());
+      final SECP256K1.Signature signature = SECP256K1.Signature.create(r, s, recId);
+
+      input.leaveList();
+
+      chainId.ifPresent(builder::chainId);
+      return builder.signature(signature).build();
+
+    } catch (RLPException e) {
+      input.reset();
+      input.enterList();
+      input.enterList();
+      return CrosschainTransaction.readFrom(input);
     }
-    final BigInteger r = BytesValues.asUnsignedBigInteger(input.readUInt256Scalar().getBytes());
-    final BigInteger s = BytesValues.asUnsignedBigInteger(input.readUInt256Scalar().getBytes());
-    final SECP256K1.Signature signature = SECP256K1.Signature.create(r, s, recId);
-
-    input.leaveList();
-
-    chainId.ifPresent(builder::chainId);
-    return builder.signature(signature).build();
   }
 
   /**
@@ -300,7 +308,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     out.endList();
   }
 
-  private void writeSignature(final RLPOutput out) {
+  protected void writeSignature(final RLPOutput out) {
     out.writeBigIntegerScalar(getV());
     out.writeBigIntegerScalar(getSignature().getR());
     out.writeBigIntegerScalar(getSignature().getS());

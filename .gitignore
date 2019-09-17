@@ -28,3 +28,10 @@ out/
 site/
 /kubernetes/reports/
 /kubernetes/besu-*.tar.gz
+
+node-acct
+node-key
+genesis.json
+crosschain/data/
+node_modules
+package-lock.json
