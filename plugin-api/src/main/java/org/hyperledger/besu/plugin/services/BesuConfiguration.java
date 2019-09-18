@@ -12,9 +12,7 @@
  */
 package org.hyperledger.besu.plugin.services;
 
-import java.net.URI;
 import java.nio.file.Path;
-import java.util.Optional;
 
 /** Generally useful configuration provided by Besu. */
 public interface BesuConfiguration {
@@ -25,12 +23,4 @@ public interface BesuConfiguration {
    * @return location of the storage in the file system of the client.
    */
   Path getStoragePath();
-
-  /**
-   * Url of the enclave that stores private transaction data.
-   *
-   * @return an optional containing the url of the enclave Besu is connected to, or empty if privacy
-   *     is not enabled.
-   */
-  Optional<URI> getEnclaveUrl();
 }

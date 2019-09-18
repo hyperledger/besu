@@ -27,8 +27,8 @@ import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
-import net.consensys.cava.toml.Toml;
-import net.consensys.cava.toml.TomlParseResult;
+import org.apache.tuweni.toml.Toml;
+import org.apache.tuweni.toml.TomlParseResult;
 
 public class WhitelistPersistor {
 

@@ -13,7 +13,6 @@
 package org.hyperledger.besu.cli.subcommands;
 
 import static org.hyperledger.besu.cli.subcommands.RetestethSubCommand.COMMAND_NAME;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration.DEFAULT_JSON_RPC_PORT;
 
 import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.cli.DefaultCommandValues;
@@ -43,11 +42,18 @@ public class RetestethSubCommand implements Runnable {
 
   public static final String COMMAND_NAME = "retesteth";
 
+  /**
+   * Using a distinct port for retesteth will result in less teting collisions and accidental RPC
+   * calls. This is <code>0xba5e</code> in hex, a hex speak play on the english translation of
+   * "Besu."
+   */
+  public static final int RETESTETH_PORT = 47710;
+
   @CommandLine.Option(
       names = {"--data-path"},
       paramLabel = DefaultCommandValues.MANDATORY_PATH_FORMAT_HELP,
       description = "The path to Besu data directory (default: ${DEFAULT-VALUE})")
-  final Path dataPath = DefaultCommandValues.getDefaultBesuDataPath(this);
+  private final Path dataPath = DefaultCommandValues.getDefaultBesuDataPath(this);
 
   @Option(
       names = {"--logging", "-l"},
@@ -60,16 +66,16 @@ public class RetestethSubCommand implements Runnable {
   @Option(
       names = {"--rpc-http-host"},
       paramLabel = DefaultCommandValues.MANDATORY_HOST_FORMAT_HELP,
-      description = "Host for JSON-RPC HTTP to listen on (default: ${DEFAULT-VALUE})",
+      description = "Host for Retesteth JSON-RPC HTTP to listen on (default: ${DEFAULT-VALUE})",
       arity = "1")
   private String rpcHttpHost = autoDiscoverDefaultIP().getHostAddress();
 
   @Option(
       names = {"--rpc-http-port"},
       paramLabel = DefaultCommandValues.MANDATORY_PORT_FORMAT_HELP,
-      description = "Port for JSON-RPC HTTP to listen on (default: ${DEFAULT-VALUE})",
+      description = "Port for Retesteth JSON-RPC HTTP to listen on (default: ${DEFAULT-VALUE})",
       arity = "1")
-  private final Integer rpcHttpPort = DEFAULT_JSON_RPC_PORT;
+  private final Integer rpcHttpPort = RETESTETH_PORT;
 
   @Option(
       names = {"--host-whitelist"},
