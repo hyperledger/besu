@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.vm.Code;
 import org.hyperledger.besu.util.bytes.Bytes32;
 import org.hyperledger.besu.util.bytes.BytesValue;
 import org.hyperledger.besu.util.bytes.BytesValues;
+import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -128,7 +129,10 @@ public class VmTraceGenerator {
                 i -> {
                   final BytesValue value =
                       BytesValues.trimLeadingZeros(stack[stack.length - i - 1]);
-                  ex.addPush(value.isEmpty() || value.isZero() ? "0x0" : value.toShortHexString());
+                  ex.addPush(
+                      value.isEmpty() || value.isZero()
+                          ? "0x0"
+                          : UInt256.fromHexString(value.getHexString()).toShortHexString());
                 });
       }
     }
@@ -192,7 +196,11 @@ public class VmTraceGenerator {
     ex.setStore(
         traceFrame
             .getStack()
-            .map(stack -> new Store(stack[1].toShortHexString(), stack[0].toShortHexString()))
+            .map(
+                stack ->
+                    new Store(
+                        UInt256.wrap(stack[1]).toShortHexString(),
+                        UInt256.wrap(stack[0]).toShortHexString()))
             .orElseThrow());
   }
 }
