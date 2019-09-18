@@ -26,11 +26,17 @@ balance = 2000000000000000000
 
 #[privacy]
 # TODO define what's needed for privacy
+# Orion node config  + keys
+# Script for Besu config
 
-[permissioning]
+[permissioning] #TODO online perm only
+# For dapp
+# - generate .env and scripts to deploy with truffle
+# - run dapp on a node Docker and use docker run --network="host" to make it able to contact the node
+
 deploy-dapp = true
-all-nodes-admin = true
-whitelist-accounts = true
+all-nodes-admin = true #
+all-accounts-whitelist = true
 
 [[nodes]]
 name = "node 1"
@@ -40,8 +46,11 @@ bootnode = true
 [[nodes]]
 name = "node 2"
 validator = true
-bootnode = true
+bootnode = false
 
 [[nodes]]
 name = "node 3"
-validator = false
+validator = true
+
+[[nodes]]
+name = "node 4"

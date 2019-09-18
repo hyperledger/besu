@@ -21,26 +21,29 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 class Permissioning {
   private Boolean deployDapp;
   private Boolean allNodesAdmin;
-  private Boolean whitelistAccounts;
+  private Boolean allAccountsWhitelist;
 
   public Permissioning(
       @Nullable @JsonProperty("deploy-dapp") final Boolean deployDapp,
       @Nullable @JsonProperty("all-nodes-admin") final Boolean allNodesAdmin,
-      @Nullable @JsonProperty("whitelist-accounts") final Boolean whitelistAccounts) {
+      @Nullable @JsonProperty("all-accounts-whitelist") final Boolean allAccountsWhitelist) {
     this.deployDapp = requireNonNullElse(deployDapp, false);
     this.allNodesAdmin = requireNonNullElse(allNodesAdmin, false);
-    this.whitelistAccounts = requireNonNullElse(whitelistAccounts, false);
+    this.allAccountsWhitelist = requireNonNullElse(allAccountsWhitelist, false);
   }
 
+  @SuppressWarnings("unused") // Used by Jackson serialisation
   public Boolean isDeployDapp() {
     return deployDapp;
   }
 
-  public Boolean isMakeAllNodesAdmin() {
+  @SuppressWarnings("unused") // Used by Jackson serialisation
+  public Boolean isAllNodesAdmin() {
     return allNodesAdmin;
   }
 
-  public Boolean isWhitelistAccounts() {
-    return whitelistAccounts;
+  @SuppressWarnings("unused") // Used by Jackson serialisation
+  public Boolean isAllAccountsWhitelist() {
+    return allAccountsWhitelist;
   }
 }

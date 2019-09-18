@@ -69,19 +69,23 @@ class Network implements Verifiable, Generatable {
     }
   }
 
+  @SuppressWarnings("unused") // Used by Jackson serialisation
   public String getName() {
     return name;
   }
 
+  @SuppressWarnings("unused") // Used by Jackson serialisation
   public BigInteger getChainId() {
     return chainId;
   }
 
+  @SuppressWarnings("unused") // Used by Jackson serialisation
   @JsonInclude(Include.NON_NULL)
   public Clique getClique() {
     return (poaConsensus instanceof Clique) ? (Clique) poaConsensus : null;
   }
 
+  @SuppressWarnings("unused") // Used by Jackson serialisation
   @JsonInclude(Include.NON_NULL)
   public Ibft2 getIbft2() {
     return (poaConsensus instanceof Ibft2) ? (Ibft2) poaConsensus : null;

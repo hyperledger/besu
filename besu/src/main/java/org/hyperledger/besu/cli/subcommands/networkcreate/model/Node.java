@@ -12,9 +12,13 @@
  */
 package org.hyperledger.besu.cli.subcommands.networkcreate.model;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Objects.requireNonNull;
 import static java.util.Objects.requireNonNullElse;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
 import org.hyperledger.besu.cli.subcommands.networkcreate.generate.DirectoryHandler;
 import org.hyperledger.besu.cli.subcommands.networkcreate.generate.Generatable;
 import org.hyperledger.besu.crypto.SECP256K1;
@@ -35,6 +39,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 class Node implements Generatable {
 
   private static final Logger LOG = LogManager.getLogger();
+  private static final String PRIVATE_KEY_FILENAME = "key";
 
   @JsonIgnore private final KeyPair keyPair;
   @JsonIgnore private final Address address;
@@ -79,6 +84,13 @@ class Node implements Generatable {
     final DirectoryHandler directoryHandler = new DirectoryHandler();
     final Path nodeDir = outputDirectoryPath.resolve(directoryHandler.getSafeName(name));
     directoryHandler.create(nodeDir);
+
+    try {
+      final Path filePath = nodeDir.resolve(PRIVATE_KEY_FILENAME);
+      Files.write(filePath, keyPair.getPrivateKey().toString().getBytes(UTF_8), StandardOpenOption.CREATE_NEW);
+    } catch (IOException e) {
+      LOG.error("Unable to write private key file", e);
+    }
 
     LOG.debug("Node {} address is {}", name, address);
     // TODO generate TOML config file

@@ -61,29 +61,35 @@ public class Configuration implements Verifiable, Generatable {
         .setValidators(nodes.stream().filter(Node::getValidator).collect(Collectors.toList()));
   }
 
+  @SuppressWarnings("unused") // Used by Jackson serialisation
   public String getVersion() {
     return version;
   }
 
+  @SuppressWarnings("unused") // Used by Jackson serialisation
   public Network getNetwork() {
     return network;
   }
 
+  @SuppressWarnings("unused") // Used by Jackson serialisation
   @JsonInclude(Include.NON_ABSENT)
   public Optional<List<Account>> getAccounts() {
     return Optional.ofNullable(accounts);
   }
 
+  @SuppressWarnings("unused") // Used by Jackson serialisation
   @JsonInclude(Include.NON_ABSENT)
   public Optional<Permissioning> getPermissioning() {
     return Optional.ofNullable(permissioning);
   }
 
+  @SuppressWarnings("unused") // Used by Jackson serialisation
   @JsonInclude(Include.NON_ABSENT)
   public Optional<Privacy> getPrivacy() {
     return Optional.ofNullable(privacy);
   }
 
+  @SuppressWarnings("unused") // Used by Jackson serialisation
   public List<Node> getNodes() {
     return nodes;
   }

@@ -36,10 +36,12 @@ class Account implements GenesisFragmentable {
     this.balance = requireNonNull(balance, "Account balance not defined.");
   }
 
+  @SuppressWarnings("unused") // Used by Jackson serialisation
   public Address getAddress() {
     return address;
   }
 
+  @SuppressWarnings("unused") // Used by Jackson serialisation
   public Wei getBalance() {
     return balance;
   }
