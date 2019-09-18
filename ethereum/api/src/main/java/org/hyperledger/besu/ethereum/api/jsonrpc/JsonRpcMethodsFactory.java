@@ -380,7 +380,8 @@ public class JsonRpcMethodsFactory {
             new PrivGetPrivacyPrecompileAddress(privacyParameters),
             new PrivGetTransactionCount(parameter, privateTransactionHandler),
             new PrivGetPrivateTransaction(blockchainQueries, enclave, parameter, privacyParameters),
-            new PrivDistributeRawTransaction(privateTransactionHandler, parameter));
+            new PrivDistributeRawTransaction(
+                privateTransactionHandler, transactionPool, parameter));
       }
     }
 
