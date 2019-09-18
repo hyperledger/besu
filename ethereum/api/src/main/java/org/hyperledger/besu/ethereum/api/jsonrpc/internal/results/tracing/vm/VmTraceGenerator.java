@@ -124,7 +124,7 @@ public class VmTraceGenerator {
     // set push from stack elements if some elements have been produced
     if (traceFrame.getStackItemsProduced() > 0 && maybeNextFrame.isPresent()) {
       final Bytes32[] stack = maybeNextFrame.get().getStack().orElseThrow();
-      if (stack != null && stack.length > 0) {
+      if (stack.length > 0) {
         IntStream.range(0, traceFrame.getStackItemsProduced())
             .forEach(
                 i -> {
