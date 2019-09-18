@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.util.stream.Collectors;
 
 import com.google.common.base.Strings;
-import net.consensys.cava.toml.TomlParseResult;
+import org.apache.tuweni.toml.TomlParseResult;
 import picocli.CommandLine;
 import picocli.CommandLine.ParameterException;
 
