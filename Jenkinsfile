@@ -292,7 +292,7 @@ exit $status
             def stage_name = "Publish jars: "
             def version = ''
             node {
-                if (shouldPublish()) {
+                if (true || shouldPublish()) {
                     checkout scm
 
                     docker.image(docker_image_dind).withRun('--privileged') { d ->
