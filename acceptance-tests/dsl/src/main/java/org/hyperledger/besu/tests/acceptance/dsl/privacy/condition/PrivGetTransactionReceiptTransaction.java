@@ -24,7 +24,8 @@ import org.web3j.protocol.exceptions.TransactionException;
 import org.web3j.protocol.pantheon.Pantheon;
 import org.web3j.tx.response.PollingPrivateTransactionReceiptProcessor;
 
-public class PrivGetTransactionReceiptTransaction implements Transaction<PrivateTransactionReceipt> {
+public class PrivGetTransactionReceiptTransaction
+    implements Transaction<PrivateTransactionReceipt> {
 
   private final String transactionHash;
 

@@ -48,7 +48,7 @@ import java.util.Optional;
 
 import org.apache.logging.log4j.Logger;
 
-public class PrevGetTransactionReceipt implements JsonRpcMethod {
+public class PrivGetTransactionReceipt implements JsonRpcMethod {
 
   private static final Logger LOG = getLogger();
 
@@ -57,7 +57,7 @@ public class PrevGetTransactionReceipt implements JsonRpcMethod {
   private final JsonRpcParameter parameters;
   private final PrivacyParameters privacyParameters;
 
-  public PrevGetTransactionReceipt(
+  public PrivGetTransactionReceipt(
       final BlockchainQueries blockchain,
       final Enclave enclave,
       final JsonRpcParameter parameters,
