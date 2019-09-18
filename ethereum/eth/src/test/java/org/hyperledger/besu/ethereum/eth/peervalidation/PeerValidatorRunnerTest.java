@@ -35,11 +35,11 @@ public class PeerValidatorRunnerTest {
 
   @Test
   public void checkPeer_schedulesFutureCheckWhenPeerNotReady() {
-    PeerValidator validator = mock(PeerValidator.class);
+    final PeerValidator validator = mock(PeerValidator.class);
 
-    EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
+    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
     EthProtocolManagerTestUtil.disableEthSchedulerAutoRun(ethProtocolManager);
-    EthPeer peer =
+    final EthPeer peer =
         EthProtocolManagerTestUtil.peerBuilder()
             .ethProtocolManager(ethProtocolManager)
             .peerValidators(validator)
@@ -51,7 +51,7 @@ public class PeerValidatorRunnerTest {
     when(validator.canBeValidated(eq(peer))).thenReturn(false);
     when(validator.nextValidationCheckTimeout(eq(peer))).thenReturn(Duration.ofSeconds(30));
 
-    PeerValidatorRunner runner =
+    final PeerValidatorRunner runner =
         spy(new PeerValidatorRunner(ethProtocolManager.ethContext(), validator));
     runner.checkPeer(peer);
 
@@ -74,11 +74,11 @@ public class PeerValidatorRunnerTest {
 
   @Test
   public void checkPeer_doesNotScheduleFutureCheckWhenPeerNotReadyAndDisconnected() {
-    PeerValidator validator = mock(PeerValidator.class);
+    final PeerValidator validator = mock(PeerValidator.class);
 
-    EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
+    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
     EthProtocolManagerTestUtil.disableEthSchedulerAutoRun(ethProtocolManager);
-    EthPeer peer =
+    final EthPeer peer =
         EthProtocolManagerTestUtil.peerBuilder()
             .ethProtocolManager(ethProtocolManager)
             .peerValidators(validator)
@@ -89,7 +89,7 @@ public class PeerValidatorRunnerTest {
     when(validator.canBeValidated(eq(peer))).thenReturn(false);
     when(validator.nextValidationCheckTimeout(eq(peer))).thenReturn(Duration.ofSeconds(30));
 
-    PeerValidatorRunner runner =
+    final PeerValidatorRunner runner =
         spy(new PeerValidatorRunner(ethProtocolManager.ethContext(), validator));
     runner.checkPeer(peer);
 
@@ -101,11 +101,11 @@ public class PeerValidatorRunnerTest {
 
   @Test
   public void checkPeer_handlesInvalidPeer() {
-    PeerValidator validator = mock(PeerValidator.class);
+    final PeerValidator validator = mock(PeerValidator.class);
 
-    EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
+    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
     EthProtocolManagerTestUtil.disableEthSchedulerAutoRun(ethProtocolManager);
-    EthPeer peer =
+    final EthPeer peer =
         EthProtocolManagerTestUtil.peerBuilder()
             .ethProtocolManager(ethProtocolManager)
             .peerValidators(validator)
@@ -121,7 +121,7 @@ public class PeerValidatorRunnerTest {
 
     assertThat(peer.isFullyValidated()).isFalse();
 
-    PeerValidatorRunner runner =
+    final PeerValidatorRunner runner =
         spy(new PeerValidatorRunner(ethProtocolManager.ethContext(), validator));
     runner.checkPeer(peer);
 
@@ -134,11 +134,11 @@ public class PeerValidatorRunnerTest {
 
   @Test
   public void checkPeer_handlesValidPeer() {
-    PeerValidator validator = mock(PeerValidator.class);
+    final PeerValidator validator = mock(PeerValidator.class);
 
-    EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
+    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
     EthProtocolManagerTestUtil.disableEthSchedulerAutoRun(ethProtocolManager);
-    EthPeer peer =
+    final EthPeer peer =
         EthProtocolManagerTestUtil.peerBuilder()
             .ethProtocolManager(ethProtocolManager)
             .peerValidators(validator)
@@ -152,7 +152,7 @@ public class PeerValidatorRunnerTest {
         .thenReturn(CompletableFuture.completedFuture(true));
     when(validator.nextValidationCheckTimeout(eq(peer))).thenReturn(Duration.ofSeconds(30));
 
-    PeerValidatorRunner runner =
+    final PeerValidatorRunner runner =
         spy(new PeerValidatorRunner(ethProtocolManager.ethContext(), validator));
     runner.checkPeer(peer);
 
