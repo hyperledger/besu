@@ -80,7 +80,7 @@ public class VmTraceGenerator {
       final TransactionTrace transactionTrace,
       final TraceFrame traceFrame,
       final Deque<VmTrace> parentTraces) {
-    if ("STOP".equals(traceFrame.getOpcode())) {
+    if ("STOP".equals(traceFrame.getOpcode()) && transactionTrace.getTraceFrames().size() == 1) {
       return;
     }
 

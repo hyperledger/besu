@@ -19,7 +19,7 @@
         "trace": [],
         "transactionHash": "0x4de634fe767d1f6d0512ca0c9c0a054d3a2596f7cdd7c1eea5f93046a740b3c7",
         "vmTrace": {
-          "code": "0x6020356000355560603560403555",
+          "code": "0x602035600035556060356040355500",
           "ops": [
             {
               "cost": 3,
@@ -151,6 +151,17 @@
                 "used": 16715410
               },
               "pc": 13,
+              "sub": null
+            },
+            {
+              "cost": 0,
+              "ex": {
+                "mem": null,
+                "push": [],
+                "store": null,
+                "used": 16715410
+              },
+              "pc": 14,
               "sub": null
             }
           ]
