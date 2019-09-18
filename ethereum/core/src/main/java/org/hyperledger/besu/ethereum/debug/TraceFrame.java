@@ -201,4 +201,12 @@ public class TraceFrame {
   public int getStackItemsProduced() {
     return stackItemsProduced;
   }
+
+  public boolean isDeeperThan(final TraceFrame other) {
+    return depth > other.depth;
+  }
+
+  public boolean isLessDeepThan(final TraceFrame other) {
+    return depth < other.depth;
+  }
 }

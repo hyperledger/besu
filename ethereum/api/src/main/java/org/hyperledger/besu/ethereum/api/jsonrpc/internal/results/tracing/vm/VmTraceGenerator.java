@@ -48,7 +48,7 @@ public class VmTraceGenerator {
    * @param transactionTrace the transaction trace to use.
    * @return a representation of the trace.
    */
-  public static Trace generateTrace(final TransactionTrace transactionTrace) {
+  private static Trace generateTrace(final TransactionTrace transactionTrace) {
     final VmTrace rootVmTrace = new VmTrace();
     final Deque<VmTrace> parentTraces = new ArrayDeque<>();
     parentTraces.add(rootVmTrace);
@@ -138,7 +138,8 @@ public class VmTraceGenerator {
       }
     }
 
-    if ("CALL".equals(traceFrame.getOpcode())) {
+    // check if next frame depth has increased i.e the current operation is a call
+    if (maybeNextFrame.map(next -> next.isDeeperThan(traceFrame)).orElse(false)) {
       maybeNextFrame.ifPresent(
           nextFrame -> op.setCost(nextFrame.getGasRemaining().toLong() + op.getCost()));
       newSubTrace = new VmTrace();
@@ -155,7 +156,8 @@ public class VmTraceGenerator {
       handleSstore(traceFrame, ex);
     }
 
-    if ("RETURN".equals(traceFrame.getOpcode())) {
+    // check if next frame depth has decreased i.e the current operation closes the parent trace
+    if (maybeNextFrame.map(next -> next.isLessDeepThan(traceFrame)).orElse(false)) {
       currentTrace = parentTraces.removeLast();
     }
 
