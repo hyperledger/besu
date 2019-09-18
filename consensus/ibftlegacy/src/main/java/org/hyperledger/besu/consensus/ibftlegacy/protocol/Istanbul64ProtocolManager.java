@@ -17,6 +17,7 @@ import static java.util.Collections.singletonList;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
+import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -32,6 +33,7 @@ public class Istanbul64ProtocolManager extends EthProtocolManager {
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final BigInteger networkId,
+      final List<PeerValidator> peerValidators,
       final boolean fastSyncEnabled,
       final int syncWorkers,
       final int txWorkers,
@@ -43,6 +45,7 @@ public class Istanbul64ProtocolManager extends EthProtocolManager {
         blockchain,
         worldStateArchive,
         networkId,
+        peerValidators,
         fastSyncEnabled,
         syncWorkers,
         txWorkers,
@@ -50,28 +53,6 @@ public class Istanbul64ProtocolManager extends EthProtocolManager {
         clock,
         metricsSystem,
         ethereumWireProtocolConfiguration);
-  }
-
-  public Istanbul64ProtocolManager(
-      final Blockchain blockchain,
-      final WorldStateArchive worldStateArchive,
-      final BigInteger networkId,
-      final boolean fastSyncEnabled,
-      final int syncWorkers,
-      final int txWorkers,
-      final int computationWorkers,
-      final Clock clock,
-      final MetricsSystem metricsSystem) {
-    super(
-        blockchain,
-        worldStateArchive,
-        networkId,
-        fastSyncEnabled,
-        syncWorkers,
-        txWorkers,
-        computationWorkers,
-        clock,
-        metricsSystem);
   }
 
   @Override
