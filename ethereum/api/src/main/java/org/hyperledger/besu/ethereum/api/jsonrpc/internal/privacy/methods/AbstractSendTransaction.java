@@ -77,7 +77,7 @@ public class AbstractSendTransaction {
       final JsonRpcRequest request,
       final PrivateTransaction privateTransaction,
       final String privacyGroupId,
-      AfterTransactionValid afterValid) {
+      final AfterTransactionValid afterValid) {
     return privateTransactionHandler
         .validatePrivateTransaction(privateTransaction, privacyGroupId)
         .either(
