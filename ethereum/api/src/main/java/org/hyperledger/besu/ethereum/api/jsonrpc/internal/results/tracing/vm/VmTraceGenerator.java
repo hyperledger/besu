@@ -94,14 +94,14 @@ public class VmTraceGenerator {
         transactionTrace.getTraceFrames().size() > nextFrameIndex
             ? Optional.of(transactionTrace.getTraceFrames().get(nextFrameIndex))
             : Optional.empty();
-    final Op op = new Op();
+    final VmOperation vmOperation = new VmOperation();
     // set gas cost and program counter
-    op.setCost(traceFrame.getGasCost().orElse(Gas.ZERO).toLong());
-    op.setPc(traceFrame.getPc());
+    vmOperation.setCost(traceFrame.getGasCost().orElse(Gas.ZERO).toLong());
+    vmOperation.setPc(traceFrame.getPc());
 
-    final Ex ex = new Ex();
+    final VmOperationExecutionReport vmOperationExecutionReport = new VmOperationExecutionReport();
     // set gas remaining
-    ex.setUsed(
+    vmOperationExecutionReport.setUsed(
         traceFrame.getGasRemaining().toLong() - traceFrame.getGasCost().orElse(Gas.ZERO).toLong());
 
     final boolean isPreviousFrameReturnOpCode =
@@ -118,7 +118,7 @@ public class VmTraceGenerator {
           .filter(memory -> memory.length > 0)
           .map(TracingUtils::dumpMemoryAndTrimTrailingZeros)
           .map(Mem::new)
-          .ifPresent(ex::setMem);
+          .ifPresent(vmOperationExecutionReport::setMem);
     }
 
     // set push from stack elements if some elements have been produced
@@ -130,7 +130,7 @@ public class VmTraceGenerator {
                 i -> {
                   final BytesValue value =
                       BytesValues.trimLeadingZeros(stack[stack.length - i - 1]);
-                  ex.addPush(
+                  vmOperationExecutionReport.addPush(
                       value.isEmpty() || value.isZero()
                           ? "0x0"
                           : UInt256.fromHexString(value.getHexString()).toShortHexString());
@@ -141,19 +141,20 @@ public class VmTraceGenerator {
     // check if next frame depth has increased i.e the current operation is a call
     if (maybeNextFrame.map(next -> next.isDeeperThan(traceFrame)).orElse(false)) {
       maybeNextFrame.ifPresent(
-          nextFrame -> op.setCost(nextFrame.getGasRemaining().toLong() + op.getCost()));
+          nextFrame ->
+              vmOperation.setCost(nextFrame.getGasRemaining().toLong() + vmOperation.getCost()));
       newSubTrace = new VmTrace();
       parentTraces.addLast(newSubTrace);
       // TODO: investigate how this hard coded value is necessary
-      ex.addPush("0x1");
+      vmOperationExecutionReport.addPush("0x1");
       findLastFrameInCall(transactionTrace, traceFrame, index.get())
-          .ifPresent(frame -> ex.setUsed(frame.getGasRemaining().toLong()));
-      op.setSub(newSubTrace);
+          .ifPresent(frame -> vmOperationExecutionReport.setUsed(frame.getGasRemaining().toLong()));
+      vmOperation.setSub(newSubTrace);
     }
 
     // set store from the stack
     if ("SSTORE".equals(traceFrame.getOpcode())) {
-      handleSstore(traceFrame, ex);
+      handleSstore(traceFrame, vmOperationExecutionReport);
     }
 
     // check if next frame depth has decreased i.e the current operation closes the parent trace
@@ -162,8 +163,8 @@ public class VmTraceGenerator {
     }
 
     // add the Op representation to the list of traces
-    op.setEx(ex);
-    currentTrace.add(op);
+    vmOperation.setVmOperationExecutionReport(vmOperationExecutionReport);
+    currentTrace.add(vmOperation);
 
     index.incrementAndGet();
   }
@@ -193,10 +194,11 @@ public class VmTraceGenerator {
    * Handle SSTORE specific opcode. Retrieve elements the stack (key and value).
    *
    * @param traceFrame the trace frame to use.
-   * @param ex the Ex object to populate.
+   * @param vmOperationExecutionReport the Ex object to populate.
    */
-  private static void handleSstore(final TraceFrame traceFrame, final Ex ex) {
-    ex.setStore(
+  private static void handleSstore(
+      final TraceFrame traceFrame, final VmOperationExecutionReport vmOperationExecutionReport) {
+    vmOperationExecutionReport.setStore(
         traceFrame
             .getStack()
             .map(

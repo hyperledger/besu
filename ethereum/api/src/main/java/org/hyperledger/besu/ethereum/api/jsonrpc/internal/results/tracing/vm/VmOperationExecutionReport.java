@@ -15,21 +15,15 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.vm;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Ex {
+/** Record of an executed virtual machine operation. */
+public class VmOperationExecutionReport {
   private Mem mem;
   private List<String> push;
   private Store store;
   private long used;
 
-  public Ex() {
+  public VmOperationExecutionReport() {
     push = new ArrayList<>();
-  }
-
-  public Ex(final Mem mem, final List<String> push, final Store store, final long used) {
-    this.mem = mem;
-    this.push = push;
-    this.store = store;
-    this.used = used;
   }
 
   public Mem getMem() {

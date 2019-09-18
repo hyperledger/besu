@@ -13,36 +13,25 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.vm;
 
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Stream;
 
-public class Op {
+import com.fasterxml.jackson.annotation.JsonGetter;
+
+public class VmOperation {
   private long cost;
-  private Ex ex;
+  // Information concerning the execution of the operation.
+  private VmOperationExecutionReport vmOperationExecutionReport;
   private long pc;
   private VmTrace sub;
 
-  public Op() {}
-
-  public Op(final long cost, final Ex ex, final long pc, final VmTrace sub) {
-    this.cost = cost;
-    this.ex = ex;
-    this.pc = pc;
-    this.sub = sub;
-  }
-
-  public static long totalGasCost(final Stream<Op> ops) {
-    final AtomicLong total = new AtomicLong(0);
-    ops.forEach(op -> total.addAndGet(op.cost));
-    return total.get();
-  }
+  public VmOperation() {}
 
   public long getCost() {
     return cost;
   }
 
-  public Ex getEx() {
-    return ex;
+  @JsonGetter("ex")
+  public VmOperationExecutionReport getVmOperationExecutionReport() {
+    return vmOperationExecutionReport;
   }
 
   public long getPc() {
@@ -57,8 +46,9 @@ public class Op {
     this.cost = cost;
   }
 
-  public void setEx(final Ex ex) {
-    this.ex = ex;
+  public void setVmOperationExecutionReport(
+      final VmOperationExecutionReport vmOperationExecutionReport) {
+    this.vmOperationExecutionReport = vmOperationExecutionReport;
   }
 
   public void setPc(final long pc) {
@@ -71,6 +61,6 @@ public class Op {
 
   @Override
   public int hashCode() {
-    return Objects.hash(cost, ex, pc, sub);
+    return Objects.hash(cost, vmOperationExecutionReport, pc, sub);
   }
 }

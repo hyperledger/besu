@@ -18,10 +18,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import com.fasterxml.jackson.annotation.JsonGetter;
+
 public class VmTrace implements Trace {
 
   private String code;
-  private final List<Op> ops;
+  private final List<VmOperation> vmOperations;
 
   public VmTrace() {
     this("0x");
@@ -31,13 +33,13 @@ public class VmTrace implements Trace {
     this(code, new ArrayList<>());
   }
 
-  private VmTrace(final String code, final List<Op> ops) {
+  private VmTrace(final String code, final List<VmOperation> vmOperations) {
     this.code = code;
-    this.ops = ops;
+    this.vmOperations = vmOperations;
   }
 
-  public void add(final Op op) {
-    ops.add(op);
+  public void add(final VmOperation vmOperation) {
+    vmOperations.add(vmOperation);
   }
 
   public String getCode() {
@@ -48,12 +50,13 @@ public class VmTrace implements Trace {
     this.code = code;
   }
 
-  public List<Op> getOps() {
-    return ops;
+  @JsonGetter("ops")
+  public List<VmOperation> getVmOperations() {
+    return vmOperations;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(code, ops);
+    return Objects.hash(code, vmOperations);
   }
 }
