@@ -165,7 +165,7 @@ public class FastSyncActions<C> {
             () ->
                 waitForPeers(syncConfig.getFastSyncMinimumPeerCount())
                     .thenCompose(ignore -> selectPivotBlockFromPeers()),
-            Duration.ofSeconds(1));
+            Duration.ofSeconds(5));
   }
 
   public CompletableFuture<FastSyncState> downloadPivotBlockHeader(

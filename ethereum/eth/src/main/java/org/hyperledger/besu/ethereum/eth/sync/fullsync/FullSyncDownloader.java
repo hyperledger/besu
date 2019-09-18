@@ -21,8 +21,12 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public class FullSyncDownloader<C> {
 
+  private static final Logger LOG = LogManager.getLogger();
   private final ChainDownloader chainDownloader;
   private final SynchronizerConfiguration syncConfig;
   private final ProtocolContext<C> protocolContext;
@@ -45,6 +49,7 @@ public class FullSyncDownloader<C> {
   }
 
   public void start() {
+    LOG.info("Start full sync.");
     chainDownloader.start();
   }
 
