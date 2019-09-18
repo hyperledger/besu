@@ -91,14 +91,15 @@ public class MainnetProtocolScheduleTest {
                     Resources.toString(
                         this.getClass().getResource("/ropsten.json"), StandardCharsets.UTF_8))
                 .getConfigOptions());
-    Assertions.assertThat(sched.getByBlockNumber(0).getName()).isEqualTo("TangerineWhistle");
-    Assertions.assertThat(sched.getByBlockNumber(1).getName()).isEqualTo("TangerineWhistle");
-    Assertions.assertThat(sched.getByBlockNumber(10).getName()).isEqualTo("SpuriousDragon");
-    Assertions.assertThat(sched.getByBlockNumber(1700000).getName()).isEqualTo("Byzantium");
-    Assertions.assertThat(sched.getByBlockNumber(4230000).getName()).isEqualTo("Constantinople");
-    Assertions.assertThat(sched.getByBlockNumber(4939394).getName()).isEqualTo("ConstantinopleFix");
-    Assertions.assertThat(sched.getByBlockNumber(Long.MAX_VALUE).getName())
+    Assertions.assertThat(sched.getByBlockNumber(0L).getName()).isEqualTo("TangerineWhistle");
+    Assertions.assertThat(sched.getByBlockNumber(1L).getName()).isEqualTo("TangerineWhistle");
+    Assertions.assertThat(sched.getByBlockNumber(10L).getName()).isEqualTo("SpuriousDragon");
+    Assertions.assertThat(sched.getByBlockNumber(1_700_000L).getName()).isEqualTo("Byzantium");
+    Assertions.assertThat(sched.getByBlockNumber(4_230_000L).getName()).isEqualTo("Constantinople");
+    Assertions.assertThat(sched.getByBlockNumber(4_939_394L).getName())
         .isEqualTo("ConstantinopleFix");
+    Assertions.assertThat(sched.getByBlockNumber(6_485_846L).getName()).isEqualTo("Istanbul");
+    Assertions.assertThat(sched.getByBlockNumber(Long.MAX_VALUE).getName()).isEqualTo("Istanbul");
   }
 
   @Test
