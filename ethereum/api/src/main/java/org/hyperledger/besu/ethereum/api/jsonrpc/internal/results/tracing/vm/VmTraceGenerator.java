@@ -13,6 +13,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.vm;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.Trace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.TracingUtils;
 import org.hyperledger.besu.ethereum.core.Gas;
@@ -131,9 +132,7 @@ public class VmTraceGenerator {
                   final BytesValue value =
                       BytesValues.trimLeadingZeros(stack[stack.length - i - 1]);
                   vmOperationExecutionReport.addPush(
-                      value.isEmpty() || value.isZero()
-                          ? "0x0"
-                          : UInt256.fromHexString(value.getHexString()).toShortHexString());
+                      Quantity.create(UInt256.fromHexString(value.getHexString())));
                 });
       }
     }
