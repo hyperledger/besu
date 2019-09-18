@@ -143,8 +143,9 @@ public class VmTraceGenerator {
           nextFrame -> op.setCost(nextFrame.getGasRemaining().toLong() + op.getCost()));
       newSubTrace = new VmTrace();
       parentTraces.addLast(newSubTrace);
+      // TODO: investigate how this hard coded value is necessary
       ex.addPush("0x1");
-      findFrameAfterReturn(transactionTrace, traceFrame, index.get())
+      findLastFrameInCall(transactionTrace, traceFrame, index.get())
           .ifPresent(frame -> ex.setUsed(frame.getGasRemaining().toLong()));
       op.setSub(newSubTrace);
     }
@@ -166,18 +167,17 @@ public class VmTraceGenerator {
   }
 
   /**
-   * Find the frame after return to set the gas used of CALL frame.
+   * Find the last frame in the call.
    *
    * @param trace the root {@link TransactionTrace}
    * @param callFrame the CALL frame
    * @param callIndex the CALL frame index
-   * @return an {@link Optional} of {@link TraceFrame} containing the frame after return if found.
+   * @return an {@link Optional} of {@link TraceFrame} containing the last frame in the call.
    */
-  private static Optional<TraceFrame> findFrameAfterReturn(
+  private static Optional<TraceFrame> findLastFrameInCall(
       final TransactionTrace trace, final TraceFrame callFrame, final int callIndex) {
     for (int i = callIndex; i < trace.getTraceFrames().size(); i++) {
-      final TraceFrame frame = trace.getTraceFrames().get(i);
-      if ("RETURN".equals(frame.getOpcode()) && (i + 1) < trace.getTraceFrames().size()) {
+      if (i + 1 < trace.getTraceFrames().size()) {
         final TraceFrame next = trace.getTraceFrames().get(i + 1);
         if (next.getPc() == (callFrame.getPc() + 1) && next.getDepth() == callFrame.getDepth()) {
           return Optional.of(next);
