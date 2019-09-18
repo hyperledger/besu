@@ -19,8 +19,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcPara
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionHandler;
@@ -38,7 +36,7 @@ public class AbstractSendTransaction {
 
   protected final PrivateTransactionHandler privateTransactionHandler;
   private final JsonRpcParameter parameters;
-  private final TransactionPool transactionPool;
+  protected final TransactionPool transactionPool;
 
   public AbstractSendTransaction(
       final PrivateTransactionHandler privateTransactionHandler,
@@ -75,34 +73,15 @@ public class AbstractSendTransaction {
     return privateTransaction;
   }
 
-  protected JsonRpcResponse validateAndCreateMarker(
+  protected JsonRpcResponse validateAndExecute(
       final JsonRpcRequest request,
       final PrivateTransaction privateTransaction,
-      final String enclaveKey,
       final String privacyGroupId,
-      final boolean shouldSendMarkerTransaction) {
+      AfterTransactionValid afterValid) {
     return privateTransactionHandler
         .validatePrivateTransaction(privateTransaction, privacyGroupId)
         .either(
-            () -> {
-              if (!shouldSendMarkerTransaction) {
-                return new JsonRpcSuccessResponse(
-                    request.getId(), privateTransaction.hash().toString());
-              }
-              final Transaction privacyMarkerTransaction =
-                  privateTransactionHandler.createPrivacyMarkerTransaction(
-                      enclaveKey, privateTransaction);
-              return transactionPool
-                  .addLocalTransaction(privacyMarkerTransaction)
-                  .either(
-                      () ->
-                          new JsonRpcSuccessResponse(
-                              request.getId(), privacyMarkerTransaction.hash().toString()),
-                      errorReason ->
-                          new JsonRpcErrorResponse(
-                              request.getId(),
-                              JsonRpcErrorConverter.convertTransactionInvalidReason(errorReason)));
-            },
+            afterValid::getResponse,
             (errorReason) ->
                 new JsonRpcErrorResponse(
                     request.getId(),
@@ -130,5 +109,9 @@ public class AbstractSendTransaction {
     public JsonRpcResponse getResponse() {
       return response;
     }
+  }
+
+  protected interface AfterTransactionValid {
+    JsonRpcResponse getResponse();
   }
 }

@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcPara
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.AbstractSendTransaction;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionHandler;
@@ -64,6 +65,11 @@ public class PrivDistributeRawTransaction extends AbstractSendTransaction implem
           request.getId(),
           JsonRpcEnclaveErrorConverter.convertEnclaveInvalidReason(e.getMessage()));
     }
-    return validateAndCreateMarker(request, privateTransaction, enclaveKey, privacyGroupId, false);
+
+    return validateAndExecute(
+        request,
+        privateTransaction,
+        privacyGroupId,
+        () -> new JsonRpcSuccessResponse(request.getId(), privateTransaction.hash().toString()));
   }
 }
