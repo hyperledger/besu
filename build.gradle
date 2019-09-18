@@ -87,7 +87,7 @@ def bintrayPackage = bintray.pkg {
 
 def azureUser = "AZURE_ARTIFACTS"
 def azureKey = project.hasProperty('azureApiKey') ? project.property('azureApiKey') : System.getenv('AZURE_KEY')
-def artifactRepoUrl = 'https://pkgs.dev.azure.com/adriansutton/Test/_packaging/besu-test/maven/v1'
+def artifactRepoUrl = 'https://pkgs.dev.azure.com/Hyperledger/Besu/_packaging/besu/maven/v1'
 
 allprojects {
   apply plugin: 'java-library'
