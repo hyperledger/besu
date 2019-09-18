@@ -10,11 +10,13 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package org.hyperledger.besu.cli.subcommands.networkcreate;
+package org.hyperledger.besu.cli.subcommands.networkcreate.model;
 
 import static java.util.Objects.requireNonNull;
 import static java.util.Objects.requireNonNullElse;
 
+import org.hyperledger.besu.cli.subcommands.networkcreate.generate.DirectoryHandler;
+import org.hyperledger.besu.cli.subcommands.networkcreate.generate.Generatable;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -73,11 +75,14 @@ class Node implements Generatable {
   }
 
   @Override
-  public void generate(final Path outputDirectoryPath) {
-    DirectoryHandler directoryHandler = new DirectoryHandler();
-    directoryHandler.create(outputDirectoryPath.resolve(directoryHandler.getSafeName(name)));
+  public Path generate(final Path outputDirectoryPath) {
+    final DirectoryHandler directoryHandler = new DirectoryHandler();
+    final Path nodeDir = outputDirectoryPath.resolve(directoryHandler.getSafeName(name));
+    directoryHandler.create(nodeDir);
 
     LOG.debug("Node {} address is {}", name, address);
     // TODO generate TOML config file
+
+    return nodeDir;
   }
 }

@@ -10,11 +10,17 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package org.hyperledger.besu.cli.subcommands.networkcreate;
+package org.hyperledger.besu.cli.subcommands.networkcreate.generate;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.hyperledger.besu.cli.subcommands.networkcreate.mapping.InitConfigurationErrorHandler;
 
-public interface GenesisFragmentable {
+public interface Verifiable {
 
-  ObjectNode getGenesisFragment();
+  /**
+   * Verify the object validity and store all potential error in the handled
+   *
+   * @param errorHandler to store and handle errors
+   * @return the error handler
+   */
+  InitConfigurationErrorHandler verify(final InitConfigurationErrorHandler errorHandler);
 }

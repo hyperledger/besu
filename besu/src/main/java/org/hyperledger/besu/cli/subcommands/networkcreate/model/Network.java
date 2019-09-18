@@ -10,49 +10,47 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package org.hyperledger.besu.cli.subcommands.networkcreate;
+package org.hyperledger.besu.cli.subcommands.networkcreate.model;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Objects.isNull;
 
-import org.hyperledger.besu.config.JsonUtil;
+import org.hyperledger.besu.cli.subcommands.networkcreate.generate.Generatable;
+import org.hyperledger.besu.cli.subcommands.networkcreate.generate.Verifiable;
+import org.hyperledger.besu.cli.subcommands.networkcreate.mapping.InitConfigurationErrorHandler;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
-import java.util.Optional;
 import java.util.Random;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.io.Resources;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 class Network implements Verifiable, Generatable {
 
-  private static final String CLIQUE_GENESIS_TEMPLATE =
-      "/networkcreate/clique-genesis-template.json";
   private final String name;
   private final BigInteger chainId;
-  private final Clique clique;
-  private final List<Account> accounts;
+  private final PoaConsensus poaConsensus;
 
   private static final Logger LOG = LogManager.getLogger();
+  private List<Account> accounts;
 
   public Network(
       @JsonProperty("name") final String name,
       @JsonProperty("chain-id") final BigInteger chainId,
       @JsonProperty("clique") final Clique clique,
-      @JsonProperty("accounts") final List<Account> accounts) {
+      @JsonProperty("ibft2") final Ibft2 ibft2) {
 
     if (chainId != null) {
       this.chainId = chainId;
@@ -62,8 +60,13 @@ class Network implements Verifiable, Generatable {
     }
 
     this.name = name;
-    this.clique = clique;
-    this.accounts = accounts;
+    if (!isNull(clique)) {
+      poaConsensus = clique;
+    } else if (!isNull(ibft2)) {
+      poaConsensus = ibft2;
+    } else {
+      poaConsensus = null;
+    }
   }
 
   public String getName() {
@@ -74,19 +77,29 @@ class Network implements Verifiable, Generatable {
     return chainId;
   }
 
+  @JsonInclude(Include.NON_NULL)
   public Clique getClique() {
-    return clique;
+    return (poaConsensus instanceof Clique) ? (Clique) poaConsensus : null;
   }
 
-  @JsonInclude(Include.NON_ABSENT)
-  public Optional<List<Account>> getAccounts() {
-    return Optional.ofNullable(accounts);
+  @JsonInclude(Include.NON_NULL)
+  public Ibft2 getIbft2() {
+    return (poaConsensus instanceof Ibft2) ? (Ibft2) poaConsensus : null;
+  }
+
+  @JsonIgnore
+  public PoaConsensus getConsensus() {
+    return poaConsensus;
   }
 
   @Override
   public InitConfigurationErrorHandler verify(final InitConfigurationErrorHandler errorHandler) {
     if (isNull(name)) errorHandler.add("Network name", "null", "Network name not defined.");
-    if (isNull(clique)) errorHandler.add("Network clique", "null", "Network clique not defined.");
+    if (isNull(poaConsensus))
+      errorHandler.add(
+          "Network poaConsensus (Clique or IBFT2) must be defined",
+          "null",
+          "Network poaConsensus (Clique or IBFT2) must be defined.");
     if (chainId.compareTo(BigInteger.ZERO) <= 0)
       errorHandler.add(
           "Network id",
@@ -97,34 +110,44 @@ class Network implements Verifiable, Generatable {
   }
 
   @Override
-  public void generate(final Path outputDirectoryPath) {
+  public Path generate(final Path outputDirectoryPath) {
     final Path outputGenesisFile = outputDirectoryPath.resolve("genesis.json");
     try {
       Files.write(outputGenesisFile, buildGenesis().getBytes(UTF_8), StandardOpenOption.CREATE_NEW);
-      LOG.info("Genesis file wrote to {}", outputGenesisFile);
+      LOG.debug("Genesis file wrote to {}", outputGenesisFile);
     } catch (IOException e) {
       LOG.error("Unable to write genesis file", e);
     }
+
+    return outputGenesisFile;
   }
 
   private String buildGenesis() {
     try {
-      final ObjectNode genesisTemplate = loadGenesisFromTemplateFile();
+      final ObjectNode genesisTemplate = poaConsensus.getGenesisTemplate();
       ObjectNode config = (ObjectNode) genesisTemplate.get("config");
 
       config.put("chainId", chainId);
 
-      ObjectNode cliqueFragment = clique.getGenesisFragment();
-      config.set("clique", cliqueFragment);
+      String consensusKey = null;
+      if (poaConsensus instanceof Clique) {
+        consensusKey = "clique";
+      } else if (poaConsensus instanceof Ibft2) {
+        consensusKey = "ibft2";
+      }
+      final ObjectNode fragment = poaConsensus.getGenesisFragment();
+      config.set(consensusKey, fragment);
 
-      genesisTemplate.put("extraData", clique.getExtraData());
+      genesisTemplate.put("extraData", poaConsensus.getExtraData());
 
       ObjectMapper objectMapper = new ObjectMapper();
 
-      ObjectNode alloc = (ObjectNode) genesisTemplate.get("alloc");
-      for (Account account : accounts) {
-        ObjectNode accountFragment = account.getGenesisFragment();
-        alloc.replace(account.getAddress().toUnprefixedString(), accountFragment);
+      if (!isNull(accounts) && !accounts.isEmpty()) {
+        ObjectNode alloc = (ObjectNode) genesisTemplate.get("alloc");
+        for (Account account : accounts) {
+          ObjectNode accountFragment = account.getGenesisFragment();
+          alloc.replace(account.getAddress().toUnprefixedString(), accountFragment);
+        }
       }
 
       return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(genesisTemplate);
@@ -134,13 +157,7 @@ class Network implements Verifiable, Generatable {
     return "";
   }
 
-  private ObjectNode loadGenesisFromTemplateFile() {
-    try {
-      final URL genesisTemplateFile = this.getClass().getResource(CLIQUE_GENESIS_TEMPLATE);
-      final String genesisTemplateSource = Resources.toString(genesisTemplateFile, UTF_8);
-      return JsonUtil.objectNodeFromString(genesisTemplateSource);
-    } catch (IOException e) {
-      throw new IllegalStateException("Unable to get genesis template " + CLIQUE_GENESIS_TEMPLATE);
-    }
+  void setAccounts(List<Account> accounts) {
+    this.accounts = accounts;
   }
 }

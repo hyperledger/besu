@@ -10,16 +10,16 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package org.hyperledger.besu.cli.subcommands.networkcreate;
+package org.hyperledger.besu.cli.subcommands.networkcreate.mapping;
 
 import java.util.ArrayList;
 import java.util.List;
 
-class InitConfigurationErrorHandler {
+public class InitConfigurationErrorHandler {
 
   private List<InitConfigurationError> errors = new ArrayList<>();
 
-  void add(final String item, final String value, final String message) {
+  public void add(final String item, final String value, final String message) {
     errors.add(new InitConfigurationError(item, value, message));
   }
 

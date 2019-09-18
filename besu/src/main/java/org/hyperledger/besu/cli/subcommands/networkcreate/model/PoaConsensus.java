@@ -10,15 +10,22 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package org.hyperledger.besu.cli.subcommands.networkcreate;
+package org.hyperledger.besu.cli.subcommands.networkcreate.model;
 
-interface Verifiable {
+import org.hyperledger.besu.cli.subcommands.networkcreate.generate.GenesisFragmentable;
 
-  /**
-   * Verify the object validity and store all potential error in the handled
-   *
-   * @param errorHandler to store and handle errors
-   * @return the error handler
-   */
-  InitConfigurationErrorHandler verify(final InitConfigurationErrorHandler errorHandler);
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
+public interface PoaConsensus extends GenesisFragmentable {
+
+  @JsonIgnore
+  String getExtraData();
+
+  void setValidators(List<Node> validators);
+
+  @JsonIgnore
+  ObjectNode getGenesisTemplate();
 }

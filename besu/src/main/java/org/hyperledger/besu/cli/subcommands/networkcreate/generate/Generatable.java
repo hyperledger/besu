@@ -10,10 +10,20 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package org.hyperledger.besu.cli.subcommands.networkcreate;
+package org.hyperledger.besu.cli.subcommands.networkcreate.generate;
 
 import java.nio.file.Path;
 
-interface Generatable {
-  void generate(final Path outputDirectoryPath);
+public interface Generatable {
+
+  /**
+   * Generate resources related to the generetable object
+   *
+   * <p>For instance for a config it can be the directory, For a network, it's mainly the genesis
+   * file For a node it's the directory and key
+   *
+   * @param outputDirectoryPath where to generate object resources
+   * @return the path where object resources where generated, can be a directory or a file
+   */
+  Path generate(final Path outputDirectoryPath);
 }

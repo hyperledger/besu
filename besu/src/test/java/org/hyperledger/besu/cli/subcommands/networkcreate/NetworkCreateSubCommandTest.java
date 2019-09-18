@@ -16,17 +16,24 @@ import static java.lang.String.format;
 import static java.lang.System.currentTimeMillis;
 import static java.nio.file.Files.createTempDirectory;
 
+import org.hyperledger.besu.cli.subcommands.networkcreate.mapping.InitConfigurationErrorHandler;
+import org.hyperledger.besu.cli.subcommands.networkcreate.mapping.MapperAdapter;
+import org.hyperledger.besu.cli.subcommands.networkcreate.model.Configuration;
+
 import java.io.IOException;
-import java.net.URL;
 import java.nio.file.Path;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.junit.Before;
 import org.junit.Test;
 
 public class NetworkCreateSubCommandTest {
+
+  private static final Logger LOG = LogManager.getLogger();
 
   private Path tmpOutputDirectoryPath;
 
@@ -53,12 +60,11 @@ public class NetworkCreateSubCommandTest {
 
   private void generate(String fileURL) throws Exception {
     final MapperAdapter mapper = MapperAdapter.getMapper(fileURL);
-    final InitConfiguration initConfig = mapper.map(new TypeReference<>() {
-    });
+    final Configuration initConfig = mapper.map(new TypeReference<>() {});
     initConfig.verify(new InitConfigurationErrorHandler());
     // TODO remove debug print
     System.out.println(mapper.writeValueAsString(initConfig));
 
-    initConfig.generate(tmpOutputDirectoryPath);
+    LOG.debug("Resources generated in {}", initConfig.generate(tmpOutputDirectoryPath));
   }
 }

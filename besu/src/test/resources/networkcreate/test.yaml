@@ -6,18 +6,18 @@ network:
   clique: # only one consensus type can be used at the same time for the network
     block-period-seconds: 345
     epoch-length: 123456
-  accounts:
-    - address: '0x1337AE03001C8205B7cc192B80007454Dfc74B86'
-      balance: 2000000000000000000
-    - address: '0x1338AE03001C8205B7cc192B80007454Dfc74B86'
-      balance: 2000000000000000000
-    - address: '0x1339AE03001C8205B7cc192B80007454Dfc74B86'
-      balance: 2000000000000000000
+accounts:
+  - address: '0x1337AE03001C8205B7cc192B80007454Dfc74B86'
+    balance: 2000000000000000000
+  - address: '0x1338AE03001C8205B7cc192B80007454Dfc74B86'
+    balance: 2000000000000000000
+  - address: '0x1339AE03001C8205B7cc192B80007454Dfc74B86'
+    balance: 2000000000000000000
 permissioning: # remove this section if you need to disable permissioning
   deploy-dapp: yes
   all-nodes-admin: yes
   whitelist-accounts: yes
-privacy: # define what's needed for privacy
+#privacy: # TODO define what's needed for privacy
 nodes:
   - name: node 1
     validator: yes

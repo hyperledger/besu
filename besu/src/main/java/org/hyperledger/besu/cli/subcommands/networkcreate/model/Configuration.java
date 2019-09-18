@@ -10,10 +10,15 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package org.hyperledger.besu.cli.subcommands.networkcreate;
+package org.hyperledger.besu.cli.subcommands.networkcreate.model;
 
 import static java.util.Objects.isNull;
 import static java.util.Objects.requireNonNull;
+
+import org.hyperledger.besu.cli.subcommands.networkcreate.generate.DirectoryHandler;
+import org.hyperledger.besu.cli.subcommands.networkcreate.generate.Generatable;
+import org.hyperledger.besu.cli.subcommands.networkcreate.generate.Verifiable;
+import org.hyperledger.besu.cli.subcommands.networkcreate.mapping.InitConfigurationErrorHandler;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -26,17 +31,19 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-class InitConfiguration implements Verifiable, Generatable {
+public class Configuration implements Verifiable, Generatable {
   private final String version;
   private final Network network;
+  private final List<Account> accounts;
   private final Permissioning permissioning;
   private final Privacy privacy;
   private final List<Node> nodes;
 
   @JsonCreator(mode = Mode.PROPERTIES)
-  public InitConfiguration(
+  public Configuration(
       @JsonProperty("version") final String version,
       @JsonProperty("network") final Network network,
+      @JsonProperty("accounts") final List<Account> accounts,
       @JsonProperty("permissioning") final Permissioning permissioning,
       @JsonProperty("privacy") final Privacy privacy,
       @JsonProperty("nodes") final List<Node> nodes) {
@@ -46,9 +53,11 @@ class InitConfiguration implements Verifiable, Generatable {
     this.nodes = nodes;
     this.permissioning = permissioning;
     this.privacy = privacy;
+    this.accounts = accounts;
+    this.network.setAccounts(accounts);
 
-    network
-        .getClique()
+    this.network
+        .getConsensus()
         .setValidators(nodes.stream().filter(Node::getValidator).collect(Collectors.toList()));
   }
 
@@ -58,6 +67,11 @@ class InitConfiguration implements Verifiable, Generatable {
 
   public Network getNetwork() {
     return network;
+  }
+
+  @JsonInclude(Include.NON_ABSENT)
+  public Optional<List<Account>> getAccounts() {
+    return Optional.ofNullable(accounts);
   }
 
   @JsonInclude(Include.NON_ABSENT)
@@ -84,10 +98,10 @@ class InitConfiguration implements Verifiable, Generatable {
   }
 
   @Override
-  public void generate(final Path outputDirectoryPath) {
-    DirectoryHandler directoryHandler = new DirectoryHandler();
+  public Path generate(final Path outputDirectoryPath) {
+    final DirectoryHandler directoryHandler = new DirectoryHandler();
 
-    Path mainDirectory =
+    final Path mainDirectory =
         outputDirectoryPath.resolve(directoryHandler.getSafeName(network.getName()));
 
     directoryHandler.create(mainDirectory);
@@ -97,5 +111,7 @@ class InitConfiguration implements Verifiable, Generatable {
     for (Node node : nodes) {
       node.generate(mainDirectory);
     }
+
+    return mainDirectory;
   }
 }

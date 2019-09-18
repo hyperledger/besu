@@ -10,15 +10,15 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package org.hyperledger.besu.cli.subcommands.networkcreate;
+package org.hyperledger.besu.cli.subcommands.networkcreate.mapping;
 
 import java.net.URL;
 import java.nio.file.Path;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.type.TypeReference;
-import net.consensys.cava.toml.Toml;
-import net.consensys.cava.toml.TomlParseResult;
+import org.apache.tuweni.toml.Toml;
+import org.apache.tuweni.toml.TomlParseResult;
 
 class TOMLMapperAdapter extends MapperAdapter {
 
@@ -28,7 +28,7 @@ class TOMLMapperAdapter extends MapperAdapter {
     fileURL = this.getClass().getResource(initFile);
   }
 
-  <T> T map(TypeReference<T> clazz) throws Exception {
+  public <T> T map(TypeReference<T> clazz) throws Exception {
     final TomlParseResult result = Toml.parse(Path.of(fileURL.toURI()));
     mapper = getMapper(new JsonFactory());
     return mapper.readValue(result.toJson(), clazz);

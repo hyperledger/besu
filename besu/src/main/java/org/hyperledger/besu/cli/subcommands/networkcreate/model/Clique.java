@@ -10,13 +10,17 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package org.hyperledger.besu.cli.subcommands.networkcreate;
+package org.hyperledger.besu.cli.subcommands.networkcreate.model;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Objects.requireNonNull;
 
+import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.consensus.clique.CliqueExtraData;
 import org.hyperledger.besu.util.bytes.BytesValue;
 
+import java.io.IOException;
+import java.net.URL;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -25,10 +29,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.io.Resources;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 // TODO Handle errors
-class Clique implements GenesisFragmentable {
+class Clique implements PoaConsensus {
+
+  private static final String GENESIS_TEMPLATE = "/networkcreate/clique-genesis-template.json";
 
   private Integer blockPeriodSeconds;
   private Integer epochLength;
@@ -43,10 +50,12 @@ class Clique implements GenesisFragmentable {
     this.epochLength = requireNonNull(epochLength, "Clique epoch-length not defined.");
   }
 
+  @SuppressWarnings("unused") // Used by Jackson serialisation
   public Integer getBlockPeriodSeconds() {
     return blockPeriodSeconds;
   }
 
+  @SuppressWarnings("unused") // Used by Jackson serialisation
   public Integer getEpochLength() {
     return epochLength;
   }
@@ -61,7 +70,8 @@ class Clique implements GenesisFragmentable {
     return fragment;
   }
 
-  String getExtraData() {
+  @Override
+  public String getExtraData() {
     final String extraData =
         CliqueExtraData.createWithoutProposerSeal(
                 BytesValue.wrap(new byte[32]),
@@ -70,7 +80,19 @@ class Clique implements GenesisFragmentable {
     return extraData;
   }
 
-  void setValidators(final List<Node> validators) {
+  @Override
+  public void setValidators(final List<Node> validators) {
     this.validators = validators;
+  }
+
+  @Override
+  public ObjectNode getGenesisTemplate() {
+    try {
+      final URL genesisTemplateFile = this.getClass().getResource(GENESIS_TEMPLATE);
+      final String genesisTemplateSource = Resources.toString(genesisTemplateFile, UTF_8);
+      return JsonUtil.objectNodeFromString(genesisTemplateSource);
+    } catch (IOException e) {
+      throw new IllegalStateException("Unable to get genesis template " + GENESIS_TEMPLATE);
+    }
   }
 }

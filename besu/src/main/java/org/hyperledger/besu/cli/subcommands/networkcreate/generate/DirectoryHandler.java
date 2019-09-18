@@ -10,7 +10,7 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package org.hyperledger.besu.cli.subcommands.networkcreate;
+package org.hyperledger.besu.cli.subcommands.networkcreate.generate;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.nio.file.Files.createDirectory;
@@ -20,14 +20,9 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Objects;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+public class DirectoryHandler {
 
-class DirectoryHandler {
-
-  private static final Logger LOG = LogManager.getLogger();
-
-  void create(final Path outputDirectoryPath) {
+  public void create(final Path outputDirectoryPath) {
     checkNotNull(outputDirectoryPath);
     final File outputDirectory = outputDirectoryPath.toFile();
 
@@ -42,10 +37,9 @@ class DirectoryHandler {
         throw new RuntimeException("Unable to create directory.");
       }
     }
-    LOG.debug("Using " + outputDirectoryPath);
   }
 
-  String getSafeName(String name) {
+  public String getSafeName(String name) {
     return name.replaceAll("[^a-zA-Z0-9\\.\\-]", "_");
   }
 }

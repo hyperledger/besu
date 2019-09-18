@@ -10,6 +10,13 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package org.hyperledger.besu.cli.subcommands.networkcreate;
-// TODO Handle errors
-class Privacy {}
+package org.hyperledger.besu.cli.subcommands.networkcreate.generate;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
+public interface GenesisFragmentable {
+
+  @JsonIgnore
+  ObjectNode getGenesisFragment();
+}
