@@ -542,10 +542,10 @@ task checkSpdxHeader(type: JavaExec) {
   args "${projectDir}"
   systemProperty "checkSpdxHeader.rootPath", "${projectDir}"
   systemProperty "checkSpdxHeader.spdxHeader", "* SPDX-License-Identifier: Apache-2.0"
-  systemProperty "checkSpdxHeader.filesRegex", ".*.java"
-  systemProperty "checkSpdxHeader.excludeRegex", "(.*generalstate/GeneralStateRegressionReferenceTest.*)|(.*generalstate/GeneralStateReferenceTest.*)"
-}
+  systemProperty "checkSpdxHeader.filesRegex", "(.*.java)|(.*.groovy)"
+  systemProperty "checkSpdxHeader.excludeRegex", "(.*generalstate/GeneralStateRegressionReferenceTest.*)|(.*generalstate/GeneralStateReferenceTest.*)|(.*blockchain/BlockchainReferenceTest.*)|(.*.gradle/.*)"
 
+}
 
 task jacocoRootReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
   additionalSourceDirs.from files(subprojects.sourceSets.main.allSource.srcDirs)
@@ -646,6 +646,7 @@ bintray {
   pkg = bintrayPackage
 }
 
+build.dependsOn checkSpdxHeader
 build.dependsOn verifyDistributions
 bintrayUpload.dependsOn verifyDistributions
 bintrayUpload.mustRunAfter(distTar)
