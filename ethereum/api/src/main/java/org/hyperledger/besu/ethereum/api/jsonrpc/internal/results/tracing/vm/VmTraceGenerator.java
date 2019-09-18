@@ -14,6 +14,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.vm;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.Trace;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.TracingUtils;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.vm.Code;
@@ -115,7 +116,7 @@ public class VmTraceGenerator {
       maybeNextFrame
           .flatMap(TraceFrame::getMemory)
           .filter(memory -> memory.length > 0)
-          .map(Trace::dumpAndTrimTrailingZeros)
+          .map(TracingUtils::dumpMemoryAndTrimTrailingZeros)
           .map(Mem::new)
           .ifPresent(ex::setMem);
     }
