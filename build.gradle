@@ -545,7 +545,6 @@ task checkSpdxHeader(type: JavaExec) {
   description 'Check SPDX License Header'
   main = 'org.hyperledger.CheckSpdxHeader'
   classpath = sourceSets.main.runtimeClasspath
-  args "${projectDir}"
   systemProperty "checkSpdxHeader.rootPath", "${projectDir}"
   systemProperty "checkSpdxHeader.spdxHeader", "* SPDX-License-Identifier: Apache-2.0"
   systemProperty "checkSpdxHeader.filesRegex", "(.*.java)|(.*.groovy)"
