@@ -13,7 +13,7 @@
 package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotBlockRetriever.MAX_PIVOT_BLOCK_RETRIES;
+import static org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotBlockRetriever.MAX_QUERY_RETRIES_PER_PEER;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -81,7 +81,7 @@ class FastSyncTargetManager<C> extends SyncTargetManager<C> {
             ethContext,
             metricsSystem,
             pivotBlockHeader.getNumber(),
-            MAX_PIVOT_BLOCK_RETRIES);
+            MAX_QUERY_RETRIES_PER_PEER);
     task.assignPeer(bestPeer);
     return ethContext
         .getScheduler()

@@ -177,7 +177,9 @@ public class FastSyncActions<C> {
             protocolSchedule,
             ethContext,
             metricsSystem,
-            currentState.getPivotBlockNumber().getAsLong())
+            currentState.getPivotBlockNumber().getAsLong(),
+            syncConfig.getFastSyncMinimumPeerCount(),
+            syncConfig.getFastSyncPivotDistance())
         .downloadPivotBlockHeader();
   }
 
