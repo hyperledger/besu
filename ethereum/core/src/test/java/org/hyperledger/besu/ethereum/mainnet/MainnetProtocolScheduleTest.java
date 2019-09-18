@@ -101,4 +101,37 @@ public class MainnetProtocolScheduleTest {
     Assertions.assertThat(sched.getByBlockNumber(6_485_846L).getName()).isEqualTo("Istanbul");
     Assertions.assertThat(sched.getByBlockNumber(Long.MAX_VALUE).getName()).isEqualTo("Istanbul");
   }
+
+  @Test
+  public void shouldCreateGoerliConfig() throws Exception {
+    final ProtocolSchedule<Void> sched =
+        MainnetProtocolSchedule.fromConfig(
+            GenesisConfigFile.fromConfig(
+                    Resources.toString(
+                        this.getClass().getResource("/goerli.json"), StandardCharsets.UTF_8))
+                .getConfigOptions());
+    Assertions.assertThat(sched.getByBlockNumber(0L).getName()).isEqualTo("ConstantinopleFix");
+    Assertions.assertThat(sched.getByBlockNumber(1_561_651L).getName()).isEqualTo("Istanbul");
+    Assertions.assertThat(sched.getByBlockNumber(Long.MAX_VALUE).getName()).isEqualTo("Istanbul");
+  }
+
+  @Test
+  public void shouldCreateRinkebyConfig() throws Exception {
+    final ProtocolSchedule<Void> sched =
+        MainnetProtocolSchedule.fromConfig(
+            GenesisConfigFile.fromConfig(
+                    Resources.toString(
+                        this.getClass().getResource("/rinkeby.json"), StandardCharsets.UTF_8))
+                .getConfigOptions());
+    Assertions.assertThat(sched.getByBlockNumber(0L).getName()).isEqualTo("Frontier");
+    Assertions.assertThat(sched.getByBlockNumber(1L).getName()).isEqualTo("Homestead");
+    Assertions.assertThat(sched.getByBlockNumber(2L).getName()).isEqualTo("TangerineWhistle");
+    Assertions.assertThat(sched.getByBlockNumber(3L).getName()).isEqualTo("SpuriousDragon");
+    Assertions.assertThat(sched.getByBlockNumber(1_035_301L).getName()).isEqualTo("Byzantium");
+    Assertions.assertThat(sched.getByBlockNumber(3_660_663L).getName()).isEqualTo("Constantinople");
+    Assertions.assertThat(sched.getByBlockNumber(4_321_234L).getName())
+        .isEqualTo("ConstantinopleFix");
+    Assertions.assertThat(sched.getByBlockNumber(Long.MAX_VALUE).getName())
+        .isEqualTo("ConstantinopleFix");
+  }
 }
