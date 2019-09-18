@@ -123,7 +123,7 @@ public class PrivacyPrecompiledContractTest {
 
     PrivateStateStorage privateStateStorage = mock(PrivateStateStorage.class);
     PrivateStateStorage.Updater storageUpdater = mock(PrivateStateStorage.Updater.class);
-    when(storageUpdater.putPrivateAccountState(nullable(Bytes32.class), any()))
+    when(storageUpdater.putLatestStateRoot(nullable(Bytes32.class), any()))
         .thenReturn(storageUpdater);
     when(storageUpdater.putTransactionLogs(nullable(Bytes32.class), any()))
         .thenReturn(storageUpdater);

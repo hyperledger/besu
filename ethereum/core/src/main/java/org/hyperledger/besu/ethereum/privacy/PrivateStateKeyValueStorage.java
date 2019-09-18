@@ -41,7 +41,7 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
   }
 
   @Override
-  public Optional<Hash> getPrivateAccountState(final BytesValue privacyId) {
+  public Optional<Hash> getLatestStateRoot(final BytesValue privacyId) {
     final byte[] id = privacyId.getArrayUnsafe();
 
     if (keyValueStorage.get(id).isPresent()) {
@@ -95,7 +95,7 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
     }
 
     @Override
-    public Updater putPrivateAccountState(final BytesValue privacyId, final Hash privateStateHash) {
+    public Updater putLatestStateRoot(final BytesValue privacyId, final Hash privateStateHash) {
       transaction.put(privacyId.getArrayUnsafe(), privateStateHash.extractArray());
       return this;
     }

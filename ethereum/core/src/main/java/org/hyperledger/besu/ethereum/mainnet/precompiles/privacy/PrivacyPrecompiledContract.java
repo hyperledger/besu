@@ -111,7 +111,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
 
     // get the last world state root hash - or create a new one
     final Hash lastRootHash =
-        privateStateStorage.getPrivateAccountState(privacyGroupId).orElse(EMPTY_ROOT_HASH);
+        privateStateStorage.getLatestStateRoot(privacyGroupId).orElse(EMPTY_ROOT_HASH);
 
     final MutableWorldState disposablePrivateState =
         privateWorldStateArchive.getMutable(lastRootHash).get();
@@ -145,7 +145,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
       disposablePrivateState.persist();
 
       final PrivateStateStorage.Updater privateStateUpdater = privateStateStorage.updater();
-      privateStateUpdater.putPrivateAccountState(privacyGroupId, disposablePrivateState.rootHash());
+      privateStateUpdater.putLatestStateRoot(privacyGroupId, disposablePrivateState.rootHash());
 
       final Bytes32 txHash = keccak256(RLP.encode(privateTransaction::writeTo));
       final LogSeries logs = result.getLogs();

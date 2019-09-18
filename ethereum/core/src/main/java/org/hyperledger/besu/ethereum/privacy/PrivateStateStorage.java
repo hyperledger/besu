@@ -25,7 +25,7 @@ import java.util.Optional;
 
 public interface PrivateStateStorage {
 
-  Optional<Hash> getPrivateAccountState(BytesValue privacyId);
+  Optional<Hash> getLatestStateRoot(BytesValue privacyId);
 
   Optional<List<Log>> getTransactionLogs(Bytes32 transactionHash);
 
@@ -39,7 +39,7 @@ public interface PrivateStateStorage {
 
   interface Updater {
 
-    Updater putPrivateAccountState(BytesValue privacyId, Hash privateStateHash);
+    Updater putLatestStateRoot(BytesValue privacyId, Hash privateStateHash);
 
     Updater putTransactionLogs(Bytes32 transactionHash, LogSeries logs);
 

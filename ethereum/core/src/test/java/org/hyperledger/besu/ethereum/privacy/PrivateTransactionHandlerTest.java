@@ -104,7 +104,7 @@ public class PrivateTransactionHandlerTest {
   public void setUp() throws Exception {
     PrivateStateStorage privateStateStorage = mock(PrivateStateStorage.class);
     Hash mockHash = mock(Hash.class);
-    when(privateStateStorage.getPrivateAccountState(any(BytesValue.class)))
+    when(privateStateStorage.getLatestStateRoot(any(BytesValue.class)))
         .thenReturn(Optional.of(mockHash));
     WorldStateArchive worldStateArchive = mock(WorldStateArchive.class);
     Account account = mock(Account.class);
