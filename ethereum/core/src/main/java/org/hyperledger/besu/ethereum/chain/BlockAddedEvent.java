@@ -27,14 +27,8 @@ public class BlockAddedEvent {
   private final List<Transaction> addedTransactions;
   private final List<Transaction> removedTransactions;
   private final EventType eventType;
-
-  public List<LogWithMetadata> getRemovedLogsWithMetadata() {
-    return null;
-  }
-
-  public List<LogWithMetadata> getAddedLogsWithMetadata() {
-    return null;
-  }
+  private List<LogWithMetadata> addedLogsWithMetadata;
+  private List<LogWithMetadata> removedLogsWithMetadata;
 
   public enum EventType {
     HEAD_ADVANCED,
@@ -46,29 +40,51 @@ public class BlockAddedEvent {
       final EventType eventType,
       final Block block,
       final List<Transaction> addedTransactions,
-      final List<Transaction> removedTransactions) {
+      final List<Transaction> removedTransactions,
+      final List<LogWithMetadata> addedLogsWithMetadata,
+      final List<LogWithMetadata> removedLogsWithMetadata) {
     this.eventType = eventType;
     this.block = block;
     this.addedTransactions = addedTransactions;
     this.removedTransactions = removedTransactions;
+    this.addedLogsWithMetadata = addedLogsWithMetadata;
+    this.removedLogsWithMetadata = removedLogsWithMetadata;
   }
 
-  public static BlockAddedEvent createForHeadAdvancement(final Block block) {
+  public static BlockAddedEvent createForHeadAdvancement(
+      final Block block, final List<LogWithMetadata> addedLogsWithMetadata) {
     return new BlockAddedEvent(
-        EventType.HEAD_ADVANCED, block, block.getBody().getTransactions(), Collections.emptyList());
+        EventType.HEAD_ADVANCED,
+        block,
+        block.getBody().getTransactions(),
+        Collections.emptyList(),
+        addedLogsWithMetadata,
+        Collections.emptyList());
   }
 
   public static BlockAddedEvent createForChainReorg(
       final Block block,
       final List<Transaction> addedTransactions,
-      final List<Transaction> removedTransactions) {
+      final List<Transaction> removedTransactions,
+      final List<LogWithMetadata> addedLogsWithMetadata,
+      final List<LogWithMetadata> removedLogsWithMetadata) {
     return new BlockAddedEvent(
-        EventType.CHAIN_REORG, block, addedTransactions, removedTransactions);
+        EventType.CHAIN_REORG,
+        block,
+        addedTransactions,
+        removedTransactions,
+        addedLogsWithMetadata,
+        removedLogsWithMetadata);
   }
 
   public static BlockAddedEvent createForFork(final Block block) {
     return new BlockAddedEvent(
-        EventType.FORK, block, Collections.emptyList(), Collections.emptyList());
+        EventType.FORK,
+        block,
+        Collections.emptyList(),
+        Collections.emptyList(),
+        Collections.emptyList(),
+        Collections.emptyList());
   }
 
   public Block getBlock() {
@@ -89,5 +105,13 @@ public class BlockAddedEvent {
 
   public List<Transaction> getRemovedTransactions() {
     return removedTransactions;
+  }
+
+  public List<LogWithMetadata> getAddedLogsWithMetadata() {
+    return addedLogsWithMetadata;
+  }
+
+  public List<LogWithMetadata> getRemovedLogsWithMetadata() {
+    return removedLogsWithMetadata;
   }
 }

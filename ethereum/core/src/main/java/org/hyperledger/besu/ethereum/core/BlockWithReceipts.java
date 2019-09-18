@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -71,5 +72,28 @@ public class BlockWithReceipts {
         .add("block", block)
         .add("receipts", receipts)
         .toString();
+  }
+
+  public List<LogWithMetadata> getLogsWithMetadata(final boolean removed) {
+    final var logsWithMetadata = new ArrayList<LogWithMetadata>();
+    final var block = getBlock();
+    for (int txi = 0; txi < receipts.size(); ++txi) {
+      final var currentReceipt = receipts.get(txi);
+      for (int li = 0; li < currentReceipt.getLogs().size(); ++li) {
+        final var currentLog = currentReceipt.getLogs().get(li);
+        logsWithMetadata.add(
+            new LogWithMetadata(
+                li,
+                block.getHeader().getNumber(),
+                block.getHash(),
+                block.getBody().getTransactions().get(txi).hash(),
+                txi,
+                currentLog.getLogger(),
+                currentLog.getData(),
+                currentLog.getTopics(),
+                removed));
+      }
+    }
+    return logsWithMetadata;
   }
 }

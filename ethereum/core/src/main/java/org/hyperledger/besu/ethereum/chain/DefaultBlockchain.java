@@ -22,7 +22,9 @@ import static java.util.stream.Collectors.toList;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -34,6 +36,7 @@ import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -227,12 +230,14 @@ public class DefaultBlockchain implements MutableBlockchain {
     }
     checkArgument(blockIsConnected(block), "Attempt to append non-connected block.");
 
-    final BlockAddedEvent blockAddedEvent = appendBlockHelper(block, receipts);
+    final BlockAddedEvent blockAddedEvent =
+        appendBlockHelper(new BlockWithReceipts(block, receipts));
     notifyBlockAdded(blockAddedEvent);
   }
 
-  private BlockAddedEvent appendBlockHelper(
-      final Block block, final List<TransactionReceipt> receipts) {
+  private BlockAddedEvent appendBlockHelper(final BlockWithReceipts blockWithReceipts) {
+    final var block = blockWithReceipts.getBlock();
+    final var receipts = blockWithReceipts.getReceipts();
     final Hash hash = block.getHash();
     final UInt256 td = calculateTotalDifficulty(block);
 
@@ -244,7 +249,8 @@ public class DefaultBlockchain implements MutableBlockchain {
     updater.putTotalDifficulty(hash, td);
 
     // Update canonical chain data
-    final BlockAddedEvent blockAddedEvent = updateCanonicalChainData(updater, block, td);
+    final BlockAddedEvent blockAddedEvent =
+        updateCanonicalChainData(updater, blockWithReceipts, td);
 
     updater.commit();
     if (blockAddedEvent.isNewCanonicalHead()) {
@@ -269,8 +275,9 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   private BlockAddedEvent updateCanonicalChainData(
       final BlockchainStorage.Updater updater,
-      final Block newBlock,
+      final BlockWithReceipts blockWithReceipts,
       final UInt256 totalDifficulty) {
+    final var newBlock = blockWithReceipts.getBlock();
     final Hash chainHead = blockchainStorage.getChainHead().orElse(null);
     if (newBlock.getHeader().getNumber() != BlockHeader.GENESIS_BLOCK_NUMBER && chainHead == null) {
       throw new IllegalStateException("Blockchain is missing chain head.");
@@ -283,7 +290,8 @@ public class DefaultBlockchain implements MutableBlockchain {
         updater.putBlockHash(newBlock.getHeader().getNumber(), newBlockHash);
         updater.setChainHead(newBlockHash);
         indexTransactionForBlock(updater, newBlockHash, newBlock.getBody().getTransactions());
-        return BlockAddedEvent.createForHeadAdvancement(newBlock);
+        return BlockAddedEvent.createForHeadAdvancement(
+            newBlock, blockWithReceipts.getLogsWithMetadata(false));
       } else if (totalDifficulty.compareTo(blockchainStorage.getTotalDifficulty(chainHead).get())
           > 0) {
         // New block represents a chain reorganization
@@ -325,9 +333,11 @@ public class DefaultBlockchain implements MutableBlockchain {
     // Update chain head
     updater.setChainHead(newChain.getHash());
 
-    // Track transactions to be added and removed
+    // Track transactions and logs to be added and removed
     final Map<Hash, List<Transaction>> newTransactions = new HashMap<>();
     final List<Transaction> removedTransactions = new ArrayList<>();
+    final List<LogWithMetadata> addedLogsWithMetadata = new ArrayList<>();
+    final List<LogWithMetadata> removedLogsWithMetadata = new ArrayList<>();
 
     while (newChain.getNumber() > oldChain.getNumber()) {
       // If new chain is longer than old chain, walk back until we meet the old chain by number
@@ -339,6 +349,7 @@ public class DefaultBlockchain implements MutableBlockchain {
               ? newChainHead.getBody().getTransactions()
               : blockchainStorage.getBlockBody(blockHash).get().getTransactions();
       newTransactions.put(blockHash, newTxs);
+      addAddedLogsWithMetadata(addedLogsWithMetadata, newChain);
 
       newChain = blockchainStorage.getBlockHeader(newChain.getParentHash()).get();
     }
@@ -349,6 +360,7 @@ public class DefaultBlockchain implements MutableBlockchain {
       updater.removeBlockHash(oldChain.getNumber());
       removedTransactions.addAll(
           blockchainStorage.getBlockBody(oldChain.getHash()).get().getTransactions());
+      addRemovedLogsWithMetadata(removedLogsWithMetadata, oldChain);
 
       oldChain = blockchainStorage.getBlockHeader(oldChain.getParentHash()).get();
     }
@@ -364,6 +376,8 @@ public class DefaultBlockchain implements MutableBlockchain {
               ? newChainHead.getBody().getTransactions()
               : blockchainStorage.getBlockBody(newBlockHash).get().getTransactions();
       newTransactions.put(newBlockHash, newTxs);
+      addAddedLogsWithMetadata(addedLogsWithMetadata, newChain);
+      addRemovedLogsWithMetadata(removedLogsWithMetadata, oldChain);
       removedTransactions.addAll(
           blockchainStorage.getBlockBody(oldChain.getHash()).get().getTransactions());
 
@@ -392,7 +406,9 @@ public class DefaultBlockchain implements MutableBlockchain {
     return BlockAddedEvent.createForChainReorg(
         newChainHead,
         newTransactions.values().stream().flatMap(Collection::stream).collect(toList()),
-        removedTransactions);
+        removedTransactions,
+        addedLogsWithMetadata,
+        removedLogsWithMetadata);
   }
 
   @Override
@@ -492,6 +508,25 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   private boolean blockIsConnected(final Block block) {
     return blockchainStorage.getBlockHeader(block.getHeader().getParentHash()).isPresent();
+  }
+
+  private void addAddedLogsWithMetadata(
+      final List<LogWithMetadata> logsWithMetadata, final BlockHeader blockHeader) {
+    logsWithMetadata.addAll(getBlockWithReceipts(blockHeader).getLogsWithMetadata(false));
+  }
+
+  private void addRemovedLogsWithMetadata(
+      final List<LogWithMetadata> logsWithMetadata, final BlockHeader blockHeader) {
+    // the logs have to be reverse chronological so reverse them before adding to the collection
+    final var logs = getBlockWithReceipts(blockHeader).getLogsWithMetadata(true);
+    Collections.reverse(logs);
+    logsWithMetadata.addAll(logs);
+  }
+
+  private BlockWithReceipts getBlockWithReceipts(final BlockHeader blockHeader) {
+    return new BlockWithReceipts(
+        new Block(blockHeader, blockchainStorage.getBlockBody(blockHeader.getHash()).get()),
+        blockchainStorage.getTransactionReceipts(blockHeader.getHash()).get());
   }
 
   @Override

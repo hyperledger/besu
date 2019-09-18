@@ -380,5 +380,4 @@ public class LogsSubscriptionServiceTest {
     when(subscriptionManager.subscriptionsOfType(any(), any()))
         .thenReturn(Lists.newArrayList(subscriptions));
   }
-
 }
