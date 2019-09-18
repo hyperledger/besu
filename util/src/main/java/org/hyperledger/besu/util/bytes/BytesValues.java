@@ -60,11 +60,6 @@ public abstract class BytesValues {
     return value.slice(toTrim);
   }
 
-  public static BytesValue trimTrailingZeros(final BytesValue value) {
-    final int toTrim = trailingZeros(value);
-    return value.slice(0, value.size() - toTrim + 1);
-  }
-
   /**
    * Returns the smallest bytes value whose bytes correspond to the provided long. That is, the
    * returned value may be of size less than 8 if the provided int has leading zero bytes.
@@ -349,15 +344,6 @@ public abstract class BytesValues {
     for (int i = 0; i < bytes.size(); i++) {
       if (bytes.get(i) != 0) {
         return i;
-      }
-    }
-    return bytes.size();
-  }
-
-  private static int trailingZeros(final BytesValue bytes) {
-    for (int i = bytes.size() - 1; i > 0; i--) {
-      if (bytes.get(i) != 0) {
-        return bytes.size() - i;
       }
     }
     return bytes.size();

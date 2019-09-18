@@ -14,7 +14,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing;
 
 import org.hyperledger.besu.util.bytes.Bytes32;
 import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.BytesValues;
 
 import java.util.Arrays;
 import java.util.Optional;
@@ -37,6 +36,20 @@ public class TracingUtils {
   public static String dumpMemoryAndTrimTrailingZeros(final Bytes32[] memory) {
     final String memoryString = dumpMemoryUnprefixed(memory);
     final BytesValue value = BytesValue.fromHexString(memoryString);
-    return "0x".concat(BytesValues.trimTrailingZeros(value).toUnprefixedString());
+    return "0x".concat(trimTrailingZeros(value).toUnprefixedString());
+  }
+
+  private static BytesValue trimTrailingZeros(final BytesValue value) {
+    final int toTrim = trailingZeros(value);
+    return value.slice(0, value.size() - toTrim + 1);
+  }
+
+  private static int trailingZeros(final BytesValue bytes) {
+    for (int i = bytes.size() - 1; i > 0; i--) {
+      if (bytes.get(i) != 0) {
+        return bytes.size() - i;
+      }
+    }
+    return bytes.size();
   }
 }
