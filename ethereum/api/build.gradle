@@ -41,7 +41,7 @@ dependencies {
   implementation project(':crypto')
 
   implementation 'org.springframework.security:spring-security-crypto'
-  implementation 'net.consensys.cava:cava-toml'
+  implementation 'org.apache.tuweni:tuweni-toml'
   implementation 'com.graphql-java:graphql-java'
   implementation 'com.google.guava:guava'
   implementation 'io.vertx:vertx-core'
