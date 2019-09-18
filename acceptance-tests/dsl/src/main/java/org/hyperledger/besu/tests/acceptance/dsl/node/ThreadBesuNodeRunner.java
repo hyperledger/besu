@@ -19,6 +19,7 @@ import org.hyperledger.besu.RunnerBuilder;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
+import org.hyperledger.besu.controller.GasLimitCalculator;
 import org.hyperledger.besu.controller.KeyPairUtil;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
@@ -146,6 +147,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
               .clock(Clock.systemUTC())
               .isRevertReasonEnabled(node.isRevertReasonEnabled())
               .storageProvider(storageProvider)
+              .targetGasLimit(GasLimitCalculator.DEFAULT)
               .build();
     } catch (final IOException e) {
       throw new RuntimeException("Error building BesuController", e);

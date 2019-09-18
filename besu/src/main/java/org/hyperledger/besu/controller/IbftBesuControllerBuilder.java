@@ -111,7 +111,7 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder<IbftContext
 
     final IbftBlockCreatorFactory blockCreatorFactory =
         new IbftBlockCreatorFactory(
-            (gasLimit) -> gasLimit,
+            gasLimitCalculator,
             transactionPool.getPendingTransactions(),
             protocolContext,
             protocolSchedule,

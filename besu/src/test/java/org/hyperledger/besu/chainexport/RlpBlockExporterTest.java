@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import org.hyperledger.besu.chainimport.RlpBlockImporter;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.controller.BesuController;
+import org.hyperledger.besu.controller.GasLimitCalculator;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -88,6 +89,7 @@ public final class RlpBlockExporterTest {
         .dataDirectory(dataDir)
         .clock(TestClock.fixed())
         .transactionPoolConfiguration(TransactionPoolConfiguration.builder().build())
+        .targetGasLimit(GasLimitCalculator.DEFAULT)
         .build();
   }
 

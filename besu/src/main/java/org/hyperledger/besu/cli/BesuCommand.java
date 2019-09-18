@@ -653,6 +653,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Path privacyMarkerTransactionSigningKeyPath = null;
 
   @Option(
+      names = {"--target-gas-limit"},
+      description =
+          "Sets target gas limit per block. If set each blocks gas limit will approach this setting over time if the current gas limit is different.")
+  private final Long targetGasLimit = null;
+
+  @Option(
       names = {"--tx-pool-max-size"},
       paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
       description =
@@ -1047,7 +1053,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           .storageProvider(keyStorageProvider(keyValueStorageName))
           .isPruningEnabled(isPruningEnabled)
           .pruningConfiguration(buildPruningConfiguration())
-          .genesisConfigOverrides(genesisConfigOverrides);
+          .genesisConfigOverrides(genesisConfigOverrides)
+          .targetGasLimit(targetGasLimit);
     } catch (final IOException e) {
       throw new ExecutionException(this.commandLine, "Invalid path", e);
     }
