@@ -25,7 +25,7 @@ import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
 import java.math.BigInteger;
 import java.util.Base64;
 
-import net.consensys.cava.crypto.sodium.Box;
+import org.apache.tuweni.crypto.sodium.Box;
 import org.junit.Before;
 import org.junit.Test;
 import org.web3j.protocol.eea.response.PrivateTransactionReceipt;

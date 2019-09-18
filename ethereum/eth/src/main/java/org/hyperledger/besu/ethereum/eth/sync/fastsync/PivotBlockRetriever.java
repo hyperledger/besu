@@ -79,6 +79,7 @@ public class PivotBlockRetriever<C> {
             .getEthPeers()
             .streamAvailablePeers()
             .filter(peer -> peer.chainState().getEstimatedHeight() >= pivotBlockNumber)
+            .filter(EthPeer::isFullyValidated)
             .collect(Collectors.toList());
 
     final int confirmationsRequired = peersToQuery.size() / 2 + 1;

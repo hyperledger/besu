@@ -15,8 +15,8 @@
 package org.hyperledger.besu.tests.acceptance.dsl.node;
 
 import static java.util.Collections.unmodifiableList;
-import static net.consensys.cava.io.file.Files.copyResource;
 import static org.apache.logging.log4j.LogManager.getLogger;
+import static org.apache.tuweni.io.file.Files.copyResource;
 
 import org.hyperledger.besu.controller.KeyPairUtil;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;

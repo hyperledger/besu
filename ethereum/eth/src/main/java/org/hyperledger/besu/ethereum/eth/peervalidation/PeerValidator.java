@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.peervalidation;
 
+import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 
@@ -42,10 +43,11 @@ public interface PeerValidator {
   /**
    * Validates the given peer.
    *
+   * @param ethContext Utilities for working with the eth sub-protocol.
    * @param ethPeer The peer to be validated.
    * @return True if the peer is valid, false otherwise.
    */
-  CompletableFuture<Boolean> validatePeer(final EthPeer ethPeer);
+  CompletableFuture<Boolean> validatePeer(final EthContext ethContext, final EthPeer ethPeer);
 
   /**
    * @param ethPeer The peer to be disconnected.

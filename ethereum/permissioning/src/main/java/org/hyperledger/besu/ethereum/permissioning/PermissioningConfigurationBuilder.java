@@ -21,8 +21,8 @@ import java.net.URI;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import net.consensys.cava.toml.TomlArray;
-import net.consensys.cava.toml.TomlParseResult;
+import org.apache.tuweni.toml.TomlArray;
+import org.apache.tuweni.toml.TomlParseResult;
 
 public class PermissioningConfigurationBuilder {
 

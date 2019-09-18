@@ -26,9 +26,11 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
+import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
@@ -207,7 +209,68 @@ public class FastSyncActionsTest {
   }
 
   @Test
+  public void selectPivotBlockShouldWaitAndRetryIfSufficientValidatedPeersUnavailable() {
+    final int minPeers = 3;
+    final PeerValidator validator = mock(PeerValidator.class);
+    syncConfigBuilder.fastSyncMinimumPeerCount(minPeers);
+    syncConfig = syncConfigBuilder.build();
+    fastSyncActions = createFastSyncActions(syncConfig);
+    final long minPivotHeight = syncConfig.getFastSyncPivotDistance() + 1L;
+    EthProtocolManagerTestUtil.disableEthSchedulerAutoRun(ethProtocolManager);
+
+    // Create peers that are not validated
+    final OptionalLong height = OptionalLong.of(minPivotHeight + 10);
+    List<RespondingEthPeer> peers = new ArrayList<>();
+    for (int i = 0; i < minPeers; i++) {
+      final UInt256 td = UInt256.of(i);
+
+      final RespondingEthPeer peer =
+          EthProtocolManagerTestUtil.createPeer(ethProtocolManager, td, height, validator);
+      peers.add(peer);
+    }
+
+    // No pivot should be selected while peers are not fully validated
+    final CompletableFuture<FastSyncState> result =
+        fastSyncActions.selectPivotBlock(FastSyncState.EMPTY_SYNC_STATE);
+    assertThat(result).isNotDone();
+    EthProtocolManagerTestUtil.runPendingFutures(ethProtocolManager);
+    assertThat(result).isNotDone();
+
+    // Validate a subset of peers
+    peers.subList(0, minPeers - 1).forEach(p -> p.getEthPeer().markValidated(validator));
+
+    // No pivot should be selected while only a subset of peers have height estimates
+    EthProtocolManagerTestUtil.runPendingFutures(ethProtocolManager);
+    assertThat(result).isNotDone();
+
+    // Set best height and mark best peer validated
+    final long bestPeerHeight = minPivotHeight + 11;
+    final EthPeer bestPeer = peers.get(minPeers - 1).getEthPeer();
+    bestPeer.chainState().updateHeightEstimate(bestPeerHeight);
+    bestPeer.markValidated(validator);
+    final FastSyncState expected =
+        new FastSyncState(bestPeerHeight - syncConfig.getFastSyncPivotDistance());
+    EthProtocolManagerTestUtil.runPendingFutures(ethProtocolManager);
+    assertThat(result).isCompletedWithValue(expected);
+  }
+
+  @Test
   public void selectPivotBlockUsesBestPeerWithHeightEstimate() {
+    selectPivotBlockUsesBestPeerMatchingRequiredCriteria(true, false);
+  }
+
+  @Test
+  public void selectPivotBlockUsesBestPeerThatIsValidated() {
+    selectPivotBlockUsesBestPeerMatchingRequiredCriteria(false, true);
+  }
+
+  @Test
+  public void selectPivotBlockUsesBestPeerThatIsValidatedAndHasHeightEstimate() {
+    selectPivotBlockUsesBestPeerMatchingRequiredCriteria(true, true);
+  }
+
+  private void selectPivotBlockUsesBestPeerMatchingRequiredCriteria(
+      final boolean bestMissingHeight, final boolean bestNotValidated) {
     final int minPeers = 3;
     final int peerCount = minPeers + 1;
     syncConfigBuilder.fastSyncMinimumPeerCount(minPeers);
@@ -217,21 +280,27 @@ public class FastSyncActionsTest {
     EthProtocolManagerTestUtil.disableEthSchedulerAutoRun(ethProtocolManager);
 
     // Create peers without chain height estimates
+    final PeerValidator validator = mock(PeerValidator.class);
     List<RespondingEthPeer> peers = new ArrayList<>();
     for (int i = 0; i < peerCount; i++) {
       // Best peer by td is the first peer, td decreases as i increases
+      final boolean isBest = i == 0;
       final UInt256 td = UInt256.of(peerCount - i);
 
       final OptionalLong height;
-      if (i == 0) {
+      if (isBest && bestMissingHeight) {
         // Don't set a height estimate for the best peer
         height = OptionalLong.empty();
       } else {
         // Height increases with i
         height = OptionalLong.of(minPivotHeight + i);
       }
+
       final RespondingEthPeer peer =
-          EthProtocolManagerTestUtil.createPeer(ethProtocolManager, td, height);
+          EthProtocolManagerTestUtil.createPeer(ethProtocolManager, td, height, validator);
+      if (!isBest || !bestNotValidated) {
+        peer.getEthPeer().markValidated(validator);
+      }
       peers.add(peer);
     }
 

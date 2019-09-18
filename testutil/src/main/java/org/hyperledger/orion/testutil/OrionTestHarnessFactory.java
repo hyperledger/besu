@@ -14,7 +14,7 @@
  */
 package org.hyperledger.orion.testutil;
 
-import static net.consensys.cava.io.file.Files.copyResource;
+import static org.apache.tuweni.io.file.Files.copyResource;
 
 import java.io.IOException;
 import java.nio.file.Path;

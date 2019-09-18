@@ -40,11 +40,12 @@ public class ChainHeadTrackerTest {
   private final EthProtocolManager ethProtocolManager =
       EthProtocolManagerTestUtil.create(blockchain, blockchainSetupUtil.getWorldArchive());
   private final RespondingEthPeer respondingPeer =
-      RespondingEthPeer.create(
-          ethProtocolManager,
-          blockchain.getChainHeadHash(),
-          blockchain.getChainHead().getTotalDifficulty(),
-          0);
+      RespondingEthPeer.builder()
+          .ethProtocolManager(ethProtocolManager)
+          .chainHeadHash(blockchain.getChainHeadHash())
+          .totalDifficulty(blockchain.getChainHead().getTotalDifficulty())
+          .estimatedHeight(0)
+          .build();
   private final ProtocolSchedule<Void> protocolSchedule =
       FixedDifficultyProtocolSchedule.create(
           GenesisConfigFile.development().getConfigOptions(), false);

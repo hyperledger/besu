@@ -55,16 +55,13 @@ public class DaoForkPeerValidatorTest {
 
     PeerValidator validator =
         new DaoForkPeerValidator(
-            ethProtocolManager.ethContext(),
-            MainnetProtocolSchedule.create(),
-            new NoOpMetricsSystem(),
-            daoBlockNumber,
-            0);
+            MainnetProtocolSchedule.create(), new NoOpMetricsSystem(), daoBlockNumber, 0);
 
     RespondingEthPeer peer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, daoBlockNumber);
 
-    CompletableFuture<Boolean> result = validator.validatePeer(peer.getEthPeer());
+    CompletableFuture<Boolean> result =
+        validator.validatePeer(ethProtocolManager.ethContext(), peer.getEthPeer());
 
     assertThat(result).isNotDone();
 
@@ -87,16 +84,13 @@ public class DaoForkPeerValidatorTest {
 
     PeerValidator validator =
         new DaoForkPeerValidator(
-            ethProtocolManager.ethContext(),
-            MainnetProtocolSchedule.create(),
-            new NoOpMetricsSystem(),
-            daoBlockNumber,
-            0);
+            MainnetProtocolSchedule.create(), new NoOpMetricsSystem(), daoBlockNumber, 0);
 
     RespondingEthPeer peer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, daoBlockNumber);
 
-    CompletableFuture<Boolean> result = validator.validatePeer(peer.getEthPeer());
+    CompletableFuture<Boolean> result =
+        validator.validatePeer(ethProtocolManager.ethContext(), peer.getEthPeer());
 
     assertThat(result).isNotDone();
 
@@ -116,16 +110,13 @@ public class DaoForkPeerValidatorTest {
 
     PeerValidator validator =
         new DaoForkPeerValidator(
-            ethProtocolManager.ethContext(),
-            MainnetProtocolSchedule.create(),
-            new NoOpMetricsSystem(),
-            daoBlockNumber,
-            0);
+            MainnetProtocolSchedule.create(), new NoOpMetricsSystem(), daoBlockNumber, 0);
 
     RespondingEthPeer peer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, daoBlockNumber);
 
-    CompletableFuture<Boolean> result = validator.validatePeer(peer.getEthPeer());
+    CompletableFuture<Boolean> result =
+        validator.validatePeer(ethProtocolManager.ethContext(), peer.getEthPeer());
 
     // Request should timeout immediately
     assertThat(result).isDone();
@@ -145,11 +136,7 @@ public class DaoForkPeerValidatorTest {
 
     PeerValidator validator =
         new DaoForkPeerValidator(
-            ethProtocolManager.ethContext(),
-            MainnetProtocolSchedule.create(),
-            new NoOpMetricsSystem(),
-            daoBlockNumber,
-            0);
+            MainnetProtocolSchedule.create(), new NoOpMetricsSystem(), daoBlockNumber, 0);
 
     int peerCount = 1000;
     List<RespondingEthPeer> otherPeers =
@@ -160,7 +147,8 @@ public class DaoForkPeerValidatorTest {
     RespondingEthPeer targetPeer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, daoBlockNumber);
 
-    CompletableFuture<Boolean> result = validator.validatePeer(targetPeer.getEthPeer());
+    CompletableFuture<Boolean> result =
+        validator.validatePeer(ethProtocolManager.ethContext(), targetPeer.getEthPeer());
 
     assertThat(result).isNotDone();
 
@@ -185,11 +173,7 @@ public class DaoForkPeerValidatorTest {
 
     PeerValidator validator =
         new DaoForkPeerValidator(
-            ethProtocolManager.ethContext(),
-            MainnetProtocolSchedule.create(),
-            new NoOpMetricsSystem(),
-            daoBlockNumber,
-            buffer);
+            MainnetProtocolSchedule.create(), new NoOpMetricsSystem(), daoBlockNumber, buffer);
 
     EthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0).getEthPeer();
 

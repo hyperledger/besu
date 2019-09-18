@@ -15,6 +15,7 @@
 package org.hyperledger.besu.plugin.services.storage.rocksdb;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
@@ -99,6 +100,22 @@ public class RocksDBKeyValueStorageFactoryTest {
   }
 
   @Test
+  public void shouldDetectCorrectVersionInCaseOfRollback() throws Exception {
+    final Path tempDatabaseDir = temporaryFolder.newFolder().toPath().resolve("db");
+    Files.createDirectories(tempDatabaseDir);
+    when(commonConfiguration.getStoragePath()).thenReturn(tempDatabaseDir);
+    final RocksDBKeyValueStorageFactory storageFactory =
+        new RocksDBKeyValueStorageFactory(() -> rocksDbConfiguration, segments, 1);
+
+    storageFactory.create(segment, commonConfiguration, metricsSystem);
+    storageFactory.close();
+
+    final RocksDBKeyValueStorageFactory rolledbackStorageFactory =
+        new RocksDBKeyValueStorageFactory(() -> rocksDbConfiguration, segments, 0);
+    rolledbackStorageFactory.create(segment, commonConfiguration, metricsSystem);
+  }
+
+  @Test
   public void shouldThrowExceptionWhenVersionNumberIsInvalid() throws Exception {
     final Path tempDatabaseDir = temporaryFolder.newFolder().toPath().resolve("db");
     Files.createDirectories(tempDatabaseDir);
@@ -111,6 +128,17 @@ public class RocksDBKeyValueStorageFactoryTest {
                 new RocksDBKeyValueStorageFactory(() -> rocksDbConfiguration, segments)
                     .create(segment, commonConfiguration, metricsSystem))
         .isInstanceOf(StorageException.class);
+  }
+
+  @Test
+  public void shouldSetSegmentationFieldDuringCreation() throws Exception {
+    final Path tempDatabaseDir = temporaryFolder.newFolder().toPath().resolve("db");
+    Files.createDirectories(tempDatabaseDir);
+    when(commonConfiguration.getStoragePath()).thenReturn(tempDatabaseDir);
+    final RocksDBKeyValueStorageFactory storageFactory =
+        new RocksDBKeyValueStorageFactory(() -> rocksDbConfiguration, segments);
+    storageFactory.create(segment, commonConfiguration, metricsSystem);
+    assertThatCode(storageFactory::isSegmentIsolationSupported).doesNotThrowAnyException();
   }
 
   @Test

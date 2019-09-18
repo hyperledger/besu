@@ -21,11 +21,11 @@ import java.io.FileNotFoundException;
 import java.util.stream.Collectors;
 
 import com.google.common.io.Resources;
-import net.consensys.cava.toml.Toml;
-import net.consensys.cava.toml.TomlParseError;
-import net.consensys.cava.toml.TomlParseResult;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.toml.Toml;
+import org.apache.tuweni.toml.TomlParseError;
+import org.apache.tuweni.toml.TomlParseResult;
 
 public class TomlConfigFileParser {
 

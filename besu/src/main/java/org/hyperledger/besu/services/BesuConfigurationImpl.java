@@ -16,9 +16,7 @@ package org.hyperledger.besu.services;
 
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 
-import java.net.URI;
 import java.nio.file.Path;
-import java.util.Optional;
 
 public class BesuConfigurationImpl implements BesuConfiguration {
 
@@ -31,10 +29,5 @@ public class BesuConfigurationImpl implements BesuConfiguration {
   @Override
   public Path getStoragePath() {
     return storagePath;
-  }
-
-  @Override
-  public Optional<URI> getEnclaveUrl() {
-    return Optional.empty();
   }
 }

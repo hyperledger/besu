@@ -36,7 +36,6 @@ public class DaoForkPeerValidator implements PeerValidator {
   private static final Logger LOG = LogManager.getLogger();
   private static long DEFAULT_CHAIN_HEIGHT_ESTIMATION_BUFFER = 10L;
 
-  private final EthContext ethContext;
   private final ProtocolSchedule<?> protocolSchedule;
   private final MetricsSystem metricsSystem;
 
@@ -44,14 +43,12 @@ public class DaoForkPeerValidator implements PeerValidator {
   // Wait for peer's chainhead to advance some distance beyond daoBlockNumber before validating
   private final long chainHeightEstimationBuffer;
 
-  public DaoForkPeerValidator(
-      final EthContext ethContext,
+  DaoForkPeerValidator(
       final ProtocolSchedule<?> protocolSchedule,
       final MetricsSystem metricsSystem,
       final long daoBlockNumber,
       final long chainHeightEstimationBuffer) {
     checkArgument(chainHeightEstimationBuffer >= 0);
-    this.ethContext = ethContext;
     this.protocolSchedule = protocolSchedule;
     this.metricsSystem = metricsSystem;
     this.daoBlockNumber = daoBlockNumber;
@@ -59,20 +56,15 @@ public class DaoForkPeerValidator implements PeerValidator {
   }
 
   public DaoForkPeerValidator(
-      final EthContext ethContext,
       final ProtocolSchedule<?> protocolSchedule,
       final MetricsSystem metricsSystem,
       final long daoBlockNumber) {
-    this(
-        ethContext,
-        protocolSchedule,
-        metricsSystem,
-        daoBlockNumber,
-        DEFAULT_CHAIN_HEIGHT_ESTIMATION_BUFFER);
+    this(protocolSchedule, metricsSystem, daoBlockNumber, DEFAULT_CHAIN_HEIGHT_ESTIMATION_BUFFER);
   }
 
   @Override
-  public CompletableFuture<Boolean> validatePeer(final EthPeer ethPeer) {
+  public CompletableFuture<Boolean> validatePeer(
+      final EthContext ethContext, final EthPeer ethPeer) {
     AbstractPeerTask<List<BlockHeader>> getHeaderTask =
         GetHeadersFromPeerByNumberTask.forSingleNumber(
                 protocolSchedule, ethContext, daoBlockNumber, metricsSystem)

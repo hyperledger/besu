@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.ethsigner.testutil;
 
-import static net.consensys.cava.io.file.Files.copyResource;
+import static org.apache.tuweni.io.file.Files.copyResource;
 
 import java.io.File;
 import java.io.FileInputStream;

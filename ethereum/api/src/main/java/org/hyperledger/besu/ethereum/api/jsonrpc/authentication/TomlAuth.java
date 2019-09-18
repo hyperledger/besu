@@ -25,9 +25,9 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.AuthProvider;
 import io.vertx.ext.auth.User;
-import net.consensys.cava.toml.Toml;
-import net.consensys.cava.toml.TomlParseResult;
-import net.consensys.cava.toml.TomlTable;
+import org.apache.tuweni.toml.Toml;
+import org.apache.tuweni.toml.TomlParseResult;
+import org.apache.tuweni.toml.TomlTable;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 
 public class TomlAuth implements AuthProvider {

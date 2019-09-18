@@ -52,6 +52,16 @@ public class GenesisConfigFile {
     }
   }
 
+  public static ObjectNode mainnetJsonNode() {
+    try {
+      final String jsonString =
+          Resources.toString(GenesisConfigFile.class.getResource("/mainnet.json"), UTF_8);
+      return JsonUtil.objectNodeFromString(jsonString, false);
+    } catch (final IOException e) {
+      throw new IllegalStateException(e);
+    }
+  }
+
   public static GenesisConfigFile development() {
     try {
       return fromConfig(

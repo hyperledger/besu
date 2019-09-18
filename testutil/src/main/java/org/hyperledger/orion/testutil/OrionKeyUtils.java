@@ -26,9 +26,9 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.Base64;
 
-import net.consensys.cava.bytes.Bytes;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 public class OrionKeyUtils {
   private static final Logger LOG = LogManager.getLogger();

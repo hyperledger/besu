@@ -56,7 +56,13 @@ dependencyManagement {
 
     dependency 'junit:junit:4.12'
 
-    dependency 'net.consensys.cava:cava-toml:0.5.0'
+    dependencySet(group: 'org.apache.tuweni', version: '0.9.0-20190709195335') {
+      entry 'tuweni-bytes'
+      entry 'tuweni-io'
+      entry 'tuweni-config'
+      entry 'tuweni-crypto'
+      entry 'tuweni-toml'
+    }
 
     dependency 'net.consensys:orion:1.3.2'
 

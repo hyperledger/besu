@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.peervalidation;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -36,88 +37,130 @@ public class PeerValidatorRunnerTest {
 
   @Test
   public void checkPeer_schedulesFutureCheckWhenPeerNotReady() {
-    EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
-    EthProtocolManagerTestUtil.disableEthSchedulerAutoRun(ethProtocolManager);
-    EthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager).getEthPeer();
+    final PeerValidator validator = mock(PeerValidator.class);
 
-    PeerValidator validator = mock(PeerValidator.class);
+    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
+    EthProtocolManagerTestUtil.disableEthSchedulerAutoRun(ethProtocolManager);
+    final EthPeer peer =
+        EthProtocolManagerTestUtil.peerBuilder()
+            .ethProtocolManager(ethProtocolManager)
+            .peerValidators(validator)
+            .build()
+            .getEthPeer();
+
+    assertThat(peer.isFullyValidated()).isFalse();
+
     when(validator.canBeValidated(eq(peer))).thenReturn(false);
     when(validator.nextValidationCheckTimeout(eq(peer))).thenReturn(Duration.ofSeconds(30));
 
-    PeerValidatorRunner runner =
+    final PeerValidatorRunner runner =
         spy(new PeerValidatorRunner(ethProtocolManager.ethContext(), validator));
     runner.checkPeer(peer);
 
+    assertThat(peer.isFullyValidated()).isFalse();
+
     verify(runner, times(1)).checkPeer(eq(peer));
-    verify(validator, never()).validatePeer(eq(peer));
+    verify(validator, never()).validatePeer(eq(ethProtocolManager.ethContext()), eq(peer));
     verify(runner, never()).disconnectPeer(eq(peer));
     verify(runner, times(1)).scheduleNextCheck(eq(peer));
 
     // Run pending futures to trigger the next check
     EthProtocolManagerTestUtil.runPendingFutures(ethProtocolManager);
     verify(runner, times(2)).checkPeer(eq(peer));
-    verify(validator, never()).validatePeer(eq(peer));
+    verify(validator, never()).validatePeer(eq(ethProtocolManager.ethContext()), eq(peer));
     verify(runner, never()).disconnectPeer(eq(peer));
     verify(runner, times(2)).scheduleNextCheck(eq(peer));
+
+    assertThat(peer.isFullyValidated()).isFalse();
   }
 
   @Test
   public void checkPeer_doesNotScheduleFutureCheckWhenPeerNotReadyAndDisconnected() {
-    EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
+    final PeerValidator validator = mock(PeerValidator.class);
+
+    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
     EthProtocolManagerTestUtil.disableEthSchedulerAutoRun(ethProtocolManager);
-    EthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager).getEthPeer();
+    final EthPeer peer =
+        EthProtocolManagerTestUtil.peerBuilder()
+            .ethProtocolManager(ethProtocolManager)
+            .peerValidators(validator)
+            .build()
+            .getEthPeer();
     peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
 
-    PeerValidator validator = mock(PeerValidator.class);
     when(validator.canBeValidated(eq(peer))).thenReturn(false);
     when(validator.nextValidationCheckTimeout(eq(peer))).thenReturn(Duration.ofSeconds(30));
 
-    PeerValidatorRunner runner =
+    final PeerValidatorRunner runner =
         spy(new PeerValidatorRunner(ethProtocolManager.ethContext(), validator));
     runner.checkPeer(peer);
 
     verify(runner, times(1)).checkPeer(eq(peer));
-    verify(validator, never()).validatePeer(eq(peer));
+    verify(validator, never()).validatePeer(eq(ethProtocolManager.ethContext()), eq(peer));
     verify(runner, never()).disconnectPeer(eq(peer));
     verify(runner, times(0)).scheduleNextCheck(eq(peer));
   }
 
   @Test
   public void checkPeer_handlesInvalidPeer() {
-    EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
-    EthProtocolManagerTestUtil.disableEthSchedulerAutoRun(ethProtocolManager);
-    EthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager).getEthPeer();
+    final PeerValidator validator = mock(PeerValidator.class);
 
-    PeerValidator validator = mock(PeerValidator.class);
+    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
+    EthProtocolManagerTestUtil.disableEthSchedulerAutoRun(ethProtocolManager);
+    final EthPeer peer =
+        EthProtocolManagerTestUtil.peerBuilder()
+            .ethProtocolManager(ethProtocolManager)
+            .peerValidators(validator)
+            .build()
+            .getEthPeer();
+
+    assertThat(peer.isFullyValidated()).isFalse();
+
     when(validator.canBeValidated(eq(peer))).thenReturn(true);
-    when(validator.validatePeer(eq(peer))).thenReturn(CompletableFuture.completedFuture(false));
+    when(validator.validatePeer(eq(ethProtocolManager.ethContext()), eq(peer)))
+        .thenReturn(CompletableFuture.completedFuture(false));
     when(validator.nextValidationCheckTimeout(eq(peer))).thenReturn(Duration.ofSeconds(30));
 
-    PeerValidatorRunner runner =
+    assertThat(peer.isFullyValidated()).isFalse();
+
+    final PeerValidatorRunner runner =
         spy(new PeerValidatorRunner(ethProtocolManager.ethContext(), validator));
     runner.checkPeer(peer);
 
-    verify(validator, times(1)).validatePeer(eq(peer));
+    verify(validator, times(1)).validatePeer(eq(ethProtocolManager.ethContext()), eq(peer));
     verify(runner, times(1)).disconnectPeer(eq(peer));
     verify(runner, never()).scheduleNextCheck(eq(peer));
+
+    assertThat(peer.isFullyValidated()).isFalse();
   }
 
   @Test
   public void checkPeer_handlesValidPeer() {
-    EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
-    EthProtocolManagerTestUtil.disableEthSchedulerAutoRun(ethProtocolManager);
-    EthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager).getEthPeer();
+    final PeerValidator validator = mock(PeerValidator.class);
 
-    PeerValidator validator = mock(PeerValidator.class);
+    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
+    EthProtocolManagerTestUtil.disableEthSchedulerAutoRun(ethProtocolManager);
+    final EthPeer peer =
+        EthProtocolManagerTestUtil.peerBuilder()
+            .ethProtocolManager(ethProtocolManager)
+            .peerValidators(validator)
+            .build()
+            .getEthPeer();
+
+    assertThat(peer.isFullyValidated()).isFalse();
+
     when(validator.canBeValidated(eq(peer))).thenReturn(true);
-    when(validator.validatePeer(eq(peer))).thenReturn(CompletableFuture.completedFuture(true));
+    when(validator.validatePeer(eq(ethProtocolManager.ethContext()), eq(peer)))
+        .thenReturn(CompletableFuture.completedFuture(true));
     when(validator.nextValidationCheckTimeout(eq(peer))).thenReturn(Duration.ofSeconds(30));
 
-    PeerValidatorRunner runner =
+    final PeerValidatorRunner runner =
         spy(new PeerValidatorRunner(ethProtocolManager.ethContext(), validator));
     runner.checkPeer(peer);
 
-    verify(validator, times(1)).validatePeer(eq(peer));
+    assertThat(peer.isFullyValidated()).isTrue();
+
+    verify(validator, times(1)).validatePeer(eq(ethProtocolManager.ethContext()), eq(peer));
     verify(runner, never()).disconnectPeer(eq(peer));
     verify(runner, never()).scheduleNextCheck(eq(peer));
   }

@@ -19,9 +19,11 @@ import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 
+import java.io.Closeable;
+
 /** Factory for creating key-value storage instances. */
 @Unstable
-public interface KeyValueStorageFactory {
+public interface KeyValueStorageFactory extends Closeable {
 
   /**
    * Retrieves the identity of the key-value storage factory.

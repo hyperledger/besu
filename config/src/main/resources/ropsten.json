@@ -8,6 +8,7 @@
     "byzantiumBlock": 1700000,
     "constantinopleBlock": 4230000,
     "constantinopleFixBlock": 4939394,
+    "istanbulBlock": 6485846,
     "ethash": {
     }
   },
