@@ -345,8 +345,7 @@ public class JsonRpcMethodsFactory {
                       protocolSchedule,
                       blockchainQueries.getBlockchain(),
                       blockchainQueries.getWorldStateArchive())),
-              blockchainQueries,
-              protocolSchedule));
+              blockchainQueries));
     }
 
     final boolean eea = rpcApis.contains(RpcApis.EEA);

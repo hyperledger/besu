@@ -13,7 +13,6 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
-import org.hyperledger.besu.ethereum.vm.GasCalculator;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
@@ -21,6 +20,5 @@ import java.util.stream.Stream;
 @FunctionalInterface
 public interface TraceFormatter {
 
-  Stream<Trace> format(
-      TransactionTrace transactionTrace, AtomicInteger traceCounter, GasCalculator gasCalculator);
+  Stream<Trace> format(TransactionTrace transactionTrace, AtomicInteger traceCounter);
 }
