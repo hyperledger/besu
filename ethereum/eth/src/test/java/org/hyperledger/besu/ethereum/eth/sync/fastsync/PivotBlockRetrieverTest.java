@@ -15,9 +15,7 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -124,8 +122,8 @@ public class PivotBlockRetrieverTest {
     assertThat(future).isNotCompleted();
 
     // Check that invalid peers were not queried
-    verify(pivotBlockRetriever, never()).createGetHeaderTask(badPeerA.getEthPeer());
-    verify(pivotBlockRetriever, never()).createGetHeaderTask(badPeerB.getEthPeer());
+    assertThat(badPeerA.hasOutstandingRequests()).isFalse();
+    assertThat(badPeerB.hasOutstandingRequests()).isFalse();
 
     // Add new peer that we can query
     final RespondingEthPeer respondingPeerB =
@@ -134,15 +132,15 @@ public class PivotBlockRetrieverTest {
 
     // We need one more responsive peer before we're done
     assertThat(future).isNotCompleted();
-    verify(pivotBlockRetriever, never()).createGetHeaderTask(badPeerA.getEthPeer());
-    verify(pivotBlockRetriever, never()).createGetHeaderTask(badPeerB.getEthPeer());
+    assertThat(badPeerA.hasOutstandingRequests()).isFalse();
+    assertThat(badPeerB.hasOutstandingRequests()).isFalse();
 
     // Add new peer that we can query
     final RespondingEthPeer respondingPeerC =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
     respondingPeerC.respond(responder);
-    verify(pivotBlockRetriever, never()).createGetHeaderTask(badPeerA.getEthPeer());
-    verify(pivotBlockRetriever, never()).createGetHeaderTask(badPeerB.getEthPeer());
+    assertThat(badPeerA.hasOutstandingRequests()).isFalse();
+    assertThat(badPeerB.hasOutstandingRequests()).isFalse();
 
     assertThat(future)
         .isCompletedWithValue(
@@ -171,8 +169,8 @@ public class PivotBlockRetrieverTest {
     assertThat(future).isNotCompleted();
 
     // Check that invalid peers were not queried
-    verify(pivotBlockRetriever, never()).createGetHeaderTask(badPeerA.getEthPeer());
-    verify(pivotBlockRetriever, never()).createGetHeaderTask(badPeerB.getEthPeer());
+    assertThat(badPeerA.hasOutstandingRequests()).isFalse();
+    assertThat(badPeerB.hasOutstandingRequests()).isFalse();
 
     // Add new peer that we can query
     final RespondingEthPeer respondingPeerB =
@@ -187,8 +185,8 @@ public class PivotBlockRetrieverTest {
 
     // We need one more responsive peer before we're done
     assertThat(future).isNotCompleted();
-    verify(pivotBlockRetriever, never()).createGetHeaderTask(badPeerA.getEthPeer());
-    verify(pivotBlockRetriever, never()).createGetHeaderTask(badPeerB.getEthPeer());
+    assertThat(badPeerA.hasOutstandingRequests()).isFalse();
+    assertThat(badPeerB.hasOutstandingRequests()).isFalse();
 
     // Add new peer that we can query
     final RespondingEthPeer respondingPeerC =
@@ -198,8 +196,8 @@ public class PivotBlockRetrieverTest {
 
     assertThat(respondingPeerC.hasOutstandingRequests()).isTrue();
     respondingPeerC.respond(responder);
-    verify(pivotBlockRetriever, never()).createGetHeaderTask(badPeerA.getEthPeer());
-    verify(pivotBlockRetriever, never()).createGetHeaderTask(badPeerB.getEthPeer());
+    assertThat(badPeerA.hasOutstandingRequests()).isFalse();
+    assertThat(badPeerB.hasOutstandingRequests()).isFalse();
 
     assertThat(future)
         .isCompletedWithValue(
@@ -227,7 +225,7 @@ public class PivotBlockRetrieverTest {
     peerC.respond(responder);
 
     // Peers A and C should be queried because they have better chain stats
-    verify(pivotBlockRetriever, never()).createGetHeaderTask(peerB.getEthPeer());
+    assertThat(peerB.hasOutstandingRequests()).isFalse();
     assertThat(future)
         .isCompletedWithValue(
             new FastSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
@@ -256,7 +254,7 @@ public class PivotBlockRetrieverTest {
     // PeerA should have responded, while peerB is being retried, peerC shouldn't have been queried
     // yet
     assertThat(future).isNotCompleted();
-    verify(pivotBlockRetriever, never()).createGetHeaderTask(peerC.getEthPeer());
+    assertThat(peerC.hasOutstandingRequests()).isFalse();
 
     // After exhausting retries for peerB, we should try peerC
     peerB.respondTimes(emptyResponder, 2);
@@ -290,7 +288,7 @@ public class PivotBlockRetrieverTest {
     // When disagreement is detected, we should push the pivot block back and retry
     final long newPivotBlock = PIVOT_BLOCK_NUMBER - 1;
     assertThat(future).isNotCompleted();
-    assertThat(pivotBlockRetriever.pivotBlockNumber).isEqualTo(newPivotBlock);
+    assertThat(pivotBlockRetriever.pivotBlockNumber).hasValue(newPivotBlock);
 
     // Another round should reach consensus
     respondingPeerA.respond(responderA);
@@ -323,7 +321,7 @@ public class PivotBlockRetrieverTest {
     // When disagreement is detected, we should push the pivot block back and retry
     final long newPivotBlock = PIVOT_BLOCK_NUMBER - 1;
     assertThat(future).isNotCompleted();
-    assertThat(pivotBlockRetriever.pivotBlockNumber).isEqualTo(newPivotBlock);
+    assertThat(pivotBlockRetriever.pivotBlockNumber).hasValue(newPivotBlock);
 
     // Another round of invalid responses should lead to failure
     respondingPeerA.respond(responderA);
