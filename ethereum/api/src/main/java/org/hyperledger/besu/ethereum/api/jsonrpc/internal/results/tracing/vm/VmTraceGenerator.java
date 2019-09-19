@@ -39,7 +39,6 @@ import com.google.common.collect.Maps;
 public class VmTraceGenerator {
 
   private Optional<Map<UInt256, UInt256>> lastCapturedStorage;
-  private Optional<Bytes32[]> lastCapturedMemory;
   private Optional<TraceFrame> maybeNextFrame;
   private int currentIndex = 0;
   private VmTrace currentTrace;
@@ -51,7 +50,6 @@ public class VmTraceGenerator {
   public VmTraceGenerator(final TransactionTrace transactionTrace) {
     this.transactionTrace = transactionTrace;
     this.lastCapturedStorage = Optional.empty();
-    this.lastCapturedMemory = Optional.empty();
   }
 
   /**
@@ -110,7 +108,6 @@ public class VmTraceGenerator {
     op.setVmOperationExecutionReport(report);
     currentTrace.add(op);
     currentIndex++;
-    lastCapturedMemory = currentTraceFrame.getMemory();
     lastCapturedStorage = currentTraceFrame.getStorage();
   }
 
