@@ -160,6 +160,8 @@ public class VmTraceGenerator {
                 .orElse(false)
             : false;
 
+    lastCapturedMemory.ifPresent(
+        lastCapturedMemory -> System.out.println(lastCapturedMemory.length));
     // set memory if memory has been changed by this operation
     if (currentTraceFrame.isMemoryWritten() && !isPreviousFrameReturnOpCode) {
       maybeNextFrame
@@ -265,30 +267,11 @@ public class VmTraceGenerator {
     return Optional.empty();
   }
 
-  /**
-   * Handle SSTORE specific opcode. Retrieve elements the stack (key and value).
-   *
-   * @param traceFrame the trace frame to use.
-   * @param vmOperationExecutionReport the Ex object to populate.
-   */
-  private static void handleSstore(
-      final TraceFrame traceFrame, final VmOperationExecutionReport vmOperationExecutionReport) {
-    vmOperationExecutionReport.setStore(
-        traceFrame
-            .getStack()
-            .map(
-                stack ->
-                    new Store(
-                        UInt256.wrap(stack[1]).toShortHexString(),
-                        UInt256.wrap(stack[0]).toShortHexString()))
-            .orElseThrow());
-  }
-
   static class StorageEntry {
     private final UInt256 key;
     private final UInt256 value;
 
-    StorageEntry(UInt256 key, UInt256 value) {
+    StorageEntry(final UInt256 key, final UInt256 value) {
       this.key = key;
       this.value = value;
     }
