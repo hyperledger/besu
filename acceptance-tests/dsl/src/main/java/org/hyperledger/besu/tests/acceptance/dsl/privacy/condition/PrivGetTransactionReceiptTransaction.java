@@ -19,9 +19,9 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
 
 import java.io.IOException;
 
-import org.web3j.protocol.eea.response.PrivateTransactionReceipt;
 import org.web3j.protocol.exceptions.TransactionException;
 import org.web3j.protocol.pantheon.Pantheon;
+import org.web3j.protocol.pantheon.response.privacy.PrivateTransactionReceipt;
 import org.web3j.tx.response.PollingPrivateTransactionReceiptProcessor;
 
 public class PrivGetTransactionReceiptTransaction
