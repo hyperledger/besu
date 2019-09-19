@@ -111,12 +111,12 @@ public class MarkSweepPrunerTest {
 
     // Prepare
     pruner.prepare();
-    // Mark
+    // Choose mark block
     final BlockHeader markBlock = blockchain.getBlockHeader(markBlockNumber).get();
-    pruner.mark(markBlock.getStateRoot());
-
     // Generate more blocks that should be kept
     generateBlockchainData(numBlocks - blockCountBeforeMarkedBlock, accountsPerBlock);
+    // Mark
+    pruner.mark(markBlock.getStateRoot());
 
     // Collect the nodes we expect to keep
     final Set<BytesValue> expectedNodes = collectWorldStateNodes(markBlock.getStateRoot());
