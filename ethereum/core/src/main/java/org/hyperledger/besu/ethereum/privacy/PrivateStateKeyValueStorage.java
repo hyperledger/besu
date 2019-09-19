@@ -32,7 +32,10 @@ import java.util.Optional;
 
 public class PrivateStateKeyValueStorage implements PrivateStateStorage {
 
+  @Deprecated
   private static final BytesValue EVENTS_KEY_SUFFIX = BytesValue.of("EVENTS".getBytes(UTF_8));
+
+  private static final BytesValue LOGS_KEY_SUFFIX = BytesValue.of("LOGS".getBytes(UTF_8));
   private static final BytesValue OUTPUT_KEY_SUFFIX = BytesValue.of("OUTPUT".getBytes(UTF_8));
   private static final BytesValue METADATA_KEY_SUFFIX = BytesValue.of("METADATA".getBytes(UTF_8));
 
@@ -55,7 +58,11 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
 
   @Override
   public Optional<List<Log>> getTransactionLogs(final Bytes32 transactionHash) {
-    return get(transactionHash, EVENTS_KEY_SUFFIX).map(this::rlpDecodeLog);
+    Optional<List<Log>> maybeLogs = get(transactionHash, LOGS_KEY_SUFFIX).map(this::rlpDecodeLog);
+    if (maybeLogs.isEmpty()) {
+      maybeLogs = get(transactionHash, EVENTS_KEY_SUFFIX).map(this::rlpDecodeLog);
+    }
+    return maybeLogs;
   }
 
   @Override
@@ -113,7 +120,7 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
 
     @Override
     public Updater putTransactionLogs(final Bytes32 transactionHash, final LogSeries logs) {
-      set(transactionHash, EVENTS_KEY_SUFFIX, RLP.encode(logs::writeTo));
+      set(transactionHash, LOGS_KEY_SUFFIX, RLP.encode(logs::writeTo));
       return this;
     }
 
