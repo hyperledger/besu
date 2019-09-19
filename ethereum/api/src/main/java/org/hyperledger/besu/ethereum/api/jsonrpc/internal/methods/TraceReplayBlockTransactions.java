@@ -132,7 +132,8 @@ public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
       formatTraces(
           trace -> resultNode.putPOJO("vmTrace", trace),
           traces,
-          (transactionTrace, ignored) -> VmTraceGenerator.generateTraceStream(transactionTrace),
+          (transactionTrace, ignored) ->
+              new VmTraceGenerator(transactionTrace).generateTraceStream(),
           traceCounter);
     }
 
