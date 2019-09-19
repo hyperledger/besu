@@ -20,7 +20,7 @@ import java.net.URL;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.io.Resources;
-
+// TODO Handle errors
 class JSONMapperAdapter extends MapperAdapter {
   private final URL fileURL;
 

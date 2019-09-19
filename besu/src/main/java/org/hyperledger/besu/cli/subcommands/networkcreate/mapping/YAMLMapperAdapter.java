@@ -21,6 +21,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.io.Resources;
 
+// TODO Handle errors
 class YAMLMapperAdapter extends MapperAdapter {
 
   private final URL fileURL;

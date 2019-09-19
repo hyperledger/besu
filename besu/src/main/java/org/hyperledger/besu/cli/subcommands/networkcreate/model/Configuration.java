@@ -31,6 +31,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+// TODO Handle errors
 public class Configuration implements Verifiable, Generatable {
   private final String version;
   private final Network network;
@@ -109,7 +110,6 @@ public class Configuration implements Verifiable, Generatable {
 
     final Path mainDirectory =
         outputDirectoryPath.resolve(directoryHandler.getSafeName(network.getName()));
-
     directoryHandler.create(mainDirectory);
 
     network.generate(mainDirectory);

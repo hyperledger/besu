@@ -21,7 +21,7 @@ import java.math.BigInteger;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
-
+// TODO Handle errors
 class CustomBalanceSerializer extends StdSerializer<Wei> {
 
   CustomBalanceSerializer() {

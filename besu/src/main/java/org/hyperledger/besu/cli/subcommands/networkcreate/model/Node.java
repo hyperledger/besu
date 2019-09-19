@@ -40,6 +40,7 @@ class Node implements Generatable {
 
   private static final Logger LOG = LogManager.getLogger();
   private static final String PRIVATE_KEY_FILENAME = "key";
+  private static final String CONFIG_FILENAME = "config.toml";
 
   @JsonIgnore private final KeyPair keyPair;
   @JsonIgnore private final Address address;
@@ -86,15 +87,25 @@ class Node implements Generatable {
     directoryHandler.create(nodeDir);
 
     try {
-      final Path filePath = nodeDir.resolve(PRIVATE_KEY_FILENAME);
-      Files.write(filePath, keyPair.getPrivateKey().toString().getBytes(UTF_8), StandardOpenOption.CREATE_NEW);
+      Files.write(nodeDir.resolve(PRIVATE_KEY_FILENAME), keyPair.getPrivateKey().toString().getBytes(UTF_8), StandardOpenOption.CREATE_NEW);
     } catch (IOException e) {
       LOG.error("Unable to write private key file", e);
     }
+
+    createConfigFile(nodeDir);
 
     LOG.debug("Node {} address is {}", name, address);
     // TODO generate TOML config file
 
     return nodeDir;
+  }
+
+  private void createConfigFile(final Path nodeDir){
+
+    try {
+      Files.write(nodeDir.resolve(PRIVATE_KEY_FILENAME), keyPair.getPrivateKey().toString().getBytes(UTF_8), StandardOpenOption.CREATE_NEW);
+    } catch (IOException e) {
+      LOG.error("Unable to write node configuration file", e);
+    }
   }
 }

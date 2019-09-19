@@ -27,6 +27,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.google.common.io.Files;
 
+// TODO Handle errors
 public abstract class MapperAdapter {
 
   ObjectMapper mapper;

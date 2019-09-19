@@ -19,7 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Objects;
-
+// TODO Handle errors
 public class DirectoryHandler {
 
   public void create(final Path outputDirectoryPath) {

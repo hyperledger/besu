@@ -20,6 +20,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.tuweni.toml.Toml;
 import org.apache.tuweni.toml.TomlParseResult;
 
+// TODO Handle errors
 class TOMLMapperAdapter extends MapperAdapter {
 
   private final URL fileURL;
