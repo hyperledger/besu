@@ -99,7 +99,7 @@ public class MarkSweepPruner {
   public void prepare() {
     markStorage.clear();
     worldStateStorage.removeNodeAddedListener(nodeAddedListenerId); // Just in case.
-    nodeAddedListenerId = worldStateStorage.addNodeAddedListener(this::markNewNodes);
+    nodeAddedListenerId = worldStateStorage.addNodeAddedListener(this::markNodes);
   }
 
   public void cleanup() {
@@ -184,10 +184,14 @@ public class MarkSweepPruner {
 
   @VisibleForTesting
   void markNode(final Bytes32 hash) {
-    markedNodesCounter.inc();
+    markNodes(Collections.singleton(hash));
+  }
+
+  private void markNodes(final Collection<Bytes32> nodeHashes) {
+    markedNodesCounter.inc(nodeHashes.size());
     markLock.lock();
     try {
-      pendingMarks.add(hash);
+      pendingMarks.addAll(nodeHashes);
       maybeFlushPendingMarks();
     } finally {
       markLock.unlock();
@@ -207,17 +211,6 @@ public class MarkSweepPruner {
       pendingMarks.forEach(node -> transaction.put(node.getArrayUnsafe(), IN_USE));
       transaction.commit();
       pendingMarks.clear();
-    } finally {
-      markLock.unlock();
-    }
-  }
-
-  private void markNewNodes(final Collection<Bytes32> nodeHashes) {
-    markedNodesCounter.inc(nodeHashes.size());
-    markLock.lock();
-    try {
-      pendingMarks.addAll(nodeHashes);
-      maybeFlushPendingMarks();
     } finally {
       markLock.unlock();
     }
