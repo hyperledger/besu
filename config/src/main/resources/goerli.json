@@ -10,6 +10,7 @@
     "byzantiumBlock":0,
     "constantinopleBlock":0,
     "constantinopleFixBlock":0,
+    "istanbulBlock":1561651,
     "clique":{
       "blockperiodseconds":15,
       "epochlength":30000

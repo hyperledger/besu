@@ -251,7 +251,7 @@ exit $status
                 }
             }
         }, BintrayPublish: {
-             def stage_name = "Bintray publish node: "
+             def stage_name = "Publish distributions: "
              def version = ''
              node {
                  if (shouldPublish()) {
@@ -288,8 +288,36 @@ exit $status
                      }
                  }
              }
+        }, AzurePublish: {
+            def stage_name = "Publish jars: "
+            def version = ''
+            node {
+                if (shouldPublish()) {
+                    checkout scm
+
+                    docker.image(docker_image_dind).withRun('--privileged') { d ->
+                        docker.image(build_image).inside("--link ${d.id}:docker") {
+
+                            stage(stage_name + 'Prepare') {
+                                sh './gradlew --no-daemon --parallel clean assemble'
+                            }
+                            stage(stage_name + 'Publish') {
+                                withCredentials([
+                                    usernamePassword(
+                                        credentialsId: 'hyperledger-azure',
+                                        usernameVariable: 'AZURE_USER',
+                                        passwordVariable: 'AZURE_KEY'
+                                    )
+                                ]) {
+                                    sh './gradlew --no-daemon --parallel publish'
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
-    }
+   }
 } catch (e) {
     currentBuild.result = 'FAILURE'
 } finally {

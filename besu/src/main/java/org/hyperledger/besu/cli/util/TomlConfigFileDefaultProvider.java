@@ -22,9 +22,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import net.consensys.cava.toml.Toml;
-import net.consensys.cava.toml.TomlParseError;
-import net.consensys.cava.toml.TomlParseResult;
+import org.apache.tuweni.toml.Toml;
+import org.apache.tuweni.toml.TomlParseError;
+import org.apache.tuweni.toml.TomlParseResult;
 import picocli.CommandLine;
 import picocli.CommandLine.IDefaultValueProvider;
 import picocli.CommandLine.Model.ArgSpec;

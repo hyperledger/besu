@@ -13,6 +13,7 @@
 package org.hyperledger.besu.ethereum.eth.manager;
 
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer.DisconnectCallback;
+import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -22,9 +23,11 @@ import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -58,9 +61,11 @@ public class EthPeers {
         pendingRequests::size);
   }
 
-  void registerConnection(final PeerConnection peerConnection) {
+  void registerConnection(
+      final PeerConnection peerConnection, final List<PeerValidator> peerValidators) {
     final EthPeer peer =
-        new EthPeer(peerConnection, protocolName, this::invokeConnectionCallbacks, clock);
+        new EthPeer(
+            peerConnection, protocolName, this::invokeConnectionCallbacks, peerValidators, clock);
     connections.putIfAbsent(peerConnection, peer);
   }
 
@@ -127,7 +132,11 @@ public class EthPeers {
   }
 
   public Optional<EthPeer> bestPeerWithHeightEstimate() {
-    return streamAvailablePeers().filter(p -> p.chainState().hasEstimatedHeight()).max(BEST_CHAIN);
+    return bestPeerMatchingCriteria(p -> p.chainState().hasEstimatedHeight());
+  }
+
+  public Optional<EthPeer> bestPeerMatchingCriteria(final Predicate<EthPeer> matchesCriteria) {
+    return streamAvailablePeers().filter(matchesCriteria::test).max(BEST_CHAIN);
   }
 
   @FunctionalInterface
