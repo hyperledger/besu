@@ -54,7 +54,7 @@ public class MarkSweepPruner {
   private final Counter sweptNodesCounter;
   private volatile long nodeAddedListenerId;
   private final ReentrantLock markLock = new ReentrantLock(true);
-  private final Set<BytesValue> pendingMarks = Collections.newSetFromMap(new ConcurrentHashMap<>());
+  private final Set<Bytes32> pendingMarks = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
   public MarkSweepPruner(
       final WorldStateStorage worldStateStorage,
@@ -149,7 +149,9 @@ public class MarkSweepPruner {
     }
     updater.commit();
     // Sweep non-state-root nodes
-    prunedNodeCount += worldStateStorage.prune(markStorage::containsKey);
+    prunedNodeCount +=
+        worldStateStorage.prune(
+            key -> pendingMarks.contains(Bytes32.wrap(key)) || markStorage.containsKey(key));
     sweptNodesCounter.inc(prunedNodeCount);
     worldStateStorage.removeNodeAddedListener(nodeAddedListenerId);
     markStorage.clear();
