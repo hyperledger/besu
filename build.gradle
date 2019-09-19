@@ -471,7 +471,7 @@ startScripts {
 
 dependencies {
   compile project(':besu')
-  compile localGroovy()
+  compile 'org.codehaus.groovy:groovy-all'
   errorprone 'com.google.errorprone:error_prone_core'
 }
 
@@ -672,7 +672,7 @@ bintray {
   pkg = bintrayPackage
 }
 
-build.dependsOn checkSpdxHeader
+check.dependsOn checkSpdxHeader
 build.dependsOn verifyDistributions
 publish.dependsOn verifyDistributions
 publish.mustRunAfter(distTar)
