@@ -12,20 +12,18 @@
  */
 package org.hyperledger.besu.crypto.crosschain.threshold.protocol;
 
-
 import org.hyperledger.besu.crypto.crosschain.threshold.crypto.BlsPoint;
 
 // Crosschain Coordination Contract which sits on the Coordination Blockchain.
 // In this PoC the contract stores the group public key.
 public class CrosschainCoordinationContract {
-    BlsPoint publicKey = null;
+  BlsPoint publicKey = null;
 
-    public void setPublicKey(final BlsPoint key) {
-        this.publicKey = key;
-    }
+  public void setPublicKey(final BlsPoint key) {
+    this.publicKey = key;
+  }
 
-    public BlsPoint getPublicKey() {
-        return this.publicKey;
-    }
-
+  public BlsPoint getPublicKey() {
+    return this.publicKey;
+  }
 }

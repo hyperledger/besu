@@ -12,7 +12,6 @@
  */
 package org.hyperledger.besu.crosschain;
 
-
 import java.util.Map;
 
 public class CrosschainConfiguration {

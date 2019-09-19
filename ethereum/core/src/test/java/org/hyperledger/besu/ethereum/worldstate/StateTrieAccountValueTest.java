@@ -53,7 +53,8 @@ public class StateTrieAccountValueTest {
   @Test
   public void roundTripMainNetAccountValueMax() {
     final long nonce = (Long.MAX_VALUE >> 1);
-    final Wei balance = Wei.fromHexString("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
+    final Wei balance =
+        Wei.fromHexString("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
     final boolean lockable = false;
     final Hash storageRoot = Hash.EMPTY_TRIE_HASH;
     final Hash codeHash = Hash.EMPTY_LIST_HASH;
@@ -89,7 +90,8 @@ public class StateTrieAccountValueTest {
   @Test
   public void roundTripCrosschainAccountValueVersionMax() {
     final long nonce = (Long.MAX_VALUE >> 1);
-    final Wei balance = Wei.fromHexString("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
+    final Wei balance =
+        Wei.fromHexString("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
     final boolean lockable = true;
     final Hash storageRoot = Hash.EMPTY_TRIE_HASH;
     final Hash codeHash = Hash.EMPTY_LIST_HASH;

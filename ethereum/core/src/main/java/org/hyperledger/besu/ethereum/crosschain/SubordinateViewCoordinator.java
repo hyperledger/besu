@@ -12,8 +12,6 @@
  */
 package org.hyperledger.besu.ethereum.crosschain;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.hyperledger.besu.crypto.crosschain.threshold.crypto.BlsPoint;
 import org.hyperledger.besu.crypto.crosschain.threshold.scheme.BlsPointSecretShare;
 import org.hyperledger.besu.ethereum.core.CrosschainTransaction;
@@ -25,94 +23,106 @@ import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.ArrayList;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+/**
+ * Subordinate View Coordinators coordinate the execution subordinate views and the signing of the
+ * view results across validator nodes.
+ *
+ * <p>This implementation simulates the communication by coordinating with simulated nodes. The
+ * final implementation will need to communicate and coordinate with real nodes.
+ */
 public class SubordinateViewCoordinator {
-    private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LogManager.getLogger();
 
+  SubordinateViewExecutor executor;
+  private NodeBlsSigner signer;
+  private ArrayList<OtherNodeSimulator> otherNodes;
 
-    SubordinateViewExecutor executor;
-    private NodeBlsSigner signer;
-    private ArrayList<OtherNodeSimulator> otherNodes;
-
-    /**
-     * This method should be called at application start-up to set-up the subordinate view coordinator
-     * and the other simulated nodes.
-     *
-     * @param sidechainId
-     * @param numNodes
-     * @throws Exception
-     */
-    public static SubordinateViewCoordinator
-        createSubordinateViewCoordinatorAndOtherNodes(final int sidechainId, final int numNodes, final TransactionSimulator transactionSimulator) throws Error {
-        try {
-            ArrayList<OtherNodeSimulator> otherNodes = new ArrayList<>();
-            for (int i = 1; i < numNodes; i++) {
-                otherNodes.add(new OtherNodeSimulator(sidechainId, i, transactionSimulator));
-            }
-            return new SubordinateViewCoordinator(sidechainId, 0, otherNodes, transactionSimulator);
-        } catch (Exception ex) {
-            throw new Error(ex);
-        }
+  /**
+   * This method should be called at application start-up to set-up the subordinate view coordinator
+   * and the other simulated nodes.
+   *
+   * @param sidechainId Sidechain ID of this node.
+   * @param numNodes number of other simulated nodes to be created.
+   * @param transactionSimulator executor to be supplied to simulated nodes.
+   * @return a subordinate view coordinator which simulates other nodes.
+   */
+  public static SubordinateViewCoordinator createSubordinateViewCoordinatorAndOtherNodes(
+      final int sidechainId, final int numNodes, final TransactionSimulator transactionSimulator) {
+    try {
+      ArrayList<OtherNodeSimulator> otherNodes = new ArrayList<>();
+      for (int i = 1; i < numNodes; i++) {
+        otherNodes.add(new OtherNodeSimulator(sidechainId, i, transactionSimulator));
+      }
+      return new SubordinateViewCoordinator(sidechainId, 0, otherNodes, transactionSimulator);
+    } catch (Exception ex) {
+      throw new Error(ex);
     }
+  }
 
+  private SubordinateViewCoordinator(
+      final int sidechainId,
+      final int nodeNumber,
+      final ArrayList<OtherNodeSimulator> otherNodes,
+      final TransactionSimulator transactionSimulator)
+      throws Exception {
+    this.signer = new NodeBlsSigner(sidechainId, nodeNumber);
+    this.otherNodes = otherNodes;
+    this.executor = new SubordinateViewExecutor(transactionSimulator);
+  }
 
-    private SubordinateViewCoordinator(final int sidechainId, final int nodeNumber, final ArrayList<OtherNodeSimulator> otherNodes, final TransactionSimulator transactionSimulator) throws Exception {
-        this.signer = new NodeBlsSigner(sidechainId, nodeNumber);
-        this.otherNodes = otherNodes;
-        this.executor = new SubordinateViewExecutor(transactionSimulator);
+  // TODO this method would be called from the JSON RPC call.
+  // TODO the JSON RPC call should be similar to EthCall, and get the blocknumber using similar code
+  // to EthBlockNumber
+  public Object getSignedResult(
+      final CrosschainTransaction subordinateView, final long blockNumber) {
+
+    Object resultObj = executor.getResult(subordinateView, blockNumber);
+    if (resultObj instanceof TransactionSimulatorResult) {
+      TransactionSimulatorResult resultTxSim = (TransactionSimulatorResult) resultObj;
+      BytesValue resultBytesValue = resultTxSim.getOutput();
+      LOG.info("Transaction Simulator Result: " + resultBytesValue.toString());
+      SubordinateViewResult result =
+          new SubordinateViewResult(subordinateView, resultBytesValue, blockNumber);
+
+      ArrayList<BlsPointSecretShare> partialSignatures = new ArrayList<>();
+      for (OtherNodeSimulator otherNode : this.otherNodes) {
+        BlsPointSecretShare partialSignature = otherNode.requestSign(result);
+        // TODO check for other node indicating an error
+        partialSignatures.add(partialSignature);
+      }
+
+      // Sign the result at the local node.
+      BlsPointSecretShare localPartialSignature = this.signer.sign(result);
+      // Use threshold partial signatures to combine to produce signature.
+      BlsPoint signature =
+          this.signer.combineSignatureShares(localPartialSignature, partialSignatures, result);
+      if (signature == null) {
+        // TODO should log this error and return an error via JSON RPC
+        // TODO should also determine which node produced an invalid partial signature
+        throw new Error("Partial signatures could not be combined to create a valid signature");
+      }
+
+      // TODO Use RLP to combine the resultBytesValue with the serialized signature,
+      //  the blocknumber and either the transaction or the hash or the transaction
+
+      BytesValue signatureAndResult = resultBytesValue;
+
+      // Replace the output with the output and signature in the result object.
+      TransactionProcessor.Result txResult =
+          MainnetTransactionProcessor.Result.successful(
+              resultTxSim.getResult().getLogs(),
+              resultTxSim.getResult().getGasRemaining(),
+              signatureAndResult,
+              resultTxSim.getValidationResult());
+
+      return new TransactionSimulatorResult(subordinateView, txResult);
+    } else {
+      // An error occurred - propagate the error.
+      LOG.info("Transaction Simulator returned an error");
+      return resultObj;
     }
-
-
-
-
-    // TODO this method would be called from the JSON RPC call.
-    // TODO the JSON RPC call should be similar to EthCall, and get the blocknumber using similar code to EthBlockNumber
-    public Object getSignedResult(final CrosschainTransaction subordinateView, final long blockNumber) {
-
-        Object resultObj = executor.getResult(subordinateView, blockNumber);
-        if (resultObj instanceof TransactionSimulatorResult) {
-            TransactionSimulatorResult resultTxSim = (TransactionSimulatorResult) resultObj;
-            BytesValue resultBytesValue = resultTxSim.getOutput();
-            LOG.info("Transaction Simulator Result: " + resultBytesValue.toString());
-            SubordinateViewResult result = new SubordinateViewResult(subordinateView, resultBytesValue, blockNumber);
-
-            ArrayList<BlsPointSecretShare> partialSignatures = new ArrayList<>();
-            for (OtherNodeSimulator otherNode: this.otherNodes) {
-                BlsPointSecretShare partialSignature = otherNode.requestSign(result);
-                // TODO check for other node indicating an error
-                partialSignatures.add(partialSignature);
-            }
-
-            // Sign the result at the local node.
-            BlsPointSecretShare localPartialSignature = this.signer.sign(result);
-            // Use threshold partial signatures to combine to produce signature.
-            BlsPoint signature = this.signer.combineSignatureShares(localPartialSignature, partialSignatures, result);
-            if (signature == null) {
-                // TODO should log this error and return an error via JSON RPC
-                // TODO should also determine which node produced an invalid partial signature
-                throw new Error("Partial signatures could not be combined to create a valid signature");
-            }
-
-
-
-            // TODO Use RLP to combine the resultBytesValue with the serialized signature,
-            //  the blocknumber and either the transaction or the hash or the transaction
-
-            BytesValue signatureAndResult = resultBytesValue;
-
-            // Replace the output with the output and signature in the result object.
-            TransactionProcessor.Result txResult = MainnetTransactionProcessor.Result.successful(
-                    resultTxSim.getResult().getLogs(), resultTxSim.getResult().getGasRemaining(),
-                    signatureAndResult, resultTxSim.getValidationResult());
-
-            return new TransactionSimulatorResult(subordinateView, txResult);
-        }
-        else {
-            // An error occurred - propagate the error.
-            LOG.info("Transaction Simulator returned an error");
-            return resultObj;
-        }
-    }
-
-
-
+  }
 }

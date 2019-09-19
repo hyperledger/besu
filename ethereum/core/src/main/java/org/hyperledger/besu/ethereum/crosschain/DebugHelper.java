@@ -16,23 +16,20 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 
 public class DebugHelper {
-    public static String getStackTrace() {
-        StringWriter sw = new StringWriter();
-        PrintWriter pw = new PrintWriter(sw);
-        (new Throwable()).printStackTrace(pw);
-        return sw.toString();
-    }
+  public static String getStackTrace() {
+    StringWriter sw = new StringWriter();
+    PrintWriter pw = new PrintWriter(sw);
+    (new Throwable()).printStackTrace(pw);
+    return sw.toString();
+  }
 
-
-
-
-//    // TODO SIDECHAINS START
-//    // Debug code to dump all updated statesd for the updated world state.
-//    WorldUpdater worldUpdater = frame.getWorldState();
-//    Collection<Account> accs = worldUpdater.getTouchedAccounts();
-//    for (Account acc: accs) {
-//        LOG.info("AccUpdated1: {}, is Lockable {}",  acc.getAddress(), acc.isLockable());
-//    }
-//    // TODO SIDECHAINS END
+  //    // TODO SIDECHAINS START
+  //    // Debug code to dump all updated statesd for the updated world state.
+  //    WorldUpdater worldUpdater = frame.getWorldState();
+  //    Collection<Account> accs = worldUpdater.getTouchedAccounts();
+  //    for (Account acc: accs) {
+  //        LOG.info("AccUpdated1: {}, is Lockable {}",  acc.getAddress(), acc.isLockable());
+  //    }
+  //    // TODO SIDECHAINS END
 
 }

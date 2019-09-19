@@ -12,8 +12,6 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.precompiles.crosschain;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.CrosschainTransaction;
 import org.hyperledger.besu.ethereum.core.Gas;
@@ -25,6 +23,8 @@ import org.hyperledger.besu.util.bytes.BytesValue;
 import java.math.BigInteger;
 import java.util.Arrays;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public abstract class AbstractCrossChainPrecompiledContract extends AbstractPrecompiledContract {
 
@@ -44,9 +44,8 @@ public abstract class AbstractCrossChainPrecompiledContract extends AbstractPrec
   private BigInteger actualFunction;
   private BigInteger actualFunctionParameters;
 
-
-
-  protected AbstractCrossChainPrecompiledContract(final String name, final GasCalculator gasCalculator) {
+  protected AbstractCrossChainPrecompiledContract(
+      final String name, final GasCalculator gasCalculator) {
     super(name, gasCalculator);
   }
 
@@ -64,11 +63,17 @@ public abstract class AbstractCrossChainPrecompiledContract extends AbstractPrec
     this.actualLengthOfFunctionAndParametersAndLength = extractParameter(input, uint256Length);
     this.actualLengthOfFunctionAndParameters = extractParameter(input, uint256Length);
     this.actualFunction = extractParameter(input, functionSignatureHashLength);
-    this.actualFunctionParameters = extractParameter(input, actualLengthOfFunctionAndParameters.intValue() - functionSignatureHashLength);
+    this.actualFunctionParameters =
+        extractParameter(
+            input, actualLengthOfFunctionAndParameters.intValue() - functionSignatureHashLength);
     if (this.offset != input.size()) {
       // TODO: We need to call the precompile with only an extra 4 bytes, and not an extra 32 bytes.
       // TODO: While this log message is still appearing, we know we have something to fix.
-      LOG.info("Actual parameter was longer than needed: Needed: " + this.offset + ", Actual: " + input.size());
+      LOG.info(
+          "Actual parameter was longer than needed: Needed: "
+              + this.offset
+              + ", Actual: "
+              + input.size());
     }
 
     // Fetch the transaction which is the context of this pre-compile execution.
@@ -87,12 +92,13 @@ public abstract class AbstractCrossChainPrecompiledContract extends AbstractPrec
       return null;
     }
 
-
-    BigInteger expectedSidechainId = (ct.getChainId().isPresent() ? ct.getChainId().get() : BigInteger.ZERO);
-    Address expectedContractAddress = (ct.getTo().isPresent() ? ct.getTo().get() : Address.fromHexString("0x0"));
+    BigInteger expectedSidechainId =
+        (ct.getChainId().isPresent() ? ct.getChainId().get() : BigInteger.ZERO);
+    Address expectedContractAddress =
+        (ct.getTo().isPresent() ? ct.getTo().get() : Address.fromHexString("0x0"));
     BigInteger expectedFunction = extractParameter(ct.getPayload(), 0, 4);
-    BigInteger expectedFunctionParameters = extractParameter(ct.getPayload(), 4, ct.getPayload().size() - 4);
-
+    BigInteger expectedFunctionParameters =
+        extractParameter(ct.getPayload(), 4, ct.getPayload().size() - 4);
 
     boolean fail = false;
     if (!expectedSidechainId.equals(actualSidechainId)) {
@@ -128,12 +134,10 @@ public abstract class AbstractCrossChainPrecompiledContract extends AbstractPrec
       BytesValue result = ct.getSignedResult();
       LOG.info("Crosschain Result: " + result.toString());
       return result;
-    }
-    else {
+    } else {
       return BytesValue.of(1);
     }
   }
-
 
   private void logActual() {
     LOG.error("actualLength: " + actualLength.toString(16));
@@ -148,23 +152,18 @@ public abstract class AbstractCrossChainPrecompiledContract extends AbstractPrec
 
   protected abstract boolean isMatched(CrosschainTransaction ct);
 
-
   private BigInteger extractParameter(final BytesValue input, final int length) {
     BigInteger result = extractParameter(input, this.offset, length);
     this.offset += length;
     return result;
   }
 
-
-
   private static BigInteger extractParameter(
-          final BytesValue input, final int offset, final int length) {
+      final BytesValue input, final int offset, final int length) {
     if (offset > input.size() || length == 0) {
       return BigInteger.ZERO;
     }
     final byte[] raw = Arrays.copyOfRange(input.extractArray(), offset, offset + length);
     return new BigInteger(1, raw);
   }
-
-
 }

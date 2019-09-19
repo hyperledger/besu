@@ -700,7 +700,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Crosschain config file path (default: ${DEFAULT-VALUE}")
   public String crosschainsConfigPath = CrosschainConfiguration.DEFAULT_PATH;
 
-
   private EthNetworkConfig ethNetworkConfig;
   private JsonRpcConfiguration jsonRpcConfiguration;
   private GraphQLConfiguration graphQLConfiguration;
@@ -1355,8 +1354,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       } catch (IOException ioe) {
         throw new ParameterException(
             this.commandLine,
-            "Unable to read from the crosschains config file " + Paths.get(crosschainsConfigPath)
-                + ". Make sure --crosschains-config is used and correct path is provided.  Exception:"+ioe.toString());
+            "Unable to read from the crosschains config file "
+                + Paths.get(crosschainsConfigPath)
+                + ". Make sure --crosschains-config is used and correct path is provided.  Exception:"
+                + ioe.toString());
       }
       String line;
       try {
@@ -1376,11 +1377,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       } catch (Exception e) {
         throw new ParameterException(
             this.commandLine,
-            "Error during read from the crosschains config file " + Paths.get(crosschainsConfigPath)
-                + ". IO Exception occurs or malformed config file is provided. Exception:"+e.toString());
+            "Error during read from the crosschains config file "
+                + Paths.get(crosschainsConfigPath)
+                + ". IO Exception occurs or malformed config file is provided. Exception:"
+                + e.toString());
       }
     }
-
   }
 
   // Blockchain synchronisation from peers.

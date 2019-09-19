@@ -12,42 +12,30 @@
  */
 package org.hyperledger.besu.ethereum.crosschain;
 
-
 import org.hyperledger.besu.ethereum.core.CrosschainTransaction;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 
 public class SubordinateViewExecutor {
-    private TransactionSimulator transactionSimulator;
+  private TransactionSimulator transactionSimulator;
 
-    public SubordinateViewExecutor(final TransactionSimulator transactionSimulator) {
-        this.transactionSimulator = transactionSimulator;
-    }
+  public SubordinateViewExecutor(final TransactionSimulator transactionSimulator) {
+    this.transactionSimulator = transactionSimulator;
+  }
 
-    /**
-     * Process the Subordinate View for this block number.
-     *
-     *
-     * @param subordinateView
-     * @param blockNumber
-     * @return TransactionSimulatorResult if the execution completed.
-     *         TransactionInvalidReason if there was an error.
-     *         TODO in what case do we get null?
-     */
-    public Object getResult(final CrosschainTransaction subordinateView, final long blockNumber) {
-        Object returnValue = this.transactionSimulator
-                .process(subordinateView, blockNumber)
-                .map(
-                        result ->
-                                result
-                                        .getValidationResult()
-                                        .either(
-                                                (() ->
-                                                        result),
-                                                reason ->
-                                                        reason))
-                .orElse(null);
-        return returnValue;
-    }
-
-
+  /**
+   * Process the Subordinate View for this block number.
+   *
+   * @param subordinateView Subordinate view to execute.
+   * @param blockNumber block number to execute the view call at.
+   * @return TransactionSimulatorResult if the execution completed. TransactionInvalidReason if
+   *     there was an error.
+   */
+  public Object getResult(final CrosschainTransaction subordinateView, final long blockNumber) {
+    Object returnValue =
+        this.transactionSimulator
+            .process(subordinateView, blockNumber)
+            .map(result -> result.getValidationResult().either((() -> result), reason -> reason))
+            .orElse(null);
+    return returnValue;
+  }
 }

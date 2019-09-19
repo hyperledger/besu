@@ -12,7 +12,6 @@
  */
 package org.hyperledger.besu.ethereum.crosschain;
 
-
 import org.hyperledger.besu.crypto.crosschain.threshold.scheme.BlsPointSecretShare;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
@@ -21,36 +20,37 @@ import org.hyperledger.besu.util.bytes.BytesValue;
 /**
  * Simulate one or more nodes for the purposes of threshold signing Subordinate View return results.
  *
- * The nodes should be created on application start-up.
+ * <p>The nodes should be created on application start-up.
  */
 public class OtherNodeSimulator {
-    private final NodeBlsSigner signer;
-    private final SubordinateViewExecutor executor;
+  private final NodeBlsSigner signer;
+  private final SubordinateViewExecutor executor;
 
+  public OtherNodeSimulator(
+      final int sidechainId, final int numNodes, final TransactionSimulator transactionSimulator)
+      throws Exception {
+    this.signer = new NodeBlsSigner(sidechainId, numNodes);
+    this.executor = new SubordinateViewExecutor(transactionSimulator);
+  }
 
-    public OtherNodeSimulator(final int sidechainId, final int numNodes, final TransactionSimulator transactionSimulator) throws Exception {
-        this.signer = new NodeBlsSigner(sidechainId, numNodes);
-        this.executor = new SubordinateViewExecutor(transactionSimulator);
+  public BlsPointSecretShare requestSign(final SubordinateViewResult subordinateViewResult) {
+    Object resultObj =
+        this.executor.getResult(
+            subordinateViewResult.getTransaction(), subordinateViewResult.getBlockNumber());
+    if (resultObj instanceof TransactionSimulatorResult) {
+      TransactionSimulatorResult resultTxSim = (TransactionSimulatorResult) resultObj;
+      BytesValue resultBytesValue = resultTxSim.getOutput();
+
+      if (!resultBytesValue.equals(subordinateViewResult.getResult())) {
+        // TODO we don't agree with the result!!!!
+        // TODO need to log this and return an error.
+        throw new Error("Didn't get the same result");
+      }
+
+      return this.signer.sign(subordinateViewResult);
     }
 
-
-    public BlsPointSecretShare requestSign(final SubordinateViewResult subordinateViewResult) {
-        Object resultObj = this.executor.getResult(subordinateViewResult.getTransaction(), subordinateViewResult.getBlockNumber());
-        if (resultObj instanceof TransactionSimulatorResult) {
-            TransactionSimulatorResult resultTxSim = (TransactionSimulatorResult) resultObj;
-            BytesValue resultBytesValue = resultTxSim.getOutput();
-
-            if (!resultBytesValue.equals(subordinateViewResult.getResult())) {
-                // TODO we don't agree with the result!!!!
-                // TODO need to log this and return an error.
-                throw new Error("Didn't get the same result");
-            }
-
-            return this.signer.sign(subordinateViewResult);
-        }
-
-        // TODO need to deal with transaction not executing correctly
-        throw new Error("Problem executing subordinate view");
-    }
-
+    // TODO need to deal with transaction not executing correctly
+    throw new Error("Problem executing subordinate view");
+  }
 }

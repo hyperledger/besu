@@ -79,12 +79,13 @@ public class EthCallTest {
     final JsonRpcRequest request = ethCallRequest(callParameter(), "latest");
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, null);
 
-    when(transactionSimulator.process(any(), anyLong())).thenReturn(Optional.empty());
+    when(transactionSimulator.process(any(CallParameter.class), anyLong()))
+        .thenReturn(Optional.empty());
 
     final JsonRpcResponse response = method.response(request);
 
     assertThat(response).isEqualToComparingFieldByField(expectedResponse);
-    verify(transactionSimulator).process(any(), anyLong());
+    verify(transactionSimulator).process(any(CallParameter.class), anyLong());
   }
 
   @Test
@@ -119,30 +120,33 @@ public class EthCallTest {
   public void shouldUseCorrectBlockNumberWhenLatest() {
     final JsonRpcRequest request = ethCallRequest(callParameter(), "latest");
     when(blockchainQueries.headBlockNumber()).thenReturn(11L);
-    when(transactionSimulator.process(any(), anyLong())).thenReturn(Optional.empty());
+    when(transactionSimulator.process(any(CallParameter.class), anyLong()))
+        .thenReturn(Optional.empty());
 
     method.response(request);
 
-    verify(transactionSimulator).process(any(), eq(11L));
+    verify(transactionSimulator).process(any(CallParameter.class), eq(11L));
   }
 
   @Test
   public void shouldUseCorrectBlockNumberWhenEarliest() {
     final JsonRpcRequest request = ethCallRequest(callParameter(), "earliest");
-    when(transactionSimulator.process(any(), anyLong())).thenReturn(Optional.empty());
+    when(transactionSimulator.process(any(CallParameter.class), anyLong()))
+        .thenReturn(Optional.empty());
     method.response(request);
 
-    verify(transactionSimulator).process(any(), eq(0L));
+    verify(transactionSimulator).process(any(CallParameter.class), eq(0L));
   }
 
   @Test
   public void shouldUseCorrectBlockNumberWhenSpecified() {
     final JsonRpcRequest request = ethCallRequest(callParameter(), Quantity.create(13L));
-    when(transactionSimulator.process(any(), anyLong())).thenReturn(Optional.empty());
+    when(transactionSimulator.process(any(CallParameter.class), anyLong()))
+        .thenReturn(Optional.empty());
 
     method.response(request);
 
-    verify(transactionSimulator).process(any(), eq(13L));
+    verify(transactionSimulator).process(any(CallParameter.class), eq(13L));
   }
 
   private CallParameter callParameter() {
@@ -159,6 +163,7 @@ public class EthCallTest {
 
     when(result.getValidationResult()).thenReturn(ValidationResult.valid());
     when(result.getOutput()).thenReturn(output);
-    when(transactionSimulator.process(any(), anyLong())).thenReturn(Optional.of(result));
+    when(transactionSimulator.process(any(CallParameter.class), anyLong()))
+        .thenReturn(Optional.of(result));
   }
 }

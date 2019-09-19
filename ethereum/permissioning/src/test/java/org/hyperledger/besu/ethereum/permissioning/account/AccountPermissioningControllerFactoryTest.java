@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.SmartContractPermissioningConfiguration;
+import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -125,7 +126,8 @@ public class AccountPermissioningControllerFactoryTest {
     PermissioningConfiguration permissioningConfiguration =
         new PermissioningConfiguration(Optional.empty(), Optional.of(onchainConfig));
 
-    when(transactionSimulator.processAtHead(any())).thenThrow(new RuntimeException());
+    when(transactionSimulator.processAtHead(any(CallParameter.class)))
+        .thenThrow(new RuntimeException());
 
     final Throwable thrown =
         catchThrowable(

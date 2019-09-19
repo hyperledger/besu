@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.permissioning.NodePermissioningControllerFa
 import org.hyperledger.besu.ethereum.permissioning.NodeSmartContractPermissioningController;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.SmartContractPermissioningConfiguration;
+import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
@@ -199,7 +200,8 @@ public class NodePermissioningControllerFactoryTest {
         new PermissioningConfiguration(
             Optional.empty(), Optional.of(smartContractPermissioningConfiguration));
 
-    when(transactionSimulator.processAtHead(any())).thenThrow(new RuntimeException());
+    when(transactionSimulator.processAtHead(any(CallParameter.class)))
+        .thenThrow(new RuntimeException());
 
     final Throwable thrown =
         catchThrowable(

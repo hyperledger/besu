@@ -12,8 +12,8 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter.convertTransactionInvalidReason;
+
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.crosschain.CrosschainProcessor;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
@@ -30,12 +30,10 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.util.bytes.BytesValue;
 
-import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter.convertTransactionInvalidReason;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-
-/**
- * Process either a Crosschain Originating Transaction or a Subordinate Transaction.
- */
+/** Process either a Crosschain Originating Transaction or a Subordinate Transaction. */
 public class EthSendRawCrosschainTransaction implements JsonRpcMethod {
 
   private static final Logger LOG = LogManager.getLogger();
@@ -44,7 +42,7 @@ public class EthSendRawCrosschainTransaction implements JsonRpcMethod {
   private final JsonRpcParameter parameters;
 
   public EthSendRawCrosschainTransaction(
-          final CrosschainProcessor crosschainProcessor, final JsonRpcParameter parameters) {
+      final CrosschainProcessor crosschainProcessor, final JsonRpcParameter parameters) {
     this.crosschainProcessor = crosschainProcessor;
     this.parameters = parameters;
   }
@@ -55,7 +53,7 @@ public class EthSendRawCrosschainTransaction implements JsonRpcMethod {
   }
 
   @Override
-  //@SuppressWarnings("ModifiedButNotUsed")
+  // @SuppressWarnings("ModifiedButNotUsed")
   public JsonRpcResponse response(final JsonRpcRequest request) {
     if (request.getParamLength() != 1) {
       return new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);

@@ -25,16 +25,17 @@ public class CrossChainSubTransPrecompiledContract extends AbstractCrossChainPre
 
   @Override
   public BytesValue compute(final BytesValue input, final MessageFrame messageFrame) {
-    LOG.info("CrossChainSubTrans Precompile called with " + input.size() + "bytes:" + input.toString());
-      BytesValue outputOrError = processSubordinateTxOrView(input);
-      if (outputOrError == null) {
-          return null;
-      }
-      return BytesValue.of(1);
+    LOG.info(
+        "CrossChainSubTrans Precompile called with " + input.size() + "bytes:" + input.toString());
+    BytesValue outputOrError = processSubordinateTxOrView(input);
+    if (outputOrError == null) {
+      return null;
+    }
+    return BytesValue.of(1);
   }
 
   @Override
   protected boolean isMatched(final CrosschainTransaction ct) {
-      return ct.getType().isOriginatingTransaction() || ct.getType().isSubordinateTransaction();
+    return ct.getType().isOriginatingTransaction() || ct.getType().isSubordinateTransaction();
   }
 }

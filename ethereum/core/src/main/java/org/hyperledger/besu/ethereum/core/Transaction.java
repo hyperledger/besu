@@ -97,7 +97,8 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
         recId = v.subtract(REPLAY_UNPROTECTED_V_BASE).byteValueExact();
       } else if (v.compareTo(REPLAY_PROTECTED_V_MIN) > 0) {
         chainId = Optional.of(v.subtract(REPLAY_PROTECTED_V_BASE).divide(TWO));
-        recId = v.subtract(TWO.multiply(chainId.get()).add(REPLAY_PROTECTED_V_BASE)).byteValueExact();
+        recId =
+            v.subtract(TWO.multiply(chainId.get()).add(REPLAY_PROTECTED_V_BASE)).byteValueExact();
       } else {
         throw new RuntimeException(
             String.format("An unsupported encoded `v` value of %s was found", v));
