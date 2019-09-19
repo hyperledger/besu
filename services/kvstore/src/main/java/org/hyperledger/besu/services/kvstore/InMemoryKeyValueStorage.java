@@ -21,6 +21,7 @@ import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -28,6 +29,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class InMemoryKeyValueStorage implements KeyValueStorage {
 
@@ -80,6 +82,14 @@ public class InMemoryKeyValueStorage implements KeyValueStorage {
     long initialSize = hashValueStore.keySet().size();
     hashValueStore.keySet().removeIf(key -> !retainCondition.test(key.getArrayUnsafe()));
     return initialSize - hashValueStore.keySet().size();
+  }
+
+  @Override
+  public List<byte[]> getAllKeysThat(final Predicate<byte[]> returnCondition) {
+    return hashValueStore.keySet().stream()
+        .map(BytesValue::getArrayUnsafe)
+        .filter(returnCondition)
+        .collect(Collectors.toList());
   }
 
   @Override

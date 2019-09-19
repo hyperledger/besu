@@ -14,9 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.privacy;
 
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.LogSeries;
+import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.util.bytes.Bytes32;
 import org.hyperledger.besu.util.bytes.BytesValue;
 
@@ -24,6 +26,8 @@ import java.util.List;
 import java.util.Optional;
 
 public interface PrivateStateStorage {
+
+  void performMigrations(PrivacyParameters privacyParameters, Blockchain blockchain);
 
   @Deprecated
   Optional<Hash> getLatestStateRoot(BytesValue privacyId);

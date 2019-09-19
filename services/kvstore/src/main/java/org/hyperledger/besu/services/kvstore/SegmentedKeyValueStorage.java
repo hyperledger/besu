@@ -18,6 +18,7 @@ import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 
 import java.io.Closeable;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
 
@@ -49,6 +50,8 @@ public interface SegmentedKeyValueStorage<S> extends Closeable {
   Transaction<S> startTransaction() throws StorageException;
 
   long removeUnless(S segmentHandle, Predicate<byte[]> inUseCheck);
+
+  List<byte[]> getThat(S segmentHandle, Predicate<byte[]> returnCondition);
 
   void clear(S segmentHandle);
 

@@ -30,6 +30,7 @@ import org.hyperledger.besu.util.bytes.BytesValue;
 import java.io.Closeable;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -178,6 +179,23 @@ public class RocksDBColumnarKeyValueStorage
       throw new StorageException(e);
     }
     return removedNodeCounter;
+  }
+
+  @Override
+  public List<byte[]> getThat(
+      final ColumnFamilyHandle segmentHandle, final Predicate<byte[]> returnCondition) {
+    List<byte[]> returnedKeys = new LinkedList<>();
+    try (final RocksIterator rocksIterator = db.newIterator(segmentHandle)) {
+      rocksIterator.seekToFirst();
+      while (rocksIterator.isValid()) {
+        final byte[] key = rocksIterator.key();
+        if (returnCondition.test(key)) {
+          returnedKeys.add(key);
+        }
+        rocksIterator.next();
+      }
+    }
+    return returnedKeys;
   }
 
   @Override
