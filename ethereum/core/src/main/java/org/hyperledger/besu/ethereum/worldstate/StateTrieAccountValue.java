@@ -20,8 +20,13 @@ import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 /** Represents the raw values associated with an account in the world state trie. */
 public class StateTrieAccountValue {
+  // Have the indicator above the maximum likely nonce value.
+  // Note that for RLP encoding, the value must be positive.
+  private static final long CONTAINS_CROSSCHAIN_EXTENDED_STATE = 0x4000000000000000L;
+  private static final long CONTAINS_CROSSCHAIN_EXTENDED_STATE_MASK = 0x3FFFFFFFFFFFFFFFL;
+  // When the lockability bit is set, it indicates that the contract is lockable.
   private static final long LOCKABLE_BIT_FLAG = 0x01;
-  private static final long VERSION_FIELD_EXISTS_FLAG = 0x02;
+  private static final long VERSION_PRESENT_FLAG = 0x02;
 
   private final long nonce;
   private final Wei balance;
@@ -31,7 +36,11 @@ public class StateTrieAccountValue {
   private final int version;
 
   private StateTrieAccountValue(
-      final long nonce, final Wei balance, final boolean lockable, final Hash storageRoot, final Hash codeHash) {
+      final long nonce,
+      final Wei balance,
+      final boolean lockable,
+      final Hash storageRoot,
+      final Hash codeHash) {
     this(nonce, balance, lockable, storageRoot, codeHash, Account.DEFAULT_VERSION);
   }
 
@@ -107,51 +116,76 @@ public class StateTrieAccountValue {
   public void writeTo(final RLPOutput out) {
     out.startList();
 
-    out.writeLongScalar(nonce);
+    boolean useCrosschainExtendedState = false;
+    boolean writeVersion = version != Account.DEFAULT_VERSION;
+    long flags = 0;
+    if (this.lockable) {
+      flags |= LOCKABLE_BIT_FLAG;
+    }
+    if (flags != 0) {
+      useCrosschainExtendedState = true;
+    }
+
+    long nonceField = this.nonce;
+    if (useCrosschainExtendedState) {
+      nonceField |= CONTAINS_CROSSCHAIN_EXTENDED_STATE;
+    }
+
+    out.writeLongScalar(nonceField);
     out.writeUInt256Scalar(balance);
     out.writeBytesValue(storageRoot);
     out.writeBytesValue(codeHash);
 
-    boolean writerVersion = version != Account.DEFAULT_VERSION;
-    // Only write out the flags if at least one of them is set.
-    long flags = 0;
-    if (this.lockable) {
-      flags |= LOCKABLE_BIT_FLAG;
-      if (writerVersion) {
-        flags |= VERSION_FIELD_EXISTS_FLAG;
+    if (!useCrosschainExtendedState) {
+      // MainNet Compatible.
+      if (writeVersion) {
+        // version of zero is never written out.
+        out.writeIntScalar(version);
+      }
+    } else {
+      if (writeVersion) {
+        flags |= VERSION_PRESENT_FLAG;
+      }
+      out.writeLongScalar(flags);
+      if (writeVersion) {
+        // version of zero is never written out.
+        out.writeIntScalar(version);
       }
     }
-    if (flags != 0) {
-      out.writeLongScalar(flags);
-    }
-    if (writerVersion) {
-      out.writeLongScalar(version);
-    }
-
     out.endList();
   }
 
   public static StateTrieAccountValue readFrom(final RLPInput in) {
     in.enterList();
 
-    final long nonce = in.readLongScalar();
+    long nonce = in.readLongScalar();
     final Wei balance = in.readUInt256Scalar(Wei::wrap);
     final Hash storageRoot = Hash.wrap(in.readBytes32());
     final Hash codeHash = Hash.wrap(in.readBytes32());
-    final int version;
+    int version = Account.DEFAULT_VERSION;
 
-    // Only read in the flags if they exist. By default, all flags are "false".
+    boolean extendedState =
+        (nonce & CONTAINS_CROSSCHAIN_EXTENDED_STATE) == CONTAINS_CROSSCHAIN_EXTENDED_STATE;
+
     boolean isLockable = false;
-    boolean versionExists = false;
-    if (!in.isEndOfCurrentList()) {
-      final long flags = in.readLongScalar();
-      isLockable = (flags & LOCKABLE_BIT_FLAG) == LOCKABLE_BIT_FLAG;
-      versionExists = (flags & VERSION_FIELD_EXISTS_FLAG) == VERSION_FIELD_EXISTS_FLAG;
-    }
-    if (versionExists) {
-      version = in.readIntScalar();
+    if (!extendedState) {
+      // MainNet compatible state read.
+      if (!in.isEndOfCurrentList()) {
+        version = in.readIntScalar();
+      }
     } else {
-      version = Account.DEFAULT_VERSION;
+      // Extended state read.
+      // Remove the extended state indicator.
+      nonce &= CONTAINS_CROSSCHAIN_EXTENDED_STATE_MASK;
+      // Only read in the flags if they exist. By default, all flags are "false".
+      if (!in.isEndOfCurrentList()) {
+        final long flags = in.readLongScalar();
+        isLockable = (flags & LOCKABLE_BIT_FLAG) == LOCKABLE_BIT_FLAG;
+        boolean versionExists = (flags & VERSION_PRESENT_FLAG) == VERSION_PRESENT_FLAG;
+        if (versionExists) {
+          version = in.readIntScalar();
+        }
+      }
     }
     in.leaveList();
 
