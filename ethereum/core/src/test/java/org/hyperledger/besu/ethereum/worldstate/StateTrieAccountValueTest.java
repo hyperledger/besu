@@ -51,14 +51,14 @@ public class StateTrieAccountValueTest {
   @Test
   public void roundTripMainNetAccountValueMax() {
     final long nonce = (Long.MAX_VALUE >> 1);
-    final Wei balance = Wei.fromHexString("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
+    final Wei balance =
+        Wei.fromHexString("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
     final Hash storageRoot = Hash.EMPTY_TRIE_HASH;
     final Hash codeHash = Hash.EMPTY_LIST_HASH;
     final int version = Integer.MAX_VALUE;
 
     roundTripMainNetAccountValue(nonce, balance, storageRoot, codeHash, version);
   }
-
 
   private void roundTripMainNetAccountValue(
       final long nonce,
