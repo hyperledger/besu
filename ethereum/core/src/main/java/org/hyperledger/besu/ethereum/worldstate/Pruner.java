@@ -57,6 +57,7 @@ public class Pruner {
   }
 
   public void start() {
+    LOG.info("Starting Pruner.");
     blockchain.observeBlockAdded((event, blockchain) -> handleNewBlock(event));
   }
 
@@ -100,7 +101,10 @@ public class Pruner {
   }
 
   private void sweep() {
-    LOG.info("Begin sweeping unused nodes for pruning. Retention period: {}", blocksRetained);
+    LOG.info(
+        "Begin sweeping unused nodes for pruning. Keeping full state for blocks {} to {}",
+        markBlockNumber,
+        markBlockNumber + blocksRetained);
     execute(
         () -> {
           pruningStrategy.sweepBefore(markBlockNumber);
