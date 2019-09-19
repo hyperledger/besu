@@ -25,6 +25,7 @@ import org.hyperledger.besu.util.bytes.BytesValues;
 import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.ArrayDeque;
+import java.util.Arrays;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
@@ -120,10 +121,17 @@ public class VmTraceGenerator {
           nextFrame -> op.setCost(nextFrame.getGasRemaining().toLong() + op.getCost()));
       final VmTrace newSubTrace = new VmTrace();
       parentTraces.addLast(newSubTrace);
-      // TODO: investigate how this hard coded value is necessary
-      report.addPush("0x1");
       findLastFrameInCall(currentTraceFrame, currentIndex)
-          .ifPresent(f -> report.setUsed(f.getGasRemaining().toLong()));
+          .ifPresent(
+              lastFrameInCall -> {
+                report.setUsed(lastFrameInCall.getGasRemaining().toLong());
+                lastFrameInCall
+                    .getStack()
+                    .filter(stack -> stack.length > 0)
+                    .map(stack -> stack[stack.length - 1])
+                    .map(last -> Quantity.create(UInt256.fromHexString(last.getHexString())))
+                    .ifPresent(report::addPush);
+              });
       op.setSub(newSubTrace);
     }
   }
@@ -153,19 +161,8 @@ public class VmTraceGenerator {
   }
 
   private void generateTracingMemory(final VmOperationExecutionReport report) {
-    final boolean isPreviousFrameReturnOpCode =
-        currentIndex != 0
-            ? Optional.ofNullable(transactionTrace.getTraceFrames().get(currentIndex - 1))
-                .map(f -> "RETURN".equals(f.getOpcode()))
-                .orElse(false)
-            : false;
-
-    lastCapturedMemory.ifPresent(
-        lastCapturedMemory -> System.out.println(lastCapturedMemory.length));
-    // set memory if memory has been changed by this operation
-    if (currentTraceFrame.isMemoryWritten() && !isPreviousFrameReturnOpCode) {
-      maybeNextFrame
-          .flatMap(TraceFrame::getMemory)
+    if (currentTraceFrame.getDepth() == maybeNextFrame.map(TraceFrame::getDepth).orElse(0)) {
+      updatedMemory(currentTraceFrame.getMemory(), maybeNextFrame.flatMap(TraceFrame::getMemory))
           .filter(memory -> memory.length > 0)
           .map(TracingUtils::dumpMemoryAndTrimTrailingZeros)
           .map(Mem::new)
@@ -245,6 +242,17 @@ public class VmTraceGenerator {
           new StorageEntry(firstOnlyOnRightKey, onlyOnRight.get(firstOnlyOnRightKey)));
     }
     return Optional.empty();
+  }
+
+  private Optional<Bytes32[]> updatedMemory(
+      final Optional<Bytes32[]> firstCapture, final Optional<Bytes32[]> secondCapture) {
+    final Bytes32[] first = firstCapture.orElse(new Bytes32[0]);
+    final Bytes32[] second = secondCapture.orElse(new Bytes32[0]);
+    final boolean deepEquals = Arrays.deepEquals(first, second);
+    if (deepEquals) {
+      return Optional.empty();
+    }
+    return Optional.of(second);
   }
 
   /**
