@@ -30,7 +30,6 @@ import static org.junit.Assume.assumeTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNotNull;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -175,7 +174,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).miningParameters(miningArg.capture());
     verify(mockControllerBuilder).nodePrivateKeyFile(isNotNull());
     verify(mockControllerBuilder).storageProvider(storageProviderArgumentCaptor.capture());
-    verify(mockControllerBuilder).targetGasLimit(isNull());
+    verify(mockControllerBuilder).targetGasLimit(eq(Optional.empty()));
     verify(mockControllerBuilder).build();
 
     assertThat(storageProviderArgumentCaptor.getValue()).isNotNull();
@@ -2758,7 +2757,9 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void targetGasLimitIsEnabledWhenSpecified() throws Exception {
     parseCommand("--target-gas-limit=10000000");
 
-    final ArgumentCaptor<Long> targetGasLimitArg = ArgumentCaptor.forClass(Long.class);
+    @SuppressWarnings("unchecked")
+    final ArgumentCaptor<Optional<Long>> targetGasLimitArg =
+        ArgumentCaptor.forClass(Optional.class);
 
     verify(mockControllerBuilder).targetGasLimit(targetGasLimitArg.capture());
     verify(mockControllerBuilder).build();
@@ -2766,14 +2767,16 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
 
-    assertThat(targetGasLimitArg.getValue()).isEqualTo(10_000_000L);
+    assertThat(targetGasLimitArg.getValue()).isEqualTo(Optional.of(10_000_000L));
   }
 
   @Test
   public void targetGasLimitIsDisabledWhenNotSpecified() throws Exception {
     parseCommand();
 
-    final ArgumentCaptor<Long> targetGasLimitArg = ArgumentCaptor.forClass(Long.class);
+    @SuppressWarnings("unchecked")
+    final ArgumentCaptor<Optional<Long>> targetGasLimitArg =
+        ArgumentCaptor.forClass(Optional.class);
 
     verify(mockControllerBuilder).targetGasLimit(targetGasLimitArg.capture());
     verify(mockControllerBuilder).build();
@@ -2781,6 +2784,6 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
 
-    assertThat(targetGasLimitArg.getValue()).isEqualTo(null);
+    assertThat(targetGasLimitArg.getValue()).isEqualTo(Optional.empty());
   }
 }

@@ -1054,7 +1054,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           .isPruningEnabled(isPruningEnabled)
           .pruningConfiguration(buildPruningConfiguration())
           .genesisConfigOverrides(genesisConfigOverrides)
-          .targetGasLimit(targetGasLimit);
+          .targetGasLimit(targetGasLimit == null ? Optional.empty() : Optional.of(targetGasLimit));
     } catch (final IOException e) {
       throw new ExecutionException(this.commandLine, "Invalid path", e);
     }

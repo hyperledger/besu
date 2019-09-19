@@ -12,6 +12,7 @@
  */
 package org.hyperledger.besu.controller;
 
+import java.util.Optional;
 import java.util.function.Function;
 
 import org.apache.logging.log4j.LogManager;
@@ -20,27 +21,53 @@ import org.apache.logging.log4j.Logger;
 public class GasLimitCalculator implements Function<Long, Long> {
   private static final Logger LOG = LogManager.getLogger();
   public static final long ADJUSTMENT_FACTOR = 1024L;
-  public static final Long DEFAULT = null;
-  private final long targetGasLimit;
+  public static final Optional<Long> DEFAULT = Optional.empty();
+  private final Optional<Long> targetGasLimit;
 
-  public GasLimitCalculator(final Long targetGasLimit) {
-    this.targetGasLimit = targetGasLimit == null ? 0L : targetGasLimit;
+  public GasLimitCalculator(final Optional<Long> targetGasLimit) {
+    if (targetGasLimit.orElse(0L) < 0L) {
+      throw new IllegalArgumentException("Invalid target gas limit");
+    }
+
+    this.targetGasLimit = targetGasLimit;
   }
 
   @Override
   public Long apply(final Long gasLimit) {
-    long newGasLimit;
+    long newGasLimit =
+        targetGasLimit
+            .map(
+                target -> {
+                  if (target > gasLimit) {
+                    return Math.min(target, safeAdd(gasLimit));
+                  } else if (target < gasLimit) {
+                    return Math.max(target, safeSub(gasLimit));
+                  } else {
+                    return gasLimit;
+                  }
+                })
+            .orElse(gasLimit);
 
-    if (targetGasLimit > gasLimit) {
-      newGasLimit = Math.min(targetGasLimit, gasLimit + ADJUSTMENT_FACTOR);
-    } else if (targetGasLimit < gasLimit) {
-      newGasLimit = Math.max(targetGasLimit, gasLimit - ADJUSTMENT_FACTOR);
-    } else {
-      return gasLimit;
+    if (newGasLimit != gasLimit) {
+      LOG.debug("Adjusting block gas limit from {} to {}", gasLimit, newGasLimit);
     }
 
-    LOG.debug("Adjusting block gas limit from {} to {}", gasLimit, newGasLimit);
-
     return newGasLimit;
+  }
+
+  private long safeAdd(final long gasLimit) {
+    if (gasLimit + ADJUSTMENT_FACTOR > gasLimit) {
+      return gasLimit + ADJUSTMENT_FACTOR;
+    } else {
+      return Long.MAX_VALUE;
+    }
+  }
+
+  private long safeSub(final long gasLimit) {
+    if (gasLimit - ADJUSTMENT_FACTOR < gasLimit) {
+      return Math.max(gasLimit - ADJUSTMENT_FACTOR, 0);
+    } else {
+      return 0;
+    }
   }
 }

@@ -180,7 +180,7 @@ public abstract class BesuControllerBuilder<C> {
     return this;
   }
 
-  public BesuControllerBuilder<C> targetGasLimit(final Long targetGasLimit) {
+  public BesuControllerBuilder<C> targetGasLimit(final Optional<Long> targetGasLimit) {
     this.gasLimitCalculator = new GasLimitCalculator(targetGasLimit);
     return this;
   }
