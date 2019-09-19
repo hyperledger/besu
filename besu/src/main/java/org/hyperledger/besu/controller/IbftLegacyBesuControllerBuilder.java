@@ -29,11 +29,14 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
+import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+
+import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -97,12 +100,15 @@ public class IbftLegacyBesuControllerBuilder extends BesuControllerBuilder<IbftC
 
   @Override
   protected EthProtocolManager createEthProtocolManager(
-      final ProtocolContext<IbftContext> protocolContext, final boolean fastSyncEnabled) {
+      final ProtocolContext<IbftContext> protocolContext,
+      final boolean fastSyncEnabled,
+      final List<PeerValidator> peerValidators) {
     LOG.info("Operating on IBFT-1.0 network.");
     return new Istanbul64ProtocolManager(
         protocolContext.getBlockchain(),
         protocolContext.getWorldStateArchive(),
         networkId,
+        peerValidators,
         fastSyncEnabled,
         syncConfig.getDownloaderParallelism(),
         syncConfig.getTransactionsParallelism(),
