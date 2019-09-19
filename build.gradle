@@ -175,11 +175,9 @@ allprojects {
     //      include '**/*.sh'
     //     exclude '**/ansible/**'
     //    }
-    //   licenseHeaderFile "${rootDir}/gradle/spotless.bash.license", '#!/bin'
     //  }
     //  format 'sol', {
     //    target fileTree('.') { include '**/*.sol' }
-    //   licenseHeaderFile "${rootDir}/gradle/spotless.java.license", '^(pragma|contract)'
     //  }
   }
 
