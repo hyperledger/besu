@@ -32,7 +32,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 // TODO Handle errors
-public class Configuration implements Verifiable, Generatable {
+public class Configuration implements Verifiable, Generatable, ConfigNode {
   private final String version;
   private final Network network;
   private final List<Account> accounts;
@@ -55,11 +55,18 @@ public class Configuration implements Verifiable, Generatable {
     this.permissioning = permissioning;
     this.privacy = privacy;
     this.accounts = accounts;
-    this.network.setAccounts(accounts);
 
+    this.network.setAccounts(accounts);
     this.network
         .getConsensus()
         .setValidators(nodes.stream().filter(Node::getValidator).collect(Collectors.toList()));
+
+    // setting parent config nodes
+    this.network.setParent(this);
+    this.accounts.forEach(account -> account.setParent(this));
+    if(!isNull(this.permissioning))this.permissioning.setParent(this);
+    if(!isNull(this.privacy))this.privacy.setParent(this);
+    this.nodes.forEach(node -> node.setParent(this));
   }
 
   @SuppressWarnings("unused") // Used by Jackson serialisation
@@ -95,11 +102,16 @@ public class Configuration implements Verifiable, Generatable {
     return nodes;
   }
 
-  // TODO Handle errors
+  // TODO Handle errors and verify each config node
   @Override
   public InitConfigurationErrorHandler verify(final InitConfigurationErrorHandler errorHandler) {
     if (isNull(version)) errorHandler.add("Configuration version", "null", "Version not defined.");
     this.network.verify(errorHandler);
+//    this.accounts.forEach(account -> account.verify(errorHandler));
+//    if(!isNull(this.permissioning))this.permissioning.verify(errorHandler);
+//    if(!isNull(this.privacy))this.privacy.verify(errorHandler);
+//    this.nodes.forEach(node -> node.verify(errorHandler));
+
     if (!errorHandler.getErrors().isEmpty()) System.out.println(errorHandler);
     return errorHandler;
   }
@@ -114,10 +126,20 @@ public class Configuration implements Verifiable, Generatable {
 
     network.generate(mainDirectory);
 
-    for (Node node : nodes) {
-      node.generate(mainDirectory);
-    }
+    nodes.forEach(node -> node.generate(mainDirectory));
 
     return mainDirectory;
+  }
+
+  @Override
+  public void setParent(ConfigNode parent) {
+    // no parent to set for this node as it's the root
+    throw new RuntimeException("Root configuration node can't have a parent");
+  }
+
+  @Override
+  public ConfigNode getParent() {
+    // no parent to return for this node as it's the root
+    return null;
   }
 }

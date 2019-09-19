@@ -12,4 +12,19 @@
  */
 package org.hyperledger.besu.cli.subcommands.networkcreate.model;
 // TODO Handle errors
-class Privacy {}
+class Privacy implements ConfigNode {
+
+  private ConfigNode parent;
+
+  public Privacy() {}
+
+  @Override
+  public void setParent(ConfigNode parent) {
+    this.parent = parent;
+  }
+
+  @Override
+  public ConfigNode getParent() {
+    return parent;
+  }
+}

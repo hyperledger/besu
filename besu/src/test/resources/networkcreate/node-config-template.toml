@@ -1,0 +1,84 @@
+# Every possible CLI should be in this file.
+# The odds are you are reading this because you added a CLI and didn't add it
+# here and a test broke.  To fix the test add your CLI to this file.
+#
+# Please use a plausible value, Besu has to at least be able to parse it.
+# If it is a multi-valued CLI make it a TOML array.
+# If it is a number or boolean make it a number or boolean
+# All other config options are strings, and must be quoted.
+# Please provide some sensible grouping.
+
+# Node Information
+data-path="data"
+node-private-key-file="key"
+
+# P2P network
+bootnodes=[
+  "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.1:4567",
+  "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.1:4567",
+  "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.1:4567"
+]
+p2p-host="127.0.0.1"
+p2p-interface="0.0.0.0"
+p2p-port=30303
+host-whitelist=["all"]
+
+# chain
+genesis-file="../genesis.json"
+
+# JSON-RPC
+rpc-http-enabled=true
+rpc-http-host="127.0.0.1"
+rpc-http-port=8545
+rpc-http-api=["ETH","NET","WEB3","IBFT","CLIQUE","PERM","EEA","PRIV"]
+rpc-http-cors-origins=["all"]
+#rpc-http-authentication-enabled=false
+#rpc-http-authentication-credentials-file="none"
+
+# GRAPHQL HTTP
+graphql-http-enabled=true
+graphql-http-host="127.0.0.1"
+graphql-http-port=8547
+graphql-http-cors-origins=["all"]
+
+# WebSockets API
+rpc-ws-enabled=true
+rpc-ws-api=["ETH","NET","WEB3","IBFT","CLIQUE","PERM","EEA","PRIV"]
+rpc-ws-host="127.0.0.1"
+rpc-ws-port=8546
+#rpc-ws-authentication-enabled=false
+#rpc-ws-authentication-credentials-file="none"
+
+## Prometheus Metrics Endpoint
+#metrics-enabled=true
+#metrics-host="8.6.7.5"
+#metrics-port=309
+#metrics-category=["RPC"]
+#metrics-push-enabled=false
+#metrics-push-host="5.5.5.1"
+#metrics-push-port=212
+#metrics-push-interval=42
+#metrics-push-prometheus-job="besu-everything"
+
+## Mining
+#miner-enabled=false
+#miner-coinbase="0x0000000000000000000000000000000000000002"
+#miner-extra-data="0x444F4E27542050414E4943202120484F444C2C20484F444C2C20484F444C2021"
+#min-gas-price=1
+
+## Permissioning
+#permissions-nodes-config-file-enabled=false
+#permissions-nodes-config-file="./permissions_config.toml"
+#permissions-accounts-config-file-enabled=false
+#permissions-accounts-config-file="./permissions_config.toml"
+#permissions-nodes-contract-enabled=false
+#permissions-nodes-contract-address="0x0000000000000000000000000000000000001234"
+#permissions-accounts-contract-enabled=false
+#permissions-accounts-contract-address="0x0000000000000000000000000000000000006789"
+
+## Privacy
+#privacy-url="http://127.0.0.1:8888"
+#privacy-public-key-file="./pubKey.pub"
+#privacy-enabled=false
+#privacy-precompiled-address=9
+#privacy-marker-transaction-signing-key-file="./signerKey"

@@ -38,7 +38,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 // TODO Handle errors
-class Network implements Verifiable, Generatable {
+class Network implements Verifiable, Generatable, ConfigNode {
 
   private final String name;
   private final BigInteger chainId;
@@ -46,6 +46,7 @@ class Network implements Verifiable, Generatable {
 
   private static final Logger LOG = LogManager.getLogger();
   private List<Account> accounts;
+  private ConfigNode parent;
 
   public Network(
       @JsonProperty("name") final String name,
@@ -68,6 +69,8 @@ class Network implements Verifiable, Generatable {
     } else {
       poaConsensus = null;
     }
+
+    this.poaConsensus.setParent(this);
   }
 
   @SuppressWarnings("unused") // Used by Jackson serialisation
@@ -164,5 +167,15 @@ class Network implements Verifiable, Generatable {
 
   void setAccounts(List<Account> accounts) {
     this.accounts = accounts;
+  }
+
+  @Override
+  public void setParent(ConfigNode parent) {
+    this.parent = parent;
+  }
+
+  @Override
+  public ConfigNode getParent() {
+    return parent;
   }
 }

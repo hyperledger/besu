@@ -25,9 +25,10 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 // TODO Handle errors
-class Account implements GenesisFragmentable {
+class Account implements GenesisFragmentable, ConfigNode {
   private Address address;
   private Wei balance;
+  private ConfigNode parent;
 
   public Account(
       @NonNull @JsonProperty("address") Address address,
@@ -53,5 +54,15 @@ class Account implements GenesisFragmentable {
     final ObjectNode fragment = mapper.createObjectNode();
     fragment.put("balance", balance.toString());
     return fragment;
+  }
+
+  @Override
+  public void setParent(ConfigNode parent) {
+    this.parent = parent;
+  }
+
+  @Override
+  public ConfigNode getParent() {
+    return parent;
   }
 }

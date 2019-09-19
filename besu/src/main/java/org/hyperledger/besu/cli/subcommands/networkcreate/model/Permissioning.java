@@ -18,10 +18,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 // TODO Handle errors
-class Permissioning {
+class Permissioning implements ConfigNode {
   private Boolean deployDapp;
   private Boolean allNodesAdmin;
   private Boolean allAccountsWhitelist;
+  private ConfigNode parent;
 
   public Permissioning(
       @Nullable @JsonProperty("deploy-dapp") final Boolean deployDapp,
@@ -45,5 +46,15 @@ class Permissioning {
   @SuppressWarnings("unused") // Used by Jackson serialisation
   public Boolean isAllAccountsWhitelist() {
     return allAccountsWhitelist;
+  }
+
+  @Override
+  public void setParent(ConfigNode parent) {
+    this.parent = parent;
+  }
+
+  @Override
+  public ConfigNode getParent() {
+    return parent;
   }
 }

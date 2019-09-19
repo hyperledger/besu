@@ -19,7 +19,7 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-public interface PoaConsensus extends GenesisFragmentable {
+public interface PoaConsensus extends GenesisFragmentable, ConfigNode {
 
   @JsonIgnore
   String getExtraData();

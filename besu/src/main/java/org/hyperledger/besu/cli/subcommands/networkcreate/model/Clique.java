@@ -40,6 +40,7 @@ class Clique implements PoaConsensus {
   private Integer blockPeriodSeconds;
   private Integer epochLength;
   private List<Node> validators;
+  private ConfigNode parent;
 
   public Clique(
       @NonNull @JsonProperty("block-period-seconds") final Integer blockPeriodSeconds,
@@ -94,5 +95,15 @@ class Clique implements PoaConsensus {
     } catch (IOException e) {
       throw new IllegalStateException("Unable to get genesis template " + GENESIS_TEMPLATE);
     }
+  }
+
+  @Override
+  public void setParent(ConfigNode parent) {
+    this.parent = parent;
+  }
+
+  @Override
+  public ConfigNode getParent() {
+    return parent;
   }
 }

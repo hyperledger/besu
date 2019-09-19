@@ -16,9 +16,15 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Objects.requireNonNull;
 import static java.util.Objects.requireNonNullElse;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+import com.google.common.io.Resources;
 import java.io.IOException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.hyperledger.besu.cli.subcommands.networkcreate.generate.DirectoryHandler;
 import org.hyperledger.besu.cli.subcommands.networkcreate.generate.Generatable;
 import org.hyperledger.besu.crypto.SECP256K1;
@@ -36,17 +42,19 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 // TODO Handle errors
-class Node implements Generatable {
+class Node implements Generatable, ConfigNode {
 
   private static final Logger LOG = LogManager.getLogger();
   private static final String PRIVATE_KEY_FILENAME = "key";
   private static final String CONFIG_FILENAME = "config.toml";
+  private static final String CONFIG_TEMPLATE_FILENAME = "/networkcreate/node-config-template.toml";
 
   @JsonIgnore private final KeyPair keyPair;
   @JsonIgnore private final Address address;
   private String name;
   private Boolean validator;
   private Boolean bootnode;
+  private ConfigNode parent;
 
   public Node(
       @NonNull @JsonProperty("name") final String name,
@@ -101,11 +109,29 @@ class Node implements Generatable {
   }
 
   private void createConfigFile(final Path nodeDir){
-
+    assertThat(parent instanceof Configuration);
+    //TODO get list of bootnodes
+//    List<Node> siblings = ((Configuration)parent).getNodes();
+//    List<Address> bootnodesEnodeAddresses = siblings.stream().filter(node -> node.bootnode)
+//        .map(bootnode -> bootnode.address).collect(
+//            Collectors.toList());
     try {
-      Files.write(nodeDir.resolve(PRIVATE_KEY_FILENAME), keyPair.getPrivateKey().toString().getBytes(UTF_8), StandardOpenOption.CREATE_NEW);
+      final URL configTemplateFile = this.getClass().getResource(CONFIG_TEMPLATE_FILENAME);
+      final String configTemplateSource = Resources.toString(configTemplateFile, UTF_8);
+      Files.write(nodeDir.resolve(CONFIG_FILENAME),
+          configTemplateSource.getBytes(UTF_8), StandardOpenOption.CREATE_NEW);
     } catch (IOException e) {
       LOG.error("Unable to write node configuration file", e);
     }
+  }
+
+  @Override
+  public void setParent(ConfigNode parent) {
+    this.parent = parent;
+  }
+
+  @Override
+  public ConfigNode getParent() {
+    return parent;
   }
 }

@@ -34,6 +34,12 @@ balance = 2000000000000000000
 # - generate .env and scripts to deploy with truffle
 # - run dapp on a node Docker and use docker run --network="host" to make it able to contact the node
 
+#[[authentication.user]]
+#password = "$2a$10$l3GA7K8g6rJ/Yv.YFSygCuI9byngpEzxgWS9qEg5emYDZomQW7fGC"
+#groups = ["admin"]
+#permissions = ["eth:*", "perm:*"]
+#roles = ["net"]
+
 deploy-dapp = true
 all-nodes-admin = true #
 all-accounts-whitelist = true

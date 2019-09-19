@@ -38,6 +38,7 @@ class Ibft2 implements PoaConsensus {
   private Integer epochLength;
   private Integer requestTimeoutSeconds;
   private List<Node> validators;
+  private ConfigNode parent;
 
   public Ibft2(
       @JsonProperty("block-period-seconds") final Integer blockPeriodSeconds,
@@ -100,5 +101,15 @@ class Ibft2 implements PoaConsensus {
     } catch (IOException e) {
       throw new IllegalStateException("Unable to get genesis template " + GENESIS_TEMPLATE);
     }
+  }
+
+  @Override
+  public void setParent(ConfigNode parent) {
+    this.parent = parent;
+  }
+
+  @Override
+  public ConfigNode getParent() {
+    return parent;
   }
 }
