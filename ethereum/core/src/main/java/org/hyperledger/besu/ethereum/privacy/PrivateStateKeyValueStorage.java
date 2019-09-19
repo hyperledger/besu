@@ -19,6 +19,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.LogSeries;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
@@ -33,6 +34,7 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
 
   private static final BytesValue EVENTS_KEY_SUFFIX = BytesValue.of("EVENTS".getBytes(UTF_8));
   private static final BytesValue OUTPUT_KEY_SUFFIX = BytesValue.of("OUTPUT".getBytes(UTF_8));
+  private static final BytesValue METADATA_KEY_SUFFIX = BytesValue.of("METADATA".getBytes(UTF_8));
 
   private final KeyValueStorage keyValueStorage;
 
@@ -59,6 +61,15 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
   @Override
   public Optional<BytesValue> getTransactionOutput(final Bytes32 transactionHash) {
     return get(transactionHash, OUTPUT_KEY_SUFFIX);
+  }
+
+  @Override
+  public Optional<PrivateTransactionMetadata> getTransactionMetadata(
+      final Bytes32 blockHash, final Bytes32 transactionHash) {
+    return get(BytesValues.concatenate(blockHash, transactionHash), METADATA_KEY_SUFFIX)
+        .map(
+            bytesValue ->
+                PrivateTransactionMetadata.readFrom(new BytesValueRLPInput(bytesValue, false)));
   }
 
   @Override
@@ -109,6 +120,18 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
     @Override
     public Updater putTransactionResult(final Bytes32 transactionHash, final BytesValue events) {
       set(transactionHash, OUTPUT_KEY_SUFFIX, events);
+      return this;
+    }
+
+    @Override
+    public Updater putTransactionMetadata(
+        final Bytes32 blockHash,
+        final Bytes32 transactionHash,
+        final PrivateTransactionMetadata metadata) {
+      set(
+          BytesValues.concatenate(blockHash, transactionHash),
+          METADATA_KEY_SUFFIX,
+          RLP.encode(metadata::writeTo));
       return this;
     }
 

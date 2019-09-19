@@ -25,11 +25,15 @@ import java.util.Optional;
 
 public interface PrivateStateStorage {
 
+  @Deprecated
   Optional<Hash> getLatestStateRoot(BytesValue privacyId);
 
   Optional<List<Log>> getTransactionLogs(Bytes32 transactionHash);
 
   Optional<BytesValue> getTransactionOutput(Bytes32 transactionHash);
+
+  Optional<PrivateTransactionMetadata> getTransactionMetadata(
+      Bytes32 blockHash, Bytes32 transactionHash);
 
   boolean isPrivateStateAvailable(Bytes32 transactionHash);
 
@@ -39,11 +43,15 @@ public interface PrivateStateStorage {
 
   interface Updater {
 
+    @Deprecated
     Updater putLatestStateRoot(BytesValue privacyId, Hash privateStateHash);
 
     Updater putTransactionLogs(Bytes32 transactionHash, LogSeries logs);
 
     Updater putTransactionResult(Bytes32 transactionHash, BytesValue events);
+
+    Updater putTransactionMetadata(
+        Bytes32 blockHash, Bytes32 transactionHash, PrivateTransactionMetadata metadata);
 
     void commit();
 
