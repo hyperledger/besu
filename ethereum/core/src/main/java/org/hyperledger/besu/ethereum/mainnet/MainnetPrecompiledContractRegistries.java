@@ -112,20 +112,20 @@ public abstract class MainnetPrecompiledContractRegistries {
   }
 
   public static PrecompileContractRegistry crosschainPrecompiles(
-          final PrecompiledContractConfiguration precompiledContractConfiguration) {
+      final PrecompiledContractConfiguration precompiledContractConfiguration) {
     final PrecompileContractRegistry registry = istanbul(precompiledContractConfiguration);
     registry.put(
-            Address.CROSSCHAIN_SUBTRANS,
-            Account.DEFAULT_VERSION,
-            new CrossChainSubTransPrecompiledContract(precompiledContractConfiguration.getGasCalculator()));
+        Address.CROSSCHAIN_SUBTRANS,
+        Account.DEFAULT_VERSION,
+        new CrossChainSubTransPrecompiledContract(
+            precompiledContractConfiguration.getGasCalculator()));
     registry.put(
-            Address.CROSSCHAIN_SUBVIEW,
-            Account.DEFAULT_VERSION,
-            new CrossChainSubViewPrecompiledContract(precompiledContractConfiguration.getGasCalculator()));
+        Address.CROSSCHAIN_SUBVIEW,
+        Account.DEFAULT_VERSION,
+        new CrossChainSubViewPrecompiledContract(
+            precompiledContractConfiguration.getGasCalculator()));
     return registry;
   }
-
-
 
   static PrecompileContractRegistry appendPrivacy(
       final PrecompileContractRegistry registry,

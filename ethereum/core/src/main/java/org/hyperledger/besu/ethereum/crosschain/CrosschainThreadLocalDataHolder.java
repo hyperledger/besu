@@ -12,27 +12,26 @@
  */
 package org.hyperledger.besu.ethereum.crosschain;
 
-
 import org.hyperledger.besu.ethereum.core.CrosschainTransaction;
 
 /**
- * Holds the Crosschain Transaction context during the execution of a Crosschain Transaction.
- * This gives the precompile contracts access to the Crosschain Transaction's list of
- * Subordinate Transactions and Views.
+ * Holds the Crosschain Transaction context during the execution of a Crosschain Transaction. This
+ * gives the precompile contracts access to the Crosschain Transaction's list of Subordinate
+ * Transactions and Views.
  */
 public class CrosschainThreadLocalDataHolder {
-    private static final ThreadLocal<CrosschainTransaction> data = new ThreadLocal<CrosschainTransaction>();
+  private static final ThreadLocal<CrosschainTransaction> data =
+      new ThreadLocal<CrosschainTransaction>();
 
-    public static void setCrosschainTransaciton(final CrosschainTransaction tx) {
-        data.set(tx);
-    }
+  public static void setCrosschainTransaciton(final CrosschainTransaction tx) {
+    data.set(tx);
+  }
 
-    public static CrosschainTransaction getCrosschainTransaction() {
-        return data.get();
-    }
-    public static void removeCrosschainTransaction() {
-        data.remove();
-    }
+  public static CrosschainTransaction getCrosschainTransaction() {
+    return data.get();
+  }
 
-
+  public static void removeCrosschainTransaction() {
+    data.remove();
+  }
 }

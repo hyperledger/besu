@@ -14,7 +14,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.AbstractBlockParameterMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.queries.BlockchainQueries;
@@ -40,8 +39,8 @@ public class EthIsLockable extends AbstractBlockParameterMethod {
   protected String resultByBlockNumber(final JsonRpcRequest request, final long blockNumber) {
     final Address address = getParameters().required(request.getParams(), 0, Address.class);
     return getBlockchainQueries()
-            .isContractLockable(address, blockNumber)
-            .map(Quantity::create)
-            .orElse(null);
+        .isContractLockable(address, blockNumber)
+        .map(Quantity::create)
+        .orElse(null);
   }
 }

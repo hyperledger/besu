@@ -166,7 +166,6 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
     private int version;
     private boolean lockable;
 
-
     @Nullable private BytesValue updatedCode; // Null if the underlying code has not been updated.
     @Nullable private Hash updatedCodeHash;
 

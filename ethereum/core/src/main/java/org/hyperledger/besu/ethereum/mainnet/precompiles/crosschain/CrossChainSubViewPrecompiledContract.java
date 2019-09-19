@@ -12,7 +12,6 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.precompiles.crosschain;
 
-
 import org.hyperledger.besu.ethereum.core.CrosschainTransaction;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
@@ -26,7 +25,8 @@ public class CrossChainSubViewPrecompiledContract extends AbstractCrossChainPrec
 
   @Override
   public BytesValue compute(final BytesValue input, final MessageFrame messageFrame) {
-    LOG.info("CrossChainSubView Precompile called with " + input.size() + "bytes:" + input.toString());
+    LOG.info(
+        "CrossChainSubView Precompile called with " + input.size() + "bytes:" + input.toString());
     return processSubordinateTxOrView(input);
   }
 

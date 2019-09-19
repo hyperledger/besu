@@ -12,40 +12,29 @@
  */
 package org.hyperledger.besu.crypto.crosschain.threshold.crypto;
 
-
 import com.google.common.base.Charsets;
 
-/**
- * Base class of all crypto providers.
- */
-abstract public class CryptoProviderBase implements BlsCryptoProvider {
-    private static String IMPLEMENTATION_NAME = "THRES";
-    private static String VERSION_STRING = "-v01";
-    private static String ALGORITHM_BASE = "-a";
-    private static int ALG_TYPE_FIXED_LENGTH = 5;
+/** Base class of all crypto providers. */
+public abstract class CryptoProviderBase implements BlsCryptoProvider {
+  private static String IMPLEMENTATION_NAME = "THRES";
+  private static String VERSION_STRING = "-v01";
+  private static String ALGORITHM_BASE = "-a";
+  private static int ALG_TYPE_FIXED_LENGTH = 5;
 
-
-
-    /**
-     * Create a security domain separation parameter.
-     * See https://tools.ietf.org/html/draft-irtf-cfrg-hash-to-curve-04#page-7
-     * section 2.2.5 for a discussion of Security Domain Separation.
-     *
-     * @param algType A fixed length string indicating the algorithm.
-     * @return a byte array reflecting the security domain.
-     */
-    protected byte[] createSecuerityDomainPrefix(final String algType) {
-        if (algType.length() != ALG_TYPE_FIXED_LENGTH) {
-            throw new Error("Invalid agorithm type string");
-        }
-
-        String securityDomainString = IMPLEMENTATION_NAME + VERSION_STRING + ALGORITHM_BASE + algType;
-        return securityDomainString.getBytes(Charsets.UTF_8);
+  /**
+   * Create a security domain separation parameter. See
+   * https://tools.ietf.org/html/draft-irtf-cfrg-hash-to-curve-04#page-7 section 2.2.5 for a
+   * discussion of Security Domain Separation.
+   *
+   * @param algType A fixed length string indicating the algorithm.
+   * @return a byte array reflecting the security domain.
+   */
+  protected byte[] createSecuerityDomainPrefix(final String algType) {
+    if (algType.length() != ALG_TYPE_FIXED_LENGTH) {
+      throw new Error("Invalid agorithm type string");
     }
 
-
-
-
-
-
+    String securityDomainString = IMPLEMENTATION_NAME + VERSION_STRING + ALGORITHM_BASE + algType;
+    return securityDomainString.getBytes(Charsets.UTF_8);
+  }
 }

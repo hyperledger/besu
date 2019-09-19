@@ -109,3 +109,7 @@ revert-reason-enabled=false
 
 # Storage plugin to use
 key-value-storage="rocksdb"
+
+# Crosschain
+crosschain-enabled=false
+crosschain-config="crosschain.config"

@@ -226,8 +226,8 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
           Address.contractAddress(senderAddress, sender.getNonce() - 1L);
 
       MessageFrame.Type contractCreationType = MessageFrame.Type.CONTRACT_CREATION;
-      if ((transaction instanceof CrosschainTransaction) &&
-              ((CrosschainTransaction)transaction).getType().isLockableContractDeploy()) {
+      if ((transaction instanceof CrosschainTransaction)
+          && ((CrosschainTransaction) transaction).getType().isLockableContractDeploy()) {
         contractCreationType = MessageFrame.Type.CONTRACT_CREATION_LOCKABLE_CONTRACT;
       }
 
@@ -289,22 +289,19 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
               .build();
 
       // If the contract is lockable, and this is a crosschain transaction, then lock the contract.
-      //TODO if (contract.isLocked()) {
+      // TODO if (contract.isLocked()) {
       // TODO do something to fail the transaction.
       if (transaction instanceof CrosschainTransaction) {
         if (contract.isLockable()) {
           // TODO
-//          contract.lock();
-        }
-        else {
+          //          contract.lock();
+        } else {
           // TODO fail because trying to do a cross chain transaction on an unlockable contract
         }
       }
 
-
-      //}
+      // }
     }
-
 
     // If we are processing a crosschain transaction, then add the transaction context such that
     // the precompile can access it.
@@ -312,9 +309,8 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
       // Add to thread local storage.
       CrosschainThreadLocalDataHolder.setCrosschainTransaciton((CrosschainTransaction) transaction);
       // Rewind to the first subordinate transaction or view for each execution.
-      ((CrosschainTransaction)transaction).resetSubordinateTransactionsAndViewsList();
+      ((CrosschainTransaction) transaction).resetSubordinateTransactionsAndViewsList();
     }
-
 
     messageFrameStack.addFirst(initialFrame);
 
@@ -323,11 +319,13 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
     }
 
     // Clean-up steps for crosschain transactions post execution:
-    // Check that all of the subordinate transactions and views were used in the transaction execution.
+    // Check that all of the subordinate transactions and views were used in the transaction
+    // execution.
     // Remove the transaction context from thread local storage.
     if (transaction instanceof CrosschainTransaction) {
-      if (((CrosschainTransaction)transaction).getNextSubordinateTransactionOrView() != null) {
-        LOG.trace("Crosschain transaction ended prior to all Subordinate Transactions and Views being consumed.");
+      if (((CrosschainTransaction) transaction).getNextSubordinateTransactionOrView() != null) {
+        LOG.trace(
+            "Crosschain transaction ended prior to all Subordinate Transactions and Views being consumed.");
         initialFrame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
       }
       CrosschainThreadLocalDataHolder.removeCrosschainTransaction();

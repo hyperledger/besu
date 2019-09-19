@@ -313,14 +313,14 @@ public abstract class MainnetProtocolSpecs {
   }
 
   public static ProtocolSpecBuilder<Void> crossChainDefinition(
-          final Optional<BigInteger> chainId,
-          final OptionalInt contractSizeLimit,
-          final OptionalInt configStackSizeLimit,
-          final boolean enableRevertReason) {
+      final Optional<BigInteger> chainId,
+      final OptionalInt contractSizeLimit,
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason) {
     return istanbulDefinition(chainId, contractSizeLimit, configStackSizeLimit, enableRevertReason)
-            .precompileContractRegistryBuilder(
-                    MainnetPrecompiledContractRegistries::crosschainPrecompiles)
-            .name("CrossChain");
+        .precompileContractRegistryBuilder(
+            MainnetPrecompiledContractRegistries::crosschainPrecompiles)
+        .name("CrossChain");
   }
 
   private static TransactionReceipt frontierTransactionReceiptFactory(

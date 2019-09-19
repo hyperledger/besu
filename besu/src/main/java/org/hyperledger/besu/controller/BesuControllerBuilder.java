@@ -289,10 +289,14 @@ public abstract class BesuControllerBuilder<C> {
 
     final int sidechainId = 22;
     final int numNodes = 5;
-    final TransactionSimulator transactionSimulator = new TransactionSimulator(blockchain, protocolContext.getWorldStateArchive(), protocolSchedule);
+    final TransactionSimulator transactionSimulator =
+        new TransactionSimulator(
+            blockchain, protocolContext.getWorldStateArchive(), protocolSchedule);
     SubordinateViewCoordinator subordinateViewCoordinator =
-        SubordinateViewCoordinator.createSubordinateViewCoordinatorAndOtherNodes(sidechainId, numNodes, transactionSimulator);
-    CrosschainProcessor crosschainProcessor = new CrosschainProcessor(subordinateViewCoordinator, transactionSimulator, transactionPool);
+        SubordinateViewCoordinator.createSubordinateViewCoordinatorAndOtherNodes(
+            sidechainId, numNodes, transactionSimulator);
+    CrosschainProcessor crosschainProcessor =
+        new CrosschainProcessor(subordinateViewCoordinator, transactionSimulator, transactionPool);
 
     final MiningCoordinator miningCoordinator =
         createMiningCoordinator(

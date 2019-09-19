@@ -53,7 +53,6 @@ public class BesuController<C> implements java.io.Closeable {
   private final SyncState syncState;
   private final CrosschainProcessor crosschainProcessor;
 
-
   BesuController(
       final ProtocolSchedule<C> protocolSchedule,
       final ProtocolContext<C> protocolContext,

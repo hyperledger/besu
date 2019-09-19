@@ -391,11 +391,13 @@ public class JsonRpcMethodsFactory {
     }
 
     if (rpcApis.contains(RpcApis.CC)) {
-      addMethods(enabledMethods, new EthSendRawCrosschainTransaction(crosschainProcessor, parameter));
-      addMethods(enabledMethods, new EthProcessSubordinateView(blockchainQueries, crosschainProcessor, parameter));
+      addMethods(
+          enabledMethods, new EthSendRawCrosschainTransaction(crosschainProcessor, parameter));
+      addMethods(
+          enabledMethods,
+          new EthProcessSubordinateView(blockchainQueries, crosschainProcessor, parameter));
       addMethods(enabledMethods, new EthIsLockable(blockchainQueries, parameter));
     }
-
 
     return enabledMethods;
   }

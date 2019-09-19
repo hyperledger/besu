@@ -74,7 +74,7 @@ public class TransactionSimulator {
   }
 
   public Optional<TransactionSimulatorResult> process(
-          final Transaction transaction, final long blockNumber) {
+      final Transaction transaction, final long blockNumber) {
     final BlockHeader header = blockchain.getBlockHeader(blockNumber).orElse(null);
     return process(transaction, header);
   }
@@ -124,12 +124,12 @@ public class TransactionSimulator {
   }
 
   private Optional<TransactionSimulatorResult> process(
-          final Transaction transaction, final BlockHeader header) {
+      final Transaction transaction, final BlockHeader header) {
     if (header == null) {
       return Optional.empty();
     }
     final MutableWorldState worldState =
-            worldStateArchive.getMutable(header.getStateRoot()).orElse(null);
+        worldStateArchive.getMutable(header.getStateRoot()).orElse(null);
     if (worldState == null) {
       return Optional.empty();
     }
@@ -137,7 +137,7 @@ public class TransactionSimulator {
   }
 
   private Optional<TransactionSimulatorResult> process(
-          final Transaction transaction, final BlockHeader header, final MutableWorldState worldState) {
+      final Transaction transaction, final BlockHeader header, final MutableWorldState worldState) {
     final ProtocolSpec<?> protocolSpec = protocolSchedule.getByBlockNumber(header.getNumber());
 
     final TransactionProcessor transactionProcessor =
