@@ -96,7 +96,6 @@ allprojects {
   apply plugin: 'io.spring.dependency-management'
   apply plugin: 'jacoco'
   apply plugin: 'net.ltgt.errorprone'
-  apply plugin: 'groovy'
   apply from: "${rootDir}/gradle/versions.gradle"
   apply from: "${rootDir}/gradle/check-licenses.gradle"
 
@@ -469,7 +468,6 @@ startScripts {
 
 dependencies {
   compile project(':besu')
-  compile localGroovy()
   errorprone 'com.google.errorprone:error_prone_core'
 }
 
@@ -540,6 +538,8 @@ task distDocker(type: Exec) {
 }
 
 task checkSpdxHeader(type: CheckSpdxHeader) {
+  apply plugin: 'groovy'
+
   rootPath = "${projectDir}"
   spdxHeader = "* SPDX-License-Identifier: Apache-2.0"
   filesRegex = "(.*.java)|(.*.groovy)"
