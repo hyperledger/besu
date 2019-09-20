@@ -36,6 +36,7 @@ public class DebugOperationTracer implements OperationTracer {
 
   private final TraceOptions options;
   private final List<TraceFrame> traceFrames = new ArrayList<>();
+  private TraceFrame lastFrame;
 
   public DebugOperationTracer(final TraceOptions options) {
     this.options = options;
@@ -55,14 +56,22 @@ public class DebugOperationTracer implements OperationTracer {
         EnumSet.copyOf(frame.getExceptionalHaltReasons());
     final Optional<Bytes32[]> stack = captureStack(frame);
     final Optional<Bytes32[]> memory = captureMemory(frame);
-
+    final Optional<Map<UInt256, UInt256>> storagePreExecution = captureStorage(frame);
+    final Optional<Bytes32[]> stackPostExecution;
+    final Optional<Bytes32[]> memoryPostExecution;
     try {
       executeOperation.execute();
     } finally {
+      stackPostExecution = captureStack(frame);
+      memoryPostExecution = captureMemory(frame);
+      if (lastFrame != null) {
+        lastFrame.setMaybeNextDepth(Optional.of(depth));
+        lastFrame.setGasRemainingPostExecution(gasRemaining);
+      }
       final Optional<Map<UInt256, UInt256>> storage = captureStorage(frame);
       final Optional<Map<Address, Wei>> maybeRefunds =
           frame.getRefunds().isEmpty() ? Optional.empty() : Optional.of(frame.getRefunds());
-      traceFrames.add(
+      lastFrame =
           new TraceFrame(
               pc,
               opcode,
@@ -76,7 +85,11 @@ public class DebugOperationTracer implements OperationTracer {
               frame.getRevertReason(),
               maybeRefunds,
               Optional.ofNullable(frame.getCode()),
-              frame.getCurrentOperation().getStackItemsProduced()));
+              frame.getCurrentOperation().getStackItemsProduced(),
+              stackPostExecution,
+              memoryPostExecution,
+              storagePreExecution);
+      traceFrames.add(lastFrame);
     }
   }
 

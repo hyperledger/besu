@@ -89,6 +89,13 @@ public class DebugTraceBlockTest {
             EnumSet.noneOf(ExceptionalHaltReason.class),
             Optional.empty(),
             Optional.empty(),
+            Optional.empty(),
+            Optional.empty(),
+            Optional.empty(),
+            Optional.empty(),
+            0,
+            Optional.empty(),
+            Optional.empty(),
             Optional.empty());
 
     final TransactionProcessor.Result transaction1Result = mock(TransactionProcessor.Result.class);

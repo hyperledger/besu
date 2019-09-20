@@ -44,6 +44,12 @@ public class TraceFrame {
   private final Optional<Map<Address, Wei>> maybeRefunds;
   private final Optional<Code> maybeCode;
   private final int stackItemsProduced;
+  private final Optional<Bytes32[]> stackPostExecution;
+  private final Optional<Bytes32[]> memoryPostExecution;
+  private Optional<Integer> maybeNextDepth;
+
+  private Gas gasRemainingPostExecution;
+  private final Optional<Map<UInt256, UInt256>> storagePreExecution;
 
   public TraceFrame(
       final int pc,
@@ -58,7 +64,10 @@ public class TraceFrame {
       final Optional<BytesValue> revertReason,
       final Optional<Map<Address, Wei>> maybeRefunds,
       final Optional<Code> maybeCode,
-      final int stackItemsProduced) {
+      final int stackItemsProduced,
+      final Optional<Bytes32[]> stackPostExecution,
+      final Optional<Bytes32[]> memoryPostExecution,
+      final Optional<Map<UInt256, UInt256>> storagePreExecution) {
     this.pc = pc;
     this.opcode = opcode;
     this.gasRemaining = gasRemaining;
@@ -72,59 +81,10 @@ public class TraceFrame {
     this.maybeRefunds = maybeRefunds;
     this.maybeCode = maybeCode;
     this.stackItemsProduced = stackItemsProduced;
-  }
-
-  public TraceFrame(
-      final int pc,
-      final String opcode,
-      final Gas gasRemaining,
-      final Optional<Gas> gasCost,
-      final int depth,
-      final EnumSet<ExceptionalHaltReason> exceptionalHaltReasons,
-      final Optional<Bytes32[]> stack,
-      final Optional<Bytes32[]> memory,
-      final Optional<Map<UInt256, UInt256>> storage,
-      final Optional<BytesValue> revertReason) {
-    this(
-        pc,
-        opcode,
-        gasRemaining,
-        gasCost,
-        depth,
-        exceptionalHaltReasons,
-        stack,
-        memory,
-        storage,
-        revertReason,
-        Optional.empty(),
-        Optional.empty(),
-        0);
-  }
-
-  public TraceFrame(
-      final int pc,
-      final String opcode,
-      final Gas gasRemaining,
-      final Optional<Gas> gasCost,
-      final int depth,
-      final EnumSet<ExceptionalHaltReason> exceptionalHaltReasons,
-      final Optional<Bytes32[]> stack,
-      final Optional<Bytes32[]> memory,
-      final Optional<Map<UInt256, UInt256>> storage) {
-    this(
-        pc,
-        opcode,
-        gasRemaining,
-        gasCost,
-        depth,
-        exceptionalHaltReasons,
-        stack,
-        memory,
-        storage,
-        Optional.empty(),
-        Optional.empty(),
-        Optional.empty(),
-        0);
+    this.stackPostExecution = stackPostExecution;
+    this.memoryPostExecution = memoryPostExecution;
+    this.maybeNextDepth = Optional.empty();
+    this.storagePreExecution = storagePreExecution;
   }
 
   public int getPc() {
@@ -194,11 +154,39 @@ public class TraceFrame {
     return stackItemsProduced;
   }
 
-  public boolean isDeeperThan(final TraceFrame other) {
-    return depth > other.depth;
+  public Optional<Bytes32[]> getStackPostExecution() {
+    return stackPostExecution;
   }
 
-  public boolean isLessDeepThan(final TraceFrame other) {
-    return depth < other.depth;
+  public Optional<Bytes32[]> getMemoryPostExecution() {
+    return memoryPostExecution;
+  }
+
+  public boolean depthHasIncreased() {
+    return maybeNextDepth.map(next -> next > depth).orElse(false);
+  }
+
+  public boolean depthHasDecreased() {
+    return maybeNextDepth.map(next -> next < depth).orElse(false);
+  }
+
+  public Optional<Integer> getMaybeNextDepth() {
+    return maybeNextDepth;
+  }
+
+  public void setMaybeNextDepth(final Optional<Integer> maybeNextDepth) {
+    this.maybeNextDepth = maybeNextDepth;
+  }
+
+  public Gas getGasRemainingPostExecution() {
+    return gasRemainingPostExecution;
+  }
+
+  public Optional<Map<UInt256, UInt256>> getStoragePreExecution() {
+    return storagePreExecution;
+  }
+
+  public void setGasRemainingPostExecution(final Gas gasRemainingPostExecution) {
+    this.gasRemainingPostExecution = gasRemainingPostExecution;
   }
 }

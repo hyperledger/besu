@@ -40,6 +40,11 @@ public class VmOperationExecutionReport {
     push.add(value);
   }
 
+  public void singlePush(final String value) {
+    push.clear();
+    push.add(value);
+  }
+
   public Store getStore() {
     return store;
   }

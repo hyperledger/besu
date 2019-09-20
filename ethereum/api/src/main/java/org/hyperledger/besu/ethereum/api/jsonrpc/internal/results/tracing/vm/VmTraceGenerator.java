@@ -40,8 +40,6 @@ import com.google.common.collect.Maps;
 
 public class VmTraceGenerator {
 
-  private Optional<Map<UInt256, UInt256>> lastCapturedStorage;
-  private Optional<TraceFrame> maybeNextFrame;
   private int currentIndex = 0;
   private VmTrace currentTrace;
   private TraceFrame currentTraceFrame;
@@ -51,7 +49,6 @@ public class VmTraceGenerator {
 
   public VmTraceGenerator(final TransactionTrace transactionTrace) {
     this.transactionTrace = transactionTrace;
-    this.lastCapturedStorage = Optional.empty();
   }
 
   /**
@@ -110,14 +107,12 @@ public class VmTraceGenerator {
     op.setVmOperationExecutionReport(report);
     currentTrace.add(op);
     currentIndex++;
-    lastCapturedStorage = currentTraceFrame.getStorage();
   }
 
   private void handleDepthIncreased(final VmOperation op, final VmOperationExecutionReport report) {
     // check if next frame depth has increased i.e the current operation is a call
-    if (maybeNextFrame.map(next -> next.isDeeperThan(currentTraceFrame)).orElse(false)) {
-      maybeNextFrame.ifPresent(
-          nextFrame -> op.setCost(nextFrame.getGasRemaining().toLong() + op.getCost()));
+    if (currentTraceFrame.depthHasIncreased()) {
+      op.setCost(currentTraceFrame.getGasRemainingPostExecution().toLong() + op.getCost());
       final VmTrace newSubTrace = new VmTrace();
       parentTraces.addLast(newSubTrace);
       findLastFrameInCall(currentTraceFrame, currentIndex)
@@ -129,7 +124,7 @@ public class VmTraceGenerator {
                     .filter(stack -> stack.length > 0)
                     .map(stack -> stack[stack.length - 1])
                     .map(last -> Quantity.create(UInt256.fromHexString(last.getHexString())))
-                    .ifPresent(report::addPush);
+                    .ifPresent(report::singlePush);
               });
       op.setSub(newSubTrace);
     }
@@ -137,7 +132,7 @@ public class VmTraceGenerator {
 
   private void handleDepthDecreased() {
     // check if next frame depth has decreased i.e the current operation closes the parent trace
-    if (maybeNextFrame.map(next -> next.isLessDeepThan(currentTraceFrame)).orElse(false)) {
+    if (currentTraceFrame.depthHasDecreased()) {
       currentTrace = parentTraces.removeLast();
     }
   }
@@ -160,8 +155,8 @@ public class VmTraceGenerator {
   }
 
   private void generateTracingMemory(final VmOperationExecutionReport report) {
-    if (currentTraceFrame.getDepth() == maybeNextFrame.map(TraceFrame::getDepth).orElse(0)) {
-      updatedMemory(currentTraceFrame.getMemory(), maybeNextFrame.flatMap(TraceFrame::getMemory))
+    if (currentTraceFrame.getDepth() == currentTraceFrame.getMaybeNextDepth().orElse(-1)) {
+      updatedMemory(currentTraceFrame.getMemory(), currentTraceFrame.getMemoryPostExecution())
           .filter(memory -> memory.length > 0)
           .map(TracingUtils::dumpMemoryAndTrimTrailingZeros)
           .map(Mem::new)
@@ -171,23 +166,22 @@ public class VmTraceGenerator {
 
   private void generateTracingPush(final VmOperationExecutionReport report) {
     // set push from stack elements if some elements have been produced
-    if (currentTraceFrame.getStackItemsProduced() > 0 && maybeNextFrame.isPresent()) {
-      final Bytes32[] stack = maybeNextFrame.get().getStack().orElseThrow();
-      if (stack.length > 0) {
-        IntStream.range(0, currentTraceFrame.getStackItemsProduced())
-            .forEach(
-                i -> {
-                  final BytesValue value =
-                      BytesValues.trimLeadingZeros(stack[stack.length - i - 1]);
-                  report.addPush(Quantity.create(UInt256.fromHexString(value.getHexString())));
-                });
-      }
+    if (currentTraceFrame.getStackItemsProduced() > 0) {
+      currentTraceFrame
+          .getStackPostExecution()
+          .filter(stack -> stack.length > 0)
+          .ifPresent(
+              stack ->
+                  IntStream.range(0, currentTraceFrame.getStackItemsProduced())
+                      .mapToObj(i -> BytesValues.trimLeadingZeros(stack[stack.length - i - 1]))
+                      .map(value -> Quantity.create(UInt256.fromHexString(value.getHexString())))
+                      .forEach(report::addPush));
     }
   }
 
   private void generateTracingStorage(final VmOperationExecutionReport report) {
     // set storage if updated
-    updatedStorage(lastCapturedStorage, currentTraceFrame.getStorage())
+    updatedStorage(currentTraceFrame.getStoragePreExecution(), currentTraceFrame.getStorage())
         .map(
             storageEntry ->
                 new Store(
@@ -206,12 +200,6 @@ public class VmTraceGenerator {
     // set smart contract code
     currentTrace.setCode(
         currentTraceFrame.getMaybeCode().orElse(new Code()).getBytes().getHexString());
-    final int nextFrameIndex = currentIndex + 1;
-    // retrieve next frame if not last
-    maybeNextFrame =
-        transactionTrace.getTraceFrames().size() > nextFrameIndex
-            ? Optional.of(transactionTrace.getTraceFrames().get(nextFrameIndex))
-            : Optional.empty();
   }
 
   /**
