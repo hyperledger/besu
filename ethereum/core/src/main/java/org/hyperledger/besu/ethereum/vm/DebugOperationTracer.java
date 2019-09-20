@@ -78,7 +78,6 @@ public class DebugOperationTracer implements OperationTracer {
               Optional.ofNullable(frame.getCode()),
               frame.getCurrentOperation().getStackItemsProduced()));
     }
-    frame.setMemoryWritten(false);
   }
 
   private Optional<Map<UInt256, UInt256>> captureStorage(final MessageFrame frame) {

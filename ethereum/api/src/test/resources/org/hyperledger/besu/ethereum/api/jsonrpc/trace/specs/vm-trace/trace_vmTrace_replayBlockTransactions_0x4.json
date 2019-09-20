@@ -16,10 +16,11 @@
       {
         "output": "0x",
         "stateDiff": null,
-        "trace": [],
+        "trace": [
+        ],
         "transactionHash": "0x4de634fe767d1f6d0512ca0c9c0a054d3a2596f7cdd7c1eea5f93046a740b3c7",
         "vmTrace": {
-          "code": "0x602035600035556060356040355500",
+          "code": "0x6020356000355560603560403555600000",
           "ops": [
             {
               "cost": 3,
@@ -77,7 +78,8 @@
               "cost": 20000,
               "ex": {
                 "mem": null,
-                "push": [],
+                "push": [
+                ],
                 "store": {
                   "key": "0x1",
                   "val": "0x1"
@@ -143,7 +145,8 @@
               "cost": 20000,
               "ex": {
                 "mem": null,
-                "push": [],
+                "push": [
+                ],
                 "store": {
                   "key": "0x2",
                   "val": "0x2"
@@ -154,14 +157,28 @@
               "sub": null
             },
             {
+              "cost": 3,
+              "ex": {
+                "mem": null,
+                "push": [
+                  "0x0"
+                ],
+                "store": null,
+                "used": 16715407
+              },
+              "pc": 14,
+              "sub": null
+            },
+            {
               "cost": 0,
               "ex": {
                 "mem": null,
-                "push": [],
+                "push": [
+                ],
                 "store": null,
-                "used": 16715410
+                "used": 16715407
               },
-              "pc": 14,
+              "pc": 16,
               "sub": null
             }
           ]

@@ -23,7 +23,7 @@
     "alloc": {
     "0010000000000000000000000000000000000000": {
       "comment": "Add smart contract that will simply set 2 key-value pairs.  Parses tx input into 4 32 byte values: [key1, val1, key2, val2]. Can be used to test constantinople fix.",
-      "code": "0x602035600035556060356040355500",
+      "code": "0x6020356000355560603560403555600000",
       "balance": "0x0"
     },
     "0020000000000000000000000000000000000000": {
