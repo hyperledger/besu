@@ -19,6 +19,12 @@ import java.util.Map;
 
 /** A mutable world state account. */
 public interface MutableAccount extends Account {
+  enum LockAction {
+    NONE,
+    LOCK,
+    UNLOCK_COMMIT,
+    UNLOCK_IGNORE
+  }
 
   /**
    * Increments (by 1) the nonce of this account.
@@ -81,6 +87,20 @@ public interface MutableAccount extends Account {
    * @param lockable true if this contract can be locked.
    */
   void setLockability(boolean lockable);
+
+  /** LOCK a contract account. */
+  void lock();
+
+  /**
+   * Unlock a contract account. Commit or ignore (discard) provisional state.
+   *
+   * @param commit true if the provisional state should be committed, false is the provisional state
+   *     should be discarded.
+   */
+  void unlock(boolean commit);
+
+  // TODO SIDECHAINS
+  void setLockAction(LockAction state);
 
   /**
    * Sets the code for the account.

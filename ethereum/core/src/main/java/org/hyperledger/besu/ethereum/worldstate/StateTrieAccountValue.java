@@ -24,13 +24,14 @@ public class StateTrieAccountValue {
   // Note that for RLP encoding, the value must be positive.
   private static final long CONTAINS_CROSSCHAIN_EXTENDED_STATE = 0x4000000000000000L;
   private static final long CONTAINS_CROSSCHAIN_EXTENDED_STATE_MASK = 0x3FFFFFFFFFFFFFFFL;
-  // When the lockability bit is set, it indicates that the contract is lockable.
   private static final long LOCKABLE_BIT_FLAG = 0x01;
   private static final long VERSION_PRESENT_FLAG = 0x02;
+  private static final long LOCKED_BIT_FLAG = 0x04;
 
   private final long nonce;
   private final Wei balance;
   private boolean lockable;
+  private boolean locked;
   private final Hash storageRoot;
   private final Hash codeHash;
   private final int version;
@@ -39,21 +40,24 @@ public class StateTrieAccountValue {
       final long nonce,
       final Wei balance,
       final boolean lockable,
+      final boolean locked,
       final Hash storageRoot,
       final Hash codeHash) {
-    this(nonce, balance, lockable, storageRoot, codeHash, Account.DEFAULT_VERSION);
+    this(nonce, balance, lockable, locked, storageRoot, codeHash, Account.DEFAULT_VERSION);
   }
 
   public StateTrieAccountValue(
       final long nonce,
       final Wei balance,
       final boolean lockable,
+      final boolean locked,
       final Hash storageRoot,
       final Hash codeHash,
       final int version) {
     this.nonce = nonce;
     this.balance = balance;
     this.lockable = lockable;
+    this.locked = locked;
     this.storageRoot = storageRoot;
     this.codeHash = codeHash;
     this.version = version;
@@ -84,6 +88,15 @@ public class StateTrieAccountValue {
    */
   public boolean isLockable() {
     return this.lockable;
+  }
+
+  /**
+   * Indicates whether this contract is currently locked.
+   *
+   * @return true if the contract is locked.
+   */
+  public boolean isLocked() {
+    return this.locked;
   }
 
   /**
@@ -121,6 +134,9 @@ public class StateTrieAccountValue {
     long flags = 0;
     if (this.lockable) {
       flags |= LOCKABLE_BIT_FLAG;
+    }
+    if (this.locked) {
+      flags |= LOCKED_BIT_FLAG;
     }
     if (flags != 0) {
       useCrosschainExtendedState = true;
@@ -168,6 +184,7 @@ public class StateTrieAccountValue {
         (nonce & CONTAINS_CROSSCHAIN_EXTENDED_STATE) == CONTAINS_CROSSCHAIN_EXTENDED_STATE;
 
     boolean isLockable = false;
+    boolean isLocked = false;
     if (!extendedState) {
       // MainNet compatible state read.
       if (!in.isEndOfCurrentList()) {
@@ -180,8 +197,9 @@ public class StateTrieAccountValue {
       // Only read in the flags if they exist. By default, all flags are "false".
       if (!in.isEndOfCurrentList()) {
         final long flags = in.readLongScalar();
-        isLockable = (flags & LOCKABLE_BIT_FLAG) == LOCKABLE_BIT_FLAG;
-        boolean versionExists = (flags & VERSION_PRESENT_FLAG) == VERSION_PRESENT_FLAG;
+        isLockable = (flags & LOCKABLE_BIT_FLAG) != 0;
+        isLocked = (flags & LOCKED_BIT_FLAG) != 0;
+        boolean versionExists = (flags & VERSION_PRESENT_FLAG) != 0;
         if (versionExists) {
           version = in.readIntScalar();
         }
@@ -189,6 +207,7 @@ public class StateTrieAccountValue {
     }
     in.leaveList();
 
-    return new StateTrieAccountValue(nonce, balance, isLockable, storageRoot, codeHash, version);
+    return new StateTrieAccountValue(
+        nonce, balance, isLockable, isLocked, storageRoot, codeHash, version);
   }
 }

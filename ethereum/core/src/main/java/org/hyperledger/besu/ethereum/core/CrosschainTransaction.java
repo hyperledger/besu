@@ -41,7 +41,9 @@ public class CrosschainTransaction extends Transaction {
     SUBORDINATE_VIEW(Constants.SUBORDINATE_VIEW),
     ORIGINATING_LOCKABLE_CONTRACT_DEPLOY(Constants.ORIGINATING_LOCKABLE_CONTRACT_DEPLOY),
     SUBORDINATE_LOCKABLE_CONTRACT_DEPLOY(Constants.SUBORDINATE_LOCKABLE_CONTRACT_DEPLOY),
-    SINGLECHAIN_LOCKABLE_CONTRACT_DEPLOY(Constants.SINGLECHAIN_LOCKABLE_CONTRACT_DEPLOY);
+    SINGLECHAIN_LOCKABLE_CONTRACT_DEPLOY(Constants.SINGLECHAIN_LOCKABLE_CONTRACT_DEPLOY),
+    UNLOCK_COMMIT_SIGNALLING_TRANSACTION(Constants.UNLOCK_COMMIT_SIGNALLING_TRANSACTION),
+    UNLOCK_IGNORE_SIGNALLING_TRANSACTION(Constants.UNLOCK_IGNORE_SIGNALLING_TRANSACTION);
 
     private static class Constants {
       private static final int ORIGINATING_TRANSACTION = 0;
@@ -50,6 +52,8 @@ public class CrosschainTransaction extends Transaction {
       private static final int ORIGINATING_LOCKABLE_CONTRACT_DEPLOY = 3;
       private static final int SUBORDINATE_LOCKABLE_CONTRACT_DEPLOY = 4;
       private static final int SINGLECHAIN_LOCKABLE_CONTRACT_DEPLOY = 5;
+      private static final int UNLOCK_COMMIT_SIGNALLING_TRANSACTION = 6;
+      private static final int UNLOCK_IGNORE_SIGNALLING_TRANSACTION = 7;
     }
 
     public int value;
@@ -72,6 +76,10 @@ public class CrosschainTransaction extends Transaction {
           return SUBORDINATE_LOCKABLE_CONTRACT_DEPLOY;
         case Constants.SINGLECHAIN_LOCKABLE_CONTRACT_DEPLOY:
           return SINGLECHAIN_LOCKABLE_CONTRACT_DEPLOY;
+        case Constants.UNLOCK_COMMIT_SIGNALLING_TRANSACTION:
+          return UNLOCK_COMMIT_SIGNALLING_TRANSACTION;
+        case Constants.UNLOCK_IGNORE_SIGNALLING_TRANSACTION:
+          return UNLOCK_IGNORE_SIGNALLING_TRANSACTION;
         default:
           String error = "Unknown crosschain transaction type: " + val;
           LOG.info(error);
@@ -107,6 +115,18 @@ public class CrosschainTransaction extends Transaction {
       return isOriginatingLockableContractDeploy()
           || isSubordinateLockableContractDeploy()
           || isSingleChainLockableContractDeploy();
+    }
+
+    public boolean isUnlockCommitSignallingTransaction() {
+      return this.value == Constants.UNLOCK_COMMIT_SIGNALLING_TRANSACTION;
+    }
+
+    public boolean isUnlockIgnoreSignallingTransaction() {
+      return this.value == Constants.UNLOCK_IGNORE_SIGNALLING_TRANSACTION;
+    }
+
+    public boolean isSignallingTransaction() {
+      return isUnlockCommitSignallingTransaction() || isUnlockIgnoreSignallingTransaction();
     }
   }
 

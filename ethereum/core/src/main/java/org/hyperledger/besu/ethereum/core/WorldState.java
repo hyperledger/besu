@@ -81,6 +81,16 @@ public interface WorldState extends WorldView {
     }
 
     @Override
+    public boolean isLocked() {
+      return accountState.isLocked();
+    }
+
+    @Override
+    public MutableAccount.LockAction getLockAction() {
+      return accountState.getLockAction();
+    }
+
+    @Override
     public BytesValue getCode() {
       return accountState.getCode();
     }

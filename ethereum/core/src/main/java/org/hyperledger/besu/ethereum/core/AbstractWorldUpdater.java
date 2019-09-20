@@ -165,6 +165,8 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
     private Wei balance;
     private int version;
     private boolean lockable;
+    private boolean locked;
+    private LockAction lockState;
 
     @Nullable private BytesValue updatedCode; // Null if the underlying code has not been updated.
     @Nullable private Hash updatedCodeHash;
@@ -183,6 +185,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
       this.balance = Wei.ZERO;
       this.version = Account.DEFAULT_VERSION;
       this.lockable = false;
+      this.lockState = LockAction.NONE;
 
       this.updatedCode = BytesValue.EMPTY;
       this.updatedStorage = new TreeMap<>();
@@ -198,6 +201,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
       this.balance = account.getBalance();
       this.version = account.getVersion();
       this.lockable = account.isLockable();
+      this.locked = account.isLocked();
 
       this.updatedStorage = new TreeMap<>();
     }
@@ -270,6 +274,31 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
     @Override
     public void setLockability(final boolean lockable) {
       this.lockable = lockable;
+    }
+
+    @Override
+    public boolean isLocked() {
+      return this.locked;
+    }
+
+    @Override
+    public void lock() {
+      this.lockState = LockAction.LOCK;
+    }
+
+    @Override
+    public void unlock(final boolean commit) {
+      this.lockState = commit ? LockAction.UNLOCK_COMMIT : LockAction.UNLOCK_IGNORE;
+    }
+
+    @Override
+    public LockAction getLockAction() {
+      return this.lockState;
+    }
+
+    @Override
+    public void setLockAction(final LockAction action) {
+      this.lockState = action;
     }
 
     @Override

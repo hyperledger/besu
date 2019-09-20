@@ -96,6 +96,16 @@ public interface AccountState {
   boolean isLockable();
 
   /**
+   * Indicates whether this contract is currently locked.
+   *
+   * @return true if the contract is locked.
+   */
+  boolean isLocked();
+
+  // TODO SIDECHAINS
+  MutableAccount.LockAction getLockAction();
+
+  /**
    * The version of the EVM bytecode associated with this account.
    *
    * @return the version of the account code. Default is zero.
