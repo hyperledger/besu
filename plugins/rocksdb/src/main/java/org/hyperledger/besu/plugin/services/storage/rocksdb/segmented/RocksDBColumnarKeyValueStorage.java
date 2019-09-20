@@ -184,7 +184,7 @@ public class RocksDBColumnarKeyValueStorage
   @Override
   public List<byte[]> getThat(
       final ColumnFamilyHandle segmentHandle, final Predicate<byte[]> returnCondition) {
-    List<byte[]> returnedKeys = new LinkedList<>();
+    List<byte[]> returnedKeys = new ArrayList<>();
     try (final RocksIterator rocksIterator = db.newIterator(segmentHandle)) {
       rocksIterator.seekToFirst();
       while (rocksIterator.isValid()) {
