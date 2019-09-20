@@ -43,7 +43,7 @@ public class PrivDistributeRawTransaction extends AbstractSendTransaction implem
   public JsonRpcResponse response(final JsonRpcRequest request) {
     PrivateTransaction privateTransaction;
     try {
-      privateTransaction = validateRequest(request);
+      privateTransaction = validateAndDecodeRequest(request);
     } catch (ErrorResponseException e) {
       return e.getResponse();
     }

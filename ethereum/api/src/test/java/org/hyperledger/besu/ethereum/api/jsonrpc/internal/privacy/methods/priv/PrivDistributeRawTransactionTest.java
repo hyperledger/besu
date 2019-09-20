@@ -62,7 +62,7 @@ public class PrivDistributeRawTransactionTest {
   }
 
   @Test
-  public void validTransactionPrivacyGroupIsSentToTransactionPool() throws Exception {
+  public void validTransactionHashReturnedAfterDistribute() throws Exception {
     when(parameter.required(any(Object[].class), anyInt(), any()))
         .thenReturn(VALID_PRIVATE_TRANSACTION_RLP_PRIVACY_GROUP);
     when(privateTxHandler.sendToOrion(any(PrivateTransaction.class))).thenReturn(MOCK_ORION_KEY);

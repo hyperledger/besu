@@ -47,7 +47,7 @@ public class AbstractSendTransaction {
     this.transactionPool = transactionPool;
   }
 
-  protected PrivateTransaction validateRequest(final JsonRpcRequest request)
+  protected PrivateTransaction validateAndDecodeRequest(final JsonRpcRequest request)
       throws ErrorResponseException {
     if (request.getParamLength() != 1) {
       throw new ErrorResponseException(
