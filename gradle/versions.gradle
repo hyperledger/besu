@@ -16,6 +16,7 @@ dependencyManagement {
     dependency 'com.fasterxml.jackson.core:jackson-databind:2.9.9.1'
     dependency 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.9.9'
     dependency 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.9.9'
+    dependency 'com.moandjiezana.toml:toml4j:0.7.2'
 
     dependency 'com.github.docker-java:docker-java:3.0.14'
 

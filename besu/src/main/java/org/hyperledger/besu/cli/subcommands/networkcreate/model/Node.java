@@ -15,16 +15,21 @@ package org.hyperledger.besu.cli.subcommands.networkcreate.model;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Objects.requireNonNull;
 import static java.util.Objects.requireNonNullElse;
-import static org.assertj.core.api.Assertions.assertThat;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.io.Resources;
+import com.moandjiezana.toml.TomlWriter;
 import java.io.IOException;
+import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -35,6 +40,7 @@ import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Util;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 
 // TODO Handle errors
 class Node implements Generatable, ConfigNode {
@@ -43,9 +49,25 @@ class Node implements Generatable, ConfigNode {
   private static final String PRIVATE_KEY_FILENAME = "key";
   private static final String CONFIG_FILENAME = "config.toml";
   private static final String CONFIG_TEMPLATE_FILENAME = "/networkcreate/node-config-template.toml";
+  private static final String DEFAULT_IP = "127.0.0.1";
+  private static final int DEFAULT_P2P_PORT = 30303;
+  private static final int DEFAULT_RPC_HTTP_PORT = 8545;
+  private static final int DEFAULT_RPC_WS_PORT = 8546;
+  private static final int DEFAULT_GRAPHQL_PORT = 8547;
+  private static final String TOML_BOOTNODE_KEY = "bootnodes";
+  private static final String TOML_BOOTNODE_FIND_REGEX = TOML_BOOTNODE_KEY+"=.*";
+  private static final String TOML_P2P_PORT_KEY = "p2p-port";
+  private static final String TOML_P2P_PORT_FIND_REGEX = TOML_P2P_PORT_KEY+"=[0-9]+";
+  private static final String TOML_RPC_HTTP_PORT_KEY = "rpc-http-port";
+  private static final String TOML_RPC_HTTP_PORT_FIND_REGEX = TOML_RPC_HTTP_PORT_KEY+"=[0-9]+";
+  private static final String TOML_GRAPHQL_PORT_KEY = "graphql-http-port";
+  private static final String TOML_GRAPHQL_PORT_FIND_REGEX = TOML_GRAPHQL_PORT_KEY +"=[0-9]+";
+  private static final String TOML_RPC_WS_PORT_KEY = "rpc-ws-port";
+  private static final String TOML_RPC_WS_PORT_FIND_REGEX = TOML_RPC_WS_PORT_KEY +"=[0-9]+";
 
   @JsonIgnore private final KeyPair keyPair;
   @JsonIgnore private final Address address;
+  @JsonIgnore private final String p2pIp;
   private String name;
   private Boolean validator;
   private Boolean bootnode;
@@ -61,26 +83,49 @@ class Node implements Generatable, ConfigNode {
 
     keyPair = SECP256K1.KeyPair.generate();
     address = Util.publicKeyToAddress(keyPair.getPublicKey());
+
+    //TODO see how to get that right, not constants
+    p2pIp = DEFAULT_IP;
   }
 
   public String getName() {
     return name;
   }
 
-  Boolean getValidator() {
-    return validator;
-  }
-
   public Boolean getBootnode() {
     return bootnode;
   }
 
+  public Address getAddress() {
+    return address;
+  }
+
+  @JsonIgnore
+  Boolean getValidator() {
+    return validator;
+  }
+
+  @JsonIgnore
   public KeyPair getKeyPair() {
     return keyPair;
   }
 
-  public Address getAddress() {
-    return address;
+  @JsonIgnore
+  private EnodeURL getEnodeURL(){
+    final int p2pPort = getPort(DEFAULT_P2P_PORT,1);
+    return EnodeURL.builder()
+        .nodeId(keyPair.getPublicKey().getEncodedBytes())
+        .ipAddress(p2pIp)
+        .listeningPort(p2pPort)
+        .discoveryPort(p2pPort)
+        .build();
+  }
+
+  private Integer getPort(final Integer defaultPort, final int portGroupSize){
+    List<Node> siblings = ((Configuration) parent).getNodes();
+    final int positionInNodesList = siblings.indexOf(this);
+    // ensure no port collision on this network
+    return defaultPort + positionInNodesList*portGroupSize;
   }
 
   @Override
@@ -103,21 +148,45 @@ class Node implements Generatable, ConfigNode {
   }
 
   private void createConfigFile(final Path nodeDir){
-    assertThat(parent instanceof Configuration);
-    //TODO get list of bootnodes
-//    List<Node> siblings = ((Configuration)parent).getNodes();
-//    List<Address> bootnodesEnodeAddresses = siblings.stream().filter(node -> node.bootnode)
-//        .map(bootnode -> bootnode.address).collect(
-//            Collectors.toList());
-    //TODO customise TOML values
+    TomlWriter tomlWriter = new TomlWriter.Builder().build();
+
     try {
       final URL configTemplateFile = this.getClass().getResource(CONFIG_TEMPLATE_FILENAME);
-      final String configTemplateSource = Resources.toString(configTemplateFile, UTF_8);
+      String configTemplateSource = Resources.toString(configTemplateFile, UTF_8);
+
+      // Write bootnodes list if the node is not a bootnode.
+      if(!bootnode) {
+        List<Node> siblings = ((Configuration) parent).getNodes();
+        List<URI> bootnodesEnodeURLs = siblings.stream().filter(node -> node.bootnode)
+            .map(Node::getEnodeURL).map(EnodeURL::toURI).collect(Collectors.toList());
+
+        Map<String,Object> bootnodes = new HashMap<>();
+        bootnodes.put(TOML_BOOTNODE_KEY,bootnodesEnodeURLs);
+
+        configTemplateSource = configTemplateSource.replaceAll(TOML_BOOTNODE_FIND_REGEX,tomlWriter.write(bootnodes));
+      }
+
+      // Write ports
+      configTemplateSource = replacePort(tomlWriter, configTemplateSource, TOML_P2P_PORT_KEY, TOML_P2P_PORT_FIND_REGEX, DEFAULT_P2P_PORT, 1);
+
+      configTemplateSource = replacePort(tomlWriter, configTemplateSource, TOML_RPC_HTTP_PORT_KEY, TOML_RPC_HTTP_PORT_FIND_REGEX, DEFAULT_RPC_HTTP_PORT, 3);
+      configTemplateSource = replacePort(tomlWriter, configTemplateSource, TOML_RPC_WS_PORT_KEY, TOML_RPC_WS_PORT_FIND_REGEX, DEFAULT_RPC_WS_PORT, 3);
+      configTemplateSource = replacePort(tomlWriter, configTemplateSource, TOML_GRAPHQL_PORT_KEY, TOML_GRAPHQL_PORT_FIND_REGEX, DEFAULT_GRAPHQL_PORT, 3);
+
+      //TODO customise TOML values
+
       Files.write(nodeDir.resolve(CONFIG_FILENAME),
           configTemplateSource.getBytes(UTF_8), StandardOpenOption.CREATE_NEW);
     } catch (IOException e) {
       LOG.error("Unable to write node configuration file", e);
     }
+  }
+
+  private String replacePort(TomlWriter tomlWriter, String configTemplateSource, String key, String regex, int defaultPort, int portGroupSize) {
+    final HashMap<String, Integer> valueMap = new HashMap<>();
+    valueMap.put(key,  getPort(defaultPort, portGroupSize));
+    LOG.debug(valueMap);
+    return configTemplateSource.replaceAll(regex, tomlWriter.write(valueMap));
   }
 
   @Override
