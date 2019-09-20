@@ -76,7 +76,6 @@ class PivotBlockConfirmer<C> {
     this.numberOfRetriesPerPeer = numberOfRetriesPerPeer;
   }
 
-  @SuppressWarnings("rawtypes")
   public CompletableFuture<FastSyncState> confirmPivotBlock() {
     if (isStarted.compareAndSet(false, true)) {
       LOG.info(
@@ -87,7 +86,6 @@ class PivotBlockConfirmer<C> {
     return result;
   }
 
-  @SuppressWarnings("rawtypes")
   private void queryPeers(final long blockNumber) {
     synchronized (runningQueries) {
       for (int i = 0; i < numberOfPeersToQuery; i++) {
