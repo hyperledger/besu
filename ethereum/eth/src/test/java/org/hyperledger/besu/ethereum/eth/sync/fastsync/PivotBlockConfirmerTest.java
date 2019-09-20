@@ -79,6 +79,34 @@ public class PivotBlockConfirmerTest {
   }
 
   @Test
+  public void completeSuccessfully() {
+    pivotBlockConfirmer = createPivotBlockConfirmer(2, 1);
+
+    final Responder responder =
+        RespondingEthPeer.blockchainResponder(blockchain, protocolContext.getWorldStateArchive());
+    final RespondingEthPeer respondingPeerA =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
+
+    final RespondingEthPeer respondingPeerB =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
+
+    // Execute task
+    final CompletableFuture<FastSyncState> future = pivotBlockConfirmer.confirmPivotBlock();
+
+    // First peer responds
+    respondingPeerA.respond(responder);
+
+    assertThat(future).isNotDone();
+
+    // Second peer responds
+    respondingPeerB.respond(responder);
+
+    assertThat(future)
+        .isCompletedWithValue(
+            new FastSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
+  }
+
+  @Test
   public void delayedResponse() {
     pivotBlockConfirmer = createPivotBlockConfirmer(2, 1);
 
@@ -230,7 +258,7 @@ public class PivotBlockConfirmerTest {
   }
 
   @Test
-  public void mismatchWithOutstandingQuery() {
+  public void headerMismatch() {
     pivotBlockConfirmer = createPivotBlockConfirmer(3, 1);
 
     final Responder responderA =
@@ -245,6 +273,7 @@ public class PivotBlockConfirmerTest {
     // Execute task and wait for response
     final CompletableFuture<FastSyncState> future = pivotBlockConfirmer.confirmPivotBlock();
     respondingPeerA.respond(responderA);
+    assertThat(future).isNotDone();
     respondingPeerB.respond(responderB);
 
     assertThat(future).isCompletedExceptionally();
