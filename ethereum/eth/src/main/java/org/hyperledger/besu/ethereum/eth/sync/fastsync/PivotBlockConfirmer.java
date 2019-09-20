@@ -59,6 +59,7 @@ class PivotBlockConfirmer<C> {
   private final Map<BlockHeader, AtomicInteger> pivotBlockVotes = new ConcurrentHashMap<>();
 
   private final AtomicBoolean isStarted = new AtomicBoolean(false);
+  private final AtomicBoolean isCancelled = new AtomicBoolean(false);
 
   PivotBlockConfirmer(
       final ProtocolSchedule<C> protocolSchedule,
@@ -132,6 +133,7 @@ class PivotBlockConfirmer<C> {
 
   private void cancelQueries() {
     synchronized (runningQueries) {
+      isCancelled.set(true);
       runningQueries.forEach(f -> f.cancel(true));
       pivotBlockQueriesByPeerId.values().forEach(EthTask::cancel);
     }
@@ -144,7 +146,7 @@ class PivotBlockConfirmer<C> {
   }
 
   private CompletableFuture<BlockHeader> executePivotQuery(final long blockNumber) {
-    if (result.isDone()) {
+    if (isCancelled.get() || result.isDone()) {
       // Stop loop if this task is done
       return FutureUtils.completedExceptionally(new CancellationException());
     }
@@ -186,18 +188,24 @@ class PivotBlockConfirmer<C> {
         RetryingGetHeaderFromPeerByNumberTask.forSingleNumber(
             protocolSchedule, ethContext, metricsSystem, blockNumber, numberOfRetriesPerPeer);
     task.assignPeer(peer);
-    final RetryingGetHeaderFromPeerByNumberTask preexistingTask =
-        pivotBlockQueriesByPeerId.putIfAbsent(peer.nodeId(), task);
 
-    if (preexistingTask == null) {
-      // If we haven't already queried this peer, return the newly created task
-      LOG.debug(
-          "Query peer {}... for block {}.", peer.nodeId().toString().substring(0, 8), blockNumber);
-      return Optional.of(task);
-    } else {
-      // Otherwise, we'll have to try again later
-      return Optional.empty();
+    // Try adding our task
+    synchronized (runningQueries) {
+      if (isCancelled.get()) {
+        // Don't run a new query if this task is already cancelled
+        return Optional.empty();
+      }
+      final RetryingGetHeaderFromPeerByNumberTask preexistingTask =
+          pivotBlockQueriesByPeerId.putIfAbsent(peer.nodeId(), task);
+      if (preexistingTask != null) {
+        // We already have a task for this peer, try again later
+        return Optional.empty();
+      }
     }
+
+    LOG.debug(
+        "Query peer {}... for block {}.", peer.nodeId().toString().substring(0, 8), blockNumber);
+    return Optional.of(task);
   }
 
   public static class ContestedPivotBlockException extends RuntimeException {
