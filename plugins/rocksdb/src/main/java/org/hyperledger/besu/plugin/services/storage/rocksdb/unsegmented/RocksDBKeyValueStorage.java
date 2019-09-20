@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.plugin.services.storage.rocksdb.unsegmented;
 
-import java.util.ArrayList;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
@@ -25,9 +24,9 @@ import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbUtil;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBConfiguration;
 import org.hyperledger.besu.services.kvstore.KeyValueStorageTransactionTransitionValidatorDecorator;
 
-import java.util.LinkedList;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 
@@ -134,8 +133,8 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
   }
 
   @Override
-  public List<byte[]> getAllKeysThat(final Predicate<byte[]> returnCondition) {
-    List<byte[]> returnedKeys = new ArrayList<>();
+  public Set<byte[]> getAllKeysThat(final Predicate<byte[]> returnCondition) {
+    Set<byte[]> returnedKeys = new HashSet<>();
     try (final RocksIterator rocksIterator = db.newIterator()) {
       rocksIterator.seekToFirst();
       while (rocksIterator.isValid()) {

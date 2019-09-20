@@ -21,7 +21,6 @@ import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -91,11 +90,11 @@ public class LimitedInMemoryKeyValueStorage implements KeyValueStorage {
   }
 
   @Override
-  public List<byte[]> getAllKeysThat(final Predicate<byte[]> returnCondition) {
+  public Set<byte[]> getAllKeysThat(final Predicate<byte[]> returnCondition) {
     return storage.asMap().keySet().stream()
         .map(BytesValue::getArrayUnsafe)
         .filter(returnCondition)
-        .collect(Collectors.toList());
+        .collect(Collectors.toSet());
   }
 
   @Override

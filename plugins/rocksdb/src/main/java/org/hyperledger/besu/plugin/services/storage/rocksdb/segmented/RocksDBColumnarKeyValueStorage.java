@@ -30,10 +30,11 @@ import org.hyperledger.besu.util.bytes.BytesValue;
 import java.io.Closeable;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.LinkedList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -182,9 +183,9 @@ public class RocksDBColumnarKeyValueStorage
   }
 
   @Override
-  public List<byte[]> getThat(
+  public Set<byte[]> getThat(
       final ColumnFamilyHandle segmentHandle, final Predicate<byte[]> returnCondition) {
-    List<byte[]> returnedKeys = new ArrayList<>();
+    Set<byte[]> returnedKeys = new HashSet<>();
     try (final RocksIterator rocksIterator = db.newIterator(segmentHandle)) {
       rocksIterator.seekToFirst();
       while (rocksIterator.isValid()) {

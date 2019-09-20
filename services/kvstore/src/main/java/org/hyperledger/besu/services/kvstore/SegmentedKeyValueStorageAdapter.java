@@ -20,8 +20,8 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Predicate;
 
 public class SegmentedKeyValueStorageAdapter<S> implements KeyValueStorage {
@@ -56,7 +56,7 @@ public class SegmentedKeyValueStorageAdapter<S> implements KeyValueStorage {
   }
 
   @Override
-  public List<byte[]> getAllKeysThat(final Predicate<byte[]> returnCondition) {
+  public Set<byte[]> getAllKeysThat(final Predicate<byte[]> returnCondition) {
     return storage.getThat(segmentHandle, returnCondition);
   }
 

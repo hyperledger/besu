@@ -18,8 +18,8 @@ import org.hyperledger.besu.plugin.Unstable;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 
 import java.io.Closeable;
-import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Predicate;
 
 /**
@@ -72,13 +72,13 @@ public interface KeyValueStorage extends Closeable {
   long removeAllKeysUnless(Predicate<byte[]> retainCondition) throws StorageException;
 
   /**
-   * Performs an evaluation against each key in the store, returning the list of entries that pass.
+   * Performs an evaluation against each key in the store, returning the set of entries that pass.
    *
    * @param returnCondition predicate to evaluate each key against, unless the result is {@code
    *     null}, the key is added to the returned list of keys.
-   * @return the list of keys that pass the condition.
+   * @return the set of keys that pass the condition.
    */
-  List<byte[]> getAllKeysThat(Predicate<byte[]> returnCondition);
+  Set<byte[]> getAllKeysThat(Predicate<byte[]> returnCondition);
 
   /**
    * Begins a fresh transaction, for sequencing operations for later atomic execution.
