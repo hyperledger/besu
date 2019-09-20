@@ -29,6 +29,15 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+/**
+ * This task attempts to find a non-controversial pivot block by confirming the pivot block number
+ * with a minimum number of peers. If a particular pivot block cannot be confirmed, the pivot block
+ * number is pushed back and the confirmation process repeats. If a maximum number of retries is
+ * reached, the task fails with a {@code FastSyncException} containing {@code
+ * FastSyncError.PIVOT_BLOCK_HEADER_MISMATCH}.
+ *
+ * @param <C> The consensus context
+ */
 public class PivotBlockRetriever<C> {
 
   private static final Logger LOG = LogManager.getLogger();

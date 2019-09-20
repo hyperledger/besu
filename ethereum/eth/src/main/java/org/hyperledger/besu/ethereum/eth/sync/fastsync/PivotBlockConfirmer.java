@@ -38,6 +38,14 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+/**
+ * This task will query {@code numberOfPeersToQuery} peers for a particular block number. If any
+ * peers disagree on the block at this number, the task fails with a {@code
+ * ContestedPivotBlockException}. The task will succeed only if {@code numberOfPeersToQuery}
+ * distinct peers all return matching block headers for the specified block number.
+ *
+ * @param <C> The consensus context
+ */
 class PivotBlockConfirmer<C> {
   private static final Logger LOG = LogManager.getLogger();
 
