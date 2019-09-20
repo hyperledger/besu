@@ -104,7 +104,5 @@ dependencyManagement {
     dependency "tech.pegasys.ethsigner.internal:core:0.3.0"
     dependency "tech.pegasys.ethsigner.internal:file-based:0.3.0"
     dependency "tech.pegasys.ethsigner.internal:signing-api:0.3.0"
-
-    dependency "org.codehaus.groovy:groovy-all:2.3.11"
   }
 }

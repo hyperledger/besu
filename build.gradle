@@ -469,7 +469,7 @@ startScripts {
 
 dependencies {
   compile project(':besu')
-  compile 'org.codehaus.groovy:groovy-all'
+  compile localGroovy()
   errorprone 'com.google.errorprone:error_prone_core'
 }
 
@@ -539,15 +539,11 @@ task distDocker(type: Exec) {
   args "-c", "docker build --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${getCheckedOutGitCommitHash()} -t ${image} ."
 }
 
-task checkSpdxHeader(type: JavaExec) {
-  description 'Check SPDX License Header'
-  main = 'org.hyperledger.CheckSpdxHeader'
-  classpath = sourceSets.main.runtimeClasspath
-  systemProperty "checkSpdxHeader.rootPath", "${projectDir}"
-  systemProperty "checkSpdxHeader.spdxHeader", "* SPDX-License-Identifier: Apache-2.0"
-  systemProperty "checkSpdxHeader.filesRegex", "(.*.java)|(.*.groovy)"
-  systemProperty "checkSpdxHeader.excludeRegex", "(.*generalstate/GeneralStateRegressionReferenceTest.*)|(.*generalstate/GeneralStateReferenceTest.*)|(.*blockchain/BlockchainReferenceTest.*)|(.*.gradle/.*)"
-
+task checkSpdxHeader(type: CheckSpdxHeader) {
+  rootPath = "${projectDir}"
+  spdxHeader = "* SPDX-License-Identifier: Apache-2.0"
+  filesRegex = "(.*.java)|(.*.groovy)"
+  excludeRegex = "(.*generalstate/GeneralStateRegressionReferenceTest.*)|(.*generalstate/GeneralStateReferenceTest.*)|(.*blockchain/BlockchainReferenceTest.*)|(.*.gradle/.*)"
 }
 
 task jacocoRootReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
