@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 ConsenSys AG.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -9,6 +9,8 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
@@ -24,6 +26,7 @@ import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
+import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -93,11 +96,42 @@ public class PivotBlockRetrieverTest {
         RespondingEthPeer.blockchainResponder(blockchain, protocolContext.getWorldStateArchive());
     final RespondingEthPeer respondingPeerA =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
-    EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1);
-    EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1);
+    final RespondingEthPeer respondingPeerB =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1);
+    final RespondingEthPeer respondingPeerC =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1);
 
     final CompletableFuture<FastSyncState> future = pivotBlockRetriever.downloadPivotBlockHeader();
     while (!future.isDone()) {
+      assertThat(respondingPeerB.hasOutstandingRequests()).isFalse();
+      assertThat(respondingPeerC.hasOutstandingRequests()).isFalse();
+      respondingPeerA.respondWhile(responder, () -> !future.isDone());
+    }
+
+    assertThat(future)
+        .isCompletedWithValue(
+            new FastSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
+  }
+
+  @Test
+  public void shouldIgnorePeersThatAreNotFullyValidated() {
+    final PeerValidator peerValidator = mock(PeerValidator.class);
+    final RespondingEthPeer.Responder responder =
+        RespondingEthPeer.blockchainResponder(blockchain, protocolContext.getWorldStateArchive());
+    final RespondingEthPeer respondingPeerA =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000, peerValidator);
+    final RespondingEthPeer respondingPeerB =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000, peerValidator);
+    final RespondingEthPeer respondingPeerC =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000, peerValidator);
+
+    // Only mark one peer as validated
+    respondingPeerA.getEthPeer().markValidated(peerValidator);
+
+    final CompletableFuture<FastSyncState> future = pivotBlockRetriever.downloadPivotBlockHeader();
+    while (!future.isDone()) {
+      assertThat(respondingPeerB.hasOutstandingRequests()).isFalse();
+      assertThat(respondingPeerC.hasOutstandingRequests()).isFalse();
       respondingPeerA.respondWhile(responder, () -> !future.isDone());
     }
 

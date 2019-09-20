@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 ConsenSys AG.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -9,6 +9,8 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu.controller;
 
@@ -29,11 +31,14 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
+import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+
+import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -97,12 +102,15 @@ public class IbftLegacyBesuControllerBuilder extends BesuControllerBuilder<IbftC
 
   @Override
   protected EthProtocolManager createEthProtocolManager(
-      final ProtocolContext<IbftContext> protocolContext, final boolean fastSyncEnabled) {
+      final ProtocolContext<IbftContext> protocolContext,
+      final boolean fastSyncEnabled,
+      final List<PeerValidator> peerValidators) {
     LOG.info("Operating on IBFT-1.0 network.");
     return new Istanbul64ProtocolManager(
         protocolContext.getBlockchain(),
         protocolContext.getWorldStateArchive(),
         networkId,
+        peerValidators,
         fastSyncEnabled,
         syncConfig.getDownloaderParallelism(),
         syncConfig.getTransactionsParallelism(),

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ConsenSys AG.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -9,6 +9,8 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu.ethereum.eth.manager;
 
@@ -21,6 +23,7 @@ import org.hyperledger.besu.ethereum.eth.messages.GetBlockBodiesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetBlockHeadersMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetNodeDataMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetReceiptsMessage;
+import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNotConnected;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
@@ -30,6 +33,7 @@ import org.hyperledger.besu.util.uint.UInt256;
 
 import java.time.Clock;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -66,11 +70,13 @@ public class EthPeer {
 
   private final AtomicReference<Consumer<EthPeer>> onStatusesExchanged = new AtomicReference<>();
   private final PeerReputation reputation = new PeerReputation();
+  private final Map<PeerValidator, Boolean> validationStatus = new HashMap<>();
 
   EthPeer(
       final PeerConnection connection,
       final String protocolName,
       final Consumer<EthPeer> onStatusesExchanged,
+      final List<PeerValidator> peerValidators,
       final Clock clock) {
     this.connection = connection;
     this.protocolName = protocolName;
@@ -86,6 +92,30 @@ public class EthPeer {
                 }));
     this.chainHeadState = new ChainState();
     this.onStatusesExchanged.set(onStatusesExchanged);
+    for (PeerValidator peerValidator : peerValidators) {
+      validationStatus.put(peerValidator, false);
+    }
+  }
+
+  public void markValidated(final PeerValidator validator) {
+    if (!validationStatus.containsKey(validator)) {
+      throw new IllegalArgumentException("Attempt to update unknown validation status");
+    }
+    validationStatus.put(validator, true);
+  }
+
+  /**
+   * Check if this peer has been fully validated.
+   *
+   * @return {@code true} if all peer validation logic has run and successfully validated this peer
+   */
+  public boolean isFullyValidated() {
+    for (Boolean isValid : validationStatus.values()) {
+      if (!isValid) {
+        return false;
+      }
+    }
+    return true;
   }
 
   public boolean isDisconnected() {

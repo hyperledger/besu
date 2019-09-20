@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 ConsenSys AG.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -9,6 +9,8 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu.controller;
 
@@ -29,10 +31,9 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
-import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.peervalidation.DaoForkPeerValidator;
-import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidatorRunner;
+import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.sync.DefaultSynchronizer;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
@@ -245,7 +246,9 @@ public abstract class BesuControllerBuilder<C> {
                 }));
 
     final boolean fastSyncEnabled = syncConfig.getSyncMode().equals(SyncMode.FAST);
-    ethProtocolManager = createEthProtocolManager(protocolContext, fastSyncEnabled);
+    ethProtocolManager =
+        createEthProtocolManager(
+            protocolContext, fastSyncEnabled, createPeerValidators(protocolSchedule));
     final SyncState syncState =
         new SyncState(blockchain, ethProtocolManager.ethContext().getEthPeers());
     final Synchronizer synchronizer =
@@ -261,17 +264,6 @@ public abstract class BesuControllerBuilder<C> {
             dataDirectory,
             clock,
             metricsSystem);
-
-    final OptionalLong daoBlock =
-        genesisConfig.getConfigOptions(genesisConfigOverrides).getDaoForkBlock();
-    if (daoBlock.isPresent()) {
-      // Setup dao validator
-      final EthContext ethContext = ethProtocolManager.ethContext();
-      final DaoForkPeerValidator daoForkPeerValidator =
-          new DaoForkPeerValidator(
-              ethContext, protocolSchedule, metricsSystem, daoBlock.getAsLong());
-      PeerValidatorRunner.runValidator(ethContext, daoForkPeerValidator);
-    }
 
     final TransactionPool transactionPool =
         TransactionPoolFactory.createTransactionPool(
@@ -356,11 +348,14 @@ public abstract class BesuControllerBuilder<C> {
       Blockchain blockchain, WorldStateArchive worldStateArchive);
 
   protected EthProtocolManager createEthProtocolManager(
-      final ProtocolContext<C> protocolContext, final boolean fastSyncEnabled) {
+      final ProtocolContext<C> protocolContext,
+      final boolean fastSyncEnabled,
+      final List<PeerValidator> peerValidators) {
     return new EthProtocolManager(
         protocolContext.getBlockchain(),
         protocolContext.getWorldStateArchive(),
         networkId,
+        peerValidators,
         fastSyncEnabled,
         syncConfig.getDownloaderParallelism(),
         syncConfig.getTransactionsParallelism(),
@@ -368,5 +363,19 @@ public abstract class BesuControllerBuilder<C> {
         clock,
         metricsSystem,
         ethereumWireProtocolConfiguration);
+  }
+
+  protected List<PeerValidator> createPeerValidators(final ProtocolSchedule<C> protocolSchedule) {
+    final List<PeerValidator> validators = new ArrayList<>();
+
+    final OptionalLong daoBlock =
+        genesisConfig.getConfigOptions(genesisConfigOverrides).getDaoForkBlock();
+    if (daoBlock.isPresent()) {
+      // Setup dao validator
+      validators.add(
+          new DaoForkPeerValidator(protocolSchedule, metricsSystem, daoBlock.getAsLong()));
+    }
+
+    return validators;
   }
 }

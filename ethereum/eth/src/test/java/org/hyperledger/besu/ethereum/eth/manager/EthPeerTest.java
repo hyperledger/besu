@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ConsenSys AG.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -9,6 +9,8 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu.ethereum.eth.manager;
 
@@ -16,6 +18,7 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
@@ -23,16 +26,22 @@ import org.hyperledger.besu.ethereum.eth.messages.BlockBodiesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
 import org.hyperledger.besu.ethereum.eth.messages.NodeDataMessage;
 import org.hyperledger.besu.ethereum.eth.messages.ReceiptsMessage;
+import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNotConnected;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.testutil.TestClock;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.junit.Test;
 
@@ -260,6 +269,61 @@ public class EthPeerTest {
     assertThat(bodiesClosedCount.get()).isEqualTo(1);
   }
 
+  @Test
+  public void isFullyValidated_noPeerValidators() {
+    final EthPeer peer = createPeer();
+    assertThat(peer.isFullyValidated()).isTrue();
+  }
+
+  @Test
+  public void isFullyValidated_singleValidator_notValidated() {
+    final PeerValidator validator = mock(PeerValidator.class);
+    final EthPeer peer = createPeer(validator);
+
+    assertThat(peer.isFullyValidated()).isFalse();
+  }
+
+  @Test
+  public void isFullyValidated_singleValidator_validated() {
+    final PeerValidator validator = mock(PeerValidator.class);
+    final EthPeer peer = createPeer(validator);
+    peer.markValidated(validator);
+
+    assertThat(peer.isFullyValidated()).isTrue();
+  }
+
+  @Test
+  public void isFullyValidated_multipleValidators_unvalidated() {
+    final List<PeerValidator> validators =
+        Stream.generate(() -> mock(PeerValidator.class)).limit(2).collect(Collectors.toList());
+
+    final EthPeer peer = createPeer(validators);
+
+    assertThat(peer.isFullyValidated()).isFalse();
+  }
+
+  @Test
+  public void isFullyValidated_multipleValidators_partiallyValidated() {
+    final List<PeerValidator> validators =
+        Stream.generate(() -> mock(PeerValidator.class)).limit(2).collect(Collectors.toList());
+
+    final EthPeer peer = createPeer(validators);
+    peer.markValidated(validators.get(0));
+
+    assertThat(peer.isFullyValidated()).isFalse();
+  }
+
+  @Test
+  public void isFullyValidated_multipleValidators_fullyValidated() {
+    final List<PeerValidator> validators =
+        Stream.generate(() -> mock(PeerValidator.class)).limit(2).collect(Collectors.toList());
+
+    final EthPeer peer = createPeer(validators);
+    validators.forEach(peer::markValidated);
+
+    assertThat(peer.isFullyValidated()).isTrue();
+  }
+
   private void messageStream(
       final ResponseStreamSupplier getStream,
       final MessageData targetMessage,
@@ -338,10 +402,18 @@ public class EthPeerTest {
   }
 
   private EthPeer createPeer() {
+    return createPeer(Collections.emptyList());
+  }
+
+  private EthPeer createPeer(final PeerValidator... peerValidators) {
+    return createPeer(Arrays.asList(peerValidators));
+  }
+
+  private EthPeer createPeer(final List<PeerValidator> peerValidators) {
     final Set<Capability> caps = new HashSet<>(singletonList(EthProtocol.ETH63));
     final PeerConnection peerConnection = new MockPeerConnection(caps);
     final Consumer<EthPeer> onPeerReady = (peer) -> {};
-    return new EthPeer(peerConnection, EthProtocol.NAME, onPeerReady, clock);
+    return new EthPeer(peerConnection, EthProtocol.NAME, onPeerReady, peerValidators, clock);
   }
 
   @FunctionalInterface

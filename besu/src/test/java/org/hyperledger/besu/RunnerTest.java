@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ConsenSys AG.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -9,6 +9,8 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu;
 
@@ -19,6 +21,7 @@ import static org.hyperledger.besu.cli.config.NetworkName.DEV;
 
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.KeyPairUtil;
 import org.hyperledger.besu.controller.MainnetBesuControllerBuilder;
@@ -61,8 +64,10 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
@@ -110,15 +115,16 @@ public final class RunnerTest {
 
   @Test
   public void fullSyncFromGenesis() throws Exception {
-    syncFromGenesis(SyncMode.FULL);
+    syncFromGenesis(SyncMode.FULL, GenesisConfigFile.mainnet());
   }
 
   @Test
   public void fastSyncFromGenesis() throws Exception {
-    syncFromGenesis(SyncMode.FAST);
+    syncFromGenesis(SyncMode.FAST, getFastSyncGenesis());
   }
 
-  private void syncFromGenesis(final SyncMode mode) throws Exception {
+  private void syncFromGenesis(final SyncMode mode, final GenesisConfigFile genesisConfig)
+      throws Exception {
     final Path dataDirAhead = temp.newFolder().toPath();
     final Path dbAhead = dataDirAhead.resolve("database");
     final int blockCount = 500;
@@ -131,7 +137,7 @@ public final class RunnerTest {
     // Setup state with block data
     try (final BesuController<Void> controller =
         new MainnetBesuControllerBuilder()
-            .genesisConfigFile(GenesisConfigFile.mainnet())
+            .genesisConfigFile(genesisConfig)
             .synchronizerConfiguration(syncConfigAhead)
             .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
             .dataDirectory(dataDirAhead)
@@ -150,7 +156,7 @@ public final class RunnerTest {
     // Setup Runner with blocks
     final BesuController<Void> controllerAhead =
         new MainnetBesuControllerBuilder()
-            .genesisConfigFile(GenesisConfigFile.mainnet())
+            .genesisConfigFile(genesisConfig)
             .synchronizerConfiguration(syncConfigAhead)
             .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
             .dataDirectory(dataDirAhead)
@@ -208,7 +214,7 @@ public final class RunnerTest {
       // Setup runner with no block data
       final BesuController<Void> controllerBehind =
           new MainnetBesuControllerBuilder()
-              .genesisConfigFile(GenesisConfigFile.mainnet())
+              .genesisConfigFile(genesisConfig)
               .synchronizerConfiguration(syncConfigBehind)
               .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
               .dataDirectory(dataDirBehind)
@@ -335,6 +341,18 @@ public final class RunnerTest {
       runnerAhead.close();
       runnerAhead.awaitStop();
     }
+  }
+
+  private GenesisConfigFile getFastSyncGenesis() {
+    final ObjectNode jsonNode = GenesisConfigFile.mainnetJsonNode();
+    final Optional<ObjectNode> configNode = JsonUtil.getObjectNode(jsonNode, "config");
+    configNode.ifPresent(
+        (node) -> {
+          // Clear DAO block so that inability to validate DAO block won't interfere with fast sync
+          node.remove("daoForkBlock");
+          node.put("daoForkSupport", false);
+        });
+    return GenesisConfigFile.fromConfig(jsonNode);
   }
 
   private StorageProvider createKeyValueStorageProvider(final Path dbAhead) {

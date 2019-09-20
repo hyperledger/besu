@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 ConsenSys AG.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -9,6 +9,8 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu.ethereum.eth.peervalidation;
 
@@ -53,16 +55,13 @@ public class DaoForkPeerValidatorTest {
 
     PeerValidator validator =
         new DaoForkPeerValidator(
-            ethProtocolManager.ethContext(),
-            MainnetProtocolSchedule.create(),
-            new NoOpMetricsSystem(),
-            daoBlockNumber,
-            0);
+            MainnetProtocolSchedule.create(), new NoOpMetricsSystem(), daoBlockNumber, 0);
 
     RespondingEthPeer peer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, daoBlockNumber);
 
-    CompletableFuture<Boolean> result = validator.validatePeer(peer.getEthPeer());
+    CompletableFuture<Boolean> result =
+        validator.validatePeer(ethProtocolManager.ethContext(), peer.getEthPeer());
 
     assertThat(result).isNotDone();
 
@@ -85,16 +84,13 @@ public class DaoForkPeerValidatorTest {
 
     PeerValidator validator =
         new DaoForkPeerValidator(
-            ethProtocolManager.ethContext(),
-            MainnetProtocolSchedule.create(),
-            new NoOpMetricsSystem(),
-            daoBlockNumber,
-            0);
+            MainnetProtocolSchedule.create(), new NoOpMetricsSystem(), daoBlockNumber, 0);
 
     RespondingEthPeer peer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, daoBlockNumber);
 
-    CompletableFuture<Boolean> result = validator.validatePeer(peer.getEthPeer());
+    CompletableFuture<Boolean> result =
+        validator.validatePeer(ethProtocolManager.ethContext(), peer.getEthPeer());
 
     assertThat(result).isNotDone();
 
@@ -114,16 +110,13 @@ public class DaoForkPeerValidatorTest {
 
     PeerValidator validator =
         new DaoForkPeerValidator(
-            ethProtocolManager.ethContext(),
-            MainnetProtocolSchedule.create(),
-            new NoOpMetricsSystem(),
-            daoBlockNumber,
-            0);
+            MainnetProtocolSchedule.create(), new NoOpMetricsSystem(), daoBlockNumber, 0);
 
     RespondingEthPeer peer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, daoBlockNumber);
 
-    CompletableFuture<Boolean> result = validator.validatePeer(peer.getEthPeer());
+    CompletableFuture<Boolean> result =
+        validator.validatePeer(ethProtocolManager.ethContext(), peer.getEthPeer());
 
     // Request should timeout immediately
     assertThat(result).isDone();
@@ -143,11 +136,7 @@ public class DaoForkPeerValidatorTest {
 
     PeerValidator validator =
         new DaoForkPeerValidator(
-            ethProtocolManager.ethContext(),
-            MainnetProtocolSchedule.create(),
-            new NoOpMetricsSystem(),
-            daoBlockNumber,
-            0);
+            MainnetProtocolSchedule.create(), new NoOpMetricsSystem(), daoBlockNumber, 0);
 
     int peerCount = 1000;
     List<RespondingEthPeer> otherPeers =
@@ -158,7 +147,8 @@ public class DaoForkPeerValidatorTest {
     RespondingEthPeer targetPeer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, daoBlockNumber);
 
-    CompletableFuture<Boolean> result = validator.validatePeer(targetPeer.getEthPeer());
+    CompletableFuture<Boolean> result =
+        validator.validatePeer(ethProtocolManager.ethContext(), targetPeer.getEthPeer());
 
     assertThat(result).isNotDone();
 
@@ -183,11 +173,7 @@ public class DaoForkPeerValidatorTest {
 
     PeerValidator validator =
         new DaoForkPeerValidator(
-            ethProtocolManager.ethContext(),
-            MainnetProtocolSchedule.create(),
-            new NoOpMetricsSystem(),
-            daoBlockNumber,
-            buffer);
+            MainnetProtocolSchedule.create(), new NoOpMetricsSystem(), daoBlockNumber, buffer);
 
     EthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0).getEthPeer();
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ConsenSys AG.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -9,10 +9,13 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu.ethereum.eth.manager;
 
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer.DisconnectCallback;
+import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -22,9 +25,11 @@ import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -58,9 +63,11 @@ public class EthPeers {
         pendingRequests::size);
   }
 
-  void registerConnection(final PeerConnection peerConnection) {
+  void registerConnection(
+      final PeerConnection peerConnection, final List<PeerValidator> peerValidators) {
     final EthPeer peer =
-        new EthPeer(peerConnection, protocolName, this::invokeConnectionCallbacks, clock);
+        new EthPeer(
+            peerConnection, protocolName, this::invokeConnectionCallbacks, peerValidators, clock);
     connections.putIfAbsent(peerConnection, peer);
   }
 
@@ -127,7 +134,11 @@ public class EthPeers {
   }
 
   public Optional<EthPeer> bestPeerWithHeightEstimate() {
-    return streamAvailablePeers().filter(p -> p.chainState().hasEstimatedHeight()).max(BEST_CHAIN);
+    return bestPeerMatchingCriteria(p -> p.chainState().hasEstimatedHeight());
+  }
+
+  public Optional<EthPeer> bestPeerMatchingCriteria(final Predicate<EthPeer> matchesCriteria) {
+    return streamAvailablePeers().filter(matchesCriteria::test).max(BEST_CHAIN);
   }
 
   @FunctionalInterface
