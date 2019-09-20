@@ -15,31 +15,26 @@ package org.hyperledger.besu.cli.subcommands.networkcreate.model;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Objects.requireNonNull;
 import static java.util.Objects.requireNonNullElse;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.List;
-import java.util.stream.Collectors;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.hyperledger.besu.cli.subcommands.networkcreate.generate.DirectoryHandler;
 import org.hyperledger.besu.cli.subcommands.networkcreate.generate.Generatable;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Util;
-
-import java.nio.file.Path;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.checkerframework.checker.nullness.qual.NonNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
 
 // TODO Handle errors
 class Node implements Generatable, ConfigNode {
@@ -103,7 +98,6 @@ class Node implements Generatable, ConfigNode {
     createConfigFile(nodeDir);
 
     LOG.debug("Node {} address is {}", name, address);
-    // TODO generate TOML config file
 
     return nodeDir;
   }
@@ -115,6 +109,7 @@ class Node implements Generatable, ConfigNode {
 //    List<Address> bootnodesEnodeAddresses = siblings.stream().filter(node -> node.bootnode)
 //        .map(bootnode -> bootnode.address).collect(
 //            Collectors.toList());
+    //TODO customise TOML values
     try {
       final URL configTemplateFile = this.getClass().getResource(CONFIG_TEMPLATE_FILENAME);
       final String configTemplateSource = Resources.toString(configTemplateFile, UTF_8);

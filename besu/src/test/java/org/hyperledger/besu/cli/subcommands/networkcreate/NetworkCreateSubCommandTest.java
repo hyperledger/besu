@@ -16,6 +16,7 @@ import static java.lang.String.format;
 import static java.lang.System.currentTimeMillis;
 import static java.nio.file.Files.createTempDirectory;
 
+import java.net.URL;
 import org.hyperledger.besu.cli.subcommands.networkcreate.mapping.InitConfigurationErrorHandler;
 import org.hyperledger.besu.cli.subcommands.networkcreate.mapping.MapperAdapter;
 import org.hyperledger.besu.cli.subcommands.networkcreate.model.Configuration;
@@ -45,20 +46,20 @@ public class NetworkCreateSubCommandTest {
 
   @Test
   public void jsonTest() throws Exception {
-    generate("/networkcreate/test.json");
+    generate(this.getClass().getResource("/networkcreate/test.json"));
   }
 
   @Test
   public void yamlTest() throws Exception {
-    generate("/networkcreate/test.yaml");
+    generate(this.getClass().getResource("/networkcreate/test.yaml"));
   }
 
   @Test
   public void tomlTest() throws Exception {
-    generate("/networkcreate/test.toml");
+    generate(this.getClass().getResource("/networkcreate/test.toml"));
   }
 
-  private void generate(String fileURL) throws Exception {
+  private void generate(URL fileURL) throws Exception {
     final MapperAdapter mapper = MapperAdapter.getMapper(fileURL);
     final Configuration initConfig = mapper.map(new TypeReference<>() {});
     initConfig.verify(new InitConfigurationErrorHandler());

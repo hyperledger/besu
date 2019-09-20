@@ -12,6 +12,16 @@
  */
 package org.hyperledger.besu.cli.subcommands.networkcreate.mapping;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.google.common.io.Resources;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Path;
+import java.util.function.Supplier;
+import org.apache.tuweni.toml.Toml;
 import org.hyperledger.besu.cli.subcommands.networkcreate.model.Configuration;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Wei;
@@ -28,22 +38,28 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.google.common.io.Files;
 
 // TODO Handle errors
-public abstract class MapperAdapter {
+public class MapperAdapter {
 
-  ObjectMapper mapper;
+  Supplier<JsonFactory> supplier;
+  InitFileReader initFileReader;
 
-  public abstract <T> T map(TypeReference<T> clazz) throws Exception;
+  private MapperAdapter(
+      final Supplier<JsonFactory> supplier,
+      final InitFileReader initFileReader) {
+    this.supplier = supplier;
+    this.initFileReader = initFileReader;
+  }
 
-  public static MapperAdapter getMapper(final String initFile) {
-    switch (Files.getFileExtension(initFile)) {
+  public static MapperAdapter getMapper(final URL initFileURL) {
+    switch (Files.getFileExtension(initFileURL.getFile())) {
       case "yaml":
       case "yml":
-        return new YAMLMapperAdapter(initFile);
+        return new MapperAdapter(YAMLFactory::new, () -> Resources.toString(initFileURL, UTF_8));
       case "toml":
       case "tml":
-        return new TOMLMapperAdapter(initFile);
+        return new MapperAdapter(JsonFactory::new, () -> Toml.parse(Path.of(initFileURL.toURI())).toJson());
       case "json":
-        return new JSONMapperAdapter(initFile);
+        return new MapperAdapter(JsonFactory::new, () -> Resources.toString(initFileURL, UTF_8));
       default:
         throw new InvalidParameterException("File type not handled.");
     }
@@ -67,6 +83,16 @@ public abstract class MapperAdapter {
   }
 
   public String writeValueAsString(Configuration initConfig) throws JsonProcessingException {
-    return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(initConfig);
+    return getMapper(supplier.get()).writerWithDefaultPrettyPrinter().writeValueAsString(initConfig);
+  }
+
+  public <T> T map(TypeReference<T> clazz) throws Exception {
+    ObjectMapper mapper = getMapper(supplier.get());
+    return mapper.readValue(initFileReader.read(), clazz);
+  }
+
+  @FunctionalInterface
+  interface InitFileReader {
+    String read() throws IOException, URISyntaxException;
   }
 }
