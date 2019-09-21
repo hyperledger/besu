@@ -52,7 +52,7 @@ import java.util.stream.Collectors;
 import org.junit.Test;
 import org.mockito.InOrder;
 
-public class MarkSweepPrunerTest {
+public class PruningIntegrationTest {
 
   private final BlockDataGenerator gen = new BlockDataGenerator();
   private final NoOpMetricsSystem metricsSystem = new NoOpMetricsSystem();
