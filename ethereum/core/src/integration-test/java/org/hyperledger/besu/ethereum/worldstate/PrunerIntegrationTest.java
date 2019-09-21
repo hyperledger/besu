@@ -16,8 +16,6 @@ package org.hyperledger.besu.ethereum.worldstate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.core.InMemoryStorageProvider.createInMemoryBlockchain;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.spy;
 
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -50,7 +48,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.junit.Test;
-import org.mockito.InOrder;
 
 public class PrunerIntegrationTest {
 
