@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
+import org.hyperledger.besu.testutil.MockExecutorService;
 import org.hyperledger.besu.util.bytes.Bytes32;
 import org.hyperledger.besu.util.bytes.BytesValue;
 
@@ -66,102 +67,99 @@ public class MarkSweepPrunerTest {
   private final MutableBlockchain blockchain = createInMemoryBlockchain(genesisBlock);
 
   @Test
-  public void prepareMarkAndSweep_smallState_manyOpsPerTx() {
-    testPrepareMarkAndSweep(3, 1, 2, 1000);
+  public void pruner_smallState_manyOpsPerTx() throws InterruptedException {
+    testPruner(3, 1, 4, 1000);
   }
 
   @Test
-  public void prepareMarkAndSweep_largeState_fewOpsPerTx() {
-    testPrepareMarkAndSweep(20, 5, 5, 5);
+  public void pruner_largeState_fewOpsPerTx() throws InterruptedException {
+    testPruner(2, 5, 6, 5);
   }
 
   @Test
-  public void prepareMarkAndSweep_emptyBlocks() {
-    testPrepareMarkAndSweep(10, 0, 5, 10);
+  public void pruner_emptyBlocks() throws InterruptedException {
+    testPruner(5, 0, 5, 10);
   }
 
   @Test
-  public void prepareMarkAndSweep_markChainhead() {
-    testPrepareMarkAndSweep(10, 2, 10, 20);
+  public void pruner_markChainhead() throws InterruptedException {
+    testPruner(4, 2, 10, 20);
   }
 
-  @Test
-  public void prepareMarkAndSweep_markGenesis() {
-    testPrepareMarkAndSweep(10, 2, 0, 20);
-  }
-
-  @Test
-  public void prepareMarkAndSweep_multipleRounds() {
-    testPrepareMarkAndSweep(10, 2, 10, 20);
-    testPrepareMarkAndSweep(10, 2, 15, 20);
-  }
-
-  private void testPrepareMarkAndSweep(
-      final int numBlocks,
+  private void testPruner(
+      final int numCycles,
       final int accountsPerBlock,
-      final int markBlockNumber,
-      final int opsPerTransaction) {
-    final MarkSweepPruner pruner =
+      final int numBlocksToKeep,
+      final int opsPerTransaction)
+      throws InterruptedException {
+
+    final var markSweepPruner =
         new MarkSweepPruner(
             worldStateStorage, blockchain, markStorage, metricsSystem, opsPerTransaction);
-    final int chainHeight = (int) blockchain.getChainHead().getHeight();
-    // Generate blocks up to markBlockNumber
-    final int blockCountBeforeMarkedBlock = markBlockNumber - chainHeight;
-    generateBlockchainData(blockCountBeforeMarkedBlock, accountsPerBlock);
+    final var pruner =
+        new Pruner(
+            markSweepPruner,
+            blockchain,
+            new MockExecutorService(),
+            new PruningConfiguration(1, numBlocksToKeep));
 
-    // Prepare
-    pruner.prepare();
-    // Choose mark block
-    final BlockHeader markBlock = blockchain.getBlockHeader(markBlockNumber).get();
-    // Generate more blocks that should be kept
-    generateBlockchainData(numBlocks - blockCountBeforeMarkedBlock, accountsPerBlock);
-    // Mark
-    pruner.mark(markBlock.getStateRoot());
+    pruner.start();
 
-    // Collect the nodes we expect to keep
-    final Set<BytesValue> expectedNodes = collectWorldStateNodes(markBlock.getStateRoot());
-    for (int i = markBlockNumber; i <= blockchain.getChainHeadBlockNumber(); i++) {
-      final Hash stateRoot = blockchain.getBlockHeader(i).get().getStateRoot();
-      collectWorldStateNodes(stateRoot, expectedNodes);
-    }
-    if (accountsPerBlock != 0 && markBlockNumber > 0) {
-      assertThat(hashValueStore.size()).isGreaterThan(expectedNodes.size()); // Sanity check
-    }
+    for (int cycle = 0; cycle < numCycles; ++cycle) {
+      int numBlockInCycle =
+          numBlocksToKeep
+              + 1; // +1 to get it to switch from MARKING_COMPLETE TO SWEEPING on each cycle
+      var fullyMarkedBlockNum = cycle * numBlockInCycle + 1;
 
-    // Sweep
-    pruner.sweepBefore(markBlock.getNumber());
+      // This should cause a full mark and sweep cycle
+      assertThat(pruner.getState()).isEqualByComparingTo(Pruner.State.IDLE);
+      generateBlockchainData(numBlockInCycle, accountsPerBlock);
+      assertThat(pruner.getState()).isEqualByComparingTo(Pruner.State.IDLE);
 
-    // Assert that blocks from mark point onward are still accessible
-    for (int i = markBlockNumber; i <= blockchain.getChainHeadBlockNumber(); i++) {
-      final Hash stateRoot = blockchain.getBlockHeader(i).get().getStateRoot();
-      assertThat(worldStateArchive.get(stateRoot)).isPresent();
-      final WorldState markedState = worldStateArchive.get(stateRoot).get();
-      // Traverse accounts and make sure all are accessible
-      final int expectedAccounts = accountsPerBlock * i;
-      final long accounts = markedState.streamAccounts(Bytes32.ZERO, expectedAccounts * 2).count();
-      assertThat(accounts).isEqualTo(expectedAccounts);
-      // Traverse storage to ensure that all storage is accessible
-      markedState
-          .streamAccounts(Bytes32.ZERO, expectedAccounts * 2)
-          .forEach(a -> a.storageEntriesFrom(Bytes32.ZERO, 1000));
-    }
-
-    // All other state roots should have been removed
-    for (int i = 0; i < markBlockNumber; i++) {
-      final BlockHeader curHeader = blockchain.getBlockHeader(i + 1L).get();
-      if (curHeader.getNumber() == markBlock.getNumber()) {
-        continue;
+      // Collect the nodes we expect to keep
+      final Set<BytesValue> expectedNodes = new HashSet<>();
+      for (int i = fullyMarkedBlockNum; i <= blockchain.getChainHeadBlockNumber(); i++) {
+        final Hash stateRoot = blockchain.getBlockHeader(i).get().getStateRoot();
+        collectWorldStateNodes(stateRoot, expectedNodes);
       }
-      if (!curHeader.getStateRoot().equals(Hash.EMPTY_TRIE_HASH)) {
-        assertThat(worldStateArchive.get(curHeader.getStateRoot())).isEmpty();
+
+      if (accountsPerBlock != 0) {
+        assertThat(hashValueStore.size())
+            .isGreaterThanOrEqualTo(expectedNodes.size()); // Sanity check
       }
+
+      // Assert that blocks from mark point onward are still accessible
+      for (int i = fullyMarkedBlockNum; i <= blockchain.getChainHeadBlockNumber(); i++) {
+        final Hash stateRoot = blockchain.getBlockHeader(i).get().getStateRoot();
+        assertThat(worldStateArchive.get(stateRoot)).isPresent();
+        final WorldState markedState = worldStateArchive.get(stateRoot).get();
+        // Traverse accounts and make sure all are accessible
+        final int expectedAccounts = accountsPerBlock * i;
+        final long accounts =
+            markedState.streamAccounts(Bytes32.ZERO, expectedAccounts * 2).count();
+        assertThat(accounts).isEqualTo(expectedAccounts);
+        // Traverse storage to ensure that all storage is accessible
+        markedState
+            .streamAccounts(Bytes32.ZERO, expectedAccounts * 2)
+            .forEach(a -> a.storageEntriesFrom(Bytes32.ZERO, 1000));
+      }
+
+      // All other state roots should have been removed
+      for (int i = 0; i < fullyMarkedBlockNum; i++) {
+        final BlockHeader curHeader = blockchain.getBlockHeader(i).get();
+        if (!curHeader.getStateRoot().equals(Hash.EMPTY_TRIE_HASH)) {
+          assertThat(worldStateArchive.get(curHeader.getStateRoot())).isEmpty();
+        }
+      }
+
+      // Check that storage contains only the values we expect
+      assertThat(hashValueStore.size()).isEqualTo(expectedNodes.size());
+      assertThat(hashValueStore.values())
+          .containsExactlyInAnyOrderElementsOf(
+              expectedNodes.stream().map(BytesValue::getArrayUnsafe).collect(Collectors.toSet()));
     }
 
-    // Check that storage contains only the values we expect
-    assertThat(hashValueStore.size()).isEqualTo(expectedNodes.size());
-    assertThat(hashValueStore.values())
-        .containsExactlyInAnyOrderElementsOf(
-            expectedNodes.stream().map(BytesValue::getArrayUnsafe).collect(Collectors.toSet()));
+    pruner.stop();
   }
 
   @Test
