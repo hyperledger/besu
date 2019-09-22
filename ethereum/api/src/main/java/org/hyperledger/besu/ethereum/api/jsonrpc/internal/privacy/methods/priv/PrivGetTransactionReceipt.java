@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea;
+package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
@@ -50,7 +50,7 @@ import java.util.Optional;
 
 import org.apache.logging.log4j.Logger;
 
-public class EeaGetTransactionReceipt implements JsonRpcMethod {
+public class PrivGetTransactionReceipt implements JsonRpcMethod {
 
   private static final Logger LOG = getLogger();
 
@@ -59,7 +59,7 @@ public class EeaGetTransactionReceipt implements JsonRpcMethod {
   private final JsonRpcParameter parameters;
   private final PrivacyParameters privacyParameters;
 
-  public EeaGetTransactionReceipt(
+  public PrivGetTransactionReceipt(
       final BlockchainQueries blockchain,
       final Enclave enclave,
       final JsonRpcParameter parameters,
@@ -72,12 +72,12 @@ public class EeaGetTransactionReceipt implements JsonRpcMethod {
 
   @Override
   public String getName() {
-    return RpcMethod.EEA_GET_TRANSACTION_RECEIPT.getMethodName();
+    return RpcMethod.PRIV_GET_TRANSACTION_RECEIPT.getMethodName();
   }
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequest request) {
-    LOG.trace("Executing {}", RpcMethod.EEA_GET_TRANSACTION_RECEIPT.getMethodName());
+    LOG.trace("Executing {}", RpcMethod.PRIV_GET_TRANSACTION_RECEIPT.getMethodName());
     final Hash transactionHash = parameters.required(request.getParams(), 0, Hash.class);
     final Optional<TransactionLocation> maybeLocation =
         blockchain.getBlockchain().getTransactionLocation(transactionHash);
