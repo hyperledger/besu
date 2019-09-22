@@ -42,6 +42,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -149,5 +150,10 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder<CliqueCon
             blockInterface),
         new VoteProposer(),
         epochManager);
+  }
+
+  @Override
+  public Optional<BlockInterface> getBlockInterface() {
+    return Optional.of(blockInterface);
   }
 }

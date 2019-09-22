@@ -17,6 +17,7 @@ package org.hyperledger.besu.controller;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
@@ -34,6 +35,7 @@ import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
 
 public class BesuController<C> implements java.io.Closeable {
 
@@ -52,6 +54,7 @@ public class BesuController<C> implements java.io.Closeable {
   private final PrivacyParameters privacyParameters;
   private final Runnable close;
   private final SyncState syncState;
+  private final Optional<BlockInterface> blockInterface;
 
   BesuController(
       final ProtocolSchedule<C> protocolSchedule,
@@ -66,7 +69,8 @@ public class BesuController<C> implements java.io.Closeable {
       final PrivacyParameters privacyParameters,
       final Runnable close,
       final JsonRpcMethodFactory additionalJsonRpcMethodsFactory,
-      final KeyPair keyPair) {
+      final KeyPair keyPair,
+      final Optional<BlockInterface> blockInterface) {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethProtocolManager = ethProtocolManager;
@@ -80,6 +84,7 @@ public class BesuController<C> implements java.io.Closeable {
     this.miningCoordinator = miningCoordinator;
     this.privacyParameters = privacyParameters;
     this.close = close;
+    this.blockInterface = blockInterface;
   }
 
   public ProtocolContext<C> getProtocolContext() {
@@ -116,6 +121,10 @@ public class BesuController<C> implements java.io.Closeable {
 
   public MiningCoordinator getMiningCoordinator() {
     return miningCoordinator;
+  }
+
+  public Optional<BlockInterface> getBlockInterface() {
+    return blockInterface;
   }
 
   @Override
