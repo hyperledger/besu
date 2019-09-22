@@ -97,8 +97,8 @@ public class MarkSweepPruner {
   }
 
   public void prepare() {
-    markStorage.clear();
     worldStateStorage.removeNodeAddedListener(nodeAddedListenerId); // Just in case.
+    markStorage.clear();
     nodeAddedListenerId = worldStateStorage.addNodeAddedListener(this::markNodes);
   }
 
