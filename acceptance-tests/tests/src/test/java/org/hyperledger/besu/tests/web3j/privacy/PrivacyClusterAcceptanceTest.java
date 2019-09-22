@@ -22,7 +22,7 @@ import java.math.BigInteger;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.web3j.protocol.eea.response.PrivateTransactionReceipt;
+import org.web3j.protocol.pantheon.response.privacy.PrivateTransactionReceipt;
 
 public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
 

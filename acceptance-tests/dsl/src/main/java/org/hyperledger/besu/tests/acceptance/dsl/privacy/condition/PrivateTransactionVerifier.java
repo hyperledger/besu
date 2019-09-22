@@ -16,8 +16,8 @@ package org.hyperledger.besu.tests.acceptance.dsl.privacy.condition;
 
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.transaction.PrivacyTransactions;
 
-import org.web3j.protocol.eea.response.PrivateTransactionReceipt;
 import org.web3j.protocol.pantheon.response.privacy.PrivacyGroup;
+import org.web3j.protocol.pantheon.response.privacy.PrivateTransactionReceipt;
 
 public class PrivateTransactionVerifier {
 

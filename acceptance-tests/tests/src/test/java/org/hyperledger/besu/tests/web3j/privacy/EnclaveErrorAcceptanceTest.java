@@ -28,7 +28,7 @@ import java.util.Base64;
 import org.apache.tuweni.crypto.sodium.Box;
 import org.junit.Before;
 import org.junit.Test;
-import org.web3j.protocol.eea.response.PrivateTransactionReceipt;
+import org.web3j.protocol.pantheon.response.privacy.PrivateTransactionReceipt;
 
 public class EnclaveErrorAcceptanceTest extends PrivacyAcceptanceTestBase {
 
