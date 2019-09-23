@@ -9,6 +9,29 @@ From v1.2, Besu requires Java 11.  Besu on Java 8 is no longer supported.
 In v1.2, we removed the entry-point script from our Docker image. Refer to the [migration guide](https://besu.hyperledger.org/en/latest/Deploying-Besu/High-Availability/)
 for information on options that were previously automatically added to the Besu command line. 
 
+## 1.2.4 
+
+### Additions and Improvements 
+
+- Add Istanbul block for Rinkeby [\#35](https://github.com/hyperledger/besu/pull/35)
+- Add Istanbul block for Goerli [\#27](https://github.com/hyperledger/besu/pull/27) 
+- Add Istanbul block for Ropsten [\#26](https://github.com/hyperledger/besu/pull/26) 
+- Add privDistributeRawTransaction endpoint [\#23](https://github.com/hyperledger/besu/pull/23) (thanks to [josh-richardson](https://github.com/josh-richardson))
+
+### Technical Improvements 
+
+- Refactors pantheon private key to signing private key [\#34](https://github.com/hyperledger/besu/pull/34) (thanks to [josh-richardson](https://github.com/josh-richardson))
+- Support both BESU\_ and PANTHEON\_ env var prefixes [\#32](https://github.com/hyperledger/besu/pull/32) 
+- Use only fully validated peers for fast sync pivot selection [\#21](https://github.com/hyperledger/besu/pull/21) 
+- Support Version Rollbacks for RocksDB \(\#6\) [\#19](https://github.com/hyperledger/besu/pull/19)
+- Update Cava library to Tuweni Library [\#18](https://github.com/hyperledger/besu/pull/18)
+- StateTrieAccountValue:Version should be written as an int, not a long [\#17](https://github.com/hyperledger/besu/pull/17) 
+- Handle discovery peers with updated endpoints [\#12](https://github.com/hyperledger/besu/pull/12) 
+- Change retesteth port [\#11](https://github.com/hyperledger/besu/pull/11) 
+- Renames eea\_getTransactionReceipt to priv\_getTransactionReceipt [\#10](https://github.com/hyperledger/besu/pull/10) (thanks to [josh-richardson](https://github.com/josh-richardson))
+- Support Version Rollbacks for RocksDB [\#6](https://github.com/hyperledger/besu/pull/6) 
+- Moving AT DSL into its own module [\#3](https://github.com/hyperledger/besu/pull/3) 
+
 ## 1.2.3 
 
 ### Additions and Improvements
