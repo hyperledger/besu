@@ -120,12 +120,12 @@ public class MarkSweepPruner {
               markNode(node.getHash());
               node.getValue().ifPresent(this::processAccountState);
             });
-    LOG.info("Completed marking used nodes for pruning");
+    LOG.debug("Completed marking used nodes for pruning");
   }
 
   public void sweepBefore(final long markedBlockNumber) {
     sweepOperationCounter.inc();
-    LOG.info("Sweeping unused nodes");
+    LOG.debug("Sweeping unused nodes");
     // Sweep state roots first, walking backwards until we get to a state root that isn't in the
     // storage
     long prunedNodeCount = 0;
@@ -153,7 +153,7 @@ public class MarkSweepPruner {
     sweptNodesCounter.inc(prunedNodeCount);
     worldStateStorage.removeNodeAddedListener(nodeAddedListenerId);
     markStorage.clear();
-    LOG.info("Completed sweeping unused nodes");
+    LOG.debug("Completed sweeping unused nodes");
   }
 
   private boolean isMarked(final Bytes32 key) {
