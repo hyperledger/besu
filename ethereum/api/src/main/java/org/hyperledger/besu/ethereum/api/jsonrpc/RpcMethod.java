@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 ConsenSys AG.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -9,6 +9,8 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc;
 
@@ -36,10 +38,11 @@ public enum RpcMethod {
   PRIV_GET_PRIVATE_TRANSACTION("priv_getPrivateTransaction"),
   PRIV_GET_TRANSACTION_COUNT("priv_getTransactionCount"),
   PRIV_GET_PRIVACY_PRECOMPILE_ADDRESS("priv_getPrivacyPrecompileAddress"),
-  EEA_GET_TRANSACTION_RECEIPT("eea_getTransactionReceipt"),
+  PRIV_GET_TRANSACTION_RECEIPT("priv_getTransactionReceipt"),
   PRIV_CREATE_PRIVACY_GROUP("priv_createPrivacyGroup"),
   PRIV_DELETE_PRIVACY_GROUP("priv_deletePrivacyGroup"),
   PRIV_FIND_PRIVACY_GROUP("priv_findPrivacyGroup"),
+  PRIV_DISTRIBUTE_RAW_TRANSACTION("priv_distributeRawTransaction"),
   EEA_SEND_RAW_TRANSACTION("eea_sendRawTransaction"),
   EEA_GET_TRANSACTION_COUNT("eea_getTransactionCount"),
   ETH_ACCOUNTS("eth_accounts"),
