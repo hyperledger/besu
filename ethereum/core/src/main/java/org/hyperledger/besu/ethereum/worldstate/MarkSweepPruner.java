@@ -99,6 +99,7 @@ public class MarkSweepPruner {
   public void prepare() {
     worldStateStorage.removeNodeAddedListener(nodeAddedListenerId); // Just in case.
     markStorage.clear();
+    pendingMarks.clear();
     nodeAddedListenerId = worldStateStorage.addNodeAddedListener(this::markNodes);
   }
 
@@ -123,7 +124,6 @@ public class MarkSweepPruner {
   }
 
   public void sweepBefore(final long markedBlockNumber) {
-    flushPendingMarks();
     sweepOperationCounter.inc();
     LOG.info("Sweeping unused nodes");
     // Sweep state roots first, walking backwards until we get to a state root that isn't in the
@@ -138,7 +138,7 @@ public class MarkSweepPruner {
         break;
       }
 
-      if (!markStorage.containsKey(candidateStateRootHash.getArrayUnsafe())) {
+      if (!isMarked(candidateStateRootHash)) {
         updater.removeAccountStateTrieNode(candidateStateRootHash);
         prunedNodeCount++;
         if (prunedNodeCount % operationsPerTransaction == 0) {
@@ -149,13 +149,19 @@ public class MarkSweepPruner {
     }
     updater.commit();
     // Sweep non-state-root nodes
-    prunedNodeCount +=
-        worldStateStorage.prune(
-            key -> pendingMarks.contains(Bytes32.wrap(key)) || markStorage.containsKey(key));
+    prunedNodeCount += worldStateStorage.prune(this::isMarked);
     sweptNodesCounter.inc(prunedNodeCount);
     worldStateStorage.removeNodeAddedListener(nodeAddedListenerId);
     markStorage.clear();
     LOG.info("Completed sweeping unused nodes");
+  }
+
+  private boolean isMarked(final Bytes32 key) {
+    return pendingMarks.contains(key) || markStorage.containsKey(key.getArrayUnsafe());
+  }
+
+  private boolean isMarked(final byte[] key) {
+    return pendingMarks.contains(Bytes32.wrap(key)) || markStorage.containsKey(key);
   }
 
   private MerklePatriciaTrie<Bytes32, BytesValue> createStateTrie(final Bytes32 rootHash) {
