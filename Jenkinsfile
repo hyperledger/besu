@@ -303,7 +303,7 @@ exit $status
                               version = gradleProperties.version
                             }
 
-                            if (version ==~ /.*-SNAPSHOT/) { # Only publish snapshots to Azure
+                            if (version ==~ /.*-SNAPSHOT/) { // Only publish snapshots to Azure
                                 stage(stage_name + 'Prepare') {
                                     sh './gradlew --no-daemon --parallel clean assemble'
                                 }
