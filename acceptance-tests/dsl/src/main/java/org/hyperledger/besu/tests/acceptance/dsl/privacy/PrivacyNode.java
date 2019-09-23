@@ -195,7 +195,7 @@ public class PrivacyNode implements AutoCloseable {
   }
 
   public String getTransactionSigningKey() {
-    return besu.keyPair().getPrivateKey().toString();
+    return besu.getPrivacyParameters().getSigningKeyPair().orElseThrow().getPrivateKey().toString();
   }
 
   public void addOtherEnclaveNode(final URI otherNode) {
