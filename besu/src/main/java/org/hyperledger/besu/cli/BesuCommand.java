@@ -68,7 +68,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
-import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
@@ -1383,19 +1382,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .staticNodes(staticNodes)
             .build();
 
-    migratePrivacyStorage(
-        controller.getPrivacyParameters(), controller.getProtocolContext().getBlockchain());
-
     addShutdownHook(runner);
     runner.start();
     runner.awaitStop();
-  }
-
-  private void migratePrivacyStorage(
-      final PrivacyParameters privacyParameters, final MutableBlockchain blockchain) {
-    if (privacyParameters.isEnabled()) {
-      privacyParameters.getPrivateStateStorage().performMigrations(privacyParameters, blockchain);
-    }
   }
 
   private VertxOptions createVertxOptions(final MetricsSystem metricsSystem) {

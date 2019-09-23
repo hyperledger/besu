@@ -210,6 +210,8 @@ public abstract class BesuControllerBuilder<C> {
 
     final MutableBlockchain blockchain = protocolContext.getBlockchain();
 
+    migratePrivacyStorage(privacyParameters, blockchain);
+
     Optional<Pruner> maybePruner = Optional.empty();
     if (isPruningEnabled) {
       checkState(
@@ -343,6 +345,13 @@ public abstract class BesuControllerBuilder<C> {
   protected abstract ProtocolSchedule<C> createProtocolSchedule();
 
   protected void validateContext(final ProtocolContext<C> context) {}
+
+  private void migratePrivacyStorage(
+      final PrivacyParameters privacyParameters, final MutableBlockchain blockchain) {
+    if (privacyParameters.isEnabled()) {
+      privacyParameters.getPrivateStateStorage().performMigrations(privacyParameters, blockchain);
+    }
+  }
 
   protected abstract C createConsensusContext(
       Blockchain blockchain, WorldStateArchive worldStateArchive);
