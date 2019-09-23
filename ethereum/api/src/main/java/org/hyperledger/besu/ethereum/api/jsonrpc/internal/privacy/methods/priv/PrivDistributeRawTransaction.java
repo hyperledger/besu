@@ -12,10 +12,9 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea;
+package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcEnclaveErrorConverter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -24,14 +23,13 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.Abstra
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionHandler;
 
-public class EeaSendRawTransaction extends AbstractSendTransaction implements JsonRpcMethod {
+public class PrivDistributeRawTransaction extends AbstractSendTransaction implements JsonRpcMethod {
 
-  public EeaSendRawTransaction(
+  public PrivDistributeRawTransaction(
       final PrivateTransactionHandler privateTransactionHandler,
       final TransactionPool transactionPool,
       final JsonRpcParameter parameters) {
@@ -40,7 +38,7 @@ public class EeaSendRawTransaction extends AbstractSendTransaction implements Js
 
   @Override
   public String getName() {
-    return RpcMethod.EEA_SEND_RAW_TRANSACTION.getMethodName();
+    return RpcMethod.PRIV_DISTRIBUTE_RAW_TRANSACTION.getMethodName();
   }
 
   @Override
@@ -74,20 +72,6 @@ public class EeaSendRawTransaction extends AbstractSendTransaction implements Js
         request,
         privateTransaction,
         privacyGroupId,
-        () -> {
-          final Transaction privacyMarkerTransaction =
-              privateTransactionHandler.createPrivacyMarkerTransaction(
-                  enclaveKey, privateTransaction);
-          return transactionPool
-              .addLocalTransaction(privacyMarkerTransaction)
-              .either(
-                  () ->
-                      new JsonRpcSuccessResponse(
-                          request.getId(), privacyMarkerTransaction.hash().toString()),
-                  errorReason ->
-                      new JsonRpcErrorResponse(
-                          request.getId(),
-                          JsonRpcErrorConverter.convertTransactionInvalidReason(errorReason)));
-        });
+        () -> new JsonRpcSuccessResponse(request.getId(), privateTransaction.hash().toString()));
   }
 }
