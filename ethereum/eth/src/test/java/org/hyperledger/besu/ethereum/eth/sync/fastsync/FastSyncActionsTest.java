@@ -371,6 +371,9 @@ public class FastSyncActionsTest {
 
   @Test
   public void downloadPivotBlockHeaderShouldRetrievePivotBlockHeader() {
+    syncConfig = SynchronizerConfiguration.builder().fastSyncMinimumPeerCount(1).build();
+    fastSyncActions = createFastSyncActions(syncConfig);
+
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1001);
     final CompletableFuture<FastSyncState> result =
         fastSyncActions.downloadPivotBlockHeader(new FastSyncState(1));
