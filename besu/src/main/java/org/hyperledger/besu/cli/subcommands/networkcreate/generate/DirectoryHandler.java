@@ -14,7 +14,6 @@ package org.hyperledger.besu.cli.subcommands.networkcreate.generate;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.nio.file.Files.createDirectories;
-import static java.nio.file.Files.createDirectory;
 
 import java.io.File;
 import java.io.IOException;
@@ -35,9 +34,10 @@ public class DirectoryHandler {
       try {
         createDirectories(outputDirectoryPath);
       } catch (IOException e) {
-        throw new RuntimeException(String.format("Unable to create directory %1$s .", outputDirectoryPath));
+        throw new RuntimeException(
+            String.format("Unable to create directory %1$s .", outputDirectoryPath));
       }
-//    }
+    }
   }
 
   public String getSafeName(final String name) {

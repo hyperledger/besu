@@ -18,10 +18,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.Files.createTempDirectory;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import javax.annotation.Nullable;
 import org.hyperledger.besu.cli.CommandTestAbstract;
 
 import java.io.BufferedWriter;
@@ -30,6 +26,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -60,7 +58,7 @@ public class NetworkCreateSubCommandTest extends CommandTestAbstract {
   @After
   public void clean() throws IOException {
     // FIXME delete tmp dir
-//    Files.delete(tmpOutputDirectoryPath);
+    //    Files.delete(tmpOutputDirectoryPath);
     LOG.warn("NOT CLEANING TEMP DIR FOR NOW!");
   }
 
@@ -91,7 +89,7 @@ public class NetworkCreateSubCommandTest extends CommandTestAbstract {
         tempConfigFile.toPath(),
         StandardCopyOption.REPLACE_EXISTING);
 
-    List<String> args = generateArgs(tempConfigFile,tmpOutputDirectoryPath);
+    List<String> args = generateArgs(tempConfigFile, tmpOutputDirectoryPath);
     testGenerateNetworkConfig(args);
   }
 
@@ -107,7 +105,7 @@ public class NetworkCreateSubCommandTest extends CommandTestAbstract {
         Files.newBufferedWriter(tempConfigFile.toPath(), UTF_8)) {
       fileWriter.write(jsonString);
       fileWriter.flush();
-      List<String> args = generateArgs(tempConfigFile,tmpOutputDirectoryPath);
+      List<String> args = generateArgs(tempConfigFile, tmpOutputDirectoryPath);
       testGenerateNetworkConfig(args);
     }
   }
@@ -127,7 +125,7 @@ public class NetworkCreateSubCommandTest extends CommandTestAbstract {
         Files.newBufferedWriter(tempConfigFile.toPath(), UTF_8)) {
       fileWriter.write(yamlString);
       fileWriter.flush();
-      List<String> args = generateArgs(tempConfigFile,tmpOutputDirectoryPath);
+      List<String> args = generateArgs(tempConfigFile, tmpOutputDirectoryPath);
       testGenerateNetworkConfig(args);
     }
   }
@@ -169,7 +167,8 @@ public class NetworkCreateSubCommandTest extends CommandTestAbstract {
   private List<String> generateArgs(final File tempConfigFile, final Path outputDirectoryPath) {
     List<String> args = new ArrayList<>();
 
-    args.add("--data-path");//We force data path to be able to assert existence of the  resulting directory structure and files
+    args.add("--data-path"); // We force data path to be able to assert existence of the  resulting
+    // directory structure and files
     args.add(tmpOutputDirectoryPath.toAbsolutePath().toString());
 
     args.add("network-create"); // sub command to test

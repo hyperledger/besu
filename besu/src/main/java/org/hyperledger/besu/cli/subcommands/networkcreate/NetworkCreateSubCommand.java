@@ -30,7 +30,6 @@ import java.io.PrintStream;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -92,11 +91,17 @@ public class NetworkCreateSubCommand implements Runnable {
   public void run() {
     checkNotNull(parentCommand);
 
-    if(isNull(initFile)){
-      initFile = parentCommand.dataDir().resolve(DEFAULT_NETWORK_CREATE_INIT_FILE).toAbsolutePath().toFile();
+    if (isNull(initFile)) {
+      initFile =
+          parentCommand
+              .dataDir()
+              .resolve(DEFAULT_NETWORK_CREATE_INIT_FILE)
+              .toAbsolutePath()
+              .toFile();
     }
-    if(isNull(targetDirectory)){
-      targetDirectory = parentCommand.dataDir().resolve(DEFAULT_NETWORK_CREATE_TARGET_DIRECTORY).toAbsolutePath();
+    if (isNull(targetDirectory)) {
+      targetDirectory =
+          parentCommand.dataDir().resolve(DEFAULT_NETWORK_CREATE_TARGET_DIRECTORY).toAbsolutePath();
     }
 
     // TODO handle exceptions

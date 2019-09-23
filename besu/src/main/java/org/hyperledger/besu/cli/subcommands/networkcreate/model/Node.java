@@ -157,7 +157,8 @@ class Node implements Generatable, ConfigNode {
     TomlWriter tomlWriter = new TomlWriter.Builder().build();
 
     try {
-      final URL configTemplateFile = getClass().getClassLoader().getResource(CONFIG_TEMPLATE_FILENAME);
+      final URL configTemplateFile =
+          getClass().getClassLoader().getResource(CONFIG_TEMPLATE_FILENAME);
       checkNotNull(configTemplateFile, "Configuration template not found.");
       String configTemplateSource = Resources.toString(configTemplateFile, UTF_8);
 
