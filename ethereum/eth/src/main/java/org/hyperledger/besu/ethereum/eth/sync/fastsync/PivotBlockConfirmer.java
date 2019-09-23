@@ -161,7 +161,7 @@ class PivotBlockConfirmer<C> {
       return FutureUtils.completedExceptionally(new CancellationException());
     }
 
-    Optional<RetryingGetHeaderFromPeerByNumberTask> query = createPivotQuery(blockNumber);
+    final Optional<RetryingGetHeaderFromPeerByNumberTask> query = createPivotQuery(blockNumber);
     final CompletableFuture<BlockHeader> pivotHeaderFuture;
     if (query.isPresent()) {
       final CompletableFuture<BlockHeader> headerQuery = query.get().getHeader();
