@@ -49,7 +49,7 @@ class Permissioning implements ConfigNode {
   }
 
   @Override
-  public void setParent(ConfigNode parent) {
+  public void setParent(final ConfigNode parent) {
     this.parent = parent;
   }
 

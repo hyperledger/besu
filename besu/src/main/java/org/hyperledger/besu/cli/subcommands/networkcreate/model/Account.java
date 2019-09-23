@@ -31,8 +31,8 @@ class Account implements GenesisFragmentable, ConfigNode {
   private ConfigNode parent;
 
   public Account(
-      @NonNull @JsonProperty("address") Address address,
-      @NonNull @JsonProperty("balance") Wei balance) {
+      @NonNull @JsonProperty("address") final Address address,
+      @NonNull @JsonProperty("balance") final Wei balance) {
     this.address = requireNonNull(address, "Account address not defined.");
     this.balance = requireNonNull(balance, "Account balance not defined.");
   }
@@ -57,7 +57,7 @@ class Account implements GenesisFragmentable, ConfigNode {
   }
 
   @Override
-  public void setParent(ConfigNode parent) {
+  public void setParent(final ConfigNode parent) {
     this.parent = parent;
   }
 

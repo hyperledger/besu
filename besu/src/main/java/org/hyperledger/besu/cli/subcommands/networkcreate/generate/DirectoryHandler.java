@@ -13,12 +13,14 @@
 package org.hyperledger.besu.cli.subcommands.networkcreate.generate;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.nio.file.Files.createDirectories;
 import static java.nio.file.Files.createDirectory;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Objects;
+
 // TODO Handle errors
 public class DirectoryHandler {
 
@@ -26,20 +28,19 @@ public class DirectoryHandler {
     checkNotNull(outputDirectoryPath);
     final File outputDirectory = outputDirectoryPath.toFile();
 
-    if (outputDirectory.exists()
-        && outputDirectory.isDirectory()
+    if (outputDirectory.isDirectory()
         && Objects.requireNonNull(outputDirectory.list()).length > 0) {
       throw new IllegalArgumentException("Output directory must be empty.");
     } else if (!outputDirectory.exists()) {
       try {
-        createDirectory(outputDirectoryPath);
+        createDirectories(outputDirectoryPath);
       } catch (IOException e) {
-        throw new RuntimeException("Unable to create directory.");
+        throw new RuntimeException(String.format("Unable to create directory %1$s .", outputDirectoryPath));
       }
-    }
+//    }
   }
 
-  public String getSafeName(String name) {
+  public String getSafeName(final String name) {
     return name.replaceAll("[^a-zA-Z0-9\\.\\-]", "_");
   }
 }

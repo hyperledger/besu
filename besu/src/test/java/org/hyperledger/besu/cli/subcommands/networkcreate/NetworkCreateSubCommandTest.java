@@ -14,25 +14,38 @@ package org.hyperledger.besu.cli.subcommands.networkcreate;
 
 import static java.lang.String.format;
 import static java.lang.System.currentTimeMillis;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.Files.createTempDirectory;
+import static org.assertj.core.api.Assertions.assertThat;
 
-import java.net.URL;
-import org.hyperledger.besu.cli.subcommands.networkcreate.mapping.InitConfigurationErrorHandler;
-import org.hyperledger.besu.cli.subcommands.networkcreate.mapping.MapperAdapter;
-import org.hyperledger.besu.cli.subcommands.networkcreate.model.Configuration;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+import javax.annotation.Nullable;
+import org.hyperledger.besu.cli.CommandTestAbstract;
 
+import java.io.BufferedWriter;
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 
-import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
+import org.apache.tuweni.toml.Toml;
+import org.jetbrains.annotations.NotNull;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import picocli.CommandLine.Model.CommandSpec;
 
-public class NetworkCreateSubCommandTest {
+public class NetworkCreateSubCommandTest extends CommandTestAbstract {
 
   private static final Logger LOG = LogManager.getLogger();
 
@@ -44,28 +57,129 @@ public class NetworkCreateSubCommandTest {
     Configurator.setAllLevels("", Level.ALL);
   }
 
-  @Test
-  public void jsonTest() throws Exception {
-    generate(this.getClass().getResource("/networkcreate/test.json"));
+  @After
+  public void clean() throws IOException {
+    // FIXME delete tmp dir
+//    Files.delete(tmpOutputDirectoryPath);
+    LOG.warn("NOT CLEANING TEMP DIR FOR NOW!");
   }
 
   @Test
-  public void yamlTest() throws Exception {
-    generate(this.getClass().getResource("/networkcreate/test.yaml"));
+  public void subCommandExists() {
+    final CommandSpec spec = parseCommand().getSpec();
+    assertThat(spec.subcommands()).containsKeys("network-create");
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
   }
 
   @Test
-  public void tomlTest() throws Exception {
-    generate(this.getClass().getResource("/networkcreate/test.toml"));
+  public void subCommandHelpIsDisplayed() {
+    parseCommand("network-create", "--help");
+
+    assertThat(commandOutput.toString())
+        .contains(
+            "Network Creator subcommand intakes an initialization file and outputs the\n"
+                + "network genesis file, pre-configured nodes and keys.");
+    assertThat(commandErrorOutput.toString()).isEmpty();
   }
 
-  private void generate(URL fileURL) throws Exception {
-    final MapperAdapter mapper = MapperAdapter.getMapper(fileURL);
-    final Configuration initConfig = mapper.map(new TypeReference<>() {});
-    initConfig.verify(new InitConfigurationErrorHandler());
-    // TODO remove debug print
-    System.out.println(mapper.writeValueAsString(initConfig));
+  @Test
+  public void subCommandCreatesNetworkSetupFromToml() throws Exception {
+    final File tempConfigFile = temp.newFile("init.toml");
+    Files.copy(
+        Path.of(this.getClass().getResource("/networkcreate/test.toml").toURI()),
+        tempConfigFile.toPath(),
+        StandardCopyOption.REPLACE_EXISTING);
 
-    LOG.debug("Resources generated in {}", initConfig.generate(tmpOutputDirectoryPath));
+    List<String> args = generateArgs(tempConfigFile,tmpOutputDirectoryPath);
+    testGenerateNetworkConfig(args);
+  }
+
+  @Test
+  public void subCommandCreatesNetworkSetupFromJson() throws Exception {
+    final File tempConfigFile = temp.newFile("init.json");
+
+    // use TOML File as unique source and transform it to required format, here JSON.
+    String jsonString =
+        Toml.parse(Path.of(this.getClass().getResource("/networkcreate/test.toml").toURI()))
+            .toJson();
+    try (final BufferedWriter fileWriter =
+        Files.newBufferedWriter(tempConfigFile.toPath(), UTF_8)) {
+      fileWriter.write(jsonString);
+      fileWriter.flush();
+      List<String> args = generateArgs(tempConfigFile,tmpOutputDirectoryPath);
+      testGenerateNetworkConfig(args);
+    }
+  }
+
+  @Test
+  public void subCommandCreatesNetworkSetupFromYaml() throws Exception {
+    final File tempConfigFile = temp.newFile("init.yaml");
+
+    // use TOML File as unique source and transform it to required format, here YAML (via JSON)
+    String jsonString =
+        Toml.parse(Path.of(this.getClass().getResource("/networkcreate/test.toml").toURI()))
+            .toJson();
+    JsonNode jsonNodeTree = new ObjectMapper().readTree(jsonString);
+    String yamlString = new YAMLMapper().writeValueAsString(jsonNodeTree);
+
+    try (final BufferedWriter fileWriter =
+        Files.newBufferedWriter(tempConfigFile.toPath(), UTF_8)) {
+      fileWriter.write(yamlString);
+      fileWriter.flush();
+      List<String> args = generateArgs(tempConfigFile,tmpOutputDirectoryPath);
+      testGenerateNetworkConfig(args);
+    }
+  }
+
+  private void testGenerateNetworkConfig(final List<String> args) {
+
+    parseCommand(args.toArray(new String[0]));
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+
+    final String NETWORK_DIR_NAME = "network_1";
+    final String[] NODES_DIR_NAMES = {"node_1", "node_2", "node_3", "node_4"};
+
+    assertThat(tmpOutputDirectoryPath.resolve(NETWORK_DIR_NAME)).exists().isDirectory();
+    assertThat(tmpOutputDirectoryPath.resolve(NETWORK_DIR_NAME).resolve("genesis.json"))
+        .exists()
+        .isRegularFile();
+
+    for (String nodeDirName : NODES_DIR_NAMES) {
+      assertThat(tmpOutputDirectoryPath.resolve(NETWORK_DIR_NAME).resolve(nodeDirName))
+          .exists()
+          .isDirectory();
+      assertThat(
+              tmpOutputDirectoryPath
+                  .resolve(NETWORK_DIR_NAME)
+                  .resolve(nodeDirName)
+                  .resolve("config.toml"))
+          .exists()
+          .isRegularFile();
+      assertThat(
+              tmpOutputDirectoryPath.resolve(NETWORK_DIR_NAME).resolve(nodeDirName).resolve("key"))
+          .exists()
+          .isRegularFile();
+    }
+  }
+
+  @NotNull
+  private List<String> generateArgs(final File tempConfigFile, final Path outputDirectoryPath) {
+    List<String> args = new ArrayList<>();
+
+    args.add("--data-path");//We force data path to be able to assert existence of the  resulting directory structure and files
+    args.add(tmpOutputDirectoryPath.toAbsolutePath().toString());
+
+    args.add("network-create"); // sub command to test
+
+    args.add("--initialization-file"); // init file source option
+    args.add(tempConfigFile.getPath()); // init file to use as source
+
+    args.add("--to"); // target dir option
+    args.add(outputDirectoryPath.toString()); // target dir path
+
+    return args;
   }
 }

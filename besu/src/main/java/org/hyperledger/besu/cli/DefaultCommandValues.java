@@ -36,6 +36,8 @@ public interface DefaultCommandValues {
   String MANDATORY_DIRECTORY_FORMAT_HELP = "<DIRECTORY>";
   String BESU_HOME_PROPERTY_NAME = "besu.home";
   String DEFAULT_DATA_DIR_PATH = "./build/data";
+  String DEFAULT_NETWORK_CREATE_INIT_FILE = "init.toml";
+  String DEFAULT_NETWORK_CREATE_TARGET_DIRECTORY = "generated-network";
   String MANDATORY_INTEGER_FORMAT_HELP = "<INTEGER>";
   String MANDATORY_DOUBLE_FORMAT_HELP = "<DOUBLE>";
   String MANDATORY_LONG_FORMAT_HELP = "<LONG>";

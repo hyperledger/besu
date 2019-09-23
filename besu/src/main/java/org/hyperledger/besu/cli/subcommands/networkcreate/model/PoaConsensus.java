@@ -24,7 +24,7 @@ public interface PoaConsensus extends GenesisFragmentable, ConfigNode {
   @JsonIgnore
   String getExtraData();
 
-  void setValidators(List<Node> validators);
+  void setValidators(final List<Node> validators);
 
   @JsonIgnore
   ObjectNode getGenesisTemplate();

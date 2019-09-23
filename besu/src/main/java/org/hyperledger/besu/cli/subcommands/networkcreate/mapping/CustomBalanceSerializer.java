@@ -21,6 +21,7 @@ import java.math.BigInteger;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+
 // TODO Handle errors
 class CustomBalanceSerializer extends StdSerializer<Wei> {
 
@@ -28,12 +29,13 @@ class CustomBalanceSerializer extends StdSerializer<Wei> {
     this(null);
   }
 
-  private CustomBalanceSerializer(Class<Wei> t) {
+  private CustomBalanceSerializer(final Class<Wei> t) {
     super(t);
   }
 
   @Override
-  public void serialize(Wei balance, JsonGenerator jsonGenerator, SerializerProvider serializer)
+  public void serialize(
+      final Wei balance, final JsonGenerator jsonGenerator, final SerializerProvider serializer)
       throws IOException {
     jsonGenerator.writeNumber(new BigDecimal(new BigInteger(balance.toUnprefixedHexString(), 16)));
   }

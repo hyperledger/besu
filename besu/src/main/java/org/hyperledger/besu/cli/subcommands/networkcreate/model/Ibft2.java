@@ -12,6 +12,7 @@
  */
 package org.hyperledger.besu.cli.subcommands.networkcreate.model;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Objects.requireNonNull;
 
@@ -32,7 +33,7 @@ import com.google.common.io.Resources;
 // TODO Handle errors
 class Ibft2 implements PoaConsensus {
 
-  private static final String GENESIS_TEMPLATE = "/networkcreate/ibft2-genesis-template.json";
+  private static final String GENESIS_TEMPLATE = "ibft2-genesis-template.json";
 
   private Integer blockPeriodSeconds;
   private Integer epochLength;
@@ -95,7 +96,8 @@ class Ibft2 implements PoaConsensus {
   @Override
   public ObjectNode getGenesisTemplate() {
     try {
-      final URL genesisTemplateFile = this.getClass().getResource(GENESIS_TEMPLATE);
+      final URL genesisTemplateFile = getClass().getClassLoader().getResource(GENESIS_TEMPLATE);
+      checkNotNull(genesisTemplateFile, "Genesis template not found.");
       final String genesisTemplateSource = Resources.toString(genesisTemplateFile, UTF_8);
       return JsonUtil.objectNodeFromString(genesisTemplateSource);
     } catch (IOException e) {
@@ -104,7 +106,7 @@ class Ibft2 implements PoaConsensus {
   }
 
   @Override
-  public void setParent(ConfigNode parent) {
+  public void setParent(final ConfigNode parent) {
     this.parent = parent;
   }
 

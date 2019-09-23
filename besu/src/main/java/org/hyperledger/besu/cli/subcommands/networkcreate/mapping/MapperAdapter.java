@@ -14,19 +14,16 @@ package org.hyperledger.besu.cli.subcommands.networkcreate.mapping;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.google.common.io.Resources;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.file.Path;
-import java.util.function.Supplier;
-import org.apache.tuweni.toml.Toml;
 import org.hyperledger.besu.cli.subcommands.networkcreate.model.Configuration;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Wei;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Path;
 import java.security.InvalidParameterException;
+import java.util.function.Supplier;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser.Feature;
@@ -34,8 +31,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.google.common.io.Files;
+import com.google.common.io.Resources;
+import org.apache.tuweni.toml.Toml;
 
 // TODO Handle errors
 public class MapperAdapter {
@@ -43,9 +43,7 @@ public class MapperAdapter {
   Supplier<JsonFactory> supplier;
   InitFileReader initFileReader;
 
-  private MapperAdapter(
-      final Supplier<JsonFactory> supplier,
-      final InitFileReader initFileReader) {
+  private MapperAdapter(final Supplier<JsonFactory> supplier, final InitFileReader initFileReader) {
     this.supplier = supplier;
     this.initFileReader = initFileReader;
   }
@@ -57,7 +55,8 @@ public class MapperAdapter {
         return new MapperAdapter(YAMLFactory::new, () -> Resources.toString(initFileURL, UTF_8));
       case "toml":
       case "tml":
-        return new MapperAdapter(JsonFactory::new, () -> Toml.parse(Path.of(initFileURL.toURI())).toJson());
+        return new MapperAdapter(
+            JsonFactory::new, () -> Toml.parse(Path.of(initFileURL.toURI())).toJson());
       case "json":
         return new MapperAdapter(JsonFactory::new, () -> Resources.toString(initFileURL, UTF_8));
       default:
@@ -82,11 +81,13 @@ public class MapperAdapter {
     return mapper;
   }
 
-  public String writeValueAsString(Configuration initConfig) throws JsonProcessingException {
-    return getMapper(supplier.get()).writerWithDefaultPrettyPrinter().writeValueAsString(initConfig);
+  public String writeValueAsString(final Configuration initConfig) throws JsonProcessingException {
+    return getMapper(supplier.get())
+        .writerWithDefaultPrettyPrinter()
+        .writeValueAsString(initConfig);
   }
 
-  public <T> T map(TypeReference<T> clazz) throws Exception {
+  public <T> T map(final TypeReference<T> clazz) throws IOException, URISyntaxException {
     ObjectMapper mapper = getMapper(supplier.get());
     return mapper.readValue(initFileReader.read(), clazz);
   }

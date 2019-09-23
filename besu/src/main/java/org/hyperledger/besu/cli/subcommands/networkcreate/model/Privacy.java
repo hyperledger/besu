@@ -19,7 +19,7 @@ class Privacy implements ConfigNode {
   public Privacy() {}
 
   @Override
-  public void setParent(ConfigNode parent) {
+  public void setParent(final ConfigNode parent) {
     this.parent = parent;
   }
 

@@ -165,12 +165,12 @@ class Network implements Verifiable, Generatable, ConfigNode {
     return "";
   }
 
-  void setAccounts(List<Account> accounts) {
+  void setAccounts(final List<Account> accounts) {
     this.accounts = accounts;
   }
 
   @Override
-  public void setParent(ConfigNode parent) {
+  public void setParent(final ConfigNode parent) {
     this.parent = parent;
   }
 

@@ -19,6 +19,7 @@ import java.io.IOException;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+
 // TODO Handle errors
 class CustomAddressSerializer extends StdSerializer<Address> {
 
@@ -26,12 +27,13 @@ class CustomAddressSerializer extends StdSerializer<Address> {
     this(null);
   }
 
-  private CustomAddressSerializer(Class<Address> t) {
+  private CustomAddressSerializer(final Class<Address> t) {
     super(t);
   }
 
   @Override
-  public void serialize(Address address, JsonGenerator jsonGenerator, SerializerProvider serializer)
+  public void serialize(
+      final Address address, final JsonGenerator jsonGenerator, final SerializerProvider serializer)
       throws IOException {
     jsonGenerator.writeString(address.toString());
   }

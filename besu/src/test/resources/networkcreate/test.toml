@@ -52,7 +52,7 @@ bootnode = true
 [[nodes]]
 name = "node 2"
 validator = true
-bootnode = false
+bootnode = true
 
 [[nodes]]
 name = "node 3"

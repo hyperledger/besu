@@ -64,8 +64,8 @@ public class Configuration implements Verifiable, Generatable, ConfigNode {
     // setting parent config nodes
     this.network.setParent(this);
     this.accounts.forEach(account -> account.setParent(this));
-    if(!isNull(this.permissioning))this.permissioning.setParent(this);
-    if(!isNull(this.privacy))this.privacy.setParent(this);
+    if (!isNull(this.permissioning)) this.permissioning.setParent(this);
+    if (!isNull(this.privacy)) this.privacy.setParent(this);
     this.nodes.forEach(node -> node.setParent(this));
   }
 
@@ -107,10 +107,10 @@ public class Configuration implements Verifiable, Generatable, ConfigNode {
   public InitConfigurationErrorHandler verify(final InitConfigurationErrorHandler errorHandler) {
     if (isNull(version)) errorHandler.add("Configuration version", "null", "Version not defined.");
     this.network.verify(errorHandler);
-//    this.accounts.forEach(account -> account.verify(errorHandler));
-//    if(!isNull(this.permissioning))this.permissioning.verify(errorHandler);
-//    if(!isNull(this.privacy))this.privacy.verify(errorHandler);
-//    this.nodes.forEach(node -> node.verify(errorHandler));
+    //    this.accounts.forEach(account -> account.verify(errorHandler));
+    //    if(!isNull(this.permissioning))this.permissioning.verify(errorHandler);
+    //    if(!isNull(this.privacy))this.privacy.verify(errorHandler);
+    //    this.nodes.forEach(node -> node.verify(errorHandler));
 
     if (!errorHandler.getErrors().isEmpty()) System.out.println(errorHandler);
     return errorHandler;
@@ -132,7 +132,7 @@ public class Configuration implements Verifiable, Generatable, ConfigNode {
   }
 
   @Override
-  public void setParent(ConfigNode parent) {
+  public void setParent(final ConfigNode parent) {
     // no parent to set for this node as it's the root
     throw new RuntimeException("Root configuration node can't have a parent");
   }
