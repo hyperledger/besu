@@ -10,24 +10,25 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
+package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.crosschain;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.AbstractBlockParameterMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.queries.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.core.Address;
 
-public class EthIsLockable extends AbstractBlockParameterMethod {
-  public EthIsLockable(final BlockchainQueries blockchain, final JsonRpcParameter parameters) {
+public class EthIsLocked extends AbstractBlockParameterMethod {
+  public EthIsLocked(final BlockchainQueries blockchain, final JsonRpcParameter parameters) {
     super(blockchain, parameters);
   }
 
   @Override
   public String getName() {
-    return RpcMethod.ETH_IS_LOCKABLE.getMethodName();
+    return RpcMethod.ETH_IS_LOCKED.getMethodName();
   }
 
   @Override
@@ -39,7 +40,7 @@ public class EthIsLockable extends AbstractBlockParameterMethod {
   protected String resultByBlockNumber(final JsonRpcRequest request, final long blockNumber) {
     final Address address = getParameters().required(request.getParams(), 0, Address.class);
     return getBlockchainQueries()
-        .isContractLockable(address, blockNumber)
+        .isContractLocked(address, blockNumber)
         .map(Quantity::create)
         .orElse(null);
   }

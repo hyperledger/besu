@@ -12,6 +12,7 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import static com.google.common.base.Preconditions.checkState;
 import static org.hyperledger.besu.crypto.Hash.keccak256;
 
 import org.hyperledger.besu.crypto.SECP256K1;
@@ -142,7 +143,7 @@ public class CrosschainTransaction extends Transaction {
 
   protected static Logger LOG = LogManager.getLogger();
 
-  public static Builder builder() {
+  public static CrosschainTransaction.Builder builderX() {
     return new Builder();
   }
 
@@ -150,16 +151,14 @@ public class CrosschainTransaction extends Transaction {
     input.enterList();
 
     final Builder builder =
-        ((CrosschainTransaction.Builder) // without this cast, the compiler doesn't find
-                // subordinateTransactionsAndViews!
-                (builder()
-                    .type(input.readLongScalar())
-                    .nonce(input.readLongScalar())
-                    .gasPrice(input.readUInt256Scalar(Wei::wrap))
-                    .gasLimit(input.readLongScalar())
-                    .to(input.readBytesValue(v -> v.size() == 0 ? null : Address.wrap(v)))
-                    .value(input.readUInt256Scalar(Wei::wrap))
-                    .payload(input.readBytesValue())))
+        builderX()
+            .type(input.readLongScalar())
+            .nonce(input.readLongScalar())
+            .gasPrice(input.readUInt256Scalar(Wei::wrap))
+            .gasLimit(input.readLongScalar())
+            .to(input.readBytesValue(v -> v.size() == 0 ? null : Address.wrap(v)))
+            .value(input.readUInt256Scalar(Wei::wrap))
+            .payload(input.readBytesValue())
             .subordinateTransactionsAndViews(
                 input.readList(
                     rlp -> CrosschainTransaction.readFrom(RLP.input(input.readBytesValue()))));
@@ -188,7 +187,7 @@ public class CrosschainTransaction extends Transaction {
     input.leaveList();
 
     chainId.ifPresent(builder::chainId);
-    return (CrosschainTransaction) builder.signature(signature).build();
+    return builder.signature(signature).build();
   }
 
   /**
@@ -270,33 +269,48 @@ public class CrosschainTransaction extends Transaction {
   private Bytes32 getOrComputeSenderRecoveryHashCrossChain() {
     if (hashNoSignature == null) {
       hashNoSignature =
-          keccak256(
-              RLP.encode(
-                  out -> {
-                    out.startList();
-                    out.writeLongScalar(this.type.value);
-                    out.writeLongScalar(nonce);
-                    out.writeUInt256Scalar(gasPrice);
-                    out.writeLongScalar(gasLimit);
-                    out.writeBytesValue(to.isPresent() ? to.get() : BytesValue.EMPTY);
-                    out.writeUInt256Scalar(value);
-                    out.writeBytesValue(payload);
-                    out.writeList(
-                        subordinateTransactionsAndViews,
-                        ((crosschainTransaction, rlpOutput) -> {
-                          BytesValueRLPOutput temp = new BytesValueRLPOutput();
-                          crosschainTransaction.writeTo(temp);
-                          rlpOutput.writeBytesValue(temp.encoded());
-                        }));
-                    if (chainId.isPresent()) {
-                      out.writeBigIntegerScalar(chainId.get());
-                      out.writeUInt256Scalar(UInt256.ZERO);
-                      out.writeUInt256Scalar(UInt256.ZERO);
-                    }
-                    out.endList();
-                  }));
+          computeSenderRecoveryHash(
+              type, nonce, gasPrice, gasLimit, to.orElse(null), value, payload, subordinateTransactionsAndViews, chainId);
     }
     return hashNoSignature;
+  }
+
+
+  private static Bytes32 computeSenderRecoveryHash(
+      final CrosschainTransactionType type,
+      final long nonce,
+      final Wei gasPrice,
+      final long gasLimit,
+      final Address to,
+      final Wei value,
+      final BytesValue payload,
+      final List<CrosschainTransaction> subordinateTransactionsAndViews,
+      final Optional<BigInteger> chainId) {
+    return keccak256(
+                RLP.encode(
+                    out -> {
+                      out.startList();
+                      out.writeLongScalar(type.value);
+                      out.writeLongScalar(nonce);
+                      out.writeUInt256Scalar(gasPrice);
+                      out.writeLongScalar(gasLimit);
+                      out.writeBytesValue(to == null ? BytesValue.EMPTY : to);
+                      out.writeUInt256Scalar(value);
+                      out.writeBytesValue(payload);
+                      out.writeList(
+                          subordinateTransactionsAndViews,
+                          ((crosschainTransaction, rlpOutput) -> {
+                            BytesValueRLPOutput temp = new BytesValueRLPOutput();
+                            crosschainTransaction.writeTo(temp);
+                            rlpOutput.writeBytesValue(temp.encoded());
+                          }));
+                      if (chainId.isPresent()) {
+                        out.writeBigIntegerScalar(chainId.get());
+                        out.writeUInt256Scalar(UInt256.ZERO);
+                        out.writeUInt256Scalar(UInt256.ZERO);
+                      }
+                      out.endList();
+                    }));
   }
 
   public void addSignedResult(final BytesValue signedResult) {
@@ -398,14 +412,62 @@ public class CrosschainTransaction extends Transaction {
     return sb.append("}").toString();
   }
 
-  public static class Builder extends Transaction.Builder {
-
+  public static class Builder {
+    private long nonce = -1L;
+    private Wei gasPrice;
+    private long gasLimit = -1L;
+    private Address to;
+    private Wei value;
+    private SECP256K1.Signature signature;
+    private BytesValue payload;
+    private Address sender;
+    private Optional<BigInteger> chainId = Optional.empty();
     CrosschainTransactionType type;
     List<CrosschainTransaction> subordinateTransactionsAndViews;
 
-    public Builder subordinateTransactionsAndViews(
-        final List<CrosschainTransaction> subordinateTransactionsAndViews) {
-      this.subordinateTransactionsAndViews = subordinateTransactionsAndViews;
+
+    public Builder chainId(final BigInteger chainId) {
+      this.chainId = Optional.of(chainId);
+      return this;
+    }
+
+    public Builder gasPrice(final Wei gasPrice) {
+      this.gasPrice = gasPrice;
+      return this;
+    }
+
+    public Builder gasLimit(final long gasLimit) {
+      this.gasLimit = gasLimit;
+      return this;
+    }
+
+    public Builder nonce(final long nonce) {
+      this.nonce = nonce;
+      return this;
+    }
+
+    public Builder value(final Wei value) {
+      this.value = value;
+      return this;
+    }
+
+    public Builder to(final Address to) {
+      this.to = to;
+      return this;
+    }
+
+    public Builder payload(final BytesValue payload) {
+      this.payload = payload;
+      return this;
+    }
+
+    public Builder sender(final Address sender) {
+      this.sender = sender;
+      return this;
+    }
+
+    public Builder signature(final SECP256K1.Signature signature) {
+      this.signature = signature;
       return this;
     }
 
@@ -413,8 +475,18 @@ public class CrosschainTransaction extends Transaction {
       this.type = CrosschainTransactionType.create((int) type);
       return this;
     }
+    public Builder type(final CrosschainTransactionType type) {
+      this.type = type;
+      return this;
+    }
 
-    @Override
+    public Builder subordinateTransactionsAndViews(
+        final List<CrosschainTransaction> subordinateTransactionsAndViews) {
+      this.subordinateTransactionsAndViews = subordinateTransactionsAndViews;
+      return this;
+    }
+
+
     public CrosschainTransaction build() {
       return new CrosschainTransaction(
           type,
@@ -428,6 +500,20 @@ public class CrosschainTransaction extends Transaction {
           subordinateTransactionsAndViews,
           sender,
           chainId);
+    }
+
+    public CrosschainTransaction signAndBuild(final SECP256K1.KeyPair keys) {
+      checkState(
+          signature == null, "The transaction signature has already been provided to this builder");
+      signature(computeSignature(keys));
+      sender(Address.extract(Hash.hash(keys.getPublicKey().getEncodedBytes())));
+      return build();
+    }
+
+    SECP256K1.Signature computeSignature(final SECP256K1.KeyPair keys) {
+      final Bytes32 hash =
+          computeSenderRecoveryHash(type, nonce, gasPrice, gasLimit, to, value, payload, subordinateTransactionsAndViews, chainId);
+      return SECP256K1.sign(hash, keys);
     }
   }
 }

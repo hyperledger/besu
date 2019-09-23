@@ -303,7 +303,8 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
               .build();
 
       // If the contract is lockable, and this is a crosschain transaction, then lock the contract.
-      if (contract.isLockable()) {
+      boolean contractIsLockable = contract != null && contract.isLockable();
+      if (contractIsLockable) {
         if (contract.isLocked()) {
           LOG.info("Attempt to execute transaction on locked contract");
           return Result.failed(gasAvailable.toLong(), validationResult, null);

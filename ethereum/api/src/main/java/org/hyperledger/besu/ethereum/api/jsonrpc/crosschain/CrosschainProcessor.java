@@ -13,9 +13,16 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.crosschain;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Collections.singletonList;
 
+import io.vertx.core.Vertx;
 import org.hyperledger.besu.crosschain.CrosschainConfiguration;
+import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.crypto.SecureRandomProvider;
+import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.CrosschainTransaction;
+import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.crosschain.CrosschainThreadLocalDataHolder;
 import org.hyperledger.besu.ethereum.crosschain.SubordinateViewCoordinator;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -33,18 +40,26 @@ import java.math.BigInteger;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.KeyPairGenerator;
+import java.security.SecureRandom;
+import java.security.spec.ECGenParameterSpec;
+import java.util.List;
 import java.util.Optional;
 
 import io.vertx.core.json.JsonObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+// TODO: This class needs to be moved to its own module, and it needs to use the Vertx, rather than blocking,
+// TODO and use the main Vertx instance.
 public class CrosschainProcessor {
   protected static final Logger LOG = LogManager.getLogger();
 
   SubordinateViewCoordinator subordinateViewCoordinator;
   TransactionSimulator transactionSimulator;
   TransactionPool transactionPool;
+  Vertx vertx;
 
   public CrosschainProcessor(
       final SubordinateViewCoordinator subordinateViewCoordinator,
@@ -53,6 +68,7 @@ public class CrosschainProcessor {
     this.subordinateViewCoordinator = subordinateViewCoordinator;
     this.transactionSimulator = transactionSimulator;
     this.transactionPool = transactionPool;
+    this.vertx = Vertx.vertx();
   }
 
   /**
@@ -81,7 +97,17 @@ public class CrosschainProcessor {
           TransactionValidator.TransactionInvalidReason.FAILED_SUBORDINATE_VIEW);
     }
 
-    return this.transactionPool.addLocalTransaction(transaction);
+    // TODO there is a synchronized inside this call. This should be surrounded by a Vertx blockingExecutor, maybe
+    ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult =
+        this.transactionPool.addLocalTransaction(transaction);
+
+    validationResult.ifValid(
+        () -> {
+          startCrosschainTransactionCommitIgnoreTimeOut(transaction);
+
+        });
+
+    return validationResult;
   }
 
   /**
@@ -195,6 +221,10 @@ public class CrosschainProcessor {
         ValidationResult.invalid(TransactionValidator.TransactionInvalidReason.UNKNOWN_FAILURE));
   }
 
+
+  // TODO this should be implemented as a Vertx HTTPS Client. We should probably submit all
+  // TODO Subordinate Views together, and wait for them to all return, and submit all
+  //  Subordinate Transactions together and wait for them to all return.
   private static String post(final String address, final String method, final String params)
       throws Exception {
     URL url = new URL("http://" + address);
@@ -231,5 +261,34 @@ public class CrosschainProcessor {
     final JsonObject responseJson = new JsonObject(response);
     String result = responseJson.getString("result");
     return BytesValue.fromHexString(result);
+  }
+
+  private void startCrosschainTransactionCommitIgnoreTimeOut(final CrosschainTransaction transaction) {
+    this.vertx.setTimer(30000, id -> {
+      CrosschainTransaction ignoreCommitTransaction =
+          CrosschainTransaction.builderX()
+              .type(CrosschainTransaction.CrosschainTransactionType.UNLOCK_IGNORE_SIGNALLING_TRANSACTION)
+              .nonce(0)
+              .gasPrice(Wei.ZERO)
+              .gasLimit(0)
+              .to(transaction.contractAddress().orElse(null))
+              .value(Wei.ZERO)
+              .payload(BytesValue.EMPTY)
+              .chainId(BigInteger.ONE)      // TODO need to pass in this sidechain's chainID.
+              .subordinateTransactionsAndViews(transaction.getSubordinateTransactionsAndViews())
+              .signAndBuild(getKeyPair());
+
+//      ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult =
+          this.transactionPool.addLocalTransaction(ignoreCommitTransaction);
+    });
+  }
+
+  // TODO REMOVE THIS CODE: Need to use node's key pair
+  SECP256K1.KeyPair keyPair;
+  private  synchronized SECP256K1.KeyPair getKeyPair() {
+    if (this.keyPair == null) {
+      this.keyPair = SECP256K1.KeyPair.generate();
+    }
+    return this.keyPair;
   }
 }
