@@ -158,13 +158,11 @@ public class VmTraceGenerator {
   }
 
   private void generateTracingMemory(final VmOperationExecutionReport report) {
-    if (currentTraceFrame.getDepth() == currentTraceFrame.getMaybeNextDepth().orElse(-1)) {
-      updatedMemory(currentTraceFrame.getMemory(), currentTraceFrame.getMemoryPostExecution())
-          .filter(memory -> memory.length > 0)
-          .map(TracingUtils::dumpMemoryAndTrimTrailingZeros)
-          .map(Mem::new)
-          .ifPresent(report::setMem);
-    }
+    updatedMemory(currentTraceFrame.getMemory(), currentTraceFrame.getMemoryPostExecution())
+        .filter(memory -> memory.length > 0)
+        .map(TracingUtils::dumpMemoryAndTrimTrailingZeros)
+        .map(Mem::new)
+        .ifPresent(report::setMem);
   }
 
   private void generateTracingPush(final VmOperationExecutionReport report) {

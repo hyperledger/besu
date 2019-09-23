@@ -28,12 +28,12 @@ public class VirtualOperation implements Operation {
   }
 
   @Override
-  public Gas cost(MessageFrame frame) {
+  public Gas cost(final MessageFrame frame) {
     return delegate.cost(frame);
   }
 
   @Override
-  public void execute(MessageFrame frame) {
+  public void execute(final MessageFrame frame) {
     delegate.execute(frame);
   }
 
