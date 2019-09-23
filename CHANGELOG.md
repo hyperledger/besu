@@ -13,9 +13,9 @@ for information on options that were previously automatically added to the Besu 
 
 ### Additions and Improvements 
 
-- Add Istanbul block for Rinkeby [\#35](https://github.com/hyperledger/besu/pull/35)
-- Add Istanbul block for Goerli [\#27](https://github.com/hyperledger/besu/pull/27) 
-- Add Istanbul block for Ropsten [\#26](https://github.com/hyperledger/besu/pull/26) 
+- Add Istanbul block (5435345) for Rinkeby [\#35](https://github.com/hyperledger/besu/pull/35)
+- Add Istanbul block (1561651) for Goerli [\#27](https://github.com/hyperledger/besu/pull/27) 
+- Add Istanbul block (6485846) for Ropsten [\#26](https://github.com/hyperledger/besu/pull/26) 
 - Add privDistributeRawTransaction endpoint [\#23](https://github.com/hyperledger/besu/pull/23) (thanks to [josh-richardson](https://github.com/josh-richardson))
 
 ### Technical Improvements 
