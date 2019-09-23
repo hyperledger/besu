@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.vm.MessageFrame.State;
 import org.hyperledger.besu.ethereum.vm.ehalt.ExceptionalHaltException;
 import org.hyperledger.besu.ethereum.vm.ehalt.ExceptionalHaltManager;
+import org.hyperledger.besu.ethereum.vm.operations.VirtualOperation;
 import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.EnumSet;
@@ -147,7 +148,7 @@ public class EVM {
     final BytesValue bytecode = code.getBytes();
     // If the length of the program code is shorter than the required offset, halt execution.
     if (offset >= bytecode.size()) {
-      return operations.get(STOP_OPCODE, contractAccountVersion);
+      return new VirtualOperation(operations.get(STOP_OPCODE, contractAccountVersion));
     }
 
     return operations.getOrDefault(bytecode.get(offset), contractAccountVersion, invalidOperation);

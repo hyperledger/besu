@@ -1,26 +1,26 @@
 {
-    "config": {
-        "homesteadBlock": 0,
-        "daoForkBlock": 0,
-        "eip150Block": 0,
-        "eip155Block": 0,
-        "eip158Block": 0,
-        "eip160Block": 0,
-        "byzantiumBlock": 0,
-        "constantinopleBlock": 0,
-        "constantinopleFixBlock": 0,
-        "ethash": {
-            "fixeddifficulty": 15
-        },
-        "chainID": 1982,
-        "networkID": 1982
+  "config": {
+    "homesteadBlock": 0,
+    "daoForkBlock": 0,
+    "eip150Block": 0,
+    "eip155Block": 0,
+    "eip158Block": 0,
+    "eip160Block": 0,
+    "byzantiumBlock": 0,
+    "constantinopleBlock": 0,
+    "constantinopleFixBlock": 0,
+    "ethash": {
+      "fixeddifficulty": 15
     },
-    "nonce": "0x0000000000000042",
-    "gasLimit": "0x100000000000",
-    "difficulty": "0xf",
-    "mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
-    "coinbase": "0x0000000000000000000000000000000000000000",
-    "alloc": {
+    "chainID": 1982,
+    "networkID": 1982
+  },
+  "nonce": "0x0000000000000042",
+  "gasLimit": "0x100000000000",
+  "difficulty": "0xf",
+  "mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "coinbase": "0x0000000000000000000000000000000000000000",
+  "alloc": {
     "0010000000000000000000000000000000000000": {
       "comment": "Add smart contract that will simply set 2 key-value pairs.  Parses tx input into 4 32 byte values: [key1, val1, key2, val2]. Can be used to test constantinople fix.",
       "code": "0x6020356000355560603560403555600000",
@@ -40,6 +40,11 @@
       "comment": "Proxy a call to the address in the first 32 bytes, sending the rest of the input data to this address. Return 32 bytes from sub-call.",
       "comment": "0x outSize 6020 outOffset 6000 inputSize 60203603 inputToMem(dupSize 80)6020600037 inOffset 6000 val 34 to 600035 gas 5A call F1 Return 60206000F3",
       "code": "0x60206000602036038060206000376000346000355AF160206000F3",
+      "balance": "0x0"
+    },
+    "0050000000000000000000000000000000000000": {
+      "comment": "Add smart contract that will simply set 2 key-value pairs.  Parses tx input into 4 32 byte values: [key1, val1, key2, val2]. Can be used to test constantinople fix. (no explicit stop)",
+      "code": "0x60203560003555606035604035556000",
       "balance": "0x0"
     },
     "fe3b557e8fb62b89f4916b721be55ceb828dbd73": {

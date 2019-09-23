@@ -50,6 +50,45 @@ public class TraceFrame {
 
   private Gas gasRemainingPostExecution;
   private final Optional<Map<UInt256, UInt256>> storagePreExecution;
+  private final boolean virtualOperation;
+
+  public TraceFrame(
+      final int pc,
+      final String opcode,
+      final Gas gasRemaining,
+      final Optional<Gas> gasCost,
+      final int depth,
+      final EnumSet<ExceptionalHaltReason> exceptionalHaltReasons,
+      final Optional<Bytes32[]> stack,
+      final Optional<Bytes32[]> memory,
+      final Optional<Map<UInt256, UInt256>> storage,
+      final Optional<BytesValue> revertReason,
+      final Optional<Map<Address, Wei>> maybeRefunds,
+      final Optional<Code> maybeCode,
+      final int stackItemsProduced,
+      final Optional<Bytes32[]> stackPostExecution,
+      final Optional<Bytes32[]> memoryPostExecution,
+      final Optional<Map<UInt256, UInt256>> storagePreExecution,
+      final boolean virtualOperation) {
+    this.pc = pc;
+    this.opcode = opcode;
+    this.gasRemaining = gasRemaining;
+    this.gasCost = gasCost;
+    this.depth = depth;
+    this.exceptionalHaltReasons = exceptionalHaltReasons;
+    this.stack = stack;
+    this.memory = memory;
+    this.storage = storage;
+    this.revertReason = revertReason;
+    this.maybeRefunds = maybeRefunds;
+    this.maybeCode = maybeCode;
+    this.stackItemsProduced = stackItemsProduced;
+    this.stackPostExecution = stackPostExecution;
+    this.memoryPostExecution = memoryPostExecution;
+    this.maybeNextDepth = Optional.empty();
+    this.storagePreExecution = storagePreExecution;
+    this.virtualOperation = virtualOperation;
+  }
 
   public TraceFrame(
       final int pc,
@@ -68,23 +107,24 @@ public class TraceFrame {
       final Optional<Bytes32[]> stackPostExecution,
       final Optional<Bytes32[]> memoryPostExecution,
       final Optional<Map<UInt256, UInt256>> storagePreExecution) {
-    this.pc = pc;
-    this.opcode = opcode;
-    this.gasRemaining = gasRemaining;
-    this.gasCost = gasCost;
-    this.depth = depth;
-    this.exceptionalHaltReasons = exceptionalHaltReasons;
-    this.stack = stack;
-    this.memory = memory;
-    this.storage = storage;
-    this.revertReason = revertReason;
-    this.maybeRefunds = maybeRefunds;
-    this.maybeCode = maybeCode;
-    this.stackItemsProduced = stackItemsProduced;
-    this.stackPostExecution = stackPostExecution;
-    this.memoryPostExecution = memoryPostExecution;
-    this.maybeNextDepth = Optional.empty();
-    this.storagePreExecution = storagePreExecution;
+    this(
+        pc,
+        opcode,
+        gasRemaining,
+        gasCost,
+        depth,
+        exceptionalHaltReasons,
+        stack,
+        memory,
+        storage,
+        revertReason,
+        maybeRefunds,
+        maybeCode,
+        stackItemsProduced,
+        stackPostExecution,
+        memoryPostExecution,
+        storagePreExecution,
+        false);
   }
 
   public int getPc() {
@@ -188,5 +228,9 @@ public class TraceFrame {
 
   public void setGasRemainingPostExecution(final Gas gasRemainingPostExecution) {
     this.gasRemainingPostExecution = gasRemainingPostExecution;
+  }
+
+  public boolean isVirtualOperation() {
+    return virtualOperation;
   }
 }

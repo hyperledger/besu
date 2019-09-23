@@ -48,8 +48,9 @@ public class DebugOperationTracer implements OperationTracer {
       final Optional<Gas> currentGasCost,
       final ExecuteOperation executeOperation)
       throws ExceptionalHaltException {
+    final Operation currentOperation = frame.getCurrentOperation();
     final int depth = frame.getMessageStackDepth();
-    final String opcode = frame.getCurrentOperation().getName();
+    final String opcode = currentOperation.getName();
     final int pc = frame.getPC();
     final Gas gasRemaining = frame.getRemainingGas();
     final EnumSet<ExceptionalHaltReason> exceptionalHaltReasons =
@@ -88,7 +89,8 @@ public class DebugOperationTracer implements OperationTracer {
               frame.getCurrentOperation().getStackItemsProduced(),
               stackPostExecution,
               memoryPostExecution,
-              storagePreExecution);
+              storagePreExecution,
+              currentOperation.isVirtualOperation());
       traceFrames.add(lastFrame);
     }
   }

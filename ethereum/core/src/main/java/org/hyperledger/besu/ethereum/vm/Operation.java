@@ -68,4 +68,8 @@ public interface Operation extends ExceptionalHaltPredicate {
   boolean getUpdatesProgramCounter();
 
   int getOpSize();
+
+  default boolean isVirtualOperation() {
+    return false;
+  }
 }
