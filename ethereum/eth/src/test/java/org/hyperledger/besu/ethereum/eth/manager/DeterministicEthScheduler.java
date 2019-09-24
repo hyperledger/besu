@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ConsenSys AG.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -9,12 +9,15 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu.ethereum.eth.manager;
 
 import org.hyperledger.besu.testutil.MockExecutorService;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -27,9 +30,10 @@ public class DeterministicEthScheduler extends EthScheduler {
 
   private final TimeoutPolicy timeoutPolicy;
   private final List<MockExecutorService> executors;
+  private List<PendingTimeout<?>> pendingTimeouts = new ArrayList<>();
 
   public DeterministicEthScheduler() {
-    this(TimeoutPolicy.NEVER);
+    this(TimeoutPolicy.NEVER_TIMEOUT);
   }
 
   public DeterministicEthScheduler(final TimeoutPolicy timeoutPolicy) {
@@ -59,6 +63,12 @@ public class DeterministicEthScheduler extends EthScheduler {
     return executors.stream().mapToLong(MockExecutorService::getPendingFuturesCount).sum();
   }
 
+  public void expirePendingTimeouts() {
+    final List<PendingTimeout<?>> toExpire = new ArrayList<>(pendingTimeouts);
+    pendingTimeouts.clear();
+    toExpire.forEach(PendingTimeout::expire);
+  }
+
   public void disableAutoRun() {
     executors.forEach(e -> e.setAutoRun(false));
   }
@@ -77,18 +87,18 @@ public class DeterministicEthScheduler extends EthScheduler {
 
   @Override
   public <T> void failAfterTimeout(final CompletableFuture<T> promise, final Duration timeout) {
+    final PendingTimeout<T> pendingTimeout = new PendingTimeout<>(promise, timeout);
     if (timeoutPolicy.shouldTimeout()) {
-      final TimeoutException timeoutException =
-          new TimeoutException(
-              "Mocked timeout after " + timeout.toMillis() + " " + TimeUnit.MILLISECONDS);
-      promise.completeExceptionally(timeoutException);
+      pendingTimeout.expire();
+    } else {
+      this.pendingTimeouts.add(pendingTimeout);
     }
   }
 
   @FunctionalInterface
   public interface TimeoutPolicy {
-    TimeoutPolicy NEVER = () -> false;
-    TimeoutPolicy ALWAYS = () -> true;
+    TimeoutPolicy NEVER_TIMEOUT = () -> false;
+    TimeoutPolicy ALWAYS_TIMEOUT = () -> true;
 
     boolean shouldTimeout();
 
@@ -101,6 +111,23 @@ public class DeterministicEthScheduler extends EthScheduler {
         timeouts.decrementAndGet();
         return true;
       };
+    }
+  }
+
+  private static class PendingTimeout<T> {
+    final CompletableFuture<T> promise;
+    final Duration timeout;
+
+    private PendingTimeout(final CompletableFuture<T> promise, final Duration timeout) {
+      this.promise = promise;
+      this.timeout = timeout;
+    }
+
+    public void expire() {
+      final TimeoutException timeoutException =
+          new TimeoutException(
+              "Mocked timeout after " + timeout.toMillis() + " " + TimeUnit.MILLISECONDS);
+      promise.completeExceptionally(timeoutException);
     }
   }
 }

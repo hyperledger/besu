@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 ConsenSys AG.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -9,8 +9,10 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea;
+package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -57,7 +59,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-public class EeaGetTransactionReceiptTest {
+public class PrivGetTransactionReceiptTest {
 
   @Rule public final TemporaryFolder temp = new TemporaryFolder();
 
@@ -161,13 +163,13 @@ public class EeaGetTransactionReceiptTest {
 
   @Test
   public void returnReceiptIfTransactionExists() {
-    final EeaGetTransactionReceipt eeaGetTransactionReceipt =
-        new EeaGetTransactionReceipt(blockchainQueries, enclave, parameters, privacyParameters);
+    final PrivGetTransactionReceipt privGetTransactionReceipt =
+        new PrivGetTransactionReceipt(blockchainQueries, enclave, parameters, privacyParameters);
     final Object[] params = new Object[] {transaction.hash()};
-    final JsonRpcRequest request = new JsonRpcRequest("1", "eea_getTransactionReceipt", params);
+    final JsonRpcRequest request = new JsonRpcRequest("1", "priv_getTransactionReceipt", params);
 
     final JsonRpcSuccessResponse response =
-        (JsonRpcSuccessResponse) eeaGetTransactionReceipt.response(request);
+        (JsonRpcSuccessResponse) privGetTransactionReceipt.response(request);
     final PrivateTransactionReceiptResult result =
         (PrivateTransactionReceiptResult) response.getResult();
 
@@ -179,14 +181,14 @@ public class EeaGetTransactionReceiptTest {
     when(failingEnclave.receive(any(ReceiveRequest.class)))
         .thenThrow(new EnclaveException("EnclavePayloadNotFound"));
 
-    final EeaGetTransactionReceipt eeaGetTransactionReceipt =
-        new EeaGetTransactionReceipt(
+    final PrivGetTransactionReceipt privGetTransactionReceipt =
+        new PrivGetTransactionReceipt(
             blockchainQueries, failingEnclave, parameters, privacyParameters);
     final Object[] params = new Object[] {transaction.hash()};
-    final JsonRpcRequest request = new JsonRpcRequest("1", "eea_getTransactionReceipt", params);
+    final JsonRpcRequest request = new JsonRpcRequest("1", "priv_getTransactionReceipt", params);
 
     final JsonRpcSuccessResponse response =
-        (JsonRpcSuccessResponse) eeaGetTransactionReceipt.response(request);
+        (JsonRpcSuccessResponse) privGetTransactionReceipt.response(request);
     final PrivateTransactionReceiptResult result =
         (PrivateTransactionReceiptResult) response.getResult();
 
@@ -197,13 +199,13 @@ public class EeaGetTransactionReceiptTest {
   public void markerTransactionNotAvailableResultsInNullResponse() {
     when(blockchain.getTransactionLocation(nullable(Hash.class))).thenReturn(Optional.empty());
 
-    final EeaGetTransactionReceipt eeaGetTransactionReceipt =
-        new EeaGetTransactionReceipt(blockchainQueries, enclave, parameters, privacyParameters);
+    final PrivGetTransactionReceipt privGetTransactionReceipt =
+        new PrivGetTransactionReceipt(blockchainQueries, enclave, parameters, privacyParameters);
     final Object[] params = new Object[] {transaction.hash()};
-    final JsonRpcRequest request = new JsonRpcRequest("1", "eea_getTransactionReceipt", params);
+    final JsonRpcRequest request = new JsonRpcRequest("1", "priv_getTransactionReceipt", params);
 
     final JsonRpcSuccessResponse response =
-        (JsonRpcSuccessResponse) eeaGetTransactionReceipt.response(request);
+        (JsonRpcSuccessResponse) privGetTransactionReceipt.response(request);
     final PrivateTransactionReceiptResult result =
         (PrivateTransactionReceiptResult) response.getResult();
 
@@ -212,13 +214,13 @@ public class EeaGetTransactionReceiptTest {
 
   @Test
   public void enclaveConnectionIssueThrowsRuntimeException() {
-    final EeaGetTransactionReceipt eeaGetTransactionReceipt =
-        new EeaGetTransactionReceipt(
+    final PrivGetTransactionReceipt privGetTransactionReceipt =
+        new PrivGetTransactionReceipt(
             blockchainQueries, failingEnclave, parameters, privacyParameters);
     final Object[] params = new Object[] {transaction.hash()};
-    final JsonRpcRequest request = new JsonRpcRequest("1", "eea_getTransactionReceipt", params);
+    final JsonRpcRequest request = new JsonRpcRequest("1", "priv_getTransactionReceipt", params);
 
-    final Throwable t = catchThrowable(() -> eeaGetTransactionReceipt.response(request));
+    final Throwable t = catchThrowable(() -> privGetTransactionReceipt.response(request));
     assertThat(t).isInstanceOf(RuntimeException.class);
   }
 }

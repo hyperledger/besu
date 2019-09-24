@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ConsenSys AG.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -9,6 +9,8 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu.ethereum.eth.manager;
 
@@ -65,7 +67,7 @@ public class EthProtocolManagerTestUtil {
 
   public static EthProtocolManager create(
       final Blockchain blockchain, final WorldStateArchive worldStateArchive) {
-    return create(blockchain, worldStateArchive, TimeoutPolicy.NEVER);
+    return create(blockchain, worldStateArchive, TimeoutPolicy.NEVER_TIMEOUT);
   }
 
   public static EthProtocolManager create(final EthScheduler ethScheduler) {
@@ -78,7 +80,7 @@ public class EthProtocolManagerTestUtil {
   }
 
   public static EthProtocolManager create() {
-    return create(TimeoutPolicy.NEVER);
+    return create(TimeoutPolicy.NEVER_TIMEOUT);
   }
 
   public static EthProtocolManager create(final TimeoutPolicy timeoutPolicy) {
@@ -107,6 +109,22 @@ public class EthProtocolManagerTestUtil {
             + DeterministicEthScheduler.class.getSimpleName()
             + " in order to manually run pending futures.");
     ((DeterministicEthScheduler) scheduler).runPendingFutures();
+  }
+
+  /**
+   * Expires any pending timeouts tracked by {@code DeterministicEthScheduler}
+   *
+   * @param ethProtocolManager The {@code EthProtocolManager} managing the scheduler holding the
+   *     timeouts to be expired.
+   */
+  public static void expirePendingTimeouts(final EthProtocolManager ethProtocolManager) {
+    final EthScheduler scheduler = ethProtocolManager.ethContext().getScheduler();
+    checkArgument(
+        scheduler instanceof DeterministicEthScheduler,
+        "EthProtocolManager must be set up with "
+            + DeterministicEthScheduler.class.getSimpleName()
+            + " in order to manually expire pending timeouts.");
+    ((DeterministicEthScheduler) scheduler).expirePendingTimeouts();
   }
 
   /**
