@@ -23,8 +23,12 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class DatabaseMetadata {
+  private static final Logger LOG = LogManager.getLogger();
+
   private static final String METADATA_FILENAME = "DATABASE_METADATA.json";
   private static ObjectMapper MAPPER = new ObjectMapper();
   private final int version;
@@ -40,9 +44,13 @@ public class DatabaseMetadata {
 
   public static DatabaseMetadata lookUpFrom(final Path databaseDir, final Path dataDir)
       throws IOException {
+    LOG.info("Lookup database metadata file in data directory: {}", dataDir.toString());
     File metadataFile = getDefaultMetadataFile(dataDir);
     final boolean shouldLookupInDatabaseDir = !metadataFile.exists();
     if (shouldLookupInDatabaseDir) {
+      LOG.info(
+          "Database metadata file not found in data directory. Lookup in database directory: {}",
+          databaseDir.toString());
       metadataFile = getDefaultMetadataFile(databaseDir);
     }
     DatabaseMetadata databaseMetadata;
@@ -55,6 +63,8 @@ public class DatabaseMetadata {
           String.format("Invalid metadata file %s", metadataFile.getAbsolutePath()), jpe);
     }
     if (shouldLookupInDatabaseDir) {
+      LOG.warn(
+          "Database metadata file has been copied from old location (database directory). Be aware that the old file might be removed in future release.");
       writeToDirectory(databaseMetadata, dataDir);
     }
     return databaseMetadata;
