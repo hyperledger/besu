@@ -266,7 +266,7 @@ exit $status
                              }
 
                              // we dont publish snapshots to bintray
-                             if (! version ==~ /.*-SNAPSHOT/) {
+                             if (! (version ==~ /.*-SNAPSHOT/)) {
 
                                  stage(stage_name + 'Prepare') {
                                      sh './gradlew --no-daemon --parallel clean assemble'
@@ -282,6 +282,9 @@ exit $status
                                          sh './gradlew --no-daemon --parallel bintrayUpload'
                                      }
                                  }
+
+                             } else {
+                                sh "echo "
 
                              }
                          }
