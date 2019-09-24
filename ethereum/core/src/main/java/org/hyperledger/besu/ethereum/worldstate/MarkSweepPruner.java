@@ -207,7 +207,7 @@ public class MarkSweepPruner {
     }
   }
 
-  void flushPendingMarks() {
+  private void flushPendingMarks() {
     markLock.lock();
     try {
       final KeyValueStorageTransaction transaction = markStorage.startTransaction();
