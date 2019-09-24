@@ -20,24 +20,29 @@ import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.vm.MessageFrame.State;
 import org.hyperledger.besu.ethereum.vm.ehalt.ExceptionalHaltException;
 import org.hyperledger.besu.ethereum.vm.ehalt.ExceptionalHaltManager;
+import org.hyperledger.besu.ethereum.vm.operations.InvalidOperation;
+import org.hyperledger.besu.ethereum.vm.operations.StopOperation;
+import org.hyperledger.besu.ethereum.vm.operations.VirtualOperation;
 import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.EnumSet;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.logging.log4j.Logger;
 
 public class EVM {
   private static final Logger LOG = getLogger();
 
-  private static final int STOP_OPCODE = 0x00;
   private final OperationRegistry operations;
   private final Operation invalidOperation;
+  private final Operation endOfScriptStop;
 
-  public EVM(final OperationRegistry operations, final Operation invalidOperation) {
+  public EVM(final OperationRegistry operations, final GasCalculator gasCalculator) {
     this.operations = operations;
-    this.invalidOperation = invalidOperation;
+    this.invalidOperation = new InvalidOperation(gasCalculator);
+    this.endOfScriptStop = new VirtualOperation(new StopOperation(gasCalculator));
   }
 
   public void runToHalt(final MessageFrame frame, final OperationTracer operationTracer)
@@ -142,12 +147,12 @@ public class EVM {
     }
   }
 
-  private Operation operationAtOffset(
-      final Code code, final int contractAccountVersion, final int offset) {
+  @VisibleForTesting
+  Operation operationAtOffset(final Code code, final int contractAccountVersion, final int offset) {
     final BytesValue bytecode = code.getBytes();
     // If the length of the program code is shorter than the required offset, halt execution.
     if (offset >= bytecode.size()) {
-      return operations.get(STOP_OPCODE, contractAccountVersion);
+      return endOfScriptStop;
     }
 
     return operations.getOrDefault(bytecode.get(offset), contractAccountVersion, invalidOperation);
