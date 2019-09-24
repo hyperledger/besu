@@ -105,7 +105,7 @@ public class DaoForkPeerValidatorTest {
   @Test
   public void validatePeer_unresponsivePeer() {
     EthProtocolManager ethProtocolManager =
-        EthProtocolManagerTestUtil.create(DeterministicEthScheduler.TimeoutPolicy.ALWAYS);
+        EthProtocolManagerTestUtil.create(DeterministicEthScheduler.TimeoutPolicy.ALWAYS_TIMEOUT);
     long daoBlockNumber = 500;
 
     PeerValidator validator =
@@ -167,7 +167,7 @@ public class DaoForkPeerValidatorTest {
   public void canBeValidated() {
     BlockDataGenerator gen = new BlockDataGenerator(1);
     EthProtocolManager ethProtocolManager =
-        EthProtocolManagerTestUtil.create(DeterministicEthScheduler.TimeoutPolicy.ALWAYS);
+        EthProtocolManagerTestUtil.create(DeterministicEthScheduler.TimeoutPolicy.ALWAYS_TIMEOUT);
     long daoBlockNumber = 500;
     long buffer = 10;
 
