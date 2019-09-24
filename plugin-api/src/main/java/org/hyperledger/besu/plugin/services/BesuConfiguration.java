@@ -25,4 +25,11 @@ public interface BesuConfiguration {
    * @return location of the storage in the file system of the client.
    */
   Path getStoragePath();
+
+  /**
+   * Location of the data directory in the file system running the client.
+   *
+   * @return location of the data directory in the file system of the client.
+   */
+  Path getDataPath();
 }
