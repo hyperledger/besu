@@ -58,7 +58,11 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
 
   @Override
   public Optional<List<Log>> getTransactionLogs(final Bytes32 transactionHash) {
-    return get(transactionHash, LOGS_KEY_SUFFIX).map(this::rlpDecodeLog);
+    Optional<List<Log>> logs = get(transactionHash, LOGS_KEY_SUFFIX).map(this::rlpDecodeLog);
+    if (logs.isEmpty()) {
+      return get(transactionHash, EVENTS_KEY_SUFFIX).map(this::rlpDecodeLog);
+    }
+    return logs;
   }
 
   @Override
