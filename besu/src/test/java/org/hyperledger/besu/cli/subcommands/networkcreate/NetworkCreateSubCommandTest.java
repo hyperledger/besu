@@ -37,7 +37,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.tuweni.toml.Toml;
-import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -163,7 +162,6 @@ public class NetworkCreateSubCommandTest extends CommandTestAbstract {
     }
   }
 
-  @NotNull
   private List<String> generateArgs(final File tempConfigFile, final Path outputDirectoryPath) {
     List<String> args = new ArrayList<>();
 
