@@ -266,7 +266,7 @@ exit $status
                              }
 
                              // we dont publish snapshots to bintray
-                             if (! version ==~ /.*-SNAPSHOT/) {
+                             if (! (version ==~ /.*-SNAPSHOT/)) {
 
                                  stage(stage_name + 'Prepare') {
                                      sh './gradlew --no-daemon --parallel clean assemble'
@@ -298,18 +298,25 @@ exit $status
                     docker.image(docker_image_dind).withRun('--privileged') { d ->
                         docker.image(build_image).inside("--link ${d.id}:docker") {
 
-                            stage(stage_name + 'Prepare') {
-                                sh './gradlew --no-daemon --parallel clean assemble'
+                            stage(stage_name + 'Calculate variables') {
+                              def gradleProperties = readProperties file: 'gradle.properties'
+                              version = gradleProperties.version
                             }
-                            stage(stage_name + 'Publish') {
-                                withCredentials([
-                                    usernamePassword(
-                                        credentialsId: 'hyperledger-azure',
-                                        usernameVariable: 'AZURE_USER',
-                                        passwordVariable: 'AZURE_KEY'
-                                    )
-                                ]) {
-                                    sh './gradlew --no-daemon --parallel publish'
+
+                            if (version ==~ /.*-SNAPSHOT/) { // Only publish snapshots to Azure
+                                stage(stage_name + 'Prepare') {
+                                    sh './gradlew --no-daemon --parallel clean assemble'
+                                }
+                                stage(stage_name + 'Publish') {
+                                    withCredentials([
+                                        usernamePassword(
+                                            credentialsId: 'hyperledger-azure',
+                                            usernameVariable: 'AZURE_USER',
+                                            passwordVariable: 'AZURE_KEY'
+                                        )
+                                    ]) {
+                                        sh './gradlew --no-daemon --parallel publish'
+                                    }
                                 }
                             }
                         }
