@@ -263,6 +263,7 @@ public class MarkSweepPrunerTest {
         Function.identity());
   }
 
+  // Proxy class so that we have access to the constructor that takes our own map
   private static class TestInMemoryStorage extends InMemoryKeyValueStorage {
 
     public TestInMemoryStorage(final Map<BytesValue, byte[]> hashValueStore) {
