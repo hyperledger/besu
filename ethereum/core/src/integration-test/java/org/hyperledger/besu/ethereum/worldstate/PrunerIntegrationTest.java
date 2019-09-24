@@ -64,27 +64,38 @@ public class PrunerIntegrationTest {
 
   @Test
   public void pruner_smallState_manyOpsPerTx() throws InterruptedException {
-    testPruner(3, 1, 4, 1000);
+    testPruner(3, 1, 1, 4, 1000);
   }
 
   @Test
   public void pruner_largeState_fewOpsPerTx() throws InterruptedException {
-    testPruner(2, 5, 6, 5);
+    testPruner(2, 5, 5, 6, 5);
   }
 
   @Test
   public void pruner_emptyBlocks() throws InterruptedException {
-    testPruner(5, 0, 5, 10);
+    testPruner(5, 0, 2, 5, 10);
   }
 
   @Test
   public void pruner_markChainhead() throws InterruptedException {
-    testPruner(4, 2, 10, 20);
+    testPruner(4, 2, 1, 10, 20);
+  }
+
+  @Test
+  public void pruner_lowRelativeBlockConfirmations() throws InterruptedException {
+    testPruner(3, 2, 1, 4, 20);
+  }
+
+  @Test
+  public void pruner_highRelativeBlockConfirmations() throws InterruptedException {
+    testPruner(3, 2, 9, 10, 20);
   }
 
   private void testPruner(
       final int numCycles,
       final int accountsPerBlock,
+      final long blockConfirmations,
       final int numBlocksToKeep,
       final int opsPerTransaction)
       throws InterruptedException {
@@ -97,7 +108,7 @@ public class PrunerIntegrationTest {
             markSweepPruner,
             blockchain,
             new MockExecutorService(),
-            new PruningConfiguration(1, numBlocksToKeep));
+            new PruningConfiguration(blockConfirmations, numBlocksToKeep));
 
     pruner.start();
 
