@@ -52,7 +52,7 @@ public class Pruner {
     this.blocksRetained = pruningConfiguration.getBlocksRetained();
     this.blockConfirmations = pruningConfiguration.getBlockConfirmations();
     checkArgument(
-        blockConfirmations > 0 && blockConfirmations < blocksRetained,
+        blockConfirmations >= 0 && blockConfirmations < blocksRetained,
         "blockConfirmations and blocksRetained must be non-negative. blockConfirmations must be less than blockRetained.");
   }
 

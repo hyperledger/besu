@@ -65,7 +65,7 @@ public class PrunerTest {
 
     final Pruner pruner =
         new Pruner(
-            markSweepPruner, blockchain, mockExecutorService, new PruningConfiguration(0, 0));
+            markSweepPruner, blockchain, mockExecutorService, new PruningConfiguration(0, 1));
     pruner.start();
 
     final Block block1 = appendBlockWithParent(blockchain, genesisBlock);
@@ -187,7 +187,7 @@ public class PrunerTest {
 
     final Pruner pruner =
         new Pruner(
-            markSweepPruner, blockchain, mockExecutorService, new PruningConfiguration(0, 0));
+            markSweepPruner, blockchain, mockExecutorService, new PruningConfiguration(0, 1));
     pruner.start();
     pruner.stop();
     verify(markSweepPruner).cleanup();
