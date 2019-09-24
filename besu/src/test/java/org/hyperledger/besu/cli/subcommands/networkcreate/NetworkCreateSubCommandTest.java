@@ -46,8 +46,6 @@ import picocli.CommandLine.Model.CommandSpec;
 
 public class NetworkCreateSubCommandTest extends CommandTestAbstract {
 
-  private static final Logger LOG = LogManager.getLogger();
-
   private Path tmpOutputDirectoryPath;
 
   @Before
