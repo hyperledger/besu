@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.worldstate;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -49,12 +51,9 @@ public class Pruner {
     this.blockchain = blockchain;
     this.blocksRetained = pruningConfiguration.getBlocksRetained();
     this.blockConfirmations = pruningConfiguration.getBlockConfirmations();
-    if (blockConfirmations < 0 || blocksRetained < 0) {
-      throw new IllegalArgumentException(
-          String.format(
-              "blockConfirmations and blocksRetained must be non-negative. blockConfirmations=%d, blocksRetained=%d",
-              blockConfirmations, blocksRetained));
-    }
+    checkArgument(
+        blockConfirmations > 0 && blockConfirmations < blocksRetained,
+        "blockConfirmations and blocksRetained must be non-negative. blockConfirmations must be less than blockRetained.");
   }
 
   public void start() {

@@ -159,6 +159,22 @@ public class PrunerTest {
                     mockExecutorService,
                     new PruningConfiguration(-1, -2)))
         .isInstanceOf(IllegalArgumentException.class);
+    assertThatThrownBy(
+            () ->
+                new Pruner(
+                    markSweepPruner,
+                    mockchain,
+                    mockExecutorService,
+                    new PruningConfiguration(10, 8)))
+        .isInstanceOf(IllegalArgumentException.class);
+    assertThatThrownBy(
+            () ->
+                new Pruner(
+                    markSweepPruner,
+                    mockchain,
+                    mockExecutorService,
+                    new PruningConfiguration(10, 10)))
+        .isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
