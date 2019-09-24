@@ -111,9 +111,9 @@ public class NetworkCreateSubCommand implements Runnable {
       final MapperAdapter mapper = MapperAdapter.getMapper(initFile.toURI().toURL());
       final Configuration initConfig = mapper.map(new TypeReference<>() {});
       initConfig.verify(new InitConfigurationErrorHandler());
-
+      LOG.debug(mapper.writeValueAsString(initConfig));
       LOG.info("Generate target {}", targetDirectory);
-      Path generatedResource = initConfig.generate(targetDirectory);
+      final Path generatedResource = initConfig.generate(targetDirectory);
       LOG.info("Resources generated in {}", generatedResource);
     } catch (final MalformedURLException | URISyntaxException e) {
       throw new ParameterException(

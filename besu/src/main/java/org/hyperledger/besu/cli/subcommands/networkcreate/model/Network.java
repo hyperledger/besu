@@ -135,7 +135,7 @@ class Network implements Verifiable, Generatable, ConfigNode {
   private String buildGenesis() {
     try {
       final ObjectNode genesisTemplate = poaConsensus.getGenesisTemplate();
-      ObjectNode config = (ObjectNode) genesisTemplate.get("config");
+      final ObjectNode config = (ObjectNode) genesisTemplate.get("config");
 
       config.put("chainId", chainId);
 
@@ -150,14 +150,14 @@ class Network implements Verifiable, Generatable, ConfigNode {
 
       genesisTemplate.put("extraData", poaConsensus.getExtraData());
 
-      ObjectMapper objectMapper = new ObjectMapper();
+      final ObjectMapper objectMapper = new ObjectMapper();
 
       if (!isNull(accounts) && !accounts.isEmpty()) {
-        ObjectNode alloc = (ObjectNode) genesisTemplate.get("alloc");
-        for (Account account : accounts) {
-          ObjectNode accountFragment = account.getGenesisFragment();
+        final ObjectNode alloc = (ObjectNode) genesisTemplate.get("alloc");
+        accounts.forEach(account -> {
+          final ObjectNode accountFragment = account.getGenesisFragment();
           alloc.replace(account.getAddress().toUnprefixedString(), accountFragment);
-        }
+        });
       }
 
       return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(genesisTemplate);

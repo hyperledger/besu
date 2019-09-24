@@ -42,8 +42,8 @@ import org.apache.tuweni.toml.Toml;
 // TODO Handle errors
 public class MapperAdapter {
 
-  Supplier<JsonFactory> supplier;
-  InitFileReader initFileReader;
+  private final Supplier<JsonFactory> supplier;
+  private final InitFileReader initFileReader;
 
   private MapperAdapter(final Supplier<JsonFactory> supplier, final InitFileReader initFileReader) {
     this.supplier = supplier;
@@ -66,17 +66,17 @@ public class MapperAdapter {
     }
   }
 
-  ObjectMapper getMapper(final JsonFactory factory) {
-    ObjectMapper mapper = new ObjectMapper(factory);
+  private ObjectMapper getMapper(final JsonFactory factory) {
+    final ObjectMapper mapper = new ObjectMapper(factory);
     mapper.configure(Feature.STRICT_DUPLICATE_DETECTION, true);
 
     mapper.registerModule(new Jdk8Module());
 
-    SimpleModule addressModule = new SimpleModule("CustomAddressSerializer");
+    final SimpleModule addressModule = new SimpleModule("CustomAddressSerializer");
     addressModule.addSerializer(Address.class, new CustomAddressSerializer());
     mapper.registerModule(addressModule);
 
-    SimpleModule balanceModule = new SimpleModule("CustomBalanceSerializer");
+    final SimpleModule balanceModule = new SimpleModule("CustomBalanceSerializer");
     balanceModule.addSerializer(Wei.class, new CustomBalanceSerializer());
     mapper.registerModule(balanceModule);
 
@@ -90,7 +90,7 @@ public class MapperAdapter {
   }
 
   public <T> T map(final TypeReference<T> clazz) throws IOException, URISyntaxException {
-    ObjectMapper mapper = getMapper(supplier.get());
+    final ObjectMapper mapper = getMapper(supplier.get());
     return mapper.readValue(initFileReader.read(), clazz);
   }
 

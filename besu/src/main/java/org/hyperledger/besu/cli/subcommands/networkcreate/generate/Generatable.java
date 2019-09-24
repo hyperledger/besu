@@ -19,7 +19,7 @@ import java.nio.file.Path;
 public interface Generatable {
 
   /**
-   * Generate resources related to the generetable object
+   * Generate resources related to the object implementing this interface.
    *
    * <p>For instance for a config it can be the directory, For a network, it's mainly the genesis
    * file For a node it's the directory and key

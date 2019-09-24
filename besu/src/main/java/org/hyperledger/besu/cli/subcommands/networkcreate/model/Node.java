@@ -127,7 +127,7 @@ class Node implements Generatable, ConfigNode {
   }
 
   private Integer getPort(final Integer defaultPort, final int portGroupSize) {
-    List<Node> siblings = ((Configuration) parent).getNodes();
+    final List<Node> siblings = ((Configuration) parent).getNodes();
     final int positionInNodesList = siblings.indexOf(this);
     // ensure no port collision on this network
     return defaultPort + positionInNodesList * portGroupSize;
@@ -156,7 +156,7 @@ class Node implements Generatable, ConfigNode {
   }
 
   private void createConfigFile(final Path nodeDir) {
-    TomlWriter tomlWriter = new TomlWriter.Builder().build();
+    final TomlWriter tomlWriter = new TomlWriter.Builder().build();
 
     try {
       final URL configTemplateFile =
@@ -165,15 +165,15 @@ class Node implements Generatable, ConfigNode {
       String configTemplateSource = Resources.toString(configTemplateFile, UTF_8);
 
       // Write bootnodes list if the node is not a bootnode.
-      List<Node> siblings = ((Configuration) parent).getNodes();
-      List<URI> bootnodesEnodeURLs =
+      final List<Node> siblings = ((Configuration) parent).getNodes();
+      final List<URI> bootnodesEnodeURLs =
           siblings.stream()
               .filter(node -> node.bootnode && !node.equals(this))
               .map(Node::getEnodeURL)
               .map(EnodeURL::toURI)
               .collect(Collectors.toList());
 
-      Map<String, Object> bootnodes = new HashMap<>();
+      final Map<String, Object> bootnodes = new HashMap<>();
       bootnodes.put(TOML_BOOTNODE_KEY, bootnodesEnodeURLs);
 
       configTemplateSource =

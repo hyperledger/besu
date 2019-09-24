@@ -31,12 +31,13 @@ public class InitConfigurationErrorHandler {
 
   @Override
   public String toString() {
-    String errorString =
-        String.format("%1$s %2$s:%n", errors.size(), errors.size() > 1 ? "errors" : "error");
-    for (InitConfigurationError error : errors) {
-      errorString += String.format("- %1$s: (%2$s) %3$s%n", error.item, error.value, error.message);
-    }
-    return errorString;
+    final StringBuilder errorString =
+        new StringBuilder(
+            String.format("%1$s %2$s:%n", errors.size(), errors.size() > 1 ? "errors" : "error"));
+    errors.stream().map(
+        error -> String.format("- %1$s: (%2$s) %3$s%n", error.item, error.value, error.message))
+        .forEach(errorString::append);
+    return errorString.toString();
   }
 
   static class InitConfigurationError {

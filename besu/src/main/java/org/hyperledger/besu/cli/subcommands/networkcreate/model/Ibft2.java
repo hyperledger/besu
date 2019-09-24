@@ -84,7 +84,7 @@ class Ibft2 implements PoaConsensus {
 
   @Override
   public String getExtraData() {
-    IbftExtraData ibftExtraData =
+    final IbftExtraData ibftExtraData =
         IbftExtraData.fromAddresses(
             validators.stream().map(Node::getAddress).collect(Collectors.toList()));
     return ibftExtraData.encode().getHexString();

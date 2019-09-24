@@ -56,13 +56,6 @@ public class NetworkCreateSubCommandTest extends CommandTestAbstract {
     Configurator.setAllLevels("", Level.ALL);
   }
 
-  @After
-  public void clean() throws IOException {
-    // FIXME delete tmp dir
-    //    Files.delete(tmpOutputDirectoryPath);
-    LOG.warn("NOT CLEANING TEMP DIR FOR NOW!");
-  }
-
   @Test
   public void subCommandExists() {
     final CommandSpec spec = parseCommand().getSpec();
@@ -90,7 +83,7 @@ public class NetworkCreateSubCommandTest extends CommandTestAbstract {
         tempConfigFile.toPath(),
         StandardCopyOption.REPLACE_EXISTING);
 
-    List<String> args = generateArgs(tempConfigFile, tmpOutputDirectoryPath);
+    final List<String> args = generateArgs(tempConfigFile, tmpOutputDirectoryPath);
     testGenerateNetworkConfig(args);
   }
 
@@ -99,14 +92,14 @@ public class NetworkCreateSubCommandTest extends CommandTestAbstract {
     final File tempConfigFile = temp.newFile("init.json");
 
     // use TOML File as unique source and transform it to required format, here JSON.
-    String jsonString =
+    final String jsonString =
         Toml.parse(Path.of(this.getClass().getResource("/networkcreate/test.toml").toURI()))
             .toJson();
     try (final BufferedWriter fileWriter =
         Files.newBufferedWriter(tempConfigFile.toPath(), UTF_8)) {
       fileWriter.write(jsonString);
       fileWriter.flush();
-      List<String> args = generateArgs(tempConfigFile, tmpOutputDirectoryPath);
+      final List<String> args = generateArgs(tempConfigFile, tmpOutputDirectoryPath);
       testGenerateNetworkConfig(args);
     }
   }
@@ -116,17 +109,17 @@ public class NetworkCreateSubCommandTest extends CommandTestAbstract {
     final File tempConfigFile = temp.newFile("init.yaml");
 
     // use TOML File as unique source and transform it to required format, here YAML (via JSON)
-    String jsonString =
+    final String jsonString =
         Toml.parse(Path.of(this.getClass().getResource("/networkcreate/test.toml").toURI()))
             .toJson();
-    JsonNode jsonNodeTree = new ObjectMapper().readTree(jsonString);
-    String yamlString = new YAMLMapper().writeValueAsString(jsonNodeTree);
+    final JsonNode jsonNodeTree = new ObjectMapper().readTree(jsonString);
+    final String yamlString = new YAMLMapper().writeValueAsString(jsonNodeTree);
 
     try (final BufferedWriter fileWriter =
         Files.newBufferedWriter(tempConfigFile.toPath(), UTF_8)) {
       fileWriter.write(yamlString);
       fileWriter.flush();
-      List<String> args = generateArgs(tempConfigFile, tmpOutputDirectoryPath);
+      final List<String> args = generateArgs(tempConfigFile, tmpOutputDirectoryPath);
       testGenerateNetworkConfig(args);
     }
   }
@@ -165,7 +158,7 @@ public class NetworkCreateSubCommandTest extends CommandTestAbstract {
   }
 
   private List<String> generateArgs(final File tempConfigFile, final Path outputDirectoryPath) {
-    List<String> args = new ArrayList<>();
+    final List<String> args = new ArrayList<>();
 
     args.add("--data-path"); // We force data path to be able to assert existence of the  resulting
     // directory structure and files
