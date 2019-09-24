@@ -38,20 +38,35 @@ public class DatabaseMetadata {
     return version;
   }
 
-  public static DatabaseMetadata fromDirectory(final Path databaseDir) throws IOException {
-    final File metadataFile = getDefaultMetadataFile(databaseDir);
+  public static DatabaseMetadata lookUpFrom(final Path databaseDir, final Path dataDir)
+      throws IOException {
+    File metadataFile = getDefaultMetadataFile(dataDir);
+    final boolean shouldLookupInDatabaseDir = !metadataFile.exists();
+    if (shouldLookupInDatabaseDir) {
+      metadataFile = getDefaultMetadataFile(databaseDir);
+    }
+    DatabaseMetadata databaseMetadata;
     try {
-      return MAPPER.readValue(metadataFile, DatabaseMetadata.class);
+      databaseMetadata = MAPPER.readValue(metadataFile, DatabaseMetadata.class);
     } catch (FileNotFoundException fnfe) {
-      return new DatabaseMetadata(0);
+      databaseMetadata = new DatabaseMetadata(0);
     } catch (JsonProcessingException jpe) {
       throw new IllegalStateException(
           String.format("Invalid metadata file %s", metadataFile.getAbsolutePath()), jpe);
     }
+    if (shouldLookupInDatabaseDir) {
+      writeToDirectory(databaseMetadata, dataDir);
+    }
+    return databaseMetadata;
   }
 
   public void writeToDirectory(final Path databaseDir) throws IOException {
-    MAPPER.writeValue(getDefaultMetadataFile(databaseDir), this);
+    writeToDirectory(this, databaseDir);
+  }
+
+  private static void writeToDirectory(
+      final DatabaseMetadata databaseMetadata, final Path databaseDir) throws IOException {
+    MAPPER.writeValue(getDefaultMetadataFile(databaseDir), databaseMetadata);
   }
 
   private static File getDefaultMetadataFile(final Path databaseDir) {

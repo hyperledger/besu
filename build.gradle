@@ -164,9 +164,7 @@ allprojects {
     }
 
     // Below this line are currently only license header tasks
-    format 'groovy', {
-      target '**/src/*/grovy/**/*.groovy'
-    }
+    format 'groovy', { target '**/src/*/grovy/**/*.groovy' }
 
     // Currently disabled due to referencetest issues
     //  format 'bash', {
