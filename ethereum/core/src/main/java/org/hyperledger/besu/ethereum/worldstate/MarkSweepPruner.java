@@ -97,14 +97,7 @@ public class MarkSweepPruner {
   }
 
   public void prepare() {
-    worldStateStorage.removeNodeAddedListener(nodeAddedListenerId); // Just in case.
-    markStorage.clear();
-    pendingMarks.clear();
     nodeAddedListenerId = worldStateStorage.addNodeAddedListener(this::markNodes);
-  }
-
-  public void cleanup() {
-    worldStateStorage.removeNodeAddedListener(nodeAddedListenerId);
   }
 
   public void mark(final Hash rootHash) {
@@ -151,9 +144,13 @@ public class MarkSweepPruner {
     // Sweep non-state-root nodes
     prunedNodeCount += worldStateStorage.prune(this::isMarked);
     sweptNodesCounter.inc(prunedNodeCount);
+    LOG.debug("Completed sweeping unused nodes");
+  }
+
+  public void cleanup() {
     worldStateStorage.removeNodeAddedListener(nodeAddedListenerId);
     markStorage.clear();
-    LOG.debug("Completed sweeping unused nodes");
+    pendingMarks.clear();
   }
 
   private boolean isMarked(final Bytes32 key) {

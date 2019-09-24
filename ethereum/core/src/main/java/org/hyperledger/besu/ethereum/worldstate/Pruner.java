@@ -108,6 +108,7 @@ public class Pruner {
     execute(
         () -> {
           pruningStrategy.sweepBefore(markBlockNumber);
+          pruningStrategy.cleanup();
           state.compareAndSet(State.SWEEPING, State.IDLE);
         });
   }
@@ -117,6 +118,7 @@ public class Pruner {
       executorService.execute(action);
     } catch (final Throwable t) {
       LOG.error("Pruning failed", t);
+      pruningStrategy.cleanup();
       state.set(State.IDLE);
     }
   }
