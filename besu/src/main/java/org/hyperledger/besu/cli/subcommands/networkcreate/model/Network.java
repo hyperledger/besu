@@ -154,10 +154,11 @@ class Network implements Verifiable, Generatable, ConfigNode {
 
       if (!isNull(accounts) && !accounts.isEmpty()) {
         final ObjectNode alloc = (ObjectNode) genesisTemplate.get("alloc");
-        accounts.forEach(account -> {
-          final ObjectNode accountFragment = account.getGenesisFragment();
-          alloc.replace(account.getAddress().toUnprefixedString(), accountFragment);
-        });
+        accounts.forEach(
+            account -> {
+              final ObjectNode accountFragment = account.getGenesisFragment();
+              alloc.replace(account.getAddress().toUnprefixedString(), accountFragment);
+            });
       }
 
       return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(genesisTemplate);
