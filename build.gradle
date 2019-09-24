@@ -364,6 +364,18 @@ subprojects {
         }
       }
     }
+
+    bintray {
+      user = bintrayUser
+      key = bintrayKey
+
+      publications = ['mavenJava']
+      override = version.endsWith('SNAPSHOT')
+
+      publish = true
+
+      pkg = bintrayPackage
+    }
   }
 
   tasks.withType(Test) {
