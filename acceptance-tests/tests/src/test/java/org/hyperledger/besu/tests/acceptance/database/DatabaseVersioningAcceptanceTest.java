@@ -93,7 +93,7 @@ public class DatabaseVersioningAcceptanceTest extends AcceptanceTestBase {
 
   @Before
   public void setUp() throws Exception {
-    node = besu.createNode("dbTest", this::configureNode);
+    node = besu.createNode(dataPath, this::configureNode);
     cluster.start(node);
   }
 
