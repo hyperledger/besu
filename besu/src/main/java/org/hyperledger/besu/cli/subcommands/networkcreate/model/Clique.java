@@ -16,8 +16,9 @@ package org.hyperledger.besu.cli.subcommands.networkcreate.model;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.Objects.requireNonNull;
+import static java.util.Objects.isNull;
 
+import org.hyperledger.besu.cli.subcommands.networkcreate.mapping.InitConfigurationErrorHandler;
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.consensus.clique.CliqueExtraData;
 import org.hyperledger.besu.util.bytes.BytesValue;
@@ -33,7 +34,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.io.Resources;
-import org.checkerframework.checker.nullness.qual.NonNull;
 
 // TODO Handle errors
 class Clique implements PoaConsensus {
@@ -46,12 +46,11 @@ class Clique implements PoaConsensus {
   private ConfigNode parent;
 
   public Clique(
-      @NonNull @JsonProperty("block-period-seconds") final Integer blockPeriodSeconds,
-      @NonNull @JsonProperty("epoch-length") final Integer epochLength) {
+      @JsonProperty("block-period-seconds") final Integer blockPeriodSeconds,
+      @JsonProperty("epoch-length") final Integer epochLength) {
 
-    this.blockPeriodSeconds =
-        requireNonNull(blockPeriodSeconds, "CLique block-period-seconds not defined.");
-    this.epochLength = requireNonNull(epochLength, "Clique epoch-length not defined.");
+    this.blockPeriodSeconds = blockPeriodSeconds;
+    this.epochLength = epochLength;
   }
 
   @SuppressWarnings("unused") // Used by Jackson serialisation
@@ -109,5 +108,24 @@ class Clique implements PoaConsensus {
   @Override
   public ConfigNode getParent() {
     return parent;
+  }
+
+  @Override
+  public InitConfigurationErrorHandler verify(final InitConfigurationErrorHandler errorHandler) {
+    if (isNull(blockPeriodSeconds)) {
+      errorHandler.add("Clique block-period-seconds", "null", "block-period-seconds not defined.");
+    }
+    if (!isNull(blockPeriodSeconds) && blockPeriodSeconds <= 0) {
+      errorHandler.add(
+          "Clique block-period-seconds",
+          blockPeriodSeconds.toString(),
+          "block-period-seconds must be greater than zero.");
+    }
+
+    if (isNull(epochLength)) {
+      errorHandler.add("Clique epoch-length", "null", "epoch-length not defined.");
+    }
+
+    return errorHandler;
   }
 }

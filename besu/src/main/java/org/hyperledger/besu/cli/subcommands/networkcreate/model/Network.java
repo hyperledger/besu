@@ -17,6 +17,7 @@ package org.hyperledger.besu.cli.subcommands.networkcreate.model;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Objects.isNull;
 
+import org.hyperledger.besu.cli.subcommands.networkcreate.generate.DirectoryHandler;
 import org.hyperledger.besu.cli.subcommands.networkcreate.generate.Generatable;
 import org.hyperledger.besu.cli.subcommands.networkcreate.generate.Verifiable;
 import org.hyperledger.besu.cli.subcommands.networkcreate.mapping.InitConfigurationErrorHandler;
@@ -120,7 +121,7 @@ class Network implements Verifiable, Generatable, ConfigNode {
   }
 
   @Override
-  public Path generate(final Path outputDirectoryPath) {
+  public Path generate(final Path outputDirectoryPath, final DirectoryHandler directoryHandler) {
     final Path outputGenesisFile = outputDirectoryPath.resolve("genesis.json");
     try {
       Files.write(outputGenesisFile, buildGenesis().getBytes(UTF_8), StandardOpenOption.CREATE_NEW);

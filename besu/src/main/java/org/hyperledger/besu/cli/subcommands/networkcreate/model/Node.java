@@ -16,11 +16,13 @@ package org.hyperledger.besu.cli.subcommands.networkcreate.model;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.Objects.requireNonNull;
+import static java.util.Objects.isNull;
 import static java.util.Objects.requireNonNullElse;
 
 import org.hyperledger.besu.cli.subcommands.networkcreate.generate.DirectoryHandler;
 import org.hyperledger.besu.cli.subcommands.networkcreate.generate.Generatable;
+import org.hyperledger.besu.cli.subcommands.networkcreate.generate.Verifiable;
+import org.hyperledger.besu.cli.subcommands.networkcreate.mapping.InitConfigurationErrorHandler;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -44,11 +46,9 @@ import com.google.common.io.Resources;
 import com.moandjiezana.toml.TomlWriter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.checkerframework.checker.nullness.qual.NonNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
 
 // TODO Handle errors
-class Node implements Generatable, ConfigNode {
+class Node implements Generatable, ConfigNode, Verifiable {
 
   private static final Logger LOG = LogManager.getLogger();
   private static final String PRIVATE_KEY_FILENAME = "key";
@@ -79,10 +79,10 @@ class Node implements Generatable, ConfigNode {
   private ConfigNode parent;
 
   public Node(
-      @NonNull @JsonProperty("name") final String name,
-      @Nullable @JsonProperty("validator") final Boolean validator,
-      @Nullable @JsonProperty("bootnode") final Boolean bootnode) {
-    this.name = requireNonNull(name, "Node name not defined.");
+      @JsonProperty("name") final String name,
+      @JsonProperty("validator") final Boolean validator,
+      @JsonProperty("bootnode") final Boolean bootnode) {
+    this.name = name;
     this.validator = requireNonNullElse(validator, false);
     this.bootnode = requireNonNullElse(bootnode, false);
 
@@ -93,14 +93,17 @@ class Node implements Generatable, ConfigNode {
     p2pIp = DEFAULT_IP;
   }
 
+  @SuppressWarnings("unused") // Used by Jackson serialisation
   public String getName() {
     return name;
   }
 
+  @SuppressWarnings("unused") // Used by Jackson serialisation
   public Boolean getBootnode() {
     return bootnode;
   }
 
+  @SuppressWarnings("unused") // Used by Jackson serialisation
   public Address getAddress() {
     return address;
   }
@@ -127,18 +130,23 @@ class Node implements Generatable, ConfigNode {
   }
 
   private Integer getPort(final Integer defaultPort, final int portGroupSize) {
-    final List<Node> siblings = ((Configuration) parent).getNodes();
+    final List<Node> siblings = getSiblings();
     final int positionInNodesList = siblings.indexOf(this);
     // ensure no port collision on this network
     return defaultPort + positionInNodesList * portGroupSize;
   }
 
+  private List<Node> getSiblings() {
+    return ((Configuration) parent).getNodes();
+  }
+
   @Override
-  public Path generate(final Path outputDirectoryPath) {
-    final DirectoryHandler directoryHandler = new DirectoryHandler();
+  public Path generate(final Path outputDirectoryPath, final DirectoryHandler directoryHandler) {
+    // generate node dir
     final Path nodeDir = outputDirectoryPath.resolve(directoryHandler.getSafeName(name));
     directoryHandler.create(nodeDir);
 
+    // generate private key
     try {
       Files.write(
           nodeDir.resolve(PRIVATE_KEY_FILENAME),
@@ -148,7 +156,13 @@ class Node implements Generatable, ConfigNode {
       LOG.error("Unable to write private key file", e);
     }
 
+    // generate config file
     createConfigFile(nodeDir);
+
+    // generate privacy config if requested
+    ((Configuration) parent)
+        .getPrivacy()
+        .ifPresent(privacy -> privacy.generate(nodeDir, directoryHandler));
 
     LOG.debug("Node {} address is {}", name, address);
 
@@ -165,7 +179,7 @@ class Node implements Generatable, ConfigNode {
       String configTemplateSource = Resources.toString(configTemplateFile, UTF_8);
 
       // Write bootnodes list if the node is not a bootnode.
-      final List<Node> siblings = ((Configuration) parent).getNodes();
+      final List<Node> siblings = getSiblings();
       final List<URI> bootnodesEnodeURLs =
           siblings.stream()
               .filter(node -> node.bootnode && !node.equals(this))
@@ -246,5 +260,11 @@ class Node implements Generatable, ConfigNode {
   @Override
   public ConfigNode getParent() {
     return parent;
+  }
+
+  @Override
+  public InitConfigurationErrorHandler verify(final InitConfigurationErrorHandler errorHandler) {
+    if (isNull(name)) errorHandler.add("Node name", "null", "Node name not defined.");
+    return errorHandler;
   }
 }

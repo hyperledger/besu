@@ -15,13 +15,14 @@
 package org.hyperledger.besu.cli.subcommands.networkcreate.model;
 
 import org.hyperledger.besu.cli.subcommands.networkcreate.generate.GenesisFragmentable;
+import org.hyperledger.besu.cli.subcommands.networkcreate.generate.Verifiable;
 
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-public interface PoaConsensus extends GenesisFragmentable, ConfigNode {
+public interface PoaConsensus extends GenesisFragmentable, ConfigNode, Verifiable {
 
   @JsonIgnore
   String getExtraData();

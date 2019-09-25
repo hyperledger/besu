@@ -22,6 +22,7 @@ import static org.hyperledger.besu.cli.DefaultCommandValues.MANDATORY_FILE_FORMA
 import static org.hyperledger.besu.cli.subcommands.networkcreate.NetworkCreateSubCommand.COMMAND_NAME;
 
 import org.hyperledger.besu.cli.BesuCommand;
+import org.hyperledger.besu.cli.subcommands.networkcreate.generate.DirectoryHandler;
 import org.hyperledger.besu.cli.subcommands.networkcreate.mapping.InitConfigurationErrorHandler;
 import org.hyperledger.besu.cli.subcommands.networkcreate.mapping.MapperAdapter;
 import org.hyperledger.besu.cli.subcommands.networkcreate.model.Configuration;
@@ -67,7 +68,7 @@ public class NetworkCreateSubCommand implements Runnable {
   private CommandSpec spec;
 
   @SuppressWarnings("unused")
-  final PrintStream out;
+  private final PrintStream out;
 
   public NetworkCreateSubCommand(final PrintStream out) {
     this.out = out;
@@ -110,10 +111,16 @@ public class NetworkCreateSubCommand implements Runnable {
     try {
       final MapperAdapter mapper = MapperAdapter.getMapper(initFile.toURI().toURL());
       final Configuration initConfig = mapper.map(new TypeReference<>() {});
-      initConfig.verify(new InitConfigurationErrorHandler());
+
+      InitConfigurationErrorHandler errorHandler =
+          initConfig.verify(new InitConfigurationErrorHandler(initFile.getAbsolutePath()));
+      if (!errorHandler.getErrors().isEmpty()) {
+        throw new ExecutionException(spec.commandLine(), errorHandler.toString());
+      }
+
       LOG.debug(mapper.writeValueAsString(initConfig));
-      LOG.info("Generate target {}", targetDirectory);
-      final Path generatedResource = initConfig.generate(targetDirectory);
+      final DirectoryHandler directoryHandler = new DirectoryHandler();
+      final Path generatedResource = initConfig.generate(targetDirectory, directoryHandler);
       LOG.info("Resources generated in {}", generatedResource);
     } catch (final MalformedURLException | URISyntaxException e) {
       throw new ParameterException(

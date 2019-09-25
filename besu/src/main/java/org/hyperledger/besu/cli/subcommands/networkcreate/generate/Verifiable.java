@@ -16,6 +16,7 @@ package org.hyperledger.besu.cli.subcommands.networkcreate.generate;
 
 import org.hyperledger.besu.cli.subcommands.networkcreate.mapping.InitConfigurationErrorHandler;
 
+@FunctionalInterface
 public interface Verifiable {
 
   /**

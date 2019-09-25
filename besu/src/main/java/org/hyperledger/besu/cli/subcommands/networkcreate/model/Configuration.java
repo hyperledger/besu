@@ -23,6 +23,7 @@ import org.hyperledger.besu.cli.subcommands.networkcreate.generate.Verifiable;
 import org.hyperledger.besu.cli.subcommands.networkcreate.mapping.InitConfigurationErrorHandler;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -35,12 +36,15 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 // TODO Handle errors
 public class Configuration implements Verifiable, Generatable, ConfigNode {
+
   private final String version;
   private final Network network;
   private final List<Account> accounts;
   private final Permissioning permissioning;
   private final Privacy privacy;
   private final List<Node> nodes;
+  private final List<Generatable> itemsToGenerate = new ArrayList<>();
+  private final List<Verifiable> itemsToVerify = new ArrayList<>();
 
   @JsonCreator(mode = Mode.PROPERTIES)
   public Configuration(
@@ -69,6 +73,13 @@ public class Configuration implements Verifiable, Generatable, ConfigNode {
     if (!isNull(this.permissioning)) this.permissioning.setParent(this);
     if (!isNull(this.privacy)) this.privacy.setParent(this);
     this.nodes.forEach(node -> node.setParent(this));
+
+    itemsToVerify.add(network);
+    itemsToVerify.addAll(nodes);
+    itemsToVerify.addAll(accounts);
+
+    itemsToGenerate.add(network);
+    itemsToGenerate.addAll(nodes);
   }
 
   @SuppressWarnings("unused") // Used by Jackson serialisation
@@ -108,27 +119,18 @@ public class Configuration implements Verifiable, Generatable, ConfigNode {
   @Override
   public InitConfigurationErrorHandler verify(final InitConfigurationErrorHandler errorHandler) {
     if (isNull(version)) errorHandler.add("Configuration version", "null", "Version not defined.");
-    this.network.verify(errorHandler);
-    //    this.accounts.forEach(account -> account.verify(errorHandler));
-    //    if(!isNull(this.permissioning))this.permissioning.verify(errorHandler);
-    //    if(!isNull(this.privacy))this.privacy.verify(errorHandler);
-    //    this.nodes.forEach(node -> node.verify(errorHandler));
-
-    if (!errorHandler.getErrors().isEmpty()) System.out.println(errorHandler);
+    itemsToVerify.forEach(verifiable -> verifiable.verify(errorHandler));
     return errorHandler;
   }
 
   @Override
-  public Path generate(final Path outputDirectoryPath) {
-    final DirectoryHandler directoryHandler = new DirectoryHandler();
+  public Path generate(final Path outputDirectoryPath, final DirectoryHandler directoryHandler) {
 
     final Path mainDirectory =
         outputDirectoryPath.resolve(directoryHandler.getSafeName(network.getName()));
     directoryHandler.create(mainDirectory);
 
-    network.generate(mainDirectory);
-
-    nodes.forEach(node -> node.generate(mainDirectory));
+    itemsToGenerate.forEach(generatable -> generatable.generate(mainDirectory, directoryHandler));
 
     return mainDirectory;
   }

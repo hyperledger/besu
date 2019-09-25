@@ -16,11 +16,18 @@ package org.hyperledger.besu.cli.subcommands.networkcreate.model;
 
 import static java.util.Objects.requireNonNullElse;
 
+import org.hyperledger.besu.cli.subcommands.networkcreate.generate.DirectoryHandler;
+import org.hyperledger.besu.cli.subcommands.networkcreate.generate.Generatable;
+import org.hyperledger.besu.cli.subcommands.networkcreate.generate.Verifiable;
+import org.hyperledger.besu.cli.subcommands.networkcreate.mapping.InitConfigurationErrorHandler;
+
+import java.nio.file.Path;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 // TODO Handle errors
-class Permissioning implements ConfigNode {
+class Permissioning implements ConfigNode, Verifiable, Generatable {
   private Boolean deployDapp;
   private Boolean allNodesAdmin;
   private Boolean allAccountsWhitelist;
@@ -58,5 +65,17 @@ class Permissioning implements ConfigNode {
   @Override
   public ConfigNode getParent() {
     return parent;
+  }
+
+  @Override
+  public Path generate(final Path outputDirectoryPath, final DirectoryHandler directoryHandler) {
+    // TODO implement
+    return null;
+  }
+
+  @Override
+  public InitConfigurationErrorHandler verify(final InitConfigurationErrorHandler errorHandler) {
+    // TODO implement
+    return null;
   }
 }

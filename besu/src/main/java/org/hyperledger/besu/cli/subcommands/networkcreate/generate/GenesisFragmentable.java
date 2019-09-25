@@ -17,6 +17,7 @@ package org.hyperledger.besu.cli.subcommands.networkcreate.generate;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+@FunctionalInterface
 public interface GenesisFragmentable {
 
   @JsonIgnore

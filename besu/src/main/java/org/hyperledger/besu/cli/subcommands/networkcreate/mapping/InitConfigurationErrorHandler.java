@@ -19,7 +19,12 @@ import java.util.List;
 
 public class InitConfigurationErrorHandler {
 
-  private List<InitConfigurationError> errors = new ArrayList<>();
+  private final List<InitConfigurationError> errors = new ArrayList<>();
+  private final String initFileName;
+
+  public InitConfigurationErrorHandler(final String initFileName) {
+    this.initFileName = initFileName;
+  }
 
   public void add(final String item, final String value, final String message) {
     errors.add(new InitConfigurationError(item, value, message));
@@ -33,7 +38,9 @@ public class InitConfigurationErrorHandler {
   public String toString() {
     final StringBuilder errorString =
         new StringBuilder(
-            String.format("%1$s %2$s:%n", errors.size(), errors.size() > 1 ? "errors" : "error"));
+            String.format(
+                "%1$s %2$s in %3$s:%n",
+                errors.size(), errors.size() > 1 ? "errors" : "error", initFileName));
     errors.stream()
         .map(
             error -> String.format("- %1$s: (%2$s) %3$s%n", error.item, error.value, error.message))

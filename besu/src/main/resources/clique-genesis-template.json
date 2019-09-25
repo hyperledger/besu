@@ -1,19 +1,19 @@
 {
   "config":{
     "chainId": 2029,
-    "constantinoplefixblock": 0,
+    "byzantium": 0,
     "clique":{
       "blockperiodseconds":2,
       "epochlength":30000
     }
   },
   "coinbase":"0x0000000000000000000000000000000000000000",
+  "nonce":"0x0",
+  "timestamp":"0x0",
   "difficulty":"0x1",
   "extraData":"0x",
   "gasLimit":"0xa00000",
   "mixHash":"0x0000000000000000000000000000000000000000000000000000000000000000",
-  "nonce":"0x0",
-  "timestamp":"0x5c51a607",
   "alloc": {
     "0x0000000000000000000000000000000000008888": {
       "comment": "Account Ingress smart contract",
