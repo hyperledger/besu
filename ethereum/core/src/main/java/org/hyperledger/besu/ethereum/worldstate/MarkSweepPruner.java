@@ -187,7 +187,14 @@ public class MarkSweepPruner {
 
   @VisibleForTesting
   void markNode(final Bytes32 hash) {
-    markNodes(Collections.singleton(hash));
+    markedNodesCounter.inc();
+    markLock.lock();
+    try {
+      pendingMarks.add(hash);
+      maybeFlushPendingMarks();
+    } finally {
+      markLock.unlock();
+    }
   }
 
   private void markNodes(final Collection<Bytes32> nodeHashes) {
