@@ -73,8 +73,10 @@ public enum GraphQLError {
       case UPFRONT_COST_EXCEEDS_BALANCE:
         return TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE;
       case NONCE_TOO_LOW:
+      case PRIVATE_NONCE_TOO_LOW:
         return NONCE_TOO_LOW;
       case INCORRECT_NONCE:
+      case INCORRECT_PRIVATE_NONCE:
         return INCORRECT_NONCE;
       case INTRINSIC_GAS_EXCEEDS_GAS_LIMIT:
         return INTRINSIC_GAS_EXCEEDS_LIMIT;
@@ -87,10 +89,6 @@ public enum GraphQLError {
         // Private Transaction Invalid Reasons
       case PRIVATE_TRANSACTION_FAILED:
         return PRIVATE_TRANSACTION_FAILED;
-      case PRIVATE_NONCE_TOO_LOW:
-        return PRIVATE_NONCE_TOO_LOW;
-      case INCORRECT_PRIVATE_NONCE:
-        return INCORRECT_PRIVATE_NONCE;
       case GAS_PRICE_TOO_LOW:
         return GAS_PRICE_TOO_LOW;
       default:
