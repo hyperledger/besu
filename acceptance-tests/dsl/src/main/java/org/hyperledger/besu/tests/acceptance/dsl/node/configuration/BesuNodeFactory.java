@@ -30,6 +30,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 public class BesuNodeFactory {
 
@@ -82,6 +83,15 @@ public class BesuNodeFactory {
   public BesuNode createArchiveNode(final String name) throws IOException {
     return create(
         new BesuNodeConfigurationBuilder().name(name).jsonRpcEnabled().webSocketEnabled().build());
+  }
+
+  public BesuNode createNode(
+      final String name,
+      final Function<BesuNodeConfigurationBuilder, BesuNodeConfigurationBuilder> configModifier)
+      throws IOException {
+    final BesuNodeConfigurationBuilder configBuilder =
+        configModifier.apply(new BesuNodeConfigurationBuilder().name(name));
+    return create(configBuilder.build());
   }
 
   public Node createArchiveNodeThatMustNotBeTheBootnode(final String name) throws IOException {
