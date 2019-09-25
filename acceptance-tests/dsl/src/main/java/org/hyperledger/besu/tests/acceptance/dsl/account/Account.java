@@ -26,6 +26,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.eth.EthTransactions
 import org.hyperledger.besu.util.bytes.Bytes32;
 
 import java.math.BigInteger;
+import java.util.Optional;
 
 import org.web3j.crypto.Credentials;
 import org.web3j.utils.Convert.Unit;
@@ -34,13 +35,33 @@ public class Account {
 
   private final EthTransactions eth;
   private final String name;
-  private final KeyPair keyPair;
+  private final Optional<PrivateKey> privateKey;
+  private final Optional<PublicKey> publicKey;
+  private final Address address;
   private long nonce = 0;
 
-  private Account(final EthTransactions eth, final String name, final KeyPair keyPair) {
+  private Account(
+      final EthTransactions eth,
+      final String name,
+      final Address address,
+      final Optional<KeyPair> keyPair) {
     this.name = name;
-    this.keyPair = keyPair;
+    this.privateKey = keyPair.map(KeyPair::getPrivateKey);
+    this.publicKey = keyPair.map(KeyPair::getPublicKey);
+    this.address = address;
     this.eth = eth;
+  }
+
+  private Account(final EthTransactions eth, final String name, final KeyPair keyPair) {
+    this(
+        eth,
+        name,
+        Address.extract(Hash.hash(keyPair.getPublicKey().getEncodedBytes())),
+        Optional.of(keyPair));
+  }
+
+  public static Account create(final EthTransactions eth, final Address address) {
+    return new Account(eth, address.toString(), address, Optional.empty());
   }
 
   public static Account create(final EthTransactions eth, final String name) {
@@ -53,9 +74,16 @@ public class Account {
         eth, name, KeyPair.create(PrivateKey.create(Bytes32.fromHexString(privateKey))));
   }
 
-  public Credentials web3jCredentials() {
-    return Credentials.create(
-        keyPair.getPrivateKey().toString(), keyPair.getPublicKey().toString());
+  public Optional<Credentials> web3jCredentials() {
+    if (!publicKey.isPresent() || !privateKey.isPresent()) {
+      return Optional.empty();
+    }
+    return Optional.of(Credentials.create(privateKey.get().toString(), publicKey.get().toString()));
+  }
+
+  public Credentials web3jCredentialsOrThrow() {
+    return web3jCredentials()
+        .orElseThrow(() -> new IllegalStateException("Account is missing required signing key."));
   }
 
   public BigInteger getNextNonce() {
@@ -63,11 +91,7 @@ public class Account {
   }
 
   public String getAddress() {
-    return Address.extract(Hash.hash(keyPair.getPublicKey().getEncodedBytes())).toString();
-  }
-
-  public Condition balanceEquals(final String expectedBalance, final Unit balanceUnit) {
-    return new ExpectAccountBalance(eth, this, expectedBalance, balanceUnit);
+    return address.toString();
   }
 
   public Condition balanceEquals(final int expectedBalance) {
@@ -95,8 +119,8 @@ public class Account {
         + ", name='"
         + name
         + '\''
-        + ", keyPair="
-        + keyPair
+        + ", address="
+        + address
         + ", nonce="
         + nonce
         + '}';
