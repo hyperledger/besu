@@ -69,6 +69,13 @@ public interface Operation extends ExceptionalHaltPredicate {
 
   int getOpSize();
 
+  /**
+   * Determines whether or not this operation has been virtually added to the contract code. For
+   * instance if the contract is not ended by a STOP opcode the {@link EVM} adds an explicit end of
+   * script stop which can be considered as virtual.
+   *
+   * @return a boolean indicating if the operation is virtual.
+   */
   default boolean isVirtualOperation() {
     return false;
   }

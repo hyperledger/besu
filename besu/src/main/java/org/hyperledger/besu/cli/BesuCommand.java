@@ -771,7 +771,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private void addConfigurationService() {
     if (pluginCommonConfiguration == null) {
-      pluginCommonConfiguration = new BesuConfigurationImpl(dataDir().resolve(DATABASE_PATH));
+      final Path dataDir = dataDir();
+      pluginCommonConfiguration =
+          new BesuConfigurationImpl(dataDir.resolve(DATABASE_PATH), dataDir);
       besuPluginContext.addService(BesuConfiguration.class, pluginCommonConfiguration);
     }
   }
