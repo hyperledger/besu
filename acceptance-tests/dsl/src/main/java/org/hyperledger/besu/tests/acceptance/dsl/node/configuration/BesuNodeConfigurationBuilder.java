@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.node.configuration;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.singletonList;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
@@ -27,6 +28,7 @@ import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationProvider;
 
 import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -36,6 +38,7 @@ import java.util.Optional;
 public class BesuNodeConfigurationBuilder {
 
   private String name;
+  private Optional<Path> dataPath = Optional.empty();
   private MiningParameters miningParameters =
       new MiningParametersTestBuilder().enabled(false).build();
   private JsonRpcConfiguration jsonRpcConfiguration = JsonRpcConfiguration.createDefault();
@@ -62,6 +65,12 @@ public class BesuNodeConfigurationBuilder {
 
   public BesuNodeConfigurationBuilder name(final String name) {
     this.name = name;
+    return this;
+  }
+
+  public BesuNodeConfigurationBuilder dataPath(final Path dataPath) {
+    checkNotNull(dataPath);
+    this.dataPath = Optional.of(dataPath);
     return this;
   }
 
@@ -210,6 +219,7 @@ public class BesuNodeConfigurationBuilder {
   public BesuNodeConfiguration build() {
     return new BesuNodeConfiguration(
         name,
+        dataPath,
         miningParameters,
         jsonRpcConfiguration,
         webSocketConfiguration,

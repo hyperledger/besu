@@ -39,6 +39,7 @@ public class BesuNodeFactory {
   public BesuNode create(final BesuNodeConfiguration config) throws IOException {
     return new BesuNode(
         config.getName(),
+        config.getDataPath(),
         config.getMiningParameters(),
         config.getJsonRpcConfiguration(),
         config.getWebSocketConfiguration(),
