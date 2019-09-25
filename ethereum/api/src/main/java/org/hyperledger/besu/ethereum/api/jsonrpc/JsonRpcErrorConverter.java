@@ -23,8 +23,10 @@ public class JsonRpcErrorConverter {
       final TransactionInvalidReason reason) {
     switch (reason) {
       case NONCE_TOO_LOW:
+      case PRIVATE_NONCE_TOO_LOW:
         return JsonRpcError.NONCE_TOO_LOW;
       case INCORRECT_NONCE:
+      case INCORRECT_PRIVATE_NONCE:
         return JsonRpcError.INCORRECT_NONCE;
       case INVALID_SIGNATURE:
         return JsonRpcError.INVALID_TRANSACTION_SIGNATURE;
@@ -39,10 +41,6 @@ public class JsonRpcErrorConverter {
         // Private Transaction Invalid Reasons
       case CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE:
         return JsonRpcError.CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE;
-      case PRIVATE_NONCE_TOO_LOW:
-        return JsonRpcError.PRIVATE_NONCE_TOO_LOW;
-      case INCORRECT_PRIVATE_NONCE:
-        return JsonRpcError.INCORRECT_PRIVATE_NONCE;
       case GAS_PRICE_TOO_LOW:
         return JsonRpcError.GAS_PRICE_TOO_LOW;
 

@@ -106,8 +106,6 @@ public enum JsonRpcError {
 
   // Private transaction errors
   ENCLAVE_ERROR(-50100, "Error communicating with enclave"),
-  PRIVATE_NONCE_TOO_LOW(-50100, "Private transaction nonce too low"),
-  INCORRECT_PRIVATE_NONCE(-50100, "Private transaction nonce is incorrect"),
   UNIMPLEMENTED_PRIVATE_TRANSACTION_TYPE(-50100, "Unimplemented private transaction type"),
   PRIVACY_NOT_ENABLED(-50100, "Privacy is not enabled to get the precompiled address"),
   CREATE_PRIVACY_GROUP_ERROR(-50100, "Error creating privacy group"),
