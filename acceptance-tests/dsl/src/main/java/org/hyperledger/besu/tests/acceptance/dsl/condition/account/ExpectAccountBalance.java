@@ -23,31 +23,30 @@ import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.eth.EthTransactions;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+
 import org.web3j.utils.Convert.Unit;
 
 public class ExpectAccountBalance implements Condition {
 
   private final EthTransactions eth;
   private final Account account;
-  private final String expectedBalance;
-  private final Unit balanceUnit;
+  private final BigInteger expectedBalance;
 
   public ExpectAccountBalance(
       final EthTransactions eth,
       final Account account,
-      final String expectedBalance,
+      final BigDecimal expectedBalance,
       final Unit balanceUnit) {
-    this.expectedBalance = expectedBalance;
-    this.balanceUnit = balanceUnit;
     this.account = account;
     this.eth = eth;
+    this.expectedBalance = toWei(expectedBalance, balanceUnit).toBigIntegerExact();
   }
 
   @Override
   public void verify(final Node node) {
     WaitUtils.waitFor(
-        () ->
-            assertThat(node.execute(eth.getBalance((account))))
-                .isEqualTo(toWei(expectedBalance, balanceUnit).toBigIntegerExact()));
+        () -> assertThat(node.execute(eth.getBalance((account)))).isEqualTo(expectedBalance));
   }
 }
