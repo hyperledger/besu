@@ -87,7 +87,6 @@ public class Pruner {
   }
 
   private void mark(final BlockHeader header) {
-    markBlockNumber = header.getNumber();
     final Hash stateRoot = header.getStateRoot();
     LOG.debug(
         "Begin marking used nodes for pruning. Block number: {} State root: {}",
