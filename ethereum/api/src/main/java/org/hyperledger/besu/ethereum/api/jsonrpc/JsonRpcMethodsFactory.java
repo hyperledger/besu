@@ -74,7 +74,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.NetPeerCount;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.NetServices;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.NetVersion;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.RpcModules;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.TraceReplayBlockTransactions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.TxPoolBesuStatistics;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.TxPoolBesuTransactions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Web3ClientVersion;
@@ -338,19 +337,20 @@ public class JsonRpcMethodsFactory {
           new AdminChangeLogLevel(parameter));
     }
 
-    if (rpcApis.contains(RpcApis.TRACE)) {
-      addMethods(
-          enabledMethods,
-          new TraceReplayBlockTransactions(
-              parameter,
-              new BlockTracer(
-                  new BlockReplay(
-                      protocolSchedule,
-                      blockchainQueries.getBlockchain(),
-                      blockchainQueries.getWorldStateArchive())),
-              blockchainQueries,
-              protocolSchedule));
-    }
+    // Disable TRACE functionality while under development
+    //    if (rpcApis.contains(RpcApis.TRACE)) {
+    //      addMethods(
+    //          enabledMethods,
+    //          new TraceReplayBlockTransactions(
+    //              parameter,
+    //              new BlockTracer(
+    //                  new BlockReplay(
+    //                      protocolSchedule,
+    //                      blockchainQueries.getBlockchain(),
+    //                      blockchainQueries.getWorldStateArchive())),
+    //              blockchainQueries,
+    //              protocolSchedule));
+    //    }
 
     final boolean eea = rpcApis.contains(RpcApis.EEA);
     final boolean priv = rpcApis.contains(RpcApis.PRIV);

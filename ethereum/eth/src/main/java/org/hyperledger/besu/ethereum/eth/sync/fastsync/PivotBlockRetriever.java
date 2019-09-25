@@ -16,109 +16,150 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
-import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.eth.sync.tasks.RetryingGetHeaderFromPeerByNumberTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.util.ExceptionUtils;
 
-import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+/**
+ * This task attempts to find a non-controversial pivot block by confirming the pivot block number
+ * with a minimum number of peers. If a particular pivot block cannot be confirmed, the pivot block
+ * number is pushed back and the confirmation process repeats. If a maximum number of retries is
+ * reached, the task fails with a {@code FastSyncException} containing {@code
+ * FastSyncError.PIVOT_BLOCK_HEADER_MISMATCH}.
+ *
+ * @param <C> The consensus context
+ */
 public class PivotBlockRetriever<C> {
 
   private static final Logger LOG = LogManager.getLogger();
-  static final int MAX_PIVOT_BLOCK_RETRIES = 3;
-  private final long pivotBlockNumber;
+  public static final int MAX_QUERY_RETRIES_PER_PEER = 3;
+  private static final int DEFAULT_MAX_PIVOT_BLOCK_RESETS = 5;
+
   private final EthContext ethContext;
   private final MetricsSystem metricsSystem;
   private final ProtocolSchedule<C> protocolSchedule;
-  private final Map<BlockHeader, AtomicInteger> confirmationsByBlockNumber =
-      new ConcurrentHashMap<>();
+
+  // The number of peers we need to query to confirm our pivot block
+  private final int peersToQuery;
+  // The max times to push the pivot block number back when peers can't agree on a pivot
+  private final int maxPivotBlockResets;
+  // How far to push back the pivot block when we retry on pivot disagreement
+  private final long pivotBlockNumberResetDelta;
+  // The current pivot block number, gets pushed back if peers disagree on the pivot block
+  AtomicLong pivotBlockNumber;
+
   private final CompletableFuture<FastSyncState> result = new CompletableFuture<>();
-  private final Collection<RetryingGetHeaderFromPeerByNumberTask> getHeaderTasks =
-      new ConcurrentLinkedQueue<>();
+  private final Map<Long, PivotBlockConfirmer<C>> confirmationTasks = new ConcurrentHashMap<>();
+
+  private final AtomicBoolean isStarted = new AtomicBoolean(false);
+
+  PivotBlockRetriever(
+      final ProtocolSchedule<C> protocolSchedule,
+      final EthContext ethContext,
+      final MetricsSystem metricsSystem,
+      final long pivotBlockNumber,
+      final int peersToQuery,
+      final long pivotBlockNumberResetDelta,
+      final int maxPivotBlockResets) {
+    this.protocolSchedule = protocolSchedule;
+    this.ethContext = ethContext;
+    this.metricsSystem = metricsSystem;
+
+    this.pivotBlockNumber = new AtomicLong(pivotBlockNumber);
+    this.peersToQuery = peersToQuery;
+    this.pivotBlockNumberResetDelta = pivotBlockNumberResetDelta;
+    this.maxPivotBlockResets = maxPivotBlockResets;
+  }
 
   public PivotBlockRetriever(
       final ProtocolSchedule<C> protocolSchedule,
       final EthContext ethContext,
       final MetricsSystem metricsSystem,
-      final long pivotBlockNumber) {
-    this.pivotBlockNumber = pivotBlockNumber;
-    this.ethContext = ethContext;
-    this.metricsSystem = metricsSystem;
-    this.protocolSchedule = protocolSchedule;
+      final long pivotBlockNumber,
+      final int peersToQuery,
+      final long pivotBlockNumberResetDelta) {
+    this(
+        protocolSchedule,
+        ethContext,
+        metricsSystem,
+        pivotBlockNumber,
+        peersToQuery,
+        pivotBlockNumberResetDelta,
+        DEFAULT_MAX_PIVOT_BLOCK_RESETS);
   }
 
-  @SuppressWarnings("rawtypes")
   public CompletableFuture<FastSyncState> downloadPivotBlockHeader() {
-    final CompletableFuture[] requestFutures = requestHeaderFromAllPeers();
+    if (isStarted.compareAndSet(false, true)) {
+      LOG.info("Retrieve a pivot block that can be confirmed by at least {} peers.", peersToQuery);
+      confirmBlock(pivotBlockNumber.get());
+    }
 
-    CompletableFuture.allOf(requestFutures)
-        .thenRun(
-            () -> {
-              // All requests have completed but we still haven't reached agreement on a header.
-              result.completeExceptionally(
-                  new FastSyncException(FastSyncError.PIVOT_BLOCK_HEADER_MISMATCH));
-            });
     return result;
   }
 
-  @SuppressWarnings("rawtypes")
-  private CompletableFuture[] requestHeaderFromAllPeers() {
-    final List<EthPeer> peersToQuery =
-        ethContext
-            .getEthPeers()
-            .streamAvailablePeers()
-            .filter(peer -> peer.chainState().getEstimatedHeight() >= pivotBlockNumber)
-            .filter(EthPeer::isFullyValidated)
-            .collect(Collectors.toList());
+  private void confirmBlock(final long blockNumber) {
+    final PivotBlockConfirmer<C> pivotBlockConfirmationTask =
+        new PivotBlockConfirmer<>(
+            protocolSchedule,
+            ethContext,
+            metricsSystem,
+            pivotBlockNumber.get(),
+            peersToQuery,
+            MAX_QUERY_RETRIES_PER_PEER);
+    final PivotBlockConfirmer<C> preexistingTask =
+        confirmationTasks.putIfAbsent(blockNumber, pivotBlockConfirmationTask);
+    if (preexistingTask != null) {
+      // We already set up a task to confirm this block
+      return;
+    }
 
-    final int confirmationsRequired = peersToQuery.size() / 2 + 1;
-    return peersToQuery.stream()
-        .map(
-            peer -> {
-              final RetryingGetHeaderFromPeerByNumberTask getHeaderTask = createGetHeaderTask(peer);
-              getHeaderTasks.add(getHeaderTask);
-              return ethContext
-                  .getScheduler()
-                  .scheduleSyncWorkerTask(getHeaderTask::getHeader)
-                  .thenAccept(header -> countHeader(header, confirmationsRequired));
-            })
-        .toArray(CompletableFuture[]::new);
+    pivotBlockConfirmationTask.confirmPivotBlock().whenComplete(this::handleConfirmationResult);
   }
 
-  private RetryingGetHeaderFromPeerByNumberTask createGetHeaderTask(final EthPeer peer) {
-    final RetryingGetHeaderFromPeerByNumberTask task =
-        RetryingGetHeaderFromPeerByNumberTask.forSingleNumber(
-            protocolSchedule, ethContext, metricsSystem, pivotBlockNumber, MAX_PIVOT_BLOCK_RETRIES);
-    task.assignPeer(peer);
-    return task;
+  private void handleConfirmationResult(final FastSyncState fastSyncState, final Throwable error) {
+    if (error != null) {
+      final Throwable rootCause = ExceptionUtils.rootCause(error);
+      if (rootCause instanceof PivotBlockConfirmer.ContestedPivotBlockException) {
+        final long blockNumber =
+            ((PivotBlockConfirmer.ContestedPivotBlockException) error).getBlockNumber();
+        handleContestedPivotBlock(blockNumber);
+      } else {
+        LOG.error("Encountered error while requesting pivot block header", error);
+        result.completeExceptionally(error);
+      }
+      return;
+    }
+
+    result.complete(fastSyncState);
   }
 
-  private void countHeader(final BlockHeader header, final int confirmationsRequired) {
-    final int confirmations =
-        confirmationsByBlockNumber
-            .computeIfAbsent(header, key -> new AtomicInteger(0))
-            .incrementAndGet();
-    LOG.debug(
-        "Received header {} which now has {} confirmations out of {} required.",
-        header.getHash(),
-        confirmations,
-        confirmationsRequired);
-    if (confirmations >= confirmationsRequired) {
-      LOG.info(
-          "Confirmed pivot block hash {} with {} confirmations", header.getHash(), confirmations);
-      result.complete(new FastSyncState(header));
-      getHeaderTasks.forEach(RetryingGetHeaderFromPeerByNumberTask::cancel);
+  private void handleContestedPivotBlock(final long contestedBlockNumber) {
+    if (pivotBlockNumber.compareAndSet(
+        contestedBlockNumber, contestedBlockNumber - pivotBlockNumberResetDelta)) {
+      LOG.info("Received conflicting pivot blocks for {}.", contestedBlockNumber);
+
+      final int retryCount = confirmationTasks.size();
+      if (retryCount > maxPivotBlockResets
+          || pivotBlockNumber.get() <= BlockHeader.GENESIS_BLOCK_NUMBER) {
+        LOG.info("Max retries reached, cancel pivot block download.");
+        // Pivot block selection has failed
+        result.completeExceptionally(
+            new FastSyncException(FastSyncError.PIVOT_BLOCK_HEADER_MISMATCH));
+        return;
+      } else {
+        LOG.info("Move pivot block back to {} and retry.", pivotBlockNumber);
+      }
+
+      confirmBlock(pivotBlockNumber.get());
     }
   }
 }

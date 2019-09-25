@@ -129,6 +129,10 @@ public class EthPeers {
     return connections.values().stream().filter(EthPeer::readyForRequests);
   }
 
+  public Stream<EthPeer> streamBestPeers() {
+    return streamAvailablePeers().sorted(BEST_CHAIN.reversed());
+  }
+
   public Optional<EthPeer> bestPeer() {
     return streamAvailablePeers().max(BEST_CHAIN);
   }

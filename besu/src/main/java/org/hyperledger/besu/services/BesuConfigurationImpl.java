@@ -21,13 +21,20 @@ import java.nio.file.Path;
 public class BesuConfigurationImpl implements BesuConfiguration {
 
   private final Path storagePath;
+  private final Path dataPath;
 
-  public BesuConfigurationImpl(final Path storagePath) {
+  public BesuConfigurationImpl(final Path dataPath, final Path storagePath) {
     this.storagePath = storagePath;
+    this.dataPath = dataPath;
   }
 
   @Override
   public Path getStoragePath() {
     return storagePath;
+  }
+
+  @Override
+  public Path getDataPath() {
+    return dataPath;
   }
 }

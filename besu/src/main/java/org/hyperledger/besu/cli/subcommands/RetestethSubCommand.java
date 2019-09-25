@@ -62,7 +62,7 @@ public class RetestethSubCommand implements Runnable {
       paramLabel = "<LOG VERBOSITY LEVEL>",
       description =
           "Logging verbosity levels: OFF, FATAL, WARN, INFO, DEBUG, TRACE, ALL (default: INFO)")
-  private final Level logLevel = Level.INFO;
+  private final Level logLevel = null;
 
   @SuppressWarnings("FieldMayBeFinal") // Because PicoCLI requires Strings to not be final.
   @Option(

@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.privacy;
 
+import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
+
 import org.hyperledger.besu.controller.KeyPairUtil;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveException;
@@ -146,13 +148,14 @@ public class PrivacyNode implements AutoCloseable {
 
     try {
       final Path dataDir = Files.createTempDirectory("acctest-privacy");
+      final Path dbDir = dataDir.resolve(DATABASE_PATH);
 
       privacyParameters =
           new PrivacyParameters.Builder()
               .setEnabled(true)
               .setEnclaveUrl(orion.clientUrl())
               .setEnclavePublicKeyUsingFile(orion.getConfig().publicKeys().get(0).toFile())
-              .setStorageProvider(createKeyValueStorageProvider(dataDir))
+              .setStorageProvider(createKeyValueStorageProvider(dataDir, dbDir))
               .setPrivateKeyPath(KeyPairUtil.getDefaultKeyFile(besu.homeDirectory()).toPath())
               .build();
     } catch (IOException e) {
@@ -206,7 +209,8 @@ public class PrivacyNode implements AutoCloseable {
     return besu.getConfiguration();
   }
 
-  private StorageProvider createKeyValueStorageProvider(final Path dbLocation) {
+  private StorageProvider createKeyValueStorageProvider(
+      final Path dataLocation, final Path dbLocation) {
     return new KeyValueStorageProviderBuilder()
         .withStorageFactory(
             new RocksDBKeyValuePrivacyStorageFactory(
@@ -217,7 +221,7 @@ public class PrivacyNode implements AutoCloseable {
                         BACKGROUND_THREAD_COUNT,
                         CACHE_CAPACITY),
                 Arrays.asList(KeyValueSegmentIdentifier.values())))
-        .withCommonConfiguration(new BesuConfigurationImpl(dbLocation))
+        .withCommonConfiguration(new BesuConfigurationImpl(dataLocation, dbLocation))
         .withMetricsSystem(new NoOpMetricsSystem())
         .build();
   }

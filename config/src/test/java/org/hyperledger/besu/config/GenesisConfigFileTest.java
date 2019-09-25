@@ -24,6 +24,7 @@ import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
 import org.junit.Test;
 
@@ -208,14 +209,13 @@ public class GenesisConfigFileTest {
   }
 
   @Test
-  public void acceptComments() {
-    // this test will change in the future to reject comments.
-    final GenesisConfigFile config =
-        GenesisConfigFile.fromConfig(
-            "{\"config\": { \"chainId\": 2017 }\n/* C comment }*/\n//C++ comment }\n}");
-
-    assertThat(config.getConfigOptions().getChainId()).contains(new BigInteger("2017"));
-    // Unfortunately there is no good (non-flakey) way to assert logs.
+  public void mustNotAcceptComments() {
+    assertThatThrownBy(
+            () ->
+                GenesisConfigFile.fromConfig(
+                    "{\"config\": { \"chainId\": 2017 }\n/* C comment }*/\n//C++ comment }\n}"))
+        .hasCauseInstanceOf(JsonParseException.class)
+        .hasMessageContaining("Unexpected character ('/'");
   }
 
   @Test
