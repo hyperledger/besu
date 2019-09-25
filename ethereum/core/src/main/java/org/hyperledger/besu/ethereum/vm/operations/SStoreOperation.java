@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.vm.operations;
 
 import org.hyperledger.besu.ethereum.core.Account;
+import org.hyperledger.besu.ethereum.core.DefaultEvmAccount;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.vm.AbstractOperation;
@@ -31,6 +32,7 @@ public class SStoreOperation extends AbstractOperation {
 
   public static final Gas FRONTIER_MINIMUM = Gas.ZERO;
   public static final Gas EIP_1706_MINIMUM = Gas.of(2300);
+  private MutableAccount accountInQuestion;
 
   private final Gas minumumGasRemaining;
 
@@ -53,13 +55,13 @@ public class SStoreOperation extends AbstractOperation {
     final UInt256 key = frame.popStackItem().asUInt256();
     final UInt256 value = frame.popStackItem().asUInt256();
 
-    final MutableAccount account = frame.getWorldState().getAccount(frame.getRecipientAddress()).getMutable();
-    assert account != null : "VM account should exists";
+    assert accountInQuestion != null : "VM account should exists";
 
     // Increment the refund counter.
-    frame.incrementGasRefund(gasCalculator().calculateStorageRefundAmount(account, key, value));
+    frame.incrementGasRefund(
+        gasCalculator().calculateStorageRefundAmount(accountInQuestion, key, value));
 
-    account.setStorageValue(key.copy(), value.copy());
+    accountInQuestion.setStorageValue(key.copy(), value.copy());
   }
 
   @Override
@@ -67,6 +69,13 @@ public class SStoreOperation extends AbstractOperation {
       final MessageFrame frame,
       final EnumSet<ExceptionalHaltReason> previousReasons,
       final EVM evm) {
+    try {
+      accountInQuestion =
+          frame.getWorldState().getAccount(frame.getRecipientAddress()).getMutable();
+    } catch (DefaultEvmAccount.ModificationNotAllowedException e) {
+      return Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
+    }
+
     if (frame.isStatic()) {
       return Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
     } else if (frame.getRemainingGas().compareTo(minumumGasRemaining) <= 0) {

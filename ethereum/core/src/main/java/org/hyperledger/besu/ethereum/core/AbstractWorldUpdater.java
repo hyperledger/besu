@@ -59,7 +59,8 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
   }
 
   @Override
-  public DefaultEvmAccount createAccount(final Address address, final long nonce, final Wei balance) {
+  public DefaultEvmAccount createAccount(
+      final Address address, final long nonce, final Wei balance) {
     final UpdateTrackingAccount<A> account = new UpdateTrackingAccount<>(address);
     account.setNonce(nonce);
     account.setBalance(balance);

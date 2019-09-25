@@ -106,10 +106,12 @@ public class MainnetContractCreationProcessor extends AbstractMessageProcessor {
       LOG.trace("Executing contract-creation");
     }
 
-    final MutableAccount sender = frame.getWorldState().getAccount(frame.getSenderAddress()).getMutable();
+    final MutableAccount sender =
+        frame.getWorldState().getAccount(frame.getSenderAddress()).getMutable();
     sender.decrementBalance(frame.getValue());
 
-    final MutableAccount contract = frame.getWorldState().getOrCreate(frame.getContractAddress()).getMutable();
+    final MutableAccount contract =
+        frame.getWorldState().getOrCreate(frame.getContractAddress()).getMutable();
     if (accountExists(contract)) {
       LOG.trace(
           "Contract creation error: account as already been created for address {}",

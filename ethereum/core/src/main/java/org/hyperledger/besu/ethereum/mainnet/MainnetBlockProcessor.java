@@ -180,7 +180,8 @@ public class MainnetBlockProcessor implements BlockProcessor {
         return false;
       }
 
-      final MutableAccount ommerCoinbase = updater.getOrCreate(ommerHeader.getCoinbase()).getMutable();
+      final MutableAccount ommerCoinbase =
+          updater.getOrCreate(ommerHeader.getCoinbase()).getMutable();
       final long distance = header.getNumber() - ommerHeader.getNumber();
       final Wei ommerReward = blockReward.minus(blockReward.times(distance).dividedBy(8));
       ommerCoinbase.incrementBalance(ommerReward);
