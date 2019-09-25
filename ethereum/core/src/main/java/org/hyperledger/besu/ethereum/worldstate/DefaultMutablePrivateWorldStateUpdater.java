@@ -14,8 +14,7 @@ package org.hyperledger.besu.ethereum.worldstate;
 
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.MutableAccount;
-import org.hyperledger.besu.ethereum.core.ReadOnlyMutableAccount;
+import org.hyperledger.besu.ethereum.core.DefaultEvmAccount;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 
@@ -33,29 +32,30 @@ public class DefaultMutablePrivateWorldStateUpdater implements WorldUpdater {
   }
 
   @Override
-  public MutableAccount createAccount(final Address address, final long nonce, final Wei balance) {
+  public DefaultEvmAccount createAccount(final Address address, final long nonce, final Wei balance) {
     return privateWorldUpdater.createAccount(address);
   }
 
   @Override
-  public MutableAccount createAccount(final Address address) {
+  public DefaultEvmAccount createAccount(final Address address) {
     return privateWorldUpdater.createAccount(address);
   }
 
   @Override
-  public MutableAccount getOrCreate(final Address address) {
+  public DefaultEvmAccount getOrCreate(final Address address) {
     return privateWorldUpdater.getOrCreate(address);
   }
 
   @Override
-  public MutableAccount getMutable(final Address address) {
-    final MutableAccount privateAccount = privateWorldUpdater.getMutable(address);
+  public DefaultEvmAccount getAccount(final Address address) {
+    final DefaultEvmAccount privateAccount = privateWorldUpdater.getAccount(address);
     if (privateAccount != null && !privateAccount.isEmpty()) {
       return privateAccount;
     }
-    final MutableAccount publicAccount = publicWorldUpdater.getMutable(address);
+    final DefaultEvmAccount publicAccount = publicWorldUpdater.getAccount(address);
     if (publicAccount != null && !publicAccount.isEmpty()) {
-      return new ReadOnlyMutableAccount(publicAccount);
+      publicAccount.setImmutable(true);
+      return publicAccount;
     }
     return null;
   }

@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.vm.operations;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
-import org.hyperledger.besu.ethereum.core.ReadOnlyMutableAccount;
 import org.hyperledger.besu.ethereum.vm.AbstractOperation;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
@@ -54,7 +53,7 @@ public class SStoreOperation extends AbstractOperation {
     final UInt256 key = frame.popStackItem().asUInt256();
     final UInt256 value = frame.popStackItem().asUInt256();
 
-    final MutableAccount account = frame.getWorldState().getMutable(frame.getRecipientAddress());
+    final MutableAccount account = frame.getWorldState().getAccount(frame.getRecipientAddress()).getMutable();
     assert account != null : "VM account should exists";
 
     // Increment the refund counter.
@@ -72,8 +71,7 @@ public class SStoreOperation extends AbstractOperation {
       return Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
     } else if (frame.getRemainingGas().compareTo(minumumGasRemaining) <= 0) {
       return Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS);
-    } else if (frame.getWorldState().getMutable(frame.getRecipientAddress())
-        instanceof ReadOnlyMutableAccount) {
+    } else if (frame.getWorldState().getAccount(frame.getRecipientAddress()).isImmutable()) {
       return Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
     } else {
       return Optional.empty();

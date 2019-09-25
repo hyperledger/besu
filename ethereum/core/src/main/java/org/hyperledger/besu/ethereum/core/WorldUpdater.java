@@ -39,7 +39,7 @@ public interface WorldUpdater extends MutableWorldView {
    * @return the account {@code address}, which will have nonce {@code nonce}, balance {@code
    *     balance} and empty code and storage.
    */
-  MutableAccount createAccount(Address address, long nonce, Wei balance);
+  DefaultEvmAccount createAccount(Address address, long nonce, Wei balance);
 
   /**
    * Creates a new account, or reset it (that is, act as if it was deleted and created anew) if it
@@ -52,7 +52,7 @@ public interface WorldUpdater extends MutableWorldView {
    * @return the account {@code address}, which will have 0 for the nonce and balance and empty code
    *     and storage.
    */
-  default MutableAccount createAccount(final Address address) {
+  default DefaultEvmAccount createAccount(final Address address) {
     return createAccount(address, Account.DEFAULT_NONCE, Account.DEFAULT_BALANCE);
   }
 
@@ -61,11 +61,11 @@ public interface WorldUpdater extends MutableWorldView {
    *
    * @param address the address of the account.
    * @return the account {@code address}. If that account exists, it is returned as if by {@link
-   *     #getMutable(Address)}, otherwise, it is created and returned as if by {@link
+   *     #getAccount(Address)}, otherwise, it is created and returned as if by {@link
    *     #createAccount(Address)} (and thus all his fields will be zero/empty).
    */
-  default MutableAccount getOrCreate(final Address address) {
-    final MutableAccount account = getMutable(address);
+  default DefaultEvmAccount getOrCreate(final Address address) {
+    final DefaultEvmAccount account = getAccount(address);
     return account == null ? createAccount(address) : account;
   }
 
@@ -77,7 +77,7 @@ public interface WorldUpdater extends MutableWorldView {
    * @return the account {@code address} as modifiable object, or {@code null} if the account does
    *     not exist.
    */
-  MutableAccount getMutable(Address address);
+  DefaultEvmAccount getAccount(Address address);
 
   /**
    * Deletes the provided account.

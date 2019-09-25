@@ -213,7 +213,7 @@ public class DebugOperationTracerTest {
 
   private Map<UInt256, UInt256> setupStorageForCapture(final MessageFrame frame) {
     final MutableAccount account = mock(MutableAccount.class);
-    when(worldUpdater.getMutable(frame.getRecipientAddress())).thenReturn(account);
+    when(worldUpdater.getAccount(frame.getRecipientAddress())).thenReturn(account);
 
     final Map<UInt256, UInt256> updatedStorage = new TreeMap<>();
     updatedStorage.put(UInt256.ZERO, UInt256.of(233));

@@ -191,11 +191,11 @@ public class PrivateTransactionProcessor {
     LOG.trace("Starting private execution of {}", transaction);
 
     final Address senderAddress = transaction.getSender();
-    final MutableAccount maybePrivateSender = privateWorldState.getMutable(senderAddress);
+    final MutableAccount maybePrivateSender = privateWorldState.getAccount(senderAddress).getMutable();
     final MutableAccount sender =
         maybePrivateSender != null
             ? maybePrivateSender
-            : privateWorldState.createAccount(senderAddress, 0, Wei.ZERO);
+            : privateWorldState.createAccount(senderAddress, 0, Wei.ZERO).getMutable();
 
     final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult =
         privateTransactionValidator.validate(transaction, sender.getNonce());

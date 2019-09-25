@@ -84,7 +84,7 @@ public class DebugOperationTracer implements OperationTracer {
     }
     final Map<UInt256, UInt256> storageContents =
         new TreeMap<>(
-            frame.getWorldState().getMutable(frame.getRecipientAddress()).getUpdatedStorage());
+            frame.getWorldState().getAccount(frame.getRecipientAddress()).getMutable().getUpdatedStorage());
     return Optional.of(storageContents);
   }
 

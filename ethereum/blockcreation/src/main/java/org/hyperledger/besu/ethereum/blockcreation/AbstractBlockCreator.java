@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.core.DefaultEvmAccount;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
@@ -294,9 +295,9 @@ public abstract class AbstractBlockCreator<C> implements AsyncBlockCreator {
     }
     final Wei coinbaseReward = blockReward.plus(blockReward.times(ommers.size()).dividedBy(32));
     final WorldUpdater updater = worldState.updater();
-    final MutableAccount beneficiary = updater.getOrCreate(miningBeneficiary);
+    final DefaultEvmAccount beneficiary = updater.getOrCreate(miningBeneficiary);
 
-    beneficiary.incrementBalance(coinbaseReward);
+    beneficiary.getMutable().incrementBalance(coinbaseReward);
     for (final BlockHeader ommerHeader : ommers) {
       if (ommerHeader.getNumber() - header.getNumber() > MAX_GENERATION) {
         LOG.trace(
@@ -307,10 +308,10 @@ public abstract class AbstractBlockCreator<C> implements AsyncBlockCreator {
         return false;
       }
 
-      final MutableAccount ommerCoinbase = updater.getOrCreate(ommerHeader.getCoinbase());
+      final DefaultEvmAccount ommerCoinbase = updater.getOrCreate(ommerHeader.getCoinbase());
       final long distance = header.getNumber() - ommerHeader.getNumber();
       final Wei ommerReward = blockReward.minus(blockReward.times(distance).dividedBy(8));
-      ommerCoinbase.incrementBalance(ommerReward);
+      ommerCoinbase.getMutable().incrementBalance(ommerReward);
     }
 
     updater.commit();

@@ -111,7 +111,7 @@ public class BlockDataGenerator {
         // Mutate accounts
         accountsToSetup.forEach(
             hash -> {
-              final MutableAccount a = stateUpdater.getMutable(hash);
+              final MutableAccount a = stateUpdater.getAccount(hash);
               a.incrementNonce();
               a.setBalance(Wei.of(positiveLong()));
               storageKeys.forEach(key -> a.setStorageValue(key, UInt256.ONE));

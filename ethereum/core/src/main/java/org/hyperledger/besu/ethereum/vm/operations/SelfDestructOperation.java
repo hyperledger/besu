@@ -18,7 +18,6 @@ import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
-import org.hyperledger.besu.ethereum.core.ReadOnlyMutableAccount;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.vm.AbstractOperation;
 import org.hyperledger.besu.ethereum.vm.EVM;
@@ -49,12 +48,12 @@ public class SelfDestructOperation extends AbstractOperation {
   @Override
   public void execute(final MessageFrame frame) {
     final Address address = frame.getRecipientAddress();
-    final MutableAccount account = frame.getWorldState().getMutable(address);
+    final MutableAccount account = frame.getWorldState().getAccount(address).getMutable();
 
     frame.addSelfDestruct(address);
 
     final MutableAccount recipient =
-        frame.getWorldState().getOrCreate(Words.toAddress(frame.popStackItem()));
+        frame.getWorldState().getOrCreate(Words.toAddress(frame.popStackItem())).getMutable();
 
     recipient.incrementBalance(account.getBalance());
 
@@ -75,7 +74,6 @@ public class SelfDestructOperation extends AbstractOperation {
         .filter(
             __ ->
                 frame.isStatic()
-                    || frame.getWorldState().getMutable(frame.getRecipientAddress())
-                        instanceof ReadOnlyMutableAccount);
+                    || frame.getWorldState().getAccount(frame.getRecipientAddress()).isImmutable());
   }
 }

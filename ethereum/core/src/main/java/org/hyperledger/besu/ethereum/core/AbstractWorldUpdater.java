@@ -59,11 +59,11 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
   }
 
   @Override
-  public MutableAccount createAccount(final Address address, final long nonce, final Wei balance) {
+  public DefaultEvmAccount createAccount(final Address address, final long nonce, final Wei balance) {
     final UpdateTrackingAccount<A> account = new UpdateTrackingAccount<>(address);
     account.setNonce(nonce);
     account.setBalance(balance);
-    return track(account);
+    return new DefaultEvmAccount(track(account));
   }
 
   @Override
@@ -80,11 +80,11 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
   }
 
   @Override
-  public MutableAccount getMutable(final Address address) {
+  public DefaultEvmAccount getAccount(final Address address) {
     // We may have updated it already, so check that first.
     final MutableAccount existing = updatedAccounts.get(address);
     if (existing != null) {
-      return existing;
+      return new DefaultEvmAccount(existing);
     }
     if (deletedAccounts.contains(address)) {
       return null;
@@ -95,7 +95,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
     if (origin == null) {
       return null;
     } else {
-      return track(new UpdateTrackingAccount<>(origin));
+      return new DefaultEvmAccount(track(new UpdateTrackingAccount<>(origin)));
     }
   }
 

@@ -189,7 +189,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
     }
 
     final Address senderAddress = transaction.getSender();
-    final MutableAccount sender = worldState.getOrCreate(senderAddress);
+    final MutableAccount sender = worldState.getOrCreate(senderAddress).getMutable();
     validationResult =
         transactionValidator.validateForSender(transaction, sender, transactionValidationParams);
     if (!validationResult.isValid()) {
@@ -309,7 +309,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
     final Wei refundedWei = refunded.priceFor(transaction.getGasPrice());
     sender.incrementBalance(refundedWei);
 
-    final MutableAccount coinbase = worldState.getOrCreate(miningBeneficiary);
+    final MutableAccount coinbase = worldState.getOrCreate(miningBeneficiary).getMutable();
     final Gas coinbaseFee = Gas.of(transaction.getGasLimit()).minus(refunded);
     final Wei coinbaseWei = coinbaseFee.priceFor(transaction.getGasPrice());
     coinbase.incrementBalance(coinbaseWei);
