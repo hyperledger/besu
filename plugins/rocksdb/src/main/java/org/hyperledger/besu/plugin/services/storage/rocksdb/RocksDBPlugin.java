@@ -47,7 +47,7 @@ public class RocksDBPlugin implements BesuPlugin {
 
   @Override
   public void register(final BesuContext context) {
-    LOG.info("Registering plugin");
+    LOG.debug("Registering plugin");
     this.context = context;
 
     final Optional<PicoCLIOptions> cmdlineOptions = context.getService(PicoCLIOptions.class);
@@ -60,21 +60,21 @@ public class RocksDBPlugin implements BesuPlugin {
     cmdlineOptions.get().addPicoCLIOptions(NAME, options);
     createFactoriesAndRegisterWithStorageService();
 
-    LOG.info("Plugin registered.");
+    LOG.debug("Plugin registered.");
   }
 
   @Override
   public void start() {
-    LOG.info("Starting plugin.");
+    LOG.debug("Starting plugin.");
     if (factory == null) {
-      LOG.debug("Applied configuration: {}", options.toString());
+      LOG.trace("Applied configuration: {}", options.toString());
       createFactoriesAndRegisterWithStorageService();
     }
   }
 
   @Override
   public void stop() {
-    LOG.info("Stopping plugin.");
+    LOG.debug("Stopping plugin.");
 
     try {
       if (factory != null) {

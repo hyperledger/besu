@@ -76,7 +76,7 @@ def bintrayKey = project.hasProperty('bintrayApiKey') ? project.property('bintra
 def bintrayPackage = bintray.pkg {
   repo = 'besu-repo'
   name = 'besu'
-  userOrg = 'hyperledger'
+  userOrg = 'hyperledger-org'
   licenses = ['Apache-2.0']
   websiteUrl = 'https://github.com/hyperledger/besu'
   vcsUrl = 'https://github.com/hyperledger/besu.git'
@@ -164,9 +164,7 @@ allprojects {
     }
 
     // Below this line are currently only license header tasks
-    format 'groovy', {
-      target '**/src/*/grovy/**/*.groovy'
-    }
+    format 'groovy', { target '**/src/*/grovy/**/*.groovy' }
 
     // Currently disabled due to referencetest issues
     //  format 'bash', {
@@ -363,6 +361,18 @@ subprojects {
           }
         }
       }
+    }
+
+    bintray {
+      user = bintrayUser
+      key = bintrayKey
+
+      publications = ['mavenJava']
+      override = version.endsWith('SNAPSHOT')
+
+      publish = true
+
+      pkg = bintrayPackage
     }
   }
 

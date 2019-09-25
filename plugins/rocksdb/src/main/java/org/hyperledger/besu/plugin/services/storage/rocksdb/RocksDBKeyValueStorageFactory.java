@@ -147,17 +147,18 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
 
   private int readDatabaseVersion(final BesuConfiguration commonConfiguration) throws IOException {
     final Path databaseDir = commonConfiguration.getStoragePath();
+    final Path dataDir = commonConfiguration.getDataPath();
     final boolean databaseExists = databaseDir.resolve("IDENTITY").toFile().exists();
     final int databaseVersion;
     if (databaseExists) {
-      databaseVersion = DatabaseMetadata.fromDirectory(databaseDir).getVersion();
-      LOG.info("Existing database detected at {}. Version {}", databaseDir, databaseVersion);
+      databaseVersion = DatabaseMetadata.lookUpFrom(databaseDir, dataDir).getVersion();
+      LOG.info("Existing database detected at {}. Version {}", dataDir, databaseVersion);
     } else {
       databaseVersion = DEFAULT_VERSION;
-      LOG.info(
-          "No existing database detected at {}. Using version {}", databaseDir, databaseVersion);
+      LOG.info("No existing database detected at {}. Using version {}", dataDir, databaseVersion);
       Files.createDirectories(databaseDir);
-      new DatabaseMetadata(databaseVersion).writeToDirectory(databaseDir);
+      Files.createDirectories(dataDir);
+      new DatabaseMetadata(databaseVersion).writeToDirectory(dataDir);
     }
 
     if (!SUPPORTED_VERSIONS.contains(databaseVersion)) {
