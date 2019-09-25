@@ -16,6 +16,7 @@ package org.hyperledger.besu.tests.acceptance.dsl.account;
 
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.crypto.SECP256K1.PrivateKey;
+import org.hyperledger.besu.crypto.SECP256K1.PublicKey;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.tests.acceptance.dsl.blockchain.Amount;
@@ -25,6 +26,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.condition.account.ExpectAccount
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.eth.EthTransactions;
 import org.hyperledger.besu.util.bytes.Bytes32;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Optional;
 
@@ -95,7 +97,7 @@ public class Account {
   }
 
   public Condition balanceEquals(final int expectedBalance) {
-    return balanceEquals(String.valueOf(expectedBalance), Unit.ETHER);
+    return new ExpectAccountBalance(eth, this, BigDecimal.valueOf(expectedBalance), Unit.ETHER);
   }
 
   public Condition balanceEquals(final Amount expectedBalance) {
@@ -103,12 +105,9 @@ public class Account {
         eth, this, expectedBalance.getValue(), expectedBalance.getUnit());
   }
 
-  public Condition balanceDoesNotChange(final String startingBalance, final Unit balanceUnit) {
-    return new ExpectAccountBalanceNotChanging(eth, this, startingBalance, balanceUnit);
-  }
-
   public Condition balanceDoesNotChange(final int startingBalance) {
-    return balanceDoesNotChange(String.valueOf(startingBalance), Unit.ETHER);
+    return new ExpectAccountBalanceNotChanging(
+        eth, this, BigDecimal.valueOf(startingBalance), Unit.ETHER);
   }
 
   @Override
