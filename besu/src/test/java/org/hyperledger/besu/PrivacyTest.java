@@ -59,11 +59,12 @@ public class PrivacyTest {
   @Test
   public void privacyPrecompiled() throws IOException {
     final Path dataDir = folder.newFolder().toPath();
+    final Path dbDir = dataDir.resolve("database");
     final PrivacyParameters privacyParameters =
         new PrivacyParameters.Builder()
             .setPrivacyAddress(ADDRESS)
             .setEnabled(true)
-            .setStorageProvider(createKeyValueStorageProvider(dataDir))
+            .setStorageProvider(createKeyValueStorageProvider(dataDir, dbDir))
             .build();
     final BesuController<?> besuController =
         new BesuController.Builder()
@@ -92,7 +93,7 @@ public class PrivacyTest {
     assertThat(precompiledContract.getName()).isEqualTo("Privacy");
   }
 
-  private StorageProvider createKeyValueStorageProvider(final Path dbAhead) {
+  private StorageProvider createKeyValueStorageProvider(final Path dataDir, final Path dbDir) {
     return new KeyValueStorageProviderBuilder()
         .withStorageFactory(
             new RocksDBKeyValuePrivacyStorageFactory(
@@ -103,7 +104,7 @@ public class PrivacyTest {
                         BACKGROUND_THREAD_COUNT,
                         CACHE_CAPACITY),
                 Arrays.asList(KeyValueSegmentIdentifier.values())))
-        .withCommonConfiguration(new BesuConfigurationImpl(dbAhead))
+        .withCommonConfiguration(new BesuConfigurationImpl(dataDir, dbDir))
         .withMetricsSystem(new NoOpMetricsSystem())
         .build();
   }

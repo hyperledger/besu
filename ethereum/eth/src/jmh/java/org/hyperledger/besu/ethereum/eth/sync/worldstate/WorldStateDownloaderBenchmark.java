@@ -100,7 +100,7 @@ public class WorldStateDownloaderBenchmark {
     final EthContext ethContext = ethProtocolManager.ethContext();
 
     final StorageProvider storageProvider =
-        createKeyValueStorageProvider(tempDir.resolve("database"));
+        createKeyValueStorageProvider(tempDir, tempDir.resolve("database"));
     worldStateStorage = storageProvider.createWorldStateStorage();
 
     pendingRequests =
@@ -158,7 +158,7 @@ public class WorldStateDownloaderBenchmark {
     return rootData;
   }
 
-  private StorageProvider createKeyValueStorageProvider(final Path dbAhead) {
+  private StorageProvider createKeyValueStorageProvider(final Path dataDir, final Path dbDir) {
     return new KeyValueStorageProviderBuilder()
         .withStorageFactory(
             new RocksDBKeyValueStorageFactory(
@@ -169,7 +169,7 @@ public class WorldStateDownloaderBenchmark {
                         DEFAULT_BACKGROUND_THREAD_COUNT,
                         DEFAULT_CACHE_CAPACITY),
                 Arrays.asList(KeyValueSegmentIdentifier.values())))
-        .withCommonConfiguration(new BesuConfigurationImpl(dbAhead))
+        .withCommonConfiguration(new BesuConfigurationImpl(dataDir, dbDir))
         .withMetricsSystem(new NoOpMetricsSystem())
         .build();
   }
