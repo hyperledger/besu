@@ -18,6 +18,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Objects.requireNonNullElse;
 
+import java.security.SecureRandom;
 import org.hyperledger.besu.cli.subcommands.networkcreate.generate.DirectoryHandler;
 import org.hyperledger.besu.cli.subcommands.networkcreate.generate.Generatable;
 import org.hyperledger.besu.cli.subcommands.networkcreate.generate.Verifiable;
@@ -28,7 +29,10 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Random;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.io.Resources;
@@ -79,11 +83,18 @@ class Privacy implements ConfigNode, Verifiable, Generatable {
     final Path privacyNodeDir = outputDirectoryPath.resolve(PRIVACY_DIR_NAME);
     directoryHandler.create(privacyNodeDir);
 
-    // TODO create passwordFile
     try {
+      // generate a 20 chars password with chars from the range between ! (33) and ~ (126) in ascii table
+      // it includes all printable symbols from letters to numbers and special characters.
+      final String password =
+          new SecureRandom()
+              .ints(20, '!', '~')
+              .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
+              .toString();
+
       Files.write(
           privacyNodeDir.resolve(PASSWORD_FILENAME),
-          "password".getBytes(UTF_8),
+          password.getBytes(UTF_8),
           StandardOpenOption.CREATE_NEW);
     } catch (IOException e) {
       LOG.error("Unable to write password file", e);
@@ -132,11 +143,14 @@ class Privacy implements ConfigNode, Verifiable, Generatable {
       //              DEFAULT_P2P_PORT,
       //              1);
 
+      // replace tls
       final HashMap<String, String> tlsValueMap = new HashMap<>();
       tlsValueMap.put("tls", tls ? "on" : "off");
-
       configTemplateSource =
           configTemplateSource.replaceAll(TOML_TLS_FIND_REGEX, tomlWriter.write(tlsValueMap));
+
+      List<String> test = new ArrayList<>();
+
       LOG.debug(configTemplateSource);
       Files.write(
           privacyNodeDir.resolve(CONFIG_FILENAME),

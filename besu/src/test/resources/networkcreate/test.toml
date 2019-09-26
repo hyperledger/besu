@@ -15,7 +15,7 @@ request-timeout-seconds = 5
 
 [[accounts]]
 address = "0x1337AE03001C8205B7cc192B80007454Dfc74B86"
-balance = 2000000000000000000
+balance = "0x246DDF97976680000"#balance can be either a number if lower than 9 ETH otherwise a hex string hs to be used for big integers
 
 [[accounts]]
 address = "0x1338AE03001C8205B7cc192B80007454Dfc74B86"

@@ -37,7 +37,7 @@ class Account implements GenesisFragmentable, ConfigNode, Verifiable {
 
   public Account(
       @JsonProperty("address") final Address address, @JsonProperty("balance") final Wei balance) {
-    this.address = address;//FIXME balance 42000000000000000000 fails
+    this.address = address;
     this.balance = balance;
   }
 
