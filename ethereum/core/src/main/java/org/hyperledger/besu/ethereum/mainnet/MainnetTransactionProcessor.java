@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.ArrayDeque;
+import java.util.Collection;
 import java.util.Deque;
 import java.util.Optional;
 
@@ -266,6 +267,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
             ((CrosschainTransaction) transaction).getType();
         if (type.isSignallingTransaction()) {
           boolean commit = type.isUnlockCommitSignallingTransaction();
+          LOG.info("Signalling Transaction Commit {}", commit);
           final MutableAccount mutableContract =
               worldUpdater.updater().getMutable(contract.getAddress());
           mutableContract.unlock(commit);
@@ -302,7 +304,15 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
               .isPersistingState(isPersistingState)
               .build();
 
-      // If the contract is lockable, and this is a crosschain transaction, then lock the contract.
+
+      //TODO DEBUG START
+      if (contract == null) {
+        LOG.info("***Contract is null");
+      } else {
+        LOG.info("Contract {} Lockable {} Locked {}", contract.getAddress(), contract.isLockable(), contract.isLocked());
+      }
+      //TODO DEBUG END
+
       boolean contractIsLockable = contract != null && contract.isLockable();
       if (contractIsLockable) {
         if (contract.isLocked()) {
@@ -310,9 +320,10 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
           return Result.failed(gasAvailable.toLong(), validationResult, null);
         }
 
-        final MutableAccount mutableContract =
-            worldUpdater.updater().getMutable(contract.getAddress());
-        mutableContract.lock();
+        if (transaction instanceof CrosschainTransaction) {
+          final MutableAccount mutableContract = worldState.getMutable(contract.getAddress());
+          mutableContract.lock();
+        }
       } else {
         if (transaction instanceof CrosschainTransaction) {
           LOG.info("Attempt to execute crosschain transaction on non-lockable contract");
@@ -320,6 +331,15 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
         }
       }
     }
+
+    // TODO SIDECHAINS START
+    // Debug code to dump all updated statesd for the updated world state.
+    Collection<Account> accs = worldState.getTouchedAccounts();
+    for (Account acc: accs) {
+      LOG.info("AccUpdatedB: {}, Lockable {} Locked {} LockState {}",  acc.getAddress(), acc.isLockable(), acc.isLocked(), acc.getLockState());
+    }
+    // TODO SIDECHAINS END
+
 
     // If we are processing a crosschain transaction, then add the transaction context such that
     // the precompile can access it.
@@ -379,6 +399,15 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
     if (clearEmptyAccounts) {
       clearEmptyAccounts(worldState);
     }
+
+    // TODO SIDECHAINS START
+    // Debug code to dump all updated statesd for the updated world state.
+    accs = worldState.getTouchedAccounts();
+    for (Account acc: accs) {
+      LOG.info("AccUpdatedA: {}, Lockable {} Locked {} LockState {}",  acc.getAddress(), acc.isLockable(), acc.isLocked(), acc.getLockState());
+    }
+    // TODO SIDECHAINS END
+
 
     if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
       return Result.successful(

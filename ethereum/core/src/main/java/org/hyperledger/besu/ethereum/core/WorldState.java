@@ -86,8 +86,8 @@ public interface WorldState extends WorldView {
     }
 
     @Override
-    public MutableAccount.LockAction getLockAction() {
-      return accountState.getLockAction();
+    public MutableAccount.LockState getLockState() {
+      return accountState.getLockState();
     }
 
     @Override

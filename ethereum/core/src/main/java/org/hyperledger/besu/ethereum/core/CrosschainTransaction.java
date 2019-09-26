@@ -129,6 +129,13 @@ public class CrosschainTransaction extends Transaction {
     public boolean isSignallingTransaction() {
       return isUnlockCommitSignallingTransaction() || isUnlockIgnoreSignallingTransaction();
     }
+
+    public boolean isLockableTransaction() {
+      return isOriginatingTransaction()
+      || isSubordinateTransaction()
+      || isOriginatingLockableContractDeploy()
+      || isSubordinateLockableContractDeploy();
+    }
   }
 
   // Type of Crosschain Transaction / View.

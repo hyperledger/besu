@@ -68,6 +68,7 @@ import java.util.concurrent.Executors;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import picocli.CommandLine;
 
 public abstract class BesuControllerBuilder<C> {
 
@@ -287,16 +288,30 @@ public abstract class BesuControllerBuilder<C> {
             miningParameters.getMinTransactionGasPrice(),
             transactionPoolConfiguration);
 
-    final int sidechainId = 22;
+    // Crosschain Configuration.
+    final Optional<BigInteger> chainId;
+    try {
+      chainId = genesisConfig
+          .getConfigOptions(genesisConfigOverrides)
+          .getChainId();
+    } catch (Exception ex) {
+      // TODO Is a RuntimeException the best type of unchecked exception to throw for this?
+      throw new RuntimeException("Chain ID could not be read from genesis file", ex);
+    }
+    if (chainId.isEmpty()) {
+      // TODO Are there situations when the chain ID will NOT be in the genesis file? MainNet?
+      throw new RuntimeException("Chain ID must be specified in the genesis file");
+    }
     final int numNodes = 5;
     final TransactionSimulator transactionSimulator =
         new TransactionSimulator(
             blockchain, protocolContext.getWorldStateArchive(), protocolSchedule);
     SubordinateViewCoordinator subordinateViewCoordinator =
         SubordinateViewCoordinator.createSubordinateViewCoordinatorAndOtherNodes(
-            sidechainId, numNodes, transactionSimulator);
+            chainId.get().intValue(), numNodes, transactionSimulator);
     CrosschainProcessor crosschainProcessor =
-        new CrosschainProcessor(subordinateViewCoordinator, transactionSimulator, transactionPool);
+        new CrosschainProcessor(subordinateViewCoordinator, transactionSimulator, transactionPool, chainId.get().intValue(), this.nodeKeys, protocolContext.getWorldStateArchive());
+
 
     final MiningCoordinator miningCoordinator =
         createMiningCoordinator(

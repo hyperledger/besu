@@ -13,15 +13,15 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.crosschain;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.Collections.singletonList;
 
 import io.vertx.core.Vertx;
 import org.hyperledger.besu.crosschain.CrosschainConfiguration;
 import org.hyperledger.besu.crypto.SECP256K1;
-import org.hyperledger.besu.crypto.SecureRandomProvider;
+import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.CrosschainTransaction;
-import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.crosschain.CrosschainThreadLocalDataHolder;
 import org.hyperledger.besu.ethereum.crosschain.SubordinateViewCoordinator;
@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.io.BufferedReader;
@@ -40,10 +41,6 @@ import java.math.BigInteger;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.KeyPairGenerator;
-import java.security.SecureRandom;
-import java.security.spec.ECGenParameterSpec;
 import java.util.List;
 import java.util.Optional;
 
@@ -59,15 +56,26 @@ public class CrosschainProcessor {
   SubordinateViewCoordinator subordinateViewCoordinator;
   TransactionSimulator transactionSimulator;
   TransactionPool transactionPool;
+  SECP256K1.KeyPair nodeKeys;
+  WorldStateArchive worldStateArchive;
+  int sidechainId;
+
   Vertx vertx;
 
   public CrosschainProcessor(
       final SubordinateViewCoordinator subordinateViewCoordinator,
       final TransactionSimulator transactionSimulator,
-      final TransactionPool transactionPool) {
+      final TransactionPool transactionPool,
+      final int sidechainId,
+      final SECP256K1.KeyPair nodeKeys,
+      final WorldStateArchive worldStateArchive) {
     this.subordinateViewCoordinator = subordinateViewCoordinator;
     this.transactionSimulator = transactionSimulator;
     this.transactionPool = transactionPool;
+    this.sidechainId = sidechainId;
+    this.nodeKeys = nodeKeys;
+    this.worldStateArchive = worldStateArchive;
+
     this.vertx = Vertx.vertx();
   }
 
@@ -82,7 +90,7 @@ public class CrosschainProcessor {
     // Get Subordinate View results.
     if (processSubordinates(transaction, false)) {
       return ValidationResult.invalid(
-          TransactionValidator.TransactionInvalidReason.FAILED_SUBORDINATE_VIEW);
+          TransactionValidator.TransactionInvalidReason.CROSSCHAIN_FAILED_SUBORDINATE_VIEW);
     }
 
     Optional<ValidationResult<TransactionValidator.TransactionInvalidReason>> executionError =
@@ -94,19 +102,20 @@ public class CrosschainProcessor {
     // Dispatch Subordinate Transactions if the trial execution worked OK.
     if (processSubordinates(transaction, true)) {
       return ValidationResult.invalid(
-          TransactionValidator.TransactionInvalidReason.FAILED_SUBORDINATE_VIEW);
+          TransactionValidator.TransactionInvalidReason.CROSSCHAIN_FAILED_SUBORDINATE_TRANSACTION);
     }
 
     // TODO there is a synchronized inside this call. This should be surrounded by a Vertx blockingExecutor, maybe
     ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult =
         this.transactionPool.addLocalTransaction(transaction);
 
-    validationResult.ifValid(
-        () -> {
-          startCrosschainTransactionCommitIgnoreTimeOut(transaction);
+    if (transaction.getType().isLockableTransaction()) {
+      validationResult.ifValid(
+          () -> {
+            startCrosschainTransactionCommitIgnoreTimeOut(transaction);
 
-        });
-
+          });
+    }
     return validationResult;
   }
 
@@ -120,7 +129,7 @@ public class CrosschainProcessor {
   public Object getSignedResult(final CrosschainTransaction transaction, final long blockNumber) {
     // Get Subordinate View results.
     if (processSubordinates(transaction, false)) {
-      return TransactionValidator.TransactionInvalidReason.FAILED_SUBORDINATE_VIEW;
+      return TransactionValidator.TransactionInvalidReason.CROSSCHAIN_FAILED_SUBORDINATE_VIEW;
     }
     return this.subordinateViewCoordinator.getSignedResult(transaction, blockNumber);
   }
@@ -213,12 +222,13 @@ public class CrosschainProcessor {
         // TODO If we return a TransactionInvalidReason, then the HTTP response will be 400.
         // Hence, return as if everything has been successful, and rely on the user to see that no
         // status update occurred as a result of their transaction.
-        return Optional.empty();
+        return Optional.of(
+            ValidationResult.invalid(TransactionValidator.TransactionInvalidReason.CROSSCHAIN_FAILED_EXECUTION));
       }
       return Optional.of(simulatorResult.getValidationResult());
     }
     return Optional.of(
-        ValidationResult.invalid(TransactionValidator.TransactionInvalidReason.UNKNOWN_FAILURE));
+        ValidationResult.invalid(TransactionValidator.TransactionInvalidReason.CROSSCHAIN_UNKNOWN_FAILURE));
   }
 
 
@@ -264,31 +274,48 @@ public class CrosschainProcessor {
   }
 
   private void startCrosschainTransactionCommitIgnoreTimeOut(final CrosschainTransaction transaction) {
+    LOG.info("Crosschain Signalling Transaction: Start");
     this.vertx.setTimer(30000, id -> {
+      LOG.info("Crosschain Signalling Transaction: fired****");
+
+      // Work out sender's nonce.
+      final MutableWorldState worldState = worldStateArchive.getMutable();
+      if (worldState == null) {
+        LOG.error("Crosschain Signalling Transaction: Can't fetch world state");
+        return;
+      }
+      final Address senderAddress =
+          Address.extract(Hash.hash(this.nodeKeys.getPublicKey().getEncodedBytes()));
+      final Account sender = worldState.get(senderAddress);
+      final long nonce = sender != null ? sender.getNonce() : 0L;
+
+      // Work out TO address.
+      Address toAddress = transaction.getTo().orElse(transaction.contractAddress().orElse(Address.ZERO));
+      if (toAddress.isEmpty()) {
+        LOG.error("Crosschain Signalling Transaction: No TO address specified");
+        return;
+      }
+
+      List<CrosschainTransaction> emptyList = List.of();
+
       CrosschainTransaction ignoreCommitTransaction =
           CrosschainTransaction.builderX()
               .type(CrosschainTransaction.CrosschainTransactionType.UNLOCK_IGNORE_SIGNALLING_TRANSACTION)
-              .nonce(0)
+              .nonce(nonce)
               .gasPrice(Wei.ZERO)
-              .gasLimit(0)
-              .to(transaction.contractAddress().orElse(null))
+              .gasLimit(10000000)
+              .to(toAddress)
               .value(Wei.ZERO)
               .payload(BytesValue.EMPTY)
-              .chainId(BigInteger.ONE)      // TODO need to pass in this sidechain's chainID.
-              .subordinateTransactionsAndViews(transaction.getSubordinateTransactionsAndViews())
-              .signAndBuild(getKeyPair());
+              .chainId(BigInteger.valueOf(this.sidechainId))
+              .subordinateTransactionsAndViews(emptyList)
+              .signAndBuild(this.nodeKeys);
 
-//      ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult =
+      ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult =
           this.transactionPool.addLocalTransaction(ignoreCommitTransaction);
+      if (!validationResult.isValid()) {
+        LOG.error("startCrosschainTransactionCommitIgnoreTimeOut: validationResult:{}", validationResult.toString());
+      }
     });
-  }
-
-  // TODO REMOVE THIS CODE: Need to use node's key pair
-  SECP256K1.KeyPair keyPair;
-  private  synchronized SECP256K1.KeyPair getKeyPair() {
-    if (this.keyPair == null) {
-      this.keyPair = SECP256K1.KeyPair.generate();
-    }
-    return this.keyPair;
   }
 }

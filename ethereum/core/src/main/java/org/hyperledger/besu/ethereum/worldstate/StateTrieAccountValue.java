@@ -12,14 +12,20 @@
  */
 package org.hyperledger.besu.ethereum.worldstate;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.crosschain.DebugHelper;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 /** Represents the raw values associated with an account in the world state trie. */
 public class StateTrieAccountValue {
+//  private static final Logger LOG = LogManager.getLogger();
+
+
   // Have the indicator above the maximum likely nonce value.
   // Note that for RLP encoding, the value must be positive.
   private static final long CONTAINS_CROSSCHAIN_EXTENDED_STATE = 0x4000000000000000L;
@@ -147,6 +153,10 @@ public class StateTrieAccountValue {
       nonceField |= CONTAINS_CROSSCHAIN_EXTENDED_STATE;
     }
 
+//    LOG.info("WriteTo ExtendedState:{}, Lockable:{}, Locked:{}, Flags:{}", useCrosschainExtendedState, this.lockable, this.locked, flags);
+//    LOG.info(DebugHelper.getStackTrace()) ;
+
+
     out.writeLongScalar(nonceField);
     out.writeUInt256Scalar(balance);
     out.writeBytesValue(storageRoot);
@@ -206,6 +216,10 @@ public class StateTrieAccountValue {
       }
     }
     in.leaveList();
+
+//    LOG.info("ReadFrom ExtendedState:{}, Lockable:{}, Locked:{}", extendedState, isLockable, isLocked);
+//    LOG.info(DebugHelper.getStackTrace()) ;
+
 
     return new StateTrieAccountValue(
         nonce, balance, isLockable, isLocked, storageRoot, codeHash, version);

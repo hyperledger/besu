@@ -13,6 +13,7 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
@@ -26,6 +27,7 @@ import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import com.google.common.collect.ImmutableList;
@@ -139,6 +141,16 @@ public class MainnetBlockProcessor implements BlockProcessor {
       if (result.isInvalid()) {
         return Result.failed();
       }
+
+
+          // TODO SIDECHAINS START
+          // Debug code to dump all updated statesd for the updated world state.
+          Collection<Account> accs = worldStateUpdater.getTouchedAccounts();
+          for (Account acc: accs) {
+              LOG.info("AccUpdated: {}, Lockable {} Locked {} LockState {}",  acc.getAddress(), acc.isLockable(), acc.isLocked(), acc.getLockState());
+          }
+          // TODO SIDECHAINS END
+
 
       worldStateUpdater.commit();
       gasUsed = transaction.getGasLimit() - result.getGasRemaining() + gasUsed;

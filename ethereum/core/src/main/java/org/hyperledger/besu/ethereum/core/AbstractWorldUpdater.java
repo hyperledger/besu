@@ -165,8 +165,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
     private Wei balance;
     private int version;
     private boolean lockable;
-    private boolean locked;
-    private LockAction lockState;
+    private LockState lockState;
 
     @Nullable private BytesValue updatedCode; // Null if the underlying code has not been updated.
     @Nullable private Hash updatedCodeHash;
@@ -185,7 +184,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
       this.balance = Wei.ZERO;
       this.version = Account.DEFAULT_VERSION;
       this.lockable = false;
-      this.lockState = LockAction.NONE;
+      this.lockState = LockState.NONE;
 
       this.updatedCode = BytesValue.EMPTY;
       this.updatedStorage = new TreeMap<>();
@@ -201,7 +200,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
       this.balance = account.getBalance();
       this.version = account.getVersion();
       this.lockable = account.isLockable();
-      this.locked = account.isLocked();
+      this.lockState = account.getLockState();
 
       this.updatedStorage = new TreeMap<>();
     }
@@ -278,26 +277,26 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
 
     @Override
     public boolean isLocked() {
-      return this.locked;
+      return this.lockState == LockState.LOCK;
     }
 
     @Override
     public void lock() {
-      this.lockState = LockAction.LOCK;
+      this.lockState = LockState.LOCK;
     }
 
     @Override
     public void unlock(final boolean commit) {
-      this.lockState = commit ? LockAction.UNLOCK_COMMIT : LockAction.UNLOCK_IGNORE;
+      this.lockState = commit ? LockState.UNLOCK_COMMIT : LockState.UNLOCK_IGNORE;
     }
 
     @Override
-    public LockAction getLockAction() {
+    public LockState getLockState() {
       return this.lockState;
     }
 
     @Override
-    public void setLockAction(final LockAction action) {
+    public void setLockState(final LockState action) {
       this.lockState = action;
     }
 
@@ -474,6 +473,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
         }
         existing.setNonce(update.getNonce());
         existing.setBalance(update.getBalance());
+        existing.setLockState(update.getLockState());
         if (update.codeWasUpdated()) {
           existing.setCode(update.getCode());
           existing.setVersion(update.getVersion());

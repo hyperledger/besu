@@ -110,10 +110,25 @@ public class DefaultMutableWorldState implements MutableWorldState {
   @Override
   public Account get(final Address address) {
     final Hash addressHash = Hash.hash(address);
-    return accountStateTrie
+    Account acc = accountStateTrie
         .get(Hash.hash(address))
         .map(bytes -> deserializeAccount(address, addressHash, bytes))
         .orElse(null);
+
+    LOG.info("WorldState get: AccIsNull: {} Acc:{}, Lockable:{}, Locked:{}",
+        (acc == null),
+        acc == null ? 0 : acc.getAddress(),
+        acc == null ? "IsNull" : acc.isLockable(),
+        acc == null ? "IsNull" : acc.isLocked());
+
+    return acc;
+//    return accountStateTrie
+//        .get(Hash.hash(address))
+//        .map(bytes -> deserializeAccount(address, addressHash, bytes))
+//        .orElse(null);
+
+
+
   }
 
   private WorldStateAccount deserializeAccount(
@@ -215,7 +230,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
 
     private final Address address;
     private final Hash addressHash;
-    private final MutableAccount.LockAction lockState;
+    private final MutableAccount.LockState lockState;
 
     final StateTrieAccountValue accountValue;
 
@@ -229,7 +244,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
       this.addressHash = addressHash;
       this.accountValue = accountValue;
       this.lockState =
-          accountValue.isLocked() ? MutableAccount.LockAction.LOCK : MutableAccount.LockAction.NONE;
+          accountValue.isLocked() ? AccountState.LockState.LOCK : AccountState.LockState.NONE;
     }
 
     private MerklePatriciaTrie<Bytes32, BytesValue> storageTrie() {
@@ -280,7 +295,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
 
     // TODO SIDECHAINS
     @Override
-    public MutableAccount.LockAction getLockAction() {
+    public MutableAccount.LockState getLockState() {
       return this.lockState;
     }
 
@@ -435,8 +450,11 @@ public class DefaultMutableWorldState implements MutableWorldState {
         final DefaultMutableWorldState wrapped) {
       Address realAddress = origin.address;
       Address provisionalStateAddress = realAddress.deriveAddress();
+      LOG.info("Real address{} Provisional{}", realAddress, provisionalStateAddress);
+      LOG.info("Origin {} IsLocked {} Lockstate {}", origin.address, origin.isLocked(), origin.lockState);
+      LOG.info("Updated{} IsLocked {} Lockstate {}", updated.getAddress(), updated.isLocked(), updated.getLockState());
       if (!origin.isLocked()) {
-        switch (origin.lockState) {
+        switch (updated.getLockState()) {
           case NONE:
             storeUpdatedStateTo(origin, updated, wrapped, realAddress);
             break;
@@ -453,25 +471,25 @@ public class DefaultMutableWorldState implements MutableWorldState {
             break;
         }
       } else {
-        switch (origin.lockState) {
+        switch (updated.getLockState()) {
             // If the update is unlock, then ignore everything except for the flag.
           case UNLOCK_IGNORE:
             changeLockStateOnAccount(origin, updated, wrapped, false);
-            deleteAccount(provisionalStateAddress);
+            deleteAccount(wrapped, provisionalStateAddress);
             break;
           case UNLOCK_COMMIT:
-            deleteAccount(realAddress);
             // Copy the state from the provisional account to the real account.
-            final Hash addressHash = Hash.hash(provisionalStateAddress);
-            Optional<BytesValue> storedAccount = wrapped.accountStateTrie.get(addressHash);
+            final Hash provisionalStateAddressHash = Hash.hash(provisionalStateAddress);
+            Optional<BytesValue> storedAccount = wrapped.accountStateTrie.get(provisionalStateAddressHash);
             if (storedAccount.isEmpty()) {
               LOG.error("Unexpectedly, no provisional state");
             } else {
               wrapped.accountStateTrie.put(updated.getAddressHash(), storedAccount.get());
             }
+            deleteAccount(wrapped, provisionalStateAddress);
             break;
           default:
-            LOG.error("Unexpectedly, locked and lock action is {}", origin.lockState);
+            LOG.error("Unexpectedly, locked and lock state is {}", origin.lockState);
             break;
         }
       }
@@ -515,7 +533,8 @@ public class DefaultMutableWorldState implements MutableWorldState {
       }
 
       // Save address preimage
-      wrapped.newAccountKeyPreimages.put(updated.getAddressHash(), updated.getAddress());
+      Hash addressHash = Hash.hash(address);
+      wrapped.newAccountKeyPreimages.put(addressHash, address);
       // Lastly, save the new account.
       final BytesValue account =
           serializeAccount(
@@ -526,8 +545,9 @@ public class DefaultMutableWorldState implements MutableWorldState {
               storageRoot,
               codeHash,
               updated.getVersion());
+      wrapped.accountStateTrie.put(addressHash, account);
 
-      wrapped.accountStateTrie.put(updated.getAddressHash(), account);
+      LOG.info("storeUpdatedStateTo, Acc:{}, Lock is always false, origin is null:{}", address, (origin==null));
     }
 
     private void changeLockStateOnAccount(
@@ -550,6 +570,8 @@ public class DefaultMutableWorldState implements MutableWorldState {
                 accountValue.getCodeHash(),
                 accountValue.getVersion());
         wrapped.accountStateTrie.put(updated.getAddressHash(), account);
+
+        LOG.info("changeLockStateOnAccount, Acc:{}, Lock: {}", updated.getAddress(), lock);
       }
     }
 
