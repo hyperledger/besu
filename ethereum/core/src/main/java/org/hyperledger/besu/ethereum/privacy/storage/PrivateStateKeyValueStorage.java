@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.privacy;
+package org.hyperledger.besu.ethereum.privacy.storage;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
