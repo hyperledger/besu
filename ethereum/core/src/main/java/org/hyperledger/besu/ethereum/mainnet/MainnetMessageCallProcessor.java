@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.DefaultEvmAccount;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.core.Wei;
@@ -49,16 +50,20 @@ public class MainnetMessageCallProcessor extends AbstractMessageProcessor {
   @Override
   public void start(final MessageFrame frame) {
     LOG.trace("Executing message-call");
+    try {
+      transferValue(frame);
 
-    transferValue(frame);
-
-    // Check first if the message call is to a pre-compile contract
-    final PrecompiledContract precompile =
-        precompiles.get(frame.getContractAddress(), frame.getContractAccountVersion());
-    if (precompile != null) {
-      executePrecompile(precompile, frame);
-    } else {
-      frame.setState(MessageFrame.State.CODE_EXECUTING);
+      // Check first if the message call is to a pre-compile contract
+      final PrecompiledContract precompile =
+              precompiles.get(frame.getContractAddress(), frame.getContractAccountVersion());
+      if (precompile != null) {
+        executePrecompile(precompile, frame);
+      } else {
+        frame.setState(MessageFrame.State.CODE_EXECUTING);
+      }
+    } catch (DefaultEvmAccount.ModificationNotAllowedException ex) {
+      LOG.trace("Message call error: illegal modification not allowed from private state");
+      frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
     }
   }
 

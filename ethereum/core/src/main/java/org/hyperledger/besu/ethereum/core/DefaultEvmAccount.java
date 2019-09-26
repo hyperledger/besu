@@ -34,9 +34,7 @@ public class DefaultEvmAccount implements EvmAccount {
   private boolean isImmutable;
 
   public DefaultEvmAccount(final MutableAccount mutableAccount) {
-    if (mutableAccount == null) {
-      throw new RuntimeException("What the fuck are you doing?");
-    }
+
     this.mutableAccount = mutableAccount;
     this.isImmutable = false;
   }

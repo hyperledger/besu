@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.privacy;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.DefaultEvmAccount;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.LogSeries;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
@@ -191,11 +192,11 @@ public class PrivateTransactionProcessor {
     LOG.trace("Starting private execution of {}", transaction);
 
     final Address senderAddress = transaction.getSender();
-    final MutableAccount maybePrivateSender =
-        privateWorldState.getAccount(senderAddress).getMutable();
+    final DefaultEvmAccount maybePrivateSender =
+        privateWorldState.getAccount(senderAddress);
     final MutableAccount sender =
         maybePrivateSender != null
-            ? maybePrivateSender
+            ? maybePrivateSender.getMutable()
             : privateWorldState.createAccount(senderAddress, 0, Wei.ZERO).getMutable();
 
     final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult =
@@ -215,7 +216,7 @@ public class PrivateTransactionProcessor {
     final Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
 
     final WorldUpdater mutablePrivateWorldStateUpdater =
-        new DefaultMutablePrivateWorldStateUpdater(publicWorldState, privateWorldState.updater());
+        new DefaultMutablePrivateWorldStateUpdater(publicWorldState, privateWorldState);
 
     if (transaction.isContractCreation()) {
       final Address privateContractAddress =
@@ -291,7 +292,7 @@ public class PrivateTransactionProcessor {
     }
 
     if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
-      privateWorldState.commit();
+      mutablePrivateWorldStateUpdater.commit();
     }
 
     if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {

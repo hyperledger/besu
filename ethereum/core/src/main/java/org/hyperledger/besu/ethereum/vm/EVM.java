@@ -50,6 +50,8 @@ public class EVM {
     while (frame.getState() == MessageFrame.State.CODE_EXECUTING) {
       executeNextOperation(frame, operationTracer);
     }
+    System.out.println(frame.getState().name());
+    System.out.println("Here");
   }
 
   public void forEachOperation(

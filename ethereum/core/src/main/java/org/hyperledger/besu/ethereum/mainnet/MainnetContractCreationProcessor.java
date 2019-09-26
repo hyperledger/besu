@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.DefaultEvmAccount;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.vm.EVM;
@@ -105,24 +106,29 @@ public class MainnetContractCreationProcessor extends AbstractMessageProcessor {
     if (LOG.isTraceEnabled()) {
       LOG.trace("Executing contract-creation");
     }
+    try {
+      final MutableAccount sender =
+              frame.getWorldState().getAccount(frame.getSenderAddress()).getMutable();
+      sender.decrementBalance(frame.getValue());
 
-    final MutableAccount sender =
-        frame.getWorldState().getAccount(frame.getSenderAddress()).getMutable();
-    sender.decrementBalance(frame.getValue());
-
-    final MutableAccount contract =
-        frame.getWorldState().getOrCreate(frame.getContractAddress()).getMutable();
-    if (accountExists(contract)) {
-      LOG.trace(
-          "Contract creation error: account as already been created for address {}",
-          frame.getContractAddress());
+      final MutableAccount contract =
+              frame.getWorldState().getOrCreate(frame.getContractAddress()).getMutable();
+      if (accountExists(contract)) {
+        LOG.trace(
+                "Contract creation error: account as already been created for address {}",
+                frame.getContractAddress());
+        frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
+      } else {
+        contract.incrementBalance(frame.getValue());
+        contract.setNonce(initialContractNonce);
+        contract.clearStorage();
+        frame.setState(MessageFrame.State.CODE_EXECUTING);
+      }
+    } catch (DefaultEvmAccount.ModificationNotAllowedException ex) {
+      LOG.trace("Contract creation error: illegal modification not allowed from private state");
       frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
-    } else {
-      contract.incrementBalance(frame.getValue());
-      contract.setNonce(initialContractNonce);
-      contract.clearStorage();
-      frame.setState(MessageFrame.State.CODE_EXECUTING);
     }
+
   }
 
   @Override

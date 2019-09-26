@@ -59,8 +59,13 @@ public class PrivateContractPublicStateAcceptanceTest extends PrivacyAcceptanceT
                     minerNode.getTransactionSigningKey(),
                     POW_CHAIN_ID,
                     minerNode.getEnclaveKey()));
+
+
+
     assertThat(reader.read(publicEventEmitter.getContractAddress()).send())
         .isEqualTo(BigInteger.valueOf(12));
+
+
   }
 
   @Test(expected = ContractCallException.class)
