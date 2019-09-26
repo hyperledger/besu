@@ -108,7 +108,7 @@ abstract class MainnetEvmRegistries {
 
     registerFrontierOpcodes(registry, gasCalculator, Account.DEFAULT_VERSION);
 
-    return new EVM(registry, new InvalidOperation(gasCalculator));
+    return new EVM(registry, gasCalculator);
   }
 
   static EVM homestead(final GasCalculator gasCalculator) {
@@ -116,7 +116,7 @@ abstract class MainnetEvmRegistries {
 
     registerHomesteadOpcodes(registry, gasCalculator, Account.DEFAULT_VERSION);
 
-    return new EVM(registry, new InvalidOperation(gasCalculator));
+    return new EVM(registry, gasCalculator);
   }
 
   static EVM byzantium(final GasCalculator gasCalculator) {
@@ -124,7 +124,7 @@ abstract class MainnetEvmRegistries {
 
     registerByzantiumOpcodes(registry, gasCalculator, Account.DEFAULT_VERSION);
 
-    return new EVM(registry, new InvalidOperation(gasCalculator));
+    return new EVM(registry, gasCalculator);
   }
 
   static EVM constantinople(final GasCalculator gasCalculator) {
@@ -132,7 +132,7 @@ abstract class MainnetEvmRegistries {
 
     registerConstantinopleOpcodes(registry, gasCalculator, Account.DEFAULT_VERSION);
 
-    return new EVM(registry, new InvalidOperation(gasCalculator));
+    return new EVM(registry, gasCalculator);
   }
 
   static EVM istanbul(final GasCalculator gasCalculator, final BigInteger chainId) {
@@ -140,7 +140,7 @@ abstract class MainnetEvmRegistries {
 
     registerIstanbulOpcodes(registry, gasCalculator, Account.DEFAULT_VERSION, chainId);
 
-    return new EVM(registry, new InvalidOperation(gasCalculator));
+    return new EVM(registry, gasCalculator);
   }
 
   private static void registerFrontierOpcodes(

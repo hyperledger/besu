@@ -107,8 +107,8 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     }
 
     final StorageServiceImpl storageService = new StorageServiceImpl();
-    final BesuConfiguration commonPluginConfiguration =
-        new BesuConfigurationImpl(Files.createTempDir().toPath());
+    final Path path = Files.createTempDir().toPath();
+    final BesuConfiguration commonPluginConfiguration = new BesuConfigurationImpl(path, path);
     final BesuPluginContextImpl besuPluginContext =
         besuPluginContextMap.computeIfAbsent(
             node, n -> buildPluginContext(node, storageService, commonPluginConfiguration));

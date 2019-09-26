@@ -196,7 +196,7 @@ public abstract class BesuControllerBuilder<C> {
     checkNotNull(metricsSystem, "Missing metrics system");
     checkNotNull(privacyParameters, "Missing privacy parameters");
     checkNotNull(dataDirectory, "Missing data directory"); // Why do we need this?
-    checkNotNull(clock, "Mising clock");
+    checkNotNull(clock, "Missing clock");
     checkNotNull(transactionPoolConfiguration, "Missing transaction pool configuration");
     checkNotNull(nodeKeys, "Missing node keys");
     checkNotNull(storageProvider, "Must supply a storage provider");

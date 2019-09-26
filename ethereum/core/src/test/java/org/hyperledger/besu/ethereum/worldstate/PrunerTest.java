@@ -65,7 +65,7 @@ public class PrunerTest {
 
     final Pruner pruner =
         new Pruner(
-            markSweepPruner, blockchain, mockExecutorService, new PruningConfiguration(0, 0));
+            markSweepPruner, blockchain, mockExecutorService, new PruningConfiguration(0, 1));
     pruner.start();
 
     final Block block1 = appendBlockWithParent(blockchain, genesisBlock);
@@ -159,6 +159,22 @@ public class PrunerTest {
                     mockExecutorService,
                     new PruningConfiguration(-1, -2)))
         .isInstanceOf(IllegalArgumentException.class);
+    assertThatThrownBy(
+            () ->
+                new Pruner(
+                    markSweepPruner,
+                    mockchain,
+                    mockExecutorService,
+                    new PruningConfiguration(10, 8)))
+        .isInstanceOf(IllegalArgumentException.class);
+    assertThatThrownBy(
+            () ->
+                new Pruner(
+                    markSweepPruner,
+                    mockchain,
+                    mockExecutorService,
+                    new PruningConfiguration(10, 10)))
+        .isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
@@ -171,7 +187,7 @@ public class PrunerTest {
 
     final Pruner pruner =
         new Pruner(
-            markSweepPruner, blockchain, mockExecutorService, new PruningConfiguration(0, 0));
+            markSweepPruner, blockchain, mockExecutorService, new PruningConfiguration(0, 1));
     pruner.start();
     pruner.stop();
     verify(markSweepPruner).cleanup();
