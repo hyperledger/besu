@@ -108,15 +108,15 @@ public class MainnetContractCreationProcessor extends AbstractMessageProcessor {
     }
     try {
       final MutableAccount sender =
-              frame.getWorldState().getAccount(frame.getSenderAddress()).getMutable();
+          frame.getWorldState().getAccount(frame.getSenderAddress()).getMutable();
       sender.decrementBalance(frame.getValue());
 
       final MutableAccount contract =
-              frame.getWorldState().getOrCreate(frame.getContractAddress()).getMutable();
+          frame.getWorldState().getOrCreate(frame.getContractAddress()).getMutable();
       if (accountExists(contract)) {
         LOG.trace(
-                "Contract creation error: account as already been created for address {}",
-                frame.getContractAddress());
+            "Contract creation error: account as already been created for address {}",
+            frame.getContractAddress());
         frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
       } else {
         contract.incrementBalance(frame.getValue());
@@ -128,7 +128,6 @@ public class MainnetContractCreationProcessor extends AbstractMessageProcessor {
       LOG.trace("Contract creation error: illegal modification not allowed from private state");
       frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
     }
-
   }
 
   @Override

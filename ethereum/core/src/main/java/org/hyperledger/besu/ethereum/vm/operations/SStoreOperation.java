@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.vm.operations;
 
 import org.hyperledger.besu.ethereum.core.Account;
-import org.hyperledger.besu.ethereum.core.DefaultEvmAccount;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.vm.AbstractOperation;
@@ -54,7 +53,8 @@ public class SStoreOperation extends AbstractOperation {
     final UInt256 key = frame.popStackItem().asUInt256();
     final UInt256 value = frame.popStackItem().asUInt256();
 
-    final MutableAccount accountInQuestion = frame.getWorldState().getAccount(frame.getRecipientAddress()).getMutable();
+    final MutableAccount accountInQuestion =
+        frame.getWorldState().getAccount(frame.getRecipientAddress()).getMutable();
 
     assert accountInQuestion != null : "VM account should exists";
 

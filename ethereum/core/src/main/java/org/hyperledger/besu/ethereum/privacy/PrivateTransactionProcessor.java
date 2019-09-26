@@ -192,8 +192,7 @@ public class PrivateTransactionProcessor {
     LOG.trace("Starting private execution of {}", transaction);
 
     final Address senderAddress = transaction.getSender();
-    final DefaultEvmAccount maybePrivateSender =
-        privateWorldState.getAccount(senderAddress);
+    final DefaultEvmAccount maybePrivateSender = privateWorldState.getAccount(senderAddress);
     final MutableAccount sender =
         maybePrivateSender != null
             ? maybePrivateSender.getMutable()

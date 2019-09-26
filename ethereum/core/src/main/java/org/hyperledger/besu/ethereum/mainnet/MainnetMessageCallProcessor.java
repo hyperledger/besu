@@ -55,7 +55,7 @@ public class MainnetMessageCallProcessor extends AbstractMessageProcessor {
 
       // Check first if the message call is to a pre-compile contract
       final PrecompiledContract precompile =
-              precompiles.get(frame.getContractAddress(), frame.getContractAccountVersion());
+          precompiles.get(frame.getContractAddress(), frame.getContractAccountVersion());
       if (precompile != null) {
         executePrecompile(precompile, frame);
       } else {
