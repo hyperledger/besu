@@ -20,25 +20,24 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.plugin.data.Address;
 import org.hyperledger.besu.plugin.data.BlockHeader;
-import org.hyperledger.besu.plugin.services.metrics.ValidatorMetricsService;
+import org.hyperledger.besu.plugin.services.metrics.PoAMetricsService;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Optional;
 
-public class ValidatorMetricServiceImpl implements ValidatorMetricsService {
+public class PoAMetricServiceImpl implements PoAMetricsService {
 
   private final BlockInterface blockInterface;
   private final Blockchain blockchain;
 
-  public ValidatorMetricServiceImpl(
-      final BlockInterface blockInterface, final Blockchain blockchain) {
+  public PoAMetricServiceImpl(final BlockInterface blockInterface, final Blockchain blockchain) {
     this.blockInterface = blockInterface;
     this.blockchain = blockchain;
   }
 
   @Override
-  public Collection<Address> getValidators() {
+  public Collection<Address> getValidatorsForLatestBlock() {
     return new ArrayList<>(blockInterface.validatorsInBlock(blockchain.getChainHeadHeader()));
   }
 
