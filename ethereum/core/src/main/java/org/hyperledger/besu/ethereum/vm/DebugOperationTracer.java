@@ -16,7 +16,10 @@ package org.hyperledger.besu.ethereum.vm;
 
 import static org.hyperledger.besu.util.uint.UInt256.U_32;
 
-import org.hyperledger.besu.ethereum.core.*;
+import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.Gas;
+import org.hyperledger.besu.ethereum.core.ModificationNotAllowedException;
+import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.vm.ehalt.ExceptionalHaltException;
