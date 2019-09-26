@@ -70,10 +70,6 @@ public class SelfDestructOperation extends AbstractOperation {
       final MessageFrame frame,
       final EnumSet<ExceptionalHaltReason> previousReasons,
       final EVM evm) {
-    return Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE)
-        .filter(
-            __ ->
-                frame.isStatic()
-                    || frame.getWorldState().getAccount(frame.getRecipientAddress()).isImmutable());
+    return Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE).filter(__ -> frame.isStatic());
   }
 }
