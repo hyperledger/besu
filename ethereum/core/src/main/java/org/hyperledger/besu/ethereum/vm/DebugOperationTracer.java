@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.vm;
 import static org.hyperledger.besu.util.uint.UInt256.U_32;
 
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.DefaultEvmAccount;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
@@ -82,14 +83,18 @@ public class DebugOperationTracer implements OperationTracer {
     if (!options.isStorageEnabled()) {
       return Optional.empty();
     }
-    final Map<UInt256, UInt256> storageContents =
-        new TreeMap<>(
-            frame
-                .getWorldState()
-                .getAccount(frame.getRecipientAddress())
-                .getMutable()
-                .getUpdatedStorage());
-    return Optional.of(storageContents);
+    try {
+      final Map<UInt256, UInt256> storageContents =
+          new TreeMap<>(
+              frame
+                  .getWorldState()
+                  .getAccount(frame.getRecipientAddress())
+                  .getMutable()
+                  .getUpdatedStorage());
+      return Optional.of(storageContents);
+    } catch (DefaultEvmAccount.ModificationNotAllowedException e) {
+      return Optional.of(new TreeMap<>());
+    }
   }
 
   private Optional<Bytes32[]> captureMemory(final MessageFrame frame) {
