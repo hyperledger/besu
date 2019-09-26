@@ -60,7 +60,7 @@ import org.hyperledger.besu.cli.util.CommandLineUtils;
 import org.hyperledger.besu.cli.util.ConfigOptionSearchAndRunHandler;
 import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.config.GenesisConfigFile;
-import org.hyperledger.besu.consensus.common.ValidatorMetricServiceImpl;
+import org.hyperledger.besu.consensus.common.PoAMetricServiceImpl;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.controller.KeyPairUtil;
@@ -102,7 +102,7 @@ import org.hyperledger.besu.plugin.services.StorageService;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
-import org.hyperledger.besu.plugin.services.metrics.ValidatorMetricsService;
+import org.hyperledger.besu.plugin.services.metrics.PoAMetricsService;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
 import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.services.BesuEventsImpl;
@@ -191,6 +191,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Map<String, String> environment;
   private final MetricCategoryRegistryImpl metricCategoryRegistry =
       new MetricCategoryRegistryImpl();
+  private final MetricCategoryConverter metricCategoryConverter = new MetricCategoryConverter();
 
   protected KeyLoader getKeyLoader() {
     return KeyPairUtil::loadKeyPair;
@@ -828,12 +829,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     commandLine.registerConverter(Wei.class, (arg) -> Wei.of(Long.parseUnsignedLong(arg)));
     commandLine.registerConverter(PositiveNumber.class, PositiveNumber::fromString);
 
-    final MetricCategoryConverter metricCategoryConverter = new MetricCategoryConverter();
     metricCategoryConverter.addCategories(BesuMetricCategory.class);
     metricCategoryConverter.addCategories(StandardMetricCategory.class);
-    metricCategoryRegistry
-        .getMetricCategories()
-        .forEach(metricCategoryConverter::addRegistryCategory);
     commandLine.registerConverter(MetricCategory.class, metricCategoryConverter);
     return this;
   }
@@ -863,6 +860,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     new RocksDBPlugin().register(besuPluginContext);
 
     besuPluginContext.registerPlugins(pluginsDir());
+
+    metricCategoryRegistry
+        .getMetricCategories()
+        .forEach(metricCategoryConverter::addRegistryCategory);
+
     return this;
   }
 
@@ -904,20 +906,23 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             besuController.getProtocolManager().getBlockBroadcaster(),
             besuController.getTransactionPool(),
             besuController.getSyncState()));
+    initPluginMetrics(besuController);
+    besuPluginContext.startPlugins();
+    return this;
+  }
+
+  private void initPluginMetrics(final BesuController<?> besuController) {
     besuPluginContext.addService(MetricsSystem.class, getMetricsSystem());
 
     besuController
         .getBlockInterface()
         .ifPresent(
             blockInterface -> {
-              ValidatorMetricServiceImpl service =
-                  new ValidatorMetricServiceImpl(
+              PoAMetricServiceImpl service =
+                  new PoAMetricServiceImpl(
                       blockInterface, besuController.getProtocolContext().getBlockchain());
-              besuPluginContext.addService(ValidatorMetricsService.class, service);
+              besuPluginContext.addService(PoAMetricsService.class, service);
             });
-
-    besuPluginContext.startPlugins();
-    return this;
   }
 
   private void prepareLogging() {

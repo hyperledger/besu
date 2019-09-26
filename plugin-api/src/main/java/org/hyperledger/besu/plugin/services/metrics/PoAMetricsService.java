@@ -19,10 +19,22 @@ import org.hyperledger.besu.plugin.data.BlockHeader;
 
 import java.util.Collection;
 
-public interface ValidatorMetricsService {
-  // Returns the current list of validators
-  Collection<Address> getValidators();
+/** Retrieves data for producing metrics related to the state of a Proof of Authority (PoA) node. */
+public interface PoAMetricsService {
 
-  // Returns the proposer of a specified block
+  /**
+   * Returns a collection containing the addresses of the validators for the most recently processed
+   * block.
+   *
+   * @return A collection of block validator addresses.
+   */
+  Collection<Address> getValidatorsForLatestBlock();
+
+  /**
+   * Returns the {@link Address} of the proposer of a specified block.
+   *
+   * @param header The {@link BlockHeader} of the block to be queried.
+   * @return The {@link Address} of the proposer of the block.
+   */
   Address getProposerOfBlock(final BlockHeader header);
 }
