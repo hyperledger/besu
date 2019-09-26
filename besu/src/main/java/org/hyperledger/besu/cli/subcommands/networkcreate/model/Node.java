@@ -164,6 +164,8 @@ class Node implements Generatable, ConfigNode, Verifiable {
         .getPrivacy()
         .ifPresent(privacy -> privacy.generate(nodeDir, directoryHandler));
 
+    // TODO generate bash script to run the node with config file option.
+
     LOG.debug("Node {} address is {}", name, address);
 
     return nodeDir;

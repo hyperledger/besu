@@ -18,9 +18,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Objects.requireNonNullElse;
 
-import java.security.SecureRandom;
 import org.hyperledger.besu.cli.subcommands.networkcreate.generate.DirectoryHandler;
 import org.hyperledger.besu.cli.subcommands.networkcreate.generate.Generatable;
+import org.hyperledger.besu.cli.subcommands.networkcreate.generate.OrionKeys;
 import org.hyperledger.besu.cli.subcommands.networkcreate.generate.Verifiable;
 import org.hyperledger.besu.cli.subcommands.networkcreate.mapping.InitConfigurationErrorHandler;
 
@@ -29,16 +29,15 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
+import java.security.SecureRandom;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Random;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.io.Resources;
 import com.moandjiezana.toml.TomlWriter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.io.Base64;
 
 // TODO Handle errors
 class Privacy implements ConfigNode, Verifiable, Generatable {
@@ -83,10 +82,12 @@ class Privacy implements ConfigNode, Verifiable, Generatable {
     final Path privacyNodeDir = outputDirectoryPath.resolve(PRIVACY_DIR_NAME);
     directoryHandler.create(privacyNodeDir);
 
+    String password = null;
     try {
-      // generate a 20 chars password with chars from the range between ! (33) and ~ (126) in ascii table
+      // generate a 20 chars password with chars from the range between ! (33) and ~ (126) in ascii
+      // table
       // it includes all printable symbols from letters to numbers and special characters.
-      final String password =
+      password =
           new SecureRandom()
               .ints(20, '!', '~')
               .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
@@ -100,22 +101,30 @@ class Privacy implements ConfigNode, Verifiable, Generatable {
       LOG.error("Unable to write password file", e);
     }
 
-    // TODO Generate Orion key pair
+    // generate key pair and write:
+    // - encrypted private key using password in a .key file
+    // - public key in a .pub file
     try {
+      checkNotNull(password);
+      OrionKeys orionKeys = new OrionKeys();
+
+      // Write private key encrypted and wrapped in Json
       Files.write(
           privacyNodeDir.resolve(PRIVATE_KEY_FILENAME),
-          "private key".getBytes(UTF_8),
+          orionKeys.encryptToJson(password).getBytes(UTF_8),
           StandardOpenOption.CREATE_NEW);
+
+      // Write public key
       Files.write(
           privacyNodeDir.resolve(PUBLIC_KEY_FILENAME),
-          "public key".getBytes(UTF_8),
+          Base64.encodeBytes(orionKeys.getPublicKey().bytesArray()).getBytes(UTF_8),
           StandardOpenOption.CREATE_NEW);
     } catch (IOException e) {
-      LOG.error("Unable to write key files", e);
+      LOG.error("Unable to write Orion key files", e);
     }
 
     createConfigFile(privacyNodeDir);
-    return null;
+    return privacyNodeDir;
   }
 
   @Override
@@ -149,8 +158,6 @@ class Privacy implements ConfigNode, Verifiable, Generatable {
       configTemplateSource =
           configTemplateSource.replaceAll(TOML_TLS_FIND_REGEX, tomlWriter.write(tlsValueMap));
 
-      List<String> test = new ArrayList<>();
-
       LOG.debug(configTemplateSource);
       Files.write(
           privacyNodeDir.resolve(CONFIG_FILENAME),
@@ -173,4 +180,5 @@ class Privacy implements ConfigNode, Verifiable, Generatable {
   //    LOG.debug(valueMap);
   //    return configTemplateSource.replaceAll(regex, tomlWriter.write(valueMap));
   //  }
+
 }

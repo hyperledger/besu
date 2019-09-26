@@ -26,7 +26,7 @@ address = "0x1339AE03001C8205B7cc192B80007454Dfc74B86"
 balance = 2000000000000000000
 
 [privacy]
-tls = true
+tls = false
 
 [permissioning] #TODO online perm only
 # For dapp
@@ -42,20 +42,20 @@ tls = true
 deploy-dapp = true
 all-nodes-admin = true #
 all-accounts-whitelist = true
-
-[[nodes]]
-name = "node 1"
-validator = true
-bootnode = true
-
-[[nodes]]
-name = "node 2"
-validator = true
-bootnode = true
-
-[[nodes]]
-name = "node 3"
-validator = true
+#
+#[[nodes]]
+#name = "node 1"
+#validator = true
+#bootnode = true
+#
+#[[nodes]]
+#name = "node 2"
+#validator = true
+#bootnode = true
+#
+#[[nodes]]
+#name = "node 3"
+#validator = true
 
 [[nodes]]
 name = "node 4"
