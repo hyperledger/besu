@@ -16,10 +16,7 @@ package org.hyperledger.besu.ethereum.vm;
 
 import static org.hyperledger.besu.util.uint.UInt256.U_32;
 
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.DefaultEvmAccount;
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.core.*;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.vm.ehalt.ExceptionalHaltException;
@@ -92,7 +89,7 @@ public class DebugOperationTracer implements OperationTracer {
                   .getMutable()
                   .getUpdatedStorage());
       return Optional.of(storageContents);
-    } catch (DefaultEvmAccount.ModificationNotAllowedException e) {
+    } catch (ModificationNotAllowedException e) {
       return Optional.of(new TreeMap<>());
     }
   }

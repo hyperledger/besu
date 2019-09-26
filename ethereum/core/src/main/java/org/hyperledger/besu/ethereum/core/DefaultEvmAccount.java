@@ -97,10 +97,4 @@ public class DefaultEvmAccount implements EvmAccount {
       final Bytes32 startKeyHash, final int limit) {
     return mutableAccount.storageEntriesFrom(startKeyHash, limit);
   }
-
-  public static class ModificationNotAllowedException extends RuntimeException {
-    ModificationNotAllowedException() {
-      super("This account may not be modified");
-    }
-  }
 }

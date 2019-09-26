@@ -53,16 +53,14 @@ public class SStoreOperation extends AbstractOperation {
     final UInt256 key = frame.popStackItem().asUInt256();
     final UInt256 value = frame.popStackItem().asUInt256();
 
-    final MutableAccount accountInQuestion =
+    final MutableAccount account =
         frame.getWorldState().getAccount(frame.getRecipientAddress()).getMutable();
-
-    assert accountInQuestion != null : "VM account should exists";
+    assert account != null : "VM account should exists";
 
     // Increment the refund counter.
-    frame.incrementGasRefund(
-        gasCalculator().calculateStorageRefundAmount(accountInQuestion, key, value));
+    frame.incrementGasRefund(gasCalculator().calculateStorageRefundAmount(account, key, value));
 
-    accountInQuestion.setStorageValue(key.copy(), value.copy());
+    account.setStorageValue(key.copy(), value.copy());
   }
 
   @Override
@@ -74,8 +72,6 @@ public class SStoreOperation extends AbstractOperation {
       return Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
     } else if (frame.getRemainingGas().compareTo(minumumGasRemaining) <= 0) {
       return Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS);
-    } else if (frame.getWorldState().getAccount(frame.getRecipientAddress()).isImmutable()) {
-      return Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
     } else {
       return Optional.empty();
     }
