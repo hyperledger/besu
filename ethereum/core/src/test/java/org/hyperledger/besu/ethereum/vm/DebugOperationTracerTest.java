@@ -22,6 +22,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.DefaultEvmAccount;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.MessageFrameTestFixture;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
@@ -212,13 +213,15 @@ public class DebugOperationTracerTest {
   }
 
   private Map<UInt256, UInt256> setupStorageForCapture(final MessageFrame frame) {
-    final MutableAccount account = mock(MutableAccount.class);
+    final DefaultEvmAccount account = mock(DefaultEvmAccount.class);
+    final MutableAccount mutableAccount = mock(MutableAccount.class);
+    when(account.getMutable()).thenReturn(mutableAccount);
     when(worldUpdater.getAccount(frame.getRecipientAddress())).thenReturn(account);
 
     final Map<UInt256, UInt256> updatedStorage = new TreeMap<>();
     updatedStorage.put(UInt256.ZERO, UInt256.of(233));
     updatedStorage.put(UInt256.ONE, UInt256.of(2424));
-    when(account.getUpdatedStorage()).thenReturn(updatedStorage);
+    when(mutableAccount.getUpdatedStorage()).thenReturn(updatedStorage);
     final Bytes32 word1 = Bytes32.fromHexString("0x01");
     final Bytes32 word2 = Bytes32.fromHexString("0x02");
     final Bytes32 word3 = Bytes32.fromHexString("0x03");
