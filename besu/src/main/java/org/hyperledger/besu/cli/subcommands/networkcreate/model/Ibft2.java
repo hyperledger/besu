@@ -52,7 +52,6 @@ class Ibft2 implements PoaConsensus {
     this.blockPeriodSeconds = blockPeriodSeconds;
     this.epochLength = epochLength;
     this.requestTimeoutSeconds = requestTimeoutSeconds;
-    ;
   }
 
   @SuppressWarnings("unused") // Used by Jackson serialisation

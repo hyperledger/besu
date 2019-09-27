@@ -23,13 +23,13 @@ import org.hyperledger.besu.cli.subcommands.networkcreate.generate.Generatable;
 import org.hyperledger.besu.cli.subcommands.networkcreate.generate.OrionKeys;
 import org.hyperledger.besu.cli.subcommands.networkcreate.generate.Verifiable;
 import org.hyperledger.besu.cli.subcommands.networkcreate.mapping.InitConfigurationErrorHandler;
+import org.hyperledger.besu.crypto.SecureRandomProvider;
 
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.security.SecureRandom;
 import java.util.HashMap;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -88,7 +88,7 @@ class Privacy implements ConfigNode, Verifiable, Generatable {
       // table
       // it includes all printable symbols from letters to numbers and special characters.
       password =
-          new SecureRandom()
+          SecureRandomProvider.createSecureRandom()
               .ints(20, '!', '~')
               .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
               .toString();
