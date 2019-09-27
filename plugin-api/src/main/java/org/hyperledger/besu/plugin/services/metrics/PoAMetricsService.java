@@ -33,7 +33,7 @@ public interface PoAMetricsService {
   /**
    * Returns the {@link Address} of the proposer of a specified block.
    *
-   * @param header The {@link BlockHeader} of the block to be queried.
+   * @param header The {@link BlockHeader} to be queried.
    * @return The {@link Address} of the proposer of the block.
    */
   Address getProposerOfBlock(final BlockHeader header);

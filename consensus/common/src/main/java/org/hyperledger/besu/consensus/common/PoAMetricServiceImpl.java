@@ -14,17 +14,13 @@
  */
 package org.hyperledger.besu.consensus.common;
 
-import static org.hyperledger.besu.ethereum.core.Hash.fromHexString;
-
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.plugin.data.Address;
 import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.services.metrics.PoAMetricsService;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Optional;
 
 public class PoAMetricServiceImpl implements PoAMetricsService {
 
@@ -43,10 +39,6 @@ public class PoAMetricServiceImpl implements PoAMetricsService {
 
   @Override
   public Address getProposerOfBlock(final BlockHeader header) {
-    Optional<Block> blockByHash =
-        blockchain.getBlockByHash(fromHexString(header.getBlockHash().getHexString()));
-    Optional<org.hyperledger.besu.ethereum.core.Address> address =
-        blockByHash.map(block -> this.blockInterface.getProposerOfBlock(block.getHeader()));
-    return address.get();
+    return this.blockInterface.getProposerOfBlock(header);
   }
 }
