@@ -68,7 +68,6 @@ import java.util.concurrent.Executors;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import picocli.CommandLine;
 
 public abstract class BesuControllerBuilder<C> {
 
@@ -291,11 +290,8 @@ public abstract class BesuControllerBuilder<C> {
     // Crosschain Configuration.
     final Optional<BigInteger> chainId;
     try {
-      chainId = genesisConfig
-          .getConfigOptions(genesisConfigOverrides)
-          .getChainId();
+      chainId = genesisConfig.getConfigOptions(genesisConfigOverrides).getChainId();
     } catch (Exception ex) {
-      // TODO Is a RuntimeException the best type of unchecked exception to throw for this?
       throw new RuntimeException("Chain ID could not be read from genesis file", ex);
     }
     if (chainId.isEmpty()) {
@@ -310,8 +306,14 @@ public abstract class BesuControllerBuilder<C> {
         SubordinateViewCoordinator.createSubordinateViewCoordinatorAndOtherNodes(
             chainId.get().intValue(), numNodes, transactionSimulator);
     CrosschainProcessor crosschainProcessor =
-        new CrosschainProcessor(subordinateViewCoordinator, transactionSimulator, transactionPool, chainId.get().intValue(), this.nodeKeys, protocolContext.getWorldStateArchive());
-
+        new CrosschainProcessor(
+            subordinateViewCoordinator,
+            transactionSimulator,
+            transactionPool,
+            chainId.get().intValue(),
+            this.nodeKeys,
+            blockchain,
+            protocolContext.getWorldStateArchive());
 
     final MiningCoordinator miningCoordinator =
         createMiningCoordinator(

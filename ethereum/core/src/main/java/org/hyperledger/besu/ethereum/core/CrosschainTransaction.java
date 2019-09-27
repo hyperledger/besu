@@ -132,9 +132,9 @@ public class CrosschainTransaction extends Transaction {
 
     public boolean isLockableTransaction() {
       return isOriginatingTransaction()
-      || isSubordinateTransaction()
-      || isOriginatingLockableContractDeploy()
-      || isSubordinateLockableContractDeploy();
+          || isSubordinateTransaction()
+          || isOriginatingLockableContractDeploy()
+          || isSubordinateLockableContractDeploy();
     }
   }
 
@@ -277,11 +277,18 @@ public class CrosschainTransaction extends Transaction {
     if (hashNoSignature == null) {
       hashNoSignature =
           computeSenderRecoveryHash(
-              type, nonce, gasPrice, gasLimit, to.orElse(null), value, payload, subordinateTransactionsAndViews, chainId);
+              type,
+              nonce,
+              gasPrice,
+              gasLimit,
+              to.orElse(null),
+              value,
+              payload,
+              subordinateTransactionsAndViews,
+              chainId);
     }
     return hashNoSignature;
   }
-
 
   private static Bytes32 computeSenderRecoveryHash(
       final CrosschainTransactionType type,
@@ -294,30 +301,30 @@ public class CrosschainTransaction extends Transaction {
       final List<CrosschainTransaction> subordinateTransactionsAndViews,
       final Optional<BigInteger> chainId) {
     return keccak256(
-                RLP.encode(
-                    out -> {
-                      out.startList();
-                      out.writeLongScalar(type.value);
-                      out.writeLongScalar(nonce);
-                      out.writeUInt256Scalar(gasPrice);
-                      out.writeLongScalar(gasLimit);
-                      out.writeBytesValue(to == null ? BytesValue.EMPTY : to);
-                      out.writeUInt256Scalar(value);
-                      out.writeBytesValue(payload);
-                      out.writeList(
-                          subordinateTransactionsAndViews,
-                          ((crosschainTransaction, rlpOutput) -> {
-                            BytesValueRLPOutput temp = new BytesValueRLPOutput();
-                            crosschainTransaction.writeTo(temp);
-                            rlpOutput.writeBytesValue(temp.encoded());
-                          }));
-                      if (chainId.isPresent()) {
-                        out.writeBigIntegerScalar(chainId.get());
-                        out.writeUInt256Scalar(UInt256.ZERO);
-                        out.writeUInt256Scalar(UInt256.ZERO);
-                      }
-                      out.endList();
-                    }));
+        RLP.encode(
+            out -> {
+              out.startList();
+              out.writeLongScalar(type.value);
+              out.writeLongScalar(nonce);
+              out.writeUInt256Scalar(gasPrice);
+              out.writeLongScalar(gasLimit);
+              out.writeBytesValue(to == null ? BytesValue.EMPTY : to);
+              out.writeUInt256Scalar(value);
+              out.writeBytesValue(payload);
+              out.writeList(
+                  subordinateTransactionsAndViews,
+                  ((crosschainTransaction, rlpOutput) -> {
+                    BytesValueRLPOutput temp = new BytesValueRLPOutput();
+                    crosschainTransaction.writeTo(temp);
+                    rlpOutput.writeBytesValue(temp.encoded());
+                  }));
+              if (chainId.isPresent()) {
+                out.writeBigIntegerScalar(chainId.get());
+                out.writeUInt256Scalar(UInt256.ZERO);
+                out.writeUInt256Scalar(UInt256.ZERO);
+              }
+              out.endList();
+            }));
   }
 
   public void addSignedResult(final BytesValue signedResult) {
@@ -432,7 +439,6 @@ public class CrosschainTransaction extends Transaction {
     CrosschainTransactionType type;
     List<CrosschainTransaction> subordinateTransactionsAndViews;
 
-
     public Builder chainId(final BigInteger chainId) {
       this.chainId = Optional.of(chainId);
       return this;
@@ -482,6 +488,7 @@ public class CrosschainTransaction extends Transaction {
       this.type = CrosschainTransactionType.create((int) type);
       return this;
     }
+
     public Builder type(final CrosschainTransactionType type) {
       this.type = type;
       return this;
@@ -492,7 +499,6 @@ public class CrosschainTransaction extends Transaction {
       this.subordinateTransactionsAndViews = subordinateTransactionsAndViews;
       return this;
     }
-
 
     public CrosschainTransaction build() {
       return new CrosschainTransaction(
@@ -519,7 +525,16 @@ public class CrosschainTransaction extends Transaction {
 
     SECP256K1.Signature computeSignature(final SECP256K1.KeyPair keys) {
       final Bytes32 hash =
-          computeSenderRecoveryHash(type, nonce, gasPrice, gasLimit, to, value, payload, subordinateTransactionsAndViews, chainId);
+          computeSenderRecoveryHash(
+              type,
+              nonce,
+              gasPrice,
+              gasLimit,
+              to,
+              value,
+              payload,
+              subordinateTransactionsAndViews,
+              chainId);
       return SECP256K1.sign(hash, keys);
     }
   }

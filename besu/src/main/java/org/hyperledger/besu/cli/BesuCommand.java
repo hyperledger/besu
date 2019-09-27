@@ -700,7 +700,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Crosschain config file path (default: ${DEFAULT-VALUE}")
   public String crosschainsConfigPath = CrosschainConfiguration.DEFAULT_PATH;
 
-
   private EthNetworkConfig ethNetworkConfig;
   private JsonRpcConfiguration jsonRpcConfiguration;
   private GraphQLConfiguration graphQLConfiguration;

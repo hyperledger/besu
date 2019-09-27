@@ -82,10 +82,7 @@ public interface MutableAccount extends Account {
    */
   void setLockability(boolean lockable);
 
-  /**
-   * Lock a contract account. Store any updates to the account as provisional updates.
-   *
-   */
+  /** Lock a contract account. Store any updates to the account as provisional updates. */
   void lock();
 
   /**
@@ -96,10 +93,7 @@ public interface MutableAccount extends Account {
    */
   void unlock(boolean commit);
 
-  /**
-   * Lock a contract account. Store any updates to the account as provisional updates.
-   *
-   */
+  /** Lock a contract account. Store any updates to the account as provisional updates. */
   void setLockState(LockState lockState);
 
   /**

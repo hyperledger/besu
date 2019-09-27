@@ -110,25 +110,10 @@ public class DefaultMutableWorldState implements MutableWorldState {
   @Override
   public Account get(final Address address) {
     final Hash addressHash = Hash.hash(address);
-    Account acc = accountStateTrie
+    return accountStateTrie
         .get(Hash.hash(address))
         .map(bytes -> deserializeAccount(address, addressHash, bytes))
         .orElse(null);
-
-    LOG.info("WorldState get: AccIsNull: {} Acc:{}, Lockable:{}, Locked:{}",
-        (acc == null),
-        acc == null ? 0 : acc.getAddress(),
-        acc == null ? "IsNull" : acc.isLockable(),
-        acc == null ? "IsNull" : acc.isLocked());
-
-    return acc;
-//    return accountStateTrie
-//        .get(Hash.hash(address))
-//        .map(bytes -> deserializeAccount(address, addressHash, bytes))
-//        .orElse(null);
-
-
-
   }
 
   private WorldStateAccount deserializeAccount(
@@ -450,9 +435,12 @@ public class DefaultMutableWorldState implements MutableWorldState {
         final DefaultMutableWorldState wrapped) {
       Address realAddress = origin.address;
       Address provisionalStateAddress = realAddress.deriveAddress();
-      LOG.info("Real address{} Provisional{}", realAddress, provisionalStateAddress);
-      LOG.info("Origin {} IsLocked {} Lockstate {}", origin.address, origin.isLocked(), origin.lockState);
-      LOG.info("Updated{} IsLocked {} Lockstate {}", updated.getAddress(), updated.isLocked(), updated.getLockState());
+      LOG.info(
+          "Processing Lockable Contracts: RealAddress:{}, Provisional:{}, Original:{}, Updated:{}",
+          realAddress,
+          provisionalStateAddress,
+          origin.lockState,
+          updated.getLockState());
       if (!origin.isLocked()) {
         switch (updated.getLockState()) {
           case NONE:
@@ -480,7 +468,8 @@ public class DefaultMutableWorldState implements MutableWorldState {
           case UNLOCK_COMMIT:
             // Copy the state from the provisional account to the real account.
             final Hash provisionalStateAddressHash = Hash.hash(provisionalStateAddress);
-            Optional<BytesValue> storedAccount = wrapped.accountStateTrie.get(provisionalStateAddressHash);
+            Optional<BytesValue> storedAccount =
+                wrapped.accountStateTrie.get(provisionalStateAddressHash);
             if (storedAccount.isEmpty()) {
               LOG.error("Unexpectedly, no provisional state");
             } else {
@@ -546,8 +535,6 @@ public class DefaultMutableWorldState implements MutableWorldState {
               codeHash,
               updated.getVersion());
       wrapped.accountStateTrie.put(addressHash, account);
-
-      LOG.info("storeUpdatedStateTo, Acc:{}, Lock is always false, origin is null:{}", address, (origin==null));
     }
 
     private void changeLockStateOnAccount(
@@ -570,8 +557,6 @@ public class DefaultMutableWorldState implements MutableWorldState {
                 accountValue.getCodeHash(),
                 accountValue.getVersion());
         wrapped.accountStateTrie.put(updated.getAddressHash(), account);
-
-        LOG.info("changeLockStateOnAccount, Acc:{}, Lock: {}", updated.getAddress(), lock);
       }
     }
 

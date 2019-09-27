@@ -27,8 +27,7 @@ public class OtherNodeSimulator {
   private final SubordinateViewExecutor executor;
 
   public OtherNodeSimulator(
-      final int sidechainId, final int numNodes, final TransactionSimulator transactionSimulator)
-      throws Exception {
+      final int sidechainId, final int numNodes, final TransactionSimulator transactionSimulator) {
     this.signer = new NodeBlsSigner(sidechainId, numNodes);
     this.executor = new SubordinateViewExecutor(transactionSimulator);
   }

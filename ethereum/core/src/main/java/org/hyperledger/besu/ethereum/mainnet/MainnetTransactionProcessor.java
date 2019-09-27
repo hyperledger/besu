@@ -32,7 +32,6 @@ import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.ArrayDeque;
-import java.util.Collection;
 import java.util.Deque;
 import java.util.Optional;
 
@@ -267,12 +266,13 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
             ((CrosschainTransaction) transaction).getType();
         if (type.isSignallingTransaction()) {
           boolean commit = type.isUnlockCommitSignallingTransaction();
-          LOG.info("Signalling Transaction Commit {}", commit);
-          final MutableAccount mutableContract =
-              worldUpdater.updater().getMutable(contract.getAddress());
+          final MutableAccount mutableContract = worldState.getMutable(contract.getAddress());
           mutableContract.unlock(commit);
-
           worldUpdater.commit();
+          LOG.debug(
+              "Signalling Transaction: unlock_{} for account {}",
+              (commit ? "commit" : "ignore"),
+              contract.getAddress());
           return Result.successful(LogSeries.empty(), 0, BytesValue.EMPTY, validationResult);
         }
       }
@@ -304,19 +304,10 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
               .isPersistingState(isPersistingState)
               .build();
 
-
-      //TODO DEBUG START
-      if (contract == null) {
-        LOG.info("***Contract is null");
-      } else {
-        LOG.info("Contract {} Lockable {} Locked {}", contract.getAddress(), contract.isLockable(), contract.isLocked());
-      }
-      //TODO DEBUG END
-
       boolean contractIsLockable = contract != null && contract.isLockable();
       if (contractIsLockable) {
         if (contract.isLocked()) {
-          LOG.info("Attempt to execute transaction on locked contract");
+          LOG.warn("Attempt to execute transaction on locked contract");
           return Result.failed(gasAvailable.toLong(), validationResult, null);
         }
 
@@ -326,20 +317,11 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
         }
       } else {
         if (transaction instanceof CrosschainTransaction) {
-          LOG.info("Attempt to execute crosschain transaction on non-lockable contract");
+          LOG.warn("Attempt to execute crosschain transaction on non-lockable contract");
           return Result.failed(gasAvailable.toLong(), validationResult, null);
         }
       }
     }
-
-    // TODO SIDECHAINS START
-    // Debug code to dump all updated statesd for the updated world state.
-    Collection<Account> accs = worldState.getTouchedAccounts();
-    for (Account acc: accs) {
-      LOG.info("AccUpdatedB: {}, Lockable {} Locked {} LockState {}",  acc.getAddress(), acc.isLockable(), acc.isLocked(), acc.getLockState());
-    }
-    // TODO SIDECHAINS END
-
 
     // If we are processing a crosschain transaction, then add the transaction context such that
     // the precompile can access it.
@@ -362,7 +344,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
     // Remove the transaction context from thread local storage.
     if (transaction instanceof CrosschainTransaction) {
       if (((CrosschainTransaction) transaction).getNextSubordinateTransactionOrView() != null) {
-        LOG.trace(
+        LOG.warn(
             "Crosschain transaction ended prior to all Subordinate Transactions and Views being consumed.");
         initialFrame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
       }
@@ -399,15 +381,6 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
     if (clearEmptyAccounts) {
       clearEmptyAccounts(worldState);
     }
-
-    // TODO SIDECHAINS START
-    // Debug code to dump all updated statesd for the updated world state.
-    accs = worldState.getTouchedAccounts();
-    for (Account acc: accs) {
-      LOG.info("AccUpdatedA: {}, Lockable {} Locked {} LockState {}",  acc.getAddress(), acc.isLockable(), acc.isLocked(), acc.getLockState());
-    }
-    // TODO SIDECHAINS END
-
 
     if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
       return Result.successful(
