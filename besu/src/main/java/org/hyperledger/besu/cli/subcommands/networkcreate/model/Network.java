@@ -65,6 +65,10 @@ class Network implements Verifiable, Generatable, ConfigNode {
     }
 
     this.name = name;
+
+    // Assign clique OR ibft2 as a consensus.
+    // Only one can be used at the sane time.
+    // At least one have to be used.
     if (!isNull(clique)) {
       poaConsensus = clique;
     } else if (!isNull(ibft2)) {
@@ -72,8 +76,9 @@ class Network implements Verifiable, Generatable, ConfigNode {
     } else {
       poaConsensus = null;
     }
-
-    this.poaConsensus.setParent(this);
+    if(!isNull(poaConsensus)) {
+      this.poaConsensus.setParent(this);
+    }
   }
 
   @SuppressWarnings("unused") // Used by Jackson serialisation
