@@ -198,13 +198,13 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
       return Result.invalid(validationResult);
     }
 
-    final MutableAccount mutableAccount = sender.getMutable();
-    final long previousNonce = mutableAccount.incrementNonce();
+    final MutableAccount senderMutableAccount = sender.getMutable();
+    final long previousNonce = senderMutableAccount.incrementNonce();
     LOG.trace(
         "Incremented sender {} nonce ({} -> {})", senderAddress, previousNonce, sender.getNonce());
 
     final Wei upfrontGasCost = transaction.getUpfrontGasCost();
-    final Wei previousBalance = mutableAccount.decrementBalance(upfrontGasCost);
+    final Wei previousBalance = senderMutableAccount.decrementBalance(upfrontGasCost);
     LOG.trace(
         "Deducted sender {} upfront gas cost {} ({} -> {})",
         senderAddress,
@@ -309,7 +309,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
     final Gas refundGas = initialFrame.getGasRefund().plus(selfDestructRefund);
     final Gas refunded = refunded(transaction, initialFrame.getRemainingGas(), refundGas);
     final Wei refundedWei = refunded.priceFor(transaction.getGasPrice());
-    mutableAccount.incrementBalance(refundedWei);
+    senderMutableAccount.incrementBalance(refundedWei);
 
     final MutableAccount coinbase = worldState.getOrCreate(miningBeneficiary).getMutable();
     final Gas coinbaseFee = Gas.of(transaction.getGasLimit()).minus(refunded);
