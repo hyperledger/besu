@@ -42,20 +42,20 @@ tls = false
 deploy-dapp = true
 all-nodes-admin = true #
 all-accounts-whitelist = true
-#
-#[[nodes]]
-#name = "node 1"
-#validator = true
-#bootnode = true
-#
-#[[nodes]]
-#name = "node 2"
-#validator = true
-#bootnode = true
-#
-#[[nodes]]
-#name = "node 3"
-#validator = true
+
+[[nodes]]
+name = "node 1"
+validator = true
+bootnode = true
+
+[[nodes]]
+name = "node 2"
+validator = true
+bootnode = true
+
+[[nodes]]
+name = "node 3"
+validator = true
 
 [[nodes]]
 name = "node 4"
