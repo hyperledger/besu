@@ -78,17 +78,17 @@ public class PrivacyPrecompiledContractTest {
                   .extractArray());
 
   private Enclave mockEnclave() {
-    Enclave mockEnclave = mock(Enclave.class);
-    ReceiveResponse response = new ReceiveResponse(VALID_PRIVATE_TRANSACTION_RLP_BASE64, "");
+    final Enclave mockEnclave = mock(Enclave.class);
+    final ReceiveResponse response = new ReceiveResponse(VALID_PRIVATE_TRANSACTION_RLP_BASE64, "");
     when(mockEnclave.receive(any(ReceiveRequest.class))).thenReturn(response);
     return mockEnclave;
   }
 
   private PrivateTransactionProcessor mockPrivateTxProcessor() {
-    PrivateTransactionProcessor mockPrivateTransactionProcessor =
+    final PrivateTransactionProcessor mockPrivateTransactionProcessor =
         mock(PrivateTransactionProcessor.class);
-    LogSeries logs = mock(LogSeries.class);
-    PrivateTransactionProcessor.Result result =
+    final LogSeries logs = mock(LogSeries.class);
+    final PrivateTransactionProcessor.Result result =
         PrivateTransactionProcessor.Result.successful(
             logs, 0, BytesValue.fromHexString(DEFAULT_OUTPUT), null);
     when(mockPrivateTransactionProcessor.processTransaction(
@@ -107,22 +107,22 @@ public class PrivacyPrecompiledContractTest {
   }
 
   private Enclave brokenMockEnclave() {
-    Enclave mockEnclave = mock(Enclave.class);
+    final Enclave mockEnclave = mock(Enclave.class);
     when(mockEnclave.receive(any(ReceiveRequest.class))).thenThrow(EnclaveException.class);
     return mockEnclave;
   }
 
   @Before
   public void setUp() {
-    WorldStateArchive worldStateArchive;
+    final WorldStateArchive worldStateArchive;
     worldStateArchive = mock(WorldStateArchive.class);
-    MutableWorldState mutableWorldState = mock(MutableWorldState.class);
+    final MutableWorldState mutableWorldState = mock(MutableWorldState.class);
     when(mutableWorldState.updater()).thenReturn(mock(WorldUpdater.class));
     when(worldStateArchive.getMutable()).thenReturn(mutableWorldState);
     when(worldStateArchive.getMutable(any())).thenReturn(Optional.of(mutableWorldState));
 
-    PrivateStateStorage privateStateStorage = mock(PrivateStateStorage.class);
-    PrivateStateStorage.Updater storageUpdater = mock(PrivateStateStorage.Updater.class);
+    final PrivateStateStorage privateStateStorage = mock(PrivateStateStorage.class);
+    final PrivateStateStorage.Updater storageUpdater = mock(PrivateStateStorage.Updater.class);
     when(storageUpdater.putLatestStateRoot(nullable(Bytes32.class), any()))
         .thenReturn(storageUpdater);
     when(storageUpdater.putTransactionLogs(nullable(Bytes32.class), any()))
@@ -151,7 +151,6 @@ public class PrivacyPrecompiledContractTest {
 
   @Test
   public void testPrivacyPrecompiledContract() {
-
     final BytesValue actual = privacyPrecompiledContract.compute(key, messageFrame);
 
     assertThat(actual).isEqualTo(BytesValue.fromHexString(DEFAULT_OUTPUT));

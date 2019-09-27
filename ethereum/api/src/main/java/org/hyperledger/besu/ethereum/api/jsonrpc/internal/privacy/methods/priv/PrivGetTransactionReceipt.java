@@ -93,8 +93,8 @@ public class PrivGetTransactionReceipt implements JsonRpcMethod {
     final long blockNumber = blockchain.getBlockchain().getBlockHeader(blockhash).get().getNumber();
 
     final String publicKey = privacyParameters.getEnclavePublicKey();
-    PrivateTransaction privateTransaction;
-    String privacyGroupId;
+    final PrivateTransaction privateTransaction;
+    final String privacyGroupId;
     try {
       final ReceiveResponse receiveResponse = getReceiveResponseFromEnclave(transaction, publicKey);
       LOG.trace("Received transaction information from Enclave");
@@ -123,12 +123,12 @@ public class PrivGetTransactionReceipt implements JsonRpcMethod {
 
     LOG.trace("Calculated contractAddress: {}", contractAddress);
 
-    BytesValue rlpEncoded = RLP.encode(privateTransaction::writeTo);
-    Bytes32 txHash = org.hyperledger.besu.crypto.Hash.keccak256(rlpEncoded);
+    final BytesValue rlpEncoded = RLP.encode(privateTransaction::writeTo);
+    final Bytes32 txHash = org.hyperledger.besu.crypto.Hash.keccak256(rlpEncoded);
 
     LOG.trace("Calculated private transaction hash: {}", txHash);
 
-    List<Log> events =
+    final List<Log> transactionLogs =
         privacyParameters
             .getPrivateStateStorage()
             .getTransactionLogs(txHash)
@@ -136,7 +136,7 @@ public class PrivGetTransactionReceipt implements JsonRpcMethod {
 
     LOG.trace("Processed private transaction events");
 
-    BytesValue output =
+    final BytesValue transactionOutput =
         privacyParameters
             .getPrivateStateStorage()
             .getTransactionOutput(txHash)
@@ -144,13 +144,13 @@ public class PrivGetTransactionReceipt implements JsonRpcMethod {
 
     LOG.trace("Processed private transaction output");
 
-    PrivateTransactionReceiptResult result =
+    final PrivateTransactionReceiptResult result =
         new PrivateTransactionReceiptResult(
             contractAddress,
             privateTransaction.getSender().toString(),
             privateTransaction.getTo().map(Address::toString).orElse(null),
-            events,
-            output,
+            transactionLogs,
+            transactionOutput,
             blockhash,
             transactionHash,
             blockNumber,

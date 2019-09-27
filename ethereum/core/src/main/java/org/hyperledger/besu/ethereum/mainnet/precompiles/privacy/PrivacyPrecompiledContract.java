@@ -92,7 +92,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
     final String key = BytesValues.asBase64String(input);
     final ReceiveRequest receiveRequest = new ReceiveRequest(key, enclavePublicKey);
 
-    ReceiveResponse receiveResponse;
+    final ReceiveResponse receiveResponse;
     try {
       receiveResponse = enclave.receive(receiveRequest);
     } catch (Exception e) {

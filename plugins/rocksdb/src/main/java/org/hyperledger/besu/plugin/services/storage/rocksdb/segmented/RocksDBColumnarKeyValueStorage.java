@@ -163,7 +163,7 @@ public class RocksDBColumnarKeyValueStorage
   }
 
   @Override
-  public long removeUnless(
+  public long removeAllEntriesUnless(
       final ColumnFamilyHandle segmentHandle, final Predicate<byte[]> inUseCheck) {
     long removedNodeCounter = 0;
     try (final RocksIterator rocksIterator = db.newIterator(segmentHandle)) {
@@ -183,9 +183,9 @@ public class RocksDBColumnarKeyValueStorage
   }
 
   @Override
-  public Set<byte[]> getThat(
+  public Set<byte[]> getAllKeysThat(
       final ColumnFamilyHandle segmentHandle, final Predicate<byte[]> returnCondition) {
-    Set<byte[]> returnedKeys = Sets.newIdentityHashSet();
+    final Set<byte[]> returnedKeys = Sets.newIdentityHashSet();
     try (final RocksIterator rocksIterator = db.newIterator(segmentHandle)) {
       rocksIterator.seekToFirst();
       while (rocksIterator.isValid()) {

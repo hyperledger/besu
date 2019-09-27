@@ -134,7 +134,7 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
 
   @Override
   public Set<byte[]> getAllKeysThat(final Predicate<byte[]> returnCondition) {
-    Set<byte[]> returnedKeys = Sets.newIdentityHashSet();
+    final Set<byte[]> returnedKeys = Sets.newIdentityHashSet();
     try (final RocksIterator rocksIterator = db.newIterator()) {
       rocksIterator.seekToFirst();
       while (rocksIterator.isValid()) {
