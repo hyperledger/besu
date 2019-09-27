@@ -76,7 +76,7 @@ class Network implements Verifiable, Generatable, ConfigNode {
     } else {
       poaConsensus = null;
     }
-    if(!isNull(poaConsensus)) {
+    if (!isNull(poaConsensus)) {
       this.poaConsensus.setParent(this);
     }
   }
