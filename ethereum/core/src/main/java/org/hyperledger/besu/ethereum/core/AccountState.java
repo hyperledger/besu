@@ -32,9 +32,32 @@ import java.util.NavigableMap;
  *       "removing" that key).
  *   <li><b>Code:</b> arbitrary-length sequence of bytes that corresponds to EVM bytecode.
  *   <li><b>Version:</b> the version of the EVM bytecode.
+ *   <li><b>Lockability:</b> Indicates if a contract can be locked.
+ *   <li><b>LockState:</b> Indicates if a contract is locked or not.
  * </ul>
  */
 public interface AccountState {
+  /**
+   * Indicates whether an account is locked or unlocked.
+   *
+   * <ul>
+   *   <li><b>NONE</b> indicates that the contract is not locked.
+   *   <li><b>LOCK</b> indicates that the contract is locked. When an existing account is in the
+   *       NONE state and the updated account's state is LOCK, then the updated account's state is
+   *       stored as provisional state and the existing account's state is updated to indicate the
+   *       state is locked.
+   *   <li><b>UNLOCK_COMMIT</b> indicates that the contract is unlocked. When stored, the existing
+   *       accounts is over written with the provisional state. The state is written as NONE.
+   *   <li><b>UNLOCK_IGNORE</b> indicates that the contract is unlocked. When stored, the
+   *       provisional state is discarded and the existing account state is written as NONE.
+   * </ul>
+   */
+  enum LockState {
+    NONE,
+    LOCK,
+    UNLOCK_COMMIT,
+    UNLOCK_IGNORE
+  }
 
   /**
    * The Keccak-256 hash of the account address.
@@ -94,6 +117,20 @@ public interface AccountState {
    * @return true if the contract can be locked.
    */
   boolean isLockable();
+
+  /**
+   * Indicates whether this contract is currently locked.
+   *
+   * @return true if the contract is locked.
+   */
+  boolean isLocked();
+
+  /**
+   * Gets the fine grain lock state.
+   *
+   * @return state of the contract.
+   */
+  MutableAccount.LockState getLockState();
 
   /**
    * The version of the EVM bytecode associated with this account.

@@ -261,6 +261,22 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
       final Address to = transaction.getTo().get();
       final Account contract = worldState.get(to);
 
+      if (transaction instanceof CrosschainTransaction) {
+        CrosschainTransaction.CrosschainTransactionType type =
+            ((CrosschainTransaction) transaction).getType();
+        if (type.isSignallingTransaction()) {
+          boolean commit = type.isUnlockCommitSignallingTransaction();
+          final MutableAccount mutableContract = worldState.getMutable(contract.getAddress());
+          mutableContract.unlock(commit);
+          worldUpdater.commit();
+          LOG.debug(
+              "Signalling Transaction: unlock_{} for account {}",
+              (commit ? "commit" : "ignore"),
+              contract.getAddress());
+          return Result.successful(LogSeries.empty(), 0, BytesValue.EMPTY, validationResult);
+        }
+      }
+
       initialFrame =
           MessageFrame.builder()
               .type(MessageFrame.Type.MESSAGE_CALL)
@@ -288,19 +304,23 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
               .isPersistingState(isPersistingState)
               .build();
 
-      // If the contract is lockable, and this is a crosschain transaction, then lock the contract.
-      // TODO if (contract.isLocked()) {
-      // TODO do something to fail the transaction.
-      if (transaction instanceof CrosschainTransaction) {
-        if (contract.isLockable()) {
-          // TODO
-          //          contract.lock();
-        } else {
-          // TODO fail because trying to do a cross chain transaction on an unlockable contract
+      boolean contractIsLockable = contract != null && contract.isLockable();
+      if (contractIsLockable) {
+        if (contract.isLocked()) {
+          LOG.warn("Attempt to execute transaction on locked contract");
+          return Result.failed(gasAvailable.toLong(), validationResult, null);
+        }
+
+        if (transaction instanceof CrosschainTransaction) {
+          final MutableAccount mutableContract = worldState.getMutable(contract.getAddress());
+          mutableContract.lock();
+        }
+      } else {
+        if (transaction instanceof CrosschainTransaction) {
+          LOG.warn("Attempt to execute crosschain transaction on non-lockable contract");
+          return Result.failed(gasAvailable.toLong(), validationResult, null);
         }
       }
-
-      // }
     }
 
     // If we are processing a crosschain transaction, then add the transaction context such that
@@ -324,7 +344,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
     // Remove the transaction context from thread local storage.
     if (transaction instanceof CrosschainTransaction) {
       if (((CrosschainTransaction) transaction).getNextSubordinateTransactionOrView() != null) {
-        LOG.trace(
+        LOG.warn(
             "Crosschain transaction ended prior to all Subordinate Transactions and Views being consumed.");
         initialFrame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
       }

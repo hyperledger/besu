@@ -51,23 +51,18 @@ public class SubordinateViewCoordinator {
    */
   public static SubordinateViewCoordinator createSubordinateViewCoordinatorAndOtherNodes(
       final int sidechainId, final int numNodes, final TransactionSimulator transactionSimulator) {
-    try {
-      ArrayList<OtherNodeSimulator> otherNodes = new ArrayList<>();
-      for (int i = 1; i < numNodes; i++) {
-        otherNodes.add(new OtherNodeSimulator(sidechainId, i, transactionSimulator));
-      }
-      return new SubordinateViewCoordinator(sidechainId, 0, otherNodes, transactionSimulator);
-    } catch (Exception ex) {
-      throw new Error(ex);
+    ArrayList<OtherNodeSimulator> otherNodes = new ArrayList<>();
+    for (int i = 1; i < numNodes; i++) {
+      otherNodes.add(new OtherNodeSimulator(sidechainId, i, transactionSimulator));
     }
+    return new SubordinateViewCoordinator(sidechainId, 0, otherNodes, transactionSimulator);
   }
 
   private SubordinateViewCoordinator(
       final int sidechainId,
       final int nodeNumber,
       final ArrayList<OtherNodeSimulator> otherNodes,
-      final TransactionSimulator transactionSimulator)
-      throws Exception {
+      final TransactionSimulator transactionSimulator) {
     this.signer = new NodeBlsSigner(sidechainId, nodeNumber);
     this.otherNodes = otherNodes;
     this.executor = new SubordinateViewExecutor(transactionSimulator);

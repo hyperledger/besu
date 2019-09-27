@@ -57,14 +57,11 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetUncleCou
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetUncleCountByBlockNumber;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetWork;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthHashrate;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthIsLockable;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthMining;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthNewBlockFilter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthNewFilter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthNewPendingTransactionFilter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthProcessSubordinateView;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthProtocolVersion;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthSendRawCrosschainTransaction;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthSendRawTransaction;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthSendTransaction;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthSyncing;
@@ -81,6 +78,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.TxPoolBesuStat
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.TxPoolBesuTransactions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Web3ClientVersion;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Web3Sha3;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.crosschain.EthIsLockable;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.crosschain.EthIsLocked;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.crosschain.EthProcessSubordinateView;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.crosschain.EthSendRawCrosschainTransaction;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.miner.MinerSetCoinbase;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.miner.MinerSetEtherbase;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.miner.MinerStart;
@@ -397,6 +398,7 @@ public class JsonRpcMethodsFactory {
           enabledMethods,
           new EthProcessSubordinateView(blockchainQueries, crosschainProcessor, parameter));
       addMethods(enabledMethods, new EthIsLockable(blockchainQueries, parameter));
+      addMethods(enabledMethods, new EthIsLocked(blockchainQueries, parameter));
     }
 
     return enabledMethods;

@@ -54,8 +54,12 @@ public class NodeBlsSigner {
 
   final BlsCryptoProvider cryptoProvider;
 
-  public NodeBlsSigner(final int sidechainId, final int nodeNumber) throws Exception {
-    loadConfigFromPropertiesFile(sidechainId, nodeNumber);
+  public NodeBlsSigner(final int sidechainId, final int nodeNumber) {
+    try {
+      loadConfigFromPropertiesFile(sidechainId, nodeNumber);
+    } catch (Exception ex) {
+      LOG.error("***** FAILED TO LOAD CROSSCHAIN PROPS FILE *** ", ex.getMessage());
+    }
     this.cryptoProvider =
         BlsCryptoProvider.getInstance(
             BlsCryptoProvider.CryptoProviderTypes.LOCAL_ALT_BN_128,

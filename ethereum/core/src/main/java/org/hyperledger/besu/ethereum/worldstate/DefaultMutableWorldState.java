@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.core.AccountState;
 import org.hyperledger.besu.ethereum.core.AccountStorageEntry;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldState;
@@ -42,7 +43,11 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.stream.Stream;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public class DefaultMutableWorldState implements MutableWorldState {
+  private static final Logger LOG = LogManager.getLogger();
 
   private final WorldStateStorage worldStateStorage;
   private final WorldStatePreimageStorage preimageStorage;
@@ -122,11 +127,12 @@ public class DefaultMutableWorldState implements MutableWorldState {
       final long nonce,
       final Wei balance,
       final boolean lockable,
+      final boolean locked,
       final Hash storageRoot,
       final Hash codeHash,
       final int version) {
     final StateTrieAccountValue accountValue =
-        new StateTrieAccountValue(nonce, balance, lockable, storageRoot, codeHash, version);
+        new StateTrieAccountValue(nonce, balance, lockable, locked, storageRoot, codeHash, version);
     return RLP.encode(accountValue::writeTo);
   }
 
@@ -209,6 +215,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
 
     private final Address address;
     private final Hash addressHash;
+    private final MutableAccount.LockState lockState;
 
     final StateTrieAccountValue accountValue;
 
@@ -221,6 +228,8 @@ public class DefaultMutableWorldState implements MutableWorldState {
       this.address = address;
       this.addressHash = addressHash;
       this.accountValue = accountValue;
+      this.lockState =
+          accountValue.isLocked() ? AccountState.LockState.LOCK : AccountState.LockState.NONE;
     }
 
     private MerklePatriciaTrie<Bytes32, BytesValue> storageTrie() {
@@ -257,6 +266,22 @@ public class DefaultMutableWorldState implements MutableWorldState {
     @Override
     public boolean isLockable() {
       return accountValue.isLockable();
+    }
+
+    /**
+     * Indicates whether this contract is currently locked.
+     *
+     * @return true if the contract is locked.
+     */
+    @Override
+    public boolean isLocked() {
+      return accountValue.isLocked();
+    }
+
+    // TODO SIDECHAINS
+    @Override
+    public MutableAccount.LockState getLockState() {
+      return this.lockState;
     }
 
     Hash getStorageRoot() {
@@ -377,62 +402,169 @@ public class DefaultMutableWorldState implements MutableWorldState {
       final DefaultMutableWorldState wrapped = wrappedWorldView();
 
       for (final Address address : deletedAccounts()) {
-        final Hash addressHash = Hash.hash(address);
-        wrapped.accountStateTrie.remove(addressHash);
-        wrapped.updatedStorageTries.remove(address);
-        wrapped.updatedAccountCode.remove(address);
+        deleteAccount(wrapped, address);
       }
 
       for (final UpdateTrackingAccount<WorldStateAccount> updated : updatedAccounts()) {
         final WorldStateAccount origin = updated.getWrappedAccount();
+        if (origin != null && origin.isLockable()) {
+          processLockableContracts(origin, updated, wrapped);
+        } else {
+          storeUpdatedStateTo(origin, updated, wrapped, updated.getAddress());
+        }
+      }
+    }
 
-        // Save the code in key-value storage ...
-        Hash codeHash = origin == null ? Hash.EMPTY : origin.getCodeHash();
-        if (updated.codeWasUpdated()) {
-          codeHash = Hash.hash(updated.getCode());
-          wrapped.updatedAccountCode.put(updated.getAddress(), updated.getCode());
+    /**
+     * For lockable contracts, the possible states are:
+     *
+     * <ul>
+     *   <li>Locked and now unlocking: An originating or subordinate transaction has completed.
+     *   <li>Not-locked, and now locking: An originating transaction or subordinate transaction has
+     *       started.
+     *   <li>Not-locked, and not doing anything: A local transaction has executed.
+     * </ul>
+     *
+     * @param origin Underlying account.
+     * @param updated Account with updated state.
+     * @param wrapped World state wrapper.
+     */
+    private void processLockableContracts(
+        final WorldStateAccount origin,
+        final UpdateTrackingAccount<WorldStateAccount> updated,
+        final DefaultMutableWorldState wrapped) {
+      Address realAddress = origin.address;
+      Address provisionalStateAddress = realAddress.deriveAddress();
+      LOG.info(
+          "Processing Lockable Contracts: RealAddress:{}, Provisional:{}, Original:{}, Updated:{}",
+          realAddress,
+          provisionalStateAddress,
+          origin.lockState,
+          updated.getLockState());
+      if (!origin.isLocked()) {
+        switch (updated.getLockState()) {
+          case NONE:
+            storeUpdatedStateTo(origin, updated, wrapped, realAddress);
+            break;
+          case LOCK:
+            changeLockStateOnAccount(origin, updated, wrapped, true);
+            // Store the updated information in a provisional account.
+            // TODO what happens if there is an account at the provisionalStateAddress - for
+            // instance someone sent
+            // TODO some Ether to the address....
+            storeUpdatedStateTo(origin, updated, wrapped, provisionalStateAddress);
+            break;
+          default:
+            LOG.error("Unexpectedly, unlocked and lock action is {}", origin.lockState);
+            break;
         }
-        // ...and storage in the account trie first.
-        final boolean freshState = origin == null || updated.getStorageWasCleared();
-        Hash storageRoot = freshState ? Hash.EMPTY_TRIE_HASH : origin.getStorageRoot();
-        if (freshState) {
-          wrapped.updatedStorageTries.remove(updated.getAddress());
-        }
-        final SortedMap<UInt256, UInt256> updatedStorage = updated.getUpdatedStorage();
-        if (!updatedStorage.isEmpty()) {
-          // Apply any storage updates
-          final MerklePatriciaTrie<Bytes32, BytesValue> storageTrie =
-              freshState
-                  ? wrapped.newAccountStorageTrie(Hash.EMPTY_TRIE_HASH)
-                  : origin.storageTrie();
-          wrapped.updatedStorageTries.put(updated.getAddress(), storageTrie);
-          for (final Map.Entry<UInt256, UInt256> entry : updatedStorage.entrySet()) {
-            final UInt256 value = entry.getValue();
-            final Hash keyHash = Hash.hash(entry.getKey().getBytes());
-            if (value.isZero()) {
-              storageTrie.remove(keyHash);
+      } else {
+        switch (updated.getLockState()) {
+            // If the update is unlock, then ignore everything except for the flag.
+          case UNLOCK_IGNORE:
+            changeLockStateOnAccount(origin, updated, wrapped, false);
+            deleteAccount(wrapped, provisionalStateAddress);
+            break;
+          case UNLOCK_COMMIT:
+            // Copy the state from the provisional account to the real account.
+            final Hash provisionalStateAddressHash = Hash.hash(provisionalStateAddress);
+            Optional<BytesValue> storedAccount =
+                wrapped.accountStateTrie.get(provisionalStateAddressHash);
+            if (storedAccount.isEmpty()) {
+              LOG.error("Unexpectedly, no provisional state");
             } else {
-              wrapped.newStorageKeyPreimages.put(keyHash, entry.getKey());
-              storageTrie.put(keyHash, RLP.encode(out -> out.writeUInt256Scalar(entry.getValue())));
+              wrapped.accountStateTrie.put(updated.getAddressHash(), storedAccount.get());
             }
-          }
-          storageRoot = Hash.wrap(storageTrie.getRootHash());
+            deleteAccount(wrapped, provisionalStateAddress);
+            break;
+          default:
+            LOG.error("Unexpectedly, locked and lock state is {}", origin.lockState);
+            break;
         }
+      }
+    }
 
-        // Save address preimage
-        wrapped.newAccountKeyPreimages.put(updated.getAddressHash(), updated.getAddress());
-        // Lastly, save the new account.
+    private void storeUpdatedStateTo(
+        final WorldStateAccount origin,
+        final UpdateTrackingAccount<WorldStateAccount> updated,
+        final DefaultMutableWorldState wrapped,
+        final Address address) {
+
+      // Save the code in key-value storage ...
+      Hash codeHash = origin == null ? Hash.EMPTY : origin.getCodeHash();
+      if (updated.codeWasUpdated()) {
+        codeHash = Hash.hash(updated.getCode());
+        wrapped.updatedAccountCode.put(address, updated.getCode());
+      }
+      // ...and storage in the account trie first.
+      final boolean freshState = origin == null || updated.getStorageWasCleared();
+      Hash storageRoot = freshState ? Hash.EMPTY_TRIE_HASH : origin.getStorageRoot();
+      if (freshState) {
+        wrapped.updatedStorageTries.remove(address);
+      }
+      final SortedMap<UInt256, UInt256> updatedStorage = updated.getUpdatedStorage();
+      if (!updatedStorage.isEmpty()) {
+        // Apply any storage updates
+        final MerklePatriciaTrie<Bytes32, BytesValue> storageTrie =
+            freshState ? wrapped.newAccountStorageTrie(Hash.EMPTY_TRIE_HASH) : origin.storageTrie();
+        wrapped.updatedStorageTries.put(address, storageTrie);
+        for (final Map.Entry<UInt256, UInt256> entry : updatedStorage.entrySet()) {
+          final UInt256 value = entry.getValue();
+          final Hash keyHash = Hash.hash(entry.getKey().getBytes());
+          if (value.isZero()) {
+            storageTrie.remove(keyHash);
+          } else {
+            wrapped.newStorageKeyPreimages.put(keyHash, entry.getKey());
+            storageTrie.put(keyHash, RLP.encode(out -> out.writeUInt256Scalar(entry.getValue())));
+          }
+        }
+        storageRoot = Hash.wrap(storageTrie.getRootHash());
+      }
+
+      // Save address preimage
+      Hash addressHash = Hash.hash(address);
+      wrapped.newAccountKeyPreimages.put(addressHash, address);
+      // Lastly, save the new account.
+      final BytesValue account =
+          serializeAccount(
+              updated.getNonce(),
+              updated.getBalance(),
+              updated.isLockable(),
+              false,
+              storageRoot,
+              codeHash,
+              updated.getVersion());
+      wrapped.accountStateTrie.put(addressHash, account);
+    }
+
+    private void changeLockStateOnAccount(
+        final WorldStateAccount origin,
+        final UpdateTrackingAccount<WorldStateAccount> updated,
+        final DefaultMutableWorldState wrapped,
+        final boolean lock) {
+      Optional<BytesValue> storedAccount = wrapped.accountStateTrie.get(origin.getAddressHash());
+      // The account won't exist if it is being created.
+      if (storedAccount.isPresent()) {
+        final RLPInput in = RLP.input(storedAccount.get());
+        StateTrieAccountValue accountValue = StateTrieAccountValue.readFrom(in);
         final BytesValue account =
             serializeAccount(
-                updated.getNonce(),
-                updated.getBalance(),
-                updated.isLockable(),
-                storageRoot,
-                codeHash,
-                updated.getVersion());
-
+                accountValue.getNonce(),
+                accountValue.getBalance(),
+                accountValue.isLockable(),
+                lock,
+                accountValue.getStorageRoot(),
+                accountValue.getCodeHash(),
+                accountValue.getVersion());
         wrapped.accountStateTrie.put(updated.getAddressHash(), account);
       }
+    }
+
+    private void deleteAccount(final DefaultMutableWorldState wrapped, final Address address) {
+      final Hash addressHash = Hash.hash(address);
+      wrapped.accountStateTrie.remove(addressHash);
+      wrapped.updatedStorageTries.remove(address);
+      wrapped.updatedAccountCode.remove(address);
     }
   }
 }

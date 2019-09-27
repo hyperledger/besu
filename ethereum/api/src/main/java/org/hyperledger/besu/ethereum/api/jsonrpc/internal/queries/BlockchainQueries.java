@@ -119,6 +119,17 @@ public class BlockchainQueries {
   }
 
   /**
+   * Returns true of the account is locked.
+   *
+   * @param address The address of the account being queried.
+   * @param blockNumber The block number being queried.
+   * @return true if the account is locked.
+   */
+  public Optional<Boolean> isContractLocked(final Address address, final long blockNumber) {
+    return fromAccount(address, blockNumber, Account::isLocked, Boolean.FALSE);
+  }
+
+  /**
    * Retrieves the code associated with the given account at a particular block number.
    *
    * @param address The account address being queried.

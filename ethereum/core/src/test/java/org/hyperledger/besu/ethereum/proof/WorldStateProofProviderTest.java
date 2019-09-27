@@ -82,7 +82,7 @@ public class WorldStateProofProviderTest {
     final Hash codeHash = Hash.hash(BytesValue.fromHexString("0x1122"));
     final StateTrieAccountValue accountValue =
         new StateTrieAccountValue(
-            1L, Wei.of(2L), false, Hash.wrap(storageTrie.getRootHash()), codeHash, 0);
+            1L, Wei.of(2L), false, false, Hash.wrap(storageTrie.getRootHash()), codeHash, 0);
     // Save to storage
     worldStateTrie.put(addressHash, RLP.encode(accountValue::writeTo));
     worldStateTrie.commit(updater::putAccountStateTrieNode);

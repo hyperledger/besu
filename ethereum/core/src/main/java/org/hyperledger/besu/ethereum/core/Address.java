@@ -177,6 +177,32 @@ public class Address extends DelegatingBytesValue
                 })));
   }
 
+  /**
+   * Derive a new address based on the current one.
+   *
+   * @return Derived address.
+   */
+  public Address deriveAddress() {
+    return deriveAddress((byte) 0);
+  }
+
+  /**
+   * Derive a new address based on the current one.
+   *
+   * @param index index to allow multiple separate addresses to be derived from the one base
+   *     address.
+   * @return Derived address.
+   */
+  public Address deriveAddress(final byte index) {
+    BytesValue addrBytes = this.wrapped;
+    if (index != 0) {
+      addrBytes = addrBytes.concat(BytesValue.of(index));
+    }
+    Hash hash = Hash.hash(addrBytes);
+    BytesValue truncatedHash = hash.slice(0, SIZE);
+    return new Address(truncatedHash);
+  }
+
   @Override
   public Address copy() {
     final BytesValue copiedStorage = wrapped.copy();
