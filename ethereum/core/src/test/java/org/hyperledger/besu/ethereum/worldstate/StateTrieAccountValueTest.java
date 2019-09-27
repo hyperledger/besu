@@ -29,13 +29,14 @@ public class StateTrieAccountValueTest {
     final long nonce = 0;
     final Wei balance = Wei.ZERO;
     final boolean lockable = false;
+    final boolean locked = false;
     // Have the storageRoot and codeHash as different values to ensure the encode / decode
     // doesn't cross the values over.
     final Hash storageRoot = Hash.EMPTY_TRIE_HASH;
     final Hash codeHash = Hash.EMPTY_LIST_HASH;
     final int version = 0;
 
-    roundTripMainNetAccountValue(nonce, balance, lockable, storageRoot, codeHash, version);
+    roundTripMainNetAccountValue(nonce, balance, lockable, locked, storageRoot, codeHash, version);
   }
 
   @Test
@@ -43,11 +44,12 @@ public class StateTrieAccountValueTest {
     final long nonce = 0;
     final Wei balance = Wei.ZERO;
     final boolean lockable = false;
+    final boolean locked = false;
     final Hash storageRoot = Hash.EMPTY_TRIE_HASH;
     final Hash codeHash = Hash.EMPTY_LIST_HASH;
     final int version = 1;
 
-    roundTripMainNetAccountValue(nonce, balance, lockable, storageRoot, codeHash, version);
+    roundTripMainNetAccountValue(nonce, balance, lockable, locked, storageRoot, codeHash, version);
   }
 
   @Test
@@ -56,11 +58,12 @@ public class StateTrieAccountValueTest {
     final Wei balance =
         Wei.fromHexString("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
     final boolean lockable = false;
+    final boolean locked = false;
     final Hash storageRoot = Hash.EMPTY_TRIE_HASH;
     final Hash codeHash = Hash.EMPTY_LIST_HASH;
     final int version = Integer.MAX_VALUE;
 
-    roundTripMainNetAccountValue(nonce, balance, lockable, storageRoot, codeHash, version);
+    roundTripMainNetAccountValue(nonce, balance, lockable, locked, storageRoot, codeHash, version);
   }
 
   @Test
@@ -68,11 +71,12 @@ public class StateTrieAccountValueTest {
     final long nonce = 0;
     final Wei balance = Wei.ZERO;
     final boolean lockable = true;
+    final boolean locked = false;
     final Hash storageRoot = Hash.EMPTY_TRIE_HASH;
     final Hash codeHash = Hash.EMPTY_TRIE_HASH;
     final int version = 0;
 
-    roundTripMainNetAccountValue(nonce, balance, lockable, storageRoot, codeHash, version);
+    roundTripMainNetAccountValue(nonce, balance, lockable, locked, storageRoot, codeHash, version);
   }
 
   @Test
@@ -80,11 +84,12 @@ public class StateTrieAccountValueTest {
     final long nonce = 0;
     final Wei balance = Wei.ZERO;
     final boolean lockable = true;
+    final boolean locked = false;
     final Hash storageRoot = Hash.EMPTY_TRIE_HASH;
     final Hash codeHash = Hash.EMPTY_TRIE_HASH;
     final int version = 1;
 
-    roundTripMainNetAccountValue(nonce, balance, lockable, storageRoot, codeHash, version);
+    roundTripMainNetAccountValue(nonce, balance, lockable, locked, storageRoot, codeHash, version);
   }
 
   @Test
@@ -93,23 +98,39 @@ public class StateTrieAccountValueTest {
     final Wei balance =
         Wei.fromHexString("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
     final boolean lockable = true;
+    final boolean locked = false;
     final Hash storageRoot = Hash.EMPTY_TRIE_HASH;
     final Hash codeHash = Hash.EMPTY_LIST_HASH;
     final int version = Integer.MAX_VALUE;
 
-    roundTripMainNetAccountValue(nonce, balance, lockable, storageRoot, codeHash, version);
+    roundTripMainNetAccountValue(nonce, balance, lockable, locked, storageRoot, codeHash, version);
+  }
+
+  @Test
+  public void roundTripCrosschainAccountValueLocked() {
+    final long nonce = (Long.MAX_VALUE >> 1);
+    final Wei balance =
+        Wei.fromHexString("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
+    final boolean lockable = true;
+    final boolean locked = true;
+    final Hash storageRoot = Hash.EMPTY_TRIE_HASH;
+    final Hash codeHash = Hash.EMPTY_LIST_HASH;
+    final int version = Integer.MAX_VALUE;
+
+    roundTripMainNetAccountValue(nonce, balance, lockable, locked, storageRoot, codeHash, version);
   }
 
   private void roundTripMainNetAccountValue(
       final long nonce,
       final Wei balance,
       final boolean lockable,
+      final boolean locked,
       final Hash storageRoot,
       final Hash codeHash,
       final int version) {
 
     StateTrieAccountValue accountValue =
-        new StateTrieAccountValue(nonce, balance, lockable, storageRoot, codeHash, version);
+        new StateTrieAccountValue(nonce, balance, lockable, locked, storageRoot, codeHash, version);
     BytesValue encoded = RLP.encode(accountValue::writeTo);
     final RLPInput in = RLP.input(encoded);
     StateTrieAccountValue roundTripAccountValue = StateTrieAccountValue.readFrom(in);
@@ -117,6 +138,7 @@ public class StateTrieAccountValueTest {
     assertThat(nonce).isEqualTo(roundTripAccountValue.getNonce());
     assertThat(balance).isEqualTo(roundTripAccountValue.getBalance());
     assertThat(lockable).isEqualTo(roundTripAccountValue.isLockable());
+    assertThat(locked).isEqualTo(roundTripAccountValue.isLocked());
     assertThat(storageRoot).isEqualTo(roundTripAccountValue.getStorageRoot());
     assertThat(codeHash).isEqualTo(roundTripAccountValue.getCodeHash());
     assertThat(version).isEqualTo(roundTripAccountValue.getVersion());

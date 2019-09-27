@@ -93,7 +93,11 @@ public interface MutableAccount extends Account {
    */
   void unlock(boolean commit);
 
-  /** Lock a contract account. Store any updates to the account as provisional updates. */
+  /**
+   * Set the lock state for a contract.
+   *
+   * @param lockState The state of locking for a contract.
+   */
   void setLockState(LockState lockState);
 
   /**
