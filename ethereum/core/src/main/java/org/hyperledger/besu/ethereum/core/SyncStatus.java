@@ -21,11 +21,21 @@ public final class SyncStatus implements org.hyperledger.besu.plugin.data.SyncSt
   private final long startingBlock;
   private final long currentBlock;
   private final long highestBlock;
+  private final boolean inSync;
 
   public SyncStatus(final long startingBlock, final long currentBlock, final long highestBlock) {
+    this(startingBlock, currentBlock, highestBlock, currentBlock == highestBlock);
+  }
+
+  public SyncStatus(
+      final long startingBlock,
+      final long currentBlock,
+      final long highestBlock,
+      final boolean inSync) {
     this.startingBlock = startingBlock;
     this.currentBlock = currentBlock;
     this.highestBlock = highestBlock;
+    this.inSync = inSync;
   }
 
   @Override
@@ -45,7 +55,7 @@ public final class SyncStatus implements org.hyperledger.besu.plugin.data.SyncSt
 
   @Override
   public boolean inSync() {
-    return currentBlock == highestBlock;
+    return inSync;
   }
 
   @Override
@@ -56,14 +66,15 @@ public final class SyncStatus implements org.hyperledger.besu.plugin.data.SyncSt
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    SyncStatus that = (SyncStatus) o;
+    final SyncStatus that = (SyncStatus) o;
     return startingBlock == that.startingBlock
         && currentBlock == that.currentBlock
-        && highestBlock == that.highestBlock;
+        && highestBlock == that.highestBlock
+        && inSync == that.inSync;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(startingBlock, currentBlock, highestBlock);
+    return Objects.hash(startingBlock, currentBlock, highestBlock, inSync);
   }
 }

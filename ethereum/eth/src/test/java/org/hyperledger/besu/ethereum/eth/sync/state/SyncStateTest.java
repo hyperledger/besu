@@ -20,6 +20,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -33,6 +34,7 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.SyncStatus;
 import org.hyperledger.besu.ethereum.eth.manager.ChainState;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
@@ -57,6 +59,7 @@ public class SyncStateTest {
   private final Blockchain blockchain = mock(Blockchain.class);
   private final EthPeers ethPeers = mock(EthPeers.class);
   private final SyncState.InSyncListener inSyncListener = mock(SyncState.InSyncListener.class);
+  private final SyncStatusListener syncStatusListener = mock(SyncStatusListener.class);
   private final EthPeer syncTargetPeer = mock(EthPeer.class);
   private final ChainState syncTargetPeerChainState = spy(new ChainState());
   private final EthPeer otherPeer = mock(EthPeer.class);
@@ -80,6 +83,7 @@ public class SyncStateTest {
     syncState = new SyncState(blockchain, ethPeers);
     blockAddedObserver = captor.getValue();
     syncState.addInSyncListener(inSyncListener);
+    syncState.addSyncStatusListener(syncStatusListener);
   }
 
   @Test
@@ -229,7 +233,7 @@ public class SyncStateTest {
 
   @Test
   public void shouldSendSyncStatusWhenBlockIsAddedToTheChain() {
-    SyncStatusListener syncStatusListener = mock(SyncStatusListener.class);
+    final SyncStatusListener syncStatusListener = mock(SyncStatusListener.class);
     syncState.addSyncStatusListener(syncStatusListener);
 
     blockAddedObserver.onBlockAdded(
@@ -240,6 +244,26 @@ public class SyncStateTest {
         blockchain);
 
     verify(syncStatusListener).onSyncStatusChanged(eq(syncState.syncStatus()));
+  }
+
+  @Test
+  public void shouldReportReorgEvents() {
+    when(blockchain.getChainHeadBlockNumber()).thenReturn(TARGET_CHAIN_HEIGHT);
+
+    blockAddedObserver.onBlockAdded(
+        BlockAddedEvent.createForChainReorg(
+            new Block(
+                targetBlockHeader(),
+                new BlockBody(Collections.emptyList(), Collections.emptyList())),
+            Collections.emptyList(),
+            Collections.emptyList()),
+        blockchain);
+
+    assertThat(syncState.isInSync()).isTrue();
+    final ArgumentCaptor<SyncStatus> captor = ArgumentCaptor.forClass(SyncStatus.class);
+    verify(syncStatusListener, times(2)).onSyncStatusChanged(captor.capture());
+    assertThat(captor.getAllValues().get(0).inSync()).isFalse();
+    assertThat(captor.getAllValues().get(1).inSync()).isTrue();
   }
 
   private void setupOutOfSyncState() {
