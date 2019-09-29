@@ -111,7 +111,7 @@ public class BlockDataGenerator {
         // Mutate accounts
         accountsToSetup.forEach(
             hash -> {
-              final MutableAccount a = stateUpdater.getMutable(hash);
+              final MutableAccount a = stateUpdater.getAccount(hash).getMutable();
               a.incrementNonce();
               a.setBalance(Wei.of(positiveLong()));
               storageKeys.forEach(key -> a.setStorageValue(key, UInt256.ONE));
@@ -150,7 +150,7 @@ public class BlockDataGenerator {
     WorldUpdater updater = worldState.updater();
     List<Account> accounts = new ArrayList<>(count);
     for (int i = 0; i < count; i++) {
-      MutableAccount account = updater.getOrCreate(address());
+      MutableAccount account = updater.getOrCreate(address()).getMutable();
       if (random.nextFloat() < percentContractAccounts) {
         // Some percentage of accounts are contract accounts
         account.setCode(bytesValue(5, 50));
