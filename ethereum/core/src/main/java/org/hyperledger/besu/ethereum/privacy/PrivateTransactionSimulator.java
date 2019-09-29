@@ -31,7 +31,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
-import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -39,6 +38,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 /*
  * Used to process transactions for priv_call.
@@ -47,8 +47,6 @@ import org.apache.tuweni.bytes.Bytes;
  * blockchain.
  */
 public class PrivateTransactionSimulator {
-
-  private static final Hash EMPTY_ROOT_HASH = Hash.wrap(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
 
   // Dummy signature for transactions to not fail being processed.
   private static final SECP256K1.Signature FAKE_SIGNATURE =
@@ -61,6 +59,7 @@ public class PrivateTransactionSimulator {
   private final WorldStateArchive worldStateArchive;
   private final ProtocolSchedule<?> protocolSchedule;
   private final PrivacyParameters privacyParameters;
+  private final PrivateStateRootResolver privateStateRootResolver;
 
   public PrivateTransactionSimulator(
       final Blockchain blockchain,
@@ -71,6 +70,8 @@ public class PrivateTransactionSimulator {
     this.worldStateArchive = worldStateArchive;
     this.protocolSchedule = protocolSchedule;
     this.privacyParameters = privacyParameters;
+    this.privateStateRootResolver =
+        new PrivateStateRootResolver(privacyParameters.getPrivateStateStorage());
   }
 
   public Optional<PrivateTransactionProcessor.Result> process(
@@ -119,12 +120,9 @@ public class PrivateTransactionSimulator {
     }
 
     // get the last world state root hash or create a new one
-    final Bytes privacyGroupId = Bytes.fromBase64String(privacyGroupIdString);
+    final Bytes32 privacyGroupId = Bytes32.wrap(Bytes.fromBase64String(privacyGroupIdString));
     final Hash lastRootHash =
-        privacyParameters
-            .getPrivateStateStorage()
-            .getLatestStateRoot(privacyGroupId)
-            .orElse(EMPTY_ROOT_HASH);
+        privateStateRootResolver.resolveLastStateRoot(privacyGroupId, header.getHash());
 
     final MutableWorldState disposablePrivateState =
         privacyParameters.getPrivateWorldStateArchive().getMutable(lastRootHash).get();

@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -26,12 +25,13 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.Enclav
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.privacy.PrivacyController;
+import org.hyperledger.besu.ethereum.privacy.PrivateNonceProvider;
 
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.User;
 import io.vertx.ext.auth.jwt.impl.JWTUser;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -39,9 +39,10 @@ public class PrivGetTransactionCountTest {
 
   private static final String ENCLAVE_PUBLIC_KEY = "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
   private final PrivacyParameters privacyParameters = mock(PrivacyParameters.class);
-  private final PrivacyController privacyController = mock(PrivacyController.class);
+  private final PrivateNonceProvider privateNonceProvider = mock(PrivateNonceProvider.class);
 
-  private final String privacyGroupId = Bytes.wrap("0x123".getBytes(UTF_8)).toBase64String();
+  private static final Bytes32 PRIVACY_GROUP_ID =
+      Bytes32.wrap(Bytes.fromBase64String("DyAOiF/ynpc+JXa2YAGB0bCitSlOMNm+ShmB/7M6C4w="));
 
   private final Address senderAddress =
       Address.fromHexString("0x627306090abab3a6e1400e9345bc60c78a8bef57");
@@ -53,16 +54,15 @@ public class PrivGetTransactionCountTest {
   @Before
   public void before() {
     when(privacyParameters.isEnabled()).thenReturn(true);
-    when(privacyController.determineNonce(senderAddress, privacyGroupId, ENCLAVE_PUBLIC_KEY))
-        .thenReturn(NONCE);
+    when(privateNonceProvider.getNonce(senderAddress, PRIVACY_GROUP_ID)).thenReturn(NONCE);
   }
 
   @Test
   public void verifyTransactionCount() {
     final PrivGetTransactionCount privGetTransactionCount =
-        new PrivGetTransactionCount(privacyController, enclavePublicKeyProvider);
+        new PrivGetTransactionCount(privateNonceProvider, enclavePublicKeyProvider);
 
-    final Object[] params = new Object[] {senderAddress, privacyGroupId};
+    final Object[] params = new Object[] {senderAddress, PRIVACY_GROUP_ID.toBase64String()};
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
             new JsonRpcRequest("1", "priv_getTransactionCount", params), user);
@@ -71,6 +71,6 @@ public class PrivGetTransactionCountTest {
         (JsonRpcSuccessResponse) privGetTransactionCount.response(request);
 
     assertThat(response.getResult()).isEqualTo(String.format("0x%X", NONCE));
-    verify(privacyController).determineNonce(senderAddress, privacyGroupId, ENCLAVE_PUBLIC_KEY);
+    verify(privateNonceProvider).getNonce(senderAddress, PRIVACY_GROUP_ID);
   }
 }

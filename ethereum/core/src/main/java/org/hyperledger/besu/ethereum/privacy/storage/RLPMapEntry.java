@@ -14,45 +14,58 @@
  */
 package org.hyperledger.besu.ethereum.privacy.storage;
 
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
-/** Mined private transaction metadata. */
-public class PrivateTransactionMetadata {
-  private final Hash privacyMarkerTransactionHash;
-  private final Hash stateRoot;
+import java.util.Objects;
 
-  public PrivateTransactionMetadata(final Hash privacyMarkerTransactionHash, final Hash stateRoot) {
-    this.privacyMarkerTransactionHash = privacyMarkerTransactionHash;
-    this.stateRoot = stateRoot;
+import org.apache.tuweni.bytes.Bytes;
+
+public class RLPMapEntry {
+  private final Bytes key;
+  private final Bytes value;
+
+  public RLPMapEntry(final Bytes key, final Bytes value) {
+    this.key = key;
+    this.value = value;
   }
 
-  public Hash getStateRoot() {
-    return stateRoot;
+  public Bytes getKey() {
+    return key;
   }
 
-  public Hash getPrivacyMarkerTransactionHash() {
-    return privacyMarkerTransactionHash;
+  public Bytes getValue() {
+    return value;
   }
 
   public void writeTo(final RLPOutput out) {
     out.startList();
 
-    out.writeBytes(privacyMarkerTransactionHash);
-    out.writeBytes(stateRoot);
+    out.writeBytes(key);
+    out.writeBytes(value);
 
     out.endList();
   }
 
-  public static PrivateTransactionMetadata readFrom(final RLPInput input) {
+  public static RLPMapEntry readFrom(final RLPInput input) {
     input.enterList();
 
-    final PrivateTransactionMetadata privateTransactionMetadata =
-        new PrivateTransactionMetadata(
-            Hash.wrap(input.readBytes32()), Hash.wrap(input.readBytes32()));
+    final RLPMapEntry rlpMapEntry = new RLPMapEntry(input.readBytes(), input.readBytes());
 
     input.leaveList();
-    return privateTransactionMetadata;
+    return rlpMapEntry;
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    final RLPMapEntry rlpMapEntry = (RLPMapEntry) o;
+    return key.equals(rlpMapEntry.key) && value.equals(rlpMapEntry.value);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(key, value);
   }
 }

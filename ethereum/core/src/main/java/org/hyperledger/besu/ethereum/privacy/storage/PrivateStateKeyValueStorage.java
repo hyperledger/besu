@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.privacy.storage;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -38,22 +37,13 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
   private static final Bytes METADATA_KEY_SUFFIX = Bytes.of("METADATA".getBytes(UTF_8));
   private static final Bytes STATUS_KEY_SUFFIX = Bytes.of("STATUS".getBytes(UTF_8));
   private static final Bytes REVERT_KEY_SUFFIX = Bytes.of("REVERT".getBytes(UTF_8));
+  private static final Bytes PRIVACY_GROUP_HEAD_BLOCK_MAP_SUFFIX =
+      Bytes.of("PGHEADMAP".getBytes(UTF_8));
 
   private final KeyValueStorage keyValueStorage;
 
   public PrivateStateKeyValueStorage(final KeyValueStorage keyValueStorage) {
     this.keyValueStorage = keyValueStorage;
-  }
-
-  @Override
-  public Optional<Hash> getLatestStateRoot(final Bytes privacyId) {
-    final byte[] id = privacyId.toArrayUnsafe();
-
-    if (keyValueStorage.get(id).isPresent()) {
-      return Optional.of(Hash.wrap(Bytes32.wrap(keyValueStorage.get(id).get())));
-    } else {
-      return Optional.empty();
-    }
   }
 
   @Override
@@ -81,10 +71,16 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
   }
 
   @Override
-  public Optional<PrivateTransactionMetadata> getTransactionMetadata(
-      final Bytes32 blockHash, final Bytes32 transactionHash) {
-    return get(Bytes.concatenate(blockHash, transactionHash), METADATA_KEY_SUFFIX)
-        .map(bytes -> PrivateTransactionMetadata.readFrom(new BytesValueRLPInput(bytes, false)));
+  public Optional<PrivateBlockMetadata> getPrivateBlockMetadata(
+      final Bytes32 blockHash, final Bytes32 privacyGroupId) {
+    return get(Bytes.concatenate(blockHash, privacyGroupId), METADATA_KEY_SUFFIX)
+        .map(this::rlpDecodePrivateBlockMetadata);
+  }
+
+  @Override
+  public Optional<PrivacyGroupHeadBlockMap> getPrivacyGroupHeadBlockMap(final Bytes32 blockHash) {
+    return get(blockHash, PRIVACY_GROUP_HEAD_BLOCK_MAP_SUFFIX)
+        .map(b -> PrivacyGroupHeadBlockMap.readFrom(new BytesValueRLPInput(b, false)));
   }
 
   @Override
@@ -105,6 +101,10 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
     return RLP.input(bytes).readList(Log::readFrom);
   }
 
+  private PrivateBlockMetadata rlpDecodePrivateBlockMetadata(final Bytes bytes) {
+    return PrivateBlockMetadata.readFrom(RLP.input(bytes));
+  }
+
   @Override
   public PrivateStateStorage.Updater updater() {
     return new PrivateStateKeyValueStorage.Updater(keyValueStorage.startTransaction());
@@ -116,12 +116,6 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
 
     private Updater(final KeyValueStorageTransaction transaction) {
       this.transaction = transaction;
-    }
-
-    @Override
-    public Updater putLatestStateRoot(final Bytes privacyId, final Hash privateStateHash) {
-      transaction.put(privacyId.toArrayUnsafe(), privateStateHash.toArray());
-      return this;
     }
 
     @Override
@@ -151,14 +145,21 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
     }
 
     @Override
-    public Updater putTransactionMetadata(
+    public Updater putPrivateBlockMetadata(
         final Bytes32 blockHash,
-        final Bytes32 transactionHash,
-        final PrivateTransactionMetadata metadata) {
+        final Bytes32 privacyGroupId,
+        final PrivateBlockMetadata metadata) {
       set(
-          Bytes.concatenate(blockHash, transactionHash),
+          Bytes.concatenate(blockHash, privacyGroupId),
           METADATA_KEY_SUFFIX,
           RLP.encode(metadata::writeTo));
+      return this;
+    }
+
+    @Override
+    public PrivateStateStorage.Updater putPrivacyGroupHeadBlockMap(
+        final Bytes32 blockHash, final PrivacyGroupHeadBlockMap map) {
+      set(blockHash, PRIVACY_GROUP_HEAD_BLOCK_MAP_SUFFIX, RLP.encode(map::writeTo));
       return this;
     }
 
