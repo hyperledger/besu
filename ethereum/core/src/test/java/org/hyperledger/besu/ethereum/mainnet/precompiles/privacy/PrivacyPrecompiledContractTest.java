@@ -26,6 +26,8 @@ import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
@@ -57,6 +59,7 @@ public class PrivacyPrecompiledContractTest {
   private final String actual = "Test String";
   private final Bytes key = Bytes.wrap(actual.getBytes(UTF_8));
   private MessageFrame messageFrame;
+  private Blockchain blockchain;
   private final String DEFAULT_OUTPUT = "0x01";
   private final WorldStateArchive worldStateArchive = mock(WorldStateArchive.class);
   final PrivateStateStorage privateStateStorage = mock(PrivateStateStorage.class);
@@ -107,15 +110,27 @@ public class PrivacyPrecompiledContractTest {
     when(worldStateArchive.getMutable(any())).thenReturn(Optional.of(mutableWorldState));
 
     final PrivateStateStorage.Updater storageUpdater = mock(PrivateStateStorage.Updater.class);
-    when(storageUpdater.putLatestStateRoot(nullable(Bytes32.class), any()))
+    when(storageUpdater.putPrivateBlockMetadata(
+            nullable(Bytes32.class), nullable(Bytes32.class), any()))
         .thenReturn(storageUpdater);
     when(storageUpdater.putTransactionLogs(nullable(Bytes32.class), any()))
         .thenReturn(storageUpdater);
     when(storageUpdater.putTransactionResult(nullable(Bytes32.class), any()))
         .thenReturn(storageUpdater);
     when(privateStateStorage.updater()).thenReturn(storageUpdater);
+    when(privateStateStorage.getPrivateBlockMetadata(any(), any())).thenReturn(Optional.empty());
 
     messageFrame = mock(MessageFrame.class);
+    blockchain = mock(Blockchain.class);
+    final BlockDataGenerator blockGenerator = new BlockDataGenerator();
+    final Block genesis = blockGenerator.genesisBlock();
+    final Block block =
+        blockGenerator.block(
+            new BlockDataGenerator.BlockOptions().setParentHash(genesis.getHeader().getHash()));
+    when(blockchain.getGenesisBlock()).thenReturn(genesis);
+    when(blockchain.getBlockByHash(block.getHash())).thenReturn(Optional.of(block));
+    when(messageFrame.getBlockchain()).thenReturn(blockchain);
+    when(messageFrame.getBlockHeader()).thenReturn(block.getHeader());
   }
 
   @Test

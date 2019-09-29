@@ -81,10 +81,17 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
   }
 
   @Override
+<<<<<<< HEAD
   public Optional<PrivateTransactionMetadata> getTransactionMetadata(
       final Bytes32 blockHash, final Bytes32 transactionHash) {
     return get(Bytes.concatenate(blockHash, transactionHash), METADATA_KEY_SUFFIX)
         .map(bytes -> PrivateTransactionMetadata.readFrom(new BytesValueRLPInput(bytes, false)));
+=======
+  public Optional<PrivateBlockMetadata> getPrivateBlockMetadata(
+      final Bytes32 blockHash, final Bytes32 privacyGroupId) {
+    return get(BytesValues.concatenate(blockHash, privacyGroupId), METADATA_KEY_SUFFIX)
+        .map(this::rlpDecodePrivateBlockMetadata);
+>>>>>>> WIP - need to fix AT
   }
 
   @Override
@@ -103,6 +110,10 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
 
   private List<Log> rlpDecodeLog(final Bytes bytes) {
     return RLP.input(bytes).readList(Log::readFrom);
+  }
+
+  private PrivateBlockMetadata rlpDecodePrivateBlockMetadata(final BytesValue bytes) {
+    return PrivateBlockMetadata.readFrom(RLP.input(bytes));
   }
 
   @Override
@@ -151,10 +162,10 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
     }
 
     @Override
-    public Updater putTransactionMetadata(
+    public Updater putPrivateBlockMetadata(
         final Bytes32 blockHash,
         final Bytes32 transactionHash,
-        final PrivateTransactionMetadata metadata) {
+        final PrivateBlockMetadata metadata) {
       set(
           Bytes.concatenate(blockHash, transactionHash),
           METADATA_KEY_SUFFIX,
