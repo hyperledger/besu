@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.DefaultEvmAccount;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.LogSeries;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
@@ -189,7 +190,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
     }
 
     final Address senderAddress = transaction.getSender();
-    final MutableAccount sender = worldState.getOrCreate(senderAddress);
+    final DefaultEvmAccount sender = worldState.getOrCreate(senderAddress);
     validationResult =
         transactionValidator.validateForSender(transaction, sender, transactionValidationParams);
     if (!validationResult.isValid()) {
@@ -197,12 +198,13 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
       return Result.invalid(validationResult);
     }
 
-    final long previousNonce = sender.incrementNonce();
+    final MutableAccount senderMutableAccount = sender.getMutable();
+    final long previousNonce = senderMutableAccount.incrementNonce();
     LOG.trace(
         "Incremented sender {} nonce ({} -> {})", senderAddress, previousNonce, sender.getNonce());
 
     final Wei upfrontGasCost = transaction.getUpfrontGasCost();
-    final Wei previousBalance = sender.decrementBalance(upfrontGasCost);
+    final Wei previousBalance = senderMutableAccount.decrementBalance(upfrontGasCost);
     LOG.trace(
         "Deducted sender {} upfront gas cost {} ({} -> {})",
         senderAddress,
@@ -307,9 +309,9 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
     final Gas refundGas = initialFrame.getGasRefund().plus(selfDestructRefund);
     final Gas refunded = refunded(transaction, initialFrame.getRemainingGas(), refundGas);
     final Wei refundedWei = refunded.priceFor(transaction.getGasPrice());
-    sender.incrementBalance(refundedWei);
+    senderMutableAccount.incrementBalance(refundedWei);
 
-    final MutableAccount coinbase = worldState.getOrCreate(miningBeneficiary);
+    final MutableAccount coinbase = worldState.getOrCreate(miningBeneficiary).getMutable();
     final Gas coinbaseFee = Gas.of(transaction.getGasLimit()).minus(refunded);
     final Wei coinbaseWei = coinbaseFee.priceFor(transaction.getGasPrice());
     coinbase.incrementBalance(coinbaseWei);
