@@ -28,6 +28,8 @@ import org.hyperledger.besu.enclave.types.SendRequestLegacy;
 import org.hyperledger.besu.enclave.types.SendResponse;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
@@ -81,6 +83,7 @@ public class PrivacyPrecompiledContractIntegrationTest {
 
   private static Enclave enclave;
   private static MessageFrame messageFrame;
+  private static Blockchain blockchain;
 
   private static OrionTestHarness testHarness;
   private static WorldStateArchive worldStateArchive;
@@ -121,6 +124,16 @@ public class PrivacyPrecompiledContractIntegrationTest {
 
     enclave = new Enclave(testHarness.clientUrl());
     messageFrame = mock(MessageFrame.class);
+    blockchain = mock(Blockchain.class);
+    final BlockDataGenerator blockGenerator = new BlockDataGenerator();
+    final Block genesis = blockGenerator.genesisBlock();
+    final Block block =
+        blockGenerator.block(
+            new BlockDataGenerator.BlockOptions().setParentHash(genesis.getHeader().getHash()));
+    when(blockchain.getGenesisBlock()).thenReturn(genesis);
+    when(blockchain.getBlockByHash(block.getHash())).thenReturn(Optional.of(block));
+    when(messageFrame.getBlockchain()).thenReturn(blockchain);
+    when(messageFrame.getBlockHeader()).thenReturn(block.getHeader());
 
     worldStateArchive = mock(WorldStateArchive.class);
     final MutableWorldState mutableWorldState = mock(MutableWorldState.class);
