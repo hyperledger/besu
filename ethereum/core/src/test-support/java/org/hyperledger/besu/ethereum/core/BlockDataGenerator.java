@@ -289,6 +289,7 @@ public class BlockDataGenerator {
     return new BlockBody(options.getTransactions(defaultTxs), ommers);
   }
 
+<<<<<<< HEAD
   public Transaction transaction(final Bytes payload) {
     return Transaction.builder()
         .nonce(positiveLong())
@@ -299,16 +300,24 @@ public class BlockDataGenerator {
         .payload(payload)
         .chainId(BigInteger.ONE)
         .signAndBuild(generateKeyPair());
+=======
+  public Transaction transaction() {
+    return transaction(bytes32());
   }
 
-  public Transaction transaction() {
+  public Transaction transaction(final BytesValue payload) {
+    return transaction(payload, address());
+>>>>>>> WIP - need to fix AT
+  }
+
+  public Transaction transaction(final BytesValue payload, final Address to) {
     return Transaction.builder()
         .nonce(positiveLong())
         .gasPrice(Wei.wrap(bytes32()))
         .gasLimit(positiveLong())
-        .to(address())
+        .to(to)
         .value(Wei.wrap(bytes32()))
-        .payload(bytes32())
+        .payload(payload)
         .chainId(BigInteger.ONE)
         .signAndBuild(generateKeyPair());
   }

@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkState;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -227,6 +228,9 @@ public class MessageFrame {
   private final Boolean isPersistingState;
   private Optional<Bytes> revertReason;
 
+  // Privacy Execution Environment fields.
+  private final Hash transactionHash;
+
   // Miscellaneous fields.
   private final EnumSet<ExceptionalHaltReason> exceptionalHaltReasons =
       EnumSet.noneOf(ExceptionalHaltReason.class);
@@ -260,6 +264,7 @@ public class MessageFrame {
       final Address miningBeneficiary,
       final BlockHashLookup blockHashLookup,
       final Boolean isPersistingState,
+      final Hash transactionHash,
       final Optional<Bytes> revertReason,
       final int maxStackSize) {
     this.type = type;
@@ -295,6 +300,7 @@ public class MessageFrame {
     this.completer = completer;
     this.miningBeneficiary = miningBeneficiary;
     this.isPersistingState = isPersistingState;
+    this.transactionHash = transactionHash;
     this.revertReason = revertReason;
   }
 
@@ -868,6 +874,15 @@ public class MessageFrame {
     return isPersistingState;
   }
 
+  /**
+   * Returns whether Message calls will be persisted
+   *
+   * @return whether Message calls will be persisted
+   */
+  public Hash getTransactionHash() {
+    return transactionHash;
+  }
+
   public void setCurrentOperation(final Operation currentOperation) {
     this.currentOperation = currentOperation;
   }
@@ -901,6 +916,7 @@ public class MessageFrame {
     private Address miningBeneficiary;
     private BlockHashLookup blockHashLookup;
     private Boolean isPersistingState = false;
+    private Hash transactionHash;
     private Optional<Bytes> reason = Optional.empty();
 
     public Builder type(final Type type) {
@@ -1019,6 +1035,11 @@ public class MessageFrame {
       return this;
     }
 
+    public Builder transactionHash(final Hash transactionHash) {
+      this.transactionHash = transactionHash;
+      return this;
+    }
+
     public Builder reason(final Bytes reason) {
       this.reason = Optional.ofNullable(reason);
       return this;
@@ -1074,6 +1095,7 @@ public class MessageFrame {
           miningBeneficiary,
           blockHashLookup,
           isPersistingState,
+          transactionHash,
           reason,
           maxStackSize);
     }

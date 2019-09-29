@@ -21,6 +21,7 @@ import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.enclave.EnclaveIOException;
 import org.hyperledger.besu.enclave.EnclaveServerException;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Log;
@@ -29,13 +30,14 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.mainnet.AbstractPrecompiledContract;
-import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
+import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivateBlockMetadata;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivateTransactionMetadata;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
@@ -54,8 +56,8 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
   private final Enclave enclave;
   private final WorldStateArchive privateWorldStateArchive;
   private final PrivateStateStorage privateStateStorage;
+  private final PrivateStateRootResolver privateStateRootResolver;
   private PrivateTransactionProcessor privateTransactionProcessor;
-  private static final Hash EMPTY_ROOT_HASH = Hash.wrap(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
 
   private static final Logger LOG = LogManager.getLogger();
 
@@ -77,6 +79,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
     this.enclave = enclave;
     this.privateWorldStateArchive = worldStateArchive;
     this.privateStateStorage = privateStateStorage;
+    this.privateStateRootResolver = new PrivateStateRootResolver(privateStateStorage);
   }
 
   public void setPrivateTransactionProcessor(
@@ -86,7 +89,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
 
   @Override
   public Gas gasRequirement(final Bytes input) {
-    return Gas.of(40_000L); // Not sure
+    return Gas.of(0L);
   }
 
   @Override
@@ -121,7 +124,8 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
 
     // get the last world state root hash or create a new one
     final Hash lastRootHash =
-        privateStateStorage.getLatestStateRoot(privacyGroupId).orElse(EMPTY_ROOT_HASH);
+        privateStateRootResolver.resolveLastStateRoot(
+            messageFrame.getBlockchain(), privacyGroupId, messageFrame.getBlockHeader());
 
     final MutableWorldState disposablePrivateState =
         privateWorldStateArchive.getMutable(lastRootHash).get();
@@ -156,7 +160,20 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
       disposablePrivateState.persist();
 
       final PrivateStateStorage.Updater privateStateUpdater = privateStateStorage.updater();
-      privateStateUpdater.putLatestStateRoot(privacyGroupId, disposablePrivateState.rootHash());
+      final BlockHeader headerWithHash = (BlockHeader) messageFrame.getBlockHeader();
+      final PrivateBlockMetadata privateBlockMetadata =
+          privateStateStorage
+              .getPrivateBlockMetadata(headerWithHash.getHash(), Bytes32.wrap(privacyGroupId))
+              .orElseGet(PrivateBlockMetadata::empty);
+      privateBlockMetadata.addPrivateTransactionMetadata(
+          new PrivateTransactionMetadata(
+              messageFrame.getTransactionHash(),
+              privacyGroupId,
+              disposablePrivateState.rootHash()));
+      privateStateUpdater.putPrivateBlockMetadata(
+          Bytes32.wrap(headerWithHash.getBlockHash().getByteArray()),
+          Bytes32.wrap(privacyGroupId),
+          privateBlockMetadata);
 
       final Bytes32 txHash = keccak256(RLP.encode(privateTransaction::writeTo));
       final List<Log> logs = result.getLogs();
@@ -169,7 +186,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
 
       privateStateUpdater.putTransactionStatus(
           txHash,
-          Bytes.of(result.getStatus() == TransactionProcessor.Result.Status.SUCCESSFUL ? 1 : 0));
+          Bytes.of(result.getStatus() == PrivateTransactionProcessor.Result.Status.SUCCESSFUL ? 1 : 0));
       privateStateUpdater.putTransactionResult(txHash, result.getOutput());
       privateStateUpdater.commit();
     }
