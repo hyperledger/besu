@@ -538,8 +538,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--logging", "-l"},
       paramLabel = "<LOG VERBOSITY LEVEL>",
       description =
-          "Logging verbosity levels: OFF, FATAL, ERROR, WARN, INFO, DEBUG, TRACE, ALL (default: ${DEFAULT-VALUE})")
-  private final Level logLevel = Level.INFO;
+          "Logging verbosity levels: OFF, FATAL, ERROR, WARN, INFO, DEBUG, TRACE, ALL (default: INFO)")
+  private final Level logLevel = null;
 
   @Option(
       names = {"--miner-enabled"},
@@ -773,7 +773,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (pluginCommonConfiguration == null) {
       final Path dataDir = dataDir();
       pluginCommonConfiguration =
-          new BesuConfigurationImpl(dataDir.resolve(DATABASE_PATH), dataDir);
+          new BesuConfigurationImpl(dataDir, dataDir.resolve(DATABASE_PATH));
       besuPluginContext.addService(BesuConfiguration.class, pluginCommonConfiguration);
     }
   }
@@ -932,7 +932,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       if (!NetworkUtility.isNetworkInterfaceAvailable(p2pInterface)) {
         throw new ParameterException(commandLine, failMessage);
       }
-    } catch (UnknownHostException | SocketException e) {
+    } catch (final UnknownHostException | SocketException e) {
       throw new ParameterException(commandLine, failMessage, e);
     }
   }

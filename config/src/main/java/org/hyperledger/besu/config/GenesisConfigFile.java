@@ -23,7 +23,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Streams;
 import com.google.common.io.Resources;
@@ -72,23 +71,7 @@ public class GenesisConfigFile {
   }
 
   public static GenesisConfigFile fromConfig(final String jsonString) {
-    try {
-      final ObjectNode rootNode = JsonUtil.objectNodeFromString(jsonString, false);
-      return fromConfig(rootNode);
-    } catch (final RuntimeException re) {
-      if (re.getCause() instanceof JsonParseException) {
-        // we had a runtime exception cause by a jsom parse exception.
-        // try again with comments enabled
-        final ObjectNode rootNode = JsonUtil.objectNodeFromString(jsonString, true);
-        // if we get here comments is what broke things, warn and move on.
-        LOG.warn(
-            "The provided genesis file contains comments. "
-                + "In a future release of Besu this will not be supported.");
-        return fromConfig(rootNode);
-      } else {
-        throw re;
-      }
-    }
+    return fromConfig(JsonUtil.objectNodeFromString(jsonString, false));
   }
 
   public static GenesisConfigFile fromConfig(final ObjectNode config) {
