@@ -19,7 +19,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.LogSeries;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
@@ -83,12 +82,10 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
   }
 
   @Override
-  public Optional<PrivateTransactionMetadata> getTransactionMetadata(
-      final Bytes32 blockHash, final Bytes32 transactionHash) {
-    return get(BytesValues.concatenate(blockHash, transactionHash), METADATA_KEY_SUFFIX)
-        .map(
-            bytesValue ->
-                PrivateTransactionMetadata.readFrom(new BytesValueRLPInput(bytesValue, false)));
+  public Optional<PrivateBlockMetadata> getPrivateBlockMetadata(
+      final Bytes32 blockHash, final Bytes32 privacyGroupId) {
+    return get(BytesValues.concatenate(blockHash, privacyGroupId), METADATA_KEY_SUFFIX)
+        .map(this::rlpDecodePrivateBlockMetadata);
   }
 
   @Override
@@ -109,6 +106,10 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
 
   private List<Log> rlpDecodeLog(final BytesValue bytes) {
     return RLP.input(bytes).readList(Log::readFrom);
+  }
+
+  private PrivateBlockMetadata rlpDecodePrivateBlockMetadata(final BytesValue bytes) {
+    return PrivateBlockMetadata.readFrom(RLP.input(bytes));
   }
 
   @Override
@@ -157,10 +158,10 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
     }
 
     @Override
-    public Updater putTransactionMetadata(
+    public Updater putPrivateBlockMetadata(
         final Bytes32 blockHash,
         final Bytes32 transactionHash,
-        final PrivateTransactionMetadata metadata) {
+        final PrivateBlockMetadata metadata) {
       set(
           BytesValues.concatenate(blockHash, transactionHash),
           METADATA_KEY_SUFFIX,
