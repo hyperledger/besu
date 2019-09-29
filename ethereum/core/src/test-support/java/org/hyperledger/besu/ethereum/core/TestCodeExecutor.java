@@ -95,7 +95,8 @@ public class TestCodeExecutor {
     final MutableWorldState initialWorldState = stateArchive.getMutable();
 
     final WorldUpdater worldState = initialWorldState.updater();
-    final MutableAccount senderAccount = worldState.getOrCreate(TestCodeExecutor.SENDER_ADDRESS);
+    final MutableAccount senderAccount =
+        worldState.getOrCreate(TestCodeExecutor.SENDER_ADDRESS).getMutable();
     accountSetup.accept(senderAccount);
     worldState.commit();
     initialWorldState.persist();

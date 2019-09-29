@@ -83,7 +83,7 @@ public class DefaultMutableWorldStateTest {
   public void containsAccount_AccountExists() {
     final MutableWorldState worldState = createEmpty();
     final WorldUpdater updater = worldState.updater();
-    updater.createAccount(ADDRESS).setBalance(Wei.of(100000));
+    updater.createAccount(ADDRESS).getMutable().setBalance(Wei.of(100000));
     updater.commit();
     assertThat(worldState.get(ADDRESS)).isNotNull();
     assertThat(worldState.rootHash())
@@ -108,7 +108,7 @@ public class DefaultMutableWorldStateTest {
   public void removeAccount_UpdatedAccount() {
     final MutableWorldState worldState = createEmpty();
     final WorldUpdater updater = worldState.updater();
-    updater.createAccount(ADDRESS).setBalance(Wei.of(100000));
+    updater.createAccount(ADDRESS).getMutable().setBalance(Wei.of(100000));
     updater.deleteAccount(ADDRESS);
     updater.commit();
     assertThat(worldState.rootHash()).isEqualTo(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
@@ -122,7 +122,7 @@ public class DefaultMutableWorldStateTest {
     // Create a world state with one account
     final MutableWorldState worldState = createEmpty();
     WorldUpdater updater = worldState.updater();
-    updater.createAccount(ADDRESS).setBalance(Wei.of(100000));
+    updater.createAccount(ADDRESS).getMutable().setBalance(Wei.of(100000));
     updater.commit();
     assertThat(worldState.get(ADDRESS)).isNotNull();
     assertThat(worldState.rootHash()).isNotEqualTo(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
@@ -131,7 +131,7 @@ public class DefaultMutableWorldStateTest {
     updater = worldState.updater();
     updater.deleteAccount(ADDRESS);
     assertThat(updater.get(ADDRESS)).isNull();
-    assertThat(updater.getMutable(ADDRESS)).isNull();
+    assertThat(updater.getAccount(ADDRESS)).isNull();
     updater.commit();
     assertThat(updater.get(ADDRESS)).isNull();
 
@@ -143,7 +143,7 @@ public class DefaultMutableWorldStateTest {
     // Create a world state with one account
     final MutableWorldState worldState = createEmpty();
     WorldUpdater updater = worldState.updater();
-    updater.createAccount(ADDRESS).setBalance(Wei.of(100000));
+    updater.createAccount(ADDRESS).getMutable().setBalance(Wei.of(100000));
     updater.commit();
     worldState.persist();
     assertThat(worldState.get(ADDRESS)).isNotNull();
@@ -153,7 +153,7 @@ public class DefaultMutableWorldStateTest {
     updater = worldState.updater();
     updater.deleteAccount(ADDRESS);
     assertThat(updater.get(ADDRESS)).isNull();
-    assertThat(updater.getMutable(ADDRESS)).isNull();
+    assertThat(updater.getAccount(ADDRESS)).isNull();
     // Check account is gone after committing
     updater.commit();
     assertThat(updater.get(ADDRESS)).isNull();
@@ -175,7 +175,7 @@ public class DefaultMutableWorldStateTest {
   public void streamAccounts_singleAccount() {
     final MutableWorldState worldState = createEmpty();
     final WorldUpdater updater = worldState.updater();
-    updater.createAccount(ADDRESS).setBalance(Wei.of(100000));
+    updater.createAccount(ADDRESS).getMutable().setBalance(Wei.of(100000));
     updater.commit();
 
     List<StreamableAccount> accounts =
@@ -201,10 +201,10 @@ public class DefaultMutableWorldStateTest {
     final WorldUpdater updater = worldState.updater();
 
     // Create an account
-    final MutableAccount accountA = updater.createAccount(addr1);
+    final MutableAccount accountA = updater.createAccount(addr1).getMutable();
     accountA.setBalance(Wei.of(100000));
     // Create another
-    final MutableAccount accountB = updater.createAccount(addr2);
+    final MutableAccount accountB = updater.createAccount(addr2).getMutable();
     accountB.setNonce(1);
     // Commit changes
     updater.commit();
@@ -249,7 +249,7 @@ public class DefaultMutableWorldStateTest {
         Hash.fromHexString("0xa3e1c133a5a51b03399ed9ad0380f3182e9e18322f232b816dd4b9094f871e1b");
 
     // Update account and assert we get the expected response from updater
-    updater.createAccount(ADDRESS).setBalance(newBalance);
+    updater.createAccount(ADDRESS).getMutable().setBalance(newBalance);
     assertThat(updater.get(ADDRESS)).isNotNull();
     assertThat(updater.get(ADDRESS).getBalance()).isEqualTo(newBalance);
 
@@ -285,7 +285,7 @@ public class DefaultMutableWorldStateTest {
   public void getAccountNonce_AccountExists() {
     final MutableWorldState worldState = createEmpty();
     final WorldUpdater updater = worldState.updater();
-    updater.createAccount(ADDRESS).setNonce(1L);
+    updater.createAccount(ADDRESS).getMutable().setNonce(1L);
     updater.commit();
     assertThat(worldState.get(ADDRESS).getNonce()).isEqualTo(1L);
     assertThat(worldState.rootHash())
@@ -298,7 +298,7 @@ public class DefaultMutableWorldStateTest {
   public void replaceAccountNonce() {
     final MutableWorldState worldState = createEmpty();
     final WorldUpdater updater = worldState.updater();
-    final MutableAccount account = updater.createAccount(ADDRESS);
+    final MutableAccount account = updater.createAccount(ADDRESS).getMutable();
     account.setNonce(1L);
     account.setNonce(2L);
     updater.commit();
@@ -313,7 +313,7 @@ public class DefaultMutableWorldStateTest {
   public void getAccountBalance_AccountExists() {
     final MutableWorldState worldState = createEmpty();
     final WorldUpdater updater = worldState.updater();
-    updater.createAccount(ADDRESS).setBalance(Wei.of(100000));
+    updater.createAccount(ADDRESS).getMutable().setBalance(Wei.of(100000));
     updater.commit();
     assertThat(worldState.get(ADDRESS).getBalance()).isEqualTo(Wei.of(100000));
   }
@@ -322,7 +322,7 @@ public class DefaultMutableWorldStateTest {
   public void replaceAccountBalance() {
     final MutableWorldState worldState = createEmpty();
     final WorldUpdater updater = worldState.updater();
-    final MutableAccount account = updater.createAccount(ADDRESS);
+    final MutableAccount account = updater.createAccount(ADDRESS).getMutable();
     account.setBalance(Wei.of(100000));
     account.setBalance(Wei.of(200000));
     updater.commit();
@@ -337,7 +337,7 @@ public class DefaultMutableWorldStateTest {
   public void setStorageValue_ZeroValue() {
     final MutableWorldState worldState = createEmpty();
     final WorldUpdater updater = worldState.updater();
-    final MutableAccount account = updater.createAccount(ADDRESS);
+    final MutableAccount account = updater.createAccount(ADDRESS).getMutable();
     account.setBalance(Wei.of(100000));
     account.setStorageValue(UInt256.ZERO, UInt256.ZERO);
     updater.commit();
@@ -352,7 +352,7 @@ public class DefaultMutableWorldStateTest {
   public void setStorageValue_NonzeroValue() {
     final MutableWorldState worldState = createEmpty();
     final WorldUpdater updater = worldState.updater();
-    final MutableAccount account = updater.createAccount(ADDRESS);
+    final MutableAccount account = updater.createAccount(ADDRESS).getMutable();
     account.setBalance(Wei.of(100000));
     account.setStorageValue(UInt256.ONE, UInt256.of(2));
     updater.commit();
@@ -367,7 +367,7 @@ public class DefaultMutableWorldStateTest {
   public void replaceStorageValue_NonzeroValue() {
     final MutableWorldState worldState = createEmpty();
     final WorldUpdater updater = worldState.updater();
-    final MutableAccount account = updater.createAccount(ADDRESS);
+    final MutableAccount account = updater.createAccount(ADDRESS).getMutable();
     account.setBalance(Wei.of(100000));
     account.setStorageValue(UInt256.ONE, UInt256.of(2));
     account.setStorageValue(UInt256.ONE, UInt256.of(3));
@@ -383,7 +383,7 @@ public class DefaultMutableWorldStateTest {
   public void replaceStorageValue_ZeroValue() {
     final MutableWorldState worldState = createEmpty();
     final WorldUpdater updater = worldState.updater();
-    final MutableAccount account = updater.createAccount(ADDRESS);
+    final MutableAccount account = updater.createAccount(ADDRESS).getMutable();
     account.setBalance(Wei.of(100000));
     account.setStorageValue(UInt256.ONE, UInt256.of(2));
     account.setStorageValue(UInt256.ONE, UInt256.ZERO);
@@ -398,12 +398,12 @@ public class DefaultMutableWorldStateTest {
   public void getOriginalStorageValue() {
     final MutableWorldState worldState = createEmpty();
     final WorldUpdater setupUpdater = worldState.updater();
-    final MutableAccount setupAccount = setupUpdater.createAccount(ADDRESS);
+    final MutableAccount setupAccount = setupUpdater.createAccount(ADDRESS).getMutable();
     setupAccount.setStorageValue(UInt256.ONE, UInt256.of(2));
     setupUpdater.commit();
 
     final WorldUpdater updater = worldState.updater();
-    final MutableAccount account = updater.getOrCreate(ADDRESS);
+    final MutableAccount account = updater.getOrCreate(ADDRESS).getMutable();
     assertThat(account.getOriginalStorageValue(UInt256.ONE)).isEqualTo(UInt256.of(2));
 
     account.setStorageValue(UInt256.ONE, UInt256.of(3));
@@ -414,12 +414,12 @@ public class DefaultMutableWorldStateTest {
   public void originalStorageValueIsAlwaysZeroIfStorageWasCleared() {
     final MutableWorldState worldState = createEmpty();
     final WorldUpdater setupUpdater = worldState.updater();
-    final MutableAccount setupAccount = setupUpdater.createAccount(ADDRESS);
+    final MutableAccount setupAccount = setupUpdater.createAccount(ADDRESS).getMutable();
     setupAccount.setStorageValue(UInt256.ONE, UInt256.of(2));
     setupUpdater.commit();
 
     final WorldUpdater updater = worldState.updater();
-    final MutableAccount account = updater.getOrCreate(ADDRESS);
+    final MutableAccount account = updater.getOrCreate(ADDRESS).getMutable();
 
     account.clearStorage();
     assertThat(account.getOriginalStorageValue(UInt256.ONE)).isEqualTo(UInt256.ZERO);
@@ -433,13 +433,13 @@ public class DefaultMutableWorldStateTest {
     // Create a world state with one account
     final MutableWorldState worldState = createEmpty();
     final WorldUpdater updater = worldState.updater();
-    MutableAccount account = updater.createAccount(ADDRESS);
+    MutableAccount account = updater.createAccount(ADDRESS).getMutable();
     account.setBalance(Wei.of(100000));
     account.setStorageValue(storageKey, storageValue);
     assertThat(account.getStorageValue(storageKey)).isEqualTo(storageValue);
 
     // Clear storage
-    account = updater.getMutable(ADDRESS);
+    account = updater.getAccount(ADDRESS).getMutable();
     assertThat(account).isNotNull();
     assertThat(account.getStorageValue(storageKey)).isEqualTo(storageValue);
     account.clearStorage();
@@ -448,12 +448,12 @@ public class DefaultMutableWorldStateTest {
 
     // Check storage is cleared after committing
     updater.commit();
-    assertThat(updater.getMutable(ADDRESS).getStorageValue(storageKey)).isEqualTo(UInt256.ZERO);
+    assertThat(updater.getAccount(ADDRESS).getStorageValue(storageKey)).isEqualTo(UInt256.ZERO);
     assertThat(updater.get(ADDRESS).getStorageValue(storageKey)).isEqualTo(UInt256.ZERO);
     assertThat(worldState.get(ADDRESS).getStorageValue(storageKey)).isEqualTo(UInt256.ZERO);
 
     // And after persisting
-    assertThat(updater.getMutable(ADDRESS).getStorageValue(storageKey)).isEqualTo(UInt256.ZERO);
+    assertThat(updater.getAccount(ADDRESS).getStorageValue(storageKey)).isEqualTo(UInt256.ZERO);
     assertThat(updater.get(ADDRESS).getStorageValue(storageKey)).isEqualTo(UInt256.ZERO);
     assertThat(worldState.get(ADDRESS).getStorageValue(storageKey)).isEqualTo(UInt256.ZERO);
   }
@@ -466,7 +466,7 @@ public class DefaultMutableWorldStateTest {
     // Create a world state with one account
     final MutableWorldState worldState = createEmpty();
     final WorldUpdater updater = worldState.updater();
-    MutableAccount account = updater.createAccount(ADDRESS);
+    MutableAccount account = updater.createAccount(ADDRESS).getMutable();
     account.setBalance(Wei.of(100000));
     account.setStorageValue(storageKey, storageValue);
     updater.commit();
@@ -475,7 +475,7 @@ public class DefaultMutableWorldStateTest {
     assertThat(worldState.rootHash()).isNotEqualTo(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
 
     // Clear storage
-    account = updater.getMutable(ADDRESS);
+    account = updater.getAccount(ADDRESS).getMutable();
     assertThat(account).isNotNull();
     assertThat(account.getStorageValue(storageKey)).isEqualTo(storageValue);
     account.clearStorage();
@@ -485,12 +485,12 @@ public class DefaultMutableWorldStateTest {
 
     // Check storage is cleared after committing
     updater.commit();
-    assertThat(updater.getMutable(ADDRESS).getStorageValue(storageKey)).isEqualTo(UInt256.ZERO);
+    assertThat(updater.getAccount(ADDRESS).getStorageValue(storageKey)).isEqualTo(UInt256.ZERO);
     assertThat(updater.get(ADDRESS).getStorageValue(storageKey)).isEqualTo(UInt256.ZERO);
     assertThat(worldState.get(ADDRESS).getStorageValue(storageKey)).isEqualTo(UInt256.ZERO);
 
     // And after persisting
-    assertThat(updater.getMutable(ADDRESS).getStorageValue(storageKey)).isEqualTo(UInt256.ZERO);
+    assertThat(updater.getAccount(ADDRESS).getStorageValue(storageKey)).isEqualTo(UInt256.ZERO);
     assertThat(updater.get(ADDRESS).getStorageValue(storageKey)).isEqualTo(UInt256.ZERO);
     assertThat(worldState.get(ADDRESS).getStorageValue(storageKey)).isEqualTo(UInt256.ZERO);
   }
@@ -504,13 +504,13 @@ public class DefaultMutableWorldStateTest {
     // Create a world state with one account
     final MutableWorldState worldState = createEmpty();
     final WorldUpdater updater = worldState.updater();
-    MutableAccount account = updater.createAccount(ADDRESS);
+    MutableAccount account = updater.createAccount(ADDRESS).getMutable();
     account.setBalance(Wei.of(100000));
     account.setStorageValue(storageKey, originalStorageValue);
     assertThat(account.getStorageValue(storageKey)).isEqualTo(originalStorageValue);
 
     // Clear storage then edit
-    account = updater.getMutable(ADDRESS);
+    account = updater.getAccount(ADDRESS).getMutable();
     assertThat(account).isNotNull();
     assertThat(account.getStorageValue(storageKey)).isEqualTo(originalStorageValue);
     assertThat(updater.get(ADDRESS).getStorageValue(storageKey)).isEqualTo(originalStorageValue);
@@ -520,12 +520,12 @@ public class DefaultMutableWorldStateTest {
 
     // Check storage is cleared after committing
     updater.commit();
-    assertThat(updater.getMutable(ADDRESS).getStorageValue(storageKey)).isEqualTo(newStorageValue);
+    assertThat(updater.getAccount(ADDRESS).getStorageValue(storageKey)).isEqualTo(newStorageValue);
     assertThat(updater.get(ADDRESS).getStorageValue(storageKey)).isEqualTo(newStorageValue);
     assertThat(worldState.get(ADDRESS).getStorageValue(storageKey)).isEqualTo(newStorageValue);
 
     // And after persisting
-    assertThat(updater.getMutable(ADDRESS).getStorageValue(storageKey)).isEqualTo(newStorageValue);
+    assertThat(updater.getAccount(ADDRESS).getStorageValue(storageKey)).isEqualTo(newStorageValue);
     assertThat(updater.get(ADDRESS).getStorageValue(storageKey)).isEqualTo(newStorageValue);
     assertThat(worldState.get(ADDRESS).getStorageValue(storageKey)).isEqualTo(newStorageValue);
   }
@@ -539,7 +539,7 @@ public class DefaultMutableWorldStateTest {
     // Create a world state with one account
     final MutableWorldState worldState = createEmpty();
     final WorldUpdater updater = worldState.updater();
-    MutableAccount account = updater.createAccount(ADDRESS);
+    MutableAccount account = updater.createAccount(ADDRESS).getMutable();
     account.setBalance(Wei.of(100000));
     account.setStorageValue(storageKey, originalStorageValue);
     assertThat(account.getStorageValue(storageKey)).isEqualTo(originalStorageValue);
@@ -547,7 +547,7 @@ public class DefaultMutableWorldStateTest {
     worldState.persist();
 
     // Clear storage then edit
-    account = updater.getMutable(ADDRESS);
+    account = updater.getAccount(ADDRESS).getMutable();
     assertThat(account).isNotNull();
     assertThat(account.getStorageValue(storageKey)).isEqualTo(originalStorageValue);
     assertThat(updater.get(ADDRESS).getStorageValue(storageKey)).isEqualTo(originalStorageValue);
@@ -558,12 +558,12 @@ public class DefaultMutableWorldStateTest {
 
     // Check storage is cleared after committing
     updater.commit();
-    assertThat(updater.getMutable(ADDRESS).getStorageValue(storageKey)).isEqualTo(newStorageValue);
+    assertThat(updater.getAccount(ADDRESS).getStorageValue(storageKey)).isEqualTo(newStorageValue);
     assertThat(updater.get(ADDRESS).getStorageValue(storageKey)).isEqualTo(newStorageValue);
     assertThat(worldState.get(ADDRESS).getStorageValue(storageKey)).isEqualTo(newStorageValue);
 
     // And after persisting
-    assertThat(updater.getMutable(ADDRESS).getStorageValue(storageKey)).isEqualTo(newStorageValue);
+    assertThat(updater.getAccount(ADDRESS).getStorageValue(storageKey)).isEqualTo(newStorageValue);
     assertThat(updater.get(ADDRESS).getStorageValue(storageKey)).isEqualTo(newStorageValue);
     assertThat(worldState.get(ADDRESS).getStorageValue(storageKey)).isEqualTo(newStorageValue);
   }
@@ -572,7 +572,7 @@ public class DefaultMutableWorldStateTest {
   public void replaceAccountCode() {
     final MutableWorldState worldState = createEmpty();
     final WorldUpdater updater = worldState.updater();
-    final MutableAccount account = updater.createAccount(ADDRESS);
+    final MutableAccount account = updater.createAccount(ADDRESS).getMutable();
     account.setBalance(Wei.of(100000));
     account.setCode(BytesValue.of(1, 2, 3));
     account.setVersion(Account.DEFAULT_VERSION);
@@ -590,12 +590,12 @@ public class DefaultMutableWorldStateTest {
   public void revert() {
     final MutableWorldState worldState = createEmpty();
     final WorldUpdater updater1 = worldState.updater();
-    final MutableAccount account1 = updater1.createAccount(ADDRESS);
+    final MutableAccount account1 = updater1.createAccount(ADDRESS).getMutable();
     account1.setBalance(Wei.of(200000));
     updater1.commit();
 
     final WorldUpdater updater2 = worldState.updater();
-    final MutableAccount account2 = updater2.getMutable(ADDRESS);
+    final MutableAccount account2 = updater2.getAccount(ADDRESS).getMutable();
     account2.setBalance(Wei.of(300000));
     assertThat(updater2.get(ADDRESS).getBalance()).isEqualTo(Wei.of(300000));
 
@@ -615,7 +615,7 @@ public class DefaultMutableWorldStateTest {
   public void shouldReturnNullForGetMutableWhenAccountDeletedInAncestor() {
     final MutableWorldState worldState = createEmpty();
     final WorldUpdater updater1 = worldState.updater();
-    final MutableAccount account1 = updater1.createAccount(ADDRESS);
+    final MutableAccount account1 = updater1.createAccount(ADDRESS).getMutable();
     updater1.commit();
     assertThat(updater1.get(ADDRESS))
         .isEqualToComparingOnlyGivenFields(account1, "address", "nonce", "balance", "codeHash");
@@ -625,14 +625,14 @@ public class DefaultMutableWorldStateTest {
     assertThat(updater2.get(ADDRESS)).isEqualTo(null);
 
     final WorldUpdater updater3 = updater2.updater();
-    assertThat(updater3.getMutable(ADDRESS)).isEqualTo(null);
+    assertThat(updater3.getAccount(ADDRESS)).isEqualTo(null);
   }
 
   @Test
   public void shouldCombineUnchangedAndChangedValuesWhenRetrievingStorageEntries() {
     final MutableWorldState worldState = createEmpty();
     WorldUpdater updater = worldState.updater();
-    MutableAccount account = updater.createAccount(ADDRESS);
+    MutableAccount account = updater.createAccount(ADDRESS).getMutable();
     account.setBalance(Wei.of(100000));
     account.setStorageValue(UInt256.ONE, UInt256.of(2));
     account.setStorageValue(UInt256.of(2), UInt256.of(5));
@@ -645,7 +645,7 @@ public class DefaultMutableWorldStateTest {
     initialSetOfEntries.forEach(entry -> initialEntries.put(entry.getKeyHash(), entry));
 
     updater = worldState.updater();
-    account = updater.getMutable(ADDRESS);
+    account = updater.getAccount(ADDRESS).getMutable();
     account.setStorageValue(UInt256.ONE, UInt256.of(3));
     account.setStorageValue(UInt256.of(3), UInt256.of(6));
 
