@@ -61,7 +61,6 @@ public class PrivacyPrecompiledContractTest {
   private PrivacyPrecompiledContract privacyPrecompiledContract;
   private PrivacyPrecompiledContract brokenPrivateTransactionHandler;
   private MessageFrame messageFrame;
-  private Blockchain blockchain;
   private final String DEFAULT_OUTPUT = "0x01";
 
   private static final byte[] VALID_PRIVATE_TRANSACTION_RLP_BASE64 =
