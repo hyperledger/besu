@@ -61,6 +61,10 @@ public class InMemoryStorageProvider implements StorageProvider {
         provider.createWorldStateStorage(), provider.createWorldStatePreimageStorage());
   }
 
+  public static PrivateStateStorage createInMemoryPrivateStateStorage() {
+    return new PrivateStateKeyValueStorage(new InMemoryKeyValueStorage());
+  }
+
   @Override
   public BlockchainStorage createBlockchainStorage(final ProtocolSchedule<?> protocolSchedule) {
     return new KeyValueStoragePrefixedKeyBlockchainStorage(

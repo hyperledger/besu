@@ -17,12 +17,20 @@ package org.hyperledger.besu.ethereum.privacy.storage;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+import org.hyperledger.besu.util.bytes.BytesValue;
 
 /** Mined private transaction metadata. */
 public class PrivateTransactionMetadata {
+  private final Hash privacyMarkerTransactionHash;
+  private final BytesValue privacyGroupId;
   private final Hash stateRoot;
 
-  public PrivateTransactionMetadata(final Hash stateRoot) {
+  public PrivateTransactionMetadata(
+      final Hash privacyMarkerTransactionHash,
+      final BytesValue privacyGroupId,
+      final Hash stateRoot) {
+    this.privacyMarkerTransactionHash = privacyMarkerTransactionHash;
+    this.privacyGroupId = privacyGroupId;
     this.stateRoot = stateRoot;
   }
 
@@ -30,9 +38,19 @@ public class PrivateTransactionMetadata {
     return stateRoot;
   }
 
+  public Hash getPrivacyMarkerTransactionHash() {
+    return privacyMarkerTransactionHash;
+  }
+
+  public BytesValue getPrivacyGroupId() {
+    return privacyGroupId;
+  }
+
   public void writeTo(final RLPOutput out) {
     out.startList();
 
+    out.writeBytesValue(privacyMarkerTransactionHash);
+    out.writeBytesValue(privacyGroupId);
     out.writeBytesValue(stateRoot);
 
     out.endList();
@@ -42,7 +60,8 @@ public class PrivateTransactionMetadata {
     input.enterList();
 
     final PrivateTransactionMetadata privateTransactionMetadata =
-        new PrivateTransactionMetadata(Hash.wrap(input.readBytes32()));
+        new PrivateTransactionMetadata(
+            Hash.wrap(input.readBytes32()), input.readBytesValue(), Hash.wrap(input.readBytes32()));
 
     input.leaveList();
     return privateTransactionMetadata;
