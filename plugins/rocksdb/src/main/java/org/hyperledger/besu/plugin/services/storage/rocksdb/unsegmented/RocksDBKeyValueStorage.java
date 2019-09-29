@@ -25,9 +25,11 @@ import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksD
 import org.hyperledger.besu.services.kvstore.KeyValueStorageTransactionTransitionValidatorDecorator;
 
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 
+import com.google.common.collect.Sets;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.rocksdb.BlockBasedTableConfig;
@@ -128,6 +130,22 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
       throw new StorageException(e);
     }
     return removedNodeCounter;
+  }
+
+  @Override
+  public Set<byte[]> getAllKeysThat(final Predicate<byte[]> returnCondition) {
+    final Set<byte[]> returnedKeys = Sets.newIdentityHashSet();
+    try (final RocksIterator rocksIterator = db.newIterator()) {
+      rocksIterator.seekToFirst();
+      while (rocksIterator.isValid()) {
+        final byte[] key = rocksIterator.key();
+        if (returnCondition.test(key)) {
+          returnedKeys.add(key);
+        }
+        rocksIterator.next();
+      }
+    }
+    return returnedKeys;
   }
 
   @Override
