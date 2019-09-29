@@ -236,8 +236,7 @@ exit $status
                                 if (env.BRANCH_NAME == 'master') {
                                     additionalTags.add('develop')
                                 }
-
-                                if (! version ==~ /.*-SNAPSHOT/) {
+                                if (! (version ==~ /.*-SNAPSHOT/)) {
                                     additionalTags.add('latest')
                                     additionalTags.add(version.split(/\./)[0..1].join('.'))
                                 }
@@ -282,9 +281,6 @@ exit $status
                                          sh './gradlew --no-daemon --parallel bintrayUpload'
                                      }
                                  }
-
-                             } else {
-                                sh "echo "
 
                              }
                          }
