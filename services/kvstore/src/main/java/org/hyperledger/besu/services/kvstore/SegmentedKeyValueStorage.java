@@ -19,6 +19,7 @@ import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 
 import java.io.Closeable;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Predicate;
 
 /**
@@ -48,7 +49,9 @@ public interface SegmentedKeyValueStorage<S> extends Closeable {
    */
   Transaction<S> startTransaction() throws StorageException;
 
-  long removeUnless(S segmentHandle, Predicate<byte[]> inUseCheck);
+  long removeAllEntriesUnless(S segmentHandle, Predicate<byte[]> inUseCheck);
+
+  Set<byte[]> getAllKeysThat(S segmentHandle, Predicate<byte[]> returnCondition);
 
   void clear(S segmentHandle);
 
