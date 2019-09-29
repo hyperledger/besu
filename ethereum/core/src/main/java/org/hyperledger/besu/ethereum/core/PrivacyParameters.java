@@ -18,8 +18,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
-import org.hyperledger.besu.ethereum.privacy.PrivateStateStorage;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransactionStorage;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
@@ -44,10 +43,9 @@ public class PrivacyParameters {
   private String enclavePublicKey;
   private File enclavePublicKeyFile;
   private Optional<SECP256K1.KeyPair> signingKeyPair = Optional.empty();
+
   private WorldStateArchive privateWorldStateArchive;
   private StorageProvider privateStorageProvider;
-
-  private PrivateTransactionStorage privateTransactionStorage;
   private PrivateStateStorage privateStateStorage;
 
   public Integer getPrivacyAddress() {
@@ -114,15 +112,6 @@ public class PrivacyParameters {
     this.privateStorageProvider = privateStorageProvider;
   }
 
-  public PrivateTransactionStorage getPrivateTransactionStorage() {
-    return privateTransactionStorage;
-  }
-
-  public void setPrivateTransactionStorage(
-      final PrivateTransactionStorage privateTransactionStorage) {
-    this.privateTransactionStorage = privateTransactionStorage;
-  }
-
   public PrivateStateStorage getPrivateStateStorage() {
     return privateStateStorage;
   }
@@ -181,16 +170,14 @@ public class PrivacyParameters {
         final WorldStateArchive privateWorldStateArchive =
             new WorldStateArchive(privateWorldStateStorage, privatePreimageStorage);
 
-        final PrivateTransactionStorage privateTransactionStorage =
-            storageProvider.createPrivateTransactionStorage();
         final PrivateStateStorage privateStateStorage = storageProvider.createPrivateStateStorage();
 
         config.setPrivateWorldStateArchive(privateWorldStateArchive);
         config.setEnclavePublicKey(enclavePublicKey);
         config.setEnclavePublicKeyFile(enclavePublicKeyFile);
         config.setPrivateStorageProvider(storageProvider);
-        config.setPrivateTransactionStorage(privateTransactionStorage);
         config.setPrivateStateStorage(privateStateStorage);
+
         if (privateKeyPath != null) {
           config.setSigningKeyPair(KeyPair.load(privateKeyPath.toFile()));
         }
