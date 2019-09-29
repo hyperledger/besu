@@ -36,8 +36,7 @@ public interface PrivateStateStorage {
 
   Optional<BytesValue> getRevertReason(Bytes32 transactionHash);
 
-  Optional<PrivateTransactionMetadata> getTransactionMetadata(
-      Bytes32 blockHash, Bytes32 transactionHash);
+  Optional<PrivateBlockMetadata> getPrivateBlockMetadata(Bytes32 blockHash, Bytes32 privacyGroupId);
 
   boolean isPrivateStateAvailable(Bytes32 transactionHash);
 
@@ -58,8 +57,8 @@ public interface PrivateStateStorage {
 
     Updater putTransactionRevertReason(Bytes32 txHash, BytesValue bytesValue);
 
-    Updater putTransactionMetadata(
-        Bytes32 blockHash, Bytes32 transactionHash, PrivateTransactionMetadata metadata);
+    Updater putPrivateBlockMetadata(
+        Bytes32 blockHash, Bytes32 privacyGroupId, PrivateBlockMetadata metadata);
 
     void commit();
 

@@ -27,6 +27,8 @@ import org.hyperledger.besu.enclave.types.ReceiveRequest;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.LogSeries;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
@@ -58,6 +60,7 @@ public class PrivacyPrecompiledContractTest {
   private PrivacyPrecompiledContract privacyPrecompiledContract;
   private PrivacyPrecompiledContract brokenPrivateTransactionHandler;
   private MessageFrame messageFrame;
+  private Blockchain blockchain;
   private final String DEFAULT_OUTPUT = "0x01";
 
   private static final byte[] VALID_PRIVATE_TRANSACTION_RLP_BASE64 =
@@ -78,7 +81,9 @@ public class PrivacyPrecompiledContractTest {
 
   private Enclave mockEnclave() {
     final Enclave mockEnclave = mock(Enclave.class);
-    final ReceiveResponse response = new ReceiveResponse(VALID_PRIVATE_TRANSACTION_RLP_BASE64, "");
+    final ReceiveResponse response =
+        new ReceiveResponse(
+            VALID_PRIVATE_TRANSACTION_RLP_BASE64, "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=");
     when(mockEnclave.receive(any(ReceiveRequest.class))).thenReturn(response);
     return mockEnclave;
   }
@@ -122,13 +127,15 @@ public class PrivacyPrecompiledContractTest {
 
     final PrivateStateStorage privateStateStorage = mock(PrivateStateStorage.class);
     final PrivateStateStorage.Updater storageUpdater = mock(PrivateStateStorage.Updater.class);
-    when(storageUpdater.putLatestStateRoot(nullable(Bytes32.class), any()))
+    when(storageUpdater.putPrivateBlockMetadata(
+            nullable(Bytes32.class), nullable(Bytes32.class), any()))
         .thenReturn(storageUpdater);
     when(storageUpdater.putTransactionLogs(nullable(Bytes32.class), any()))
         .thenReturn(storageUpdater);
     when(storageUpdater.putTransactionResult(nullable(Bytes32.class), any()))
         .thenReturn(storageUpdater);
     when(privateStateStorage.updater()).thenReturn(storageUpdater);
+    when(privateStateStorage.getPrivateBlockMetadata(any(), any())).thenReturn(Optional.empty());
 
     privacyPrecompiledContract =
         new PrivacyPrecompiledContract(
@@ -144,6 +151,16 @@ public class PrivacyPrecompiledContractTest {
             worldStateArchive,
             privateStateStorage);
     messageFrame = mock(MessageFrame.class);
+    blockchain = mock(Blockchain.class);
+    final BlockDataGenerator blockGenerator = new BlockDataGenerator();
+    final Block genesis = blockGenerator.genesisBlock();
+    final Block block =
+        blockGenerator.block(
+            new BlockDataGenerator.BlockOptions().setParentHash(genesis.getHeader().getHash()));
+    when(blockchain.getGenesisBlock()).thenReturn(genesis);
+    when(blockchain.getBlockByHash(block.getHash())).thenReturn(Optional.of(block));
+    when(messageFrame.getBlockchain()).thenReturn(blockchain);
+    when(messageFrame.getBlockHeader()).thenReturn(block.getHeader());
   }
 
   @Test
