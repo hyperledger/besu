@@ -78,6 +78,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.TxPoolBesuStat
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.TxPoolBesuTransactions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Web3ClientVersion;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Web3Sha3;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.crosschain.CrossCheckUnlock;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.crosschain.EthIsLockable;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.crosschain.EthIsLocked;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.crosschain.EthProcessSubordinateView;
@@ -399,6 +400,7 @@ public class JsonRpcMethodsFactory {
           new EthProcessSubordinateView(blockchainQueries, crosschainProcessor, parameter));
       addMethods(enabledMethods, new EthIsLockable(blockchainQueries, parameter));
       addMethods(enabledMethods, new EthIsLocked(blockchainQueries, parameter));
+      addMethods(enabledMethods, new CrossCheckUnlock(crosschainProcessor, parameter));
     }
 
     return enabledMethods;

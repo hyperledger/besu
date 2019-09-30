@@ -16,6 +16,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 import org.hyperledger.besu.crosschain.CrosschainConfiguration;
 import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcRequestException;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -23,6 +24,7 @@ import org.hyperledger.besu.ethereum.core.CrosschainTransaction;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.crosschain.CrosschainThreadLocalDataHolder;
 import org.hyperledger.besu.ethereum.crosschain.SubordinateViewCoordinator;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -282,59 +284,102 @@ public class CrosschainProcessor {
   private void startCrosschainTransactionCommitIgnoreTimeOut(
       final CrosschainTransaction transaction) {
     this.vertx.setTimer(
-        30000,
+        2000,
         id -> {
-          LOG.debug("Crosschain Signalling Transaction: Initiated");
-
-          // Work out sender's nonce.
-          // TODO The code below only determines the nonce up until the latest block. It does not
-          // TODO look at pending transactions.
-          Hash latestBlockStateRootHash =
-              this.blockchain.getChainHeadBlock().getHeader().getStateRoot();
-          final Optional<MutableWorldState> maybeWorldState =
-              worldStateArchive.getMutable(latestBlockStateRootHash);
-          if (maybeWorldState.isEmpty()) {
-            LOG.error("Crosschain Signalling Transaction: Can't fetch world state");
-            return;
-          }
-          MutableWorldState worldState = maybeWorldState.get();
-          final Address senderAddress =
-              Address.extract(Hash.hash(this.nodeKeys.getPublicKey().getEncodedBytes()));
-          final Account sender = worldState.get(senderAddress);
-          final long nonce = sender != null ? sender.getNonce() : 0L;
-
           // Work out TO address.
           Address toAddress =
               transaction.getTo().orElse(transaction.contractAddress().orElse(Address.ZERO));
-          if (toAddress.equals(Address.ZERO)) {
-            LOG.error("Crosschain Signalling Transaction: No TO address specified");
-            return;
-          }
-
-          List<CrosschainTransaction> emptyList = List.of();
-
-          CrosschainTransaction ignoreCommitTransaction =
-              CrosschainTransaction.builderX()
-                  .type(
-                      CrosschainTransaction.CrosschainTransactionType
-                          .UNLOCK_IGNORE_SIGNALLING_TRANSACTION)
-                  .nonce(nonce)
-                  .gasPrice(Wei.ZERO)
-                  .gasLimit(10000000)
-                  .to(toAddress)
-                  .value(Wei.ZERO)
-                  .payload(BytesValue.EMPTY)
-                  .chainId(BigInteger.valueOf(this.sidechainId))
-                  .subordinateTransactionsAndViews(emptyList)
-                  .signAndBuild(this.nodeKeys);
-
-          ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult =
-              this.transactionPool.addLocalTransaction(ignoreCommitTransaction);
-          if (!validationResult.isValid()) {
-            LOG.warn(
-                "Crosschain Signalling Transaction: Validation result:{}",
-                validationResult.toString());
-          }
+          sendSignallingTransaction(toAddress);
         });
+  }
+
+  /**
+   * Called by the JSON RPC Call CrossCheckUnlock.
+   *
+   * <p>If a contract is lockable and locked, then check with the Crosschain Coordination Contract
+   * which is coordinating the Crosschain Transaction to see if the transaction has completed and if
+   * the contract can be unlocked.
+   *
+   * @param address Address of contract to check.
+   */
+  public void checkUnlock(final Address address) {
+
+    // TODO For the moment just unlock the contract.
+
+    // Is the contract lockable and is it locked?
+    Hash latestBlockStateRootHash = this.blockchain.getChainHeadBlock().getHeader().getStateRoot();
+    final Optional<WorldState> maybeWorldState = worldStateArchive.get(latestBlockStateRootHash);
+    if (maybeWorldState.isEmpty()) {
+      LOG.error("Crosschain Signalling Transaction: Can't fetch world state");
+      return;
+    }
+    WorldState worldState = maybeWorldState.get();
+    final Account contract = worldState.get(address);
+
+    if (!contract.isLockable()) {
+      throw new InvalidJsonRpcRequestException("Contract is not lockable");
+    }
+
+    if (contract.isLocked()) {
+      // TODO here we need to check the Crosschain Coordination Contract.
+
+      sendSignallingTransaction(address);
+    }
+  }
+
+  /**
+   * Send a signalling transaction to an address to unlock a contract.
+   *
+   * <p>TODO we should probably check the response and retry if appropriate.
+   *
+   * @param toAddress Address of contract to unlock / send the signalling transaction to.
+   */
+  private void sendSignallingTransaction(final Address toAddress) {
+    LOG.debug("Crosschain Signalling Transaction: Initiated");
+
+    // Work out sender's nonce.
+    // TODO The code below only determines the nonce up until the latest block. It does not
+    // TODO look at pending transactions.
+    Hash latestBlockStateRootHash = this.blockchain.getChainHeadBlock().getHeader().getStateRoot();
+    final Optional<MutableWorldState> maybeWorldState =
+        worldStateArchive.getMutable(latestBlockStateRootHash);
+    if (maybeWorldState.isEmpty()) {
+      LOG.error("Crosschain Signalling Transaction: Can't fetch world state");
+      return;
+    }
+    MutableWorldState worldState = maybeWorldState.get();
+    final Address senderAddress =
+        Address.extract(Hash.hash(this.nodeKeys.getPublicKey().getEncodedBytes()));
+    final Account sender = worldState.get(senderAddress);
+    final long nonce = sender != null ? sender.getNonce() : 0L;
+
+    if (toAddress.equals(Address.ZERO)) {
+      LOG.error("Crosschain Signalling Transaction: No TO address specified");
+      return;
+    }
+
+    List<CrosschainTransaction> emptyList = List.of();
+
+    CrosschainTransaction ignoreCommitTransaction =
+        CrosschainTransaction.builderX()
+            .type(
+                CrosschainTransaction.CrosschainTransactionType
+                    .UNLOCK_COMMIT_SIGNALLING_TRANSACTION)
+            .nonce(nonce)
+            .gasPrice(Wei.ZERO)
+            .gasLimit(10000000)
+            .to(toAddress)
+            .value(Wei.ZERO)
+            .payload(BytesValue.EMPTY)
+            .chainId(BigInteger.valueOf(this.sidechainId))
+            .subordinateTransactionsAndViews(emptyList)
+            .signAndBuild(this.nodeKeys);
+
+    ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult =
+        this.transactionPool.addLocalTransaction(ignoreCommitTransaction);
+    if (!validationResult.isValid()) {
+      LOG.warn(
+          "Crosschain Signalling Transaction: Validation result:{}", validationResult.toString());
+    }
   }
 }
