@@ -7,7 +7,7 @@ From v1.2, Besu requires Java 11.  Besu on Java 8 is no longer supported.
 
 ### Docker Image Migration 
 
-In v1.2, we removed the entry-point script from our Docker image. Refer to the [migration guide](https://besu.hyperledger.org/en/latest/Deploying-Besu/High-Availability/)
+In v1.2, we removed the entry-point script from our Docker image. Refer to the [migration guide](https://besu.hyperledger.org/en/latest/HowTo/Get-Started/Migration-Docker/)
 for information on options that were previously automatically added to the Besu command line. 
 
 ### 1.3 RC 
@@ -19,7 +19,7 @@ for information on options that were previously automatically added to the Besu 
 ### Additions and Improvements
 
 - Store db metadata file in the root data directory. [\#46](https://github.com/hyperledger/besu/pull/46) 
-- Add `--targat-gas-limit` command line option. [\#24](https://github.com/hyperledger/besu/pull/24)(thanks to new contributor [cfelde](https://github.com/cfelde))
+- Add `--target-gas-limit` command line option. [\#24](https://github.com/hyperledger/besu/pull/24)(thanks to new contributor [cfelde](https://github.com/cfelde))
 - Allow private contracts to access public state. [\#9](https://github.com/hyperledger/besu/pull/9) 
 - Documentation updates include: 
   - Added [sample load balancer configurations](https://besu.hyperledger.org/en/latest/HowTo/Configure/Configure-HA/Sample-Configuration/)  
