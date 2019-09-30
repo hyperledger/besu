@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.controller.BesuController;
+import org.hyperledger.besu.controller.GasLimitCalculator;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
 import org.hyperledger.besu.ethereum.core.MiningParametersTestBuilder;
@@ -68,6 +69,7 @@ public final class RlpBlockImporterTest {
             .dataDirectory(dataDir)
             .clock(TestClock.fixed())
             .transactionPoolConfiguration(TransactionPoolConfiguration.builder().build())
+            .targetGasLimit(GasLimitCalculator.DEFAULT)
             .build();
     final RlpBlockImporter.ImportResult result =
         rlpBlockImporter.importBlockchain(source, targetController);
@@ -107,6 +109,7 @@ public final class RlpBlockImporterTest {
             .dataDirectory(dataDir)
             .clock(TestClock.fixed())
             .transactionPoolConfiguration(TransactionPoolConfiguration.builder().build())
+            .targetGasLimit(GasLimitCalculator.DEFAULT)
             .build();
     final RlpBlockImporter.ImportResult result =
         rlpBlockImporter.importBlockchain(source, controller);

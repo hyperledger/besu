@@ -178,6 +178,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).miningParameters(miningArg.capture());
     verify(mockControllerBuilder).nodePrivateKeyFile(isNotNull());
     verify(mockControllerBuilder).storageProvider(storageProviderArgumentCaptor.capture());
+    verify(mockControllerBuilder).targetGasLimit(eq(Optional.empty()));
     verify(mockControllerBuilder).build();
 
     assertThat(storageProviderArgumentCaptor.getValue()).isNotNull();
@@ -2796,5 +2797,39 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(commandErrorOutput.toString())
         .contains("Unknown options in TOML configuration file: invalid_option, invalid_option2");
+  }
+
+  @Test
+  public void targetGasLimitIsEnabledWhenSpecified() throws Exception {
+    parseCommand("--target-gas-limit=10000000");
+
+    @SuppressWarnings("unchecked")
+    final ArgumentCaptor<Optional<Long>> targetGasLimitArg =
+        ArgumentCaptor.forClass(Optional.class);
+
+    verify(mockControllerBuilder).targetGasLimit(targetGasLimitArg.capture());
+    verify(mockControllerBuilder).build();
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+
+    assertThat(targetGasLimitArg.getValue()).isEqualTo(Optional.of(10_000_000L));
+  }
+
+  @Test
+  public void targetGasLimitIsDisabledWhenNotSpecified() throws Exception {
+    parseCommand();
+
+    @SuppressWarnings("unchecked")
+    final ArgumentCaptor<Optional<Long>> targetGasLimitArg =
+        ArgumentCaptor.forClass(Optional.class);
+
+    verify(mockControllerBuilder).targetGasLimit(targetGasLimitArg.capture());
+    verify(mockControllerBuilder).build();
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+
+    assertThat(targetGasLimitArg.getValue()).isEqualTo(Optional.empty());
   }
 }
