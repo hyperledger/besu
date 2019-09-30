@@ -58,6 +58,7 @@ public class Pruner {
 
   public void start() {
     LOG.info("Starting Pruner.");
+    pruningStrategy.prepare();
     blockchain.observeBlockAdded((event, blockchain) -> handleNewBlock(event));
   }
 
@@ -73,7 +74,6 @@ public class Pruner {
 
     final long blockNumber = event.getBlock().getHeader().getNumber();
     if (state.compareAndSet(State.IDLE, State.MARK_BLOCK_CONFIRMATIONS_AWAITING)) {
-      pruningStrategy.prepare();
       markBlockNumber = blockNumber;
     } else if (blockNumber >= markBlockNumber + blockConfirmations
         && state.compareAndSet(State.MARK_BLOCK_CONFIRMATIONS_AWAITING, State.MARKING)) {
@@ -107,7 +107,6 @@ public class Pruner {
     execute(
         () -> {
           pruningStrategy.sweepBefore(markBlockNumber);
-          pruningStrategy.cleanup();
           state.compareAndSet(State.SWEEPING, State.IDLE);
         });
   }
