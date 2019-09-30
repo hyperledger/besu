@@ -34,6 +34,11 @@ public class IbftBlockInterface implements BlockInterface {
   }
 
   @Override
+  public Address getProposerOfBlock(final org.hyperledger.besu.plugin.data.BlockHeader header) {
+    return Address.fromHexString(header.getCoinbase().getHexString());
+  }
+
+  @Override
   public Optional<ValidatorVote> extractVoteFromHeader(final BlockHeader header) {
     final IbftExtraData ibftExtraData = IbftExtraData.decode(header);
 
