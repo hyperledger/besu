@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.privacy.storage;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.LogSeries;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -44,17 +43,6 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
 
   public PrivateStateKeyValueStorage(final KeyValueStorage keyValueStorage) {
     this.keyValueStorage = keyValueStorage;
-  }
-
-  @Override
-  public Optional<Hash> getLatestStateRoot(final BytesValue privacyId) {
-    final byte[] id = privacyId.getArrayUnsafe();
-
-    if (keyValueStorage.get(id).isPresent()) {
-      return Optional.of(Hash.wrap(Bytes32.wrap(keyValueStorage.get(id).get())));
-    } else {
-      return Optional.empty();
-    }
   }
 
   @Override
@@ -126,12 +114,6 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
     }
 
     @Override
-    public Updater putLatestStateRoot(final BytesValue privacyId, final Hash privateStateHash) {
-      transaction.put(privacyId.getArrayUnsafe(), privateStateHash.extractArray());
-      return this;
-    }
-
-    @Override
     public Updater putTransactionLogs(final Bytes32 transactionHash, final LogSeries logs) {
       set(transactionHash, LOGS_KEY_SUFFIX, RLP.encode(logs::writeTo));
       return this;
@@ -160,10 +142,10 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
     @Override
     public Updater putPrivateBlockMetadata(
         final Bytes32 blockHash,
-        final Bytes32 transactionHash,
+        final Bytes32 privacyGroupId,
         final PrivateBlockMetadata metadata) {
       set(
-          BytesValues.concatenate(blockHash, transactionHash),
+          BytesValues.concatenate(blockHash, privacyGroupId),
           METADATA_KEY_SUFFIX,
           RLP.encode(metadata::writeTo));
       return this;
