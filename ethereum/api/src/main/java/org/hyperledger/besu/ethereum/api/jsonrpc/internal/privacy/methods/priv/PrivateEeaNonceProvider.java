@@ -19,7 +19,8 @@ import org.hyperledger.besu.enclave.types.FindPrivacyGroupRequest;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.enclave.types.PrivacyGroup.Type;
 import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransactionHandler;
+import org.hyperledger.besu.ethereum.privacy.PrivateNonceProvider;
+import org.hyperledger.besu.util.bytes.BytesValues;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -30,12 +31,12 @@ import org.bouncycastle.util.Arrays;
 public class PrivateEeaNonceProvider {
 
   private final Enclave enclave;
-  private final PrivateTransactionHandler privateTransactionHandler;
+  private final PrivateNonceProvider privateNonceProvider;
 
   public PrivateEeaNonceProvider(
-      final Enclave enclave, final PrivateTransactionHandler privateTransactionHandler) {
+      final Enclave enclave, final PrivateNonceProvider privateNonceProvider) {
     this.enclave = enclave;
-    this.privateTransactionHandler = privateTransactionHandler;
+    this.privateNonceProvider = privateNonceProvider;
   }
 
   public long determineNonce(
@@ -64,6 +65,6 @@ public class PrivateEeaNonceProvider {
 
     final String privacyGroupId = legacyGroups.get(0).getPrivacyGroupId();
 
-    return privateTransactionHandler.getSenderNonce(address, privacyGroupId);
+    return privateNonceProvider.getNonce(address, BytesValues.fromBase64(privacyGroupId));
   }
 }

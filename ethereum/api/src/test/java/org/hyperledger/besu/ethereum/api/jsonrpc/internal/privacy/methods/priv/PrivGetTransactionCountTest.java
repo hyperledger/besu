@@ -26,7 +26,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransactionHandler;
+import org.hyperledger.besu.ethereum.privacy.PrivateNonceProvider;
 import org.hyperledger.besu.util.bytes.BytesValue;
 import org.hyperledger.besu.util.bytes.BytesValues;
 
@@ -36,8 +36,8 @@ import org.junit.Test;
 public class PrivGetTransactionCountTest {
 
   private final PrivacyParameters privacyParameters = mock(PrivacyParameters.class);
-  private final PrivateTransactionHandler privateTransactionHandler =
-      mock(PrivateTransactionHandler.class);
+  private final PrivateNonceProvider privateNonceProvider =
+      mock(PrivateNonceProvider.class);
 
   private final String privacyGroupId =
       BytesValues.asBase64String(BytesValue.wrap("0x123".getBytes(UTF_8)));
@@ -49,13 +49,16 @@ public class PrivGetTransactionCountTest {
   @Before
   public void before() {
     when(privacyParameters.isEnabled()).thenReturn(true);
-    when(privateTransactionHandler.getSenderNonce(senderAddress, privacyGroupId)).thenReturn(NONCE);
+    when(privateNonceProvider.getNonce(senderAddress, BytesValues.fromBase64(privacyGroupId))).thenReturn(NONCE);
   }
 
   @Test
   public void verifyTransactionCount() {
+    when(privateNonceProvider.getNonce(senderAddress, BytesValues.fromBase64(privacyGroupId)))
+        .thenReturn(NONCE);
+
     final PrivGetTransactionCount privGetTransactionCount =
-        new PrivGetTransactionCount(privacyParameters, privateTransactionHandler);
+        new PrivGetTransactionCount(privacyParameters, privateNonceProvider);
 
     final Object[] params = new Object[] {senderAddress, privacyGroupId};
     final JsonRpcRequestContext request =
@@ -71,7 +74,7 @@ public class PrivGetTransactionCountTest {
   public void returnPrivacyDisabledErrorWhenPrivacyIsDisabled() {
     when(privacyParameters.isEnabled()).thenReturn(false);
     final PrivGetTransactionCount privGetTransactionCount =
-        new PrivGetTransactionCount(privacyParameters, privateTransactionHandler);
+        new PrivGetTransactionCount(privacyParameters, privateNonceProvider);
 
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(

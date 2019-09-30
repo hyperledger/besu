@@ -26,7 +26,6 @@ import java.math.BigInteger;
 import java.util.Collections;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.web3j.protocol.besu.response.privacy.PrivacyGroup;
 import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
@@ -57,12 +56,11 @@ public class EthSignerAcceptanceTest extends PrivacyAcceptanceTestBase {
   }
 
   @Test
-  @Ignore
   public void privateSmartContractMustDeploy() throws IOException {
     final String transactionHash =
         ethSignerClient.eeaSendTransaction(
             null,
-            BigInteger.valueOf(63992),
+            BigInteger.valueOf(23176),
             BigInteger.valueOf(1000),
             EventEmitter.BINARY,
             BigInteger.valueOf(0),
@@ -78,12 +76,11 @@ public class EthSignerAcceptanceTest extends PrivacyAcceptanceTestBase {
   }
 
   @Test
-  @Ignore
   public void privateSmartContractMustDeployNoNonce() throws IOException {
     final String transactionHash =
         ethSignerClient.eeaSendTransaction(
             null,
-            BigInteger.valueOf(63992),
+            BigInteger.valueOf(23176),
             BigInteger.valueOf(1000),
             EventEmitter.BINARY,
             minerNode.getEnclaveKey(),
@@ -114,7 +111,7 @@ public class EthSignerAcceptanceTest extends PrivacyAcceptanceTestBase {
     final String transactionHash =
         ethSignerClient.eeaSendTransaction(
             null,
-            BigInteger.valueOf(63992),
+            BigInteger.valueOf(23176),
             BigInteger.valueOf(1000),
             EventEmitter.BINARY,
             BigInteger.valueOf(0),
@@ -130,7 +127,6 @@ public class EthSignerAcceptanceTest extends PrivacyAcceptanceTestBase {
   }
 
   @Test
-  @Ignore
   public void privateSmartContractMustDeployWithPrivacyGroupNoNonce() throws IOException {
     final String privacyGroupId =
         minerNode.execute(privacyTransactions.createPrivacyGroup(null, null, minerNode));
@@ -147,7 +143,7 @@ public class EthSignerAcceptanceTest extends PrivacyAcceptanceTestBase {
     final String transactionHash =
         ethSignerClient.eeaSendTransaction(
             null,
-            BigInteger.valueOf(63992),
+            BigInteger.valueOf(23176),
             BigInteger.valueOf(1000),
             EventEmitter.BINARY,
             minerNode.getEnclaveKey(),

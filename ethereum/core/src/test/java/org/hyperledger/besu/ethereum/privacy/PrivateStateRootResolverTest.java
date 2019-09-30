@@ -73,6 +73,18 @@ public class PrivateStateRootResolverTest {
   }
 
   @Test
+  public void resolvesGenesis() {
+    final MutableBlockchain oneBlockBlockchain =
+        InMemoryStorageProvider.createInMemoryBlockchain(BLOCK_GENERATOR.genesisBlock());
+    final PrivateStateRootResolver privateStateRootResolver =
+        new PrivateStateRootResolver(privateStateStorage);
+    assertThat(
+            privateStateRootResolver.resolveLastStateRoot(
+                oneBlockBlockchain, privacyGroupId, oneBlockBlockchain.getChainHeadHeader()))
+        .isEqualTo(PrivateStateRootResolver.EMPTY_ROOT_HASH);
+  }
+
+  @Test
   public void ifNoCommitmentForPrivacyGroupExistsReturnEmptyRootHash() {
     final PrivateStateRootResolver privateStateRootResolver =
         new PrivateStateRootResolver(privateStateStorage);
