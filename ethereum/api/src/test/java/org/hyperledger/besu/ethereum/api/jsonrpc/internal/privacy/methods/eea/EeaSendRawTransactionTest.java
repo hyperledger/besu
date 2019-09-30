@@ -196,7 +196,7 @@ public class EeaSendRawTransactionTest {
   }
 
   @Test
-  public void validTransactionIsSentToTransactionPool() throws Exception {
+  public void validTransactionIsSentToTransactionPool() {
     when(privateTxHandler.sendToOrion(any(PrivateTransaction.class))).thenReturn(MOCK_ORION_KEY);
     when(privateTxHandler.getPrivacyGroup(any(String.class), any(PrivateTransaction.class)))
         .thenReturn(MOCK_PRIVACY_GROUP);
@@ -231,7 +231,7 @@ public class EeaSendRawTransactionTest {
   }
 
   @Test
-  public void validTransactionPrivacyGroupIsSentToTransactionPool() throws Exception {
+  public void validTransactionPrivacyGroupIsSentToTransactionPool() {
     when(privateTxHandler.sendToOrion(any(PrivateTransaction.class))).thenReturn(MOCK_ORION_KEY);
     when(privateTxHandler.getPrivacyGroup(any(String.class), any(PrivateTransaction.class)))
         .thenReturn(MOCK_PRIVACY_GROUP);
@@ -269,7 +269,7 @@ public class EeaSendRawTransactionTest {
   }
 
   @Test
-  public void transactionPrivacyGroupNoPrivateFromReturnsError() throws Exception {
+  public void transactionPrivacyGroupNoPrivateFromReturnsError() {
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
             new JsonRpcRequest(
