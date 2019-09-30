@@ -24,7 +24,6 @@ public interface PoAMetricsService {
 
   /**
    * Retrieves the validators who have signed the latest block from the canonical chain.
-   * block.
    *
    * @return Identities of the validators who formed quorum on the latest block. 
    */
