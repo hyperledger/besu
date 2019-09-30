@@ -113,7 +113,8 @@ public enum RpcMethod {
   ETH_IS_LOCKABLE("eth_isLockable"),
   ETH_IS_LOCKED("eth_isLocked"),
   ETH_SEND_RAW_CROSSCHAIN_TRANSACTION("eth_sendRawCrosschainTransaction"),
-  ETH_PROCESS_RAW_SUBORDINATE_VIEW("eth_processSubordinateView");
+  ETH_PROCESS_RAW_SUBORDINATE_VIEW("eth_processSubordinateView"),
+  CROSS_CHECK_UNLOCK("cross_checkUnlock");
 
   private final String methodName;
 
