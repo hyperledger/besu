@@ -392,7 +392,7 @@ public class JsonRpcMethodsFactory {
       }
     }
 
-    if (rpcApis.contains(RpcApis.CC)) {
+    if (rpcApis.contains(RpcApis.CROSSCHAIN)) {
       addMethods(
           enabledMethods, new EthSendRawCrosschainTransaction(crosschainProcessor, parameter));
       addMethods(

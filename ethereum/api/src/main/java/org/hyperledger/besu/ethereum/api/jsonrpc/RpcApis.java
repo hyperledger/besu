@@ -29,7 +29,7 @@ public class RpcApis {
   public static final RpcApi PRIV = new RpcApi("PRIV");
   public static final RpcApi TX_POOL = new RpcApi("TXPOOL");
   public static final RpcApi TRACE = new RpcApi("TRACE");
-  public static final RpcApi CC = new RpcApi("CC");
+  public static final RpcApi CROSSCHAIN = new RpcApi("CROSSCHAIN");
 
   public static final List<RpcApi> DEFAULT_JSON_RPC_APIS = Arrays.asList(ETH, NET, WEB3);
 
@@ -56,8 +56,8 @@ public class RpcApis {
       return Optional.of(TX_POOL);
     } else if (name.equals(TRACE.getCliValue())) {
       return Optional.of(TRACE);
-    } else if (name.equals(CC.getCliValue())) {
-      return Optional.of(CC);
+    } else if (name.equals(CROSSCHAIN.getCliValue())) {
+      return Optional.of(CROSSCHAIN);
     } else {
       return Optional.empty();
     }

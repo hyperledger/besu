@@ -9,7 +9,7 @@ miner-extra-data="This is just a template! Read the README-Crosschains.md"
 
 p2p-enabled=false
 rpc-http-enabled=true
-rpc-http-api=["ETH","NET","WEB3","CC"]
+rpc-http-api=["ETH","NET","WEB3","CROSSCHAIN"]
 rpc-http-port="This is just a template! Read the README-Crosschains.md"
 
 crosschain-enabled=true
