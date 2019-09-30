@@ -39,7 +39,6 @@ import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -119,10 +118,5 @@ public class IbftLegacyBesuControllerBuilder extends BesuControllerBuilder<IbftC
         clock,
         metricsSystem,
         ethereumWireProtocolConfiguration);
-  }
-
-  @Override
-  public Optional<BlockInterface> getBlockInterface() {
-    return Optional.of(blockInterface);
   }
 }
