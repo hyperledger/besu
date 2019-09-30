@@ -19,6 +19,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.consensus.clique.CliqueBlockInterface;
 import org.hyperledger.besu.consensus.clique.CliqueContext;
 import org.hyperledger.besu.consensus.clique.TestHelpers;
 import org.hyperledger.besu.consensus.common.VoteProposer;
@@ -45,6 +46,7 @@ public class CliqueDifficultyValidationRuleTest {
   private final List<Address> validatorList = Lists.newArrayList();
   private ProtocolContext<CliqueContext> cliqueProtocolContext;
   private BlockHeaderTestFixture blockHeaderBuilder;
+  private final CliqueBlockInterface blockInterface = new CliqueBlockInterface();
 
   @Before
   public void setup() {
@@ -56,7 +58,8 @@ public class CliqueDifficultyValidationRuleTest {
     when(voteTallyCache.getVoteTallyAfterBlock(any())).thenReturn(new VoteTally(validatorList));
     final VoteProposer voteProposer = new VoteProposer();
 
-    final CliqueContext cliqueContext = new CliqueContext(voteTallyCache, voteProposer, null);
+    final CliqueContext cliqueContext =
+        new CliqueContext(voteTallyCache, voteProposer, null, blockInterface);
     cliqueProtocolContext = new ProtocolContext<>(null, null, cliqueContext);
     blockHeaderBuilder = new BlockHeaderTestFixture();
   }

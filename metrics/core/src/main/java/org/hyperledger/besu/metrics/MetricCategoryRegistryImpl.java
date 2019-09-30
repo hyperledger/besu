@@ -22,7 +22,7 @@ import java.util.List;
 
 public class MetricCategoryRegistryImpl implements MetricCategoryRegistry {
 
-  private List<MetricCategory> metricCategories = new ArrayList<>();
+  private final List<MetricCategory> metricCategories = new ArrayList<>();
 
   public List<MetricCategory> getMetricCategories() {
     return metricCategories;

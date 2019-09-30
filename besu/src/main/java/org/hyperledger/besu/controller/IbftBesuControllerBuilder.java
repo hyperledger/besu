@@ -66,7 +66,6 @@ import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.util.Subscribers;
 
-import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -240,11 +239,7 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder<IbftContext
             new VoteTallyUpdater(epochManager, new IbftBlockInterface()),
             epochManager,
             new IbftBlockInterface()),
-        new VoteProposer());
-  }
-
-  @Override
-  public Optional<BlockInterface> getBlockInterface() {
-    return Optional.of(blockInterface);
+        new VoteProposer(),
+        blockInterface);
   }
 }

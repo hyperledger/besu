@@ -19,7 +19,6 @@ import static com.google.common.base.Preconditions.checkState;
 import static org.hyperledger.besu.controller.KeyPairUtil.loadKeyPair;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
-import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethodFactory;
@@ -314,8 +313,7 @@ public abstract class BesuControllerBuilder<C> {
           }
         },
         additionalJsonRpcMethodFactory,
-        nodeKeys,
-        getBlockInterface());
+        nodeKeys);
   }
 
   protected void prepForBuild() {}
@@ -328,10 +326,6 @@ public abstract class BesuControllerBuilder<C> {
   protected SubProtocolConfiguration createSubProtocolConfiguration(
       final EthProtocolManager ethProtocolManager) {
     return new SubProtocolConfiguration().withSubProtocol(EthProtocol.get(), ethProtocolManager);
-  }
-
-  protected Optional<BlockInterface> getBlockInterface() {
-    return Optional.empty();
   }
 
   protected final void addShutdownAction(final Runnable action) {
