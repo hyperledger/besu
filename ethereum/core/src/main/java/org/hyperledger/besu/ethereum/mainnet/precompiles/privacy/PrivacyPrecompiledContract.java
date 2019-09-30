@@ -112,7 +112,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
     // get the last world state root hash - or create a new one
     final Hash lastRootHash =
         privateStateRootResolver.resolveLastStateRoot(
-            messageFrame.getBlockchain(), privacyGroupId, messageFrame.getBlockHeader());
+            messageFrame.getBlockchain(), messageFrame.getBlockHeader(), privacyGroupId);
 
     final MutableWorldState disposablePrivateState =
         privateWorldStateArchive.getMutable(lastRootHash).get();
