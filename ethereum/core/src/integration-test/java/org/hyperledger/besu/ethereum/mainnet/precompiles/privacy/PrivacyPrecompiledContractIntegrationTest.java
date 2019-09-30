@@ -131,6 +131,7 @@ public class PrivacyPrecompiledContractIntegrationTest {
             new BlockDataGenerator.BlockOptions().setParentHash(genesis.getHeader().getHash()));
     when(blockchain.getGenesisBlock()).thenReturn(genesis);
     when(blockchain.getBlockByHash(block.getHash())).thenReturn(Optional.of(block));
+    when(blockchain.getBlockByHash(genesis.getHash())).thenReturn(Optional.of(genesis));
     when(messageFrame.getBlockchain()).thenReturn(blockchain);
     when(messageFrame.getBlockHeader()).thenReturn(block.getHeader());
 
@@ -142,7 +143,8 @@ public class PrivacyPrecompiledContractIntegrationTest {
 
     privateStateStorage = mock(PrivateStateStorage.class);
     final PrivateStateStorage.Updater storageUpdater = mock(PrivateStateStorage.Updater.class);
-    when(storageUpdater.putLatestStateRoot(nullable(Bytes32.class), any()))
+    when(storageUpdater.putPrivateBlockMetadata(
+            nullable(Bytes32.class), nullable(Bytes32.class), any()))
         .thenReturn(storageUpdater);
     when(storageUpdater.putTransactionLogs(nullable(Bytes32.class), any()))
         .thenReturn(storageUpdater);

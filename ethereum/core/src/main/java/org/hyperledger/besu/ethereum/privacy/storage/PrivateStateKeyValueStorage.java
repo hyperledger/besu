@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.privacy.storage;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -164,10 +163,10 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
     @Override
     public Updater putPrivateBlockMetadata(
         final Bytes32 blockHash,
-        final Bytes32 transactionHash,
+        final Bytes32 privacyGroupId,
         final PrivateBlockMetadata metadata) {
       set(
-          Bytes.concatenate(blockHash, transactionHash),
+          Bytes.concatenate(blockHash, privacyGroupId),
           METADATA_KEY_SUFFIX,
           RLP.encode(metadata::writeTo));
       return this;

@@ -28,7 +28,6 @@ import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 public class PrivateStateRootResolver {
   public static final Hash EMPTY_ROOT_HASH = Hash.wrap(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
@@ -41,19 +40,19 @@ public class PrivateStateRootResolver {
 
   public Hash resolveLastStateRoot(
       final Blockchain blockchain,
-      final BytesValue privacyGroupId,
-      final ProcessableBlockHeader latestBlockHeader) {
+      final ProcessableBlockHeader latestBlockHeader,
+      final BytesValue privacyGroupId) {
     Hash parentHash;
     if (latestBlockHeader instanceof BlockHeader) {
       parentHash = ((BlockHeader) latestBlockHeader).getHash();
-      final Optional<Hash> maybeRoot = resolveForBlock(parentHash, privacyGroupId);
+      final Optional<Hash> maybeRoot = resolveStateRootFor(parentHash, privacyGroupId);
       if (maybeRoot.isPresent()) {
         return maybeRoot.get();
       }
     }
     parentHash = latestBlockHeader.getParentHash();
     while (!parentHash.equals(blockchain.getGenesisBlock().getHeader().getParentHash())) {
-      final Optional<Hash> maybeRoot = resolveForBlock(parentHash, privacyGroupId);
+      final Optional<Hash> maybeRoot = resolveStateRootFor(parentHash, privacyGroupId);
       if (maybeRoot.isPresent()) {
         return maybeRoot.get();
       }
@@ -63,14 +62,13 @@ public class PrivateStateRootResolver {
     return EMPTY_ROOT_HASH;
   }
 
-  private Optional<Hash> resolveForBlock(final Hash blockHash, final BytesValue privacyGroupId) {
+  private Optional<Hash> resolveStateRootFor(
+      final Hash blockHash, final BytesValue privacyGroupId) {
     final Optional<PrivateBlockMetadata> maybeMetadata =
         privateStateStorage.getPrivateBlockMetadata(blockHash, Bytes32.wrap(privacyGroupId));
     if (maybeMetadata.isPresent()) {
       final List<PrivateTransactionMetadata> commitmentTransactionList =
-          maybeMetadata.get().getPrivateTransactionMetadataList().stream()
-              .filter(pmt -> pmt.getPrivacyGroupId().equals(privacyGroupId))
-              .collect(Collectors.toList());
+          maybeMetadata.get().getPrivateTransactionMetadataList();
       if (commitmentTransactionList.size() > 0) {
         return Optional.of(
             commitmentTransactionList.get(commitmentTransactionList.size() - 1).getStateRoot());
