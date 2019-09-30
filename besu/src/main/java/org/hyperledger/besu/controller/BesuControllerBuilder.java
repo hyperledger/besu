@@ -84,6 +84,7 @@ public abstract class BesuControllerBuilder<C> {
   protected Clock clock;
   protected KeyPair nodeKeys;
   protected boolean isRevertReasonEnabled;
+  protected GasLimitCalculator gasLimitCalculator;
   private StorageProvider storageProvider;
   private final List<Runnable> shutdownActions = new ArrayList<>();
   private boolean isPruningEnabled;
@@ -181,6 +182,11 @@ public abstract class BesuControllerBuilder<C> {
     return this;
   }
 
+  public BesuControllerBuilder<C> targetGasLimit(final Optional<Long> targetGasLimit) {
+    this.gasLimitCalculator = new GasLimitCalculator(targetGasLimit);
+    return this;
+  }
+
   public BesuController<C> build() {
     checkNotNull(genesisConfig, "Missing genesis config");
     checkNotNull(syncConfig, "Missing sync config");
@@ -194,6 +200,7 @@ public abstract class BesuControllerBuilder<C> {
     checkNotNull(transactionPoolConfiguration, "Missing transaction pool configuration");
     checkNotNull(nodeKeys, "Missing node keys");
     checkNotNull(storageProvider, "Must supply a storage provider");
+    checkNotNull(gasLimitCalculator, "Missing gas limit calculator");
 
     prepForBuild();
 

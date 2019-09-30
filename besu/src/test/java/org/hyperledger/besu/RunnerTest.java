@@ -23,6 +23,7 @@ import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.controller.BesuController;
+import org.hyperledger.besu.controller.GasLimitCalculator;
 import org.hyperledger.besu.controller.KeyPairUtil;
 import org.hyperledger.besu.controller.MainnetBesuControllerBuilder;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
@@ -149,6 +150,7 @@ public final class RunnerTest {
             .clock(TestClock.fixed())
             .transactionPoolConfiguration(TransactionPoolConfiguration.builder().build())
             .storageProvider(createKeyValueStorageProvider(dataDirAhead, dbAhead))
+            .targetGasLimit(GasLimitCalculator.DEFAULT)
             .build()) {
       setupState(blockCount, controller.getProtocolSchedule(), controller.getProtocolContext());
     }
@@ -168,6 +170,7 @@ public final class RunnerTest {
             .clock(TestClock.fixed())
             .transactionPoolConfiguration(TransactionPoolConfiguration.builder().build())
             .storageProvider(createKeyValueStorageProvider(dataDirAhead, dbAhead))
+            .targetGasLimit(GasLimitCalculator.DEFAULT)
             .build();
     final String listenHost = InetAddress.getLoopbackAddress().getHostAddress();
     final JsonRpcConfiguration aheadJsonRpcConfiguration = jsonRpcConfiguration();
@@ -226,6 +229,7 @@ public final class RunnerTest {
               .privacyParameters(PrivacyParameters.DEFAULT)
               .clock(TestClock.fixed())
               .transactionPoolConfiguration(TransactionPoolConfiguration.builder().build())
+              .targetGasLimit(GasLimitCalculator.DEFAULT)
               .build();
       final EnodeURL enode = runnerAhead.getLocalEnode().get();
       final EthNetworkConfig behindEthNetworkConfiguration =
