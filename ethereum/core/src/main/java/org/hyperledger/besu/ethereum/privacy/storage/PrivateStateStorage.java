@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.privacy.storage;
 
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.LogSeries;
 import org.hyperledger.besu.util.bytes.Bytes32;
@@ -24,9 +23,6 @@ import java.util.List;
 import java.util.Optional;
 
 public interface PrivateStateStorage {
-
-  @Deprecated
-  Optional<Hash> getLatestStateRoot(BytesValue privacyId);
 
   Optional<List<Log>> getTransactionLogs(Bytes32 transactionHash);
 
@@ -45,9 +41,6 @@ public interface PrivateStateStorage {
   Updater updater();
 
   interface Updater {
-
-    @Deprecated
-    Updater putLatestStateRoot(BytesValue privacyId, Hash privateStateHash);
 
     Updater putTransactionLogs(Bytes32 transactionHash, LogSeries logs);
 
