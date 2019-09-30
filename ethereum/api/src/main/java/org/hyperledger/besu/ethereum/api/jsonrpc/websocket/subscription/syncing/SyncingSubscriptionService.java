@@ -21,9 +21,12 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.plugin.data.SyncStatus;
 
+import java.util.Optional;
+
 public class SyncingSubscriptionService {
 
   private final SubscriptionManager subscriptionManager;
+  private Optional<Boolean> lastMessageWasInSync = Optional.empty();
 
   public SyncingSubscriptionService(
       final SubscriptionManager subscriptionManager, final Synchronizer synchronizer) {
@@ -37,15 +40,21 @@ public class SyncingSubscriptionService {
         Subscription.class,
         syncingSubscriptions -> {
           if (syncStatus.inSync()) {
-            syncingSubscriptions.forEach(
-                s ->
-                    subscriptionManager.sendMessage(
-                        s.getSubscriptionId(), new NotSynchronisingResult()));
+            if (!lastMessageWasInSync.orElse(Boolean.FALSE)) {
+              syncingSubscriptions.forEach(
+                  s ->
+                      subscriptionManager.sendMessage(
+                          s.getSubscriptionId(), new NotSynchronisingResult()));
+              lastMessageWasInSync = Optional.of(Boolean.TRUE);
+            }
           } else {
-            syncingSubscriptions.forEach(
-                s ->
-                    subscriptionManager.sendMessage(
-                        s.getSubscriptionId(), new SyncingResult(syncStatus)));
+            if (lastMessageWasInSync.orElse(Boolean.TRUE)) {
+              syncingSubscriptions.forEach(
+                  s ->
+                      subscriptionManager.sendMessage(
+                          s.getSubscriptionId(), new SyncingResult(syncStatus)));
+              lastMessageWasInSync = Optional.of(Boolean.FALSE);
+            }
           }
         });
   }
