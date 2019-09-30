@@ -62,7 +62,6 @@ import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.consensus.common.PoAContext;
 import org.hyperledger.besu.consensus.common.PoAMetricServiceImpl;
-import org.hyperledger.besu.consensus.ibft.IbftContext;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.controller.KeyPairUtil;
@@ -916,12 +915,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private void addPluginMetrics(final BesuController<?> besuController) {
     besuPluginContext.addService(MetricsSystem.class, getMetricsSystem());
 
-    Object consensusState = besuController.getProtocolContext().getConsensusState();
+    final Object consensusState = besuController.getProtocolContext().getConsensusState();
 
     if (consensusState != null && PoAContext.class.isAssignableFrom(consensusState.getClass())) {
-      PoAMetricServiceImpl service =
+      final PoAMetricServiceImpl service =
           new PoAMetricServiceImpl(
-              ((IbftContext) consensusState).getBlockInterface(),
+              ((PoAContext) consensusState).getBlockInterface(),
               besuController.getProtocolContext().getBlockchain());
       besuPluginContext.addService(PoAMetricsService.class, service);
     }
