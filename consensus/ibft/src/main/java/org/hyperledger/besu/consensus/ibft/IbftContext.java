@@ -14,18 +14,25 @@
  */
 package org.hyperledger.besu.consensus.ibft;
 
+import org.hyperledger.besu.consensus.common.BlockInterface;
+import org.hyperledger.besu.consensus.common.PoAContext;
 import org.hyperledger.besu.consensus.common.VoteProposer;
 import org.hyperledger.besu.consensus.common.VoteTallyCache;
 
 /** Holds the IBFT specific mutable state. */
-public class IbftContext {
+public class IbftContext implements PoAContext {
 
   private final VoteTallyCache voteTallyCache;
   private final VoteProposer voteProposer;
+  private final BlockInterface blockInterface;
 
-  public IbftContext(final VoteTallyCache voteTallyCache, final VoteProposer voteProposer) {
+  public IbftContext(
+      final VoteTallyCache voteTallyCache,
+      final VoteProposer voteProposer,
+      final BlockInterface blockInterface) {
     this.voteTallyCache = voteTallyCache;
     this.voteProposer = voteProposer;
+    this.blockInterface = blockInterface;
   }
 
   public VoteTallyCache getVoteTallyCache() {
@@ -34,5 +41,10 @@ public class IbftContext {
 
   public VoteProposer getVoteProposer() {
     return voteProposer;
+  }
+
+  @Override
+  public BlockInterface getBlockInterface() {
+    return blockInterface;
   }
 }

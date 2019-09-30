@@ -22,6 +22,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.clique.CliqueBlockHeaderFunctions;
+import org.hyperledger.besu.consensus.clique.CliqueBlockInterface;
 import org.hyperledger.besu.consensus.clique.CliqueContext;
 import org.hyperledger.besu.consensus.clique.CliqueExtraData;
 import org.hyperledger.besu.consensus.clique.CliqueProtocolSchedule;
@@ -65,6 +66,7 @@ public class CliqueMinerExecutorTest {
   private ProtocolContext<CliqueContext> cliqueProtocolContext;
   private BlockHeaderTestFixture blockHeaderBuilder;
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
+  private final CliqueBlockInterface blockInterface = new CliqueBlockInterface();
 
   @Before
   public void setup() {
@@ -78,7 +80,8 @@ public class CliqueMinerExecutorTest {
     when(voteTallyCache.getVoteTallyAfterBlock(any())).thenReturn(new VoteTally(validatorList));
     final VoteProposer voteProposer = new VoteProposer();
 
-    final CliqueContext cliqueContext = new CliqueContext(voteTallyCache, voteProposer, null);
+    final CliqueContext cliqueContext =
+        new CliqueContext(voteTallyCache, voteProposer, null, blockInterface);
     cliqueProtocolContext = new ProtocolContext<>(null, null, cliqueContext);
     blockHeaderBuilder = new BlockHeaderTestFixture();
   }
