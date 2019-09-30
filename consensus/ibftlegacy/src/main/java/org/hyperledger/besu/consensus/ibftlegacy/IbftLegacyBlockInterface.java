@@ -47,6 +47,12 @@ public class IbftLegacyBlockInterface implements BlockInterface {
   }
 
   @Override
+  public Address getProposerOfBlock(final org.hyperledger.besu.plugin.data.BlockHeader header) {
+    return getProposerOfBlock(
+        BlockHeader.convertPluginBlockHeader(header, new LegacyIbftBlockHeaderFunctions()));
+  }
+
+  @Override
   public Optional<ValidatorVote> extractVoteFromHeader(final BlockHeader header) {
     final Address candidate = header.getCoinbase();
     if (!candidate.equals(NO_VOTE_SUBJECT)) {

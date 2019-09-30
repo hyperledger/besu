@@ -12,8 +12,9 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.privacy;
+package org.hyperledger.besu.ethereum.privacy.storage;
 
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.LogSeries;
 import org.hyperledger.besu.util.bytes.Bytes32;
@@ -22,21 +23,35 @@ import org.hyperledger.besu.util.bytes.BytesValue;
 import java.util.List;
 import java.util.Optional;
 
-public interface PrivateTransactionStorage {
+public interface PrivateStateStorage {
 
-  Optional<List<Log>> getEvents(Bytes32 transactionHash);
+  @Deprecated
+  Optional<Hash> getLatestStateRoot(BytesValue privacyId);
 
-  Optional<BytesValue> getOutput(Bytes32 transactionHash);
+  Optional<List<Log>> getTransactionLogs(Bytes32 transactionHash);
+
+  Optional<BytesValue> getTransactionOutput(Bytes32 transactionHash);
+
+  Optional<PrivateTransactionMetadata> getTransactionMetadata(
+      Bytes32 blockHash, Bytes32 transactionHash);
 
   boolean isPrivateStateAvailable(Bytes32 transactionHash);
+
+  boolean isWorldStateAvailable(Bytes32 rootHash);
 
   Updater updater();
 
   interface Updater {
 
+    @Deprecated
+    Updater putLatestStateRoot(BytesValue privacyId, Hash privateStateHash);
+
     Updater putTransactionLogs(Bytes32 transactionHash, LogSeries logs);
 
     Updater putTransactionResult(Bytes32 transactionHash, BytesValue events);
+
+    Updater putTransactionMetadata(
+        Bytes32 blockHash, Bytes32 transactionHash, PrivateTransactionMetadata metadata);
 
     void commit();
 

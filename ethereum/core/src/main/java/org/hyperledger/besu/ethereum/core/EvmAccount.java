@@ -12,26 +12,8 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.privacy;
+package org.hyperledger.besu.ethereum.core;
 
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-
-import java.util.Optional;
-
-public interface PrivateStateStorage {
-
-  Optional<Hash> getPrivateAccountState(BytesValue privacyId);
-
-  boolean isWorldStateAvailable(Bytes32 rootHash);
-
-  PrivateStateStorage.Updater updater();
-
-  interface Updater {
-
-    PrivateStateStorage.Updater putPrivateAccountState(BytesValue privacyId, Hash privateStateHash);
-
-    void commit();
-  }
+public interface EvmAccount extends Account {
+  public MutableAccount getMutable() throws ModificationNotAllowedException;
 }

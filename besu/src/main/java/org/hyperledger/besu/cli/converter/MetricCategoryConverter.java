@@ -39,4 +39,8 @@ public class MetricCategoryConverter implements CommandLine.ITypeConverter<Metri
     EnumSet.allOf(categoryEnum)
         .forEach(category -> metricCategories.put(category.name(), category));
   }
+
+  public void addRegistryCategory(final MetricCategory metricCategory) {
+    metricCategories.put(metricCategory.getName(), metricCategory);
+  }
 }

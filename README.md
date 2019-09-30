@@ -2,7 +2,7 @@
  [![Build Status](https://jenkins.pegasys.tech/job/Besu/job/master/badge/icon)](https://jenkins.pegasys.tech/job/Besu/job/master/)
  [![Documentation Status](https://readthedocs.org/projects/hyperledger-besu/badge/?version=latest)](https://besu.hyperledger.org/en/latest/?badge=latest)
  [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/PegasysEng/besu/blob/master/LICENSE)
- [ ![Download](https://api.bintray.com/packages/hyperledger/besu-repo/besu/images/download.svg) ](https://bintray.com/hyperledger/besu-repo/besu/_latestVersion)
+ [ ![Download](https://api.bintray.com/packages/hyperledger-org/besu-repo/besu/images/download.svg) ](https://bintray.com/hyperledger-org/besu-repo/besu/_latestVersion)
  [![RocketChat chat](https://open.rocket.chat/images/join-chat.svg)](https://chat.hyperledger.org/channel/besu)
 
 

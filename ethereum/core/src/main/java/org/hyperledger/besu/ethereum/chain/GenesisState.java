@@ -112,7 +112,7 @@ public final class GenesisState {
     final WorldUpdater updater = target.updater();
     genesisAccounts.forEach(
         genesisAccount -> {
-          final MutableAccount account = updater.getOrCreate(genesisAccount.address);
+          final MutableAccount account = updater.getOrCreate(genesisAccount.address).getMutable();
           account.setNonce(genesisAccount.nonce);
           account.setBalance(genesisAccount.balance);
           account.setCode(genesisAccount.code);
