@@ -80,7 +80,7 @@ public class PrivateStateRootResolverTest {
         new PrivateStateRootResolver(privateStateStorage);
     assertThat(
             privateStateRootResolver.resolveLastStateRoot(
-                oneBlockBlockchain, privacyGroupId, oneBlockBlockchain.getChainHeadHeader()))
+                oneBlockBlockchain, oneBlockBlockchain.getChainHeadHeader(), privacyGroupId))
         .isEqualTo(PrivateStateRootResolver.EMPTY_ROOT_HASH);
   }
 
@@ -90,7 +90,7 @@ public class PrivateStateRootResolverTest {
         new PrivateStateRootResolver(privateStateStorage);
     assertThat(
             privateStateRootResolver.resolveLastStateRoot(
-                BLOCKCHAIN, privacyGroupId, BLOCKCHAIN.getChainHeadHeader()))
+                BLOCKCHAIN, BLOCKCHAIN.getChainHeadHeader(), privacyGroupId))
         .isEqualTo(PrivateStateRootResolver.EMPTY_ROOT_HASH);
   }
 
@@ -109,7 +109,7 @@ public class PrivateStateRootResolverTest {
         new PrivateStateRootResolver(privateStateStorage);
     assertThat(
             privateStateRootResolver.resolveLastStateRoot(
-                BLOCKCHAIN, privacyGroupId, BLOCKCHAIN.getChainHeadHeader()))
+                BLOCKCHAIN, BLOCKCHAIN.getChainHeadHeader(), privacyGroupId))
         .isEqualTo(pmt1StateHash);
   }
 
@@ -135,7 +135,7 @@ public class PrivateStateRootResolverTest {
         new PrivateStateRootResolver(privateStateStorage);
     assertThat(
             privateStateRootResolver.resolveLastStateRoot(
-                BLOCKCHAIN, privacyGroupId, BLOCKCHAIN.getChainHeadHeader()))
+                BLOCKCHAIN, BLOCKCHAIN.getChainHeadHeader(), privacyGroupId))
         .isEqualTo(pmt1StateHash);
   }
 
@@ -155,7 +155,7 @@ public class PrivateStateRootResolverTest {
         new PrivateStateRootResolver(privateStateStorage);
     assertThat(
             privateStateRootResolver.resolveLastStateRoot(
-                BLOCKCHAIN, privacyGroupId, BLOCKCHAIN.getChainHeadHeader()))
+                BLOCKCHAIN, BLOCKCHAIN.getChainHeadHeader(), privacyGroupId))
         .isEqualTo(pmt2StateHash);
   }
 }
