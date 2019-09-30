@@ -37,7 +37,6 @@ import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionHandler;
 import org.hyperledger.besu.util.bytes.BytesValue;
 
-import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Optional;
 
@@ -192,7 +191,7 @@ public class EeaSendRawTransactionTest {
   }
 
   @Test
-  public void validTransactionIsSentToTransactionPool() throws Exception {
+  public void validTransactionIsSentToTransactionPool() {
     when(privateTxHandler.sendToOrion(any(PrivateTransaction.class))).thenReturn(MOCK_ORION_KEY);
     when(privateTxHandler.getPrivacyGroup(any(String.class), any(PrivateTransaction.class)))
         .thenReturn(MOCK_PRIVACY_GROUP);
@@ -227,7 +226,7 @@ public class EeaSendRawTransactionTest {
   }
 
   @Test
-  public void validTransactionPrivacyGroupIsSentToTransactionPool() throws Exception {
+  public void validTransactionPrivacyGroupIsSentToTransactionPool() {
     when(privateTxHandler.sendToOrion(any(PrivateTransaction.class))).thenReturn(MOCK_ORION_KEY);
     when(privateTxHandler.getPrivacyGroup(any(String.class), any(PrivateTransaction.class)))
         .thenReturn(MOCK_PRIVACY_GROUP);
@@ -265,7 +264,7 @@ public class EeaSendRawTransactionTest {
   }
 
   @Test
-  public void transactionPrivacyGroupNoPrivateFromReturnsError() throws Exception {
+  public void transactionPrivacyGroupNoPrivateFromReturnsError() {
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
             new JsonRpcRequest(
@@ -283,9 +282,9 @@ public class EeaSendRawTransactionTest {
   }
 
   @Test
-  public void invalidTransactionIsSentToTransactionPool() throws Exception {
+  public void whenEnclaveIsDownDoesNotSendToTransactionPool() {
     when(privateTxHandler.sendToOrion(any(PrivateTransaction.class)))
-        .thenThrow(new IOException("enclave failed to execute"));
+        .thenThrow(new RuntimeException("enclave failed to execute"));
 
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(

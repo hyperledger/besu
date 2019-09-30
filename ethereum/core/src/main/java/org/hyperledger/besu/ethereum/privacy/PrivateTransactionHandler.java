@@ -21,16 +21,12 @@ import org.hyperledger.besu.enclave.types.SendRequest;
 import org.hyperledger.besu.enclave.types.SendRequestBesu;
 import org.hyperledger.besu.enclave.types.SendRequestLegacy;
 import org.hyperledger.besu.enclave.types.SendResponse;
-import org.hyperledger.besu.ethereum.core.Account;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.PrivateMarkerTransactionFactory;
-import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.util.bytes.BytesValues;
 
 import java.math.BigInteger;
@@ -47,40 +43,37 @@ public class PrivateTransactionHandler {
 
   private final Enclave enclave;
   private final String enclavePublicKey;
-  private final PrivateStateStorage privateStateStorage;
-  private final WorldStateArchive privateWorldStateArchive;
   private final PrivateTransactionValidator privateTransactionValidator;
   private final PrivateMarkerTransactionFactory privateMarkerTransactionFactory;
+  private final PrivateNonceProvider privateNonceProvider;
 
   public PrivateTransactionHandler(
       final PrivacyParameters privacyParameters,
       final Optional<BigInteger> chainId,
-      final PrivateMarkerTransactionFactory privateMarkerTransactionFactory) {
+      final PrivateMarkerTransactionFactory privateMarkerTransactionFactory,
+      final PrivateNonceProvider privateNonceProvider) {
     this(
         new Enclave(privacyParameters.getEnclaveUri()),
         privacyParameters.getEnclavePublicKey(),
-        privacyParameters.getPrivateStateStorage(),
-        privacyParameters.getPrivateWorldStateArchive(),
         new PrivateTransactionValidator(chainId),
-        privateMarkerTransactionFactory);
+        privateMarkerTransactionFactory,
+        privateNonceProvider);
   }
 
   public PrivateTransactionHandler(
       final Enclave enclave,
       final String enclavePublicKey,
-      final PrivateStateStorage privateStateStorage,
-      final WorldStateArchive privateWorldStateArchive,
       final PrivateTransactionValidator privateTransactionValidator,
-      final PrivateMarkerTransactionFactory privateMarkerTransactionFactory) {
+      final PrivateMarkerTransactionFactory privateMarkerTransactionFactory,
+      final PrivateNonceProvider privateNonceProvider) {
     this.enclave = enclave;
     this.enclavePublicKey = enclavePublicKey;
-    this.privateStateStorage = privateStateStorage;
-    this.privateWorldStateArchive = privateWorldStateArchive;
     this.privateTransactionValidator = privateTransactionValidator;
     this.privateMarkerTransactionFactory = privateMarkerTransactionFactory;
+    this.privateNonceProvider = privateNonceProvider;
   }
 
-  public String sendToOrion(final PrivateTransaction privateTransaction) throws Exception {
+  public String sendToOrion(final PrivateTransaction privateTransaction) {
     final SendRequest sendRequest = createSendRequest(privateTransaction);
     final SendResponse sendResponse;
 
@@ -121,7 +114,9 @@ public class PrivateTransactionHandler {
   public ValidationResult<TransactionValidator.TransactionInvalidReason> validatePrivateTransaction(
       final PrivateTransaction privateTransaction, final String privacyGroupId) {
     return privateTransactionValidator.validate(
-        privateTransaction, getSenderNonce(privateTransaction.getSender(), privacyGroupId));
+        privateTransaction,
+        privateNonceProvider.getNonce(
+            privateTransaction.getSender(), BytesValues.fromBase64(privacyGroupId)));
   }
 
   private SendRequest createSendRequest(final PrivateTransaction privateTransaction) {
@@ -148,29 +143,5 @@ public class PrivateTransactionHandler {
       return new SendRequestLegacy(
           payload, BytesValues.asBase64String(privateTransaction.getPrivateFrom()), privateFor);
     }
-  }
-
-  public long getSenderNonce(final Address sender, final String privacyGroupId) {
-    return privateStateStorage
-        .getLatestStateRoot(BytesValues.fromBase64(privacyGroupId))
-        .map(
-            lastRootHash ->
-                privateWorldStateArchive
-                    .getMutable(lastRootHash)
-                    .map(
-                        worldState -> {
-                          final Account maybePrivateSender = worldState.get(sender);
-
-                          if (maybePrivateSender != null) {
-                            return maybePrivateSender.getNonce();
-                          }
-                          // account has not interacted in this private state
-                          return Account.DEFAULT_NONCE;
-                        })
-                    // private state does not exist
-                    .orElse(Account.DEFAULT_NONCE))
-        .orElse(
-            // private state does not exist
-            Account.DEFAULT_NONCE);
   }
 }
