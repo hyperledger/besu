@@ -55,11 +55,6 @@ public abstract class PeerPermissions implements AutoCloseable {
   }
 
   /**
-   * @param peer The {@link Peer} object representing the remote node
-   * @return True if we are allowed to communicate with this peer.
-   */
-
-  /**
    * Checks whether the local node is permitted to engage in some action with the given remote peer.
    *
    * @param localNode The local node that is querying for permissions.
