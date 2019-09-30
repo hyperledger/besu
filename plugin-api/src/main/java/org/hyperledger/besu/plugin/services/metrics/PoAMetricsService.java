@@ -31,7 +31,7 @@ public interface PoAMetricsService {
   Collection<Address> getValidatorsForLatestBlock();
 
   /**
-   * Returns the {@link Address} of the proposer of a specified block.
+   * Retrieves the {@link Address} for the proposer of a block on the canonical chain.
    *
    * @param header The {@link BlockHeader} for which the proposer will be found.
    * @return The identity of the proposer for the given block.
