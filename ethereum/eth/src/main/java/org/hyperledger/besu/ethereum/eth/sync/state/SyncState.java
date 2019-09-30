@@ -33,7 +33,7 @@ public class SyncState {
   private final Blockchain blockchain;
   private final EthPeers ethPeers;
 
-  private final long startingBlock;
+  private long startingBlock;
   private boolean lastInSync = true;
   private final Subscribers<InSyncListener> inSyncListeners = Subscribers.create();
   private final Subscribers<SyncStatusListener> syncStatusListeners = Subscribers.create();
@@ -49,13 +49,32 @@ public class SyncState {
           if (event.isNewCanonicalHead()) {
             checkInSync();
           }
-          publishSyncStatus();
+          switch (event.getEventType()) {
+            case CHAIN_REORG:
+              publishReorg();
+              // fall through
+            case HEAD_ADVANCED:
+              publishSyncStatus();
+              break;
+            case FORK:
+              // don't broadcast detected forks
+              break;
+          }
         });
   }
 
   @VisibleForTesting
   public void publishSyncStatus() {
     final SyncStatus syncStatus = syncStatus();
+    syncStatusListeners.forEach(c -> c.onSyncStatusChanged(syncStatus));
+  }
+
+  private void publishReorg() {
+    final long chainHeadBlockNumber = blockchain.getChainHeadBlockNumber();
+    final SyncStatus syncStatus =
+        new SyncStatus(
+            startingBlock, chainHeadBlockNumber, bestChainHeight(chainHeadBlockNumber), false);
+
     syncStatusListeners.forEach(c -> c.onSyncStatusChanged(syncStatus));
   }
 
@@ -74,11 +93,7 @@ public class SyncState {
   public SyncStatus syncStatus() {
     final long chainHeadBlockNumber = blockchain.getChainHeadBlockNumber();
     return new SyncStatus(
-        startingBlock(), chainHeadBlockNumber, bestChainHeight(chainHeadBlockNumber));
-  }
-
-  public long startingBlock() {
-    return startingBlock;
+        startingBlock, chainHeadBlockNumber, bestChainHeight(chainHeadBlockNumber));
   }
 
   public Optional<SyncTarget> syncTarget() {
@@ -153,6 +168,10 @@ public class SyncState {
     final boolean currentInSync = isInSync();
     if (lastInSync != currentInSync) {
       lastInSync = currentInSync;
+      if (!currentInSync) {
+        // when we fall out of sync change our starting block
+        startingBlock = blockchain.getChainHeadBlockNumber();
+      }
       inSyncListeners.forEach(c -> c.onSyncStatusChanged(currentInSync));
     }
   }
