@@ -210,4 +210,27 @@ public class BlockHeader extends SealableBlockHeader
     sb.append("nonce=").append(nonce);
     return sb.append("}").toString();
   }
+
+  public static org.hyperledger.besu.ethereum.core.BlockHeader convertPluginBlockHeader(
+      final org.hyperledger.besu.plugin.data.BlockHeader pluginBlockHeader,
+      final BlockHeaderFunctions blockHeaderFunctions) {
+    return new org.hyperledger.besu.ethereum.core.BlockHeader(
+        Hash.fromHexString(pluginBlockHeader.getParentHash().getHexString()),
+        Hash.fromHexString(pluginBlockHeader.getOmmersHash().getHexString()),
+        org.hyperledger.besu.ethereum.core.Address.fromHexString(
+            pluginBlockHeader.getCoinbase().getHexString()),
+        Hash.fromHexString(pluginBlockHeader.getStateRoot().getHexString()),
+        Hash.fromHexString(pluginBlockHeader.getTransactionsRoot().getHexString()),
+        Hash.fromHexString(pluginBlockHeader.getReceiptsRoot().getHexString()),
+        LogsBloomFilter.fromHexString(pluginBlockHeader.getLogsBloom().getHexString()),
+        UInt256.fromHexString(pluginBlockHeader.getDifficulty().getHexString()),
+        pluginBlockHeader.getNumber(),
+        pluginBlockHeader.getGasLimit(),
+        pluginBlockHeader.getGasUsed(),
+        pluginBlockHeader.getTimestamp(),
+        BytesValue.wrap(pluginBlockHeader.getExtraData().getByteArray()),
+        Hash.fromHexString(pluginBlockHeader.getMixHash().getHexString()),
+        pluginBlockHeader.getNonce(),
+        blockHeaderFunctions);
+  }
 }

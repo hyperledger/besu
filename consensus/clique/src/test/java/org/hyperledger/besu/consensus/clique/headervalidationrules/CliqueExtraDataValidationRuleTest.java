@@ -19,6 +19,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.consensus.clique.CliqueBlockInterface;
 import org.hyperledger.besu.consensus.clique.CliqueContext;
 import org.hyperledger.besu.consensus.clique.CliqueExtraData;
 import org.hyperledger.besu.consensus.clique.TestHelpers;
@@ -44,6 +45,7 @@ public class CliqueExtraDataValidationRuleTest {
 
   private final KeyPair proposerKeyPair = KeyPair.generate();
   private Address localAddr;
+  private final CliqueBlockInterface blockInterface = new CliqueBlockInterface();
 
   private final List<Address> validatorList = Lists.newArrayList();
   private ProtocolContext<CliqueContext> cliqueProtocolContext;
@@ -58,7 +60,8 @@ public class CliqueExtraDataValidationRuleTest {
     final VoteTallyCache voteTallyCache = mock(VoteTallyCache.class);
     when(voteTallyCache.getVoteTallyAfterBlock(any())).thenReturn(new VoteTally(validatorList));
 
-    final CliqueContext cliqueContext = new CliqueContext(voteTallyCache, null, null);
+    final CliqueContext cliqueContext =
+        new CliqueContext(voteTallyCache, null, null, blockInterface);
     cliqueProtocolContext = new ProtocolContext<>(null, null, cliqueContext);
   }
 
