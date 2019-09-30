@@ -42,8 +42,8 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransactionStorage;
 import org.hyperledger.besu.ethereum.privacy.Restriction;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.util.bytes.Bytes32;
 import org.hyperledger.besu.util.bytes.BytesValue;
@@ -154,11 +154,10 @@ public class PrivGetTransactionReceiptTest {
     final BlockHeader mockBlockHeader = mock(BlockHeader.class);
     when(blockchain.getBlockHeader(any(Hash.class))).thenReturn(Optional.of(mockBlockHeader));
     when(mockBlockHeader.getNumber()).thenReturn(0L);
-    final PrivateTransactionStorage privateTransactionStorage =
-        mock(PrivateTransactionStorage.class);
-    when(privacyParameters.getPrivateTransactionStorage()).thenReturn(privateTransactionStorage);
-    when(privateTransactionStorage.getEvents(any(Bytes32.class))).thenReturn(Optional.empty());
-    when(privateTransactionStorage.getOutput(any(Bytes32.class))).thenReturn(Optional.empty());
+    final PrivateStateStorage privateStateStorage = mock(PrivateStateStorage.class);
+    when(privacyParameters.getPrivateStateStorage()).thenReturn(privateStateStorage);
+    when(privateStateStorage.getTransactionLogs(any(Bytes32.class))).thenReturn(Optional.empty());
+    when(privateStateStorage.getTransactionOutput(any(Bytes32.class))).thenReturn(Optional.empty());
   }
 
   @Test
