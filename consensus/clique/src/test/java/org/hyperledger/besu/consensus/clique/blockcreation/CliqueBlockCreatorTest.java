@@ -66,6 +66,7 @@ public class CliqueBlockCreatorTest {
   private final KeyPair otherKeyPair = KeyPair.generate();
   private final List<Address> validatorList = Lists.newArrayList();
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
+  private final CliqueBlockInterface blockInterface = new CliqueBlockInterface();
 
   private ProtocolSchedule<CliqueContext> protocolSchedule;
   private final WorldStateArchive stateArchive = createInMemoryWorldStateArchive();
@@ -87,7 +88,8 @@ public class CliqueBlockCreatorTest {
     final VoteTallyCache voteTallyCache = mock(VoteTallyCache.class);
     when(voteTallyCache.getVoteTallyAfterBlock(any())).thenReturn(new VoteTally(validatorList));
     voteProposer = new VoteProposer();
-    final CliqueContext cliqueContext = new CliqueContext(voteTallyCache, voteProposer, null);
+    final CliqueContext cliqueContext =
+        new CliqueContext(voteTallyCache, voteProposer, null, blockInterface);
 
     final Block genesis =
         GenesisState.fromConfig(GenesisConfigFile.mainnet(), protocolSchedule).getBlock();

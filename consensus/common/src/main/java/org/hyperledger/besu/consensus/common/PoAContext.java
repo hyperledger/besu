@@ -14,19 +14,6 @@
  */
 package org.hyperledger.besu.consensus.common;
 
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
-
-import java.util.Collection;
-import java.util.Optional;
-
-public interface BlockInterface {
-
-  Address getProposerOfBlock(final org.hyperledger.besu.ethereum.core.BlockHeader header);
-
-  Address getProposerOfBlock(final org.hyperledger.besu.plugin.data.BlockHeader header);
-
-  Optional<ValidatorVote> extractVoteFromHeader(final BlockHeader header);
-
-  Collection<Address> validatorsInBlock(final BlockHeader header);
+public interface PoAContext {
+  BlockInterface getBlockInterface();
 }

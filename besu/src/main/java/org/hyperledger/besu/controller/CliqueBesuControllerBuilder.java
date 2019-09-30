@@ -148,6 +148,7 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder<CliqueCon
             epochManager,
             blockInterface),
         new VoteProposer(),
-        epochManager);
+        epochManager,
+        blockInterface);
   }
 }
