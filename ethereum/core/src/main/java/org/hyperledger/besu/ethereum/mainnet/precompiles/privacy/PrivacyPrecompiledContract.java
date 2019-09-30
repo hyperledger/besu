@@ -153,9 +153,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
               .orElseGet(PrivateBlockMetadata::empty);
       privateBlockMetadata.addPrivateTransactionMetadata(
           new PrivateTransactionMetadata(
-              messageFrame.getTransactionHash(),
-              privacyGroupId,
-              disposablePrivateState.rootHash()));
+              messageFrame.getTransactionHash(), disposablePrivateState.rootHash()));
       privateStateUpdater.putPrivateBlockMetadata(
           Bytes32.wrap(headerWithHash.getBlockHash().getByteArray()),
           Bytes32.wrap(privacyGroupId),
