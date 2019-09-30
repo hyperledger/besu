@@ -58,17 +58,17 @@ public class GasLimitCalculator implements Function<Long, Long> {
   }
 
   private long safeAdd(final long gasLimit) {
-    if (gasLimit + ADJUSTMENT_FACTOR > gasLimit) {
-      return gasLimit + ADJUSTMENT_FACTOR;
-    } else {
+    try {
+      return Math.addExact(gasLimit, ADJUSTMENT_FACTOR);
+    } catch (final ArithmeticException ex) {
       return Long.MAX_VALUE;
     }
   }
 
   private long safeSub(final long gasLimit) {
-    if (gasLimit - ADJUSTMENT_FACTOR < gasLimit) {
-      return Math.max(gasLimit - ADJUSTMENT_FACTOR, 0);
-    } else {
+    try {
+      return Math.max(Math.subtractExact(gasLimit, ADJUSTMENT_FACTOR), 0);
+    } catch (final ArithmeticException ex) {
       return 0;
     }
   }
