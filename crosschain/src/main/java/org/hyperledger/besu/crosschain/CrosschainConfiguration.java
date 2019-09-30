@@ -23,4 +23,8 @@ public class CrosschainConfiguration {
   // Mapping between Sidechain ID (currently chain ID) and RPC address of Sidechain node which is
   // operating on that sidechain.
   public static Map<Integer, String> chainsMapping;
+
+  public static int nodeCount;
+
+  public static int nodeNum;
 }
