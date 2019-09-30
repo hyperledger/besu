@@ -19,7 +19,9 @@ import org.hyperledger.besu.plugin.data.BlockHeader;
 
 import java.util.Collection;
 
-/** Provides relevant data for producing metrics on the status of a Proof of Authority (PoA) node. */
+/**
+ * Provides relevant data for producing metrics on the status of a Proof of Authority (PoA) node.
+ */
 public interface PoAMetricsService {
 
   /**
