@@ -21,12 +21,10 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateBlockMetadata;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
-import org.hyperledger.besu.ethereum.privacy.storage.PrivateTransactionMetadata;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.util.bytes.Bytes32;
 import org.hyperledger.besu.util.bytes.BytesValue;
 
-import java.util.List;
 import java.util.Optional;
 
 public class PrivateStateRootResolver {
@@ -64,16 +62,8 @@ public class PrivateStateRootResolver {
 
   private Optional<Hash> resolveStateRootFor(
       final Hash blockHash, final BytesValue privacyGroupId) {
-    final Optional<PrivateBlockMetadata> maybeMetadata =
-        privateStateStorage.getPrivateBlockMetadata(blockHash, Bytes32.wrap(privacyGroupId));
-    if (maybeMetadata.isPresent()) {
-      final List<PrivateTransactionMetadata> commitmentTransactionList =
-          maybeMetadata.get().getPrivateTransactionMetadataList();
-      if (commitmentTransactionList.size() > 0) {
-        return Optional.of(
-            commitmentTransactionList.get(commitmentTransactionList.size() - 1).getStateRoot());
-      }
-    }
-    return Optional.empty();
+    return privateStateStorage
+        .getPrivateBlockMetadata(blockHash, Bytes32.wrap(privacyGroupId))
+        .map(PrivateBlockMetadata::getLatestStateRoot);
   }
 }
