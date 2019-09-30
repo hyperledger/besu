@@ -30,23 +30,17 @@ import org.hyperledger.besu.enclave.types.ReceiveRequest;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.enclave.types.SendRequest;
 import org.hyperledger.besu.enclave.types.SendResponse;
-import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.FixedKeySigningPrivateMarkerTransactionFactory;
-import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.util.bytes.BytesValue;
 import org.hyperledger.besu.util.bytes.BytesValues;
 import org.hyperledger.orion.testutil.OrionKeyUtils;
 
 import java.math.BigInteger;
-import java.util.Optional;
 
 import com.google.common.collect.Lists;
 import org.junit.Before;
@@ -103,16 +97,8 @@ public class PrivateTransactionHandlerTest {
 
   @Before
   public void setUp() throws Exception {
-    PrivateStateStorage privateStateStorage = mock(PrivateStateStorage.class);
-    Hash mockHash = mock(Hash.class);
-    when(privateStateStorage.getLatestStateRoot(any(BytesValue.class)))
-        .thenReturn(Optional.of(mockHash));
-    WorldStateArchive worldStateArchive = mock(WorldStateArchive.class);
-    Account account = mock(Account.class);
-    when(account.getNonce()).thenReturn(1L);
-    MutableWorldState mutableWorldState = mock(MutableWorldState.class);
-    when(worldStateArchive.getMutable(any(Hash.class))).thenReturn(Optional.of(mutableWorldState));
-    when(mutableWorldState.get(any(Address.class))).thenReturn(account);
+    final PrivateNonceProvider privateNonceProvider = mock(PrivateNonceProvider.class);
+    when(privateNonceProvider.getNonce(any(Address.class), any(BytesValue.class))).thenReturn(1L);
 
     privateTransactionValidator = mockPrivateTransactionValidator();
 
@@ -120,24 +106,22 @@ public class PrivateTransactionHandlerTest {
         new PrivateTransactionHandler(
             mockEnclave(),
             OrionKeyUtils.loadKey("orion_key_0.pub"),
-            privateStateStorage,
-            worldStateArchive,
             privateTransactionValidator,
             new FixedKeySigningPrivateMarkerTransactionFactory(
-                Address.DEFAULT_PRIVACY, (address) -> 0, KEY_PAIR));
+                Address.DEFAULT_PRIVACY, (address) -> 0, KEY_PAIR),
+            privateNonceProvider);
     brokenPrivateTransactionHandler =
         new PrivateTransactionHandler(
             brokenMockEnclave(),
             OrionKeyUtils.loadKey("orion_key_0.pub"),
-            privateStateStorage,
-            worldStateArchive,
             privateTransactionValidator,
             new FixedKeySigningPrivateMarkerTransactionFactory(
-                Address.DEFAULT_PRIVACY, (address) -> 0, KEY_PAIR));
+                Address.DEFAULT_PRIVACY, (address) -> 0, KEY_PAIR),
+            privateNonceProvider);
   }
 
   @Test
-  public void validLegacyTransactionThroughHandler() throws Exception {
+  public void validLegacyTransactionThroughHandler() {
 
     final PrivateTransaction transaction = buildLegacyPrivateTransaction(1);
 
@@ -161,7 +145,7 @@ public class PrivateTransactionHandlerTest {
   }
 
   @Test
-  public void validBesuTransactionThroughHandler() throws Exception {
+  public void validBesuTransactionThroughHandler() {
 
     final PrivateTransaction transaction = buildBesuPrivateTransaction(1);
 
@@ -190,7 +174,7 @@ public class PrivateTransactionHandlerTest {
   }
 
   @Test
-  public void nonceTooLowError() throws Exception {
+  public void nonceTooLowError() {
     when(privateTransactionValidator.validate(any(), any()))
         .thenReturn(ValidationResult.invalid(PRIVATE_NONCE_TOO_LOW));
 
@@ -204,7 +188,7 @@ public class PrivateTransactionHandlerTest {
   }
 
   @Test
-  public void incorrectNonceError() throws Exception {
+  public void incorrectNonceError() {
     when(privateTransactionValidator.validate(any(), any()))
         .thenReturn(ValidationResult.invalid(INCORRECT_PRIVATE_NONCE));
 

@@ -159,6 +159,7 @@ public class PrivacyPrecompiledContractTest {
             new BlockDataGenerator.BlockOptions().setParentHash(genesis.getHeader().getHash()));
     when(blockchain.getGenesisBlock()).thenReturn(genesis);
     when(blockchain.getBlockByHash(block.getHash())).thenReturn(Optional.of(block));
+    when(blockchain.getBlockByHash(genesis.getHash())).thenReturn(Optional.of(genesis));
     when(messageFrame.getBlockchain()).thenReturn(blockchain);
     when(messageFrame.getBlockHeader()).thenReturn(block.getHeader());
   }

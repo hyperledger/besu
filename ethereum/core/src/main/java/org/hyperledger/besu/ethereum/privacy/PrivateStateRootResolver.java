@@ -30,9 +30,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 public class PrivateStateRootResolver {
   public static final Hash EMPTY_ROOT_HASH = Hash.wrap(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
 
@@ -55,7 +52,7 @@ public class PrivateStateRootResolver {
       }
     }
     parentHash = latestBlockHeader.getParentHash();
-    while (!parentHash.equals(blockchain.getGenesisBlock().getHash())) {
+    while (!parentHash.equals(blockchain.getGenesisBlock().getHeader().getParentHash())) {
       final Optional<Hash> maybeRoot = resolveForBlock(parentHash, privacyGroupId);
       if (maybeRoot.isPresent()) {
         return maybeRoot.get();
