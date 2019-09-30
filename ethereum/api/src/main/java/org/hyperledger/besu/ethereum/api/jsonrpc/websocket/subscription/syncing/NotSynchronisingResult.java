@@ -24,4 +24,14 @@ public class NotSynchronisingResult implements JsonRpcResult {
   public boolean getResult() {
     return false;
   }
+
+  @Override
+  public boolean equals(final Object o) {
+    return (this == o) || (o != null && getClass() == o.getClass());
+  }
+
+  @Override
+  public int hashCode() {
+    return "NotSyncingResult".hashCode();
+  }
 }
