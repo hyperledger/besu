@@ -19,22 +19,26 @@ for information on options that were previously automatically added to the Besu 
 ### Additions and Improvements
 
 - Store db metadata file in the root data directory. [\#46](https://github.com/hyperledger/besu/pull/46) 
-- Allow private contracts to access public state. [\#9](https://github.com/hyperledger/besu/pull/9) (thanks to [josh-richardson](https://github.com/josh-richardson))
+- Add `--targat-gas-limit` command line option. [\#24](https://github.com/hyperledger/besu/pull/24)(thanks to new contributor [cfelde](https://github.com/cfelde))
+- Allow private contracts to access public state. [\#9](https://github.com/hyperledger/besu/pull/9) 
 - Documentation updates include: 
+  - Added [sample load balancer configurations](https://besu.hyperledger.org/en/latest/HowTo/Configure/Configure-HA/Sample-Configuration/)  
   - Added [`retesteth`](https://besu.hyperledger.org/en/latest/Reference/CLI/CLI-Subcommands/#retesteth) subcommand 
   - Added [`debug_accountRange`](https://besu.hyperledger.org/en/latest/Reference/API-Methods/#debug_accountrange) JSON-RPC API method 
   - Clarified purpose of [static nodes](https://besu.hyperledger.org/en/latest/HowTo/Find-and-Connect/Managing-Peers/#static-nodes) 
 
 ### Technical Improvements 
 
-- Return enclave key instead of private transaction hash [\#53](https://github.com/hyperledger/besu/pull/53) (thanks to [iikirilov](https://github.com/iikirilov))
-- Fix some mark sweep pruner bugs where nodes that should be kept were being swept  [\#50](https://github.com/hyperledger/besu/pull/50) 
+- Less verbose synching subscriptions [\#59](https://github.com/hyperledger/besu/pull/59)
+- Return enclave key instead of private transaction hash [\#53](https://github.com/hyperledger/besu/pull/53) 
+- Fix mark sweep pruner bugs where nodes that should be kept were being swept  [\#50](https://github.com/hyperledger/besu/pull/50) 
 - Clean up BesuConfiguration construction [\#51](https://github.com/hyperledger/besu/pull/51) 
 - Private tx nonce errors return same msg as any tx [\#48](https://github.com/hyperledger/besu/pull/48) 
 - Fix default logging [\#47](https://github.com/hyperledger/besu/pull/47) 
 - Introduce virtual operation. [\#45](https://github.com/hyperledger/besu/pull/45) 
-- Downgrade some RocksDBPlugin Logging Levels [\#44](https://github.com/hyperledger/besu/pull/44)
-- Refactor privacy storage. [\#7](https://github.com/hyperledger/besu/pull/7) (thanks to [iikirilov](https://github.com/iikirilov))
+- Downgrade RocksDBPlugin Logging Levels [\#44](https://github.com/hyperledger/besu/pull/44)
+- Infrastructure for exposing PoA metrics for plugins. [\#37](https://github.com/hyperledger/besu/pull/37)
+- Refactor privacy storage. [\#7](https://github.com/hyperledger/besu/pull/7)
 
 ## 1.2.4 
 
