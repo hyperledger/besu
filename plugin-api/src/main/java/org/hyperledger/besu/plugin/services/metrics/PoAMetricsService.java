@@ -23,7 +23,7 @@ import java.util.Collection;
 public interface PoAMetricsService {
 
   /**
-   * Returns a collection containing the addresses of the validators for the most recently processed
+   * Retrieves the validators who have signed the latest block from the canonical chain.
    * block.
    *
    * @return Identities of the validators who formed quorum on the latest block. 
