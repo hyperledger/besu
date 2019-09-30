@@ -144,11 +144,16 @@ public class MarkSweepPruner {
     // Sweep non-state-root nodes
     prunedNodeCount += worldStateStorage.prune(this::isMarked);
     sweptNodesCounter.inc(prunedNodeCount);
+    clearMarks();
     LOG.debug("Completed sweeping unused nodes");
   }
 
   public void cleanup() {
     worldStateStorage.removeNodeAddedListener(nodeAddedListenerId);
+    clearMarks();
+  }
+
+  public void clearMarks() {
     markStorage.clear();
     pendingMarks.clear();
   }
