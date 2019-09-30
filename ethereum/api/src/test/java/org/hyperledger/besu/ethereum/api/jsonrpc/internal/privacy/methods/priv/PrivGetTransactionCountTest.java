@@ -23,6 +23,8 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
@@ -72,5 +74,20 @@ public class PrivGetTransactionCountTest {
 
     assertThat(response.getResult()).isEqualTo(String.format("0x%X", NONCE));
     verify(privacyController).determineNonce(senderAddress, privacyGroupId, ENCLAVE_PUBLIC_KEY);
+  }
+
+  @Test
+  public void returnPrivacyDisabledErrorWhenPrivacyIsDisabled() {
+    when(privacyParameters.isEnabled()).thenReturn(false);
+    final PrivGetTransactionCount privGetTransactionCount =
+        new PrivGetTransactionCount(privacyController, enclavePublicKeyProvider);
+
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest("1", "priv_getTransactionCount", new Object[] {}));
+    final JsonRpcErrorResponse response =
+        (JsonRpcErrorResponse) privGetTransactionCount.response(request);
+
+    assertThat(response.getError()).isEqualTo(JsonRpcError.PRIVACY_NOT_ENABLED);
   }
 }
