@@ -156,7 +156,8 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
   }
 
   private boolean isCategoryEnabled(final MetricCategory category) {
-    return enabledCategories.contains(category);
+    return enabledCategories.stream()
+        .anyMatch(metricCategory -> metricCategory.getName().equals(category.getName()));
   }
 
   public void addCollector(final MetricCategory category, final Collector metric) {
