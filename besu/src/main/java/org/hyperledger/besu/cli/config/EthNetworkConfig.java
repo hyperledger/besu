@@ -39,15 +39,13 @@ public class EthNetworkConfig {
   public static final BigInteger RINKEBY_NETWORK_ID = BigInteger.valueOf(4);
   public static final BigInteger GOERLI_NETWORK_ID = BigInteger.valueOf(5);
   public static final BigInteger DEV_NETWORK_ID = BigInteger.valueOf(2018);
-  public static final BigInteger ATLANTIS_NETWORK_ID = BigInteger.valueOf(1);
-  public static final BigInteger AGHARTA_NETWORK_ID = BigInteger.valueOf(1);
+  public static final BigInteger CLASSIC_NETWORK_ID = BigInteger.valueOf(1);
   private static final String MAINNET_GENESIS = "/mainnet.json";
   private static final String ROPSTEN_GENESIS = "/ropsten.json";
   private static final String RINKEBY_GENESIS = "/rinkeby.json";
   private static final String GOERLI_GENESIS = "/goerli.json";
   private static final String DEV_GENESIS = "/dev.json";
-  private static final String ATLANTIS_GENESIS = "/atlantis.json";
-  private static final String AGHARTA_GENESIS = "/agharta.json";
+  private static final String CLASSIC_GENESIS = "/classic.json";
   private final String genesisConfig;
   private final BigInteger networkId;
   private final List<EnodeURL> bootNodes;
@@ -117,12 +115,9 @@ public class EthNetworkConfig {
             jsonConfig(GOERLI_GENESIS), GOERLI_NETWORK_ID, GOERLI_BOOTSTRAP_NODES);
       case DEV:
         return new EthNetworkConfig(jsonConfig(DEV_GENESIS), DEV_NETWORK_ID, new ArrayList<>());
-      case ATLANTIS:
+      case CLASSIC:
         return new EthNetworkConfig(
-            jsonConfig(ATLANTIS_GENESIS), ATLANTIS_NETWORK_ID, new ArrayList<>());
-      case AGHARTA:
-        return new EthNetworkConfig(
-            jsonConfig(AGHARTA_GENESIS), AGHARTA_NETWORK_ID, new ArrayList<>());
+            jsonConfig(CLASSIC_GENESIS), CLASSIC_NETWORK_ID, new ArrayList<>());
       case MAINNET:
       default:
         return new EthNetworkConfig(
@@ -151,10 +146,8 @@ public class EthNetworkConfig {
         return jsonConfig(GOERLI_GENESIS);
       case DEV:
         return jsonConfig(DEV_GENESIS);
-      case ATLANTIS:
-        return jsonConfig(ATLANTIS_GENESIS);
-      case AGHARTA:
-        return jsonConfig(AGHARTA_GENESIS);
+      case CLASSIC:
+        return jsonConfig(CLASSIC_GENESIS);
       default:
         throw new IllegalArgumentException("Unknown network:" + network);
     }

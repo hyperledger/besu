@@ -20,6 +20,5 @@ public enum NetworkName {
   ROPSTEN,
   GOERLI,
   DEV,
-  ATLANTIS,
-  AGHARTA
+  CLASSIC
 }
