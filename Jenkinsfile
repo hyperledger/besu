@@ -8,6 +8,10 @@ def shouldPublish() {
     return env.BRANCH_NAME == 'master' || env.BRANCH_NAME ==~ /^release-\d+\.\d+/
 }
 
+def isSnapshotVersion(v) {
+    return (v ==~ /.*-SNAPSHOT/)
+}
+
 if (shouldPublish()) {
     properties([
         buildDiscarder(
@@ -236,8 +240,7 @@ exit $status
                                 if (env.BRANCH_NAME == 'master') {
                                     additionalTags.add('develop')
                                 }
-
-                                if (! version ==~ /.*-SNAPSHOT/) {
+                                if (! isSnapshotVersion(version)) {
                                     additionalTags.add('latest')
                                     additionalTags.add(version.split(/\./)[0..1].join('.'))
                                 }
@@ -266,7 +269,7 @@ exit $status
                              }
 
                              // we dont publish snapshots to bintray
-                             if (! (version ==~ /.*-SNAPSHOT/)) {
+                             if (! isSnapshotVersion(version)) {
 
                                  stage(stage_name + 'Prepare') {
                                      sh './gradlew --no-daemon --parallel clean assemble'
@@ -303,7 +306,7 @@ exit $status
                               version = gradleProperties.version
                             }
 
-                            if (version ==~ /.*-SNAPSHOT/) { // Only publish snapshots to Azure
+                            if (isSnapshotVersion(version)) { // Only publish snapshots to Azure
                                 stage(stage_name + 'Prepare') {
                                     sh './gradlew --no-daemon --parallel clean assemble'
                                 }

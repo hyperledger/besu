@@ -60,7 +60,9 @@ import org.hyperledger.besu.cli.util.CommandLineUtils;
 import org.hyperledger.besu.cli.util.ConfigOptionSearchAndRunHandler;
 import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.consensus.common.PoAContext;
 import org.hyperledger.besu.consensus.common.PoAMetricServiceImpl;
+import org.hyperledger.besu.consensus.ibft.IbftContext;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.controller.KeyPairUtil;
@@ -906,23 +908,23 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             besuController.getProtocolManager().getBlockBroadcaster(),
             besuController.getTransactionPool(),
             besuController.getSyncState()));
-    initPluginMetrics(besuController);
+    addPluginMetrics(besuController);
     besuPluginContext.startPlugins();
     return this;
   }
 
-  private void initPluginMetrics(final BesuController<?> besuController) {
+  private void addPluginMetrics(final BesuController<?> besuController) {
     besuPluginContext.addService(MetricsSystem.class, getMetricsSystem());
 
-    besuController
-        .getBlockInterface()
-        .ifPresent(
-            blockInterface -> {
-              PoAMetricServiceImpl service =
-                  new PoAMetricServiceImpl(
-                      blockInterface, besuController.getProtocolContext().getBlockchain());
-              besuPluginContext.addService(PoAMetricsService.class, service);
-            });
+    Object consensusState = besuController.getProtocolContext().getConsensusState();
+
+    if (consensusState != null && PoAContext.class.isAssignableFrom(consensusState.getClass())) {
+      PoAMetricServiceImpl service =
+          new PoAMetricServiceImpl(
+              ((IbftContext) consensusState).getBlockInterface(),
+              besuController.getProtocolContext().getBlockchain());
+      besuPluginContext.addService(PoAMetricsService.class, service);
+    }
   }
 
   private void prepareLogging() {

@@ -240,7 +240,8 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder<IbftContext
             new VoteTallyUpdater(epochManager, new IbftBlockInterface()),
             epochManager,
             new IbftBlockInterface()),
-        new VoteProposer());
+        new VoteProposer(),
+        blockInterface);
   }
 
   @Override
