@@ -26,7 +26,7 @@ public interface PoAMetricsService {
    * Returns a collection containing the addresses of the validators for the most recently processed
    * block.
    *
-   * @return A collection of block validator addresses.
+   * @return Identities of the validators who formed quorum on the latest block. 
    */
   Collection<Address> getValidatorsForLatestBlock();
 
