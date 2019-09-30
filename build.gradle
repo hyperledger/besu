@@ -87,10 +87,6 @@ def bintrayPackage = bintray.pkg {
   }
 }
 
-def azureUser = "AZURE_ARTIFACTS"
-def azureKey = project.hasProperty('azureApiKey') ? project.property('azureApiKey') : System.getenv('AZURE_KEY')
-def artifactRepoUrl = 'https://pkgs.dev.azure.com/Hyperledger/Besu/_packaging/besu/maven/v1'
-
 allprojects {
   apply plugin: 'java-library'
   apply plugin: 'io.spring.dependency-management'
@@ -126,14 +122,12 @@ allprojects {
       maven { url "https://nexus.int.pegasys.tech/repository/consensys-pegasys/" }
       maven { url "https://nexus.int.pegasys.tech/repository/jcenter/" }
       maven { url  "https://dl.bintray.com/tuweni/tuweni/" }
-      maven { url artifactRepoUrl }
     } else {
       jcenter()
       mavenCentral()
       mavenLocal()
       maven { url "https://consensys.bintray.com/pegasys-repo" }
       maven { url  "https://dl.bintray.com/tuweni/tuweni/" }
-      maven { url artifactRepoUrl }
     }
   }
 
@@ -317,16 +311,6 @@ subprojects {
     apply plugin: 'maven-publish'
 
     publishing {
-      repositories {
-        maven {
-          url artifactRepoUrl
-          credentials {
-            username azureUser
-            password azureKey
-          }
-        }
-      }
-
       publications {
         mavenJava(MavenPublication) {
           groupId "org.hyperledger.besu.internal"
@@ -639,27 +623,6 @@ tasks.register("verifyDistributions") {
   }
 }
 
-apply plugin: 'maven-publish'
-publishing {
-  repositories {
-    maven {
-      url artifactRepoUrl
-      credentials {
-        username azureUser
-        password azureKey
-      }
-    }
-  }
-
-  publications {
-    maven(MavenPublication) {
-      artifact source: distTar.outputs.files.singleFile, extension: 'tar.gz'
-      artifact source: distZip.outputs.files.singleFile, extension: 'zip'
-      version "${project.version}"
-    }
-  }
-}
-
 bintray {
   user = bintrayUser
   key = bintrayKey
@@ -678,9 +641,6 @@ bintray {
 
 check.dependsOn checkSpdxHeader
 build.dependsOn verifyDistributions
-publish.dependsOn verifyDistributions
-publish.mustRunAfter(distTar)
-publish.mustRunAfter(distZip)
 bintrayUpload.dependsOn verifyDistributions
 bintrayUpload.mustRunAfter(distTar)
 bintrayUpload.mustRunAfter(distZip)
