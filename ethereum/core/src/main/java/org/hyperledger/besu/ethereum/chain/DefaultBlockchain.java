@@ -376,10 +376,10 @@ public class DefaultBlockchain implements MutableBlockchain {
               ? newChainHead.getBody().getTransactions()
               : blockchainStorage.getBlockBody(newBlockHash).get().getTransactions();
       newTransactions.put(newBlockHash, newTxs);
-      addAddedLogsWithMetadata(addedLogsWithMetadata, newChain);
-      addRemovedLogsWithMetadata(removedLogsWithMetadata, oldChain);
       removedTransactions.addAll(
           blockchainStorage.getBlockBody(oldChain.getHash()).get().getTransactions());
+      addAddedLogsWithMetadata(addedLogsWithMetadata, newChain);
+      addRemovedLogsWithMetadata(removedLogsWithMetadata, oldChain);
 
       newChain = blockchainStorage.getBlockHeader(newChain.getParentHash()).get();
       oldChain = blockchainStorage.getBlockHeader(oldChain.getParentHash()).get();
