@@ -27,6 +27,12 @@ jar {
   }
 }
 
+publishing {
+  publications {
+    mavenJava(MavenPublication) { artifactId 'metrics-rocksdb' }
+  }
+}
+
 dependencies {
   implementation project(':metrics:core')
   implementation project(':plugin-api')
