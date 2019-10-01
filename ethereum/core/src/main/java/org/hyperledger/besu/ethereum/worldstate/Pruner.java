@@ -35,6 +35,7 @@ public class Pruner {
   private final MarkSweepPruner pruningStrategy;
   private final Blockchain blockchain;
   private final ExecutorService executorService;
+  private Long blockAddedObserverId;
   private final long blocksRetained;
   private final AtomicReference<State> state = new AtomicReference<>(State.IDLE);
   private volatile long markBlockNumber = 0;
@@ -59,11 +60,13 @@ public class Pruner {
   public void start() {
     LOG.info("Starting Pruner.");
     pruningStrategy.prepare();
-    blockchain.observeBlockAdded((event, blockchain) -> handleNewBlock(event));
+    blockAddedObserverId =
+        blockchain.observeBlockAdded((event, blockchain) -> handleNewBlock(event));
   }
 
   public void stop() throws InterruptedException {
     pruningStrategy.cleanup();
+    blockchain.removeObserver(blockAddedObserverId);
     executorService.awaitTermination(10, TimeUnit.SECONDS);
   }
 
