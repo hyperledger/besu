@@ -268,9 +268,26 @@ allprojects {
 
 task deploy() {}
 
+task checkMavenCoordianteCollisions {
+  doLast {
+    def coordinates = [:]
+    getAllprojects().forEach {
+      if (it.properties.containsKey('publishing')) {
+        def coordinate = it.publishing?.publications[0].coordinates
+        if (coordinates.containsKey(coordinate)) {
+          throw new GradleException("Duplicate maven coordinates detected, ${coordinate} is used by " +
+              "both ${coordinates[coordinate]} and ${it.path}.\n" +
+              "Please add a `publishing` script block to one or both subprojects.")
+        }
+        coordinates[coordinate] = it.path
+      }
+    }
+  }
+}
+
 tasks.register('checkPluginAPIChanges', DefaultTask) { }
 checkPluginAPIChanges.dependsOn(':plugin-api:checkAPIChanges')
-check.dependsOn('checkPluginAPIChanges')
+check.dependsOn('checkPluginAPIChanges', 'checkMavenCoordianteCollisions')
 
 subprojects {
 
