@@ -159,7 +159,8 @@ public class LogsSubscriptionServiceTest {
     }
 
     // Now add another block that re-emits the target log
-    final BlockWithReceipts newBlockWithLog = generateBlock(1, () -> Arrays.asList(targetLog));
+    final BlockWithReceipts newBlockWithLog =
+        generateBlock(1, () -> Collections.singletonList(targetLog));
     blockchain.appendBlock(newBlockWithLog.getBlock(), newBlockWithLog.getReceipts());
     // Sanity check
     assertThat(blockchain.getChainHeadHash()).isEqualTo(newBlockWithLog.getBlock().getHash());
