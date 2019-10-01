@@ -70,6 +70,6 @@ public class LogAdapter extends AdapterBase {
 
     return query
         .getWorldState(blockNumber)
-        .map(ws -> new AccountAdapter(ws.get(logWithMetadata.getAddress())));
+        .map(ws -> new AccountAdapter(ws.get(logWithMetadata.getLogger())));
   }
 }

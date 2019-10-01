@@ -53,7 +53,7 @@ public class LogResult implements JsonRpcResult {
     this.blockHash = logWithMetadata.getBlockHash().toString();
     this.transactionHash = logWithMetadata.getTransactionHash().toString();
     this.transactionIndex = Quantity.create(logWithMetadata.getTransactionIndex());
-    this.address = logWithMetadata.getAddress().toString();
+    this.address = logWithMetadata.getLogger().toString();
     this.data = logWithMetadata.getData().toString();
     this.topics = new ArrayList<>(logWithMetadata.getTopics().size());
     this.removed = logWithMetadata.isRemoved();

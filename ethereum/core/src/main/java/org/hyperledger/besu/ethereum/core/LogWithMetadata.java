@@ -22,7 +22,7 @@ import java.util.List;
 
 import com.google.common.base.MoreObjects;
 
-public class LogWithMetadata {
+public class LogWithMetadata extends Log {
 
   private final int logIndex;
   private final long blockNumber;
@@ -44,6 +44,7 @@ public class LogWithMetadata {
       final BytesValue data,
       final List<LogTopic> topics,
       final boolean removed) {
+    super(address, data, topics);
     this.logIndex = logIndex;
     this.blockNumber = blockNumber;
     this.blockHash = blockHash;
@@ -77,14 +78,17 @@ public class LogWithMetadata {
     return transactionIndex;
   }
 
-  public Address getAddress() {
+  @Override
+  public Address getLogger() {
     return address;
   }
 
+  @Override
   public BytesValue getData() {
     return data;
   }
 
+  @Override
   public List<LogTopic> getTopics() {
     return topics;
   }

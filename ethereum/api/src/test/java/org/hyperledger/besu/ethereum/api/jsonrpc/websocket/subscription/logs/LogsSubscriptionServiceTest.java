@@ -39,7 +39,6 @@ import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.LogTopic;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -62,12 +61,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class LogsSubscriptionServiceTest {
 
   private final BlockDataGenerator gen = new BlockDataGenerator(1);
-  private final WorldStateArchive worldStateArchive =
-      InMemoryStorageProvider.createInMemoryWorldStateArchive();
   private final MutableBlockchain blockchain =
       InMemoryStorageProvider.createInMemoryBlockchain(gen.genesisBlock());
-  private BlockchainQueries blockchainQueries =
-      new BlockchainQueries(blockchain, worldStateArchive);
 
   private LogsSubscriptionService logsSubscriptionService;
   private final AtomicLong nextSubscriptionId = new AtomicLong();
@@ -76,7 +71,7 @@ public class LogsSubscriptionServiceTest {
 
   @Before
   public void before() {
-    logsSubscriptionService = new LogsSubscriptionService(subscriptionManager, blockchainQueries);
+    logsSubscriptionService = new LogsSubscriptionService(subscriptionManager);
     blockchain.observeBlockAdded(logsSubscriptionService);
   }
 
