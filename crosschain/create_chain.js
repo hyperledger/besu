@@ -28,7 +28,7 @@ const destPath = process.env.HOME+`/crosschain_data`;
 const basePort = 8000;
 const baseP2PPort = 30000;
 const chainPath = `${destPath}/chain${chainId}`;
-var staticNode = null;
+var staticNode = "[\n";
 
 var node_acct_list = [];
 
@@ -46,6 +46,8 @@ for (var i = 0; i < nodeCount; i++) {
     let config = toml.parse(fs.readFileSync(resourcesPath + "/config_template.toml").toString());
     let port = basePort + chainId*10 + nodeNum*1
     let p2pPort = baseP2PPort + chainId*10 + nodeNum*1
+    config['sidechain-nodeCount'] = nodeCount
+    config['sidechain-nodeNum'] = nodeNum
     config['p2p-enabled'] = true
     config['p2p-port'] = p2pPort
     config['rpc-http-port'] = port
@@ -72,15 +74,21 @@ for (var i = 0; i < nodeCount; i++) {
     // Besu might show warnings, so make it clear that we finished successfully.
     console.log(`\nCreated config files for node ${nodeNum} as a validator for chainId ${chainId} at port ${port}).`);
 
-    if (staticNode == null) {
-        let child = execFileSync('build/install/besu/bin/besu', [`--data-path=${nodePath}`,'public-key', 'export',`--to=${nodePath}/enode`]);
-        staticNode = fs.readFileSync(`${nodePath}/enode`).toString().substring(2,);
-        staticNode = "[\n\"enode://" + staticNode + "@127.0.0.1:" + p2pPort.toString() + "\"\n" + "]";
-        fs.writeFileSync(`${nodePath}/static-nodes.json`, staticNode);
-    } else {
-        fs.writeFileSync(`${nodePath}/static-nodes.json`, staticNode);
+    child = execFileSync('build/install/besu/bin/besu', [`--data-path=${nodePath}`,'public-key', 'export',`--to=${nodePath}/enode`]);
+    var enode = fs.readFileSync(`${nodePath}/enode`).toString().substring(2,);
+    staticNode += "\"enode://" + enode + "@127.0.0.1:" + p2pPort.toString() + "\"";
+    if (i != nodeCount - 1) {
+        staticNode += ","
     }
+    staticNode += "\n"
+}
+staticNode += "]\n"
 
+// Write static nodes to each node path
+for (var i = 0; i < nodeCount; i++) {
+    const nodeNum = i.toString();
+    const nodePath = `${chainPath}/node${nodeNum}`;
+    fs.writeFileSync(`${nodePath}/static-nodes.json`, staticNode);
 }
 
 fs.writeFileSync(`${chainPath}/toEncode.json`, JSON.stringify(node_acct_list.sort()));
@@ -96,4 +104,3 @@ genesis["extraData"] = extradata;
 
 genesis["config"]["chainId"] = parseInt(chainId);
 fs.writeFileSync(`${chainPath}/genesis.json`, JSON.stringify(genesis, null, 4));
-
