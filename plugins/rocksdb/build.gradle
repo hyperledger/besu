@@ -25,6 +25,12 @@ jar {
   }
 }
 
+publishing {
+  publications {
+    mavenJava(MavenPublication) { artifactId 'plugins-rocksdb' }
+  }
+}
+
 dependencies {
   api project(':plugin-api')
 
