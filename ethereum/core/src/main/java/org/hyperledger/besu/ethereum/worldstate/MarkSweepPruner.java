@@ -97,6 +97,11 @@ public class MarkSweepPruner {
   }
 
   public void prepare() {
+    // Optimization for the case where the previous cycle was interrupted (like the node was shut
+    // down). If the previous cycle was interrupted, there will be marks in the mark storage from
+    // last time, causing the first sweep to be smaller than it needs to be.
+    clearMarks();
+
     nodeAddedListenerId = worldStateStorage.addNodeAddedListener(this::markNodes);
   }
 
