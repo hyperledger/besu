@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
+import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -145,8 +146,11 @@ public class FilterManagerLogFilterTest {
   }
 
   private void recordNewBlockEvent() {
+    final var gen = new BlockDataGenerator();
+    final var block = gen.block();
     filterManager.recordBlockEvent(
-        BlockAddedEvent.createForHeadAdvancement(new BlockDataGenerator().block()),
+        BlockAddedEvent.createForHeadAdvancement(
+            block, new BlockWithReceipts(block, gen.receipts(block)).getLogsWithMetadata(false)),
         blockchainQueries.getBlockchain());
   }
 
