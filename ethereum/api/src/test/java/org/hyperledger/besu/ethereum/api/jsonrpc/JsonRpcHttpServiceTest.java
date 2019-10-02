@@ -1476,6 +1476,7 @@ public class JsonRpcHttpServiceTest {
   }
 
   @Test
+  @SuppressWarnings("unchecked")
   public void disabledMethod() throws Exception {
     final String methodName = RpcMethod.NET_SERVICES.getMethodName();
     final String id = "234";
