@@ -14,17 +14,41 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy;
 
+import static java.util.Collections.singletonList;
+
 import org.web3j.protocol.Web3jService;
+import org.web3j.protocol.core.Request;
+import org.web3j.protocol.core.Response;
 import org.web3j.protocol.pantheon.Pantheon;
 
 public class PrivacyRequestFactory {
   private final Pantheon besuClient;
+  private final Web3jService web3jService;
 
   public PrivacyRequestFactory(final Web3jService web3jService) {
+    this.web3jService = web3jService;
     this.besuClient = Pantheon.build(web3jService);
   }
 
   public Pantheon getBesuClient() {
     return besuClient;
+  }
+
+  public Request<?, PrivDistributeTransactionResponse> privDistributeTransaction(
+      final String signedPrivateTransaction) {
+    return new Request<>(
+        "priv_distributeRawTransaction",
+        singletonList(signedPrivateTransaction),
+        web3jService,
+        PrivDistributeTransactionResponse.class);
+  }
+
+  public static class PrivDistributeTransactionResponse extends Response<String> {
+
+    public PrivDistributeTransactionResponse() {}
+
+    public String getTransactionKey() {
+      return getResult();
+    }
   }
 }

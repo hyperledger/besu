@@ -34,4 +34,9 @@ public class PrivacyTransactions {
   public FindPrivacyGroupTransaction findPrivacyGroup(final List<String> nodes) {
     return new FindPrivacyGroupTransaction(nodes);
   }
+
+  public PrivDistributeTransactionTransaction privDistributeTransaction(
+      final String signedPrivateTransaction) {
+    return new PrivDistributeTransactionTransaction(signedPrivateTransaction);
+  }
 }
