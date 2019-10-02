@@ -40,22 +40,24 @@ public class PrivateStateRootResolver {
       final Blockchain blockchain,
       final ProcessableBlockHeader latestBlockHeader,
       final BytesValue privacyGroupId) {
-    Hash parentHash;
+    Hash currentBlockHash;
     if (latestBlockHeader instanceof BlockHeader) {
-      parentHash = ((BlockHeader) latestBlockHeader).getHash();
-      final Optional<Hash> maybeRoot = resolveStateRootFor(parentHash, privacyGroupId);
-      if (maybeRoot.isPresent()) {
-        return maybeRoot.get();
+      currentBlockHash = ((BlockHeader) latestBlockHeader).getHash();
+      final Optional<Hash> privateStateRootOptional =
+          resolveStateRootFor(currentBlockHash, privacyGroupId);
+      if (privateStateRootOptional.isPresent()) {
+        return privateStateRootOptional.get();
       }
     }
-    parentHash = latestBlockHeader.getParentHash();
-    while (!parentHash.equals(blockchain.getGenesisBlock().getHeader().getParentHash())) {
-      final Optional<Hash> maybeRoot = resolveStateRootFor(parentHash, privacyGroupId);
-      if (maybeRoot.isPresent()) {
-        return maybeRoot.get();
+    currentBlockHash = latestBlockHeader.getParentHash();
+    while (isNotGenesisBlockParentHash(currentBlockHash, blockchain)) {
+      final Optional<Hash> privateStateRootOptional =
+          resolveStateRootFor(currentBlockHash, privacyGroupId);
+      if (privateStateRootOptional.isPresent()) {
+        return privateStateRootOptional.get();
       }
-      final Block parentBlock = blockchain.getBlockByHash(parentHash).get();
-      parentHash = parentBlock.getHeader().getParentHash();
+      final Block parentBlock = blockchain.getBlockByHash(currentBlockHash).get();
+      currentBlockHash = parentBlock.getHeader().getParentHash();
     }
     return EMPTY_ROOT_HASH;
   }
@@ -65,5 +67,9 @@ public class PrivateStateRootResolver {
     return privateStateStorage
         .getPrivateBlockMetadata(blockHash, Bytes32.wrap(privacyGroupId))
         .map(PrivateBlockMetadata::getLatestStateRoot);
+  }
+
+  private boolean isNotGenesisBlockParentHash(final Hash hash, final Blockchain blockchain) {
+    return !hash.equals(blockchain.getGenesisBlock().getHeader().getParentHash());
   }
 }
