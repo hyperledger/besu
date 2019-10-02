@@ -44,6 +44,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Wei;
@@ -73,6 +74,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -2787,5 +2789,42 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString()).isEmpty();
 
     assertThat(targetGasLimitArg.getValue()).isEqualTo(Optional.empty());
+  }
+
+  @Test
+  public void requiredBlocksSetWhenSpecified() {
+    final long blockNumber = 8675309L;
+    final String hash = "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef";
+
+    parseCommand("--required-block=" + blockNumber + "=" + hash);
+
+    @SuppressWarnings("unchecked")
+    final ArgumentCaptor<Map<Long, Hash>> requiredBlocksArg = ArgumentCaptor.forClass(Map.class);
+
+    verify(mockControllerBuilder).requiredBlocks(requiredBlocksArg.capture());
+    verify(mockControllerBuilder).build();
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+
+    assertThat(requiredBlocksArg.getValue()).containsOnlyKeys(blockNumber);
+    assertThat(requiredBlocksArg.getValue())
+        .containsEntry(blockNumber, Hash.fromHexStringLenient(hash));
+  }
+
+  @Test
+  public void requiredBlocksEmptyWhenNotSpecified() {
+    parseCommand();
+
+    @SuppressWarnings("unchecked")
+    final ArgumentCaptor<Map<Long, Hash>> requiredBlocksArg = ArgumentCaptor.forClass(Map.class);
+
+    verify(mockControllerBuilder).requiredBlocks(requiredBlocksArg.capture());
+    verify(mockControllerBuilder).build();
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+
+    assertThat(requiredBlocksArg.getValue()).isEmpty();
   }
 }

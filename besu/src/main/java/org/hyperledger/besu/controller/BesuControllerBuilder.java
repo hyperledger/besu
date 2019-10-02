@@ -91,7 +91,7 @@ public abstract class BesuControllerBuilder<C> {
   private boolean isPruningEnabled;
   private PruningConfiguration pruningConfiguration;
   Map<String, String> genesisConfigOverrides;
-  private Map<Long, Hash> requiredBlocks;
+  private Map<Long, Hash> requiredBlocks = Collections.emptyMap();
 
   public BesuControllerBuilder<C> storageProvider(final StorageProvider storageProvider) {
     this.storageProvider = storageProvider;
