@@ -71,6 +71,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Wei;
@@ -130,6 +131,7 @@ import java.nio.file.Paths;
 import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -646,6 +648,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Boolean isRevertReasonEnabled = false;
 
   @Option(
+      names = {"--required-blocks", "--required-block"},
+      paramLabel = "BLOCK=HASH",
+      description = "Block number and hash peers are required to have.",
+      arity = "*",
+      split = ",")
+  private final Map<Long, Hash> requiredBlocks = new HashMap<>();
+
+  @Option(
       names = {"--privacy-url"},
       description = "The URL on which the enclave is running")
   private final URI privacyUrl = PrivacyParameters.DEFAULT_ENCLAVE_URL;
@@ -835,6 +845,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     commandLine.registerConverter(UInt256.class, (arg) -> UInt256.of(new BigInteger(arg)));
     commandLine.registerConverter(Wei.class, (arg) -> Wei.of(Long.parseUnsignedLong(arg)));
     commandLine.registerConverter(PositiveNumber.class, PositiveNumber::fromString);
+    commandLine.registerConverter(Hash.class, Hash::fromHexString);
 
     metricCategoryConverter.addCategories(BesuMetricCategory.class);
     metricCategoryConverter.addCategories(StandardMetricCategory.class);
@@ -1085,7 +1096,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           .isPruningEnabled(isPruningEnabled)
           .pruningConfiguration(buildPruningConfiguration())
           .genesisConfigOverrides(genesisConfigOverrides)
-          .targetGasLimit(targetGasLimit == null ? Optional.empty() : Optional.of(targetGasLimit));
+          .targetGasLimit(targetGasLimit == null ? Optional.empty() : Optional.of(targetGasLimit))
+          .requiredBlocks(requiredBlocks);
     } catch (final IOException e) {
       throw new ExecutionException(this.commandLine, "Invalid path", e);
     }
