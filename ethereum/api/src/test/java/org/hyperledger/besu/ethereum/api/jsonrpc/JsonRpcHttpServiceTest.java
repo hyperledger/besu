@@ -15,10 +15,12 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
@@ -1473,11 +1475,38 @@ public class JsonRpcHttpServiceTest {
   }
 
   @Test
+  public void disabledMethod() throws Exception {
+    final String methodName = RpcMethod.NET_SERVICES.getMethodName();
+    final String id = "234";
+    final RequestBody body =
+        RequestBody.create(
+            JSON,
+            "{\"jsonrpc\":\"2.0\",\"id\":"
+                + Json.encode(id)
+                + ",\"method\":\""
+                + methodName
+                + "\"}");
+
+    when(rpcMethods.get(any(String.class))).thenReturn(null);
+    when(rpcMethods.containsKey(any(String.class))).thenReturn(false);
+
+    try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
+      assertThat(resp.code()).isEqualTo(400);
+      final JsonObject json = new JsonObject(resp.body().string());
+      final JsonRpcError expectedError = JsonRpcError.METHOD_NOT_ENABLED;
+      testHelper.assertValidJsonRpcError(
+          json, id, expectedError.getCode(), expectedError.getMessage());
+    }
+
+    verify(rpcMethods).containsKey(methodName);
+    verify(rpcMethods).get(methodName);
+  }
+
+  @Test
   public void exceptionallyHandleJsonSingleRequest() throws Exception {
     final JsonRpcMethod jsonRpcMethod = mock(JsonRpcMethod.class);
     when(jsonRpcMethod.getName()).thenReturn("foo");
-    when(jsonRpcMethod.response(ArgumentMatchers.any()))
-        .thenThrow(new RuntimeException("test exception"));
+    when(jsonRpcMethod.response(any())).thenThrow(new RuntimeException("test exception"));
 
     doReturn(Optional.of(jsonRpcMethod)).when(rpcMethods).get("foo");
 
@@ -1493,8 +1522,7 @@ public class JsonRpcHttpServiceTest {
   public void exceptionallyHandleJsonBatchRequest() throws Exception {
     final JsonRpcMethod jsonRpcMethod = mock(JsonRpcMethod.class);
     when(jsonRpcMethod.getName()).thenReturn("foo");
-    when(jsonRpcMethod.response(ArgumentMatchers.any()))
-        .thenThrow(new RuntimeException("test exception"));
+    when(jsonRpcMethod.response(any())).thenThrow(new RuntimeException("test exception"));
     doReturn(Optional.of(jsonRpcMethod)).when(rpcMethods).get("foo");
 
     final RequestBody body =
