@@ -386,6 +386,11 @@ public class DefaultBlockchain implements MutableBlockchain {
       oldChain = blockchainStorage.getBlockHeader(oldChain.getParentHash()).get();
     }
 
+    // We must provide the removed logs in reverse-chronological order and the added logs in
+    // chronological order
+    Collections.sort(addedLogsWithMetadata);
+    Collections.sort(removedLogsWithMetadata, Collections.reverseOrder(LogWithMetadata::compareTo));
+
     // Update indexed transactions
     newTransactions.forEach(
         (blockHash, transactionsInBlock) -> {
@@ -519,10 +524,7 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   private void addRemovedLogsWithMetadata(
       final List<LogWithMetadata> logsWithMetadata, final BlockWithReceipts blockWithReceipts) {
-    // the logs have to be reverse chronological so reverse them before adding to the collection
-    final var logs = blockWithReceipts.getLogsWithMetadata(true);
-    Collections.reverse(logs);
-    logsWithMetadata.addAll(logs);
+    logsWithMetadata.addAll(blockWithReceipts.getLogsWithMetadata(true));
   }
 
   private Optional<BlockWithReceipts> getBlockWithReceipts(final BlockHeader blockHeader) {

@@ -18,11 +18,12 @@ package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.util.bytes.BytesValue;
 
+import java.util.Comparator;
 import java.util.List;
 
 import com.google.common.base.MoreObjects;
 
-public class LogWithMetadata extends Log {
+public class LogWithMetadata extends Log implements Comparable<LogWithMetadata> {
 
   private final int logIndex;
   private final long blockNumber;
@@ -110,5 +111,13 @@ public class LogWithMetadata extends Log {
         .add("topics", topics)
         .add("removed", removed)
         .toString();
+  }
+
+  @Override
+  public int compareTo(final LogWithMetadata other) {
+    return Comparator.comparingLong(LogWithMetadata::getBlockNumber)
+        .thenComparingInt(LogWithMetadata::getTransactionIndex)
+        .thenComparingInt(LogWithMetadata::getLogIndex)
+        .compare(this, other);
   }
 }
