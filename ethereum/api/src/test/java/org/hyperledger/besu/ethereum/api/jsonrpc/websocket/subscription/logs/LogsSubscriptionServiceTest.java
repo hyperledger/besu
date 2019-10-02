@@ -94,7 +94,7 @@ public class LogsSubscriptionServiceTest {
 
     final List<LogResult> logResults = captor.getAllValues();
 
-    assertThat(logResults.size()).isEqualTo(1);
+    assertThat(logResults).hasSize(1);
     final LogResult result = logResults.get(0);
     assertLogResultMatches(result, block, receipts, txIndex, logIndex, false);
   }
@@ -128,7 +128,7 @@ public class LogsSubscriptionServiceTest {
 
     final List<LogResult> logResults = captor.getAllValues();
 
-    assertThat(logResults.size()).isEqualTo(2);
+    assertThat(logResults).hasSize(2);
     final LogResult firstLog = logResults.get(0);
     assertLogResultMatches(firstLog, block, receipts, txIndex, logIndex, false);
     final LogResult secondLog = logResults.get(1);
@@ -171,7 +171,7 @@ public class LogsSubscriptionServiceTest {
 
     final List<LogResult> logResults = captor.getAllValues();
 
-    assertThat(logResults.size()).isEqualTo(3);
+    assertThat(logResults).hasSize(3);
     final LogResult originalLog = logResults.get(0);
     assertLogResultMatches(originalLog, block, receipts, txIndex, logIndex, false);
     final LogResult removedLog = logResults.get(1);
@@ -209,7 +209,7 @@ public class LogsSubscriptionServiceTest {
     final List<LogResult> logResults = captor.getAllValues();
 
     // Verify all logs are emitted
-    assertThat(logResults.size()).isEqualTo(targetBlocks.size() * txCount);
+    assertThat(logResults).hasSize(targetBlocks.size() * txCount);
     for (int i = 0; i < targetBlocks.size(); i++) {
       final BlockWithReceipts targetBlock = targetBlocks.get(i);
       for (int j = 0; j < txCount; j++) {
@@ -249,7 +249,7 @@ public class LogsSubscriptionServiceTest {
 
       final List<LogResult> logResults = captor.getAllValues();
 
-      assertThat(logResults.size()).isEqualTo(1);
+      assertThat(logResults).hasSize(1);
       final LogResult result = logResults.get(0);
       assertLogResultMatches(result, block, receipts, txIndex, logIndex, false);
     }
