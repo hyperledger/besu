@@ -176,7 +176,7 @@ public class LogsSubscriptionServiceTest {
     assertLogResultMatches(originalLog, block, receipts, txIndex, logIndex, false);
     final LogResult removedLog = logResults.get(1);
     assertLogResultMatches(removedLog, block, receipts, txIndex, logIndex, true);
-    final LogResult updatedLog = logResults.get(1);
+    final LogResult updatedLog = logResults.get(2);
     assertLogResultMatches(
         updatedLog, newBlockWithLog.getBlock(), newBlockWithLog.getReceipts(), 0, 0, false);
   }
