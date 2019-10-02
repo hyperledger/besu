@@ -85,6 +85,21 @@ public class PrivateStateRootResolverTest {
   }
 
   @Test
+  public void mustResolveStateRootIfChainHeadIsNotCommited() {
+    final BlockDataGenerator.BlockOptions options =
+        new BlockDataGenerator.BlockOptions()
+            .setBlockNumber(BLOCKCHAIN.getChainHeadBlockNumber())
+            .setParentHash(BLOCKCHAIN.getChainHeadHash());
+    final Block block = BLOCK_GENERATOR.block(options);
+    final PrivateStateRootResolver privateStateRootResolver =
+        new PrivateStateRootResolver(privateStateStorage);
+    assertThat(
+            privateStateRootResolver.resolveLastStateRoot(
+                BLOCKCHAIN, block.getHeader(), privacyGroupId))
+        .isEqualTo(PrivateStateRootResolver.EMPTY_ROOT_HASH);
+  }
+
+  @Test
   public void ifNoCommitmentForPrivacyGroupExistsReturnEmptyRootHash() {
     final PrivateStateRootResolver privateStateRootResolver =
         new PrivateStateRootResolver(privateStateStorage);
