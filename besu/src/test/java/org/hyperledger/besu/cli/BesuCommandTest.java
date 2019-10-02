@@ -2827,4 +2827,55 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(requiredBlocksArg.getValue()).isEmpty();
   }
+
+  @Test
+  public void requiredBlocksMulpleBlocksOneArg() {
+    final long block1 = 8675309L;
+    final long block2 = 5551212L;
+    final String hash1 = "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef";
+    final String hash2 = "0x0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+
+    parseCommand("--required-block=" + block1 + "=" + hash1 + "," + block2 + "=" + hash2);
+
+    @SuppressWarnings("unchecked")
+    final ArgumentCaptor<Map<Long, Hash>> requiredBlocksArg = ArgumentCaptor.forClass(Map.class);
+
+    verify(mockControllerBuilder).requiredBlocks(requiredBlocksArg.capture());
+    verify(mockControllerBuilder).build();
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+
+    assertThat(requiredBlocksArg.getValue()).containsOnlyKeys(block1, block2);
+    assertThat(requiredBlocksArg.getValue())
+        .containsEntry(block1, Hash.fromHexStringLenient(hash1));
+    assertThat(requiredBlocksArg.getValue())
+        .containsEntry(block2, Hash.fromHexStringLenient(hash2));
+  }
+
+  @Test
+  public void requiredBlocksMulpleBlocksTwoArgs() {
+    final long block1 = 8675309L;
+    final long block2 = 5551212L;
+    final String hash1 = "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef";
+    final String hash2 = "0x0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+
+    parseCommand(
+        "--required-block=" + block1 + "=" + hash1, "--required-block=" + block2 + "=" + hash2);
+
+    @SuppressWarnings("unchecked")
+    final ArgumentCaptor<Map<Long, Hash>> requiredBlocksArg = ArgumentCaptor.forClass(Map.class);
+
+    verify(mockControllerBuilder).requiredBlocks(requiredBlocksArg.capture());
+    verify(mockControllerBuilder).build();
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+
+    assertThat(requiredBlocksArg.getValue()).containsOnlyKeys(block1, block2);
+    assertThat(requiredBlocksArg.getValue())
+        .containsEntry(block1, Hash.fromHexStringLenient(hash1));
+    assertThat(requiredBlocksArg.getValue())
+        .containsEntry(block2, Hash.fromHexStringLenient(hash2));
+  }
 }

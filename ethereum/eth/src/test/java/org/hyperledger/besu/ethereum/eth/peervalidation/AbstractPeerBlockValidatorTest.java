@@ -22,7 +22,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator.BlockOptions;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.eth.manager.DeterministicEthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
@@ -31,8 +30,6 @@ import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.GetBlockHeadersMessage;
-import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
-import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -44,7 +41,7 @@ import org.junit.Test;
 
 public abstract class AbstractPeerBlockValidatorTest {
 
-  abstract AbstractPeerBlockValidator getSampleValidator(long blockNumber);
+  abstract AbstractPeerBlockValidator createValidator(long blockNumber);
 
   @Test
   public void validatePeer_unresponsivePeer() {
@@ -52,7 +49,7 @@ public abstract class AbstractPeerBlockValidatorTest {
         EthProtocolManagerTestUtil.create(DeterministicEthScheduler.TimeoutPolicy.ALWAYS_TIMEOUT);
     final long blockNumber = 500;
 
-    final PeerValidator validator = getSampleValidator(blockNumber);
+    final PeerValidator validator = createValidator(blockNumber);
 
     final RespondingEthPeer peer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, blockNumber);
@@ -69,43 +66,34 @@ public abstract class AbstractPeerBlockValidatorTest {
   public void validatePeer_requestBlockFromPeerBeingTested() {
     final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
     final BlockDataGenerator gen = new BlockDataGenerator(1);
-    final long requiredBlockNumber = 500;
-    final Block requiredBlock =
-        gen.block(BlockOptions.create().setBlockNumber(requiredBlockNumber));
+    final long blockNumber = 500;
+    final Block block = gen.block(BlockOptions.create().setBlockNumber(blockNumber));
 
-    final PeerValidator validator =
-        new RequiredBlocksPeerValidator(
-            MainnetProtocolSchedule.create(),
-            new NoOpMetricsSystem(),
-            requiredBlockNumber,
-            Hash.ZERO,
-            0);
+    final PeerValidator validator = createValidator(blockNumber);
 
     final int peerCount = 1000;
     final List<RespondingEthPeer> otherPeers =
         Stream.generate(
-                () ->
-                    EthProtocolManagerTestUtil.createPeer(ethProtocolManager, requiredBlockNumber))
+                () -> EthProtocolManagerTestUtil.createPeer(ethProtocolManager, blockNumber))
             .limit(peerCount)
             .collect(Collectors.toList());
     final RespondingEthPeer targetPeer =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, requiredBlockNumber);
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, blockNumber);
 
     final CompletableFuture<Boolean> result =
         validator.validatePeer(ethProtocolManager.ethContext(), targetPeer.getEthPeer());
 
     assertThat(result).isNotDone();
 
-    // Other peers should not receive request for required block
+    // Other peers should not receive request for target block
     for (final RespondingEthPeer otherPeer : otherPeers) {
-      final AtomicBoolean requiredBlockRequestedForOtherPeer =
-          respondToBlockRequest(otherPeer, requiredBlock);
-      assertThat(requiredBlockRequestedForOtherPeer).isFalse();
+      final AtomicBoolean blockRequestedForOtherPeer = respondToBlockRequest(otherPeer, block);
+      assertThat(blockRequestedForOtherPeer).isFalse();
     }
 
-    // Target peer should receive request for required block
-    final AtomicBoolean requiredBlockRequested = respondToBlockRequest(targetPeer, requiredBlock);
-    assertThat(requiredBlockRequested).isTrue();
+    // Target peer should receive request for target block
+    final AtomicBoolean blockRequested = respondToBlockRequest(targetPeer, block);
+    assertThat(blockRequested).isTrue();
   }
 
   @Test
@@ -113,32 +101,25 @@ public abstract class AbstractPeerBlockValidatorTest {
     final BlockDataGenerator gen = new BlockDataGenerator(1);
     final EthProtocolManager ethProtocolManager =
         EthProtocolManagerTestUtil.create(DeterministicEthScheduler.TimeoutPolicy.ALWAYS_TIMEOUT);
-    final long requiredBlockNumber = 500;
+    final long blockNumber = 500;
     final long buffer = 10;
 
-    final PeerValidator validator =
-        new RequiredBlocksPeerValidator(
-            MainnetProtocolSchedule.create(),
-            new NoOpMetricsSystem(),
-            requiredBlockNumber,
-            Hash.ZERO,
-            buffer);
-
+    final PeerValidator validator = createValidator(blockNumber);
     final EthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0).getEthPeer();
 
-    peer.chainState().update(gen.hash(), requiredBlockNumber - 10);
+    peer.chainState().update(gen.hash(), blockNumber - 10);
     assertThat(validator.canBeValidated(peer)).isFalse();
 
-    peer.chainState().update(gen.hash(), requiredBlockNumber);
+    peer.chainState().update(gen.hash(), blockNumber);
     assertThat(validator.canBeValidated(peer)).isFalse();
 
-    peer.chainState().update(gen.hash(), requiredBlockNumber + buffer - 1);
+    peer.chainState().update(gen.hash(), blockNumber + buffer - 1);
     assertThat(validator.canBeValidated(peer)).isFalse();
 
-    peer.chainState().update(gen.hash(), requiredBlockNumber + buffer);
+    peer.chainState().update(gen.hash(), blockNumber + buffer);
     assertThat(validator.canBeValidated(peer)).isTrue();
 
-    peer.chainState().update(gen.hash(), requiredBlockNumber + buffer + 10);
+    peer.chainState().update(gen.hash(), blockNumber + buffer + 10);
     assertThat(validator.canBeValidated(peer)).isTrue();
   }
 

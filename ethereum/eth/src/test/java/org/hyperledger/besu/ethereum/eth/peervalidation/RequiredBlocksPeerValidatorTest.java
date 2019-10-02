@@ -36,7 +36,7 @@ import org.junit.Test;
 public class RequiredBlocksPeerValidatorTest extends AbstractPeerBlockValidatorTest {
 
   @Override
-  AbstractPeerBlockValidator getSampleValidator(final long blockNumber) {
+  AbstractPeerBlockValidator createValidator(final long blockNumber) {
     return new RequiredBlocksPeerValidator(
         MainnetProtocolSchedule.create(), new NoOpMetricsSystem(), blockNumber, Hash.ZERO, 0);
   }
