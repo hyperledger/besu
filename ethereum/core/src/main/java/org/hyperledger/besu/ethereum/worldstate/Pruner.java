@@ -35,6 +35,7 @@ public class Pruner {
   private final MarkSweepPruner pruningStrategy;
   private final Blockchain blockchain;
   private final ExecutorService executorService;
+  private Long blockAddedObserverId;
   private final long blocksRetained;
   private final AtomicReference<State> state = new AtomicReference<>(State.IDLE);
   private volatile long markBlockNumber = 0;
@@ -58,11 +59,14 @@ public class Pruner {
 
   public void start() {
     LOG.info("Starting Pruner.");
-    blockchain.observeBlockAdded((event, blockchain) -> handleNewBlock(event));
+    pruningStrategy.prepare();
+    blockAddedObserverId =
+        blockchain.observeBlockAdded((event, blockchain) -> handleNewBlock(event));
   }
 
   public void stop() throws InterruptedException {
     pruningStrategy.cleanup();
+    blockchain.removeObserver(blockAddedObserverId);
     executorService.awaitTermination(10, TimeUnit.SECONDS);
   }
 
@@ -73,7 +77,6 @@ public class Pruner {
 
     final long blockNumber = event.getBlock().getHeader().getNumber();
     if (state.compareAndSet(State.IDLE, State.MARK_BLOCK_CONFIRMATIONS_AWAITING)) {
-      pruningStrategy.prepare();
       markBlockNumber = blockNumber;
     } else if (blockNumber >= markBlockNumber + blockConfirmations
         && state.compareAndSet(State.MARK_BLOCK_CONFIRMATIONS_AWAITING, State.MARKING)) {
@@ -87,7 +90,6 @@ public class Pruner {
   }
 
   private void mark(final BlockHeader header) {
-    markBlockNumber = header.getNumber();
     final Hash stateRoot = header.getStateRoot();
     LOG.debug(
         "Begin marking used nodes for pruning. Block number: {} State root: {}",
@@ -117,6 +119,7 @@ public class Pruner {
       executorService.execute(action);
     } catch (final Throwable t) {
       LOG.error("Pruning failed", t);
+      pruningStrategy.cleanup();
       state.set(State.IDLE);
     }
   }
