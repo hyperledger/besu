@@ -15,6 +15,7 @@
 package org.hyperledger.besu.cli.config;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.CLASSIC_BOOTSTRAP_NODES;
 import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.GOERLI_BOOTSTRAP_NODES;
 import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.MAINNET_BOOTSTRAP_NODES;
 import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.RINKEBY_BOOTSTRAP_NODES;
@@ -117,7 +118,7 @@ public class EthNetworkConfig {
         return new EthNetworkConfig(jsonConfig(DEV_GENESIS), DEV_NETWORK_ID, new ArrayList<>());
       case CLASSIC:
         return new EthNetworkConfig(
-            jsonConfig(CLASSIC_GENESIS), CLASSIC_NETWORK_ID, new ArrayList<>());
+            jsonConfig(CLASSIC_GENESIS), CLASSIC_NETWORK_ID, CLASSIC_BOOTSTRAP_NODES);
       case MAINNET:
       default:
         return new EthNetworkConfig(

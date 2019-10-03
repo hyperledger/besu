@@ -63,4 +63,8 @@ public interface GenesisConfigOptions {
   OptionalInt getEvmStackSize();
 
   Map<String, Object> asMap();
+
+  OptionalLong getAtlantisBlockNumber();
+
+  OptionalLong getAghartaBlockNumber();
 }
