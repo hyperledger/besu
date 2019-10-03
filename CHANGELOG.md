@@ -10,7 +10,7 @@ From v1.2, Besu requires Java 11.  Besu on Java 8 is no longer supported.
 In v1.2, we removed the entry-point script from our Docker image. Refer to the [migration guide](https://besu.hyperledger.org/en/latest/HowTo/Get-Started/Migration-Docker/)
 for information on options that were previously automatically added to the Besu command line. 
 
-### 1.3 RC 
+### 1.3 
 
 ### Breaking Change 
 
@@ -26,6 +26,11 @@ for information on options that were previously automatically added to the Besu 
   - Added [`retesteth`](https://besu.hyperledger.org/en/latest/Reference/CLI/CLI-Subcommands/#retesteth) subcommand 
   - Added [`debug_accountRange`](https://besu.hyperledger.org/en/latest/Reference/API-Methods/#debug_accountrange) JSON-RPC API method 
   - Clarified purpose of [static nodes](https://besu.hyperledger.org/en/latest/HowTo/Find-and-Connect/Managing-Peers/#static-nodes) 
+  - Added links [Kubernetes reference implementations](https://besu.hyperledger.org/en/latest/HowTo/Deploy/Kubernetes/)
+  - Added content about [access between private and public states](https://besu.hyperledger.org/en/latest/Concepts/Privacy/Privacy-Groups/#access-between-states)
+  - Added restriction that [account permissioning cannot be used with random key signing](https://besu.hyperledger.org/en/latest/HowTo/Use-Privacy/Sign-Privacy-Marker-Transactions/).
+  - Added high availability requirement for [private transaction manager](https://besu.hyperledger.org/en/latest/Concepts/Privacy/Privacy-Overview/#availability) (ie, Orion)
+  - Added [genesis file reference](https://besu.hyperledger.org/en/latest/Reference/Config-Items/)
 
 ### Technical Improvements 
 
