@@ -176,6 +176,11 @@ public class DefaultBlockchain implements MutableBlockchain {
   }
 
   @Override
+  public Block getChainHeadBlock() {
+    return new Block(chainHeader, blockchainStorage.getBlockBody(chainHeader.getHash()).get());
+  }
+
+  @Override
   public Optional<BlockHeader> getBlockHeader(final long blockNumber) {
     return blockchainStorage.getBlockHash(blockNumber).flatMap(blockchainStorage::getBlockHeader);
   }
