@@ -23,6 +23,8 @@ import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 
+import java.util.List;
+
 public class LogsSubscriptionService implements BlockAddedObserver {
 
   private final SubscriptionManager subscriptionManager;

@@ -297,7 +297,9 @@ public class DefaultBlockchain implements MutableBlockchain {
         updater.setChainHead(newBlockHash);
         indexTransactionForBlock(updater, newBlockHash, newBlock.getBody().getTransactions());
         return BlockAddedEvent.createForHeadAdvancement(
-            newBlock, blockWithReceipts.getLogsWithMetadata(false));
+            newBlock,
+            LogWithMetadata.generate(
+                blockWithReceipts.getBlock(), blockWithReceipts.getReceipts(), false));
       } else if (totalDifficulty.compareTo(blockchainStorage.getTotalDifficulty(chainHead).get())
           > 0) {
         // New block represents a chain reorganization
