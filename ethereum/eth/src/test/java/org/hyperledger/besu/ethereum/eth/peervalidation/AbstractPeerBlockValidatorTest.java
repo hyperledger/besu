@@ -41,7 +41,7 @@ import org.junit.Test;
 
 public abstract class AbstractPeerBlockValidatorTest {
 
-  abstract AbstractPeerBlockValidator createValidator(long blockNumber);
+  abstract AbstractPeerBlockValidator createValidator(long blockNumber, long buffer);
 
   @Test
   public void validatePeer_unresponsivePeer() {
@@ -49,7 +49,7 @@ public abstract class AbstractPeerBlockValidatorTest {
         EthProtocolManagerTestUtil.create(DeterministicEthScheduler.TimeoutPolicy.ALWAYS_TIMEOUT);
     final long blockNumber = 500;
 
-    final PeerValidator validator = createValidator(blockNumber);
+    final PeerValidator validator = createValidator(blockNumber, 0);
 
     final RespondingEthPeer peer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, blockNumber);
@@ -69,7 +69,7 @@ public abstract class AbstractPeerBlockValidatorTest {
     final long blockNumber = 500;
     final Block block = gen.block(BlockOptions.create().setBlockNumber(blockNumber));
 
-    final PeerValidator validator = createValidator(blockNumber);
+    final PeerValidator validator = createValidator(blockNumber, 0);
 
     final int peerCount = 1000;
     final List<RespondingEthPeer> otherPeers =
@@ -104,7 +104,7 @@ public abstract class AbstractPeerBlockValidatorTest {
     final long blockNumber = 500;
     final long buffer = 10;
 
-    final PeerValidator validator = createValidator(blockNumber);
+    final PeerValidator validator = createValidator(blockNumber, buffer);
     final EthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0).getEthPeer();
 
     peer.chainState().update(gen.hash(), blockNumber - 10);

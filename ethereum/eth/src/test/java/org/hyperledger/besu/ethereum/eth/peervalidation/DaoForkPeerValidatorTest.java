@@ -35,9 +35,9 @@ import org.junit.Test;
 public class DaoForkPeerValidatorTest extends AbstractPeerBlockValidatorTest {
 
   @Override
-  AbstractPeerBlockValidator createValidator(final long blockNumber) {
+  AbstractPeerBlockValidator createValidator(final long blockNumber, final long buffer) {
     return new DaoForkPeerValidator(
-        MainnetProtocolSchedule.create(), new NoOpMetricsSystem(), blockNumber, 0);
+        MainnetProtocolSchedule.create(), new NoOpMetricsSystem(), blockNumber, buffer);
   }
 
   @Test
