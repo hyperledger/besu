@@ -121,9 +121,16 @@ public class PrivGetTransactionReceiptTest {
           Collections.emptyList(),
           BytesValue.EMPTY,
           null,
-          null,
           0,
-          0);
+          0,
+          Hash.fromHexString("0x65348ddfe0b282c26862b4610a8c45fd8486a93ae6e2b197836c826b4b671848"),
+          Hash.fromHexString("0x43ef5094212ba4862d6b310a3d337c3478fdf942c5ed3f8e792ad93d6d96994d"),
+          BytesValue.fromHexString(
+              "0x41316156744d784c4355486d425648586f5a7a7a42675062572f776a3561784470573958386c393153476f3d"),
+          Collections.singletonList(
+              BytesValue.fromHexString(
+                  "0x4b6f32625671442b6e4e6c4e594c35454537793349644f6e766966746a69697a706a52742b4854754642733d")),
+          null);
 
   private final JsonRpcParameter parameters = new JsonRpcParameter();
 
