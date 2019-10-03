@@ -97,14 +97,12 @@ public class MarkSweepPruner {
   }
 
   public void prepare() {
-    worldStateStorage.removeNodeAddedListener(nodeAddedListenerId); // Just in case.
-    markStorage.clear();
-    pendingMarks.clear();
-    nodeAddedListenerId = worldStateStorage.addNodeAddedListener(this::markNodes);
-  }
+    // Optimization for the case where the previous cycle was interrupted (like the node was shut
+    // down). If the previous cycle was interrupted, there will be marks in the mark storage from
+    // last time, causing the first sweep to be smaller than it needs to be.
+    clearMarks();
 
-  public void cleanup() {
-    worldStateStorage.removeNodeAddedListener(nodeAddedListenerId);
+    nodeAddedListenerId = worldStateStorage.addNodeAddedListener(this::markNodes);
   }
 
   public void mark(final Hash rootHash) {
@@ -151,9 +149,18 @@ public class MarkSweepPruner {
     // Sweep non-state-root nodes
     prunedNodeCount += worldStateStorage.prune(this::isMarked);
     sweptNodesCounter.inc(prunedNodeCount);
-    worldStateStorage.removeNodeAddedListener(nodeAddedListenerId);
-    markStorage.clear();
+    clearMarks();
     LOG.debug("Completed sweeping unused nodes");
+  }
+
+  public void cleanup() {
+    worldStateStorage.removeNodeAddedListener(nodeAddedListenerId);
+    clearMarks();
+  }
+
+  public void clearMarks() {
+    markStorage.clear();
+    pendingMarks.clear();
   }
 
   private boolean isMarked(final Bytes32 key) {
@@ -190,7 +197,14 @@ public class MarkSweepPruner {
 
   @VisibleForTesting
   void markNode(final Bytes32 hash) {
-    markNodes(Collections.singleton(hash));
+    markedNodesCounter.inc();
+    markLock.lock();
+    try {
+      pendingMarks.add(hash);
+      maybeFlushPendingMarks();
+    } finally {
+      markLock.unlock();
+    }
   }
 
   private void markNodes(final Collection<Bytes32> nodeHashes) {
@@ -210,7 +224,7 @@ public class MarkSweepPruner {
     }
   }
 
-  void flushPendingMarks() {
+  private void flushPendingMarks() {
     markLock.lock();
     try {
       final KeyValueStorageTransaction transaction = markStorage.startTransaction();
