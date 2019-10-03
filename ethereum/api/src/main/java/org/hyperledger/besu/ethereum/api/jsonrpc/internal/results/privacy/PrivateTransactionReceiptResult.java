@@ -30,6 +30,11 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
   "from",
   "to",
   "output",
+  "publicHash",
+  "privateHash",
+  "privateFrom",
+  "privateFor",
+  "privacyGroupId",
   "logs",
 })
 public class PrivateTransactionReceiptResult {
@@ -38,6 +43,11 @@ public class PrivateTransactionReceiptResult {
   private final String from;
   private final String to;
   private final String output;
+  private final Hash publicHash;
+  private final Hash privateHash;
+  private final BytesValue privateFrom;
+  private final List<BytesValue> privateFor;
+  private final BytesValue privacyGroupId;
   private final List<TransactionReceiptLogResult> logs;
 
   public PrivateTransactionReceiptResult(
@@ -47,14 +57,23 @@ public class PrivateTransactionReceiptResult {
       final List<Log> logs,
       final BytesValue output,
       final Hash blockHash,
-      final Hash hash,
       final long blockNumber,
-      final int txIndex) {
+      final int txIndex,
+      final Hash publicHash,
+      final Hash privateHash,
+      final BytesValue privateFrom,
+      final List<BytesValue> privateFor,
+      final BytesValue privacyGroupId) {
     this.contractAddress = contractAddress;
     this.from = from;
     this.to = to;
     this.output = output.toString();
-    this.logs = logReceipts(logs, blockNumber, hash, blockHash, txIndex);
+    this.publicHash = publicHash;
+    this.privateHash = privateHash;
+    this.privateFrom = privateFrom;
+    this.privateFor = privateFor;
+    this.privacyGroupId = privacyGroupId;
+    this.logs = logReceipts(logs, blockNumber, publicHash, blockHash, txIndex);
   }
 
   @JsonGetter(value = "contractAddress")
@@ -80,6 +99,31 @@ public class PrivateTransactionReceiptResult {
   @JsonGetter(value = "logs")
   public List<TransactionReceiptLogResult> getLogs() {
     return logs;
+  }
+
+  @JsonGetter("publicHash")
+  public Hash getPublicHash() {
+    return publicHash;
+  }
+
+  @JsonGetter("privateHash")
+  public Hash getPrivateHash() {
+    return privateHash;
+  }
+
+  @JsonGetter("privateFrom")
+  public BytesValue getPrivateFrom() {
+    return privateFrom;
+  }
+
+  @JsonGetter("privateFor")
+  public List<BytesValue> getPrivateFor() {
+    return privateFor;
+  }
+
+  @JsonGetter("privacyGroupId")
+  public BytesValue getPrivacyGroupId() {
+    return privacyGroupId;
   }
 
   private List<TransactionReceiptLogResult> logReceipts(
