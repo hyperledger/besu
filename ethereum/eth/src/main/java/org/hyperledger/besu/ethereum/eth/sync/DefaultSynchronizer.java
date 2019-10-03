@@ -170,8 +170,8 @@ public class DefaultSynchronizer<C> implements Synchronizer {
   }
 
   private void startFullSync() {
-    fullSyncDownloader.start();
     maybePruner.ifPresent(Pruner::start);
+    fullSyncDownloader.start();
   }
 
   @Override
