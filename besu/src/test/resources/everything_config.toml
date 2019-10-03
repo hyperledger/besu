@@ -31,6 +31,7 @@ max-peers=42
 remote-connections-limit-enabled=true
 remote-connections-max-percentage=60
 host-whitelist=["all"]
+required-blocks=["8675309=123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"]
 
 # chain
 network="MAINNET"
