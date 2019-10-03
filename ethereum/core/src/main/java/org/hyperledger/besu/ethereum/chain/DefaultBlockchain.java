@@ -266,12 +266,12 @@ public class DefaultBlockchain implements MutableBlockchain {
       return block.getHeader().getDifficulty();
     }
 
-    final UInt256 parentTargetDifficulty =
+    final UInt256 parentTotalDifficulty =
         blockchainStorage
             .getTotalDifficulty(block.getHeader().getParentHash())
             .orElseThrow(
                 () -> new IllegalStateException("Blockchain is missing total difficulty data."));
-    return block.getHeader().getDifficulty().plus(parentTargetDifficulty);
+    return block.getHeader().getDifficulty().plus(parentTotalDifficulty);
   }
 
   private BlockAddedEvent updateCanonicalChainData(
