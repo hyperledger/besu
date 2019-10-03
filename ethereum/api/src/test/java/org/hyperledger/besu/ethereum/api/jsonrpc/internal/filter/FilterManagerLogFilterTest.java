@@ -146,8 +146,8 @@ public class FilterManagerLogFilterTest {
   }
 
   private void recordNewBlockEvent() {
-    final var gen = new BlockDataGenerator();
-    final var block = gen.block();
+    final BlockDataGenerator gen = new BlockDataGenerator();
+    final Block block = gen.block();
     filterManager.recordBlockEvent(
         BlockAddedEvent.createForHeadAdvancement(
             block, new BlockWithReceipts(block, gen.receipts(block)).getLogsWithMetadata(false)),

@@ -237,8 +237,8 @@ public class DefaultBlockchain implements MutableBlockchain {
   }
 
   private BlockAddedEvent appendBlockHelper(final BlockWithReceipts blockWithReceipts) {
-    final var block = blockWithReceipts.getBlock();
-    final var receipts = blockWithReceipts.getReceipts();
+    final Block block = blockWithReceipts.getBlock();
+    final List<TransactionReceipt> receipts = blockWithReceipts.getReceipts();
     final Hash hash = block.getHash();
     final UInt256 td = calculateTotalDifficulty(block);
 
@@ -278,7 +278,7 @@ public class DefaultBlockchain implements MutableBlockchain {
       final BlockchainStorage.Updater updater,
       final BlockWithReceipts blockWithReceipts,
       final UInt256 totalDifficulty) {
-    final var newBlock = blockWithReceipts.getBlock();
+    final Block newBlock = blockWithReceipts.getBlock();
     final Hash chainHead = blockchainStorage.getChainHead().orElse(null);
     if (newBlock.getHeader().getNumber() != BlockHeader.GENESIS_BLOCK_NUMBER && chainHead == null) {
       throw new IllegalStateException("Blockchain is missing chain head.");
@@ -536,7 +536,7 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   private void addRemovedLogsWithMetadata(
       final Deque<LogWithMetadata> logsWithMetadata, final BlockWithReceipts blockWithReceipts) {
-    final var newLogsWithMetadata = blockWithReceipts.getLogsWithMetadata(true);
+    final List<LogWithMetadata> newLogsWithMetadata = blockWithReceipts.getLogsWithMetadata(true);
     for (int i = newLogsWithMetadata.size() - 1; i >= 0; i--) {
       logsWithMetadata.addFirst(newLogsWithMetadata.get(i));
     }

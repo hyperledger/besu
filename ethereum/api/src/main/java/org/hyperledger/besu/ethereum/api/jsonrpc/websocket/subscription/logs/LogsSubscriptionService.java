@@ -33,7 +33,7 @@ public class LogsSubscriptionService implements BlockAddedObserver {
 
   @Override
   public void onBlockAdded(final BlockAddedEvent event, final Blockchain __) {
-    final var logsSubscriptions =
+    final List<LogsSubscription> logsSubscriptions =
         subscriptionManager.subscriptionsOfType(SubscriptionType.LOGS, LogsSubscription.class);
 
     event

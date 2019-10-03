@@ -75,12 +75,12 @@ public class BlockWithReceipts {
   }
 
   public List<LogWithMetadata> getLogsWithMetadata(final boolean removed) {
-    final var logsWithMetadata = new ArrayList<LogWithMetadata>();
-    final var block = getBlock();
+    final List<LogWithMetadata> logsWithMetadata = new ArrayList<LogWithMetadata>();
+    final Block block = getBlock();
     for (int txi = 0; txi < receipts.size(); ++txi) {
-      final var currentReceipt = receipts.get(txi);
+      final TransactionReceipt currentReceipt = receipts.get(txi);
       for (int li = 0; li < currentReceipt.getLogs().size(); ++li) {
-        final var currentLog = currentReceipt.getLogs().get(li);
+        final Log currentLog = currentReceipt.getLogs().get(li);
         logsWithMetadata.add(
             new LogWithMetadata(
                 li,
