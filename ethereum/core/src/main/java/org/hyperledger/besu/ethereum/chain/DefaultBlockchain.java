@@ -332,81 +332,57 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   private BlockAddedEvent handleChainReorg(
       final BlockchainStorage.Updater updater, final BlockWithReceipts newChainHeadWithReceipts) {
-    final Block newChainHeadBlock = newChainHeadWithReceipts.getBlock();
-    final Block oldChainHeadBlock = getChainHeadBlock();
-    BlockHeader currentOldChainHeader = oldChainHeadBlock.getHeader();
-    BlockHeader currentNewChainHeader = newChainHeadBlock.getHeader();
+    BlockWithReceipts oldChainWithReceipts = getBlockWithReceipts(chainHeader).get();
+    BlockWithReceipts currentOldChainWithReceipts = oldChainWithReceipts;
+    BlockWithReceipts currentNewChainWithReceipts = newChainHeadWithReceipts;
 
     // Update chain head
-    updater.setChainHead(newChainHeadBlock.getHash());
+    updater.setChainHead(currentNewChainWithReceipts.getHeader().getHash());
 
     // Track transactions and logs to be added and removed
     final Map<Hash, List<Transaction>> newTransactions = new HashMap<>();
     final List<Transaction> removedTransactions = new ArrayList<>();
     final Deque<LogWithMetadata> logsWithMetadata = new ArrayDeque<>();
 
-    while (currentNewChainHeader.getNumber() > currentOldChainHeader.getNumber()) {
+    while (currentNewChainWithReceipts.getNumber() > currentOldChainWithReceipts.getNumber()) {
       // If new chain is longer than old chain, walk back until we meet the old chain by number
       // adding indexing for new chain along the way.
-      final Hash blockHash = currentNewChainHeader.getHash();
-      updater.putBlockHash(currentNewChainHeader.getNumber(), blockHash);
-      final List<Transaction> newTxs =
-          blockchainStorage
-              .getBlockBody(blockHash)
-              .map(BlockBody::getTransactions)
-              // If it's not in storage, it must be the new chain head
-              .orElseGet(() -> newChainHeadBlock.getBody().getTransactions());
-      newTransactions.put(blockHash, newTxs);
+      final Hash blockHash = currentNewChainWithReceipts.getHash();
+      updater.putBlockHash(currentNewChainWithReceipts.getNumber(), blockHash);
 
-      addAddedLogsWithMetadata(
-          logsWithMetadata,
-          getBlockWithReceipts(currentNewChainHeader).orElse(newChainHeadWithReceipts));
+      newTransactions.put(
+          blockHash, currentNewChainWithReceipts.getBlock().getBody().getTransactions());
+      addAddedLogsWithMetadata(logsWithMetadata, currentNewChainWithReceipts);
 
-      currentNewChainHeader =
-          blockchainStorage.getBlockHeader(currentNewChainHeader.getParentHash()).get();
+      currentNewChainWithReceipts = getParentBlockWithReceipts(currentNewChainWithReceipts);
     }
 
-    while (currentOldChainHeader.getNumber() > currentNewChainHeader.getNumber()) {
+    while (currentOldChainWithReceipts.getNumber() > currentNewChainWithReceipts.getNumber()) {
       // If oldChain is longer than new chain, walk back until we meet the new chain by number,
       // updating as we go.
-      updater.removeBlockHash(currentOldChainHeader.getNumber());
+      updater.removeBlockHash(currentOldChainWithReceipts.getNumber());
+
       removedTransactions.addAll(
-          blockchainStorage.getBlockBody(currentOldChainHeader.getHash()).get().getTransactions());
+          currentOldChainWithReceipts.getBlock().getBody().getTransactions());
+      addRemovedLogsWithMetadata(logsWithMetadata, currentOldChainWithReceipts);
 
-      addRemovedLogsWithMetadata(
-          logsWithMetadata, getBlockWithReceipts(currentOldChainHeader).get());
-
-      currentOldChainHeader =
-          blockchainStorage.getBlockHeader(currentOldChainHeader.getParentHash()).get();
+      currentOldChainWithReceipts = getParentBlockWithReceipts(currentOldChainWithReceipts);
     }
 
-    while (!currentOldChainHeader.getHash().equals(currentNewChainHeader.getHash())) {
+    while (!currentOldChainWithReceipts.getHash().equals(currentNewChainWithReceipts.getHash())) {
       // Walk back until we meet the common ancestor between the two chains, updating as we go.
-      final Hash newBlockHash = currentNewChainHeader.getHash();
-      updater.putBlockHash(currentNewChainHeader.getNumber(), newBlockHash);
+      final Hash newBlockHash = currentNewChainWithReceipts.getHash();
+      updater.putBlockHash(currentNewChainWithReceipts.getNumber(), newBlockHash);
 
-      // Collect transaction to be updated
-      final List<Transaction> newTxs =
-          blockchainStorage
-              .getBlockBody(newBlockHash)
-              .map(BlockBody::getTransactions)
-              // If it's not in storage, it must be the new chain head
-              .orElseGet(() -> newChainHeadBlock.getBody().getTransactions());
-
-      newTransactions.put(newBlockHash, newTxs);
+      newTransactions.put(
+          newBlockHash, currentNewChainWithReceipts.getBlock().getBody().getTransactions());
       removedTransactions.addAll(
-          blockchainStorage.getBlockBody(currentOldChainHeader.getHash()).get().getTransactions());
+          currentOldChainWithReceipts.getBlock().getBody().getTransactions());
+      addAddedLogsWithMetadata(logsWithMetadata, currentNewChainWithReceipts);
+      addRemovedLogsWithMetadata(logsWithMetadata, currentOldChainWithReceipts);
 
-      addAddedLogsWithMetadata(
-          logsWithMetadata,
-          getBlockWithReceipts(currentNewChainHeader).orElse(newChainHeadWithReceipts));
-      addRemovedLogsWithMetadata(
-          logsWithMetadata, getBlockWithReceipts(currentOldChainHeader).get());
-
-      currentNewChainHeader =
-          blockchainStorage.getBlockHeader(currentNewChainHeader.getParentHash()).get();
-      currentOldChainHeader =
-          blockchainStorage.getBlockHeader(currentOldChainHeader.getParentHash()).get();
+      currentNewChainWithReceipts = getParentBlockWithReceipts(currentNewChainWithReceipts);
+      currentOldChainWithReceipts = getParentBlockWithReceipts(currentOldChainWithReceipts);
     }
 
     // Update indexed transactions
@@ -421,7 +397,7 @@ public class DefaultBlockchain implements MutableBlockchain {
     // Update tracked forks
     final Collection<Hash> forks = blockchainStorage.getForkHeads();
     // Old head is now a fork
-    forks.add(oldChainHeadBlock.getHash());
+    forks.add(oldChainWithReceipts.getHash());
     // Remove new chain head's parent if it was tracked as a fork
     final Optional<Hash> parentFork =
         forks.stream()
@@ -430,7 +406,7 @@ public class DefaultBlockchain implements MutableBlockchain {
     parentFork.ifPresent(forks::remove);
     updater.setForkHeads(forks);
     return BlockAddedEvent.createForChainReorg(
-        newChainHeadBlock,
+        newChainHeadWithReceipts.getBlock(),
         newTransactions.values().stream().flatMap(Collection::stream).collect(toList()),
         removedTransactions,
         new ArrayList<>(logsWithMetadata));
@@ -556,6 +532,13 @@ public class DefaultBlockchain implements MutableBlockchain {
                 blockchainStorage
                     .getTransactionReceipts(blockHeader.getHash())
                     .map(receipts -> new BlockWithReceipts(block, receipts)));
+  }
+
+  private BlockWithReceipts getParentBlockWithReceipts(final BlockWithReceipts blockWithReceipts) {
+    return blockchainStorage
+        .getBlockHeader(blockWithReceipts.getHeader().getParentHash())
+        .flatMap(this::getBlockWithReceipts)
+        .get();
   }
 
   @Override
