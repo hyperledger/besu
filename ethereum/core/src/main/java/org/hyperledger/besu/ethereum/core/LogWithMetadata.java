@@ -18,12 +18,11 @@ package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.util.bytes.BytesValue;
 
-import java.util.Comparator;
 import java.util.List;
 
 import com.google.common.base.MoreObjects;
 
-public class LogWithMetadata extends Log implements Comparable<LogWithMetadata> {
+public class LogWithMetadata extends Log {
 
   private final int logIndex;
   private final long blockNumber;
@@ -111,23 +110,5 @@ public class LogWithMetadata extends Log implements Comparable<LogWithMetadata> 
         .add("topics", topics)
         .add("removed", removed)
         .toString();
-  }
-
-  @Override
-  public int compareTo(final LogWithMetadata other) {
-    // here chronology is block chronology, not real time chronology.
-    final var chronologicalOrder =
-        Comparator.comparingLong(LogWithMetadata::getBlockNumber)
-            .thenComparingInt(LogWithMetadata::getTransactionIndex)
-            .thenComparingInt(LogWithMetadata::getLogIndex);
-
-    final int removedCompare = Boolean.compare(this.removed, other.isRemoved());
-    if (removedCompare != 0) { // sort removed logs (true) before added logs (false)
-      return -removedCompare;
-    } else if (removed) { // if we're sorting removed logs, reverse chronological
-      return chronologicalOrder.reversed().compare(this, other);
-    } else { // if we're sorting added logs, chronological
-      return chronologicalOrder.compare(this, other);
-    }
   }
 }
