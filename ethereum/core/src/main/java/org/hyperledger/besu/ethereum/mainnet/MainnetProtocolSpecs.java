@@ -314,6 +314,78 @@ public abstract class MainnetProtocolSpecs {
         .name("Istanbul");
   }
 
+  // TODO edwardmack, this is just a place holder definiton, REPLACE with real definition
+  public static ProtocolSpecBuilder<Void> atlantisDefinition(
+      final Optional<BigInteger> chainId,
+      final OptionalInt configContractSizeLimit,
+      final OptionalInt configStackSizeLimit) {
+    final int contractSizeLimit =
+        configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
+    final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
+
+    return tangerineWhistleDefinition(OptionalInt.empty(), configStackSizeLimit)
+        .gasCalculator(SpuriousDragonGasCalculator::new)
+        .skipZeroBlockRewards(true)
+        .messageCallProcessorBuilder(
+            (evm, precompileContractRegistry) ->
+                new MainnetMessageCallProcessor(
+                    evm,
+                    precompileContractRegistry,
+                    SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
+        .contractCreationProcessorBuilder(
+            (gasCalculator, evm) ->
+                new MainnetContractCreationProcessor(
+                    gasCalculator,
+                    evm,
+                    true,
+                    Collections.singletonList(MaxCodeSizeRule.of(contractSizeLimit)),
+                    1,
+                    SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
+        .transactionValidatorBuilder(
+            gasCalculator -> new MainnetTransactionValidator(gasCalculator, true, chainId))
+        .transactionProcessorBuilder(
+            (gasCalculator,
+                transactionValidator,
+                contractCreationProcessor,
+                messageCallProcessor) ->
+                new MainnetTransactionProcessor(
+                    gasCalculator,
+                    transactionValidator,
+                    contractCreationProcessor,
+                    messageCallProcessor,
+                    true,
+                    stackSizeLimit,
+                    Account.DEFAULT_VERSION))
+        .name("Atlantis");
+  }
+
+  // TODO edwardmack, this is just a place holder definiton, REPLACE with real definition
+  public static ProtocolSpecBuilder<Void> aghartaDefinition(
+      final Optional<BigInteger> chainId,
+      final OptionalInt configContractSizeLimit,
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason) {
+    final int contractSizeLimit =
+        configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
+    return constantinopleFixDefinition(
+            chainId, configContractSizeLimit, configStackSizeLimit, enableRevertReason)
+        .gasCalculator(IstanbulGasCalculator::new)
+        .evmBuilder(
+            gasCalculator ->
+                MainnetEvmRegistries.istanbul(gasCalculator, chainId.orElse(BigInteger.ZERO)))
+        .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::istanbul)
+        .contractCreationProcessorBuilder(
+            (gasCalculator, evm) ->
+                new MainnetContractCreationProcessor(
+                    gasCalculator,
+                    evm,
+                    true,
+                    Collections.singletonList(MaxCodeSizeRule.of(contractSizeLimit)),
+                    1,
+                    SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
+        .name("Agharta");
+  }
+
   private static TransactionReceipt frontierTransactionReceiptFactory(
       final TransactionProcessor.Result result, final WorldState worldState, final long gasUsed) {
     return new TransactionReceipt(

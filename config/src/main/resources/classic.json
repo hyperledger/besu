@@ -1,6 +1,6 @@
 {
   "config": {
-    "chainId": 1,
+    "chainId": 61,
     "homesteadBlock": 1150000,
     "daoForkBlock": 1920000,
     "daoForkSupport": true,
@@ -11,6 +11,8 @@
     "byzantiumBlock": 4370000,
     "constantinopleBlock": 7280000,
     "constantinopleFixBlock": 7280000,
+    "atlantisBlock": 8772000,
+    "aghartaBlock": 9200000,
     "ethash": {
 
     }
