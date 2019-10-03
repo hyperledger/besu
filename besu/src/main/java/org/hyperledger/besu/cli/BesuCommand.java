@@ -591,7 +591,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--pruning-blocks-retained"},
       hidden = true,
       description =
-          "Number of recent blocks for which to keep entire world state (default: ${DEFAULT-VALUE})",
+          "Minimum number of recent blocks for which to keep entire world state (default: ${DEFAULT-VALUE})",
       arity = "1")
   private final Long pruningBlocksRetained = DEFAULT_PRUNING_BLOCKS_RETAINED;
 
@@ -599,7 +599,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--pruning-block-confirmations"},
       hidden = true,
       description =
-          "Number of confirmations on a block before marking begins (default: ${DEFAULT-VALUE})",
+          "Minimum number of confirmations on a block before marking begins (default: ${DEFAULT-VALUE})",
       arity = "1")
   private final Long pruningBlockConfirmations = DEFAULT_PRUNING_BLOCK_CONFIRMATIONS;
 
