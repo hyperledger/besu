@@ -337,8 +337,7 @@ public class DefaultBlockchain implements MutableBlockchain {
     // Track transactions and logs to be added and removed
     final Map<Hash, List<Transaction>> newTransactions = new HashMap<>();
     final List<Transaction> removedTransactions = new ArrayList<>();
-    final List<LogWithMetadata> addedLogsWithMetadata = new ArrayList<>();
-    final List<LogWithMetadata> removedLogsWithMetadata = new ArrayList<>();
+    final List<LogWithMetadata> logsWithMetadata = new ArrayList<>();
 
     while (currentNewChainHeader.getNumber() > currentOldChainHeader.getNumber()) {
       // If new chain is longer than old chain, walk back until we meet the old chain by number
@@ -354,7 +353,7 @@ public class DefaultBlockchain implements MutableBlockchain {
       newTransactions.put(blockHash, newTxs);
 
       addAddedLogsWithMetadata(
-          addedLogsWithMetadata,
+          logsWithMetadata,
           getBlockWithReceipts(currentNewChainHeader).orElse(newChainHeadWithReceipts));
 
       currentNewChainHeader =
@@ -369,7 +368,7 @@ public class DefaultBlockchain implements MutableBlockchain {
           blockchainStorage.getBlockBody(currentOldChainHeader.getHash()).get().getTransactions());
 
       addRemovedLogsWithMetadata(
-          removedLogsWithMetadata, getBlockWithReceipts(currentOldChainHeader).get());
+          logsWithMetadata, getBlockWithReceipts(currentOldChainHeader).get());
 
       currentOldChainHeader =
           blockchainStorage.getBlockHeader(currentOldChainHeader.getParentHash()).get();
@@ -393,10 +392,10 @@ public class DefaultBlockchain implements MutableBlockchain {
           blockchainStorage.getBlockBody(currentOldChainHeader.getHash()).get().getTransactions());
 
       addAddedLogsWithMetadata(
-          addedLogsWithMetadata,
+          logsWithMetadata,
           getBlockWithReceipts(currentNewChainHeader).orElse(newChainHeadWithReceipts));
       addRemovedLogsWithMetadata(
-          removedLogsWithMetadata, getBlockWithReceipts(currentOldChainHeader).get());
+          logsWithMetadata, getBlockWithReceipts(currentOldChainHeader).get());
 
       currentNewChainHeader =
           blockchainStorage.getBlockHeader(currentNewChainHeader.getParentHash()).get();
@@ -404,10 +403,9 @@ public class DefaultBlockchain implements MutableBlockchain {
           blockchainStorage.getBlockHeader(currentOldChainHeader.getParentHash()).get();
     }
 
-    // We must provide the removed logs in reverse-chronological order and the added logs in
+    // Sorts logs with removed logs in reverse-chronological order and the added logs in
     // chronological order
-    Collections.sort(addedLogsWithMetadata);
-    Collections.sort(removedLogsWithMetadata, Collections.reverseOrder(LogWithMetadata::compareTo));
+    Collections.sort(logsWithMetadata);
 
     // Update indexed transactions
     newTransactions.forEach(
@@ -433,8 +431,7 @@ public class DefaultBlockchain implements MutableBlockchain {
         newChainHeadBlock,
         newTransactions.values().stream().flatMap(Collection::stream).collect(toList()),
         removedTransactions,
-        addedLogsWithMetadata,
-        removedLogsWithMetadata);
+        logsWithMetadata);
   }
 
   @Override

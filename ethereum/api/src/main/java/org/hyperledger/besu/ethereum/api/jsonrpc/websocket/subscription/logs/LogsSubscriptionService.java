@@ -23,8 +23,6 @@ import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 
-import java.util.stream.Stream;
-
 public class LogsSubscriptionService implements BlockAddedObserver {
 
   private final SubscriptionManager subscriptionManager;
@@ -38,10 +36,9 @@ public class LogsSubscriptionService implements BlockAddedObserver {
     final var logsSubscriptions =
         subscriptionManager.subscriptionsOfType(SubscriptionType.LOGS, LogsSubscription.class);
 
-    // Get removed and added logs, with removed always first
-    Stream.concat(
-            event.getRemovedLogsWithMetadata().stream(), event.getAddedLogsWithMetadata().stream())
-        .forEachOrdered(
+    event
+        .getLogsWithMetadata()
+        .forEach(
             logWithMetadata ->
                 logsSubscriptions.stream()
                     .filter(

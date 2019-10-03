@@ -115,9 +115,19 @@ public class LogWithMetadata extends Log implements Comparable<LogWithMetadata> 
 
   @Override
   public int compareTo(final LogWithMetadata other) {
-    return Comparator.comparingLong(LogWithMetadata::getBlockNumber)
-        .thenComparingInt(LogWithMetadata::getTransactionIndex)
-        .thenComparingInt(LogWithMetadata::getLogIndex)
-        .compare(this, other);
+    // here chronology is block chronology, not real time chronology.
+    final var chronologicalOrder =
+        Comparator.comparingLong(LogWithMetadata::getBlockNumber)
+            .thenComparingInt(LogWithMetadata::getTransactionIndex)
+            .thenComparingInt(LogWithMetadata::getLogIndex);
+
+    final int removedCompare = Boolean.compare(this.removed, other.isRemoved());
+    if (removedCompare != 0) { // sort removed logs (true) before added logs (false)
+      return -removedCompare;
+    } else if (removed) { // if we're sorting removed logs, reverse chronological
+      return chronologicalOrder.reversed().compare(this, other);
+    } else { // if we're sorting added logs, chronological
+      return chronologicalOrder.compare(this, other);
+    }
   }
 }
