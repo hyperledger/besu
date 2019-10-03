@@ -512,12 +512,16 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   private void addAddedLogsWithMetadata(
       final Deque<LogWithMetadata> logsWithMetadata, final BlockWithReceipts blockWithReceipts) {
-    logsWithMetadata.addAll(blockWithReceipts.getLogsWithMetadata(false));
+    logsWithMetadata.addAll(
+        LogWithMetadata.generate(
+            blockWithReceipts.getBlock(), blockWithReceipts.getReceipts(), false));
   }
 
   private void addRemovedLogsWithMetadata(
       final Deque<LogWithMetadata> logsWithMetadata, final BlockWithReceipts blockWithReceipts) {
-    final List<LogWithMetadata> newLogsWithMetadata = blockWithReceipts.getLogsWithMetadata(true);
+    final List<LogWithMetadata> newLogsWithMetadata =
+        LogWithMetadata.generate(
+            blockWithReceipts.getBlock(), blockWithReceipts.getReceipts(), true);
     for (int i = newLogsWithMetadata.size() - 1; i >= 0; i--) {
       logsWithMetadata.addFirst(newLogsWithMetadata.get(i));
     }
