@@ -22,7 +22,9 @@ import java.util.Optional;
 
 public interface BlockInterface {
 
-  Address getProposerOfBlock(final BlockHeader header);
+  Address getProposerOfBlock(final org.hyperledger.besu.ethereum.core.BlockHeader header);
+
+  Address getProposerOfBlock(final org.hyperledger.besu.plugin.data.BlockHeader header);
 
   Optional<ValidatorVote> extractVoteFromHeader(final BlockHeader header);
 

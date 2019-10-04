@@ -21,6 +21,8 @@ import org.hyperledger.besu.tests.acceptance.dsl.privacy.condition.PrivateContra
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.condition.PrivateTransactionVerifier;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.contract.PrivateContractTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.transaction.PrivacyTransactions;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.contract.ContractTransactions;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.eth.EthTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.net.NetTransactions;
 
 import org.junit.After;
@@ -37,10 +39,12 @@ public class PrivacyAcceptanceTestBase {
   protected final PrivateContractTransactions privateContractTransactions;
   protected final PrivacyCluster privacyCluster;
   protected final PrivacyAccountResolver privacyAccountResolver;
-
+  protected final ContractTransactions contractTransactions;
   protected final NetConditions net;
+  protected final EthTransactions ethTransactions;
 
   public PrivacyAcceptanceTestBase() {
+    ethTransactions = new EthTransactions();
     net = new NetConditions(new NetTransactions());
     privacyTransactions = new PrivacyTransactions();
     privateContractVerifier = new PrivateContractVerifier();
@@ -49,6 +53,7 @@ public class PrivacyAcceptanceTestBase {
     privateContractTransactions = new PrivateContractTransactions();
     privacyCluster = new PrivacyCluster(net);
     privacyAccountResolver = new PrivacyAccountResolver();
+    contractTransactions = new ContractTransactions();
   }
 
   @After

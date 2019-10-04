@@ -39,14 +39,16 @@ public class EthHashMinerExecutor extends AbstractMinerExecutor<Void, EthHashBlo
       final ProtocolSchedule<Void> protocolSchedule,
       final PendingTransactions pendingTransactions,
       final MiningParameters miningParams,
-      final AbstractBlockScheduler blockScheduler) {
+      final AbstractBlockScheduler blockScheduler,
+      final Function<Long, Long> gasLimitCalculator) {
     super(
         protocolContext,
         executorService,
         protocolSchedule,
         pendingTransactions,
         miningParams,
-        blockScheduler);
+        blockScheduler,
+        gasLimitCalculator);
     this.coinbase = miningParams.getCoinbase();
   }
 
@@ -79,7 +81,7 @@ public class EthHashMinerExecutor extends AbstractMinerExecutor<Void, EthHashBlo
                 pendingTransactions,
                 protocolContext,
                 protocolSchedule,
-                (gasLimit) -> gasLimit,
+                gasLimitCalculator,
                 solver,
                 minTransactionGasPrice,
                 parentHeader);

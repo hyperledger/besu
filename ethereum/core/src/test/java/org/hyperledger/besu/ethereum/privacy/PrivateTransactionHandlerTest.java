@@ -39,6 +39,7 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.FixedKeySigningPrivateMarkerTransactionFactory;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.util.bytes.BytesValue;
 import org.hyperledger.besu.util.bytes.BytesValues;
@@ -104,7 +105,7 @@ public class PrivateTransactionHandlerTest {
   public void setUp() throws Exception {
     PrivateStateStorage privateStateStorage = mock(PrivateStateStorage.class);
     Hash mockHash = mock(Hash.class);
-    when(privateStateStorage.getPrivateAccountState(any(BytesValue.class)))
+    when(privateStateStorage.getLatestStateRoot(any(BytesValue.class)))
         .thenReturn(Optional.of(mockHash));
     WorldStateArchive worldStateArchive = mock(WorldStateArchive.class);
     Account account = mock(Account.class);

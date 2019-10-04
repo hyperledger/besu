@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.controller.BesuController;
+import org.hyperledger.besu.controller.GasLimitCalculator;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -80,6 +81,7 @@ public class PrivacyTest {
             .clock(TestClock.fixed())
             .privacyParameters(privacyParameters)
             .transactionPoolConfiguration(TransactionPoolConfiguration.builder().build())
+            .targetGasLimit(GasLimitCalculator.DEFAULT)
             .build();
 
     final Address privacyContractAddress = Address.privacyPrecompiled(ADDRESS);
