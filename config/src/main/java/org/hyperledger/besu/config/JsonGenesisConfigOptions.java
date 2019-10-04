@@ -175,6 +175,16 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public OptionalLong getAtlantisBlockNumber() {
+    return getOptionalLong("atlantisblock");
+  }
+
+  @Override
+  public OptionalLong getAghartaBlockNumber() {
+    return getOptionalLong("aghartablock");
+  }
+
+  @Override
   public Map<String, Object> asMap() {
     final ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
     getChainId().ifPresent(chainId -> builder.put("chainId", chainId));

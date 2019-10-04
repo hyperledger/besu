@@ -151,6 +151,19 @@ public class ProtocolScheduleBuilder<C> {
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
             isRevertReasonEnabled));
+    addProtocolSpec(
+        protocolSchedule,
+        config.getAtlantisBlockNumber(),
+        MainnetProtocolSpecs.atlantisDefinition(
+            chainId, config.getContractSizeLimit(), config.getEvmStackSize()));
+    addProtocolSpec(
+        protocolSchedule,
+        config.getAghartaBlockNumber(),
+        MainnetProtocolSpecs.aghartaDefinition(
+            chainId,
+            config.getContractSizeLimit(),
+            config.getEvmStackSize(),
+            isRevertReasonEnabled));
 
     LOG.info("Protocol schedule created with milestones: {}", protocolSchedule.listMilestones());
     return protocolSchedule;

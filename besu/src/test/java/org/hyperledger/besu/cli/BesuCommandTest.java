@@ -17,6 +17,7 @@ package org.hyperledger.besu.cli;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.cli.config.NetworkName.CLASSIC;
 import static org.hyperledger.besu.cli.config.NetworkName.DEV;
 import static org.hyperledger.besu.cli.config.NetworkName.GOERLI;
 import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
@@ -2418,6 +2419,22 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void classicValuesAreUsed() throws Exception {
+    parseCommand("--network", "classic");
+
+    final ArgumentCaptor<EthNetworkConfig> networkArg =
+        ArgumentCaptor.forClass(EthNetworkConfig.class);
+
+    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
+    verify(mockControllerBuilder).build();
+
+    assertThat(networkArg.getValue()).isEqualTo(EthNetworkConfig.getNetworkConfig(CLASSIC));
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
   public void rinkebyValuesCanBeOverridden() throws Exception {
     networkValuesCanBeOverridden("rinkeby");
   }
@@ -2435,6 +2452,11 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void devValuesCanBeOverridden() throws Exception {
     networkValuesCanBeOverridden("dev");
+  }
+
+  @Test
+  public void classicValuesCanBeOverridden() throws Exception {
+    networkValuesCanBeOverridden("classic");
   }
 
   private void networkValuesCanBeOverridden(final String network) throws Exception {
