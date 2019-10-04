@@ -57,7 +57,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     final Wei value = Wei.wrap(frame.getStackItem(0));
 
     final Address address = frame.getRecipientAddress();
-    final MutableAccount account = frame.getWorldState().getMutable(address);
+    final MutableAccount account = frame.getWorldState().getAccount(address).getMutable();
 
     frame.clearReturnData();
 
@@ -90,7 +90,8 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
 
   private void spawnChildMessage(final MessageFrame frame) {
     final Address address = frame.getRecipientAddress();
-    final MutableAccount account = frame.getWorldState().getMutable(address);
+    final MutableAccount account = frame.getWorldState().getAccount(address).getMutable();
+
     account.incrementNonce();
 
     final Wei value = Wei.wrap(frame.getStackItem(0));

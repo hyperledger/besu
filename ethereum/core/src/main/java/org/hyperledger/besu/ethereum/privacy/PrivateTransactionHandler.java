@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.PrivateMarkerTransactionFactory;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.util.bytes.BytesValues;
@@ -152,7 +153,7 @@ public class PrivateTransactionHandler {
 
   public long getSenderNonce(final Address sender, final String privacyGroupId) {
     return privateStateStorage
-        .getPrivateAccountState(BytesValues.fromBase64(privacyGroupId))
+        .getLatestStateRoot(BytesValues.fromBase64(privacyGroupId))
         .map(
             lastRootHash ->
                 privateWorldStateArchive

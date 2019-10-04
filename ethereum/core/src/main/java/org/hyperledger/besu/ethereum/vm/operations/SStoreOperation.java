@@ -53,7 +53,8 @@ public class SStoreOperation extends AbstractOperation {
     final UInt256 key = frame.popStackItem().asUInt256();
     final UInt256 value = frame.popStackItem().asUInt256();
 
-    final MutableAccount account = frame.getWorldState().getMutable(frame.getRecipientAddress());
+    final MutableAccount account =
+        frame.getWorldState().getAccount(frame.getRecipientAddress()).getMutable();
     assert account != null : "VM account should exists";
 
     // Increment the refund counter.

@@ -28,6 +28,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class InMemoryKeyValueStorage implements KeyValueStorage {
 
@@ -86,6 +87,14 @@ public class InMemoryKeyValueStorage implements KeyValueStorage {
     } finally {
       lock.unlock();
     }
+  }
+
+  @Override
+  public Set<byte[]> getAllKeysThat(final Predicate<byte[]> returnCondition) {
+    return hashValueStore.keySet().stream()
+        .map(BytesValue::getArrayUnsafe)
+        .filter(returnCondition)
+        .collect(Collectors.toSet());
   }
 
   @Override

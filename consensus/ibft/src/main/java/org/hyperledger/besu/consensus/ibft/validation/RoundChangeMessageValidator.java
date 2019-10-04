@@ -42,8 +42,7 @@ public class RoundChangeMessageValidator {
 
     if (msg.getPreparedCertificate().isPresent() != msg.getProposedBlock().isPresent()) {
       LOG.info(
-          "Invalid RoundChange message, availability of certificate does not correlate with"
-              + "availability of block.");
+          "Invalid RoundChange message, availability of certificate does not correlate with availability of block.");
       return false;
     }
 

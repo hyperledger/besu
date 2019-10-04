@@ -40,7 +40,7 @@ public class EntriesFromIntegrationTest {
     final MutableWorldState worldState =
         InMemoryStorageProvider.createInMemoryWorldStateArchive().getMutable();
     final WorldUpdater updater = worldState.updater();
-    MutableAccount account = updater.getOrCreate(Address.fromHexString("0x56"));
+    MutableAccount account = updater.getOrCreate(Address.fromHexString("0x56")).getMutable();
     final Map<Bytes32, AccountStorageEntry> expectedValues = new TreeMap<>();
     final int nodeCount = 100_000;
     final Random random = new Random(42989428249L);
@@ -53,7 +53,7 @@ public class EntriesFromIntegrationTest {
     updater.commit();
 
     // Add some changes on top that AbstractWorldUpdater.UpdateTrackingAccount will have to merge.
-    account = worldState.updater().getOrCreate(Address.fromHexString("0x56"));
+    account = worldState.updater().getOrCreate(Address.fromHexString("0x56")).getMutable();
     for (int i = 0; i <= nodeCount; i++) {
       addExpectedValue(
           account, expectedValues, UInt256.of(Math.abs(random.nextLong())), UInt256.of(i * 10 + 1));

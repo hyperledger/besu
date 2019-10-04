@@ -96,7 +96,8 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder<CliqueCon
                 protocolContext.getConsensusState().getVoteTallyCache(),
                 localAddress,
                 secondsBetweenBlocks),
-            epochManager);
+            epochManager,
+            gasLimitCalculator);
     final CliqueMiningCoordinator miningCoordinator =
         new CliqueMiningCoordinator(
             protocolContext.getBlockchain(),
@@ -148,6 +149,7 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder<CliqueCon
             epochManager,
             blockInterface),
         new VoteProposer(),
-        epochManager);
+        epochManager,
+        blockInterface);
   }
 }
