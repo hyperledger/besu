@@ -22,6 +22,8 @@ import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.eth.EthTransactions;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.concurrent.TimeUnit;
 
 import org.awaitility.Awaitility;
@@ -31,18 +33,16 @@ public class ExpectAccountBalanceNotChanging implements Condition {
 
   private final EthTransactions eth;
   private final Account account;
-  private final String startBalance;
-  private final Unit balanceUnit;
+  private final BigInteger startBalance;
 
   public ExpectAccountBalanceNotChanging(
       final EthTransactions eth,
       final Account account,
-      final String startBalance,
+      final BigDecimal startBalance,
       final Unit balanceUnit) {
-    this.startBalance = startBalance;
-    this.balanceUnit = balanceUnit;
     this.account = account;
     this.eth = eth;
+    this.startBalance = toWei(startBalance, balanceUnit).toBigIntegerExact();
   }
 
   @Override
@@ -51,8 +51,6 @@ public class ExpectAccountBalanceNotChanging implements Condition {
         .ignoreExceptions()
         .pollDelay(5, TimeUnit.SECONDS)
         .untilAsserted(
-            () ->
-                assertThat(node.execute(eth.getBalance((account))))
-                    .isEqualTo(toWei(startBalance, balanceUnit).toBigIntegerExact()));
+            () -> assertThat(node.execute(eth.getBalance((account)))).isEqualTo(startBalance));
   }
 }
