@@ -60,6 +60,8 @@ import org.hyperledger.besu.cli.util.CommandLineUtils;
 import org.hyperledger.besu.cli.util.ConfigOptionSearchAndRunHandler;
 import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.consensus.common.PoAContext;
+import org.hyperledger.besu.consensus.common.PoAMetricServiceImpl;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.controller.KeyPairUtil;
@@ -69,6 +71,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Wei;
@@ -86,6 +89,7 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
 import org.hyperledger.besu.ethereum.worldstate.PruningConfiguration;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.metrics.MetricCategoryRegistryImpl;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
@@ -99,6 +103,8 @@ import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 import org.hyperledger.besu.plugin.services.StorageService;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
+import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
+import org.hyperledger.besu.plugin.services.metrics.PoAMetricsService;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
 import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.services.BesuEventsImpl;
@@ -125,6 +131,7 @@ import java.nio.file.Paths;
 import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -185,6 +192,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final BesuPluginContextImpl besuPluginContext;
   private final StorageServiceImpl storageService;
   private final Map<String, String> environment;
+  private final MetricCategoryRegistryImpl metricCategoryRegistry =
+      new MetricCategoryRegistryImpl();
+  private final MetricCategoryConverter metricCategoryConverter = new MetricCategoryConverter();
 
   protected KeyLoader getKeyLoader() {
     return KeyPairUtil::loadKeyPair;
@@ -538,8 +548,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--logging", "-l"},
       paramLabel = "<LOG VERBOSITY LEVEL>",
       description =
-          "Logging verbosity levels: OFF, FATAL, ERROR, WARN, INFO, DEBUG, TRACE, ALL (default: ${DEFAULT-VALUE})")
-  private final Level logLevel = Level.INFO;
+          "Logging verbosity levels: OFF, FATAL, ERROR, WARN, INFO, DEBUG, TRACE, ALL (default: INFO)")
+  private final Level logLevel = null;
 
   @Option(
       names = {"--miner-enabled"},
@@ -581,7 +591,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--pruning-blocks-retained"},
       hidden = true,
       description =
-          "Number of recent blocks for which to keep entire world state (default: ${DEFAULT-VALUE})",
+          "Minimum number of recent blocks for which to keep entire world state (default: ${DEFAULT-VALUE})",
       arity = "1")
   private final Long pruningBlocksRetained = DEFAULT_PRUNING_BLOCKS_RETAINED;
 
@@ -589,7 +599,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--pruning-block-confirmations"},
       hidden = true,
       description =
-          "Number of confirmations on a block before marking begins (default: ${DEFAULT-VALUE})",
+          "Minimum number of confirmations on a block before marking begins (default: ${DEFAULT-VALUE})",
       arity = "1")
   private final Long pruningBlockConfirmations = DEFAULT_PRUNING_BLOCK_CONFIRMATIONS;
 
@@ -638,6 +648,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Boolean isRevertReasonEnabled = false;
 
   @Option(
+      names = {"--required-blocks", "--required-block"},
+      paramLabel = "BLOCK=HASH",
+      description = "Block number and hash peers are required to have.",
+      arity = "*",
+      split = ",")
+  private final Map<Long, Hash> requiredBlocks = new HashMap<>();
+
+  @Option(
       names = {"--privacy-url"},
       description = "The URL on which the enclave is running")
   private final URI privacyUrl = PrivacyParameters.DEFAULT_ENCLAVE_URL;
@@ -653,6 +671,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description =
           "The name of a file containing the private key used to sign privacy marker transactions. If unset, each will be signed with a random key.")
   private final Path privacyMarkerTransactionSigningKeyPath = null;
+
+  @Option(
+      names = {"--target-gas-limit"},
+      description =
+          "Sets target gas limit per block. If set each blocks gas limit will approach this setting over time if the current gas limit is different.")
+  private final Long targetGasLimit = null;
 
   @Option(
       names = {"--tx-pool-max-size"},
@@ -773,7 +797,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (pluginCommonConfiguration == null) {
       final Path dataDir = dataDir();
       pluginCommonConfiguration =
-          new BesuConfigurationImpl(dataDir.resolve(DATABASE_PATH), dataDir);
+          new BesuConfigurationImpl(dataDir, dataDir.resolve(DATABASE_PATH));
       besuPluginContext.addService(BesuConfiguration.class, pluginCommonConfiguration);
     }
   }
@@ -821,8 +845,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     commandLine.registerConverter(UInt256.class, (arg) -> UInt256.of(new BigInteger(arg)));
     commandLine.registerConverter(Wei.class, (arg) -> Wei.of(Long.parseUnsignedLong(arg)));
     commandLine.registerConverter(PositiveNumber.class, PositiveNumber::fromString);
+    commandLine.registerConverter(Hash.class, Hash::fromHexString);
 
-    final MetricCategoryConverter metricCategoryConverter = new MetricCategoryConverter();
     metricCategoryConverter.addCategories(BesuMetricCategory.class);
     metricCategoryConverter.addCategories(StandardMetricCategory.class);
     commandLine.registerConverter(MetricCategory.class, metricCategoryConverter);
@@ -848,11 +872,17 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private BesuCommand preparePlugins() {
     besuPluginContext.addService(PicoCLIOptions.class, new PicoCLIOptionsImpl(commandLine));
     besuPluginContext.addService(StorageService.class, storageService);
+    besuPluginContext.addService(MetricCategoryRegistry.class, metricCategoryRegistry);
 
     // register built-in plugins
     new RocksDBPlugin().register(besuPluginContext);
 
     besuPluginContext.registerPlugins(pluginsDir());
+
+    metricCategoryRegistry
+        .getMetricCategories()
+        .forEach(metricCategoryConverter::addRegistryCategory);
+
     return this;
   }
 
@@ -894,9 +924,23 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             besuController.getProtocolManager().getBlockBroadcaster(),
             besuController.getTransactionPool(),
             besuController.getSyncState()));
-    besuPluginContext.addService(MetricsSystem.class, getMetricsSystem());
+    addPluginMetrics(besuController);
     besuPluginContext.startPlugins();
     return this;
+  }
+
+  private void addPluginMetrics(final BesuController<?> besuController) {
+    besuPluginContext.addService(MetricsSystem.class, getMetricsSystem());
+
+    final Object consensusState = besuController.getProtocolContext().getConsensusState();
+
+    if (consensusState != null && PoAContext.class.isAssignableFrom(consensusState.getClass())) {
+      final PoAMetricServiceImpl service =
+          new PoAMetricServiceImpl(
+              ((PoAContext) consensusState).getBlockInterface(),
+              besuController.getProtocolContext().getBlockchain());
+      besuPluginContext.addService(PoAMetricsService.class, service);
+    }
   }
 
   private void prepareLogging() {
@@ -932,7 +976,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       if (!NetworkUtility.isNetworkInterfaceAvailable(p2pInterface)) {
         throw new ParameterException(commandLine, failMessage);
       }
-    } catch (UnknownHostException | SocketException e) {
+    } catch (final UnknownHostException | SocketException e) {
       throw new ParameterException(commandLine, failMessage, e);
     }
   }
@@ -1051,7 +1095,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           .storageProvider(keyStorageProvider(keyValueStorageName))
           .isPruningEnabled(isPruningEnabled)
           .pruningConfiguration(buildPruningConfiguration())
-          .genesisConfigOverrides(genesisConfigOverrides);
+          .genesisConfigOverrides(genesisConfigOverrides)
+          .targetGasLimit(targetGasLimit == null ? Optional.empty() : Optional.of(targetGasLimit))
+          .requiredBlocks(requiredBlocks);
     } catch (final IOException e) {
       throw new ExecutionException(this.commandLine, "Invalid path", e);
     }

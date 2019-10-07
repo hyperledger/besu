@@ -14,45 +14,24 @@
  */
 package org.hyperledger.besu.ethereum.eth.peervalidation;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask;
-import org.hyperledger.besu.ethereum.eth.manager.task.GetHeadersFromPeerByNumberTask;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
-import java.time.Duration;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class DaoForkPeerValidator implements PeerValidator {
+public class DaoForkPeerValidator extends AbstractPeerBlockValidator {
   private static final Logger LOG = LogManager.getLogger();
-  private static long DEFAULT_CHAIN_HEIGHT_ESTIMATION_BUFFER = 10L;
-
-  private final ProtocolSchedule<?> protocolSchedule;
-  private final MetricsSystem metricsSystem;
-
-  private final long daoBlockNumber;
-  // Wait for peer's chainhead to advance some distance beyond daoBlockNumber before validating
-  private final long chainHeightEstimationBuffer;
 
   DaoForkPeerValidator(
       final ProtocolSchedule<?> protocolSchedule,
       final MetricsSystem metricsSystem,
       final long daoBlockNumber,
       final long chainHeightEstimationBuffer) {
-    checkArgument(chainHeightEstimationBuffer >= 0);
-    this.protocolSchedule = protocolSchedule;
-    this.metricsSystem = metricsSystem;
-    this.daoBlockNumber = daoBlockNumber;
-    this.chainHeightEstimationBuffer = chainHeightEstimationBuffer;
+    super(protocolSchedule, metricsSystem, daoBlockNumber, chainHeightEstimationBuffer);
   }
 
   public DaoForkPeerValidator(
@@ -63,63 +42,11 @@ public class DaoForkPeerValidator implements PeerValidator {
   }
 
   @Override
-  public CompletableFuture<Boolean> validatePeer(
-      final EthContext ethContext, final EthPeer ethPeer) {
-    AbstractPeerTask<List<BlockHeader>> getHeaderTask =
-        GetHeadersFromPeerByNumberTask.forSingleNumber(
-                protocolSchedule, ethContext, daoBlockNumber, metricsSystem)
-            .setTimeout(Duration.ofSeconds(20))
-            .assignPeer(ethPeer);
-    return getHeaderTask
-        .run()
-        .handle(
-            (res, err) -> {
-              if (err != null) {
-                // Mark peer as invalid on error
-                LOG.debug(
-                    "Peer {} is invalid because DAO block ({}) is unavailable: {}",
-                    ethPeer,
-                    daoBlockNumber,
-                    err.toString());
-                return false;
-              }
-              List<BlockHeader> headers = res.getResult();
-              if (headers.size() == 0) {
-                // If no headers are returned, fail
-                LOG.debug(
-                    "Peer {} is invalid because DAO block ({}) is unavailable.",
-                    ethPeer,
-                    daoBlockNumber);
-                return false;
-              }
-              BlockHeader header = headers.get(0);
-              boolean validDaoBlock = MainnetBlockHeaderValidator.validateHeaderForDaoFork(header);
-              if (!validDaoBlock) {
-                LOG.debug(
-                    "Peer {} is invalid because DAO block ({}) is invalid.",
-                    ethPeer,
-                    daoBlockNumber);
-              }
-              return validDaoBlock;
-            });
-  }
-
-  @Override
-  public boolean canBeValidated(final EthPeer ethPeer) {
-    return ethPeer.chainState().getEstimatedHeight()
-        >= (daoBlockNumber + chainHeightEstimationBuffer);
-  }
-
-  @Override
-  public Duration nextValidationCheckTimeout(final EthPeer ethPeer) {
-    if (!ethPeer.chainState().hasEstimatedHeight()) {
-      return Duration.ofSeconds(30);
+  boolean validateBlockHeader(final EthPeer ethPeer, final BlockHeader header) {
+    final boolean validDaoBlock = MainnetBlockHeaderValidator.validateHeaderForDaoFork(header);
+    if (!validDaoBlock) {
+      LOG.debug("Peer {} is invalid because DAO block ({}) is invalid.", ethPeer, blockNumber);
     }
-    long distanceToDaoBlock = daoBlockNumber - ethPeer.chainState().getEstimatedHeight();
-    if (distanceToDaoBlock < 100_000L) {
-      return Duration.ofMinutes(1);
-    }
-    // If the peer is trailing behind, give it some time to catch up before trying again.
-    return Duration.ofMinutes(10);
+    return validDaoBlock;
   }
 }

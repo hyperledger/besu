@@ -113,7 +113,7 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder<IbftContext
 
     final IbftBlockCreatorFactory blockCreatorFactory =
         new IbftBlockCreatorFactory(
-            (gasLimit) -> gasLimit,
+            gasLimitCalculator,
             transactionPool.getPendingTransactions(),
             protocolContext,
             protocolSchedule,
@@ -239,6 +239,7 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder<IbftContext
             new VoteTallyUpdater(epochManager, new IbftBlockInterface()),
             epochManager,
             new IbftBlockInterface()),
-        new VoteProposer());
+        new VoteProposer(),
+        blockInterface);
   }
 }

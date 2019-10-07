@@ -8,6 +8,10 @@ def shouldPublish() {
     return env.BRANCH_NAME == 'master' || env.BRANCH_NAME ==~ /^release-\d+\.\d+/
 }
 
+def isSnapshotVersion(v) {
+    return (v ==~ /.*-SNAPSHOT/)
+}
+
 if (shouldPublish()) {
     properties([
         buildDiscarder(
@@ -236,8 +240,7 @@ exit $status
                                 if (env.BRANCH_NAME == 'master') {
                                     additionalTags.add('develop')
                                 }
-
-                                if (! version ==~ /.*-SNAPSHOT/) {
+                                if (! isSnapshotVersion(version)) {
                                     additionalTags.add('latest')
                                     additionalTags.add(version.split(/\./)[0..1].join('.'))
                                 }
@@ -265,64 +268,25 @@ exit $status
                                  version = gradleProperties.version
                              }
 
-                             // we dont publish snapshots to bintray
-                             if (! (version ==~ /.*-SNAPSHOT/)) {
-
-                                 stage(stage_name + 'Prepare') {
-                                     sh './gradlew --no-daemon --parallel clean assemble'
-                                 }
-                                 stage(stage_name + 'Publish') {
-                                     withCredentials([
-                                     usernamePassword(
-                                         credentialsId: 'pegasys-bintray',
-                                         usernameVariable: 'BINTRAY_USER',
-                                         passwordVariable: 'BINTRAY_KEY'
-                                     )
-                                     ]) {
-                                         sh './gradlew --no-daemon --parallel bintrayUpload'
-                                     }
-                                 }
-
+                             stage(stage_name + 'Prepare') {
+                                 sh './gradlew --no-daemon --parallel clean assemble'
                              }
+                             stage(stage_name + 'Publish') {
+                                 withCredentials([
+                                 usernamePassword(
+                                     credentialsId: 'pegasys-bintray',
+                                     usernameVariable: 'BINTRAY_USER',
+                                     passwordVariable: 'BINTRAY_KEY'
+                                 )
+                                 ]) {
+                                     sh './gradlew --no-daemon --parallel bintrayUpload'
+                                 }
+                             }
+
                          }
                      }
                  }
              }
-        }, AzurePublish: {
-            def stage_name = "Publish jars: "
-            def version = ''
-            node {
-                if (shouldPublish()) {
-                    checkout scm
-
-                    docker.image(docker_image_dind).withRun('--privileged') { d ->
-                        docker.image(build_image).inside("--link ${d.id}:docker") {
-
-                            stage(stage_name + 'Calculate variables') {
-                              def gradleProperties = readProperties file: 'gradle.properties'
-                              version = gradleProperties.version
-                            }
-
-                            if (version ==~ /.*-SNAPSHOT/) { // Only publish snapshots to Azure
-                                stage(stage_name + 'Prepare') {
-                                    sh './gradlew --no-daemon --parallel clean assemble'
-                                }
-                                stage(stage_name + 'Publish') {
-                                    withCredentials([
-                                        usernamePassword(
-                                            credentialsId: 'hyperledger-azure',
-                                            usernameVariable: 'AZURE_USER',
-                                            passwordVariable: 'AZURE_KEY'
-                                        )
-                                    ]) {
-                                        sh './gradlew --no-daemon --parallel publish'
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
         }
    }
 } catch (e) {

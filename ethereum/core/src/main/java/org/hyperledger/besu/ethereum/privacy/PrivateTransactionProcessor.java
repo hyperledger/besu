@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.privacy;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.DefaultEvmAccount;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.LogSeries;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
@@ -33,6 +34,7 @@ import org.hyperledger.besu.ethereum.vm.Code;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
+import org.hyperledger.besu.ethereum.worldstate.DefaultMutablePrivateWorldStateUpdater;
 import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.ArrayDeque;
@@ -190,11 +192,11 @@ public class PrivateTransactionProcessor {
     LOG.trace("Starting private execution of {}", transaction);
 
     final Address senderAddress = transaction.getSender();
-    final MutableAccount maybePrivateSender = privateWorldState.getMutable(senderAddress);
+    final DefaultEvmAccount maybePrivateSender = privateWorldState.getAccount(senderAddress);
     final MutableAccount sender =
         maybePrivateSender != null
-            ? maybePrivateSender
-            : privateWorldState.createAccount(senderAddress, 0, Wei.ZERO);
+            ? maybePrivateSender.getMutable()
+            : privateWorldState.createAccount(senderAddress, 0, Wei.ZERO).getMutable();
 
     final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult =
         privateTransactionValidator.validate(transaction, sender.getNonce());
@@ -211,6 +213,10 @@ public class PrivateTransactionProcessor {
 
     final MessageFrame initialFrame;
     final Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
+
+    final WorldUpdater mutablePrivateWorldStateUpdater =
+        new DefaultMutablePrivateWorldStateUpdater(publicWorldState, privateWorldState);
+
     if (transaction.isContractCreation()) {
       final Address privateContractAddress =
           Address.privateContractAddress(senderAddress, previousNonce, privacyGroupId);
@@ -227,7 +233,7 @@ public class PrivateTransactionProcessor {
               .type(MessageFrame.Type.CONTRACT_CREATION)
               .messageFrameStack(messageFrameStack)
               .blockchain(blockchain)
-              .worldState(privateWorldState.updater())
+              .worldState(mutablePrivateWorldStateUpdater)
               .address(privateContractAddress)
               .originator(senderAddress)
               .contract(privateContractAddress)
@@ -256,7 +262,7 @@ public class PrivateTransactionProcessor {
               .type(MessageFrame.Type.MESSAGE_CALL)
               .messageFrameStack(messageFrameStack)
               .blockchain(blockchain)
-              .worldState(privateWorldState.updater())
+              .worldState(mutablePrivateWorldStateUpdater)
               .address(to)
               .originator(senderAddress)
               .contract(to)
@@ -285,7 +291,7 @@ public class PrivateTransactionProcessor {
     }
 
     if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
-      privateWorldState.commit();
+      mutablePrivateWorldStateUpdater.commit();
     }
 
     if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {

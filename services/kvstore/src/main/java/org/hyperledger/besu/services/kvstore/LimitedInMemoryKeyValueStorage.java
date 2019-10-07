@@ -28,6 +28,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -86,6 +87,14 @@ public class LimitedInMemoryKeyValueStorage implements KeyValueStorage {
     final long initialSize = storage.size();
     storage.asMap().keySet().removeIf(key -> !retainCondition.test(key.getArrayUnsafe()));
     return initialSize - storage.size();
+  }
+
+  @Override
+  public Set<byte[]> getAllKeysThat(final Predicate<byte[]> returnCondition) {
+    return storage.asMap().keySet().stream()
+        .map(BytesValue::getArrayUnsafe)
+        .filter(returnCondition)
+        .collect(Collectors.toSet());
   }
 
   @Override

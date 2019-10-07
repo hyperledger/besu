@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.worldstate;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -23,6 +25,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -32,6 +35,7 @@ public class Pruner {
   private final MarkSweepPruner pruningStrategy;
   private final Blockchain blockchain;
   private final ExecutorService executorService;
+  private Long blockAddedObserverId;
   private final long blocksRetained;
   private final AtomicReference<State> state = new AtomicReference<>(State.IDLE);
   private volatile long markBlockNumber = 0;
@@ -48,20 +52,21 @@ public class Pruner {
     this.blockchain = blockchain;
     this.blocksRetained = pruningConfiguration.getBlocksRetained();
     this.blockConfirmations = pruningConfiguration.getBlockConfirmations();
-    if (blockConfirmations < 0 || blocksRetained < 0) {
-      throw new IllegalArgumentException(
-          String.format(
-              "blockConfirmations and blocksRetained must be non-negative. blockConfirmations=%d, blocksRetained=%d",
-              blockConfirmations, blocksRetained));
-    }
+    checkArgument(
+        blockConfirmations >= 0 && blockConfirmations < blocksRetained,
+        "blockConfirmations and blocksRetained must be non-negative. blockConfirmations must be less than blockRetained.");
   }
 
   public void start() {
-    blockchain.observeBlockAdded((event, blockchain) -> handleNewBlock(event));
+    LOG.info("Starting Pruner.");
+    pruningStrategy.prepare();
+    blockAddedObserverId =
+        blockchain.observeBlockAdded((event, blockchain) -> handleNewBlock(event));
   }
 
   public void stop() throws InterruptedException {
     pruningStrategy.cleanup();
+    blockchain.removeObserver(blockAddedObserverId);
     executorService.awaitTermination(10, TimeUnit.SECONDS);
   }
 
@@ -72,7 +77,6 @@ public class Pruner {
 
     final long blockNumber = event.getBlock().getHeader().getNumber();
     if (state.compareAndSet(State.IDLE, State.MARK_BLOCK_CONFIRMATIONS_AWAITING)) {
-      pruningStrategy.prepare();
       markBlockNumber = blockNumber;
     } else if (blockNumber >= markBlockNumber + blockConfirmations
         && state.compareAndSet(State.MARK_BLOCK_CONFIRMATIONS_AWAITING, State.MARKING)) {
@@ -86,9 +90,8 @@ public class Pruner {
   }
 
   private void mark(final BlockHeader header) {
-    markBlockNumber = header.getNumber();
     final Hash stateRoot = header.getStateRoot();
-    LOG.info(
+    LOG.debug(
         "Begin marking used nodes for pruning. Block number: {} State root: {}",
         markBlockNumber,
         stateRoot);
@@ -100,7 +103,10 @@ public class Pruner {
   }
 
   private void sweep() {
-    LOG.info("Begin sweeping unused nodes for pruning. Retention period: {}", blocksRetained);
+    LOG.debug(
+        "Begin sweeping unused nodes for pruning. Keeping full state for blocks {} to {}",
+        markBlockNumber,
+        markBlockNumber + blocksRetained);
     execute(
         () -> {
           pruningStrategy.sweepBefore(markBlockNumber);
@@ -113,11 +119,17 @@ public class Pruner {
       executorService.execute(action);
     } catch (final Throwable t) {
       LOG.error("Pruning failed", t);
+      pruningStrategy.cleanup();
       state.set(State.IDLE);
     }
   }
 
-  private enum State {
+  @VisibleForTesting
+  State getState() {
+    return state.get();
+  }
+
+  enum State {
     IDLE,
     MARK_BLOCK_CONFIRMATIONS_AWAITING,
     MARKING,

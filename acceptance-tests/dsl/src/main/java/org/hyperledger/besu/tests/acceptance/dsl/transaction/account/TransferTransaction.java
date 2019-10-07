@@ -23,6 +23,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.NodeRequests;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Optional;
 
@@ -41,7 +42,7 @@ public class TransferTransaction implements Transaction<Hash> {
 
   private final Account sender;
   private final Account recipient;
-  private final String transferAmount;
+  private final BigDecimal transferAmount;
   private final Unit transferUnit;
   private final BigInteger gasPrice;
   private final BigInteger nonce;

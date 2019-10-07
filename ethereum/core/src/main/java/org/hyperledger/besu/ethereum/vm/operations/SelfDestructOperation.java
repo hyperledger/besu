@@ -48,12 +48,12 @@ public class SelfDestructOperation extends AbstractOperation {
   @Override
   public void execute(final MessageFrame frame) {
     final Address address = frame.getRecipientAddress();
-    final MutableAccount account = frame.getWorldState().getMutable(address);
+    final MutableAccount account = frame.getWorldState().getAccount(address).getMutable();
 
     frame.addSelfDestruct(address);
 
     final MutableAccount recipient =
-        frame.getWorldState().getOrCreate(Words.toAddress(frame.popStackItem()));
+        frame.getWorldState().getOrCreate(Words.toAddress(frame.popStackItem())).getMutable();
 
     recipient.incrementBalance(account.getBalance());
 

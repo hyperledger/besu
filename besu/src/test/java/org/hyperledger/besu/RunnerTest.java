@@ -23,6 +23,7 @@ import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.controller.BesuController;
+import org.hyperledger.besu.controller.GasLimitCalculator;
 import org.hyperledger.besu.controller.KeyPairUtil;
 import org.hyperledger.besu.controller.MainnetBesuControllerBuilder;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
@@ -148,7 +149,8 @@ public final class RunnerTest {
             .privacyParameters(PrivacyParameters.DEFAULT)
             .clock(TestClock.fixed())
             .transactionPoolConfiguration(TransactionPoolConfiguration.builder().build())
-            .storageProvider(createKeyValueStorageProvider(dbAhead))
+            .storageProvider(createKeyValueStorageProvider(dataDirAhead, dbAhead))
+            .targetGasLimit(GasLimitCalculator.DEFAULT)
             .build()) {
       setupState(blockCount, controller.getProtocolSchedule(), controller.getProtocolContext());
     }
@@ -167,7 +169,8 @@ public final class RunnerTest {
             .privacyParameters(PrivacyParameters.DEFAULT)
             .clock(TestClock.fixed())
             .transactionPoolConfiguration(TransactionPoolConfiguration.builder().build())
-            .storageProvider(createKeyValueStorageProvider(dbAhead))
+            .storageProvider(createKeyValueStorageProvider(dataDirAhead, dbAhead))
+            .targetGasLimit(GasLimitCalculator.DEFAULT)
             .build();
     final String listenHost = InetAddress.getLoopbackAddress().getHostAddress();
     final JsonRpcConfiguration aheadJsonRpcConfiguration = jsonRpcConfiguration();
@@ -226,6 +229,7 @@ public final class RunnerTest {
               .privacyParameters(PrivacyParameters.DEFAULT)
               .clock(TestClock.fixed())
               .transactionPoolConfiguration(TransactionPoolConfiguration.builder().build())
+              .targetGasLimit(GasLimitCalculator.DEFAULT)
               .build();
       final EnodeURL enode = runnerAhead.getLocalEnode().get();
       final EthNetworkConfig behindEthNetworkConfiguration =
@@ -355,7 +359,7 @@ public final class RunnerTest {
     return GenesisConfigFile.fromConfig(jsonNode);
   }
 
-  private StorageProvider createKeyValueStorageProvider(final Path dbAhead) {
+  private StorageProvider createKeyValueStorageProvider(final Path dataDir, final Path dbDir) {
     return new KeyValueStorageProviderBuilder()
         .withStorageFactory(
             new RocksDBKeyValueStorageFactory(
@@ -366,7 +370,7 @@ public final class RunnerTest {
                         BACKGROUND_THREAD_COUNT,
                         CACHE_CAPACITY),
                 Arrays.asList(KeyValueSegmentIdentifier.values())))
-        .withCommonConfiguration(new BesuConfigurationImpl(dbAhead))
+        .withCommonConfiguration(new BesuConfigurationImpl(dataDir, dbDir))
         .withMetricsSystem(new NoOpMetricsSystem())
         .build();
   }

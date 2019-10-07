@@ -167,7 +167,7 @@ public class MainnetBlockProcessor implements BlockProcessor {
     }
     final Wei coinbaseReward = blockReward.plus(blockReward.times(ommers.size()).dividedBy(32));
     final WorldUpdater updater = worldState.updater();
-    final MutableAccount coinbase = updater.getOrCreate(header.getCoinbase());
+    final MutableAccount coinbase = updater.getOrCreate(header.getCoinbase()).getMutable();
 
     coinbase.incrementBalance(coinbaseReward);
     for (final BlockHeader ommerHeader : ommers) {
@@ -180,7 +180,8 @@ public class MainnetBlockProcessor implements BlockProcessor {
         return false;
       }
 
-      final MutableAccount ommerCoinbase = updater.getOrCreate(ommerHeader.getCoinbase());
+      final MutableAccount ommerCoinbase =
+          updater.getOrCreate(ommerHeader.getCoinbase()).getMutable();
       final long distance = header.getNumber() - ommerHeader.getNumber();
       final Wei ommerReward = blockReward.minus(blockReward.times(distance).dividedBy(8));
       ommerCoinbase.incrementBalance(ommerReward);

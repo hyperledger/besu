@@ -66,105 +66,6 @@ public class MarkSweepPrunerTest {
   private final MutableBlockchain blockchain = createInMemoryBlockchain(genesisBlock);
 
   @Test
-  public void prepareMarkAndSweep_smallState_manyOpsPerTx() {
-    testPrepareMarkAndSweep(3, 1, 2, 1000);
-  }
-
-  @Test
-  public void prepareMarkAndSweep_largeState_fewOpsPerTx() {
-    testPrepareMarkAndSweep(20, 5, 5, 5);
-  }
-
-  @Test
-  public void prepareMarkAndSweep_emptyBlocks() {
-    testPrepareMarkAndSweep(10, 0, 5, 10);
-  }
-
-  @Test
-  public void prepareMarkAndSweep_markChainhead() {
-    testPrepareMarkAndSweep(10, 2, 10, 20);
-  }
-
-  @Test
-  public void prepareMarkAndSweep_markGenesis() {
-    testPrepareMarkAndSweep(10, 2, 0, 20);
-  }
-
-  @Test
-  public void prepareMarkAndSweep_multipleRounds() {
-    testPrepareMarkAndSweep(10, 2, 10, 20);
-    testPrepareMarkAndSweep(10, 2, 15, 20);
-  }
-
-  private void testPrepareMarkAndSweep(
-      final int numBlocks,
-      final int accountsPerBlock,
-      final int markBlockNumber,
-      final int opsPerTransaction) {
-    final MarkSweepPruner pruner =
-        new MarkSweepPruner(
-            worldStateStorage, blockchain, markStorage, metricsSystem, opsPerTransaction);
-    final int chainHeight = (int) blockchain.getChainHead().getHeight();
-    // Generate blocks up to markBlockNumber
-    final int blockCountBeforeMarkedBlock = markBlockNumber - chainHeight;
-    generateBlockchainData(blockCountBeforeMarkedBlock, accountsPerBlock);
-
-    // Prepare
-    pruner.prepare();
-    // Mark
-    final BlockHeader markBlock = blockchain.getBlockHeader(markBlockNumber).get();
-    pruner.mark(markBlock.getStateRoot());
-
-    // Generate more blocks that should be kept
-    generateBlockchainData(numBlocks - blockCountBeforeMarkedBlock, accountsPerBlock);
-
-    // Collect the nodes we expect to keep
-    final Set<BytesValue> expectedNodes = collectWorldStateNodes(markBlock.getStateRoot());
-    for (int i = markBlockNumber; i <= blockchain.getChainHeadBlockNumber(); i++) {
-      final Hash stateRoot = blockchain.getBlockHeader(i).get().getStateRoot();
-      collectWorldStateNodes(stateRoot, expectedNodes);
-    }
-    if (accountsPerBlock != 0 && markBlockNumber > 0) {
-      assertThat(hashValueStore.size()).isGreaterThan(expectedNodes.size()); // Sanity check
-    }
-
-    // Sweep
-    pruner.sweepBefore(markBlock.getNumber());
-
-    // Assert that blocks from mark point onward are still accessible
-    for (int i = markBlockNumber; i <= blockchain.getChainHeadBlockNumber(); i++) {
-      final Hash stateRoot = blockchain.getBlockHeader(i).get().getStateRoot();
-      assertThat(worldStateArchive.get(stateRoot)).isPresent();
-      final WorldState markedState = worldStateArchive.get(stateRoot).get();
-      // Traverse accounts and make sure all are accessible
-      final int expectedAccounts = accountsPerBlock * i;
-      final long accounts = markedState.streamAccounts(Bytes32.ZERO, expectedAccounts * 2).count();
-      assertThat(accounts).isEqualTo(expectedAccounts);
-      // Traverse storage to ensure that all storage is accessible
-      markedState
-          .streamAccounts(Bytes32.ZERO, expectedAccounts * 2)
-          .forEach(a -> a.storageEntriesFrom(Bytes32.ZERO, 1000));
-    }
-
-    // All other state roots should have been removed
-    for (int i = 0; i < markBlockNumber; i++) {
-      final BlockHeader curHeader = blockchain.getBlockHeader(i + 1L).get();
-      if (curHeader.getNumber() == markBlock.getNumber()) {
-        continue;
-      }
-      if (!curHeader.getStateRoot().equals(Hash.EMPTY_TRIE_HASH)) {
-        assertThat(worldStateArchive.get(curHeader.getStateRoot())).isEmpty();
-      }
-    }
-
-    // Check that storage contains only the values we expect
-    assertThat(hashValueStore.size()).isEqualTo(expectedNodes.size());
-    assertThat(hashValueStore.values())
-        .containsExactlyInAnyOrderElementsOf(
-            expectedNodes.stream().map(BytesValue::getArrayUnsafe).collect(Collectors.toSet()));
-  }
-
-  @Test
   public void mark_marksAllExpectedNodes() {
     final MarkSweepPruner pruner =
         new MarkSweepPruner(worldStateStorage, blockchain, markStorage, metricsSystem);
@@ -362,6 +263,7 @@ public class MarkSweepPrunerTest {
         Function.identity());
   }
 
+  // Proxy class so that we have access to the constructor that takes our own map
   private static class TestInMemoryStorage extends InMemoryKeyValueStorage {
 
     public TestInMemoryStorage(final Map<BytesValue, byte[]> hashValueStore) {

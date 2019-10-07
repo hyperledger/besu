@@ -55,14 +55,16 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueContext, Cl
       final KeyPair nodeKeys,
       final MiningParameters miningParams,
       final AbstractBlockScheduler blockScheduler,
-      final EpochManager epochManager) {
+      final EpochManager epochManager,
+      final Function<Long, Long> gasLimitCalculator) {
     super(
         protocolContext,
         executorService,
         protocolSchedule,
         pendingTransactions,
         miningParams,
-        blockScheduler);
+        blockScheduler,
+        gasLimitCalculator);
     this.nodeKeys = nodeKeys;
     this.localAddress = Util.publicKeyToAddress(nodeKeys.getPublicKey());
     this.epochManager = epochManager;
@@ -91,7 +93,7 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueContext, Cl
                 pendingTransactions,
                 protocolContext,
                 protocolSchedule,
-                (gasLimit) -> gasLimit,
+                gasLimitCalculator,
                 nodeKeys,
                 minTransactionGasPrice,
                 header,

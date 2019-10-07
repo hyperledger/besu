@@ -27,6 +27,7 @@ import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
+import java.util.function.Function;
 
 public abstract class AbstractMinerExecutor<
     C, M extends BlockMiner<C, ? extends AbstractBlockCreator<C>>> {
@@ -36,6 +37,7 @@ public abstract class AbstractMinerExecutor<
   protected final ProtocolSchedule<C> protocolSchedule;
   protected final PendingTransactions pendingTransactions;
   protected final AbstractBlockScheduler blockScheduler;
+  protected final Function<Long, Long> gasLimitCalculator;
 
   protected volatile BytesValue extraData;
   protected volatile Wei minTransactionGasPrice;
@@ -46,7 +48,8 @@ public abstract class AbstractMinerExecutor<
       final ProtocolSchedule<C> protocolSchedule,
       final PendingTransactions pendingTransactions,
       final MiningParameters miningParams,
-      final AbstractBlockScheduler blockScheduler) {
+      final AbstractBlockScheduler blockScheduler,
+      final Function<Long, Long> gasLimitCalculator) {
     this.protocolContext = protocolContext;
     this.executorService = executorService;
     this.protocolSchedule = protocolSchedule;
@@ -54,6 +57,7 @@ public abstract class AbstractMinerExecutor<
     this.extraData = miningParams.getExtraData();
     this.minTransactionGasPrice = miningParams.getMinTransactionGasPrice();
     this.blockScheduler = blockScheduler;
+    this.gasLimitCalculator = gasLimitCalculator;
   }
 
   public abstract M startAsyncMining(
