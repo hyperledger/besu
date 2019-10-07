@@ -131,16 +131,6 @@ public class TransactionSimulator {
     return Optional.of(new TransactionSimulatorResult(transaction, result));
   }
 
-  public Optional<Boolean> doesAddressExist(final Address address, final Hash blockHeaderHash) {
-    final BlockHeader header = blockchain.getBlockHeader(blockHeaderHash).orElse(null);
-    return doesAddressExist(address, header);
-  }
-
-  public Optional<Boolean> doesAddressExist(final Address address, final long blockNumber) {
-    final BlockHeader header = blockchain.getBlockHeader(blockNumber).orElse(null);
-    return doesAddressExist(address, header);
-  }
-
   public Optional<Boolean> doesAddressExistAtHead(final Address address) {
     return doesAddressExist(address, blockchain.getChainHeadHeader());
   }
