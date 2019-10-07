@@ -16,6 +16,8 @@ package org.hyperledger.besu.cli.subcommands.networkcreate.model;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Objects.isNull;
+import static org.hyperledger.besu.cli.subcommands.networkcreate.model.Permissioning.PERMISSIONING_ACCOUNT_INGRESS_SMART_CONTRACT;
+import static org.hyperledger.besu.cli.subcommands.networkcreate.model.Permissioning.PERMISSIONING_NODE_INGRESS_SMART_CONTRACT;
 
 import org.hyperledger.besu.cli.subcommands.networkcreate.generate.DirectoryHandler;
 import org.hyperledger.besu.cli.subcommands.networkcreate.generate.Generatable;
@@ -142,6 +144,13 @@ class Network implements Verifiable, Generatable, ConfigNode {
     try {
       final ObjectNode genesisTemplate = poaConsensus.getGenesisTemplate();
       final ObjectNode config = (ObjectNode) genesisTemplate.get("config");
+
+      if (parent instanceof Configuration
+          && ((Configuration) parent).getPermissioning().isEmpty()) {
+        final ObjectNode alloc = (ObjectNode) genesisTemplate.get("alloc");
+        alloc.remove(PERMISSIONING_ACCOUNT_INGRESS_SMART_CONTRACT);
+        alloc.remove(PERMISSIONING_NODE_INGRESS_SMART_CONTRACT);
+      }
 
       config.put("chainId", chainId);
 

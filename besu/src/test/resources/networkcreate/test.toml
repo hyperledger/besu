@@ -2,7 +2,7 @@ version=1.0
 
 [network]
 name = "network 1"
-chain-id = 123456
+chain-id = 123456 # default is a random one
 
 #[network.clique]
 #block-period-seconds = 345
@@ -25,37 +25,39 @@ balance = 2000000000000000000
 address = "0x1339AE03001C8205B7cc192B80007454Dfc74B86"
 balance = 2000000000000000000
 
-[privacy]
-tls = false
+#[privacy]
+#tls = false # default is false
 
-[permissioning] #TODO online perm only
+#[permissioning] # online perm only
 # For dapp
 # - generate .env and scripts to deploy with truffle
 # - run dapp on a node Docker and use docker run --network="host" to make it able to contact the node
 
-#[[authentication.user]]
+#deploy-dapp = true
+#all-nodes-admin = true #
+#all-accounts-whitelist = true
+
+#User for RPC auth
+#[[user]]
 #password = "$2a$10$l3GA7K8g6rJ/Yv.YFSygCuI9byngpEzxgWS9qEg5emYDZomQW7fGC"
 #groups = ["admin"]
 #permissions = ["eth:*", "perm:*"]
 #roles = ["net"]
 
-deploy-dapp = true
-all-nodes-admin = true #
-all-accounts-whitelist = true
-
 [[nodes]]
 name = "node 1"
-validator = true
-bootnode = true
+validator = true # default is false
+bootnode = true # default is false
 
 [[nodes]]
 name = "node 2"
-validator = true
-bootnode = true
+validator = true # default is false
+bootnode = true # default is false
 
 [[nodes]]
 name = "node 3"
-validator = true
+validator = true # default is false
 
 [[nodes]]
 name = "node 4"
+apis = true # true to activate RPC/GraphQL APIs for this node. Default is false

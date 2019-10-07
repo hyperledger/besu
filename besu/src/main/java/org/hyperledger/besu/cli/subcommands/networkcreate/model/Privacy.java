@@ -141,16 +141,25 @@ class Privacy implements ConfigNode, Verifiable, Generatable {
       checkNotNull(configTemplateFile, "Configuration template not found.");
       String configTemplateSource = Resources.toString(configTemplateFile, UTF_8);
 
-      // TODO customise TOML values
+      // TODO customise TOML values and make this a separate class
       //      // Write ports
       //      configTemplateSource =
       //          replacePort(
       //              tomlWriter,
       //              configTemplateSource,
-      //              TOML_P2P_PORT_KEY,
+      //              P2P,
       //              TOML_P2P_PORT_FIND_REGEX,
       //              DEFAULT_P2P_PORT,
       //              1);
+
+      //      nodeurl = "http://127.0.0.1:8080/"
+      // TODO use same port anti colision strategy thaan for nodes and make it a separate class
+      //      nodeport = 8080
+      //      clienturl = "http://127.0.0.1:8888/"
+      //      clientport = 8888
+      //      publickeys = ["nodeKey.pub"]
+      //      privatekeys = ["nodeKey.key"]
+      //      passwords = "passwordFile"
 
       // replace tls
       final HashMap<String, String> tlsValueMap = new HashMap<>();

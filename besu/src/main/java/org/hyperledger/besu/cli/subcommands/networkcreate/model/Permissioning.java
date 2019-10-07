@@ -28,6 +28,12 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 
 // TODO Handle errors
 class Permissioning implements ConfigNode, Verifiable, Generatable {
+
+  static final String PERMISSIONING_ACCOUNT_INGRESS_SMART_CONTRACT =
+      "0x0000000000000000000000000000000000008888";
+  static final String PERMISSIONING_NODE_INGRESS_SMART_CONTRACT =
+      "0x0000000000000000000000000000000000009999";
+
   private Boolean deployDapp;
   private Boolean allNodesAdmin;
   private Boolean allAccountsWhitelist;
