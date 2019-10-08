@@ -140,7 +140,7 @@ public class SyncState {
     replaceSyncTarget(Optional.empty());
   }
 
-  private void replaceSyncTarget(final Optional<SyncTarget> newTarget) {
+  private synchronized void replaceSyncTarget(final Optional<SyncTarget> newTarget) {
     syncTarget.ifPresent(this::removeEstimatedHeightListener);
     syncTarget = newTarget;
     newTarget.ifPresent(this::addEstimatedHeightListener);
