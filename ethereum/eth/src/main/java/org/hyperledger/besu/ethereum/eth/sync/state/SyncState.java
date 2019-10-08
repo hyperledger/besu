@@ -39,7 +39,7 @@ public class SyncState {
   private volatile long chainHeightListenerId;
   private volatile Optional<SyncTarget> syncTarget = Optional.empty();
   private volatile long startingBlock;
-  private AtomicBoolean lastInSync = new AtomicBoolean(true);
+  private final AtomicBoolean lastInSync = new AtomicBoolean(true);
 
   public SyncState(final Blockchain blockchain, final EthPeers ethPeers) {
     this.blockchain = blockchain;
