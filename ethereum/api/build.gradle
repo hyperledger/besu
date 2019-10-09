@@ -50,6 +50,11 @@ dependencies {
   implementation 'io.vertx:vertx-web'
   implementation 'io.vertx:vertx-auth-jwt'
   implementation 'io.vertx:vertx-unit'
+  implementation 'com.fasterxml.jackson.core:jackson-databind'
+  implementation 'org.apache.logging.log4j:log4j-api'
+
+  runtime 'org.apache.logging.log4j:log4j-core'
+  runtime 'org.apache.logging.log4j:log4j-slf4j-impl'
 
   testImplementation 'com.squareup.okhttp3:okhttp'
   testImplementation 'junit:junit'
