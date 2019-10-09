@@ -68,7 +68,7 @@ public class PersistBlockTask<C> extends AbstractEthTask<Block> {
       final List<Block> blocks,
       final HeaderValidationMode headerValidationMode,
       final MetricsSystem metricsSystem) {
-    checkArgument(!blocks.isEmpty());
+    checkArgument(!blocks.isEmpty(), "No blocks to import provided");
     return () -> {
       final List<Block> successfulImports = new ArrayList<>();
       final Iterator<Block> blockIterator = blocks.iterator();
@@ -121,7 +121,7 @@ public class PersistBlockTask<C> extends AbstractEthTask<Block> {
       final List<Block> blocks,
       final HeaderValidationMode headerValidationMode,
       final MetricsSystem metricsSystem) {
-    checkArgument(!blocks.isEmpty());
+    checkArgument(!blocks.isEmpty(), "No blocks to import provided");
     return () -> {
       final CompletableFuture<List<Block>> finalResult = new CompletableFuture<>();
       final List<Block> successfulImports = new ArrayList<>();
