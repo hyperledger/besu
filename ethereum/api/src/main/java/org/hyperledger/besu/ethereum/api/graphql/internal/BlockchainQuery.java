@@ -214,6 +214,42 @@ public class BlockchainQuery {
     return result;
   }
 
+  /**
+   * Retrieve logs from the range of blocks with optional filtering based on logger address and log
+   * topics.
+   *
+   * @param fromBlockNumber The block number defining the first block in the search range
+   *     (inclusive).
+   * @param toBlockNumber The block number defining the last block in the search range (inclusive).
+   * @param query Constraints on required topics by topic index. For a given index if the set of
+   *     topics is non-empty, the topic at this index must match one of the values in the set.
+   * @return The set of logs matching the given constraints.
+   */
+  public List<LogWithMetadata> matchingLogs(
+      final long fromBlockNumber, final long toBlockNumber, final LogsQuery query) {
+    if (fromBlockNumber > toBlockNumber || toBlockNumber > blockchain.getChainHeadBlockNumber()) {
+      return Lists.newArrayList();
+    }
+    List<LogWithMetadata> matchingLogs = Lists.newArrayList();
+    for (long blockNumber = fromBlockNumber; blockNumber <= toBlockNumber; blockNumber++) {
+      final Hash blockhash = blockchain.getBlockHashByNumber(blockNumber).get();
+      final boolean logHasBeenRemoved = !blockchain.blockIsOnCanonicalChain(blockhash);
+      final List<TransactionReceipt> receipts = blockchain.getTxReceipts(blockhash).get();
+      final List<Transaction> transaction =
+          blockchain.getBlockBody(blockhash).get().getTransactions();
+      matchingLogs =
+          generateLogWithMetadata(
+              receipts,
+              blockNumber,
+              query,
+              blockhash,
+              matchingLogs,
+              transaction,
+              logHasBeenRemoved);
+    }
+    return matchingLogs;
+  }
+
   public List<LogWithMetadata> matchingLogs(final Hash blockhash, final LogsQuery query) {
     final List<LogWithMetadata> matchingLogs = Lists.newArrayList();
     final Optional<BlockHeader> blockHeader = blockchain.getBlockHeader(blockhash);
