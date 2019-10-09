@@ -18,23 +18,30 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.ChainHead;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.SyncStatus;
+import org.hyperledger.besu.ethereum.eth.manager.ChainState;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
+import org.hyperledger.besu.ethereum.eth.sync.state.InSyncTracker.InSyncListener;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.plugin.services.BesuEvents.SyncStatusListener;
 import org.hyperledger.besu.util.Subscribers;
+import org.hyperledger.besu.util.Subscribers.Unsubscriber;
 
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 import com.google.common.annotations.VisibleForTesting;
 
 public class SyncState {
-  private static final long SYNC_TOLERANCE = 5;
+  public static final long SYNC_TOLERANCE = 5;
   private final Blockchain blockchain;
   private final EthPeers ethPeers;
 
-  private final Subscribers<InSyncListener> inSyncListeners = Subscribers.create();
+  // A set of sync status trackers, organized by sync tolerance
+  private final Map<Long, InSyncTracker> inSyncTrackers = new ConcurrentHashMap<>();
   private final Subscribers<SyncStatusListener> syncStatusListeners = Subscribers.create();
   private volatile long chainHeightListenerId;
   private volatile Optional<SyncTarget> syncTarget = Optional.empty();
@@ -79,8 +86,63 @@ public class SyncState {
     syncStatusListeners.forEach(c -> c.onSyncStatusChanged(syncStatus));
   }
 
-  public void addInSyncListener(final InSyncListener observer) {
-    inSyncListeners.subscribe(observer);
+  /**
+   * Add a listener that will be notified when this node's sync status changes. A node is considered
+   * in-sync if the local chain height is no more than {@code SYNC_TOLERANCE} behind the highest
+   * estimated remote chain height.
+   *
+   * @param listener The callback to invoke when the sync status changes
+   * @return An {@code Unsubscriber} that can be used to stop listening for these events
+   */
+  public Unsubscriber addInSyncListener(final InSyncListener listener) {
+    return addInSyncListener(listener, SYNC_TOLERANCE);
+  }
+
+  /**
+   * Add a listener that will be notified when this node's sync status changes. A node is considered
+   * in-sync if the local chain height is no more than {@code syncTolerance} behind the highest
+   * estimated remote chain height.
+   *
+   * @param listener The callback to invoke when the sync status changes
+   * @param syncTolerance The tolerance used to determine whether this node is in-sync. A value of
+   *     zero means that the node is considered in-sync only when the local chain height is greater
+   *     than or equal to the best estimated remote chain height.
+   * @return An {@code Unsubscriber} that can be used to stop listening for these events
+   */
+  public Unsubscriber addInSyncListener(final InSyncListener listener, final long syncTolerance) {
+    AtomicLong subscriptionId = new AtomicLong();
+    inSyncTrackers.compute(
+        syncTolerance,
+        (key, inSyncTracker) -> {
+          if (inSyncTracker == null) {
+            inSyncTracker = InSyncTracker.create(syncTolerance);
+            inSyncTracker.checkState(
+                getLocalHeight(), getSyncTargetEstimatedHeight(), getBestPeerEstimatedHeight());
+          }
+          subscriptionId.set(inSyncTracker.addInSyncListener(listener));
+          return inSyncTracker;
+        });
+
+    return () -> removeInSyncListener(syncTolerance, subscriptionId.get());
+  }
+
+  private boolean removeInSyncListener(final long syncTolerance, final long subscriberId) {
+    final AtomicBoolean wasRemoved = new AtomicBoolean(false);
+    inSyncTrackers.compute(
+        syncTolerance,
+        (key, inSyncTracker) -> {
+          if (inSyncTracker == null) {
+            // We don't have any subscribers at this tolerance level
+            return null;
+          }
+          wasRemoved.set(inSyncTracker.removeInSyncListener(subscriberId));
+          if (inSyncTracker.getListenerCount() == 0) {
+            // Drop this InSyncListener since no one is listening
+            return null;
+          }
+          return inSyncTracker;
+        });
+    return wasRemoved.get();
   }
 
   public long addSyncStatusListener(final SyncStatusListener observer) {
@@ -117,19 +179,30 @@ public class SyncState {
   }
 
   private boolean isInSyncWithTarget(final long syncTolerance) {
-    return syncTarget
-        .map(t -> t.estimatedTargetHeight() - blockchain.getChainHeadBlockNumber() <= syncTolerance)
-        .orElse(true);
+    final Optional<Long> syncTargetHeight = getSyncTargetEstimatedHeight();
+    return InSyncTracker.isInSync(getLocalHeight(), syncTargetHeight, syncTolerance);
   }
 
   private boolean isInSyncWithBestPeer(final long syncTolerance) {
+    final Optional<Long> bestPeerHeight = getBestPeerEstimatedHeight();
+    return InSyncTracker.isInSync(getLocalHeight(), bestPeerHeight, syncTolerance);
+  }
+
+  private long getLocalHeight() {
+    return blockchain.getChainHeadBlockNumber();
+  }
+
+  private Optional<Long> getSyncTargetEstimatedHeight() {
+    return syncTarget.map(SyncTarget::estimatedTargetHeight);
+  }
+
+  private Optional<Long> getBestPeerEstimatedHeight() {
     final ChainHead chainHead = blockchain.getChainHead();
     return ethPeers
         .bestPeerWithHeightEstimate()
         .filter(peer -> peer.chainState().chainIsBetterThan(chainHead))
         .map(EthPeer::chainState)
-        .map(chainState -> chainState.getEstimatedHeight() - chainHead.getHeight() <= syncTolerance)
-        .orElse(true);
+        .map(ChainState::getEstimatedHeight);
   }
 
   public void disconnectSyncTarget(final DisconnectReason reason) {
@@ -166,18 +239,22 @@ public class SyncState {
   }
 
   private synchronized void checkInSync() {
-    final boolean currentInSync = isInSync();
-    if (lastInSync.compareAndSet(!currentInSync, currentInSync)) {
-      if (!currentInSync) {
-        // when we fall out of sync change our starting block
-        startingBlock = blockchain.getChainHeadBlockNumber();
-      }
-      inSyncListeners.forEach(c -> c.onSyncStatusChanged(currentInSync));
-    }
-  }
+    long localChainHeight = getLocalHeight();
+    Optional<Long> syncTargetHeight = getSyncTargetEstimatedHeight();
+    Optional<Long> bestPeerHeight = getBestPeerEstimatedHeight();
+    final boolean currentInSync =
+        InSyncTracker.isInSync(localChainHeight, syncTargetHeight, SYNC_TOLERANCE)
+            && InSyncTracker.isInSync(localChainHeight, bestPeerHeight, SYNC_TOLERANCE);
 
-  @FunctionalInterface
-  public interface InSyncListener {
-    void onSyncStatusChanged(boolean newSyncStatus);
+    if (lastInSync.compareAndSet(!currentInSync, currentInSync)) {
+      if (currentInSync) {
+        // when we fall out of sync change our starting block
+        startingBlock = localChainHeight;
+      }
+    }
+
+    inSyncTrackers.forEach(
+        (tolerance, syncTracker) ->
+            syncTracker.checkState(localChainHeight, syncTargetHeight, bestPeerHeight));
   }
 }

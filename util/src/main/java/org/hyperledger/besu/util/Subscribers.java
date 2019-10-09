@@ -152,4 +152,14 @@ public class Subscribers<T> {
       return 0;
     }
   }
+
+  public interface Unsubscriber {
+
+    /**
+     * Unsubscribe from an event stream.
+     *
+     * @return True if a listener was actually unsubscribed.
+     */
+    boolean unsubscribe();
+  }
 }
