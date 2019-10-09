@@ -98,7 +98,29 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
     bob.verify(
         privateTransactionVerifier.validPrivateTransactionReceipt(
             transactionHash, expectedReceipt));
+
     charlie.verify(privateTransactionVerifier.noPrivateTransactionReceipt(transactionHash));
+
+    // When Alice executes a contract call in the wrong privacy group the transaction should pass
+    // but it should return any output
+    final String transactionHash2 =
+        alice.execute(
+            privateContractTransactions.callSmartContract(
+                eventEmitter.getContractAddress(),
+                eventEmitter.value().encodeFunctionCall(),
+                alice.getTransactionSigningKey(),
+                POW_CHAIN_ID,
+                alice.getEnclaveKey(),
+                charlie.getEnclaveKey()));
+
+    final PrivateTransactionReceipt expectedReceipt2 =
+        alice.execute(privacyTransactions.getPrivateTransactionReceipt(transactionHash2));
+
+    assertThat(expectedReceipt2.getOutput()).isEqualTo("0x");
+
+    charlie.verify(
+        privateTransactionVerifier.validPrivateTransactionReceipt(
+            transactionHash2, expectedReceipt2));
   }
 
   @Test
