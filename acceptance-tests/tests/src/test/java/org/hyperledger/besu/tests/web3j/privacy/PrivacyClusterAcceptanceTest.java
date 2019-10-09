@@ -102,7 +102,7 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
     charlie.verify(privateTransactionVerifier.noPrivateTransactionReceipt(transactionHash));
 
     // When Alice executes a contract call in the wrong privacy group the transaction should pass
-    // but it should return any output
+    // but it should NOT return any output
     final String transactionHash2 =
         alice.execute(
             privateContractTransactions.callSmartContract(
