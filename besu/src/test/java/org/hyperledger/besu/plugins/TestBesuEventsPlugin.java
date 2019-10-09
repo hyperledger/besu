@@ -17,6 +17,7 @@ package org.hyperledger.besu.plugins;
 import org.hyperledger.besu.plugin.BesuContext;
 import org.hyperledger.besu.plugin.BesuPlugin;
 import org.hyperledger.besu.plugin.data.BlockHeader;
+import org.hyperledger.besu.plugin.data.BlockPropagated;
 import org.hyperledger.besu.plugin.services.BesuEvents;
 
 import java.io.File;
@@ -66,7 +67,8 @@ public class TestBesuEventsPlugin implements BesuPlugin {
     LOG.info("No longer listening with ID#" + subscriptionId);
   }
 
-  private void onBlockAnnounce(final BlockHeader header) {
+  private void onBlockAnnounce(final BlockPropagated blockPropagated) {
+    final BlockHeader header = blockPropagated.getBlockHeader();
     final int blockCount = blockCounter.incrementAndGet();
     LOG.info("I got a new block! (I've seen {}) - {}", blockCount, header);
     try {

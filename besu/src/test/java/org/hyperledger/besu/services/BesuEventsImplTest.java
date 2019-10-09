@@ -43,7 +43,7 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.plugin.data.BlockHeader;
+import org.hyperledger.besu.plugin.data.BlockPropagated;
 import org.hyperledger.besu.plugin.data.SyncStatus;
 import org.hyperledger.besu.plugin.data.Transaction;
 import org.hyperledger.besu.testutil.TestClock;
@@ -144,24 +144,29 @@ public class BesuEventsImplTest {
 
   @Test
   public void newBlockEventFiresAfterSubscribe() {
-    final AtomicReference<BlockHeader> result = new AtomicReference<>();
+    final AtomicReference<BlockPropagated> result = new AtomicReference<>();
     serviceImpl.addBlockPropagatedListener(result::set);
-
+    final Block block = generateBlock();
     assertThat(result.get()).isNull();
-    blockBroadcaster.propagate(generateBlock(), UInt256.of(1));
+    blockBroadcaster.propagate(block, UInt256.of(1));
 
     assertThat(result.get()).isNotNull();
+    assertThat(result.get().getBlockHeader()).isEqualTo(block.getHeader());
+    assertThat(result.get().getTotalDifficulty()).isEqualTo(UInt256.of(1));
   }
 
   @Test
   public void newBlockEventDoesNotFireAfterUnsubscribe() {
-    final AtomicReference<BlockHeader> result = new AtomicReference<>();
+    final AtomicReference<BlockPropagated> result = new AtomicReference<>();
     final long id = serviceImpl.addBlockPropagatedListener(result::set);
 
     assertThat(result.get()).isNull();
-    blockBroadcaster.propagate(generateBlock(), UInt256.of(1));
+    final Block block = generateBlock();
+    blockBroadcaster.propagate(block, UInt256.of(1));
 
     assertThat(result.get()).isNotNull();
+    assertThat(result.get().getBlockHeader()).isEqualTo(block.getHeader());
+    assertThat(result.get().getTotalDifficulty()).isEqualTo(UInt256.of(1));
     serviceImpl.removeBlockPropagatedListener(id);
     result.set(null);
 
