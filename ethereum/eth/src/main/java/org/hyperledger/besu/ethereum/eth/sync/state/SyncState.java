@@ -25,6 +25,7 @@ import org.hyperledger.besu.plugin.services.BesuEvents.SyncStatusListener;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -33,12 +34,12 @@ public class SyncState {
   private final Blockchain blockchain;
   private final EthPeers ethPeers;
 
-  private long startingBlock;
-  private boolean lastInSync = true;
   private final Subscribers<InSyncListener> inSyncListeners = Subscribers.create();
   private final Subscribers<SyncStatusListener> syncStatusListeners = Subscribers.create();
-  private Optional<SyncTarget> syncTarget = Optional.empty();
-  private long chainHeightListenerId;
+  private volatile long chainHeightListenerId;
+  private volatile Optional<SyncTarget> syncTarget = Optional.empty();
+  private volatile long startingBlock;
+  private final AtomicBoolean lastInSync = new AtomicBoolean(true);
 
   public SyncState(final Blockchain blockchain, final EthPeers ethPeers) {
     this.blockchain = blockchain;
@@ -139,7 +140,7 @@ public class SyncState {
     replaceSyncTarget(Optional.empty());
   }
 
-  private void replaceSyncTarget(final Optional<SyncTarget> newTarget) {
+  private synchronized void replaceSyncTarget(final Optional<SyncTarget> newTarget) {
     syncTarget.ifPresent(this::removeEstimatedHeightListener);
     syncTarget = newTarget;
     newTarget.ifPresent(this::addEstimatedHeightListener);
@@ -166,8 +167,7 @@ public class SyncState {
 
   private synchronized void checkInSync() {
     final boolean currentInSync = isInSync();
-    if (lastInSync != currentInSync) {
-      lastInSync = currentInSync;
+    if (lastInSync.compareAndSet(!currentInSync, currentInSync)) {
       if (!currentInSync) {
         // when we fall out of sync change our starting block
         startingBlock = blockchain.getChainHeadBlockNumber();

@@ -17,9 +17,12 @@ package org.hyperledger.besu.ethereum.api.graphql;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import org.hyperledger.besu.ethereum.api.BlockWithMetadata;
+import org.hyperledger.besu.ethereum.api.LogWithMetadata;
+import org.hyperledger.besu.ethereum.api.LogsQuery;
 import org.hyperledger.besu.ethereum.api.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.api.graphql.internal.BlockchainQuery;
 import org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter.AccountAdapter;
+import org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter.LogAdapter;
 import org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter.NormalBlockAdapter;
 import org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter.PendingStateAdapter;
 import org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter.SyncStateAdapter;
@@ -29,6 +32,7 @@ import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.LogTopic;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.WorldState;
@@ -46,9 +50,11 @@ import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.google.common.base.Preconditions;
 import graphql.schema.DataFetcher;
@@ -201,6 +207,43 @@ public class GraphQLDataFetchers {
                 })
             .map(AccountAdapter::new);
       }
+    };
+  }
+
+  DataFetcher<Optional<List<LogAdapter>>> getLogsDataFetcher() {
+    return dataFetchingEnvironment -> {
+      final BlockchainQuery blockchainQuery =
+          ((GraphQLDataFetcherContext) dataFetchingEnvironment.getContext()).getBlockchainQuery();
+
+      final Map<String, Object> filter = dataFetchingEnvironment.getArgument("filter");
+
+      final long currentBlock = blockchainQuery.getBlockchain().getChainHeadBlockNumber();
+      final long fromBlock = (Long) filter.getOrDefault("fromBlock", currentBlock);
+      final long toBlock = (Long) filter.getOrDefault("toBlock", currentBlock);
+
+      if (fromBlock > toBlock) {
+        throw new GraphQLException(GraphQLError.INVALID_PARAMS);
+      }
+
+      @SuppressWarnings("unchecked")
+      final List<Address> addrs = (List<Address>) filter.get("addresses");
+      @SuppressWarnings("unchecked")
+      final List<List<Bytes32>> topics = (List<List<Bytes32>>) filter.get("topics");
+
+      final List<List<LogTopic>> transformedTopics = new ArrayList<>();
+      for (final List<Bytes32> topic : topics) {
+        transformedTopics.add(topic.stream().map(LogTopic::of).collect(Collectors.toList()));
+      }
+
+      final LogsQuery query =
+          new LogsQuery.Builder().addresses(addrs).topics(transformedTopics).build();
+
+      final List<LogWithMetadata> logs = blockchainQuery.matchingLogs(fromBlock, toBlock, query);
+      final List<LogAdapter> results = new ArrayList<>();
+      for (final LogWithMetadata log : logs) {
+        results.add(new LogAdapter(log));
+      }
+      return Optional.of(results);
     };
   }
 
