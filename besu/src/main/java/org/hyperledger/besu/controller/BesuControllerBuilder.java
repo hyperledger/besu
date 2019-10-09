@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
@@ -34,6 +35,7 @@ import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.peervalidation.DaoForkPeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
+import org.hyperledger.besu.ethereum.eth.peervalidation.RequiredBlocksPeerValidator;
 import org.hyperledger.besu.ethereum.eth.sync.DefaultSynchronizer;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
@@ -72,9 +74,8 @@ public abstract class BesuControllerBuilder<C> {
   private static final Logger LOG = LogManager.getLogger();
 
   protected GenesisConfigFile genesisConfig;
-  protected SynchronizerConfiguration syncConfig;
-  protected EthProtocolManager ethProtocolManager;
-  protected EthProtocolConfiguration ethereumWireProtocolConfiguration;
+  SynchronizerConfiguration syncConfig;
+  EthProtocolConfiguration ethereumWireProtocolConfiguration;
   protected TransactionPoolConfiguration transactionPoolConfiguration;
   protected BigInteger networkId;
   protected MiningParameters miningParameters;
@@ -82,13 +83,15 @@ public abstract class BesuControllerBuilder<C> {
   protected PrivacyParameters privacyParameters;
   protected Path dataDirectory;
   protected Clock clock;
-  protected KeyPair nodeKeys;
+  KeyPair nodeKeys;
   protected boolean isRevertReasonEnabled;
+  GasLimitCalculator gasLimitCalculator;
   private StorageProvider storageProvider;
   private final List<Runnable> shutdownActions = new ArrayList<>();
   private boolean isPruningEnabled;
   private PruningConfiguration pruningConfiguration;
   Map<String, String> genesisConfigOverrides;
+  private Map<Long, Hash> requiredBlocks = Collections.emptyMap();
 
   public BesuControllerBuilder<C> storageProvider(final StorageProvider storageProvider) {
     this.storageProvider = storageProvider;
@@ -181,6 +184,16 @@ public abstract class BesuControllerBuilder<C> {
     return this;
   }
 
+  public BesuControllerBuilder<C> targetGasLimit(final Optional<Long> targetGasLimit) {
+    this.gasLimitCalculator = new GasLimitCalculator(targetGasLimit);
+    return this;
+  }
+
+  public BesuControllerBuilder<C> requiredBlocks(final Map<Long, Hash> requiredBlocks) {
+    this.requiredBlocks = requiredBlocks;
+    return this;
+  }
+
   public BesuController<C> build() {
     checkNotNull(genesisConfig, "Missing genesis config");
     checkNotNull(syncConfig, "Missing sync config");
@@ -194,6 +207,7 @@ public abstract class BesuControllerBuilder<C> {
     checkNotNull(transactionPoolConfiguration, "Missing transaction pool configuration");
     checkNotNull(nodeKeys, "Missing node keys");
     checkNotNull(storageProvider, "Must supply a storage provider");
+    checkNotNull(gasLimitCalculator, "Missing gas limit calculator");
 
     prepForBuild();
 
@@ -246,7 +260,7 @@ public abstract class BesuControllerBuilder<C> {
                 }));
 
     final boolean fastSyncEnabled = syncConfig.getSyncMode().equals(SyncMode.FAST);
-    ethProtocolManager =
+    final EthProtocolManager ethProtocolManager =
         createEthProtocolManager(
             protocolContext, fastSyncEnabled, createPeerValidators(protocolSchedule));
     final SyncState syncState =
@@ -328,7 +342,7 @@ public abstract class BesuControllerBuilder<C> {
     return new SubProtocolConfiguration().withSubProtocol(EthProtocol.get(), ethProtocolManager);
   }
 
-  protected final void addShutdownAction(final Runnable action) {
+  final void addShutdownAction(final Runnable action) {
     shutdownActions.add(action);
   }
 
@@ -365,7 +379,7 @@ public abstract class BesuControllerBuilder<C> {
         ethereumWireProtocolConfiguration);
   }
 
-  protected List<PeerValidator> createPeerValidators(final ProtocolSchedule<C> protocolSchedule) {
+  private List<PeerValidator> createPeerValidators(final ProtocolSchedule<C> protocolSchedule) {
     final List<PeerValidator> validators = new ArrayList<>();
 
     final OptionalLong daoBlock =
@@ -374,6 +388,12 @@ public abstract class BesuControllerBuilder<C> {
       // Setup dao validator
       validators.add(
           new DaoForkPeerValidator(protocolSchedule, metricsSystem, daoBlock.getAsLong()));
+    }
+
+    for (final Map.Entry<Long, Hash> requiredBlock : requiredBlocks.entrySet()) {
+      validators.add(
+          new RequiredBlocksPeerValidator(
+              protocolSchedule, metricsSystem, requiredBlock.getKey(), requiredBlock.getValue()));
     }
 
     return validators;

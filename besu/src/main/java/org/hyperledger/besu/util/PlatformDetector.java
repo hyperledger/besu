@@ -186,6 +186,9 @@ public class PlatformDetector {
     if (javaVendor.contains("amazoncominc")) {
       return "corretto";
     }
+    if (javaVmName.contains("openjdk")) {
+      return "openjdk";
+    }
 
     return "-" + javaVendor + "-" + javaVmName;
   }

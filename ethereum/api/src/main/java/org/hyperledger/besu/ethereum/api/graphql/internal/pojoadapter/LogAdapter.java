@@ -32,7 +32,7 @@ import graphql.schema.DataFetchingEnvironment;
 public class LogAdapter extends AdapterBase {
   private final LogWithMetadata logWithMetadata;
 
-  LogAdapter(final LogWithMetadata logWithMetadata) {
+  public LogAdapter(final LogWithMetadata logWithMetadata) {
     this.logWithMetadata = logWithMetadata;
   }
 

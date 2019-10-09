@@ -15,12 +15,14 @@
 package org.hyperledger.besu.tests.acceptance.dsl.node;
 
 import static org.hyperledger.besu.cli.config.NetworkName.DEV;
+import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
 
 import org.hyperledger.besu.Runner;
 import org.hyperledger.besu.RunnerBuilder;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
+import org.hyperledger.besu.controller.GasLimitCalculator;
 import org.hyperledger.besu.controller.KeyPairUtil;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
@@ -56,7 +58,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import com.google.common.io.Files;
 import io.vertx.core.Vertx;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -106,8 +107,9 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     }
 
     final StorageServiceImpl storageService = new StorageServiceImpl();
-    final Path path = Files.createTempDir().toPath();
-    final BesuConfiguration commonPluginConfiguration = new BesuConfigurationImpl(path, path);
+    final Path dataDir = node.homeDirectory();
+    final BesuConfiguration commonPluginConfiguration =
+        new BesuConfigurationImpl(dataDir, dataDir.resolve(DATABASE_PATH));
     final BesuPluginContextImpl besuPluginContext =
         besuPluginContextMap.computeIfAbsent(
             node, n -> buildPluginContext(node, storageService, commonPluginConfiguration));
@@ -148,6 +150,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
               .clock(Clock.systemUTC())
               .isRevertReasonEnabled(node.isRevertReasonEnabled())
               .storageProvider(storageProvider)
+              .targetGasLimit(GasLimitCalculator.DEFAULT)
               .build();
     } catch (final IOException e) {
       throw new RuntimeException("Error building BesuController", e);
