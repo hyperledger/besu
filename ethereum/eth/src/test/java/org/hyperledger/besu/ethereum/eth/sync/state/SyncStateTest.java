@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.eth.sync.state;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -37,6 +36,7 @@ import org.hyperledger.besu.ethereum.core.SyncStatus;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.core.Synchronizer.InSyncListener;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.eth.manager.ChainHeadEstimate;
 import org.hyperledger.besu.ethereum.eth.manager.ChainState;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
@@ -70,10 +70,13 @@ public class SyncStateTest {
   private final InSyncListener inSyncListenerExact = mock(InSyncListener.class);
   private final SyncStatusListener syncStatusListener = mock(SyncStatusListener.class);
 
-  private EthProtocolManager ethProtocolManager;
   private final BlockDataGenerator gen = new BlockDataGenerator(1);
-  private MutableBlockchain blockchain =
-      InMemoryStorageProvider.createInMemoryBlockchain(gen.genesisBlock());
+  private final Block genesisBlock =
+      gen.genesisBlock(new BlockOptions().setDifficulty(UInt256.ZERO));
+  private final MutableBlockchain blockchain =
+      InMemoryStorageProvider.createInMemoryBlockchain(genesisBlock);
+
+  private EthProtocolManager ethProtocolManager;
   private EthPeers ethPeers;
   private RespondingEthPeer syncTargetPeer;
   private RespondingEthPeer otherPeer;
@@ -153,6 +156,7 @@ public class SyncStateTest {
 
   @Test
   public void isInSync_syncTargetWithBetterHeight() {
+    otherPeer.disconnect(DisconnectReason.REQUESTED);
     setupSyncTarget();
 
     assertThat(syncState.syncTarget()).isPresent(); // Sanity check
@@ -164,6 +168,7 @@ public class SyncStateTest {
 
   @Test
   public void isInSync_syncTargetWithWorseHeight() {
+    otherPeer.disconnect(DisconnectReason.REQUESTED);
     final long heightDifference = 20L;
     advanceLocalChain(TARGET_CHAIN_HEIGHT + heightDifference);
     setupSyncTarget();
@@ -320,20 +325,20 @@ public class SyncStateTest {
     // Add listener
     InSyncListener newListener = mock(InSyncListener.class);
     syncState.subscribeInSync(newListener);
-    verify(newListener, never()).onSyncStatusChanged(anyBoolean());
-
+    verify(newListener, never()).onSyncStatusChanged(false);
+    verify(newListener, times(1)).onSyncStatusChanged(true);
     // Fall out of sync
     updateChainState(
         syncTargetPeer.getEthPeer(),
         TARGET_CHAIN_HEIGHT + Synchronizer.DEFAULT_IN_SYNC_TOLERANCE + 1L,
         TARGET_DIFFICULTY.plus(10L));
     verify(newListener, times(1)).onSyncStatusChanged(false);
-    verify(newListener, never()).onSyncStatusChanged(true);
+    verify(newListener, times(1)).onSyncStatusChanged(true);
 
     // Catch up
     advanceLocalChain(TARGET_CHAIN_HEIGHT + 1L);
     verify(newListener, times(1)).onSyncStatusChanged(false);
-    verify(newListener, times(1)).onSyncStatusChanged(true);
+    verify(newListener, times(2)).onSyncStatusChanged(true);
   }
 
   @Test
@@ -347,7 +352,8 @@ public class SyncStateTest {
     // Add listener
     InSyncListener newListener = mock(InSyncListener.class);
     syncState.subscribeInSync(newListener, syncTolerance);
-    verify(newListener, never()).onSyncStatusChanged(anyBoolean());
+    verify(newListener, never()).onSyncStatusChanged(false);
+    verify(newListener, times(1)).onSyncStatusChanged(true);
 
     // Fall out of sync
     updateChainState(
@@ -355,12 +361,12 @@ public class SyncStateTest {
         TARGET_CHAIN_HEIGHT + syncTolerance + 1L,
         TARGET_DIFFICULTY.plus(10L));
     verify(newListener, times(1)).onSyncStatusChanged(false);
-    verify(newListener, never()).onSyncStatusChanged(true);
+    verify(newListener, times(1)).onSyncStatusChanged(true);
 
     // Catch up
     advanceLocalChain(TARGET_CHAIN_HEIGHT + 1L);
     verify(newListener, times(1)).onSyncStatusChanged(false);
-    verify(newListener, times(1)).onSyncStatusChanged(true);
+    verify(newListener, times(2)).onSyncStatusChanged(true);
   }
 
   @Test
@@ -565,8 +571,12 @@ public class SyncStateTest {
 
   private EthPeer mockChainIsBetterThan(final EthPeer peer, final boolean isBetter) {
     final ChainState chainState = spy(peer.chainState());
+    final ChainHeadEstimate chainStateSnapshot = spy(peer.chainStateSnapshot());
     doReturn(isBetter).when(chainState).chainIsBetterThan(any());
+    doReturn(isBetter).when(chainStateSnapshot).chainIsBetterThan(any());
     final EthPeer mockedPeer = spy(peer);
+    doReturn(chainStateSnapshot).when(chainState).getSnapshot();
+    doReturn(chainStateSnapshot).when(mockedPeer).chainStateSnapshot();
     doReturn(chainState).when(mockedPeer).chainState();
     return mockedPeer;
   }

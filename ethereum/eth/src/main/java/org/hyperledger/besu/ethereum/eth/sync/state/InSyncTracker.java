@@ -15,11 +15,13 @@
 
 package org.hyperledger.besu.ethereum.eth.sync.state;
 
+import org.hyperledger.besu.ethereum.chain.ChainHead;
 import org.hyperledger.besu.ethereum.core.Synchronizer.InSyncListener;
+import org.hyperledger.besu.ethereum.eth.manager.ChainHeadEstimate;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
 /**
  * Tracks the sync status of a node within the specific {@code syncTolerance}. The first event
@@ -27,9 +29,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * no events will be emitted to any listeners.
  */
 class InSyncTracker {
-  // Assume we're in sync to start, so that we'll broadcast our first event when we detect that
-  // we're out of sync
-  private final AtomicBoolean inSync = new AtomicBoolean(true);
+  private volatile InSyncState state = InSyncState.UNKNOWN;
   // If the local chain is no more than {@code syncTolerance} behind the estimated highest chain,
   // then the tracker considers this local node to be in sync
   private final long syncTolerance;
@@ -45,31 +45,49 @@ class InSyncTracker {
   }
 
   public static boolean isInSync(
-      final long localChainHeight,
-      final Optional<Long> otherChainHeight,
-      final long syncTolerance) {
-    return otherChainHeight
-        .map(peerHeight -> (peerHeight - localChainHeight) <= syncTolerance)
-        .orElse(true);
+      final ChainHead localChain, final ChainHeadEstimate remoteChain, final long syncTolerance) {
+    final boolean inSyncByHeight =
+        remoteChain.getEstimatedHeight() - localChain.getHeight() <= syncTolerance;
+    return inSyncByHeight || !remoteChain.chainIsBetterThan(localChain);
   }
 
   synchronized void checkState(
-      final long localChainHeight,
-      final Optional<Long> syncTargetHeight,
-      final Optional<Long> bestPeerHeight) {
-    final boolean currentlyInSync =
-        isInSync(localChainHeight, syncTargetHeight) && isInSync(localChainHeight, bestPeerHeight);
-    if (inSync.compareAndSet(!currentlyInSync, currentlyInSync)) {
+      final ChainHead localChain,
+      final Optional<ChainHeadEstimate> syncTargetChain,
+      final Optional<ChainHeadEstimate> bestPeerChain) {
+    final boolean currentSyncStatus =
+        currentSyncStatus(localChain, syncTargetChain, bestPeerChain).orElse(true);
+
+    final InSyncState newState = InSyncState.fromInSync(currentSyncStatus);
+    if (state != newState) {
       // Sync status has changed, notify subscribers
-      inSyncSubscribers.forEach(c -> c.onSyncStatusChanged(currentlyInSync));
+      state = newState;
+      state.ifKnown(value -> inSyncSubscribers.forEach(c -> c.onSyncStatusChanged(value)));
     }
   }
 
-  public synchronized long addInSyncListener(final InSyncListener subscriber) {
-    if (!inSync.get()) {
-      // If we're already out of sync, dispatch an event to the subscriber
-      subscriber.onSyncStatusChanged(false);
+  private Optional<Boolean> currentSyncStatus(
+      final ChainHead localChain,
+      final Optional<ChainHeadEstimate> syncTargetChain,
+      final Optional<ChainHeadEstimate> bestPeerChain) {
+    final Optional<Boolean> inSyncWithSyncTarget =
+        syncTargetChain.map(remote -> isInSync(localChain, remote));
+    final Optional<Boolean> inSyncWithBestPeer =
+        bestPeerChain.map(remote -> isInSync(localChain, remote));
+    // If we're out of sync with either peer, we're out of sync
+    if (inSyncWithSyncTarget.isPresent() && !inSyncWithSyncTarget.get()) {
+      return Optional.of(false);
     }
+    if (inSyncWithBestPeer.isPresent() && !inSyncWithBestPeer.get()) {
+      return Optional.of(false);
+    }
+    // Otherwise, if either peer is in sync, we're in sync
+    return inSyncWithSyncTarget.or(() -> inSyncWithBestPeer);
+  }
+
+  public synchronized long addInSyncListener(final InSyncListener subscriber) {
+    // If our state is known, fire an event to let the listener know
+    state.ifKnown(subscriber::onSyncStatusChanged);
     return inSyncSubscribers.subscribe(subscriber);
   }
 
@@ -81,7 +99,27 @@ class InSyncTracker {
     return inSyncSubscribers.getSubscriberCount();
   }
 
-  private boolean isInSync(final long localChainHeight, final Optional<Long> otherChainHeight) {
-    return isInSync(localChainHeight, otherChainHeight, syncTolerance);
+  private boolean isInSync(final ChainHead localChain, final ChainHeadEstimate remoteChain) {
+    return isInSync(localChain, remoteChain, syncTolerance);
+  }
+
+  private enum InSyncState {
+    UNKNOWN(Optional.empty()),
+    IN_SYNC(Optional.of(true)),
+    OUT_OF_SYNC(Optional.of(false));
+
+    private final Optional<Boolean> inSync;
+
+    InSyncState(final Optional<Boolean> inSync) {
+      this.inSync = inSync;
+    }
+
+    static InSyncState fromInSync(final boolean inSync) {
+      return inSync ? IN_SYNC : OUT_OF_SYNC;
+    }
+
+    public void ifKnown(final Consumer<Boolean> handler) {
+      inSync.ifPresent(handler::accept);
+    }
   }
 }

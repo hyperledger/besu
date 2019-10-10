@@ -20,7 +20,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.SyncStatus;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.core.Synchronizer.InSyncListener;
-import org.hyperledger.besu.ethereum.eth.manager.ChainState;
+import org.hyperledger.besu.ethereum.eth.manager.ChainHeadEstimate;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
@@ -118,7 +118,7 @@ public class SyncState {
           if (inSyncTracker == null) {
             inSyncTracker = InSyncTracker.create(syncTolerance);
             inSyncTracker.checkState(
-                getLocalHeight(), getSyncTargetEstimatedHeight(), getBestPeerEstimatedHeight());
+                getLocalChainHead(), getSyncTargetChainHead(), getBestPeerChainHead());
           }
           subscriptionId.set(inSyncTracker.addInSyncListener(listener));
           return inSyncTracker;
@@ -174,36 +174,40 @@ public class SyncState {
   }
 
   public boolean isInSync(final long syncTolerance) {
+    return isInSync(
+        getLocalChainHead(), getSyncTargetChainHead(), getBestPeerChainHead(), syncTolerance);
+  }
+
+  private boolean isInSync(
+      final ChainHead localChain,
+      final Optional<ChainHeadEstimate> syncTargetChain,
+      final Optional<ChainHeadEstimate> bestPeerChain,
+      final long syncTolerance) {
     // Sync target may be temporarily empty while we switch sync targets during a sync, so
     // check both the sync target and our best peer to determine if we're in sync or not
-    return isInSyncWithTarget(syncTolerance) && isInSyncWithBestPeer(syncTolerance);
+    return isInSync(localChain, syncTargetChain, syncTolerance)
+        && isInSync(localChain, bestPeerChain, syncTolerance);
   }
 
-  private boolean isInSyncWithTarget(final long syncTolerance) {
-    final Optional<Long> syncTargetHeight = getSyncTargetEstimatedHeight();
-    return InSyncTracker.isInSync(getLocalHeight(), syncTargetHeight, syncTolerance);
+  private boolean isInSync(
+      final ChainHead localChain,
+      final Optional<ChainHeadEstimate> remoteChain,
+      final long syncTolerance) {
+    return remoteChain
+        .map(remoteState -> InSyncTracker.isInSync(localChain, remoteState, syncTolerance))
+        .orElse(true);
   }
 
-  private boolean isInSyncWithBestPeer(final long syncTolerance) {
-    final Optional<Long> bestPeerHeight = getBestPeerEstimatedHeight();
-    return InSyncTracker.isInSync(getLocalHeight(), bestPeerHeight, syncTolerance);
+  private ChainHead getLocalChainHead() {
+    return blockchain.getChainHead();
   }
 
-  private long getLocalHeight() {
-    return blockchain.getChainHeadBlockNumber();
+  private Optional<ChainHeadEstimate> getSyncTargetChainHead() {
+    return syncTarget.map(SyncTarget::peer).map(EthPeer::chainStateSnapshot);
   }
 
-  private Optional<Long> getSyncTargetEstimatedHeight() {
-    return syncTarget.map(SyncTarget::estimatedTargetHeight);
-  }
-
-  private Optional<Long> getBestPeerEstimatedHeight() {
-    final ChainHead chainHead = blockchain.getChainHead();
-    return ethPeers
-        .bestPeerWithHeightEstimate()
-        .filter(peer -> peer.chainState().chainIsBetterThan(chainHead))
-        .map(EthPeer::chainState)
-        .map(ChainState::getEstimatedHeight);
+  private Optional<ChainHeadEstimate> getBestPeerChainHead() {
+    return ethPeers.bestPeerWithHeightEstimate().map(EthPeer::chainStateSnapshot);
   }
 
   public void disconnectSyncTarget(final DisconnectReason reason) {
@@ -240,24 +244,19 @@ public class SyncState {
   }
 
   private synchronized void checkInSync() {
-    long localChainHeight = getLocalHeight();
-    Optional<Long> syncTargetHeight = getSyncTargetEstimatedHeight();
-    Optional<Long> bestPeerHeight = getBestPeerEstimatedHeight();
-    final boolean currentInSync =
-        InSyncTracker.isInSync(
-                localChainHeight, syncTargetHeight, Synchronizer.DEFAULT_IN_SYNC_TOLERANCE)
-            && InSyncTracker.isInSync(
-                localChainHeight, bestPeerHeight, Synchronizer.DEFAULT_IN_SYNC_TOLERANCE);
-
+    ChainHead localChain = getLocalChainHead();
+    Optional<ChainHeadEstimate> syncTargetChain = getSyncTargetChainHead();
+    Optional<ChainHeadEstimate> bestPeerChain = getBestPeerChainHead();
+    final boolean currentInSync = isInSync(localChain, syncTargetChain, bestPeerChain, 0);
     if (lastInSync.compareAndSet(!currentInSync, currentInSync)) {
       if (currentInSync) {
         // when we fall out of sync change our starting block
-        startingBlock = localChainHeight;
+        startingBlock = localChain.getHeight();
       }
     }
 
     inSyncTrackers.forEach(
         (tolerance, syncTracker) ->
-            syncTracker.checkState(localChainHeight, syncTargetHeight, bestPeerHeight));
+            syncTracker.checkState(localChain, syncTargetChain, bestPeerChain));
   }
 }
