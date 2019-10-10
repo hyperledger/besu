@@ -162,7 +162,7 @@ public class BesuEventsImplTest {
 
     assertThat(result.get()).isNull();
     final Block block = generateBlock();
-    blockBroadcaster.propagate(block, UInt256.of(1));
+    blockBroadcaster.propagate(block, UInt256.of(2));
 
     assertThat(result.get()).isNotNull();
     assertThat(result.get().getBlockHeader()).isEqualTo(block.getHeader());

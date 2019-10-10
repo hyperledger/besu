@@ -109,7 +109,7 @@ public interface BesuEvents {
      * <p>The block may not have been imported to the local chain yet and may fail later
      * validations.
      *
-     * @param blockPropagated the new block header.
+     * @param blockPropagated block being propagated.
      */
     void onBlockPropagated(BlockPropagated blockPropagated);
   }
