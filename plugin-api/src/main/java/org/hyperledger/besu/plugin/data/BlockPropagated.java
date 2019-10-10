@@ -16,8 +16,6 @@ package org.hyperledger.besu.plugin.data;
 
 import org.hyperledger.besu.plugin.Unstable;
 
-import java.util.function.Supplier;
-
 /** The minimum set of data for a BlockPropagated. */
 @Unstable
 public interface BlockPropagated {
@@ -35,5 +33,4 @@ public interface BlockPropagated {
    * @return A scalar value corresponding to the total difficulty.
    */
   Quantity getTotalDifficulty();
-
 }
