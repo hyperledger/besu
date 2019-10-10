@@ -18,7 +18,7 @@ import org.hyperledger.besu.ethereum.eth.sync.BlockBroadcaster;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.plugin.data.BlockHeader;
-import org.hyperledger.besu.plugin.data.BlockPropagated;
+import org.hyperledger.besu.plugin.data.PropagatedBlockContext;
 import org.hyperledger.besu.plugin.data.Quantity;
 import org.hyperledger.besu.plugin.services.BesuEvents;
 
@@ -42,7 +42,7 @@ public class BesuEventsImpl implements BesuEvents {
   public long addBlockPropagatedListener(final BlockPropagatedListener listener) {
     return blockBroadcaster.subscribePropagateNewBlocks(
         (block, totalDifficulty) ->
-            listener.onBlockPropagated(blockPropagated(block::getHeader, () -> totalDifficulty)));
+            listener.onBlockPropagated(blockPropagatedContext(block::getHeader, () -> totalDifficulty)));
   }
 
   @Override
@@ -82,10 +82,10 @@ public class BesuEventsImpl implements BesuEvents {
     syncState.removeSyncStatusListener(listenerIdentifier);
   }
 
-  private static BlockPropagated blockPropagated(
+  private static PropagatedBlockContext blockPropagatedContext(
       final Supplier<BlockHeader> blockHeaderSupplier,
       final Supplier<Quantity> totalDifficultySupplier) {
-    return new BlockPropagated() {
+    return new PropagatedBlockContext() {
       @Override
       public BlockHeader getBlockHeader() {
         return blockHeaderSupplier.get();

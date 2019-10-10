@@ -16,9 +16,9 @@ package org.hyperledger.besu.plugin.data;
 
 import org.hyperledger.besu.plugin.Unstable;
 
-/** The minimum set of data for a BlockPropagated. */
+/** The minimum set of data for a PropagatedBlockContext. */
 @Unstable
-public interface BlockPropagated {
+public interface PropagatedBlockContext {
 
   /**
    * A {@link BlockHeader} object.

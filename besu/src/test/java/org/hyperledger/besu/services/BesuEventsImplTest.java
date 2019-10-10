@@ -43,7 +43,7 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.plugin.data.BlockPropagated;
+import org.hyperledger.besu.plugin.data.PropagatedBlockContext;
 import org.hyperledger.besu.plugin.data.SyncStatus;
 import org.hyperledger.besu.plugin.data.Transaction;
 import org.hyperledger.besu.testutil.TestClock;
@@ -144,7 +144,7 @@ public class BesuEventsImplTest {
 
   @Test
   public void newBlockEventFiresAfterSubscribe() {
-    final AtomicReference<BlockPropagated> result = new AtomicReference<>();
+    final AtomicReference<PropagatedBlockContext> result = new AtomicReference<>();
     serviceImpl.addBlockPropagatedListener(result::set);
     final Block block = generateBlock();
     assertThat(result.get()).isNull();
@@ -157,7 +157,7 @@ public class BesuEventsImplTest {
 
   @Test
   public void newBlockEventDoesNotFireAfterUnsubscribe() {
-    final AtomicReference<BlockPropagated> result = new AtomicReference<>();
+    final AtomicReference<PropagatedBlockContext> result = new AtomicReference<>();
     final long id = serviceImpl.addBlockPropagatedListener(result::set);
 
     assertThat(result.get()).isNull();

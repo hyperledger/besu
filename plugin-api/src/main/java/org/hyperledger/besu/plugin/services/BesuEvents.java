@@ -15,7 +15,7 @@
 package org.hyperledger.besu.plugin.services;
 
 import org.hyperledger.besu.plugin.Unstable;
-import org.hyperledger.besu.plugin.data.BlockPropagated;
+import org.hyperledger.besu.plugin.data.PropagatedBlockContext;
 import org.hyperledger.besu.plugin.data.SyncStatus;
 import org.hyperledger.besu.plugin.data.Transaction;
 
@@ -109,9 +109,9 @@ public interface BesuEvents {
      * <p>The block may not have been imported to the local chain yet and may fail later
      * validations.
      *
-     * @param blockPropagated block being propagated.
+     * @param propagatedBlockContext block being propagated.
      */
-    void onBlockPropagated(BlockPropagated blockPropagated);
+    void onBlockPropagated(PropagatedBlockContext propagatedBlockContext);
   }
 
   /** The listener interface for receiving new transaction added events. */
