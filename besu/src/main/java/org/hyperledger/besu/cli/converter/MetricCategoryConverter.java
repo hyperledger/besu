@@ -41,6 +41,6 @@ public class MetricCategoryConverter implements CommandLine.ITypeConverter<Metri
   }
 
   public void addRegistryCategory(final MetricCategory metricCategory) {
-    metricCategories.put(metricCategory.getName(), metricCategory);
+    metricCategories.put(metricCategory.getName().toUpperCase(), metricCategory);
   }
 }
