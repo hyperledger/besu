@@ -48,6 +48,7 @@ balance = 2000000000000000000
 name = "node 1"
 validator = true # default is false
 bootnode = true # default is false
+apis = ["metrics"] # activate RPC/GraphQL/metrics/all APIs for this node. Default is none.
 
 [[nodes]]
 name = "node 2"
@@ -60,4 +61,4 @@ validator = true # default is false
 
 [[nodes]]
 name = "node 4"
-apis = true # true to activate RPC/GraphQL APIs for this node. Default is false
+apis = ["all"]

@@ -176,18 +176,4 @@ class Privacy implements ConfigNode, Verifiable, Generatable {
       LOG.error("Unable to write privacy configuration file", e);
     }
   }
-
-  //  private String replacePort(
-  //      final TomlWriter tomlWriter,
-  //      final String configTemplateSource,
-  //      final String key,
-  //      final String regex,
-  //      final int defaultPort,
-  //      final int portGroupSize) {
-  //    final HashMap<String, Integer> valueMap = new HashMap<>();
-  //    valueMap.put(key, getPort(defaultPort, portGroupSize));
-  //    LOG.debug(valueMap);
-  //    return configTemplateSource.replaceAll(regex, tomlWriter.write(valueMap));
-  //  }
-
 }

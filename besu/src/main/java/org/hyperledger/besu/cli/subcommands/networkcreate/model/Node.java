@@ -30,7 +30,6 @@ import org.hyperledger.besu.cli.subcommands.networkcreate.generate.Verifiable;
 import org.hyperledger.besu.cli.subcommands.networkcreate.mapping.InitConfigurationErrorHandler;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
@@ -40,47 +39,48 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonCreator.Mode;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-// TODO Handle errors
 public class Node implements Generatable, ConfigNode, Verifiable {
 
   private static final Logger LOG = LogManager.getLogger();
   private static final String PRIVATE_KEY_FILENAME = "key";
   private static final String DEFAULT_IP = "127.0.0.1";
+  private static final String DEFAULT_INTERFACE = "0.0.0.0";
+
+  @JsonIgnore private ConfigNode parent;
 
   @JsonIgnore private final KeyPair keyPair;
   @JsonIgnore private final Address address;
-  @JsonIgnore private final String p2pIp;
   private String name;
   private Boolean validator;
   private Boolean bootnode;
-  private Boolean apis;
-  private ConfigNode parent;
+  private List<Apis> apis;
 
+  @JsonCreator(mode = Mode.PROPERTIES)
   public Node(
       @JsonProperty("name") final String name,
       @JsonProperty("validator") final Boolean validator,
       @JsonProperty("bootnode") final Boolean bootnode,
-      @JsonProperty("apis") final Boolean apis) {
+      @JsonProperty("apis") final List<Apis> apis) {
 
     this.name = name;
     this.validator = requireNonNullElse(validator, false);
     this.bootnode = requireNonNullElse(bootnode, false);
-    this.apis = requireNonNullElse(apis, false);
+
+    this.apis = requireNonNullElse(apis, List.of());
 
     keyPair = SECP256K1.KeyPair.generate();
     address = Util.publicKeyToAddress(keyPair.getPublicKey());
-
-    // TODO see how to get that right, not constants
-    p2pIp = DEFAULT_IP;
   }
 
   @SuppressWarnings("unused") // Used by Jackson serialisation
@@ -99,7 +99,8 @@ public class Node implements Generatable, ConfigNode, Verifiable {
   }
 
   @SuppressWarnings("unused") // Used by Jackson serialisation
-  public Boolean getApis() {
+  @JsonInclude(Include.NON_EMPTY)
+  public List<Apis> getApis() {
     return apis;
   }
 
@@ -115,17 +116,16 @@ public class Node implements Generatable, ConfigNode, Verifiable {
 
   @JsonIgnore
   private EnodeURL getEnodeURL() {
-    final int p2pPort = P2P.getPort(getSiblings(), this);
     return EnodeURL.builder()
         .nodeId(keyPair.getPublicKey().getEncodedBytes())
-        .ipAddress(p2pIp)
-        .listeningPort(p2pPort)
-        .discoveryPort(p2pPort)
+        .ipAddress(DEFAULT_IP)
+        .listeningPort(P2P.getPort(getSiblings(), this))
+        .discoveryPort(P2P.getPort(getSiblings(), this))
         .build();
   }
 
   @JsonIgnore
-  private List<Node> getSiblings() {
+  List<Node> getSiblings() {
     return ((Configuration) parent).getNodes();
   }
 
@@ -184,18 +184,19 @@ public class Node implements Generatable, ConfigNode, Verifiable {
                 .map(EnodeURL::toURI)
                 .toArray(URI[]::new))
         .addComment("P2P advertising host")
-        .addOption("p2p-host", "127.0.0.1")
+        .addOption("p2p-host", DEFAULT_IP)
         .addComment("P2P listening port")
         .addOption(P2P.getKey(), P2P.getPort(getSiblings(), this))
         .addComment("P2P listening interface")
-        .addOption("p2p-interface", "0.0.0.0")
+        .addOption("p2p-interface", DEFAULT_INTERFACE)
         .addComment("P2P hosts whitelist")
         .addOption("host-whitelist", new String[] {"all"});
 
-    if(apis) {
+    if (isApiEnabled(Apis.HTTP_RPC)) {
       // Write RPC port option
-      nodeConfig.addEmptyLine()
-          .addComment("RPC/GraphQL options")
+      nodeConfig
+          .addEmptyLine()
+          .addComment("HTTP RPC options")
 
           // RPC HTTP
           .addOption("rpc-http-enabled", true)
@@ -204,10 +205,16 @@ public class Node implements Generatable, ConfigNode, Verifiable {
           .addComment("HTTP RPC listening port")
           .addOption(RPC_HTTP.getKey(), RPC_HTTP.getPort(getSiblings(), this))
           .addComment("HTTP RPC activated APIs")
-          .addOption("rpc-http-api", new String[]{"ETH", "NET", "WEB3"})
+          .addOption("rpc-http-api", new String[] {"ETH", "NET", "WEB3"})
           .addComment("HTTP RPC cors")
-          .addOption("rpc-http-cors-origins", new String[]{"all"})
+          .addOption("rpc-http-cors-origins", new String[] {"all"});
+    }
 
+    if (isApiEnabled(Apis.WS_RPC)) {
+      // Write RPC port option
+      nodeConfig
+          .addEmptyLine()
+          .addComment("Websocket RPC options")
           // RPC WebSocket
           .addEmptyLine()
           .addOption("rpc-ws-enabled", true)
@@ -216,8 +223,14 @@ public class Node implements Generatable, ConfigNode, Verifiable {
           .addComment("Websocket RPC listening port")
           .addOption(RPC_WS.getKey(), RPC_WS.getPort(getSiblings(), this))
           .addComment("Websocket RPC activated APIs")
-          .addOption("rpc-ws-api", new String[]{"ETH", "NET", "WEB3"})
+          .addOption("rpc-ws-api", new String[] {"ETH", "NET", "WEB3"});
+    }
 
+    if (isApiEnabled(Apis.GRAPHQL)) {
+      // Write RPC port option
+      nodeConfig
+          .addEmptyLine()
+          .addComment("GRAPHQL options")
           // GraphQL
           .addEmptyLine()
           .addOption("graphql-http-enabled", true)
@@ -226,8 +239,14 @@ public class Node implements Generatable, ConfigNode, Verifiable {
           .addComment("GraphQL listening port")
           .addOption(GRAPHQL.getKey(), GRAPHQL.getPort(getSiblings(), this))
           .addComment("GraphQL cors")
-          .addOption("graphql-http-cors-origins", new String[]{"all"})
+          .addOption("graphql-http-cors-origins", new String[] {"all"});
+    }
 
+    if (isApiEnabled(Apis.METRICS)) {
+      // Write RPC port option
+      nodeConfig
+          .addEmptyLine()
+          .addComment("Metrics options")
           // Metrics
           .addEmptyLine()
           .addComment("Metrics options")
@@ -249,6 +268,10 @@ public class Node implements Generatable, ConfigNode, Verifiable {
     // #privacy-enabled=false
     // #privacy-precompiled-address=9
     // #privacy-marker-transaction-signing-key-file="./signerKey"
+  }
+
+  private boolean isApiEnabled(final Apis api) {
+    return apis.contains(api) || apis.contains(Apis.ALL);
   }
 
   @Override

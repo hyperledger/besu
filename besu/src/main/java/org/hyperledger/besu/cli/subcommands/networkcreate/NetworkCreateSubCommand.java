@@ -48,6 +48,7 @@ import picocli.CommandLine.ParentCommand;
 import picocli.CommandLine.Spec;
 
 @Command(
+    hidden = true, // Hidden during development
     name = COMMAND_NAME,
     description =
         "Network Creator subcommand intakes an initialization file and outputs the network"
@@ -107,7 +108,6 @@ public class NetworkCreateSubCommand implements Runnable {
           parentCommand.dataDir().resolve(DEFAULT_NETWORK_CREATE_TARGET_DIRECTORY).toAbsolutePath();
     }
 
-    // TODO handle exceptions
     try {
       final MapperAdapter mapper = MapperAdapter.getMapper(initFile.toURI().toURL());
       final Configuration initConfig = mapper.map(new TypeReference<>() {});
