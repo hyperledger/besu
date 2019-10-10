@@ -15,6 +15,7 @@
 
 package org.hyperledger.besu.ethereum.eth.sync.state;
 
+import org.hyperledger.besu.ethereum.core.Synchronizer.InSyncListener;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.util.Optional;
@@ -82,10 +83,5 @@ class InSyncTracker {
 
   private boolean isInSync(final long localChainHeight, final Optional<Long> otherChainHeight) {
     return isInSync(localChainHeight, otherChainHeight, syncTolerance);
-  }
-
-  @FunctionalInterface
-  public interface InSyncListener {
-    void onSyncStatusChanged(boolean newSyncStatus);
   }
 }

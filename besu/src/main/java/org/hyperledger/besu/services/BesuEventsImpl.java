@@ -68,11 +68,11 @@ public class BesuEventsImpl implements BesuEvents {
 
   @Override
   public long addSyncStatusListener(final SyncStatusListener syncStatusListener) {
-    return syncState.addSyncStatusListener(syncStatusListener);
+    return syncState.subscribeSyncStatus(syncStatusListener);
   }
 
   @Override
   public void removeSyncStatusListener(final long listenerIdentifier) {
-    syncState.removeSyncStatusListener(listenerIdentifier);
+    syncState.unsubscribeSyncStatus(listenerIdentifier);
   }
 }

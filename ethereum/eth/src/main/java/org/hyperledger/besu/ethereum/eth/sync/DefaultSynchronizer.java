@@ -34,7 +34,7 @@ import org.hyperledger.besu.plugin.data.SyncStatus;
 import org.hyperledger.besu.plugin.services.BesuEvents.SyncStatusListener;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.util.ExceptionUtils;
-import org.hyperledger.besu.util.Subscribers;
+import org.hyperledger.besu.util.Subscribers.Unsubscriber;
 
 import java.nio.file.Path;
 import java.time.Clock;
@@ -51,7 +51,6 @@ public class DefaultSynchronizer<C> implements Synchronizer {
   private final Optional<Pruner> maybePruner;
   private final SyncState syncState;
   private final AtomicBoolean running = new AtomicBoolean(false);
-  private final Subscribers<SyncStatusListener> syncStatusListeners = Subscribers.create();
   private final BlockPropagationManager<C> blockPropagationManager;
   private final Optional<FastSyncDownloader<C>> fastSyncDownloader;
   private final FullSyncDownloader<C> fullSyncDownloader;
@@ -126,7 +125,6 @@ public class DefaultSynchronizer<C> implements Synchronizer {
   public void start() {
     if (running.compareAndSet(false, true)) {
       LOG.info("Starting synchronizer.");
-      syncState.addSyncStatusListener(this::syncStatusCallback);
       blockPropagationManager.start();
       if (fastSyncDownloader.isPresent()) {
         fastSyncDownloader.get().start().whenComplete(this::handleFastSyncResult);
@@ -187,17 +185,23 @@ public class DefaultSynchronizer<C> implements Synchronizer {
   }
 
   @Override
-  public long observeSyncStatus(final SyncStatusListener listener) {
+  public long subscribeSyncStatus(final SyncStatusListener listener) {
     checkNotNull(listener);
-    return syncStatusListeners.subscribe(listener);
+    return syncState.subscribeSyncStatus(listener);
   }
 
   @Override
-  public boolean removeObserver(final long observerId) {
-    return syncStatusListeners.unsubscribe(observerId);
+  public boolean unsubscribeSyncStatus(final long subscriberId) {
+    return syncState.unsubscribeSyncStatus(subscriberId);
   }
 
-  private void syncStatusCallback(final SyncStatus status) {
-    syncStatusListeners.forEach(c -> c.onSyncStatusChanged(status));
+  @Override
+  public Unsubscriber subscribeInSync(final InSyncListener listener) {
+    return syncState.subscribeInSync(listener);
+  }
+
+  @Override
+  public Unsubscriber subscribeInSync(final InSyncListener listener, final long syncTolerance) {
+    return syncState.subscribeInSync(listener, syncTolerance);
   }
 }

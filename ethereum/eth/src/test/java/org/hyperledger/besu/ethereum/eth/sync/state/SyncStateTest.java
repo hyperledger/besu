@@ -34,6 +34,8 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
 import org.hyperledger.besu.ethereum.core.SyncStatus;
+import org.hyperledger.besu.ethereum.core.Synchronizer;
+import org.hyperledger.besu.ethereum.core.Synchronizer.InSyncListener;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.ChainState;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
@@ -41,7 +43,6 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
-import org.hyperledger.besu.ethereum.eth.sync.state.InSyncTracker.InSyncListener;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.plugin.services.BesuEvents.SyncStatusListener;
 import org.hyperledger.besu.util.Subscribers.Unsubscriber;
@@ -90,9 +91,9 @@ public class SyncStateTest {
     advanceLocalChain(OUR_CHAIN_HEAD_NUMBER);
 
     syncState = new SyncState(blockchain, ethPeers);
-    syncState.addInSyncListener(inSyncListener);
-    syncState.addInSyncListener(inSyncListenerExact, 0);
-    syncState.addSyncStatusListener(syncStatusListener);
+    syncState.subscribeInSync(inSyncListener);
+    syncState.subscribeInSync(inSyncListenerExact, 0);
+    syncState.subscribeSyncStatus(syncStatusListener);
   }
 
   @Test
@@ -233,7 +234,7 @@ public class SyncStateTest {
     setupOutOfSyncState();
 
     // Update to just within the default sync threshold
-    advanceLocalChain(TARGET_CHAIN_HEIGHT - SyncState.SYNC_TOLERANCE);
+    advanceLocalChain(TARGET_CHAIN_HEIGHT - Synchronizer.DEFAULT_IN_SYNC_TOLERANCE);
     // We should register as in-sync with default tolerance, out-of-sync with exact tolerance
     assertThat(syncState.isInSync()).isTrue();
     assertThat(syncState.isInSync(0)).isFalse();
@@ -241,7 +242,7 @@ public class SyncStateTest {
     verify(inSyncListenerExact, never()).onSyncStatusChanged(true);
 
     // Advance one more block
-    advanceLocalChain(TARGET_CHAIN_HEIGHT - SyncState.SYNC_TOLERANCE + 1);
+    advanceLocalChain(TARGET_CHAIN_HEIGHT - Synchronizer.DEFAULT_IN_SYNC_TOLERANCE + 1);
     // We should register as in-sync with default tolerance, out-of-sync with exact tolerance
     assertThat(syncState.isInSync()).isTrue();
     assertThat(syncState.isInSync(0)).isFalse();
@@ -263,7 +264,7 @@ public class SyncStateTest {
 
     // Add listener
     InSyncListener newListener = mock(InSyncListener.class);
-    syncState.addInSyncListener(newListener);
+    syncState.subscribeInSync(newListener);
     verify(newListener, times(1)).onSyncStatusChanged(false);
     verify(newListener, never()).onSyncStatusChanged(true);
 
@@ -277,7 +278,7 @@ public class SyncStateTest {
     // Fall out of sync
     updateChainState(
         syncTargetPeer.getEthPeer(),
-        TARGET_CHAIN_HEIGHT + SyncState.SYNC_TOLERANCE + 1L,
+        TARGET_CHAIN_HEIGHT + Synchronizer.DEFAULT_IN_SYNC_TOLERANCE + 1L,
         TARGET_DIFFICULTY.plus(10L));
     verify(newListener, times(2)).onSyncStatusChanged(false);
     verify(newListener, times(1)).onSyncStatusChanged(true);
@@ -288,9 +289,9 @@ public class SyncStateTest {
     setupOutOfSyncState();
 
     // Add listener
-    final long syncTolerance = SyncState.SYNC_TOLERANCE * 2;
+    final long syncTolerance = Synchronizer.DEFAULT_IN_SYNC_TOLERANCE * 2;
     InSyncListener newListener = mock(InSyncListener.class);
-    syncState.addInSyncListener(newListener, syncTolerance);
+    syncState.subscribeInSync(newListener, syncTolerance);
     verify(newListener, times(1)).onSyncStatusChanged(false);
     verify(newListener, never()).onSyncStatusChanged(true);
 
@@ -318,13 +319,13 @@ public class SyncStateTest {
 
     // Add listener
     InSyncListener newListener = mock(InSyncListener.class);
-    syncState.addInSyncListener(newListener);
+    syncState.subscribeInSync(newListener);
     verify(newListener, never()).onSyncStatusChanged(anyBoolean());
 
     // Fall out of sync
     updateChainState(
         syncTargetPeer.getEthPeer(),
-        TARGET_CHAIN_HEIGHT + SyncState.SYNC_TOLERANCE + 1L,
+        TARGET_CHAIN_HEIGHT + Synchronizer.DEFAULT_IN_SYNC_TOLERANCE + 1L,
         TARGET_DIFFICULTY.plus(10L));
     verify(newListener, times(1)).onSyncStatusChanged(false);
     verify(newListener, never()).onSyncStatusChanged(true);
@@ -337,7 +338,7 @@ public class SyncStateTest {
 
   @Test
   public void addInSyncListener_whileInSync_withDistinctSyncTolerance() {
-    final long syncTolerance = SyncState.SYNC_TOLERANCE * 2;
+    final long syncTolerance = Synchronizer.DEFAULT_IN_SYNC_TOLERANCE * 2;
     setupOutOfSyncState();
 
     // Catch all the way up
@@ -345,7 +346,7 @@ public class SyncStateTest {
 
     // Add listener
     InSyncListener newListener = mock(InSyncListener.class);
-    syncState.addInSyncListener(newListener, syncTolerance);
+    syncState.subscribeInSync(newListener, syncTolerance);
     verify(newListener, never()).onSyncStatusChanged(anyBoolean());
 
     // Fall out of sync
@@ -364,12 +365,12 @@ public class SyncStateTest {
 
   @Test
   public void removeInSyncListener_doesntReceiveSubsequentEvents() {
-    final long syncTolerance = SyncState.SYNC_TOLERANCE + 1L;
+    final long syncTolerance = Synchronizer.DEFAULT_IN_SYNC_TOLERANCE + 1L;
     setupOutOfSyncState();
 
     // Add listener
     InSyncListener newListener = mock(InSyncListener.class);
-    final Unsubscriber unsubscriber = syncState.addInSyncListener(newListener, syncTolerance);
+    final Unsubscriber unsubscriber = syncState.subscribeInSync(newListener, syncTolerance);
     verify(newListener).onSyncStatusChanged(false);
     verify(newListener, never()).onSyncStatusChanged(true);
 
@@ -400,14 +401,14 @@ public class SyncStateTest {
 
   @Test
   public void removeInSyncListener_addAdditionalListenerBeforeRemoving() {
-    final long syncTolerance = SyncState.SYNC_TOLERANCE + 1L;
+    final long syncTolerance = Synchronizer.DEFAULT_IN_SYNC_TOLERANCE + 1L;
     setupOutOfSyncState();
 
     // Add listener
     InSyncListener listenerToRemove = mock(InSyncListener.class);
     InSyncListener otherListener = mock(InSyncListener.class);
-    final Unsubscriber unsubscriber = syncState.addInSyncListener(listenerToRemove, syncTolerance);
-    syncState.addInSyncListener(otherListener, syncTolerance);
+    final Unsubscriber unsubscriber = syncState.subscribeInSync(listenerToRemove, syncTolerance);
+    syncState.subscribeInSync(otherListener, syncTolerance);
     // Events should be received
     verify(listenerToRemove).onSyncStatusChanged(false);
     verify(listenerToRemove, never()).onSyncStatusChanged(true);
@@ -447,13 +448,13 @@ public class SyncStateTest {
 
   @Test
   public void removeInSyncListener_addAdditionalListenerAfterRemoving() {
-    final long syncTolerance = SyncState.SYNC_TOLERANCE + 1L;
+    final long syncTolerance = Synchronizer.DEFAULT_IN_SYNC_TOLERANCE + 1L;
     setupOutOfSyncState();
 
     // Add listener
     InSyncListener listenerToRemove = mock(InSyncListener.class);
     InSyncListener otherListener = mock(InSyncListener.class);
-    final Unsubscriber unsubscriber = syncState.addInSyncListener(listenerToRemove, syncTolerance);
+    final Unsubscriber unsubscriber = syncState.subscribeInSync(listenerToRemove, syncTolerance);
     // Events should be received
     verify(listenerToRemove).onSyncStatusChanged(false);
     verify(listenerToRemove, never()).onSyncStatusChanged(true);
@@ -462,7 +463,7 @@ public class SyncStateTest {
     unsubscriber.unsubscribe();
 
     // Add new listener
-    syncState.addInSyncListener(otherListener, syncTolerance);
+    syncState.subscribeInSync(otherListener, syncTolerance);
     verify(otherListener).onSyncStatusChanged(false);
     verify(otherListener, never()).onSyncStatusChanged(true);
 
@@ -497,7 +498,7 @@ public class SyncStateTest {
   @Test
   public void shouldSendSyncStatusWhenBlockIsAddedToTheChain() {
     final SyncStatusListener syncStatusListener = mock(SyncStatusListener.class);
-    syncState.addSyncStatusListener(syncStatusListener);
+    syncState.subscribeSyncStatus(syncStatusListener);
 
     advanceLocalChain(OUR_CHAIN_HEAD_NUMBER + 1L);
 

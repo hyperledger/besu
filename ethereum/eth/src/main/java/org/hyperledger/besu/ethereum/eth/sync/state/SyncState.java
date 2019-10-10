@@ -18,10 +18,11 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.ChainHead;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.SyncStatus;
+import org.hyperledger.besu.ethereum.core.Synchronizer;
+import org.hyperledger.besu.ethereum.core.Synchronizer.InSyncListener;
 import org.hyperledger.besu.ethereum.eth.manager.ChainState;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
-import org.hyperledger.besu.ethereum.eth.sync.state.InSyncTracker.InSyncListener;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.plugin.services.BesuEvents.SyncStatusListener;
 import org.hyperledger.besu.util.Subscribers;
@@ -36,7 +37,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import com.google.common.annotations.VisibleForTesting;
 
 public class SyncState {
-  public static final long SYNC_TOLERANCE = 5;
+
   private final Blockchain blockchain;
   private final EthPeers ethPeers;
 
@@ -94,8 +95,8 @@ public class SyncState {
    * @param listener The callback to invoke when the sync status changes
    * @return An {@code Unsubscriber} that can be used to stop listening for these events
    */
-  public Unsubscriber addInSyncListener(final InSyncListener listener) {
-    return addInSyncListener(listener, SYNC_TOLERANCE);
+  public Unsubscriber subscribeInSync(final InSyncListener listener) {
+    return subscribeInSync(listener, Synchronizer.DEFAULT_IN_SYNC_TOLERANCE);
   }
 
   /**
@@ -109,7 +110,7 @@ public class SyncState {
    *     than or equal to the best estimated remote chain height.
    * @return An {@code Unsubscriber} that can be used to stop listening for these events
    */
-  public Unsubscriber addInSyncListener(final InSyncListener listener, final long syncTolerance) {
+  public Unsubscriber subscribeInSync(final InSyncListener listener, final long syncTolerance) {
     AtomicLong subscriptionId = new AtomicLong();
     inSyncTrackers.compute(
         syncTolerance,
@@ -123,10 +124,10 @@ public class SyncState {
           return inSyncTracker;
         });
 
-    return () -> removeInSyncListener(syncTolerance, subscriptionId.get());
+    return () -> unsubscribeInSync(syncTolerance, subscriptionId.get());
   }
 
-  private boolean removeInSyncListener(final long syncTolerance, final long subscriberId) {
+  private boolean unsubscribeInSync(final long syncTolerance, final long subscriberId) {
     final AtomicBoolean wasRemoved = new AtomicBoolean(false);
     inSyncTrackers.compute(
         syncTolerance,
@@ -145,12 +146,12 @@ public class SyncState {
     return wasRemoved.get();
   }
 
-  public long addSyncStatusListener(final SyncStatusListener observer) {
-    return syncStatusListeners.subscribe(observer);
+  public long subscribeSyncStatus(final SyncStatusListener listener) {
+    return syncStatusListeners.subscribe(listener);
   }
 
-  public void removeSyncStatusListener(final long listenerId) {
-    syncStatusListeners.unsubscribe(listenerId);
+  public boolean unsubscribeSyncStatus(final long listenerId) {
+    return syncStatusListeners.unsubscribe(listenerId);
   }
 
   public SyncStatus syncStatus() {
@@ -169,7 +170,7 @@ public class SyncState {
   }
 
   public boolean isInSync() {
-    return isInSync(SYNC_TOLERANCE);
+    return isInSync(Synchronizer.DEFAULT_IN_SYNC_TOLERANCE);
   }
 
   public boolean isInSync(final long syncTolerance) {
@@ -243,8 +244,10 @@ public class SyncState {
     Optional<Long> syncTargetHeight = getSyncTargetEstimatedHeight();
     Optional<Long> bestPeerHeight = getBestPeerEstimatedHeight();
     final boolean currentInSync =
-        InSyncTracker.isInSync(localChainHeight, syncTargetHeight, SYNC_TOLERANCE)
-            && InSyncTracker.isInSync(localChainHeight, bestPeerHeight, SYNC_TOLERANCE);
+        InSyncTracker.isInSync(
+                localChainHeight, syncTargetHeight, Synchronizer.DEFAULT_IN_SYNC_TOLERANCE)
+            && InSyncTracker.isInSync(
+                localChainHeight, bestPeerHeight, Synchronizer.DEFAULT_IN_SYNC_TOLERANCE);
 
     if (lastInSync.compareAndSet(!currentInSync, currentInSync)) {
       if (currentInSync) {

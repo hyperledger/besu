@@ -16,11 +16,15 @@ package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.plugin.data.SyncStatus;
 import org.hyperledger.besu.plugin.services.BesuEvents;
+import org.hyperledger.besu.util.Subscribers.Unsubscriber;
 
 import java.util.Optional;
 
 /** Provides an interface to block synchronization processes. */
 public interface Synchronizer {
+
+  // Default tolerance used to determine whether or not this node is "in sync"
+  long DEFAULT_IN_SYNC_TOLERANCE = 5;
 
   void start();
 
@@ -32,7 +36,35 @@ public interface Synchronizer {
    */
   Optional<SyncStatus> getSyncStatus();
 
-  long observeSyncStatus(final BesuEvents.SyncStatusListener listener);
+  long subscribeSyncStatus(final BesuEvents.SyncStatusListener listener);
 
-  boolean removeObserver(long observerId);
+  boolean unsubscribeSyncStatus(long observerId);
+
+  /**
+   * Add a listener that will be notified when this node's sync status changes. A node is considered
+   * in-sync if the local chain height is no more than {@code DEFAULT_IN_SYNC_TOLERANCE} behind the
+   * highest estimated remote chain height.
+   *
+   * @param listener The callback to invoke when the sync status changes
+   * @return An {@code Unsubscriber} that can be used to stop listening for these events
+   */
+  Unsubscriber subscribeInSync(final InSyncListener listener);
+
+  /**
+   * Add a listener that will be notified when this node's sync status changes. A node is considered
+   * in-sync if the local chain height is no more than {@code syncTolerance} behind the highest
+   * estimated remote chain height.
+   *
+   * @param listener The callback to invoke when the sync status changes
+   * @param syncTolerance The tolerance used to determine whether this node is in-sync. A value of
+   *     zero means that the node is considered in-sync only when the local chain height is greater
+   *     than or equal to the best estimated remote chain height.
+   * @return An {@code Unsubscriber} that can be used to stop listening for these events
+   */
+  Unsubscriber subscribeInSync(final InSyncListener listener, final long syncTolerance);
+
+  @FunctionalInterface
+  interface InSyncListener {
+    void onSyncStatusChanged(boolean newSyncStatus);
+  }
 }
