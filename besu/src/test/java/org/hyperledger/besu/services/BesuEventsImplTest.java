@@ -166,7 +166,7 @@ public class BesuEventsImplTest {
 
     assertThat(result.get()).isNotNull();
     assertThat(result.get().getBlockHeader()).isEqualTo(block.getHeader());
-    assertThat(result.get().getTotalDifficulty()).isEqualTo(UInt256.of(1));
+    assertThat(result.get().getTotalDifficulty()).isEqualTo(UInt256.of(2));
     serviceImpl.removeBlockPropagatedListener(id);
     result.set(null);
 
