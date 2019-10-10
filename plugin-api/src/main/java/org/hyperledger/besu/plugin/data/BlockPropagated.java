@@ -36,19 +36,4 @@ public interface BlockPropagated {
    */
   Quantity getTotalDifficulty();
 
-  static BlockPropagated of(
-      final Supplier<BlockHeader> blockHeaderSupplier,
-      final Supplier<Quantity> totalDifficultySupplier) {
-    return new BlockPropagated() {
-      @Override
-      public BlockHeader getBlockHeader() {
-        return blockHeaderSupplier.get();
-      }
-
-      @Override
-      public Quantity getTotalDifficulty() {
-        return totalDifficultySupplier.get();
-      }
-    };
-  }
 }
