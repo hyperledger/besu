@@ -42,7 +42,8 @@ public class BesuEventsImpl implements BesuEvents {
   public long addBlockPropagatedListener(final BlockPropagatedListener listener) {
     return blockBroadcaster.subscribePropagateNewBlocks(
         (block, totalDifficulty) ->
-            listener.onBlockPropagated(blockPropagatedContext(block::getHeader, () -> totalDifficulty)));
+            listener.onBlockPropagated(
+                blockPropagatedContext(block::getHeader, () -> totalDifficulty)));
   }
 
   @Override
