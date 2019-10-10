@@ -276,8 +276,8 @@ task checkMavenCoordianteCollisions {
         def coordinate = it.publishing?.publications[0].coordinates
         if (coordinates.containsKey(coordinate)) {
           throw new GradleException("Duplicate maven coordinates detected, ${coordinate} is used by " +
-          "both ${coordinates[coordinate]} and ${it.path}.\n" +
-          "Please add a `publishing` script block to one or both subprojects.")
+            "both ${coordinates[coordinate]} and ${it.path}.\n" +
+            "Please add a `publishing` script block to one or both subprojects.")
         }
         coordinates[coordinate] = it.path
       }
