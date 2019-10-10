@@ -212,10 +212,10 @@ public class ECIESEncryptionEngine {
 
     mac.doFinal(T, 0);
 
-    // Output the triple (C,T).
     final byte[] Output = new byte[len + T.length];
     System.arraycopy(C, 0, Output, 0, len);
     System.arraycopy(T, 0, Output, len, T.length);
+
     return Output;
   }
 
