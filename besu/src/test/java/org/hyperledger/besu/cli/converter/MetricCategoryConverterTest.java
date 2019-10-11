@@ -36,9 +36,14 @@ public class MetricCategoryConverterTest {
     metricCategoryConverter.addRegistryCategory(metricCategory);
     when(metricCategory.getName()).thenReturn("tesTCat2");
     metricCategoryConverter.addRegistryCategory(metricCategory);
-    boolean containsLowercase =
+
+    final boolean containsLowercase =
         metricCategoryConverter.getMetricCategories().keySet().stream()
             .anyMatch(testString -> testString.chars().anyMatch(Character::isLowerCase));
+
     assertThat(containsLowercase).isFalse();
+    assertThat(metricCategoryConverter.getMetricCategories().size()).isEqualTo(2);
+    assertThat(metricCategoryConverter.getMetricCategories().keySet())
+        .containsExactlyInAnyOrder("TESTCAT", "TESTCAT2");
   }
 }
