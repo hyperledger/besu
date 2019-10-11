@@ -62,7 +62,7 @@ class InSyncTracker {
     if (state != newState) {
       // Sync status has changed, notify subscribers
       state = newState;
-      state.ifKnown(value -> inSyncSubscribers.forEach(c -> c.onSyncStatusChanged(value)));
+      state.ifKnown(value -> inSyncSubscribers.forEach(c -> c.onInSyncStatusChange(value)));
     }
   }
 
@@ -87,7 +87,6 @@ class InSyncTracker {
 
   public synchronized long addInSyncListener(final InSyncListener subscriber) {
     // If our state is known, fire an event to let the listener know
-    state.ifKnown(subscriber::onSyncStatusChanged);
     return inSyncSubscribers.subscribe(subscriber);
   }
 

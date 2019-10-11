@@ -111,7 +111,7 @@ public class SyncStatusNodePermissioningProviderTest {
 
   @Test
   public void whenIsNotInSyncHasReachedSyncShouldReturnFalse() {
-    inSyncListener.onSyncStatusChanged(false);
+    inSyncListener.onInSyncStatusChange(false);
 
     assertThat(provider.hasReachedSync()).isFalse();
     assertThat(syncGauge.getAsInt()).isEqualTo(0);
@@ -119,7 +119,7 @@ public class SyncStatusNodePermissioningProviderTest {
 
   @Test
   public void whenInSyncHasReachedSyncShouldReturnTrue() {
-    inSyncListener.onSyncStatusChanged(true);
+    inSyncListener.onInSyncStatusChange(true);
 
     assertThat(provider.hasReachedSync()).isTrue();
     assertThat(syncGauge.getAsInt()).isEqualTo(1);
@@ -127,15 +127,15 @@ public class SyncStatusNodePermissioningProviderTest {
 
   @Test
   public void whenInSyncChangesFromTrueToFalseHasReachedSyncShouldReturnTrue() {
-    inSyncListener.onSyncStatusChanged(false);
+    inSyncListener.onInSyncStatusChange(false);
     assertThat(provider.hasReachedSync()).isFalse();
     assertThat(syncGauge.getAsInt()).isEqualTo(0);
 
-    inSyncListener.onSyncStatusChanged(true);
+    inSyncListener.onInSyncStatusChange(true);
     assertThat(provider.hasReachedSync()).isTrue();
     assertThat(syncGauge.getAsInt()).isEqualTo(1);
 
-    inSyncListener.onSyncStatusChanged(false);
+    inSyncListener.onInSyncStatusChange(false);
     assertThat(provider.hasReachedSync()).isTrue();
     assertThat(syncGauge.getAsInt()).isEqualTo(1);
   }
@@ -181,7 +181,7 @@ public class SyncStatusNodePermissioningProviderTest {
 
   @Test
   public void whenOutOfSyncNonBootnodeShouldNotBePermitted() {
-    inSyncListener.onSyncStatusChanged(false);
+    inSyncListener.onInSyncStatusChange(false);
     assertThat(provider.hasReachedSync()).isFalse();
     assertThat(syncGauge.getAsInt()).isEqualTo(0);
 
@@ -195,7 +195,7 @@ public class SyncStatusNodePermissioningProviderTest {
 
   @Test
   public void whenOutOfSyncBootnodeIncomingConnectionShouldNotBePermitted() {
-    inSyncListener.onSyncStatusChanged(false);
+    inSyncListener.onInSyncStatusChange(false);
     assertThat(provider.hasReachedSync()).isFalse();
     assertThat(syncGauge.getAsInt()).isEqualTo(0);
 
@@ -209,7 +209,7 @@ public class SyncStatusNodePermissioningProviderTest {
 
   @Test
   public void whenOutOfSyncBootnodeOutgoingConnectionShouldBePermitted() {
-    inSyncListener.onSyncStatusChanged(false);
+    inSyncListener.onInSyncStatusChange(false);
     assertThat(provider.hasReachedSync()).isFalse();
     assertThat(syncGauge.getAsInt()).isEqualTo(0);
 
@@ -223,7 +223,7 @@ public class SyncStatusNodePermissioningProviderTest {
 
   @Test
   public void whenHasSyncedIsPermittedShouldReturnTrue() {
-    inSyncListener.onSyncStatusChanged(true);
+    inSyncListener.onInSyncStatusChange(true);
     assertThat(provider.hasReachedSync()).isTrue();
     assertThat(syncGauge.getAsInt()).isEqualTo(1);
 
@@ -237,7 +237,7 @@ public class SyncStatusNodePermissioningProviderTest {
 
   @Test
   public void syncStatusPermissioningCheckShouldIgnoreEnodeURLDiscoveryPort() {
-    inSyncListener.onSyncStatusChanged(false);
+    inSyncListener.onInSyncStatusChange(false);
     assertThat(provider.hasReachedSync()).isFalse();
 
     final EnodeURL bootnode =

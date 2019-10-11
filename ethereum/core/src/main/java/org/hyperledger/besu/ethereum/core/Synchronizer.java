@@ -65,6 +65,6 @@ public interface Synchronizer {
 
   @FunctionalInterface
   interface InSyncListener {
-    void onSyncStatusChanged(boolean newSyncStatus);
+    void onInSyncStatusChange(boolean newSyncStatus);
   }
 }
