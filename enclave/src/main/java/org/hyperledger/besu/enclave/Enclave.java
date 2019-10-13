@@ -57,9 +57,9 @@ public class Enclave {
     final String url = enclaveUri.resolve("/upcheck").toString();
     final Request request = new Request.Builder().url(url).get().build();
 
-    try (Response response = client.newCall(request).execute()) {
+    try (final Response response = client.newCall(request).execute()) {
       return response.isSuccessful();
-    } catch (IOException e) {
+    } catch (final IOException e) {
       LOG.error("Enclave failed to execute upcheck");
       throw new IOException("Failed to perform upcheck", e);
     }
@@ -82,7 +82,7 @@ public class Enclave {
   }
 
   public PrivacyGroup[] findPrivacyGroup(final FindPrivacyGroupRequest content) {
-    Request request = buildPostRequest(JSON, content, "/findPrivacyGroup");
+    final Request request = buildPostRequest(JSON, content, "/findPrivacyGroup");
     return executePost(request, PrivacyGroup[].class);
   }
 

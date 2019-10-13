@@ -14,6 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
+import static org.apache.logging.log4j.LogManager.getLogger;
+
+import org.hyperledger.besu.enclave.Enclave;
+import org.hyperledger.besu.enclave.types.FindPrivacyGroupRequest;
+import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -26,16 +31,28 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionHandler;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
+import com.google.common.collect.Lists;
+import org.apache.logging.log4j.Logger;
+import org.bouncycastle.util.Arrays;
+
 public class PrivGetTransactionCount implements JsonRpcMethod {
+
+  private static final Logger LOG = getLogger();
 
   private final JsonRpcParameter parameters;
   private final PrivateTransactionHandler privateTransactionHandler;
+  private final Enclave enclave;
 
   public PrivGetTransactionCount(
       final JsonRpcParameter parameters,
-      final PrivateTransactionHandler privateTransactionHandler) {
+      final PrivateTransactionHandler privateTransactionHandler,
+      final Enclave enclave) {
     this.parameters = parameters;
     this.privateTransactionHandler = privateTransactionHandler;
+    this.enclave = enclave;
   }
 
   @Override
@@ -45,14 +62,56 @@ public class PrivGetTransactionCount implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequest request) {
-    if (request.getParamLength() != 2) {
+    if (request.getParamLength() == 2) {
+      final Address address = parameters.required(request.getParams(), 0, Address.class);
+      final String privacyGroupId = parameters.required(request.getParams(), 1, String.class);
+
+      final long nonce = privateTransactionHandler.getSenderNonce(address, privacyGroupId);
+      return new JsonRpcSuccessResponse(request.getId(), Quantity.create(nonce));
+    } else if (request.getParamLength() == 3) {
+      final Address address = parameters.required(request.getParams(), 0, Address.class);
+      final String privateFrom = parameters.required(request.getParams(), 1, String.class);
+      final String[] privateFor = parameters.required(request.getParams(), 2, String[].class);
+
+      try {
+        final long nonce = determineNonce(privateFrom, privateFor, address);
+        return new JsonRpcSuccessResponse(request.getId(), Quantity.create(nonce));
+      } catch (final Exception e) {
+        LOG.error(e.getMessage(), e);
+        return new JsonRpcErrorResponse(
+            request.getId(), JsonRpcError.GET_PRIVATE_TRANSACTION_NONCE_ERROR);
+      }
+    } else {
       return new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
     }
+  }
 
-    final Address address = parameters.required(request.getParams(), 0, Address.class);
-    final String privacyGroupId = parameters.required(request.getParams(), 1, String.class);
+  private long determineNonce(
+      final String privateFrom, final String[] privateFor, final Address address) {
 
-    final long nonce = privateTransactionHandler.getSenderNonce(address, privacyGroupId);
-    return new JsonRpcSuccessResponse(request.getId(), Quantity.create(nonce));
+    final String[] groupMembers = Arrays.append(privateFor, privateFrom);
+
+    final FindPrivacyGroupRequest request = new FindPrivacyGroupRequest(groupMembers);
+    final List<PrivacyGroup> matchingGroups = Lists.newArrayList(enclave.findPrivacyGroup(request));
+
+    final List<PrivacyGroup> legacyGroups =
+        matchingGroups.stream()
+            .filter(group -> group.getType() == PrivacyGroup.Type.LEGACY)
+            .collect(Collectors.toList());
+
+    if (legacyGroups.size() == 0) {
+      // the legacy group does not exist yet
+      return 0;
+    }
+
+    if (legacyGroups.size() != 1) {
+      throw new RuntimeException(
+          String.format(
+              "Found invalid number of privacy groups (%d), expected 1.", legacyGroups.size()));
+    }
+
+    final String privacyGroupId = legacyGroups.get(0).getPrivacyGroupId();
+
+    return privateTransactionHandler.getSenderNonce(address, privacyGroupId);
   }
 }

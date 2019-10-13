@@ -90,8 +90,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.permissioning.
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.permissioning.PermRemoveAccountsFromWhitelist;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.permissioning.PermRemoveNodesFromWhitelist;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea.EeaGetTransactionCount;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea.EeaPrivateNonceProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea.EeaSendRawTransaction;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivCreatePrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivDeletePrivacyGroup;
@@ -366,9 +364,7 @@ public class JsonRpcMethodsFactory {
       if (eea) {
         addMethods(
             enabledMethods,
-            new EeaSendRawTransaction(privateTransactionHandler, transactionPool, parameter),
-            new EeaGetTransactionCount(
-                parameter, new EeaPrivateNonceProvider(enclave, privateTransactionHandler)));
+            new EeaSendRawTransaction(privateTransactionHandler, transactionPool, parameter));
       }
       if (priv) {
         addMethods(
@@ -380,7 +376,10 @@ public class JsonRpcMethodsFactory {
                 new Enclave(privacyParameters.getEnclaveUri()), privacyParameters, parameter),
             new PrivFindPrivacyGroup(new Enclave(privacyParameters.getEnclaveUri()), parameter),
             new PrivGetPrivacyPrecompileAddress(privacyParameters),
-            new PrivGetTransactionCount(parameter, privateTransactionHandler),
+            new PrivGetTransactionCount(
+                parameter,
+                privateTransactionHandler,
+                new Enclave(privacyParameters.getEnclaveUri())),
             new PrivGetPrivateTransaction(blockchainQueries, enclave, parameter, privacyParameters),
             new PrivDistributeRawTransaction(
                 privateTransactionHandler, transactionPool, parameter));
