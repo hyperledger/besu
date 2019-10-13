@@ -39,13 +39,16 @@ public abstract class AbstractMiningCoordinator<
     implements BlockAddedObserver, MiningCoordinator {
 
   private static final Logger LOG = getLogger();
-  protected boolean isEnabled = false;
-  protected volatile Optional<M> currentRunningMiner = Optional.empty();
 
   private final Subscribers<MinedBlockObserver> minedBlockObservers = Subscribers.create();
   private final AbstractMinerExecutor<C, M> executor;
-  protected final Blockchain blockchain;
   private final SyncState syncState;
+  private final Blockchain blockchain;
+
+  private boolean isStarted = false;
+  private boolean isStopped = false;
+  private boolean isEnabled = false;
+  protected volatile Optional<M> currentRunningMiner = Optional.empty();
 
   public AbstractMiningCoordinator(
       final Blockchain blockchain,
@@ -68,15 +71,40 @@ public abstract class AbstractMiningCoordinator<
   }
 
   @Override
+  public void start() {
+    synchronized (this) {
+      if (isStarted) {
+        return;
+      }
+      isStarted = true;
+      maybeStartMining();
+    }
+  }
+
+  @Override
+  public void stop() {
+    synchronized (this) {
+      if (!isStarted || isStopped) {
+        return;
+      }
+      isStopped = true;
+      haltCurrentMiningOperation();
+    }
+  }
+
+  @Override
+  public void awaitStop() {
+    // TODO
+  }
+
+  @Override
   public void enable() {
     synchronized (this) {
       if (isEnabled) {
         return;
       }
-      if (syncState.isInSync()) {
-        startAsyncMiningOperation();
-      }
       isEnabled = true;
+      maybeStartMining();
     }
   }
 
@@ -86,8 +114,8 @@ public abstract class AbstractMiningCoordinator<
       if (!isEnabled) {
         return;
       }
-      haltCurrentMiningOperation();
       isEnabled = false;
+      haltCurrentMiningOperation();
     }
   }
 
@@ -98,40 +126,49 @@ public abstract class AbstractMiningCoordinator<
     }
   }
 
-  protected void startAsyncMiningOperation() {
+  private boolean maybeStartMining() {
+    if (!isStarted || isStopped || !isEnabled || !syncState.isInSync() || isRunning()) {
+      return false;
+    }
+
+    startAsyncMiningOperation();
+    return true;
+  }
+
+  private void startAsyncMiningOperation() {
     final BlockHeader parentHeader = blockchain.getChainHeadHeader();
     currentRunningMiner = Optional.of(executor.startAsyncMining(minedBlockObservers, parentHeader));
   }
 
-  protected void haltCurrentMiningOperation() {
-    currentRunningMiner.ifPresent(M::cancel);
+  private boolean haltCurrentMiningOperation() {
+    boolean halted = currentRunningMiner.isPresent();
+    currentRunningMiner.ifPresent(this::haltMiner);
     currentRunningMiner = Optional.empty();
+    return halted;
+  }
+
+  protected void haltMiner(final M miner) {
+    miner.cancel();
   }
 
   @Override
   public void onBlockAdded(final BlockAddedEvent event, final Blockchain blockchain) {
     synchronized (this) {
-      if (isEnabled
-          && event.isNewCanonicalHead()
+      if (event.isNewCanonicalHead()
           && newChainHeadInvalidatesMiningOperation(event.getBlock().getHeader())) {
         haltCurrentMiningOperation();
-        if (syncState.isInSync()) {
-          startAsyncMiningOperation();
-        }
+        maybeStartMining();
       }
     }
   }
 
-  public void inSyncChanged(final boolean inSync) {
+  void inSyncChanged(final boolean inSync) {
     synchronized (this) {
-      if (isEnabled && inSync) {
+      if (inSync && maybeStartMining()) {
         LOG.info("Resuming mining operations");
-        startAsyncMiningOperation();
-      } else if (!inSync) {
-        if (isEnabled) {
-          LOG.info("Pausing mining while behind chain head");
-        }
-        haltCurrentMiningOperation();
+      }
+      if (!inSync && haltCurrentMiningOperation()) {
+        LOG.info("Pausing mining while behind chain head");
       }
     }
   }

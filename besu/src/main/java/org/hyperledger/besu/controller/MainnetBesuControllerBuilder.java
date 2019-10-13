@@ -69,7 +69,7 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder<Void> {
     }
     addShutdownAction(
         () -> {
-          miningCoordinator.disable();
+          miningCoordinator.stop();
           minerThreadPool.shutdownNow();
           try {
             minerThreadPool.awaitTermination(5, TimeUnit.SECONDS);

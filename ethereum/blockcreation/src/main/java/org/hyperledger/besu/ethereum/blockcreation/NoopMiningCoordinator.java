@@ -35,6 +35,15 @@ public class NoopMiningCoordinator implements MiningCoordinator {
   }
 
   @Override
+  public void start() {}
+
+  @Override
+  public void stop() {}
+
+  @Override
+  public void awaitStop() {}
+
+  @Override
   public void enable() {}
 
   @Override

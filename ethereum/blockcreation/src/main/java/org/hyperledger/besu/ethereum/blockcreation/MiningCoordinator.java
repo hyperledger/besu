@@ -28,6 +28,12 @@ import java.util.Optional;
 
 public interface MiningCoordinator {
 
+  void start();
+
+  void stop();
+
+  void awaitStop();
+
   void enable();
 
   void disable();

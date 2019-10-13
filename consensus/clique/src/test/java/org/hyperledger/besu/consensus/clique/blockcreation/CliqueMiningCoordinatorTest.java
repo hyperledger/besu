@@ -108,6 +108,7 @@ public class CliqueMiningCoordinatorTest {
         new CliqueMiningCoordinator(blockChain, minerExecutor, syncState, miningTracker);
 
     coordinator.enable();
+    coordinator.start();
 
     verify(minerExecutor, times(1)).startAsyncMining(any(), any());
 
@@ -134,6 +135,7 @@ public class CliqueMiningCoordinatorTest {
         new CliqueMiningCoordinator(blockChain, minerExecutor, syncState, miningTracker);
 
     coordinator.enable();
+    coordinator.start();
 
     verify(minerExecutor, times(1)).startAsyncMining(any(), any());
 
@@ -164,6 +166,7 @@ public class CliqueMiningCoordinatorTest {
         new CliqueMiningCoordinator(blockChain, minerExecutor, syncState, miningTracker);
 
     coordinator.enable();
+    coordinator.start();
 
     verify(minerExecutor, times(1)).startAsyncMining(any(), any());
 
@@ -194,6 +197,7 @@ public class CliqueMiningCoordinatorTest {
         new CliqueMiningCoordinator(blockChain, minerExecutor, syncState, miningTracker);
 
     coordinator.enable();
+    coordinator.start();
 
     verify(minerExecutor, times(1)).startAsyncMining(any(), any());
 
@@ -219,6 +223,7 @@ public class CliqueMiningCoordinatorTest {
         new CliqueMiningCoordinator(blockChain, minerExecutor, syncState, miningTracker);
 
     coordinator.enable();
+    coordinator.start();
 
     verify(minerExecutor, times(1)).startAsyncMining(any(), any());
 

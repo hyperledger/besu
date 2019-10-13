@@ -193,7 +193,7 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder<IbftContext
     addShutdownAction(
         () -> {
           ibftProcessor.stop();
-          ibftMiningCoordinator.disable();
+          ibftMiningCoordinator.stop();
           processorExecutor.shutdownNow();
           try {
             processorExecutor.awaitTermination(5, TimeUnit.SECONDS);

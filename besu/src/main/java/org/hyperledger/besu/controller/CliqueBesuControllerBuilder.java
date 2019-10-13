@@ -110,7 +110,7 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder<CliqueCon
     miningCoordinator.enable();
     addShutdownAction(
         () -> {
-          miningCoordinator.disable();
+          miningCoordinator.stop();
           minerThreadPool.shutdownNow();
           try {
             minerThreadPool.awaitTermination(5, TimeUnit.SECONDS);

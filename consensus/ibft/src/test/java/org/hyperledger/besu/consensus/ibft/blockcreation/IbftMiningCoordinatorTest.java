@@ -61,11 +61,12 @@ public class IbftMiningCoordinatorTest {
   @Test
   public void enablesMining() {
     ibftMiningCoordinator.enable();
+    ibftMiningCoordinator.start();
   }
 
   @Test
-  public void disablesMining() {
-    ibftMiningCoordinator.disable();
+  public void stopsMining() {
+    ibftMiningCoordinator.stop();
     verify(ibftProcessor).stop();
   }
 

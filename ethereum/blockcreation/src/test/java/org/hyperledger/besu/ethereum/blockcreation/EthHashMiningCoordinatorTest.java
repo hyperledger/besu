@@ -68,7 +68,10 @@ public class EthHashMiningCoordinatorTest {
     final EthHashMiningCoordinator miningCoordinator =
         new EthHashMiningCoordinator(executionContext.getBlockchain(), executor, syncState);
 
-    miningCoordinator.enable(); // Must enable prior returning data
+    // Must enable prior returning data
+    miningCoordinator.enable();
+    miningCoordinator.start();
+
     assertThat(miningCoordinator.hashesPerSecond()).isEqualTo(hashRate1);
     assertThat(miningCoordinator.hashesPerSecond()).isEqualTo(hashRate1);
     assertThat(miningCoordinator.hashesPerSecond()).isEqualTo(hashRate3);

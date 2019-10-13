@@ -57,12 +57,21 @@ public class IbftMiningCoordinator implements MiningCoordinator, BlockAddedObser
   }
 
   @Override
+  public void start() {}
+
+  @Override
+  public void stop() {
+    ibftProcessor.stop();
+  }
+
+  @Override
+  public void awaitStop() {}
+
+  @Override
   public void enable() {}
 
   @Override
-  public void disable() {
-    ibftProcessor.stop();
-  }
+  public void disable() {}
 
   @Override
   public boolean isRunning() {
