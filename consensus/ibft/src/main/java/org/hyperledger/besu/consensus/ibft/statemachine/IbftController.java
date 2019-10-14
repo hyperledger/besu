@@ -34,7 +34,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import org.apache.logging.log4j.LogManager;
@@ -52,7 +51,8 @@ public class IbftController {
   private final MessageTracker duplicateMessageTracker;
   private final SynchronizerUpdater sychronizerUpdater;
 
-  private final AtomicBoolean started = new AtomicBoolean(false);
+  private boolean started = false;
+  private boolean stopped = false;
 
   public IbftController(
       final Blockchain blockchain,
@@ -71,10 +71,18 @@ public class IbftController {
     this.sychronizerUpdater = sychronizerUpdater;
   }
 
-  public void start() {
-    if (started.compareAndSet(false, true)) {
+  public synchronized void start() {
+    if (!started) {
+      started = true;
       startNewHeightManager(blockchain.getChainHeadHeader());
     }
+  }
+
+  public synchronized void stop() {
+    if (!isRunning()) {
+      return;
+    }
+    stopped = true;
   }
 
   public void handleMessageEvent(final IbftReceivedMessageEvent msg) {
@@ -126,8 +134,11 @@ public class IbftController {
     }
   }
 
-  private <P extends IbftMessage<?>> void consumeMessage(
+  private synchronized <P extends IbftMessage<?>> void consumeMessage(
       final Message message, final P ibftMessage, final Consumer<P> handleMessage) {
+    if (!isRunning()) {
+      return;
+    }
     LOG.trace("Received IBFT {} message", ibftMessage.getClass().getSimpleName());
     if (processMessage(ibftMessage, message)) {
       gossiper.send(message);
@@ -135,7 +146,10 @@ public class IbftController {
     }
   }
 
-  public void handleNewBlockEvent(final NewChainHead newChainHead) {
+  public synchronized void handleNewBlockEvent(final NewChainHead newChainHead) {
+    if (!isRunning()) {
+      return;
+    }
     final BlockHeader newBlockHeader = newChainHead.getNewChainHeadHeader();
     final BlockHeader currentMiningParent = currentHeightManager.getParentBlockHeader();
     LOG.debug(
@@ -167,7 +181,10 @@ public class IbftController {
     startNewHeightManager(newBlockHeader);
   }
 
-  public void handleBlockTimerExpiry(final BlockTimerExpiry blockTimerExpiry) {
+  public synchronized void handleBlockTimerExpiry(final BlockTimerExpiry blockTimerExpiry) {
+    if (!isRunning()) {
+      return;
+    }
     final ConsensusRoundIdentifier roundIndentifier = blockTimerExpiry.getRoundIndentifier();
     if (isMsgForCurrentHeight(roundIndentifier)) {
       currentHeightManager.handleBlockTimerExpiry(roundIndentifier);
@@ -179,7 +196,10 @@ public class IbftController {
     }
   }
 
-  public void handleRoundExpiry(final RoundExpiry roundExpiry) {
+  public synchronized void handleRoundExpiry(final RoundExpiry roundExpiry) {
+    if (!isRunning()) {
+      return;
+    }
     if (isMsgForCurrentHeight(roundExpiry.getView())) {
       currentHeightManager.roundExpired(roundExpiry);
     } else {
@@ -227,5 +247,9 @@ public class IbftController {
 
   private boolean isMsgForFutureChainHeight(final ConsensusRoundIdentifier roundIdentifier) {
     return roundIdentifier.getSequenceNumber() > currentHeightManager.getChainHeight();
+  }
+
+  private boolean isRunning() {
+    return started && !stopped;
   }
 }
