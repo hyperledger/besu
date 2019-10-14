@@ -153,6 +153,11 @@ public class ProtocolScheduleBuilder<C> {
             config.getEvmStackSize(),
             isRevertReasonEnabled));
     addProtocolSpec(
+            protocolSchedule,
+            config.getDefuseDifficultyBombBlockNumber(),
+            ClassicProtocolSpecs.defuseDifficultyBombDefinition(
+                    chainId, config.getContractSizeLimit(), config.getEvmStackSize()));
+    addProtocolSpec(
         protocolSchedule,
         config.getAtlantisBlockNumber(),
         ClassicProtocolSpecs.atlantisDefinition(

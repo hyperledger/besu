@@ -175,6 +175,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public OptionalLong getDefuseDifficultyBombBlockNumber() {
+    return getOptionalLong("ecip1041block");
+  }
+
+  @Override
   public OptionalLong getAtlantisBlockNumber() {
     return getOptionalLong("atlantisblock");
   }

@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetPrecompiledContractRegistrie
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSpecs;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
+import org.hyperledger.besu.ethereum.mainnet.MainnetDifficultyCalculators;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
 import org.hyperledger.besu.ethereum.mainnet.SpuriousDragonGasCalculator;
 import org.hyperledger.besu.ethereum.mainnet.contractvalidation.MaxCodeSizeRule;
@@ -47,6 +48,17 @@ public class ClassicProtocolSpecs {
   // failed, but the transaction itself succeeded.
   private static final ImmutableSet<Address> SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES =
       ImmutableSet.of(RIPEMD160_PRECOMPILE);
+
+  public static ProtocolSpecBuilder<Void> defuseDifficultyBombDefinition(
+          final Optional<BigInteger> chainId,
+          final OptionalInt contractSizeLimit,
+          final OptionalInt configStackSizeLimit) {
+    return MainnetProtocolSpecs.tangerineWhistleDefinition(contractSizeLimit, configStackSizeLimit)
+            .difficultyCalculator(MainnetDifficultyCalculators.DIFFICULTY_BOMB_REMOVED)
+            .transactionValidatorBuilder(
+                    gasCalculator -> new MainnetTransactionValidator(gasCalculator, true, chainId))
+            .name("DefuseDifficultyBomb");
+  }
 
   // TODO edwardmack, this is just a place holder definiton, REPLACE with real definition
   public static ProtocolSpecBuilder<Void> atlantisDefinition(

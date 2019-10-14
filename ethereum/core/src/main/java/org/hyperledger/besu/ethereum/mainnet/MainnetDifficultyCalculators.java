@@ -67,6 +67,17 @@ public abstract class MainnetDifficultyCalculators {
         return periodCount > 1 ? adjustForPeriod(periodCount, difficulty) : difficulty;
       };
 
+    public static DifficultyCalculator<Void> DIFFICULTY_BOMB_REMOVED =
+            (time, parent, protocolContext) -> {
+                final BigInteger parentDifficulty = difficulty(parent.getDifficulty());
+                final BigInteger difficulty =
+                        ensureMinimumDifficulty(
+                                BigInteger.valueOf(Math.max(1 - (time - parent.getTimestamp()) / 10, -99L))
+                                        .multiply(parentDifficulty.divide(DIFFICULTY_BOUND_DIVISOR))
+                                        .add(parentDifficulty));
+                return difficulty;
+            };
+
   public static DifficultyCalculator<Void> BYZANTIUM =
       (time, parent, protocolContext) ->
           calculateByzantiumDifficulty(time, parent, BYZANTIUM_FAKE_BLOCK_OFFSET);

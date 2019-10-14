@@ -64,6 +64,8 @@ public interface GenesisConfigOptions {
 
   Map<String, Object> asMap();
 
+  OptionalLong getDefuseDifficultyBombBlockNumber();
+
   OptionalLong getAtlantisBlockNumber();
 
   OptionalLong getAghartaBlockNumber();

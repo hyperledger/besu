@@ -2,19 +2,11 @@
   "config": {
     "chainId": 6,
     "homesteadBlock": 0,
-    "daoForkBlock": 1,
-    "daoForkSupport": true,
-    "eip150Block": 2,
+    "eip150Block": 0,
     "eip150Hash": "0x14c2283285a88fe5fce9bf5c573ab03d6616695d717b12a127188bcacfc743c4",
-    "eip155Block": 3,
-    "eip158Block": 7,
-    "eip160Block":7,
-    "byzantiumBlock": 7,
-    "constantinopleBlock": 8,
-    "constantinopleFixBlock": 9,
-    "istanbulBlock": 10,
-    "atlantisBlock": 11,
-    "aghartaBlock": 12,
+    "eip158Block": 0,
+    "eip160Block": 0,
+    "atlantisBlock": 716617,
     "clique":{
       "blockperiodseconds":15,
       "epochlength":30000
