@@ -158,7 +158,7 @@ public class SyncStateTest {
   @Test
   public void isInSync_syncTargetWithBetterHeight() {
     otherPeer.disconnect(DisconnectReason.REQUESTED);
-    setupSyncTarget();
+    setupOutOfSyncState();
 
     assertThat(syncState.syncTarget()).isPresent(); // Sanity check
     assertThat(syncState.isInSync()).isFalse();
@@ -172,7 +172,7 @@ public class SyncStateTest {
     otherPeer.disconnect(DisconnectReason.REQUESTED);
     final long heightDifference = 20L;
     advanceLocalChain(TARGET_CHAIN_HEIGHT + heightDifference);
-    setupSyncTarget();
+    setupOutOfSyncState();
 
     assertThat(syncState.syncTarget()).isPresent(); // Sanity check
     assertThat(syncState.isInSync()).isTrue();
@@ -181,7 +181,7 @@ public class SyncStateTest {
 
   @Test
   public void isInSync_outOfSyncWithTargetAndOutOfSyncWithBestPeer() {
-    setupSyncTarget();
+    setupOutOfSyncState();
     updateChainState(otherPeer.getEthPeer(), TARGET_CHAIN_HEIGHT, TARGET_DIFFICULTY);
     doReturn(Optional.of(otherPeer.getEthPeer())).when(ethPeers).bestPeerWithHeightEstimate();
 
@@ -194,7 +194,7 @@ public class SyncStateTest {
 
   @Test
   public void isInSync_inSyncWithTargetOutOfSyncWithBestPeer() {
-    setupSyncTarget();
+    setupOutOfSyncState();
     advanceLocalChain(TARGET_CHAIN_HEIGHT);
     final long heightDifference = 20L;
     updateChainState(
@@ -212,7 +212,7 @@ public class SyncStateTest {
 
   @Test
   public void isInSync_inSyncWithTargetInSyncWithBestPeer() {
-    setupSyncTarget();
+    setupOutOfSyncState();
     advanceLocalChain(TARGET_CHAIN_HEIGHT);
     updateChainState(otherPeer.getEthPeer(), TARGET_CHAIN_HEIGHT, TARGET_DIFFICULTY);
     doReturn(Optional.of(otherPeer.getEthPeer())).when(ethPeers).bestPeerWithHeightEstimate();
@@ -223,7 +223,7 @@ public class SyncStateTest {
 
   @Test
   public void shouldSwitchToInSyncWhenNoBetterPeersAreAvailable() {
-    setupSyncTarget();
+    setupOutOfSyncState();
 
     otherPeer.disconnect(DisconnectReason.REQUESTED);
     syncTargetPeer.disconnect(DisconnectReason.REQUESTED);
@@ -237,14 +237,14 @@ public class SyncStateTest {
 
   @Test
   public void shouldBecomeInSyncWhenOurBlockchainCatchesUp() {
-    setupSyncTarget();
+    setupOutOfSyncState();
 
     // Update to just within the default sync threshold
     advanceLocalChain(TARGET_CHAIN_HEIGHT - Synchronizer.DEFAULT_IN_SYNC_TOLERANCE);
     // We should register as in-sync with default tolerance, out-of-sync with exact tolerance
     assertThat(syncState.isInSync()).isTrue();
     assertThat(syncState.isInSync(0)).isFalse();
-    verify(inSyncListener, times(1)).onInSyncStatusChange(true);
+    verify(inSyncListener).onInSyncStatusChange(true);
     verify(inSyncListenerExact, never()).onInSyncStatusChange(true);
 
     // Advance one more block
@@ -261,12 +261,12 @@ public class SyncStateTest {
     assertThat(syncState.isInSync()).isTrue();
     assertThat(syncState.isInSync(0)).isTrue();
     verifyNoMoreInteractions(inSyncListener);
-    verify(inSyncListenerExact, times(1)).onInSyncStatusChange(true);
+    verify(inSyncListenerExact).onInSyncStatusChange(true);
   }
 
   @Test
   public void addInSyncListener_whileOutOfSync() {
-    setupSyncTarget();
+    setupOutOfSyncState();
 
     // Add listener
     InSyncListener newListener = mock(InSyncListener.class);
@@ -277,22 +277,24 @@ public class SyncStateTest {
     // Catch all the way up
     advanceLocalChain(TARGET_CHAIN_HEIGHT);
 
-    // We should register as in-sync
-    verify(newListener, times(1)).onInSyncStatusChange(true);
-    verify(newListener, never()).onInSyncStatusChange(false);
-
     // Fall out of sync
     updateChainState(
         syncTargetPeer.getEthPeer(),
         TARGET_CHAIN_HEIGHT + Synchronizer.DEFAULT_IN_SYNC_TOLERANCE + 1L,
         TARGET_DIFFICULTY.plus(10L));
-    verify(newListener, times(1)).onInSyncStatusChange(false);
-    verify(newListener, times(1)).onInSyncStatusChange(true);
+
+    final ArgumentCaptor<Boolean> inSyncEventCaptor = ArgumentCaptor.forClass(Boolean.class);
+    verify(newListener, times(3)).onInSyncStatusChange(inSyncEventCaptor.capture());
+
+    final List<Boolean> syncChanges = inSyncEventCaptor.getAllValues();
+    assertThat(syncChanges.get(0)).isEqualTo(false);
+    assertThat(syncChanges.get(1)).isEqualTo(true);
+    assertThat(syncChanges.get(2)).isEqualTo(false);
   }
 
   @Test
   public void addInSyncListener_whileOutOfSync_withDistinctSyncTolerance() {
-    setupSyncTarget();
+    setupOutOfSyncState();
 
     // Add listener
     final long syncTolerance = Synchronizer.DEFAULT_IN_SYNC_TOLERANCE * 2;
@@ -304,22 +306,24 @@ public class SyncStateTest {
     // Catch all the way up
     advanceLocalChain(TARGET_CHAIN_HEIGHT);
 
-    // We should register as in-sync
-    verify(newListener, times(1)).onInSyncStatusChange(true);
-    verify(newListener, never()).onInSyncStatusChange(false);
-
     // Fall out of sync
     updateChainState(
         syncTargetPeer.getEthPeer(),
         TARGET_CHAIN_HEIGHT + syncTolerance + 1L,
         TARGET_DIFFICULTY.plus(10L));
-    verify(newListener, times(1)).onInSyncStatusChange(false);
-    verify(newListener, times(1)).onInSyncStatusChange(true);
+
+    final ArgumentCaptor<Boolean> inSyncEventCaptor = ArgumentCaptor.forClass(Boolean.class);
+    verify(newListener, times(3)).onInSyncStatusChange(inSyncEventCaptor.capture());
+
+    final List<Boolean> syncChanges = inSyncEventCaptor.getAllValues();
+    assertThat(syncChanges.get(0)).isEqualTo(false);
+    assertThat(syncChanges.get(1)).isEqualTo(true);
+    assertThat(syncChanges.get(2)).isEqualTo(false);
   }
 
   @Test
   public void addInSyncListener_whileInSync() {
-    setupSyncTarget();
+    setupOutOfSyncState();
     // Catch all the way up
     advanceLocalChain(TARGET_CHAIN_HEIGHT);
 
@@ -333,19 +337,19 @@ public class SyncStateTest {
         syncTargetPeer.getEthPeer(),
         TARGET_CHAIN_HEIGHT + Synchronizer.DEFAULT_IN_SYNC_TOLERANCE + 1L,
         TARGET_DIFFICULTY.plus(10L));
-    verify(newListener, times(1)).onInSyncStatusChange(false);
+    verify(newListener).onInSyncStatusChange(false);
     verify(newListener, never()).onInSyncStatusChange(true);
 
     // Catch up
     advanceLocalChain(TARGET_CHAIN_HEIGHT + 1L);
-    verify(newListener, times(1)).onInSyncStatusChange(false);
-    verify(newListener, times(1)).onInSyncStatusChange(true);
+    verify(newListener).onInSyncStatusChange(false);
+    verify(newListener).onInSyncStatusChange(true);
   }
 
   @Test
   public void addInSyncListener_whileInSync_withDistinctSyncTolerance() {
     final long syncTolerance = Synchronizer.DEFAULT_IN_SYNC_TOLERANCE * 2;
-    setupSyncTarget();
+    setupOutOfSyncState();
 
     // Catch all the way up
     advanceLocalChain(TARGET_CHAIN_HEIGHT);
@@ -361,19 +365,19 @@ public class SyncStateTest {
         syncTargetPeer.getEthPeer(),
         TARGET_CHAIN_HEIGHT + syncTolerance + 1L,
         TARGET_DIFFICULTY.plus(10L));
-    verify(newListener, times(1)).onInSyncStatusChange(false);
+    verify(newListener).onInSyncStatusChange(false);
     verify(newListener, never()).onInSyncStatusChange(true);
 
     // Catch up
     advanceLocalChain(TARGET_CHAIN_HEIGHT + 1L);
-    verify(newListener, times(1)).onInSyncStatusChange(false);
-    verify(newListener, times(1)).onInSyncStatusChange(true);
+    verify(newListener).onInSyncStatusChange(false);
+    verify(newListener).onInSyncStatusChange(true);
   }
 
   @Test
   public void removeInSyncListener_doesntReceiveSubsequentEvents() {
     final long syncTolerance = Synchronizer.DEFAULT_IN_SYNC_TOLERANCE + 1L;
-    setupSyncTarget();
+    setupOutOfSyncState();
 
     // Add listener
     InSyncListener newListener = mock(InSyncListener.class);
@@ -395,18 +399,18 @@ public class SyncStateTest {
         TARGET_CHAIN_HEIGHT + syncTolerance + 1L,
         TARGET_DIFFICULTY.plus(10L));
 
-    // We should not register the in-sync event
+    // We should not register the sync event
     verify(newListener, never()).onInSyncStatusChange(anyBoolean());
 
     // Other listeners should keep running
-    verify(inSyncListenerExact, times(1)).onInSyncStatusChange(false);
-    verify(inSyncListenerExact, times(1)).onInSyncStatusChange(true);
+    verify(inSyncListenerExact, times(2)).onInSyncStatusChange(false);
+    verify(inSyncListenerExact).onInSyncStatusChange(true);
   }
 
   @Test
   public void removeInSyncListener_addAdditionalListenerBeforeRemoving() {
     final long syncTolerance = Synchronizer.DEFAULT_IN_SYNC_TOLERANCE + 1L;
-    setupSyncTarget();
+    setupOutOfSyncState();
 
     // Add listener
     InSyncListener listenerToRemove = mock(InSyncListener.class);
@@ -422,9 +426,6 @@ public class SyncStateTest {
 
     // We should not register the in-sync event
     verify(listenerToRemove, never()).onInSyncStatusChange(anyBoolean());
-    // Other listener should receive events
-    verify(otherListener, times(1)).onInSyncStatusChange(true);
-    verify(otherListener, never()).onInSyncStatusChange(false);
 
     // Fall out of sync
     updateChainState(
@@ -434,19 +435,24 @@ public class SyncStateTest {
 
     // We should not register the in-sync event
     verify(listenerToRemove, never()).onInSyncStatusChange(anyBoolean());
-    // Other listener should receive events
-    verify(otherListener, times(1)).onInSyncStatusChange(true);
-    verify(otherListener, times(1)).onInSyncStatusChange(false);
+
+    final ArgumentCaptor<Boolean> inSyncEventCaptor = ArgumentCaptor.forClass(Boolean.class);
+    verify(otherListener, times(3)).onInSyncStatusChange(inSyncEventCaptor.capture());
+
+    final List<Boolean> syncChanges = inSyncEventCaptor.getAllValues();
+    assertThat(syncChanges.get(0)).isEqualTo(false);
+    assertThat(syncChanges.get(1)).isEqualTo(true);
+    assertThat(syncChanges.get(2)).isEqualTo(false);
 
     // Other listeners should keep running
-    verify(inSyncListenerExact, times(1)).onInSyncStatusChange(true);
-    verify(inSyncListenerExact, times(1)).onInSyncStatusChange(false);
+    verify(inSyncListenerExact).onInSyncStatusChange(true);
+    verify(inSyncListenerExact, times(2)).onInSyncStatusChange(false);
   }
 
   @Test
   public void removeInSyncListener_addAdditionalListenerAfterRemoving() {
     final long syncTolerance = Synchronizer.DEFAULT_IN_SYNC_TOLERANCE + 1L;
-    setupSyncTarget();
+    setupOutOfSyncState();
 
     // Add listener
     InSyncListener listenerToRemove = mock(InSyncListener.class);
@@ -462,11 +468,8 @@ public class SyncStateTest {
     // Catch all the way up
     advanceLocalChain(TARGET_CHAIN_HEIGHT);
 
-    // We should not register the in-sync event
+    // We should not register the sync event
     verify(listenerToRemove, never()).onInSyncStatusChange(anyBoolean());
-    // Other listener should receive events
-    verify(otherListener, times(1)).onInSyncStatusChange(true);
-    verify(otherListener, never()).onInSyncStatusChange(false);
 
     // Fall out of sync
     updateChainState(
@@ -474,15 +477,20 @@ public class SyncStateTest {
         TARGET_CHAIN_HEIGHT + syncTolerance + 1L,
         TARGET_DIFFICULTY.plus(10L));
 
-    // We should not register the in-sync event
+    // We should not register the sync event
     verify(listenerToRemove, never()).onInSyncStatusChange(anyBoolean());
-    // Other listener should receive events
-    verify(otherListener, times(1)).onInSyncStatusChange(true);
-    verify(otherListener, times(1)).onInSyncStatusChange(false);
+
+    final ArgumentCaptor<Boolean> inSyncEventCaptor = ArgumentCaptor.forClass(Boolean.class);
+    verify(otherListener, times(3)).onInSyncStatusChange(inSyncEventCaptor.capture());
+
+    final List<Boolean> syncChanges = inSyncEventCaptor.getAllValues();
+    assertThat(syncChanges.get(0)).isEqualTo(false);
+    assertThat(syncChanges.get(1)).isEqualTo(true);
+    assertThat(syncChanges.get(2)).isEqualTo(false);
 
     // Other listeners should keep running
-    verify(inSyncListenerExact, times(1)).onInSyncStatusChange(false);
-    verify(inSyncListenerExact, times(1)).onInSyncStatusChange(true);
+    verify(inSyncListenerExact, times(2)).onInSyncStatusChange(false);
+    verify(inSyncListenerExact).onInSyncStatusChange(true);
   }
 
   @Test
@@ -565,8 +573,10 @@ public class SyncStateTest {
     return mockedPeer;
   }
 
-  private void setupSyncTarget() {
+  private void setupOutOfSyncState() {
     syncState.setSyncTarget(syncTargetPeer.getEthPeer(), blockchain.getGenesisBlock().getHeader());
+    verify(inSyncListener).onInSyncStatusChange(false);
+    verify(inSyncListenerExact).onInSyncStatusChange(false);
   }
 
   private void advanceLocalChain(final long newChainHeight) {

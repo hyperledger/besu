@@ -18,7 +18,6 @@ package org.hyperledger.besu.ethereum.eth.sync.state;
 import org.hyperledger.besu.ethereum.chain.ChainHead;
 import org.hyperledger.besu.ethereum.core.Synchronizer.InSyncListener;
 import org.hyperledger.besu.ethereum.eth.manager.ChainHeadEstimate;
-import org.hyperledger.besu.util.Subscribers;
 
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -29,19 +28,20 @@ import java.util.function.Consumer;
  * no events will be emitted to any listeners.
  */
 class InSyncTracker {
-  private volatile InSyncState state = InSyncState.UNKNOWN;
+  private InSyncState state = InSyncState.UNKNOWN;
   // If the local chain is no more than {@code syncTolerance} behind the estimated highest chain,
   // then the tracker considers this local node to be in sync
   private final long syncTolerance;
 
-  private final Subscribers<InSyncListener> inSyncSubscribers = Subscribers.create();
+  private final InSyncListener listener;
 
-  private InSyncTracker(final long syncTolerance) {
+  private InSyncTracker(final InSyncListener listener, final long syncTolerance) {
+    this.listener = listener;
     this.syncTolerance = syncTolerance;
   }
 
-  public static InSyncTracker create(final long syncTolerance) {
-    return new InSyncTracker(syncTolerance);
+  public static InSyncTracker create(final InSyncListener listener, final long syncTolerance) {
+    return new InSyncTracker(listener, syncTolerance);
   }
 
   public static boolean isInSync(
@@ -62,7 +62,7 @@ class InSyncTracker {
     if (state != newState) {
       // Sync status has changed, notify subscribers
       state = newState;
-      state.ifKnown(value -> inSyncSubscribers.forEach(c -> c.onInSyncStatusChange(value)));
+      state.ifKnown(listener::onInSyncStatusChange);
     }
   }
 
@@ -83,19 +83,6 @@ class InSyncTracker {
     }
     // Otherwise, if either peer is in sync, we're in sync
     return inSyncWithSyncTarget.or(() -> inSyncWithBestPeer);
-  }
-
-  public synchronized long addInSyncListener(final InSyncListener subscriber) {
-    // If our state is known, fire an event to let the listener know
-    return inSyncSubscribers.subscribe(subscriber);
-  }
-
-  public boolean removeInSyncListener(final long subscriptionId) {
-    return inSyncSubscribers.unsubscribe(subscriptionId);
-  }
-
-  public int getListenerCount() {
-    return inSyncSubscribers.getSubscriberCount();
   }
 
   private boolean isInSync(final ChainHead localChain, final ChainHeadEstimate remoteChain) {

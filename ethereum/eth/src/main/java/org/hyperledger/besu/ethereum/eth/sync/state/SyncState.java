@@ -28,13 +28,12 @@ import org.hyperledger.besu.plugin.services.BesuEvents.SyncStatusListener;
 import org.hyperledger.besu.util.Subscribers;
 import org.hyperledger.besu.util.Subscribers.Unsubscriber;
 
-import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 
 import com.google.common.annotations.VisibleForTesting;
+import io.vertx.core.impl.ConcurrentHashSet;
 
 public class SyncState {
 
@@ -42,7 +41,7 @@ public class SyncState {
   private final EthPeers ethPeers;
 
   // A set of sync status trackers, organized by sync tolerance
-  private final Map<Long, InSyncTracker> inSyncTrackers = new ConcurrentHashMap<>();
+  private final Set<InSyncTracker> inSyncTrackers = new ConcurrentHashSet<>();
   private final Subscribers<SyncStatusListener> syncStatusListeners = Subscribers.create();
   private volatile long chainHeightListenerId;
   private volatile Optional<SyncTarget> syncTarget = Optional.empty();
@@ -111,39 +110,10 @@ public class SyncState {
    * @return An {@code Unsubscriber} that can be used to stop listening for these events
    */
   public Unsubscriber subscribeInSync(final InSyncListener listener, final long syncTolerance) {
-    AtomicLong subscriptionId = new AtomicLong();
-    inSyncTrackers.compute(
-        syncTolerance,
-        (key, inSyncTracker) -> {
-          if (inSyncTracker == null) {
-            inSyncTracker = InSyncTracker.create(syncTolerance);
-            inSyncTracker.checkState(
-                getLocalChainHead(), getSyncTargetChainHead(), getBestPeerChainHead());
-          }
-          subscriptionId.set(inSyncTracker.addInSyncListener(listener));
-          return inSyncTracker;
-        });
+    final InSyncTracker inSyncTracker = InSyncTracker.create(listener, syncTolerance);
+    inSyncTrackers.add(inSyncTracker);
 
-    return () -> unsubscribeInSync(syncTolerance, subscriptionId.get());
-  }
-
-  private boolean unsubscribeInSync(final long syncTolerance, final long subscriberId) {
-    final AtomicBoolean wasRemoved = new AtomicBoolean(false);
-    inSyncTrackers.compute(
-        syncTolerance,
-        (key, inSyncTracker) -> {
-          if (inSyncTracker == null) {
-            // We don't have any subscribers at this tolerance level
-            return null;
-          }
-          wasRemoved.set(inSyncTracker.removeInSyncListener(subscriberId));
-          if (inSyncTracker.getListenerCount() == 0) {
-            // Drop this InSyncListener since no one is listening
-            return null;
-          }
-          return inSyncTracker;
-        });
-    return wasRemoved.get();
+    return () -> inSyncTrackers.remove(inSyncTracker);
   }
 
   public long subscribeSyncStatus(final SyncStatusListener listener) {
@@ -256,7 +226,6 @@ public class SyncState {
     }
 
     inSyncTrackers.forEach(
-        (tolerance, syncTracker) ->
-            syncTracker.checkState(localChain, syncTargetChain, bestPeerChain));
+        (syncTracker) -> syncTracker.checkState(localChain, syncTargetChain, bestPeerChain));
   }
 }
