@@ -8,9 +8,7 @@
     "eip150Hash": "0x2086799aeebeae135c246c65021c82b4e15a2c451340993aacfd2751886514f0",
     "eip155Block": 2675000,
     "eip158Block": 2675000,
-    "byzantiumBlock": 4370000,
-    "constantinopleBlock": 7280000,
-    "constantinopleFixBlock": 7280000,
+    "ecip1041Block": 5900000,
     "atlantisBlock": 8772000,
     "aghartaBlock": 9200000,
     "ethash": {
