@@ -17,6 +17,7 @@ package org.hyperledger.besu.cli.config;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.CLASSIC_BOOTSTRAP_NODES;
 import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.GOERLI_BOOTSTRAP_NODES;
+import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.KOTTI_BOOTSTRAP_NODES;
 import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.MAINNET_BOOTSTRAP_NODES;
 import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.RINKEBY_BOOTSTRAP_NODES;
 import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.ROPSTEN_BOOTSTRAP_NODES;
@@ -41,12 +42,14 @@ public class EthNetworkConfig {
   public static final BigInteger GOERLI_NETWORK_ID = BigInteger.valueOf(5);
   public static final BigInteger DEV_NETWORK_ID = BigInteger.valueOf(2018);
   public static final BigInteger CLASSIC_NETWORK_ID = BigInteger.valueOf(1);
+  public static final BigInteger KOTTI_NETWORK_ID = BigInteger.valueOf(6);
   private static final String MAINNET_GENESIS = "/mainnet.json";
   private static final String ROPSTEN_GENESIS = "/ropsten.json";
   private static final String RINKEBY_GENESIS = "/rinkeby.json";
   private static final String GOERLI_GENESIS = "/goerli.json";
   private static final String DEV_GENESIS = "/dev.json";
   private static final String CLASSIC_GENESIS = "/classic.json";
+  private static final String KOTTI_GENESIS = "/kotti.json";
   private final String genesisConfig;
   private final BigInteger networkId;
   private final List<EnodeURL> bootNodes;
@@ -119,6 +122,9 @@ public class EthNetworkConfig {
       case CLASSIC:
         return new EthNetworkConfig(
             jsonConfig(CLASSIC_GENESIS), CLASSIC_NETWORK_ID, CLASSIC_BOOTSTRAP_NODES);
+      case KOTTI:
+        return new EthNetworkConfig(
+            jsonConfig(KOTTI_GENESIS), KOTTI_NETWORK_ID, KOTTI_BOOTSTRAP_NODES);
       case MAINNET:
       default:
         return new EthNetworkConfig(
