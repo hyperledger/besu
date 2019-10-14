@@ -133,7 +133,7 @@ public class EnclaveTest {
     assertThat(privacyGroupResponse.getPrivacyGroupId()).isNotNull();
     assertThat(privacyGroupResponse.getName()).isEqualTo(name);
     assertThat(privacyGroupResponse.getDescription()).isEqualTo(description);
-    assertThat(privacyGroupResponse.getType()).isEqualByComparingTo(PrivacyGroup.Type.PANTHEON);
+    assertThat(privacyGroupResponse.getType()).isEqualByComparingTo(PrivacyGroup.Type.BESU);
 
     final String response =
         enclave.deletePrivacyGroup(
@@ -157,7 +157,7 @@ public class EnclaveTest {
     assertThat(privacyGroupResponse.getPrivacyGroupId()).isNotNull();
     assertThat(privacyGroupResponse.getName()).isEqualTo(name);
     assertThat(privacyGroupResponse.getDescription()).isEqualTo(description);
-    assertThat(privacyGroupResponse.getType()).isEqualTo(PrivacyGroup.Type.PANTHEON);
+    assertThat(privacyGroupResponse.getType()).isEqualTo(PrivacyGroup.Type.BESU);
 
     FindPrivacyGroupRequest findPrivacyGroupRequest =
         new FindPrivacyGroupRequest(publicKeys.toArray(new String[0]));

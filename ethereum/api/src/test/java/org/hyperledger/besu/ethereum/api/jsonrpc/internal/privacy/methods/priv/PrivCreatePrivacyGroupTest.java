@@ -58,7 +58,7 @@ public class PrivCreatePrivacyGroupTest {
   public void verifyCreatePrivacyGroup() {
     final String expected = "a wonderful group";
     final PrivacyGroup privacyGroup =
-        new PrivacyGroup(expected, PrivacyGroup.Type.PANTHEON, NAME, DESCRIPTION, ADDRESSES);
+        new PrivacyGroup(expected, PrivacyGroup.Type.BESU, NAME, DESCRIPTION, ADDRESSES);
     when(enclave.createPrivacyGroup(any(CreatePrivacyGroupRequest.class))).thenReturn(privacyGroup);
     when(privacyParameters.getEnclavePublicKey()).thenReturn(FROM);
 
@@ -84,7 +84,7 @@ public class PrivCreatePrivacyGroupTest {
   public void verifyCreatePrivacyGroupWithoutDescription() {
     final String expected = "a wonderful group";
     final PrivacyGroup privacyGroup =
-        new PrivacyGroup(expected, PrivacyGroup.Type.PANTHEON, NAME, DESCRIPTION, ADDRESSES);
+        new PrivacyGroup(expected, PrivacyGroup.Type.BESU, NAME, DESCRIPTION, ADDRESSES);
     when(enclave.createPrivacyGroup(any(CreatePrivacyGroupRequest.class))).thenReturn(privacyGroup);
     when(privacyParameters.getEnclavePublicKey()).thenReturn(FROM);
 
@@ -118,7 +118,7 @@ public class PrivCreatePrivacyGroupTest {
   public void verifyCreatePrivacyGroupWithoutName() {
     final String expected = "a wonderful group";
     final PrivacyGroup privacyGroup =
-        new PrivacyGroup(expected, PrivacyGroup.Type.PANTHEON, NAME, DESCRIPTION, ADDRESSES);
+        new PrivacyGroup(expected, PrivacyGroup.Type.BESU, NAME, DESCRIPTION, ADDRESSES);
     when(enclave.createPrivacyGroup(any(CreatePrivacyGroupRequest.class))).thenReturn(privacyGroup);
     when(privacyParameters.getEnclavePublicKey()).thenReturn(FROM);
 
@@ -152,7 +152,7 @@ public class PrivCreatePrivacyGroupTest {
   public void verifyCreatePrivacyGroupWithoutOptionalParams() {
     final String expected = "a wonderful group";
     final PrivacyGroup privacyGroup =
-        new PrivacyGroup(expected, PrivacyGroup.Type.PANTHEON, NAME, DESCRIPTION, ADDRESSES);
+        new PrivacyGroup(expected, PrivacyGroup.Type.BESU, NAME, DESCRIPTION, ADDRESSES);
     when(enclave.createPrivacyGroup(any(CreatePrivacyGroupRequest.class))).thenReturn(privacyGroup);
     when(privacyParameters.getEnclavePublicKey()).thenReturn(FROM);
 
@@ -183,7 +183,7 @@ public class PrivCreatePrivacyGroupTest {
 
     final String expected = "a wonderful group";
     final PrivacyGroup privacyGroup =
-        new PrivacyGroup(expected, PrivacyGroup.Type.PANTHEON, NAME, DESCRIPTION, ADDRESSES);
+        new PrivacyGroup(expected, PrivacyGroup.Type.BESU, NAME, DESCRIPTION, ADDRESSES);
     when(enclave.createPrivacyGroup(any(CreatePrivacyGroupRequest.class))).thenReturn(privacyGroup);
     when(privacyParameters.getEnclavePublicKey()).thenReturn(FROM);
 
