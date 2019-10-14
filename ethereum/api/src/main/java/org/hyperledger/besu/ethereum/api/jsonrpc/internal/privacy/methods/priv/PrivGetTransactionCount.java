@@ -66,15 +66,15 @@ public class PrivGetTransactionCount implements JsonRpcMethod {
     final String privacyGroupId;
     long nonce = 0;
     try {
-    if (request.getParamLength() == 2) {
-      privacyGroupId = parameters.required(request.getParams(), 1, String.class);
-    } else if (request.getParamLength() == 3) {
-      final String privateFrom = parameters.required(request.getParams(), 1, String.class);
-      final String[] privateFor = parameters.required(request.getParams(), 2, String[].class);
-      privacyGroupId = determineLegacyPrivacyGroupId(privateFrom, privateFor);
-    } else {
-      return new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
-    }
+      if (request.getParamLength() == 2) {
+        privacyGroupId = parameters.required(request.getParams(), 1, String.class);
+      } else if (request.getParamLength() == 3) {
+        final String privateFrom = parameters.required(request.getParams(), 1, String.class);
+        final String[] privateFor = parameters.required(request.getParams(), 2, String[].class);
+        privacyGroupId = determineLegacyPrivacyGroupId(privateFrom, privateFor);
+      } else {
+        return new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
+      }
       if (privacyGroupId != null) {
         nonce = privateTransactionHandler.getSenderNonce(address, privacyGroupId);
       }
@@ -82,7 +82,7 @@ public class PrivGetTransactionCount implements JsonRpcMethod {
     } catch (final Exception e) {
       LOG.error(e.getMessage(), e);
       return new JsonRpcErrorResponse(
-              request.getId(), JsonRpcError.GET_PRIVATE_TRANSACTION_NONCE_ERROR);
+          request.getId(), JsonRpcError.GET_PRIVATE_TRANSACTION_NONCE_ERROR);
     }
   }
 
