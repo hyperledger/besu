@@ -44,10 +44,14 @@ public class NoopMiningCoordinator implements MiningCoordinator {
   public void awaitStop() {}
 
   @Override
-  public void enable() {}
+  public boolean enable() {
+    return false;
+  }
 
   @Override
-  public void disable() {}
+  public boolean disable() {
+    return false;
+  }
 
   @Override
   public boolean isRunning() {

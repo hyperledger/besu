@@ -34,9 +34,19 @@ public interface MiningCoordinator {
 
   void awaitStop();
 
-  void enable();
+  /**
+   * If mining is enabled, disable it.
+   *
+   * @return True if mining status has transitioned from disabled to enabled
+   */
+  boolean enable();
 
-  void disable();
+  /**
+   * If mining is disabled, enable it.
+   *
+   * @return True if mining status has transitioned from enabled to disabled
+   */
+  boolean disable();
 
   boolean isRunning();
 

@@ -36,7 +36,7 @@ public class MinerStop implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequest req) {
-    miningCoordinator.disable();
-    return new JsonRpcSuccessResponse(req.getId(), true);
+    final boolean disabled = miningCoordinator.disable();
+    return new JsonRpcSuccessResponse(req.getId(), disabled);
   }
 }

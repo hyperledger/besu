@@ -100,25 +100,27 @@ public abstract class AbstractMiningCoordinator<
   }
 
   @Override
-  public void enable() {
+  public boolean enable() {
     synchronized (this) {
       if (isEnabled) {
-        return;
+        return false;
       }
       isEnabled = true;
       maybeStartMining();
     }
+    return true;
   }
 
   @Override
-  public void disable() {
+  public boolean disable() {
     synchronized (this) {
       if (!isEnabled) {
-        return;
+        return false;
       }
       isEnabled = false;
       haltCurrentMiningOperation();
     }
+    return true;
   }
 
   @Override
