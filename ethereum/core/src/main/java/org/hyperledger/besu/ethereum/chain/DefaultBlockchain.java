@@ -138,21 +138,11 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   private static boolean validateStorageNonEmpty(final BlockchainStorage blockchainStorage) {
     // Run a few basic checks to make sure data looks available and consistent
-    final Optional<Hash> maybeHead = blockchainStorage.getChainHead();
-    if (maybeHead.isEmpty()) {
-      return false;
-    }
-    final Optional<Hash> genesisHash =
-        blockchainStorage.getBlockHash(BlockHeader.GENESIS_BLOCK_NUMBER);
-    if (genesisHash.isEmpty()) {
-      return false;
-    }
-    final Optional<UInt256> td = blockchainStorage.getTotalDifficulty(maybeHead.get());
-    if (td.isEmpty()) {
-      return false;
-    }
-
-    return true;
+    return blockchainStorage
+            .getChainHead()
+            .flatMap(blockchainStorage::getTotalDifficulty)
+            .isPresent()
+        && blockchainStorage.getBlockHash(BlockHeader.GENESIS_BLOCK_NUMBER).isPresent();
   }
 
   @Override
@@ -320,11 +310,11 @@ public class DefaultBlockchain implements MutableBlockchain {
     final Collection<Hash> forkHeads = blockchainStorage.getForkHeads();
 
     // Check to see if this block advances any existing fork.
-    final Hash parentHash = fork.getHeader().getParentHash();
-    final Optional<Hash> parent =
-        forkHeads.stream().filter(head -> head.equals(parentHash)).findAny();
     // This block will replace its parent
-    parent.ifPresent(forkHeads::remove);
+    forkHeads.stream()
+        .filter(head -> head.equals(fork.getHeader().getParentHash()))
+        .findFirst()
+        .ifPresent(forkHeads::remove);
 
     forkHeads.add(fork.getHash());
 
@@ -473,7 +463,7 @@ public class DefaultBlockchain implements MutableBlockchain {
         genesisBlock.getHeader().getNumber() == BlockHeader.GENESIS_BLOCK_NUMBER,
         "Invalid genesis block.");
     final Optional<Hash> maybeHead = blockchainStorage.getChainHead();
-    if (!maybeHead.isPresent()) {
+    if (maybeHead.isEmpty()) {
       // Initialize blockchain store with genesis block.
       final BlockchainStorage.Updater updater = blockchainStorage.updater();
       final Hash hash = genesisBlock.getHash();
@@ -487,7 +477,7 @@ public class DefaultBlockchain implements MutableBlockchain {
     } else {
       // Verify genesis block is consistent with stored blockchain.
       final Optional<Hash> genesisHash = getBlockHashByNumber(BlockHeader.GENESIS_BLOCK_NUMBER);
-      if (!genesisHash.isPresent()) {
+      if (genesisHash.isEmpty()) {
         throw new IllegalStateException("Blockchain is missing genesis block data.");
       }
       if (!genesisHash.get().equals(genesisBlock.getHash())) {
