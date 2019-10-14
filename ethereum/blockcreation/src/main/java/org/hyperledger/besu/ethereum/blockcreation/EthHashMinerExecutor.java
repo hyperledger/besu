@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.util.Optional;
-import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
 
 public class EthHashMinerExecutor extends AbstractMinerExecutor<Void, EthHashBlockMiner> {
@@ -35,7 +34,6 @@ public class EthHashMinerExecutor extends AbstractMinerExecutor<Void, EthHashBlo
 
   public EthHashMinerExecutor(
       final ProtocolContext<Void> protocolContext,
-      final ExecutorService executorService,
       final ProtocolSchedule<Void> protocolSchedule,
       final PendingTransactions pendingTransactions,
       final MiningParameters miningParams,
@@ -43,7 +41,6 @@ public class EthHashMinerExecutor extends AbstractMinerExecutor<Void, EthHashBlo
       final Function<Long, Long> gasLimitCalculator) {
     super(
         protocolContext,
-        executorService,
         protocolSchedule,
         pendingTransactions,
         miningParams,
@@ -57,19 +54,12 @@ public class EthHashMinerExecutor extends AbstractMinerExecutor<Void, EthHashBlo
       final Subscribers<MinedBlockObserver> observers, final BlockHeader parentHeader) {
     if (!coinbase.isPresent()) {
       throw new CoinbaseNotSetException("Unable to start mining without a coinbase.");
-    } else {
-      final EthHashBlockMiner currentRunningMiner = createMiner(observers, parentHeader);
-      executorService.execute(currentRunningMiner);
-      return currentRunningMiner;
     }
+    return super.startAsyncMining(observers, parentHeader);
   }
 
   @Override
-  public EthHashBlockMiner createMiner(final BlockHeader parentHeader) {
-    return createMiner(Subscribers.none(), parentHeader);
-  }
-
-  private EthHashBlockMiner createMiner(
+  public EthHashBlockMiner createMiner(
       final Subscribers<MinedBlockObserver> observers, final BlockHeader parentHeader) {
     final EthHashSolver solver =
         new EthHashSolver(new RandomNonceGenerator(), new EthHasher.Light());

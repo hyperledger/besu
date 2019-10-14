@@ -66,7 +66,7 @@ public abstract class AbstractMiningCoordinator<
       final BlockHeader parentHeader,
       final List<Transaction> transactions,
       final List<BlockHeader> ommers) {
-    M miner = executor.createMiner(parentHeader);
+    M miner = executor.createMiner(Subscribers.none(), parentHeader);
     return Optional.of(miner.createBlock(parentHeader, transactions, ommers));
   }
 
@@ -77,6 +77,7 @@ public abstract class AbstractMiningCoordinator<
         return;
       }
       isStarted = true;
+      executor.start();
       maybeStartMining();
     }
   }
@@ -89,12 +90,13 @@ public abstract class AbstractMiningCoordinator<
       }
       isStopped = true;
       haltCurrentMiningOperation();
+      executor.stop();
     }
   }
 
   @Override
   public void awaitStop() {
-    // TODO
+    executor.awaitStop();
   }
 
   @Override

@@ -17,8 +17,10 @@ package org.hyperledger.besu.consensus.ibft.blockcreation;
 import static org.apache.logging.log4j.LogManager.getLogger;
 
 import org.hyperledger.besu.consensus.ibft.IbftEventQueue;
+import org.hyperledger.besu.consensus.ibft.IbftExecutors;
 import org.hyperledger.besu.consensus.ibft.IbftProcessor;
 import org.hyperledger.besu.consensus.ibft.ibftevent.NewChainHead;
+import org.hyperledger.besu.consensus.ibft.statemachine.IbftController;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
@@ -32,22 +34,33 @@ import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.logging.log4j.Logger;
 
 public class IbftMiningCoordinator implements MiningCoordinator, BlockAddedObserver {
 
-  private final IbftBlockCreatorFactory blockCreatorFactory;
   private static final Logger LOG = getLogger();
+
+  private final IbftController controller;
+  private final IbftProcessor ibftProcessor;
+  private final IbftBlockCreatorFactory blockCreatorFactory;
   protected final Blockchain blockchain;
   private final IbftEventQueue eventQueue;
-  private final IbftProcessor ibftProcessor;
+  private final IbftExecutors ibftExecutors;
+
+  private AtomicBoolean started = new AtomicBoolean(false);
+  private AtomicBoolean stopped = new AtomicBoolean(false);
 
   public IbftMiningCoordinator(
+      final IbftExecutors ibftExecutors,
+      final IbftController controller,
       final IbftProcessor ibftProcessor,
       final IbftBlockCreatorFactory blockCreatorFactory,
       final Blockchain blockchain,
       final IbftEventQueue eventQueue) {
+    this.ibftExecutors = ibftExecutors;
+    this.controller = controller;
     this.ibftProcessor = ibftProcessor;
     this.blockCreatorFactory = blockCreatorFactory;
     this.eventQueue = eventQueue;
@@ -57,15 +70,26 @@ public class IbftMiningCoordinator implements MiningCoordinator, BlockAddedObser
   }
 
   @Override
-  public void start() {}
-
-  @Override
-  public void stop() {
-    ibftProcessor.stop();
+  public void start() {
+    if (started.compareAndSet(false, true)) {
+      ibftExecutors.start();
+      controller.start();
+      ibftExecutors.executeOnSingleThread(ibftProcessor);
+    }
   }
 
   @Override
-  public void awaitStop() {}
+  public void stop() {
+    if (started.get() && stopped.compareAndSet(false, true)) {
+      ibftProcessor.stop();
+      ibftExecutors.stop();
+    }
+  }
+
+  @Override
+  public void awaitStop() {
+    ibftExecutors.awaitStop();
+  }
 
   @Override
   public void enable() {}

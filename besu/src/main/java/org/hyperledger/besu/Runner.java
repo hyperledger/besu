@@ -85,6 +85,7 @@ public class Runner implements AutoCloseable {
       if (networkRunner.getNetwork().isP2pEnabled()) {
         besuController.getSynchronizer().start();
       }
+      besuController.getMiningCoordinator().start();
       vertx.setPeriodic(
           TimeUnit.MINUTES.toMillis(1),
           time ->
@@ -113,17 +114,19 @@ public class Runner implements AutoCloseable {
   @Override
   public void close() throws Exception {
     try {
+      jsonRpc.ifPresent(service -> waitForServiceToStop("jsonRpc", service.stop()));
+      graphQLHttp.ifPresent(service -> waitForServiceToStop("graphQLHttp", service.stop()));
+      websocketRpc.ifPresent(service -> waitForServiceToStop("websocketRpc", service.stop()));
+      metrics.ifPresent(service -> waitForServiceToStop("metrics", service.stop()));
+
+      besuController.getMiningCoordinator().stop();
+      besuController.getMiningCoordinator().awaitStop();
       if (networkRunner.getNetwork().isP2pEnabled()) {
         besuController.getSynchronizer().stop();
       }
 
       networkRunner.stop();
       networkRunner.awaitStop();
-
-      jsonRpc.ifPresent(service -> waitForServiceToStop("jsonRpc", service.stop()));
-      graphQLHttp.ifPresent(service -> waitForServiceToStop("graphQLHttp", service.stop()));
-      websocketRpc.ifPresent(service -> waitForServiceToStop("websocketRpc", service.stop()));
-      metrics.ifPresent(service -> waitForServiceToStop("metrics", service.stop()));
 
       if (natManager.isPresent()) {
         natManager.get().stop();

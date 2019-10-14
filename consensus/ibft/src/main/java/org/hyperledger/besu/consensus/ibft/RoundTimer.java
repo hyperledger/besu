@@ -17,13 +17,12 @@ package org.hyperledger.besu.consensus.ibft;
 import org.hyperledger.besu.consensus.ibft.ibftevent.RoundExpiry;
 
 import java.util.Optional;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 /** Class for starting and keeping organised round timers */
 public class RoundTimer {
-  private final ScheduledExecutorService timerExecutor;
+  private final IbftExecutors ibftExecutors;
   private Optional<ScheduledFuture<?>> currentTimerTask;
   private final IbftEventQueue queue;
   private final long baseExpiryMillis;
@@ -33,14 +32,12 @@ public class RoundTimer {
    *
    * @param queue The queue in which to put round expiry events
    * @param baseExpirySeconds The initial round length for round 0
-   * @param timerExecutor executor service that timers can be scheduled with
+   * @param ibftExecutors executor service that timers can be scheduled with
    */
   public RoundTimer(
-      final IbftEventQueue queue,
-      final long baseExpirySeconds,
-      final ScheduledExecutorService timerExecutor) {
+      final IbftEventQueue queue, final long baseExpirySeconds, final IbftExecutors ibftExecutors) {
     this.queue = queue;
-    this.timerExecutor = timerExecutor;
+    this.ibftExecutors = ibftExecutors;
     this.currentTimerTask = Optional.empty();
     this.baseExpiryMillis = baseExpirySeconds * 1000;
   }
@@ -73,7 +70,7 @@ public class RoundTimer {
     final Runnable newTimerRunnable = () -> queue.add(new RoundExpiry(round));
 
     final ScheduledFuture<?> newTimerTask =
-        timerExecutor.schedule(newTimerRunnable, expiryTime, TimeUnit.MILLISECONDS);
+        ibftExecutors.scheduleTask(newTimerRunnable, expiryTime, TimeUnit.MILLISECONDS);
     currentTimerTask = Optional.of(newTimerTask);
   }
 }

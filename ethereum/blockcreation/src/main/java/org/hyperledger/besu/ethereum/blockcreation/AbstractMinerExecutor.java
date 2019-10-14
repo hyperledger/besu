@@ -27,13 +27,20 @@ import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public abstract class AbstractMinerExecutor<
     C, M extends BlockMiner<C, ? extends AbstractBlockCreator<C>>> {
 
+  private static final Logger LOG = LogManager.getLogger();
+
+  private final ExecutorService executorService = Executors.newCachedThreadPool();
   protected final ProtocolContext<C> protocolContext;
-  protected final ExecutorService executorService;
   protected final ProtocolSchedule<C> protocolSchedule;
   protected final PendingTransactions pendingTransactions;
   protected final AbstractBlockScheduler blockScheduler;
@@ -42,16 +49,17 @@ public abstract class AbstractMinerExecutor<
   protected volatile BytesValue extraData;
   protected volatile Wei minTransactionGasPrice;
 
+  private boolean started = false;
+  private boolean stopped = false;
+
   public AbstractMinerExecutor(
       final ProtocolContext<C> protocolContext,
-      final ExecutorService executorService,
       final ProtocolSchedule<C> protocolSchedule,
       final PendingTransactions pendingTransactions,
       final MiningParameters miningParams,
       final AbstractBlockScheduler blockScheduler,
       final Function<Long, Long> gasLimitCalculator) {
     this.protocolContext = protocolContext;
-    this.executorService = executorService;
     this.protocolSchedule = protocolSchedule;
     this.pendingTransactions = pendingTransactions;
     this.extraData = miningParams.getExtraData();
@@ -60,10 +68,41 @@ public abstract class AbstractMinerExecutor<
     this.gasLimitCalculator = gasLimitCalculator;
   }
 
-  public abstract M startAsyncMining(
-      final Subscribers<MinedBlockObserver> observers, final BlockHeader parentHeader);
+  synchronized void start() {
+    started = true;
+  }
 
-  public abstract M createMiner(final BlockHeader parentHeader);
+  public M startAsyncMining(
+      final Subscribers<MinedBlockObserver> observers, final BlockHeader parentHeader) {
+    synchronized (this) {
+      assertRunning();
+      final M currentRunningMiner = createMiner(observers, parentHeader);
+      executorService.execute(currentRunningMiner);
+      return currentRunningMiner;
+    }
+  }
+
+  public void stop() {
+    synchronized (this) {
+      if (started && !stopped) {
+        stopped = true;
+      } else {
+        return;
+      }
+    }
+    executorService.shutdownNow();
+  }
+
+  public void awaitStop() {
+    try {
+      executorService.awaitTermination(5, TimeUnit.SECONDS);
+    } catch (final InterruptedException e) {
+      LOG.error("Failed to shutdown miner executor");
+    }
+  }
+
+  public abstract M createMiner(
+      final Subscribers<MinedBlockObserver> subscribers, final BlockHeader parentHeader);
 
   public void setExtraData(final BytesValue extraData) {
     this.extraData = extraData.copy();
@@ -78,4 +117,15 @@ public abstract class AbstractMinerExecutor<
   }
 
   public abstract Optional<Address> getCoinbase();
+
+  private void assertRunning() {
+    if (!started) {
+      throw new IllegalStateException(
+          "Attempt to interact with " + getClass().getSimpleName() + " before invoking start().");
+    }
+    if (stopped) {
+      throw new IllegalStateException(
+          "Attempt to interacted with a stopped " + getClass().getSimpleName() + ".");
+    }
+  }
 }
