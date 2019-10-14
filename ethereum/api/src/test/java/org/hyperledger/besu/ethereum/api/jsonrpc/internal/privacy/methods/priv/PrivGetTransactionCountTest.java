@@ -55,7 +55,7 @@ public class PrivGetTransactionCountTest {
   @Before
   public void setup() {
     final Object[] jsonBody = new Object[] {address.toString(), privateFrom, privateFor};
-    legacyRequest = new JsonRpcRequest("2.0", "prv_getTransactionCount", jsonBody);
+    legacyRequest = new JsonRpcRequest("2.0", "priv_getTransactionCount", jsonBody);
   }
 
   @Test
