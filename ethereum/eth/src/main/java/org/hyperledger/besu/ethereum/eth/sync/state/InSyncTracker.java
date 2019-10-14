@@ -22,11 +22,7 @@ import org.hyperledger.besu.ethereum.eth.manager.ChainHeadEstimate;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-/**
- * Tracks the sync status of a node within the specific {@code syncTolerance}. The first event
- * emitted to any listener will be an out-of-sync event. If the node is in sync and remains in sync,
- * no events will be emitted to any listeners.
- */
+/** Tracks the sync status of this node within the specified {@code syncTolerance}. */
 class InSyncTracker {
   private InSyncState state = InSyncState.UNKNOWN;
   // If the local chain is no more than {@code syncTolerance} behind the estimated highest chain,
