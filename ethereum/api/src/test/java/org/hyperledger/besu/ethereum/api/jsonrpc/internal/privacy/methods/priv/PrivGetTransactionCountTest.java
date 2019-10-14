@@ -38,15 +38,30 @@ import org.junit.Test;
 
 public class PrivGetTransactionCountTest {
 
+  private static final PrivacyGroup[] PRIVACY_GROUP_FOR_VALID_LEGACY_CASE = {
+    new PrivacyGroup(
+        "Group1", PrivacyGroup.Type.PANTHEON, "Group1_Name", "Group1_Desc", new String[0]),
+    new PrivacyGroup(
+        "Group2", PrivacyGroup.Type.LEGACY, "Group2_Name", "Group2_Desc", new String[0]),
+  };
+  private static final PrivacyGroup[] PRIVACY_GROUP_WITH_TWO_LEGACY_TYPES = {
+    new PrivacyGroup(
+        "Group1", PrivacyGroup.Type.LEGACY, "Group1_Name", "Group1_Desc", new String[0]),
+    new PrivacyGroup(
+        "Group2", PrivacyGroup.Type.LEGACY, "Group2_Name", "Group2_Desc", new String[0]),
+  };
+  private static final PrivacyGroup[] PRIVACY_GROUP_WITHOUT_LEGACY_TYPE = {
+    new PrivacyGroup(
+        "Group1", PrivacyGroup.Type.PANTHEON, "Group1_Name", "Group1_Desc", new String[0]),
+    new PrivacyGroup(
+        "Group2", PrivacyGroup.Type.PANTHEON, "Group2_Name", "Group2_Desc", new String[0]),
+  };
   private final JsonRpcParameter parameters = new JsonRpcParameter();
   private final String privacyGroupId =
       BytesValues.asBase64String(BytesValue.wrap("0x123".getBytes(UTF_8)));
 
-  private final String privateFrom = "thePrivateFromKey";
-  private final String[] privateFor = new String[] {"first", "second", "third"};
-  private final Address address = Address.fromHexString("55");
-
   private JsonRpcRequest legacyRequest;
+  private JsonRpcRequest nonLegacyRequest;
 
   private final Address senderAddress =
       Address.fromHexString("0x627306090abab3a6e1400e9345bc60c78a8bef57");
@@ -54,12 +69,16 @@ public class PrivGetTransactionCountTest {
 
   @Before
   public void setup() {
-    final Object[] jsonBody = new Object[] {address.toString(), privateFrom, privateFor};
+    final String[] privateFor = new String[] {"first", "second", "third"};
+    final Address address = Address.fromHexString("55");
+    final Object[] jsonBody = new Object[] {address.toString(), "thePrivateFromKey", privateFor};
     legacyRequest = new JsonRpcRequest("2.0", "priv_getTransactionCount", jsonBody);
+    final Object[] params = new Object[] {senderAddress, privacyGroupId};
+    nonLegacyRequest = new JsonRpcRequest("1", "priv_getTransactionCount", params);
   }
 
   @Test
-  public void verifyTransactionCount() {
+  public void validRequestForNonLegacyCase() {
     final PrivateTransactionHandler privateNonceProvider = mock(PrivateTransactionHandler.class);
     when(privateNonceProvider.getSenderNonce(senderAddress, privacyGroupId)).thenReturn(NONCE);
     final Enclave enclave = mock(Enclave.class);
@@ -67,29 +86,36 @@ public class PrivGetTransactionCountTest {
     final PrivGetTransactionCount privGetTransactionCount =
         new PrivGetTransactionCount(parameters, privateNonceProvider, enclave);
 
-    final Object[] params = new Object[] {senderAddress, privacyGroupId};
-    final JsonRpcRequest request = new JsonRpcRequest("1", "priv_getTransactionCount", params);
-
     final JsonRpcSuccessResponse response =
-        (JsonRpcSuccessResponse) privGetTransactionCount.response(request);
+        (JsonRpcSuccessResponse) privGetTransactionCount.response(nonLegacyRequest);
 
     assertThat(response.getResult()).isEqualTo(String.format("0x%X", NONCE));
   }
 
   @Test
-  public void validRequestProducesExpectedNonce() {
+  public void whenNonceProviderThrowsRuntimeExceptionProducesErrorResponseForNonLegacyCase() {
+    final PrivateTransactionHandler privateNonceProvider = mock(PrivateTransactionHandler.class);
+    when(privateNonceProvider.getSenderNonce(any(), any())).thenThrow(RuntimeException.class);
+    final Enclave enclave = mock(Enclave.class);
+
+    final PrivGetTransactionCount method =
+        new PrivGetTransactionCount(parameters, privateNonceProvider, enclave);
+
+    final JsonRpcResponse response = method.response(nonLegacyRequest);
+    assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);
+
+    final JsonRpcErrorResponse errorResponse = (JsonRpcErrorResponse) response;
+    assertThat(errorResponse.getError())
+        .isEqualTo(JsonRpcError.GET_PRIVATE_TRANSACTION_NONCE_ERROR);
+  }
+
+  @Test
+  public void validRequestProducesExpectedNonceForLegacyCase() {
     final PrivateTransactionHandler privateNonceProvider = mock(PrivateTransactionHandler.class);
     when(privateNonceProvider.getSenderNonce(any(), any())).thenReturn(NONCE);
 
-    final PrivacyGroup[] privacyGroups =
-        new PrivacyGroup[] {
-          new PrivacyGroup(
-              "Group1", PrivacyGroup.Type.PANTHEON, "Group1_Name", "Group1_Desc", new String[0]),
-          new PrivacyGroup(
-              "Group2", PrivacyGroup.Type.LEGACY, "Group2_Name", "Group2_Desc", new String[0]),
-        };
     final Enclave enclave = mock(Enclave.class);
-    when(enclave.findPrivacyGroup(any())).thenReturn(privacyGroups);
+    when(enclave.findPrivacyGroup(any())).thenReturn(PRIVACY_GROUP_FOR_VALID_LEGACY_CASE);
 
     final PrivGetTransactionCount method =
         new PrivGetTransactionCount(parameters, privateNonceProvider, enclave);
@@ -103,19 +129,12 @@ public class PrivGetTransactionCountTest {
   }
 
   @Test
-  public void nonceProviderThrowsRuntimeExceptionProducesErrorResponse() {
+  public void whenNonceProviderThrowsRuntimeExceptionProducesErrorResponseForLegacyCase() {
     final PrivateTransactionHandler privateNonceProvider = mock(PrivateTransactionHandler.class);
     when(privateNonceProvider.getSenderNonce(any(), any())).thenThrow(RuntimeException.class);
 
-    final PrivacyGroup[] privacyGroups =
-        new PrivacyGroup[] {
-          new PrivacyGroup(
-              "Group1", PrivacyGroup.Type.PANTHEON, "Group1_Name", "Group1_Desc", new String[0]),
-          new PrivacyGroup(
-              "Group2", PrivacyGroup.Type.LEGACY, "Group2_Name", "Group2_Desc", new String[0]),
-        };
     final Enclave enclave = mock(Enclave.class);
-    when(enclave.findPrivacyGroup(any())).thenReturn(privacyGroups);
+    when(enclave.findPrivacyGroup(any())).thenReturn(PRIVACY_GROUP_FOR_VALID_LEGACY_CASE);
 
     final PrivGetTransactionCount method =
         new PrivGetTransactionCount(parameters, privateNonceProvider, enclave);
@@ -129,19 +148,12 @@ public class PrivGetTransactionCountTest {
   }
 
   @Test
-  public void moreThanOneMatchingLegacyGroupProducesErrorResponse() {
+  public void moreThanOneMatchingLegacyGroupProducesErrorResponseForLegacyCase() {
     final PrivateTransactionHandler privateNonceProvider = mock(PrivateTransactionHandler.class);
     when(privateNonceProvider.getSenderNonce(any(), any())).thenThrow(RuntimeException.class);
 
-    final PrivacyGroup[] privacyGroups =
-        new PrivacyGroup[] {
-          new PrivacyGroup(
-              "Group1", PrivacyGroup.Type.LEGACY, "Group1_Name", "Group1_Desc", new String[0]),
-          new PrivacyGroup(
-              "Group2", PrivacyGroup.Type.LEGACY, "Group2_Name", "Group2_Desc", new String[0]),
-        };
     final Enclave enclave = mock(Enclave.class);
-    when(enclave.findPrivacyGroup(any())).thenReturn(privacyGroups);
+    when(enclave.findPrivacyGroup(any())).thenReturn(PRIVACY_GROUP_WITH_TWO_LEGACY_TYPES);
 
     final PrivGetTransactionCount method =
         new PrivGetTransactionCount(parameters, privateNonceProvider, enclave);
@@ -155,18 +167,11 @@ public class PrivGetTransactionCountTest {
   }
 
   @Test
-  public void noMatchingLegacyGroupReturnsNonce0() {
+  public void noMatchingLegacyGroupReturnsNonce0ForLegacyCase() {
     final PrivateTransactionHandler privateNonceProvider = mock(PrivateTransactionHandler.class);
 
-    final PrivacyGroup[] privacyGroups =
-        new PrivacyGroup[] {
-          new PrivacyGroup(
-              "Group1", PrivacyGroup.Type.PANTHEON, "Group1_Name", "Group1_Desc", new String[0]),
-          new PrivacyGroup(
-              "Group2", PrivacyGroup.Type.PANTHEON, "Group2_Name", "Group2_Desc", new String[0]),
-        };
     final Enclave enclave = mock(Enclave.class);
-    when(enclave.findPrivacyGroup(any())).thenReturn(privacyGroups);
+    when(enclave.findPrivacyGroup(any())).thenReturn(PRIVACY_GROUP_WITHOUT_LEGACY_TYPE);
 
     final PrivGetTransactionCount method =
         new PrivGetTransactionCount(parameters, privateNonceProvider, enclave);

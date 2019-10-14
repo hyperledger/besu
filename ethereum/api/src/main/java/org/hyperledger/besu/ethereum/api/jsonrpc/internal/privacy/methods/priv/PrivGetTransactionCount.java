@@ -62,56 +62,48 @@ public class PrivGetTransactionCount implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequest request) {
+    final Address address = parameters.required(request.getParams(), 0, Address.class);
+    final String privacyGroupId;
+    long nonce = 0;
+    try {
     if (request.getParamLength() == 2) {
-      final Address address = parameters.required(request.getParams(), 0, Address.class);
-      final String privacyGroupId = parameters.required(request.getParams(), 1, String.class);
-
-      final long nonce = privateTransactionHandler.getSenderNonce(address, privacyGroupId);
-      return new JsonRpcSuccessResponse(request.getId(), Quantity.create(nonce));
+      privacyGroupId = parameters.required(request.getParams(), 1, String.class);
     } else if (request.getParamLength() == 3) {
-      final Address address = parameters.required(request.getParams(), 0, Address.class);
       final String privateFrom = parameters.required(request.getParams(), 1, String.class);
       final String[] privateFor = parameters.required(request.getParams(), 2, String[].class);
-
-      try {
-        final long nonce = determineNonce(privateFrom, privateFor, address);
-        return new JsonRpcSuccessResponse(request.getId(), Quantity.create(nonce));
-      } catch (final Exception e) {
-        LOG.error(e.getMessage(), e);
-        return new JsonRpcErrorResponse(
-            request.getId(), JsonRpcError.GET_PRIVATE_TRANSACTION_NONCE_ERROR);
-      }
+      privacyGroupId = determineLegacyPrivacyGroupId(privateFrom, privateFor);
     } else {
       return new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
     }
+      if (privacyGroupId != null) {
+        nonce = privateTransactionHandler.getSenderNonce(address, privacyGroupId);
+      }
+      return new JsonRpcSuccessResponse(request.getId(), Quantity.create(nonce));
+    } catch (final Exception e) {
+      LOG.error(e.getMessage(), e);
+      return new JsonRpcErrorResponse(
+              request.getId(), JsonRpcError.GET_PRIVATE_TRANSACTION_NONCE_ERROR);
+    }
   }
 
-  private long determineNonce(
-      final String privateFrom, final String[] privateFor, final Address address) {
-
+  private String determineLegacyPrivacyGroupId(
+      final String privateFrom, final String[] privateFor) {
     final String[] groupMembers = Arrays.append(privateFor, privateFrom);
-
     final FindPrivacyGroupRequest request = new FindPrivacyGroupRequest(groupMembers);
     final List<PrivacyGroup> matchingGroups = Lists.newArrayList(enclave.findPrivacyGroup(request));
-
     final List<PrivacyGroup> legacyGroups =
         matchingGroups.stream()
             .filter(group -> group.getType() == PrivacyGroup.Type.LEGACY)
             .collect(Collectors.toList());
-
     if (legacyGroups.size() == 0) {
       // the legacy group does not exist yet
-      return 0;
+      return null;
     }
-
     if (legacyGroups.size() != 1) {
       throw new RuntimeException(
           String.format(
               "Found invalid number of privacy groups (%d), expected 1.", legacyGroups.size()));
     }
-
-    final String privacyGroupId = legacyGroups.get(0).getPrivacyGroupId();
-
-    return privateTransactionHandler.getSenderNonce(address, privacyGroupId);
+    return legacyGroups.get(0).getPrivacyGroupId();
   }
 }
