@@ -16,9 +16,9 @@ package org.hyperledger.besu.ethereum.api.graphql;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.ethereum.api.BlockWithMetadata;
-import org.hyperledger.besu.ethereum.api.TransactionWithMetadata;
-import org.hyperledger.besu.ethereum.api.graphql.internal.BlockchainQuery;
+import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
+import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
@@ -64,7 +64,7 @@ public class GraphQLHttpServiceTest {
   private static String baseUrl;
   protected static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
   protected static final MediaType GRAPHQL = MediaType.parse("application/graphql; charset=utf-8");
-  private static BlockchainQuery blockchainQueries;
+  private static BlockchainQueries blockchainQueries;
   private static Synchronizer synchronizer;
   private static GraphQL graphQL;
   private static GraphQLDataFetchers dataFetchers;
@@ -75,14 +75,14 @@ public class GraphQLHttpServiceTest {
 
   @BeforeClass
   public static void initServerAndClient() throws Exception {
-    blockchainQueries = Mockito.mock(BlockchainQuery.class);
+    blockchainQueries = Mockito.mock(BlockchainQueries.class);
     synchronizer = Mockito.mock(Synchronizer.class);
     graphQL = Mockito.mock(GraphQL.class);
 
     miningCoordinatorMock = Mockito.mock(EthHashMiningCoordinator.class);
 
     dataFetcherContext = Mockito.mock(GraphQLDataFetcherContext.class);
-    Mockito.when(dataFetcherContext.getBlockchainQuery()).thenReturn(blockchainQueries);
+    Mockito.when(dataFetcherContext.getBlockchainQueries()).thenReturn(blockchainQueries);
     Mockito.when(dataFetcherContext.getMiningCoordinator()).thenReturn(miningCoordinatorMock);
 
     Mockito.when(dataFetcherContext.getTransactionPool())

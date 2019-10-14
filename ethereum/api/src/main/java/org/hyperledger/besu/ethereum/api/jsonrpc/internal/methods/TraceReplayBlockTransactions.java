@@ -23,10 +23,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceTypePa
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.queries.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.FlatTraceGenerator;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.TraceFormatter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.TraceWriter;
+import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
