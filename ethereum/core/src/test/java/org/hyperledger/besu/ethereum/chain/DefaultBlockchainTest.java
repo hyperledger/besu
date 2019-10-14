@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
@@ -38,6 +39,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
+import com.google.common.collect.Lists;
 import org.junit.Test;
 
 public class DefaultBlockchainTest {
@@ -156,9 +158,16 @@ public class DefaultBlockchainTest {
     final BlockDataGenerator.BlockOptions options =
         new BlockDataGenerator.BlockOptions()
             .setBlockNumber(1L)
+            .addTransaction(gen.transactions(5))
             .setParentHash(genesisBlock.getHash());
     final Block newBlock = gen.block(options);
     final List<TransactionReceipt> receipts = gen.receipts(newBlock);
+    blockchain.observeBlockAdded(
+        ((event, blockchain1) ->
+            assertThat(event.getLogsWithMetadata())
+                .containsExactly(
+                    LogWithMetadata.generate(newBlock, receipts, false)
+                        .toArray(new LogWithMetadata[] {}))));
     blockchain.appendBlock(newBlock, receipts);
 
     assertBlockIsHead(blockchain, newBlock);
@@ -226,15 +235,25 @@ public class DefaultBlockchainTest {
   public void appendBlockWithReorgToChainAtEqualHeight() {
     final BlockDataGenerator gen = new BlockDataGenerator(1);
 
-    // Setup an initial blockchain
+    // Setup
     final int chainLength = 3;
     final List<Block> chain = gen.blockSequence(chainLength);
     final List<List<TransactionReceipt>> blockReceipts =
         chain.stream().map(gen::receipts).collect(Collectors.toList());
     final KeyValueStorage kvStore = new InMemoryKeyValueStorage();
     final DefaultBlockchain blockchain = createMutableBlockchain(kvStore, chain.get(0));
+
+    // Listen to block events and add the Logs here
+    List<LogWithMetadata> logsWithMetadata = new ArrayList<>();
+    blockchain.observeBlockAdded(
+        ((event, __) -> logsWithMetadata.addAll(event.getLogsWithMetadata())));
+    List<LogWithMetadata> expectedLogsWithMetadata = new ArrayList<>();
+
+    // Add initial blocks
     for (int i = 1; i < chain.size(); i++) {
       blockchain.appendBlock(chain.get(i), blockReceipts.get(i));
+      expectedLogsWithMetadata.addAll(
+          LogWithMetadata.generate(chain.get(i), blockReceipts.get(i), false));
     }
     assertThat(blockchain.getForks()).isEmpty();
     final Block originalHead = chain.get(chainLength - 1);
@@ -267,6 +286,15 @@ public class DefaultBlockchainTest {
       assertThat(blockchain.getTransactionByHash(tx.getHash())).isNotPresent();
     }
 
+    // LogWithMetadata reflecting removal of originalHead's logs
+    final List<LogWithMetadata> removedLogs =
+        Lists.reverse(
+            LogWithMetadata.generate(
+                originalHead, blockchain.getTxReceipts(originalHead.getHash()).get(), true));
+    expectedLogsWithMetadata.addAll(removedLogs);
+    // LogWithMetadata reflecting addition of originalHead's logs
+    expectedLogsWithMetadata.addAll(LogWithMetadata.generate(fork, forkReceipts, false));
+
     assertBlockIsHead(blockchain, fork);
     assertTotalDifficultiesAreConsistent(blockchain, fork);
     // Old chain head should now be tracked as a fork.
@@ -277,6 +305,8 @@ public class DefaultBlockchainTest {
     for (int i = commonAncestor + 1; i < chainLength; i++) {
       assertThat(blockchain.blockIsOnCanonicalChain(chain.get(i).getHash())).isFalse();
     }
+    assertThat(logsWithMetadata)
+        .containsExactly(expectedLogsWithMetadata.toArray(new LogWithMetadata[] {}));
   }
 
   @Test

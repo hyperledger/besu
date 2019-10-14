@@ -35,6 +35,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -486,7 +487,7 @@ public class BlockDataGenerator {
     private Optional<Hash> parentHash = Optional.empty();
     private Optional<Hash> stateRoot = Optional.empty();
     private Optional<UInt256> difficulty = Optional.empty();
-    private Optional<List<Transaction>> transactions = Optional.empty();
+    private List<Transaction> transactions = new ArrayList<>();
     private Optional<BytesValue> extraData = Optional.empty();
     private Optional<BlockHeaderFunctions> blockHeaderFunctions = Optional.empty();
 
@@ -495,7 +496,7 @@ public class BlockDataGenerator {
     }
 
     public List<Transaction> getTransactions(final List<Transaction> defaultValue) {
-      return transactions.orElse(defaultValue);
+      return transactions.isEmpty() ? defaultValue : transactions;
     }
 
     public long getBlockNumber(final long defaultValue) {
@@ -523,11 +524,12 @@ public class BlockDataGenerator {
     }
 
     public BlockOptions addTransaction(final Transaction... tx) {
-      if (!transactions.isPresent()) {
-        transactions = Optional.of(new ArrayList<>());
-      }
-      transactions.get().addAll(Arrays.asList(tx));
+      transactions.addAll(Arrays.asList(tx));
       return this;
+    }
+
+    public BlockOptions addTransaction(final Collection<Transaction> txs) {
+      return addTransaction(txs.toArray(new Transaction[] {}));
     }
 
     public BlockOptions setBlockNumber(final long blockNumber) {
