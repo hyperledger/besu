@@ -36,7 +36,7 @@ import com.google.common.io.Resources;
 // TODO Handle errors
 class Ibft2 implements PoaConsensus {
 
-  private static final String GENESIS_TEMPLATE = "ibft2-genesis-template.json";
+  private static final String GENESIS_TEMPLATE = "networkcreator/ibft2-genesis-template.json";
 
   private Integer blockPeriodSeconds;
   private Integer epochLength;

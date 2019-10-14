@@ -38,7 +38,7 @@ import com.google.common.io.Resources;
 // TODO Handle errors
 class Clique implements PoaConsensus {
 
-  private static final String GENESIS_TEMPLATE = "clique-genesis-template.json";
+  private static final String GENESIS_TEMPLATE = "networkcreator/clique-genesis-template.json";
 
   private Integer blockPeriodSeconds;
   private Integer epochLength;

@@ -48,7 +48,7 @@ class Privacy implements ConfigNode, Verifiable, Generatable {
   private static final String PASSWORD_FILENAME = "passwordFile";
   private static final String PRIVATE_KEY_FILENAME = "nodeKey.key";
   private static final String PUBLIC_KEY_FILENAME = "nodeKey.pub";
-  private static final String CONFIG_TEMPLATE_FILENAME = "orion-template.conf";
+  private static final String CONFIG_TEMPLATE_FILENAME = "networkcreator/orion-template.conf";
   private static final String CONFIG_FILENAME = "orion.conf";
 
   private static final String TOML_TLS_KEY = "tls";

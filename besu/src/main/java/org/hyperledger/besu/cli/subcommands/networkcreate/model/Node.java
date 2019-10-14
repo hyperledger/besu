@@ -125,7 +125,7 @@ public class Node implements Generatable, ConfigNode, Verifiable {
   }
 
   @JsonIgnore
-  List<Node> getSiblings() {
+  private List<Node> getSiblings() {
     return ((Configuration) parent).getNodes();
   }
 
@@ -152,8 +152,6 @@ public class Node implements Generatable, ConfigNode, Verifiable {
     ((Configuration) parent)
         .getPrivacy()
         .ifPresent(privacy -> privacy.generate(nodeDir, directoryHandler));
-
-    // TODO generate bash script to run the node with config file option.
 
     LOG.debug("Node {} address is {}", name, address);
 

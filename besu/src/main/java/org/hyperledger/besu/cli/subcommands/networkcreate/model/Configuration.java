@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.cli.subcommands.networkcreate.model;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Objects.isNull;
 import static java.util.Objects.requireNonNull;
 
@@ -22,6 +23,10 @@ import org.hyperledger.besu.cli.subcommands.networkcreate.generate.Generatable;
 import org.hyperledger.besu.cli.subcommands.networkcreate.generate.Verifiable;
 import org.hyperledger.besu.cli.subcommands.networkcreate.mapping.InitConfigurationErrorHandler;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,10 +38,19 @@ import com.fasterxml.jackson.annotation.JsonCreator.Mode;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 // TODO Handle errors
 public class Configuration implements Verifiable, Generatable, ConfigNode {
 
+  private static final Logger LOG = LogManager.getLogger();
+
+  private static final String CONFIGURATION_VERSION = "1.0";
+  private static final String CONFIGURATION_VERSION_MAX = "1.0";
+
+  private static final String README_FILENAME = "README.md";
+  private static final String README_FILE_SOURCE = "networkcreator/README.md";
   private final String version;
   private final Network network;
   private final List<Account> accounts;
@@ -118,7 +132,16 @@ public class Configuration implements Verifiable, Generatable, ConfigNode {
   // TODO Handle errors and verify each config node
   @Override
   public InitConfigurationErrorHandler verify(final InitConfigurationErrorHandler errorHandler) {
-    if (isNull(version)) errorHandler.add("Configuration version", "null", "Version not defined.");
+    if (isNull(version)) {
+      errorHandler.add("Configuration version", "null", "Version not defined.");
+    } else if (!CONFIGURATION_VERSION.equals(version)) {
+      errorHandler.add(
+          "Configuration version",
+          version,
+          String.format(
+              "Incompatible configuration version, expected version should be %1$s.",
+              CONFIGURATION_VERSION));
+    }
     itemsToVerify.forEach(verifiable -> verifiable.verify(errorHandler));
     return errorHandler;
   }
@@ -129,6 +152,16 @@ public class Configuration implements Verifiable, Generatable, ConfigNode {
     final Path mainDirectory =
         outputDirectoryPath.resolve(directoryHandler.getSafeName(network.getName()));
     directoryHandler.create(mainDirectory);
+
+    try {
+      final URL readmeFileSource = getClass().getClassLoader().getResource(README_FILE_SOURCE);
+      checkNotNull(readmeFileSource, "Readme template not found.");
+      Files.copy(Path.of(readmeFileSource.toURI()), mainDirectory.resolve(README_FILENAME));
+    } catch (IOException e) {
+      LOG.warn("Unable to write readme file", e);
+    } catch (URISyntaxException | NullPointerException e) {
+      LOG.warn("Unable to read readme template file", e);
+    }
 
     itemsToGenerate.forEach(generatable -> generatable.generate(mainDirectory, directoryHandler));
 

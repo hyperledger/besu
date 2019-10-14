@@ -130,7 +130,12 @@ public class NetworkCreateSubCommandTest extends CommandTestAbstract {
     final String[] NODES_DIR_NAMES = {"node_1", "node_2", "node_3", "node_4"};
 
     assertThat(tmpOutputDirectoryPath.resolve(NETWORK_DIR_NAME)).exists().isDirectory();
+
     assertThat(tmpOutputDirectoryPath.resolve(NETWORK_DIR_NAME).resolve("genesis.json"))
+        .exists()
+        .isRegularFile();
+
+    assertThat(tmpOutputDirectoryPath.resolve(NETWORK_DIR_NAME).resolve("README.md"))
         .exists()
         .isRegularFile();
 
