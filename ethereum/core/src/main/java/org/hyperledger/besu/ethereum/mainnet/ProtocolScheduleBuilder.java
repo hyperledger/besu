@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.ethereum.classic.ClassicProtocolSpecs;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
 
@@ -154,12 +155,12 @@ public class ProtocolScheduleBuilder<C> {
     addProtocolSpec(
         protocolSchedule,
         config.getAtlantisBlockNumber(),
-        MainnetProtocolSpecs.atlantisDefinition(
+        ClassicProtocolSpecs.atlantisDefinition(
             chainId, config.getContractSizeLimit(), config.getEvmStackSize()));
     addProtocolSpec(
         protocolSchedule,
         config.getAghartaBlockNumber(),
-        MainnetProtocolSpecs.aghartaDefinition(
+        ClassicProtocolSpecs.aghartaDefinition(
             chainId,
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
