@@ -219,7 +219,7 @@ public class SyncState {
     Optional<ChainHeadEstimate> bestPeerChain = getBestPeerChainHead();
     final boolean currentInSync = isInSync(localChain, syncTargetChain, bestPeerChain, 0);
     if (lastInSync.compareAndSet(!currentInSync, currentInSync)) {
-      if (currentInSync) {
+      if (!currentInSync) {
         // when we fall out of sync change our starting block
         startingBlock = localChain.getHeight();
       }
