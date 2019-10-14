@@ -20,5 +20,6 @@ public enum NetworkName {
   ROPSTEN,
   GOERLI,
   DEV,
-  CLASSIC
+  CLASSIC,
+  KOTTI
 }
