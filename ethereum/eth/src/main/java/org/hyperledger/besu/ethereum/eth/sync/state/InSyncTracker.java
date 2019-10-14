@@ -60,7 +60,7 @@ class InSyncTracker {
 
     final InSyncState newState = InSyncState.fromInSync(currentSyncStatus);
     if (state != newState) {
-      // Sync status has changed, notify subscribers
+      // Sync status has changed, notify listener
       state = newState;
       state.ifKnown(listener::onInSyncStatusChange);
     }

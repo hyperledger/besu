@@ -40,7 +40,6 @@ public class SyncState {
   private final Blockchain blockchain;
   private final EthPeers ethPeers;
 
-  // A set of sync status trackers, organized by sync tolerance
   private final Set<InSyncTracker> inSyncTrackers = new ConcurrentHashSet<>();
   private final Subscribers<SyncStatusListener> syncStatusListeners = Subscribers.create();
   private volatile long chainHeightListenerId;
