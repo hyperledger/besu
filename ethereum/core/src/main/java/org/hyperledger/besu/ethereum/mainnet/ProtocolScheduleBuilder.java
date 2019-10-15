@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.ethereum.classic.ClassicProtocolSpecs;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
 
@@ -117,6 +116,11 @@ public class ProtocolScheduleBuilder<C> {
             config.getContractSizeLimit(), config.getEvmStackSize()));
     addProtocolSpec(
         protocolSchedule,
+        config.getEcip1015BlockNumber(),
+        ClassicProtocolSpecs.tangerineWhistleDefinition(
+            chainId, config.getContractSizeLimit(), config.getEvmStackSize()));
+    addProtocolSpec(
+        protocolSchedule,
         config.getSpuriousDragonBlockNumber(),
         MainnetProtocolSpecs.spuriousDragonDefinition(
             chainId, config.getContractSizeLimit(), config.getEvmStackSize()));
@@ -153,10 +157,10 @@ public class ProtocolScheduleBuilder<C> {
             config.getEvmStackSize(),
             isRevertReasonEnabled));
     addProtocolSpec(
-            protocolSchedule,
-            config.getDefuseDifficultyBombBlockNumber(),
-            ClassicProtocolSpecs.defuseDifficultyBombDefinition(
-                    chainId, config.getContractSizeLimit(), config.getEvmStackSize()));
+        protocolSchedule,
+        config.getDefuseDifficultyBombBlockNumber(),
+        ClassicProtocolSpecs.defuseDifficultyBombDefinition(
+            chainId, config.getContractSizeLimit(), config.getEvmStackSize()));
     addProtocolSpec(
         protocolSchedule,
         config.getAtlantisBlockNumber(),

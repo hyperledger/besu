@@ -46,6 +46,8 @@ public interface GenesisConfigOptions {
 
   OptionalLong getTangerineWhistleBlockNumber();
 
+  OptionalLong getEcip1015BlockNumber();
+
   OptionalLong getSpuriousDragonBlockNumber();
 
   OptionalLong getByzantiumBlockNumber();

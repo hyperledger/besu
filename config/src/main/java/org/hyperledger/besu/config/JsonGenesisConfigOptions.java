@@ -135,6 +135,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public OptionalLong getEcip1015BlockNumber() {
+    return getOptionalLong("ecip1015block");
+  }
+
+  @Override
   public OptionalLong getSpuriousDragonBlockNumber() {
     return getOptionalLong("eip158block");
   }

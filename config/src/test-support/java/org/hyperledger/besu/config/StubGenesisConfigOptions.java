@@ -38,6 +38,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private OptionalLong defuseDifficultyBombBlockNumber = OptionalLong.empty();
   private OptionalLong atlantisBlockNumber = OptionalLong.empty();
   private OptionalLong aghartaBlockNumber = OptionalLong.empty();
+  private OptionalLong ecip1015BlockNumber = OptionalLong.empty();
 
   @Override
   public String getConsensusEngine() {
@@ -97,6 +98,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public OptionalLong getTangerineWhistleBlockNumber() {
     return tangerineWhistleBlockNumber;
+  }
+
+  @Override
+  public OptionalLong getEcip1015BlockNumber() {
+    return ecip1015BlockNumber;
   }
 
   @Override
