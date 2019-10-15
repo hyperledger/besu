@@ -55,7 +55,7 @@ public abstract class AbstractMiningCoordinator<
     this.blockchain = blockchain;
     this.syncState = syncState;
     this.blockchain.observeBlockAdded(this);
-    syncState.addInSyncListener(this::inSyncChanged);
+    syncState.subscribeInSync(this::inSyncChanged);
   }
 
   @Override

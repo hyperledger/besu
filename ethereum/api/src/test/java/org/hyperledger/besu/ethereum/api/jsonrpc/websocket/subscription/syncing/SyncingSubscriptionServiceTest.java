@@ -54,7 +54,7 @@ public class SyncingSubscriptionServiceTest {
   public void before() {
     final ArgumentCaptor<SyncStatusListener> captor =
         ArgumentCaptor.forClass(SyncStatusListener.class);
-    when(synchronizer.observeSyncStatus(captor.capture())).thenReturn(1L);
+    when(synchronizer.subscribeSyncStatus(captor.capture())).thenReturn(1L);
     new SyncingSubscriptionService(subscriptionManager, synchronizer);
     syncStatusListener = captor.getValue();
   }
