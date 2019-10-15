@@ -12,23 +12,25 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
+package org.hyperledger.besu.plugin.data;
 
-import org.hyperledger.besu.ethereum.api.query.TransactionReceiptWithMetadata;
+import org.hyperledger.besu.plugin.Unstable;
 
-import com.fasterxml.jackson.annotation.JsonGetter;
+/** The minimum set of data for a PropagatedBlockContext. */
+@Unstable
+public interface PropagatedBlockContext {
 
-public class TransactionReceiptRootResult extends TransactionReceiptResult {
+  /**
+   * A {@link BlockHeader} object.
+   *
+   * @return A {@link BlockHeader}
+   */
+  BlockHeader getBlockHeader();
 
-  private final String root;
-
-  public TransactionReceiptRootResult(final TransactionReceiptWithMetadata receiptWithMetadata) {
-    super(receiptWithMetadata);
-    root = receipt.getStateRoot().toString();
-  }
-
-  @JsonGetter(value = "root")
-  public String getRoot() {
-    return root;
-  }
+  /**
+   * A scalar value corresponding to the total difficulty.
+   *
+   * @return A scalar value corresponding to the total difficulty.
+   */
+  Quantity getTotalDifficulty();
 }

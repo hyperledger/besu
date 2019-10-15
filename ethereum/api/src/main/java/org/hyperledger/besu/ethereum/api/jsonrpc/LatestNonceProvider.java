@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.queries.BlockchainQueries;
+import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.util.NonceProvider;

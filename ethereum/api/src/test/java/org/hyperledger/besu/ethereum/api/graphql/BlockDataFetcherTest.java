@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.graphql;
 
-import org.hyperledger.besu.ethereum.api.BlockWithMetadata;
+import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.util.bytes.BytesValue;
 
@@ -46,7 +46,7 @@ public class BlockDataFetcherTest extends AbstractDataFetcherTest {
     Mockito.when(environment.getArgument(ArgumentMatchers.eq("hash"))).thenReturn(null);
 
     Mockito.when(environment.getContext()).thenReturn(context);
-    Mockito.when(context.getBlockchainQuery()).thenReturn(query);
+    Mockito.when(context.getBlockchainQueries()).thenReturn(query);
     Mockito.when(query.blockByNumber(ArgumentMatchers.anyLong()))
         .thenReturn(Optional.of(new BlockWithMetadata<>(null, null, null, null, 0)));
 

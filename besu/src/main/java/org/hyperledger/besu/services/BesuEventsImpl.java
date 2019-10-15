@@ -17,7 +17,12 @@ package org.hyperledger.besu.services;
 import org.hyperledger.besu.ethereum.eth.sync.BlockBroadcaster;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.plugin.data.BlockHeader;
+import org.hyperledger.besu.plugin.data.PropagatedBlockContext;
+import org.hyperledger.besu.plugin.data.Quantity;
 import org.hyperledger.besu.plugin.services.BesuEvents;
+
+import java.util.function.Supplier;
 
 public class BesuEventsImpl implements BesuEvents {
   private final BlockBroadcaster blockBroadcaster;
@@ -36,7 +41,9 @@ public class BesuEventsImpl implements BesuEvents {
   @Override
   public long addBlockPropagatedListener(final BlockPropagatedListener listener) {
     return blockBroadcaster.subscribePropagateNewBlocks(
-        block -> listener.onBlockPropagated(block.getHeader()));
+        (block, totalDifficulty) ->
+            listener.onBlockPropagated(
+                blockPropagatedContext(block::getHeader, () -> totalDifficulty)));
   }
 
   @Override
@@ -74,5 +81,21 @@ public class BesuEventsImpl implements BesuEvents {
   @Override
   public void removeSyncStatusListener(final long listenerIdentifier) {
     syncState.unsubscribeSyncStatus(listenerIdentifier);
+  }
+
+  private static PropagatedBlockContext blockPropagatedContext(
+      final Supplier<BlockHeader> blockHeaderSupplier,
+      final Supplier<Quantity> totalDifficultySupplier) {
+    return new PropagatedBlockContext() {
+      @Override
+      public BlockHeader getBlockHeader() {
+        return blockHeaderSupplier.get();
+      }
+
+      @Override
+      public Quantity getTotalDifficulty() {
+        return totalDifficultySupplier.get();
+      }
+    };
   }
 }

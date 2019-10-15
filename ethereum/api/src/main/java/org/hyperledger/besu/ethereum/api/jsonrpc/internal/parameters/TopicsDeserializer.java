@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
-import org.hyperledger.besu.ethereum.api.TopicsParameter;
+import org.hyperledger.besu.ethereum.api.query.TopicsParameter;
 
 import java.io.IOException;
 import java.util.ArrayList;

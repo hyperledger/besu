@@ -17,11 +17,11 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.queries.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
+import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Hash;
 
 public class EthGetBlockByHash implements JsonRpcMethod {

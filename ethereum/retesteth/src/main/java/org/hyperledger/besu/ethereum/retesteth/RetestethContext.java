@@ -20,7 +20,7 @@ import org.hyperledger.besu.config.JsonGenesisConfigOptions;
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockReplay;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.queries.BlockchainQueries;
+import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.IncrementingNonceGenerator;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;

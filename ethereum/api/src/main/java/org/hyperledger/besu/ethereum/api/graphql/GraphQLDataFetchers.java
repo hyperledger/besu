@@ -16,11 +16,6 @@ package org.hyperledger.besu.ethereum.api.graphql;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import org.hyperledger.besu.ethereum.api.BlockWithMetadata;
-import org.hyperledger.besu.ethereum.api.LogWithMetadata;
-import org.hyperledger.besu.ethereum.api.LogsQuery;
-import org.hyperledger.besu.ethereum.api.TransactionWithMetadata;
-import org.hyperledger.besu.ethereum.api.graphql.internal.BlockchainQuery;
 import org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter.AccountAdapter;
 import org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter.LogAdapter;
 import org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter.NormalBlockAdapter;
@@ -28,14 +23,19 @@ import org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter.PendingSta
 import org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter.SyncStateAdapter;
 import org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter.TransactionAdapter;
 import org.hyperledger.besu.ethereum.api.graphql.internal.response.GraphQLError;
+import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
+import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.api.query.LogWithMetadata;
+import org.hyperledger.besu.ethereum.api.query.LogsQuery;
+import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogTopic;
+import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
@@ -125,8 +125,8 @@ public class GraphQLDataFetchers {
   DataFetcher<List<NormalBlockAdapter>> getRangeBlockDataFetcher() {
 
     return dataFetchingEnvironment -> {
-      final BlockchainQuery blockchainQuery =
-          ((GraphQLDataFetcherContext) dataFetchingEnvironment.getContext()).getBlockchainQuery();
+      final BlockchainQueries blockchainQuery =
+          ((GraphQLDataFetcherContext) dataFetchingEnvironment.getContext()).getBlockchainQueries();
 
       final long from = dataFetchingEnvironment.getArgument("from");
       final long to;
@@ -152,8 +152,8 @@ public class GraphQLDataFetchers {
   public DataFetcher<Optional<NormalBlockAdapter>> getBlockDataFetcher() {
 
     return dataFetchingEnvironment -> {
-      final BlockchainQuery blockchain =
-          ((GraphQLDataFetcherContext) dataFetchingEnvironment.getContext()).getBlockchainQuery();
+      final BlockchainQueries blockchain =
+          ((GraphQLDataFetcherContext) dataFetchingEnvironment.getContext()).getBlockchainQueries();
       final Long number = dataFetchingEnvironment.getArgument("number");
       final Bytes32 hash = dataFetchingEnvironment.getArgument("hash");
       if ((number != null) && (hash != null)) {
@@ -176,12 +176,12 @@ public class GraphQLDataFetchers {
 
   DataFetcher<Optional<AccountAdapter>> getAccountDataFetcher() {
     return dataFetchingEnvironment -> {
-      final BlockchainQuery blockchainQuery =
-          ((GraphQLDataFetcherContext) dataFetchingEnvironment.getContext()).getBlockchainQuery();
+      final BlockchainQueries blockchainQuery =
+          ((GraphQLDataFetcherContext) dataFetchingEnvironment.getContext()).getBlockchainQueries();
       final Address addr = dataFetchingEnvironment.getArgument("address");
       final Long bn = dataFetchingEnvironment.getArgument("blockNumber");
       if (bn != null) {
-        final Optional<WorldState> ws = blockchainQuery.getWorldState(bn);
+        final Optional<MutableWorldState> ws = blockchainQuery.getWorldState(bn);
         if (ws.isPresent()) {
           final Account account = ws.get().get(addr);
           Preconditions.checkArgument(
@@ -197,7 +197,7 @@ public class GraphQLDataFetchers {
       } else {
         // return account on latest block
         final long latestBn = blockchainQuery.latestBlock().get().getHeader().getNumber();
-        final Optional<WorldState> ows = blockchainQuery.getWorldState(latestBn);
+        final Optional<MutableWorldState> ows = blockchainQuery.getWorldState(latestBn);
         return ows.flatMap(
                 ws -> {
                   Account account = ws.get(addr);
@@ -212,8 +212,8 @@ public class GraphQLDataFetchers {
 
   DataFetcher<Optional<List<LogAdapter>>> getLogsDataFetcher() {
     return dataFetchingEnvironment -> {
-      final BlockchainQuery blockchainQuery =
-          ((GraphQLDataFetcherContext) dataFetchingEnvironment.getContext()).getBlockchainQuery();
+      final BlockchainQueries blockchainQuery =
+          ((GraphQLDataFetcherContext) dataFetchingEnvironment.getContext()).getBlockchainQueries();
 
       final Map<String, Object> filter = dataFetchingEnvironment.getArgument("filter");
 
@@ -249,8 +249,8 @@ public class GraphQLDataFetchers {
 
   DataFetcher<Optional<TransactionAdapter>> getTransactionDataFetcher() {
     return dataFetchingEnvironment -> {
-      final BlockchainQuery blockchain =
-          ((GraphQLDataFetcherContext) dataFetchingEnvironment.getContext()).getBlockchainQuery();
+      final BlockchainQueries blockchain =
+          ((GraphQLDataFetcherContext) dataFetchingEnvironment.getContext()).getBlockchainQueries();
       final Bytes32 hash = dataFetchingEnvironment.getArgument("hash");
       final Optional<TransactionWithMetadata> tran = blockchain.transactionByHash(Hash.wrap(hash));
       return tran.map(TransactionAdapter::new);
