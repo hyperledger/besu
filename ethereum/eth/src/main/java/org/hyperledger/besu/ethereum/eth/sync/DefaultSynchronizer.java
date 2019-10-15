@@ -34,7 +34,6 @@ import org.hyperledger.besu.plugin.data.SyncStatus;
 import org.hyperledger.besu.plugin.services.BesuEvents.SyncStatusListener;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.util.ExceptionUtils;
-import org.hyperledger.besu.util.Subscribers.Unsubscriber;
 
 import java.nio.file.Path;
 import java.time.Clock;
@@ -196,12 +195,17 @@ public class DefaultSynchronizer<C> implements Synchronizer {
   }
 
   @Override
-  public Unsubscriber subscribeInSync(final InSyncListener listener) {
+  public long subscribeInSync(final InSyncListener listener) {
     return syncState.subscribeInSync(listener);
   }
 
   @Override
-  public Unsubscriber subscribeInSync(final InSyncListener listener, final long syncTolerance) {
+  public long subscribeInSync(final InSyncListener listener, final long syncTolerance) {
     return syncState.subscribeInSync(listener, syncTolerance);
+  }
+
+  @Override
+  public boolean unsubscribeInSync(final long listenerId) {
+    return syncState.unsubscribeSyncStatus(listenerId);
   }
 }

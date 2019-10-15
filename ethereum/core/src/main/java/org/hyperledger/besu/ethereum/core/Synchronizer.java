@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.plugin.data.SyncStatus;
 import org.hyperledger.besu.plugin.services.BesuEvents;
-import org.hyperledger.besu.util.Subscribers.Unsubscriber;
 
 import java.util.Optional;
 
@@ -46,9 +45,9 @@ public interface Synchronizer {
    * highest estimated remote chain height.
    *
    * @param listener The callback to invoke when the sync status changes
-   * @return An {@code Unsubscriber} that can be used to stop listening for these events
+   * @return A subscription id that can be used to unsubscribe from these events
    */
-  Unsubscriber subscribeInSync(final InSyncListener listener);
+  long subscribeInSync(final InSyncListener listener);
 
   /**
    * Add a listener that will be notified when this node's sync status changes. A node is considered
@@ -59,9 +58,17 @@ public interface Synchronizer {
    * @param syncTolerance The tolerance used to determine whether this node is in-sync. A value of
    *     zero means that the node is considered in-sync only when the local chain height is greater
    *     than or equal to the best estimated remote chain height.
-   * @return An {@code Unsubscriber} that can be used to stop listening for these events
+   * @return A subscription id that can be used to unsubscribe from these events
    */
-  Unsubscriber subscribeInSync(final InSyncListener listener, final long syncTolerance);
+  long subscribeInSync(final InSyncListener listener, final long syncTolerance);
+
+  /**
+   * Unsubscribe from in sync events.
+   *
+   * @param listenerId The id returned when subscribing
+   * @return {@code true} if a subscription was cancelled
+   */
+  boolean unsubscribeInSync(final long listenerId);
 
   @FunctionalInterface
   interface InSyncListener {

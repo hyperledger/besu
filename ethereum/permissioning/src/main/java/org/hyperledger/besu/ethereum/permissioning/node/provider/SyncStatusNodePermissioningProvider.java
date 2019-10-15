@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.permissioning.node.NodePermissioningProvide
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
-import org.hyperledger.besu.util.Subscribers.Unsubscriber;
 
 import java.net.URI;
 import java.util.Collection;
@@ -37,7 +36,7 @@ public class SyncStatusNodePermissioningProvider implements NodePermissioningPro
   private final Counter checkCounter;
   private final Counter checkCounterPermitted;
   private final Counter checkCounterUnpermitted;
-  private final Unsubscriber unsubscribeInSync;
+  private final long inSyncSubscriberId;
   private final AtomicBoolean hasReachedSync = new AtomicBoolean(false);
 
   public SyncStatusNodePermissioningProvider(
@@ -46,7 +45,7 @@ public class SyncStatusNodePermissioningProvider implements NodePermissioningPro
       final MetricsSystem metricsSystem) {
     checkNotNull(synchronizer);
     this.synchronizer = synchronizer;
-    this.unsubscribeInSync = this.synchronizer.subscribeInSync(this::handleInSyncEvent, 0);
+    this.inSyncSubscriberId = this.synchronizer.subscribeInSync(this::handleInSyncEvent, 0);
     this.fixedNodes =
         fixedNodes.stream().map(EnodeURL::toURIWithoutDiscoveryPort).collect(Collectors.toSet());
 
@@ -75,7 +74,7 @@ public class SyncStatusNodePermissioningProvider implements NodePermissioningPro
   private void handleInSyncEvent(final boolean isInSync) {
     if (isInSync) {
       if (hasReachedSync.compareAndSet(false, true)) {
-        unsubscribeInSync.unsubscribe();
+        synchronizer.unsubscribeInSync(inSyncSubscriberId);
       }
     }
   }

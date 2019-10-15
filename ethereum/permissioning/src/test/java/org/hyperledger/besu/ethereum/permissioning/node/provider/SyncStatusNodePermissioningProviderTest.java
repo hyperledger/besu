@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.permissioning.node.provider;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -28,7 +27,6 @@ import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
-import org.hyperledger.besu.util.Subscribers.Unsubscriber;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -64,7 +62,6 @@ public class SyncStatusNodePermissioningProviderTest {
   private Collection<EnodeURL> bootnodes = new ArrayList<>();
   private SyncStatusNodePermissioningProvider provider;
   private InSyncListener inSyncListener;
-  private Unsubscriber unsubscribeInSync = mock(Unsubscriber.class);
 
   @Before
   public void before() {
@@ -73,7 +70,7 @@ public class SyncStatusNodePermissioningProviderTest {
     final ArgumentCaptor<Long> syncToleranceCaptor = ArgumentCaptor.forClass(Long.class);
     when(synchronizer.subscribeInSync(
             inSyncSubscriberCaptor.capture(), syncToleranceCaptor.capture()))
-        .thenReturn(unsubscribeInSync);
+        .thenReturn(1L);
     bootnodes.add(bootnode);
 
     @SuppressWarnings("unchecked")

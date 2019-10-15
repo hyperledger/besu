@@ -26,21 +26,22 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.plugin.services.BesuEvents.SyncStatusListener;
 import org.hyperledger.besu.util.Subscribers;
-import org.hyperledger.besu.util.Subscribers.Unsubscriber;
 
+import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 import com.google.common.annotations.VisibleForTesting;
-import io.vertx.core.impl.ConcurrentHashSet;
 
 public class SyncState {
 
   private final Blockchain blockchain;
   private final EthPeers ethPeers;
 
-  private final Set<InSyncTracker> inSyncTrackers = new ConcurrentHashSet<>();
+  private final AtomicLong inSyncSubscriberId = new AtomicLong();
+  private final Map<Long, InSyncTracker> inSyncTrackers = new ConcurrentHashMap<>();
   private final Subscribers<SyncStatusListener> syncStatusListeners = Subscribers.create();
   private volatile long chainHeightListenerId;
   private volatile Optional<SyncTarget> syncTarget = Optional.empty();
@@ -93,7 +94,7 @@ public class SyncState {
    * @param listener The callback to invoke when the sync status changes
    * @return An {@code Unsubscriber} that can be used to stop listening for these events
    */
-  public Unsubscriber subscribeInSync(final InSyncListener listener) {
+  public long subscribeInSync(final InSyncListener listener) {
     return subscribeInSync(listener, Synchronizer.DEFAULT_IN_SYNC_TOLERANCE);
   }
 
@@ -108,11 +109,16 @@ public class SyncState {
    *     than or equal to the best estimated remote chain height.
    * @return An {@code Unsubscriber} that can be used to stop listening for these events
    */
-  public Unsubscriber subscribeInSync(final InSyncListener listener, final long syncTolerance) {
+  public long subscribeInSync(final InSyncListener listener, final long syncTolerance) {
     final InSyncTracker inSyncTracker = InSyncTracker.create(listener, syncTolerance);
-    inSyncTrackers.add(inSyncTracker);
+    final long id = inSyncSubscriberId.incrementAndGet();
+    inSyncTrackers.put(id, inSyncTracker);
 
-    return () -> inSyncTrackers.remove(inSyncTracker);
+    return id;
+  }
+
+  public boolean unsubscribeInSync(final long subscriberId) {
+    return inSyncTrackers.remove(subscriberId) != null;
   }
 
   public long subscribeSyncStatus(final SyncStatusListener listener) {
@@ -224,7 +230,9 @@ public class SyncState {
       }
     }
 
-    inSyncTrackers.forEach(
-        (syncTracker) -> syncTracker.checkState(localChain, syncTargetChain, bestPeerChain));
+    inSyncTrackers
+        .values()
+        .forEach(
+            (syncTracker) -> syncTracker.checkState(localChain, syncTargetChain, bestPeerChain));
   }
 }

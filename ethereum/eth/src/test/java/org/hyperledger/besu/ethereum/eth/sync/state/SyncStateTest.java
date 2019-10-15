@@ -46,7 +46,6 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.plugin.services.BesuEvents.SyncStatusListener;
-import org.hyperledger.besu.util.Subscribers.Unsubscriber;
 import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.List;
@@ -381,11 +380,11 @@ public class SyncStateTest {
 
     // Add listener
     InSyncListener newListener = mock(InSyncListener.class);
-    final Unsubscriber unsubscriber = syncState.subscribeInSync(newListener, syncTolerance);
+    final long subscriberId = syncState.subscribeInSync(newListener, syncTolerance);
     verify(newListener, never()).onInSyncStatusChange(anyBoolean());
 
     // Remove listener
-    unsubscriber.unsubscribe();
+    syncState.unsubscribeInSync(subscriberId);
 
     // Catch all the way up
     advanceLocalChain(TARGET_CHAIN_HEIGHT);
@@ -415,11 +414,11 @@ public class SyncStateTest {
     // Add listener
     InSyncListener listenerToRemove = mock(InSyncListener.class);
     InSyncListener otherListener = mock(InSyncListener.class);
-    final Unsubscriber unsubscriber = syncState.subscribeInSync(listenerToRemove, syncTolerance);
+    final long subscriberId = syncState.subscribeInSync(listenerToRemove, syncTolerance);
     syncState.subscribeInSync(otherListener, syncTolerance);
 
     // Remove listener
-    unsubscriber.unsubscribe();
+    syncState.unsubscribeInSync(subscriberId);
 
     // Catch all the way up
     advanceLocalChain(TARGET_CHAIN_HEIGHT);
@@ -457,10 +456,10 @@ public class SyncStateTest {
     // Add listener
     InSyncListener listenerToRemove = mock(InSyncListener.class);
     InSyncListener otherListener = mock(InSyncListener.class);
-    final Unsubscriber unsubscriber = syncState.subscribeInSync(listenerToRemove, syncTolerance);
+    final long subscriberId = syncState.subscribeInSync(listenerToRemove, syncTolerance);
 
     // Remove listener
-    unsubscriber.unsubscribe();
+    syncState.unsubscribeInSync(subscriberId);
 
     // Add new listener
     syncState.subscribeInSync(otherListener, syncTolerance);
