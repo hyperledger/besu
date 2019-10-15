@@ -19,6 +19,8 @@ import org.hyperledger.besu.plugin.data.PropagatedBlockContext;
 import org.hyperledger.besu.plugin.data.SyncStatus;
 import org.hyperledger.besu.plugin.data.Transaction;
 
+import java.util.Optional;
+
 /**
  * This service allows plugins to attach to various events during the normal operation of Besu.
  *
@@ -144,6 +146,6 @@ public interface BesuEvents {
      *
      * @param syncStatus the sync status
      */
-    void onSyncStatusChanged(SyncStatus syncStatus);
+    void onSyncStatusChanged(Optional<SyncStatus> syncStatus);
   }
 }
