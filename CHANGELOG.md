@@ -10,6 +10,26 @@ From v1.2, Besu requires Java 11.  Besu on Java 8 is no longer supported.
 In v1.2, we removed the entry-point script from our Docker image. Refer to the [migration guide](https://besu.hyperledger.org/en/latest/HowTo/Get-Started/Migration-Docker/)
 for information on options that were previously automatically added to the Besu command line. 
 
+### 1.3.1 
+
+### Additions and Improvements 
+
+- Added GraphQL query/logs support [\#94](https://github.com/hyperledger/besu/pull/94)
+
+### Technical Improvements 
+
+- Add totalDiffculty to BlockPropagated events. [\#97](https://github.com/hyperledger/besu/pull/97) 
+- Merge BlockchainQueries classes [\#101](https://github.com/hyperledger/besu/pull/101) 
+- Fixed casing of dynamic MetricCategorys [\#99](https://github.com/hyperledger/besu/pull/99) 
+- Fix private transactions breaking evm [\#96](https://github.com/hyperledger/besu/pull/96) 
+- Make SyncState variables thread-safe [\#95](https://github.com/hyperledger/besu/pull/95) 
+- Fix transaction tracking by sender [\#93](https://github.com/hyperledger/besu/pull/93) 
+- Make logic in PersistBlockTask more explicit to fix a LGTM warning [\#92](https://github.com/hyperledger/besu/pull/92) 
+- Removed Unused methods in the transaction simulator. [\#91](https://github.com/hyperledger/besu/pull/91) 
+- Fix ThreadBesuNodeRunner BesuConfiguration setup [\#90](https://github.com/hyperledger/besu/pull/90) 
+- JsonRpc method disabled error condition rewrite and unit test [\#80](https://github.com/hyperledger/besu/pull/80) 
+- Round trip testing of state trie account values [\#31](https://github.com/hyperledger/besu/pull/31) 
+
 ### 1.3 
 
 ### Breaking Change 
@@ -18,6 +38,7 @@ for information on options that were previously automatically added to the Besu 
 
 ### Additions and Improvements
 
+- Add `--required-block` command line option to deal with chain splits [\#79](https://github.com/hyperledger/besu/pull/79)
 - Store db metadata file in the root data directory. [\#46](https://github.com/hyperledger/besu/pull/46) 
 - Add `--target-gas-limit` command line option. [\#24](https://github.com/hyperledger/besu/pull/24)(thanks to new contributor [cfelde](https://github.com/cfelde))
 - Allow private contracts to access public state. [\#9](https://github.com/hyperledger/besu/pull/9) 
