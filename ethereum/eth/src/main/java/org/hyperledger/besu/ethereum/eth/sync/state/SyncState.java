@@ -17,23 +17,21 @@ package org.hyperledger.besu.ethereum.eth.sync.state;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.ChainHead;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.SyncStatus;
+import org.hyperledger.besu.ethereum.core.DefaultSyncStatus;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.core.Synchronizer.InSyncListener;
 import org.hyperledger.besu.ethereum.eth.manager.ChainHeadEstimate;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
+import org.hyperledger.besu.plugin.data.SyncStatus;
 import org.hyperledger.besu.plugin.services.BesuEvents.SyncStatusListener;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-
-import com.google.common.annotations.VisibleForTesting;
 
 public class SyncState {
 
@@ -45,45 +43,16 @@ public class SyncState {
   private final Subscribers<SyncStatusListener> syncStatusListeners = Subscribers.create();
   private volatile long chainHeightListenerId;
   private volatile Optional<SyncTarget> syncTarget = Optional.empty();
-  private volatile long startingBlock;
-  private final AtomicBoolean lastInSync = new AtomicBoolean(true);
 
   public SyncState(final Blockchain blockchain, final EthPeers ethPeers) {
     this.blockchain = blockchain;
     this.ethPeers = ethPeers;
-    this.startingBlock = this.blockchain.getChainHeadBlockNumber();
     blockchain.observeBlockAdded(
         (event, chain) -> {
           if (event.isNewCanonicalHead()) {
             checkInSync();
           }
-          switch (event.getEventType()) {
-            case CHAIN_REORG:
-              publishReorg();
-              // fall through
-            case HEAD_ADVANCED:
-              publishSyncStatus();
-              break;
-            case FORK:
-              // don't broadcast detected forks
-              break;
-          }
         });
-  }
-
-  @VisibleForTesting
-  public void publishSyncStatus() {
-    final SyncStatus syncStatus = syncStatus();
-    syncStatusListeners.forEach(c -> c.onSyncStatusChanged(syncStatus));
-  }
-
-  private void publishReorg() {
-    final long chainHeadBlockNumber = blockchain.getChainHeadBlockNumber();
-    final SyncStatus syncStatus =
-        new SyncStatus(
-            startingBlock, chainHeadBlockNumber, bestChainHeight(chainHeadBlockNumber), false);
-
-    syncStatusListeners.forEach(c -> c.onSyncStatusChanged(syncStatus));
   }
 
   /**
@@ -129,10 +98,8 @@ public class SyncState {
     return syncStatusListeners.unsubscribe(listenerId);
   }
 
-  public SyncStatus syncStatus() {
-    final long chainHeadBlockNumber = blockchain.getChainHeadBlockNumber();
-    return new SyncStatus(
-        startingBlock, chainHeadBlockNumber, bestChainHeight(chainHeadBlockNumber));
+  public Optional<SyncStatus> syncStatus() {
+    return syncStatus(syncTarget);
   }
 
   public Optional<SyncTarget> syncTarget() {
@@ -194,10 +161,30 @@ public class SyncState {
   }
 
   private synchronized void replaceSyncTarget(final Optional<SyncTarget> newTarget) {
+    if (syncTarget.equals(newTarget)) {
+      // Nothing to do
+      return;
+    }
     syncTarget.ifPresent(this::removeEstimatedHeightListener);
     syncTarget = newTarget;
     newTarget.ifPresent(this::addEstimatedHeightListener);
+    publishSyncStatus(newTarget);
     checkInSync();
+  }
+
+  private void publishSyncStatus(final Optional<SyncTarget> newTarget) {
+    final Optional<SyncStatus> syncStatus = syncStatus(newTarget);
+    syncStatusListeners.forEach(c -> c.onSyncStatusChanged(syncStatus));
+  }
+
+  private Optional<SyncStatus> syncStatus(final Optional<SyncTarget> maybeTarget) {
+    return maybeTarget.map(
+        target -> {
+          final long chainHeadBlockNumber = blockchain.getChainHeadBlockNumber();
+          final long commonAncestor = target.commonAncestor().getNumber();
+          final long highestKnownBlock = bestChainHeight(chainHeadBlockNumber);
+          return new DefaultSyncStatus(commonAncestor, chainHeadBlockNumber, highestKnownBlock);
+        });
   }
 
   private void removeEstimatedHeightListener(final SyncTarget target) {
@@ -207,6 +194,11 @@ public class SyncState {
   private void addEstimatedHeightListener(final SyncTarget target) {
     chainHeightListenerId =
         target.addPeerChainEstimatedHeightListener(estimatedHeight -> checkInSync());
+  }
+
+  public long bestChainHeight() {
+    final long localChainHeight = blockchain.getChainHeadBlockNumber();
+    return bestChainHeight(localChainHeight);
   }
 
   public long bestChainHeight(final long localChainHeight) {
@@ -222,13 +214,6 @@ public class SyncState {
     ChainHead localChain = getLocalChainHead();
     Optional<ChainHeadEstimate> syncTargetChain = getSyncTargetChainHead();
     Optional<ChainHeadEstimate> bestPeerChain = getBestPeerChainHead();
-    final boolean currentInSync = isInSync(localChain, syncTargetChain, bestPeerChain, 0);
-    if (lastInSync.compareAndSet(!currentInSync, currentInSync)) {
-      if (!currentInSync) {
-        // when we fall out of sync change our starting block
-        startingBlock = localChain.getHeight();
-      }
-    }
 
     inSyncTrackers
         .values()
