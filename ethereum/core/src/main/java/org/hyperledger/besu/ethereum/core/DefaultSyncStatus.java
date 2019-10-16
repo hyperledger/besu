@@ -16,26 +16,17 @@ package org.hyperledger.besu.ethereum.core;
 
 import java.util.Objects;
 
-public final class SyncStatus implements org.hyperledger.besu.plugin.data.SyncStatus {
+public final class DefaultSyncStatus implements org.hyperledger.besu.plugin.data.SyncStatus {
 
   private final long startingBlock;
   private final long currentBlock;
   private final long highestBlock;
-  private final boolean inSync;
 
-  public SyncStatus(final long startingBlock, final long currentBlock, final long highestBlock) {
-    this(startingBlock, currentBlock, highestBlock, currentBlock == highestBlock);
-  }
-
-  public SyncStatus(
-      final long startingBlock,
-      final long currentBlock,
-      final long highestBlock,
-      final boolean inSync) {
+  public DefaultSyncStatus(
+      final long startingBlock, final long currentBlock, final long highestBlock) {
     this.startingBlock = startingBlock;
     this.currentBlock = currentBlock;
     this.highestBlock = highestBlock;
-    this.inSync = inSync;
   }
 
   @Override
@@ -54,11 +45,6 @@ public final class SyncStatus implements org.hyperledger.besu.plugin.data.SyncSt
   }
 
   @Override
-  public boolean inSync() {
-    return inSync;
-  }
-
-  @Override
   public boolean equals(final Object o) {
     if (this == o) {
       return true;
@@ -66,15 +52,14 @@ public final class SyncStatus implements org.hyperledger.besu.plugin.data.SyncSt
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    final SyncStatus that = (SyncStatus) o;
+    final DefaultSyncStatus that = (DefaultSyncStatus) o;
     return startingBlock == that.startingBlock
         && currentBlock == that.currentBlock
-        && highestBlock == that.highestBlock
-        && inSync == that.inSync;
+        && highestBlock == that.highestBlock;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(startingBlock, currentBlock, highestBlock, inSync);
+    return Objects.hash(startingBlock, currentBlock, highestBlock);
   }
 }

@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.SyncingResult;
+import org.hyperledger.besu.ethereum.core.DefaultSyncStatus;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.plugin.data.SyncStatus;
 
@@ -68,8 +69,7 @@ public class EthSyncingTest {
   @Test
   public void shouldReturnExpectedValueWhenSyncStatusIsNotEmpty() {
     final JsonRpcRequest request = requestWithParams();
-    final SyncStatus expectedSyncStatus =
-        new org.hyperledger.besu.ethereum.core.SyncStatus(0, 1, 2);
+    final SyncStatus expectedSyncStatus = new DefaultSyncStatus(0, 1, 2);
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(request.getId(), new SyncingResult(expectedSyncStatus));
     final Optional<SyncStatus> optionalSyncStatus = Optional.of(expectedSyncStatus);
