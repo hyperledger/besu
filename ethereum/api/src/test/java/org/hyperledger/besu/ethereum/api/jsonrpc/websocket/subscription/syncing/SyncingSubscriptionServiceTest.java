@@ -14,12 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.syncing;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.atMostOnce;
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -27,12 +24,14 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.JsonRpcResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.SyncingResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.SubscriptionManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.SubscriptionType;
-import org.hyperledger.besu.ethereum.core.SyncStatus;
+import org.hyperledger.besu.ethereum.core.DefaultSyncStatus;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
+import org.hyperledger.besu.plugin.data.SyncStatus;
 import org.hyperledger.besu.plugin.services.BesuEvents.SyncStatusListener;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 import org.junit.Before;
@@ -64,8 +63,8 @@ public class SyncingSubscriptionServiceTest {
     final SyncingSubscription subscription =
         new SyncingSubscription(9L, "conn", SubscriptionType.SYNCING);
     final List<SyncingSubscription> subscriptions = Collections.singletonList(subscription);
-    final SyncStatus syncStatus = new SyncStatus(0L, 1L, 3L);
-    final SyncingResult expectedSyncingResult = new SyncingResult(syncStatus);
+    final Optional<SyncStatus> syncStatus = Optional.of(new DefaultSyncStatus(0L, 1L, 3L));
+    final JsonRpcResult expectedSyncingResult = new SyncingResult(syncStatus.get());
 
     doAnswer(
             invocation -> {
@@ -84,11 +83,12 @@ public class SyncingSubscriptionServiceTest {
   }
 
   @Test
-  public void shouldSendNotSyncingStatusWhenReceiveSyncStatusAtHead() {
+  public void shouldSendNotSyncingResultWhenReceiveNonSyncingStatus() {
     final SyncingSubscription subscription =
         new SyncingSubscription(9L, "conn", SubscriptionType.SYNCING);
     final List<SyncingSubscription> subscriptions = Collections.singletonList(subscription);
-    final SyncStatus syncStatus = new SyncStatus(0L, 1L, 1L);
+    final Optional<SyncStatus> syncStatus = Optional.empty();
+    final JsonRpcResult expectedSyncingResult = new NotSynchronisingResult();
 
     doAnswer(
             invocation -> {
@@ -103,92 +103,6 @@ public class SyncingSubscriptionServiceTest {
 
     verify(subscriptionManager)
         .sendMessage(
-            ArgumentMatchers.eq(subscription.getSubscriptionId()),
-            any(NotSynchronisingResult.class));
-  }
-
-  @Test
-  public void shouldNotRepeatOutOfSyncMessages() {
-    final SyncingSubscription subscription =
-        new SyncingSubscription(9L, "conn", SubscriptionType.SYNCING);
-    final List<SyncingSubscription> subscriptions = Collections.singletonList(subscription);
-    final SyncStatus syncStatus = new SyncStatus(0L, 1L, 3L);
-    final SyncingResult expectedSyncingResult = new SyncingResult(syncStatus);
-
-    doAnswer(
-            invocation -> {
-              Consumer<List<SyncingSubscription>> consumer = invocation.getArgument(2);
-              consumer.accept(subscriptions);
-              return null;
-            })
-        .when(subscriptionManager)
-        .notifySubscribersOnWorkerThread(any(), any(), any());
-
-    syncStatusListener.onSyncStatusChanged(syncStatus);
-    syncStatusListener.onSyncStatusChanged(syncStatus);
-
-    verify(subscriptionManager, atMostOnce())
-        .sendMessage(
             ArgumentMatchers.eq(subscription.getSubscriptionId()), eq(expectedSyncingResult));
-  }
-
-  @Test
-  public void shouldNotRepeatInSyncMessages() {
-    final SyncingSubscription subscription =
-        new SyncingSubscription(9L, "conn", SubscriptionType.SYNCING);
-    final List<SyncingSubscription> subscriptions = Collections.singletonList(subscription);
-    final SyncStatus syncStatus = new SyncStatus(0L, 3L, 3L);
-    final SyncingResult expectedSyncingResult = new SyncingResult(syncStatus);
-
-    doAnswer(
-            invocation -> {
-              Consumer<List<SyncingSubscription>> consumer = invocation.getArgument(2);
-              consumer.accept(subscriptions);
-              return null;
-            })
-        .when(subscriptionManager)
-        .notifySubscribersOnWorkerThread(any(), any(), any());
-
-    syncStatusListener.onSyncStatusChanged(syncStatus);
-    syncStatusListener.onSyncStatusChanged(syncStatus);
-
-    verify(subscriptionManager, atMostOnce())
-        .sendMessage(
-            ArgumentMatchers.eq(subscription.getSubscriptionId()), eq(expectedSyncingResult));
-  }
-
-  @Test
-  public void shouldOnlyReportSyncChange() {
-    final SyncingSubscription subscription =
-        new SyncingSubscription(9L, "conn", SubscriptionType.SYNCING);
-    final List<SyncingSubscription> subscriptions = Collections.singletonList(subscription);
-
-    final SyncStatus inSyncStatus = new SyncStatus(0L, 3L, 3L);
-    final SyncStatus outOfSyncStatus = new SyncStatus(0L, 1L, 3L);
-
-    doAnswer(
-            invocation -> {
-              Consumer<List<SyncingSubscription>> consumer = invocation.getArgument(2);
-              consumer.accept(subscriptions);
-              return null;
-            })
-        .when(subscriptionManager)
-        .notifySubscribersOnWorkerThread(any(), any(), any());
-
-    syncStatusListener.onSyncStatusChanged(outOfSyncStatus);
-    syncStatusListener.onSyncStatusChanged(inSyncStatus);
-    syncStatusListener.onSyncStatusChanged(inSyncStatus);
-    syncStatusListener.onSyncStatusChanged(outOfSyncStatus);
-    syncStatusListener.onSyncStatusChanged(outOfSyncStatus);
-    syncStatusListener.onSyncStatusChanged(inSyncStatus);
-    syncStatusListener.onSyncStatusChanged(inSyncStatus);
-
-    final var resultCaptor = ArgumentCaptor.forClass(JsonRpcResult.class);
-    final NotSynchronisingResult inSyncResult = new NotSynchronisingResult();
-    final SyncingResult outOfSyncingResult = new SyncingResult(outOfSyncStatus);
-
-    verify(subscriptionManager, times(4)).sendMessage(any(), resultCaptor.capture());
-    assertThat(resultCaptor.getAllValues())
-        .containsOnly(outOfSyncingResult, inSyncResult, outOfSyncingResult, inSyncResult);
   }
 }
