@@ -12,23 +12,27 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
-import org.hyperledger.besu.ethereum.api.query.TransactionReceiptWithMetadata;
+package org.hyperledger.besu.ethereum.eth.manager;
 
-import com.fasterxml.jackson.annotation.JsonGetter;
+import org.hyperledger.besu.util.uint.UInt256;
 
-public class TransactionReceiptRootResult extends TransactionReceiptResult {
+public class ChainStateSnapshot implements ChainHeadEstimate {
+  private final UInt256 totalDifficulty;
+  private final long chainHeight;
 
-  private final String root;
-
-  public TransactionReceiptRootResult(final TransactionReceiptWithMetadata receiptWithMetadata) {
-    super(receiptWithMetadata);
-    root = receipt.getStateRoot().toString();
+  public ChainStateSnapshot(final UInt256 totalDifficulty, final long chainHeight) {
+    this.totalDifficulty = totalDifficulty;
+    this.chainHeight = chainHeight;
   }
 
-  @JsonGetter(value = "root")
-  public String getRoot() {
-    return root;
+  @Override
+  public UInt256 getEstimatedTotalDifficulty() {
+    return totalDifficulty;
+  }
+
+  @Override
+  public long getEstimatedHeight() {
+    return chainHeight;
   }
 }

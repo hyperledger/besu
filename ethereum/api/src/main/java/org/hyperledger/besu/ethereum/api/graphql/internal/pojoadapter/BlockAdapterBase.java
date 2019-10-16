@@ -14,12 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter;
 
-import org.hyperledger.besu.ethereum.api.BlockWithMetadata;
-import org.hyperledger.besu.ethereum.api.LogWithMetadata;
-import org.hyperledger.besu.ethereum.api.LogsQuery;
-import org.hyperledger.besu.ethereum.api.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLDataFetcherContext;
-import org.hyperledger.besu.ethereum.api.graphql.internal.BlockchainQuery;
+import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
+import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.api.query.LogWithMetadata;
+import org.hyperledger.besu.ethereum.api.query.LogsQuery;
+import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
@@ -53,7 +53,7 @@ public class BlockAdapterBase extends AdapterBase {
   }
 
   public Optional<NormalBlockAdapter> getParent(final DataFetchingEnvironment environment) {
-    final BlockchainQuery query = getBlockchainQuery(environment);
+    final BlockchainQueries query = getBlockchainQueries(environment);
     final Hash parentHash = header.getParentHash();
     final Optional<BlockWithMetadata<TransactionWithMetadata, Hash>> block =
         query.blockByHash(parentHash);
@@ -84,7 +84,7 @@ public class BlockAdapterBase extends AdapterBase {
 
   public Optional<AccountAdapter> getMiner(final DataFetchingEnvironment environment) {
 
-    final BlockchainQuery query = getBlockchainQuery(environment);
+    final BlockchainQueries query = getBlockchainQueries(environment);
     long blockNumber = header.getNumber();
     final Long bn = environment.getArgument("block");
     if (bn != null) {
@@ -133,7 +133,7 @@ public class BlockAdapterBase extends AdapterBase {
 
   public Optional<AccountAdapter> getAccount(final DataFetchingEnvironment environment) {
 
-    final BlockchainQuery query = getBlockchainQuery(environment);
+    final BlockchainQueries query = getBlockchainQueries(environment);
     final long bn = header.getNumber();
     final WorldState ws = query.getWorldState(bn).get();
 
@@ -161,7 +161,7 @@ public class BlockAdapterBase extends AdapterBase {
     final LogsQuery query =
         new LogsQuery.Builder().addresses(addrs).topics(transformedTopics).build();
 
-    final BlockchainQuery blockchain = getBlockchainQuery(environment);
+    final BlockchainQueries blockchain = getBlockchainQueries(environment);
 
     final Hash hash = header.getHash();
     final List<LogWithMetadata> logs = blockchain.matchingLogs(hash, query);
@@ -190,7 +190,7 @@ public class BlockAdapterBase extends AdapterBase {
     final UInt256 value = (UInt256) callData.get("value");
     final BytesValue data = (BytesValue) callData.get("data");
 
-    final BlockchainQuery query = getBlockchainQuery(environment);
+    final BlockchainQueries query = getBlockchainQueries(environment);
     final ProtocolSchedule<?> protocolSchedule =
         ((GraphQLDataFetcherContext) environment.getContext()).getProtocolSchedule();
     final long bn = header.getNumber();

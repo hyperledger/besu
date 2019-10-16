@@ -11,6 +11,7 @@
 | Byron Gravenorst | bgravenorst      | bgravenorst      |
 | Chris Hare       | CjHare           | cjhare           |
 | Edward Evans     | EdJoJob          | EdJoJob          |
+| Ivaylo Kirilov   | iikirilov        | iikirilov        |
 | Jason Frame      | jframe           | jframe           |
 | Joshua Fernandes | joshuafernandes  | joshuafernandes  |
 | Lucas Saldanha   | lucassaldanha    | lucassaldanha    |

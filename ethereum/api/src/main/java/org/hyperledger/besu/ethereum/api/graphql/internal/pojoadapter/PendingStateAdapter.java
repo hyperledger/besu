@@ -14,12 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter;
 
-import org.hyperledger.besu.ethereum.api.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLDataFetcherContext;
-import org.hyperledger.besu.ethereum.api.graphql.internal.BlockchainQuery;
+import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
@@ -60,12 +60,12 @@ public class PendingStateAdapter extends AdapterBase {
   // speculative environment, so estimate against latest.
   public Optional<AccountAdapter> getAccount(
       final DataFetchingEnvironment dataFetchingEnvironment) {
-    final BlockchainQuery blockchainQuery =
-        ((GraphQLDataFetcherContext) dataFetchingEnvironment.getContext()).getBlockchainQuery();
+    final BlockchainQueries blockchainQuery =
+        ((GraphQLDataFetcherContext) dataFetchingEnvironment.getContext()).getBlockchainQueries();
     final Address addr = dataFetchingEnvironment.getArgument("address");
     final Long blockNumber = dataFetchingEnvironment.getArgument("blockNumber");
     final long latestBlockNumber = blockchainQuery.latestBlock().get().getHeader().getNumber();
-    final Optional<WorldState> optionalWorldState =
+    final Optional<MutableWorldState> optionalWorldState =
         blockchainQuery.getWorldState(latestBlockNumber);
     return optionalWorldState
         .flatMap(worldState -> Optional.ofNullable(worldState.get(addr)))
@@ -90,7 +90,7 @@ public class PendingStateAdapter extends AdapterBase {
     final UInt256 value = (UInt256) callData.get("value");
     final BytesValue data = (BytesValue) callData.get("data");
 
-    final BlockchainQuery query = getBlockchainQuery(environment);
+    final BlockchainQueries query = getBlockchainQueries(environment);
     final ProtocolSchedule<?> protocolSchedule =
         ((GraphQLDataFetcherContext) environment.getContext()).getProtocolSchedule();
 
