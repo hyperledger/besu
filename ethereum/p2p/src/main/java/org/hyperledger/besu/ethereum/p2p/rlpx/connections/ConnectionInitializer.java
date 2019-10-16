@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.p2p.rlpx.connections;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.ConnectCallback;
 
+import java.net.InetSocketAddress;
 import java.util.concurrent.CompletableFuture;
 
 public interface ConnectionInitializer {
@@ -27,7 +28,7 @@ public interface ConnectionInitializer {
    *
    * @return The port on which we're listening for incoming connections.
    */
-  CompletableFuture<Integer> start();
+  CompletableFuture<InetSocketAddress> start();
 
   /**
    * Shutdown the connection initializer. Stop listening for incoming connections and stop
