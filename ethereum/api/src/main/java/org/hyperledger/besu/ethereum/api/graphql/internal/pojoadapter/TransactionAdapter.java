@@ -124,14 +124,16 @@ public class TransactionAdapter extends AdapterBase {
   public Optional<Long> getGasUsed(final DataFetchingEnvironment environment) {
     final BlockchainQueries query = getBlockchainQueries(environment);
     final Optional<TransactionReceiptWithMetadata> rpt =
-        query.transactionReceiptByTransactionHash(transactionWithMetadata.getTransaction().getHash());
+        query.transactionReceiptByTransactionHash(
+            transactionWithMetadata.getTransaction().getHash());
     return rpt.map(TransactionReceiptWithMetadata::getGasUsed);
   }
 
   public Optional<Long> getCumulativeGasUsed(final DataFetchingEnvironment environment) {
     final BlockchainQueries query = getBlockchainQueries(environment);
     final Optional<TransactionReceiptWithMetadata> rpt =
-        query.transactionReceiptByTransactionHash(transactionWithMetadata.getTransaction().getHash());
+        query.transactionReceiptByTransactionHash(
+            transactionWithMetadata.getTransaction().getHash());
     if (rpt.isPresent()) {
       final TransactionReceipt receipt = rpt.get().getReceipt();
       return Optional.of(receipt.getCumulativeGasUsed());
