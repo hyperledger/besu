@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty;
 
-import static com.google.common.base.Preconditions.checkState;
-
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
@@ -114,15 +112,15 @@ public class NettyConnectionInitializer implements ConnectionInitializer {
         future -> {
           final InetSocketAddress socketAddress =
               (InetSocketAddress) server.channel().localAddress();
-          final String message =
-              String.format(
-                  "Unable start up P2P network on %s:%s.  Check for port conflicts.",
-                  config.getBindHost(), config.getBindPort());
-
-          if (!future.isSuccess()) {
+          if (!future.isSuccess() || socketAddress == null) {
+            final String message =
+                String.format(
+                    "Unable start up P2P network on %s:%s.  Check for port conflicts.",
+                    config.getBindHost(), config.getBindPort());
             LOG.error(message, future.cause());
+            listeningPortFuture.completeExceptionally(new IllegalStateException(message));
+            return;
           }
-          checkState(socketAddress != null, message);
 
           LOG.info("P2P network started and listening on {}", socketAddress);
           final int listeningPort = socketAddress.getPort();
