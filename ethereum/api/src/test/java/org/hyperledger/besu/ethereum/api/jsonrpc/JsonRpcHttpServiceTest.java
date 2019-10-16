@@ -1750,7 +1750,7 @@ public class JsonRpcHttpServiceTest {
       final Transaction transaction = block.getBody().getTransactions().get(i);
       if (shouldTransactionsBeHashed) {
         assertThat(Hash.fromHexString(transactionsResult.getString(i)))
-            .isEqualTo(transaction.hash());
+            .isEqualTo(transaction.getHash());
       } else {
         final JsonObject transactionResult = transactionsResult.getJsonObject(i);
         final Integer expectedIndex = i;
@@ -1768,7 +1768,7 @@ public class JsonRpcHttpServiceTest {
       final Integer index,
       final Hash blockHash,
       final Long blockNumber) {
-    assertThat(Hash.fromHexString(result.getString("hash"))).isEqualTo(transaction.hash());
+    assertThat(Hash.fromHexString(result.getString("hash"))).isEqualTo(transaction.getHash());
     assertThat(Long.decode(result.getString("nonce"))).isEqualByComparingTo(transaction.getNonce());
     if (blockHash != null) {
       assertThat(Hash.fromHexString(result.getString("blockHash"))).isEqualTo(blockHash);
@@ -1899,7 +1899,7 @@ public class JsonRpcHttpServiceTest {
 
     final List<Hash> txs =
         block.getBody().getTransactions().stream()
-            .map(Transaction::hash)
+            .map(Transaction::getHash)
             .collect(Collectors.toList());
     final List<Hash> ommers =
         block.getBody().getOmmers().stream().map(BlockHeader::getHash).collect(Collectors.toList());

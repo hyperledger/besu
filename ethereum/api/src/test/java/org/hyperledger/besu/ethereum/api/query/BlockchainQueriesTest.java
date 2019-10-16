@@ -512,7 +512,7 @@ public class BlockchainQueriesTest {
     for (int i = 0; i < result.getTransactions().size(); i++) {
       final Hash txResult = result.getTransactions().get(i);
       final Transaction actualTx = targetBlock.getBody().getTransactions().get(i);
-      assertThat(txResult).isEqualByComparingTo(actualTx.hash());
+      assertThat(txResult).isEqualByComparingTo(actualTx.getHash());
     }
   }
 

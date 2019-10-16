@@ -82,7 +82,7 @@ public class EthSendRawTransaction implements JsonRpcMethod {
     final ValidationResult<TransactionInvalidReason> validationResult =
         transactionPool.get().addLocalTransaction(transaction);
     return validationResult.either(
-        () -> new JsonRpcSuccessResponse(request.getId(), transaction.hash().toString()),
+        () -> new JsonRpcSuccessResponse(request.getId(), transaction.getHash().toString()),
         errorReason ->
             sendEmptyHashOnInvalidBlock
                 ? new JsonRpcSuccessResponse(request.getId(), Hash.EMPTY.toString())
