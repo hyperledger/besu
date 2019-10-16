@@ -25,7 +25,7 @@ balance = 2000000000000000000
 address = "0x1339AE03001C8205B7cc192B80007454Dfc74B86"
 balance = 2000000000000000000
 
-#[privacy]
+[privacy]
 #tls = false # default is false
 
 #[permissioning] # online perm only

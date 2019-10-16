@@ -27,37 +27,34 @@ import com.moandjiezana.toml.TomlWriter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class NodeConfig {
+public class ConfigWriter {
 
   private static final Logger LOG = LogManager.getLogger();
 
   private final StringBuilder stringBuilder = new StringBuilder();
   private final TomlWriter writer = new TomlWriter.Builder().build();
-  private static final String CONFIG_FILENAME = "config.toml";
 
-  public void write(final Path nodeDir) {
+  public void write(final Path configFile) {
     LOG.debug(stringBuilder.toString());
     try {
       Files.write(
-          nodeDir.resolve(CONFIG_FILENAME),
-          stringBuilder.toString().getBytes(UTF_8),
-          StandardOpenOption.CREATE_NEW);
+          configFile, stringBuilder.toString().getBytes(UTF_8), StandardOpenOption.CREATE_NEW);
     } catch (IOException e) {
-      LOG.error("Unable to write node configuration file", e);
+      LOG.error("Unable to write configuration file", e);
     }
   }
 
-  public NodeConfig addEmptyLine() {
+  public ConfigWriter addEmptyLine() {
     stringBuilder.append(System.lineSeparator());
     return this;
   }
 
-  public NodeConfig addComment(final String comment) {
+  public ConfigWriter addComment(final String comment) {
     stringBuilder.append("# ").append(comment).append(System.lineSeparator());
     return this;
   }
 
-  public NodeConfig addOption(final String optionName, final Object optionValue) {
+  public ConfigWriter addOption(final String optionName, final Object optionValue) {
     stringBuilder.append(writer.write(Map.of(optionName, optionValue)));
     return this;
   }

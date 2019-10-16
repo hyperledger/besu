@@ -31,6 +31,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.Random;
+import javax.annotation.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -128,7 +129,10 @@ class Network implements Verifiable, Generatable, ConfigNode {
   }
 
   @Override
-  public Path generate(final Path outputDirectoryPath, final DirectoryHandler directoryHandler) {
+  public Path generate(
+      final Path outputDirectoryPath,
+      final DirectoryHandler directoryHandler,
+      @Nullable final Node node) {
     final Path outputGenesisFile = outputDirectoryPath.resolve("genesis.json");
     try {
       Files.write(outputGenesisFile, buildGenesis().getBytes(UTF_8), StandardOpenOption.CREATE_NEW);

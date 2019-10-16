@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonCreator.Mode;
@@ -147,7 +148,10 @@ public class Configuration implements Verifiable, Generatable, ConfigNode {
   }
 
   @Override
-  public Path generate(final Path outputDirectoryPath, final DirectoryHandler directoryHandler) {
+  public Path generate(
+      final Path outputDirectoryPath,
+      final DirectoryHandler directoryHandler,
+      @Nullable final Node node) {
 
     final Path mainDirectory =
         outputDirectoryPath.resolve(directoryHandler.getSafeName(network.getName()));
@@ -163,7 +167,8 @@ public class Configuration implements Verifiable, Generatable, ConfigNode {
       LOG.warn("Unable to read readme template file", e);
     }
 
-    itemsToGenerate.forEach(generatable -> generatable.generate(mainDirectory, directoryHandler));
+    itemsToGenerate.forEach(
+        generatable -> generatable.generate(mainDirectory, directoryHandler, null));
 
     return mainDirectory;
   }

@@ -74,7 +74,10 @@ class Permissioning implements ConfigNode, Verifiable, Generatable {
   }
 
   @Override
-  public Path generate(final Path outputDirectoryPath, final DirectoryHandler directoryHandler) {
+  public Path generate(
+      final Path outputDirectoryPath,
+      final DirectoryHandler directoryHandler,
+      @Nullable final Node node) {
     // TODO implement
     return null;
   }

@@ -23,9 +23,9 @@ import static org.hyperledger.besu.cli.subcommands.networkcreate.generate.PortCo
 import static org.hyperledger.besu.cli.subcommands.networkcreate.generate.PortConfig.RPC_HTTP;
 import static org.hyperledger.besu.cli.subcommands.networkcreate.generate.PortConfig.RPC_WS;
 
+import org.hyperledger.besu.cli.subcommands.networkcreate.generate.ConfigWriter;
 import org.hyperledger.besu.cli.subcommands.networkcreate.generate.DirectoryHandler;
 import org.hyperledger.besu.cli.subcommands.networkcreate.generate.Generatable;
-import org.hyperledger.besu.cli.subcommands.networkcreate.generate.NodeConfig;
 import org.hyperledger.besu.cli.subcommands.networkcreate.generate.Verifiable;
 import org.hyperledger.besu.cli.subcommands.networkcreate.mapping.InitConfigurationErrorHandler;
 import org.hyperledger.besu.crypto.SECP256K1;
@@ -40,6 +40,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
+import java.util.Optional;
+import javax.annotation.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonCreator.Mode;
@@ -56,15 +58,19 @@ public class Node implements Generatable, ConfigNode, Verifiable {
   private static final String PRIVATE_KEY_FILENAME = "key";
   private static final String DEFAULT_IP = "127.0.0.1";
   private static final String DEFAULT_INTERFACE = "0.0.0.0";
+  private static final String CONFIG_FILENAME = "config.toml";
 
   @JsonIgnore private ConfigNode parent;
 
+  @JsonIgnore private String privacyClientUrl;
+  @JsonIgnore private Path publicKeyFile;
+
   @JsonIgnore private final KeyPair keyPair;
   @JsonIgnore private final Address address;
-  private String name;
-  private Boolean validator;
-  private Boolean bootnode;
-  private List<Apis> apis;
+  private final String name;
+  private final Boolean validator;
+  private final Boolean bootnode;
+  private final List<Apis> apis;
 
   @JsonCreator(mode = Mode.PROPERTIES)
   public Node(
@@ -129,8 +135,31 @@ public class Node implements Generatable, ConfigNode, Verifiable {
     return ((Configuration) parent).getNodes();
   }
 
+  @JsonIgnore
+  private Optional<String> getPrivacyClientUrl() {
+    return Optional.ofNullable(privacyClientUrl);
+  }
+
+  @JsonIgnore
+  void setPrivacyClientUrl(String privacyClientUrl) {
+    this.privacyClientUrl = privacyClientUrl;
+  }
+
+  @JsonIgnore
+  void setPrivacyNodePublicKeyFile(final Path publicKeyFile) {
+    this.publicKeyFile = publicKeyFile;
+  }
+
+  @JsonIgnore
+  private Optional<Path> getPrivacyNodePublicKeyFile() {
+    return Optional.ofNullable(publicKeyFile);
+  }
+
   @Override
-  public Path generate(final Path outputDirectoryPath, final DirectoryHandler directoryHandler) {
+  public Path generate(
+      final Path outputDirectoryPath,
+      final DirectoryHandler directoryHandler,
+      @Nullable final Node node) {
     // generate node dir
     final Path nodeDir = outputDirectoryPath.resolve(directoryHandler.getSafeName(name));
     directoryHandler.create(nodeDir);
@@ -145,23 +174,24 @@ public class Node implements Generatable, ConfigNode, Verifiable {
       LOG.error("Unable to write private key file", e);
     }
 
-    // generate config file
-    createConfigFile(nodeDir);
-
-    // generate privacy config if requested
+    // generate privacy config if requested, must be generated before node config file
+    // otherwise values are not populated
     ((Configuration) parent)
         .getPrivacy()
-        .ifPresent(privacy -> privacy.generate(nodeDir, directoryHandler));
+        .ifPresent(privacy -> privacy.generate(nodeDir, directoryHandler, this));
 
     LOG.debug("Node {} address is {}", name, address);
+
+    // generate config file
+    createConfigFile(nodeDir);
 
     return nodeDir;
   }
 
   private void createConfigFile(final Path nodeDir) {
 
-    NodeConfig nodeConfig = new NodeConfig();
-    nodeConfig
+    ConfigWriter configWriter = new ConfigWriter();
+    configWriter
         .addComment(String.format("Node \"%1$s\" configuration file.", name))
 
         // Write node options
@@ -191,12 +221,10 @@ public class Node implements Generatable, ConfigNode, Verifiable {
         .addOption("host-whitelist", new String[] {"all"});
 
     if (isApiEnabled(Apis.HTTP_RPC)) {
-      // Write RPC port option
-      nodeConfig
+      // Write RPC HTTP options
+      configWriter
           .addEmptyLine()
           .addComment("HTTP RPC options")
-
-          // RPC HTTP
           .addOption("rpc-http-enabled", true)
           .addComment("HTTP RPC listening host")
           .addOption("rpc-http-host", "127.0.0.1")
@@ -209,12 +237,10 @@ public class Node implements Generatable, ConfigNode, Verifiable {
     }
 
     if (isApiEnabled(Apis.WS_RPC)) {
-      // Write RPC port option
-      nodeConfig
+      // Write RPC WebSocket options
+      configWriter
           .addEmptyLine()
           .addComment("Websocket RPC options")
-          // RPC WebSocket
-          .addEmptyLine()
           .addOption("rpc-ws-enabled", true)
           .addComment("Websocket RPC listening host")
           .addOption("rpc-ws-host", "127.0.0.1")
@@ -225,12 +251,10 @@ public class Node implements Generatable, ConfigNode, Verifiable {
     }
 
     if (isApiEnabled(Apis.GRAPHQL)) {
-      // Write RPC port option
-      nodeConfig
+      // Write GraphQL options
+      configWriter
           .addEmptyLine()
           .addComment("GRAPHQL options")
-          // GraphQL
-          .addEmptyLine()
           .addOption("graphql-http-enabled", true)
           .addComment("GraphQL listening host")
           .addOption("graphql-http-host", "127.0.0.1")
@@ -241,11 +265,8 @@ public class Node implements Generatable, ConfigNode, Verifiable {
     }
 
     if (isApiEnabled(Apis.METRICS)) {
-      // Write RPC port option
-      nodeConfig
-          .addEmptyLine()
-          .addComment("Metrics options")
-          // Metrics
+      // Write Metrics options
+      configWriter
           .addEmptyLine()
           .addComment("Metrics options")
           .addOption("metrics-enabled", true)
@@ -255,17 +276,24 @@ public class Node implements Generatable, ConfigNode, Verifiable {
           .addOption(METRICS.getKey(), METRICS.getPort(getSiblings(), this));
     }
 
-    // Write the file
-    nodeConfig.write(nodeDir);
+    if (((Configuration) parent).getPrivacy().isPresent()) {
+      // Write Privacy options
+      configWriter
+          .addEmptyLine()
+          .addComment("Privacy options")
+          .addOption("privacy-enabled", true)
+          .addOption("privacy-url", getPrivacyClientUrl().orElse("http://127.0.0.1:8888"))
+          .addOption(
+              "privacy-public-key-file",
+              nodeDir
+                  .relativize(
+                      getPrivacyNodePublicKeyFile().orElse(nodeDir.resolve("Orion/nodeKey.pub")))
+                  .toString())
+          .addOption("min-gas-price", 0);
+    }
 
-    // TODO customise TOML values
-    // TODO privacy config
-    //      ## Privacy
-    // #privacy-url="http://127.0.0.1:8888"
-    // #privacy-public-key-file="./pubKey.pub"
-    // #privacy-enabled=false
-    // #privacy-precompiled-address=9
-    // #privacy-marker-transaction-signing-key-file="./signerKey"
+    // Write the file
+    configWriter.write(nodeDir.resolve(CONFIG_FILENAME));
   }
 
   private boolean isApiEnabled(final Apis api) {

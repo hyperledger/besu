@@ -16,8 +16,12 @@ package org.hyperledger.besu.cli.subcommands.networkcreate.model;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Objects.isNull;
 import static java.util.Objects.requireNonNullElse;
+import static org.hyperledger.besu.cli.subcommands.networkcreate.generate.PortConfig.PRIVACY_CLIENT;
+import static org.hyperledger.besu.cli.subcommands.networkcreate.generate.PortConfig.PRIVACY_NODE;
 
+import org.hyperledger.besu.cli.subcommands.networkcreate.generate.ConfigWriter;
 import org.hyperledger.besu.cli.subcommands.networkcreate.generate.DirectoryHandler;
 import org.hyperledger.besu.cli.subcommands.networkcreate.generate.Generatable;
 import org.hyperledger.besu.cli.subcommands.networkcreate.generate.OrionKeys;
@@ -26,15 +30,13 @@ import org.hyperledger.besu.cli.subcommands.networkcreate.mapping.InitConfigurat
 import org.hyperledger.besu.crypto.SecureRandomProvider;
 
 import java.io.IOException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.HashMap;
+import java.util.List;
+import javax.annotation.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.io.Resources;
-import com.moandjiezana.toml.TomlWriter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.io.Base64;
@@ -48,11 +50,8 @@ class Privacy implements ConfigNode, Verifiable, Generatable {
   private static final String PASSWORD_FILENAME = "passwordFile";
   private static final String PRIVATE_KEY_FILENAME = "nodeKey.key";
   private static final String PUBLIC_KEY_FILENAME = "nodeKey.pub";
-  private static final String CONFIG_TEMPLATE_FILENAME = "networkcreator/orion-template.conf";
   private static final String CONFIG_FILENAME = "orion.conf";
-
-  private static final String TOML_TLS_KEY = "tls";
-  private static final String TOML_TLS_FIND_REGEX = TOML_TLS_KEY + ".*=.+";
+  private static final String URL_FORMAT = "http://127.0.0.1:%1$s/";
 
   private ConfigNode parent;
 
@@ -78,7 +77,10 @@ class Privacy implements ConfigNode, Verifiable, Generatable {
   }
 
   @Override
-  public Path generate(final Path outputDirectoryPath, final DirectoryHandler directoryHandler) {
+  public Path generate(
+      final Path outputDirectoryPath,
+      final DirectoryHandler directoryHandler,
+      @Nullable final Node node) {
     final Path privacyNodeDir = outputDirectoryPath.resolve(PRIVACY_DIR_NAME);
     directoryHandler.create(privacyNodeDir);
 
@@ -115,15 +117,21 @@ class Privacy implements ConfigNode, Verifiable, Generatable {
           StandardOpenOption.CREATE_NEW);
 
       // Write public key
+      Path publicKeyFile = privacyNodeDir.resolve(PUBLIC_KEY_FILENAME);
+      if (!isNull(node)) {
+        node.setPrivacyNodePublicKeyFile(publicKeyFile);
+      }
       Files.write(
-          privacyNodeDir.resolve(PUBLIC_KEY_FILENAME),
+          publicKeyFile,
           Base64.encodeBytes(orionKeys.getPublicKey().bytesArray()).getBytes(UTF_8),
           StandardOpenOption.CREATE_NEW);
+    } catch (NullPointerException e) {
+      LOG.error("Error happened while generating password", e);
     } catch (IOException e) {
       LOG.error("Unable to write Orion key files", e);
     }
 
-    createConfigFile(privacyNodeDir);
+    createConfigFile(privacyNodeDir, node);
     return privacyNodeDir;
   }
 
@@ -132,48 +140,39 @@ class Privacy implements ConfigNode, Verifiable, Generatable {
     return errorHandler;
   }
 
-  private void createConfigFile(final Path privacyNodeDir) {
-    final TomlWriter tomlWriter = new TomlWriter.Builder().build();
+  private void createConfigFile(final Path configFileDir, final Node currentNode) {
 
-    try {
-      final URL configTemplateFile =
-          getClass().getClassLoader().getResource(CONFIG_TEMPLATE_FILENAME);
-      checkNotNull(configTemplateFile, "Configuration template not found.");
-      String configTemplateSource = Resources.toString(configTemplateFile, UTF_8);
+    List<Node> allNodes = ((Configuration) parent).getNodes();
 
-      // TODO customise TOML values and make this a separate class
-      //      // Write ports
-      //      configTemplateSource =
-      //          replacePort(
-      //              tomlWriter,
-      //              configTemplateSource,
-      //              P2P,
-      //              TOML_P2P_PORT_FIND_REGEX,
-      //              DEFAULT_P2P_PORT,
-      //              1);
+    Integer nodePort = PRIVACY_NODE.getPort(allNodes, currentNode);
+    Integer clientPort = PRIVACY_CLIENT.getPort(allNodes, currentNode);
+    String nodeUrl = String.format(URL_FORMAT, nodePort);
+    String clientUrl = String.format(URL_FORMAT, clientPort);
 
-      //      nodeurl = "http://127.0.0.1:8080/"
-      // TODO use same port anti colision strategy thaan for nodes and make it a separate class
-      //      nodeport = 8080
-      //      clienturl = "http://127.0.0.1:8888/"
-      //      clientport = 8888
-      //      publickeys = ["nodeKey.pub"]
-      //      privatekeys = ["nodeKey.key"]
-      //      passwords = "passwordFile"
+    // used by node in its config file
+    currentNode.setPrivacyClientUrl(clientUrl);
 
-      // replace tls
-      final HashMap<String, String> tlsValueMap = new HashMap<>();
-      tlsValueMap.put("tls", tls ? "on" : "off");
-      configTemplateSource =
-          configTemplateSource.replaceAll(TOML_TLS_FIND_REGEX, tomlWriter.write(tlsValueMap));
+    String[] otherNodesUrls =
+        allNodes.stream()
+            .filter(node -> !node.equals(currentNode))
+            .map(node -> String.format(URL_FORMAT, PRIVACY_NODE.getPort(allNodes, node)))
+            .toArray(String[]::new);
 
-      LOG.debug(configTemplateSource);
-      Files.write(
-          privacyNodeDir.resolve(CONFIG_FILENAME),
-          configTemplateSource.getBytes(UTF_8),
-          StandardOpenOption.CREATE_NEW);
-    } catch (IOException e) {
-      LOG.error("Unable to write privacy configuration file", e);
-    }
+    ConfigWriter configWriter = new ConfigWriter();
+    configWriter
+        .addComment("Orion configuration file.")
+        // Write node options
+        .addEmptyLine()
+        .addOption("tls", tls)
+        .addOption("nodeurl", nodeUrl)
+        .addOption(PRIVACY_NODE.getKey(), nodePort)
+        .addOption("clienturl", clientUrl)
+        .addOption(PRIVACY_CLIENT.getKey(), clientPort)
+        .addOption("privatekeys", new String[] {"nodeKey.key"})
+        .addOption("publickeys", new String[] {"nodeKey.pub"})
+        .addOption("passwords", "passwordFile")
+        .addOption("othernodes", otherNodesUrls);
+    // Write the file
+    configWriter.write(configFileDir.resolve(CONFIG_FILENAME));
   }
 }

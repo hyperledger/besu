@@ -120,7 +120,7 @@ public class NetworkCreateSubCommand implements Runnable {
 
       LOG.debug(mapper.writeValueAsString(initConfig));
       final DirectoryHandler directoryHandler = new DirectoryHandler();
-      final Path generatedResource = initConfig.generate(targetDirectory, directoryHandler);
+      final Path generatedResource = initConfig.generate(targetDirectory, directoryHandler, null);
       LOG.info("Resources generated in {}", generatedResource);
     } catch (final MalformedURLException | URISyntaxException e) {
       throw new ParameterException(

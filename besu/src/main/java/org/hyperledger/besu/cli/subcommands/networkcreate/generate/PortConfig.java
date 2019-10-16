@@ -29,14 +29,18 @@ public enum PortConfig {
   RPC_HTTP("rpc-http-port", 8545, Group.RPC),
   RPC_WS("rpc-ws-port", 8546, Group.RPC),
   GRAPHQL("graphql-http-port", 8547, Group.RPC),
-  METRICS("metrics-port", 9545, Group.METRICS);
+  METRICS("metrics-port", 9545, Group.METRICS),
+  PRIVACY_NODE("nodeport", 8080, Group.PRIVACY_NODE),
+  PRIVACY_CLIENT("clientport", 8888, Group.PRIVACY_CLIENT);
 
   // Port group.
   // All ports in the same group will be incremented together.
   private enum Group {
     P2P,
     RPC,
-    METRICS;
+    METRICS,
+    PRIVACY_NODE,
+    PRIVACY_CLIENT
   }
 
   private final String key;

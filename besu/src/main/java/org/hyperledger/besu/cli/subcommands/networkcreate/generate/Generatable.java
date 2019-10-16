@@ -14,7 +14,10 @@
  */
 package org.hyperledger.besu.cli.subcommands.networkcreate.generate;
 
+import org.hyperledger.besu.cli.subcommands.networkcreate.model.Node;
+
 import java.nio.file.Path;
+import javax.annotation.Nullable;
 
 @FunctionalInterface
 public interface Generatable {
@@ -27,7 +30,11 @@ public interface Generatable {
    *
    * @param outputDirectoryPath where to generate object resources
    * @param directoryHandler the handler to generate filesystem resources
+   * @param node the related node. Optional, only for context.
    * @return the path where object resources where generated, can be a directory or a file
    */
-  Path generate(final Path outputDirectoryPath, final DirectoryHandler directoryHandler);
+  Path generate(
+      final Path outputDirectoryPath,
+      final DirectoryHandler directoryHandler,
+      @Nullable final Node node);
 }
