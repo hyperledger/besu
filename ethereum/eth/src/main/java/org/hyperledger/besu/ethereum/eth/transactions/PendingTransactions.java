@@ -149,7 +149,8 @@ public class PendingTransactions {
 
   private void doRemoveTransaction(final Transaction transaction, final boolean addedToBlock) {
     synchronized (pendingTransactions) {
-      final TransactionInfo removedTransactionInfo = pendingTransactions.remove(transaction.hash());
+      final TransactionInfo removedTransactionInfo =
+          pendingTransactions.remove(transaction.getHash());
       if (removedTransactionInfo != null) {
         prioritizedTransactions.remove(removedTransactionInfo);
         removeTransactionTrackedBySenderAndNonce(transaction);
@@ -377,7 +378,7 @@ public class PendingTransactions {
     }
 
     public Hash getHash() {
-      return transaction.hash();
+      return transaction.getHash();
     }
 
     public Instant getAddedToPoolAt() {

@@ -199,7 +199,7 @@ public class NewBlockHeadersSubscriptionServiceTest {
   private List<Hash> transactionsWithHashOnly() {
     final List<Hash> hashes = new ArrayList<>();
     for (final TransactionWithMetadata transactionWithMetadata : transactionsWithMetadata()) {
-      hashes.add(transactionWithMetadata.getTransaction().hash());
+      hashes.add(transactionWithMetadata.getTransaction().getHash());
     }
     return hashes;
   }

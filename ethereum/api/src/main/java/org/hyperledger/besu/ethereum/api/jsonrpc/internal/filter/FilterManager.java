@@ -163,7 +163,7 @@ public class FilterManager extends AbstractVerticle {
     pendingTransactionFilters.forEach(
         (filter) -> {
           synchronized (filter) {
-            filter.addTransactionHash(transaction.hash());
+            filter.addTransactionHash(transaction.getHash());
           }
         });
   }

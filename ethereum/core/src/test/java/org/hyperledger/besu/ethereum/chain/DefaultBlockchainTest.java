@@ -264,7 +264,7 @@ public class DefaultBlockchainTest {
     }
     // Check old transactions have been removed
     for (final Transaction tx : originalHead.getBody().getTransactions()) {
-      assertThat(blockchain.getTransactionByHash(tx.hash())).isNotPresent();
+      assertThat(blockchain.getTransactionByHash(tx.getHash())).isNotPresent();
     }
 
     assertBlockIsHead(blockchain, fork);
@@ -340,7 +340,7 @@ public class DefaultBlockchainTest {
     assertTotalDifficultiesAreConsistent(blockchain, originalHead);
     // Check transactions were not indexed
     for (final Transaction tx : forkBlocks.get(0).getBody().getTransactions()) {
-      assertThat(blockchain.getTransactionByHash(tx.hash())).isNotPresent();
+      assertThat(blockchain.getTransactionByHash(tx.getHash())).isNotPresent();
     }
     // Appended block should be tracked as a fork
     assertThat(blockchain.blockIsOnCanonicalChain(forkBlocks.get(0).getHash())).isFalse();
@@ -362,7 +362,7 @@ public class DefaultBlockchainTest {
       removedTransactions.addAll(chain.get(i).getBody().getTransactions());
     }
     for (final Transaction tx : removedTransactions) {
-      assertThat(blockchain.getTransactionByHash(tx.hash())).isNotPresent();
+      assertThat(blockchain.getTransactionByHash(tx.getHash())).isNotPresent();
     }
 
     // Check that blockNumber index for previous chain head has been removed
@@ -432,7 +432,7 @@ public class DefaultBlockchainTest {
     assertTotalDifficultiesAreConsistent(blockchain, originalHead);
     // Check transactions were not indexed
     for (final Transaction tx : forkBlocks.get(0).getBody().getTransactions()) {
-      assertThat(blockchain.getTransactionByHash(tx.hash())).isNotPresent();
+      assertThat(blockchain.getTransactionByHash(tx.getHash())).isNotPresent();
     }
     // Appended block should be tracked as a fork
     assertThat(blockchain.blockIsOnCanonicalChain(forkBlocks.get(0).getHash())).isFalse();
@@ -454,7 +454,7 @@ public class DefaultBlockchainTest {
       removedTransactions.addAll(chain.get(i).getBody().getTransactions());
     }
     for (final Transaction tx : removedTransactions) {
-      assertThat(blockchain.getTransactionByHash(tx.hash())).isNotPresent();
+      assertThat(blockchain.getTransactionByHash(tx.getHash())).isNotPresent();
     }
     // Old chain head should now be tracked as a fork.
     forks = blockchain.getForks();
@@ -510,7 +510,7 @@ public class DefaultBlockchainTest {
 
     // Check old transactions have been removed
     for (final Transaction tx : chain.get(chainLength - 1).getBody().getTransactions()) {
-      final Optional<Transaction> actualTransaction = blockchain.getTransactionByHash(tx.hash());
+      final Optional<Transaction> actualTransaction = blockchain.getTransactionByHash(tx.getHash());
       if (tx.equals(overlappingTx)) {
         assertThat(actualTransaction).isPresent();
       } else {
@@ -548,7 +548,7 @@ public class DefaultBlockchainTest {
 
     // Check transactions were not indexed
     for (final Transaction tx : originalHead.getBody().getTransactions()) {
-      assertThat(blockchain.getTransactionByHash(tx.hash())).isNotPresent();
+      assertThat(blockchain.getTransactionByHash(tx.getHash())).isNotPresent();
     }
 
     // Check that blockNumber index for previous chain head has been removed
@@ -608,7 +608,7 @@ public class DefaultBlockchainTest {
       assertTotalDifficultiesAreConsistent(blockchain, originalHead);
       // Check transactions were not indexed
       for (final Transaction tx : forkBlock.getBody().getTransactions()) {
-        assertThat(blockchain.getTransactionByHash(tx.hash())).isNotPresent();
+        assertThat(blockchain.getTransactionByHash(tx.getHash())).isNotPresent();
       }
       // Appended block should be tracked as a fork
       assertThat(blockchain.blockIsOnCanonicalChain(forkBlock.getHash())).isFalse();
@@ -775,7 +775,7 @@ public class DefaultBlockchainTest {
     final List<Transaction> txs = block.getBody().getTransactions();
     for (int i = 0; i < txs.size(); i++) {
       final Transaction expected = txs.get(i);
-      final Transaction actual = blockchain.getTransactionByHash(expected.hash()).get();
+      final Transaction actual = blockchain.getTransactionByHash(expected.getHash()).get();
       assertThat(actual).isEqualTo(expected);
     }
     final List<TransactionReceipt> actualReceipts = blockchain.getTxReceipts(hash).get();

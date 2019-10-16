@@ -86,7 +86,7 @@ public class GraphQLDataFetchers {
         final ValidationResult<TransactionInvalidReason> validationResult =
             transactionPool.addLocalTransaction(transaction);
         if (validationResult.isValid()) {
-          return Optional.of(transaction.hash());
+          return Optional.of(transaction.getHash());
         } else {
           throw new GraphQLException(GraphQLError.of(validationResult.getInvalidReason()));
         }

@@ -33,6 +33,13 @@ import java.util.Optional;
 public interface Transaction {
 
   /**
+   * The Keccak 256-bit hash of this transaction.
+   *
+   * @return The Keccak 256-bit hash of this transaction.
+   */
+  Hash getHash();
+
+  /**
    * A scalar value equal to the number of transactions sent by the sender.
    *
    * @return the number of transactions sent by the sender.
