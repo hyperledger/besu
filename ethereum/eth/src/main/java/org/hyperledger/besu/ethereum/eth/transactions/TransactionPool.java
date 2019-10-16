@@ -135,7 +135,7 @@ public class TransactionPool implements BlockAddedObserver {
     }
     final Set<Transaction> addedTransactions = new HashSet<>();
     for (final Transaction transaction : transactions) {
-      if (pendingTransactions.containsTransaction(transaction.hash())) {
+      if (pendingTransactions.containsTransaction(transaction.getHash())) {
         // We already have this transaction, don't even validate it.
         duplicateTransactionCounter.labels(REMOTE).inc();
         continue;

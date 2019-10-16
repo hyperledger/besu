@@ -435,7 +435,7 @@ public class DefaultBlockchain implements MutableBlockchain {
   private static void indexTransactionForBlock(
       final BlockchainStorage.Updater updater, final Hash hash, final List<Transaction> txs) {
     for (int i = 0; i < txs.size(); i++) {
-      final Hash txHash = txs.get(i).hash();
+      final Hash txHash = txs.get(i).getHash();
       final TransactionLocation loc = new TransactionLocation(hash, i);
       updater.putTransactionLocation(txHash, loc);
     }
@@ -444,7 +444,7 @@ public class DefaultBlockchain implements MutableBlockchain {
   private static void clearIndexedTransactionsForBlock(
       final BlockchainStorage.Updater updater, final List<Transaction> txs) {
     for (final Transaction tx : txs) {
-      updater.removeTransactionLocation(tx.hash());
+      updater.removeTransactionLocation(tx.getHash());
     }
   }
 

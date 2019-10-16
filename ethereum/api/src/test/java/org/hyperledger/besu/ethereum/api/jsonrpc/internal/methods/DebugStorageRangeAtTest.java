@@ -77,7 +77,7 @@ public class DebugStorageRangeAtTest {
 
   @Before
   public void setUp() {
-    when(transaction.hash()).thenReturn(transactionHash);
+    when(transaction.getHash()).thenReturn(transactionHash);
   }
 
   @Test

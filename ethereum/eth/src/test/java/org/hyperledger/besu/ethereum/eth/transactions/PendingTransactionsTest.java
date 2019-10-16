@@ -514,11 +514,11 @@ public class PendingTransactionsTest {
   }
 
   private void assertTransactionPending(final Transaction t) {
-    assertThat(transactions.getTransactionByHash(t.hash())).contains(t);
+    assertThat(transactions.getTransactionByHash(t.getHash())).contains(t);
   }
 
   private void assertTransactionNotPending(final Transaction t) {
-    assertThat(transactions.getTransactionByHash(t.hash())).isEmpty();
+    assertThat(transactions.getTransactionByHash(t.getHash())).isEmpty();
   }
 
   private Transaction createTransaction(final int transactionNumber) {

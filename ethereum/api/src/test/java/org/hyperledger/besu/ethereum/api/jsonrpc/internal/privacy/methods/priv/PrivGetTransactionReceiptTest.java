@@ -164,7 +164,7 @@ public class PrivGetTransactionReceiptTest {
   public void returnReceiptIfTransactionExists() {
     final PrivGetTransactionReceipt privGetTransactionReceipt =
         new PrivGetTransactionReceipt(blockchainQueries, enclave, parameters, privacyParameters);
-    final Object[] params = new Object[] {transaction.hash()};
+    final Object[] params = new Object[] {transaction.getHash()};
     final JsonRpcRequest request = new JsonRpcRequest("1", "priv_getTransactionReceipt", params);
 
     final JsonRpcSuccessResponse response =
@@ -183,7 +183,7 @@ public class PrivGetTransactionReceiptTest {
     final PrivGetTransactionReceipt privGetTransactionReceipt =
         new PrivGetTransactionReceipt(
             blockchainQueries, failingEnclave, parameters, privacyParameters);
-    final Object[] params = new Object[] {transaction.hash()};
+    final Object[] params = new Object[] {transaction.getHash()};
     final JsonRpcRequest request = new JsonRpcRequest("1", "priv_getTransactionReceipt", params);
 
     final JsonRpcSuccessResponse response =
@@ -200,7 +200,7 @@ public class PrivGetTransactionReceiptTest {
 
     final PrivGetTransactionReceipt privGetTransactionReceipt =
         new PrivGetTransactionReceipt(blockchainQueries, enclave, parameters, privacyParameters);
-    final Object[] params = new Object[] {transaction.hash()};
+    final Object[] params = new Object[] {transaction.getHash()};
     final JsonRpcRequest request = new JsonRpcRequest("1", "priv_getTransactionReceipt", params);
 
     final JsonRpcSuccessResponse response =
@@ -216,7 +216,7 @@ public class PrivGetTransactionReceiptTest {
     final PrivGetTransactionReceipt privGetTransactionReceipt =
         new PrivGetTransactionReceipt(
             blockchainQueries, failingEnclave, parameters, privacyParameters);
-    final Object[] params = new Object[] {transaction.hash()};
+    final Object[] params = new Object[] {transaction.getHash()};
     final JsonRpcRequest request = new JsonRpcRequest("1", "priv_getTransactionReceipt", params);
 
     final Throwable t = catchThrowable(() -> privGetTransactionReceipt.response(request));

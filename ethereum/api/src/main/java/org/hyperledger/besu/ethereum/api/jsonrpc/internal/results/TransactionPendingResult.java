@@ -54,7 +54,7 @@ public class TransactionPendingResult implements TransactionResult {
     this.from = transaction.getSender().toString();
     this.gas = Quantity.create(transaction.getGasLimit());
     this.gasPrice = Quantity.create(transaction.getGasPrice());
-    this.hash = transaction.hash().toString();
+    this.hash = transaction.getHash().toString();
     this.input = transaction.getPayload().toString();
     this.nonce = Quantity.create(transaction.getNonce());
     this.to = transaction.getTo().map(BytesValue::toString).orElse(null);

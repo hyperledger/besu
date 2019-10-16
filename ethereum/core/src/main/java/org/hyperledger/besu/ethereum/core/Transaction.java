@@ -151,11 +151,6 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     this.chainId = chainId;
   }
 
-  @Override
-  public Hash getHash() {
-    return hash();
-  }
-
   /**
    * Returns the transaction nonce.
    *
@@ -340,7 +335,8 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
    *
    * @return the transaction hash
    */
-  public Hash hash() {
+  @Override
+  public Hash getHash() {
     if (hash == null) {
       final BytesValue rlp = RLP.encode(this::writeTo);
       hash = Hash.hash(rlp);

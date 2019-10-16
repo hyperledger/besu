@@ -160,7 +160,7 @@ public class JsonRpcResponseUtils {
     when(transaction.getV()).thenReturn(bigInteger(v));
     when(transaction.getR()).thenReturn(bigInteger(r));
     when(transaction.getS()).thenReturn(bigInteger(s));
-    when(transaction.hash()).thenReturn(hash(hash));
+    when(transaction.getHash()).thenReturn(hash(hash));
     when(transaction.getTo()).thenReturn(Optional.ofNullable(address(toAddress)));
     when(transaction.getSender()).thenReturn(address(fromAddress));
     when(transaction.getPayload()).thenReturn(bytes(input));

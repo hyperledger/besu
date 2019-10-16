@@ -46,7 +46,7 @@ public class AccountPermissioningController {
   }
 
   public boolean isPermitted(final Transaction transaction, final boolean includeOnChainCheck) {
-    final Hash transactionHash = transaction.hash();
+    final Hash transactionHash = transaction.getHash();
     final Address sender = transaction.getSender();
 
     LOG.trace("Account permissioning: Checking transaction {}", transactionHash);
