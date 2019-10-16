@@ -26,7 +26,7 @@ public interface ConnectionInitializer {
    * Start the connection initializer. Begins listening for incoming connections. Start allowing
    * outbound connections.
    *
-   * @return The port on which we're listening for incoming connections.
+   * @return The address on which we're listening for incoming connections.
    */
   CompletableFuture<InetSocketAddress> start();
 
