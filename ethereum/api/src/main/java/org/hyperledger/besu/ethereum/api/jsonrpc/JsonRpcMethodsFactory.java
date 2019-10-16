@@ -90,8 +90,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.permissioning.
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.permissioning.PermRemoveAccountsFromWhitelist;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.permissioning.PermRemoveNodesFromWhitelist;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea.EeaGetTransactionCount;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea.EeaPrivateNonceProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea.EeaSendRawTransaction;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivCreatePrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivDeletePrivacyGroup;
@@ -100,7 +98,9 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.P
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivGetPrivacyPrecompileAddress;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivGetPrivateTransaction;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivGetTransactionCount;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivGetTransactionCountLegacy;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivGetTransactionReceipt;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivateNonceProviderLegacy;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockReplay;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTracer;
@@ -367,8 +367,8 @@ public class JsonRpcMethodsFactory {
         addMethods(
             enabledMethods,
             new EeaSendRawTransaction(privateTransactionHandler, transactionPool, parameter),
-            new EeaGetTransactionCount(
-                parameter, new EeaPrivateNonceProvider(enclave, privateTransactionHandler)));
+            new PrivGetTransactionCountLegacy(
+                parameter, new PrivateNonceProviderLegacy(enclave, privateTransactionHandler)));
       }
       if (priv) {
         addMethods(
