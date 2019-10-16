@@ -125,7 +125,7 @@ public class BesuEventsImplTest {
   @Test
   public void syncStatusEventFiresAfterSubscribe() {
     final AtomicReference<Optional<SyncStatus>> result = new AtomicReference<>();
-    serviceImpl.addSyncStatusListener(newValue -> result.set(newValue));
+    serviceImpl.addSyncStatusListener(result::set);
 
     assertThat(result.get()).isNull();
     setSyncTarget();
@@ -141,7 +141,7 @@ public class BesuEventsImplTest {
   @Test
   public void syncStatusEventDoesNotFireAfterUnsubscribe() {
     final AtomicReference<Optional<SyncStatus>> result = new AtomicReference<>();
-    final long id = serviceImpl.addSyncStatusListener(newValue -> result.set(newValue));
+    final long id = serviceImpl.addSyncStatusListener(result::set);
 
     assertThat(result.get()).isNull();
     setSyncTarget();

@@ -31,7 +31,7 @@ public class SyncingSubscriptionService {
   public SyncingSubscriptionService(
       final SubscriptionManager subscriptionManager, final Synchronizer synchronizer) {
     this.subscriptionManager = subscriptionManager;
-    synchronizer.subscribeSyncStatus(syncStatus -> sendSyncingToMatchingSubscriptions(syncStatus));
+    synchronizer.subscribeSyncStatus(this::sendSyncingToMatchingSubscriptions);
   }
 
   private void sendSyncingToMatchingSubscriptions(final Optional<SyncStatus> syncStatus) {
