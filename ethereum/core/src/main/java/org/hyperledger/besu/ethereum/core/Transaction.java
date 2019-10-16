@@ -151,6 +151,11 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     this.chainId = chainId;
   }
 
+  @Override
+  public Hash getHash() {
+    return hash();
+  }
+
   /**
    * Returns the transaction nonce.
    *
