@@ -136,4 +136,11 @@ public interface Transaction {
    * @return if present, the message call data
    */
   Optional<? extends UnformattedData> getData();
+
+  /**
+   * Returns the transaction payload.
+   *
+   * @return the transaction payload
+   */
+  UnformattedData getPayload();
 }
