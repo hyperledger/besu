@@ -13,11 +13,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-spotless { groovyGradle { paddedCell()
-  } }
+spotless {
+  groovyGradle {
+    paddedCell()
+  }
+}
 
 sourceSets {
-  test { resources { include '*Tests/**/*.json' } }
+  test {
+    resources {
+      include '*Tests/**/*.json'
+    }
+  }
 }
 
 configurations { testOutput }
