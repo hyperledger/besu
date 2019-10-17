@@ -141,7 +141,7 @@ public class Node implements Generatable, ConfigNode, Verifiable {
   }
 
   @JsonIgnore
-  void setPrivacyClientUrl(String privacyClientUrl) {
+  void setPrivacyClientUrl(final String privacyClientUrl) {
     this.privacyClientUrl = privacyClientUrl;
   }
 

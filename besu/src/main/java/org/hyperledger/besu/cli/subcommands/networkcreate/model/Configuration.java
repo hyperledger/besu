@@ -48,7 +48,6 @@ public class Configuration implements Verifiable, Generatable, ConfigNode {
   private static final Logger LOG = LogManager.getLogger();
 
   private static final String CONFIGURATION_VERSION = "1.0";
-  private static final String CONFIGURATION_VERSION_MAX = "1.0";
 
   private static final String README_FILENAME = "README.md";
   private static final String README_FILE_SOURCE = "networkcreator/README.md";
