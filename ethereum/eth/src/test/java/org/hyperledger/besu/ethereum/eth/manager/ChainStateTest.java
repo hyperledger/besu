@@ -44,6 +44,20 @@ public class ChainStateTest {
   }
 
   @Test
+  public void updateHeightEstimate_toZero() {
+    chainState.updateHeightEstimate(0L);
+    assertThat(chainState.hasEstimatedHeight()).isFalse();
+    assertThat(chainState.getEstimatedHeight()).isEqualTo(0L);
+  }
+
+  @Test
+  public void updateHeightEstimate_toNonZeroValue() {
+    chainState.updateHeightEstimate(1L);
+    assertThat(chainState.hasEstimatedHeight()).isTrue();
+    assertThat(chainState.getEstimatedHeight()).isEqualTo(1L);
+  }
+
+  @Test
   public void updateBestBlockAndHeightFromHashAndHeight() {
     final long blockNumber = 12;
     final BlockHeader bestBlockHeader =
