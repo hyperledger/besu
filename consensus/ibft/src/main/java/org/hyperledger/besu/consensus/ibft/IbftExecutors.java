@@ -19,8 +19,7 @@ import static org.hyperledger.besu.ethereum.eth.manager.MonitoredExecutors.newSc
 
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.time.Duration;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -32,15 +31,23 @@ import org.apache.logging.log4j.Logger;
 
 public class IbftExecutors {
 
+  private enum State {
+    IDLE,
+    RUNNING,
+    STOPPED
+  }
+
   private static final Logger LOG = LogManager.getLogger();
 
-  private final ScheduledExecutorService timerExecutor;
-  private final Queue<ExecutorService> processorExecutor = new ConcurrentLinkedQueue<>();
-  private boolean started = false;
-  private boolean stopped = false;
+  private final Duration shutdownTimeout = Duration.ofSeconds(30);
+  private final MetricsSystem metricsSystem;
+
+  private volatile ScheduledExecutorService timerExecutor;
+  private volatile ExecutorService ibftProcessorExecutor;
+  private volatile State state = State.IDLE;
 
   private IbftExecutors(final MetricsSystem metricsSystem) {
-    timerExecutor = newScheduledThreadPool("IbftTimerExecutor", 1, metricsSystem);
+    this.metricsSystem = metricsSystem;
   }
 
   public static IbftExecutors create(final MetricsSystem metricsSystem) {
@@ -48,40 +55,39 @@ public class IbftExecutors {
   }
 
   public synchronized void start() {
-    started = true;
+    if (state != State.IDLE) {
+      // Nothing to do
+      return;
+    }
+    state = State.RUNNING;
+    ibftProcessorExecutor = Executors.newSingleThreadExecutor();
+    timerExecutor = newScheduledThreadPool("IbftTimerExecutor", 1, metricsSystem);
   }
 
   public synchronized void stop() {
     synchronized (this) {
-      if (started && !stopped) {
-        stopped = true;
-      } else {
+      if (state != State.RUNNING) {
         return;
       }
+      state = State.STOPPED;
     }
 
     timerExecutor.shutdownNow();
-    for (final ExecutorService executorService : processorExecutor) {
-      executorService.shutdownNow();
+    ibftProcessorExecutor.shutdownNow();
+  }
+
+  public void awaitStop() throws InterruptedException {
+    if (!timerExecutor.awaitTermination(shutdownTimeout.getSeconds(), TimeUnit.SECONDS)) {
+      LOG.error("{} timer executor did not shutdown cleanly.", getClass().getSimpleName());
+    }
+    if (!ibftProcessorExecutor.awaitTermination(shutdownTimeout.getSeconds(), TimeUnit.SECONDS)) {
+      LOG.error("{} ibftProcessor executor did not shutdown cleanly.", getClass().getSimpleName());
     }
   }
 
-  public void awaitStop() {
-    try {
-      timerExecutor.awaitTermination(5, TimeUnit.SECONDS);
-      for (ExecutorService executorService : processorExecutor) {
-        executorService.awaitTermination(5, TimeUnit.SECONDS);
-      }
-    } catch (final InterruptedException e) {
-      LOG.error("{} failed to shutdown cleanly.", getClass().getSimpleName(), e);
-    }
-  }
-
-  public synchronized void executeOnSingleThread(final Runnable runnable) {
+  public synchronized void executeIbftProcessor(final IbftProcessor ibftProcessor) {
     assertRunning();
-    ExecutorService executor = Executors.newSingleThreadExecutor();
-    processorExecutor.add(executor);
-    executor.execute(runnable);
+    ibftProcessorExecutor.execute(ibftProcessor);
   }
 
   public synchronized ScheduledFuture<?> scheduleTask(
@@ -91,13 +97,13 @@ public class IbftExecutors {
   }
 
   private void assertRunning() {
-    if (!started) {
+    if (state != State.RUNNING) {
       throw new IllegalStateException(
-          "Attempt to interact with " + getClass().getSimpleName() + " before invoking start().");
-    }
-    if (stopped) {
-      throw new IllegalStateException(
-          "Attempt to interacted with a stopped " + getClass().getSimpleName() + ".");
+          "Attempt to interact with "
+              + getClass().getSimpleName()
+              + " that is not running. Current State is "
+              + state.name()
+              + ".");
     }
   }
 }

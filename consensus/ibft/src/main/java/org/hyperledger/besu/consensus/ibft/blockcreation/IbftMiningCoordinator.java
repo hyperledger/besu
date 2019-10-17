@@ -74,7 +74,7 @@ public class IbftMiningCoordinator implements MiningCoordinator, BlockAddedObser
     if (started.compareAndSet(false, true)) {
       ibftExecutors.start();
       controller.start();
-      ibftExecutors.executeOnSingleThread(ibftProcessor);
+      ibftExecutors.executeIbftProcessor(ibftProcessor);
     }
   }
 
@@ -88,7 +88,7 @@ public class IbftMiningCoordinator implements MiningCoordinator, BlockAddedObser
   }
 
   @Override
-  public void awaitStop() {
+  public void awaitStop() throws InterruptedException {
     ibftExecutors.awaitStop();
   }
 
