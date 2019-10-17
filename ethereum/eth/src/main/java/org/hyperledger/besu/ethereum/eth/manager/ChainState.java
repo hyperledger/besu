@@ -103,8 +103,8 @@ public class ChainState implements ChainHeadEstimate {
 
   public void updateHeightEstimate(final long blockNumber) {
     synchronized (this) {
-      estimatedHeightKnown = true;
       if (blockNumber > estimatedHeight) {
+        estimatedHeightKnown = true;
         estimatedHeight = blockNumber;
         estimatedHeightListeners.forEach(e -> e.onEstimatedHeightChanged(estimatedHeight));
       }
