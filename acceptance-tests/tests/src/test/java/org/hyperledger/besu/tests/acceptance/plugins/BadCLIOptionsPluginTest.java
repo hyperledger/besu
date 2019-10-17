@@ -11,6 +11,7 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
+ *
  */
 package org.hyperledger.besu.tests.acceptance.plugins;
 
@@ -32,48 +33,40 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-public class PicoCLIOptionsPluginTest extends AcceptanceTestBase {
+public class BadCLIOptionsPluginTest extends AcceptanceTestBase {
   private BesuNode node;
-
-  // context: https://en.wikipedia.org/wiki/The_Magic_Words_are_Squeamish_Ossifrage
-  private static final String MAGIC_WORDS = "Squemish Ossifrage";
 
   @Before
   public void setUp() throws Exception {
     node =
         besu.createPluginsNode(
-            "node1",
-            Collections.singletonList("testPlugins"),
-            Collections.singletonList("--Xplugin-test-option=" + MAGIC_WORDS));
+            "node1", Collections.singletonList("testPlugins"), Collections.emptyList());
     cluster.start(node);
   }
 
   @Test
-  public void shouldRegister() throws IOException {
-    final Path registrationFile =
-        node.homeDirectory().resolve("plugins/pluginLifecycle.registered");
+  public void shouldNotRegister() {
+    final Path registrationFile = node.homeDirectory().resolve("plugins/badCLIOptions.init");
     waitForFile(registrationFile);
-
-    // this assert is false as CLI will not be parsed at this point
-    assertThat(Files.readAllLines(registrationFile).stream().anyMatch(s -> s.contains(MAGIC_WORDS)))
-        .isFalse();
+    assertThat(node.homeDirectory().resolve("plugins/badCliOptions.register")).doesNotExist();
   }
 
   @Test
-  public void shouldStart() throws IOException {
+  public void shouldNotStart() {
+    // depend on the good PicoCLIOptions to tell us when it should be up
     final Path registrationFile = node.homeDirectory().resolve("plugins/pluginLifecycle.started");
     waitForFile(registrationFile);
 
-    // this assert is true as CLI will be parsed at this point
-    assertThat(Files.readAllLines(registrationFile).stream().anyMatch(s -> s.contains(MAGIC_WORDS)))
-        .isTrue();
+    assertThat(node.homeDirectory().resolve("plugins/badCliOptions.start")).doesNotExist();
   }
 
   @Test
   @Ignore("No way to do a graceful shutdown of Besu at the moment.")
-  public void shouldStop() {
+  public void shouldNotStop() {
     cluster.stopNode(node);
     waitForFile(node.homeDirectory().resolve("plugins/pluginLifecycle.stopped"));
+    assertThat(node.homeDirectory().resolve("plugins/badCliOptions.start")).doesNotExist();
+    assertThat(node.homeDirectory().resolve("plugins/badCliOptions.stop")).doesNotExist();
   }
 
   private void waitForFile(final Path path) {
