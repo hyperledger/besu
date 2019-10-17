@@ -50,6 +50,8 @@ public interface GenesisConfigOptions {
 
   OptionalLong getSpuriousDragonBlockNumber();
 
+  OptionalLong getDieHardBlockNumber();
+
   OptionalLong getByzantiumBlockNumber();
 
   OptionalLong getConstantinopleBlockNumber();

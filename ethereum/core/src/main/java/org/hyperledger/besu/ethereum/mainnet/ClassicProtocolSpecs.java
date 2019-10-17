@@ -50,6 +50,45 @@ public class ClassicProtocolSpecs {
         .name("ClassicTangerineWhistle");
   }
 
+  public static ProtocolSpecBuilder<Void> dieHardDefinition(
+      final Optional<BigInteger> chainId,
+      final OptionalInt configContractSizeLimit,
+      final OptionalInt configStackSizeLimit) {
+    //    final int contractSizeLimit =
+    //            configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
+    // final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
+
+    return tangerineWhistleDefinition(chainId, OptionalInt.empty(), configStackSizeLimit)
+        .gasCalculator(SpuriousDragonGasCalculator::new)
+        //            .skipZeroBlockRewards(true)
+        //            .messageCallProcessorBuilder(MainnetMessageCallProcessor::new)
+        //            .contractCreationProcessorBuilder(
+        //                    (gasCalculator, evm) ->
+        //                            new MainnetContractCreationProcessor(
+        //                                    gasCalculator,
+        //                                    evm,
+        //                                    true,
+        //
+        // Collections.singletonList(MaxCodeSizeRule.of(contractSizeLimit)),
+        //                                    1))
+        .transactionValidatorBuilder(
+            gasCalculator -> new MainnetTransactionValidator(gasCalculator, true, chainId))
+        //            .transactionProcessorBuilder(
+        //                    (gasCalculator,
+        //                     transactionValidator,
+        //                     contractCreationProcessor,
+        //                     messageCallProcessor) ->
+        //                            new MainnetTransactionProcessor(
+        //                                    gasCalculator,
+        //                                    transactionValidator,
+        //                                    contractCreationProcessor,
+        //                                    messageCallProcessor,
+        //                                    true,
+        //                                    stackSizeLimit,
+        //                                    Account.DEFAULT_VERSION))
+        .name("DieHard");
+  }
+
   public static ProtocolSpecBuilder<Void> defuseDifficultyBombDefinition(
       final Optional<BigInteger> chainId,
       final OptionalInt contractSizeLimit,

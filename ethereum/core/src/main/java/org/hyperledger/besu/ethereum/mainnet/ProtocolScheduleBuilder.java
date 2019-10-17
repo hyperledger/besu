@@ -126,6 +126,11 @@ public class ProtocolScheduleBuilder<C> {
             chainId, config.getContractSizeLimit(), config.getEvmStackSize()));
     addProtocolSpec(
         protocolSchedule,
+        config.getDieHardBlockNumber(),
+        ClassicProtocolSpecs.dieHardDefinition(
+            chainId, config.getContractSizeLimit(), config.getEvmStackSize()));
+    addProtocolSpec(
+        protocolSchedule,
         config.getByzantiumBlockNumber(),
         MainnetProtocolSpecs.byzantiumDefinition(
             chainId,

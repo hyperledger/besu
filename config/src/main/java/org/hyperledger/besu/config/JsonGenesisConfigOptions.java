@@ -145,6 +145,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public OptionalLong getDieHardBlockNumber() {
+    return getOptionalLong("diehardblock");
+  }
+
+  @Override
   public OptionalLong getByzantiumBlockNumber() {
     return getOptionalLong("byzantiumblock");
   }
