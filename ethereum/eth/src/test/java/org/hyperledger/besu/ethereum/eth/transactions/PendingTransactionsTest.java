@@ -277,7 +277,7 @@ public class PendingTransactionsTest {
   }
 
   @Test
-  public void shouldNotSelectReplacedTransactionWithSameSenderAndNonceButGreaterGas() {
+  public void shouldNotSelectReplacedTransaction() {
     final Transaction transaction1 = transactionWithNonceSenderAndGasPrice(1, KEYS1, 1);
     final Transaction transaction2 = transactionWithNonceSenderAndGasPrice(1, KEYS1, 2);
 
@@ -292,7 +292,7 @@ public class PendingTransactionsTest {
         });
 
     assertThat(parsedTransactions.size()).isEqualTo(1);
-    assertThat(parsedTransactions.get(0)).isEqualTo(transaction2);
+    assertThat(parsedTransactions).containsExactly(transaction2);
   }
 
   @Test
