@@ -28,7 +28,9 @@ import org.hyperledger.besu.util.bytes.BytesValue;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
 import org.apache.logging.log4j.LogManager;
@@ -49,8 +51,7 @@ public abstract class AbstractMinerExecutor<
   protected volatile BytesValue extraData;
   protected volatile Wei minTransactionGasPrice;
 
-  private boolean started = false;
-  private boolean stopped = false;
+  private final AtomicBoolean stopped = new AtomicBoolean(false);
 
   public AbstractMinerExecutor(
       final ProtocolContext<C> protocolContext,
@@ -68,36 +69,27 @@ public abstract class AbstractMinerExecutor<
     this.gasLimitCalculator = gasLimitCalculator;
   }
 
-  synchronized void start() {
-    started = true;
-  }
-
-  public M startAsyncMining(
+  public Optional<M> startAsyncMining(
       final Subscribers<MinedBlockObserver> observers, final BlockHeader parentHeader) {
-    synchronized (this) {
-      assertRunning();
+    try {
       final M currentRunningMiner = createMiner(observers, parentHeader);
       executorService.execute(currentRunningMiner);
-      return currentRunningMiner;
+      return Optional.of(currentRunningMiner);
+    } catch (RejectedExecutionException e) {
+      LOG.warn("Unable to start mining.", e);
+      return Optional.empty();
     }
   }
 
-  public void stop() {
-    synchronized (this) {
-      if (started && !stopped) {
-        stopped = true;
-      } else {
-        return;
-      }
+  public void shutDown() {
+    if (stopped.compareAndSet(false, true)) {
+      executorService.shutdownNow();
     }
-    executorService.shutdownNow();
   }
 
-  public void awaitStop() {
-    try {
-      executorService.awaitTermination(5, TimeUnit.SECONDS);
-    } catch (final InterruptedException e) {
-      LOG.error("Failed to shutdown miner executor");
+  public void awaitShutdown() throws InterruptedException {
+    if (!executorService.awaitTermination(30, TimeUnit.SECONDS)) {
+      LOG.error("Failed to shutdown {}.", this.getClass().getSimpleName());
     }
   }
 
@@ -117,15 +109,4 @@ public abstract class AbstractMinerExecutor<
   }
 
   public abstract Optional<Address> getCoinbase();
-
-  private void assertRunning() {
-    if (!started) {
-      throw new IllegalStateException(
-          "Attempt to interact with " + getClass().getSimpleName() + " before invoking start().");
-    }
-    if (stopped) {
-      throw new IllegalStateException(
-          "Attempt to interacted with a stopped " + getClass().getSimpleName() + ".");
-    }
-  }
 }

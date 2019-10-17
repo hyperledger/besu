@@ -43,6 +43,7 @@ import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.assertj.core.util.Lists;
 import org.junit.Before;
@@ -89,7 +90,7 @@ public class CliqueMiningCoordinatorTest {
 
     when(protocolContext.getConsensusState()).thenReturn(cliqueContext);
     when(protocolContext.getBlockchain()).thenReturn(blockChain);
-    when(minerExecutor.startAsyncMining(any(), any())).thenReturn(blockMiner);
+    when(minerExecutor.startAsyncMining(any(), any())).thenReturn(Optional.of(blockMiner));
     when(syncState.isInSync()).thenReturn(true);
 
     miningTracker = new CliqueMiningTracker(proposerAddress, protocolContext);
@@ -140,7 +141,7 @@ public class CliqueMiningCoordinatorTest {
     verify(minerExecutor, times(1)).startAsyncMining(any(), any());
 
     reset(minerExecutor);
-    when(minerExecutor.startAsyncMining(any(), any())).thenReturn(blockMiner);
+    when(minerExecutor.startAsyncMining(any(), any())).thenReturn(Optional.of(blockMiner));
 
     final Block importedBlock = createEmptyBlock(2, blockChain.getChainHeadHash(), validatorKeys);
 
@@ -171,7 +172,7 @@ public class CliqueMiningCoordinatorTest {
     verify(minerExecutor, times(1)).startAsyncMining(any(), any());
 
     reset(minerExecutor);
-    when(minerExecutor.startAsyncMining(any(), any())).thenReturn(blockMiner);
+    when(minerExecutor.startAsyncMining(any(), any())).thenReturn(Optional.of(blockMiner));
 
     final Block importedBlock = createEmptyBlock(2, blockChain.getChainHeadHash(), validatorKeys);
 
@@ -202,7 +203,7 @@ public class CliqueMiningCoordinatorTest {
     verify(minerExecutor, times(1)).startAsyncMining(any(), any());
 
     reset(minerExecutor);
-    when(minerExecutor.startAsyncMining(any(), any())).thenReturn(blockMiner);
+    when(minerExecutor.startAsyncMining(any(), any())).thenReturn(Optional.of(blockMiner));
 
     final Block importedBlock = createEmptyBlock(2, blockChain.getChainHeadHash(), validatorKeys);
 
@@ -228,7 +229,7 @@ public class CliqueMiningCoordinatorTest {
     verify(minerExecutor, times(1)).startAsyncMining(any(), any());
 
     reset(minerExecutor);
-    when(minerExecutor.startAsyncMining(any(), any())).thenReturn(blockMiner);
+    when(minerExecutor.startAsyncMining(any(), any())).thenReturn(Optional.of(blockMiner));
 
     final Block importedBlock = createEmptyBlock(1, blockChain.getChainHeadHash(), proposerKeys);
     blockChain.appendBlock(importedBlock, Lists.emptyList());

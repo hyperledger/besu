@@ -50,7 +50,7 @@ public class EthHashMinerExecutor extends AbstractMinerExecutor<Void, EthHashBlo
   }
 
   @Override
-  public EthHashBlockMiner startAsyncMining(
+  public Optional<EthHashBlockMiner> startAsyncMining(
       final Subscribers<MinedBlockObserver> observers, final BlockHeader parentHeader) {
     if (!coinbase.isPresent()) {
       throw new CoinbaseNotSetException("Unable to start mining without a coinbase.");

@@ -32,7 +32,7 @@ public interface MiningCoordinator {
 
   void stop();
 
-  void awaitStop();
+  void awaitStop() throws InterruptedException;
 
   /**
    * If mining is disabled, enable it.

@@ -78,9 +78,7 @@ public class Runner implements AutoCloseable {
   public void start() {
     try {
       LOG.info("Starting Ethereum main loop ... ");
-      if (natManager.isPresent()) {
-        natManager.get().start();
-      }
+      natManager.ifPresent(UpnpNatManager::start);
       networkRunner.start();
       if (networkRunner.getNetwork().isP2pEnabled()) {
         besuController.getSynchronizer().start();
@@ -102,8 +100,27 @@ public class Runner implements AutoCloseable {
     }
   }
 
+  public void stop() {
+    jsonRpc.ifPresent(service -> waitForServiceToStop("jsonRpc", service.stop()));
+    graphQLHttp.ifPresent(service -> waitForServiceToStop("graphQLHttp", service.stop()));
+    websocketRpc.ifPresent(service -> waitForServiceToStop("websocketRpc", service.stop()));
+    metrics.ifPresent(service -> waitForServiceToStop("metrics", service.stop()));
+
+    besuController.getMiningCoordinator().stop();
+    if (networkRunner.getNetwork().isP2pEnabled()) {
+      besuController.getSynchronizer().stop();
+    }
+
+    networkRunner.stop();
+
+    natManager.ifPresent(UpnpNatManager::stop);
+    besuController.close();
+    vertx.close();
+  }
+
   public void awaitStop() {
     try {
+      besuController.getMiningCoordinator().awaitStop();
       networkRunner.awaitStop();
     } catch (final InterruptedException e) {
       LOG.debug("Interrupted, exiting", e);
@@ -112,32 +129,9 @@ public class Runner implements AutoCloseable {
   }
 
   @Override
-  public void close() throws Exception {
-    try {
-      jsonRpc.ifPresent(service -> waitForServiceToStop("jsonRpc", service.stop()));
-      graphQLHttp.ifPresent(service -> waitForServiceToStop("graphQLHttp", service.stop()));
-      websocketRpc.ifPresent(service -> waitForServiceToStop("websocketRpc", service.stop()));
-      metrics.ifPresent(service -> waitForServiceToStop("metrics", service.stop()));
-
-      besuController.getMiningCoordinator().stop();
-      besuController.getMiningCoordinator().awaitStop();
-      if (networkRunner.getNetwork().isP2pEnabled()) {
-        besuController.getSynchronizer().stop();
-      }
-
-      networkRunner.stop();
-      networkRunner.awaitStop();
-
-      if (natManager.isPresent()) {
-        natManager.get().stop();
-      }
-    } finally {
-      try {
-        vertx.close();
-      } finally {
-        besuController.close();
-      }
-    }
+  public void close() {
+    stop();
+    awaitStop();
   }
 
   private void waitForServiceToStop(

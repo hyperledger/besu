@@ -77,7 +77,6 @@ public abstract class AbstractMiningCoordinator<
         return;
       }
       isStarted = true;
-      executor.start();
       maybeStartMining();
     }
   }
@@ -90,13 +89,13 @@ public abstract class AbstractMiningCoordinator<
       }
       isStopped = true;
       haltCurrentMiningOperation();
-      executor.stop();
+      executor.shutDown();
     }
   }
 
   @Override
-  public void awaitStop() {
-    executor.awaitStop();
+  public void awaitStop() throws InterruptedException {
+    executor.awaitShutdown();
   }
 
   @Override
@@ -141,7 +140,7 @@ public abstract class AbstractMiningCoordinator<
 
   private void startAsyncMiningOperation() {
     final BlockHeader parentHeader = blockchain.getChainHeadHeader();
-    currentRunningMiner = Optional.of(executor.startAsyncMining(minedBlockObservers, parentHeader));
+    currentRunningMiner = executor.startAsyncMining(minedBlockObservers, parentHeader);
   }
 
   private boolean haltCurrentMiningOperation() {
