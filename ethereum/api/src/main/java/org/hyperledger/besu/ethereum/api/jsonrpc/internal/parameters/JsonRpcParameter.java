@@ -16,8 +16,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.util.Optional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -74,8 +72,6 @@ public class JsonRpcParameter {
         param = mapper.readValue(json, paramClass);
       } catch (final JsonProcessingException e) {
         throw new InvalidJsonRpcParameters("Invalid json rpc parameter at index " + index, e);
-      } catch (final IOException e) {
-        throw new UncheckedIOException(e);
       }
     }
 
