@@ -125,7 +125,19 @@ public class RlpxAgent {
     }
 
     setupListeners();
-    return connectionInitializer.start();
+    return connectionInitializer
+        .start()
+        .thenApply(
+            (socketAddress) -> {
+              LOG.info("P2P RLPx agent started and listening on {}.", socketAddress);
+              return socketAddress.getPort();
+            })
+        .whenComplete(
+            (res, err) -> {
+              if (err != null) {
+                LOG.error("Failed to start P2P RLPx agent.", err);
+              }
+            });
   }
 
   public CompletableFuture<Void> stop() {
