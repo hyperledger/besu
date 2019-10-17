@@ -291,7 +291,6 @@ public class PendingTransactionsTest {
           return PendingTransactions.TransactionSelectionResult.CONTINUE;
         });
 
-    assertThat(parsedTransactions.size()).isEqualTo(1);
     assertThat(parsedTransactions).containsExactly(transaction2);
   }
 
