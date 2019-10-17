@@ -218,6 +218,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
    *
    * @return the transaction payload
    */
+  @Override
   public BytesValue getPayload() {
     return payload;
   }

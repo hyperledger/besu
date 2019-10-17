@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.Di
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -42,13 +43,12 @@ import io.vertx.core.Vertx;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.awaitility.Awaitility;
-import org.awaitility.Duration;
 import org.awaitility.core.ConditionTimeoutException;
 
 public class TestNodeList implements Closeable {
   private static final Logger LOG = LogManager.getLogger();
   protected final List<TestNode> nodes = new ArrayList<>();
-  private final Duration MSG_WAIT = new Duration(2, TimeUnit.SECONDS);
+  private final Duration MSG_WAIT = Duration.ofSeconds(2);
 
   public TestNode create(
       final Vertx vertx,
