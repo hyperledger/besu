@@ -33,6 +33,13 @@ import java.util.Optional;
 public interface Transaction {
 
   /**
+   * The Keccak 256-bit hash of this transaction.
+   *
+   * @return The Keccak 256-bit hash of this transaction.
+   */
+  Hash getHash();
+
+  /**
    * A scalar value equal to the number of transactions sent by the sender.
    *
    * @return the number of transactions sent by the sender.
@@ -129,4 +136,16 @@ public interface Transaction {
    * @return if present, the message call data
    */
   Optional<? extends UnformattedData> getData();
+
+  /**
+   * The data payload of this transaction.
+   *
+   * <p>If this transaction is a message-call to an account (the {@link #getTo} field is present),
+   * this same value will be exposed by {@link #getData}. If instead this is a contract-creation
+   * transaction (the {@link #getTo} field is absent), the payload is also exposed by {@link
+   * #getInit}.
+   *
+   * @return the transaction payload
+   */
+  UnformattedData getPayload();
 }

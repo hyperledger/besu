@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -80,6 +81,34 @@ public class FullSyncTargetManagerTest {
   @After
   public void tearDown() {
     ethProtocolManager.stop();
+  }
+
+  @Test
+  public void findSyncTarget_withHeightEstimates() {
+    when(localWorldState.isWorldStateAvailable(localBlockchain.getChainHeadHeader().getStateRoot()))
+        .thenReturn(true);
+    final RespondingEthPeer bestPeer =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, UInt256.MAX_VALUE, 1);
+
+    final CompletableFuture<SyncTarget> result = syncTargetManager.findSyncTarget(Optional.empty());
+    bestPeer.respond(responder);
+
+    assertThat(result)
+        .isCompletedWithValue(
+            new SyncTarget(bestPeer.getEthPeer(), localBlockchain.getBlockHeader(4L).get()));
+  }
+
+  @Test
+  public void findSyncTarget_noHeightEstimates() {
+    when(localWorldState.isWorldStateAvailable(localBlockchain.getChainHeadHeader().getStateRoot()))
+        .thenReturn(true);
+    final RespondingEthPeer bestPeer =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, UInt256.MAX_VALUE, 0);
+
+    final CompletableFuture<SyncTarget> result = syncTargetManager.findSyncTarget(Optional.empty());
+    bestPeer.respond(responder);
+
+    assertThat(result).isNotCompleted();
   }
 
   @Test

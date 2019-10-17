@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty;
 
-import static com.google.common.base.Preconditions.checkState;
-
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
@@ -48,12 +46,9 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.concurrent.SingleThreadEventExecutor;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class NettyConnectionInitializer implements ConnectionInitializer {
 
-  private static final Logger LOG = LogManager.getLogger();
   private static final int TIMEOUT_SECONDS = 10;
 
   private final KeyPair keyPair;
@@ -95,8 +90,8 @@ public class NettyConnectionInitializer implements ConnectionInitializer {
   }
 
   @Override
-  public CompletableFuture<Integer> start() {
-    final CompletableFuture<Integer> listeningPortFuture = new CompletableFuture<>();
+  public CompletableFuture<InetSocketAddress> start() {
+    final CompletableFuture<InetSocketAddress> listeningPortFuture = new CompletableFuture<>();
     if (!started.compareAndSet(false, true)) {
       listeningPortFuture.completeExceptionally(
           new IllegalStateException(
@@ -114,19 +109,17 @@ public class NettyConnectionInitializer implements ConnectionInitializer {
         future -> {
           final InetSocketAddress socketAddress =
               (InetSocketAddress) server.channel().localAddress();
-          final String message =
-              String.format(
-                  "Unable start up P2P network on %s:%s.  Check for port conflicts.",
-                  config.getBindHost(), config.getBindPort());
-
-          if (!future.isSuccess()) {
-            LOG.error(message, future.cause());
+          if (!future.isSuccess() || socketAddress == null) {
+            final String message =
+                String.format(
+                    "Unable start listening on %s:%s. Check for port conflicts.",
+                    config.getBindHost(), config.getBindPort());
+            listeningPortFuture.completeExceptionally(
+                new IllegalStateException(message, future.cause()));
+            return;
           }
-          checkState(socketAddress != null, message);
 
-          LOG.info("P2P network started and listening on {}", socketAddress);
-          final int listeningPort = socketAddress.getPort();
-          listeningPortFuture.complete(listeningPort);
+          listeningPortFuture.complete(socketAddress);
         });
 
     return listeningPortFuture;

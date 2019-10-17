@@ -384,11 +384,11 @@ public class TransactionPoolTest {
             Wei.ZERO,
             metricsSystem);
 
-    when(pendingTransactions.containsTransaction(transaction1.hash())).thenReturn(true);
+    when(pendingTransactions.containsTransaction(transaction1.getHash())).thenReturn(true);
 
     transactionPool.addRemoteTransactions(singletonList(transaction1));
 
-    verify(pendingTransactions).containsTransaction(transaction1.hash());
+    verify(pendingTransactions).containsTransaction(transaction1.getHash());
     verifyZeroInteractions(transactionValidator);
     verifyNoMoreInteractions(pendingTransactions);
   }
@@ -606,11 +606,11 @@ public class TransactionPoolTest {
   }
 
   private void assertTransactionPending(final Transaction t) {
-    assertThat(transactions.getTransactionByHash(t.hash())).contains(t);
+    assertThat(transactions.getTransactionByHash(t.getHash())).contains(t);
   }
 
   private void assertTransactionNotPending(final Transaction transaction) {
-    assertThat(transactions.getTransactionByHash(transaction.hash())).isEmpty();
+    assertThat(transactions.getTransactionByHash(transaction.getHash())).isEmpty();
   }
 
   private void verifyChainHeadIs(final Block forkBlock2) {

@@ -1,4 +1,5 @@
 /*
+ *
  * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
@@ -11,18 +12,15 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
+ *
  */
-package org.hyperledger.besu.ethereum.api.jsonrpc.internal.queries;
+package org.hyperledger.besu.ethereum.api.query;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.core.InMemoryStorageProvider.createInMemoryBlockchain;
 import static org.hyperledger.besu.ethereum.core.InMemoryStorageProvider.createInMemoryWorldStateArchive;
 
-import org.hyperledger.besu.ethereum.api.BlockWithMetadata;
-import org.hyperledger.besu.ethereum.api.LogWithMetadata;
-import org.hyperledger.besu.ethereum.api.LogsQuery;
-import org.hyperledger.besu.ethereum.api.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -514,7 +512,7 @@ public class BlockchainQueriesTest {
     for (int i = 0; i < result.getTransactions().size(); i++) {
       final Hash txResult = result.getTransactions().get(i);
       final Transaction actualTx = targetBlock.getBody().getTransactions().get(i);
-      assertThat(txResult).isEqualByComparingTo(actualTx.hash());
+      assertThat(txResult).isEqualByComparingTo(actualTx.getHash());
     }
   }
 

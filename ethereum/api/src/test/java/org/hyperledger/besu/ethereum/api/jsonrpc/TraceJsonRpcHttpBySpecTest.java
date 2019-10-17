@@ -19,7 +19,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.TraceReplayBlo
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockReplay;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.queries.BlockchainQueries;
+import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 
 import java.net.URL;

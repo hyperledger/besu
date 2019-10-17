@@ -235,7 +235,7 @@ public class AccountLocalConfigPermissioningController implements TransactionPer
 
   @Override
   public boolean isPermitted(final Transaction transaction) {
-    final Hash transactionHash = transaction.hash();
+    final Hash transactionHash = transaction.getHash();
     final Address sender = transaction.getSender();
 
     LOG.trace("Account permissioning - Local Config: Checking transaction {}", transactionHash);
