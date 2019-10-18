@@ -36,7 +36,7 @@ public class PrivateTransactionValidator {
   public ValidationResult<TransactionValidator.TransactionInvalidReason> validate(
       final PrivateTransaction transaction, final Long accountNonce) {
 
-    LOG.debug("Validating private transaction {} signature ", transaction.hash());
+    LOG.debug("Validating private transaction {} signature ", transaction.getHash());
 
     ValidationResult<TransactionValidator.TransactionInvalidReason> signatureValidationResult =
         validateTransactionSignature(transaction);
