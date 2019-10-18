@@ -37,6 +37,7 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -142,6 +143,15 @@ public class PrivGetTransactionReceipt implements JsonRpcMethod {
             .getTransactionOutput(txHash)
             .orElse(BytesValue.wrap(new byte[0]));
 
+    final BytesValue revertReason =
+        privacyParameters
+            .getPrivateStateStorage()
+            .getRevertReason(txHash)
+            .orElse(BytesValue.wrap(new byte[0]));
+
+    final TransactionProcessor.Result.Status transactionStatus =
+        privacyParameters.getPrivateStateStorage().getStatus(txHash).orElse(null);
+
     LOG.trace("Processed private transaction output");
 
     final PrivateTransactionReceiptResult result =
@@ -158,7 +168,9 @@ public class PrivGetTransactionReceipt implements JsonRpcMethod {
             privateTransaction.hash(),
             privateTransaction.getPrivateFrom(),
             privateTransaction.getPrivateFor().orElse(null),
-            privateTransaction.getPrivacyGroupId().orElse(null));
+            privateTransaction.getPrivacyGroupId().orElse(null),
+            revertReason,
+            transactionStatus);
 
     LOG.trace("Created Private Transaction from given Transaction Hash");
 
