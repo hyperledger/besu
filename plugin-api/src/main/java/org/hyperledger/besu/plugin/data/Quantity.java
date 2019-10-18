@@ -36,7 +36,7 @@ public interface Quantity extends BinaryData {
   Number getValue();
 
   /**
-   * Returns a minimal hex string representation of this Quantity with all leading zeros truncated.
+   * Returns a minimal hex string representation of this quantity with all leading zeros truncated.
    *
    * @return A minimal hex string representation of this quantity.
    */
