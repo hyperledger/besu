@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.privacy.storage;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.LogSeries;
+import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
 import org.hyperledger.besu.util.bytes.Bytes32;
 import org.hyperledger.besu.util.bytes.BytesValue;
 
@@ -31,6 +32,10 @@ public interface PrivateStateStorage {
   Optional<List<Log>> getTransactionLogs(Bytes32 transactionHash);
 
   Optional<BytesValue> getTransactionOutput(Bytes32 transactionHash);
+
+  Optional<TransactionProcessor.Result.Status> getStatus(Bytes32 transactionHash);
+
+  Optional<BytesValue> getRevertReason(Bytes32 transactionHash);
 
   Optional<PrivateTransactionMetadata> getTransactionMetadata(
       Bytes32 blockHash, Bytes32 transactionHash);
@@ -49,6 +54,11 @@ public interface PrivateStateStorage {
     Updater putTransactionLogs(Bytes32 transactionHash, LogSeries logs);
 
     Updater putTransactionResult(Bytes32 transactionHash, BytesValue events);
+
+    Updater putTransactionStatus(
+        Bytes32 transactionHash, TransactionProcessor.Result.Status status);
+
+    Updater putRevertReason(Bytes32 txHash, BytesValue bytesValue);
 
     Updater putTransactionMetadata(
         Bytes32 blockHash, Bytes32 transactionHash, PrivateTransactionMetadata metadata);

@@ -152,6 +152,11 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
       if (!logs.isEmpty()) {
         privateStateUpdater.putTransactionLogs(txHash, result.getLogs());
       }
+      if (result.getRevertReason().isPresent()) {
+        privateStateUpdater.putRevertReason(txHash, result.getRevertReason().get());
+      }
+
+      privateStateUpdater.putTransactionStatus(txHash, result.getStatus());
       privateStateUpdater.putTransactionResult(txHash, result.getOutput());
       privateStateUpdater.commit();
     }

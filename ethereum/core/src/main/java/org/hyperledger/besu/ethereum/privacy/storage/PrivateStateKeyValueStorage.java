@@ -19,6 +19,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.LogSeries;
+import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
@@ -38,6 +39,8 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
   private static final BytesValue LOGS_KEY_SUFFIX = BytesValue.of("LOGS".getBytes(UTF_8));
   private static final BytesValue OUTPUT_KEY_SUFFIX = BytesValue.of("OUTPUT".getBytes(UTF_8));
   private static final BytesValue METADATA_KEY_SUFFIX = BytesValue.of("METADATA".getBytes(UTF_8));
+  private static final BytesValue STATUS_KEY_SUFFIX = BytesValue.of("STATUS".getBytes(UTF_8));
+  private static final BytesValue REVERT_KEY_SUFFIX = BytesValue.of("REVERT".getBytes(UTF_8));
 
   private final KeyValueStorage keyValueStorage;
 
@@ -68,6 +71,17 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
   @Override
   public Optional<BytesValue> getTransactionOutput(final Bytes32 transactionHash) {
     return get(transactionHash, OUTPUT_KEY_SUFFIX);
+  }
+
+  @Override
+  public Optional<TransactionProcessor.Result.Status> getStatus(final Bytes32 transactionHash) {
+    return get(transactionHash, STATUS_KEY_SUFFIX)
+        .map(bytesValue -> TransactionProcessor.Result.Status.values()[bytesValue.getInt(0)]);
+  }
+
+  @Override
+  public Optional<BytesValue> getRevertReason(final Bytes32 transactionHash) {
+    return get(transactionHash, REVERT_KEY_SUFFIX);
   }
 
   @Override
@@ -127,6 +141,20 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
     @Override
     public Updater putTransactionResult(final Bytes32 transactionHash, final BytesValue events) {
       set(transactionHash, OUTPUT_KEY_SUFFIX, events);
+      return this;
+    }
+
+    @Override
+    public PrivateStateStorage.Updater putTransactionStatus(
+        final Bytes32 transactionHash, final TransactionProcessor.Result.Status status) {
+      set(transactionHash, STATUS_KEY_SUFFIX, BytesValue.of(status.ordinal()));
+      return this;
+    }
+
+    @Override
+    public PrivateStateStorage.Updater putRevertReason(
+        final Bytes32 transactionHash, final BytesValue revertReason) {
+      set(transactionHash, REVERT_KEY_SUFFIX, revertReason);
       return this;
     }
 

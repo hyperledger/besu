@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.privacy;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TransactionReceiptLogResult;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Log;
+import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
 import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.ArrayList;
@@ -48,6 +49,8 @@ public class PrivateTransactionReceiptResult {
   private final BytesValue privateFrom;
   private final List<BytesValue> privateFor;
   private final BytesValue privacyGroupId;
+  private final BytesValue revertReason;
+  private final TransactionProcessor.Result.Status status;
   private final List<TransactionReceiptLogResult> logs;
 
   public PrivateTransactionReceiptResult(
@@ -63,7 +66,9 @@ public class PrivateTransactionReceiptResult {
       final Hash privateHash,
       final BytesValue privateFrom,
       final List<BytesValue> privateFor,
-      final BytesValue privacyGroupId) {
+      final BytesValue privacyGroupId,
+      final BytesValue revertReason,
+      final TransactionProcessor.Result.Status status) {
     this.contractAddress = contractAddress;
     this.from = from;
     this.to = to;
@@ -73,6 +78,8 @@ public class PrivateTransactionReceiptResult {
     this.privateFrom = privateFrom;
     this.privateFor = privateFor;
     this.privacyGroupId = privacyGroupId;
+    this.revertReason = revertReason;
+    this.status = status;
     this.logs = logReceipts(logs, blockNumber, publicHash, blockHash, txIndex);
   }
 
@@ -124,6 +131,16 @@ public class PrivateTransactionReceiptResult {
   @JsonGetter("privacyGroupId")
   public BytesValue getPrivacyGroupId() {
     return privacyGroupId;
+  }
+
+  @JsonGetter("revertReason")
+  public BytesValue getRevertReason() {
+    return revertReason;
+  }
+
+  @JsonGetter("status")
+  public TransactionProcessor.Result.Status getStatus() {
+    return status;
   }
 
   private List<TransactionReceiptLogResult> logReceipts(
