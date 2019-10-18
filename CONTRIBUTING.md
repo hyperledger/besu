@@ -29,6 +29,14 @@ and feel free to propose changes to this document in a pull request.
 This project and everyone participating in it is governed by the [Besu Code of Conduct](CODE-OF-CONDUCT.md).
 By participating, you are expected to uphold this code. Please report unacceptable behavior to [private@pegasys.tech].
 
+The [Hyperledger Code of Conduct](https://wiki.hyperledger.org/community/hyperledger-project-code-of-conduct) 
+also applies to participants in this project.
+
+## Governance
+
+Hyperledger Besu is managed under an open governance model as described in the [HyperLedger 
+charter](https://www.hyperledger.org/about/charter). Hyperledger Besu is lead by a set of [maintainers](MAINTAINERS.md).
+
 ## I just have a quick question
 
 > **Note:** Please don't file an issue to ask a question.  You'll get faster results by using the resources below.
