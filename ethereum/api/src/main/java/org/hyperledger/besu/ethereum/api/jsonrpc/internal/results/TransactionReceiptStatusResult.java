@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.queries.TransactionReceiptWithMetadata;
+import org.hyperledger.besu.ethereum.api.query.TransactionReceiptWithMetadata;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 

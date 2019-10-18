@@ -203,11 +203,14 @@ public class BlockDataGenerator {
   }
 
   public Block genesisBlock() {
-    final BlockOptions options =
-        new BlockOptions()
-            .setBlockNumber(BlockHeader.GENESIS_BLOCK_NUMBER)
-            .setStateRoot(Hash.EMPTY_TRIE_HASH)
-            .setParentHash(Hash.ZERO);
+    return genesisBlock(new BlockOptions());
+  }
+
+  public Block genesisBlock(final BlockOptions options) {
+    options
+        .setBlockNumber(BlockHeader.GENESIS_BLOCK_NUMBER)
+        .setStateRoot(Hash.EMPTY_TRIE_HASH)
+        .setParentHash(Hash.ZERO);
     return block(options);
   }
 

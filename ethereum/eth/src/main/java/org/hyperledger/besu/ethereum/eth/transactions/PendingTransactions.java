@@ -149,17 +149,11 @@ public class PendingTransactions {
 
   private void doRemoveTransaction(final Transaction transaction, final boolean addedToBlock) {
     synchronized (pendingTransactions) {
-      final TransactionInfo removedTransactionInfo = pendingTransactions.remove(transaction.hash());
+      final TransactionInfo removedTransactionInfo =
+          pendingTransactions.remove(transaction.getHash());
       if (removedTransactionInfo != null) {
         prioritizedTransactions.remove(removedTransactionInfo);
-        Optional.ofNullable(transactionsBySender.get(transaction.getSender()))
-            .ifPresent(
-                transactionsForSender -> {
-                  transactionsForSender.remove(transaction.getNonce());
-                  if (transactionsForSender.isEmpty()) {
-                    transactionsBySender.remove(transaction.getSender());
-                  }
-                });
+        removeTransactionTrackedBySenderAndNonce(transaction);
         incrementTransactionRemovedCounter(
             removedTransactionInfo.isReceivedFromLocalSource(), addedToBlock);
       }
@@ -240,18 +234,40 @@ public class PendingTransactions {
   }
 
   private boolean addTransactionForSenderAndNonce(final TransactionInfo transactionInfo) {
-    final Map<Long, TransactionInfo> transactionsForSender =
-        transactionsBySender.computeIfAbsent(transactionInfo.getSender(), key -> new TreeMap<>());
     final TransactionInfo existingTransaction =
-        transactionsForSender.get(transactionInfo.getNonce());
+        getTrackedTransactionBySenderAndNonce(transactionInfo);
     if (existingTransaction != null) {
       if (!shouldReplace(existingTransaction, transactionInfo)) {
         return false;
       }
       removeTransaction(existingTransaction.getTransaction());
     }
-    transactionsForSender.put(transactionInfo.getNonce(), transactionInfo);
+    trackTransactionBySenderAndNonce(transactionInfo);
     return true;
+  }
+
+  private void trackTransactionBySenderAndNonce(final TransactionInfo transactionInfo) {
+    final Map<Long, TransactionInfo> transactionsForSender =
+        transactionsBySender.computeIfAbsent(transactionInfo.getSender(), key -> new TreeMap<>());
+    transactionsForSender.put(transactionInfo.getNonce(), transactionInfo);
+  }
+
+  private void removeTransactionTrackedBySenderAndNonce(final Transaction transaction) {
+    Optional.ofNullable(transactionsBySender.get(transaction.getSender()))
+        .ifPresent(
+            transactionsForSender -> {
+              transactionsForSender.remove(transaction.getNonce());
+              if (transactionsForSender.isEmpty()) {
+                transactionsBySender.remove(transaction.getSender());
+              }
+            });
+  }
+
+  private TransactionInfo getTrackedTransactionBySenderAndNonce(
+      final TransactionInfo transactionInfo) {
+    final Map<Long, TransactionInfo> transactionsForSender =
+        transactionsBySender.computeIfAbsent(transactionInfo.getSender(), key -> new TreeMap<>());
+    return transactionsForSender.get(transactionInfo.getNonce());
   }
 
   private boolean shouldReplace(
@@ -362,7 +378,7 @@ public class PendingTransactions {
     }
 
     public Hash getHash() {
-      return transaction.hash();
+      return transaction.getHash();
     }
 
     public Instant getAddedToPoolAt() {
