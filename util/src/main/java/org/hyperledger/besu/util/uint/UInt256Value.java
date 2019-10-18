@@ -158,6 +158,7 @@ public interface UInt256Value<T extends UInt256Value<T>>
   }
 
   /** @return This value represented as a minimal hexadecimal string (without any leading zero). */
+  @Override
   default String toShortHexString() {
     final String hex = toHexString();
     // Skipping '0x'
