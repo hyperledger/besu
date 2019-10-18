@@ -251,7 +251,7 @@ public class PrivateTransactionProcessor {
               .miningBeneficiary(miningBeneficiary)
               .blockHashLookup(blockHashLookup)
               .maxStackSize(maxStackSize)
-              .transactionHash(transaction.hash)
+              .transactionHash(transaction.getHash())
               .build();
 
     } else {
@@ -282,7 +282,7 @@ public class PrivateTransactionProcessor {
               .miningBeneficiary(miningBeneficiary)
               .blockHashLookup(blockHashLookup)
               .maxStackSize(maxStackSize)
-              .transactionHash(transaction.hash)
+              .transactionHash(transaction.getHash())
               .build();
     }
 

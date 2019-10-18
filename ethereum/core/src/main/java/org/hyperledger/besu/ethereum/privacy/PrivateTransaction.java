@@ -415,7 +415,7 @@ public class PrivateTransaction {
    *
    * @return the transaction hash
    */
-  public Hash hash() {
+  public Hash getHash() {
     if (hash == null) {
       final BytesValue rlp = RLP.encode(this::writeTo);
       hash = Hash.hash(rlp);
