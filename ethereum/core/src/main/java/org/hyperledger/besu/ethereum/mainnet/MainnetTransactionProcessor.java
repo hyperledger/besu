@@ -251,7 +251,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
               .blockHashLookup(blockHashLookup)
               .isPersistingState(isPersistingState)
               .maxStackSize(maxStackSize)
-              .transactionHash(transaction.hash())
+              .transactionHash(transaction.getHash())
               .build();
 
     } else {
@@ -283,7 +283,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
               .blockHashLookup(blockHashLookup)
               .maxStackSize(maxStackSize)
               .isPersistingState(isPersistingState)
-              .transactionHash(transaction.hash())
+              .transactionHash(transaction.getHash())
               .build();
     }
 
