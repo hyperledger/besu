@@ -118,7 +118,7 @@ public class PrivateStateRootResolverTest {
         new PrivateBlockMetadata(
             Collections.singletonList(
                 new PrivateTransactionMetadata(
-                    BLOCK_GENERATOR.transaction().hash(), pmt1StateHash))));
+                    BLOCK_GENERATOR.transaction().getHash(), pmt1StateHash))));
     updater.commit();
     final PrivateStateRootResolver privateStateRootResolver =
         new PrivateStateRootResolver(privateStateStorage);
@@ -137,14 +137,14 @@ public class PrivateStateRootResolverTest {
         new PrivateBlockMetadata(
             Arrays.asList(
                 new PrivateTransactionMetadata(
-                    BLOCK_GENERATOR.transaction().hash(), pmt1StateHash))));
+                    BLOCK_GENERATOR.transaction().getHash(), pmt1StateHash))));
     updater.putPrivateBlockMetadata(
         BLOCKCHAIN.getBlockByNumber(16).get().getHash(),
         Bytes32.wrap(failingPrivacyGroupId),
         new PrivateBlockMetadata(
             Arrays.asList(
                 new PrivateTransactionMetadata(
-                    BLOCK_GENERATOR.transaction().hash(), pmt2StateHash))));
+                    BLOCK_GENERATOR.transaction().getHash(), pmt2StateHash))));
     updater.commit();
     final PrivateStateRootResolver privateStateRootResolver =
         new PrivateStateRootResolver(privateStateStorage);
@@ -162,9 +162,10 @@ public class PrivateStateRootResolverTest {
         Bytes32.wrap(privacyGroupId),
         new PrivateBlockMetadata(
             Arrays.asList(
-                new PrivateTransactionMetadata(BLOCK_GENERATOR.transaction().hash(), pmt1StateHash),
                 new PrivateTransactionMetadata(
-                    BLOCK_GENERATOR.transaction().hash(), pmt2StateHash))));
+                    BLOCK_GENERATOR.transaction().getHash(), pmt1StateHash),
+                new PrivateTransactionMetadata(
+                    BLOCK_GENERATOR.transaction().getHash(), pmt2StateHash))));
     updater.commit();
     final PrivateStateRootResolver privateStateRootResolver =
         new PrivateStateRootResolver(privateStateStorage);
