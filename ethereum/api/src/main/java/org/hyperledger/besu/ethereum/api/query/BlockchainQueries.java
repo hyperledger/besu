@@ -12,14 +12,10 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.api.jsonrpc.internal.queries;
+package org.hyperledger.besu.ethereum.api.query;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import org.hyperledger.besu.ethereum.api.BlockWithMetadata;
-import org.hyperledger.besu.ethereum.api.LogWithMetadata;
-import org.hyperledger.besu.ethereum.api.LogsQuery;
-import org.hyperledger.besu.ethereum.api.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.TransactionLocation;
 import org.hyperledger.besu.ethereum.core.Account;
@@ -324,7 +320,7 @@ public class BlockchainQueries {
                                     (td) -> {
                                       final List<Hash> txs =
                                           body.getTransactions().stream()
-                                              .map(Transaction::hash)
+                                              .map(Transaction::getHash)
                                               .collect(Collectors.toList());
                                       final List<Hash> ommers =
                                           body.getOmmers().stream()
@@ -525,6 +521,34 @@ public class BlockchainQueries {
         receipts, number, query, blockhash, matchingLogs, transaction, logHasBeenRemoved);
   }
 
+  public static List<LogWithMetadata> generateLogWithMetadataForTransaction(
+      final TransactionReceipt receipt,
+      final long number,
+      final Hash blockhash,
+      final Hash transactionHash,
+      final int transactionIndex,
+      final boolean removed) {
+
+    final List<LogWithMetadata> logs = new ArrayList<>();
+    for (int logIndex = 0; logIndex < receipt.getLogs().size(); ++logIndex) {
+
+      final LogWithMetadata logWithMetaData =
+          new LogWithMetadata(
+              logIndex,
+              number,
+              blockhash,
+              transactionHash,
+              transactionIndex,
+              receipt.getLogs().get(logIndex).getLogger(),
+              receipt.getLogs().get(logIndex).getData(),
+              receipt.getLogs().get(logIndex).getTopics(),
+              removed);
+      logs.add(logWithMetaData);
+    }
+
+    return logs;
+  }
+
   private List<LogWithMetadata> generateLogWithMetadata(
       final List<TransactionReceipt> receipts,
       final long number,
@@ -542,7 +566,7 @@ public class BlockchainQueries {
                   logIndex,
                   number,
                   blockhash,
-                  transaction.get(transactionIndex).hash(),
+                  transaction.get(transactionIndex).getHash(),
                   transactionIndex,
                   receipts.get(transactionIndex).getLogs().get(logIndex).getLogger(),
                   receipts.get(transactionIndex).getLogs().get(logIndex).getData(),

@@ -92,8 +92,8 @@ public class TransactionTracerTest {
   public void setUp() throws Exception {
     transactionTracer =
         new TransactionTracer(new BlockReplay(protocolSchedule, blockchain, worldStateArchive));
-    when(transaction.hash()).thenReturn(transactionHash);
-    when(otherTransaction.hash()).thenReturn(otherTransactionHash);
+    when(transaction.getHash()).thenReturn(transactionHash);
+    when(otherTransaction.getHash()).thenReturn(otherTransactionHash);
     when(blockHeader.getNumber()).thenReturn(12L);
     when(blockHeader.getHash()).thenReturn(blockHash);
     when(blockHeader.getParentHash()).thenReturn(previousBlockHash);

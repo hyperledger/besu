@@ -123,6 +123,10 @@ public class PrunerIntegrationTest {
       generateBlockchainData(numBlockInCycle, accountsPerBlock);
       assertThat(pruner.getState()).isEqualByComparingTo(Pruner.State.IDLE);
 
+      // Restarting the Pruner shouldn't matter since we're idle
+      pruner.stop();
+      pruner.start();
+
       // Collect the nodes we expect to keep
       final Set<BytesValue> expectedNodes = new HashSet<>();
       for (int i = fullyMarkedBlockNum; i <= blockchain.getChainHeadBlockNumber(); i++) {

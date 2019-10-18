@@ -59,7 +59,7 @@ public class SimpleTestTransactionBuilder {
       final String s) {
 
     final Transaction transaction = mock(Transaction.class);
-    when(transaction.hash()).thenReturn(blockHash);
+    when(transaction.getHash()).thenReturn(blockHash);
     when(transaction.getGasPrice()).thenReturn(Wei.fromHexString(gasPrice));
     when(transaction.getNonce()).thenReturn(unsignedLong(nonce));
     when(transaction.getV()).thenReturn(bigInteger(v));

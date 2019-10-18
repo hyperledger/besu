@@ -277,6 +277,24 @@ public class PendingTransactionsTest {
   }
 
   @Test
+  public void shouldNotSelectReplacedTransaction() {
+    final Transaction transaction1 = transactionWithNonceSenderAndGasPrice(1, KEYS1, 1);
+    final Transaction transaction2 = transactionWithNonceSenderAndGasPrice(1, KEYS1, 2);
+
+    transactions.addRemoteTransaction(transaction1);
+    transactions.addRemoteTransaction(transaction2);
+
+    final List<Transaction> parsedTransactions = Lists.newArrayList();
+    transactions.selectTransactions(
+        transaction -> {
+          parsedTransactions.add(transaction);
+          return PendingTransactions.TransactionSelectionResult.CONTINUE;
+        });
+
+    assertThat(parsedTransactions).containsExactly(transaction2);
+  }
+
+  @Test
   public void invalidTransactionIsDeletedFromPendingTransactions() {
     transactions.addRemoteTransaction(transaction1);
     transactions.addRemoteTransaction(transaction2);
@@ -323,6 +341,71 @@ public class PendingTransactionsTest {
     assertThat(transactions.size()).isEqualTo(2);
     assertThat(metricsSystem.getCounterValue(ADDED_COUNTER, REMOTE)).isEqualTo(3);
     assertThat(metricsSystem.getCounterValue(REMOVED_COUNTER, REMOTE, DROPPED)).isEqualTo(1);
+  }
+
+  @Test
+  public void shouldReplaceTransactionWithSameSenderAndNonce_multipleReplacements() {
+    final int replacedTxCount = 5;
+    final List<Transaction> replacedTransactions = new ArrayList<>();
+    for (int i = 0; i < replacedTxCount; i++) {
+      final Transaction duplicateTx = transactionWithNonceSenderAndGasPrice(1, KEYS1, i + 1);
+      replacedTransactions.add(duplicateTx);
+      transactions.addRemoteTransaction(duplicateTx);
+    }
+    final Transaction finalReplacingTx = transactionWithNonceSenderAndGasPrice(1, KEYS1, 100);
+    final Transaction independentTx = transactionWithNonceSenderAndGasPrice(2, KEYS1, 1);
+    assertThat(transactions.addRemoteTransaction(independentTx)).isTrue();
+    assertThat(transactions.addRemoteTransaction(finalReplacingTx)).isTrue();
+
+    // All tx's except the last duplicate should be removed
+    replacedTransactions.forEach(this::assertTransactionNotPending);
+    assertTransactionPending(finalReplacingTx);
+    // Tx with distinct nonce should be maintained
+    assertTransactionPending(independentTx);
+
+    assertThat(transactions.size()).isEqualTo(2);
+    assertThat(metricsSystem.getCounterValue(ADDED_COUNTER, REMOTE)).isEqualTo(replacedTxCount + 2);
+    assertThat(metricsSystem.getCounterValue(REMOVED_COUNTER, REMOTE, DROPPED))
+        .isEqualTo(replacedTxCount);
+  }
+
+  @Test
+  public void
+      shouldReplaceTransactionWithSameSenderAndNonce_multipleReplacementsAddedLocallyAndRemotely() {
+    final int replacedTxCount = 11;
+    final List<Transaction> replacedTransactions = new ArrayList<>();
+    int remoteDuplicateCount = 0;
+    for (int i = 0; i < replacedTxCount; i++) {
+      final Transaction duplicateTx = transactionWithNonceSenderAndGasPrice(1, KEYS1, i + 1);
+      replacedTransactions.add(duplicateTx);
+      if (i % 2 == 0) {
+        transactions.addRemoteTransaction(duplicateTx);
+        remoteDuplicateCount++;
+      } else {
+        transactions.addLocalTransaction(duplicateTx);
+      }
+    }
+    final Transaction finalReplacingTx = transactionWithNonceSenderAndGasPrice(1, KEYS1, 100);
+    final Transaction independentTx = transactionWithNonceSenderAndGasPrice(2, KEYS1, 1);
+    assertThat(transactions.addLocalTransaction(finalReplacingTx)).isTrue();
+    assertThat(transactions.addRemoteTransaction(independentTx)).isTrue();
+
+    // All tx's except the last duplicate should be removed
+    replacedTransactions.forEach(this::assertTransactionNotPending);
+    assertTransactionPending(finalReplacingTx);
+    // Tx with distinct nonce should be maintained
+    assertTransactionPending(independentTx);
+
+    final int localDuplicateCount = replacedTxCount - remoteDuplicateCount;
+    assertThat(transactions.size()).isEqualTo(2);
+    assertThat(metricsSystem.getCounterValue(ADDED_COUNTER, REMOTE))
+        .isEqualTo(remoteDuplicateCount + 1);
+    assertThat(metricsSystem.getCounterValue(ADDED_COUNTER, LOCAL))
+        .isEqualTo(localDuplicateCount + 1);
+    assertThat(metricsSystem.getCounterValue(REMOVED_COUNTER, REMOTE, DROPPED))
+        .isEqualTo(remoteDuplicateCount);
+    assertThat(metricsSystem.getCounterValue(REMOVED_COUNTER, LOCAL, DROPPED))
+        .isEqualTo(localDuplicateCount);
   }
 
   @Test
@@ -449,11 +532,11 @@ public class PendingTransactionsTest {
   }
 
   private void assertTransactionPending(final Transaction t) {
-    assertThat(transactions.getTransactionByHash(t.hash())).contains(t);
+    assertThat(transactions.getTransactionByHash(t.getHash())).contains(t);
   }
 
   private void assertTransactionNotPending(final Transaction t) {
-    assertThat(transactions.getTransactionByHash(t.hash())).isEmpty();
+    assertThat(transactions.getTransactionByHash(t.getHash())).isEmpty();
   }
 
   private Transaction createTransaction(final int transactionNumber) {

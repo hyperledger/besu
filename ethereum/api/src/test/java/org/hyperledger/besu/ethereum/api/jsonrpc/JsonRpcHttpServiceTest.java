@@ -15,30 +15,33 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
-import org.hyperledger.besu.ethereum.api.BlockWithMetadata;
-import org.hyperledger.besu.ethereum.api.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.queries.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
+import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
+import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.DefaultSyncStatus;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.core.SyncStatus;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
@@ -51,6 +54,7 @@ import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioni
 import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningController;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
+import org.hyperledger.besu.plugin.data.SyncStatus;
 import org.hyperledger.besu.util.bytes.BytesValue;
 import org.hyperledger.besu.util.bytes.BytesValues;
 import org.hyperledger.besu.util.uint.UInt256;
@@ -1473,11 +1477,41 @@ public class JsonRpcHttpServiceTest {
   }
 
   @Test
+  @SuppressWarnings("unchecked")
+  public void disabledMethod() throws Exception {
+    final String methodName = RpcMethod.NET_SERVICES.getMethodName();
+    final String id = "234";
+    final RequestBody body =
+        RequestBody.create(
+            JSON,
+            "{\"jsonrpc\":\"2.0\",\"id\":"
+                + Json.encode(id)
+                + ",\"method\":\""
+                + methodName
+                + "\"}");
+
+    when(rpcMethods.get(any(String.class))).thenReturn(null);
+    when(rpcMethods.containsKey(any(String.class))).thenReturn(false);
+
+    try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
+      assertThat(resp.code()).isEqualTo(400);
+      final JsonObject json = new JsonObject(resp.body().string());
+      final JsonRpcError expectedError = JsonRpcError.METHOD_NOT_ENABLED;
+      testHelper.assertValidJsonRpcError(
+          json, id, expectedError.getCode(), expectedError.getMessage());
+    }
+
+    verify(rpcMethods).containsKey(methodName);
+    verify(rpcMethods).get(methodName);
+
+    reset(rpcMethods);
+  }
+
+  @Test
   public void exceptionallyHandleJsonSingleRequest() throws Exception {
     final JsonRpcMethod jsonRpcMethod = mock(JsonRpcMethod.class);
     when(jsonRpcMethod.getName()).thenReturn("foo");
-    when(jsonRpcMethod.response(ArgumentMatchers.any()))
-        .thenThrow(new RuntimeException("test exception"));
+    when(jsonRpcMethod.response(any())).thenThrow(new RuntimeException("test exception"));
 
     doReturn(Optional.of(jsonRpcMethod)).when(rpcMethods).get("foo");
 
@@ -1493,8 +1527,7 @@ public class JsonRpcHttpServiceTest {
   public void exceptionallyHandleJsonBatchRequest() throws Exception {
     final JsonRpcMethod jsonRpcMethod = mock(JsonRpcMethod.class);
     when(jsonRpcMethod.getName()).thenReturn("foo");
-    when(jsonRpcMethod.response(ArgumentMatchers.any()))
-        .thenThrow(new RuntimeException("test exception"));
+    when(jsonRpcMethod.response(any())).thenThrow(new RuntimeException("test exception"));
     doReturn(Optional.of(jsonRpcMethod)).when(rpcMethods).get("foo");
 
     final RequestBody body =
@@ -1717,7 +1750,7 @@ public class JsonRpcHttpServiceTest {
       final Transaction transaction = block.getBody().getTransactions().get(i);
       if (shouldTransactionsBeHashed) {
         assertThat(Hash.fromHexString(transactionsResult.getString(i)))
-            .isEqualTo(transaction.hash());
+            .isEqualTo(transaction.getHash());
       } else {
         final JsonObject transactionResult = transactionsResult.getJsonObject(i);
         final Integer expectedIndex = i;
@@ -1735,7 +1768,7 @@ public class JsonRpcHttpServiceTest {
       final Integer index,
       final Hash blockHash,
       final Long blockNumber) {
-    assertThat(Hash.fromHexString(result.getString("hash"))).isEqualTo(transaction.hash());
+    assertThat(Hash.fromHexString(result.getString("hash"))).isEqualTo(transaction.getHash());
     assertThat(Long.decode(result.getString("nonce"))).isEqualByComparingTo(transaction.getNonce());
     if (blockHash != null) {
       assertThat(Hash.fromHexString(result.getString("blockHash"))).isEqualTo(blockHash);
@@ -1823,7 +1856,7 @@ public class JsonRpcHttpServiceTest {
 
   @Test
   public void ethSyncingResultIsPresent() throws Exception {
-    final SyncStatus testResult = new SyncStatus(1L, 8L, 7L);
+    final SyncStatus testResult = new DefaultSyncStatus(1L, 8L, 7L);
     when(synchronizer.getSyncStatus()).thenReturn(Optional.of(testResult));
     final String id = "999";
     final RequestBody body =
@@ -1866,7 +1899,7 @@ public class JsonRpcHttpServiceTest {
 
     final List<Hash> txs =
         block.getBody().getTransactions().stream()
-            .map(Transaction::hash)
+            .map(Transaction::getHash)
             .collect(Collectors.toList());
     final List<Hash> ommers =
         block.getBody().getOmmers().stream().map(BlockHeader::getHash).collect(Collectors.toList());

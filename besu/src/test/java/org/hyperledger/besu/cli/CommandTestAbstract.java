@@ -170,6 +170,7 @@ public abstract class CommandTestAbstract {
     when(mockControllerBuilder.pruningConfiguration(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.genesisConfigOverrides(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.targetGasLimit(any())).thenReturn(mockControllerBuilder);
+    when(mockControllerBuilder.requiredBlocks(any())).thenReturn(mockControllerBuilder);
 
     // doReturn used because of generic BesuController
     doReturn(mockController).when(mockControllerBuilder).build();

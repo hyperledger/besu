@@ -25,6 +25,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.condition.account.ExpectAccount
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.eth.EthTransactions;
 import org.hyperledger.besu.util.bytes.Bytes32;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 
 import org.web3j.crypto.Credentials;
@@ -66,12 +67,8 @@ public class Account {
     return Address.extract(Hash.hash(keyPair.getPublicKey().getEncodedBytes())).toString();
   }
 
-  public Condition balanceEquals(final String expectedBalance, final Unit balanceUnit) {
-    return new ExpectAccountBalance(eth, this, expectedBalance, balanceUnit);
-  }
-
   public Condition balanceEquals(final int expectedBalance) {
-    return balanceEquals(String.valueOf(expectedBalance), Unit.ETHER);
+    return new ExpectAccountBalance(eth, this, BigDecimal.valueOf(expectedBalance), Unit.ETHER);
   }
 
   public Condition balanceEquals(final Amount expectedBalance) {
@@ -79,12 +76,9 @@ public class Account {
         eth, this, expectedBalance.getValue(), expectedBalance.getUnit());
   }
 
-  public Condition balanceDoesNotChange(final String startingBalance, final Unit balanceUnit) {
-    return new ExpectAccountBalanceNotChanging(eth, this, startingBalance, balanceUnit);
-  }
-
   public Condition balanceDoesNotChange(final int startingBalance) {
-    return balanceDoesNotChange(String.valueOf(startingBalance), Unit.ETHER);
+    return new ExpectAccountBalanceNotChanging(
+        eth, this, BigDecimal.valueOf(startingBalance), Unit.ETHER);
   }
 
   @Override

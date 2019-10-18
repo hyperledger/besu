@@ -18,9 +18,9 @@ import net.ltgt.gradle.errorprone.CheckSeverity
 import java.text.SimpleDateFormat
 
 plugins {
-  id 'com.diffplug.gradle.spotless' version '3.23.1'
+  id 'com.diffplug.gradle.spotless' version '3.25.0'
   id 'com.jfrog.bintray' version '1.8.4'
-  id 'com.github.ben-manes.versions' version '0.21.0'
+  id 'com.github.ben-manes.versions' version '0.26.0'
   id 'com.github.hierynomus.license' version '0.15.0'
   id 'io.spring.dependency-management' version '1.0.8.RELEASE'
   id 'me.champeau.gradle.jmh' version '0.4.8' apply false
@@ -268,7 +268,7 @@ allprojects {
 
 task deploy() {}
 
-task checkMavenCoordianteCollisions {
+task checkMavenCoordinateCollisions {
   doLast {
     def coordinates = [:]
     getAllprojects().forEach {
@@ -287,7 +287,7 @@ task checkMavenCoordianteCollisions {
 
 tasks.register('checkPluginAPIChanges', DefaultTask) { }
 checkPluginAPIChanges.dependsOn(':plugin-api:checkAPIChanges')
-check.dependsOn('checkPluginAPIChanges', 'checkMavenCoordianteCollisions')
+check.dependsOn('checkPluginAPIChanges', 'checkMavenCoordinateCollisions')
 
 subprojects {
 
