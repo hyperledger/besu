@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ConsenSys AG.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -9,6 +9,8 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu.ethereum.api.graphql.internal.response;
 
@@ -71,8 +73,10 @@ public enum GraphQLError {
       case UPFRONT_COST_EXCEEDS_BALANCE:
         return TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE;
       case NONCE_TOO_LOW:
+      case PRIVATE_NONCE_TOO_LOW:
         return NONCE_TOO_LOW;
       case INCORRECT_NONCE:
+      case INCORRECT_PRIVATE_NONCE:
         return INCORRECT_NONCE;
       case INTRINSIC_GAS_EXCEEDS_GAS_LIMIT:
         return INTRINSIC_GAS_EXCEEDS_LIMIT;
@@ -85,10 +89,6 @@ public enum GraphQLError {
         // Private Transaction Invalid Reasons
       case PRIVATE_TRANSACTION_FAILED:
         return PRIVATE_TRANSACTION_FAILED;
-      case PRIVATE_NONCE_TOO_LOW:
-        return PRIVATE_NONCE_TOO_LOW;
-      case INCORRECT_PRIVATE_NONCE:
-        return INCORRECT_PRIVATE_NONCE;
       case GAS_PRICE_TOO_LOW:
         return GAS_PRICE_TOO_LOW;
       default:

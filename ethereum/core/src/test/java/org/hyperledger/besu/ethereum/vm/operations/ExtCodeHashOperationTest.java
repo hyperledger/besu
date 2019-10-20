@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ConsenSys AG.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -9,6 +9,8 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
@@ -72,7 +74,7 @@ public class ExtCodeHashOperationTest {
 
   @Test
   public void shouldReturnHashOfEmptyDataWhenAccountExistsButDoesNotHaveCode() {
-    worldStateUpdater.getOrCreate(REQUESTED_ADDRESS).setBalance(Wei.of(1));
+    worldStateUpdater.getOrCreate(REQUESTED_ADDRESS).getMutable().setBalance(Wei.of(1));
     assertThat(executeOperation(REQUESTED_ADDRESS)).isEqualTo(Hash.EMPTY);
   }
 
@@ -90,14 +92,14 @@ public class ExtCodeHashOperationTest {
   @Test
   public void shouldReturnEmptyCodeHashWhenPrecompileHasBalance() {
     // Sending money to a precompile causes it to exist in the world state archive.
-    worldStateUpdater.getOrCreate(Address.ECREC).setBalance(Wei.of(10));
+    worldStateUpdater.getOrCreate(Address.ECREC).getMutable().setBalance(Wei.of(10));
     assertThat(executeOperation(Address.ECREC)).isEqualTo(Hash.EMPTY);
   }
 
   @Test
   public void shouldGetHashOfAccountCodeWhenCodeIsPresent() {
     final BytesValue code = BytesValue.fromHexString("0xabcdef");
-    final MutableAccount account = worldStateUpdater.getOrCreate(REQUESTED_ADDRESS);
+    final MutableAccount account = worldStateUpdater.getOrCreate(REQUESTED_ADDRESS).getMutable();
     account.setCode(code);
     account.setVersion(Account.DEFAULT_VERSION);
     assertThat(executeOperation(REQUESTED_ADDRESS)).isEqualTo(Hash.hash(code));
@@ -107,7 +109,7 @@ public class ExtCodeHashOperationTest {
   public void shouldZeroOutLeftMostBitsToGetAddress() {
     // If EXTCODEHASH of A is X, then EXTCODEHASH of A + 2**160 is X.
     final BytesValue code = BytesValue.fromHexString("0xabcdef");
-    final MutableAccount account = worldStateUpdater.getOrCreate(REQUESTED_ADDRESS);
+    final MutableAccount account = worldStateUpdater.getOrCreate(REQUESTED_ADDRESS).getMutable();
     account.setCode(code);
     account.setVersion(Account.DEFAULT_VERSION);
     final Bytes32 value =

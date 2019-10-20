@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 ConsenSys AG.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -9,6 +9,8 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu.plugin.services.storage;
 
@@ -17,6 +19,7 @@ import org.hyperledger.besu.plugin.services.exception.StorageException;
 
 import java.io.Closeable;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Predicate;
 
 /**
@@ -67,6 +70,15 @@ public interface KeyValueStorage extends Closeable {
    * @throws StorageException problem encountered when removing data.
    */
   long removeAllKeysUnless(Predicate<byte[]> retainCondition) throws StorageException;
+
+  /**
+   * Performs an evaluation against each key in the store, returning the set of entries that pass.
+   *
+   * @param returnCondition predicate to evaluate each key against, unless the result is {@code
+   *     null}, the key is added to the returned list of keys.
+   * @return the set of keys that pass the condition.
+   */
+  Set<byte[]> getAllKeysThat(Predicate<byte[]> returnCondition);
 
   /**
    * Begins a fresh transaction, for sequencing operations for later atomic execution.

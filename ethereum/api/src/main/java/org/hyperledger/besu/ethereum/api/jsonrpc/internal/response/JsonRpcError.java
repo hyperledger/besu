@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ConsenSys AG.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -9,6 +9,8 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.response;
 
@@ -104,8 +106,6 @@ public enum JsonRpcError {
 
   // Private transaction errors
   ENCLAVE_ERROR(-50100, "Error communicating with enclave"),
-  PRIVATE_NONCE_TOO_LOW(-50100, "Private transaction nonce too low"),
-  INCORRECT_PRIVATE_NONCE(-50100, "Private transaction nonce is incorrect"),
   UNIMPLEMENTED_PRIVATE_TRANSACTION_TYPE(-50100, "Unimplemented private transaction type"),
   PRIVACY_NOT_ENABLED(-50100, "Privacy is not enabled to get the precompiled address"),
   CREATE_PRIVACY_GROUP_ERROR(-50100, "Error creating privacy group"),

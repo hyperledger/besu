@@ -8,6 +8,10 @@ def shouldPublish() {
     return env.BRANCH_NAME == 'master' || env.BRANCH_NAME ==~ /^release-\d+\.\d+/
 }
 
+def isSnapshotVersion(v) {
+    return (v ==~ /.*-SNAPSHOT/)
+}
+
 if (shouldPublish()) {
     properties([
         buildDiscarder(
@@ -236,8 +240,7 @@ exit $status
                                 if (env.BRANCH_NAME == 'master') {
                                     additionalTags.add('develop')
                                 }
-
-                                if (! version ==~ /.*-SNAPSHOT/) {
+                                if (! isSnapshotVersion(version)) {
                                     additionalTags.add('latest')
                                     additionalTags.add(version.split(/\./)[0..1].join('.'))
                                 }
@@ -251,7 +254,7 @@ exit $status
                 }
             }
         }, BintrayPublish: {
-             def stage_name = "Bintray publish node: "
+             def stage_name = "Publish distributions: "
              def version = ''
              node {
                  if (shouldPublish()) {
@@ -265,31 +268,27 @@ exit $status
                                  version = gradleProperties.version
                              }
 
-                             // we dont publish snapshots to bintray
-                             if (! version ==~ /.*-SNAPSHOT/) {
-
-                                 stage(stage_name + 'Prepare') {
-                                     sh './gradlew --no-daemon --parallel clean assemble'
-                                 }
-                                 stage(stage_name + 'Publish') {
-                                     withCredentials([
-                                     usernamePassword(
-                                         credentialsId: 'pegasys-bintray',
-                                         usernameVariable: 'BINTRAY_USER',
-                                         passwordVariable: 'BINTRAY_KEY'
-                                     )
-                                     ]) {
-                                         sh './gradlew --no-daemon --parallel bintrayUpload'
-                                     }
-                                 }
-
+                             stage(stage_name + 'Prepare') {
+                                 sh './gradlew --no-daemon --parallel clean assemble'
                              }
+                             stage(stage_name + 'Publish') {
+                                 withCredentials([
+                                 usernamePassword(
+                                     credentialsId: 'pegasys-bintray',
+                                     usernameVariable: 'BINTRAY_USER',
+                                     passwordVariable: 'BINTRAY_KEY'
+                                 )
+                                 ]) {
+                                     sh './gradlew --no-daemon --parallel bintrayUpload'
+                                 }
+                             }
+
                          }
                      }
                  }
              }
         }
-    }
+   }
 } catch (e) {
     currentBuild.result = 'FAILURE'
 } finally {

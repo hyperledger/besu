@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 ConsenSys AG.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -9,6 +9,8 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu.ethereum.mainnet.precompiles.privacy;
 
@@ -25,10 +27,9 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.mainnet.AbstractPrecompiledContract;
-import org.hyperledger.besu.ethereum.privacy.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransactionStorage;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
@@ -47,7 +48,6 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
   private final Enclave enclave;
   private final String enclavePublicKey;
   private final WorldStateArchive privateWorldStateArchive;
-  private final PrivateTransactionStorage privateTransactionStorage;
   private final PrivateStateStorage privateStateStorage;
   private PrivateTransactionProcessor privateTransactionProcessor;
   private static final Hash EMPTY_ROOT_HASH = Hash.wrap(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
@@ -61,7 +61,6 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
         privacyParameters.getEnclavePublicKey(),
         new Enclave(privacyParameters.getEnclaveUri()),
         privacyParameters.getPrivateWorldStateArchive(),
-        privacyParameters.getPrivateTransactionStorage(),
         privacyParameters.getPrivateStateStorage());
   }
 
@@ -70,13 +69,11 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
       final String publicKey,
       final Enclave enclave,
       final WorldStateArchive worldStateArchive,
-      final PrivateTransactionStorage privateTransactionStorage,
       final PrivateStateStorage privateStateStorage) {
     super("Privacy", gasCalculator);
     this.enclave = enclave;
     this.enclavePublicKey = publicKey;
     this.privateWorldStateArchive = worldStateArchive;
-    this.privateTransactionStorage = privateTransactionStorage;
     this.privateStateStorage = privateStateStorage;
   }
 
@@ -95,7 +92,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
     final String key = BytesValues.asBase64String(input);
     final ReceiveRequest receiveRequest = new ReceiveRequest(key, enclavePublicKey);
 
-    ReceiveResponse receiveResponse;
+    final ReceiveResponse receiveResponse;
     try {
       receiveResponse = enclave.receive(receiveRequest);
     } catch (Exception e) {
@@ -114,7 +111,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
 
     // get the last world state root hash - or create a new one
     final Hash lastRootHash =
-        privateStateStorage.getPrivateAccountState(privacyGroupId).orElse(EMPTY_ROOT_HASH);
+        privateStateStorage.getLatestStateRoot(privacyGroupId).orElse(EMPTY_ROOT_HASH);
 
     final MutableWorldState disposablePrivateState =
         privateWorldStateArchive.getMutable(lastRootHash).get();
@@ -148,17 +145,15 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
       disposablePrivateState.persist();
 
       final PrivateStateStorage.Updater privateStateUpdater = privateStateStorage.updater();
-      privateStateUpdater.putPrivateAccountState(privacyGroupId, disposablePrivateState.rootHash());
-      privateStateUpdater.commit();
+      privateStateUpdater.putLatestStateRoot(privacyGroupId, disposablePrivateState.rootHash());
 
       final Bytes32 txHash = keccak256(RLP.encode(privateTransaction::writeTo));
-      final PrivateTransactionStorage.Updater privateUpdater = privateTransactionStorage.updater();
       final LogSeries logs = result.getLogs();
       if (!logs.isEmpty()) {
-        privateUpdater.putTransactionLogs(txHash, result.getLogs());
+        privateStateUpdater.putTransactionLogs(txHash, result.getLogs());
       }
-      privateUpdater.putTransactionResult(txHash, result.getOutput());
-      privateUpdater.commit();
+      privateStateUpdater.putTransactionResult(txHash, result.getOutput());
+      privateStateUpdater.commit();
     }
 
     return result.getOutput();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ConsenSys AG.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -9,6 +9,8 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc;
 
@@ -72,7 +74,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.NetPeerCount;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.NetServices;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.NetVersion;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.RpcModules;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.TraceReplayBlockTransactions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.TxPoolBesuStatistics;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.TxPoolBesuTransactions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Web3ClientVersion;
@@ -90,21 +91,22 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.permissioning.
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.permissioning.PermRemoveNodesFromWhitelist;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea.EeaGetTransactionCount;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea.EeaGetTransactionReceipt;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea.EeaPrivateNonceProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea.EeaSendRawTransaction;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivCreatePrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivDeletePrivacyGroup;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivDistributeRawTransaction;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivFindPrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivGetPrivacyPrecompileAddress;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivGetPrivateTransaction;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivGetTransactionCount;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivGetTransactionReceipt;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockReplay;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTracer;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.queries.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
+import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -335,19 +337,20 @@ public class JsonRpcMethodsFactory {
           new AdminChangeLogLevel(parameter));
     }
 
-    if (rpcApis.contains(RpcApis.TRACE)) {
-      addMethods(
-          enabledMethods,
-          new TraceReplayBlockTransactions(
-              parameter,
-              new BlockTracer(
-                  new BlockReplay(
-                      protocolSchedule,
-                      blockchainQueries.getBlockchain(),
-                      blockchainQueries.getWorldStateArchive())),
-              blockchainQueries,
-              protocolSchedule));
-    }
+    // Disable TRACE functionality while under development
+    //    if (rpcApis.contains(RpcApis.TRACE)) {
+    //      addMethods(
+    //          enabledMethods,
+    //          new TraceReplayBlockTransactions(
+    //              parameter,
+    //              new BlockTracer(
+    //                  new BlockReplay(
+    //                      protocolSchedule,
+    //                      blockchainQueries.getBlockchain(),
+    //                      blockchainQueries.getWorldStateArchive())),
+    //              blockchainQueries,
+    //              protocolSchedule));
+    //    }
 
     final boolean eea = rpcApis.contains(RpcApis.EEA);
     final boolean priv = rpcApis.contains(RpcApis.PRIV);
@@ -363,7 +366,6 @@ public class JsonRpcMethodsFactory {
       if (eea) {
         addMethods(
             enabledMethods,
-            new EeaGetTransactionReceipt(blockchainQueries, enclave, parameter, privacyParameters),
             new EeaSendRawTransaction(privateTransactionHandler, transactionPool, parameter),
             new EeaGetTransactionCount(
                 parameter, new EeaPrivateNonceProvider(enclave, privateTransactionHandler)));
@@ -371,6 +373,7 @@ public class JsonRpcMethodsFactory {
       if (priv) {
         addMethods(
             enabledMethods,
+            new PrivGetTransactionReceipt(blockchainQueries, enclave, parameter, privacyParameters),
             new PrivCreatePrivacyGroup(
                 new Enclave(privacyParameters.getEnclaveUri()), privacyParameters, parameter),
             new PrivDeletePrivacyGroup(
@@ -378,8 +381,9 @@ public class JsonRpcMethodsFactory {
             new PrivFindPrivacyGroup(new Enclave(privacyParameters.getEnclaveUri()), parameter),
             new PrivGetPrivacyPrecompileAddress(privacyParameters),
             new PrivGetTransactionCount(parameter, privateTransactionHandler),
-            new PrivGetPrivateTransaction(
-                blockchainQueries, enclave, parameter, privacyParameters));
+            new PrivGetPrivateTransaction(blockchainQueries, enclave, parameter, privacyParameters),
+            new PrivDistributeRawTransaction(
+                privateTransactionHandler, transactionPool, parameter));
       }
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ConsenSys AG.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -9,6 +9,8 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu.ethereum.blockcreation;
 
@@ -25,6 +27,7 @@ import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
+import java.util.function.Function;
 
 public abstract class AbstractMinerExecutor<
     C, M extends BlockMiner<C, ? extends AbstractBlockCreator<C>>> {
@@ -34,6 +37,7 @@ public abstract class AbstractMinerExecutor<
   protected final ProtocolSchedule<C> protocolSchedule;
   protected final PendingTransactions pendingTransactions;
   protected final AbstractBlockScheduler blockScheduler;
+  protected final Function<Long, Long> gasLimitCalculator;
 
   protected volatile BytesValue extraData;
   protected volatile Wei minTransactionGasPrice;
@@ -44,7 +48,8 @@ public abstract class AbstractMinerExecutor<
       final ProtocolSchedule<C> protocolSchedule,
       final PendingTransactions pendingTransactions,
       final MiningParameters miningParams,
-      final AbstractBlockScheduler blockScheduler) {
+      final AbstractBlockScheduler blockScheduler,
+      final Function<Long, Long> gasLimitCalculator) {
     this.protocolContext = protocolContext;
     this.executorService = executorService;
     this.protocolSchedule = protocolSchedule;
@@ -52,6 +57,7 @@ public abstract class AbstractMinerExecutor<
     this.extraData = miningParams.getExtraData();
     this.minTransactionGasPrice = miningParams.getMinTransactionGasPrice();
     this.blockScheduler = blockScheduler;
+    this.gasLimitCalculator = gasLimitCalculator;
   }
 
   public abstract M startAsyncMining(

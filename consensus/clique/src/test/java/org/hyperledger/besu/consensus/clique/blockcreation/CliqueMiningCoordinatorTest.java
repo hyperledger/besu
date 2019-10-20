@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ConsenSys AG.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -9,6 +9,8 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu.consensus.clique.blockcreation;
 
@@ -22,6 +24,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.consensus.clique.CliqueBlockInterface;
 import org.hyperledger.besu.consensus.clique.CliqueContext;
 import org.hyperledger.besu.consensus.clique.CliqueMiningTracker;
 import org.hyperledger.besu.consensus.clique.TestHelpers;
@@ -62,6 +65,7 @@ public class CliqueMiningCoordinatorTest {
   private final BlockHeaderTestFixture headerTestFixture = new BlockHeaderTestFixture();
 
   private CliqueMiningTracker miningTracker;
+  private final CliqueBlockInterface blockInterface = new CliqueBlockInterface();
 
   @Mock private MutableBlockchain blockChain;
   @Mock private ProtocolContext<CliqueContext> protocolContext;
@@ -80,7 +84,8 @@ public class CliqueMiningCoordinatorTest {
     final VoteTally voteTally = mock(VoteTally.class);
     when(voteTally.getValidators()).thenReturn(validators);
     when(voteTallyCache.getVoteTallyAfterBlock(any())).thenReturn(voteTally);
-    final CliqueContext cliqueContext = new CliqueContext(voteTallyCache, null, null);
+    final CliqueContext cliqueContext =
+        new CliqueContext(voteTallyCache, null, null, blockInterface);
 
     when(protocolContext.getConsensusState()).thenReturn(cliqueContext);
     when(protocolContext.getBlockchain()).thenReturn(blockChain);

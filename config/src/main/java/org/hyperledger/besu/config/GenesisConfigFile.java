@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ConsenSys AG.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -9,6 +9,8 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu.config;
 
@@ -21,7 +23,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Streams;
 import com.google.common.io.Resources;
@@ -50,6 +51,16 @@ public class GenesisConfigFile {
     }
   }
 
+  public static ObjectNode mainnetJsonNode() {
+    try {
+      final String jsonString =
+          Resources.toString(GenesisConfigFile.class.getResource("/mainnet.json"), UTF_8);
+      return JsonUtil.objectNodeFromString(jsonString, false);
+    } catch (final IOException e) {
+      throw new IllegalStateException(e);
+    }
+  }
+
   public static GenesisConfigFile development() {
     try {
       return fromConfig(
@@ -60,23 +71,7 @@ public class GenesisConfigFile {
   }
 
   public static GenesisConfigFile fromConfig(final String jsonString) {
-    try {
-      final ObjectNode rootNode = JsonUtil.objectNodeFromString(jsonString, false);
-      return fromConfig(rootNode);
-    } catch (final RuntimeException re) {
-      if (re.getCause() instanceof JsonParseException) {
-        // we had a runtime exception cause by a jsom parse exception.
-        // try again with comments enabled
-        final ObjectNode rootNode = JsonUtil.objectNodeFromString(jsonString, true);
-        // if we get here comments is what broke things, warn and move on.
-        LOG.warn(
-            "The provided genesis file contains comments. "
-                + "In a future release of Besu this will not be supported.");
-        return fromConfig(rootNode);
-      } else {
-        throw re;
-      }
-    }
+    return fromConfig(JsonUtil.objectNodeFromString(jsonString, false));
   }
 
   public static GenesisConfigFile fromConfig(final ObjectNode config) {

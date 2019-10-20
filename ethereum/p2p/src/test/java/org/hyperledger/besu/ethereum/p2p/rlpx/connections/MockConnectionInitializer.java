@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 ConsenSys AG.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -9,6 +9,8 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu.ethereum.p2p.rlpx.connections;
 
@@ -16,6 +18,7 @@ import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.ConnectCallback;
 import org.hyperledger.besu.util.Subscribers;
 
+import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -50,8 +53,10 @@ public class MockConnectionInitializer implements ConnectionInitializer {
   }
 
   @Override
-  public CompletableFuture<Integer> start() {
-    return CompletableFuture.completedFuture(NEXT_PORT.incrementAndGet());
+  public CompletableFuture<InetSocketAddress> start() {
+    InetSocketAddress socketAddress =
+        new InetSocketAddress("127.0.0.1", NEXT_PORT.incrementAndGet());
+    return CompletableFuture.completedFuture(socketAddress);
   }
 
   @Override

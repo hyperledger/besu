@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 ConsenSys AG.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -9,6 +9,8 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu.ethereum.mainnet.precompiles.privacy;
 
@@ -30,10 +32,9 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.mainnet.SpuriousDragonGasCalculator;
-import org.hyperledger.besu.ethereum.privacy.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransactionStorage;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
@@ -83,15 +84,13 @@ public class PrivacyPrecompiledContractIntegrationTest {
 
   private static OrionTestHarness testHarness;
   private static WorldStateArchive worldStateArchive;
-  private static PrivateTransactionStorage privateTransactionStorage;
-  private static PrivateTransactionStorage.Updater updater;
   private static PrivateStateStorage privateStateStorage;
   private static PrivateStateStorage.Updater storageUpdater;
 
   private PrivateTransactionProcessor mockPrivateTxProcessor() {
-    PrivateTransactionProcessor mockPrivateTransactionProcessor =
+    final PrivateTransactionProcessor mockPrivateTransactionProcessor =
         mock(PrivateTransactionProcessor.class);
-    PrivateTransactionProcessor.Result result =
+    final PrivateTransactionProcessor.Result result =
         PrivateTransactionProcessor.Result.successful(
             null, 0, BytesValue.fromHexString(DEFAULT_OUTPUT), null);
     when(mockPrivateTransactionProcessor.processTransaction(
@@ -124,19 +123,18 @@ public class PrivacyPrecompiledContractIntegrationTest {
     messageFrame = mock(MessageFrame.class);
 
     worldStateArchive = mock(WorldStateArchive.class);
-    MutableWorldState mutableWorldState = mock(MutableWorldState.class);
+    final MutableWorldState mutableWorldState = mock(MutableWorldState.class);
     when(mutableWorldState.updater()).thenReturn(mock(WorldUpdater.class));
     when(worldStateArchive.getMutable()).thenReturn(mutableWorldState);
     when(worldStateArchive.getMutable(any())).thenReturn(Optional.of(mutableWorldState));
-    privateTransactionStorage = mock(PrivateTransactionStorage.class);
-    updater = mock(PrivateTransactionStorage.Updater.class);
-    when(updater.putTransactionLogs(nullable(Bytes32.class), any())).thenReturn(updater);
-    when(updater.putTransactionResult(nullable(Bytes32.class), any())).thenReturn(updater);
-    when(privateTransactionStorage.updater()).thenReturn(updater);
 
     privateStateStorage = mock(PrivateStateStorage.class);
     storageUpdater = mock(PrivateStateStorage.Updater.class);
-    when(storageUpdater.putPrivateAccountState(nullable(Bytes32.class), any()))
+    when(storageUpdater.putLatestStateRoot(nullable(Bytes32.class), any()))
+        .thenReturn(storageUpdater);
+    when(storageUpdater.putTransactionLogs(nullable(Bytes32.class), any()))
+        .thenReturn(storageUpdater);
+    when(storageUpdater.putTransactionResult(nullable(Bytes32.class), any()))
         .thenReturn(storageUpdater);
     when(privateStateStorage.updater()).thenReturn(storageUpdater);
   }
@@ -152,26 +150,25 @@ public class PrivacyPrecompiledContractIntegrationTest {
   }
 
   @Test
-  public void testSendAndReceive() throws Exception {
-    List<String> publicKeys = testHarness.getPublicKeys();
+  public void testSendAndReceive() {
+    final List<String> publicKeys = testHarness.getPublicKeys();
 
-    String s = new String(VALID_PRIVATE_TRANSACTION_RLP_BASE64, UTF_8);
-    SendRequest sc =
+    final String s = new String(VALID_PRIVATE_TRANSACTION_RLP_BASE64, UTF_8);
+    final SendRequest sc =
         new SendRequestLegacy(s, publicKeys.get(0), Lists.newArrayList(publicKeys.get(0)));
-    SendResponse sr = enclave.send(sc);
+    final SendResponse sr = enclave.send(sc);
 
-    PrivacyPrecompiledContract privacyPrecompiledContract =
+    final PrivacyPrecompiledContract privacyPrecompiledContract =
         new PrivacyPrecompiledContract(
             new SpuriousDragonGasCalculator(),
             publicKeys.get(0),
             enclave,
             worldStateArchive,
-            privateTransactionStorage,
             privateStateStorage);
 
     privacyPrecompiledContract.setPrivateTransactionProcessor(mockPrivateTxProcessor());
 
-    BytesValue actual =
+    final BytesValue actual =
         privacyPrecompiledContract.compute(BytesValues.fromBase64(sr.getKey()), messageFrame);
 
     assertThat(actual).isEqualTo(BytesValue.fromHexString(DEFAULT_OUTPUT));
@@ -179,11 +176,11 @@ public class PrivacyPrecompiledContractIntegrationTest {
 
   @Test
   public void testNoPrivateKeyError() throws RuntimeException {
-    List<String> publicKeys = testHarness.getPublicKeys();
+    final List<String> publicKeys = testHarness.getPublicKeys();
     publicKeys.add("noPrivateKey");
 
-    String s = new String(VALID_PRIVATE_TRANSACTION_RLP_BASE64, UTF_8);
-    SendRequest sc = new SendRequestLegacy(s, publicKeys.get(0), publicKeys);
+    final String s = new String(VALID_PRIVATE_TRANSACTION_RLP_BASE64, UTF_8);
+    final SendRequest sc = new SendRequestLegacy(s, publicKeys.get(0), publicKeys);
 
     final Throwable thrown = catchThrowable(() -> enclave.send(sc));
 
@@ -192,11 +189,11 @@ public class PrivacyPrecompiledContractIntegrationTest {
 
   @Test
   public void testWrongPrivateKeyError() throws RuntimeException {
-    List<String> publicKeys = testHarness.getPublicKeys();
+    final List<String> publicKeys = testHarness.getPublicKeys();
     publicKeys.add("noPrivateKenoPrivateKenoPrivateKenoPrivateK");
 
-    String s = new String(VALID_PRIVATE_TRANSACTION_RLP_BASE64, UTF_8);
-    SendRequest sc = new SendRequestLegacy(s, publicKeys.get(0), publicKeys);
+    final String s = new String(VALID_PRIVATE_TRANSACTION_RLP_BASE64, UTF_8);
+    final SendRequest sc = new SendRequestLegacy(s, publicKeys.get(0), publicKeys);
 
     final Throwable thrown = catchThrowable(() -> enclave.send(sc));
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 ConsenSys AG.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -9,13 +9,20 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu.services;
 
 import org.hyperledger.besu.ethereum.eth.sync.BlockBroadcaster;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.plugin.data.BlockHeader;
+import org.hyperledger.besu.plugin.data.PropagatedBlockContext;
+import org.hyperledger.besu.plugin.data.Quantity;
 import org.hyperledger.besu.plugin.services.BesuEvents;
+
+import java.util.function.Supplier;
 
 public class BesuEventsImpl implements BesuEvents {
   private final BlockBroadcaster blockBroadcaster;
@@ -34,7 +41,9 @@ public class BesuEventsImpl implements BesuEvents {
   @Override
   public long addBlockPropagatedListener(final BlockPropagatedListener listener) {
     return blockBroadcaster.subscribePropagateNewBlocks(
-        block -> listener.onBlockPropagated(block.getHeader()));
+        (block, totalDifficulty) ->
+            listener.onBlockPropagated(
+                blockPropagatedContext(block::getHeader, () -> totalDifficulty)));
   }
 
   @Override
@@ -66,11 +75,27 @@ public class BesuEventsImpl implements BesuEvents {
 
   @Override
   public long addSyncStatusListener(final SyncStatusListener syncStatusListener) {
-    return syncState.addSyncStatusListener(syncStatusListener);
+    return syncState.subscribeSyncStatus(syncStatusListener);
   }
 
   @Override
   public void removeSyncStatusListener(final long listenerIdentifier) {
-    syncState.removeSyncStatusListener(listenerIdentifier);
+    syncState.unsubscribeSyncStatus(listenerIdentifier);
+  }
+
+  private static PropagatedBlockContext blockPropagatedContext(
+      final Supplier<BlockHeader> blockHeaderSupplier,
+      final Supplier<Quantity> totalDifficultySupplier) {
+    return new PropagatedBlockContext() {
+      @Override
+      public BlockHeader getBlockHeader() {
+        return blockHeaderSupplier.get();
+      }
+
+      @Override
+      public Quantity getTotalDifficulty() {
+        return totalDifficultySupplier.get();
+      }
+    };
   }
 }

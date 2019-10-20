@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 ConsenSys AG.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -9,6 +9,8 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu.ethereum.privacy;
 
@@ -37,6 +39,7 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.FixedKeySigningPrivateMarkerTransactionFactory;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.util.bytes.BytesValue;
 import org.hyperledger.besu.util.bytes.BytesValues;
@@ -102,7 +105,7 @@ public class PrivateTransactionHandlerTest {
   public void setUp() throws Exception {
     PrivateStateStorage privateStateStorage = mock(PrivateStateStorage.class);
     Hash mockHash = mock(Hash.class);
-    when(privateStateStorage.getPrivateAccountState(any(BytesValue.class)))
+    when(privateStateStorage.getLatestStateRoot(any(BytesValue.class)))
         .thenReturn(Optional.of(mockHash));
     WorldStateArchive worldStateArchive = mock(WorldStateArchive.class);
     Account account = mock(Account.class);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ConsenSys AG.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -9,6 +9,8 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu.plugin.services.storage.rocksdb.segmented;
 
@@ -31,11 +33,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Sets;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.rocksdb.BlockBasedTableConfig;
@@ -159,7 +163,7 @@ public class RocksDBColumnarKeyValueStorage
   }
 
   @Override
-  public long removeUnless(
+  public long removeAllEntriesUnless(
       final ColumnFamilyHandle segmentHandle, final Predicate<byte[]> inUseCheck) {
     long removedNodeCounter = 0;
     try (final RocksIterator rocksIterator = db.newIterator(segmentHandle)) {
@@ -176,6 +180,23 @@ public class RocksDBColumnarKeyValueStorage
       throw new StorageException(e);
     }
     return removedNodeCounter;
+  }
+
+  @Override
+  public Set<byte[]> getAllKeysThat(
+      final ColumnFamilyHandle segmentHandle, final Predicate<byte[]> returnCondition) {
+    final Set<byte[]> returnedKeys = Sets.newIdentityHashSet();
+    try (final RocksIterator rocksIterator = db.newIterator(segmentHandle)) {
+      rocksIterator.seekToFirst();
+      while (rocksIterator.isValid()) {
+        final byte[] key = rocksIterator.key();
+        if (returnCondition.test(key)) {
+          returnedKeys.add(key);
+        }
+        rocksIterator.next();
+      }
+    }
+    return returnedKeys;
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 ConsenSys AG.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -9,6 +9,8 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu.ethereum.permissioning.node.provider;
 
@@ -18,14 +20,13 @@ import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.permissioning.node.NodePermissioningProvider;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
-import org.hyperledger.besu.plugin.data.SyncStatus;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 
 import java.net.URI;
 import java.util.Collection;
-import java.util.OptionalLong;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 public class SyncStatusNodePermissioningProvider implements NodePermissioningProvider {
@@ -35,8 +36,8 @@ public class SyncStatusNodePermissioningProvider implements NodePermissioningPro
   private final Counter checkCounter;
   private final Counter checkCounterPermitted;
   private final Counter checkCounterUnpermitted;
-  private OptionalLong syncStatusObserverId;
-  private boolean hasReachedSync = false;
+  private final long inSyncSubscriberId;
+  private final AtomicBoolean hasReachedSync = new AtomicBoolean(false);
 
   public SyncStatusNodePermissioningProvider(
       final Synchronizer synchronizer,
@@ -44,8 +45,7 @@ public class SyncStatusNodePermissioningProvider implements NodePermissioningPro
       final MetricsSystem metricsSystem) {
     checkNotNull(synchronizer);
     this.synchronizer = synchronizer;
-    long id = this.synchronizer.observeSyncStatus(this::handleSyncStatusUpdate);
-    this.syncStatusObserverId = OptionalLong.of(id);
+    this.inSyncSubscriberId = this.synchronizer.subscribeInSync(this::handleInSyncEvent, 0);
     this.fixedNodes =
         fixedNodes.stream().map(EnodeURL::toURIWithoutDiscoveryPort).collect(Collectors.toSet());
 
@@ -53,7 +53,7 @@ public class SyncStatusNodePermissioningProvider implements NodePermissioningPro
         BesuMetricCategory.PERMISSIONING,
         "sync_status_node_sync_reached",
         "Whether the sync status permissioning provider has realised sync yet",
-        () -> hasReachedSync ? 1 : 0);
+        () -> hasReachedSync.get() ? 1 : 0);
     this.checkCounter =
         metricsSystem.createCounter(
             BesuMetricCategory.PERMISSIONING,
@@ -71,20 +71,10 @@ public class SyncStatusNodePermissioningProvider implements NodePermissioningPro
             "Number of times the sync status permissioning provider has been checked and returned unpermitted");
   }
 
-  private void handleSyncStatusUpdate(final SyncStatus syncStatus) {
-    if (syncStatus != null) {
-      long blocksBehind = syncStatus.getHighestBlock() - syncStatus.getCurrentBlock();
-      if (blocksBehind <= 0) {
-        synchronized (this) {
-          if (!hasReachedSync) {
-            syncStatusObserverId.ifPresent(
-                id -> {
-                  synchronizer.removeObserver(id);
-                  syncStatusObserverId = OptionalLong.empty();
-                });
-            hasReachedSync = true;
-          }
-        }
+  private void handleInSyncEvent(final boolean isInSync) {
+    if (isInSync) {
+      if (hasReachedSync.compareAndSet(false, true)) {
+        synchronizer.unsubscribeInSync(inSyncSubscriberId);
       }
     }
   }
@@ -102,7 +92,7 @@ public class SyncStatusNodePermissioningProvider implements NodePermissioningPro
    */
   @Override
   public boolean isPermitted(final EnodeURL sourceEnode, final EnodeURL destinationEnode) {
-    if (hasReachedSync) {
+    if (hasReachedSync.get()) {
       return true;
     } else {
       checkCounter.inc();
@@ -117,6 +107,6 @@ public class SyncStatusNodePermissioningProvider implements NodePermissioningPro
   }
 
   public boolean hasReachedSync() {
-    return hasReachedSync;
+    return hasReachedSync.get();
   }
 }

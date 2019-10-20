@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 ConsenSys AG.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -9,12 +9,15 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu.services;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
@@ -28,6 +31,7 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.sync.BlockBroadcaster;
@@ -41,7 +45,7 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.plugin.data.BlockHeader;
+import org.hyperledger.besu.plugin.data.PropagatedBlockContext;
 import org.hyperledger.besu.plugin.data.SyncStatus;
 import org.hyperledger.besu.plugin.data.Transaction;
 import org.hyperledger.besu.testutil.TestClock;
@@ -120,46 +124,71 @@ public class BesuEventsImplTest {
 
   @Test
   public void syncStatusEventFiresAfterSubscribe() {
-    final AtomicReference<SyncStatus> result = new AtomicReference<>();
+    final AtomicReference<Optional<SyncStatus>> result = new AtomicReference<>();
     serviceImpl.addSyncStatusListener(result::set);
 
     assertThat(result.get()).isNull();
-    syncState.publishSyncStatus();
+    setSyncTarget();
+    assertThat(result.get()).isNotNull();
+
+    // Reset result for next event
+    result.set(null);
+
+    clearSyncTarget();
     assertThat(result.get()).isNotNull();
   }
 
   @Test
   public void syncStatusEventDoesNotFireAfterUnsubscribe() {
-    final AtomicReference<SyncStatus> result = new AtomicReference<>();
+    final AtomicReference<Optional<SyncStatus>> result = new AtomicReference<>();
     final long id = serviceImpl.addSyncStatusListener(result::set);
-    syncState.publishSyncStatus();
-    assertThat(result.get()).isNotNull();
-    result.set(null);
-    serviceImpl.removeSyncStatusListener(id);
-    syncState.publishSyncStatus();
+
     assertThat(result.get()).isNull();
+    setSyncTarget();
+    assertThat(result.get()).isNotNull();
+
+    // Reset result for next event
+    result.set(null);
+    // And remove listener
+    serviceImpl.removeSyncStatusListener(id);
+
+    clearSyncTarget();
+    assertThat(result.get()).isNull();
+  }
+
+  private void setSyncTarget() {
+    syncState.setSyncTarget(mock(EthPeer.class), fakeBlockHeader);
+  }
+
+  private void clearSyncTarget() {
+    syncState.clearSyncTarget();
   }
 
   @Test
   public void newBlockEventFiresAfterSubscribe() {
-    final AtomicReference<BlockHeader> result = new AtomicReference<>();
+    final AtomicReference<PropagatedBlockContext> result = new AtomicReference<>();
     serviceImpl.addBlockPropagatedListener(result::set);
-
+    final Block block = generateBlock();
     assertThat(result.get()).isNull();
-    blockBroadcaster.propagate(generateBlock(), UInt256.of(1));
+    blockBroadcaster.propagate(block, UInt256.of(1));
 
     assertThat(result.get()).isNotNull();
+    assertThat(result.get().getBlockHeader()).isEqualTo(block.getHeader());
+    assertThat(result.get().getTotalDifficulty()).isEqualTo(UInt256.of(1));
   }
 
   @Test
   public void newBlockEventDoesNotFireAfterUnsubscribe() {
-    final AtomicReference<BlockHeader> result = new AtomicReference<>();
+    final AtomicReference<PropagatedBlockContext> result = new AtomicReference<>();
     final long id = serviceImpl.addBlockPropagatedListener(result::set);
 
     assertThat(result.get()).isNull();
-    blockBroadcaster.propagate(generateBlock(), UInt256.of(1));
+    final Block block = generateBlock();
+    blockBroadcaster.propagate(block, UInt256.of(2));
 
     assertThat(result.get()).isNotNull();
+    assertThat(result.get().getBlockHeader()).isEqualTo(block.getHeader());
+    assertThat(result.get().getTotalDifficulty()).isEqualTo(UInt256.of(2));
     serviceImpl.removeBlockPropagatedListener(id);
     result.set(null);
 

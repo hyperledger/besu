@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 ConsenSys AG.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -9,12 +9,14 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter;
 
-import org.hyperledger.besu.ethereum.api.BlockWithMetadata;
-import org.hyperledger.besu.ethereum.api.TransactionWithMetadata;
-import org.hyperledger.besu.ethereum.api.graphql.internal.BlockchainQuery;
+import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
+import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.util.uint.UInt256;
@@ -49,7 +51,7 @@ public class NormalBlockAdapter extends BlockAdapterBase {
   }
 
   public List<UncleBlockAdapter> getOmmers(final DataFetchingEnvironment environment) {
-    final BlockchainQuery query = getBlockchainQuery(environment);
+    final BlockchainQueries query = getBlockchainQueries(environment);
     final List<Hash> ommers = blockWithMetaData.getOmmers();
     final List<UncleBlockAdapter> results = new ArrayList<>();
     final Hash hash = blockWithMetaData.getHeader().getHash();
@@ -62,7 +64,7 @@ public class NormalBlockAdapter extends BlockAdapterBase {
   }
 
   public Optional<UncleBlockAdapter> getOmmerAt(final DataFetchingEnvironment environment) {
-    final BlockchainQuery query = getBlockchainQuery(environment);
+    final BlockchainQueries query = getBlockchainQueries(environment);
     final int index = environment.getArgument("index");
     final List<Hash> ommers = blockWithMetaData.getOmmers();
     if (ommers.size() > index) {

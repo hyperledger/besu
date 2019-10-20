@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ConsenSys AG.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -9,9 +9,12 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu.ethereum.p2p.discovery;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Arrays.asList;
 
 import org.hyperledger.besu.crypto.SECP256K1;
@@ -31,6 +34,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalInt;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -179,6 +183,9 @@ public class PeerDiscoveryTestHelper {
     private List<EnodeURL> bootnodes = Collections.emptyList();
     private boolean active = true;
     private PeerPermissions peerPermissions = PeerPermissions.noop();
+    private String advertisedHost = "127.0.0.1";
+    private OptionalInt bindPort = OptionalInt.empty();
+    private KeyPair keyPair = SECP256K1.KeyPair.generate();
 
     private AgentBuilder(
         final Map<BytesValue, MockPeerDiscoveryAgent> agents,
@@ -215,14 +222,37 @@ public class PeerDiscoveryTestHelper {
       return this;
     }
 
+    public AgentBuilder advertisedHost(final String host) {
+      checkNotNull(host);
+      this.advertisedHost = host;
+      return this;
+    }
+
+    public AgentBuilder bindPort(final int bindPort) {
+      if (bindPort == 0) {
+        // Zero means pick the next available port
+        this.bindPort = OptionalInt.empty();
+        return this;
+      }
+      this.bindPort = OptionalInt.of(bindPort);
+      return this;
+    }
+
+    public AgentBuilder keyPair(final KeyPair keyPair) {
+      checkNotNull(keyPair);
+      this.keyPair = keyPair;
+      return this;
+    }
+
     public MockPeerDiscoveryAgent build() {
+      final int port = bindPort.orElseGet(nextAvailablePort::incrementAndGet);
       final DiscoveryConfiguration config = new DiscoveryConfiguration();
       config.setBootnodes(bootnodes);
-      config.setBindPort(nextAvailablePort.incrementAndGet());
+      config.setAdvertisedHost(advertisedHost);
+      config.setBindPort(port);
       config.setActive(active);
 
-      return new MockPeerDiscoveryAgent(
-          SECP256K1.KeyPair.generate(), config, peerPermissions, agents);
+      return new MockPeerDiscoveryAgent(keyPair, config, peerPermissions, agents);
     }
   }
 }

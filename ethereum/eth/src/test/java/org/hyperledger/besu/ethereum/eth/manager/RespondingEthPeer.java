@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ConsenSys AG.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -9,10 +9,13 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu.ethereum.eth.manager;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hyperledger.besu.ethereum.core.InMemoryStorageProvider.createInMemoryWorldStateArchive;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -28,6 +31,7 @@ import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV63;
 import org.hyperledger.besu.ethereum.eth.messages.NodeDataMessage;
 import org.hyperledger.besu.ethereum.eth.messages.ReceiptsMessage;
+import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.DefaultMessage;
@@ -55,7 +59,6 @@ import com.google.common.collect.Lists;
 
 public class RespondingEthPeer {
   private static final BlockDataGenerator gen = new BlockDataGenerator();
-  private static final int DEFAULT_ESTIMATED_HEIGHT = 1000;
   private final EthPeer ethPeer;
   private final BlockingQueue<OutgoingMessage> outgoingMessages;
   private final EthProtocolManager ethProtocolManager;
@@ -98,48 +101,16 @@ public class RespondingEthPeer {
     return peerConnection;
   }
 
-  public static RespondingEthPeer create(
-      final EthProtocolManager ethProtocolManager, final UInt256 totalDifficulty) {
-    return create(ethProtocolManager, totalDifficulty, DEFAULT_ESTIMATED_HEIGHT);
+  public static Builder builder() {
+    return new Builder();
   }
 
-  public static RespondingEthPeer create(
-      final EthProtocolManager ethProtocolManager,
-      final UInt256 totalDifficulty,
-      final long estimatedHeight) {
-    final Hash chainHeadHash = gen.hash();
-    return create(ethProtocolManager, chainHeadHash, totalDifficulty, estimatedHeight);
-  }
-
-  public static RespondingEthPeer create(
-      final EthProtocolManager ethProtocolManager,
-      final UInt256 totalDifficulty,
-      final OptionalLong estimatedHeight) {
-    final Hash chainHeadHash = gen.hash();
-    return create(ethProtocolManager, chainHeadHash, totalDifficulty, estimatedHeight);
-  }
-
-  public static RespondingEthPeer create(
-      final EthProtocolManager ethProtocolManager,
-      final Hash chainHeadHash,
-      final UInt256 totalDifficulty) {
-    return create(ethProtocolManager, chainHeadHash, totalDifficulty, DEFAULT_ESTIMATED_HEIGHT);
-  }
-
-  public static RespondingEthPeer create(
+  private static RespondingEthPeer create(
       final EthProtocolManager ethProtocolManager,
       final Hash chainHeadHash,
       final UInt256 totalDifficulty,
-      final long estimatedHeight) {
-    return create(
-        ethProtocolManager, chainHeadHash, totalDifficulty, OptionalLong.of(estimatedHeight));
-  }
-
-  public static RespondingEthPeer create(
-      final EthProtocolManager ethProtocolManager,
-      final Hash chainHeadHash,
-      final UInt256 totalDifficulty,
-      final OptionalLong estimatedHeight) {
+      final OptionalLong estimatedHeight,
+      final List<PeerValidator> peerValidators) {
     final EthPeers ethPeers = ethProtocolManager.ethContext().getEthPeers();
 
     final Set<Capability> caps = new HashSet<>(Collections.singletonList(EthProtocol.ETH63));
@@ -147,7 +118,7 @@ public class RespondingEthPeer {
     final MockPeerConnection peerConnection =
         new MockPeerConnection(
             caps, (cap, msg, conn) -> outgoingMessages.add(new OutgoingMessage(cap, msg)));
-    ethPeers.registerConnection(peerConnection);
+    ethPeers.registerConnection(peerConnection, peerValidators);
     final EthPeer peer = ethPeers.peer(peerConnection);
     peer.registerStatusReceived(chainHeadHash, totalDifficulty);
     estimatedHeight.ifPresent(height -> peer.chainState().update(chainHeadHash, height));
@@ -363,6 +334,61 @@ public class RespondingEthPeer {
       }
       return Optional.ofNullable(response);
     };
+  }
+
+  public static class Builder {
+    private EthProtocolManager ethProtocolManager;
+    private Hash chainHeadHash = gen.hash();
+    private UInt256 totalDifficulty = UInt256.of(1000L);
+    private OptionalLong estimatedHeight = OptionalLong.of(1000L);
+    private List<PeerValidator> peerValidators = new ArrayList<>();
+
+    public RespondingEthPeer build() {
+      checkNotNull(ethProtocolManager, "Must configure EthProtocolManager");
+
+      return RespondingEthPeer.create(
+          ethProtocolManager, chainHeadHash, totalDifficulty, estimatedHeight, peerValidators);
+    }
+
+    public Builder ethProtocolManager(final EthProtocolManager ethProtocolManager) {
+      checkNotNull(ethProtocolManager);
+      this.ethProtocolManager = ethProtocolManager;
+      return this;
+    }
+
+    public Builder chainHeadHash(final Hash chainHeadHash) {
+      checkNotNull(chainHeadHash);
+      this.chainHeadHash = chainHeadHash;
+      return this;
+    }
+
+    public Builder totalDifficulty(final UInt256 totalDifficulty) {
+      checkNotNull(totalDifficulty);
+      this.totalDifficulty = totalDifficulty;
+      return this;
+    }
+
+    public Builder estimatedHeight(final OptionalLong estimatedHeight) {
+      checkNotNull(estimatedHeight);
+      this.estimatedHeight = estimatedHeight;
+      return this;
+    }
+
+    public Builder estimatedHeight(final long estimatedHeight) {
+      this.estimatedHeight = OptionalLong.of(estimatedHeight);
+      return this;
+    }
+
+    public Builder peerValidators(final List<PeerValidator> peerValidators) {
+      checkNotNull(peerValidators);
+      this.peerValidators.addAll(peerValidators);
+      return this;
+    }
+
+    public Builder peerValidators(final PeerValidator... peerValidators) {
+      peerValidators(Arrays.asList(peerValidators));
+      return this;
+    }
   }
 
   static class OutgoingMessage {

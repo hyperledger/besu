@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ConsenSys AG.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -9,6 +9,8 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu.tests.acceptance.dsl.account;
 
@@ -23,6 +25,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.condition.account.ExpectAccount
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.eth.EthTransactions;
 import org.hyperledger.besu.util.bytes.Bytes32;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 
 import org.web3j.crypto.Credentials;
@@ -64,12 +67,8 @@ public class Account {
     return Address.extract(Hash.hash(keyPair.getPublicKey().getEncodedBytes())).toString();
   }
 
-  public Condition balanceEquals(final String expectedBalance, final Unit balanceUnit) {
-    return new ExpectAccountBalance(eth, this, expectedBalance, balanceUnit);
-  }
-
   public Condition balanceEquals(final int expectedBalance) {
-    return balanceEquals(String.valueOf(expectedBalance), Unit.ETHER);
+    return new ExpectAccountBalance(eth, this, BigDecimal.valueOf(expectedBalance), Unit.ETHER);
   }
 
   public Condition balanceEquals(final Amount expectedBalance) {
@@ -77,12 +76,9 @@ public class Account {
         eth, this, expectedBalance.getValue(), expectedBalance.getUnit());
   }
 
-  public Condition balanceDoesNotChange(final String startingBalance, final Unit balanceUnit) {
-    return new ExpectAccountBalanceNotChanging(eth, this, startingBalance, balanceUnit);
-  }
-
   public Condition balanceDoesNotChange(final int startingBalance) {
-    return balanceDoesNotChange(String.valueOf(startingBalance), Unit.ETHER);
+    return new ExpectAccountBalanceNotChanging(
+        eth, this, BigDecimal.valueOf(startingBalance), Unit.ETHER);
   }
 
   @Override

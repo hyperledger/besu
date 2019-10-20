@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ConsenSys AG.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -9,12 +9,15 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
+import org.hyperledger.besu.ethereum.core.ModificationNotAllowedException;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
@@ -103,21 +106,27 @@ public class MainnetContractCreationProcessor extends AbstractMessageProcessor {
     if (LOG.isTraceEnabled()) {
       LOG.trace("Executing contract-creation");
     }
+    try {
+      final MutableAccount sender =
+          frame.getWorldState().getAccount(frame.getSenderAddress()).getMutable();
+      sender.decrementBalance(frame.getValue());
 
-    final MutableAccount sender = frame.getWorldState().getMutable(frame.getSenderAddress());
-    sender.decrementBalance(frame.getValue());
-
-    final MutableAccount contract = frame.getWorldState().getOrCreate(frame.getContractAddress());
-    if (accountExists(contract)) {
-      LOG.trace(
-          "Contract creation error: account as already been created for address {}",
-          frame.getContractAddress());
+      final MutableAccount contract =
+          frame.getWorldState().getOrCreate(frame.getContractAddress()).getMutable();
+      if (accountExists(contract)) {
+        LOG.trace(
+            "Contract creation error: account as already been created for address {}",
+            frame.getContractAddress());
+        frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
+      } else {
+        contract.incrementBalance(frame.getValue());
+        contract.setNonce(initialContractNonce);
+        contract.clearStorage();
+        frame.setState(MessageFrame.State.CODE_EXECUTING);
+      }
+    } catch (ModificationNotAllowedException ex) {
+      LOG.trace("Contract creation error: illegal modification not allowed from private state");
       frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
-    } else {
-      contract.incrementBalance(frame.getValue());
-      contract.setNonce(initialContractNonce);
-      contract.clearStorage();
-      frame.setState(MessageFrame.State.CODE_EXECUTING);
     }
   }
 
@@ -146,7 +155,7 @@ public class MainnetContractCreationProcessor extends AbstractMessageProcessor {
 
         // Finalize contract creation, setting the contract code.
         final MutableAccount contract =
-            frame.getWorldState().getOrCreate(frame.getContractAddress());
+            frame.getWorldState().getOrCreate(frame.getContractAddress()).getMutable();
         contract.setCode(contractCode);
         contract.setVersion(accountVersion);
         LOG.trace(

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 ConsenSys AG.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -9,12 +9,14 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter;
 
-import org.hyperledger.besu.ethereum.api.LogWithMetadata;
-import org.hyperledger.besu.ethereum.api.TransactionWithMetadata;
-import org.hyperledger.besu.ethereum.api.graphql.internal.BlockchainQuery;
+import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.api.query.LogWithMetadata;
+import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogTopic;
 import org.hyperledger.besu.util.bytes.Bytes32;
@@ -30,7 +32,7 @@ import graphql.schema.DataFetchingEnvironment;
 public class LogAdapter extends AdapterBase {
   private final LogWithMetadata logWithMetadata;
 
-  LogAdapter(final LogWithMetadata logWithMetadata) {
+  public LogAdapter(final LogWithMetadata logWithMetadata) {
     this.logWithMetadata = logWithMetadata;
   }
 
@@ -52,14 +54,14 @@ public class LogAdapter extends AdapterBase {
   }
 
   public Optional<TransactionAdapter> getTransaction(final DataFetchingEnvironment environment) {
-    final BlockchainQuery query = getBlockchainQuery(environment);
+    final BlockchainQueries query = getBlockchainQueries(environment);
     final Hash hash = logWithMetadata.getTransactionHash();
     final Optional<TransactionWithMetadata> tran = query.transactionByHash(hash);
     return tran.map(TransactionAdapter::new);
   }
 
   public Optional<AccountAdapter> getAccount(final DataFetchingEnvironment environment) {
-    final BlockchainQuery query = getBlockchainQuery(environment);
+    final BlockchainQueries query = getBlockchainQueries(environment);
     long blockNumber = logWithMetadata.getBlockNumber();
     final Long bn = environment.getArgument("block");
     if (bn != null) {

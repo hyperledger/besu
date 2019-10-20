@@ -15,6 +15,7 @@ dependencies {
 
   testImplementation 'junit:junit'
   testImplementation 'net.consensys:orion'
+  testImplementation 'org.apache.tuweni:tuweni-crypto'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.web3j:abi'
   testImplementation 'org.web3j:pantheon'
@@ -37,7 +38,11 @@ dependencies {
 test.enabled = false
 
 sourceSets {
-  test { resources {  srcDirs "${rootDir}/besu/build/libs" } }
+  test {
+    resources {
+      srcDirs "${rootDir}/besu/build/libs"
+    }
+  }
 }
 
 processTestResources.dependsOn(':besu:testJar')

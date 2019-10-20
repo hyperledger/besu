@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ConsenSys AG.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -9,10 +9,11 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu.ethereum.eth.manager;
 
-import org.hyperledger.besu.ethereum.chain.ChainHead;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.util.Subscribers;
@@ -20,7 +21,7 @@ import org.hyperledger.besu.util.uint.UInt256;
 
 import com.google.common.base.MoreObjects;
 
-public class ChainState {
+public class ChainState implements ChainHeadEstimate {
   // The best block by total difficulty that we know about
   private final BestBlock bestBlock = new BestBlock();
   // The highest block that we've seen
@@ -38,14 +39,20 @@ public class ChainState {
     estimatedHeightListeners.unsubscribe(listenerId);
   }
 
+  public ChainStateSnapshot getSnapshot() {
+    return new ChainStateSnapshot(getEstimatedTotalDifficulty(), getEstimatedHeight());
+  }
+
   public boolean hasEstimatedHeight() {
     return estimatedHeightKnown;
   }
 
+  @Override
   public long getEstimatedHeight() {
     return estimatedHeight;
   }
 
+  @Override
   public UInt256 getEstimatedTotalDifficulty() {
     return bestBlock.getTotalDifficulty();
   }
@@ -96,32 +103,12 @@ public class ChainState {
 
   public void updateHeightEstimate(final long blockNumber) {
     synchronized (this) {
-      estimatedHeightKnown = true;
       if (blockNumber > estimatedHeight) {
+        estimatedHeightKnown = true;
         estimatedHeight = blockNumber;
         estimatedHeightListeners.forEach(e -> e.onEstimatedHeightChanged(estimatedHeight));
       }
     }
-  }
-
-  /**
-   * Returns true if this chain state represents a chain that is "better" than the chain represented
-   * by the supplied {@link ChainHead}. "Better" currently means that this chain is longer or
-   * heavier than the supplied {@code chainToCheck}.
-   *
-   * @param chainToCheck The chain being compared.
-   * @return true if this {@link ChainState} represents a better chain than {@code chainToCheck}.
-   */
-  public boolean chainIsBetterThan(final ChainHead chainToCheck) {
-    return hasHigherDifficultyThan(chainToCheck) || hasLongerChainThan(chainToCheck);
-  }
-
-  private boolean hasHigherDifficultyThan(final ChainHead chainToCheck) {
-    return bestBlock.getTotalDifficulty().compareTo(chainToCheck.getTotalDifficulty()) > 0;
-  }
-
-  private boolean hasLongerChainThan(final ChainHead chainToCheck) {
-    return estimatedHeight > chainToCheck.getHeight();
   }
 
   @Override

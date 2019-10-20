@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 ConsenSys AG.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -9,6 +9,8 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu.ethereum.worldstate;
 
@@ -52,7 +54,7 @@ public class MarkSweepPruner {
   private final Counter sweptNodesCounter;
   private volatile long nodeAddedListenerId;
   private final ReentrantLock markLock = new ReentrantLock(true);
-  private final Set<BytesValue> pendingMarks = Collections.newSetFromMap(new ConcurrentHashMap<>());
+  private final Set<Bytes32> pendingMarks = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
   public MarkSweepPruner(
       final WorldStateStorage worldStateStorage,
@@ -95,17 +97,16 @@ public class MarkSweepPruner {
   }
 
   public void prepare() {
-    worldStateStorage.removeNodeAddedListener(nodeAddedListenerId); // Just in case.
-    nodeAddedListenerId = worldStateStorage.addNodeAddedListener(this::markNewNodes);
-  }
+    // Optimization for the case where the previous cycle was interrupted (like the node was shut
+    // down). If the previous cycle was interrupted, there will be marks in the mark storage from
+    // last time, causing the first sweep to be smaller than it needs to be.
+    clearMarks();
 
-  public void cleanup() {
-    worldStateStorage.removeNodeAddedListener(nodeAddedListenerId);
+    nodeAddedListenerId = worldStateStorage.addNodeAddedListener(this::markNodes);
   }
 
   public void mark(final Hash rootHash) {
     markOperationCounter.inc();
-    markStorage.clear();
     createStateTrie(rootHash)
         .visitAll(
             node -> {
@@ -117,13 +118,12 @@ public class MarkSweepPruner {
               markNode(node.getHash());
               node.getValue().ifPresent(this::processAccountState);
             });
-    LOG.info("Completed marking used nodes for pruning");
+    LOG.debug("Completed marking used nodes for pruning");
   }
 
   public void sweepBefore(final long markedBlockNumber) {
-    flushPendingMarks();
     sweepOperationCounter.inc();
-    LOG.info("Sweeping unused nodes");
+    LOG.debug("Sweeping unused nodes");
     // Sweep state roots first, walking backwards until we get to a state root that isn't in the
     // storage
     long prunedNodeCount = 0;
@@ -136,7 +136,7 @@ public class MarkSweepPruner {
         break;
       }
 
-      if (!markStorage.containsKey(candidateStateRootHash.getArrayUnsafe())) {
+      if (!isMarked(candidateStateRootHash)) {
         updater.removeAccountStateTrieNode(candidateStateRootHash);
         prunedNodeCount++;
         if (prunedNodeCount % operationsPerTransaction == 0) {
@@ -147,11 +147,28 @@ public class MarkSweepPruner {
     }
     updater.commit();
     // Sweep non-state-root nodes
-    prunedNodeCount += worldStateStorage.prune(markStorage::containsKey);
+    prunedNodeCount += worldStateStorage.prune(this::isMarked);
     sweptNodesCounter.inc(prunedNodeCount);
+    clearMarks();
+    LOG.debug("Completed sweeping unused nodes");
+  }
+
+  public void cleanup() {
     worldStateStorage.removeNodeAddedListener(nodeAddedListenerId);
+    clearMarks();
+  }
+
+  public void clearMarks() {
     markStorage.clear();
-    LOG.info("Completed sweeping unused nodes");
+    pendingMarks.clear();
+  }
+
+  private boolean isMarked(final Bytes32 key) {
+    return pendingMarks.contains(key) || markStorage.containsKey(key.getArrayUnsafe());
+  }
+
+  private boolean isMarked(final byte[] key) {
+    return pendingMarks.contains(Bytes32.wrap(key)) || markStorage.containsKey(key);
   }
 
   private MerklePatriciaTrie<Bytes32, BytesValue> createStateTrie(final Bytes32 rootHash) {
@@ -190,30 +207,30 @@ public class MarkSweepPruner {
     }
   }
 
+  private void markNodes(final Collection<Bytes32> nodeHashes) {
+    markedNodesCounter.inc(nodeHashes.size());
+    markLock.lock();
+    try {
+      pendingMarks.addAll(nodeHashes);
+      maybeFlushPendingMarks();
+    } finally {
+      markLock.unlock();
+    }
+  }
+
   private void maybeFlushPendingMarks() {
     if (pendingMarks.size() > operationsPerTransaction) {
       flushPendingMarks();
     }
   }
 
-  void flushPendingMarks() {
+  private void flushPendingMarks() {
     markLock.lock();
     try {
       final KeyValueStorageTransaction transaction = markStorage.startTransaction();
       pendingMarks.forEach(node -> transaction.put(node.getArrayUnsafe(), IN_USE));
       transaction.commit();
       pendingMarks.clear();
-    } finally {
-      markLock.unlock();
-    }
-  }
-
-  private void markNewNodes(final Collection<Bytes32> nodeHashes) {
-    markedNodesCounter.inc(nodeHashes.size());
-    markLock.lock();
-    try {
-      pendingMarks.addAll(nodeHashes);
-      maybeFlushPendingMarks();
     } finally {
       markLock.unlock();
     }

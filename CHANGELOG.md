@@ -1,13 +1,93 @@
 # Changelog
 
+
 ### Java 11 Required from v1.2
 
 From v1.2, Besu requires Java 11.  Besu on Java 8 is no longer supported.
 
 ### Docker Image Migration 
 
-In v1.2, we removed the entry-point script from our Docker image. Refer to the [migration guide](https://besu.hyperledger.org/en/latest/Deploying-Besu/High-Availability/)
+In v1.2, we removed the entry-point script from our Docker image. Refer to the [migration guide](https://besu.hyperledger.org/en/latest/HowTo/Get-Started/Migration-Docker/)
 for information on options that were previously automatically added to the Besu command line. 
+
+### 1.3.1 
+
+### Additions and Improvements 
+
+- Added GraphQL query/logs support [\#94](https://github.com/hyperledger/besu/pull/94)
+
+### Technical Improvements 
+
+- Add totalDiffculty to BlockPropagated events. [\#97](https://github.com/hyperledger/besu/pull/97) 
+- Merge BlockchainQueries classes [\#101](https://github.com/hyperledger/besu/pull/101) 
+- Fixed casing of dynamic MetricCategorys [\#99](https://github.com/hyperledger/besu/pull/99) 
+- Fix private transactions breaking evm [\#96](https://github.com/hyperledger/besu/pull/96) 
+- Make SyncState variables thread-safe [\#95](https://github.com/hyperledger/besu/pull/95) 
+- Fix transaction tracking by sender [\#93](https://github.com/hyperledger/besu/pull/93) 
+- Make logic in PersistBlockTask more explicit to fix a LGTM warning [\#92](https://github.com/hyperledger/besu/pull/92) 
+- Removed Unused methods in the transaction simulator. [\#91](https://github.com/hyperledger/besu/pull/91) 
+- Fix ThreadBesuNodeRunner BesuConfiguration setup [\#90](https://github.com/hyperledger/besu/pull/90) 
+- JsonRpc method disabled error condition rewrite and unit test [\#80](https://github.com/hyperledger/besu/pull/80) 
+- Round trip testing of state trie account values [\#31](https://github.com/hyperledger/besu/pull/31) 
+
+### 1.3 
+
+### Breaking Change 
+
+- Disallow comments in Genesis JSON file. [\#49](https://github.com/hyperledger/besu/pull/49) 
+
+### Additions and Improvements
+
+- Add `--required-block` command line option to deal with chain splits [\#79](https://github.com/hyperledger/besu/pull/79)
+- Store db metadata file in the root data directory. [\#46](https://github.com/hyperledger/besu/pull/46) 
+- Add `--target-gas-limit` command line option. [\#24](https://github.com/hyperledger/besu/pull/24)(thanks to new contributor [cfelde](https://github.com/cfelde))
+- Allow private contracts to access public state. [\#9](https://github.com/hyperledger/besu/pull/9) 
+- Documentation updates include: 
+  - Added [sample load balancer configurations](https://besu.hyperledger.org/en/latest/HowTo/Configure/Configure-HA/Sample-Configuration/)  
+  - Added [`retesteth`](https://besu.hyperledger.org/en/latest/Reference/CLI/CLI-Subcommands/#retesteth) subcommand 
+  - Added [`debug_accountRange`](https://besu.hyperledger.org/en/latest/Reference/API-Methods/#debug_accountrange) JSON-RPC API method 
+  - Clarified purpose of [static nodes](https://besu.hyperledger.org/en/latest/HowTo/Find-and-Connect/Managing-Peers/#static-nodes) 
+  - Added links [Kubernetes reference implementations](https://besu.hyperledger.org/en/latest/HowTo/Deploy/Kubernetes/)
+  - Added content about [access between private and public states](https://besu.hyperledger.org/en/latest/Concepts/Privacy/Privacy-Groups/#access-between-states)
+  - Added restriction that [account permissioning cannot be used with random key signing](https://besu.hyperledger.org/en/latest/HowTo/Use-Privacy/Sign-Privacy-Marker-Transactions/).
+  - Added high availability requirement for [private transaction manager](https://besu.hyperledger.org/en/latest/Concepts/Privacy/Privacy-Overview/#availability) (ie, Orion)
+  - Added [genesis file reference](https://besu.hyperledger.org/en/latest/Reference/Config-Items/)
+
+### Technical Improvements 
+
+- Less verbose synching subscriptions [\#59](https://github.com/hyperledger/besu/pull/59)
+- Return enclave key instead of private transaction hash [\#53](https://github.com/hyperledger/besu/pull/53) 
+- Fix mark sweep pruner bugs where nodes that should be kept were being swept  [\#50](https://github.com/hyperledger/besu/pull/50) 
+- Clean up BesuConfiguration construction [\#51](https://github.com/hyperledger/besu/pull/51) 
+- Private tx nonce errors return same msg as any tx [\#48](https://github.com/hyperledger/besu/pull/48) 
+- Fix default logging [\#47](https://github.com/hyperledger/besu/pull/47) 
+- Introduce virtual operation. [\#45](https://github.com/hyperledger/besu/pull/45) 
+- Downgrade RocksDBPlugin Logging Levels [\#44](https://github.com/hyperledger/besu/pull/44)
+- Infrastructure for exposing PoA metrics for plugins. [\#37](https://github.com/hyperledger/besu/pull/37)
+- Refactor privacy storage. [\#7](https://github.com/hyperledger/besu/pull/7)
+
+## 1.2.4 
+
+### Additions and Improvements 
+
+- Add Istanbul block (5435345) for Rinkeby [\#35](https://github.com/hyperledger/besu/pull/35)
+- Add Istanbul block (1561651) for Goerli [\#27](https://github.com/hyperledger/besu/pull/27) 
+- Add Istanbul block (6485846) for Ropsten [\#26](https://github.com/hyperledger/besu/pull/26) 
+- Add privDistributeRawTransaction endpoint [\#23](https://github.com/hyperledger/besu/pull/23) (thanks to [josh-richardson](https://github.com/josh-richardson))
+
+### Technical Improvements 
+
+- Refactors pantheon private key to signing private key [\#34](https://github.com/hyperledger/besu/pull/34) (thanks to [josh-richardson](https://github.com/josh-richardson))
+- Support both BESU\_ and PANTHEON\_ env var prefixes [\#32](https://github.com/hyperledger/besu/pull/32) 
+- Use only fully validated peers for fast sync pivot selection [\#21](https://github.com/hyperledger/besu/pull/21) 
+- Support Version Rollbacks for RocksDB \(\#6\) [\#19](https://github.com/hyperledger/besu/pull/19)
+- Update Cava library to Tuweni Library [\#18](https://github.com/hyperledger/besu/pull/18)
+- StateTrieAccountValue:Version should be written as an int, not a long [\#17](https://github.com/hyperledger/besu/pull/17) 
+- Handle discovery peers with updated endpoints [\#12](https://github.com/hyperledger/besu/pull/12) 
+- Change retesteth port [\#11](https://github.com/hyperledger/besu/pull/11) 
+- Renames eea\_getTransactionReceipt to priv\_getTransactionReceipt [\#10](https://github.com/hyperledger/besu/pull/10) (thanks to [josh-richardson](https://github.com/josh-richardson))
+- Support Version Rollbacks for RocksDB [\#6](https://github.com/hyperledger/besu/pull/6) 
+- Moving AT DSL into its own module [\#3](https://github.com/hyperledger/besu/pull/3) 
 
 ## 1.2.3 
 

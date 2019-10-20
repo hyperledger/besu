@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 ConsenSys AG.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -9,6 +9,8 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu.tests.acceptance.dsl.privacy;
 
@@ -19,6 +21,8 @@ import org.hyperledger.besu.tests.acceptance.dsl.privacy.condition.PrivateContra
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.condition.PrivateTransactionVerifier;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.contract.PrivateContractTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.transaction.PrivacyTransactions;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.contract.ContractTransactions;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.eth.EthTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.net.NetTransactions;
 
 import org.junit.After;
@@ -35,10 +39,12 @@ public class PrivacyAcceptanceTestBase {
   protected final PrivateContractTransactions privateContractTransactions;
   protected final PrivacyCluster privacyCluster;
   protected final PrivacyAccountResolver privacyAccountResolver;
-
+  protected final ContractTransactions contractTransactions;
   protected final NetConditions net;
+  protected final EthTransactions ethTransactions;
 
   public PrivacyAcceptanceTestBase() {
+    ethTransactions = new EthTransactions();
     net = new NetConditions(new NetTransactions());
     privacyTransactions = new PrivacyTransactions();
     privateContractVerifier = new PrivateContractVerifier();
@@ -47,6 +53,7 @@ public class PrivacyAcceptanceTestBase {
     privateContractTransactions = new PrivateContractTransactions();
     privacyCluster = new PrivacyCluster(net);
     privacyAccountResolver = new PrivacyAccountResolver();
+    contractTransactions = new ContractTransactions();
   }
 
   @After

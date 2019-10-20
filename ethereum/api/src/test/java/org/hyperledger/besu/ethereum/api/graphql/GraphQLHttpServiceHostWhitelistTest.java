@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ConsenSys AG.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -9,10 +9,12 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu.ethereum.api.graphql;
 
-import org.hyperledger.besu.ethereum.api.graphql.internal.BlockchainQuery;
+import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
@@ -65,7 +67,7 @@ public class GraphQLHttpServiceHostWhitelistTest {
   }
 
   private GraphQLHttpService createGraphQLHttpService() throws Exception {
-    final BlockchainQuery blockchainQueries = Mockito.mock(BlockchainQuery.class);
+    final BlockchainQueries blockchainQueries = Mockito.mock(BlockchainQueries.class);
     final Synchronizer synchronizer = Mockito.mock(Synchronizer.class);
 
     final EthHashMiningCoordinator miningCoordinatorMock =
@@ -73,7 +75,7 @@ public class GraphQLHttpServiceHostWhitelistTest {
 
     final GraphQLDataFetcherContext dataFetcherContext =
         Mockito.mock(GraphQLDataFetcherContext.class);
-    Mockito.when(dataFetcherContext.getBlockchainQuery()).thenReturn(blockchainQueries);
+    Mockito.when(dataFetcherContext.getBlockchainQueries()).thenReturn(blockchainQueries);
     Mockito.when(dataFetcherContext.getMiningCoordinator()).thenReturn(miningCoordinatorMock);
 
     Mockito.when(dataFetcherContext.getTransactionPool())

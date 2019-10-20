@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ConsenSys AG.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -9,11 +9,14 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
+import org.hyperledger.besu.ethereum.core.ModificationNotAllowedException;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.vm.EVM;
@@ -47,16 +50,20 @@ public class MainnetMessageCallProcessor extends AbstractMessageProcessor {
   @Override
   public void start(final MessageFrame frame) {
     LOG.trace("Executing message-call");
+    try {
+      transferValue(frame);
 
-    transferValue(frame);
-
-    // Check first if the message call is to a pre-compile contract
-    final PrecompiledContract precompile =
-        precompiles.get(frame.getContractAddress(), frame.getContractAccountVersion());
-    if (precompile != null) {
-      executePrecompile(precompile, frame);
-    } else {
-      frame.setState(MessageFrame.State.CODE_EXECUTING);
+      // Check first if the message call is to a pre-compile contract
+      final PrecompiledContract precompile =
+          precompiles.get(frame.getContractAddress(), frame.getContractAccountVersion());
+      if (precompile != null) {
+        executePrecompile(precompile, frame);
+      } else {
+        frame.setState(MessageFrame.State.CODE_EXECUTING);
+      }
+    } catch (ModificationNotAllowedException ex) {
+      LOG.trace("Message call error: illegal modification not allowed from private state");
+      frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
     }
   }
 
@@ -77,11 +84,12 @@ public class MainnetMessageCallProcessor extends AbstractMessageProcessor {
    * of the world state of this executor.
    */
   private void transferValue(final MessageFrame frame) {
-    final MutableAccount senderAccount = frame.getWorldState().getMutable(frame.getSenderAddress());
+    final MutableAccount senderAccount =
+        frame.getWorldState().getAccount(frame.getSenderAddress()).getMutable();
     // The yellow paper explicitly states that if the recipient account doesn't exist at this
     // point, it is created.
     final MutableAccount recipientAccount =
-        frame.getWorldState().getOrCreate(frame.getRecipientAddress());
+        frame.getWorldState().getOrCreate(frame.getRecipientAddress()).getMutable();
 
     if (frame.getRecipientAddress().equals(frame.getSenderAddress())) {
       LOG.trace("Message call of {} to itself: no fund transferred", frame.getSenderAddress());

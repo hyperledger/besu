@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ConsenSys AG.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -9,6 +9,8 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu.services.kvstore;
 
@@ -26,6 +28,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class InMemoryKeyValueStorage implements KeyValueStorage {
 
@@ -75,9 +78,23 @@ public class InMemoryKeyValueStorage implements KeyValueStorage {
 
   @Override
   public long removeAllKeysUnless(final Predicate<byte[]> retainCondition) throws StorageException {
-    long initialSize = hashValueStore.keySet().size();
-    hashValueStore.keySet().removeIf(key -> !retainCondition.test(key.getArrayUnsafe()));
-    return initialSize - hashValueStore.keySet().size();
+    final Lock lock = rwLock.writeLock();
+    lock.lock();
+    try {
+      long initialSize = hashValueStore.keySet().size();
+      hashValueStore.keySet().removeIf(key -> !retainCondition.test(key.getArrayUnsafe()));
+      return initialSize - hashValueStore.keySet().size();
+    } finally {
+      lock.unlock();
+    }
+  }
+
+  @Override
+  public Set<byte[]> getAllKeysThat(final Predicate<byte[]> returnCondition) {
+    return hashValueStore.keySet().stream()
+        .map(BytesValue::getArrayUnsafe)
+        .filter(returnCondition)
+        .collect(Collectors.toSet());
   }
 
   @Override

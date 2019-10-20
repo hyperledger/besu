@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ConsenSys AG.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -9,6 +9,8 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc;
 
@@ -80,7 +82,7 @@ public class JsonRpcHttpService {
 
   private final Vertx vertx;
   private final JsonRpcConfiguration config;
-  private final RpcMethods rpcMethods;
+  private final Map<String, JsonRpcMethod> rpcMethods;
   private final Optional<UpnpNatManager> natManager;
   private final Path dataDir;
   private final LabelledMetric<OperationTimer> requestTimer;
@@ -145,7 +147,7 @@ public class JsonRpcHttpService {
     this.config = config;
     this.vertx = vertx;
     this.natManager = natManager;
-    this.rpcMethods = new RpcMethods(methods);
+    this.rpcMethods = methods;
     this.authenticationService = authenticationService;
     this.livenessService = livenessService;
     this.readinessService = readinessService;
@@ -477,17 +479,12 @@ public class JsonRpcHttpService {
       return NO_RESPONSE;
     }
 
-    LOG.debug("JSON-RPC request -> {}", request.getMethod());
-    // Find method handler
-    final JsonRpcMethod method = rpcMethods.getMethod(request.getMethod());
-    if (method == null) {
-      if (!rpcMethods.isDefined(request.getMethod())) {
-        return errorResponse(id, JsonRpcError.METHOD_NOT_FOUND);
-      }
-      if (!rpcMethods.isEnabled(request.getMethod())) {
-        return errorResponse(id, JsonRpcError.METHOD_NOT_ENABLED);
-      }
+    final Optional<JsonRpcError> unavailableMethod = validateMethodAvailability(request);
+    if (unavailableMethod.isPresent()) {
+      return errorResponse(id, unavailableMethod.get());
     }
+
+    final JsonRpcMethod method = rpcMethods.get(request.getMethod());
 
     if (AuthenticationUtils.isPermitted(authenticationService, user, method)) {
       // Generate response
@@ -504,6 +501,24 @@ public class JsonRpcHttpService {
     } else {
       return unauthorizedResponse(id, JsonRpcError.UNAUTHORIZED);
     }
+  }
+
+  private Optional<JsonRpcError> validateMethodAvailability(final JsonRpcRequest request) {
+    final String name = request.getMethod();
+    LOG.debug("JSON-RPC request -> {}", name);
+
+    final JsonRpcMethod method = rpcMethods.get(name);
+
+    if (method == null) {
+      if (!RpcMethod.rpcMethodExists(name)) {
+        return Optional.of(JsonRpcError.METHOD_NOT_FOUND);
+      }
+      if (!rpcMethods.containsKey(name)) {
+        return Optional.of(JsonRpcError.METHOD_NOT_ENABLED);
+      }
+    }
+
+    return Optional.empty();
   }
 
   private void handleJsonRpcError(

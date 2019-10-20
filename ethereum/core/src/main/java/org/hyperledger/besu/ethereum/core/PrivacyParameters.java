@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 ConsenSys AG.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -9,6 +9,8 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu.ethereum.core;
 
@@ -16,8 +18,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
-import org.hyperledger.besu.ethereum.privacy.PrivateStateStorage;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransactionStorage;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
@@ -42,10 +43,9 @@ public class PrivacyParameters {
   private String enclavePublicKey;
   private File enclavePublicKeyFile;
   private Optional<SECP256K1.KeyPair> signingKeyPair = Optional.empty();
+
   private WorldStateArchive privateWorldStateArchive;
   private StorageProvider privateStorageProvider;
-
-  private PrivateTransactionStorage privateTransactionStorage;
   private PrivateStateStorage privateStateStorage;
 
   public Integer getPrivacyAddress() {
@@ -112,15 +112,6 @@ public class PrivacyParameters {
     this.privateStorageProvider = privateStorageProvider;
   }
 
-  public PrivateTransactionStorage getPrivateTransactionStorage() {
-    return privateTransactionStorage;
-  }
-
-  public void setPrivateTransactionStorage(
-      final PrivateTransactionStorage privateTransactionStorage) {
-    this.privateTransactionStorage = privateTransactionStorage;
-  }
-
   public PrivateStateStorage getPrivateStateStorage() {
     return privateStateStorage;
   }
@@ -179,16 +170,14 @@ public class PrivacyParameters {
         final WorldStateArchive privateWorldStateArchive =
             new WorldStateArchive(privateWorldStateStorage, privatePreimageStorage);
 
-        final PrivateTransactionStorage privateTransactionStorage =
-            storageProvider.createPrivateTransactionStorage();
         final PrivateStateStorage privateStateStorage = storageProvider.createPrivateStateStorage();
 
         config.setPrivateWorldStateArchive(privateWorldStateArchive);
         config.setEnclavePublicKey(enclavePublicKey);
         config.setEnclavePublicKeyFile(enclavePublicKeyFile);
         config.setPrivateStorageProvider(storageProvider);
-        config.setPrivateTransactionStorage(privateTransactionStorage);
         config.setPrivateStateStorage(privateStateStorage);
+
         if (privateKeyPath != null) {
           config.setSigningKeyPair(KeyPair.load(privateKeyPath.toFile()));
         }

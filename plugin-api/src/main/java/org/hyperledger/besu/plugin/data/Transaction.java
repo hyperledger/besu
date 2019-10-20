@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 ConsenSys AG.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -9,6 +9,8 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu.plugin.data;
 
@@ -29,6 +31,13 @@ import java.util.Optional;
  */
 @Unstable
 public interface Transaction {
+
+  /**
+   * The Keccak 256-bit hash of this transaction.
+   *
+   * @return The Keccak 256-bit hash of this transaction.
+   */
+  Hash getHash();
 
   /**
    * A scalar value equal to the number of transactions sent by the sender.
@@ -127,4 +136,16 @@ public interface Transaction {
    * @return if present, the message call data
    */
   Optional<? extends UnformattedData> getData();
+
+  /**
+   * The data payload of this transaction.
+   *
+   * <p>If this transaction is a message-call to an account (the {@link #getTo} field is present),
+   * this same value will be exposed by {@link #getData}. If instead this is a contract-creation
+   * transaction (the {@link #getTo} field is absent), the payload is also exposed by {@link
+   * #getInit}.
+   *
+   * @return the transaction payload
+   */
+  UnformattedData getPayload();
 }

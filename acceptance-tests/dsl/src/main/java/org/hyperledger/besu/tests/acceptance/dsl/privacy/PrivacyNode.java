@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 ConsenSys AG.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -9,8 +9,12 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu.tests.acceptance.dsl.privacy;
+
+import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
 
 import org.hyperledger.besu.controller.KeyPairUtil;
 import org.hyperledger.besu.enclave.Enclave;
@@ -144,13 +148,14 @@ public class PrivacyNode implements AutoCloseable {
 
     try {
       final Path dataDir = Files.createTempDirectory("acctest-privacy");
+      final Path dbDir = dataDir.resolve(DATABASE_PATH);
 
       privacyParameters =
           new PrivacyParameters.Builder()
               .setEnabled(true)
               .setEnclaveUrl(orion.clientUrl())
               .setEnclavePublicKeyUsingFile(orion.getConfig().publicKeys().get(0).toFile())
-              .setStorageProvider(createKeyValueStorageProvider(dataDir))
+              .setStorageProvider(createKeyValueStorageProvider(dataDir, dbDir))
               .setPrivateKeyPath(KeyPairUtil.getDefaultKeyFile(besu.homeDirectory()).toPath())
               .build();
     } catch (IOException e) {
@@ -193,7 +198,7 @@ public class PrivacyNode implements AutoCloseable {
   }
 
   public String getTransactionSigningKey() {
-    return besu.keyPair().getPrivateKey().toString();
+    return besu.getPrivacyParameters().getSigningKeyPair().orElseThrow().getPrivateKey().toString();
   }
 
   public void addOtherEnclaveNode(final URI otherNode) {
@@ -204,7 +209,8 @@ public class PrivacyNode implements AutoCloseable {
     return besu.getConfiguration();
   }
 
-  private StorageProvider createKeyValueStorageProvider(final Path dbLocation) {
+  private StorageProvider createKeyValueStorageProvider(
+      final Path dataLocation, final Path dbLocation) {
     return new KeyValueStorageProviderBuilder()
         .withStorageFactory(
             new RocksDBKeyValuePrivacyStorageFactory(
@@ -215,7 +221,7 @@ public class PrivacyNode implements AutoCloseable {
                         BACKGROUND_THREAD_COUNT,
                         CACHE_CAPACITY),
                 Arrays.asList(KeyValueSegmentIdentifier.values())))
-        .withCommonConfiguration(new BesuConfigurationImpl(dbLocation))
+        .withCommonConfiguration(new BesuConfigurationImpl(dataLocation, dbLocation))
         .withMetricsSystem(new NoOpMetricsSystem())
         .build();
   }

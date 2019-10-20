@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ConsenSys AG.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -9,6 +9,8 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu.cli;
 
@@ -42,6 +44,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Wei;
@@ -71,6 +74,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -78,9 +82,9 @@ import java.util.stream.Stream;
 import com.google.common.collect.Lists;
 import com.google.common.io.Resources;
 import io.vertx.core.json.JsonObject;
-import net.consensys.cava.toml.Toml;
-import net.consensys.cava.toml.TomlParseResult;
 import org.apache.commons.text.StringEscapeUtils;
+import org.apache.tuweni.toml.Toml;
+import org.apache.tuweni.toml.TomlParseResult;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -174,6 +178,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).miningParameters(miningArg.capture());
     verify(mockControllerBuilder).nodePrivateKeyFile(isNotNull());
     verify(mockControllerBuilder).storageProvider(storageProviderArgumentCaptor.capture());
+    verify(mockControllerBuilder).targetGasLimit(eq(Optional.empty()));
     verify(mockControllerBuilder).build();
 
     assertThat(storageProviderArgumentCaptor.getValue()).isNotNull();
@@ -2750,5 +2755,127 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(commandErrorOutput.toString())
         .contains("Unknown options in TOML configuration file: invalid_option, invalid_option2");
+  }
+
+  @Test
+  public void targetGasLimitIsEnabledWhenSpecified() throws Exception {
+    parseCommand("--target-gas-limit=10000000");
+
+    @SuppressWarnings("unchecked")
+    final ArgumentCaptor<Optional<Long>> targetGasLimitArg =
+        ArgumentCaptor.forClass(Optional.class);
+
+    verify(mockControllerBuilder).targetGasLimit(targetGasLimitArg.capture());
+    verify(mockControllerBuilder).build();
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+
+    assertThat(targetGasLimitArg.getValue()).isEqualTo(Optional.of(10_000_000L));
+  }
+
+  @Test
+  public void targetGasLimitIsDisabledWhenNotSpecified() throws Exception {
+    parseCommand();
+
+    @SuppressWarnings("unchecked")
+    final ArgumentCaptor<Optional<Long>> targetGasLimitArg =
+        ArgumentCaptor.forClass(Optional.class);
+
+    verify(mockControllerBuilder).targetGasLimit(targetGasLimitArg.capture());
+    verify(mockControllerBuilder).build();
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+
+    assertThat(targetGasLimitArg.getValue()).isEqualTo(Optional.empty());
+  }
+
+  @Test
+  public void requiredBlocksSetWhenSpecified() {
+    final long blockNumber = 8675309L;
+    final String hash = "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef";
+
+    parseCommand("--required-block=" + blockNumber + "=" + hash);
+
+    @SuppressWarnings("unchecked")
+    final ArgumentCaptor<Map<Long, Hash>> requiredBlocksArg = ArgumentCaptor.forClass(Map.class);
+
+    verify(mockControllerBuilder).requiredBlocks(requiredBlocksArg.capture());
+    verify(mockControllerBuilder).build();
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+
+    assertThat(requiredBlocksArg.getValue()).containsOnlyKeys(blockNumber);
+    assertThat(requiredBlocksArg.getValue())
+        .containsEntry(blockNumber, Hash.fromHexStringLenient(hash));
+  }
+
+  @Test
+  public void requiredBlocksEmptyWhenNotSpecified() {
+    parseCommand();
+
+    @SuppressWarnings("unchecked")
+    final ArgumentCaptor<Map<Long, Hash>> requiredBlocksArg = ArgumentCaptor.forClass(Map.class);
+
+    verify(mockControllerBuilder).requiredBlocks(requiredBlocksArg.capture());
+    verify(mockControllerBuilder).build();
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+
+    assertThat(requiredBlocksArg.getValue()).isEmpty();
+  }
+
+  @Test
+  public void requiredBlocksMulpleBlocksOneArg() {
+    final long block1 = 8675309L;
+    final long block2 = 5551212L;
+    final String hash1 = "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef";
+    final String hash2 = "0x0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+
+    parseCommand("--required-block=" + block1 + "=" + hash1 + "," + block2 + "=" + hash2);
+
+    @SuppressWarnings("unchecked")
+    final ArgumentCaptor<Map<Long, Hash>> requiredBlocksArg = ArgumentCaptor.forClass(Map.class);
+
+    verify(mockControllerBuilder).requiredBlocks(requiredBlocksArg.capture());
+    verify(mockControllerBuilder).build();
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+
+    assertThat(requiredBlocksArg.getValue()).containsOnlyKeys(block1, block2);
+    assertThat(requiredBlocksArg.getValue())
+        .containsEntry(block1, Hash.fromHexStringLenient(hash1));
+    assertThat(requiredBlocksArg.getValue())
+        .containsEntry(block2, Hash.fromHexStringLenient(hash2));
+  }
+
+  @Test
+  public void requiredBlocksMulpleBlocksTwoArgs() {
+    final long block1 = 8675309L;
+    final long block2 = 5551212L;
+    final String hash1 = "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef";
+    final String hash2 = "0x0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+
+    parseCommand(
+        "--required-block=" + block1 + "=" + hash1, "--required-block=" + block2 + "=" + hash2);
+
+    @SuppressWarnings("unchecked")
+    final ArgumentCaptor<Map<Long, Hash>> requiredBlocksArg = ArgumentCaptor.forClass(Map.class);
+
+    verify(mockControllerBuilder).requiredBlocks(requiredBlocksArg.capture());
+    verify(mockControllerBuilder).build();
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+
+    assertThat(requiredBlocksArg.getValue()).containsOnlyKeys(block1, block2);
+    assertThat(requiredBlocksArg.getValue())
+        .containsEntry(block1, Hash.fromHexStringLenient(hash1));
+    assertThat(requiredBlocksArg.getValue())
+        .containsEntry(block2, Hash.fromHexStringLenient(hash2));
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ConsenSys AG.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -9,6 +9,8 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu.ethereum.core;
 
@@ -207,5 +209,28 @@ public class BlockHeader extends SealableBlockHeader
     sb.append("mixHash=").append(mixHash).append(", ");
     sb.append("nonce=").append(nonce);
     return sb.append("}").toString();
+  }
+
+  public static org.hyperledger.besu.ethereum.core.BlockHeader convertPluginBlockHeader(
+      final org.hyperledger.besu.plugin.data.BlockHeader pluginBlockHeader,
+      final BlockHeaderFunctions blockHeaderFunctions) {
+    return new org.hyperledger.besu.ethereum.core.BlockHeader(
+        Hash.fromHexString(pluginBlockHeader.getParentHash().getHexString()),
+        Hash.fromHexString(pluginBlockHeader.getOmmersHash().getHexString()),
+        org.hyperledger.besu.ethereum.core.Address.fromHexString(
+            pluginBlockHeader.getCoinbase().getHexString()),
+        Hash.fromHexString(pluginBlockHeader.getStateRoot().getHexString()),
+        Hash.fromHexString(pluginBlockHeader.getTransactionsRoot().getHexString()),
+        Hash.fromHexString(pluginBlockHeader.getReceiptsRoot().getHexString()),
+        LogsBloomFilter.fromHexString(pluginBlockHeader.getLogsBloom().getHexString()),
+        UInt256.fromHexString(pluginBlockHeader.getDifficulty().getHexString()),
+        pluginBlockHeader.getNumber(),
+        pluginBlockHeader.getGasLimit(),
+        pluginBlockHeader.getGasUsed(),
+        pluginBlockHeader.getTimestamp(),
+        BytesValue.wrap(pluginBlockHeader.getExtraData().getByteArray()),
+        Hash.fromHexString(pluginBlockHeader.getMixHash().getHexString()),
+        pluginBlockHeader.getNonce(),
+        blockHeaderFunctions);
   }
 }

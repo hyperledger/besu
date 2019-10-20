@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ConsenSys AG.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -9,20 +9,26 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu.ethereum.p2p.discovery.internal;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
+import org.hyperledger.besu.ethereum.p2p.discovery.Endpoint;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryTestHelper;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerTable.AddResult.AddOutcome;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerTable.EvictResult;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerTable.EvictResult.EvictOutcome;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
+import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.List;
+import java.util.OptionalInt;
 
 import org.junit.Test;
 
@@ -66,6 +72,69 @@ public class PeerTableTest {
     assertThat(table.tryAdd(peer).getOutcome()).isEqualTo(AddOutcome.ADDED);
 
     assertThat(table.tryAdd(peer))
+        .satisfies(
+            result -> {
+              assertThat(result.getOutcome()).isEqualTo(AddOutcome.ALREADY_EXISTED);
+              assertThat(result.getEvictionCandidate()).isNull();
+            });
+  }
+
+  @Test
+  public void peerExists_withDifferentIp() {
+    final PeerTable table = new PeerTable(Peer.randomId(), 16);
+    final BytesValue peerId = KeyPair.generate().getPublicKey().getEncodedBytes();
+    final DiscoveryPeer peer =
+        DiscoveryPeer.fromIdAndEndpoint(
+            peerId, new Endpoint("1.1.1.1", 30303, OptionalInt.empty()));
+
+    assertThat(table.tryAdd(peer).getOutcome()).isEqualTo(AddOutcome.ADDED);
+
+    final DiscoveryPeer duplicatePeer =
+        DiscoveryPeer.fromIdAndEndpoint(
+            peerId, new Endpoint("1.1.1.2", 30303, OptionalInt.empty()));
+    assertThat(table.tryAdd(duplicatePeer))
+        .satisfies(
+            result -> {
+              assertThat(result.getOutcome()).isEqualTo(AddOutcome.ALREADY_EXISTED);
+              assertThat(result.getEvictionCandidate()).isNull();
+            });
+  }
+
+  @Test
+  public void peerExists_withDifferentUdpPort() {
+    final PeerTable table = new PeerTable(Peer.randomId(), 16);
+    final BytesValue peerId = KeyPair.generate().getPublicKey().getEncodedBytes();
+    final DiscoveryPeer peer =
+        DiscoveryPeer.fromIdAndEndpoint(
+            peerId, new Endpoint("1.1.1.1", 30303, OptionalInt.empty()));
+
+    assertThat(table.tryAdd(peer).getOutcome()).isEqualTo(AddOutcome.ADDED);
+
+    final DiscoveryPeer duplicatePeer =
+        DiscoveryPeer.fromIdAndEndpoint(
+            peerId, new Endpoint("1.1.1.1", 30301, OptionalInt.empty()));
+    assertThat(table.tryAdd(duplicatePeer))
+        .satisfies(
+            result -> {
+              assertThat(result.getOutcome()).isEqualTo(AddOutcome.ALREADY_EXISTED);
+              assertThat(result.getEvictionCandidate()).isNull();
+            });
+  }
+
+  @Test
+  public void peerExists_withDifferentIdAndUdpPort() {
+    final PeerTable table = new PeerTable(Peer.randomId(), 16);
+    final BytesValue peerId = KeyPair.generate().getPublicKey().getEncodedBytes();
+    final DiscoveryPeer peer =
+        DiscoveryPeer.fromIdAndEndpoint(
+            peerId, new Endpoint("1.1.1.1", 30303, OptionalInt.empty()));
+
+    assertThat(table.tryAdd(peer).getOutcome()).isEqualTo(AddOutcome.ADDED);
+
+    final DiscoveryPeer duplicatePeer =
+        DiscoveryPeer.fromIdAndEndpoint(
+            peerId, new Endpoint("1.1.1.2", 30301, OptionalInt.empty()));
+    assertThat(table.tryAdd(duplicatePeer))
         .satisfies(
             result -> {
               assertThat(result.getOutcome()).isEqualTo(AddOutcome.ALREADY_EXISTED);

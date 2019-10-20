@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ConsenSys AG.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -9,6 +9,8 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 import net.ltgt.gradle.errorprone.CheckSeverity
@@ -16,9 +18,9 @@ import net.ltgt.gradle.errorprone.CheckSeverity
 import java.text.SimpleDateFormat
 
 plugins {
-  id 'com.diffplug.gradle.spotless' version '3.23.1'
+  id 'com.diffplug.gradle.spotless' version '3.25.0'
   id 'com.jfrog.bintray' version '1.8.4'
-  id 'com.github.ben-manes.versions' version '0.21.0'
+  id 'com.github.ben-manes.versions' version '0.26.0'
   id 'com.github.hierynomus.license' version '0.15.0'
   id 'io.spring.dependency-management' version '1.0.8.RELEASE'
   id 'me.champeau.gradle.jmh' version '0.4.8' apply false
@@ -74,7 +76,7 @@ def bintrayKey = project.hasProperty('bintrayApiKey') ? project.property('bintra
 def bintrayPackage = bintray.pkg {
   repo = 'besu-repo'
   name = 'besu'
-  userOrg = 'hyperledger'
+  userOrg = 'hyperledger-org'
   licenses = ['Apache-2.0']
   websiteUrl = 'https://github.com/hyperledger/besu'
   vcsUrl = 'https://github.com/hyperledger/besu.git'
@@ -119,11 +121,13 @@ allprojects {
     if ("$System.env.JENKINS_URL" == 'https://jenkins.pegasys.tech/') {
       maven { url "https://nexus.int.pegasys.tech/repository/consensys-pegasys/" }
       maven { url "https://nexus.int.pegasys.tech/repository/jcenter/" }
+      maven { url  "https://dl.bintray.com/tuweni/tuweni/" }
     } else {
       jcenter()
       mavenCentral()
       mavenLocal()
       maven { url "https://consensys.bintray.com/pegasys-repo" }
+      maven { url  "https://dl.bintray.com/tuweni/tuweni/" }
     }
   }
 
@@ -145,7 +149,6 @@ allprojects {
       importOrder 'org.hyperledger', 'java', ''
       trimTrailingWhitespace()
       endWithNewline()
-      licenseHeaderFile "${rootDir}/gradle/spotless.java.license"
     }
     groovyGradle {
       target '*.gradle'
@@ -155,23 +158,17 @@ allprojects {
     }
 
     // Below this line are currently only license header tasks
-    format 'groovy', {
-      target '**/src/*/grovy/**/*.groovy'
-      licenseHeaderFile "${rootDir}/gradle/spotless.java.license", 'import'
-    }
+    format 'groovy', { target '**/src/*/grovy/**/*.groovy' }
 
     // Currently disabled due to referencetest issues
-
     //  format 'bash', {
     //    target fileTree('.') {
     //      include '**/*.sh'
     //     exclude '**/ansible/**'
     //    }
-    //   licenseHeaderFile "${rootDir}/gradle/spotless.bash.license", '#!/bin'
     //  }
     //  format 'sol', {
     //    target fileTree('.') { include '**/*.sol' }
-    //   licenseHeaderFile "${rootDir}/gradle/spotless.java.license", '^(pragma|contract)'
     //  }
   }
 
@@ -271,9 +268,26 @@ allprojects {
 
 task deploy() {}
 
+task checkMavenCoordinateCollisions {
+  doLast {
+    def coordinates = [:]
+    getAllprojects().forEach {
+      if (it.properties.containsKey('publishing')) {
+        def coordinate = it.publishing?.publications[0].coordinates
+        if (coordinates.containsKey(coordinate)) {
+          throw new GradleException("Duplicate maven coordinates detected, ${coordinate} is used by " +
+          "both ${coordinates[coordinate]} and ${it.path}.\n" +
+          "Please add a `publishing` script block to one or both subprojects.")
+        }
+        coordinates[coordinate] = it.path
+      }
+    }
+  }
+}
+
 tasks.register('checkPluginAPIChanges', DefaultTask) { }
 checkPluginAPIChanges.dependsOn(':plugin-api:checkAPIChanges')
-check.dependsOn('checkPluginAPIChanges')
+check.dependsOn('checkPluginAPIChanges', 'checkMavenCoordinateCollisions')
 
 subprojects {
 
@@ -462,6 +476,7 @@ startScripts {
   }
 }
 
+
 dependencies {
   compile project(':besu')
   errorprone 'com.google.errorprone:error_prone_core'
@@ -531,6 +546,15 @@ task distDocker(type: Exec) {
 
   executable "sh"
   args "-c", "docker build --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${getCheckedOutGitCommitHash()} -t ${image} ."
+}
+
+task checkSpdxHeader(type: CheckSpdxHeader) {
+  apply plugin: 'groovy'
+
+  rootPath = "${projectDir}"
+  spdxHeader = "* SPDX-License-Identifier: Apache-2.0"
+  filesRegex = "(.*.java)|(.*.groovy)"
+  excludeRegex = "(.*generalstate/GeneralStateRegressionReferenceTest.*)|(.*generalstate/GeneralStateReferenceTest.*)|(.*blockchain/BlockchainReferenceTest.*)|(.*.gradle/.*)"
 }
 
 task jacocoRootReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
@@ -632,6 +656,7 @@ bintray {
   pkg = bintrayPackage
 }
 
+check.dependsOn checkSpdxHeader
 build.dependsOn verifyDistributions
 bintrayUpload.dependsOn verifyDistributions
 bintrayUpload.mustRunAfter(distTar)

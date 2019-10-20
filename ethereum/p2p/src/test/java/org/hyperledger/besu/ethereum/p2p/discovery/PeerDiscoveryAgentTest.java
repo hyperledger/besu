@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ConsenSys AG.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -9,6 +9,8 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu.ethereum.p2p.discovery;
 
@@ -20,6 +22,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryTestHelper.AgentBuilder;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.FindNeighborsPacketData;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.MockPeerDiscoveryAgent;
@@ -306,6 +310,104 @@ public class PeerDiscoveryAgentTest {
     assertThat(agent.streamDiscoveredPeers()).hasSize(1);
     List<IncomingPacket> remoteIncomingPackets = otherNode.getIncomingPackets();
     assertThat(remoteIncomingPackets).isEmpty();
+  }
+
+  /**
+   * These tests simulates the case where a node crashes then comes back up with a new ip address or
+   * listening port.
+   */
+  @Test
+  public void bonding_simulatePeerRestartingWithNewEndpoint_updatedPort() {
+    simulatePeerRestartingOnDifferentEndpoint(false, true);
+  }
+
+  @Test
+  public void bonding_simulatePeerRestartingWithNewEndpoint_updatedHost() {
+    simulatePeerRestartingOnDifferentEndpoint(true, false);
+  }
+
+  @Test
+  public void bonding_simulatePeerRestartingWithNewEndpoint_updatedHostAndPort() {
+    simulatePeerRestartingOnDifferentEndpoint(true, true);
+  }
+
+  public void simulatePeerRestartingOnDifferentEndpoint(
+      final boolean updateHost, final boolean updatePort) {
+    // Setup peer
+    final MockPeerDiscoveryAgent agent = helper.startDiscoveryAgent();
+    final DiscoveryPeer agentPeer = agent.getAdvertisedPeer().get();
+
+    final KeyPair remoteKeyPair = SECP256K1.KeyPair.generate();
+    final String remoteIp = "1.2.3.4";
+    final MockPeerDiscoveryAgent remoteAgent =
+        helper.createDiscoveryAgent(
+            helper
+                .agentBuilder()
+                .keyPair(remoteKeyPair)
+                .advertisedHost(remoteIp)
+                .bootstrapPeers(agentPeer));
+
+    agent.start(999);
+    remoteAgent.start(888);
+    final DiscoveryPeer remotePeer = remoteAgent.getAdvertisedPeer().get();
+
+    // Remote agent should have bonded with agent
+    assertThat(agent.streamDiscoveredPeers()).hasSize(1);
+    assertThat(agent.streamDiscoveredPeers()).contains(remoteAgent.getAdvertisedPeer().get());
+
+    // Create a new remote agent with same id, and new endpoint
+    remoteAgent.stop();
+    final int newPort = updatePort ? 0 : remotePeer.getEndpoint().getUdpPort();
+    final String newIp = updateHost ? "1.2.3.5" : remoteIp;
+    final MockPeerDiscoveryAgent updatedRemoteAgent =
+        helper.createDiscoveryAgent(
+            helper
+                .agentBuilder()
+                .keyPair(remoteKeyPair)
+                .advertisedHost(newIp)
+                .bindPort(newPort)
+                .bootstrapPeers(agentPeer));
+    updatedRemoteAgent.start(889);
+    final DiscoveryPeer updatedRemotePeer = updatedRemoteAgent.getAdvertisedPeer().get();
+
+    // Sanity check
+    assertThat(
+            updatedRemotePeer.getEndpoint().getUdpPort() == remotePeer.getEndpoint().getUdpPort())
+        .isEqualTo(!updatePort);
+    assertThat(updatedRemotePeer.getEndpoint().getHost().equals(remotePeer.getEndpoint().getHost()))
+        .isEqualTo(!updateHost);
+    assertThat(updatedRemotePeer.getId()).isEqualTo(remotePeer.getId());
+
+    // Check that our restarted agent receives a PONG response
+    final List<IncomingPacket> incomingPackets = updatedRemoteAgent.getIncomingPackets();
+    assertThat(incomingPackets).hasSizeGreaterThan(0);
+    final long pongCount =
+        incomingPackets.stream()
+            .filter(packet -> packet.fromAgent.equals(agent))
+            .filter(packet -> packet.packet.getType().equals(PacketType.PONG))
+            .count();
+    assertThat(pongCount).isGreaterThan(0);
+
+    // Check that agent has an endpoint matching the restarted node
+    final List<DiscoveryPeer> matchingPeers =
+        agent
+            .streamDiscoveredPeers()
+            .filter(peer -> peer.getId().equals(updatedRemotePeer.getId()))
+            .collect(toList());
+    // We should have only one peer matching this id
+    assertThat(matchingPeers.size()).isEqualTo(1);
+    final DiscoveryPeer discoveredPeer = matchingPeers.get(0);
+    assertThat(discoveredPeer.getEndpoint().getUdpPort())
+        .isEqualTo(updatedRemotePeer.getEndpoint().getUdpPort());
+    assertThat(discoveredPeer.getEndpoint().getHost())
+        .isEqualTo(updatedRemotePeer.getEndpoint().getHost());
+    // Check endpoint is consistent with enodeURL
+    assertThat(discoveredPeer.getEnodeURL().getDiscoveryPortOrZero())
+        .isEqualTo(updatedRemotePeer.getEndpoint().getUdpPort());
+    assertThat(discoveredPeer.getEnodeURL().getListeningPortOrZero())
+        .isEqualTo(updatedRemotePeer.getEndpoint().getFunctionalTcpPort());
+    assertThat(discoveredPeer.getEnodeURL().getIpAsString())
+        .isEqualTo(updatedRemotePeer.getEndpoint().getHost());
   }
 
   @Test

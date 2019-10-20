@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ConsenSys AG.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -9,6 +9,8 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu.ethereum.vm;
 
@@ -38,7 +40,7 @@ public class EntriesFromIntegrationTest {
     final MutableWorldState worldState =
         InMemoryStorageProvider.createInMemoryWorldStateArchive().getMutable();
     final WorldUpdater updater = worldState.updater();
-    MutableAccount account = updater.getOrCreate(Address.fromHexString("0x56"));
+    MutableAccount account = updater.getOrCreate(Address.fromHexString("0x56")).getMutable();
     final Map<Bytes32, AccountStorageEntry> expectedValues = new TreeMap<>();
     final int nodeCount = 100_000;
     final Random random = new Random(42989428249L);
@@ -51,7 +53,7 @@ public class EntriesFromIntegrationTest {
     updater.commit();
 
     // Add some changes on top that AbstractWorldUpdater.UpdateTrackingAccount will have to merge.
-    account = worldState.updater().getOrCreate(Address.fromHexString("0x56"));
+    account = worldState.updater().getOrCreate(Address.fromHexString("0x56")).getMutable();
     for (int i = 0; i <= nodeCount; i++) {
       addExpectedValue(
           account, expectedValues, UInt256.of(Math.abs(random.nextLong())), UInt256.of(i * 10 + 1));

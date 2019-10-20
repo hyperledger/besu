@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ConsenSys AG.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -9,6 +9,8 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu.ethereum.core;
 
@@ -37,7 +39,7 @@ public interface WorldUpdater extends MutableWorldView {
    * @return the account {@code address}, which will have nonce {@code nonce}, balance {@code
    *     balance} and empty code and storage.
    */
-  MutableAccount createAccount(Address address, long nonce, Wei balance);
+  DefaultEvmAccount createAccount(Address address, long nonce, Wei balance);
 
   /**
    * Creates a new account, or reset it (that is, act as if it was deleted and created anew) if it
@@ -50,7 +52,7 @@ public interface WorldUpdater extends MutableWorldView {
    * @return the account {@code address}, which will have 0 for the nonce and balance and empty code
    *     and storage.
    */
-  default MutableAccount createAccount(final Address address) {
+  default DefaultEvmAccount createAccount(final Address address) {
     return createAccount(address, Account.DEFAULT_NONCE, Account.DEFAULT_BALANCE);
   }
 
@@ -59,11 +61,11 @@ public interface WorldUpdater extends MutableWorldView {
    *
    * @param address the address of the account.
    * @return the account {@code address}. If that account exists, it is returned as if by {@link
-   *     #getMutable(Address)}, otherwise, it is created and returned as if by {@link
+   *     #getAccount(Address)}, otherwise, it is created and returned as if by {@link
    *     #createAccount(Address)} (and thus all his fields will be zero/empty).
    */
-  default MutableAccount getOrCreate(final Address address) {
-    final MutableAccount account = getMutable(address);
+  default DefaultEvmAccount getOrCreate(final Address address) {
+    final DefaultEvmAccount account = getAccount(address);
     return account == null ? createAccount(address) : account;
   }
 
@@ -72,10 +74,9 @@ public interface WorldUpdater extends MutableWorldView {
    * this updater).
    *
    * @param address the address of the account.
-   * @return the account {@code address} as modifiable object, or {@code null} if the account does
-   *     not exist.
+   * @return the account {@code address}, or {@code null} if the account does not exist.
    */
-  MutableAccount getMutable(Address address);
+  DefaultEvmAccount getAccount(Address address);
 
   /**
    * Deletes the provided account.

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 ConsenSys AG.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -9,6 +9,8 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu.consensus.clique.blockcreation;
 
@@ -64,6 +66,7 @@ public class CliqueBlockCreatorTest {
   private final KeyPair otherKeyPair = KeyPair.generate();
   private final List<Address> validatorList = Lists.newArrayList();
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
+  private final CliqueBlockInterface blockInterface = new CliqueBlockInterface();
 
   private ProtocolSchedule<CliqueContext> protocolSchedule;
   private final WorldStateArchive stateArchive = createInMemoryWorldStateArchive();
@@ -85,7 +88,8 @@ public class CliqueBlockCreatorTest {
     final VoteTallyCache voteTallyCache = mock(VoteTallyCache.class);
     when(voteTallyCache.getVoteTallyAfterBlock(any())).thenReturn(new VoteTally(validatorList));
     voteProposer = new VoteProposer();
-    final CliqueContext cliqueContext = new CliqueContext(voteTallyCache, voteProposer, null);
+    final CliqueContext cliqueContext =
+        new CliqueContext(voteTallyCache, voteProposer, null, blockInterface);
 
     final Block genesis =
         GenesisState.fromConfig(GenesisConfigFile.mainnet(), protocolSchedule).getBlock();

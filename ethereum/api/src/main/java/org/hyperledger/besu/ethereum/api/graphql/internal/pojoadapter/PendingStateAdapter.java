@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 ConsenSys AG.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -9,15 +9,17 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter;
 
-import org.hyperledger.besu.ethereum.api.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLDataFetcherContext;
-import org.hyperledger.besu.ethereum.api.graphql.internal.BlockchainQuery;
+import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
@@ -58,12 +60,12 @@ public class PendingStateAdapter extends AdapterBase {
   // speculative environment, so estimate against latest.
   public Optional<AccountAdapter> getAccount(
       final DataFetchingEnvironment dataFetchingEnvironment) {
-    final BlockchainQuery blockchainQuery =
-        ((GraphQLDataFetcherContext) dataFetchingEnvironment.getContext()).getBlockchainQuery();
+    final BlockchainQueries blockchainQuery =
+        ((GraphQLDataFetcherContext) dataFetchingEnvironment.getContext()).getBlockchainQueries();
     final Address addr = dataFetchingEnvironment.getArgument("address");
     final Long blockNumber = dataFetchingEnvironment.getArgument("blockNumber");
     final long latestBlockNumber = blockchainQuery.latestBlock().get().getHeader().getNumber();
-    final Optional<WorldState> optionalWorldState =
+    final Optional<MutableWorldState> optionalWorldState =
         blockchainQuery.getWorldState(latestBlockNumber);
     return optionalWorldState
         .flatMap(worldState -> Optional.ofNullable(worldState.get(addr)))
@@ -88,7 +90,7 @@ public class PendingStateAdapter extends AdapterBase {
     final UInt256 value = (UInt256) callData.get("value");
     final BytesValue data = (BytesValue) callData.get("data");
 
-    final BlockchainQuery query = getBlockchainQuery(environment);
+    final BlockchainQueries query = getBlockchainQueries(environment);
     final ProtocolSchedule<?> protocolSchedule =
         ((GraphQLDataFetcherContext) environment.getContext()).getProtocolSchedule();
 

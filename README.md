@@ -1,8 +1,11 @@
 # Besu Ethereum Client
  [![Build Status](https://jenkins.pegasys.tech/job/Besu/job/master/badge/icon)](https://jenkins.pegasys.tech/job/Besu/job/master/)
+ [![Total alerts](https://img.shields.io/lgtm/alerts/g/hyperledger/besu.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/hyperledger/besu/alerts/)
+ [![Language grade: Java](https://img.shields.io/lgtm/grade/java/g/hyperledger/besu.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/hyperledger/besu/context:java)
  [![Documentation Status](https://readthedocs.org/projects/hyperledger-besu/badge/?version=latest)](https://besu.hyperledger.org/en/latest/?badge=latest)
+ [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/3174/badge)](https://bestpractices.coreinfrastructure.org/projects/3174)
  [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/PegasysEng/besu/blob/master/LICENSE)
- [ ![Download](https://api.bintray.com/packages/hyperledger/besu-repo/besu/images/download.svg) ](https://bintray.com/hyperledger/besu-repo/besu/_latestVersion)
+ [ ![Download](https://api.bintray.com/packages/hyperledger-org/besu-repo/besu/images/download.svg) ](https://bintray.com/hyperledger-org/besu-repo/besu/_latestVersion)
  [![RocketChat chat](https://open.rocket.chat/images/join-chat.svg)](https://chat.hyperledger.org/channel/besu)
 
 
