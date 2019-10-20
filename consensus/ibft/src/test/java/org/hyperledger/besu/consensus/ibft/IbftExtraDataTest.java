@@ -462,6 +462,14 @@ public class IbftExtraDataTest {
         .isInstanceOf(RLPException.class);
   }
 
+  @Test
+  public void emptyExtraDataThrowsException() {
+    final BytesValue bufferToInject = BytesValue.EMPTY;
+
+    assertThatThrownBy(() -> IbftExtraData.decodeRaw(bufferToInject))
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
   private static byte[] createNonEmptyVanityData() {
     final byte[] vanity_bytes = new byte[32];
     for (int i = 0; i < vanity_bytes.length; i++) {
