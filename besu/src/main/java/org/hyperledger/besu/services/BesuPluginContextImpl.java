@@ -57,6 +57,7 @@ public class BesuPluginContextImpl implements BesuContext {
   private Lifecycle state = Lifecycle.UNINITIALIZED;
   private final Map<Class<?>, ? super Object> serviceRegistry = new HashMap<>();
   private final List<BesuPlugin> plugins = new ArrayList<>();
+  private final List<String> pluginVersions = new ArrayList<>();
 
   public <T> void addService(final Class<T> serviceType, final T service) {
     checkArgument(serviceType.isInterface(), "Services must be Java interfaces.");
@@ -89,6 +90,10 @@ public class BesuPluginContextImpl implements BesuContext {
       try {
         plugin.register(this);
         LOG.debug("Registered plugin of type {}.", plugin.getClass().getName());
+        final String pluginVersion = plugin.getClass().getPackage().getImplementationVersion();
+        if (pluginVersion != null) {
+          pluginVersions.add(pluginVersion);
+        }
       } catch (final Exception e) {
         LOG.error(
             "Error registering plugin of type {}, start and stop will not be called. \n{}",
@@ -151,6 +156,10 @@ public class BesuPluginContextImpl implements BesuContext {
 
     LOG.debug("Plugin shutdown complete.");
     state = Lifecycle.STOPPED;
+  }
+
+  public List<String> getPluginVersions() {
+    return Collections.unmodifiableList(pluginVersions);
   }
 
   private static URL pathToURIOrNull(final Path p) {
