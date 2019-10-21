@@ -38,12 +38,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
-import com.google.common.collect.Lists;
+import java.util.stream.LongStream;
 
 public class BlockchainQueries {
 
@@ -487,32 +487,31 @@ public class BlockchainQueries {
    */
   public List<LogWithMetadata> matchingLogs(
       final long fromBlockNumber, final long toBlockNumber, final LogsQuery query) {
-    if (fromBlockNumber > toBlockNumber || toBlockNumber > headBlockNumber()) {
-      return Lists.newArrayList();
+    try {
+      return LongStream.rangeClosed(fromBlockNumber, toBlockNumber)
+          .mapToObj(i -> matchingLogs(blockchain.getBlockHashByNumber(i).get(), query))
+          .flatMap(Collection::stream)
+          .collect(Collectors.toList());
+    } catch (NoSuchElementException nsee) {
+      return Collections.emptyList();
     }
-    List<LogWithMetadata> matchingLogs = Lists.newArrayList();
-    for (long blockNumber = fromBlockNumber; blockNumber <= toBlockNumber; blockNumber++) {
-      final Hash blockHash = blockchain.getBlockHashByNumber(blockNumber).get();
-      matchingLogs.addAll(matchingLogs(blockHash, query));
-    }
-    return matchingLogs;
   }
 
-  public List<LogWithMetadata> matchingLogs(final Hash blockhash, final LogsQuery query) {
-    Optional<BlockHeader> blockHeader = blockchain.getBlockHeader(blockhash);
+  public List<LogWithMetadata> matchingLogs(final Hash blockHash, final LogsQuery query) {
+    Optional<BlockHeader> blockHeader = blockchain.getBlockHeader(blockHash);
     if (blockHeader.isEmpty()) {
       return Collections.emptyList();
     }
-    final List<TransactionReceipt> receipts = blockchain.getTxReceipts(blockhash).get();
+    final List<TransactionReceipt> receipts = blockchain.getTxReceipts(blockHash).get();
     final List<Transaction> transactions =
-        blockchain.getBlockBody(blockhash).get().getTransactions();
+        blockchain.getBlockBody(blockHash).get().getTransactions();
     final long number = blockHeader.get().getNumber();
-    final boolean removed = !blockchain.blockIsOnCanonicalChain(blockhash);
+    final boolean removed = !blockchain.blockIsOnCanonicalChain(blockHash);
     return IntStream.range(0, receipts.size())
         .mapToObj(
             i ->
                 LogWithMetadata.generate(
-                    receipts.get(i), number, blockhash, transactions.get(i).getHash(), i, removed))
+                    receipts.get(i), number, blockHash, transactions.get(i).getHash(), i, removed))
         .flatMap(Collection::stream)
         .filter(query::matches)
         .collect(Collectors.toList());
