@@ -167,13 +167,13 @@ public class TransactionAdapter extends AdapterBase {
   public List<LogAdapter> getLogs(final DataFetchingEnvironment environment) {
     final BlockchainQueries query = getBlockchainQueries(environment);
     final Hash hash = transactionWithMetadata.getTransaction().getHash();
-    final Optional<TransactionReceiptWithMetadata> tranRpt =
+    final Optional<TransactionReceiptWithMetadata> maybeTransactionReceiptWithMetadata =
         query.transactionReceiptByTransactionHash(hash);
     final List<LogAdapter> results = new ArrayList<>();
-    if (tranRpt.isPresent()) {
+    if (maybeTransactionReceiptWithMetadata.isPresent()) {
       final List<LogWithMetadata> logs =
-          BlockchainQueries.generateLogWithMetadataForTransaction(
-              tranRpt.get().getReceipt(),
+          LogWithMetadata.generate(
+              maybeTransactionReceiptWithMetadata.get().getReceipt(),
               transactionWithMetadata.getBlockNumber().get(),
               transactionWithMetadata.getBlockHash().get(),
               hash,

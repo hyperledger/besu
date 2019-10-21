@@ -58,24 +58,43 @@ public class LogWithMetadata extends Log {
   }
 
   public static List<LogWithMetadata> generate(
+      final TransactionReceipt receipt,
+      final long number,
+      final Hash blockHash,
+      final Hash transactionHash,
+      final int transactionIndex,
+      final boolean removed) {
+
+    final List<LogWithMetadata> logs = new ArrayList<>();
+    for (int logIndex = 0; logIndex < receipt.getLogs().size(); ++logIndex) {
+      logs.add(
+          new LogWithMetadata(
+              logIndex,
+              number,
+              blockHash,
+              transactionHash,
+              transactionIndex,
+              receipt.getLogs().get(logIndex).getLogger(),
+              receipt.getLogs().get(logIndex).getData(),
+              receipt.getLogs().get(logIndex).getTopics(),
+              removed));
+    }
+
+    return logs;
+  }
+
+  public static List<LogWithMetadata> generate(
       final Block block, final List<TransactionReceipt> receipts, final boolean removed) {
     final List<LogWithMetadata> logsWithMetadata = new ArrayList<>();
     for (int txi = 0; txi < receipts.size(); ++txi) {
-      final TransactionReceipt currentReceipt = receipts.get(txi);
-      for (int li = 0; li < currentReceipt.getLogs().size(); ++li) {
-        final Log currentLog = currentReceipt.getLogs().get(li);
-        logsWithMetadata.add(
-            new LogWithMetadata(
-                li,
-                block.getHeader().getNumber(),
-                block.getHash(),
-                block.getBody().getTransactions().get(txi).getHash(),
-                txi,
-                currentLog.getLogger(),
-                currentLog.getData(),
-                currentLog.getTopics(),
-                removed));
-      }
+      logsWithMetadata.addAll(
+          generate(
+              receipts.get(txi),
+              block.getHeader().getNumber(),
+              block.getHash(),
+              block.getBody().getTransactions().get(txi).getHash(),
+              txi,
+              removed));
     }
     return logsWithMetadata;
   }
