@@ -29,6 +29,7 @@ import java.nio.file.Path;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -43,6 +44,7 @@ public class Runner implements AutoCloseable {
   private static final Logger LOG = LogManager.getLogger();
 
   private final Vertx vertx;
+  private final CountDownLatch vertxShutdownLatch = new CountDownLatch(1);
 
   private final NetworkRunner networkRunner;
   private final Optional<UpnpNatManager> natManager;
@@ -115,13 +117,14 @@ public class Runner implements AutoCloseable {
 
     natManager.ifPresent(UpnpNatManager::stop);
     besuController.close();
-    vertx.close();
+    vertx.close((res) -> vertxShutdownLatch.countDown());
   }
 
   public void awaitStop() {
     try {
       besuController.getMiningCoordinator().awaitStop();
       networkRunner.awaitStop();
+      vertxShutdownLatch.await();
     } catch (final InterruptedException e) {
       LOG.debug("Interrupted, exiting", e);
       Thread.currentThread().interrupt();
