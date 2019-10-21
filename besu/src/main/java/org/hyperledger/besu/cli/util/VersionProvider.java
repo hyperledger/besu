@@ -27,7 +27,7 @@ public class VersionProvider implements CommandLine.IVersionProvider {
   public VersionProvider(final List<String> pluginVersions) {
     final List<String> versionsList = new ArrayList<>();
     versionsList.add(BesuInfo.version());
-    if (pluginVersions != null && !pluginVersions.isEmpty()) {
+    if (!pluginVersions.isEmpty()) {
       versionsList.addAll(pluginVersions);
     }
     versions = versionsList.toArray(String[]::new);

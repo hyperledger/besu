@@ -31,12 +31,6 @@ public class VersionProviderTest {
   }
 
   @Test
-  public void validateNullListGenerateBesuInfoVersionOnly() {
-    VersionProvider versionProvider = new VersionProvider(null);
-    assertThat(versionProvider.getVersion()).containsOnly(BesuInfo.version());
-  }
-
-  @Test
   public void validateVersionListGenerateValidValues() {
     VersionProvider versionProvider = new VersionProvider(Collections.singletonList("test"));
     assertThat(versionProvider.getVersion()).containsExactly(BesuInfo.version(), "test");

@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.ServiceLoader;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -90,10 +91,7 @@ public class BesuPluginContextImpl implements BesuContext {
       try {
         plugin.register(this);
         LOG.debug("Registered plugin of type {}.", plugin.getClass().getName());
-        final String pluginVersion = plugin.getClass().getPackage().getImplementationVersion();
-        if (pluginVersion != null) {
-          pluginVersions.add(pluginVersion);
-        }
+        addPluginVersion(plugin);
       } catch (final Exception e) {
         LOG.error(
             "Error registering plugin of type {}, start and stop will not be called. \n{}",
@@ -107,6 +105,21 @@ public class BesuPluginContextImpl implements BesuContext {
     LOG.debug("Plugin registration complete.");
 
     state = Lifecycle.REGISTERED;
+  }
+
+  private void addPluginVersion(final BesuPlugin plugin) {
+    final Package pluginPackage = plugin.getClass().getPackage();
+    final String implTitle =
+        Optional.ofNullable(pluginPackage.getImplementationTitle())
+            .filter(Predicate.not(String::isBlank))
+            .orElse(plugin.getClass().getSimpleName());
+    final String implVersion =
+        Optional.ofNullable(pluginPackage.getImplementationVersion())
+            .filter(Predicate.not(String::isBlank))
+            .orElse("<Unknown Version>");
+    final String pluginVersion = implTitle + "/" + implVersion;
+    LOG.debug("Plugin Version: {}", pluginVersion);
+    pluginVersions.add(pluginVersion);
   }
 
   public void startPlugins() {
