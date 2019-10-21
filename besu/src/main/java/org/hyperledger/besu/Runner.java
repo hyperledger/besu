@@ -109,32 +109,23 @@ public class Runner implements AutoCloseable {
     metrics.ifPresent(service -> waitForServiceToStop("metrics", service.stop()));
 
     besuController.getMiningCoordinator().stop();
+    waitForServiceToStop("Mining Coordinator", besuController.getMiningCoordinator()::awaitStop);
     if (networkRunner.getNetwork().isP2pEnabled()) {
       besuController.getSynchronizer().stop();
     }
 
     networkRunner.stop();
+    waitForServiceToStop("Network", networkRunner::awaitStop);
 
     natManager.ifPresent(UpnpNatManager::stop);
     besuController.close();
     vertx.close((res) -> vertxShutdownLatch.countDown());
-  }
-
-  public void awaitStop() {
-    try {
-      besuController.getMiningCoordinator().awaitStop();
-      networkRunner.awaitStop();
-      vertxShutdownLatch.await();
-    } catch (final InterruptedException e) {
-      LOG.debug("Interrupted, exiting", e);
-      Thread.currentThread().interrupt();
-    }
+    waitForServiceToStop("Vertx", vertxShutdownLatch::await);
   }
 
   @Override
   public void close() {
     stop();
-    awaitStop();
   }
 
   private void waitForServiceToStop(
@@ -148,6 +139,15 @@ public class Runner implements AutoCloseable {
       LOG.error("Service " + serviceName + " failed to shutdown", e);
     } catch (final TimeoutException e) {
       LOG.error("Service {} did not shut down cleanly", serviceName);
+    }
+  }
+
+  private void waitForServiceToStop(final String serviceName, final SynchronousShutdown shutdown) {
+    try {
+      shutdown.await();
+    } catch (final InterruptedException e) {
+      LOG.debug("Interrupted while waiting for service " + serviceName + " to stop", e);
+      Thread.currentThread().interrupt();
     }
   }
 
@@ -235,5 +235,10 @@ public class Runner implements AutoCloseable {
   @VisibleForTesting
   Optional<EnodeURL> getLocalEnode() {
     return networkRunner.getNetwork().getLocalEnode();
+  }
+
+  @FunctionalInterface
+  private interface SynchronousShutdown {
+    void await() throws InterruptedException;
   }
 }
