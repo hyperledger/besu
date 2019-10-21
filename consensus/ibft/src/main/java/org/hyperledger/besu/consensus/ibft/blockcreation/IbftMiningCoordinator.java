@@ -87,7 +87,6 @@ public class IbftMiningCoordinator implements MiningCoordinator, BlockAddedObser
   public void stop() {
     if (state.compareAndSet(State.RUNNING, State.STOPPED)) {
       ibftProcessor.stop();
-      controller.stop();
       ibftExecutors.stop();
     }
   }
