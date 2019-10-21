@@ -39,7 +39,7 @@ dependencies {
   implementation project(':util')
   implementation project(':config')
   implementation project(':crypto')
-  implementation project(':crosschain')
+  //implementation project(':crosschain')
 
   implementation 'org.springframework.security:spring-security-crypto'
   implementation 'net.consensys.cava:cava-toml'

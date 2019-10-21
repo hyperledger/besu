@@ -17,6 +17,8 @@ repositories { mavenCentral() }
 dependencies {
   implementation project(':util')
   implementation project(':crypto')
+  implementation project(':ethereum:core')
+  implementation project(':ethereum:api')
   implementation 'org.apache.logging.log4j:log4j-api'
   implementation 'com.google.guava:guava'
 

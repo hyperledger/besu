@@ -127,6 +127,7 @@ public abstract class MainnetPrecompiledContractRegistries {
     return registry;
   }
 
+  // TODO does Privacy make sense in Mainnet, or should it go somewhere else?
   static PrecompileContractRegistry appendPrivacy(
       final PrecompileContractRegistry registry,
       final PrecompiledContractConfiguration precompiledContractConfiguration,
