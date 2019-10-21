@@ -281,19 +281,19 @@ public class ProtocolSpecBuilder<T> {
         transactionProcessorBuilder.apply(
             gasCalculator, transactionValidator, contractCreationProcessor, messageCallProcessor);
 
-    // Set private Tx Processor
+    final PrivateTransactionValidator privateTransactionValidator =
+        privateTransactionValidatorBuilder.apply();
+    final PrivateTransactionProcessor privateTransactionProcessor =
+        privateTransactionProcessorBuilder.apply(
+            gasCalculator,
+            transactionValidator,
+            contractCreationProcessor,
+            messageCallProcessor,
+            privateTransactionValidator);
+    // Set private transaction components
     if (privacyParameters.isEnabled()) {
-      final PrivateTransactionValidator privateTransactionValidator =
-          privateTransactionValidatorBuilder.apply();
-      final PrivateTransactionProcessor privateTransactionProcessor =
-          privateTransactionProcessorBuilder.apply(
-              gasCalculator,
-              transactionValidator,
-              contractCreationProcessor,
-              messageCallProcessor,
-              privateTransactionValidator);
-      Address address = Address.privacyPrecompiled(privacyParameters.getPrivacyAddress());
-      PrivacyPrecompiledContract privacyPrecompiledContract =
+      final Address address = Address.privacyPrecompiled(privacyParameters.getPrivacyAddress());
+      final PrivacyPrecompiledContract privacyPrecompiledContract =
           (PrivacyPrecompiledContract)
               precompileContractRegistry.get(address, Account.DEFAULT_VERSION);
       privacyPrecompiledContract.setPrivateTransactionProcessor(privateTransactionProcessor);
@@ -320,6 +320,8 @@ public class ProtocolSpecBuilder<T> {
         evm,
         transactionValidator,
         transactionProcessor,
+        privateTransactionValidator,
+        privateTransactionProcessor,
         blockHeaderValidator,
         ommerHeaderValidator,
         blockBodyValidator,
