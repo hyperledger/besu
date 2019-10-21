@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.ModificationNotAllowedException;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
@@ -155,6 +156,8 @@ public abstract class AbstractMessageProcessor {
       evm.runToHalt(frame, operationTracer);
     } catch (final ExceptionalHaltException e) {
       frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
+    } catch (final ModificationNotAllowedException e) {
+      frame.setState(MessageFrame.State.REVERT);
     }
   }
 
