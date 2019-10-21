@@ -31,12 +31,19 @@ import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.logging.log4j.Logger;
 
 public abstract class AbstractMiningCoordinator<
         C, M extends BlockMiner<C, ? extends AbstractBlockCreator<C>>>
     implements BlockAddedObserver, MiningCoordinator {
+
+  enum State {
+    IDLE,
+    RUNNING,
+    STOPPED
+  }
 
   private static final Logger LOG = getLogger();
 
@@ -45,8 +52,7 @@ public abstract class AbstractMiningCoordinator<
   private final SyncState syncState;
   private final Blockchain blockchain;
 
-  private boolean isStarted = false;
-  private boolean isStopped = false;
+  private State state = State.IDLE;
   private boolean isEnabled = false;
   protected volatile Optional<M> currentRunningMiner = Optional.empty();
 
@@ -66,28 +72,28 @@ public abstract class AbstractMiningCoordinator<
       final BlockHeader parentHeader,
       final List<Transaction> transactions,
       final List<BlockHeader> ommers) {
-    M miner = executor.createMiner(Subscribers.none(), parentHeader);
+    final M miner = executor.createMiner(Subscribers.none(), parentHeader);
     return Optional.of(miner.createBlock(parentHeader, transactions, ommers));
   }
 
   @Override
   public void start() {
     synchronized (this) {
-      if (isStarted) {
+      if (state != State.IDLE) {
         return;
       }
-      isStarted = true;
-      maybeStartMining();
+      state = State.RUNNING;
+      startMiningIfPossible();
     }
   }
 
   @Override
   public void stop() {
     synchronized (this) {
-      if (!isStarted || isStopped) {
+      if (state != State.RUNNING) {
         return;
       }
-      isStopped = true;
+      state = State.STOPPED;
       haltCurrentMiningOperation();
       executor.shutDown();
     }
@@ -105,7 +111,7 @@ public abstract class AbstractMiningCoordinator<
         return false;
       }
       isEnabled = true;
-      maybeStartMining();
+      startMiningIfPossible();
     }
     return true;
   }
@@ -123,14 +129,14 @@ public abstract class AbstractMiningCoordinator<
   }
 
   @Override
-  public boolean isRunning() {
+  public boolean isMining() {
     synchronized (this) {
       return currentRunningMiner.isPresent();
     }
   }
 
-  private boolean maybeStartMining() {
-    if (!isStarted || isStopped || !isEnabled || !syncState.isInSync() || isRunning()) {
+  private synchronized boolean startMiningIfPossible() {
+    if ((state != State.RUNNING) || !isEnabled || !syncState.isInSync() || isMining()) {
       return false;
     }
 
@@ -144,10 +150,14 @@ public abstract class AbstractMiningCoordinator<
   }
 
   private boolean haltCurrentMiningOperation() {
-    boolean halted = currentRunningMiner.isPresent();
-    currentRunningMiner.ifPresent(this::haltMiner);
+    final AtomicBoolean wasHalted = new AtomicBoolean(false);
+    currentRunningMiner.ifPresent(
+        (miner) -> {
+          haltMiner(miner);
+          wasHalted.set(true);
+        });
     currentRunningMiner = Optional.empty();
-    return halted;
+    return wasHalted.get();
   }
 
   protected void haltMiner(final M miner) {
@@ -160,14 +170,14 @@ public abstract class AbstractMiningCoordinator<
       if (event.isNewCanonicalHead()
           && newChainHeadInvalidatesMiningOperation(event.getBlock().getHeader())) {
         haltCurrentMiningOperation();
-        maybeStartMining();
+        startMiningIfPossible();
       }
     }
   }
 
   void inSyncChanged(final boolean inSync) {
     synchronized (this) {
-      if (inSync && maybeStartMining()) {
+      if (inSync && startMiningIfPossible()) {
         LOG.info("Resuming mining operations");
       }
       if (!inSync && haltCurrentMiningOperation()) {

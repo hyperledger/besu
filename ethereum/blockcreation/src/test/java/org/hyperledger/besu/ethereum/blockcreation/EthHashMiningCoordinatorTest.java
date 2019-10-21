@@ -48,7 +48,7 @@ public class EthHashMiningCoordinatorTest {
         new EthHashMiningCoordinator(executionContext.getBlockchain(), executor, syncState);
     final EthHashSolution solution = new EthHashSolution(1L, Hash.EMPTY, new byte[Bytes32.SIZE]);
 
-    assertThat(miningCoordinator.isRunning()).isFalse();
+    assertThat(miningCoordinator.isMining()).isFalse();
     assertThat(miningCoordinator.hashesPerSecond()).isEqualTo(Optional.empty());
     assertThat(miningCoordinator.getWorkDefinition()).isEqualTo(Optional.empty());
     assertThat(miningCoordinator.submitWork(solution)).isFalse();

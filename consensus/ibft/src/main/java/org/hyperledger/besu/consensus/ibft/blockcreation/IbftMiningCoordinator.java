@@ -103,7 +103,7 @@ public class IbftMiningCoordinator implements MiningCoordinator, BlockAddedObser
   }
 
   @Override
-  public boolean isRunning() {
+  public boolean isMining() {
     return true;
   }
 

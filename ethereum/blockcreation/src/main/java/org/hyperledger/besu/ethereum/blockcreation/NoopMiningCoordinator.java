@@ -54,7 +54,7 @@ public class NoopMiningCoordinator implements MiningCoordinator {
   }
 
   @Override
-  public boolean isRunning() {
+  public boolean isMining() {
     return false;
   }
 

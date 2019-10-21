@@ -48,7 +48,7 @@ public interface MiningCoordinator {
    */
   boolean disable();
 
-  boolean isRunning();
+  boolean isMining();
 
   Wei getMinTransactionGasPrice();
 
