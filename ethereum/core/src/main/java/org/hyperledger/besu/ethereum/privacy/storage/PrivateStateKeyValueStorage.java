@@ -19,7 +19,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.LogSeries;
-import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
@@ -74,9 +73,8 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
   }
 
   @Override
-  public Optional<TransactionProcessor.Result.Status> getStatus(final Bytes32 transactionHash) {
-    return get(transactionHash, STATUS_KEY_SUFFIX)
-        .map(bytesValue -> TransactionProcessor.Result.Status.values()[bytesValue.getInt(0)]);
+  public Optional<BytesValue> getStatus(final Bytes32 transactionHash) {
+    return get(transactionHash, STATUS_KEY_SUFFIX);
   }
 
   @Override
@@ -146,13 +144,13 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
 
     @Override
     public PrivateStateStorage.Updater putTransactionStatus(
-        final Bytes32 transactionHash, final TransactionProcessor.Result.Status status) {
-      set(transactionHash, STATUS_KEY_SUFFIX, BytesValue.of(status.ordinal()));
+        final Bytes32 transactionHash, final BytesValue status) {
+      set(transactionHash, STATUS_KEY_SUFFIX, status);
       return this;
     }
 
     @Override
-    public PrivateStateStorage.Updater putRevertReason(
+    public PrivateStateStorage.Updater putTransactionRevertReason(
         final Bytes32 transactionHash, final BytesValue revertReason) {
       set(transactionHash, REVERT_KEY_SUFFIX, revertReason);
       return this;

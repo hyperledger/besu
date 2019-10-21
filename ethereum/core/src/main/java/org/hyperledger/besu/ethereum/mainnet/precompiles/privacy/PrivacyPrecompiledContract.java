@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.mainnet.AbstractPrecompiledContract;
+import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
@@ -153,10 +154,13 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
         privateStateUpdater.putTransactionLogs(txHash, result.getLogs());
       }
       if (result.getRevertReason().isPresent()) {
-        privateStateUpdater.putRevertReason(txHash, result.getRevertReason().get());
+        privateStateUpdater.putTransactionRevertReason(txHash, result.getRevertReason().get());
       }
 
-      privateStateUpdater.putTransactionStatus(txHash, result.getStatus());
+      privateStateUpdater.putTransactionStatus(
+          txHash,
+          BytesValue.of(
+              result.getStatus() == TransactionProcessor.Result.Status.SUCCESSFUL ? 1 : 0));
       privateStateUpdater.putTransactionResult(txHash, result.getOutput());
       privateStateUpdater.commit();
     }
