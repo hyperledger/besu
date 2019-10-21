@@ -93,6 +93,7 @@ public class IbftMiningCoordinator implements MiningCoordinator, BlockAddedObser
 
   @Override
   public void awaitStop() throws InterruptedException {
+    ibftProcessor.awaitStop();
     ibftExecutors.awaitStop();
   }
 
