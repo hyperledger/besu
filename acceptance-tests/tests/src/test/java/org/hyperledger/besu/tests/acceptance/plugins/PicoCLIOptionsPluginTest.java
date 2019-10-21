@@ -44,7 +44,7 @@ public class PicoCLIOptionsPluginTest extends AcceptanceTestBase {
         besu.createPluginsNode(
             "node1",
             Collections.singletonList("testPlugins"),
-            Collections.singletonList("--Xtest-option=" + MAGIC_WORDS));
+            Collections.singletonList("--Xplugin-test-option=" + MAGIC_WORDS));
     cluster.start(node);
   }
 

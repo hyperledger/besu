@@ -277,6 +277,24 @@ public class PendingTransactionsTest {
   }
 
   @Test
+  public void shouldNotSelectReplacedTransaction() {
+    final Transaction transaction1 = transactionWithNonceSenderAndGasPrice(1, KEYS1, 1);
+    final Transaction transaction2 = transactionWithNonceSenderAndGasPrice(1, KEYS1, 2);
+
+    transactions.addRemoteTransaction(transaction1);
+    transactions.addRemoteTransaction(transaction2);
+
+    final List<Transaction> parsedTransactions = Lists.newArrayList();
+    transactions.selectTransactions(
+        transaction -> {
+          parsedTransactions.add(transaction);
+          return PendingTransactions.TransactionSelectionResult.CONTINUE;
+        });
+
+    assertThat(parsedTransactions).containsExactly(transaction2);
+  }
+
+  @Test
   public void invalidTransactionIsDeletedFromPendingTransactions() {
     transactions.addRemoteTransaction(transaction1);
     transactions.addRemoteTransaction(transaction2);
@@ -514,11 +532,11 @@ public class PendingTransactionsTest {
   }
 
   private void assertTransactionPending(final Transaction t) {
-    assertThat(transactions.getTransactionByHash(t.hash())).contains(t);
+    assertThat(transactions.getTransactionByHash(t.getHash())).contains(t);
   }
 
   private void assertTransactionNotPending(final Transaction t) {
-    assertThat(transactions.getTransactionByHash(t.hash())).isEmpty();
+    assertThat(transactions.getTransactionByHash(t.getHash())).isEmpty();
   }
 
   private Transaction createTransaction(final int transactionNumber) {

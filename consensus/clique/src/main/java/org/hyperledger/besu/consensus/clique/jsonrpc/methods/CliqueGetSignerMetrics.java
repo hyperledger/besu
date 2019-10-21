@@ -19,7 +19,7 @@ import org.hyperledger.besu.consensus.common.jsonrpc.AbstractGetSignerMetricsMet
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.queries.BlockchainQueries;
+import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 
 public class CliqueGetSignerMetrics extends AbstractGetSignerMetricsMethod
     implements JsonRpcMethod {

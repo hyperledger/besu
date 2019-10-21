@@ -326,8 +326,14 @@ public class EthPeer {
     return knownBlocks.contains(hash);
   }
 
+  /** @return This peer's current chain state. */
   public ChainState chainState() {
     return chainHeadState;
+  }
+
+  /** @return A read-only snapshot of this peer's current {@code chainState} } */
+  public ChainHeadEstimate chainStateSnapshot() {
+    return chainHeadState.getSnapshot();
   }
 
   public void registerHeight(final Hash blockHash, final long height) {
