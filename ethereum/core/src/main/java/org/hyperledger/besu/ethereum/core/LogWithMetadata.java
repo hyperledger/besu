@@ -69,7 +69,7 @@ public class LogWithMetadata extends Log {
                 li,
                 block.getHeader().getNumber(),
                 block.getHash(),
-                block.getBody().getTransactions().get(txi).hash(),
+                block.getBody().getTransactions().get(txi).getHash(),
                 txi,
                 currentLog.getLogger(),
                 currentLog.getData(),
