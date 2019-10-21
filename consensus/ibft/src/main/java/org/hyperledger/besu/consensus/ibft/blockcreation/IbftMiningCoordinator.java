@@ -34,11 +34,17 @@ import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.logging.log4j.Logger;
 
 public class IbftMiningCoordinator implements MiningCoordinator, BlockAddedObserver {
+
+  private enum State {
+    IDLE,
+    RUNNING,
+    STOPPED
+  }
 
   private static final Logger LOG = getLogger();
 
@@ -49,8 +55,7 @@ public class IbftMiningCoordinator implements MiningCoordinator, BlockAddedObser
   private final IbftEventQueue eventQueue;
   private final IbftExecutors ibftExecutors;
 
-  private AtomicBoolean started = new AtomicBoolean(false);
-  private AtomicBoolean stopped = new AtomicBoolean(false);
+  private AtomicReference<State> state = new AtomicReference<>(State.IDLE);
 
   public IbftMiningCoordinator(
       final IbftExecutors ibftExecutors,
@@ -71,7 +76,7 @@ public class IbftMiningCoordinator implements MiningCoordinator, BlockAddedObser
 
   @Override
   public void start() {
-    if (started.compareAndSet(false, true)) {
+    if (state.compareAndSet(State.IDLE, State.RUNNING)) {
       ibftExecutors.start();
       controller.start();
       ibftExecutors.executeIbftProcessor(ibftProcessor);
@@ -80,7 +85,7 @@ public class IbftMiningCoordinator implements MiningCoordinator, BlockAddedObser
 
   @Override
   public void stop() {
-    if (started.get() && stopped.compareAndSet(false, true)) {
+    if (state.compareAndSet(State.RUNNING, State.STOPPED)) {
       ibftProcessor.stop();
       controller.stop();
       ibftExecutors.stop();

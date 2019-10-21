@@ -39,7 +39,7 @@ public abstract class AbstractMiningCoordinator<
         C, M extends BlockMiner<C, ? extends AbstractBlockCreator<C>>>
     implements BlockAddedObserver, MiningCoordinator {
 
-  enum State {
+  private enum State {
     IDLE,
     RUNNING,
     STOPPED
