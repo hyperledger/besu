@@ -132,7 +132,7 @@ public class PrivGetTransactionReceiptTest {
                   "0x4b6f32625671442b6e4e6c4e594c35454537793349644f6e766966746a69697a706a52742b4854754642733d")),
           null,
           BytesValue.fromHexString("0x"),
-          null);
+          BytesValue.of(1));
 
   private final JsonRpcParameter parameters = new JsonRpcParameter();
 
@@ -167,6 +167,8 @@ public class PrivGetTransactionReceiptTest {
     when(privacyParameters.getPrivateStateStorage()).thenReturn(privateStateStorage);
     when(privateStateStorage.getTransactionLogs(any(Bytes32.class))).thenReturn(Optional.empty());
     when(privateStateStorage.getTransactionOutput(any(Bytes32.class))).thenReturn(Optional.empty());
+    when(privateStateStorage.getStatus(any(Bytes32.class)))
+        .thenReturn(Optional.of(BytesValue.of(1)));
   }
 
   @Test
