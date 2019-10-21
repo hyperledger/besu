@@ -132,7 +132,7 @@ public class PrivGetTransactionReceiptTest {
                   "0x4b6f32625671442b6e4e6c4e594c35454537793349644f6e766966746a69697a706a52742b4854754642733d")),
           null,
           BytesValue.fromHexString("0x"),
-          BytesValue.of(1));
+          BytesValue.of(1).toString());
 
   private final JsonRpcParameter parameters = new JsonRpcParameter();
 
