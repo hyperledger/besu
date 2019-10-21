@@ -45,6 +45,7 @@ public class Runner implements AutoCloseable {
 
   private final Vertx vertx;
   private final CountDownLatch vertxShutdownLatch = new CountDownLatch(1);
+  private final CountDownLatch shutdown = new CountDownLatch(1);
 
   private final NetworkRunner networkRunner;
   private final Optional<UpnpNatManager> natManager;
@@ -121,6 +122,16 @@ public class Runner implements AutoCloseable {
     besuController.close();
     vertx.close((res) -> vertxShutdownLatch.countDown());
     waitForServiceToStop("Vertx", vertxShutdownLatch::await);
+    shutdown.countDown();
+  }
+
+  public void awaitStop() {
+    try {
+      shutdown.await();
+    } catch (final InterruptedException e) {
+      LOG.debug("Interrupted, exiting", e);
+      Thread.currentThread().interrupt();
+    }
   }
 
   @Override
