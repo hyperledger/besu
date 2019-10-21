@@ -246,7 +246,7 @@ public class DefaultBlockchainTest {
     // Listen to block events and add the Logs here
     List<LogWithMetadata> logsWithMetadata = new ArrayList<>();
     blockchain.observeBlockAdded(
-        ((event, __) -> logsWithMetadata.addAll(event.getLogsWithMetadata())));
+        (event, __) -> logsWithMetadata.addAll(event.getLogsWithMetadata()));
     List<LogWithMetadata> expectedLogsWithMetadata = new ArrayList<>();
 
     // Add initial blocks
