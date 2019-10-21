@@ -37,14 +37,14 @@ public interface MiningCoordinator {
   /**
    * If mining is disabled, enable it.
    *
-   * @return True if mining status has transitioned from disabled to enabled
+   * @return True if mining is enabled.
    */
   boolean enable();
 
   /**
    * If mining is enabled, disable it.
    *
-   * @return True if mining status has transitioned from enabled to disabled
+   * @return True if mining is disabled.
    */
   boolean disable();
 

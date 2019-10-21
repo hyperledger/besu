@@ -108,7 +108,7 @@ public abstract class AbstractMiningCoordinator<
   public boolean enable() {
     synchronized (this) {
       if (isEnabled) {
-        return false;
+        return true;
       }
       isEnabled = true;
       startMiningIfPossible();
@@ -125,7 +125,7 @@ public abstract class AbstractMiningCoordinator<
       isEnabled = false;
       haltCurrentMiningOperation();
     }
-    return true;
+    return false;
   }
 
   @Override

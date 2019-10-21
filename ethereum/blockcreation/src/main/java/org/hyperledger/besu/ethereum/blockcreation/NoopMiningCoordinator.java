@@ -50,7 +50,7 @@ public class NoopMiningCoordinator implements MiningCoordinator {
 
   @Override
   public boolean disable() {
-    return false;
+    return true;
   }
 
   @Override

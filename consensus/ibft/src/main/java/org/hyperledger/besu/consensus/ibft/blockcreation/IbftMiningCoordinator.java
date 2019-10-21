@@ -105,7 +105,7 @@ public class IbftMiningCoordinator implements MiningCoordinator, BlockAddedObser
 
   @Override
   public boolean enable() {
-    return false;
+    return true;
   }
 
   @Override
