@@ -87,13 +87,19 @@ public class IbftMiningCoordinator implements MiningCoordinator, BlockAddedObser
   public void stop() {
     if (state.compareAndSet(State.RUNNING, State.STOPPED)) {
       ibftProcessor.stop();
+      // Make sure the processor has stopped before shutting down the executors
+      try {
+        ibftProcessor.awaitStop();
+      } catch (final InterruptedException e) {
+        LOG.debug("Interrupted while waiting for IbftProcessor to stop.", e);
+        Thread.currentThread().interrupt();
+      }
       ibftExecutors.stop();
     }
   }
 
   @Override
   public void awaitStop() throws InterruptedException {
-    ibftProcessor.awaitStop();
     ibftExecutors.awaitStop();
   }
 
