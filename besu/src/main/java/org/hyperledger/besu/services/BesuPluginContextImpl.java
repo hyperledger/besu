@@ -117,7 +117,7 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
         Optional.ofNullable(pluginPackage.getImplementationVersion())
             .filter(Predicate.not(String::isBlank))
             .orElse("<Unknown Version>");
-    final String pluginVersion = implTitle + "/" + implVersion;
+    final String pluginVersion = implTitle + "/v" + implVersion;
     pluginVersions.add(pluginVersion);
   }
 
