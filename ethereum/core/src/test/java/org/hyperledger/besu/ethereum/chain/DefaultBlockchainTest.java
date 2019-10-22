@@ -320,8 +320,15 @@ public class DefaultBlockchainTest {
         chain.stream().map(gen::receipts).collect(Collectors.toList());
     final KeyValueStorage kvStore = new InMemoryKeyValueStorage();
     final DefaultBlockchain blockchain = createMutableBlockchain(kvStore, chain.get(0));
+    // Listen to block events and add the Logs here
+    List<LogWithMetadata> logsWithMetadata = new ArrayList<>();
+    blockchain.observeBlockAdded(
+        (event, __) -> logsWithMetadata.addAll(event.getLogsWithMetadata()));
+    List<LogWithMetadata> expectedLogsWithMetadata = new ArrayList<>();
     for (int i = 1; i < chain.size(); i++) {
       blockchain.appendBlock(chain.get(i), blockReceipts.get(i));
+      expectedLogsWithMetadata.addAll(
+          LogWithMetadata.generate(chain.get(i), blockReceipts.get(i), false));
     }
     final Block originalHead = chain.get(originalChainLength - 1);
 
@@ -394,6 +401,19 @@ public class DefaultBlockchainTest {
     for (final Transaction tx : removedTransactions) {
       assertThat(blockchain.getTransactionByHash(tx.getHash())).isNotPresent();
     }
+    // LogWithMetadata reflecting removal of logs
+    for (int i = originalChainLength - 1; i >= forkStart; i--) {
+      final Block currentBlock = chain.get(i);
+      expectedLogsWithMetadata.addAll(
+          Lists.reverse(
+              LogWithMetadata.generate(
+                  currentBlock, blockchain.getTxReceipts(currentBlock.getHash()).get(), true)));
+    }
+    // LogWithMetadata reflecting addition of logs
+    for (int i = 0; i < forkBlocks.size(); i++) {
+      expectedLogsWithMetadata.addAll(
+          LogWithMetadata.generate(forkBlocks.get(i), forkReceipts.get(i), false));
+    }
 
     // Check that blockNumber index for previous chain head has been removed
     assertThat(blockchain.getBlockHashByNumber(originalChainLength - 1)).isNotPresent();
@@ -405,6 +425,8 @@ public class DefaultBlockchainTest {
     for (int i = commonAncestor + 1; i < originalChainLength; i++) {
       assertThat(blockchain.blockIsOnCanonicalChain(chain.get(i).getHash())).isFalse();
     }
+    assertThat(logsWithMetadata)
+        .containsExactly(expectedLogsWithMetadata.toArray(new LogWithMetadata[] {}));
   }
 
   @Test
