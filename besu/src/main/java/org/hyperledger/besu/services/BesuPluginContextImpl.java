@@ -27,6 +27,7 @@ import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -171,7 +172,7 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
   }
 
   @Override
-  public List<String> getPluginVersions() {
+  public Collection<String> getPluginVersions() {
     return Collections.unmodifiableList(pluginVersions);
   }
 

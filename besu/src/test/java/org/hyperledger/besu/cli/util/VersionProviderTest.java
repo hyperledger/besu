@@ -36,14 +36,14 @@ public class VersionProviderTest {
   @Test
   public void validateEmptyListGenerateBesuInfoVersionOnly() {
     when(pluginVersionsProvider.getPluginVersions()).thenReturn(emptyList());
-    VersionProvider versionProvider = new VersionProvider(pluginVersionsProvider);
+    final VersionProvider versionProvider = new VersionProvider(pluginVersionsProvider);
     assertThat(versionProvider.getVersion()).containsOnly(BesuInfo.version());
   }
 
   @Test
   public void validateVersionListGenerateValidValues() {
     when(pluginVersionsProvider.getPluginVersions()).thenReturn(Collections.singletonList("test"));
-    VersionProvider versionProvider = new VersionProvider(pluginVersionsProvider);
+    final VersionProvider versionProvider = new VersionProvider(pluginVersionsProvider);
     assertThat(versionProvider.getVersion()).containsExactly(BesuInfo.version(), "test");
   }
 }

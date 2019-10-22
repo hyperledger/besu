@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.services;
 
-import java.util.List;
+import java.util.Collection;
 
 public interface PluginVersionsProvider {
-  List<String> getPluginVersions();
+  Collection<String> getPluginVersions();
 }
