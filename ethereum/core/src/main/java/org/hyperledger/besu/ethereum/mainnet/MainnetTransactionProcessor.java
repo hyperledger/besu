@@ -164,7 +164,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
   }
 
   @Override
-  public Result processTransaction(
+  public TransactionProcessor.Result processTransaction(
       final Blockchain blockchain,
       final WorldUpdater worldState,
       final ProcessableBlockHeader blockHeader,

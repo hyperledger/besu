@@ -44,7 +44,7 @@ public class CrosschainTransactionProcessor extends MainnetTransactionProcessor 
   }
 
   @Override
-  public Result processTransaction(
+  public TransactionProcessor.Result processTransaction(
       final Blockchain blockchain,
       final WorldUpdater worldState,
       final ProcessableBlockHeader blockHeader,
