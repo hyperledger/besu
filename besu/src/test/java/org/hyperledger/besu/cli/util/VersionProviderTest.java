@@ -14,25 +14,36 @@
  */
 package org.hyperledger.besu.cli.util;
 
+import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.BesuInfo;
+import org.hyperledger.besu.services.PluginVersionsProvider;
 
 import java.util.Collections;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.class)
 public class VersionProviderTest {
+
+  @Mock private PluginVersionsProvider pluginVersionsProvider;
 
   @Test
   public void validateEmptyListGenerateBesuInfoVersionOnly() {
-    VersionProvider versionProvider = new VersionProvider(Collections.emptyList());
+    when(pluginVersionsProvider.getPluginVersions()).thenReturn(emptyList());
+    VersionProvider versionProvider = new VersionProvider(pluginVersionsProvider);
     assertThat(versionProvider.getVersion()).containsOnly(BesuInfo.version());
   }
 
   @Test
   public void validateVersionListGenerateValidValues() {
-    VersionProvider versionProvider = new VersionProvider(Collections.singletonList("test"));
+    when(pluginVersionsProvider.getPluginVersions()).thenReturn(Collections.singletonList("test"));
+    VersionProvider versionProvider = new VersionProvider(pluginVersionsProvider);
     assertThat(versionProvider.getVersion()).containsExactly(BesuInfo.version(), "test");
   }
 }

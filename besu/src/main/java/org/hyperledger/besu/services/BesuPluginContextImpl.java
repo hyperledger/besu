@@ -41,7 +41,7 @@ import com.google.common.annotations.VisibleForTesting;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class BesuPluginContextImpl implements BesuContext {
+public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvider {
 
   private static final Logger LOG = LogManager.getLogger();
 
@@ -118,7 +118,6 @@ public class BesuPluginContextImpl implements BesuContext {
             .filter(Predicate.not(String::isBlank))
             .orElse("<Unknown Version>");
     final String pluginVersion = implTitle + "/" + implVersion;
-    LOG.debug("Plugin Version: {}", pluginVersion);
     pluginVersions.add(pluginVersion);
   }
 
@@ -171,6 +170,7 @@ public class BesuPluginContextImpl implements BesuContext {
     state = Lifecycle.STOPPED;
   }
 
+  @Override
   public List<String> getPluginVersions() {
     return Collections.unmodifiableList(pluginVersions);
   }

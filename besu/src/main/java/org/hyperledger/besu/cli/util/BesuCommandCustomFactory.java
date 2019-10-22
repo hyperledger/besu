@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.cli.util;
 
-import org.hyperledger.besu.services.BesuPluginContextImpl;
+import org.hyperledger.besu.services.PluginVersionsProvider;
 
 import java.lang.reflect.Constructor;
 
@@ -25,18 +25,17 @@ import picocli.CommandLine;
  * same logic as PicoCLI DefaultFactory.
  */
 public class BesuCommandCustomFactory implements CommandLine.IFactory {
-  private final BesuPluginContextImpl besuPluginContext;
+  private final PluginVersionsProvider pluginVersionsProvider;
 
-  public BesuCommandCustomFactory(final BesuPluginContextImpl besuPluginContext) {
-    this.besuPluginContext = besuPluginContext;
+  public BesuCommandCustomFactory(final PluginVersionsProvider pluginVersionsProvider) {
+    this.pluginVersionsProvider = pluginVersionsProvider;
   }
 
   @SuppressWarnings("unchecked")
   @Override
   public <T> T create(final Class<T> cls) throws Exception {
     if (CommandLine.IVersionProvider.class.isAssignableFrom(cls)) {
-      // the besuPluginContext has registered required plugins by this time.
-      return (T) new VersionProvider(besuPluginContext.getPluginVersions());
+      return (T) new VersionProvider(pluginVersionsProvider);
     }
 
     final Constructor<T> constructor = cls.getDeclaredConstructor();

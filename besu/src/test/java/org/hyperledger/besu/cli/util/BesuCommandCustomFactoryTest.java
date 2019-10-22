@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.BesuInfo;
-import org.hyperledger.besu.services.BesuPluginContextImpl;
+import org.hyperledger.besu.services.PluginVersionsProvider;
 
 import java.util.Arrays;
 
@@ -31,17 +31,17 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class BesuCommandCustomFactoryTest {
 
-  @Mock private BesuPluginContextImpl besuPluginContextImpl;
+  @Mock private PluginVersionsProvider pluginVersionsProvider;
 
   @Before
   public void initMocks() {
-    when(besuPluginContextImpl.getPluginVersions()).thenReturn(Arrays.asList("v1", "v2"));
+    when(pluginVersionsProvider.getPluginVersions()).thenReturn(Arrays.asList("v1", "v2"));
   }
 
   @Test
   public void testCreateVersionProviderInstance() throws Exception {
     BesuCommandCustomFactory besuCommandCustomFactory =
-        new BesuCommandCustomFactory(besuPluginContextImpl);
+        new BesuCommandCustomFactory(pluginVersionsProvider);
     VersionProvider versionProvider = besuCommandCustomFactory.create(VersionProvider.class);
     assertThat(versionProvider.getVersion()).containsExactly(BesuInfo.version(), "v1", "v2");
   }
