@@ -17,7 +17,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static org.hyperledger.besu.controller.KeyPairUtil.loadKeyPair;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
-import org.hyperledger.besu.crosschain.CrosschainConfiguration;
+import org.hyperledger.besu.config.CrosschainConfigOptions;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.crosschain.CrosschainProcessor;
@@ -299,8 +299,8 @@ public abstract class BesuControllerBuilder<C> {
       // TODO Are there situations when the chain ID will NOT be in the genesis file? MainNet?
       throw new RuntimeException("Chain ID must be specified in the genesis file");
     }
-    final int numNodes = CrosschainConfiguration.nodeCount;
-    final int nodeNum = CrosschainConfiguration.nodeNum;
+    final int numNodes = CrosschainConfigOptions.nodeCount;
+    final int nodeNum = CrosschainConfigOptions.nodeNum;
     final TransactionSimulator transactionSimulator =
         new TransactionSimulator(
             blockchain, protocolContext.getWorldStateArchive(), protocolSchedule);

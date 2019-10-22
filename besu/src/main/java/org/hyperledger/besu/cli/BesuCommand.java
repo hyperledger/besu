@@ -61,7 +61,7 @@ import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.controller.KeyPairUtil;
-import org.hyperledger.besu.crosschain.CrosschainConfiguration;
+import org.hyperledger.besu.config.CrosschainConfigOptions;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
@@ -698,7 +698,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @Option(
       names = {"--crosschain-config"},
       description = "Crosschain config file path (default: ${DEFAULT-VALUE}")
-  public String crosschainsConfigPath = CrosschainConfiguration.DEFAULT_PATH;
+  public String crosschainsConfigPath = CrosschainConfigOptions.DEFAULT_PATH;
 
   @Option(
       names = {"--sidechain-nodeCount"},
@@ -1357,9 +1357,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private void crosschainConfig() {
     if (isCrosschainsEnabled) {
-      CrosschainConfiguration.nodeCount = nodeCount;
-      CrosschainConfiguration.nodeNum = nodeNum;
-      CrosschainConfiguration.chainsMapping = new HashMap<>();
+      CrosschainConfigOptions.nodeCount = nodeCount;
+      CrosschainConfigOptions.nodeNum = nodeNum;
+      CrosschainConfigOptions.chainsMapping = new HashMap<>();
       BufferedReader br;
       try {
         br = Files.newBufferedReader(Paths.get(crosschainsConfigPath), UTF_8);
@@ -1384,7 +1384,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           if (!address.startsWith("RPC:")) throw new Exception();
           id = id.substring(8);
           address = address.substring(4);
-          CrosschainConfiguration.chainsMapping.put(Integer.valueOf(id), address);
+          CrosschainConfigOptions.chainsMapping.put(Integer.valueOf(id), address);
         }
       } catch (Exception e) {
         throw new ParameterException(
