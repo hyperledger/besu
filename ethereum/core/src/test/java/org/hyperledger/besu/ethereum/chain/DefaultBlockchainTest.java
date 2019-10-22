@@ -440,8 +440,15 @@ public class DefaultBlockchainTest {
         chain.stream().map(gen::receipts).collect(Collectors.toList());
     final KeyValueStorage kvStore = new InMemoryKeyValueStorage();
     final DefaultBlockchain blockchain = createMutableBlockchain(kvStore, chain.get(0));
+    // Listen to block events and add the Logs here
+    List<LogWithMetadata> logsWithMetadata = new ArrayList<>();
+    blockchain.observeBlockAdded(
+        (event, __) -> logsWithMetadata.addAll(event.getLogsWithMetadata()));
+    List<LogWithMetadata> expectedLogsWithMetadata = new ArrayList<>();
     for (int i = 1; i < chain.size(); i++) {
       blockchain.appendBlock(chain.get(i), blockReceipts.get(i));
+      expectedLogsWithMetadata.addAll(
+          LogWithMetadata.generate(chain.get(i), blockReceipts.get(i), false));
     }
     final Block originalHead = chain.get(originalChainLength - 1);
 
@@ -508,6 +515,19 @@ public class DefaultBlockchainTest {
     for (final Transaction tx : removedTransactions) {
       assertThat(blockchain.getTransactionByHash(tx.getHash())).isNotPresent();
     }
+    // LogWithMetadata reflecting removal of logs
+    for (int i = originalChainLength - 1; i >= forkStart; i--) {
+      final Block currentBlock = chain.get(i);
+      expectedLogsWithMetadata.addAll(
+          Lists.reverse(
+              LogWithMetadata.generate(
+                  currentBlock, blockchain.getTxReceipts(currentBlock.getHash()).get(), true)));
+    }
+    // LogWithMetadata reflecting addition of logs
+    for (int i = 0; i < forkBlocks.size(); i++) {
+      expectedLogsWithMetadata.addAll(
+          LogWithMetadata.generate(forkBlocks.get(i), forkReceipts.get(i), false));
+    }
     // Old chain head should now be tracked as a fork.
     forks = blockchain.getForks();
     assertThat(forks.size()).isEqualTo(1);
@@ -516,6 +536,8 @@ public class DefaultBlockchainTest {
     for (int i = commonAncestor + 1; i < originalChainLength; i++) {
       assertThat(blockchain.blockIsOnCanonicalChain(chain.get(i).getHash())).isFalse();
     }
+    assertThat(logsWithMetadata)
+        .containsExactly(expectedLogsWithMetadata.toArray(new LogWithMetadata[] {}));
   }
 
   @Test
@@ -529,8 +551,15 @@ public class DefaultBlockchainTest {
         chain.stream().map(gen::receipts).collect(Collectors.toList());
     final KeyValueStorage kvStore = new InMemoryKeyValueStorage();
     final DefaultBlockchain blockchain = createMutableBlockchain(kvStore, chain.get(0));
+    // Listen to block events and add the Logs here
+    List<LogWithMetadata> logsWithMetadata = new ArrayList<>();
+    blockchain.observeBlockAdded(
+        (event, __) -> logsWithMetadata.addAll(event.getLogsWithMetadata()));
+    List<LogWithMetadata> expectedLogsWithMetadata = new ArrayList<>();
     for (int i = 1; i < chain.size(); i++) {
       blockchain.appendBlock(chain.get(i), blockReceipts.get(i));
+      expectedLogsWithMetadata.addAll(
+          LogWithMetadata.generate(chain.get(i), blockReceipts.get(i), false));
     }
     final Transaction overlappingTx = chain.get(chainLength - 1).getBody().getTransactions().get(0);
 
@@ -569,6 +598,18 @@ public class DefaultBlockchainTest {
         assertThat(actualTransaction).isNotPresent();
       }
     }
+    // LogWithMetadata reflecting removal of logs
+    for (int i = chainLength - 1; i >= forkBlock; i--) {
+      final Block currentBlock = chain.get(i);
+      expectedLogsWithMetadata.addAll(
+          Lists.reverse(
+              LogWithMetadata.generate(
+                  currentBlock, blockchain.getTxReceipts(currentBlock.getHash()).get(), true)));
+    }
+    // LogWithMetadata reflecting addition of logs
+    expectedLogsWithMetadata.addAll(LogWithMetadata.generate(fork, forkReceipts, false));
+    assertThat(logsWithMetadata)
+        .containsExactly(expectedLogsWithMetadata.toArray(new LogWithMetadata[] {}));
   }
 
   @Test
@@ -621,8 +662,15 @@ public class DefaultBlockchainTest {
         chain.stream().map(gen::receipts).collect(Collectors.toList());
     final KeyValueStorage kvStore = new InMemoryKeyValueStorage();
     final DefaultBlockchain blockchain = createMutableBlockchain(kvStore, chain.get(0));
+    // Listen to block events and add the Logs here
+    List<LogWithMetadata> logsWithMetadata = new ArrayList<>();
+    blockchain.observeBlockAdded(
+        (event, __) -> logsWithMetadata.addAll(event.getLogsWithMetadata()));
+    List<LogWithMetadata> expectedLogsWithMetadata = new ArrayList<>();
     for (int i = 1; i < chain.size(); i++) {
       blockchain.appendBlock(chain.get(i), blockReceipts.get(i));
+      expectedLogsWithMetadata.addAll(
+          LogWithMetadata.generate(chain.get(i), blockReceipts.get(i), false));
     }
     final Block originalHead = chain.get(originalChainLength - 1);
 
@@ -690,6 +738,9 @@ public class DefaultBlockchainTest {
 
     // Head should not have changed
     assertBlockIsHead(blockchain, originalHead);
+    // We should only have the log events from when we initially created the chain. None from forks.
+    assertThat(logsWithMetadata)
+        .containsExactly(expectedLogsWithMetadata.toArray(new LogWithMetadata[] {}));
   }
 
   @Test

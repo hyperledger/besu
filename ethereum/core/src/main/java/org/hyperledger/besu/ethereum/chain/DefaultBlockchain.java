@@ -34,10 +34,8 @@ import org.hyperledger.besu.util.Subscribers;
 import org.hyperledger.besu.util.bytes.BytesValues;
 import org.hyperledger.besu.util.uint.UInt256;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -45,8 +43,11 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Lists;
 
 public class DefaultBlockchain implements MutableBlockchain {
 
@@ -334,7 +335,8 @@ public class DefaultBlockchain implements MutableBlockchain {
     // Track transactions and logs to be added and removed
     final Map<Hash, List<Transaction>> newTransactions = new HashMap<>();
     final List<Transaction> removedTransactions = new ArrayList<>();
-    final Deque<LogWithMetadata> logsWithMetadata = new ArrayDeque<>();
+    final List<LogWithMetadata> addedLogsWithMetadata = new ArrayList<>();
+    final List<LogWithMetadata> removedLogsWithMetadata = new ArrayList<>();
 
     while (currentNewChainWithReceipts.getNumber() > currentOldChainWithReceipts.getNumber()) {
       // If new chain is longer than old chain, walk back until we meet the old chain by number
@@ -344,7 +346,7 @@ public class DefaultBlockchain implements MutableBlockchain {
 
       newTransactions.put(
           blockHash, currentNewChainWithReceipts.getBlock().getBody().getTransactions());
-      addAddedLogsWithMetadata(logsWithMetadata, currentNewChainWithReceipts);
+      addAddedLogsWithMetadata(addedLogsWithMetadata, currentNewChainWithReceipts);
 
       currentNewChainWithReceipts = getParentBlockWithReceipts(currentNewChainWithReceipts);
     }
@@ -356,7 +358,7 @@ public class DefaultBlockchain implements MutableBlockchain {
 
       removedTransactions.addAll(
           currentOldChainWithReceipts.getBlock().getBody().getTransactions());
-      addRemovedLogsWithMetadata(logsWithMetadata, currentOldChainWithReceipts);
+      addRemovedLogsWithMetadata(removedLogsWithMetadata, currentOldChainWithReceipts);
 
       currentOldChainWithReceipts = getParentBlockWithReceipts(currentOldChainWithReceipts);
     }
@@ -370,8 +372,8 @@ public class DefaultBlockchain implements MutableBlockchain {
           newBlockHash, currentNewChainWithReceipts.getBlock().getBody().getTransactions());
       removedTransactions.addAll(
           currentOldChainWithReceipts.getBlock().getBody().getTransactions());
-      addAddedLogsWithMetadata(logsWithMetadata, currentNewChainWithReceipts);
-      addRemovedLogsWithMetadata(logsWithMetadata, currentOldChainWithReceipts);
+      addAddedLogsWithMetadata(addedLogsWithMetadata, currentNewChainWithReceipts);
+      addRemovedLogsWithMetadata(removedLogsWithMetadata, currentOldChainWithReceipts);
 
       currentNewChainWithReceipts = getParentBlockWithReceipts(currentNewChainWithReceipts);
       currentOldChainWithReceipts = getParentBlockWithReceipts(currentOldChainWithReceipts);
@@ -401,7 +403,8 @@ public class DefaultBlockchain implements MutableBlockchain {
         newChainHeadWithReceipts.getBlock(),
         newTransactions.values().stream().flatMap(Collection::stream).collect(toList()),
         removedTransactions,
-        new ArrayList<>(logsWithMetadata));
+        Stream.concat(removedLogsWithMetadata.stream(), addedLogsWithMetadata.stream())
+            .collect(Collectors.toUnmodifiableList()));
   }
 
   @Override
@@ -503,19 +506,19 @@ public class DefaultBlockchain implements MutableBlockchain {
   }
 
   private void addAddedLogsWithMetadata(
-      final Deque<LogWithMetadata> logsWithMetadata, final BlockWithReceipts blockWithReceipts) {
+      final List<LogWithMetadata> logsWithMetadata, final BlockWithReceipts blockWithReceipts) {
     logsWithMetadata.addAll(
+        0,
         LogWithMetadata.generate(
             blockWithReceipts.getBlock(), blockWithReceipts.getReceipts(), false));
   }
 
   private void addRemovedLogsWithMetadata(
-      final Deque<LogWithMetadata> logsWithMetadata, final BlockWithReceipts blockWithReceipts) {
-    for (final LogWithMetadata logWithMetadata :
-        LogWithMetadata.generate(
-            blockWithReceipts.getBlock(), blockWithReceipts.getReceipts(), true)) {
-      logsWithMetadata.addFirst(logWithMetadata);
-    }
+      final List<LogWithMetadata> logsWithMetadata, final BlockWithReceipts blockWithReceipts) {
+    logsWithMetadata.addAll(
+        Lists.reverse(
+            LogWithMetadata.generate(
+                blockWithReceipts.getBlock(), blockWithReceipts.getReceipts(), true)));
   }
 
   private Optional<BlockWithReceipts> getBlockWithReceipts(final BlockHeader blockHeader) {
