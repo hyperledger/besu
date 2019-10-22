@@ -1,6 +1,5 @@
 # Changelog
 
-
 ### Java 11 Required from v1.2
 
 From v1.2, Besu requires Java 11.  Besu on Java 8 is no longer supported.
@@ -9,6 +8,18 @@ From v1.2, Besu requires Java 11.  Besu on Java 8 is no longer supported.
 
 In v1.2, we removed the entry-point script from our Docker image. Refer to the [migration guide](https://besu.hyperledger.org/en/latest/HowTo/Get-Started/Migration-Docker/)
 for information on options that were previously automatically added to the Besu command line. 
+
+### 1.3.2 
+
+- Expose getPayload in Transaction plugin-api interface. [\#113](https://github.com/hyperledger/besu/pull/113) 
+- Add hash field in Transaction plugin interface. [\#111](https://github.com/hyperledger/besu/pull/111) 
+- Fix private transaction root mismatch [\#118](https://github.com/hyperledger/besu/pull/118) 
+- Programatically enforce plugin CLI variable names [\#117](https://github.com/hyperledger/besu/pull/117) 
+- Additional unit test for selecting replaced pending transactions [\#116](https://github.com/hyperledger/besu/pull/116) 
+- Only set sync targets that have an estimated height value [\#115](https://github.com/hyperledger/besu/pull/115)
+- Fix rlpx startup [\#114](https://github.com/hyperledger/besu/pull/114) 
+- Dependency Version Upgrades [\#112](https://github.com/hyperledger/besu/pull/112) 
+- Rework sync status events [\#106](https://github.com/hyperledger/besu/pull/106) 
 
 ### 1.3.1 
 
