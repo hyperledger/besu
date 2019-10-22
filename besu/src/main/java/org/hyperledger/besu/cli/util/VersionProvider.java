@@ -17,8 +17,7 @@ package org.hyperledger.besu.cli.util;
 import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.services.PluginVersionsProvider;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.stream.Stream;
 
 import picocli.CommandLine;
 
@@ -32,10 +31,8 @@ public class VersionProvider implements CommandLine.IVersionProvider {
   @Override
   public String[] getVersion() {
     // the PluginVersionsProvider has registered plugins and their versions by this time.
-    final List<String> pluginVersionsList = this.pluginVersionsProvider.getPluginVersions();
-    final List<String> versionsList = new ArrayList<>();
-    versionsList.add(BesuInfo.version());
-    versionsList.addAll(pluginVersionsList);
-    return versionsList.toArray(String[]::new);
+    return Stream.concat(
+            Stream.of(BesuInfo.version()), pluginVersionsProvider.getPluginVersions().stream())
+        .toArray(String[]::new);
   }
 }
