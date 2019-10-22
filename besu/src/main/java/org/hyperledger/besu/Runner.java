@@ -137,6 +137,7 @@ public class Runner implements AutoCloseable {
   @Override
   public void close() {
     stop();
+    awaitStop();
   }
 
   private void waitForServiceToStop(
