@@ -152,7 +152,7 @@ public class ProtocolScheduleBuilder<C> {
     addProtocolSpec(
         protocolSchedule,
         config.getCrossChainBlockNumber(),
-        MainnetProtocolSpecs.crossChainDefinition(
+        PrivatenetProtocolSpecs.crossChainDefinition(
             chainId,
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
