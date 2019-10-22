@@ -40,9 +40,9 @@ public class BesuCommandCustomFactoryTest {
 
   @Test
   public void testCreateVersionProviderInstance() throws Exception {
-    BesuCommandCustomFactory besuCommandCustomFactory =
+    final BesuCommandCustomFactory besuCommandCustomFactory =
         new BesuCommandCustomFactory(pluginVersionsProvider);
-    VersionProvider versionProvider = besuCommandCustomFactory.create(VersionProvider.class);
+    final VersionProvider versionProvider = besuCommandCustomFactory.create(VersionProvider.class);
     assertThat(versionProvider.getVersion()).containsExactly(BesuInfo.version(), "v1", "v2");
   }
 }
