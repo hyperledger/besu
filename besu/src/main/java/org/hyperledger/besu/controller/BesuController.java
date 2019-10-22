@@ -18,7 +18,7 @@ import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
-import org.hyperledger.besu.ethereum.api.jsonrpc.crosschain.CrosschainProcessor;
+import org.hyperledger.besu.crosschain.ethereum.api.jsonrpc.CrosschainProcessor;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethodFactory;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
