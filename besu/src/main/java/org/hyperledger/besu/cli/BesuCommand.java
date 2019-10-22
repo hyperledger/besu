@@ -56,6 +56,7 @@ import org.hyperledger.besu.cli.subcommands.blocks.BlocksSubCommand.JsonBlockImp
 import org.hyperledger.besu.cli.subcommands.blocks.BlocksSubCommand.RlpBlockExporterFactory;
 import org.hyperledger.besu.cli.subcommands.operator.OperatorSubCommand;
 import org.hyperledger.besu.cli.subcommands.rlp.RLPSubCommand;
+import org.hyperledger.besu.cli.util.BesuCommandCustomFactory;
 import org.hyperledger.besu.cli.util.CommandLineUtils;
 import org.hyperledger.besu.cli.util.ConfigOptionSearchAndRunHandler;
 import org.hyperledger.besu.cli.util.VersionProvider;
@@ -773,7 +774,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final BesuExceptionHandler exceptionHandler,
       final InputStream in,
       final String... args) {
-    commandLine = new CommandLine(this).setCaseInsensitiveEnumValuesAllowed(true);
+    commandLine =
+        new CommandLine(this, new BesuCommandCustomFactory(besuPluginContext))
+            .setCaseInsensitiveEnumValuesAllowed(true);
     handleStandaloneCommand()
         .addSubCommands(resultHandler, in)
         .registerConverters()
