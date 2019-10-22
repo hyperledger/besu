@@ -54,7 +54,7 @@ public abstract class AbstractMiningCoordinator<
 
   private State state = State.IDLE;
   private boolean isEnabled = false;
-  protected volatile Optional<M> currentRunningMiner = Optional.empty();
+  protected Optional<M> currentRunningMiner = Optional.empty();
 
   public AbstractMiningCoordinator(
       final Blockchain blockchain,
@@ -149,7 +149,7 @@ public abstract class AbstractMiningCoordinator<
     currentRunningMiner = executor.startAsyncMining(minedBlockObservers, parentHeader);
   }
 
-  private boolean haltCurrentMiningOperation() {
+  private synchronized boolean haltCurrentMiningOperation() {
     final AtomicBoolean wasHalted = new AtomicBoolean(false);
     currentRunningMiner.ifPresent(
         (miner) -> {

@@ -64,7 +64,7 @@ public class IbftExecutors {
     timerExecutor = newScheduledThreadPool("IbftTimerExecutor", 1, metricsSystem);
   }
 
-  public synchronized void stop() {
+  public void stop() {
     synchronized (this) {
       if (state != State.RUNNING) {
         return;
