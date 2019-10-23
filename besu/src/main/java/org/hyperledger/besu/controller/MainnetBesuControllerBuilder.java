@@ -64,6 +64,7 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder<Void> {
     final EthHashMiningCoordinator miningCoordinator =
         new EthHashMiningCoordinator(protocolContext.getBlockchain(), executor, syncState);
     miningCoordinator.addMinedBlockObserver(ethProtocolManager);
+    miningCoordinator.setCpuMiningEnabled(miningParameters.isCpuMiningEnabled());
     if (miningParameters.isMiningEnabled()) {
       miningCoordinator.enable();
     }

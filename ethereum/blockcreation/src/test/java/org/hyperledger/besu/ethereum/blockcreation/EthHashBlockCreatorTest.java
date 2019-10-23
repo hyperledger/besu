@@ -74,7 +74,7 @@ public class EthHashBlockCreatorTest {
             .build();
 
     final EthHashSolver solver =
-        new EthHashSolver(Lists.newArrayList(BLOCK_1_NONCE), new EthHasher.Light());
+        new EthHashSolver(Lists.newArrayList(BLOCK_1_NONCE), new EthHasher.Light(), true);
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
@@ -122,7 +122,7 @@ public class EthHashBlockCreatorTest {
             .build();
 
     final EthHashSolver solver =
-        new EthHashSolver(Lists.newArrayList(BLOCK_1_NONCE), new EthHasher.Light());
+        new EthHashSolver(Lists.newArrayList(BLOCK_1_NONCE), new EthHasher.Light(), true);
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
@@ -165,7 +165,7 @@ public class EthHashBlockCreatorTest {
             .build();
 
     final EthHashSolver solver =
-        new EthHashSolver(Lists.newArrayList(BLOCK_1_NONCE), new EthHasher.Light());
+        new EthHashSolver(Lists.newArrayList(BLOCK_1_NONCE), new EthHasher.Light(), true);
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
@@ -224,7 +224,7 @@ public class EthHashBlockCreatorTest {
             .build();
 
     final EthHashSolver solver =
-        new EthHashSolver(Lists.newArrayList(BLOCK_1_NONCE), new EthHasher.Light());
+        new EthHashSolver(Lists.newArrayList(BLOCK_1_NONCE), new EthHasher.Light(), true);
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
