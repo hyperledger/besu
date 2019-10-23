@@ -314,7 +314,7 @@ public class DefaultBlockchain implements MutableBlockchain {
     // This block will replace its parent
     forkHeads.stream()
         .filter(head -> head.equals(fork.getHeader().getParentHash()))
-        .findFirst()
+        .findAny()
         .ifPresent(forkHeads::remove);
 
     forkHeads.add(fork.getHash());
