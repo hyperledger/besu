@@ -475,41 +475,4 @@ public class IbftExtraDataTest {
     }
     return vanity_bytes;
   }
-
-  @Test
-  public void doMyStuff() {
-    final String key1 =
-        "0xb962e52b5e421d1dd73fc2c18b7cf162b2cc8936b3ec7a689365474c7a64c28767c61ff8ef46829dd71fcc52593fdda7a16ff229ffbdbd5108634471700d70d8";
-    final String key2 =
-        "0x71f2f210e9701008a6774015b0806467a446e811f25b1797224a49a27a73037eb2b909e7b293c93a42b4740565f237ccd89b1f285ebad7a5ef876cd1c2e56a4c";
-    final String key3 =
-        "0x3f5acb72b5a8436318c26b014e45caa3477e70d328d87d5dfefb2149c1406715c547dc2d9f29adc73024e95a164d49d71107e3149105defb943807925f4aea35";
-    final String key4 =
-        "0x4cde66c509327f0bea090aad56748c41a2aa6d33c5b4b7e77088cdd0c93f43876512be86fd0c76efaf9b6994b1a6eb5e0ae182a06c2c5dcdfc3f20a537db6169";
-
-    final Address addr1 = Util.publicKeyToAddress(PublicKey.create(BytesValue.fromHexString(key1)));
-    final Address addr2 = Util.publicKeyToAddress(PublicKey.create(BytesValue.fromHexString(key2)));
-    final Address addr3 = Util.publicKeyToAddress(PublicKey.create(BytesValue.fromHexString(key3)));
-    final Address addr4 = Util.publicKeyToAddress(PublicKey.create(BytesValue.fromHexString(key4)));
-
-    OrderedHashSet<Address> addrs = new OrderedHashSet<>();
-    addrs.add(addr1);
-    addrs.add(addr2);
-    addrs.add(addr3);
-    addrs.add(addr4);
-
-    final IbftExtraData ed =
-        new IbftExtraData(
-            BytesValue.wrap(new byte[32]), Collections.emptyList(), Optional.empty(), 0, addrs);
-
-    final String genesisText = ed.encode().toString();
-
-    /*
-    "0x5d301767ae21d29200661a24d9318d57885316fe",
-    "0xaf3aa4810e15eaf71631389e411d53493efe1aac",
-    "0x89fc175f2317a9475f3d0cb3e7de36c968369bb2",
-    "0x1b0265ee954c4bcd2b124ecd597771501ecf1a22"
-     */
-
-  }
 }
