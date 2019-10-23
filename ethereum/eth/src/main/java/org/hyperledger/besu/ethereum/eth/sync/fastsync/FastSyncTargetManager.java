@@ -91,7 +91,12 @@ class FastSyncTargetManager<C> extends SyncTargetManager<C> {
         .thenApply(
             result -> {
               if (peerHasDifferentPivotBlock(result)) {
-                LOG.warn("Best peer has wrong pivot block, disconnect: {}", bestPeer);
+                LOG.warn(
+                    "Best peer has wrong pivot block (#{}) expecting {} but received {}.  Disconnect: {}",
+                    pivotBlockHeader.getNumber(),
+                    pivotBlockHeader.getHash(),
+                    result.size() == 1 ? result.get(0).getHash() : "invalid response",
+                    bestPeer);
                 bestPeer.disconnect(DisconnectReason.USELESS_PEER);
                 return Optional.<EthPeer>empty();
               } else {
