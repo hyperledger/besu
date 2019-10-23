@@ -230,7 +230,7 @@ public class BlockPropagationManager<C> {
             .whenComplete((r, t) -> requestedBlocks.remove(newBlock.hash()));
       }
     } catch (final RLPException e) {
-      LOG.warn(
+      LOG.debug(
           "Malformed NEW_BLOCK_HASHES message received from peer, disconnecting: {}",
           message.getPeer(),
           e);
