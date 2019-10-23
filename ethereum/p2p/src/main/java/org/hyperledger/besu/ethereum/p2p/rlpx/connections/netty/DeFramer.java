@@ -140,7 +140,7 @@ final class DeFramer extends ByteToMessageDecoder {
             && !Objects.equals(expectedPeer.get().getId(), peerInfo.getNodeId())) {
           String unexpectedMsg =
               String.format(
-                  "Expected id %s, but got %s.", expectedPeer.get().getId(), peerInfo.getNodeId());
+                  "Expected id %s, but got %s", expectedPeer.get().getId(), peerInfo.getNodeId());
           connectFuture.completeExceptionally(new UnexpectedPeerConnectionException(unexpectedMsg));
           LOG.debug("{}. Disconnecting.", unexpectedMsg);
           connection.disconnect(DisconnectMessage.DisconnectReason.UNEXPECTED_ID);
