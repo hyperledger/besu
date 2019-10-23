@@ -27,16 +27,19 @@ public class MiningParameters {
   private final Wei minTransactionGasPrice;
   private final BytesValue extraData;
   private final Boolean enabled;
+  private final Boolean cpuMiningEnabled;
 
   public MiningParameters(
       final Address coinbase,
       final Wei minTransactionGasPrice,
       final BytesValue extraData,
-      final Boolean enabled) {
+      final Boolean enabled,
+      final Boolean cpuMiningEnabled) {
     this.coinbase = Optional.ofNullable(coinbase);
     this.minTransactionGasPrice = minTransactionGasPrice;
     this.extraData = extraData;
     this.enabled = enabled;
+    this.cpuMiningEnabled = cpuMiningEnabled;
   }
 
   public Optional<Address> getCoinbase() {
@@ -55,6 +58,10 @@ public class MiningParameters {
     return enabled;
   }
 
+  public Boolean isCpuMiningEnabled() {
+    return cpuMiningEnabled;
+  }
+
   @Override
   public boolean equals(final Object o) {
     if (this == o) {
@@ -67,12 +74,13 @@ public class MiningParameters {
     return Objects.equals(coinbase, that.coinbase)
         && Objects.equals(minTransactionGasPrice, that.minTransactionGasPrice)
         && Objects.equals(extraData, that.extraData)
-        && Objects.equals(enabled, that.enabled);
+        && Objects.equals(enabled, that.enabled)
+        && Objects.equals(cpuMiningEnabled, that.cpuMiningEnabled);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(coinbase, minTransactionGasPrice, extraData, enabled);
+    return Objects.hash(coinbase, minTransactionGasPrice, extraData, enabled, cpuMiningEnabled);
   }
 
   @Override
@@ -82,6 +90,7 @@ public class MiningParameters {
         .add("minTransactionGasPrice", minTransactionGasPrice)
         .add("extraData", extraData)
         .add("enabled", enabled)
+        .add("cpuMiningEnabled", cpuMiningEnabled)
         .toString();
   }
 }

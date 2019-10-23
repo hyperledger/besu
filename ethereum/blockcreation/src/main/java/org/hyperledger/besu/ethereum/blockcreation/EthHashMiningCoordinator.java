@@ -45,6 +45,10 @@ public class EthHashMiningCoordinator extends AbstractMiningCoordinator<Void, Et
     executor.setCoinbase(coinbase);
   }
 
+  public void setCpuMiningEnabled(final Boolean cpuMiningEnabled) {
+    executor.setCpuMiningEnabled(cpuMiningEnabled);
+  }
+
   @Override
   public Optional<Long> hashesPerSecond() {
     final Optional<Long> currentHashesPerSecond =

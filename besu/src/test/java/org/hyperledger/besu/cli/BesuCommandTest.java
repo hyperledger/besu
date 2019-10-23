@@ -764,6 +764,7 @@ public class BesuCommandTest extends CommandTestAbstract {
                 Address.fromHexString(expectedCoinbase),
                 DefaultCommandValues.DEFAULT_MIN_TRANSACTION_GAS_PRICE,
                 DefaultCommandValues.DEFAULT_EXTRA_DATA,
+                false,
                 false));
   }
 
@@ -782,6 +783,7 @@ public class BesuCommandTest extends CommandTestAbstract {
                 Address.fromHexString(expectedCoinbase),
                 DefaultCommandValues.DEFAULT_MIN_TRANSACTION_GAS_PRICE,
                 DefaultCommandValues.DEFAULT_EXTRA_DATA,
+                false,
                 false));
   }
 
@@ -2270,6 +2272,25 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(miningArg.getValue().isMiningEnabled()).isTrue();
     assertThat(miningArg.getValue().getCoinbase())
         .isEqualTo(Optional.of(Address.fromHexString(coinbaseStr)));
+  }
+
+  @Test
+  public void cpuMiningIsEnabledWhenSpecified() throws Exception {
+    final String coinbaseStr = String.format("%040x", 1);
+    parseCommand("--miner-enabled", "--miner-coinbase=" + coinbaseStr, "--cpu-miner-enabled");
+
+    final ArgumentCaptor<MiningParameters> miningArg =
+        ArgumentCaptor.forClass(MiningParameters.class);
+
+    verify(mockControllerBuilder).miningParameters(miningArg.capture());
+    verify(mockControllerBuilder).build();
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(miningArg.getValue().isMiningEnabled()).isTrue();
+    assertThat(miningArg.getValue().getCoinbase())
+        .isEqualTo(Optional.of(Address.fromHexString(coinbaseStr)));
+    assertThat(miningArg.getValue().isCpuMiningEnabled()).isTrue();
   }
 
   @Test

@@ -74,18 +74,25 @@ public class EthHashSolver {
   private final Iterable<Long> nonceGenerator;
   private final EthHasher ethHasher;
   private volatile long hashesPerSecond = NO_MINING_CONDUCTED;
+  private final Boolean cpuMiningEnabled;
 
   private volatile Optional<EthHashSolverJob> currentJob = Optional.empty();
 
-  public EthHashSolver(final Iterable<Long> nonceGenerator, final EthHasher ethHasher) {
+  public EthHashSolver(
+      final Iterable<Long> nonceGenerator,
+      final EthHasher ethHasher,
+      final Boolean cpuMiningEnabled) {
     this.nonceGenerator = nonceGenerator;
     this.ethHasher = ethHasher;
+    this.cpuMiningEnabled = cpuMiningEnabled;
   }
 
   public EthHashSolution solveFor(final EthHashSolverJob job)
       throws InterruptedException, ExecutionException {
     currentJob = Optional.of(job);
-    findValidNonce();
+    if (cpuMiningEnabled) {
+      findValidNonce();
+    }
     return currentJob.get().getSolution();
   }
 

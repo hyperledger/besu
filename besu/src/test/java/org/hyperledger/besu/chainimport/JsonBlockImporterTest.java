@@ -421,6 +421,9 @@ public abstract class JsonBlockImporterTest {
             new MiningParametersTestBuilder()
                 .minTransactionGasPrice(Wei.ZERO)
                 .enabled(false)
+                .cpuMiningEnabled(
+                    true) // even though mining is disabled, CPU mining is required to perform block
+                // header creation.
                 .build())
         .nodeKeys(KeyPair.generate())
         .metricsSystem(new NoOpMetricsSystem())

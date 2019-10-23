@@ -558,6 +558,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Boolean isMiningEnabled = false;
 
   @Option(
+      names = {"--cpu-miner-enabled"},
+      description = "Set if node will perform CPU mining (default: ${DEFAULT-VALUE})")
+  private final Boolean isCpuMiningEnabled = false;
+
+  @Option(
       names = {"--miner-coinbase"},
       description =
           "Account to which mining rewards are paid. You must specify a valid coinbase if "
@@ -971,6 +976,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "Unable to mine without a valid coinbase. Either disable mining (remove --miner-enabled)"
               + "or specify the beneficiary of mining (via --miner-coinbase <Address>)");
     }
+    // noinspection ConstantConditions
+    if (!isMiningEnabled && isCpuMiningEnabled) {
+      throw new ParameterException(
+          this.commandLine,
+          "Unable to mine with CPU if mining is disabled. Either disable CPU mining (remove --cpu-miner-enabled)"
+              + "or specify mining is enabled (--miner-enabled)");
+    }
   }
 
   protected void validateP2PInterface(final String p2pInterface) {
@@ -1088,7 +1100,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           .ethProtocolConfiguration(ethProtocolOptions.toDomainObject())
           .dataDirectory(dataDir())
           .miningParameters(
-              new MiningParameters(coinbase, minTransactionGasPrice, extraData, isMiningEnabled))
+              new MiningParameters(
+                  coinbase, minTransactionGasPrice, extraData, isMiningEnabled, isCpuMiningEnabled))
           .transactionPoolConfiguration(buildTransactionPoolConfiguration())
           .nodePrivateKeyFile(nodePrivateKeyFile())
           .metricsSystem(metricsSystem.get())
