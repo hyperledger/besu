@@ -65,6 +65,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthNewPendingT
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthProtocolVersion;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthSendRawTransaction;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthSendTransaction;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthSubmitWork;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthSyncing;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthUninstallFilter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -207,6 +208,7 @@ public class JsonRpcMethodsFactory {
       final WebSocketConfiguration webSocketConfiguration,
       final MetricsConfiguration metricsConfiguration) {
     final Map<String, JsonRpcMethod> enabledMethods = new HashMap<>();
+    final JsonRpcParameter parameters = new JsonRpcParameter();
     if (!rpcApis.isEmpty()) {
       addMethods(enabledMethods, new RpcModules(rpcApis));
     }
@@ -263,6 +265,7 @@ public class JsonRpcMethodsFactory {
           new EthProtocolVersion(supportedCapabilities),
           new EthGasPrice(miningCoordinator),
           new EthGetWork(miningCoordinator),
+          new EthSubmitWork(miningCoordinator, parameters),
           new EthHashrate(miningCoordinator),
           new EthChainId(protocolSchedule.getChainId()));
     }
