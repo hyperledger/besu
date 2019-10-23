@@ -386,7 +386,7 @@ public class BlockDataGenerator {
   public Log log(final int topicCount) {
     final List<LogTopic> topics =
         Stream.generate(this::logTopic).limit(topicCount).collect(Collectors.toList());
-    return new Log(address(), bytesValue(5 + random.nextInt(10)), topics);
+    return new Log(address(), bytesValue(5, 15), topics);
   }
 
   private LogTopic logTopic() {
@@ -398,6 +398,18 @@ public class BlockDataGenerator {
   }
 
   public BytesValue bytesValue(final int size) {
+    return BytesValue.wrap(bytes(size));
+  }
+
+  public BytesValue bytesValue() {
+    return bytesValue(1, 20);
+  }
+
+  public BytesValue bytesValue(final int minSize, final int maxSize) {
+    checkArgument(minSize >= 0);
+    checkArgument(maxSize >= 0);
+    checkArgument(maxSize > minSize);
+    final int size = random.nextInt(maxSize - minSize) + minSize;
     return BytesValue.wrap(bytes(size));
   }
 
@@ -431,18 +443,6 @@ public class BlockDataGenerator {
 
   public LogsBloomFilter logsBloom() {
     return new LogsBloomFilter(BytesValue.of(bytes(LogsBloomFilter.BYTE_SIZE)));
-  }
-
-  public BytesValue bytesValue() {
-    return bytesValue(1, 20);
-  }
-
-  public BytesValue bytesValue(final int minSize, final int maxSize) {
-    checkArgument(minSize >= 0);
-    checkArgument(maxSize >= 0);
-    checkArgument(maxSize > minSize);
-    final int size = random.nextInt(maxSize - minSize) + minSize;
-    return BytesValue.wrap(bytes(size));
   }
 
   private byte[] bytes(final int size) {
