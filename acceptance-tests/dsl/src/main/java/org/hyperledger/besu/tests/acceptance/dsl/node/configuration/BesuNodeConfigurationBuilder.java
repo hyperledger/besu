@@ -66,7 +66,8 @@ public class BesuNodeConfigurationBuilder {
   }
 
   public BesuNodeConfigurationBuilder miningEnabled() {
-    this.miningParameters = new MiningParametersTestBuilder().enabled(true).build();
+    this.miningParameters =
+        new MiningParametersTestBuilder().enabled(true).cpuMiningEnabled(true).build();
     this.jsonRpcConfiguration.addRpcApi(RpcApis.MINER);
     return this;
   }
