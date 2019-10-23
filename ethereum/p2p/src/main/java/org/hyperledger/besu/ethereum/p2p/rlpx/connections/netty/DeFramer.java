@@ -140,15 +140,15 @@ final class DeFramer extends ByteToMessageDecoder {
             && !Objects.equals(expectedPeer.get().getId(), peerInfo.getNodeId())) {
           String unexpectedMsg =
               String.format(
-                  "Expected id %s, but got %s", expectedPeer.get().getId(), peerInfo.getNodeId());
+                  "Expected id %s, but got %s.", expectedPeer.get().getId(), peerInfo.getNodeId());
           connectFuture.completeExceptionally(new UnexpectedPeerConnectionException(unexpectedMsg));
+          LOG.debug("{}. Disconnecting.", unexpectedMsg);
           connection.disconnect(DisconnectMessage.DisconnectReason.UNEXPECTED_ID);
         }
 
         // Check that we have shared caps
         if (capabilityMultiplexer.getAgreedCapabilities().size() == 0) {
-          LOG.debug(
-              "Disconnecting from {} because no capabilities are shared.", peerInfo.getClientId());
+          LOG.debug("Disconnecting because no capabilities are shared: {}", peerInfo);
           connectFuture.completeExceptionally(
               new IncompatiblePeerException("No shared capabilities"));
           connection.disconnect(DisconnectMessage.DisconnectReason.USELESS_PEER);

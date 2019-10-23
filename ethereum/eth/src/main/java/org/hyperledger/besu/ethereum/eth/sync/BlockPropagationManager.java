@@ -175,6 +175,10 @@ public class BlockPropagationManager<C> {
 
       importOrSavePendingBlock(block);
     } catch (final RLPException e) {
+      LOG.debug(
+          "Malformed NEW_BLOCK message received from peer, disconnecting: {}",
+          message.getPeer(),
+          e);
       message.getPeer().disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
     }
   }
@@ -226,6 +230,10 @@ public class BlockPropagationManager<C> {
             .whenComplete((r, t) -> requestedBlocks.remove(newBlock.hash()));
       }
     } catch (final RLPException e) {
+      LOG.warn(
+          "Malformed NEW_BLOCK_HASHES message received from peer, disconnecting: {}",
+          message.getPeer(),
+          e);
       message.getPeer().disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
     }
   }
