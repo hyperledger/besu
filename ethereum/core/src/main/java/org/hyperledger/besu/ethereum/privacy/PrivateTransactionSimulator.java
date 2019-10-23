@@ -64,19 +64,6 @@ public class PrivateTransactionSimulator {
       return Optional.empty();
     }
 
-    //        final Address senderAddress =
-    //                callParams.getFrom() != null ? callParams.getFrom() : DEFAULT_FROM;
-    //        final Account sender = worldState.get(senderAddress);
-    //        final long nonce = sender != null ? sender.getNonce() : 0L;
-    //        final long gasLimit =
-    //                callParams.getGasLimit() >= 0 ? callParams.getGasLimit() :
-    // header.getGasLimit();
-    //        final Wei gasPrice = callParams.getGasPrice() != null ? callParams.getGasPrice() :
-    // Wei.ZERO;
-    //        final Wei value = callParams.getValue() != null ? callParams.getValue() : Wei.ZERO;
-    //        final BytesValue payload =
-    //                callParams.getPayload() != null ? callParams.getPayload() : BytesValue.EMPTY;
-
     final ProtocolSpec<?> protocolSpec = protocolSchedule.getByBlockNumber(header.getNumber());
     final PrivateTransactionProcessor transactionProcessor =
         protocolSchedule.getByBlockNumber(header.getNumber()).getPrivateTransactionProcessor();
@@ -93,11 +80,8 @@ public class PrivateTransactionSimulator {
             new BlockHashLookup(header, blockchain),
             privacyGroupId);
 
-    if (result.isSuccessful()) {
-      return Optional.of(
-          new PrivateTransactionSimulatorResult(
-              privateTransaction, result, privateWorldState.rootHash()));
-    }
-    return Optional.empty();
+    return Optional.of(
+        new PrivateTransactionSimulatorResult(
+            privateTransaction, result, privateWorldState.rootHash()));
   }
 }

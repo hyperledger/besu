@@ -53,6 +53,7 @@ public class PrivateStateKeyValueStorageTest {
 
   private static final String PRIVACY_GROUP_ID = "tJw12cPM6EZRF5zfHv2zLePL0cqlaDjLn0x1T/V0yzE=";
   private static final String TRANSACTION_KEY = "93Ky7lXwFkMc7+ckoFgUMku5bpr9tz4zhmWmk9RlNng=";
+  private static final String TRANSACTION_KEY_2 = "EKpwAzgBhWruCxJYFRHPCn3rD17yyQnZ+Mlu4dp2UeM=";
   private static final SECP256K1.KeyPair KEY_PAIR =
       SECP256K1.KeyPair.create(
           SECP256K1.PrivateKey.create(
@@ -67,6 +68,18 @@ public class PrivateStateKeyValueStorageTest {
           .to(Address.DEFAULT_PRIVACY)
           .value(Wei.ZERO)
           .payload(BytesValues.fromBase64(TRANSACTION_KEY))
+          .sender(Address.fromHexString("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"))
+          .chainId(BigInteger.valueOf(2018))
+          .signAndBuild(KEY_PAIR);
+
+  private static final Transaction PUBLIC_TRANSACTION_2 =
+      Transaction.builder()
+          .nonce(0)
+          .gasPrice(Wei.of(1000))
+          .gasLimit(3000000)
+          .to(Address.DEFAULT_PRIVACY)
+          .value(Wei.ZERO)
+          .payload(BytesValues.fromBase64(TRANSACTION_KEY_2))
           .sender(Address.fromHexString("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"))
           .chainId(BigInteger.valueOf(2018))
           .signAndBuild(KEY_PAIR);
@@ -187,6 +200,69 @@ public class PrivateStateKeyValueStorageTest {
     final PrivateBlockMetadata expected = PrivateBlockMetadata.empty();
     expected.addPrivateTransactionMetadata(
         new PrivateTransactionMetadata(PUBLIC_TRANSACTION.getHash(), Hash.EMPTY));
+
+    assertThat(storage.getLatestStateRoot(BytesValues.fromBase64(PRIVACY_GROUP_ID))).isEmpty();
+    assertThat(
+            storage.getPrivateBlockMetadata(
+                block.getHash(), Bytes32.wrap(BytesValues.fromBase64(PRIVACY_GROUP_ID))))
+        .contains(expected);
+  }
+
+  @Test
+  public void testPerformMigrationOnLegacyStateRootMultipleTx() {
+    storage
+        .updater()
+        .putLatestStateRoot(BytesValues.fromBase64(PRIVACY_GROUP_ID), Hash.EMPTY)
+        .commit();
+
+    assertThat(storage.getLatestStateRoot(BytesValues.fromBase64(PRIVACY_GROUP_ID)))
+        .contains(Hash.EMPTY);
+
+    final BytesValue enclaveKey = BytesValue.EMPTY;
+
+    final Enclave enclave = mock(Enclave.class);
+    when(enclave.receive(
+            eq(new ReceiveRequest(TRANSACTION_KEY, BytesValues.asBase64String(enclaveKey)))))
+        .thenReturn(
+            new ReceiveResponse(
+                BytesValues.asBase64String(RLP.encode(VALID_SIGNED_PRIVATE_TRANSACTION::writeTo))
+                    .getBytes(UTF_8),
+                PRIVACY_GROUP_ID));
+    when(enclave.receive(
+            eq(new ReceiveRequest(TRANSACTION_KEY_2, BytesValues.asBase64String(enclaveKey)))))
+        .thenReturn(
+            new ReceiveResponse(
+                BytesValues.asBase64String(RLP.encode(VALID_SIGNED_PRIVATE_TRANSACTION::writeTo))
+                    .getBytes(UTF_8),
+                PRIVACY_GROUP_ID));
+
+    final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
+    final Block genesis = blockDataGenerator.genesisBlock();
+    final BlockDataGenerator.BlockOptions options = BlockDataGenerator.BlockOptions.create();
+    options.setParentHash(genesis.getHash());
+    options.setBlockNumber(1);
+    options.addTransaction(PUBLIC_TRANSACTION, PUBLIC_TRANSACTION_2);
+    final Block block = blockDataGenerator.block(options);
+    final Blockchain blockchain = mock(Blockchain.class);
+    when(blockchain.getChainHeadBlockNumber()).thenReturn(1L);
+    when(blockchain.getBlockByNumber(0L)).thenReturn(Optional.of(genesis));
+    when(blockchain.getBlockByNumber(1L)).thenReturn(Optional.of(block));
+
+    final PrivateTransactionSimulator privateTransactionSimulator =
+        mock(PrivateTransactionSimulator.class);
+    when(privateTransactionSimulator.process(any(), any(), any()))
+        .thenReturn(Optional.of(new PrivateTransactionSimulatorResult(null, null, Hash.EMPTY)));
+    when(privateTransactionSimulator.process(any(), any(), any()))
+        .thenReturn(Optional.of(new PrivateTransactionSimulatorResult(null, null, Hash.EMPTY)));
+
+    storage.performMigrations(
+        enclave, enclaveKey, Address.DEFAULT_PRIVACY, blockchain, privateTransactionSimulator);
+
+    final PrivateBlockMetadata expected = PrivateBlockMetadata.empty();
+    expected.addPrivateTransactionMetadata(
+        new PrivateTransactionMetadata(PUBLIC_TRANSACTION.getHash(), Hash.EMPTY));
+    expected.addPrivateTransactionMetadata(
+        new PrivateTransactionMetadata(PUBLIC_TRANSACTION_2.getHash(), Hash.EMPTY));
 
     assertThat(storage.getLatestStateRoot(BytesValues.fromBase64(PRIVACY_GROUP_ID))).isEmpty();
     assertThat(
