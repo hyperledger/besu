@@ -498,7 +498,7 @@ public class BlockchainQueries {
   }
 
   public List<LogWithMetadata> matchingLogs(final Hash blockHash, final LogsQuery query) {
-    Optional<BlockHeader> blockHeader = blockchain.getBlockHeader(blockHash);
+    final Optional<BlockHeader> blockHeader = blockchain.getBlockHeader(blockHash);
     if (blockHeader.isEmpty()) {
       return Collections.emptyList();
     }
