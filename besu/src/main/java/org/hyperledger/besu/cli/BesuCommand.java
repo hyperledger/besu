@@ -941,7 +941,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final PoAMetricServiceImpl service =
           new PoAMetricServiceImpl(
               ((PoAContext) consensusState).getBlockInterface(),
-              besuController.getProtocolContext().getBlockchain());
+              besuController.getProtocolContext().getBlockchain(),
+              besuController.getLocalNodeKeyPair());
       besuPluginContext.addService(PoAMetricsService.class, service);
     }
   }

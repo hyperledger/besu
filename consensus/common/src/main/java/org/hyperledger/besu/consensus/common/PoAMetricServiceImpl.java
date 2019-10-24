@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.consensus.common;
 
+import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.plugin.data.Address;
 import org.hyperledger.besu.plugin.data.BlockHeader;
@@ -26,10 +27,15 @@ public class PoAMetricServiceImpl implements PoAMetricsService {
 
   private final BlockInterface blockInterface;
   private final Blockchain blockchain;
+  private final KeyPair keyPair;
 
-  public PoAMetricServiceImpl(final BlockInterface blockInterface, final Blockchain blockchain) {
+  public PoAMetricServiceImpl(
+      final BlockInterface blockInterface,
+      final Blockchain blockchain,
+      final KeyPair localNodeKeyPair) {
     this.blockInterface = blockInterface;
     this.blockchain = blockchain;
+    this.keyPair = localNodeKeyPair;
   }
 
   @Override
@@ -40,5 +46,12 @@ public class PoAMetricServiceImpl implements PoAMetricsService {
   @Override
   public Address getProposerOfBlock(final BlockHeader header) {
     return this.blockInterface.getProposerOfBlock(header);
+  }
+
+  @Override
+  public boolean isThisNodesAddress(final Address address) {
+    final org.hyperledger.besu.ethereum.core.Address nodeAddress =
+        org.hyperledger.besu.ethereum.core.Address.extract(keyPair.getPublicKey());
+    return nodeAddress.getHexString().equals(address.getHexString());
   }
 }

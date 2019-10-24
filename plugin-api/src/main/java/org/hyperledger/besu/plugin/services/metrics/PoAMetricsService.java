@@ -38,4 +38,12 @@ public interface PoAMetricsService {
    * @return The identity of the proposer for the given block.
    */
   Address getProposerOfBlock(final BlockHeader header);
+
+  /**
+   * Checks whether a specified {@link Address} matches this node's address.
+   *
+   * @param address An address for comparison.
+   * @return A boolean indicating whether the specified address matches this node's address.
+   */
+  boolean isThisNodesAddress(final Address address);
 }
