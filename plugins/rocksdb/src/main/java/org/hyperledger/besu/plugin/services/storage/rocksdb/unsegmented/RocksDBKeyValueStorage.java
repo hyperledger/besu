@@ -62,10 +62,7 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
     try {
       final Statistics stats = new Statistics();
       options =
-          new Options()
-              .setCreateIfMissing(true)
-              .setMaxOpenFiles(configuration.getMaxOpenFiles())
-              .setTableFormatConfig(createBlockBasedTableConfig(configuration))
+          new Options().setCreateIfMissing(true).setMaxOpenFiles(configuration.getMaxOpenFiles()).setTableFormatConfig(createBlockBasedTableConfig(configuration))
               .setMaxBackgroundCompactions(configuration.getMaxBackgroundCompactions())
               .setStatistics(stats);
       options.getEnv().setBackgroundThreads(configuration.getBackgroundThreadCount());
