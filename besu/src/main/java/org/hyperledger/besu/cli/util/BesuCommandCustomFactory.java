@@ -14,25 +14,36 @@
  */
 package org.hyperledger.besu.cli.util;
 
-import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.services.PluginVersionsProvider;
 
-import java.util.stream.Stream;
+import java.lang.reflect.Constructor;
 
 import picocli.CommandLine;
 
-public class VersionProvider implements CommandLine.IVersionProvider {
+/**
+ * Custom PicoCli IFactory to handle version provider construction with plugin versions. Based on
+ * same logic as PicoCLI DefaultFactory.
+ */
+public class BesuCommandCustomFactory implements CommandLine.IFactory {
   private final PluginVersionsProvider pluginVersionsProvider;
 
-  public VersionProvider(final PluginVersionsProvider pluginVersionsProvider) {
+  public BesuCommandCustomFactory(final PluginVersionsProvider pluginVersionsProvider) {
     this.pluginVersionsProvider = pluginVersionsProvider;
   }
 
+  @SuppressWarnings("unchecked")
   @Override
-  public String[] getVersion() {
-    // the PluginVersionsProvider has registered plugins and their versions by this time.
-    return Stream.concat(
-            Stream.of(BesuInfo.version()), pluginVersionsProvider.getPluginVersions().stream())
-        .toArray(String[]::new);
+  public <T> T create(final Class<T> cls) throws Exception {
+    if (CommandLine.IVersionProvider.class.isAssignableFrom(cls)) {
+      return (T) new VersionProvider(pluginVersionsProvider);
+    }
+
+    final Constructor<T> constructor = cls.getDeclaredConstructor();
+    try {
+      return constructor.newInstance();
+    } catch (Exception e) {
+      constructor.setAccessible(true);
+      return constructor.newInstance();
+    }
   }
 }
