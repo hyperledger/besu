@@ -1085,8 +1085,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   public BesuController<?> buildController() {
     try {
-      return getControllerBuilder().build();
+      BesuControllerBuilder<?> builder = getControllerBuilder();
+      return builder.build();
     } catch (final Exception e) {
+      e.printStackTrace();
       throw new ExecutionException(this.commandLine, e.getMessage(), e);
     }
   }

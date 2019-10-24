@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.blockcreation;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.blockcreation.stratum.StratumServer;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -32,6 +33,7 @@ public class EthHashMinerExecutor extends AbstractMinerExecutor<Void, EthHashBlo
 
   private volatile Optional<Address> coinbase;
   private Boolean cpuMiningEnabled;
+  private final StratumServer stratumServer;
 
   public EthHashMinerExecutor(
       final ProtocolContext<Void> protocolContext,
@@ -39,7 +41,8 @@ public class EthHashMinerExecutor extends AbstractMinerExecutor<Void, EthHashBlo
       final PendingTransactions pendingTransactions,
       final MiningParameters miningParams,
       final AbstractBlockScheduler blockScheduler,
-      final Function<Long, Long> gasLimitCalculator) {
+      final Function<Long, Long> gasLimitCalculator,
+      final StratumServer stratumServer) {
     super(
         protocolContext,
         protocolSchedule,
@@ -48,6 +51,7 @@ public class EthHashMinerExecutor extends AbstractMinerExecutor<Void, EthHashBlo
         blockScheduler,
         gasLimitCalculator);
     this.coinbase = miningParams.getCoinbase();
+    this.stratumServer = stratumServer;
   }
 
   @Override
@@ -55,6 +59,8 @@ public class EthHashMinerExecutor extends AbstractMinerExecutor<Void, EthHashBlo
       final Subscribers<MinedBlockObserver> observers, final BlockHeader parentHeader) {
     if (!coinbase.isPresent()) {
       throw new CoinbaseNotSetException("Unable to start mining without a coinbase.");
+    } else {
+      stratumServer.start();
     }
     return super.startAsyncMining(observers, parentHeader);
   }
@@ -63,7 +69,12 @@ public class EthHashMinerExecutor extends AbstractMinerExecutor<Void, EthHashBlo
   public EthHashBlockMiner createMiner(
       final Subscribers<MinedBlockObserver> observers, final BlockHeader parentHeader) {
     final EthHashSolver solver =
-        new EthHashSolver(new RandomNonceGenerator(), new EthHasher.Light(), cpuMiningEnabled);
+        new EthHashSolver(
+            new RandomNonceGenerator(),
+            new EthHasher.Light(),
+            cpuMiningEnabled,
+            stratumServer::solveFor);
+    stratumServer.setSubmitCallback(solver::submitSolution);
     final Function<BlockHeader, EthHashBlockCreator> blockCreator =
         (header) ->
             new EthHashBlockCreator(

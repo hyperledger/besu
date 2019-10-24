@@ -24,6 +24,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 import com.google.common.base.Stopwatch;
 
@@ -75,6 +76,7 @@ public class EthHashSolver {
   private final EthHasher ethHasher;
   private volatile long hashesPerSecond = NO_MINING_CONDUCTED;
   private final Boolean cpuMiningEnabled;
+  private final Consumer<EthHashSolverInputs> externalMiningConsumer;
 
   private volatile Optional<EthHashSolverJob> currentJob = Optional.empty();
 
@@ -82,9 +84,18 @@ public class EthHashSolver {
       final Iterable<Long> nonceGenerator,
       final EthHasher ethHasher,
       final Boolean cpuMiningEnabled) {
+    this(nonceGenerator, ethHasher, cpuMiningEnabled, input -> {});
+  }
+
+  public EthHashSolver(
+      final Iterable<Long> nonceGenerator,
+      final EthHasher ethHasher,
+      final Boolean cpuMiningEnabled,
+      final Consumer<EthHashSolverInputs> externalMiningConsumer) {
     this.nonceGenerator = nonceGenerator;
     this.ethHasher = ethHasher;
     this.cpuMiningEnabled = cpuMiningEnabled;
+    this.externalMiningConsumer = externalMiningConsumer;
   }
 
   public EthHashSolution solveFor(final EthHashSolverJob job)
@@ -92,6 +103,8 @@ public class EthHashSolver {
     currentJob = Optional.of(job);
     if (cpuMiningEnabled) {
       findValidNonce();
+    } else {
+      externalMiningConsumer.accept(job.inputs);
     }
     return currentJob.get().getSolution();
   }

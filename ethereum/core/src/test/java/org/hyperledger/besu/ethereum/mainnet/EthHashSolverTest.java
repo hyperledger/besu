@@ -38,7 +38,8 @@ public class EthHashSolverTest {
   @Test
   public void emptyHashRateAndWorkDefinitionIsReportedPriorToSolverStarting() {
     final List<Long> noncesToTry = Arrays.asList(1L, 1L, 1L, 1L, 1L, 1L, 0L);
-    final EthHashSolver solver = new EthHashSolver(noncesToTry, new EthHasher.Light(), true);
+    final EthHashSolver solver =
+        new EthHashSolver(noncesToTry, new EthHasher.Light(), true, input -> {});
 
     assertThat(solver.hashesPerSecond()).isEqualTo(Optional.empty());
     assertThat(solver.getWorkDefinition()).isEqualTo(Optional.empty());
@@ -60,7 +61,7 @@ public class EthHashSolverTest {
         .when(hasher)
         .hash(any(), anyLong(), anyLong(), any());
 
-    final EthHashSolver solver = new EthHashSolver(noncesToTry, hasher, true);
+    final EthHashSolver solver = new EthHashSolver(noncesToTry, hasher, true, input -> {});
 
     final Stopwatch operationTimer = Stopwatch.createStarted();
     final EthHashSolverInputs inputs = new EthHashSolverInputs(UInt256.ONE, new byte[0], 5);
@@ -119,7 +120,8 @@ public class EthHashSolverTest {
         new EthHashSolver(
             Lists.newArrayList(expectedFirstOutput.getNonce(), 0L, expectedSecondOutput.getNonce()),
             new EthHasher.Light(),
-            true);
+            true,
+            input -> {});
 
     EthHashSolution soln =
         solver.solveFor(EthHashSolver.EthHashSolverJob.createFromInputs(firstInputs));

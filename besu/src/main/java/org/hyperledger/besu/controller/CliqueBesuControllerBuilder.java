@@ -42,6 +42,10 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -78,6 +82,7 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder<CliqueCon
       final MiningParameters miningParameters,
       final SyncState syncState,
       final EthProtocolManager ethProtocolManager) {
+    final ExecutorService minerThreadPool = Executors.newCachedThreadPool();
     final CliqueMinerExecutor miningExecutor =
         new CliqueMinerExecutor(
             protocolContext,

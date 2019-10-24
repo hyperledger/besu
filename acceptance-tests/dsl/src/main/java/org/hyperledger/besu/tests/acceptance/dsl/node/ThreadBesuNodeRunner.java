@@ -135,6 +135,8 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             .withMetricsSystem(metricsSystem)
             .build();
 
+    final Vertx vertx = Vertx.vertx();
+
     final BesuController<?> besuController;
     try {
       besuController =
@@ -174,7 +176,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
 
     final Runner runner =
         runnerBuilder
-            .vertx(Vertx.vertx())
+            .vertx(vertx)
             .besuController(besuController)
             .ethNetworkConfig(ethNetworkConfig)
             .discovery(node.isDiscoveryEnabled())
