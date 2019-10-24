@@ -320,7 +320,7 @@ public class BlockchainQueries {
                                     (td) -> {
                                       final List<Hash> txs =
                                           body.getTransactions().stream()
-                                              .map(Transaction::hash)
+                                              .map(Transaction::getHash)
                                               .collect(Collectors.toList());
                                       final List<Hash> ommers =
                                           body.getOmmers().stream()
@@ -566,7 +566,7 @@ public class BlockchainQueries {
                   logIndex,
                   number,
                   blockhash,
-                  transaction.get(transactionIndex).hash(),
+                  transaction.get(transactionIndex).getHash(),
                   transactionIndex,
                   receipts.get(transactionIndex).getLogs().get(logIndex).getLogger(),
                   receipts.get(transactionIndex).getLogs().get(logIndex).getData(),

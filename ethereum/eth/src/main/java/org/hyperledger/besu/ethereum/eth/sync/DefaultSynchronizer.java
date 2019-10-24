@@ -106,7 +106,7 @@ public class DefaultSynchronizer<C> implements Synchronizer {
         BesuMetricCategory.ETHEREUM,
         "best_known_block_number",
         "The estimated highest block available",
-        () -> syncState.syncStatus().getHighestBlock());
+        syncState::bestChainHeight);
     metricsSystem.createIntegerGauge(
         BesuMetricCategory.SYNCHRONIZER,
         "in_sync",
@@ -176,11 +176,7 @@ public class DefaultSynchronizer<C> implements Synchronizer {
     if (!running.get()) {
       return Optional.empty();
     }
-    final SyncStatus syncStatus = syncState.syncStatus();
-    if (syncStatus.inSync()) {
-      return Optional.empty();
-    }
-    return Optional.of(syncStatus);
+    return syncState.syncStatus();
   }
 
   @Override

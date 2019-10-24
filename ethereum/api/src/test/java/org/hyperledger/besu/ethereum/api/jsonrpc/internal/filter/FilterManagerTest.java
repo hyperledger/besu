@@ -239,6 +239,6 @@ public class FilterManagerTest {
   private Hash receivePendingTransaction() {
     final Transaction transaction = blockGenerator.transaction();
     filterManager.recordPendingTransactionEvent(transaction);
-    return transaction.hash();
+    return transaction.getHash();
   }
 }

@@ -205,13 +205,13 @@ public class LogsSubscriptionServiceTest {
         TransactionReceiptWithMetadata.create(
             transactionReceipt,
             transaction,
-            transaction.hash(),
+            transaction.getHash(),
             0,
             1L,
             blockHeader.getHash(),
             blockHeader.getNumber());
 
-    when(blockchainQueries.transactionReceiptByTransactionHash(eq(transaction.hash())))
+    when(blockchainQueries.transactionReceiptByTransactionHash(eq(transaction.getHash())))
         .thenReturn(Optional.of(transactionReceiptWithMetadata));
 
     return transactionReceiptWithMetadata;

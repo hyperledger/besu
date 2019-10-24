@@ -255,6 +255,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
   public boolean removeMaintainedConnectionPeer(final Peer peer) {
     final boolean wasRemoved = maintainedPeers.remove(peer);
     peerDiscoveryAgent.dropPeer(peer);
+    LOG.debug("Disconnect requested for peer {}.", peer);
     rlpxAgent.disconnect(peer.getId(), DisconnectReason.REQUESTED);
     return wasRemoved;
   }

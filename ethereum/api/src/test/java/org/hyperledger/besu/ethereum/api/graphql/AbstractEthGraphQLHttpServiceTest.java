@@ -21,8 +21,8 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
+import org.hyperledger.besu.ethereum.core.DefaultSyncStatus;
 import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
-import org.hyperledger.besu.ethereum.core.SyncStatus;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
@@ -39,6 +39,7 @@ import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.util.RawBlockIterator;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.plugin.data.SyncStatus;
 import org.hyperledger.besu.testutil.BlockTestUtil;
 
 import java.net.URL;
@@ -120,7 +121,7 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
   @Before
   public void setupTest() throws Exception {
     final Synchronizer synchronizerMock = Mockito.mock(Synchronizer.class);
-    final SyncStatus status = new SyncStatus(1, 2, 3);
+    final SyncStatus status = new DefaultSyncStatus(1, 2, 3);
     Mockito.when(synchronizerMock.getSyncStatus()).thenReturn(Optional.of(status));
 
     final EthHashMiningCoordinator miningCoordinatorMock =

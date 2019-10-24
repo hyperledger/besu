@@ -32,8 +32,17 @@ import picocli.CommandLine.Option;
 public class TestPicoCLIPlugin implements BesuPlugin {
   private static final Logger LOG = LogManager.getLogger();
 
-  @Option(names = "--Xtest-option", hidden = true, defaultValue = "UNSET")
+  @Option(
+      names = {"--Xplugin-test-option"},
+      hidden = true,
+      defaultValue = "UNSET")
   String testOption = System.getProperty("testPicoCLIPlugin.testOption");
+
+  @Option(
+      names = {"--plugin-test-stable-option"},
+      hidden = true,
+      defaultValue = "UNSET")
+  String stableOption = "";
 
   private String state = "uninited";
   private File callbackDir;
@@ -51,8 +60,7 @@ public class TestPicoCLIPlugin implements BesuPlugin {
     context
         .getService(PicoCLIOptions.class)
         .ifPresent(
-            picoCLIOptions ->
-                picoCLIOptions.addPicoCLIOptions("Test PicoCLI Plugin", TestPicoCLIPlugin.this));
+            picoCLIOptions -> picoCLIOptions.addPicoCLIOptions("test", TestPicoCLIPlugin.this));
 
     callbackDir = new File(System.getProperty("besu.plugins.dir", "plugins"));
     writeSignal("registered");
@@ -93,6 +101,7 @@ public class TestPicoCLIPlugin implements BesuPlugin {
   }
 
   /** This is used to signal to the acceptance test that certain tasks were completed. */
+  @SuppressWarnings("ResultOfMethodCallIgnored")
   private void writeSignal(final String signal) {
     try {
       final File callbackFile = new File(callbackDir, "pluginLifecycle." + signal);

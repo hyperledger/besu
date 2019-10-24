@@ -109,7 +109,7 @@ public class TransactionSmartContractPermissioningController
    */
   @Override
   public boolean isPermitted(final Transaction transaction) {
-    final org.hyperledger.besu.ethereum.core.Hash transactionHash = transaction.hash();
+    final org.hyperledger.besu.ethereum.core.Hash transactionHash = transaction.getHash();
     final Address sender = transaction.getSender();
 
     LOG.trace("Account permissioning - Smart Contract : Checking transaction {}", transactionHash);

@@ -12,21 +12,10 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+package org.hyperledger.besu.services;
 
-spotless {
-  groovyGradle {
-    paddedCell()
-  }
+import java.util.Collection;
+
+public interface PluginVersionsProvider {
+  Collection<String> getPluginVersions();
 }
-
-sourceSets {
-  test {
-    resources {
-      include '*Tests/**/*.json'
-    }
-  }
-}
-
-configurations { testOutput }
-
-dependencies { testOutput sourceSets.test.output }

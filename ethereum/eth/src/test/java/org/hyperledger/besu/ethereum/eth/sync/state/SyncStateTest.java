@@ -17,8 +17,8 @@ package org.hyperledger.besu.ethereum.eth.sync.state;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -33,7 +33,6 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator.BlockOptions;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
-import org.hyperledger.besu.ethereum.core.SyncStatus;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.core.Synchronizer.InSyncListener;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
@@ -45,6 +44,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
+import org.hyperledger.besu.plugin.data.SyncStatus;
 import org.hyperledger.besu.plugin.services.BesuEvents.SyncStatusListener;
 import org.hyperledger.besu.util.uint.UInt256;
 
@@ -53,8 +53,12 @@ import java.util.Optional;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.class)
 public class SyncStateTest {
 
   private static final UInt256 standardDifficultyPerBlock = UInt256.of(1L);
@@ -75,6 +79,8 @@ public class SyncStateTest {
       gen.genesisBlock(new BlockOptions().setDifficulty(UInt256.ZERO));
   private final MutableBlockchain blockchain =
       InMemoryStorageProvider.createInMemoryBlockchain(genesisBlock);
+
+  @Captor ArgumentCaptor<Optional<SyncStatus>> syncStatusCaptor;
 
   private EthProtocolManager ethProtocolManager;
   private EthPeers ethPeers;
@@ -493,59 +499,65 @@ public class SyncStateTest {
   }
 
   @Test
-  public void shouldSendSyncStatusWhenBlockIsAddedToTheChain() {
-    final SyncStatusListener syncStatusListener = mock(SyncStatusListener.class);
-    syncState.subscribeSyncStatus(syncStatusListener);
+  public void syncStatusListener_receivesEventWhenSyncTargetSet() {
+    syncState.setSyncTarget(syncTargetPeer.getEthPeer(), blockchain.getBlockHeader(3L).get());
 
-    advanceLocalChain(OUR_CHAIN_HEAD_NUMBER + 1L);
+    verify(syncStatusListener).onSyncStatusChanged(syncStatusCaptor.capture());
 
-    verify(syncStatusListener).onSyncStatusChanged(eq(syncState.syncStatus()));
+    assertThat(syncStatusCaptor.getAllValues()).hasSize(1);
+    final Optional<SyncStatus> syncStatus = syncStatusCaptor.getValue();
+
+    assertThat(syncStatus).isPresent();
+    assertThat(syncStatus.get().getStartingBlock()).isEqualTo(3L);
+    assertThat(syncStatus.get().getCurrentBlock()).isEqualTo(OUR_CHAIN_HEAD_NUMBER);
+    assertThat(syncStatus.get().getHighestBlock()).isEqualTo(TARGET_CHAIN_HEIGHT);
   }
 
   @Test
-  public void shouldHandleSyncThenReorg() {
-    // Sync up to the target
-    final int expectedSyncEvents = (int) TARGET_CHAIN_DELTA;
-    advanceLocalChain(TARGET_CHAIN_HEIGHT);
-    // Perform a shallow reorg
-    final int expectedReorgEvents = 2;
-    reorgLocalChain(TARGET_CHAIN_HEIGHT - 1, TARGET_CHAIN_HEIGHT, UInt256.of(2L));
+  public void syncStatusListener_receivesEventWhenSyncTargetCleared() {
+    syncState.setSyncTarget(syncTargetPeer.getEthPeer(), blockchain.getBlockHeader(3L).get());
+    syncState.clearSyncTarget();
 
-    assertThat(syncState.isInSync()).isTrue();
-    final ArgumentCaptor<SyncStatus> captor = ArgumentCaptor.forClass(SyncStatus.class);
-    verify(syncStatusListener, times(expectedSyncEvents + expectedReorgEvents))
-        .onSyncStatusChanged(captor.capture());
+    verify(syncStatusListener, times(2)).onSyncStatusChanged(syncStatusCaptor.capture());
 
-    final List<SyncStatus> eventValues = captor.getAllValues();
+    List<Optional<SyncStatus>> events = syncStatusCaptor.getAllValues();
+    assertThat(events).hasSize(2);
 
-    // Check the initial set of events corresponding to block advancement while we're out of sync
-    for (int i = 0; i < eventValues.size(); i++) {
+    // Check first value
+    final Optional<SyncStatus> syncingEvent = events.get(0);
+    assertThat(syncingEvent).isPresent();
+    assertThat(syncingEvent.get().getStartingBlock()).isEqualTo(3L);
+    assertThat(syncingEvent.get().getCurrentBlock()).isEqualTo(OUR_CHAIN_HEAD_NUMBER);
+    assertThat(syncingEvent.get().getHighestBlock()).isEqualTo(TARGET_CHAIN_HEIGHT);
 
-      final SyncStatus syncStatus = eventValues.get(i);
-      if (i == eventValues.size() - 1) {
-        // Last event should be the in-sync reorg event
-        assertThat(syncStatus.inSync()).isTrue();
-        assertThat(syncStatus.getCurrentBlock()).isEqualTo(TARGET_CHAIN_HEIGHT);
-        // TODO - finalize the start, current, and highest block values should be
-      } else if (i == eventValues.size() - 2) {
-        // Second-to-last event should be the in-sync reorg event
-        assertThat(syncStatus.inSync()).isFalse();
-        assertThat(syncStatus.getCurrentBlock()).isEqualTo(TARGET_CHAIN_HEIGHT);
-        // TODO - finalize the start, current, and highest block values should be
-      } else if (i == eventValues.size() - 3) {
-        // Third-to-last event should be the event when the node finally reaches sync
-        assertThat(syncStatus.inSync()).isTrue();
-        assertThat(syncStatus.getCurrentBlock()).isEqualTo(TARGET_CHAIN_HEIGHT);
-        assertThat(syncStatus.getHighestBlock()).isEqualTo(TARGET_CHAIN_HEIGHT);
-        // TODO - verify desired startingBlock value
-      } else {
-        // All previous events should correspond to the initial sync
-        assertThat(syncStatus.inSync()).isFalse();
-        assertThat(syncStatus.getCurrentBlock()).isEqualTo(OUR_CHAIN_HEAD_NUMBER + i + 1);
-        assertThat(syncStatus.getHighestBlock()).isEqualTo(TARGET_CHAIN_HEIGHT);
-        // TODO - verify desired startingBlock value
-      }
-    }
+    // Check second value
+    final Optional<SyncStatus> clearedEvent = events.get(1);
+    assertThat(clearedEvent).isEmpty();
+  }
+
+  @Test
+  public void syncStatusListener_ignoreNoopChangesToSyncTarget() {
+    syncState.clearSyncTarget();
+    syncState.setSyncTarget(syncTargetPeer.getEthPeer(), blockchain.getBlockHeader(3L).get());
+    syncState.setSyncTarget(syncTargetPeer.getEthPeer(), blockchain.getBlockHeader(3L).get());
+    syncState.clearSyncTarget();
+    syncState.clearSyncTarget();
+
+    verify(syncStatusListener, times(2)).onSyncStatusChanged(syncStatusCaptor.capture());
+
+    List<Optional<SyncStatus>> events = syncStatusCaptor.getAllValues();
+    assertThat(events).hasSize(2);
+
+    // Check first value
+    final Optional<SyncStatus> syncingEvent = events.get(0);
+    assertThat(syncingEvent).isPresent();
+    assertThat(syncingEvent.get().getStartingBlock()).isEqualTo(3L);
+    assertThat(syncingEvent.get().getCurrentBlock()).isEqualTo(OUR_CHAIN_HEAD_NUMBER);
+    assertThat(syncingEvent.get().getHighestBlock()).isEqualTo(TARGET_CHAIN_HEIGHT);
+
+    // Check second value
+    final Optional<SyncStatus> clearedEvent = events.get(1);
+    assertThat(clearedEvent).isEmpty();
   }
 
   private RespondingEthPeer createPeer(final UInt256 totalDifficulty, final long blockHeight) {
@@ -563,12 +575,12 @@ public class SyncStateTest {
   private EthPeer mockChainIsBetterThan(final EthPeer peer, final boolean isBetter) {
     final ChainState chainState = spy(peer.chainState());
     final ChainHeadEstimate chainStateSnapshot = spy(peer.chainStateSnapshot());
-    doReturn(isBetter).when(chainState).chainIsBetterThan(any());
-    doReturn(isBetter).when(chainStateSnapshot).chainIsBetterThan(any());
+    lenient().doReturn(isBetter).when(chainState).chainIsBetterThan(any());
+    lenient().doReturn(isBetter).when(chainStateSnapshot).chainIsBetterThan(any());
     final EthPeer mockedPeer = spy(peer);
-    doReturn(chainStateSnapshot).when(chainState).getSnapshot();
-    doReturn(chainStateSnapshot).when(mockedPeer).chainStateSnapshot();
-    doReturn(chainState).when(mockedPeer).chainState();
+    lenient().doReturn(chainStateSnapshot).when(chainState).getSnapshot();
+    lenient().doReturn(chainStateSnapshot).when(mockedPeer).chainStateSnapshot();
+    lenient().doReturn(chainState).when(mockedPeer).chainState();
     return mockedPeer;
   }
 
@@ -589,22 +601,6 @@ public class SyncStateTest {
                   .setBlockNumber(parent.getNumber() + 1L));
       final List<TransactionReceipt> receipts = gen.receipts(block);
       blockchain.appendBlock(block, receipts);
-    }
-  }
-
-  private void reorgLocalChain(
-      final long commonAncestor, final long newHeight, final UInt256 difficultyPerBlock) {
-    BlockHeader currentBlock = blockchain.getBlockHeader(commonAncestor).get();
-    while (currentBlock.getNumber() < newHeight) {
-      final Block block =
-          gen.block(
-              BlockOptions.create()
-                  .setDifficulty(difficultyPerBlock)
-                  .setParentHash(currentBlock.getHash())
-                  .setBlockNumber(currentBlock.getNumber() + 1L));
-      final List<TransactionReceipt> receipts = gen.receipts(block);
-      blockchain.appendBlock(block, receipts);
-      currentBlock = block.getHeader();
     }
   }
 

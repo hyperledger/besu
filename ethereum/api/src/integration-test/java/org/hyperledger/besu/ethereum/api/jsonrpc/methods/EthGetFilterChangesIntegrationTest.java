@@ -216,7 +216,7 @@ public class EthGetFilterChangesIntegrationTest {
 
     // We've added one transaction, so there should be one new hash.
     expected =
-        new JsonRpcSuccessResponse(null, Lists.newArrayList(String.valueOf(transaction.hash())));
+        new JsonRpcSuccessResponse(null, Lists.newArrayList(String.valueOf(transaction.getHash())));
     actual = method.response(request);
     assertThat(actual).isEqualToComparingFieldByField(expected);
 
