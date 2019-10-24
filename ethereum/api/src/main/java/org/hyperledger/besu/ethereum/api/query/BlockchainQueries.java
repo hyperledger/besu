@@ -38,7 +38,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -487,14 +486,12 @@ public class BlockchainQueries {
    */
   public List<LogWithMetadata> matchingLogs(
       final long fromBlockNumber, final long toBlockNumber, final LogsQuery query) {
-    try {
-      return LongStream.rangeClosed(fromBlockNumber, toBlockNumber)
-          .mapToObj(i -> matchingLogs(blockchain.getBlockHashByNumber(i).get(), query))
-          .flatMap(Collection::stream)
-          .collect(Collectors.toList());
-    } catch (NoSuchElementException nsee) {
-      return Collections.emptyList();
-    }
+    return LongStream.rangeClosed(fromBlockNumber, toBlockNumber)
+        .mapToObj(blockchain::getBlockHashByNumber)
+        .takeWhile(Optional::isPresent)
+        .flatMap(Optional::stream)
+        .flatMap(hash -> matchingLogs(hash, query).stream())
+        .collect(Collectors.toList());
   }
 
   public List<LogWithMetadata> matchingLogs(final Hash blockHash, final LogsQuery query) {
