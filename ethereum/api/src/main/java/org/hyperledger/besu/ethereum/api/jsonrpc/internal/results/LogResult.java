@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
-import org.hyperledger.besu.ethereum.api.query.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.LogTopic;
+import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,7 +53,7 @@ public class LogResult implements JsonRpcResult {
     this.blockHash = logWithMetadata.getBlockHash().toString();
     this.transactionHash = logWithMetadata.getTransactionHash().toString();
     this.transactionIndex = Quantity.create(logWithMetadata.getTransactionIndex());
-    this.address = logWithMetadata.getAddress().toString();
+    this.address = logWithMetadata.getLogger().toString();
     this.data = logWithMetadata.getData().toString();
     this.topics = new ArrayList<>(logWithMetadata.getTopics().size());
     this.removed = logWithMetadata.isRemoved();
