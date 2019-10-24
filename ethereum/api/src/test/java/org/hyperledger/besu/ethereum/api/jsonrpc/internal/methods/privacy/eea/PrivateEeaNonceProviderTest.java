@@ -25,7 +25,7 @@ import org.hyperledger.besu.enclave.EnclaveException;
 import org.hyperledger.besu.enclave.types.FindPrivacyGroupRequest;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.enclave.types.PrivacyGroup.Type;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivateNonceProviderLegacy;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivateEeaNonceProvider;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionHandler;
 
@@ -33,15 +33,15 @@ import com.google.common.collect.Lists;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
-public class PrivateNonceProviderLegacyTest {
+public class PrivateEeaNonceProviderTest {
 
   private final Address address = Address.fromHexString("55");
   private final Enclave enclave = mock(Enclave.class);
   private final PrivateTransactionHandler privateTransactionHandler =
       mock(PrivateTransactionHandler.class);
 
-  private final PrivateNonceProviderLegacy nonceProvider =
-      new PrivateNonceProviderLegacy(enclave, privateTransactionHandler);
+  private final PrivateEeaNonceProvider nonceProvider =
+      new PrivateEeaNonceProvider(enclave, privateTransactionHandler);
 
   @Test
   public void validRequestProducesExpectedNonce() {

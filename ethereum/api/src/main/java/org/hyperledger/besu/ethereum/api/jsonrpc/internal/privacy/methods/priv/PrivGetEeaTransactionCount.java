@@ -29,22 +29,22 @@ import org.hyperledger.besu.ethereum.core.Address;
 
 import org.apache.logging.log4j.Logger;
 
-public class PrivGetTransactionCountLegacy implements JsonRpcMethod {
+public class PrivGetEeaTransactionCount implements JsonRpcMethod {
 
   private static final Logger LOG = getLogger();
 
   private final JsonRpcParameter parameters;
-  private final PrivateNonceProviderLegacy nonceProvider;
+  private final PrivateEeaNonceProvider nonceProvider;
 
-  public PrivGetTransactionCountLegacy(
-      final JsonRpcParameter parameters, final PrivateNonceProviderLegacy nonceProvider) {
+  public PrivGetEeaTransactionCount(
+      final JsonRpcParameter parameters, final PrivateEeaNonceProvider nonceProvider) {
     this.parameters = parameters;
     this.nonceProvider = nonceProvider;
   }
 
   @Override
   public String getName() {
-    return RpcMethod.PRIV_GET_TRANSACTION_COUNT_LEGACY.getMethodName();
+    return RpcMethod.PRIV_GET_EEA_TRANSACTION_COUNT.getMethodName();
   }
 
   @Override

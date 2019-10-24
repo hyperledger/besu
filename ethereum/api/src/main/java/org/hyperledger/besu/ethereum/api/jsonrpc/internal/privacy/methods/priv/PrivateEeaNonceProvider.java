@@ -27,12 +27,12 @@ import java.util.stream.Collectors;
 import com.google.common.collect.Lists;
 import org.bouncycastle.util.Arrays;
 
-public class PrivateNonceProviderLegacy {
+public class PrivateEeaNonceProvider {
 
   private final Enclave enclave;
   private final PrivateTransactionHandler privateTransactionHandler;
 
-  public PrivateNonceProviderLegacy(
+  public PrivateEeaNonceProvider(
       final Enclave enclave, final PrivateTransactionHandler privateTransactionHandler) {
     this.enclave = enclave;
     this.privateTransactionHandler = privateTransactionHandler;
