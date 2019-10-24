@@ -62,9 +62,7 @@ public interface DefaultCommandValues {
   String PERMISSIONING_CONFIG_LOCATION = "permissions_config.toml";
   String MANDATORY_HOST_FORMAT_HELP = "<HOST>";
   String MANDATORY_PORT_FORMAT_HELP = "<PORT>";
-  // Default should be FAST for the next release
-  // but we use FULL for the moment as Fast is still in progress
-  SyncMode DEFAULT_SYNC_MODE = SyncMode.FULL;
+  SyncMode DEFAULT_SYNC_MODE = SyncMode.FAST;
   NatMethod DEFAULT_NAT_METHOD = NatMethod.NONE;
   int FAST_SYNC_MIN_PEER_COUNT = 5;
   int DEFAULT_MAX_PEERS = 25;
