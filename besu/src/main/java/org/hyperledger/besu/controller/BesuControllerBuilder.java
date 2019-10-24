@@ -88,7 +88,7 @@ public abstract class BesuControllerBuilder<C> {
   GasLimitCalculator gasLimitCalculator;
   private StorageProvider storageProvider;
   private final List<Runnable> shutdownActions = new ArrayList<>();
-  private boolean isPruningEnabled;
+  private boolean pruningEnabled;
   private PruningConfiguration pruningConfiguration;
   Map<String, String> genesisConfigOverrides;
   private Map<Long, Hash> requiredBlocks = Collections.emptyMap();
@@ -168,7 +168,7 @@ public abstract class BesuControllerBuilder<C> {
   }
 
   public BesuControllerBuilder<C> pruningEnabled(final boolean pruningEnabled) {
-    this.isPruningEnabled = pruningEnabled;
+    this.pruningEnabled = pruningEnabled;
     return this;
   }
 
@@ -225,7 +225,7 @@ public abstract class BesuControllerBuilder<C> {
     final MutableBlockchain blockchain = protocolContext.getBlockchain();
 
     Optional<Pruner> maybePruner = Optional.empty();
-    if (isPruningEnabled) {
+    if (pruningEnabled) {
       checkState(
           storageProvider.isWorldStateIterable(),
           "Cannot enable pruning with current database version. Resync to get the latest version.");
