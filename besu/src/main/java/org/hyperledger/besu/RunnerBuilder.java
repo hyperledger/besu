@@ -453,8 +453,7 @@ public class RunnerBuilder {
       final SubscriptionManager subscriptionManager =
           createSubscriptionManager(vertx, transactionPool);
 
-      createLogsSubscriptionService(
-          context.getBlockchain(), context.getWorldStateArchive(), subscriptionManager);
+      createLogsSubscriptionService(context.getBlockchain(), subscriptionManager);
 
       createNewBlockHeadersSubscriptionService(
           context.getBlockchain(), context.getWorldStateArchive(), subscriptionManager);
@@ -621,12 +620,9 @@ public class RunnerBuilder {
   }
 
   private void createLogsSubscriptionService(
-      final Blockchain blockchain,
-      final WorldStateArchive worldStateArchive,
-      final SubscriptionManager subscriptionManager) {
+      final Blockchain blockchain, final SubscriptionManager subscriptionManager) {
     final LogsSubscriptionService logsSubscriptionService =
-        new LogsSubscriptionService(
-            subscriptionManager, new BlockchainQueries(blockchain, worldStateArchive));
+        new LogsSubscriptionService(subscriptionManager);
 
     blockchain.observeBlockAdded(logsSubscriptionService);
   }

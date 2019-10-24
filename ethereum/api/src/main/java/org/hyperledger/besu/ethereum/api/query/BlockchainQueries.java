@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
@@ -34,12 +35,14 @@ import org.hyperledger.besu.util.bytes.BytesValue;
 import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import com.google.common.collect.Lists;
+import java.util.stream.IntStream;
+import java.util.stream.LongStream;
 
 public class BlockchainQueries {
 
@@ -483,100 +486,32 @@ public class BlockchainQueries {
    */
   public List<LogWithMetadata> matchingLogs(
       final long fromBlockNumber, final long toBlockNumber, final LogsQuery query) {
-    if (fromBlockNumber > toBlockNumber || toBlockNumber > headBlockNumber()) {
-      return Lists.newArrayList();
-    }
-    List<LogWithMetadata> matchingLogs = Lists.newArrayList();
-    for (long blockNumber = fromBlockNumber; blockNumber <= toBlockNumber; blockNumber++) {
-      final Hash blockhash = blockchain.getBlockHashByNumber(blockNumber).get();
-      final boolean logHasBeenRemoved = !blockchain.blockIsOnCanonicalChain(blockhash);
-      final List<TransactionReceipt> receipts = blockchain.getTxReceipts(blockhash).get();
-      final List<Transaction> transaction =
-          blockchain.getBlockBody(blockhash).get().getTransactions();
-      matchingLogs =
-          generateLogWithMetadata(
-              receipts,
-              blockNumber,
-              query,
-              blockhash,
-              matchingLogs,
-              transaction,
-              logHasBeenRemoved);
-    }
-    return matchingLogs;
+    return LongStream.rangeClosed(fromBlockNumber, toBlockNumber)
+        .mapToObj(blockchain::getBlockHashByNumber)
+        .takeWhile(Optional::isPresent)
+        .flatMap(Optional::stream)
+        .flatMap(hash -> matchingLogs(hash, query).stream())
+        .collect(Collectors.toList());
   }
 
-  public List<LogWithMetadata> matchingLogs(final Hash blockhash, final LogsQuery query) {
-    final List<LogWithMetadata> matchingLogs = Lists.newArrayList();
-    Optional<BlockHeader> blockHeader = blockchain.getBlockHeader(blockhash);
-    if (!blockHeader.isPresent()) {
-      return matchingLogs;
+  public List<LogWithMetadata> matchingLogs(final Hash blockHash, final LogsQuery query) {
+    final Optional<BlockHeader> blockHeader = blockchain.getBlockHeader(blockHash);
+    if (blockHeader.isEmpty()) {
+      return Collections.emptyList();
     }
-    final List<TransactionReceipt> receipts = blockchain.getTxReceipts(blockhash).get();
-    final List<Transaction> transaction =
-        blockchain.getBlockBody(blockhash).get().getTransactions();
+    final List<TransactionReceipt> receipts = blockchain.getTxReceipts(blockHash).get();
+    final List<Transaction> transactions =
+        blockchain.getBlockBody(blockHash).get().getTransactions();
     final long number = blockHeader.get().getNumber();
-    final boolean logHasBeenRemoved = !blockchain.blockIsOnCanonicalChain(blockhash);
-    return generateLogWithMetadata(
-        receipts, number, query, blockhash, matchingLogs, transaction, logHasBeenRemoved);
-  }
-
-  public static List<LogWithMetadata> generateLogWithMetadataForTransaction(
-      final TransactionReceipt receipt,
-      final long number,
-      final Hash blockhash,
-      final Hash transactionHash,
-      final int transactionIndex,
-      final boolean removed) {
-
-    final List<LogWithMetadata> logs = new ArrayList<>();
-    for (int logIndex = 0; logIndex < receipt.getLogs().size(); ++logIndex) {
-
-      final LogWithMetadata logWithMetaData =
-          new LogWithMetadata(
-              logIndex,
-              number,
-              blockhash,
-              transactionHash,
-              transactionIndex,
-              receipt.getLogs().get(logIndex).getLogger(),
-              receipt.getLogs().get(logIndex).getData(),
-              receipt.getLogs().get(logIndex).getTopics(),
-              removed);
-      logs.add(logWithMetaData);
-    }
-
-    return logs;
-  }
-
-  private List<LogWithMetadata> generateLogWithMetadata(
-      final List<TransactionReceipt> receipts,
-      final long number,
-      final LogsQuery query,
-      final Hash blockhash,
-      final List<LogWithMetadata> matchingLogs,
-      final List<Transaction> transaction,
-      final boolean removed) {
-    for (int transactionIndex = 0; transactionIndex < receipts.size(); ++transactionIndex) {
-      final TransactionReceipt receipt = receipts.get(transactionIndex);
-      for (int logIndex = 0; logIndex < receipt.getLogs().size(); ++logIndex) {
-        if (query.matches(receipt.getLogs().get(logIndex))) {
-          final LogWithMetadata logWithMetaData =
-              new LogWithMetadata(
-                  logIndex,
-                  number,
-                  blockhash,
-                  transaction.get(transactionIndex).getHash(),
-                  transactionIndex,
-                  receipts.get(transactionIndex).getLogs().get(logIndex).getLogger(),
-                  receipts.get(transactionIndex).getLogs().get(logIndex).getData(),
-                  receipts.get(transactionIndex).getLogs().get(logIndex).getTopics(),
-                  removed);
-          matchingLogs.add(logWithMetaData);
-        }
-      }
-    }
-    return matchingLogs;
+    final boolean removed = !blockchain.blockIsOnCanonicalChain(blockHash);
+    return IntStream.range(0, receipts.size())
+        .mapToObj(
+            i ->
+                LogWithMetadata.generate(
+                    receipts.get(i), number, blockHash, transactions.get(i).getHash(), i, removed))
+        .flatMap(Collection::stream)
+        .filter(query::matches)
+        .collect(Collectors.toList());
   }
 
   /**
