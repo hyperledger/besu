@@ -1383,7 +1383,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private boolean getPruningDefault() {
-    return pruningOverride == null ? syncMode == SyncMode.FAST : pruningOverride;
+    return Optional.ofNullable(pruningOverride).orElse(syncMode == SyncMode.FAST);
   }
 
   // Blockchain synchronisation from peers.
