@@ -486,10 +486,10 @@ public class BlockchainQueries {
    */
   public List<LogWithMetadata> matchingLogs(
       final long fromBlockNumber, final long toBlockNumber, final LogsQuery query) {
-    return LongStream.rangeClosed(fromBlockNumber, toBlockNumber)
-        .mapToObj(blockchain::getBlockHashByNumber)
-        .takeWhile(Optional::isPresent)
-        .flatMap(Optional::stream)
+    return LongStream.rangeClosed(fromBlockNumber, Math.min(toBlockNumber, headBlockNumber()))
+        .mapToObj(blockchain::getBlockHeader)
+        .filter(header -> header.isPresent() && query.couldMatch(header.get().getLogsBloom()))
+        .map(header -> header.get().getHash())
         .flatMap(hash -> matchingLogs(hash, query).stream())
         .collect(Collectors.toList());
   }

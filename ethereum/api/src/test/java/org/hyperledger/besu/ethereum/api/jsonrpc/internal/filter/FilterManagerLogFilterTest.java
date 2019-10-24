@@ -18,7 +18,6 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.refEq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -86,7 +85,7 @@ public class FilterManagerLogFilterTest {
     filterManager.installLogFilter(latest(), latest(), logsQuery());
     recordNewBlockEvent();
 
-    verify(blockchainQueries).matchingLogs(eq(100L), eq(100L), refEq(logsQuery()));
+    verify(blockchainQueries).matchingLogs(eq(100L), eq(100L), eq(logsQuery()));
   }
 
   @Test
@@ -96,14 +95,14 @@ public class FilterManagerLogFilterTest {
     filterManager.installLogFilter(blockNum(1L), blockNum(10L), logsQuery());
     recordNewBlockEvent();
 
-    verify(blockchainQueries).matchingLogs(eq(3L), eq(10L), refEq(logsQuery()));
+    verify(blockchainQueries).matchingLogs(eq(3L), eq(10L), eq(logsQuery()));
   }
 
   @Test
   public void shouldReturnLogWhenLogFilterMatches() {
     final LogWithMetadata log = logWithMetadata();
     when(blockchainQueries.headBlockNumber()).thenReturn(100L);
-    when(blockchainQueries.matchingLogs(eq(100L), eq(100L), refEq(logsQuery())))
+    when(blockchainQueries.matchingLogs(eq(100L), eq(100L), eq(logsQuery())))
         .thenReturn(Lists.newArrayList(log));
 
     final String filterId = filterManager.installLogFilter(latest(), latest(), logsQuery());
@@ -163,13 +162,13 @@ public class FilterManagerLogFilterTest {
   public void getLogsForExistingFilterReturnsResults() {
     final LogWithMetadata log = logWithMetadata();
     when(blockchainQueries.headBlockNumber()).thenReturn(100L);
-    when(blockchainQueries.matchingLogs(eq(100L), eq(100L), refEq(logsQuery())))
+    when(blockchainQueries.matchingLogs(eq(100L), eq(100L), eq(logsQuery())))
         .thenReturn(Lists.newArrayList(log));
 
     final String filterId = filterManager.installLogFilter(latest(), latest(), logsQuery());
     final List<LogWithMetadata> retrievedLogs = filterManager.logs(filterId);
 
-    assertThat(retrievedLogs).isEqualToComparingFieldByFieldRecursively(Lists.newArrayList(log));
+    assertThat(retrievedLogs).usingRecursiveComparison().isEqualTo(Lists.newArrayList(log));
   }
 
   @Test
