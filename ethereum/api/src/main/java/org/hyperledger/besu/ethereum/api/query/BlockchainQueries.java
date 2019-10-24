@@ -486,11 +486,16 @@ public class BlockchainQueries {
    */
   public List<LogWithMetadata> matchingLogs(
       final long fromBlockNumber, final long toBlockNumber, final LogsQuery query) {
+    // rangeClosed handles the inverted from/to situations automatically with zero results.
     return LongStream.rangeClosed(fromBlockNumber, toBlockNumber)
-        .mapToObj(blockchain::getBlockHashByNumber)
+        .mapToObj(blockchain::getBlockHeader)
+        // Use takeWhile instead of clamping on toBlockNumber/headBlockNumber because it may get an
+        // extra block or two for a query that has a toBlockNumber past chain head.  Similarly this
+        // handles the case when fromBlockNumber is past chain head.
         .takeWhile(Optional::isPresent)
-        .flatMap(Optional::stream)
-        .flatMap(hash -> matchingLogs(hash, query).stream())
+        .map(Optional::get)
+        .filter(header -> query.couldMatch(header.getLogsBloom()))
+        .flatMap(header -> matchingLogs(header.getHash(), query).stream())
         .collect(Collectors.toList());
   }
 

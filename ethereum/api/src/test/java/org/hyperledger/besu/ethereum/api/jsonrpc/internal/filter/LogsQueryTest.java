@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.api.query.LogsQuery;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.LogTopic;
+import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.ArrayList;
@@ -41,6 +42,7 @@ public class LogsQueryTest {
     final List<LogTopic> topics = new ArrayList<>();
     final Log log = new Log(address, data, topics);
 
+    assertThat(query.couldMatch(LogsBloomFilter.compute(List.of(log)))).isTrue();
     assertThat(query.matches(log)).isTrue();
   }
 
@@ -52,6 +54,7 @@ public class LogsQueryTest {
     final List<LogTopic> topics = new ArrayList<>();
     final Log log = new Log(address, BytesValue.fromHexString("0x0102"), topics);
 
+    assertThat(query.couldMatch(LogsBloomFilter.compute(List.of(log)))).isTrue();
     assertThat(query.matches(log)).isTrue();
   }
 
@@ -77,6 +80,7 @@ public class LogsQueryTest {
     final List<LogTopic> topics = new ArrayList<>();
     final Log log = new Log(address1, BytesValue.fromHexString("0x0102"), topics);
 
+    assertThat(query.couldMatch(LogsBloomFilter.compute(List.of(log)))).isTrue();
     assertThat(query.matches(log)).isTrue();
   }
 
@@ -129,6 +133,7 @@ public class LogsQueryTest {
     final LogsQuery query = new LogsQuery.Builder().address(address).topics(topicsQuery).build();
     final Log log = new Log(address, BytesValue.fromHexString("0x0102"), Lists.newArrayList(topic));
 
+    assertThat(query.couldMatch(LogsBloomFilter.compute(List.of(log)))).isTrue();
     assertThat(query.matches(log)).isTrue();
   }
 
@@ -214,6 +219,7 @@ public class LogsQueryTest {
         new LogsQuery.Builder().address(address1).topics(queryParameter).build();
     final Log log = new Log(address1, BytesValue.fromHexString("0x0102"), logTopics);
 
+    assertThat(query.couldMatch(LogsBloomFilter.compute(List.of(log)))).isTrue();
     assertThat(query.matches(log)).isTrue();
   }
 
@@ -243,6 +249,7 @@ public class LogsQueryTest {
     final LogsQuery query = new LogsQuery.Builder().address(address).topics(queryParameter).build();
     final Log log = new Log(address, BytesValue.fromHexString("0x0102"), logTopics);
 
+    assertThat(query.couldMatch(LogsBloomFilter.compute(List.of(log)))).isTrue();
     assertThat(query.matches(log)).isTrue();
   }
 
@@ -275,6 +282,7 @@ public class LogsQueryTest {
     final LogsQuery query = new LogsQuery.Builder().address(address).topics(queryParameter).build();
     final Log log = new Log(address, BytesValue.fromHexString("0x0102"), logTopics);
 
+    assertThat(query.couldMatch(LogsBloomFilter.compute(List.of(log)))).isTrue();
     assertThat(query.matches(log)).isTrue();
   }
 
@@ -308,6 +316,7 @@ public class LogsQueryTest {
     final LogsQuery query = new LogsQuery.Builder().address(address).topics(queryParameter).build();
     final Log log = new Log(address, BytesValue.fromHexString("0x0102"), logTopics);
 
+    assertThat(query.couldMatch(LogsBloomFilter.compute(List.of(log)))).isTrue();
     assertThat(query.matches(log)).isTrue();
   }
 
@@ -344,6 +353,7 @@ public class LogsQueryTest {
     final LogsQuery query = new LogsQuery.Builder().address(address).topics(queryParameter).build();
     final Log log = new Log(address, BytesValue.fromHexString("0x0102"), logTopics);
 
+    assertThat(query.couldMatch(LogsBloomFilter.compute(List.of(log)))).isTrue();
     assertThat(query.matches(log)).isTrue();
   }
 
@@ -417,6 +427,7 @@ public class LogsQueryTest {
     final LogsQuery query = new LogsQuery.Builder().address(address).topics(queryParameter).build();
     final Log log = new Log(address, BytesValue.fromHexString("0x0102"), logTopics);
 
+    assertThat(query.couldMatch(LogsBloomFilter.compute(List.of(log)))).isTrue();
     assertThat(query.matches(log)).isTrue();
   }
 
