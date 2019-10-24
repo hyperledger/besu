@@ -59,15 +59,7 @@ public class LogsQuery {
   }
 
   private boolean matchesTopic(final LogTopic topic, final List<LogTopic> matchCriteria) {
-    for (final LogTopic candidate : matchCriteria) {
-      if (candidate == null) {
-        return true;
-      }
-      if (candidate.equals(topic)) {
-        return true;
-      }
-    }
-    return false;
+    return matchCriteria.contains(null) || matchCriteria.contains(topic);
   }
 
   public static class Builder {
