@@ -29,6 +29,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import org.apache.logging.log4j.Logger;
@@ -36,7 +37,7 @@ import org.apache.logging.log4j.Logger;
 /**
  * Implementation of the stratum+tcp protocol.
  *
- * This protocol allows miners to submit nonces over a persistent TCP connection.
+ * <p>This protocol allows miners to submit nonces over a persistent TCP connection.
  */
 public class Stratum1Protocol implements StratumProtocol {
 
@@ -82,6 +83,7 @@ public class Stratum1Protocol implements StratumProtocol {
     }
   }
 
+  @JsonPropertyOrder({"id", "jsonrpc", "result", "error"})
   private static final class MinerNotifyResponse {
 
     private final int id;
@@ -111,6 +113,7 @@ public class Stratum1Protocol implements StratumProtocol {
     }
   }
 
+  @JsonPropertyOrder({"id", "method", "jsonrpc", "params"})
   private static final class MinerNewWork {
 
     private final String jobId;
@@ -160,7 +163,9 @@ public class Stratum1Protocol implements StratumProtocol {
   public boolean register(final byte[] initialMessage, final StratumConnection conn) {
     try {
       MinerMessage message = mapper.readValue(initialMessage, MinerMessage.class);
-      if (!"mining.subscribe".equals(message.getMethod())) {
+      if (!"mining.subscribe".equals(message.getMethod())
+          || message.getParams().length < 2
+          || !message.getParams()[1].equals("EthereumStratum/1.0.0")) {
         logger.debug("Invalid first message method: {}", message.getMethod());
         return false;
       }

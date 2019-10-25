@@ -765,7 +765,9 @@ public class BesuCommandTest extends CommandTestAbstract {
                 DefaultCommandValues.DEFAULT_MIN_TRANSACTION_GAS_PRICE,
                 DefaultCommandValues.DEFAULT_EXTRA_DATA,
                 false,
-                false));
+                false,
+                "0.0.0.0",
+                8008));
   }
 
   @Test
@@ -784,7 +786,9 @@ public class BesuCommandTest extends CommandTestAbstract {
                 DefaultCommandValues.DEFAULT_MIN_TRANSACTION_GAS_PRICE,
                 DefaultCommandValues.DEFAULT_EXTRA_DATA,
                 false,
-                false));
+                false,
+                "0.0.0.0",
+                8008));
   }
 
   @Test

@@ -86,6 +86,10 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
       params.add("--miner-enabled");
       params.add("--miner-coinbase");
       params.add(node.getMiningParameters().getCoinbase().get().toString());
+      params.add("--stratum-port");
+      params.add(Integer.toString(node.getMiningParameters().getStratumPort()));
+      params.add("--stratum-network-interface");
+      params.add(node.getMiningParameters().getStratumNetworkInterface());
     }
     if (node.getMiningParameters().isCpuMiningEnabled()) {
       params.add("--cpu-miner-enabled");

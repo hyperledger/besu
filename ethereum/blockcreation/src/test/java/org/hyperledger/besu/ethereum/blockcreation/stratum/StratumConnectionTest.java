@@ -70,7 +70,7 @@ public class StratumConnectionTest {
 
     assertThat(message.get())
         .isEqualTo(
-            "{\"id\":23,\"result\":[[\"mining.notify\",\"ae6812eb4cd7735a302a8a9dd95cf71f\",\"EthereumStratum/1.0.0\"],\"080c\"],\"error\":null}\n");
+            "{\"id\":23,\"jsonrpc\":\"2.0\",\"result\":[[\"mining.notify\",\"ae6812eb4cd7735a302a8a9dd95cf71f\",\"EthereumStratum/1.0.0\"],\"080c\"],\"error\":null}\n");
   }
 
   @Test
@@ -111,6 +111,6 @@ public class StratumConnectionTest {
 
     assertThat(message.get())
         .isEqualTo(
-            "{\"method\":\"mining.notify\",\"id\":null,\"params\":[\"abcd\",\"abad8f99f3918bf903c6a909d9bbc0fdfa5a2f4b9cb1196175ec825c6610126c\",\"0xdeadbeef\",true]}");
+            "{\"id\":null,\"method\":\"mining.notify\",\"jsonrpc\":\"2.0\",\"params\":[\"abcd\",\"0xdeadbeef\",\"0x0000000000000000000000000000000000000000000000000000000000000000\",\"0x0000000000000000000000000000000000000000000000000000000000000003\",true]}");
   }
 }

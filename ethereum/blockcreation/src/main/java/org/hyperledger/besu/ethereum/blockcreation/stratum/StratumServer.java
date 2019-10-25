@@ -51,6 +51,7 @@ public class StratumServer {
 
   public void start() {
     if (started.compareAndSet(false, true)) {
+      logger.info("Starting stratum server on {}:{}", networkInterface, port);
       server =
           vertx.createNetServer(new NetServerOptions().setPort(port).setHost(networkInterface));
       CompletableFuture<Throwable> result = new CompletableFuture<>();

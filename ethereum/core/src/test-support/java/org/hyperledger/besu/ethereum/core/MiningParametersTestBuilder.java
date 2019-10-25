@@ -23,6 +23,7 @@ public class MiningParametersTestBuilder {
   private BytesValue extraData = BytesValue.EMPTY;
   private Boolean enabled = false;
   private Boolean cpuMiningEnabled = false;
+  private int stratumPort = 0;
 
   public MiningParametersTestBuilder coinbase(final Address coinbase) {
     this.coinbase = coinbase;
@@ -49,8 +50,19 @@ public class MiningParametersTestBuilder {
     return this;
   }
 
+  public MiningParametersTestBuilder stratumPort(final int port) {
+    this.stratumPort = port;
+    return this;
+  }
+
   public MiningParameters build() {
     return new MiningParameters(
-        coinbase, minTransactionGasPrice, extraData, enabled, cpuMiningEnabled);
+        coinbase,
+        minTransactionGasPrice,
+        extraData,
+        enabled,
+        cpuMiningEnabled,
+        "0.0.0.0",
+        stratumPort);
   }
 }

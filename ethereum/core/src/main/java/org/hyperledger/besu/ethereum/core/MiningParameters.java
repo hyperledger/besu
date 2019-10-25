@@ -19,8 +19,6 @@ import org.hyperledger.besu.util.bytes.BytesValue;
 import java.util.Objects;
 import java.util.Optional;
 
-import com.google.common.base.MoreObjects;
-
 public class MiningParameters {
 
   private final Optional<Address> coinbase;
@@ -28,18 +26,24 @@ public class MiningParameters {
   private final BytesValue extraData;
   private final Boolean enabled;
   private final Boolean cpuMiningEnabled;
+  private final String stratumNetworkInterface;
+  private final int stratumPort;
 
   public MiningParameters(
       final Address coinbase,
       final Wei minTransactionGasPrice,
       final BytesValue extraData,
       final Boolean enabled,
-      final Boolean cpuMiningEnabled) {
+      final Boolean cpuMiningEnabled,
+      final String stratumNetworkInterface,
+      final int stratumPort) {
     this.coinbase = Optional.ofNullable(coinbase);
     this.minTransactionGasPrice = minTransactionGasPrice;
     this.extraData = extraData;
     this.enabled = enabled;
     this.cpuMiningEnabled = cpuMiningEnabled;
+    this.stratumNetworkInterface = stratumNetworkInterface;
+    this.stratumPort = stratumPort;
   }
 
   public Optional<Address> getCoinbase() {
@@ -62,35 +66,58 @@ public class MiningParameters {
     return cpuMiningEnabled;
   }
 
+  public String getStratumNetworkInterface() {
+    return stratumNetworkInterface;
+  }
+
+  public int getStratumPort() {
+    return stratumPort;
+  }
+
   @Override
   public boolean equals(final Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    final MiningParameters that = (MiningParameters) o;
-    return Objects.equals(coinbase, that.coinbase)
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    MiningParameters that = (MiningParameters) o;
+    return stratumPort == that.stratumPort
+        && Objects.equals(coinbase, that.coinbase)
         && Objects.equals(minTransactionGasPrice, that.minTransactionGasPrice)
         && Objects.equals(extraData, that.extraData)
         && Objects.equals(enabled, that.enabled)
-        && Objects.equals(cpuMiningEnabled, that.cpuMiningEnabled);
+        && Objects.equals(cpuMiningEnabled, that.cpuMiningEnabled)
+        && Objects.equals(stratumNetworkInterface, that.stratumNetworkInterface);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(coinbase, minTransactionGasPrice, extraData, enabled, cpuMiningEnabled);
+    return Objects.hash(
+        coinbase,
+        minTransactionGasPrice,
+        extraData,
+        enabled,
+        cpuMiningEnabled,
+        stratumNetworkInterface,
+        stratumPort);
   }
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(this)
-        .add("coinbase", coinbase)
-        .add("minTransactionGasPrice", minTransactionGasPrice)
-        .add("extraData", extraData)
-        .add("enabled", enabled)
-        .add("cpuMiningEnabled", cpuMiningEnabled)
-        .toString();
+    return "MiningParameters{"
+        + "coinbase="
+        + coinbase
+        + ", minTransactionGasPrice="
+        + minTransactionGasPrice
+        + ", extraData="
+        + extraData
+        + ", enabled="
+        + enabled
+        + ", cpuMiningEnabled="
+        + cpuMiningEnabled
+        + ", stratumNetworkInterface='"
+        + stratumNetworkInterface
+        + '\''
+        + ", stratumPort="
+        + stratumPort
+        + '}';
   }
 }

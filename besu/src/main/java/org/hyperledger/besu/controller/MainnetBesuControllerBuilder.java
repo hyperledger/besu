@@ -48,8 +48,12 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder<Void> {
       final SyncState syncState,
       final EthProtocolManager ethProtocolManager) {
     final ExecutorService minerThreadPool = Executors.newCachedThreadPool();
-    // TODO make port and network interface parameters.
-    final StratumServer server = new StratumServer(vertx, 8008, "0.0.0.0");
+    Vertx vertx = Vertx.vertx();
+    final StratumServer server =
+        new StratumServer(
+            vertx,
+            miningParameters.getStratumPort(),
+            miningParameters.getStratumNetworkInterface());
     final EthHashMinerExecutor executor =
         new EthHashMinerExecutor(
             protocolContext,
@@ -70,7 +74,6 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder<Void> {
     if (miningParameters.isMiningEnabled()) {
       miningCoordinator.enable();
     }
-
     return miningCoordinator;
   }
 

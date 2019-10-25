@@ -80,13 +80,13 @@ final class StratumConnection {
           this.protocol = protocol;
         }
       }
+      if (protocol == null) {
+        logger.debug("Invalid first message: {}", new String(message, StandardCharsets.UTF_8));
+        closeHandle.run();
+      }
+    } else {
+      protocol.handle(this, message);
     }
-    if (protocol == null) {
-      logger.debug("Invalid first message: {}", new String(message, StandardCharsets.UTF_8));
-      closeHandle.run();
-      return;
-    }
-    protocol.handle(this, message);
   }
 
   public void send(final String message) {

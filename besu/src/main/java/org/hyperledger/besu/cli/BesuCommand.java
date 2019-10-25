@@ -562,6 +562,17 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Set if node will perform CPU mining (default: ${DEFAULT-VALUE})")
   private final Boolean isCpuMiningEnabled = false;
 
+  @SuppressWarnings("FieldMayBeFinal") // Because PicoCLI requires Strings to not be final.
+  @Option(
+      names = {"--stratum-network-interface"},
+      description = "Stratum network interface binding (default: ${DEFAULT-VALUE})")
+  private String stratumNetworkInterface = "0.0.0.0";
+
+  @Option(
+      names = {"--stratum-port"},
+      description = "Stratum port binding (default: ${DEFAULT-VALUE})")
+  private final Integer stratumPort = 8008;
+
   @Option(
       names = {"--miner-coinbase"},
       description =
@@ -1103,7 +1114,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           .dataDirectory(dataDir())
           .miningParameters(
               new MiningParameters(
-                  coinbase, minTransactionGasPrice, extraData, isMiningEnabled, isCpuMiningEnabled))
+                  coinbase,
+                  minTransactionGasPrice,
+                  extraData,
+                  isMiningEnabled,
+                  isCpuMiningEnabled,
+                  stratumNetworkInterface,
+                  stratumPort))
           .transactionPoolConfiguration(buildTransactionPoolConfiguration())
           .nodePrivateKeyFile(nodePrivateKeyFile())
           .metricsSystem(metricsSystem.get())

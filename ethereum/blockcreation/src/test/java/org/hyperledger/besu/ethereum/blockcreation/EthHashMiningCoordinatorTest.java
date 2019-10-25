@@ -51,7 +51,7 @@ public class EthHashMiningCoordinatorTest {
     assertThat(miningCoordinator.isMining()).isFalse();
     assertThat(miningCoordinator.hashesPerSecond()).isEqualTo(Optional.empty());
     assertThat(miningCoordinator.getWorkDefinition()).isEqualTo(Optional.empty());
-    assertThat(miningCoordinator.submitWork(solution)).isFalse();
+    assertThat(miningCoordinator.submitWork(solution.getNonce())).isFalse();
   }
 
   @Test

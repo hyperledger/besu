@@ -41,7 +41,6 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.List;
 
-import io.vertx.core.Vertx;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

@@ -29,6 +29,8 @@ import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolution;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
+import org.hyperledger.besu.util.bytes.BytesValue;
+import org.hyperledger.besu.util.bytes.BytesValues;
 import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.Optional;
@@ -101,13 +103,13 @@ public class EthSubmitWorkTest {
             firstInputs.getPrePowHash());
     final JsonRpcRequest request =
         requestWithParams(
-            expectedFirstOutput.getNonce(),
-            expectedFirstOutput.getMixHash(),
-            expectedFirstOutput.getPowHash());
+            BytesValues.toMinimalBytes(expectedFirstOutput.getNonce()).getHexString(),
+            expectedFirstOutput.getMixHash().getHexString(),
+            BytesValue.wrap(expectedFirstOutput.getPowHash()).getHexString());
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(request.getId(), true);
     when(miningCoordinator.getWorkDefinition()).thenReturn(Optional.of(firstInputs));
     // potentially could use a real miner here.
-    when(miningCoordinator.submitWork(expectedFirstOutput)).thenReturn(true);
+    when(miningCoordinator.submitWork(expectedFirstOutput.getNonce())).thenReturn(true);
 
     final JsonRpcResponse actualResponse = method.response(request);
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
