@@ -25,7 +25,7 @@ import java.util.Collection;
 public class PoAMetricServiceImpl implements PoAMetricsService {
 
   private final BlockInterface blockInterface;
-  protected final Blockchain blockchain;
+  private final Blockchain blockchain;
 
   public PoAMetricServiceImpl(final BlockInterface blockInterface, final Blockchain blockchain) {
     this.blockInterface = blockInterface;
@@ -40,5 +40,9 @@ public class PoAMetricServiceImpl implements PoAMetricsService {
   @Override
   public Address getProposerOfBlock(final BlockHeader header) {
     return this.blockInterface.getProposerOfBlock(header);
+  }
+
+  protected Blockchain getBlockchain() {
+    return blockchain;
   }
 }

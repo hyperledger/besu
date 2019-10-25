@@ -34,7 +34,7 @@ public class IbftQueryServiceImpl extends PoAMetricServiceImpl implements IbftQu
 
   @Override
   public int getRoundNumberFromCanonicalHead() {
-    final BlockHeader canonicalHeader = blockchain.getChainHeadHeader();
+    final BlockHeader canonicalHeader = getBlockchain().getChainHeadHeader();
 
     final IbftExtraData extraData = IbftExtraData.decode(canonicalHeader);
 
@@ -43,7 +43,7 @@ public class IbftQueryServiceImpl extends PoAMetricServiceImpl implements IbftQu
 
   @Override
   public Collection<Address> getSignersFromCanonicalHead() {
-    final BlockHeader canonicalHeader = blockchain.getChainHeadHeader();
+    final BlockHeader canonicalHeader = getBlockchain().getChainHeadHeader();
     final IbftExtraData extraData = IbftExtraData.decode(canonicalHeader);
 
     return Collections.unmodifiableList(
