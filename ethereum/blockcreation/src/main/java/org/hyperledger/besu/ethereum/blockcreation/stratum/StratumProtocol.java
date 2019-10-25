@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation.stratum;
 
-import org.hyperledger.besu.ethereum.mainnet.EthHashSolution;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
 
 import java.util.function.Function;
@@ -29,5 +28,5 @@ public interface StratumProtocol {
 
   void solveFor(EthHashSolverInputs input);
 
-  void setSubmitCallback(Function<EthHashSolution, Boolean> submitSolutionCallback);
+  void setSubmitCallback(Function<Long, Boolean> submitSolutionCallback);
 }

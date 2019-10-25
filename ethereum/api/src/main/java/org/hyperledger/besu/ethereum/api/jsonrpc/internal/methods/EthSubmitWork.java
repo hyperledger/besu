@@ -24,9 +24,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.mainnet.EthHashSolution;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
+import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Optional;
 
@@ -52,12 +51,10 @@ public class EthSubmitWork implements JsonRpcMethod {
   public JsonRpcResponse response(final JsonRpcRequest req) {
     final Optional<EthHashSolverInputs> solver = miner.getWorkDefinition();
     if (solver.isPresent()) {
-      final EthHashSolution solution =
-          new EthHashSolution(
-              parameters.required(req.getParams(), 0, Long.class),
-              parameters.required(req.getParams(), 1, Hash.class),
-              parameters.required(req.getParams(), 2, byte[].class));
-      final boolean result = miner.submitWork(solution);
+      long nonce =
+          BytesValue.fromHexString(parameters.required(req.getParams(), 0, String.class))
+              .getLong(0);
+      final boolean result = miner.submitWork(nonce);
       return new JsonRpcSuccessResponse(req.getId(), result);
     } else {
       LOG.trace("Mining is not operational, eth_submitWork request cannot be processed");

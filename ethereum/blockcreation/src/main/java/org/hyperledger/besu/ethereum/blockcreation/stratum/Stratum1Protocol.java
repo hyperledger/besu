@@ -16,14 +16,10 @@ package org.hyperledger.besu.ethereum.blockcreation.stratum;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.mainnet.EthHashSolution;
+import org.hyperledger.besu.ethereum.mainnet.DirectAcyclicGraphSeed;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
-import org.hyperledger.besu.ethereum.mainnet.EthHasher;
-import org.hyperledger.besu.util.bytes.Bytes32;
 import org.hyperledger.besu.util.bytes.BytesValue;
 import org.hyperledger.besu.util.bytes.BytesValues;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -37,21 +33,21 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import org.apache.logging.log4j.Logger;
 
+/**
+ * Implementation of the stratum+tcp protocol.
+ *
+ * This protocol allows miners to submit nonces over a persistent TCP connection.
+ */
 public class Stratum1Protocol implements StratumProtocol {
 
-  private String currentJobId;
   private EthHashSolverInputs currentInput;
-  private Function<EthHashSolution, Boolean> submitCallback;
+  private Function<Long, Boolean> submitCallback;
   private Supplier<String> jobIdSupplier =
       () -> {
         BytesValue timeValue = BytesValues.toMinimalBytes(Instant.now().toEpochMilli());
         return timeValue.slice(timeValue.size() - 4, 4).toUnprefixedString();
       };
 
-  /**
-   * { "id": 1, "method": "mining.subscribe", "params": [ "MinerName/1.0.0", "EthereumStratum/1.0.0"
-   * ] }\n
-   */
   @JsonIgnoreProperties(ignoreUnknown = true)
   private static final class MinerMessage {
 
@@ -86,10 +82,6 @@ public class Stratum1Protocol implements StratumProtocol {
     }
   }
 
-  /**
-   * { "id": 1, "result": [ [ "mining.notify", "ae6812eb4cd7735a302a8a9dd95cf71f",
-   * "EthereumStratum/1.0.0" ], "080c" ], "error": null }\n
-   */
   private static final class MinerNotifyResponse {
 
     private final int id;
@@ -119,11 +111,6 @@ public class Stratum1Protocol implements StratumProtocol {
     }
   }
 
-  /**
-   * { "id": null, "method": "mining.notify", "params": [ "bf0488aa",
-   * "abad8f99f3918bf903c6a909d9bbc0fdfa5a2f4b9cb1196175ec825c6610126c",
-   * "fc12eb20c58158071c956316cdcd12a22dd8bf126ac4aee559f0ffe4df11f279", true ] }\n
-   */
   private static final class MinerNewWork {
 
     private final String jobId;
@@ -142,18 +129,14 @@ public class Stratum1Protocol implements StratumProtocol {
       return "mining.notify";
     }
 
-    /**
-     * First parameter of params array is job ID (must be HEX number of any size). Second parameter
-     * is seedhash. Seedhash is sent with every job to support possible multipools, which may switch
-     * between coins quickly. Third parameter is headerhash. Last parameter is boolean cleanjobs. If
-     * set to true, then miner needs to clear queue of jobs and immediatelly start working on new
-     * provided job, because all old jobs shares will result with stale share error.
-     */
     public Object[] getParams() {
+      final byte[] dagSeed = DirectAcyclicGraphSeed.dagSeed(input.getBlockNumber());
       return new Object[] {
         jobId,
-        "abad8f99f3918bf903c6a909d9bbc0fdfa5a2f4b9cb1196175ec825c6610126c", // hardcode seed hash.
-        BytesValue.wrap(input.getPrePowHash()).toUnprefixedString()
+        BytesValue.wrap(input.getPrePowHash()).getHexString(),
+        BytesValue.wrap(dagSeed).getHexString(),
+        input.getTarget().toHexString(),
+        true
       };
     }
 
@@ -164,7 +147,6 @@ public class Stratum1Protocol implements StratumProtocol {
 
   private static final Logger logger = getLogger();
   private static final JsonMapper mapper = new JsonMapper();
-  private static final EthHasher ethHasher = new EthHasher.Light();
 
   private final List<StratumConnection> activeConnections = new ArrayList<>();
 
@@ -216,7 +198,7 @@ public class Stratum1Protocol implements StratumProtocol {
   }
 
   private void sendNewWork(final StratumConnection conn) {
-    MinerNewWork newWork = new MinerNewWork(currentJobId, currentInput);
+    MinerNewWork newWork = new MinerNewWork(jobIdSupplier.get(), currentInput);
     try {
       conn.send(mapper.writeValueAsString(newWork));
     } catch (JsonProcessingException e) {
@@ -242,30 +224,17 @@ public class Stratum1Protocol implements StratumProtocol {
         // ready for work.
         registerConnection(conn);
       } else if ("mining.submit".equals(message.getMethod())) {
-        String jobId = message.getParams()[1];
         long nonce = BytesValue.fromHexString(message.getParams()[2]).getLong(0);
-        if (currentJobId != null && currentJobId.equals(jobId)) {
-          byte[] hashBuffer = new byte[64];
-          ethHasher.hash(
-              hashBuffer, nonce, currentInput.getBlockNumber(), currentInput.getPrePowHash());
-          final UInt256 x = UInt256.wrap(Bytes32.wrap(hashBuffer, 32));
-          if (x.compareTo(currentInput.getTarget()) <= 0) {
-            final Hash mixedHash =
-                Hash.wrap(Bytes32.leftPad(BytesValue.wrap(hashBuffer).slice(0, Bytes32.SIZE)));
-            EthHashSolution solution =
-                new EthHashSolution(nonce, mixedHash, currentInput.getPrePowHash());
-            if (submitCallback.apply(solution)) {
-              String accept =
-                  mapper.writeValueAsString(new MinerNotifyResponse(message.getId(), true, null));
-              conn.send(accept + "\n");
-              return;
-            }
-          }
+        if (submitCallback.apply(nonce)) {
+          String accept =
+              mapper.writeValueAsString(new MinerNotifyResponse(message.getId(), true, null));
+          conn.send(accept + "\n");
+          return;
         }
-        String accept =
-            mapper.writeValueAsString(new MinerNotifyResponse(message.getId(), false, null));
-        conn.send(accept + "\n");
       }
+      String reject =
+          mapper.writeValueAsString(new MinerNotifyResponse(message.getId(), false, null));
+      conn.send(reject + "\n");
     } catch (IOException e) {
       logger.debug(e.getMessage(), e);
       conn.close(null);
@@ -274,7 +243,6 @@ public class Stratum1Protocol implements StratumProtocol {
 
   @Override
   public void solveFor(final EthHashSolverInputs input) {
-    this.currentJobId = jobIdSupplier.get();
     this.currentInput = input;
     logger.debug("Sending new work to miners: {}", input);
     for (StratumConnection conn : activeConnections) {
@@ -283,7 +251,7 @@ public class Stratum1Protocol implements StratumProtocol {
   }
 
   @Override
-  public void setSubmitCallback(final Function<EthHashSolution, Boolean> submitSolutionCallback) {
+  public void setSubmitCallback(final Function<Long, Boolean> submitSolutionCallback) {
     this.submitCallback = submitSolutionCallback;
   }
 }

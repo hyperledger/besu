@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.blockcreation.stratum;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
-import org.hyperledger.besu.ethereum.mainnet.EthHashSolution;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
 
 import java.util.concurrent.CompletableFuture;
@@ -95,7 +94,7 @@ public class StratumServer {
     }
   }
 
-  public void setSubmitCallback(final Function<EthHashSolution, Boolean> submitSolutionCallback) {
+  public void setSubmitCallback(final Function<Long, Boolean> submitSolutionCallback) {
     for (StratumProtocol protocol : protocols) {
       protocol.setSubmitCallback(submitSolutionCallback);
     }

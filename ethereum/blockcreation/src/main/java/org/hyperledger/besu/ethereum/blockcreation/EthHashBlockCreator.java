@@ -104,8 +104,8 @@ public class EthHashBlockCreator extends AbstractBlockCreator<Void> {
     return nonceSolver.hashesPerSecond();
   }
 
-  public boolean submitWork(final EthHashSolution solution) {
-    return nonceSolver.submitSolution(solution);
+  public boolean submitWork(final long nonce) {
+    return nonceSolver.submitSolution(nonce);
   }
 
   @Override

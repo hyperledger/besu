@@ -14,12 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import static org.apache.logging.log4j.LogManager.getLogger;
+
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.util.bytes.Bytes32;
 import org.hyperledger.besu.util.bytes.BytesValue;
 import org.hyperledger.besu.util.uint.UInt256;
 
-import java.util.Arrays;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -27,8 +28,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import com.google.common.base.Stopwatch;
+import org.apache.logging.log4j.Logger;
 
 public class EthHashSolver {
+
+  private static final Logger logger = getLogger();
 
   public static class EthHashSolverJob {
 
@@ -157,23 +161,21 @@ public class EthHashSolver {
     return Optional.of(hashesPerSecond);
   }
 
-  public boolean submitSolution(final EthHashSolution solution) {
+  public boolean submitSolution(final long nonce) {
     final Optional<EthHashSolverJob> jobSnapshot = currentJob;
     if (jobSnapshot.isEmpty()) {
+      logger.debug("No current job, rejecting miner work");
       return false;
     }
 
     final EthHashSolverJob job = jobSnapshot.get();
     final EthHashSolverInputs inputs = job.getInputs();
-    if (!Arrays.equals(inputs.getPrePowHash(), solution.getPowHash())) {
-      return false;
-    }
     final byte[] hashBuffer = new byte[64];
-    final Optional<EthHashSolution> calculatedSolution =
-        testNonce(inputs, solution.getNonce(), hashBuffer);
+    final Optional<EthHashSolution> calculatedSolution = testNonce(inputs, nonce, hashBuffer);
 
     if (calculatedSolution.isPresent()) {
-      currentJob.get().solvedWith(solution);
+      logger.debug("Accepting a solution from a miner");
+      currentJob.get().solvedWith(calculatedSolution.get());
       return true;
     }
     return false;

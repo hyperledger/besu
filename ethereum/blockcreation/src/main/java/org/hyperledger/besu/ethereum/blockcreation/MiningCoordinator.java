@@ -19,7 +19,6 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.mainnet.EthHashSolution;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
 import org.hyperledger.besu.util.bytes.BytesValue;
 
@@ -70,7 +69,7 @@ public interface MiningCoordinator {
         "Current consensus mechanism prevents querying work definition.");
   }
 
-  default boolean submitWork(final EthHashSolution solution) {
+  default boolean submitWork(final long nonce) {
     throw new UnsupportedOperationException(
         "Current consensus mechanism prevents submission of work solutions.");
   }
