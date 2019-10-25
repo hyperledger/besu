@@ -25,7 +25,7 @@ import java.util.Collection;
 public class PoAMetricServiceImpl implements PoAMetricsService {
 
   private final BlockInterface blockInterface;
-  private final Blockchain blockchain;
+  protected final Blockchain blockchain;
 
   public PoAMetricServiceImpl(final BlockInterface blockInterface, final Blockchain blockchain) {
     this.blockInterface = blockInterface;

@@ -63,6 +63,8 @@ import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.consensus.common.PoAContext;
 import org.hyperledger.besu.consensus.common.PoAMetricServiceImpl;
+import org.hyperledger.besu.consensus.ibft.IbftContext;
+import org.hyperledger.besu.consensus.ibft.queries.IbftQueriesImpl;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.controller.KeyPairUtil;
@@ -103,6 +105,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 import org.hyperledger.besu.plugin.services.StorageService;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
+import org.hyperledger.besu.plugin.services.metrics.IbftQueries;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
 import org.hyperledger.besu.plugin.services.metrics.PoAMetricsService;
@@ -937,12 +940,20 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     final Object consensusState = besuController.getProtocolContext().getConsensusState();
 
-    if (consensusState != null && PoAContext.class.isAssignableFrom(consensusState.getClass())) {
-      final PoAMetricServiceImpl service =
-          new PoAMetricServiceImpl(
-              ((PoAContext) consensusState).getBlockInterface(),
-              besuController.getProtocolContext().getBlockchain());
-      besuPluginContext.addService(PoAMetricsService.class, service);
+    if (consensusState != null) {
+      if (IbftContext.class.isAssignableFrom(consensusState.getClass())) {
+        final IbftQueriesImpl ibftQueries =
+            new IbftQueriesImpl(
+                ((PoAContext) consensusState).getBlockInterface(),
+                besuController.getProtocolContext().getBlockchain());
+        besuPluginContext.addService(IbftQueries.class, ibftQueries);
+      } else if (PoAContext.class.isAssignableFrom(consensusState.getClass())) {
+        final PoAMetricServiceImpl service =
+            new PoAMetricServiceImpl(
+                ((PoAContext) consensusState).getBlockInterface(),
+                besuController.getProtocolContext().getBlockchain());
+        besuPluginContext.addService(PoAMetricsService.class, service);
+      }
     }
   }
 

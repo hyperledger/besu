@@ -25,9 +25,9 @@ import java.util.Collection;
 public interface PoAMetricsService {
 
   /**
-   * Retrieves the validators who have signed the latest block from the canonical chain.
+   * Retrieves the validators specified in the latest block from the canonical chain.
    *
-   * @return Identities of the validators who formed quorum on the latest block.
+   * @return Adresses of all validators in the latest canonical block.
    */
   Collection<Address> getValidatorsForLatestBlock();
 
