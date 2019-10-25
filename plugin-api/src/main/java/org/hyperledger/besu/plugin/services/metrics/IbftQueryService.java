@@ -18,9 +18,9 @@ import org.hyperledger.besu.plugin.data.Address;
 
 import java.util.Collection;
 
-public interface IbftQueries extends PoAMetricsService {
+public interface IbftQueryService extends PoAMetricsService {
 
-  public int getRoundNumberFromCanonicalHead();
+  int getRoundNumberFromCanonicalHead();
 
-  public Collection<Address> getSignersFromCanonicalHead();
+  Collection<Address> getSignersFromCanonicalHead();
 }
