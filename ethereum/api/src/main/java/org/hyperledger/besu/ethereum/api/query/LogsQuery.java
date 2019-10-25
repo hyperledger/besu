@@ -16,6 +16,10 @@
  */
 package org.hyperledger.besu.ethereum.api.query;
 
+import static java.util.Collections.emptyList;
+import static java.util.stream.Collectors.toUnmodifiableList;
+
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TopicsDeserializer;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.LogTopic;
@@ -24,33 +28,42 @@ import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.google.common.collect.Lists;
 
 public class LogsQuery {
 
-  private final List<Address> queryAddresses;
-  private final List<List<LogTopic>> queryTopics;
+  private final List<Address> addresses;
+  private final List<List<LogTopic>> topics;
   private final List<LogsBloomFilter> addressBlooms;
   private final List<List<LogsBloomFilter>> topicsBlooms;
 
-  private LogsQuery(final List<Address> queryAddresses, final List<List<LogTopic>> queryTopics) {
-    this.queryAddresses = queryAddresses;
-    this.queryTopics = queryTopics;
-    addressBlooms =
-        this.queryAddresses.stream()
-            .map(LogsBloomFilter::computeBytes)
-            .collect(Collectors.toList());
-    topicsBlooms =
-        this.queryTopics.stream()
+  @JsonCreator
+  public LogsQuery(
+      @JsonFormat(with = JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY) @JsonProperty("address")
+          final List<Address> addresses,
+      @JsonDeserialize(using = TopicsDeserializer.class) @JsonProperty("topics")
+          final List<List<LogTopic>> topics) {
+    this.addresses = Optional.ofNullable(addresses).orElse(emptyList());
+    this.topics = Optional.ofNullable(topics).orElse(emptyList());
+    this.addressBlooms =
+        this.addresses.stream().map(LogsBloomFilter::computeBytes).collect(toUnmodifiableList());
+    this.topicsBlooms =
+        this.topics.stream()
             .map(
-                topics ->
-                    topics.stream()
+                subTopics ->
+                    subTopics.stream()
                         .filter(Objects::nonNull)
                         .map(LogsBloomFilter::computeBytes)
                         .collect(Collectors.toList()))
-            .collect(Collectors.toList());
+            .collect(toUnmodifiableList());
   }
 
   public boolean couldMatch(final LogsBloomFilter bloom) {
@@ -66,22 +79,14 @@ public class LogsQuery {
   }
 
   private boolean matchesAddresses(final Address address) {
-    return queryAddresses.isEmpty() || queryAddresses.contains(address);
+    return addresses.isEmpty() || addresses.contains(address);
   }
 
   private boolean matchesTopics(final List<LogTopic> topics) {
-    if (queryTopics.isEmpty()) {
-      return true;
-    }
-    if (topics.size() < queryTopics.size()) {
-      return false;
-    }
-    for (int i = 0; i < queryTopics.size(); ++i) {
-      if (!matchesTopic(topics.get(i), queryTopics.get(i))) {
-        return false;
-      }
-    }
-    return true;
+    return this.topics.isEmpty()
+        || (topics.size() >= this.topics.size()
+            && IntStream.range(0, this.topics.size())
+                .allMatch(i -> matchesTopic(topics.get(i), this.topics.get(i))));
   }
 
   private boolean matchesTopic(final LogTopic topic, final List<LogTopic> matchCriteria) {
@@ -93,13 +98,19 @@ public class LogsQuery {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     final LogsQuery logsQuery = (LogsQuery) o;
-    return Objects.equals(queryAddresses, logsQuery.queryAddresses)
-        && Objects.equals(queryTopics, logsQuery.queryTopics);
+    return Objects.equals(addresses, logsQuery.addresses)
+        && Objects.equals(topics, logsQuery.topics);
+  }
+
+  @Override
+  public String toString() {
+    return String.format(
+        "%s{addresses=%s, topics=%s", getClass().getSimpleName(), addresses, topics);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(queryAddresses, queryTopics);
+    return Objects.hash(addresses, topics);
   }
 
   public static class Builder {
@@ -130,13 +141,6 @@ public class LogsQuery {
     public Builder topics(final List<List<LogTopic>> topics) {
       if (topics != null && !topics.isEmpty()) {
         queryTopics.addAll(topics);
-      }
-      return this;
-    }
-
-    public Builder topics(final TopicsParameter topicsParameter) {
-      if (topicsParameter != null) {
-        topics(topicsParameter.getTopics());
       }
       return this;
     }

@@ -44,7 +44,7 @@ public class LogTopic extends DelegatingBytesValue {
   }
 
   public static LogTopic fromHexString(final String str) {
-    return new LogTopic(BytesValue.fromHexString(str));
+    return str == null ? null : LogTopic.create(BytesValue.fromHexString(str));
   }
 
   /**
