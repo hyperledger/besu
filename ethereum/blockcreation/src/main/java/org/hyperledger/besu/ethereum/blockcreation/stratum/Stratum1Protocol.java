@@ -28,7 +28,9 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.json.JsonMapper;
@@ -49,37 +51,36 @@ public class Stratum1Protocol implements StratumProtocol {
         return timeValue.slice(timeValue.size() - 4, 4).toUnprefixedString();
       };
 
-  @JsonIgnoreProperties(ignoreUnknown = true)
+  @JsonIgnoreProperties("jsonrpc")
   private static final class MinerMessage {
 
     private int id;
-
     private String method;
-
     private String[] params;
 
+    @JsonCreator
+    public MinerMessage(
+        @JsonProperty("id") int id,
+        @JsonProperty("method") String method,
+        @JsonProperty("params") String[] params) {
+      this.id = id;
+      this.method = method;
+      this.params = params;
+    }
+
+    @JsonProperty("id")
     public int getId() {
       return id;
     }
 
-    public void setId(final int id) {
-      this.id = id;
-    }
-
+    @JsonProperty("method")
     public String getMethod() {
       return method;
     }
 
-    public void setMethod(final String method) {
-      this.method = method;
-    }
-
+    @JsonProperty("params")
     public String[] getParams() {
       return params;
-    }
-
-    public void setParams(final String[] params) {
-      this.params = params;
     }
   }
 
@@ -96,18 +97,22 @@ public class Stratum1Protocol implements StratumProtocol {
       this.error = error;
     }
 
+    @JsonProperty("id")
     public int getId() {
       return id;
     }
 
+    @JsonProperty("result")
     public Object getResult() {
       return result;
     }
 
+    @JsonProperty("error")
     public Object[] getError() {
       return error;
     }
 
+    @JsonProperty("jsonrpc")
     public String getJsonrpc() {
       return "2.0";
     }
@@ -124,14 +129,17 @@ public class Stratum1Protocol implements StratumProtocol {
       this.input = input;
     }
 
+    @JsonProperty("id")
     public String getId() {
       return null;
     }
 
+    @JsonProperty("method")
     public String getMethod() {
       return "mining.notify";
     }
 
+    @JsonProperty("params")
     public Object[] getParams() {
       final byte[] dagSeed = DirectAcyclicGraphSeed.dagSeed(input.getBlockNumber());
       return new Object[] {
@@ -143,6 +151,7 @@ public class Stratum1Protocol implements StratumProtocol {
       };
     }
 
+    @JsonProperty("jsonrpc")
     public String getJsonrpc() {
       return "2.0";
     }
