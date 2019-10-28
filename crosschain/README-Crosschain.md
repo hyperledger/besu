@@ -64,7 +64,7 @@ The script `crosschain/run_node.js <chainId>` invokes Pantheon with the appropri
 
 ------------  
 
-## 4. FYI: creating a Genesis File
+## FYI: creating a Genesis File
 
 As stated, this is all done for you by the script `crosschain/create_chain.js`, but as a FYI here is the manual process to create an IBFT2 crosschain-enabled genesis file with the account address of the validator nodes.  
 The `genesis_template.json` file can be used as a template, but needs to be customized with the address of your node/s. To do so::
@@ -74,5 +74,7 @@ The `genesis_template.json` file can be used as a template, but needs to be cust
 4. make Besu RLP-encode the extraData structure containing the address in the JSON file
 5. Copy the extradata text into the "extradata" field of the genesis file
 
+## 4. Creating Threshold Keys
 
+Run CrosschainPocGenerateKeys.java file to generate keys
 
