@@ -55,6 +55,7 @@ public class IbftMiningCoordinator implements MiningCoordinator, BlockAddedObser
   private final IbftEventQueue eventQueue;
   private final IbftExecutors ibftExecutors;
 
+  private long blockAddedObserverId;
   private AtomicReference<State> state = new AtomicReference<>(State.IDLE);
 
   public IbftMiningCoordinator(
@@ -71,13 +72,13 @@ public class IbftMiningCoordinator implements MiningCoordinator, BlockAddedObser
     this.eventQueue = eventQueue;
 
     this.blockchain = blockchain;
-    this.blockchain.observeBlockAdded(this);
   }
 
   @Override
   public void start() {
     if (state.compareAndSet(State.IDLE, State.RUNNING)) {
       ibftExecutors.start();
+      blockAddedObserverId = blockchain.observeBlockAdded(this);
       controller.start();
       ibftExecutors.executeIbftProcessor(ibftProcessor);
     }
@@ -86,6 +87,7 @@ public class IbftMiningCoordinator implements MiningCoordinator, BlockAddedObser
   @Override
   public void stop() {
     if (state.compareAndSet(State.RUNNING, State.STOPPED)) {
+      blockchain.removeObserver(blockAddedObserverId);
       ibftProcessor.stop();
       // Make sure the processor has stopped before shutting down the executors
       try {

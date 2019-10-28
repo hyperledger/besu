@@ -49,7 +49,7 @@ public class EthMiningTest {
   }
 
   @Test
-  public void shouldReturnTrueWhenMiningCoordinatorExistsAndRunning() {
+  public void shouldReturnTrueWhenMining() {
     final JsonRpcRequest request = requestWithParams();
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(request.getId(), true);
     when(miningCoordinator.isMining()).thenReturn(true);
@@ -61,7 +61,7 @@ public class EthMiningTest {
   }
 
   @Test
-  public void shouldReturnFalseWhenMiningCoordinatorExistsAndDisabled() {
+  public void shouldReturnFalseWhenNotMining() {
     final JsonRpcRequest request = requestWithParams();
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(request.getId(), false);
     when(miningCoordinator.isMining()).thenReturn(false);
