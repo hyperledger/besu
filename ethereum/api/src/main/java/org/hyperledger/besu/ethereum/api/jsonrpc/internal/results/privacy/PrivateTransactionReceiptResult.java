@@ -50,7 +50,7 @@ public class PrivateTransactionReceiptResult {
   private final List<BytesValue> privateFor;
   private final BytesValue privacyGroupId;
   private final BytesValue revertReason;
-  private final String status;
+  private final BytesValue status;
   private final List<TransactionReceiptLogResult> logs;
 
   public PrivateTransactionReceiptResult(
@@ -68,7 +68,7 @@ public class PrivateTransactionReceiptResult {
       final List<BytesValue> privateFor,
       final BytesValue privacyGroupId,
       final BytesValue revertReason,
-      final String status) {
+      final BytesValue status) {
     this.contractAddress = contractAddress;
     this.from = from;
     this.to = to;
@@ -139,7 +139,7 @@ public class PrivateTransactionReceiptResult {
   }
 
   @JsonGetter("status")
-  public String getStatus() {
+  public BytesValue getStatus() {
     return status;
   }
 
