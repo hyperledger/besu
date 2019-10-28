@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -232,7 +233,8 @@ public class FilterManagerTest {
         new BlockDataGenerator.BlockOptions().setBlockNumber(blockNumber).setParentHash(parentHash);
     currentBlock = blockGenerator.block(options);
     filterManager.recordBlockEvent(
-        BlockAddedEvent.createForHeadAdvancement(currentBlock), blockchainQueries.getBlockchain());
+        BlockAddedEvent.createForHeadAdvancement(currentBlock, Collections.emptyList()),
+        blockchainQueries.getBlockchain());
     return currentBlock.getHash();
   }
 
