@@ -25,7 +25,7 @@ import org.hyperledger.besu.enclave.EnclaveException;
 import org.hyperledger.besu.enclave.types.FindPrivacyGroupRequest;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.enclave.types.PrivacyGroup.Type;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea.EeaPrivateNonceProvider;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivateEeaNonceProvider;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionHandler;
 
@@ -33,20 +33,20 @@ import com.google.common.collect.Lists;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
-public class EeaPrivateNonceProviderTest {
+public class PrivateEeaNonceProviderTest {
 
   private final Address address = Address.fromHexString("55");
-  private Enclave enclave = mock(Enclave.class);
-  private PrivateTransactionHandler privateTransactionHandler =
+  private final Enclave enclave = mock(Enclave.class);
+  private final PrivateTransactionHandler privateTransactionHandler =
       mock(PrivateTransactionHandler.class);
 
-  private final EeaPrivateNonceProvider nonceProvider =
-      new EeaPrivateNonceProvider(enclave, privateTransactionHandler);
+  private final PrivateEeaNonceProvider nonceProvider =
+      new PrivateEeaNonceProvider(enclave, privateTransactionHandler);
 
   @Test
   public void validRequestProducesExpectedNonce() {
     final long reportedNonce = 8L;
-    PrivacyGroup[] returnedGroups =
+    final PrivacyGroup[] returnedGroups =
         new PrivacyGroup[] {
           new PrivacyGroup("Group1", Type.LEGACY, "Group1_Name", "Group1_Desc", new String[0]),
         };
@@ -68,7 +68,7 @@ public class EeaPrivateNonceProviderTest {
   @Test
   public void noMatchingLegacyGroupsProducesExpectedNonce() {
     final long reportedNonce = 0L;
-    PrivacyGroup[] returnedGroups = new PrivacyGroup[0];
+    final PrivacyGroup[] returnedGroups = new PrivacyGroup[0];
 
     final ArgumentCaptor<FindPrivacyGroupRequest> groupMembersCaptor =
         ArgumentCaptor.forClass(FindPrivacyGroupRequest.class);
@@ -86,7 +86,7 @@ public class EeaPrivateNonceProviderTest {
 
   @Test
   public void moreThanOneMatchingLegacyGroupThrowsException() {
-    PrivacyGroup[] returnedGroups =
+    final PrivacyGroup[] returnedGroups =
         new PrivacyGroup[] {
           new PrivacyGroup("Group1", Type.LEGACY, "Group1_Name", "Group1_Desc", new String[0]),
           new PrivacyGroup("Group2", Type.LEGACY, "Group2_Name", "Group2_Desc", new String[0]),

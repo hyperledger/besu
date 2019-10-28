@@ -81,9 +81,6 @@ public class ECIESEncryptionEngine {
   private final SECP256K1.PublicKey ephPubKey;
   private final byte[] iv;
 
-  // TODO: This V is possibly redundant.
-  private final byte[] V = new byte[0];
-
   private ECIESEncryptionEngine(
       final CipherParameters pubParam,
       final CipherParameters privParam,
@@ -209,22 +206,16 @@ public class ECIESEncryptionEngine {
       mac.update(P2, 0, P2.length);
     }
 
-    if (V.length != 0 && P2 != null) {
-      final byte[] L2 = Pack.intToBigEndian(P2.length * 8);
-      mac.update(L2, 0, L2.length);
-    }
-
     if (macData != null) {
       mac.update(macData, 0, macData.length);
     }
 
     mac.doFinal(T, 0);
 
-    // Output the triple (V,C,T).
-    final byte[] Output = new byte[V.length + len + T.length];
-    System.arraycopy(V, 0, Output, 0, V.length);
-    System.arraycopy(C, 0, Output, V.length, len);
-    System.arraycopy(T, 0, Output, V.length + len, T.length);
+    final byte[] Output = new byte[len + T.length];
+    System.arraycopy(C, 0, Output, 0, len);
+    System.arraycopy(T, 0, Output, len, T.length);
+
     return Output;
   }
 
@@ -271,8 +262,8 @@ public class ECIESEncryptionEngine {
     // Use IV to initialize cipher.
     cipher.init(false, new ParametersWithIV(new KeyParameter(K1), iv));
 
-    M = new byte[cipher.getOutputSize(inLen - V.length - mac.getMacSize())];
-    len = cipher.processBytes(inEnc, inOff + V.length, inLen - V.length - mac.getMacSize(), M, 0);
+    M = new byte[cipher.getOutputSize(inLen - mac.getMacSize())];
+    len = cipher.processBytes(inEnc, inOff, inLen - mac.getMacSize(), M, 0);
     len += cipher.doFinal(M, len);
 
     // Convert the length of the encoding vector into a byte array.
@@ -290,15 +281,10 @@ public class ECIESEncryptionEngine {
 
     mac.init(new KeyParameter(K2hash));
     mac.update(iv, 0, iv.length);
-    mac.update(inEnc, inOff + V.length, inLen - V.length - T2.length);
+    mac.update(inEnc, inOff, inLen - T2.length);
 
     if (P2 != null) {
       mac.update(P2, 0, P2.length);
-    }
-
-    if (V.length != 0 && P2 != null) {
-      final byte[] L2 = Pack.intToBigEndian(P2.length * 8);
-      mac.update(L2, 0, L2.length);
     }
 
     if (commonMac != null) {

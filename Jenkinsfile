@@ -92,7 +92,7 @@ exit $status
                     docker.image(build_image).inside("--link ${d.id}:docker") {
                         try {
                             stage(stage_name + 'Prepare') {
-                                sh './gradlew --no-daemon --parallel clean compileJava compileTestJava assemble'
+                                sh './gradlew --no-daemon --parallel clean spotlessCheck compileJava compileTestJava assemble'
                             }
                             stage(stage_name + 'Unit tests') {
                                 sh './gradlew --no-daemon --parallel build'

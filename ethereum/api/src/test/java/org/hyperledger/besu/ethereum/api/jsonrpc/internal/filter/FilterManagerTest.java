@@ -22,7 +22,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.queries.BlockchainQueries;
+import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -232,13 +233,14 @@ public class FilterManagerTest {
         new BlockDataGenerator.BlockOptions().setBlockNumber(blockNumber).setParentHash(parentHash);
     currentBlock = blockGenerator.block(options);
     filterManager.recordBlockEvent(
-        BlockAddedEvent.createForHeadAdvancement(currentBlock), blockchainQueries.getBlockchain());
+        BlockAddedEvent.createForHeadAdvancement(currentBlock, Collections.emptyList()),
+        blockchainQueries.getBlockchain());
     return currentBlock.getHash();
   }
 
   private Hash receivePendingTransaction() {
     final Transaction transaction = blockGenerator.transaction();
     filterManager.recordPendingTransactionEvent(transaction);
-    return transaction.hash();
+    return transaction.getHash();
   }
 }

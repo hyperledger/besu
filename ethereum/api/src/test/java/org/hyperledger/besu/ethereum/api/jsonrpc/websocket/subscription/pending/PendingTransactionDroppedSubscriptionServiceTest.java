@@ -97,7 +97,7 @@ public class PendingTransactionDroppedSubscriptionServiceTest {
 
   private Transaction transaction(final Hash hash) {
     final Transaction tx = mock(Transaction.class);
-    when(tx.hash()).thenReturn(hash);
+    when(tx.getHash()).thenReturn(hash);
     return tx;
   }
 

@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter;
 
-import org.hyperledger.besu.ethereum.api.BlockWithMetadata;
-import org.hyperledger.besu.ethereum.api.TransactionWithMetadata;
-import org.hyperledger.besu.ethereum.api.graphql.internal.BlockchainQuery;
+import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
+import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.util.uint.UInt256;
@@ -51,7 +51,7 @@ public class NormalBlockAdapter extends BlockAdapterBase {
   }
 
   public List<UncleBlockAdapter> getOmmers(final DataFetchingEnvironment environment) {
-    final BlockchainQuery query = getBlockchainQuery(environment);
+    final BlockchainQueries query = getBlockchainQueries(environment);
     final List<Hash> ommers = blockWithMetaData.getOmmers();
     final List<UncleBlockAdapter> results = new ArrayList<>();
     final Hash hash = blockWithMetaData.getHeader().getHash();
@@ -64,7 +64,7 @@ public class NormalBlockAdapter extends BlockAdapterBase {
   }
 
   public Optional<UncleBlockAdapter> getOmmerAt(final DataFetchingEnvironment environment) {
-    final BlockchainQuery query = getBlockchainQuery(environment);
+    final BlockchainQueries query = getBlockchainQueries(environment);
     final int index = environment.getArgument("index");
     final List<Hash> ommers = blockWithMetaData.getOmmers();
     if (ommers.size() > index) {

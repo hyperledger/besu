@@ -1,4 +1,5 @@
 /*
+ *
  * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
@@ -11,8 +12,9 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
+ *
  */
-package org.hyperledger.besu.ethereum.api;
+package org.hyperledger.besu.ethereum.api.query;
 
 import org.hyperledger.besu.ethereum.core.LogTopic;
 import org.hyperledger.besu.util.bytes.BytesValue;
@@ -20,13 +22,10 @@ import org.hyperledger.besu.util.bytes.BytesValue;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-
 public class TopicsParameter {
 
   private final List<List<LogTopic>> queryTopics = new ArrayList<>();
 
-  @JsonCreator
   public TopicsParameter(final List<List<String>> topics) {
     if (topics != null) {
       for (final List<String> list : topics) {

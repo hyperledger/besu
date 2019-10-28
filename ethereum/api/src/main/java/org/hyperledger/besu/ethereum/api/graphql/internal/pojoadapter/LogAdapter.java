@@ -14,11 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter;
 
-import org.hyperledger.besu.ethereum.api.LogWithMetadata;
-import org.hyperledger.besu.ethereum.api.TransactionWithMetadata;
-import org.hyperledger.besu.ethereum.api.graphql.internal.BlockchainQuery;
+import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogTopic;
+import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.util.bytes.Bytes32;
 import org.hyperledger.besu.util.bytes.BytesValue;
 
@@ -54,14 +54,14 @@ public class LogAdapter extends AdapterBase {
   }
 
   public Optional<TransactionAdapter> getTransaction(final DataFetchingEnvironment environment) {
-    final BlockchainQuery query = getBlockchainQuery(environment);
+    final BlockchainQueries query = getBlockchainQueries(environment);
     final Hash hash = logWithMetadata.getTransactionHash();
     final Optional<TransactionWithMetadata> tran = query.transactionByHash(hash);
     return tran.map(TransactionAdapter::new);
   }
 
   public Optional<AccountAdapter> getAccount(final DataFetchingEnvironment environment) {
-    final BlockchainQuery query = getBlockchainQuery(environment);
+    final BlockchainQueries query = getBlockchainQueries(environment);
     long blockNumber = logWithMetadata.getBlockNumber();
     final Long bn = environment.getArgument("block");
     if (bn != null) {
@@ -70,6 +70,6 @@ public class LogAdapter extends AdapterBase {
 
     return query
         .getWorldState(blockNumber)
-        .map(ws -> new AccountAdapter(ws.get(logWithMetadata.getAddress())));
+        .map(ws -> new AccountAdapter(ws.get(logWithMetadata.getLogger())));
   }
 }

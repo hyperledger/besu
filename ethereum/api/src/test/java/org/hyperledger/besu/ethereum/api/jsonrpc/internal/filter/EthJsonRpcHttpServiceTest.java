@@ -38,7 +38,7 @@ public class EthJsonRpcHttpServiceTest extends AbstractJsonRpcHttpServiceTest {
     final Block block = blockchainSetupUtil.getBlock(blockNumber);
     final Transaction transaction = block.getBody().getTransactions().get(transactionIndex);
     filterManager.recordPendingTransactionEvent(transaction);
-    return transaction.hash();
+    return transaction.getHash();
   }
 
   @Test

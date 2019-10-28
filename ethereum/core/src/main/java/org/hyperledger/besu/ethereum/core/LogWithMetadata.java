@@ -1,4 +1,5 @@
 /*
+ *
  * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
@@ -11,19 +12,18 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
+ *
  */
-package org.hyperledger.besu.ethereum.api;
+package org.hyperledger.besu.ethereum.core;
 
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.LogTopic;
 import org.hyperledger.besu.util.bytes.BytesValue;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.google.common.base.MoreObjects;
 
-public class LogWithMetadata {
+public class LogWithMetadata extends Log {
 
   private final int logIndex;
   private final long blockNumber;
@@ -45,6 +45,7 @@ public class LogWithMetadata {
       final BytesValue data,
       final List<LogTopic> topics,
       final boolean removed) {
+    super(address, data, topics);
     this.logIndex = logIndex;
     this.blockNumber = blockNumber;
     this.blockHash = blockHash;
@@ -54,6 +55,48 @@ public class LogWithMetadata {
     this.data = data;
     this.topics = topics;
     this.removed = removed;
+  }
+
+  public static List<LogWithMetadata> generate(
+      final TransactionReceipt receipt,
+      final long number,
+      final Hash blockHash,
+      final Hash transactionHash,
+      final int transactionIndex,
+      final boolean removed) {
+
+    final List<LogWithMetadata> logs = new ArrayList<>();
+    for (int logIndex = 0; logIndex < receipt.getLogs().size(); ++logIndex) {
+      logs.add(
+          new LogWithMetadata(
+              logIndex,
+              number,
+              blockHash,
+              transactionHash,
+              transactionIndex,
+              receipt.getLogs().get(logIndex).getLogger(),
+              receipt.getLogs().get(logIndex).getData(),
+              receipt.getLogs().get(logIndex).getTopics(),
+              removed));
+    }
+
+    return logs;
+  }
+
+  public static List<LogWithMetadata> generate(
+      final Block block, final List<TransactionReceipt> receipts, final boolean removed) {
+    final List<LogWithMetadata> logsWithMetadata = new ArrayList<>();
+    for (int txi = 0; txi < receipts.size(); ++txi) {
+      logsWithMetadata.addAll(
+          generate(
+              receipts.get(txi),
+              block.getHeader().getNumber(),
+              block.getHash(),
+              block.getBody().getTransactions().get(txi).getHash(),
+              txi,
+              removed));
+    }
+    return logsWithMetadata;
   }
 
   // The index of this log within the entire ordered list of logs associated with the block this log
@@ -78,14 +121,17 @@ public class LogWithMetadata {
     return transactionIndex;
   }
 
-  public Address getAddress() {
+  @Override
+  public Address getLogger() {
     return address;
   }
 
+  @Override
   public BytesValue getData() {
     return data;
   }
 
+  @Override
   public List<LogTopic> getTopics() {
     return topics;
   }

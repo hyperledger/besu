@@ -83,7 +83,7 @@ public class EeaSendRawTransaction extends AbstractSendTransaction implements Js
               .either(
                   () ->
                       new JsonRpcSuccessResponse(
-                          request.getId(), privacyMarkerTransaction.hash().toString()),
+                          request.getId(), privacyMarkerTransaction.getHash().toString()),
                   errorReason ->
                       new JsonRpcErrorResponse(
                           request.getId(),
