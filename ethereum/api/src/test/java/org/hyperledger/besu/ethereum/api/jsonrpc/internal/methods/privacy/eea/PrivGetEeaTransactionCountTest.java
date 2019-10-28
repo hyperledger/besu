@@ -20,8 +20,8 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea.EeaGetTransactionCount;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea.EeaPrivateNonceProvider;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivGetEeaTransactionCount;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivateEeaNonceProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -31,9 +31,9 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.junit.Before;
 import org.junit.Test;
 
-public class EeaGetTransactionCountTest {
+public class PrivGetEeaTransactionCountTest {
 
-  private EeaPrivateNonceProvider nonceProvider = mock(EeaPrivateNonceProvider.class);
+  private final PrivateEeaNonceProvider nonceProvider = mock(PrivateEeaNonceProvider.class);
   private JsonRpcRequest request;
 
   private final String privateFrom = "thePrivateFromKey";
@@ -43,14 +43,14 @@ public class EeaGetTransactionCountTest {
   @Before
   public void setup() {
     final Object[] jsonBody = new Object[] {address.toString(), privateFrom, privateFor};
-    request = new JsonRpcRequest("2.0", "eea_getTransactionCount", jsonBody);
+    request = new JsonRpcRequest("2.0", "priv_getEeaTransactionCount", jsonBody);
   }
 
   @Test
   public void validRequestProducesExpectedNonce() {
     final long reportedNonce = 8L;
-    final EeaGetTransactionCount method =
-        new EeaGetTransactionCount(new JsonRpcParameter(), nonceProvider);
+    final PrivGetEeaTransactionCount method =
+        new PrivGetEeaTransactionCount(new JsonRpcParameter(), nonceProvider);
 
     when(nonceProvider.determineNonce(privateFrom, privateFor, address)).thenReturn(reportedNonce);
 
@@ -58,14 +58,14 @@ public class EeaGetTransactionCountTest {
     assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);
 
     final JsonRpcSuccessResponse successResponse = (JsonRpcSuccessResponse) response;
-    int returnedValue = Integer.decode((String) successResponse.getResult());
+    final int returnedValue = Integer.decode((String) successResponse.getResult());
     assertThat(returnedValue).isEqualTo(reportedNonce);
   }
 
   @Test
   public void nonceProviderThrowsRuntimeExceptionProducesErrorResponse() {
-    final EeaGetTransactionCount method =
-        new EeaGetTransactionCount(new JsonRpcParameter(), nonceProvider);
+    final PrivGetEeaTransactionCount method =
+        new PrivGetEeaTransactionCount(new JsonRpcParameter(), nonceProvider);
 
     when(nonceProvider.determineNonce(privateFrom, privateFor, address))
         .thenThrow(RuntimeException.class);
@@ -80,8 +80,8 @@ public class EeaGetTransactionCountTest {
 
   @Test
   public void nonceProviderThrowsAnExceptionProducesErrorResponse() {
-    final EeaGetTransactionCount method =
-        new EeaGetTransactionCount(new JsonRpcParameter(), nonceProvider);
+    final PrivGetEeaTransactionCount method =
+        new PrivGetEeaTransactionCount(new JsonRpcParameter(), nonceProvider);
 
     when(nonceProvider.determineNonce(privateFrom, privateFor, address))
         .thenThrow(RuntimeException.class);

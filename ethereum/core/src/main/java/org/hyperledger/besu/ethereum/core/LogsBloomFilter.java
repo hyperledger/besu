@@ -76,6 +76,12 @@ public class LogsBloomFilter implements UnformattedData {
     return bloom;
   }
 
+  public static LogsBloomFilter computeBytes(final BytesValue bytesValue) {
+    final LogsBloomFilter bloom = new LogsBloomFilter();
+    bloom.insertBytesValue(bytesValue);
+    return bloom;
+  }
+
   /**
    * Creates a bloom filter from the given RLP-encoded input.
    *
@@ -129,11 +135,15 @@ public class LogsBloomFilter implements UnformattedData {
   }
 
   public void insertLog(final Log log) {
-    setBits(keccak256(log.getLogger()));
+    insertBytesValue(log.getLogger());
 
     for (final LogTopic topic : log.getTopics()) {
-      setBits(keccak256(topic));
+      insertBytesValue(topic);
     }
+  }
+
+  private void insertBytesValue(final BytesValue bytesValue) {
+    setBits(keccak256(bytesValue));
   }
 
   private void setBit(final int index) {
@@ -146,6 +156,22 @@ public class LogsBloomFilter implements UnformattedData {
     for (int i = 0; i < data.size(); ++i) {
       data.set(i, (byte) ((data.get(i) | other.data.get(i)) & 0xff));
     }
+  }
+
+  public boolean couldContain(final LogsBloomFilter subset) {
+    if (subset == null) {
+      return true;
+    }
+    if (subset.size() != data.size()) {
+      return false;
+    }
+    for (int i = 0; i < data.size(); i++) {
+      final byte subsetValue = subset.data.get(i);
+      if ((data.get(i) & subsetValue) != subsetValue) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @Override

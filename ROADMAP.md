@@ -10,7 +10,6 @@ Our key areas for now are:
 * Making Besu a First Class Client
 * Istanbul Support 
 * State Pruning 
-* Tracing APIs
 * Disaster recovery 
 
 ### Making Besu a First Class Client
@@ -28,24 +27,20 @@ Besu will support the upcoming Istanbul network upgrade and implement all requir
 
 State pruning will be implemented. State pruning reduces the disk space required for the Besu database by discarding outdated world state data. 
 
-### Tracing APIs 
-
-Additional tracing APIs to be added. 
-
 ### Disaster Recovery
 
 Support key-value storage in relational databases to solidify a robust Disaster Recovery process. Note: Orion to support Oracle and Postgres in 1.3. 
 
 ## Next (v1.4)
 The key areas for next are:
-* Privacy group modification 
+* Tracing APIs
 * Enhancing key management capabilities 
 * Migration tools  
 * Ethereum 1.x 
 
-### Privacy Group Modification 
+### Tracing APIs 
 
-Add the ability to add and remove privacy group members. 
+Additional tracing APIs to be added. 
 
 ### Enhancing Key Management
 

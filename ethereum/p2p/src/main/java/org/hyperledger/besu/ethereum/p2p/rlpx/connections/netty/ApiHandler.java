@@ -82,15 +82,14 @@ final class ApiHandler extends SimpleChannelInboundHandler<MessageData> {
             LOG.debug(
                 "Received Wire DISCONNECT ({}) from peer: {}",
                 reason.name(),
-                connection.getPeerInfo().getClientId());
+                connection.getPeerInfo());
           } catch (final RLPException e) {
             LOG.debug(
-                "Received Wire DISCONNECT with invalid RLP. Peer: {}",
-                connection.getPeerInfo().getClientId());
+                "Received Wire DISCONNECT with invalid RLP. Peer: {}", connection.getPeerInfo());
           } catch (final Exception e) {
             LOG.error(
                 "Received Wire DISCONNECT, but unable to parse reason. Peer: {}",
-                connection.getPeerInfo().getClientId(),
+                connection.getPeerInfo(),
                 e);
           }
           connection.terminateConnection(reason, true);

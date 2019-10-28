@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea;
+package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
@@ -29,22 +29,22 @@ import org.hyperledger.besu.ethereum.core.Address;
 
 import org.apache.logging.log4j.Logger;
 
-public class EeaGetTransactionCount implements JsonRpcMethod {
+public class PrivGetEeaTransactionCount implements JsonRpcMethod {
 
   private static final Logger LOG = getLogger();
 
   private final JsonRpcParameter parameters;
-  private final EeaPrivateNonceProvider nonceProvider;
+  private final PrivateEeaNonceProvider nonceProvider;
 
-  public EeaGetTransactionCount(
-      final JsonRpcParameter parameters, final EeaPrivateNonceProvider nonceProvider) {
+  public PrivGetEeaTransactionCount(
+      final JsonRpcParameter parameters, final PrivateEeaNonceProvider nonceProvider) {
     this.parameters = parameters;
     this.nonceProvider = nonceProvider;
   }
 
   @Override
   public String getName() {
-    return RpcMethod.EEA_GET_TRANSACTION_COUNT.getMethodName();
+    return RpcMethod.PRIV_GET_EEA_TRANSACTION_COUNT.getMethodName();
   }
 
   @Override

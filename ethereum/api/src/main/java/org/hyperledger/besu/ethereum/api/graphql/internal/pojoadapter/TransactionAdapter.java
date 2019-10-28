@@ -15,11 +15,11 @@
 package org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter;
 
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.api.query.LogWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.TransactionReceiptWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
@@ -167,13 +167,13 @@ public class TransactionAdapter extends AdapterBase {
   public List<LogAdapter> getLogs(final DataFetchingEnvironment environment) {
     final BlockchainQueries query = getBlockchainQueries(environment);
     final Hash hash = transactionWithMetadata.getTransaction().getHash();
-    final Optional<TransactionReceiptWithMetadata> tranRpt =
+    final Optional<TransactionReceiptWithMetadata> maybeTransactionReceiptWithMetadata =
         query.transactionReceiptByTransactionHash(hash);
     final List<LogAdapter> results = new ArrayList<>();
-    if (tranRpt.isPresent()) {
+    if (maybeTransactionReceiptWithMetadata.isPresent()) {
       final List<LogWithMetadata> logs =
-          BlockchainQueries.generateLogWithMetadataForTransaction(
-              tranRpt.get().getReceipt(),
+          LogWithMetadata.generate(
+              maybeTransactionReceiptWithMetadata.get().getReceipt(),
               transactionWithMetadata.getBlockNumber().get(),
               transactionWithMetadata.getBlockHash().get(),
               hash,
