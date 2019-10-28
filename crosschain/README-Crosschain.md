@@ -28,7 +28,7 @@ npm install crosschain
 To create 2 blockchains with chainIds 11 and 22 and with one node in each:
 ```bash
 crosschain/create_chain.js 11 1 
-crosschain/create_chain.js 22 2
+crosschain/create_chain.js 12 1
 ```
  ----------------
 ### Explanation:
