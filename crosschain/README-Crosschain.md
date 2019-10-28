@@ -25,10 +25,10 @@ npm install crosschain
 ## 2. Configuration and data location
 
 ### Quick start: 
-To create 2 blockchains with chainIds 11 and 22:
+To create 2 blockchains with chainIds 11 and 22 and with one node in each:
 ```bash
-crosschain/create_chain.js 11
-crosschain/create_chain.js 22
+crosschain/create_chain.js 11 1 
+crosschain/create_chain.js 22 2
 ```
  ----------------
 ### Explanation:
