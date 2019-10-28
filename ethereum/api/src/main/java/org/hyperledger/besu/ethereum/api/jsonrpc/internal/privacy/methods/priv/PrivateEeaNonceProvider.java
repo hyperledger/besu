@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea;
+package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.types.FindPrivacyGroupRequest;
@@ -27,12 +27,12 @@ import java.util.stream.Collectors;
 import com.google.common.collect.Lists;
 import org.bouncycastle.util.Arrays;
 
-public class EeaPrivateNonceProvider {
+public class PrivateEeaNonceProvider {
 
   private final Enclave enclave;
   private final PrivateTransactionHandler privateTransactionHandler;
 
-  public EeaPrivateNonceProvider(
+  public PrivateEeaNonceProvider(
       final Enclave enclave, final PrivateTransactionHandler privateTransactionHandler) {
     this.enclave = enclave;
     this.privateTransactionHandler = privateTransactionHandler;
