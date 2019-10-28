@@ -299,11 +299,15 @@ public abstract class BesuControllerBuilder<C> {
             syncState,
             ethProtocolManager);
 
+    final PluginServiceFactory additionalPluginServices =
+        createAdditionalPluginServices(blockchain);
+
     final SubProtocolConfiguration subProtocolConfiguration =
         createSubProtocolConfiguration(ethProtocolManager);
 
     final JsonRpcMethodFactory additionalJsonRpcMethodFactory =
         createAdditionalJsonRpcMethodFactory(protocolContext);
+
     return new BesuController<>(
         protocolSchedule,
         protocolContext,
@@ -327,7 +331,8 @@ public abstract class BesuControllerBuilder<C> {
           }
         },
         additionalJsonRpcMethodFactory,
-        nodeKeys);
+        nodeKeys,
+        additionalPluginServices);
   }
 
   protected void prepForBuild() {}
@@ -398,4 +403,7 @@ public abstract class BesuControllerBuilder<C> {
 
     return validators;
   }
+
+  protected abstract PluginServiceFactory createAdditionalPluginServices(
+      final Blockchain blockchain);
 }

@@ -87,6 +87,11 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder<Void> {
   }
 
   @Override
+  protected PluginServiceFactory createAdditionalPluginServices(final Blockchain blockchain) {
+    return new NoopPluginServiceFactory();
+  }
+
+  @Override
   protected ProtocolSchedule<Void> createProtocolSchedule() {
     return MainnetProtocolSchedule.fromConfig(
         genesisConfig.getConfigOptions(genesisConfigOverrides),

@@ -61,10 +61,6 @@ import org.hyperledger.besu.cli.util.CommandLineUtils;
 import org.hyperledger.besu.cli.util.ConfigOptionSearchAndRunHandler;
 import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.config.GenesisConfigFile;
-import org.hyperledger.besu.consensus.common.PoAContext;
-import org.hyperledger.besu.consensus.common.PoAMetricServiceImpl;
-import org.hyperledger.besu.consensus.ibft.IbftContext;
-import org.hyperledger.besu.consensus.ibft.queries.IbftQueryServiceImpl;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.controller.KeyPairUtil;
@@ -105,10 +101,8 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 import org.hyperledger.besu.plugin.services.StorageService;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
-import org.hyperledger.besu.plugin.services.metrics.IbftQueryService;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
-import org.hyperledger.besu.plugin.services.metrics.PoAMetricsService;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
 import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.services.BesuEventsImpl;
@@ -930,31 +924,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             besuController.getProtocolManager().getBlockBroadcaster(),
             besuController.getTransactionPool(),
             besuController.getSyncState()));
-    addPluginMetrics(besuController);
+    besuPluginContext.addService(MetricsSystem.class, getMetricsSystem());
+    besuController.getAdditionalPluginServices().appendQueries(besuPluginContext);
     besuPluginContext.startPlugins();
     return this;
-  }
-
-  private void addPluginMetrics(final BesuController<?> besuController) {
-    besuPluginContext.addService(MetricsSystem.class, getMetricsSystem());
-
-    final Object consensusState = besuController.getProtocolContext().getConsensusState();
-
-    if (consensusState != null) {
-      if (IbftContext.class.isAssignableFrom(consensusState.getClass())) {
-        final IbftQueryServiceImpl ibftQueries =
-            new IbftQueryServiceImpl(
-                ((PoAContext) consensusState).getBlockInterface(),
-                besuController.getProtocolContext().getBlockchain());
-        besuPluginContext.addService(IbftQueryService.class, ibftQueries);
-      } else if (PoAContext.class.isAssignableFrom(consensusState.getClass())) {
-        final PoAMetricServiceImpl service =
-            new PoAMetricServiceImpl(
-                ((PoAContext) consensusState).getBlockInterface(),
-                besuController.getProtocolContext().getBlockchain());
-        besuPluginContext.addService(PoAMetricsService.class, service);
-      }
-    }
   }
 
   private void prepareLogging() {

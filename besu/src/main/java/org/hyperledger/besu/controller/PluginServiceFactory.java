@@ -12,16 +12,11 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.plugin.services.metrics;
+package org.hyperledger.besu.controller;
 
-import org.hyperledger.besu.plugin.data.Address;
-import org.hyperledger.besu.plugin.data.BlockHeader;
+import org.hyperledger.besu.services.BesuPluginContextImpl;
 
-import java.util.Collection;
+public interface PluginServiceFactory {
 
-public interface IbftQueryService extends PoaQueryService {
-
-  int getRoundNumberFrom(final BlockHeader header);
-
-  Collection<Address> getSignersFrom(final BlockHeader header);
+  void appendQueries(BesuPluginContextImpl besuContext);
 }

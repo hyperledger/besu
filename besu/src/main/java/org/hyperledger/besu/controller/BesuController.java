@@ -51,6 +51,7 @@ public class BesuController<C> implements java.io.Closeable {
   private final MiningCoordinator miningCoordinator;
   private final PrivacyParameters privacyParameters;
   private final Runnable close;
+  private final PluginServiceFactory additionalPluginServices;
   private final SyncState syncState;
 
   BesuController(
@@ -66,7 +67,8 @@ public class BesuController<C> implements java.io.Closeable {
       final PrivacyParameters privacyParameters,
       final Runnable close,
       final JsonRpcMethodFactory additionalJsonRpcMethodsFactory,
-      final KeyPair keyPair) {
+      final KeyPair keyPair,
+      final PluginServiceFactory additionalPluginServices) {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethProtocolManager = ethProtocolManager;
@@ -80,6 +82,7 @@ public class BesuController<C> implements java.io.Closeable {
     this.miningCoordinator = miningCoordinator;
     this.privacyParameters = privacyParameters;
     this.close = close;
+    this.additionalPluginServices = additionalPluginServices;
   }
 
   public ProtocolContext<C> getProtocolContext() {
@@ -134,6 +137,10 @@ public class BesuController<C> implements java.io.Closeable {
 
   public SyncState getSyncState() {
     return syncState;
+  }
+
+  public PluginServiceFactory getAdditionalPluginServices() {
+    return additionalPluginServices;
   }
 
   public static class Builder {

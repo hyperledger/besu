@@ -50,6 +50,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class CliqueBesuControllerBuilder extends BesuControllerBuilder<CliqueContext> {
+
   private static final Logger LOG = LogManager.getLogger();
 
   private Address localAddress;
@@ -137,6 +138,11 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder<CliqueCon
     if (blockInterface.validatorsInBlock(genesisBlockHeader).isEmpty()) {
       LOG.warn("Genesis block contains no signers - chain will not progress.");
     }
+  }
+
+  @Override
+  protected PluginServiceFactory createAdditionalPluginServices(final Blockchain blockchain) {
+    return new CliqueQueryFactory(blockchain);
   }
 
   @Override

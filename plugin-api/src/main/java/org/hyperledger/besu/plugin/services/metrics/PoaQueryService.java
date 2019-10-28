@@ -22,7 +22,7 @@ import java.util.Collection;
 /**
  * Provides relevant data for producing metrics on the status of a Proof of Authority (PoA) node.
  */
-public interface PoAMetricsService {
+public interface PoaQueryService {
 
   /**
    * Retrieves the validators specified in the latest block from the canonical chain.
