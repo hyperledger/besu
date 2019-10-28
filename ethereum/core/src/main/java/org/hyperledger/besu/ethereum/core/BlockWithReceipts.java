@@ -12,23 +12,18 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.sync.fastsync;
-
-import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+package org.hyperledger.besu.ethereum.core;
 
 import java.util.List;
 import java.util.Objects;
 
 import com.google.common.base.MoreObjects;
 
-class BlockWithReceipts {
+public class BlockWithReceipts {
   private final Block block;
   private final List<TransactionReceipt> receipts;
 
-  BlockWithReceipts(final Block block, final List<TransactionReceipt> receipts) {
+  public BlockWithReceipts(final Block block, final List<TransactionReceipt> receipts) {
     this.block = block;
     this.receipts = receipts;
   }

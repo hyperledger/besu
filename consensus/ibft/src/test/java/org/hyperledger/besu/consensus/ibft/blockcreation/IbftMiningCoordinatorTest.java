@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.util.bytes.BytesValue;
 
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 import org.assertj.core.util.Lists;
@@ -85,7 +86,8 @@ public class IbftMiningCoordinatorTest {
 
   @Test
   public void addsNewChainHeadEventWhenNewCanonicalHeadBlockEventReceived() throws Exception {
-    BlockAddedEvent headAdvancement = BlockAddedEvent.createForHeadAdvancement(block);
+    BlockAddedEvent headAdvancement =
+        BlockAddedEvent.createForHeadAdvancement(block, Collections.emptyList());
     ibftMiningCoordinator.onBlockAdded(headAdvancement, blockChain);
 
     assertThat(eventQueue.size()).isEqualTo(1);

@@ -40,7 +40,6 @@ dependencies {
   implementation project(':ethereum:rlp')
   implementation project(':ethereum:p2p')
   implementation project(':services:kvstore')
-  implementation project(':consensus:common')
   implementation project(':util')
 
   implementation 'io.vertx:vertx-core'
