@@ -211,6 +211,12 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       return;
     } else if (!peer.statusHasBeenReceived()) {
       // Peers are required to send status messages before any other message type
+      LOG.debug(
+          "{} requires a Status ({}) message to be sent first.  Instead, received message {}.  Disconnecting from {}.",
+          this.getClass().getSimpleName(),
+          EthPV62.STATUS,
+          message.getData().getCode(),
+          peer);
       peer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
       return;
     }
@@ -218,7 +224,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     // Dispatch eth message
     final EthMessage ethMessage = new EthMessage(peer, message.getData());
     if (!peer.validateReceivedMessage(ethMessage)) {
-      LOG.warn("Unsolicited message received from {}, disconnecting", peer);
+      LOG.debug("Unsolicited message received from, disconnecting: {}", peer);
       peer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
       return;
     }

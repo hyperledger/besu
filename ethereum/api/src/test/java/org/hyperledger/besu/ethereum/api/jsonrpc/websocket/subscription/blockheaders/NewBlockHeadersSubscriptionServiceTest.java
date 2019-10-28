@@ -174,7 +174,8 @@ public class NewBlockHeadersSubscriptionServiceTest {
     final BlockBody blockBody = new BlockBody(Collections.emptyList(), Collections.emptyList());
     final Block testBlock = new Block(blockHeader, blockBody);
     newBlockHeadersSubscriptionService.onBlockAdded(
-        BlockAddedEvent.createForHeadAdvancement(testBlock), blockchainQueries.getBlockchain());
+        BlockAddedEvent.createForHeadAdvancement(testBlock, Collections.emptyList()),
+        blockchainQueries.getBlockchain());
     verify(blockchainQueries, times(1)).getBlockchain();
   }
 

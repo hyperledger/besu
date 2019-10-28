@@ -22,13 +22,10 @@ import org.hyperledger.besu.util.bytes.BytesValue;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-
 public class TopicsParameter {
 
   private final List<List<LogTopic>> queryTopics = new ArrayList<>();
 
-  @JsonCreator
   public TopicsParameter(final List<List<String>> topics) {
     if (topics != null) {
       for (final List<String> list : topics) {

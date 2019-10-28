@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.refEq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -85,14 +86,14 @@ public class EthNewFilterTest {
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(request.getId(), "0x1");
 
     final LogsQuery expectedLogsQuery = new LogsQuery.Builder().build();
-    when(filterManager.installLogFilter(any(), any(), refEq(expectedLogsQuery))).thenReturn("0x1");
+    when(filterManager.installLogFilter(any(), any(), eq(expectedLogsQuery))).thenReturn("0x1");
 
     final JsonRpcResponse actualResponse = method.response(request);
 
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
     verify(filterManager)
         .installLogFilter(
-            refEq(blockParamLatest()), refEq(blockParamLatest()), refEq(expectedLogsQuery));
+            refEq(blockParamLatest()), refEq(blockParamLatest()), eq(expectedLogsQuery));
   }
 
   @Test
@@ -104,14 +105,14 @@ public class EthNewFilterTest {
 
     final LogsQuery expectedLogsQuery =
         new LogsQuery.Builder().topics(new TopicsParameter(topics)).build();
-    when(filterManager.installLogFilter(any(), any(), refEq(expectedLogsQuery))).thenReturn("0x1");
+    when(filterManager.installLogFilter(any(), any(), eq(expectedLogsQuery))).thenReturn("0x1");
 
     final JsonRpcResponse actualResponse = method.response(request);
 
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
     verify(filterManager)
         .installLogFilter(
-            refEq(blockParamLatest()), refEq(blockParamLatest()), refEq(expectedLogsQuery));
+            refEq(blockParamLatest()), refEq(blockParamLatest()), eq(expectedLogsQuery));
   }
 
   @Test
@@ -122,14 +123,14 @@ public class EthNewFilterTest {
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(request.getId(), "0x1");
 
     final LogsQuery expectedLogsQuery = new LogsQuery.Builder().address(address).build();
-    when(filterManager.installLogFilter(any(), any(), refEq(expectedLogsQuery))).thenReturn("0x1");
+    when(filterManager.installLogFilter(any(), any(), eq(expectedLogsQuery))).thenReturn("0x1");
 
     final JsonRpcResponse actualResponse = method.response(request);
 
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
     verify(filterManager)
         .installLogFilter(
-            refEq(blockParamLatest()), refEq(blockParamLatest()), refEq(expectedLogsQuery));
+            refEq(blockParamLatest()), refEq(blockParamLatest()), eq(expectedLogsQuery));
   }
 
   @Test
@@ -142,14 +143,14 @@ public class EthNewFilterTest {
 
     final LogsQuery expectedLogsQuery =
         new LogsQuery.Builder().address(address).topics(new TopicsParameter(topics)).build();
-    when(filterManager.installLogFilter(any(), any(), refEq(expectedLogsQuery))).thenReturn("0x1");
+    when(filterManager.installLogFilter(any(), any(), eq(expectedLogsQuery))).thenReturn("0x1");
 
     final JsonRpcResponse actualResponse = method.response(request);
 
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
     verify(filterManager)
         .installLogFilter(
-            refEq(blockParamLatest()), refEq(blockParamLatest()), refEq(expectedLogsQuery));
+            refEq(blockParamLatest()), refEq(blockParamLatest()), eq(expectedLogsQuery));
   }
 
   private List<List<String>> topics() {
