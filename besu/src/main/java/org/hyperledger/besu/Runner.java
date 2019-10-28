@@ -113,6 +113,7 @@ public class Runner implements AutoCloseable {
     waitForServiceToStop("Mining Coordinator", besuController.getMiningCoordinator()::awaitStop);
     if (networkRunner.getNetwork().isP2pEnabled()) {
       besuController.getSynchronizer().stop();
+      waitForServiceToStop("Synchronizer", besuController.getSynchronizer()::awaitStop);
     }
 
     networkRunner.stop();
