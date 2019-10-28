@@ -469,7 +469,8 @@ public class IbftExtraDataTest {
     final BytesValue bufferToInject = BytesValue.EMPTY;
 
     assertThatThrownBy(() -> IbftExtraData.decodeRaw(bufferToInject))
-        .isInstanceOf(IllegalArgumentException.class);
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Invalid BytesValue supplied - Ibft Extra Data required.");
   }
 
   private static byte[] createNonEmptyVanityData() {
