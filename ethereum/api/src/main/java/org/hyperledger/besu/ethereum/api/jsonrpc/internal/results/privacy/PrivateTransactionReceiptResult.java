@@ -18,9 +18,11 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TransactionRec
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.util.bytes.BytesValue;
+import org.hyperledger.besu.util.bytes.BytesValues;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -36,6 +38,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
   "privateFor",
   "privacyGroupId",
   "status",
+  "revertReason",
   "logs",
 })
 public class PrivateTransactionReceiptResult {
@@ -44,12 +47,12 @@ public class PrivateTransactionReceiptResult {
   private final String from;
   private final String to;
   private final String output;
-  private final Hash publicHash;
-  private final Hash privateHash;
-  private final BytesValue privateFrom;
-  private final List<BytesValue> privateFor;
-  private final BytesValue privacyGroupId;
-  private final BytesValue revertReason;
+  private final String publicHash;
+  private final String privateHash;
+  private final String privateFrom;
+  private final List<String> privateFor;
+  private final String privacyGroupId;
+  private final String revertReason;
   private final String status;
   private final List<TransactionReceiptLogResult> logs;
 
@@ -73,12 +76,16 @@ public class PrivateTransactionReceiptResult {
     this.from = from;
     this.to = to;
     this.output = output.toString();
-    this.publicHash = publicHash;
-    this.privateHash = privateHash;
-    this.privateFrom = privateFrom;
-    this.privateFor = privateFor;
-    this.privacyGroupId = privacyGroupId;
-    this.revertReason = revertReason;
+    this.publicHash = publicHash.toString();
+    this.privateHash = privateHash.toString();
+    this.privateFrom = privateFrom != null ? BytesValues.asBase64String(privateFrom) : null;
+    this.privateFor =
+        privateFor != null
+            ? privateFor.stream().map(BytesValues::asBase64String).collect(Collectors.toList())
+            : null;
+    this.privacyGroupId =
+        privacyGroupId != null ? BytesValues.asBase64String(privacyGroupId) : null;
+    this.revertReason = revertReason != null ? revertReason.toString() : null;
     this.status = status;
     this.logs = logReceipts(logs, blockNumber, publicHash, blockHash, txIndex);
   }
@@ -109,32 +116,32 @@ public class PrivateTransactionReceiptResult {
   }
 
   @JsonGetter("publicHash")
-  public Hash getPublicHash() {
+  public String getPublicHash() {
     return publicHash;
   }
 
   @JsonGetter("privateHash")
-  public Hash getPrivateHash() {
+  public String getPrivateHash() {
     return privateHash;
   }
 
   @JsonGetter("privateFrom")
-  public BytesValue getPrivateFrom() {
+  public String getPrivateFrom() {
     return privateFrom;
   }
 
   @JsonGetter("privateFor")
-  public List<BytesValue> getPrivateFor() {
+  public List<String> getPrivateFor() {
     return privateFor;
   }
 
   @JsonGetter("privacyGroupId")
-  public BytesValue getPrivacyGroupId() {
+  public String getPrivacyGroupId() {
     return privacyGroupId;
   }
 
   @JsonGetter("revertReason")
-  public BytesValue getRevertReason() {
+  public String getRevertReason() {
     return revertReason;
   }
 
