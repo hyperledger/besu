@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import org.apache.logging.log4j.LogManager;
@@ -42,6 +43,7 @@ import org.apache.logging.log4j.Logger;
 public class IbftController {
 
   private static final Logger LOG = LogManager.getLogger();
+  private final Blockchain blockchain;
   private final IbftFinalState ibftFinalState;
   private final IbftBlockHeightManagerFactory ibftBlockHeightManagerFactory;
   private final FutureMessageBuffer futureMessageBuffer;
@@ -49,6 +51,8 @@ public class IbftController {
   private final Gossiper gossiper;
   private final MessageTracker duplicateMessageTracker;
   private final SynchronizerUpdater sychronizerUpdater;
+
+  private final AtomicBoolean started = new AtomicBoolean(false);
 
   public IbftController(
       final Blockchain blockchain,
@@ -58,14 +62,19 @@ public class IbftController {
       final MessageTracker duplicateMessageTracker,
       final FutureMessageBuffer futureMessageBuffer,
       final SynchronizerUpdater sychronizerUpdater) {
+    this.blockchain = blockchain;
     this.ibftFinalState = ibftFinalState;
     this.ibftBlockHeightManagerFactory = ibftBlockHeightManagerFactory;
     this.futureMessageBuffer = futureMessageBuffer;
     this.gossiper = gossiper;
     this.duplicateMessageTracker = duplicateMessageTracker;
     this.sychronizerUpdater = sychronizerUpdater;
+  }
 
-    startNewHeightManager(blockchain.getChainHeadHeader());
+  public void start() {
+    if (started.compareAndSet(false, true)) {
+      startNewHeightManager(blockchain.getChainHeadHeader());
+    }
   }
 
   public void handleMessageEvent(final IbftReceivedMessageEvent msg) {
