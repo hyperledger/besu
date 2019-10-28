@@ -105,7 +105,8 @@ public class AbstractMiningCoordinatorTest {
     miningCoordinator.enable();
     miningCoordinator.start();
 
-    miningCoordinator.onBlockAdded(BlockAddedEvent.createForHeadAdvancement(BLOCK), blockchain);
+    miningCoordinator.onBlockAdded(
+        BlockAddedEvent.createForHeadAdvancement(BLOCK, Collections.emptyList()), blockchain);
 
     verifyNoMoreInteractions(minerExecutor, blockMiner);
   }
@@ -116,7 +117,8 @@ public class AbstractMiningCoordinatorTest {
     miningCoordinator.enable();
     miningCoordinator.start();
 
-    miningCoordinator.onBlockAdded(BlockAddedEvent.createForHeadAdvancement(BLOCK), blockchain);
+    miningCoordinator.onBlockAdded(
+        BlockAddedEvent.createForHeadAdvancement(BLOCK, Collections.emptyList()), blockchain);
 
     verify(blockMiner).cancel();
     verify(minerExecutor, times(2)).startAsyncMining(any(), any());
@@ -172,7 +174,8 @@ public class AbstractMiningCoordinatorTest {
     miningCoordinator.disable();
     miningCoordinator.start();
     when(syncState.isInSync()).thenReturn(true);
-    miningCoordinator.onBlockAdded(BlockAddedEvent.createForHeadAdvancement(BLOCK), blockchain);
+    miningCoordinator.onBlockAdded(
+        BlockAddedEvent.createForHeadAdvancement(BLOCK, Collections.emptyList()), blockchain);
 
     verifyNoMoreInteractions(minerExecutor, blockMiner);
   }
@@ -181,7 +184,8 @@ public class AbstractMiningCoordinatorTest {
   public void shouldNotStartMiningWhenBlockAddedAndInSyncIfMinerNotStarted() {
     miningCoordinator.enable();
     when(syncState.isInSync()).thenReturn(true);
-    miningCoordinator.onBlockAdded(BlockAddedEvent.createForHeadAdvancement(BLOCK), blockchain);
+    miningCoordinator.onBlockAdded(
+        BlockAddedEvent.createForHeadAdvancement(BLOCK, Collections.emptyList()), blockchain);
     verifyNoMoreInteractions(minerExecutor, blockMiner);
   }
 
@@ -193,7 +197,8 @@ public class AbstractMiningCoordinatorTest {
     verify(minerExecutor).shutDown();
 
     when(syncState.isInSync()).thenReturn(true);
-    miningCoordinator.onBlockAdded(BlockAddedEvent.createForHeadAdvancement(BLOCK), blockchain);
+    miningCoordinator.onBlockAdded(
+        BlockAddedEvent.createForHeadAdvancement(BLOCK, Collections.emptyList()), blockchain);
 
     verifyNoMoreInteractions(minerExecutor, blockMiner);
   }
@@ -207,8 +212,8 @@ public class AbstractMiningCoordinatorTest {
     miningCoordinator.start();
 
     when(syncState.isInSync()).thenReturn(true);
-    miningCoordinator.onBlockAdded(BlockAddedEvent.createForHeadAdvancement(BLOCK), blockchain);
-
+    miningCoordinator.onBlockAdded(
+        BlockAddedEvent.createForHeadAdvancement(BLOCK, Collections.emptyList()), blockchain);
     verifyNoMoreInteractions(minerExecutor, blockMiner);
   }
 
