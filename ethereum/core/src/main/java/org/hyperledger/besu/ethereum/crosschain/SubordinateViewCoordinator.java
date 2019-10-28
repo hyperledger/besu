@@ -50,7 +50,10 @@ public class SubordinateViewCoordinator {
    * @return a subordinate view coordinator which simulates other nodes.
    */
   public static SubordinateViewCoordinator createSubordinateViewCoordinatorAndOtherNodes(
-      final int sidechainId, final int numNodes, final int nodeNum, final TransactionSimulator transactionSimulator) {
+      final int sidechainId,
+      final int numNodes,
+      final int nodeNum,
+      final TransactionSimulator transactionSimulator) {
     ArrayList<OtherNodeSimulator> otherNodes = new ArrayList<>();
     for (int i = 0; i < numNodes; i++) {
       if (i == nodeNum) continue;

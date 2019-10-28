@@ -54,7 +54,6 @@ public class NodeConfigurationFactory {
     return createJsonRpcWithRpcApiEnabledConfig(CROSSCHAIN);
   }
 
-
   public JsonRpcConfiguration createJsonRpcEnabledConfig() {
     final JsonRpcConfiguration config = JsonRpcConfiguration.createDefault();
     config.setEnabled(true);
