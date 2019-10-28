@@ -56,7 +56,7 @@ public class GossipTest {
           .indexOfFirstLocallyProposedBlock(0)
           .clock(fixedClock)
           .useGossip(true)
-          .build();
+          .buildAndStart();
 
   private final ConsensusRoundIdentifier roundId = new ConsensusRoundIdentifier(1, 0);
   private final RoundSpecificPeers peers = context.roundSpecificPeers(roundId);
