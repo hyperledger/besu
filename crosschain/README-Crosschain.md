@@ -28,17 +28,16 @@ npm install crosschain
 To create 2 blockchains with chainIds 11 and 22 and with one node in each:
 ```bash
 crosschain/create_chain.js 11 1 
-crosschain/create_chain.js 12 1
+crosschain/create_chain.js 22 1
 ```
  ----------------
 ### Explanation:
  
 You will need to run 2 crosschain-enabled blockchains, each of them with at least 1 node.
 
-To ease the related configuration, the script `crosschain/create_chain.js <chainId>` creates a set of configuration files (`genesis.json` and `config.toml`) for (currently) only one node in one blockchain. You can specify a `chainId` <99. The data for each node will be stored in the directory ~/crosschain_data/chain***N***/node***M***.  For details on the process, see point 4.
+To ease the related configuration, the script `crosschain/create_chain.js <chainId> <numNodes>` creates a set of configuration files (`genesis.json` and `config.toml`) for the specified number of nodes `numNodes`(currently) in one blockchain. You can specify a `chainId` <99. The data for each node will be stored in the directory ~/crosschain_data/chain***N***/node***M***.  For details on the process, see point 4.
 
 You can run the script for as many blockchains as you need. Note that it will delete any previously existing configuration for the given `chainId`, so if you need to re-create a chain, just re-run the script.
-(Currently, the script only generates 1 node per chainId).
 
 Each node directory will contain the node's key and data directory.
 
@@ -47,8 +46,7 @@ Each node will listen for RPC at port `8000 + chainId*10 + nodeN`. For example, 
 Each node will know how to reach the RPC port of the other instances through the `crosschain/resources/crosschain.config` file, which lists the correspondence chainId -> RPC address/port. This file is pre-configured with chains 11-99, in localhost:8000-8990.
 
 
-
-## 3. Run Pantheon with the prepared config files
+## 3. Run Besu with the prepared config files
 
 ### Quick start: 
 ```bash
@@ -60,7 +58,7 @@ crosschain/run_node.js 22
 ```
 --------------------
 ### Explanation:
-The script `crosschain/run_node.js <chainId> <nodeNumber>` invokes Pantheon with the appropriate arguments to use each data directory. 
+The script `crosschain/run_node.js <chainId>` invokes Pantheon with the appropriate arguments to use each data directory. 
 
 
 
@@ -73,7 +71,7 @@ The `genesis_template.json` file can be used as a template, but needs to be cust
 1. ensure that the node has its key someplace where it will not be deleted randomly - else it will be regenerated and you'll have to reconfigure the whole chain. 
 2. obtain the node's account address
 3. put the node account address into a valid JSON file
-4. make Pantheon RLP-encode the extraData structure containing the address in the JSON file
+4. make Besu RLP-encode the extraData structure containing the address in the JSON file
 5. Copy the extradata text into the "extradata" field of the genesis file
 
 
