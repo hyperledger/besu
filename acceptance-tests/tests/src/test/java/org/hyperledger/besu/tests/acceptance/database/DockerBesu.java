@@ -70,8 +70,8 @@ class DockerBesu {
     // showLog(container.getId());
     final WaitContainerResultCallback callback =
         dockerClient.waitContainerCmd(container.getId()).exec(new WaitContainerResultCallback());
-    callback.awaitCompletion(20, TimeUnit.SECONDS);
-    // callback.awaitCompletion().close();
+    callback.awaitCompletion(1, TimeUnit.MINUTES);
+    //callback.awaitCompletion().close();
     try {
       dockerClient.stopContainerCmd(container.getId()).exec();
       dockerClient.removeContainerCmd(container.getId()).exec();
