@@ -84,6 +84,10 @@ public class IbftExtraData implements ParsedExtraData {
   }
 
   static IbftExtraData decodeRaw(final BytesValue input) {
+    if (input.isEmpty()) {
+      throw new IllegalArgumentException("Invalid BytesValue supplied - Ibft Extra Data required.");
+    }
+
     final RLPInput rlpInput = new BytesValueRLPInput(input, false);
 
     rlpInput.enterList(); // This accounts for the "root node" which contains IBFT data items.
