@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.account;
 
+import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.eth.EthTransactions;
 
 public class Accounts {
@@ -46,5 +47,9 @@ public class Accounts {
 
   public Account createAccount(final String accountName) {
     return Account.create(eth, accountName);
+  }
+
+  public Account createAccount(final Address address) {
+    return Account.create(eth, address);
   }
 }

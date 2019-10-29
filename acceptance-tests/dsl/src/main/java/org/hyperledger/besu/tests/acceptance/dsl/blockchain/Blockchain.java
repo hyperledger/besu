@@ -16,6 +16,7 @@ package org.hyperledger.besu.tests.acceptance.dsl.blockchain;
 
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.blockchain.ExpectBeneficiary;
+import org.hyperledger.besu.tests.acceptance.dsl.condition.blockchain.ExpectBlockNumber;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.blockchain.ExpectBlockNumberAbove;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.blockchain.ExpectMinimumBlockNumber;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
@@ -51,6 +52,10 @@ public class Blockchain {
   public Condition reachesHeight(
       final BesuNode node, final int blocksAheadOfLatest, final int timeout) {
     return new ExpectBlockNumberAbove(eth, futureHeight(node, blocksAheadOfLatest), timeout);
+  }
+
+  public Condition currentHeight(final long blockNumber) {
+    return new ExpectBlockNumber(eth, BigInteger.valueOf(blockNumber));
   }
 
   private BigInteger futureHeight(final Node node, final int blocksAheadOfLatest) {
