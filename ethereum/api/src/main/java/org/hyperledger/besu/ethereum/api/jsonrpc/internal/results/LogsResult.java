@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
-import org.hyperledger.besu.ethereum.api.query.LogWithMetadata;
+import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 
 import java.util.ArrayList;
 import java.util.List;

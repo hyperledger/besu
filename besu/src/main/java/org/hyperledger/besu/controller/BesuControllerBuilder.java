@@ -332,6 +332,7 @@ public abstract class BesuControllerBuilder<C> {
         },
         additionalJsonRpcMethodFactory,
         nodeKeys,
+        closeables,
         additionalPluginServices);
   }
 

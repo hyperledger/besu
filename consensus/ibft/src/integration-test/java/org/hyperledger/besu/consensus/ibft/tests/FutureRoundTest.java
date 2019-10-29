@@ -48,7 +48,7 @@ public class FutureRoundTest {
           .validatorCount(NETWORK_SIZE)
           .indexOfFirstLocallyProposedBlock(0)
           .clock(fixedClock)
-          .build();
+          .buildAndStart();
 
   private final ConsensusRoundIdentifier roundId = new ConsensusRoundIdentifier(1, 0);
   private final RoundSpecificPeers peers = context.roundSpecificPeers(roundId);

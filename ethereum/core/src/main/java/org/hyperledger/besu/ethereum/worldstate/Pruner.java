@@ -22,34 +22,43 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class Pruner {
+
   private static final Logger LOG = LogManager.getLogger();
 
   private final MarkSweepPruner pruningStrategy;
   private final Blockchain blockchain;
-  private final ExecutorService executorService;
   private Long blockAddedObserverId;
   private final long blocksRetained;
-  private final AtomicReference<State> state = new AtomicReference<>(State.IDLE);
+  private final AtomicReference<PruningPhase> pruningPhase =
+      new AtomicReference<>(PruningPhase.IDLE);
   private volatile long markBlockNumber = 0;
   private volatile BlockHeader markedBlockHeader;
   private long blockConfirmations;
 
-  public Pruner(
+  private AtomicReference<State> state = new AtomicReference<>(State.IDLE);
+  private final Supplier<ExecutorService> executorServiceSupplier;
+  private ExecutorService executorService;
+
+  @VisibleForTesting
+  Pruner(
       final MarkSweepPruner pruningStrategy,
       final Blockchain blockchain,
-      final ExecutorService executorService,
-      final PruningConfiguration pruningConfiguration) {
+      final PruningConfiguration pruningConfiguration,
+      final Supplier<ExecutorService> executorServiceSupplier) {
     this.pruningStrategy = pruningStrategy;
-    this.executorService = executorService;
     this.blockchain = blockchain;
+    this.executorServiceSupplier = executorServiceSupplier;
     this.blocksRetained = pruningConfiguration.getBlocksRetained();
     this.blockConfirmations = pruningConfiguration.getBlockConfirmations();
     checkArgument(
@@ -57,17 +66,47 @@ public class Pruner {
         "blockConfirmations and blocksRetained must be non-negative. blockConfirmations must be less than blockRetained.");
   }
 
-  public void start() {
-    LOG.info("Starting Pruner.");
-    pruningStrategy.prepare();
-    blockAddedObserverId =
-        blockchain.observeBlockAdded((event, blockchain) -> handleNewBlock(event));
+  public Pruner(
+      final MarkSweepPruner pruningStrategy,
+      final Blockchain blockchain,
+      final PruningConfiguration pruningConfiguration) {
+    this(pruningStrategy, blockchain, pruningConfiguration, getDefaultExecutorSupplier());
   }
 
-  public void stop() throws InterruptedException {
-    pruningStrategy.cleanup();
-    blockchain.removeObserver(blockAddedObserverId);
-    executorService.awaitTermination(10, TimeUnit.SECONDS);
+  private static Supplier<ExecutorService> getDefaultExecutorSupplier() {
+    return () ->
+        Executors.newSingleThreadExecutor(
+            new ThreadFactoryBuilder()
+                .setDaemon(true)
+                .setPriority(Thread.MIN_PRIORITY)
+                .setNameFormat("StatePruning-%d")
+                .build());
+  }
+
+  public void start() {
+
+    if (state.compareAndSet(State.IDLE, State.RUNNING)) {
+      LOG.info("Starting Pruner.");
+      executorService = executorServiceSupplier.get();
+      pruningStrategy.prepare();
+      blockAddedObserverId =
+          blockchain.observeBlockAdded((event, blockchain) -> handleNewBlock(event));
+    }
+  }
+
+  public void stop() {
+    if (state.compareAndSet(State.RUNNING, State.STOPPED)) {
+      LOG.info("Stopping Pruner.");
+      pruningStrategy.cleanup();
+      blockchain.removeObserver(blockAddedObserverId);
+      executorService.shutdownNow();
+    }
+  }
+
+  public void awaitStop() throws InterruptedException {
+    if (!executorService.awaitTermination(10, TimeUnit.SECONDS)) {
+      LOG.error("Failed to shutdown Pruner executor service.");
+    }
   }
 
   private void handleNewBlock(final BlockAddedEvent event) {
@@ -76,15 +115,17 @@ public class Pruner {
     }
 
     final long blockNumber = event.getBlock().getHeader().getNumber();
-    if (state.compareAndSet(State.IDLE, State.MARK_BLOCK_CONFIRMATIONS_AWAITING)) {
+    if (pruningPhase.compareAndSet(
+        PruningPhase.IDLE, PruningPhase.MARK_BLOCK_CONFIRMATIONS_AWAITING)) {
       markBlockNumber = blockNumber;
     } else if (blockNumber >= markBlockNumber + blockConfirmations
-        && state.compareAndSet(State.MARK_BLOCK_CONFIRMATIONS_AWAITING, State.MARKING)) {
+        && pruningPhase.compareAndSet(
+            PruningPhase.MARK_BLOCK_CONFIRMATIONS_AWAITING, PruningPhase.MARKING)) {
       markedBlockHeader = blockchain.getBlockHeader(markBlockNumber).get();
       mark(markedBlockHeader);
     } else if (blockNumber >= markBlockNumber + blocksRetained
         && blockchain.blockIsOnCanonicalChain(markedBlockHeader.getHash())
-        && state.compareAndSet(State.MARKING_COMPLETE, State.SWEEPING)) {
+        && pruningPhase.compareAndSet(PruningPhase.MARKING_COMPLETE, PruningPhase.SWEEPING)) {
       sweep();
     }
   }
@@ -98,7 +139,7 @@ public class Pruner {
     execute(
         () -> {
           pruningStrategy.mark(stateRoot);
-          state.compareAndSet(State.MARKING, State.MARKING_COMPLETE);
+          pruningPhase.compareAndSet(PruningPhase.MARKING, PruningPhase.MARKING_COMPLETE);
         });
   }
 
@@ -110,7 +151,7 @@ public class Pruner {
     execute(
         () -> {
           pruningStrategy.sweepBefore(markBlockNumber);
-          state.compareAndSet(State.SWEEPING, State.IDLE);
+          pruningPhase.compareAndSet(PruningPhase.SWEEPING, PruningPhase.IDLE);
         });
   }
 
@@ -120,20 +161,26 @@ public class Pruner {
     } catch (final Throwable t) {
       LOG.error("Pruning failed", t);
       pruningStrategy.cleanup();
-      state.set(State.IDLE);
+      pruningPhase.set(PruningPhase.IDLE);
     }
   }
 
   @VisibleForTesting
-  State getState() {
-    return state.get();
+  PruningPhase getPruningPhase() {
+    return pruningPhase.get();
   }
 
-  enum State {
+  enum PruningPhase {
     IDLE,
     MARK_BLOCK_CONFIRMATIONS_AWAITING,
     MARKING,
     MARKING_COMPLETE,
     SWEEPING;
+  }
+
+  private enum State {
+    IDLE,
+    RUNNING,
+    STOPPED
   }
 }

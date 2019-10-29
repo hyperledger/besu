@@ -68,6 +68,7 @@ public class BesuController<C> implements java.io.Closeable {
       final Runnable close,
       final JsonRpcMethodFactory additionalJsonRpcMethodsFactory,
       final KeyPair keyPair,
+      final List<Closeable> closeables,
       final PluginServiceFactory additionalPluginServices) {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
@@ -123,7 +124,15 @@ public class BesuController<C> implements java.io.Closeable {
 
   @Override
   public void close() {
-    close.run();
+    closeables.forEach(this::tryClose);
+  }
+
+  private void tryClose(final Closeable closeable) {
+    try {
+      closeable.close();
+    } catch (IOException e) {
+      LOG.error("Unable to close resource.", e);
+    }
   }
 
   public PrivacyParameters getPrivacyParameters() {
