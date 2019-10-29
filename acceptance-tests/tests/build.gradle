@@ -23,6 +23,7 @@ dependencies {
   testImplementation project(':acceptance-tests:dsl')
   testImplementation project(':enclave')
   testImplementation 'org.awaitility:awaitility'
+  testImplementation 'com.github.docker-java:docker-java'
   testImplementation project(':consensus:clique')
   testImplementation project(':ethereum:permissioning')
   testImplementation project(':util')
@@ -33,6 +34,9 @@ dependencies {
   testImplementation project(':testutil')
   testImplementation 'tech.pegasys.ethsigner.internal:core'
   testImplementation 'tech.pegasys.ethsigner.internal:file-based'
+  compile('javax.activation:activation'){
+    force = true
+  }
 }
 
 test.enabled = false

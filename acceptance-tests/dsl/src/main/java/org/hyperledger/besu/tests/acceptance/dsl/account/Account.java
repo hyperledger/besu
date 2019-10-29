@@ -93,7 +93,7 @@ public class Account {
   }
 
   public String getAddress() {
-    return Address.extract(Hash.hash(keyPair.getPublicKey().getEncodedBytes())).toString();
+    return address.toString();
   }
 
   public Condition balanceEquals(final int expectedBalance) {

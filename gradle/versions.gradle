@@ -33,7 +33,7 @@ dependencyManagement {
     dependency 'com.graphql-java:graphql-java:13.0'
 
     dependency 'com.squareup.okhttp3:okhttp:4.2.2'
-    
+
     dependency 'commons-cli:commons-cli:1.4'
 
     dependency 'info.picocli:picocli:3.9.6'
@@ -97,6 +97,9 @@ dependencyManagement {
     dependency 'org.web3j:pantheon:4.5.1'
 
     dependency 'org.xerial.snappy:snappy-java:1.1.7.3'
+
+    dependency 'com.github.docker-java:docker-java:3.1.5'
+    dependency 'javax.activation:activation:1.1.1'
 
     dependency "tech.pegasys.ethsigner.internal:core:0.3.0"
     dependency "tech.pegasys.ethsigner.internal:file-based:0.3.0"
