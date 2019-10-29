@@ -80,7 +80,7 @@ class DockerBesu {
     }
   }
 
-  private void showLog(final String containerId) {
+  /*private void showLog(final String containerId) {
     dockerClient
         .logContainerCmd(containerId)
         .withStdOut(true)
@@ -94,7 +94,7 @@ class DockerBesu {
                 System.out.println(new String(item.getPayload(), UTF_8));
               }
             });
-  }
+  }*/
 
   DockerClient getDockerClient() {
     return dockerClient;
