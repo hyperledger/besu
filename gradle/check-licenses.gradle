@@ -147,6 +147,7 @@ downloadLicenses {
       (group('org.javassist')): apache,
       /// Explicilitly declare Apache 2.0 license for javassist
       (group('javax.ws.rs')): cddl1_1,
+      (group('javax.activation')): cddl1_1,
       (group('org.glassfish.jersey.core')): apache,
       (group('org.glassfish.jersey.bundles.repackaged')): apache,
       (group('org.glassfish.jersey.connectors')): apache
