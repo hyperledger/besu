@@ -20,8 +20,8 @@ dependencies {
   implementation project(':config')
   implementation project(':ethereum:core')
   implementation project(':ethereum:api')
-  implementation project(':ethereum:vm')
-  implementation project(':ethereum:mainnet')
+  implementation project(':ethereum:eth')
+  implementation project(':ethereum:rlp')
   implementation 'org.apache.logging.log4j:log4j-api'
   implementation 'com.google.guava:guava'
 

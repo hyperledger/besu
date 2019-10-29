@@ -12,8 +12,6 @@
  */
 package org.hyperledger.besu.crosschain.ethereum.crosschain;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.*;
 import org.hyperledger.besu.ethereum.mainnet.*;
@@ -22,7 +20,6 @@ import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.Optional;
 
 public class CrosschainTransactionProcessor extends MainnetTransactionProcessor {
 

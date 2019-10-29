@@ -14,7 +14,7 @@ package org.hyperledger.besu.crosschain.ethereum.api.jsonrpc;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-import org.hyperledger.besu.crosschain.CrosschainConfiguration;
+import org.hyperledger.besu.config.CrosschainConfigOptions;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcRequestException;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -171,7 +171,7 @@ public class CrosschainProcessor {
         int chainId = sidechainId.intValue();
 
         // Get the address from chain mapping.
-        String ipAddress = CrosschainConfiguration.chainsMapping.get(chainId);
+        String ipAddress = CrosschainConfigOptions.chainsMapping.get(chainId);
         String response = null;
         LOG.debug("Sending Crosschain Transaction or view to chain at " + ipAddress);
         try {
