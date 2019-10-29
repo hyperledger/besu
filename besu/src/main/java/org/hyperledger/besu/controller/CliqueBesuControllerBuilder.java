@@ -46,7 +46,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class CliqueBesuControllerBuilder extends BesuControllerBuilder<CliqueContext> {
-
   private static final Logger LOG = LogManager.getLogger();
 
   private Address localAddress;
@@ -126,7 +125,7 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder<CliqueCon
 
   @Override
   protected PluginServiceFactory createAdditionalPluginServices(final Blockchain blockchain) {
-    return new CliqueQueryFactory(blockchain);
+    return new CliqueQueryPluginServiceFactory(blockchain);
   }
 
   @Override

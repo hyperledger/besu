@@ -19,5 +19,5 @@ import org.hyperledger.besu.services.BesuPluginContextImpl;
 public class NoopPluginServiceFactory implements PluginServiceFactory {
 
   @Override
-  public void appendQueries(final BesuPluginContextImpl besuContext) {}
+  public void appendPluginServices(final BesuPluginContextImpl besuContext) {}
 }

@@ -18,5 +18,5 @@ import org.hyperledger.besu.services.BesuPluginContextImpl;
 
 public interface PluginServiceFactory {
 
-  void appendQueries(BesuPluginContextImpl besuContext);
+  void appendPluginServices(BesuPluginContextImpl besuContext);
 }

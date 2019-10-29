@@ -14,26 +14,29 @@
  */
 package org.hyperledger.besu.controller;
 
+import org.hyperledger.besu.consensus.clique.CliqueBlockInterface;
 import org.hyperledger.besu.consensus.common.BlockInterface;
-import org.hyperledger.besu.consensus.ibft.IbftBlockInterface;
-import org.hyperledger.besu.consensus.ibft.queries.IbftQueryServiceImpl;
+import org.hyperledger.besu.consensus.common.PoaQueryServiceImpl;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.plugin.services.metrics.IbftQueryService;
+import org.hyperledger.besu.plugin.services.metrics.PoAMetricsService;
+import org.hyperledger.besu.plugin.services.query.PoaQueryService;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 
-public class IbftQueryFactory implements PluginServiceFactory {
+public class CliqueQueryPluginServiceFactory implements PluginServiceFactory {
 
   final Blockchain blockchain;
 
-  public IbftQueryFactory(final Blockchain blockchain) {
+  public CliqueQueryPluginServiceFactory(final Blockchain blockchain) {
     this.blockchain = blockchain;
   }
 
   @Override
-  public void appendQueries(final BesuPluginContextImpl besuContext) {
-    final BlockInterface blockInterface = new IbftBlockInterface();
+  public void appendPluginServices(final BesuPluginContextImpl besuContext) {
+    final BlockInterface blockInterface = new CliqueBlockInterface();
 
     besuContext.addService(
-        IbftQueryService.class, new IbftQueryServiceImpl(blockInterface, blockchain));
+        PoaQueryService.class, new PoaQueryServiceImpl(blockInterface, blockchain));
+    besuContext.addService(
+        PoAMetricsService.class, new PoaQueryServiceImpl(blockInterface, blockchain));
   }
 }

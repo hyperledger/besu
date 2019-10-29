@@ -17,12 +17,13 @@ package org.hyperledger.besu.consensus.common;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.plugin.data.Address;
 import org.hyperledger.besu.plugin.data.BlockHeader;
-import org.hyperledger.besu.plugin.services.metrics.PoaQueryService;
+import org.hyperledger.besu.plugin.services.metrics.PoAMetricsService;
+import org.hyperledger.besu.plugin.services.query.PoaQueryService;
 
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class PoaQueryServiceImpl implements PoaQueryService {
+public class PoaQueryServiceImpl implements PoaQueryService, PoAMetricsService {
 
   private final BlockInterface blockInterface;
   private final Blockchain blockchain;

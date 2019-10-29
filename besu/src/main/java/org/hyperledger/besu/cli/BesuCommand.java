@@ -925,7 +925,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             besuController.getTransactionPool(),
             besuController.getSyncState()));
     besuPluginContext.addService(MetricsSystem.class, getMetricsSystem());
-    besuController.getAdditionalPluginServices().appendQueries(besuPluginContext);
+    besuController.getAdditionalPluginServices().appendPluginServices(besuPluginContext);
     besuPluginContext.startPlugins();
     return this;
   }

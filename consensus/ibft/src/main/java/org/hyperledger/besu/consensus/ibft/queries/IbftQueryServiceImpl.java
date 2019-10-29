@@ -22,13 +22,15 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.plugin.data.Address;
-import org.hyperledger.besu.plugin.services.metrics.IbftQueryService;
+import org.hyperledger.besu.plugin.services.metrics.PoAMetricsService;
+import org.hyperledger.besu.plugin.services.query.IbftQueryService;
 import org.hyperledger.besu.util.bytes.Bytes32;
 
 import java.util.Collection;
 import java.util.Collections;
 
-public class IbftQueryServiceImpl extends PoaQueryServiceImpl implements IbftQueryService {
+public class IbftQueryServiceImpl extends PoaQueryServiceImpl
+    implements IbftQueryService, PoAMetricsService {
 
   public IbftQueryServiceImpl(final BlockInterface blockInterface, final Blockchain blockchain) {
     super(blockInterface, blockchain);

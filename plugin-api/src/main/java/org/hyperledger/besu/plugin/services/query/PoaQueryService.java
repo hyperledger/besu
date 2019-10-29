@@ -12,22 +12,20 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.plugin.services.metrics;
+package org.hyperledger.besu.plugin.services.query;
 
 import org.hyperledger.besu.plugin.data.Address;
 import org.hyperledger.besu.plugin.data.BlockHeader;
 
 import java.util.Collection;
 
-/**
- * Provides relevant data for producing metrics on the status of a Proof of Authority (PoA) node.
- */
+/** Provides methods to query the status of a Proof of Authority (PoA) network. */
 public interface PoaQueryService {
 
   /**
    * Retrieves the validators specified in the latest block from the canonical chain.
    *
-   * @return Adresses of all validators in the latest canonical block.
+   * @return Addresses of all validators in the latest canonical block.
    */
   Collection<Address> getValidatorsForLatestBlock();
 
