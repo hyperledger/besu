@@ -108,6 +108,15 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
         Address.fromHexString("0xd1aeb42885a43b72b518182ef893125814811048"),
         Wei.fromHexString("0x2b5e3af16b1880000")
       },
+      new Object[] {
+        "After versioning was enabled ",
+        "docker.io/pegasyseng/pantheon",
+        "1.2.1",
+        "version1",
+        0xA,
+        Address.fromHexString("0xd1aeb42885a43b72b518182ef893125814811048"),
+        Wei.fromHexString("0x2b5e3af16b1880000")
+      }
     };
   }
 
