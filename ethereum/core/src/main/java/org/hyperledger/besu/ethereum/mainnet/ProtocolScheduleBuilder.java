@@ -149,20 +149,12 @@ public class ProtocolScheduleBuilder<C> {
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
             isRevertReasonEnabled));
-    addProtocolSpec(
-        protocolSchedule,
-        config.getCrossChainBlockNumber(),
-        PrivatenetProtocolSpecs.crossChainDefinition(
-            chainId,
-            config.getContractSizeLimit(),
-            config.getEvmStackSize(),
-            isRevertReasonEnabled));
 
     LOG.info("Protocol schedule created with milestones: {}", protocolSchedule.listMilestones());
     return protocolSchedule;
   }
 
-  private void addProtocolSpec(
+  public void addProtocolSpec(
       final MutableProtocolSchedule<C> protocolSchedule,
       final OptionalLong blockNumber,
       final ProtocolSpecBuilder<Void> definition) {
