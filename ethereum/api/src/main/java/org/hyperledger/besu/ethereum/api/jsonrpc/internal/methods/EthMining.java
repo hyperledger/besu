@@ -36,6 +36,6 @@ public class EthMining implements JsonRpcMethod {
   @Override
   public JsonRpcResponse response(final JsonRpcRequest req) {
 
-    return new JsonRpcSuccessResponse(req.getId(), miningCoordinator.isRunning());
+    return new JsonRpcSuccessResponse(req.getId(), miningCoordinator.isMining());
   }
 }

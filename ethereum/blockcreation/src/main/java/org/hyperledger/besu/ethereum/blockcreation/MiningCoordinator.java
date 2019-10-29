@@ -28,11 +28,27 @@ import java.util.Optional;
 
 public interface MiningCoordinator {
 
-  void enable();
+  void start();
 
-  void disable();
+  void stop();
 
-  boolean isRunning();
+  void awaitStop() throws InterruptedException;
+
+  /**
+   * If mining is disabled, enable it.
+   *
+   * @return True if mining is enabled.
+   */
+  boolean enable();
+
+  /**
+   * If mining is enabled, disable it.
+   *
+   * @return True if mining is disabled.
+   */
+  boolean disable();
+
+  boolean isMining();
 
   Wei getMinTransactionGasPrice();
 
