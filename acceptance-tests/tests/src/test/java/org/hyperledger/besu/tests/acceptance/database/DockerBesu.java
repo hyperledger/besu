@@ -90,7 +90,7 @@ class DockerBesu {
         .exec(
             new LogContainerResultCallback() {
               @Override
-              public void onNext(Frame item) {
+              public void onNext(final Frame item) {
                 System.out.println(new String(item.getPayload(), UTF_8));
               }
             });
