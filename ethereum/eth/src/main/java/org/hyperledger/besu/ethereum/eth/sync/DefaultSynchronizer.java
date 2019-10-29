@@ -141,6 +141,14 @@ public class DefaultSynchronizer<C> implements Synchronizer {
       LOG.info("Stopping synchronizer");
       fastSyncDownloader.ifPresent(FastSyncDownloader::stop);
       fullSyncDownloader.stop();
+      maybePruner.ifPresent(Pruner::stop);
+    }
+  }
+
+  @Override
+  public void awaitStop() throws InterruptedException {
+    if (maybePruner.isPresent()) {
+      maybePruner.get().awaitStop();
     }
   }
 
