@@ -15,34 +15,16 @@
 
 package org.hyperledger.besu.tests.acceptance.database;
 
-import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.command.CreateContainerResponse;
-import com.github.dockerjava.api.model.Bind;
-import com.github.dockerjava.api.model.Container;
-import com.github.dockerjava.api.model.Frame;
-import com.github.dockerjava.api.model.Info;
-import com.github.dockerjava.api.model.SearchItem;
-import com.github.dockerjava.api.model.Volume;
-import com.github.dockerjava.core.DefaultDockerClientConfig;
-import com.github.dockerjava.core.DockerClientBuilder;
-import com.github.dockerjava.core.command.LogContainerResultCallback;
-import com.github.dockerjava.core.command.WaitContainerResultCallback;
-import com.google.common.base.Charsets;
-import com.google.common.io.Resources;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
-import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
+import org.hyperledger.besu.tests.acceptance.dsl.blockchain.Amount;
+import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.BesuNodeConfigurationBuilder;
 import org.hyperledger.besu.util.PlatformDetector;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -50,14 +32,18 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+import com.google.common.base.Charsets;
+import com.google.common.io.Resources;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
 public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
@@ -65,24 +51,30 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
   private static final Logger LOG = LogManager.getLogger();
   private final String testName;
   private final String dockerImage;
+  private final String dockerImageName;
+  private final String dockerImageTag;
   private final String dataPath;
   private final long expectedChainHeight;
   private final Address testAddress;
   private final Wei expectedBalance;
   private final Account testAccount;
-  private static Map<String, Boolean> initializedImages = new HashMap<>();
+  private Path hostDataPath;
+  private String hostDataPathForBind;
 
-  private Node node;
+  private BesuNode node;
 
   public DatabaseMigrationAcceptanceTest(
       final String testName,
-      final String dockerImage,
+      final String dockerImageName,
+      final String dockerImageTag,
       final String dataPath,
       final long expectedChainHeight,
       final Address testAddress,
       final Wei expectedBalance) {
     this.testName = testName;
-    this.dockerImage = dockerImage;
+    this.dockerImageName = dockerImageName;
+    this.dockerImageTag = dockerImageTag;
+    this.dockerImage = String.format("%s:%s", dockerImageName, dockerImageTag);
     this.dataPath = dataPath;
     this.expectedChainHeight = expectedChainHeight;
     this.testAddress = testAddress;
@@ -109,7 +101,8 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
       },*/
       new Object[] {
         "Before versioning was enabled",
-        "docker.io/pegasyseng/pantheon:1.2.0",
+        "docker.io/pegasyseng/pantheon",
+        "1.2.0",
         "version0",
         0xA,
         Address.fromHexString("0xd1aeb42885a43b72b518182ef893125814811048"),
@@ -120,93 +113,46 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
 
   @Before
   public void setUp() throws Exception {
-    if (!initializedImages.getOrDefault(dockerImage, false)) {
-      generateDatabaseFromDocker();
-      initializedImages.put(dockerImage, true);
-    }
-    // node = besu.createNode(dataPath, this::configureNode);
-    // cluster.start(node);
+    generateDatabaseFromDocker();
+    node = besu.createNode(dataPath, this::configureNode);
+    cluster.start(node);
   }
 
   private void generateDatabaseFromDocker() throws Exception {
     LOG.info("Generating database with docker image: {}", dockerImage);
-    final DockerClient dockerClient =
-        DockerClientBuilder.getInstance(
-                DefaultDockerClientConfig.createDefaultConfigBuilder()
-                    .withDockerHost("unix:///var/run/docker.sock")
-                    .build())
-            .build();
-    final Info info = dockerClient.infoCmd().exec();
-    LOG.info("Docker info: {}", info.toString());
-    final Path hostDataDir = copyDataDir(dataPath);
-    LOG.info("Host data dir: {}", hostDataDir.toAbsolutePath().toString());
-    Volume containerDataDir = new Volume("/home/besu");
-
-    String hostDataPath = hostDataDir.toAbsolutePath().toString();
+    final DockerBesu docker = DockerBesu.createDockerClient();
+    LOG.info("Pulling docker image: {}", dockerImage);
+    docker.pull(dockerImageName, dockerImageTag);
+    hostDataPath = copyDataDir(dataPath);
+    LOG.info("Host data dir: {}", hostDataPath.toAbsolutePath().toString());
+    hostDataPathForBind = hostDataPath.toAbsolutePath().toString();
     if (PlatformDetector.getOSType().equals("osx")) {
-      hostDataPath = "/private".concat(hostDataPath);
+      hostDataPathForBind = "/private".concat(hostDataPathForBind);
     }
-    CreateContainerResponse container =
-        dockerClient
-            .createContainerCmd(dockerImage)
-            .withName(testName.toLowerCase().replace(" ", "-"))
-            .withVolumes(containerDataDir)
-            .withBinds(new Bind(hostDataPath, containerDataDir))
-            .withCmd(
-                "--data-path=/home/besu",
-                "--genesis-file=genesis.json",
-                "blocks",
-                "import",
-                "--from=ropsten-10-blocks.bin")
-            .exec();
-    dockerClient.startContainerCmd(container.getId()).exec();
-
-    showLog(dockerClient, container.getId(), true, 200);
-    final WaitContainerResultCallback callback =
-        dockerClient.waitContainerCmd(container.getId()).exec(new WaitContainerResultCallback());
-    callback.awaitCompletion().close();
-    dockerClient.removeContainerCmd(container.getId()).exec();
-  }
-
-  private static void showLog(
-      final DockerClient dockerClient,
-      final String containerId,
-      final boolean follow,
-      final int numberOfLines) {
-    dockerClient
-        .logContainerCmd(containerId)
-        .withStdOut(true)
-        .withStdErr(true)
-        .withFollowStream(follow)
-        .withTail(numberOfLines)
-        .exec(
-            new LogContainerResultCallback() {
-              @Override
-              public void onNext(Frame item) {
-                System.out.println(new String(item.getPayload(), UTF_8));
-              }
-            });
+    docker.runBesu(
+        dockerImage,
+        hostDataPathForBind,
+        "--data-path=/home/besu",
+        String.format("--genesis-file=%s/genesis.json", DockerBesu.containerDataPath),
+        "blocks",
+        "import",
+        String.format("--from=%s/ropsten-10-blocks.bin", DockerBesu.containerDataPath));
   }
 
   private BesuNodeConfigurationBuilder configureNode(
       final BesuNodeConfigurationBuilder nodeBuilder) {
-    final Path dataPath = copyDataDir(this.dataPath);
     final String genesisData = getGenesisConfiguration();
     return nodeBuilder
         .devMode(false)
-        .dataPath(dataPath)
+        .dataPath(hostDataPath)
         .genesisConfigProvider((nodes) -> Optional.of(genesisData))
         .jsonRpcEnabled();
   }
 
   private String getGenesisConfiguration() {
     try {
-      final String genesisPath = dataPath + "/genesis.json";
-      final URL genesisResource = this.getClass().getResource(genesisPath);
-      if (genesisResource == null) {
-        throw new RuntimeException("Unable to locate genesis file: " + genesisPath);
-      }
-      return Resources.toString(genesisResource, Charsets.UTF_8);
+      return Resources.toString(
+          hostDataPath.resolve("genesis.json").toUri().toURL(), Charsets.UTF_8);
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
@@ -214,12 +160,12 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
 
   @Test
   public void shouldReturnCorrectBlockHeight() {
-    // blockchain.currentHeight(expectedChainHeight).verify(node);
+    blockchain.currentHeight(expectedChainHeight).verify(node);
   }
 
-  // @Test
+  @Test
   public void shouldReturnCorrectAccountBalance() {
-    // testAccount.balanceEquals(Amount.wei(expectedBalance)).verify(node);
+    testAccount.balanceEquals(Amount.wei(expectedBalance)).verify(node);
   }
 
   private Path copyDataDir(final String path) {

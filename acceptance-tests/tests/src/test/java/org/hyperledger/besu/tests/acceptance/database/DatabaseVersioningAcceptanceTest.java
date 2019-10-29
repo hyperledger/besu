@@ -15,19 +15,14 @@
 
 package org.hyperledger.besu.tests.acceptance.database;
 
-import com.google.common.base.Charsets;
-import com.google.common.io.Resources;
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.BesuNodeConfigurationBuilder;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -38,7 +33,13 @@ import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+import com.google.common.base.Charsets;
+import com.google.common.io.Resources;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
 public class DatabaseVersioningAcceptanceTest extends AcceptanceTestBase {
