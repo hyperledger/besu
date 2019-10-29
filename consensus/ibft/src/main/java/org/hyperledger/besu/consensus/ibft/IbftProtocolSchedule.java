@@ -36,7 +36,7 @@ public class IbftProtocolSchedule {
       final GenesisConfigOptions config,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled) {
-    final IbftConfigOptions ibftConfig = config.getIbftLegacyConfigOptions();
+    final IbftConfigOptions ibftConfig = config.getIbft2ConfigOptions();
     final long blockPeriod = ibftConfig.getBlockPeriodSeconds();
 
     return new ProtocolScheduleBuilder<>(
