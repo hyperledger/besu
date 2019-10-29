@@ -128,7 +128,7 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
   }
 
   private void generateDatabaseFromDocker() throws Exception {
-    LOG.info("Generating database with docker image: {}", dockerImage);
+    LOG.info("Generating database for test case: {}", testName);
     final DockerBesu docker = DockerBesu.createDockerClient();
     LOG.info("Pulling docker image: {}", dockerImage);
     docker.pull(dockerImageName, dockerImageTag);
