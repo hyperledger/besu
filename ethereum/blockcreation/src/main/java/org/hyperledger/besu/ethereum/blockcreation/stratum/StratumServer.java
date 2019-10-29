@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.blockcreation.stratum;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
+import org.hyperledger.besu.ethereum.chain.EthHashObserver;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
 
 import java.util.concurrent.CompletableFuture;
@@ -32,7 +33,7 @@ import io.vertx.core.net.NetServerOptions;
 import io.vertx.core.net.NetSocket;
 import org.apache.logging.log4j.Logger;
 
-public class StratumServer {
+public class StratumServer implements EthHashObserver {
 
   private static final Logger logger = getLogger();
 
@@ -89,13 +90,19 @@ public class StratumServer {
     }
   }
 
-  public void solveFor(final EthHashSolverInputs ethHashSolverInputs) {
+  @Override
+  public void newJob(final EthHashSolverInputs ethHashSolverInputs) {
+    if (!started.get()) {
+      logger.debug("Discarding {} as stratum server is not started", ethHashSolverInputs);
+      return;
+    }
     for (StratumProtocol protocol : protocols) {
       protocol.solveFor(ethHashSolverInputs);
     }
   }
 
-  public void setSubmitCallback(final Function<Long, Boolean> submitSolutionCallback) {
+  @Override
+  public void setSubmitWorkCallback(final Function<Long, Boolean> submitSolutionCallback) {
     for (StratumProtocol protocol : protocols) {
       protocol.setSubmitCallback(submitSolutionCallback);
     }

@@ -54,6 +54,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
+import org.hyperledger.besu.util.Subscribers;
 
 import java.util.Optional;
 import java.util.concurrent.locks.ReentrantLock;
@@ -148,8 +149,8 @@ public class RetestethContext {
     final Iterable<Long> nonceGenerator = new IncrementingNonceGenerator(0);
     ethHashSolver =
         ("NoProof".equals(sealengine) || "NoReward".equals(sealEngine))
-            ? new EthHashSolver(nonceGenerator, NO_WORK_HASHER, true)
-            : new EthHashSolver(nonceGenerator, new EthHasher.Light(), true);
+            ? new EthHashSolver(nonceGenerator, NO_WORK_HASHER, true, Subscribers.none())
+            : new EthHashSolver(nonceGenerator, new EthHasher.Light(), true, Subscribers.none());
 
     blockReplay =
         new BlockReplay(

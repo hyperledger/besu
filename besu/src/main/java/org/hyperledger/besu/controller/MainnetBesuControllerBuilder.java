@@ -19,7 +19,6 @@ import org.hyperledger.besu.ethereum.blockcreation.DefaultBlockScheduler;
 import org.hyperledger.besu.ethereum.blockcreation.EthHashMinerExecutor;
 import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
-import org.hyperledger.besu.ethereum.blockcreation.stratum.StratumServer;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
@@ -29,13 +28,6 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class MainnetBesuControllerBuilder extends BesuControllerBuilder<Void> {
 
@@ -47,13 +39,6 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder<Void> {
       final MiningParameters miningParameters,
       final SyncState syncState,
       final EthProtocolManager ethProtocolManager) {
-    final ExecutorService minerThreadPool = Executors.newCachedThreadPool();
-    Vertx vertx = Vertx.vertx();
-    final StratumServer server =
-        new StratumServer(
-            vertx,
-            miningParameters.getStratumPort(),
-            miningParameters.getStratumNetworkInterface());
     final EthHashMinerExecutor executor =
         new EthHashMinerExecutor(
             protocolContext,
@@ -64,8 +49,7 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder<Void> {
                 MainnetBlockHeaderValidator.MINIMUM_SECONDS_SINCE_PARENT,
                 MainnetBlockHeaderValidator.TIMESTAMP_TOLERANCE_S,
                 clock),
-            gasLimitCalculator,
-            server);
+            gasLimitCalculator);
 
     final EthHashMiningCoordinator miningCoordinator =
         new EthHashMiningCoordinator(protocolContext.getBlockchain(), executor, syncState);

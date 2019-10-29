@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethodFactory;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
@@ -58,6 +59,7 @@ public class BesuController<C> implements java.io.Closeable {
   private final MiningCoordinator miningCoordinator;
   private final PrivacyParameters privacyParameters;
   private final List<Closeable> closeables;
+  private final MiningParameters miningParameters;
   private final SyncState syncState;
 
   BesuController(
@@ -71,6 +73,7 @@ public class BesuController<C> implements java.io.Closeable {
       final TransactionPool transactionPool,
       final MiningCoordinator miningCoordinator,
       final PrivacyParameters privacyParameters,
+      final MiningParameters miningParameters,
       final JsonRpcMethodFactory additionalJsonRpcMethodsFactory,
       final KeyPair keyPair,
       final List<Closeable> closeables) {
@@ -87,6 +90,7 @@ public class BesuController<C> implements java.io.Closeable {
     this.miningCoordinator = miningCoordinator;
     this.privacyParameters = privacyParameters;
     this.closeables = closeables;
+    this.miningParameters = miningParameters;
   }
 
   public ProtocolContext<C> getProtocolContext() {
@@ -140,6 +144,10 @@ public class BesuController<C> implements java.io.Closeable {
 
   public PrivacyParameters getPrivacyParameters() {
     return privacyParameters;
+  }
+
+  public MiningParameters getMiningParameters() {
+    return miningParameters;
   }
 
   public Map<String, JsonRpcMethod> getAdditionalJsonRpcMethods(

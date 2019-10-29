@@ -15,9 +15,7 @@
 package org.hyperledger.besu.ethereum.blockcreation;
 
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.mockito.Mockito.mock;
 
-import org.hyperledger.besu.ethereum.blockcreation.stratum.StratumServer;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.MiningParametersTestBuilder;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
@@ -46,8 +44,6 @@ public class EthHashMinerExecutorTest {
             TestClock.fixed(),
             metricsSystem);
 
-    final StratumServer server = mock(StratumServer.class);
-
     final EthHashMinerExecutor executor =
         new EthHashMinerExecutor(
             null,
@@ -55,11 +51,10 @@ public class EthHashMinerExecutorTest {
             pendingTransactions,
             miningParameters,
             new DefaultBlockScheduler(1, 10, TestClock.fixed()),
-            Function.identity(),
-            server);
+            Function.identity());
 
     assertThatExceptionOfType(CoinbaseNotSetException.class)
-        .isThrownBy(() -> executor.startAsyncMining(Subscribers.create(), null))
+        .isThrownBy(() -> executor.startAsyncMining(Subscribers.create(), Subscribers.none(), null))
         .withMessageContaining("Unable to start mining without a coinbase.");
   }
 
@@ -74,8 +69,6 @@ public class EthHashMinerExecutorTest {
             TestClock.fixed(),
             metricsSystem);
 
-    final StratumServer server = mock(StratumServer.class);
-
     final EthHashMinerExecutor executor =
         new EthHashMinerExecutor(
             null,
@@ -83,8 +76,7 @@ public class EthHashMinerExecutorTest {
             pendingTransactions,
             miningParameters,
             new DefaultBlockScheduler(1, 10, TestClock.fixed()),
-            Function.identity(),
-            server);
+            Function.identity());
 
     assertThatExceptionOfType(IllegalArgumentException.class)
         .isThrownBy(() -> executor.setCoinbase(null))

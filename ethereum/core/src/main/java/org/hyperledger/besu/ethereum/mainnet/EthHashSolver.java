@@ -16,7 +16,9 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
+import org.hyperledger.besu.ethereum.chain.EthHashObserver;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.util.Subscribers;
 import org.hyperledger.besu.util.bytes.Bytes32;
 import org.hyperledger.besu.util.bytes.BytesValue;
 import org.hyperledger.besu.util.uint.UInt256;
@@ -25,7 +27,6 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 
 import com.google.common.base.Stopwatch;
 import org.apache.logging.log4j.Logger;
@@ -80,26 +81,19 @@ public class EthHashSolver {
   private final EthHasher ethHasher;
   private volatile long hashesPerSecond = NO_MINING_CONDUCTED;
   private final Boolean cpuMiningEnabled;
-  private final Consumer<EthHashSolverInputs> externalMiningConsumer;
-
+  private final Subscribers<EthHashObserver> ethHashObservers;
   private volatile Optional<EthHashSolverJob> currentJob = Optional.empty();
 
   public EthHashSolver(
       final Iterable<Long> nonceGenerator,
       final EthHasher ethHasher,
-      final Boolean cpuMiningEnabled) {
-    this(nonceGenerator, ethHasher, cpuMiningEnabled, input -> {});
-  }
-
-  public EthHashSolver(
-      final Iterable<Long> nonceGenerator,
-      final EthHasher ethHasher,
       final Boolean cpuMiningEnabled,
-      final Consumer<EthHashSolverInputs> externalMiningConsumer) {
+      final Subscribers<EthHashObserver> ethHashObservers) {
     this.nonceGenerator = nonceGenerator;
     this.ethHasher = ethHasher;
     this.cpuMiningEnabled = cpuMiningEnabled;
-    this.externalMiningConsumer = externalMiningConsumer;
+    this.ethHashObservers = ethHashObservers;
+    ethHashObservers.forEach(observer -> observer.setSubmitWorkCallback(this::submitSolution));
   }
 
   public EthHashSolution solveFor(final EthHashSolverJob job)
@@ -108,7 +102,7 @@ public class EthHashSolver {
     if (cpuMiningEnabled) {
       findValidNonce();
     } else {
-      externalMiningConsumer.accept(job.inputs);
+      ethHashObservers.forEach(observer -> observer.newJob(job.inputs));
     }
     return currentJob.get().getSolution();
   }
