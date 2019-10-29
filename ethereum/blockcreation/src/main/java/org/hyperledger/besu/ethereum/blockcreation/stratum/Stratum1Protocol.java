@@ -60,9 +60,9 @@ public class Stratum1Protocol implements StratumProtocol {
 
     @JsonCreator
     public MinerMessage(
-        @JsonProperty("id") int id,
-        @JsonProperty("method") String method,
-        @JsonProperty("params") String[] params) {
+        final @JsonProperty("id") int id,
+        final @JsonProperty("method") String method,
+        final @JsonProperty("params") String[] params) {
       this.id = id;
       this.method = method;
       this.params = params;
