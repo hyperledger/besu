@@ -104,7 +104,7 @@ public final class UpnpNatManagerTest {
 
     assertThatThrownBy(
             () -> {
-              upnpManager.requestPortForward(0, UpnpNatManager.Protocol.TCP, "");
+              upnpManager.requestPortForward(80, UpnpNatManager.Protocol.TCP, "");
             })
         .isInstanceOf(IllegalStateException.class);
   }
