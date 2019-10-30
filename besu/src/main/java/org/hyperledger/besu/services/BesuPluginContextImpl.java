@@ -17,6 +17,7 @@ package org.hyperledger.besu.services;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 
+import org.hyperledger.besu.controller.PluginServiceFactory;
 import org.hyperledger.besu.plugin.BesuContext;
 import org.hyperledger.besu.plugin.BesuPlugin;
 
@@ -67,6 +68,10 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
         serviceType.isInstance(service),
         "The service registered with a type must implement that type");
     serviceRegistry.put(serviceType, service);
+  }
+
+  public void addServicesFrom(final PluginServiceFactory factory) {
+    factory.appendPluginServices(this);
   }
 
   @SuppressWarnings("unchecked")
