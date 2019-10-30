@@ -17,7 +17,7 @@ executors:
     working_directory: ~/project
     environment:
       JAVA_TOOL_OPTIONS: -Xmx2048m
-      GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=8 -Xmx2048m
+      GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=6 -Xmx2048m
 
 commands:
   prepare:
@@ -37,14 +37,19 @@ commands:
             - deps-
 
 jobs:
+
   assemble:
     executor: besu_executor_xl
     steps:
       - prepare
       - run:
+          name: DCO check
+          command: |
+            ./scripts/dco_check.sh
+      - run:
           name: Assemble
           command: |
-            ./gradlew --no-daemon --parallel clean compileJava compileTestJava assemble
+            ./gradlew --no-daemon --parallel clean spotlessCheck compileJava compileTestJava assemble
       - save_cache:
           name: Caching gradle dependencies
           key: deps-{{ checksum "build.gradle" }}-{{ .Branch }}-{{ .Revision }}
@@ -110,7 +115,7 @@ jobs:
           name: AcceptanceTests
           no_output_timeout: 40m
           command: |
-            ./gradlew --no-daemon --parallel --info acceptanceTest
+            ./gradlew --no-daemon --parallel acceptanceTest
 
   buildDocker:
     executor: besu_executor_med
