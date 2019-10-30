@@ -35,11 +35,9 @@ public class IbftQueryPluginServiceFactory implements PluginServiceFactory {
   public void appendPluginServices(final BesuPluginContextImpl besuContext) {
     final BlockInterface blockInterface = new IbftBlockInterface();
 
-    besuContext.addService(
-        IbftQueryService.class, new IbftQueryServiceImpl(blockInterface, blockchain));
-    besuContext.addService(
-        PoaQueryService.class, new IbftQueryServiceImpl(blockInterface, blockchain));
-    besuContext.addService(
-        PoAMetricsService.class, new IbftQueryServiceImpl(blockInterface, blockchain));
+    final IbftQueryServiceImpl service = new IbftQueryServiceImpl(blockInterface, blockchain);
+    besuContext.addService(IbftQueryService.class, service);
+    besuContext.addService(PoaQueryService.class, service);
+    besuContext.addService(PoAMetricsService.class, service);
   }
 }

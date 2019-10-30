@@ -34,9 +34,8 @@ public class CliqueQueryPluginServiceFactory implements PluginServiceFactory {
   public void appendPluginServices(final BesuPluginContextImpl besuContext) {
     final BlockInterface blockInterface = new CliqueBlockInterface();
 
-    besuContext.addService(
-        PoaQueryService.class, new PoaQueryServiceImpl(blockInterface, blockchain));
-    besuContext.addService(
-        PoAMetricsService.class, new PoaQueryServiceImpl(blockInterface, blockchain));
+    final PoaQueryServiceImpl service = new PoaQueryServiceImpl(blockInterface, blockchain);
+    besuContext.addService(PoaQueryService.class, service);
+    besuContext.addService(PoAMetricsService.class, service);
   }
 }
