@@ -28,7 +28,6 @@ import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -51,8 +50,8 @@ public class LogsQuery {
           final List<Address> addresses,
       @JsonDeserialize(using = TopicsDeserializer.class) @JsonProperty("topics")
           final List<List<LogTopic>> topics) {
-    this.addresses = Optional.ofNullable(addresses).orElse(emptyList());
-    this.topics = Optional.ofNullable(topics).orElse(emptyList());
+    this.addresses = addresses != null ? addresses : emptyList();
+    this.topics = topics != null ? topics : emptyList();
     this.addressBlooms =
         this.addresses.stream().map(LogsBloomFilter::computeBytes).collect(toUnmodifiableList());
     this.topicsBlooms =

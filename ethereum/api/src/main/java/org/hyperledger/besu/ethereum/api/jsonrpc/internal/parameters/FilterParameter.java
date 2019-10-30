@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogTopic;
 
 import java.util.List;
-import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -49,8 +48,8 @@ public class FilterParameter {
     this.fromBlock =
         fromBlock != null ? new BlockParameter(fromBlock) : new BlockParameter("latest");
     this.toBlock = toBlock != null ? new BlockParameter(toBlock) : new BlockParameter("latest");
-    this.addresses = Optional.ofNullable(address).orElse(emptyList());
-    this.topics = Optional.ofNullable(topics).orElse(emptyList());
+    this.addresses = address != null ? address : emptyList();
+    this.topics = topics != null ? topics : emptyList();
     this.blockhash = blockhash != null ? Hash.fromHexString(blockhash) : null;
   }
 
