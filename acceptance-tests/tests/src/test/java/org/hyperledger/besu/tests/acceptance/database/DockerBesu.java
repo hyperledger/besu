@@ -15,13 +15,17 @@
 
 package org.hyperledger.besu.tests.acceptance.database;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import java.util.concurrent.TimeUnit;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.model.Bind;
+import com.github.dockerjava.api.model.Frame;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientBuilder;
+import com.github.dockerjava.core.command.LogContainerResultCallback;
 import com.github.dockerjava.core.command.PullImageResultCallback;
 import com.github.dockerjava.core.command.WaitContainerResultCallback;
 import org.apache.logging.log4j.LogManager;
@@ -51,19 +55,21 @@ class DockerBesu {
         .pullImageCmd(image)
         .withTag(tag)
         .exec(new PullImageResultCallback())
-        .awaitCompletion(2, TimeUnit.MINUTES);
+        .awaitCompletion(5, TimeUnit.MINUTES);
   }
 
   void runBesu(final String dockerImage, final String hostDataPath, final String... cmds)
       throws Exception {
-    CreateContainerResponse container =
+    LOG.info("Creating container for docker image: {}", dockerImage);
+    final CreateContainerResponse container =
         dockerClient
             .createContainerCmd(dockerImage)
             .withBinds(Bind.parse(String.format("%s:%s", hostDataPath, containerDataPath)))
             .withCmd(cmds)
             .exec();
+    LOG.info("Starting container command.");
     dockerClient.startContainerCmd(container.getId()).exec();
-    // showLog(container.getId());
+    showLog(container.getId());
     final WaitContainerResultCallback callback =
         dockerClient.waitContainerCmd(container.getId()).exec(new WaitContainerResultCallback());
     callback.awaitCompletion(1, TimeUnit.MINUTES);
@@ -76,7 +82,7 @@ class DockerBesu {
     }
   }
 
-  /*private void showLog(final String containerId) {
+  private void showLog(final String containerId) {
     dockerClient
         .logContainerCmd(containerId)
         .withStdOut(true)
@@ -90,9 +96,5 @@ class DockerBesu {
                 System.out.println(new String(item.getPayload(), UTF_8));
               }
             });
-  }*/
-
-  DockerClient getDockerClient() {
-    return dockerClient;
   }
 }

@@ -138,6 +138,7 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
     if (PlatformDetector.getOSType().equals("osx")) {
       hostDataPathForBind = "/private".concat(hostDataPathForBind);
     }
+    LOG.info("Starting Besu import command in docker container: {}", dockerImage);
     docker.runBesu(
         dockerImage,
         hostDataPathForBind,
@@ -146,6 +147,7 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
         "blocks",
         "import",
         String.format("--from=%s/ropsten-10-blocks.bin", DockerBesu.containerDataPath));
+    LOG.info("Besu import command completed.");
   }
 
   private BesuNodeConfigurationBuilder configureNode(
