@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.nat.upnp;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkState;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -38,10 +41,8 @@ import org.jupnp.model.types.UnsignedIntegerTwoBytes;
 import org.jupnp.registry.Registry;
 import org.jupnp.registry.RegistryListener;
 import org.jupnp.support.igd.callback.GetExternalIP;
-import org.jupnp.support.igd.callback.GetStatusInfo;
 import org.jupnp.support.igd.callback.PortMappingAdd;
 import org.jupnp.support.igd.callback.PortMappingDelete;
-import org.jupnp.support.model.Connection;
 import org.jupnp.support.model.PortMapping;
 
 /**
@@ -179,23 +180,6 @@ public class UpnpNatManager {
   }
 
   /**
-   * Get the local address on which we discovered our external IP address.
-   *
-   * <p>This can be useful to distinguish which network interface the external address was
-   * discovered on.
-   *
-   * @return the local address on which our GetExternalIP was discovered on, or an empty value if no
-   *     GetExternalIP query has been performed successfully.
-   */
-  public Optional<String> getDiscoveredOnLocalAddress() {
-    if (!started) {
-      throw new IllegalStateException(
-          "Cannot call getDiscoveredOnLocalAddress() when in stopped state");
-    }
-    return this.discoveredOnLocalAddress;
-  }
-
-  /**
    * Returns a CompletableFuture that will wait for the given service type to be discovered. No new
    * query will be performed, and if the service has already been discovered, the future will
    * complete in the very near future.
@@ -225,8 +209,6 @@ public class UpnpNatManager {
    *
    * <p>Note that this is not synchronized, as it is expected to be called within an
    * already-synchronized context ({@link #start()}).
-   *
-   * @return A CompletableFuture that can be used to query the result (or error).
    */
   private void initiateExternalIpQuery() {
     discoverService(SERVICE_TYPE_WAN_IP_CONNECTION)
@@ -286,46 +268,6 @@ public class UpnpNatManager {
   }
 
   /**
-   * Sends a UPnP request to the discovered IGD to request status info.
-   *
-   * @return A CompletableFuture that can be used to query the result (or error).
-   */
-  public CompletableFuture<Connection.StatusInfo> queryStatusInfo() {
-    if (!started) {
-      throw new IllegalStateException("Cannot call queryStatusInfo() when in stopped state");
-    }
-    final CompletableFuture<Connection.StatusInfo> upnpQueryFuture = new CompletableFuture<>();
-
-    return discoverService(SERVICE_TYPE_WAN_IP_CONNECTION)
-        .thenCompose(
-            service -> {
-              GetStatusInfo callback =
-                  new GetStatusInfo(service) {
-                    @Override
-                    public void success(final Connection.StatusInfo statusInfo) {
-                      upnpQueryFuture.complete(statusInfo);
-                    }
-
-                    /**
-                     * Because the underlying jupnp library omits generics info in this method
-                     * signature, we must too when we override it.
-                     */
-                    @Override
-                    @SuppressWarnings("rawtypes")
-                    public void failure(
-                        final ActionInvocation invocation,
-                        final UpnpResponse operation,
-                        final String msg) {
-                      upnpQueryFuture.completeExceptionally(new Exception(msg));
-                    }
-                  };
-              upnpService.getControlPoint().execute(callback);
-
-              return upnpQueryFuture;
-            });
-  }
-
-  /**
    * Convenience function to call {@link #requestPortForward(PortMapping)} with the following
    * defaults:
    *
@@ -337,12 +279,11 @@ public class UpnpNatManager {
    * @param port is the port to be used for both internal and external port values
    * @param protocol is either UDP or TCP
    * @param description is a free-form description, often displayed in router UIs
-   * @return A CompletableFuture which will provide the results of the request
    */
-  public CompletableFuture<Void> requestPortForward(
+  public void requestPortForward(
       final int port, final Protocol protocol, final String description) {
 
-    return this.requestPortForward(
+    this.requestPortForward(
         new PortMapping(
             true,
             new UnsignedIntegerFourBytes(0),
@@ -355,54 +296,15 @@ public class UpnpNatManager {
   }
 
   /**
-   * Convenience function to avoid use of PortMapping object. Takes the same arguments as are in a
-   * PortMapping object and constructs such an object for the caller.
-   *
-   * <p>This method chains to the {@link #requestPortForward(PortMapping)} method.
-   *
-   * @param enabled specifies whether or not the PortMapping is enabled
-   * @param leaseDurationSeconds is the duration of the PortMapping, in seconds
-   * @param remoteHost is a domain name or IP address used to filter which remote source this
-   *     forwarding can apply to
-   * @param externalPort is the source port (the port visible to the Internet)
-   * @param internalPort is the destination port (the port to be forwarded to)
-   * @param internalClient is the destination host on the local LAN
-   * @param protocol is either UDP or TCP
-   * @param description is a free-form description, often displayed in router UIs
-   * @return A CompletableFuture which will provide the results of the request
-   */
-  public CompletableFuture<Void> requestPortForward(
-      final boolean enabled,
-      final int leaseDurationSeconds,
-      final String remoteHost,
-      final int externalPort,
-      final int internalPort,
-      final String internalClient,
-      final Protocol protocol,
-      final String description) {
-
-    return this.requestPortForward(
-        new PortMapping(
-            enabled,
-            new UnsignedIntegerFourBytes(leaseDurationSeconds),
-            remoteHost,
-            new UnsignedIntegerTwoBytes(externalPort),
-            new UnsignedIntegerTwoBytes(internalPort),
-            internalClient,
-            toJupnpProtocol(protocol),
-            description));
-  }
-
-  /**
    * Sends a UPnP request to the discovered IGD to request a port forward.
    *
    * @param portMapping is a portMapping object describing the desired port mapping parameters.
    * @return A CompletableFuture that can be used to query the result (or error).
    */
   private CompletableFuture<Void> requestPortForward(final PortMapping portMapping) {
-    if (!started) {
-      throw new IllegalStateException("Cannot call requestPortForward() when in stopped state");
-    }
+    checkArgument(
+        portMapping.getInternalPort().getValue() != 0, "Cannot map to internal port zero.");
+    checkState(started, "Cannot call requestPortForward() when in stopped state");
 
     CompletableFuture<Void> upnpQueryFuture = new CompletableFuture<>();
 

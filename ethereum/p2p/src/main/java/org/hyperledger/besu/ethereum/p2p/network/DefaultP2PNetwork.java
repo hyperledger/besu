@@ -189,13 +189,13 @@ public class DefaultP2PNetwork implements P2PNetwork {
       return;
     }
 
-    if (natManager.isPresent()) {
-      this.configureNatEnvironment();
-    }
-
     final int listeningPort = rlpxAgent.start().join();
     final int discoveryPort = peerDiscoveryAgent.start(listeningPort).join();
     setLocalNode(listeningPort, discoveryPort);
+
+    if (natManager.isPresent()) {
+      this.configureNatEnvironment(listeningPort, discoveryPort);
+    }
 
     peerBondedObserverId =
         OptionalLong.of(peerDiscoveryAgent.observePeerBondedEvents(this::handlePeerBondedEvent));
@@ -362,8 +362,9 @@ public class DefaultP2PNetwork implements P2PNetwork {
     localNode.setEnode(localEnode);
   }
 
-  private void configureNatEnvironment() {
-    CompletableFuture<String> natQueryFuture = this.natManager.get().queryExternalIPAddress();
+  private void configureNatEnvironment(final int listeningPort, final int discoveryPort) {
+    final CompletableFuture<String> natQueryFuture =
+        this.natManager.orElseThrow().queryExternalIPAddress();
     String externalAddress = null;
     try {
       final int timeoutSeconds = 60;
@@ -379,19 +380,15 @@ public class DefaultP2PNetwork implements P2PNetwork {
         LOG.info("External IP detected: " + externalAddress);
         this.natManager
             .get()
-            .requestPortForward(
-                this.config.getDiscovery().getBindPort(),
-                UpnpNatManager.Protocol.UDP,
-                "besu-discovery");
+            .requestPortForward(discoveryPort, UpnpNatManager.Protocol.UDP, "besu-discovery");
         this.natManager
             .get()
-            .requestPortForward(
-                this.config.getRlpx().getBindPort(), UpnpNatManager.Protocol.TCP, "besu-rlpx");
+            .requestPortForward(listeningPort, UpnpNatManager.Protocol.TCP, "besu-rlpx");
       } else {
         LOG.info("No external IP detected within timeout.");
       }
 
-    } catch (Exception e) {
+    } catch (final Exception e) {
       LOG.error("Error configuring NAT environment", e);
     }
     natExternalAddress = Optional.ofNullable(externalAddress);
