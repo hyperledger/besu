@@ -1,0 +1,4 @@
+Acceptance tests for sidechains:
+
+1) Create a set of sidechains
+2) Do a crosschain transaction
