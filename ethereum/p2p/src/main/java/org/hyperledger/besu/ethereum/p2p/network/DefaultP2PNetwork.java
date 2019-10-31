@@ -190,12 +190,13 @@ public class DefaultP2PNetwork implements P2PNetwork {
     }
 
     final int listeningPort = rlpxAgent.start().join();
-    final int discoveryPort = peerDiscoveryAgent.start(listeningPort).join();
-    setLocalNode(listeningPort, discoveryPort);
+    final int discoveryPort = peerDiscoveryAgent.start(config.getDiscovery().getBindPort()).join();
 
     if (natManager.isPresent()) {
       this.configureNatEnvironment(listeningPort, discoveryPort);
     }
+
+    setLocalNode(listeningPort, discoveryPort);
 
     peerBondedObserverId =
         OptionalLong.of(peerDiscoveryAgent.observePeerBondedEvents(this::handlePeerBondedEvent));
