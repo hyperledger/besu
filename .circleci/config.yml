@@ -41,6 +41,7 @@ commands:
     steps:
       - run:
           name: Gather test results
+          when: always
           command: |
             FILES=`find . -name test-results`
             for FILE in $FILES
@@ -48,21 +49,10 @@ commands:
               MODULE=`echo "$FILE" | sed -e 's@./\(.*\)/build/test-results@\1@'`
               TARGET="build/test-results/$MODULE"
               mkdir -p "$TARGET"
-              cp -rf ${FILE}/*/* "build/test-results/$MODULE"
+              cp -rf ${FILE}/*/* "$TARGET"
             done
       - store_test_results:
           path: build/test-results
-      - run:
-          name: Test results artifacts
-          command: |
-            mkdir -p ~/results/junit/
-            find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} ~/results/junit/ \;
-            mkdir -p ~/results/reports
-            find . -type d -regex ".*/build/reports" -exec cp -r {} ~/results/reports/ \;
-          when: always
-      - store_artifacts:
-          path: ~/results
-
 jobs:
   assemble:
     executor: besu_executor_xl
@@ -206,10 +196,7 @@ workflows:
             - assemble
       - buildDocker:
           requires:
-            - integrationTests
             - unitTests
-            - acceptanceTests
-            - referenceTests
       - publish:
           filters:
             branches:
