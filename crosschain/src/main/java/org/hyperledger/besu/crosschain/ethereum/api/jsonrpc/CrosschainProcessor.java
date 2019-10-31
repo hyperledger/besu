@@ -15,6 +15,8 @@ package org.hyperledger.besu.crosschain.ethereum.api.jsonrpc;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import org.hyperledger.besu.config.CrosschainConfigOptions;
+import org.hyperledger.besu.crosschain.ethereum.crosschain.CrosschainThreadLocalDataHolder;
+import org.hyperledger.besu.crosschain.ethereum.crosschain.SubordinateViewCoordinator;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcRequestException;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -25,8 +27,6 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldState;
-import org.hyperledger.besu.crosschain.ethereum.crosschain.CrosschainThreadLocalDataHolder;
-import org.hyperledger.besu.crosschain.ethereum.crosschain.SubordinateViewCoordinator;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;

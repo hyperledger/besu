@@ -12,14 +12,14 @@
  */
 package org.hyperledger.besu.crosschain.crypto.threshold.crypto.altbn128;
 
+import org.hyperledger.besu.crosschain.crypto.threshold.crypto.BlsCryptoProvider;
+import org.hyperledger.besu.crosschain.crypto.threshold.crypto.BlsPoint;
 import org.hyperledger.besu.crosschain.crypto.threshold.crypto.CryptoProviderBase;
 import org.hyperledger.besu.crypto.Hash;
 import org.hyperledger.besu.crypto.altbn128.AltBn128Fq12Pairer;
 import org.hyperledger.besu.crypto.altbn128.AltBn128Fq2Point;
 import org.hyperledger.besu.crypto.altbn128.AltBn128Point;
 import org.hyperledger.besu.crypto.altbn128.Fq12;
-import org.hyperledger.besu.crosschain.crypto.threshold.crypto.BlsCryptoProvider;
-import org.hyperledger.besu.crosschain.crypto.threshold.crypto.BlsPoint;
 import org.hyperledger.besu.util.bytes.Bytes32;
 import org.hyperledger.besu.util.bytes.BytesValue;
 import org.hyperledger.besu.util.bytes.BytesValues;

@@ -12,10 +12,10 @@
  */
 package org.hyperledger.besu.crosschain.crypto.threshold.crypto.altbn128;
 
+import org.hyperledger.besu.crosschain.crypto.threshold.crypto.BlsPoint;
 import org.hyperledger.besu.crypto.altbn128.AltBn128Fq2Point;
 import org.hyperledger.besu.crypto.altbn128.Fq;
 import org.hyperledger.besu.crypto.altbn128.Fq2;
-import org.hyperledger.besu.crosschain.crypto.threshold.crypto.BlsPoint;
 import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.math.BigInteger;

@@ -23,7 +23,10 @@ public class IbftContext {
   private final VoteProposer voteProposer;
   private final CrosschainProcessor crosschainProcessor;
 
-  public IbftContext(final VoteTallyCache voteTallyCache, final VoteProposer voteProposer) {
+  public IbftContext(
+      final VoteTallyCache voteTallyCache,
+      final VoteProposer voteProposer,
+      final CrosschainProcessor crosschainProcessor) {
     this.voteTallyCache = voteTallyCache;
     this.voteProposer = voteProposer;
     this.crosschainProcessor = crosschainProcessor;

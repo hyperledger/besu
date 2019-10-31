@@ -16,11 +16,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static org.hyperledger.besu.controller.KeyPairUtil.loadKeyPair;
 
-import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.CrosschainConfigOptions;
+import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.crosschain.ethereum.api.jsonrpc.CrosschainProcessor;
+import org.hyperledger.besu.crosschain.ethereum.crosschain.SubordinateViewCoordinator;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.crosschain.ethereum.api.jsonrpc.CrosschainProcessor;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethodFactory;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;

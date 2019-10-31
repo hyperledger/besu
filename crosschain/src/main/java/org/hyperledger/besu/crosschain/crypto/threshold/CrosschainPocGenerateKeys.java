@@ -12,8 +12,8 @@
  */
 package org.hyperledger.besu.crosschain.crypto.threshold;
 
-import org.hyperledger.besu.crosschain.crypto.threshold.protocol.Node;
 import org.hyperledger.besu.crosschain.crypto.threshold.crypto.BlsPoint;
+import org.hyperledger.besu.crosschain.crypto.threshold.protocol.Node;
 
 import java.io.FileWriter;
 import java.math.BigInteger;

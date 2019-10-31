@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockBodyValidator;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockImporter;
+import org.hyperledger.besu.ethereum.mainnet.MutableProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
@@ -43,25 +44,27 @@ public class IbftProtocolSchedule {
     final IbftConfigOptions ibftConfig = config.getIbft2ConfigOptions();
     final long blockPeriod = ibftConfig.getBlockPeriodSeconds();
 
-    psc = new ProtocolScheduleBuilder<>(
+    psc =
+        new ProtocolScheduleBuilder<>(
             config,
             DEFAULT_CHAIN_ID,
             builder -> applyIbftChanges(blockPeriod, builder),
             privacyParameters,
             isRevertReasonEnabled);
 
-    MutableProtocolSchedule<IbftContext> protocolSchedule = (MutableProtocolSchedule<IbftContext>) psc.createProtocolSchedule();
+    MutableProtocolSchedule<IbftContext> protocolSchedule =
+        (MutableProtocolSchedule<IbftContext>) psc.createProtocolSchedule();
 
     final Optional<BigInteger> chainId =
-            config.getChainId().map(Optional::of).orElse(Optional.of(DEFAULT_CHAIN_ID));
+        config.getChainId().map(Optional::of).orElse(Optional.of(DEFAULT_CHAIN_ID));
     psc.addProtocolSpec(
-            protocolSchedule,
-            config.getCrossChainBlockNumber(),
-            CrosschainProtocolSpecs.crossChainDefinition(
-                    chainId,
-                    config.getContractSizeLimit(),
-                    config.getEvmStackSize(),
-                    isRevertReasonEnabled));
+        protocolSchedule,
+        config.getCrossChainBlockNumber(),
+        CrosschainProtocolSpecs.crossChainDefinition(
+            chainId,
+            config.getContractSizeLimit(),
+            config.getEvmStackSize(),
+            isRevertReasonEnabled));
 
     return protocolSchedule;
   }

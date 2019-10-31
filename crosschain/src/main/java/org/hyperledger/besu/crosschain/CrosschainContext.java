@@ -13,6 +13,4 @@
 package org.hyperledger.besu.crosschain;
 
 /** Holds the Crosschain specific mutable state. */
-public class CrosschainContext {
-
-}
+public class CrosschainContext {}

@@ -12,8 +12,8 @@
  */
 package org.hyperledger.besu.crosschain.crypto.threshold.protocol;
 
-import org.hyperledger.besu.crypto.Hash;
 import org.hyperledger.besu.crosschain.crypto.threshold.crypto.BlsPoint;
+import org.hyperledger.besu.crypto.Hash;
 import org.hyperledger.besu.util.bytes.Bytes32;
 import org.hyperledger.besu.util.bytes.BytesValue;
 
