@@ -19,61 +19,132 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.consensus.ibft.IbftBlockHashing;
+import org.hyperledger.besu.consensus.ibft.IbftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.ibft.IbftBlockInterface;
 import org.hyperledger.besu.consensus.ibft.IbftExtraData;
+import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.SECP256K1.Signature;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.NonBesuBlockHeader;
+import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.plugin.services.query.IbftQueryService;
 import org.hyperledger.besu.util.bytes.Bytes32;
 import org.hyperledger.besu.util.bytes.BytesValue;
 
+import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
-import org.junit.Before;
+import com.google.common.collect.Lists;
 import org.junit.Test;
 
 public class IbftQueryServiceImplTest {
 
   private Blockchain blockchain = mock(Blockchain.class);
-  // private BlockHeaderFunctions headerFunctions;
 
-  final int ROUND_NUMBER_IN_BLOCK = 5;
-  private IbftExtraData extraData;
+  private final List<KeyPair> validatorKeys =
+      Lists.newArrayList(KeyPair.generate(), KeyPair.generate());
 
-  @Before
-  public void setup() {
-    extraData =
+  private final List<KeyPair> signingKeys = Lists.newArrayList(validatorKeys.get(0));
+  private final int ROUND_NUMBER_IN_BLOCK = 5;
+
+  private IbftExtraData signedExtraData;
+
+  private BlockHeader createBlockHeader() {
+
+    final Collection<Address> validators =
+        validatorKeys.stream()
+            .map(validatorKeys -> Util.publicKeyToAddress(validatorKeys.getPublicKey()))
+            .collect(Collectors.toList());
+
+    final IbftExtraData unsignedExtraData =
         new IbftExtraData(
             BytesValue.wrap(new byte[32]),
             Collections.emptyList(),
             Optional.empty(),
             ROUND_NUMBER_IN_BLOCK,
-            Collections.emptyList());
+            validators);
+
+    final BlockHeaderTestFixture blockHeaderTestFixture = new BlockHeaderTestFixture();
+    blockHeaderTestFixture.number(1); // can't be genesis block (due to extradata serialisation)
+    blockHeaderTestFixture.blockHeaderFunctions(IbftBlockHeaderFunctions.forOnChainBlock());
+    blockHeaderTestFixture.extraData(unsignedExtraData.encode());
+
+    final BlockHeader unsignedBlockHeader = blockHeaderTestFixture.buildHeader();
+
+    final Collection<Signature> validatorSignatures =
+        signingKeys.stream()
+            .map(
+                keyPair ->
+                    SECP256K1.sign(
+                        IbftBlockHashing.calculateDataHashForCommittedSeal(unsignedBlockHeader),
+                        keyPair))
+            .collect(Collectors.toList());
+
+    signedExtraData =
+        new IbftExtraData(
+            BytesValue.wrap(new byte[32]),
+            validatorSignatures,
+            Optional.empty(),
+            ROUND_NUMBER_IN_BLOCK,
+            validators);
+
+    blockHeaderTestFixture.extraData(signedExtraData.encode());
+    return blockHeaderTestFixture.buildHeader();
   }
 
   @Test
   public void roundNumberFromBlockIsReturned() {
-    final BlockHeaderTestFixture blockHeaderTestFixture = new BlockHeaderTestFixture();
-    blockHeaderTestFixture.extraData(extraData.encode());
-    final BlockHeader header = blockHeaderTestFixture.buildHeader();
-
     final IbftQueryService service = new IbftQueryServiceImpl(new IbftBlockInterface(), blockchain);
-    assertThat(service.getRoundNumberFrom(header)).isEqualTo(ROUND_NUMBER_IN_BLOCK);
+
+    final BlockHeader headerToQuery = createBlockHeader();
+
+    assertThat(service.getRoundNumberFrom(headerToQuery)).isEqualTo(ROUND_NUMBER_IN_BLOCK);
   }
 
   @Test
   public void getRoundNumberThrowsIfBlockIsNotOnTheChain() {
     final Hash hash = Hash.wrap(Bytes32.wrap(new byte[32]));
 
-    final NonBesuBlockHeader header = new NonBesuBlockHeader(hash, extraData.encode());
+    final NonBesuBlockHeader header = new NonBesuBlockHeader(hash, signedExtraData.encode());
     when(blockchain.getBlockHeader(hash)).thenReturn(Optional.empty());
 
     final IbftQueryService service = new IbftQueryServiceImpl(new IbftBlockInterface(), blockchain);
     assertThatExceptionOfType(RuntimeException.class)
         .isThrownBy(() -> service.getRoundNumberFrom(header));
+  }
+
+  @Test
+  public void getSignersReturnsAddressesOfSignersInBlock() {
+    final IbftQueryService service = new IbftQueryServiceImpl(new IbftBlockInterface(), blockchain);
+
+    final BlockHeader headerToQuery = createBlockHeader();
+
+    final List<Address> signers =
+        signingKeys.stream()
+            .map(keyPair -> Util.publicKeyToAddress(keyPair.getPublicKey()))
+            .collect(Collectors.toList());
+
+    assertThat(service.getSignersFrom(headerToQuery)).containsExactlyElementsOf(signers);
+  }
+
+  @Test
+  public void getSignersTheowsIfBlockIsNotOnTheChain() {
+    final Hash hash = Hash.wrap(Bytes32.wrap(new byte[32]));
+
+    final NonBesuBlockHeader header = new NonBesuBlockHeader(hash, signedExtraData.encode());
+    when(blockchain.getBlockHeader(hash)).thenReturn(Optional.empty());
+
+    final IbftQueryService service = new IbftQueryServiceImpl(new IbftBlockInterface(), blockchain);
+    assertThatExceptionOfType(RuntimeException.class)
+        .isThrownBy(() -> service.getSignersFrom(header));
   }
 }

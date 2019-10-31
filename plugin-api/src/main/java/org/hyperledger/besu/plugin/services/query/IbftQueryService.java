@@ -19,14 +19,14 @@ import org.hyperledger.besu.plugin.data.BlockHeader;
 
 import java.util.Collection;
 
-/** Allows for the IBFT specific aspects of the block chain to be queried. */
+/** Allows for the IBFT 2.0 specific aspects of the block chain to be queried. */
 public interface IbftQueryService extends PoaQueryService {
 
   /**
    * Extracts the round number from the supplied header and returns it to the caller.
    *
    * @param header the block header from which the round number is to be extracted
-   * @return The number of failed IBFT rounds executed prior to adding the block to the chain.
+   * @return The number of failed rounds executed prior to adding the block to the chain.
    */
   int getRoundNumberFrom(final BlockHeader header);
 
