@@ -189,8 +189,12 @@ public class DefaultP2PNetwork implements P2PNetwork {
       return;
     }
 
+    final int configuredDiscoveryPort = config.getDiscovery().getBindPort();
+    final int configuredRlpxPort = config.getRlpx().getBindPort();
+
     final int listeningPort = rlpxAgent.start().join();
-    final int discoveryPort = peerDiscoveryAgent.start(config.getDiscovery().getBindPort()).join();
+    final int discoveryPort =
+        peerDiscoveryAgent.start((configuredDiscoveryPort == 0 && configuredRlpxPort == 0) ? listeningPort : configuredDiscoveryPort).join();
 
     if (natManager.isPresent()) {
       this.configureNatEnvironment(listeningPort, discoveryPort);
