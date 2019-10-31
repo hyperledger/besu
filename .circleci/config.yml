@@ -36,8 +36,24 @@ commands:
             - deps-{{ checksum "build.gradle" }}
             - deps-
 
-jobs:
+  capture_test_results:
+    description: "Capture test results"
+    steps:
+      - run:
+          name: "Gather test results"
+          command: |
+            FILES=`find . -name test-results`
+            for FILE in $FILES
+            do
+              MODULE=`echo "$FILE" | sed -e 's@./\(.*\)/build/test-results@\1@'`
+              TARGET="build/test-results/$MODULE"
+              mkdir -p "$TARGET"
+              cp -rf ${FILE}/*/* "build/test-results/$MODULE"
+            done
+      - store_test_results:
+          path: build/test-results
 
+jobs:
   assemble:
     executor: besu_executor_xl
     steps:
@@ -72,6 +88,7 @@ jobs:
           no_output_timeout: 20m
           command: |
             ./gradlew --no-daemon --parallel build
+      - capture_test_results
 
   integrationTests:
     executor: besu_executor_med
@@ -91,6 +108,7 @@ jobs:
           name: CompileJmh
           command: |
             ./gradlew --no-daemon --parallel compileJmh
+      - capture_test_results
 
   referenceTests:
     executor: besu_executor_xl
@@ -104,6 +122,7 @@ jobs:
           command: |
             git submodule update --init --recursive
             ./gradlew --no-daemon --parallel referenceTest
+      - capture_test_results
 
   acceptanceTests:
     executor: besu_executor_xl
@@ -116,6 +135,7 @@ jobs:
           no_output_timeout: 40m
           command: |
             ./gradlew --no-daemon --parallel acceptanceTest
+      - capture_test_results
 
   buildDocker:
     executor: besu_executor_med
