@@ -26,14 +26,15 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.BesuNodeConfigurationBuilder;
 import org.hyperledger.besu.util.PlatformDetector;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.google.common.base.Charsets;
@@ -209,8 +210,16 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
 
   private static void ls(final Path path) throws Exception {
     LOG.info("ls {}", path.toAbsolutePath().toString());
-    try (Stream<Path> stream = Files.walk(path)) {
-      stream.map(Path::toString).collect(Collectors.toList()).forEach(System.out::println);
+    ls(path.toFile());
+  }
+
+  private static void ls(final File file) throws Exception {
+    for (File f : Objects.requireNonNull(file.listFiles())) {
+      if (f.isDirectory()) {
+        ls(f);
+      } else if (f.isFile()) {
+        System.out.println(f.getName());
+      }
     }
   }
 }
