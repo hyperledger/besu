@@ -161,7 +161,7 @@ task checkLicenses {
 
   def bads = ""
   doLast {
-    def xml = new XmlParser().parse('build/reports/license/license-dependency.xml')
+    def xml = new XmlParser().parse("${rootProject.buildDir}/reports/license/license-dependency.xml")
     xml.each { license ->
       if (!acceptedLicenses.contains((license.@name).toLowerCase())) {
         def depStrings = []
