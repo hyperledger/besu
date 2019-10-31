@@ -53,19 +53,22 @@ public class DatabaseMetadata {
           databaseDir.toString());
       metadataFile = getDefaultMetadataFile(databaseDir);
     }
-    DatabaseMetadata databaseMetadata;
-    try {
-      databaseMetadata = MAPPER.readValue(metadataFile, DatabaseMetadata.class);
-    } catch (FileNotFoundException fnfe) {
-      databaseMetadata = new DatabaseMetadata(0);
-    } catch (JsonProcessingException jpe) {
-      throw new IllegalStateException(
-          String.format("Invalid metadata file %s", metadataFile.getAbsolutePath()), jpe);
-    }
+    final DatabaseMetadata databaseMetadata = resolveDatabaseMetadata(metadataFile);
     if (shouldLookupInDatabaseDir) {
       LOG.warn(
           "Database metadata file has been copied from old location (database directory). Be aware that the old file might be removed in future release.");
       writeToDirectory(databaseMetadata, dataDir);
+    }
+    return databaseMetadata;
+  }
+
+  // Lookup for privacy metadata
+  public static DatabaseMetadata lookUpFrom(final Path databaseDir) throws IOException {
+    LOG.info("Lookup database metadata file in database directory: {}", databaseDir.toString());
+    File metadataFile = getDefaultMetadataFile(databaseDir);
+    final DatabaseMetadata databaseMetadata = resolveDatabaseMetadata(metadataFile);
+    if (!metadataFile.exists()) {
+      writeToDirectory(databaseMetadata, databaseDir);
     }
     return databaseMetadata;
   }
@@ -81,5 +84,19 @@ public class DatabaseMetadata {
 
   private static File getDefaultMetadataFile(final Path databaseDir) {
     return databaseDir.resolve(METADATA_FILENAME).toFile();
+  }
+
+  private static DatabaseMetadata resolveDatabaseMetadata(final File metadataFile)
+      throws IOException {
+    DatabaseMetadata databaseMetadata;
+    try {
+      databaseMetadata = MAPPER.readValue(metadataFile, DatabaseMetadata.class);
+    } catch (FileNotFoundException fnfe) {
+      databaseMetadata = new DatabaseMetadata(0);
+    } catch (JsonProcessingException jpe) {
+      throw new IllegalStateException(
+          String.format("Invalid metadata file %s", metadataFile.getAbsolutePath()), jpe);
+    }
+    return databaseMetadata;
   }
 }

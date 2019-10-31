@@ -12,25 +12,20 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.storage;
+package org.hyperledger.besu.ethereum.privacy.storage;
 
-import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
-import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 
 import java.io.Closeable;
 
-public interface StorageProvider extends Closeable {
-
-  BlockchainStorage createBlockchainStorage(ProtocolSchedule<?> protocolSchedule);
+public interface PrivacyStorageProvider extends Closeable {
 
   WorldStateStorage createWorldStateStorage();
 
   WorldStatePreimageStorage createWorldStatePreimageStorage();
 
-  KeyValueStorage createPruningStorage();
+  PrivateStateStorage createPrivateStateStorage();
 
-  boolean isWorldStateIterable();
+  int getSchemaVersion();
 }

@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivacyStorageProvider;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
@@ -34,7 +35,7 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
-public class InMemoryStorageProvider implements StorageProvider {
+public class InMemoryStorageProvider implements StorageProvider, PrivacyStorageProvider {
 
   public static MutableBlockchain createInMemoryBlockchain(final Block genesisBlock) {
     return createInMemoryBlockchain(genesisBlock, new MainnetBlockHeaderFunctions());
@@ -90,6 +91,11 @@ public class InMemoryStorageProvider implements StorageProvider {
   @Override
   public boolean isWorldStateIterable() {
     return true;
+  }
+
+  @Override
+  public int getSchemaVersion() {
+    return 0;
   }
 
   @Override

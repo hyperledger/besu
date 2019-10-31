@@ -23,11 +23,12 @@ import org.hyperledger.besu.enclave.types.SendRequest;
 import org.hyperledger.besu.enclave.types.SendRequestLegacy;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.storage.StorageProvider;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivacyStorageProvider;
+import org.hyperledger.besu.ethereum.privacy.storage.keyvalue.PrivacyKeyValueStorageProviderBuilder;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
-import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBKeyValuePrivacyStorageFactory;
+import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBKeyValuePrivacyStorageFactoryAdapter;
+import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBKeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBFactoryConfiguration;
 import org.hyperledger.besu.services.BesuConfigurationImpl;
@@ -210,18 +211,19 @@ public class PrivacyNode implements AutoCloseable {
     return besu.getConfiguration();
   }
 
-  private StorageProvider createKeyValueStorageProvider(
+  private PrivacyStorageProvider createKeyValueStorageProvider(
       final Path dataLocation, final Path dbLocation) {
-    return new KeyValueStorageProviderBuilder()
+    return new PrivacyKeyValueStorageProviderBuilder()
         .withStorageFactory(
-            new RocksDBKeyValuePrivacyStorageFactory(
-                () ->
-                    new RocksDBFactoryConfiguration(
-                        MAX_OPEN_FILES,
-                        MAX_BACKGROUND_COMPACTIONS,
-                        BACKGROUND_THREAD_COUNT,
-                        CACHE_CAPACITY),
-                Arrays.asList(KeyValueSegmentIdentifier.values()),
+            new RocksDBKeyValuePrivacyStorageFactoryAdapter(
+                new RocksDBKeyValueStorageFactory(
+                    () ->
+                        new RocksDBFactoryConfiguration(
+                            MAX_OPEN_FILES,
+                            MAX_BACKGROUND_COMPACTIONS,
+                            BACKGROUND_THREAD_COUNT,
+                            CACHE_CAPACITY),
+                    Arrays.asList(KeyValueSegmentIdentifier.values()),
                 RocksDBMetricsFactory.PRIVATE_ROCKS_DB_METRICS))
         .withCommonConfiguration(new BesuConfigurationImpl(dataLocation, dbLocation))
         .withMetricsSystem(new NoOpMetricsSystem())

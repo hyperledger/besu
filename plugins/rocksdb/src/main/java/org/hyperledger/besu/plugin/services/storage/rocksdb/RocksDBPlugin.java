@@ -39,7 +39,7 @@ public class RocksDBPlugin implements BesuPlugin {
   private final RocksDBCLIOptions options;
   private BesuContext context;
   private RocksDBKeyValueStorageFactory factory;
-  private RocksDBKeyValuePrivacyStorageFactory privacyFactory;
+  private RocksDBKeyValuePrivacyStorageFactoryAdapter privacyFactory;
 
   public RocksDBPlugin() {
     this.options = RocksDBCLIOptions.create();
@@ -100,12 +100,8 @@ public class RocksDBPlugin implements BesuPlugin {
 
     final Supplier<RocksDBFactoryConfiguration> configuration =
         Suppliers.memoize(options::toDomainObject);
-    factory =
-        new RocksDBKeyValueStorageFactory(
-            configuration, segments, RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS);
-    privacyFactory =
-        new RocksDBKeyValuePrivacyStorageFactory(
-            configuration, segments, RocksDBMetricsFactory.PRIVATE_ROCKS_DB_METRICS);
+    factory = new RocksDBKeyValueStorageFactory(configuration, segments, RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS);
+    privacyFactory = new RocksDBKeyValuePrivacyStorageFactoryAdapter(factory);
 
     service.registerKeyValueStorage(factory);
     service.registerKeyValueStorage(privacyFactory);

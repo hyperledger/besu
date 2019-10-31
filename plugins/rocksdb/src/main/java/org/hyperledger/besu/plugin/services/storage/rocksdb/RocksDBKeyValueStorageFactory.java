@@ -87,11 +87,6 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
   }
 
   @Override
-  public int getVersion() {
-    return databaseVersion;
-  }
-
-  @Override
   public KeyValueStorage create(
       final SegmentIdentifier segment,
       final BesuConfiguration commonConfiguration,
