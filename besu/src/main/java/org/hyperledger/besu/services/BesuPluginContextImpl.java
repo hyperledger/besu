@@ -70,10 +70,6 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
     serviceRegistry.put(serviceType, service);
   }
 
-  public void addServicesFrom(final PluginServiceFactory factory) {
-    factory.appendPluginServices(this);
-  }
-
   @SuppressWarnings("unchecked")
   @Override
   public <T> Optional<T> getService(final Class<T> serviceType) {
