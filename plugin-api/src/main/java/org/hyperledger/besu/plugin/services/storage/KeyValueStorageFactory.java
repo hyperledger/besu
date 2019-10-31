@@ -33,6 +33,13 @@ public interface KeyValueStorageFactory extends Closeable {
   String getName();
 
   /**
+   * Retrieves the version of the key-value storage factory.
+   *
+   * @return the version of the key-value storage factory.
+   */
+  int getVersion();
+
+  /**
    * Creates a new key-value storage instance, appropriate for the given segment.
    *
    * <p>When segment isolation is not supported, the create will still be called with each of the
