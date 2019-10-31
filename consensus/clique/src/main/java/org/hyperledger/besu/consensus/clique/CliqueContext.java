@@ -16,7 +16,7 @@ package org.hyperledger.besu.consensus.clique;
 
 import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.EpochManager;
-import org.hyperledger.besu.consensus.common.PoAContext;
+import org.hyperledger.besu.consensus.common.PoaContext;
 import org.hyperledger.besu.consensus.common.VoteProposer;
 import org.hyperledger.besu.consensus.common.VoteTallyCache;
 
@@ -24,7 +24,7 @@ import org.hyperledger.besu.consensus.common.VoteTallyCache;
  * Holds the data which lives "in parallel" with the importation of blocks etc. when using the
  * Clique consensus mechanism.
  */
-public class CliqueContext implements PoAContext {
+public class CliqueContext implements PoaContext {
 
   private final VoteTallyCache voteTallyCache;
   private final VoteProposer voteProposer;
