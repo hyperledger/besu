@@ -209,6 +209,8 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
 
   private static void ls(final Path path) throws Exception {
     LOG.info("ls {}", path.toAbsolutePath().toString());
-    Files.walk(path).map(Path::toString).collect(Collectors.toList()).forEach(System.out::println);
+    try (Stream<Path> stream = Files.walk(path)) {
+      stream.map(Path::toString).collect(Collectors.toList()).forEach(System.out::println);
+    }
   }
 }
