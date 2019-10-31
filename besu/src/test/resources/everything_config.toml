@@ -115,3 +115,4 @@ crosschain-enabled=false
 crosschain-config="crosschain.config"
 sidechain-nodeCount="1"
 sidechain-nodeNum="1"
+

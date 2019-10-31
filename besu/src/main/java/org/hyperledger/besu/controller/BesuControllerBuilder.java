@@ -29,7 +29,6 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
-import org.hyperledger.besu.crosschain.ethereum.crosschain.SubordinateViewCoordinator;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -87,6 +86,7 @@ public abstract class BesuControllerBuilder<C> {
   protected Clock clock;
   protected KeyPair nodeKeys;
   protected boolean isRevertReasonEnabled;
+  protected CrosschainProcessor crosschainProcessor;
   private StorageProvider storageProvider;
   private final List<Runnable> shutdownActions = new ArrayList<>();
   private boolean isPruningEnabled;
@@ -307,7 +307,7 @@ public abstract class BesuControllerBuilder<C> {
     SubordinateViewCoordinator subordinateViewCoordinator =
         SubordinateViewCoordinator.createSubordinateViewCoordinatorAndOtherNodes(
             chainId.get().intValue(), numNodes, nodeNum, transactionSimulator);
-    CrosschainProcessor crosschainProcessor =
+    crosschainProcessor =
         new CrosschainProcessor(
             subordinateViewCoordinator,
             transactionSimulator,

@@ -28,7 +28,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcHttpService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
-import org.hyperledger.besu.crosschain.ethereum.api.jsonrpc.CrosschainProcessor;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.LivenessCheck;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.ReadinessCheck;
@@ -369,8 +368,6 @@ public class RunnerBuilder {
             accountPermissioningController.flatMap(
                 AccountPermissioningController::getAccountLocalConfigPermissioningController);
 
-    final CrosschainProcessor crosschainProcessor = besuController.getCrosschainProcessor();
-
     Optional<JsonRpcHttpService> jsonRpcHttpService = Optional.empty();
     if (jsonRpcConfiguration.isEnabled()) {
       final Map<String, JsonRpcMethod> jsonRpcMethods =
@@ -391,8 +388,7 @@ public class RunnerBuilder {
               privacyParameters,
               jsonRpcConfiguration,
               webSocketConfiguration,
-              metricsConfiguration,
-              crosschainProcessor);
+              metricsConfiguration);
       jsonRpcHttpService =
           Optional.of(
               new JsonRpcHttpService(
@@ -450,8 +446,7 @@ public class RunnerBuilder {
               privacyParameters,
               jsonRpcConfiguration,
               webSocketConfiguration,
-              metricsConfiguration,
-              crosschainProcessor);
+              metricsConfiguration);
 
       final SubscriptionManager subscriptionManager =
           createSubscriptionManager(vertx, transactionPool);
@@ -581,8 +576,7 @@ public class RunnerBuilder {
       final PrivacyParameters privacyParameters,
       final JsonRpcConfiguration jsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
-      final MetricsConfiguration metricsConfiguration,
-      final CrosschainProcessor crosschainProcessor) {
+      final MetricsConfiguration metricsConfiguration) {
     final Map<String, JsonRpcMethod> methods =
         new JsonRpcMethodsFactory()
             .methods(
@@ -605,8 +599,7 @@ public class RunnerBuilder {
                 privacyParameters,
                 jsonRpcConfiguration,
                 webSocketConfiguration,
-                metricsConfiguration,
-                crosschainProcessor);
+                metricsConfiguration);
     methods.putAll(besuController.getAdditionalJsonRpcMethods(jsonRpcApis));
     return methods;
   }

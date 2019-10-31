@@ -12,20 +12,4 @@
  */
 package org.hyperledger.besu.crosschain;
 
-import org.checkerframework.checker.units.qual.C;
-import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.ethereum.MainnetBlockValidator;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.mainnet.*;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
-
-import java.math.BigInteger;
-import java.util.OptionalLong;
-
-public class CrosschainProtocolSchedule {
-
-  private static final BigInteger DEFAULT_CHAIN_ID = BigInteger.ONE;
-
-
-}
+public class CrosschainProtocolSchedule {}

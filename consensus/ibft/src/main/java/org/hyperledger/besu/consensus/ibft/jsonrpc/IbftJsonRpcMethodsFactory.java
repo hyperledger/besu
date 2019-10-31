@@ -22,8 +22,15 @@ import org.hyperledger.besu.consensus.ibft.jsonrpc.methods.IbftGetSignerMetrics;
 import org.hyperledger.besu.consensus.ibft.jsonrpc.methods.IbftGetValidatorsByBlockHash;
 import org.hyperledger.besu.consensus.ibft.jsonrpc.methods.IbftGetValidatorsByBlockNumber;
 import org.hyperledger.besu.consensus.ibft.jsonrpc.methods.IbftProposeValidatorVote;
+import org.hyperledger.besu.crosschain.ethereum.api.jsonrpc.CrosschainProcessor;
+import org.hyperledger.besu.crosschain.ethereum.api.jsonrpc.internal.methods.CrossCheckUnlock;
+import org.hyperledger.besu.crosschain.ethereum.api.jsonrpc.internal.methods.EthIsLockable;
+import org.hyperledger.besu.crosschain.ethereum.api.jsonrpc.internal.methods.EthIsLocked;
+import org.hyperledger.besu.crosschain.ethereum.api.jsonrpc.internal.methods.EthProcessSubordinateView;
+import org.hyperledger.besu.crosschain.ethereum.api.jsonrpc.internal.methods.EthSendRawCrosschainTransaction;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
+import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethodFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
@@ -46,12 +53,12 @@ public class IbftJsonRpcMethodsFactory implements JsonRpcMethodFactory {
   public Map<String, JsonRpcMethod> createJsonRpcMethods(final Collection<RpcApi> jsonRpcApis) {
     final Map<String, JsonRpcMethod> rpcMethods = new HashMap<>();
 
-    if (jsonRpcApis.contains(IbftRpcApis.IBFT)) {
-      final BlockchainQueries blockchainQueries =
-          new BlockchainQueries(context.getBlockchain(), context.getWorldStateArchive());
-      final VoteProposer voteProposer = context.getConsensusState().getVoteProposer();
-      final BlockInterface blockInterface = new IbftBlockInterface();
+    final BlockchainQueries blockchainQueries =
+        new BlockchainQueries(context.getBlockchain(), context.getWorldStateArchive());
+    final VoteProposer voteProposer = context.getConsensusState().getVoteProposer();
+    final BlockInterface blockInterface = new IbftBlockInterface();
 
+    if (jsonRpcApis.contains(IbftRpcApis.IBFT)) {
       addMethods(
           rpcMethods,
           new IbftProposeValidatorVote(voteProposer, jsonRpcParameter),
@@ -61,6 +68,20 @@ public class IbftJsonRpcMethodsFactory implements JsonRpcMethodFactory {
               context.getBlockchain(), blockInterface, jsonRpcParameter),
           new IbftGetSignerMetrics(blockInterface, blockchainQueries, jsonRpcParameter),
           new IbftGetPendingVotes(voteProposer));
+    }
+
+    if (jsonRpcApis.contains(RpcApis.CROSSCHAIN)) {
+
+      final CrosschainProcessor crosschainProcessor =
+          context.getConsensusState().getCrosschainProcessor();
+
+      addMethods(
+          rpcMethods,
+          new EthSendRawCrosschainTransaction(crosschainProcessor, jsonRpcParameter),
+          new EthProcessSubordinateView(blockchainQueries, crosschainProcessor, jsonRpcParameter),
+          new EthIsLockable(blockchainQueries, jsonRpcParameter),
+          new EthIsLocked(blockchainQueries, jsonRpcParameter),
+          new CrossCheckUnlock(crosschainProcessor, jsonRpcParameter));
     }
 
     return rpcMethods;
