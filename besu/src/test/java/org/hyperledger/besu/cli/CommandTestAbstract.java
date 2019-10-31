@@ -38,6 +38,7 @@ import org.hyperledger.besu.cli.subcommands.PublicKeySubCommand;
 import org.hyperledger.besu.cli.subcommands.blocks.BlocksSubCommand;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
+import org.hyperledger.besu.controller.NoopPluginServiceFactory;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
@@ -177,6 +178,9 @@ public abstract class CommandTestAbstract {
     lenient().when(mockController.getProtocolManager()).thenReturn(mockEthProtocolManager);
     lenient().when(mockController.getProtocolSchedule()).thenReturn(mockProtocolSchedule);
     lenient().when(mockController.getProtocolContext()).thenReturn(mockProtocolContext);
+    lenient()
+        .when(mockController.getAdditionalPluginServices())
+        .thenReturn(new NoopPluginServiceFactory());
 
     when(mockEthProtocolManager.getBlockBroadcaster()).thenReturn(mockBlockBroadcaster);
 
