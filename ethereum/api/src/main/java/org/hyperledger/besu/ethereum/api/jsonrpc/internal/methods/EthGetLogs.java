@@ -46,10 +46,7 @@ public class EthGetLogs implements JsonRpcMethod {
     final FilterParameter filter =
         parameters.required(request.getParams(), 0, FilterParameter.class);
     final LogsQuery query =
-        new LogsQuery.Builder()
-            .addresses(filter.getAddresses())
-            .topics(filter.getTopics().getTopics())
-            .build();
+        new LogsQuery.Builder().addresses(filter.getAddresses()).topics(filter.getTopics()).build();
 
     if (isValid(filter)) {
       return new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);

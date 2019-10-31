@@ -39,7 +39,7 @@ public class SubscriptionBuilder {
           return new LogsSubscription(
               subscriptionId,
               connectionId,
-              Optional.ofNullable(request.getFilterParameter())
+              Optional.ofNullable(request.getLogsQuery())
                   .orElseThrow(IllegalArgumentException::new));
         }
       case SYNCING:
