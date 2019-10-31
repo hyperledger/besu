@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request;
 
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
+import static java.util.stream.Collectors.toUnmodifiableList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.both;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -22,13 +25,14 @@ import static org.junit.internal.matchers.ThrowableMessageMatcher.hasMessage;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods.WebSocketRpcRequest;
-import org.hyperledger.besu.ethereum.api.query.TopicsParameter;
+import org.hyperledger.besu.ethereum.api.query.LogsQuery;
+import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.LogTopic;
 
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.List;
+import java.util.stream.Stream;
 
 import io.vertx.core.json.Json;
 import org.junit.Before;
@@ -158,15 +162,14 @@ public class SubscriptionRequestMapperTest {
         parseWebSocketRpcRequest(
             "{\"id\": 1, \"method\": \"eth_subscribe\", \"params\": [\"logs\", {\"address\": \"0x8320fe7702b96808f7bbc0d4a888ed1468216cfd\"}]}");
 
-    final FilterParameter expectedFilterParam =
-        new FilterParameter(
-            null,
-            null,
-            Arrays.asList("0x8320fe7702b96808f7bbc0d4a888ed1468216cfd"),
-            new TopicsParameter(Collections.emptyList()),
-            null);
     final SubscribeRequest expectedSubscribeRequest =
-        new SubscribeRequest(SubscriptionType.LOGS, expectedFilterParam, null, null);
+        new SubscribeRequest(
+            SubscriptionType.LOGS,
+            new LogsQuery(
+                singletonList(Address.fromHexString("0x8320fe7702b96808f7bbc0d4a888ed1468216cfd")),
+                emptyList()),
+            null,
+            null);
 
     final SubscribeRequest subscribeRequest = mapper.mapSubscribeRequest(jsonRpcRequest);
 
@@ -180,20 +183,21 @@ public class SubscriptionRequestMapperTest {
         parseWebSocketRpcRequest(
             "{\"id\": 1, \"method\": \"eth_subscribe\", \"params\": [\"logs\", {\"address\": [\"0x8320fe7702b96808f7bbc0d4a888ed1468216cfd\", \"0xf17f52151EbEF6C7334FAD080c5704D77216b732\"], \"topics\": [\"0xd78a0cb8bb633d06981248b816e7bd33c2a35a6089241d099fa519e361cab902\"]}]}");
 
-    final FilterParameter expectedFilterParam =
-        new FilterParameter(
-            null,
-            null,
-            Arrays.asList(
-                "0x8320fe7702b96808f7bbc0d4a888ed1468216cfd",
-                "0xf17f52151EbEF6C7334FAD080c5704D77216b732"),
-            new TopicsParameter(
-                Arrays.asList(
-                    Arrays.asList(
-                        "0xd78a0cb8bb633d06981248b816e7bd33c2a35a6089241d099fa519e361cab902"))),
-            null);
     final SubscribeRequest expectedSubscribeRequest =
-        new SubscribeRequest(SubscriptionType.LOGS, expectedFilterParam, null, null);
+        new SubscribeRequest(
+            SubscriptionType.LOGS,
+            new LogsQuery(
+                Stream.of(
+                        "0x8320fe7702b96808f7bbc0d4a888ed1468216cfd",
+                        "0xf17f52151EbEF6C7334FAD080c5704D77216b732")
+                    .map(Address::fromHexString)
+                    .collect(toUnmodifiableList()),
+                singletonList(
+                    singletonList(
+                        LogTopic.fromHexString(
+                            "0xd78a0cb8bb633d06981248b816e7bd33c2a35a6089241d099fa519e361cab902")))),
+            null,
+            null);
 
     final SubscribeRequest subscribeRequest = mapper.mapSubscribeRequest(jsonRpcRequest);
 
@@ -207,19 +211,20 @@ public class SubscriptionRequestMapperTest {
         parseWebSocketRpcRequest(
             "{\"id\": 1, \"method\": \"eth_subscribe\", \"params\": [\"logs\", {\"address\": \"0x8320fe7702b96808f7bbc0d4a888ed1468216cfd\", \"topics\": [\"0xd78a0cb8bb633d06981248b816e7bd33c2a35a6089241d099fa519e361cab902\", \"0xd78a0cb8bb633d06981248b816e7bd33c2a35a6089241d099fa519e361cab901\"]}]}");
 
-    final FilterParameter expectedFilterParam =
-        new FilterParameter(
-            null,
-            null,
-            Arrays.asList("0x8320fe7702b96808f7bbc0d4a888ed1468216cfd"),
-            new TopicsParameter(
-                Arrays.asList(
-                    Arrays.asList(
-                        "0xd78a0cb8bb633d06981248b816e7bd33c2a35a6089241d099fa519e361cab902",
-                        "0xd78a0cb8bb633d06981248b816e7bd33c2a35a6089241d099fa519e361cab901"))),
-            null);
     final SubscribeRequest expectedSubscribeRequest =
-        new SubscribeRequest(SubscriptionType.LOGS, expectedFilterParam, null, null);
+        new SubscribeRequest(
+            SubscriptionType.LOGS,
+            new LogsQuery(
+                singletonList(Address.fromHexString("0x8320fe7702b96808f7bbc0d4a888ed1468216cfd")),
+                List.of(
+                    singletonList(
+                        LogTopic.fromHexString(
+                            "0xd78a0cb8bb633d06981248b816e7bd33c2a35a6089241d099fa519e361cab902")),
+                    singletonList(
+                        LogTopic.fromHexString(
+                            "0xd78a0cb8bb633d06981248b816e7bd33c2a35a6089241d099fa519e361cab901")))),
+            null,
+            null);
 
     final SubscribeRequest subscribeRequest = mapper.mapSubscribeRequest(jsonRpcRequest);
 
@@ -233,15 +238,14 @@ public class SubscriptionRequestMapperTest {
         parseWebSocketRpcRequest(
             "{\"id\": 1, \"method\": \"eth_subscribe\", \"params\": [\"logs\", {\"address\": \"0x8320fe7702b96808f7bbc0d4a888ed1468216cfd\"}]}");
 
-    final FilterParameter expectedFilterParam =
-        new FilterParameter(
-            null,
-            null,
-            Arrays.asList("0x8320fe7702b96808f7bbc0d4a888ed1468216cfd"),
-            new TopicsParameter(Collections.emptyList()),
-            null);
     final SubscribeRequest expectedSubscribeRequest =
-        new SubscribeRequest(SubscriptionType.LOGS, expectedFilterParam, null, null);
+        new SubscribeRequest(
+            SubscriptionType.LOGS,
+            new LogsQuery(
+                singletonList(Address.fromHexString("0x8320fe7702b96808f7bbc0d4a888ed1468216cfd")),
+                emptyList()),
+            null,
+            null);
 
     final SubscribeRequest subscribeRequest = mapper.mapSubscribeRequest(jsonRpcRequest);
 
@@ -257,8 +261,8 @@ public class SubscriptionRequestMapperTest {
 
     thrown.expect(InvalidSubscriptionRequestException.class);
     thrown.expectCause(
-        both(hasMessage(equalTo("Invalid odd-length hex binary representation 0x1")))
-            .and(instanceOf(IllegalArgumentException.class)));
+        both(hasMessage(equalTo("Invalid json rpc parameter at index 1")))
+            .and(instanceOf(InvalidJsonRpcParameters.class)));
 
     mapper.mapSubscribeRequest(jsonRpcRequest);
   }
