@@ -17,7 +17,6 @@ package org.hyperledger.besu.services;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 
-import org.hyperledger.besu.controller.PluginServiceFactory;
 import org.hyperledger.besu.plugin.BesuContext;
 import org.hyperledger.besu.plugin.BesuPlugin;
 
