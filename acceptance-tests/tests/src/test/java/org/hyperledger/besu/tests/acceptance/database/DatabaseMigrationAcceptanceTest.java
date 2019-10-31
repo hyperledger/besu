@@ -33,6 +33,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.google.common.base.Charsets;
@@ -134,6 +135,7 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
     docker.pull(dockerImageName, dockerImageTag);
     hostDataPath = copyDataDir(dataPath);
     LOG.info("Host data dir: {}", hostDataPath.toAbsolutePath().toString());
+    ls(hostDataPath);
     hostDataPathForBind = hostDataPath.toAbsolutePath().toString();
     if (PlatformDetector.getOSType().equals("osx")) {
       hostDataPathForBind = "/private".concat(hostDataPathForBind);
@@ -203,5 +205,10 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
     } catch (Exception e) {
       throw new RuntimeException(e.getMessage(), e);
     }
+  }
+
+  private static void ls(final Path path) throws Exception {
+    LOG.info("ls {}", path.toAbsolutePath().toString());
+    Files.walk(path).map(Path::toString).collect(Collectors.toList()).forEach(System.out::println);
   }
 }
