@@ -40,7 +40,7 @@ commands:
     description: "Capture test results"
     steps:
       - run:
-          name: "Gather test results"
+          name: Gather test results
           command: |
             FILES=`find . -name test-results`
             for FILE in $FILES
@@ -52,6 +52,16 @@ commands:
             done
       - store_test_results:
           path: build/test-results
+      - run:
+          name: Test results artifacts
+          command: |
+            mkdir -p ~/results/junit/
+            find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} ~/results/junit/ \;
+            mkdir -p ~/results/reports
+            find . -type d -regex ".*/build/reports" -exec cp -r {} ~/results/reports/ \;
+          when: always
+      - store_artifacts:
+          path: ~/results
 
 jobs:
   assemble:
