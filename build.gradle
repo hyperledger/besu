@@ -236,7 +236,7 @@ allprojects {
    */
   test {
     jvmArgs = [
-      '-Xmx4g',
+      '-Xmx2g',
       '-XX:-UseGCOverheadLimit',
       // Mockito and jackson-databind do some strange reflection during tests.
       // This suppresses an illegal access warning.
@@ -546,6 +546,30 @@ task distDocker(type: Exec) {
 
   executable "sh"
   args "-c", "docker build --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${getCheckedOutGitCommitHash()} -t ${image} ."
+}
+
+task dockerUpload(type: Exec) {
+  dependsOn distDocker
+  def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
+  def imageName = "hyperledger/besu"
+  def image = project.hasProperty('release.releaseVersion') ? "${imageName}:" + project.property('release.releaseVersion') : "${imageName}:${project.version}"
+  def cmd = "docker push '${image}'"
+  def additionalTags = []
+
+  if (project.hasProperty('branch') && project.property('branch') == 'master') {
+    additionalTags.add('develop')
+  }
+
+  if (! version ==~ /.*-SNAPSHOT/) {
+    additionalTags.add('latest')
+    additionalTags.add(version.split(/\./)[0..1].join('.'))
+  }
+
+  additionalTags.each { tag ->
+    cmd += " && docker tag '${image}' '${imageName}:${tag.trim()}' && docker push '${imageName}:${tag.trim()}'"
+  }
+  executable "sh"
+  args "-c", cmd
 }
 
 task checkSpdxHeader(type: CheckSpdxHeader) {
