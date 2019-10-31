@@ -93,6 +93,11 @@ public class IbftLegacyBesuControllerBuilder extends BesuControllerBuilder<IbftC
   }
 
   @Override
+  protected PluginServiceFactory createAdditionalPluginServices(final Blockchain blockchain) {
+    return new NoopPluginServiceFactory();
+  }
+
+  @Override
   protected void validateContext(final ProtocolContext<IbftContext> context) {
     final BlockHeader genesisBlockHeader = context.getBlockchain().getGenesisBlock().getHeader();
 

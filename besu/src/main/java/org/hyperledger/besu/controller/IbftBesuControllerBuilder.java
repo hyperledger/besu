@@ -191,6 +191,11 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder<IbftContext
   }
 
   @Override
+  protected PluginServiceFactory createAdditionalPluginServices(final Blockchain blockchain) {
+    return new IbftQueryPluginServiceFactory(blockchain);
+  }
+
+  @Override
   protected ProtocolSchedule<IbftContext> createProtocolSchedule() {
     return IbftProtocolSchedule.create(
         genesisConfig.getConfigOptions(genesisConfigOverrides),
