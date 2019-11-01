@@ -203,6 +203,7 @@ public abstract class BesuControllerBuilder<C> {
 
     final ProtocolSchedule<C> protocolSchedule = createProtocolSchedule();
     final GenesisState genesisState = GenesisState.fromConfig(genesisConfig, protocolSchedule);
+    this.crosschainProcessor = new CrosschainProcessor();
     final ProtocolContext<C> protocolContext =
         ProtocolContext.init(
             storageProvider,
@@ -308,8 +309,7 @@ public abstract class BesuControllerBuilder<C> {
     SubordinateViewCoordinator subordinateViewCoordinator =
         SubordinateViewCoordinator.createSubordinateViewCoordinatorAndOtherNodes(
             chainId.get().intValue(), numNodes, nodeNum, transactionSimulator);
-    crosschainProcessor =
-        new CrosschainProcessor(
+    this.crosschainProcessor.init(
             subordinateViewCoordinator,
             transactionSimulator,
             transactionPool,

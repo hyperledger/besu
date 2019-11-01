@@ -67,7 +67,11 @@ public class CrosschainProcessor {
 
   Vertx vertx;
 
-  public CrosschainProcessor(
+  public CrosschainProcessor() {}
+
+
+
+  public void init(
       final SubordinateViewCoordinator subordinateViewCoordinator,
       final TransactionSimulator transactionSimulator,
       final TransactionPool transactionPool,

@@ -12,9 +12,12 @@
  */
 package org.hyperledger.besu.crosschain.ethereum.privatenet;
 
+import org.hyperledger.besu.crosschain.ethereum.crosschain.CrosschainTransactionProcessor;
 import org.hyperledger.besu.crosschain.ethereum.privatenet.precompiles.CrosschainPrecompiledContractRegistries;
+import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSpecs;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
+import org.hyperledger.besu.ethereum.vm.MessageFrame;
 
 import java.math.BigInteger;
 import java.util.Optional;
@@ -26,8 +29,22 @@ public class CrosschainProtocolSpecs {
       final OptionalInt contractSizeLimit,
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason) {
+    final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
     return MainnetProtocolSpecs.istanbulDefinition(
             chainId, contractSizeLimit, configStackSizeLimit, enableRevertReason)
+        .transactionProcessorBuilder(
+            (gasCalculator,
+             transactionValidator,
+             contractCreationProcessor,
+             messageCallProcessor) ->
+                new CrosschainTransactionProcessor(
+                    gasCalculator,
+                    transactionValidator,
+                    contractCreationProcessor,
+                    messageCallProcessor,
+                    true,
+                    stackSizeLimit,
+                    Account.DEFAULT_VERSION))
         .precompileContractRegistryBuilder(
             CrosschainPrecompiledContractRegistries::crosschainPrecompiles)
         .name("CrossChain");

@@ -341,7 +341,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
     executor.process(frame, operationTracer);
   }
 
-  private AbstractMessageProcessor getMessageProcessor(final MessageFrame.Type type) {
+  protected AbstractMessageProcessor getMessageProcessor(final MessageFrame.Type type) {
     switch (type) {
       case MESSAGE_CALL:
         return messageCallProcessor;

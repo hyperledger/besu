@@ -286,4 +286,18 @@ public class CrosschainTransactionProcessor extends MainnetTransactionProcessor 
       return Result.failed(refunded.toLong(), validationResult, initialFrame.getRevertReason());
     }
   }
+
+  @Override
+  protected AbstractMessageProcessor getMessageProcessor(final MessageFrame.Type type) {
+    switch (type) {
+      case MESSAGE_CALL:
+        return messageCallProcessor;
+      case CONTRACT_CREATION:
+      case CONTRACT_CREATION_LOCKABLE_CONTRACT:
+        return contractCreationProcessor;
+      default:
+        throw new IllegalStateException("Request for unsupported message processor type " + type);
+    }
+  }
+
 }
