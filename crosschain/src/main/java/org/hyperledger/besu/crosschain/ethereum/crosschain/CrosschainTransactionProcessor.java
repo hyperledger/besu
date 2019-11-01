@@ -299,5 +299,4 @@ public class CrosschainTransactionProcessor extends MainnetTransactionProcessor 
         throw new IllegalStateException("Request for unsupported message processor type " + type);
     }
   }
-
 }

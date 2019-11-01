@@ -34,9 +34,9 @@ public class CrosschainProtocolSpecs {
             chainId, contractSizeLimit, configStackSizeLimit, enableRevertReason)
         .transactionProcessorBuilder(
             (gasCalculator,
-             transactionValidator,
-             contractCreationProcessor,
-             messageCallProcessor) ->
+                transactionValidator,
+                contractCreationProcessor,
+                messageCallProcessor) ->
                 new CrosschainTransactionProcessor(
                     gasCalculator,
                     transactionValidator,

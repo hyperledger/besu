@@ -69,8 +69,6 @@ public class CrosschainProcessor {
 
   public CrosschainProcessor() {}
 
-
-
   public void init(
       final SubordinateViewCoordinator subordinateViewCoordinator,
       final TransactionSimulator transactionSimulator,

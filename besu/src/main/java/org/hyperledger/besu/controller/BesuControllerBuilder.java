@@ -310,13 +310,13 @@ public abstract class BesuControllerBuilder<C> {
         SubordinateViewCoordinator.createSubordinateViewCoordinatorAndOtherNodes(
             chainId.get().intValue(), numNodes, nodeNum, transactionSimulator);
     this.crosschainProcessor.init(
-            subordinateViewCoordinator,
-            transactionSimulator,
-            transactionPool,
-            chainId.get().intValue(),
-            this.nodeKeys,
-            blockchain,
-            protocolContext.getWorldStateArchive());
+        subordinateViewCoordinator,
+        transactionSimulator,
+        transactionPool,
+        chainId.get().intValue(),
+        this.nodeKeys,
+        blockchain,
+        protocolContext.getWorldStateArchive());
 
     final MiningCoordinator miningCoordinator =
         createMiningCoordinator(
