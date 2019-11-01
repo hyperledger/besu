@@ -88,7 +88,5 @@ public interface MiningCoordinator {
       final List<Transaction> transactions,
       final List<BlockHeader> ommers);
 
-  default void addEthHashObserver(final EthHashObserver observer) {
-    // NO-OP
-  }
+  default void addEthHashObserver(final EthHashObserver observer) {}
 }
