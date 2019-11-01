@@ -83,7 +83,7 @@ public class IbftLegacyBesuControllerBuilder extends BesuControllerBuilder<IbftC
             blockInterface);
 
     final VoteProposer voteProposer = new VoteProposer();
-    return new IbftContext(voteTallyCache, voteProposer);
+    return new IbftContext(voteTallyCache, voteProposer, null);
   }
 
   @Override

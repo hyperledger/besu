@@ -34,7 +34,7 @@ dependencies {
   implementation project(':metrics:core')
   implementation project(':plugin-api')
   implementation project(':services:kvstore')
-  implementation project(':crosschain')
+  //implementation project(':crosschain')
 
 
   implementation 'com.fasterxml.jackson.core:jackson-databind'

@@ -19,7 +19,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
-import org.hyperledger.besu.ethereum.api.jsonrpc.crosschain.CrosschainProcessor;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterIdGenerator;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
@@ -156,8 +155,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
             privacyParameters,
             config,
             mock(WebSocketConfiguration.class),
-            mock(MetricsConfiguration.class),
-            mock(CrosschainProcessor.class));
+            mock(MetricsConfiguration.class));
   }
 
   protected void startService() throws Exception {

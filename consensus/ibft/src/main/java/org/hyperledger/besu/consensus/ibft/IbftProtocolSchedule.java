@@ -16,36 +16,57 @@ import static org.hyperledger.besu.consensus.ibft.IbftBlockHeaderValidationRules
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.IbftConfigOptions;
+import org.hyperledger.besu.crosschain.ethereum.privatenet.CrosschainProtocolSpecs;
 import org.hyperledger.besu.ethereum.MainnetBlockValidator;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockBodyValidator;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockImporter;
+import org.hyperledger.besu.ethereum.mainnet.MutableProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
 
 import java.math.BigInteger;
+import java.util.Optional;
 
 /** Defines the protocol behaviours for a blockchain using IBFT. */
 public class IbftProtocolSchedule {
 
   private static final BigInteger DEFAULT_CHAIN_ID = BigInteger.ONE;
 
+  private static ProtocolScheduleBuilder<IbftContext> psc;
+
   public static ProtocolSchedule<IbftContext> create(
       final GenesisConfigOptions config,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled) {
-    final IbftConfigOptions ibftConfig = config.getIbftLegacyConfigOptions();
+    final IbftConfigOptions ibftConfig = config.getIbft2ConfigOptions();
     final long blockPeriod = ibftConfig.getBlockPeriodSeconds();
 
-    return new ProtocolScheduleBuilder<>(
+    psc =
+        new ProtocolScheduleBuilder<>(
             config,
             DEFAULT_CHAIN_ID,
             builder -> applyIbftChanges(blockPeriod, builder),
             privacyParameters,
-            isRevertReasonEnabled)
-        .createProtocolSchedule();
+            isRevertReasonEnabled);
+
+    MutableProtocolSchedule<IbftContext> protocolSchedule =
+        (MutableProtocolSchedule<IbftContext>) psc.createProtocolSchedule();
+
+    final Optional<BigInteger> chainId =
+        config.getChainId().map(Optional::of).orElse(Optional.of(DEFAULT_CHAIN_ID));
+    psc.addProtocolSpec(
+        protocolSchedule,
+        config.getCrossChainBlockNumber(),
+        CrosschainProtocolSpecs.crossChainDefinition(
+            chainId,
+            config.getContractSizeLimit(),
+            config.getEvmStackSize(),
+            isRevertReasonEnabled));
+
+    return protocolSchedule;
   }
 
   public static ProtocolSchedule<IbftContext> create(

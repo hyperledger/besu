@@ -14,16 +14,22 @@ package org.hyperledger.besu.consensus.ibft;
 
 import org.hyperledger.besu.consensus.common.VoteProposer;
 import org.hyperledger.besu.consensus.common.VoteTallyCache;
+import org.hyperledger.besu.crosschain.ethereum.api.jsonrpc.CrosschainProcessor;
 
 /** Holds the IBFT specific mutable state. */
 public class IbftContext {
 
   private final VoteTallyCache voteTallyCache;
   private final VoteProposer voteProposer;
+  private final CrosschainProcessor crosschainProcessor;
 
-  public IbftContext(final VoteTallyCache voteTallyCache, final VoteProposer voteProposer) {
+  public IbftContext(
+      final VoteTallyCache voteTallyCache,
+      final VoteProposer voteProposer,
+      final CrosschainProcessor crosschainProcessor) {
     this.voteTallyCache = voteTallyCache;
     this.voteProposer = voteProposer;
+    this.crosschainProcessor = crosschainProcessor;
   }
 
   public VoteTallyCache getVoteTallyCache() {
@@ -32,5 +38,9 @@ public class IbftContext {
 
   public VoteProposer getVoteProposer() {
     return voteProposer;
+  }
+
+  public CrosschainProcessor getCrosschainProcessor() {
+    return crosschainProcessor;
   }
 }

@@ -16,11 +16,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static org.hyperledger.besu.controller.KeyPairUtil.loadKeyPair;
 
+import org.hyperledger.besu.config.CrosschainConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigFile;
-import org.hyperledger.besu.crosschain.CrosschainConfiguration;
+import org.hyperledger.besu.crosschain.ethereum.api.jsonrpc.CrosschainProcessor;
+import org.hyperledger.besu.crosschain.ethereum.crosschain.SubordinateViewCoordinator;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.crosschain.CrosschainProcessor;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethodFactory;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -29,7 +30,6 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
-import org.hyperledger.besu.ethereum.crosschain.SubordinateViewCoordinator;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -87,6 +87,7 @@ public abstract class BesuControllerBuilder<C> {
   protected Clock clock;
   protected KeyPair nodeKeys;
   protected boolean isRevertReasonEnabled;
+  protected CrosschainProcessor crosschainProcessor;
   private StorageProvider storageProvider;
   private final List<Runnable> shutdownActions = new ArrayList<>();
   private boolean isPruningEnabled;
@@ -202,6 +203,7 @@ public abstract class BesuControllerBuilder<C> {
 
     final ProtocolSchedule<C> protocolSchedule = createProtocolSchedule();
     final GenesisState genesisState = GenesisState.fromConfig(genesisConfig, protocolSchedule);
+    this.crosschainProcessor = new CrosschainProcessor();
     final ProtocolContext<C> protocolContext =
         ProtocolContext.init(
             storageProvider,
@@ -299,16 +301,15 @@ public abstract class BesuControllerBuilder<C> {
       // TODO Are there situations when the chain ID will NOT be in the genesis file? MainNet?
       throw new RuntimeException("Chain ID must be specified in the genesis file");
     }
-    final int numNodes = CrosschainConfiguration.nodeCount;
-    final int nodeNum = CrosschainConfiguration.nodeNum;
+    final int numNodes = CrosschainConfigOptions.nodeCount;
+    final int nodeNum = CrosschainConfigOptions.nodeNum;
     final TransactionSimulator transactionSimulator =
         new TransactionSimulator(
             blockchain, protocolContext.getWorldStateArchive(), protocolSchedule);
     SubordinateViewCoordinator subordinateViewCoordinator =
         SubordinateViewCoordinator.createSubordinateViewCoordinatorAndOtherNodes(
             chainId.get().intValue(), numNodes, nodeNum, transactionSimulator);
-    CrosschainProcessor crosschainProcessor =
-        new CrosschainProcessor(
+    this.crosschainProcessor.init(
             subordinateViewCoordinator,
             transactionSimulator,
             transactionPool,

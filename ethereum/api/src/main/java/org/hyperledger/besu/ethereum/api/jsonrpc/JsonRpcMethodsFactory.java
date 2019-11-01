@@ -14,7 +14,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.enclave.Enclave;
-import org.hyperledger.besu.ethereum.api.jsonrpc.crosschain.CrosschainProcessor;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.AdminAddPeer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.AdminChangeLogLevel;
@@ -78,11 +77,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.TxPoolBesuStat
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.TxPoolBesuTransactions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Web3ClientVersion;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Web3Sha3;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.crosschain.CrossCheckUnlock;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.crosschain.EthIsLockable;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.crosschain.EthIsLocked;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.crosschain.EthProcessSubordinateView;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.crosschain.EthSendRawCrosschainTransaction;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.miner.MinerSetCoinbase;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.miner.MinerSetEtherbase;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.miner.MinerStart;
@@ -165,8 +159,7 @@ public class JsonRpcMethodsFactory {
       final PrivacyParameters privacyParameters,
       final JsonRpcConfiguration jsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
-      final MetricsConfiguration metricsConfiguration,
-      final CrosschainProcessor crosschainProcessor) {
+      final MetricsConfiguration metricsConfiguration) {
     final BlockchainQueries blockchainQueries =
         new BlockchainQueries(blockchain, worldStateArchive);
     return methods(
@@ -188,8 +181,7 @@ public class JsonRpcMethodsFactory {
         privacyParameters,
         jsonRpcConfiguration,
         webSocketConfiguration,
-        metricsConfiguration,
-        crosschainProcessor);
+        metricsConfiguration);
   }
 
   public Map<String, JsonRpcMethod> methods(
@@ -211,8 +203,7 @@ public class JsonRpcMethodsFactory {
       final PrivacyParameters privacyParameters,
       final JsonRpcConfiguration jsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
-      final MetricsConfiguration metricsConfiguration,
-      final CrosschainProcessor crosschainProcessor) {
+      final MetricsConfiguration metricsConfiguration) {
     final Map<String, JsonRpcMethod> enabledMethods = new HashMap<>();
     if (!rpcApis.isEmpty()) {
       addMethods(enabledMethods, new RpcModules(rpcApis));
@@ -390,17 +381,6 @@ public class JsonRpcMethodsFactory {
             new PrivGetPrivateTransaction(
                 blockchainQueries, enclave, parameter, privacyParameters));
       }
-    }
-
-    if (rpcApis.contains(RpcApis.CROSSCHAIN)) {
-      addMethods(
-          enabledMethods, new EthSendRawCrosschainTransaction(crosschainProcessor, parameter));
-      addMethods(
-          enabledMethods,
-          new EthProcessSubordinateView(blockchainQueries, crosschainProcessor, parameter));
-      addMethods(enabledMethods, new EthIsLockable(blockchainQueries, parameter));
-      addMethods(enabledMethods, new EthIsLocked(blockchainQueries, parameter));
-      addMethods(enabledMethods, new CrossCheckUnlock(crosschainProcessor, parameter));
     }
 
     return enabledMethods;

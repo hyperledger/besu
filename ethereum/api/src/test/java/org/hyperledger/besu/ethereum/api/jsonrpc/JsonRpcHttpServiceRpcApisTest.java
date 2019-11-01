@@ -19,7 +19,6 @@ import static org.mockito.Mockito.spy;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.crypto.SECP256K1;
-import org.hyperledger.besu.ethereum.api.jsonrpc.crosschain.CrosschainProcessor;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -204,8 +203,7 @@ public class JsonRpcHttpServiceRpcApisTest {
                     mock(PrivacyParameters.class),
                     mock(JsonRpcConfiguration.class),
                     mock(WebSocketConfiguration.class),
-                    mock(MetricsConfiguration.class),
-                    mock(CrosschainProcessor.class)));
+                    mock(MetricsConfiguration.class)));
     final JsonRpcHttpService jsonRpcHttpService =
         new JsonRpcHttpService(
             vertx,
@@ -295,8 +293,7 @@ public class JsonRpcHttpServiceRpcApisTest {
                     mock(PrivacyParameters.class),
                     jsonRpcConfiguration,
                     webSocketConfiguration,
-                    metricsConfiguration,
-                    mock(CrosschainProcessor.class)));
+                    metricsConfiguration));
     final JsonRpcHttpService jsonRpcHttpService =
         new JsonRpcHttpService(
             vertx,

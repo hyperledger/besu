@@ -15,7 +15,6 @@ package org.hyperledger.besu.ethereum.mainnet;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.CrosschainTransaction;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.LogSeries;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
@@ -23,7 +22,6 @@ import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
-import org.hyperledger.besu.ethereum.crosschain.CrosschainThreadLocalDataHolder;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.Code;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
@@ -40,19 +38,19 @@ import org.apache.logging.log4j.Logger;
 
 public class MainnetTransactionProcessor implements TransactionProcessor {
 
-  private static final Logger LOG = LogManager.getLogger();
+  protected static final Logger LOG = LogManager.getLogger();
 
-  private final GasCalculator gasCalculator;
+  protected final GasCalculator gasCalculator;
 
-  private final TransactionValidator transactionValidator;
+  protected final TransactionValidator transactionValidator;
 
-  private final AbstractMessageProcessor contractCreationProcessor;
+  protected final AbstractMessageProcessor contractCreationProcessor;
 
-  private final AbstractMessageProcessor messageCallProcessor;
+  protected final AbstractMessageProcessor messageCallProcessor;
 
-  private final int maxStackSize;
+  protected final int maxStackSize;
 
-  private final int createContractAccountVersion;
+  protected final int createContractAccountVersion;
 
   public static class Result implements TransactionProcessor.Result {
 
@@ -146,7 +144,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
     }
   }
 
-  private final boolean clearEmptyAccounts;
+  protected final boolean clearEmptyAccounts;
 
   public MainnetTransactionProcessor(
       final GasCalculator gasCalculator,
@@ -166,7 +164,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
   }
 
   @Override
-  public Result processTransaction(
+  public TransactionProcessor.Result processTransaction(
       final Blockchain blockchain,
       final WorldUpdater worldState,
       final ProcessableBlockHeader blockHeader,
@@ -225,15 +223,9 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
       final Address contractAddress =
           Address.contractAddress(senderAddress, sender.getNonce() - 1L);
 
-      MessageFrame.Type contractCreationType = MessageFrame.Type.CONTRACT_CREATION;
-      if ((transaction instanceof CrosschainTransaction)
-          && ((CrosschainTransaction) transaction).getType().isLockableContractDeploy()) {
-        contractCreationType = MessageFrame.Type.CONTRACT_CREATION_LOCKABLE_CONTRACT;
-      }
-
       initialFrame =
           MessageFrame.builder()
-              .type(contractCreationType)
+              .type(MessageFrame.Type.CONTRACT_CREATION)
               .messageFrameStack(messageFrameStack)
               .blockchain(blockchain)
               .worldState(worldUpdater.updater())
@@ -261,22 +253,6 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
       final Address to = transaction.getTo().get();
       final Account contract = worldState.get(to);
 
-      if (transaction instanceof CrosschainTransaction) {
-        CrosschainTransaction.CrosschainTransactionType type =
-            ((CrosschainTransaction) transaction).getType();
-        if (type.isSignallingTransaction()) {
-          boolean commit = type.isUnlockCommitSignallingTransaction();
-          final MutableAccount mutableContract = worldState.getMutable(contract.getAddress());
-          mutableContract.unlock(commit);
-          worldUpdater.commit();
-          LOG.debug(
-              "Signalling Transaction: unlock_{} for account {}",
-              (commit ? "commit" : "ignore"),
-              contract.getAddress());
-          return Result.successful(LogSeries.empty(), 0, BytesValue.EMPTY, validationResult);
-        }
-      }
-
       initialFrame =
           MessageFrame.builder()
               .type(MessageFrame.Type.MESSAGE_CALL)
@@ -303,52 +279,12 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
               .maxStackSize(maxStackSize)
               .isPersistingState(isPersistingState)
               .build();
-
-      boolean contractIsLockable = contract != null && contract.isLockable();
-      if (contractIsLockable) {
-        if (contract.isLocked()) {
-          LOG.warn("Attempt to execute transaction on locked contract");
-          return Result.failed(gasAvailable.toLong(), validationResult, null);
-        }
-
-        if (transaction instanceof CrosschainTransaction) {
-          final MutableAccount mutableContract = worldState.getMutable(contract.getAddress());
-          mutableContract.lock();
-        }
-      } else {
-        if (transaction instanceof CrosschainTransaction) {
-          LOG.warn("Attempt to execute crosschain transaction on non-lockable contract");
-          return Result.failed(gasAvailable.toLong(), validationResult, null);
-        }
-      }
-    }
-
-    // If we are processing a crosschain transaction, then add the transaction context such that
-    // the precompile can access it.
-    if (transaction instanceof CrosschainTransaction) {
-      // Add to thread local storage.
-      CrosschainThreadLocalDataHolder.setCrosschainTransaciton((CrosschainTransaction) transaction);
-      // Rewind to the first subordinate transaction or view for each execution.
-      ((CrosschainTransaction) transaction).resetSubordinateTransactionsAndViewsList();
     }
 
     messageFrameStack.addFirst(initialFrame);
 
     while (!messageFrameStack.isEmpty()) {
       process(messageFrameStack.peekFirst(), operationTracer);
-    }
-
-    // Clean-up steps for crosschain transactions post execution:
-    // Check that all of the subordinate transactions and views were used in the transaction
-    // execution.
-    // Remove the transaction context from thread local storage.
-    if (transaction instanceof CrosschainTransaction) {
-      if (((CrosschainTransaction) transaction).getNextSubordinateTransactionOrView() != null) {
-        LOG.warn(
-            "Crosschain transaction ended prior to all Subordinate Transactions and Views being consumed.");
-        initialFrame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
-      }
-      CrosschainThreadLocalDataHolder.removeCrosschainTransaction();
     }
 
     if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
@@ -393,31 +329,30 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
     }
   }
 
-  private static void clearEmptyAccounts(final WorldUpdater worldState) {
+  protected static void clearEmptyAccounts(final WorldUpdater worldState) {
     worldState.getTouchedAccounts().stream()
         .filter(Account::isEmpty)
         .forEach(a -> worldState.deleteAccount(a.getAddress()));
   }
 
-  private void process(final MessageFrame frame, final OperationTracer operationTracer) {
+  protected void process(final MessageFrame frame, final OperationTracer operationTracer) {
     final AbstractMessageProcessor executor = getMessageProcessor(frame.getType());
 
     executor.process(frame, operationTracer);
   }
 
-  private AbstractMessageProcessor getMessageProcessor(final MessageFrame.Type type) {
+  protected AbstractMessageProcessor getMessageProcessor(final MessageFrame.Type type) {
     switch (type) {
       case MESSAGE_CALL:
         return messageCallProcessor;
       case CONTRACT_CREATION:
-      case CONTRACT_CREATION_LOCKABLE_CONTRACT:
         return contractCreationProcessor;
       default:
         throw new IllegalStateException("Request for unsupported message processor type " + type);
     }
   }
 
-  private static Gas refunded(
+  protected static Gas refunded(
       final Transaction transaction, final Gas gasRemaining, final Gas gasRefund) {
     // Integer truncation takes care of the the floor calculation needed after the divide.
     final Gas maxRefundAllowance =
