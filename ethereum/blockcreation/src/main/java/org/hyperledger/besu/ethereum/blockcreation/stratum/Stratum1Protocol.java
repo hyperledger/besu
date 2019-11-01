@@ -44,6 +44,7 @@ import org.apache.logging.log4j.Logger;
 public class Stratum1Protocol implements StratumProtocol {
   private static final Logger LOG = getLogger();
   private static final JsonMapper mapper = new JsonMapper();
+  private static final String STRATUM_1 = "EthereumStratum/1.0.0";
 
   @JsonIgnoreProperties("jsonrpc")
   private static final class MinerMessage {
@@ -172,7 +173,7 @@ public class Stratum1Protocol implements StratumProtocol {
       MinerMessage message = mapper.readValue(initialMessage, MinerMessage.class);
       if (!"mining.subscribe".equals(message.getMethod())
           || message.getParams().length < 2
-          || !message.getParams()[1].equals("EthereumStratum/1.0.0")) {
+          || !message.getParams()[1].equals(STRATUM_1)) {
         LOG.debug("Invalid first message method: {}", message.getMethod());
         return false;
       }
@@ -185,7 +186,7 @@ public class Stratum1Protocol implements StratumProtocol {
                       new String[] {
                         "mining.notify",
                         "ae6812eb4cd7735a302a8a9dd95cf71f", // subscription ID, never reused.
-                        "EthereumStratum/1.0.0"
+                        STRATUM_1
                       },
                       "080c" // TODO. For now we use a fixed extranounce.
                     },
