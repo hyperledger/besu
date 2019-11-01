@@ -105,7 +105,7 @@ public class StratumConnectionTest {
                 + "}\n"));
     assertThat(called.get()).isFalse();
     // now send work without waiting.
-    protocol.solveFor(
+    protocol.setCurrentWorkTask(
         new EthHashSolverInputs(
             UInt256.of(3), BytesValue.fromHexString("deadbeef").getArrayUnsafe(), 42));
 

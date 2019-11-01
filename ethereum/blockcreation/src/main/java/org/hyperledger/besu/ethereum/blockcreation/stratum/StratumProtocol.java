@@ -26,7 +26,7 @@ public interface StratumProtocol {
 
   void handle(StratumConnection conn, byte[] message);
 
-  void solveFor(EthHashSolverInputs input);
+  void setCurrentWorkTask(EthHashSolverInputs input);
 
   void setSubmitCallback(Function<Long, Boolean> submitSolutionCallback);
 }

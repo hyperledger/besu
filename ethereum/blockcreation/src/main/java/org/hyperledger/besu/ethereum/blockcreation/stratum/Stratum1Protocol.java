@@ -256,7 +256,7 @@ public class Stratum1Protocol implements StratumProtocol {
   }
 
   @Override
-  public void solveFor(final EthHashSolverInputs input) {
+  public void setCurrentWorkTask(final EthHashSolverInputs input) {
     this.currentInput = input;
     logger.debug("Sending new work to miners: {}", input);
     for (StratumConnection conn : activeConnections) {

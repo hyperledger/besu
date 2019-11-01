@@ -97,7 +97,7 @@ public class StratumServer implements EthHashObserver {
       return;
     }
     for (StratumProtocol protocol : protocols) {
-      protocol.solveFor(ethHashSolverInputs);
+      protocol.setCurrentWorkTask(ethHashSolverInputs);
     }
   }
 
