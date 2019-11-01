@@ -193,7 +193,7 @@ public class BlocksSubCommand implements Runnable {
       // Extradata and coinbase can be configured on a per-block level via the json file
       final Address coinbase = Address.ZERO;
       final BytesValue extraData = BytesValue.EMPTY;
-      return new MiningParameters(coinbase, minTransactionGasPrice, extraData);
+      return new MiningParameters(coinbase, minTransactionGasPrice, extraData, false);
     }
 
     private <T> void importJsonBlocks(final BesuController<T> controller, final Path path)
