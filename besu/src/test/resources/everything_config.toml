@@ -82,7 +82,7 @@ cpu-miner-enabled=false
 miner-coinbase="0x0000000000000000000000000000000000000002"
 miner-extra-data="0x444F4E27542050414E4943202120484F444C2C20484F444C2C20484F444C2021"
 min-gas-price=1
-stratum-network-interface="0.0.0.0"
+stratum-host="0.0.0.0"
 stratum-port=8008
 
 # Permissioning
