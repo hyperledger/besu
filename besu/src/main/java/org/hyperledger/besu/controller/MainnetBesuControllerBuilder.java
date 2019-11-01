@@ -58,6 +58,7 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder<Void> {
     if (miningParameters.isMiningEnabled()) {
       miningCoordinator.enable();
     }
+
     return miningCoordinator;
   }
 
