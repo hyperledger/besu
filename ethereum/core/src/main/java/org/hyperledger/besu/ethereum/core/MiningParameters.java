@@ -24,8 +24,8 @@ public class MiningParameters {
   private final Optional<Address> coinbase;
   private final Wei minTransactionGasPrice;
   private final BytesValue extraData;
-  private final Boolean enabled;
-  private final Boolean cpuMiningEnabled;
+  private final boolean enabled;
+  private final boolean cpuMiningEnabled;
   private final String stratumNetworkInterface;
   private final int stratumPort;
 
@@ -41,8 +41,8 @@ public class MiningParameters {
       final Address coinbase,
       final Wei minTransactionGasPrice,
       final BytesValue extraData,
-      final Boolean enabled,
-      final Boolean cpuMiningEnabled,
+      final boolean enabled,
+      final boolean cpuMiningEnabled,
       final String stratumNetworkInterface,
       final int stratumPort) {
     this.coinbase = Optional.ofNullable(coinbase);
@@ -66,11 +66,11 @@ public class MiningParameters {
     return extraData;
   }
 
-  public Boolean isMiningEnabled() {
+  public boolean isMiningEnabled() {
     return enabled;
   }
 
-  public Boolean isCpuMiningEnabled() {
+  public boolean isCpuMiningEnabled() {
     return cpuMiningEnabled;
   }
 

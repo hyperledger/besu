@@ -32,7 +32,7 @@ import java.util.function.Function;
 public class EthHashMinerExecutor extends AbstractMinerExecutor<Void, EthHashBlockMiner> {
 
   private volatile Optional<Address> coinbase;
-  private Boolean cpuMiningEnabled;
+  private boolean cpuMiningEnabled;
 
   public EthHashMinerExecutor(
       final ProtocolContext<Void> protocolContext,
@@ -95,7 +95,7 @@ public class EthHashMinerExecutor extends AbstractMinerExecutor<Void, EthHashBlo
     }
   }
 
-  void setCpuMiningEnabled(final Boolean cpuMiningEnabled) {
+  void setCpuMiningEnabled(final boolean cpuMiningEnabled) {
     this.cpuMiningEnabled = cpuMiningEnabled;
   }
 
