@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.miner;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
@@ -50,8 +51,20 @@ public class MinerStartTest {
 
   @Test
   public void shouldReturnTrueWhenMiningStartsSuccessfully() {
+    when(miningCoordinator.enable()).thenReturn(true);
     final JsonRpcRequest request = minerStart();
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, true);
+
+    final JsonRpcResponse actualResponse = method.response(request);
+
+    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+  }
+
+  @Test
+  public void shouldReturnFalseWhenMiningDoesNotStart() {
+    when(miningCoordinator.enable()).thenReturn(false);
+    final JsonRpcRequest request = minerStart();
+    final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, false);
 
     final JsonRpcResponse actualResponse = method.response(request);
 

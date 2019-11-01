@@ -31,11 +31,18 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public class BesuController<C> implements java.io.Closeable {
+  private static final Logger LOG = LogManager.getLogger();
 
   public static final String DATABASE_PATH = "database";
   private final ProtocolSchedule<C> protocolSchedule;
@@ -50,7 +57,8 @@ public class BesuController<C> implements java.io.Closeable {
   private final TransactionPool transactionPool;
   private final MiningCoordinator miningCoordinator;
   private final PrivacyParameters privacyParameters;
-  private final Runnable close;
+  private final List<Closeable> closeables;
+  private final PluginServiceFactory additionalPluginServices;
   private final SyncState syncState;
 
   BesuController(
@@ -64,9 +72,10 @@ public class BesuController<C> implements java.io.Closeable {
       final TransactionPool transactionPool,
       final MiningCoordinator miningCoordinator,
       final PrivacyParameters privacyParameters,
-      final Runnable close,
       final JsonRpcMethodFactory additionalJsonRpcMethodsFactory,
-      final KeyPair keyPair) {
+      final KeyPair keyPair,
+      final List<Closeable> closeables,
+      final PluginServiceFactory additionalPluginServices) {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethProtocolManager = ethProtocolManager;
@@ -79,7 +88,8 @@ public class BesuController<C> implements java.io.Closeable {
     this.transactionPool = transactionPool;
     this.miningCoordinator = miningCoordinator;
     this.privacyParameters = privacyParameters;
-    this.close = close;
+    this.closeables = closeables;
+    this.additionalPluginServices = additionalPluginServices;
   }
 
   public ProtocolContext<C> getProtocolContext() {
@@ -120,7 +130,15 @@ public class BesuController<C> implements java.io.Closeable {
 
   @Override
   public void close() {
-    close.run();
+    closeables.forEach(this::tryClose);
+  }
+
+  private void tryClose(final Closeable closeable) {
+    try {
+      closeable.close();
+    } catch (IOException e) {
+      LOG.error("Unable to close resource.", e);
+    }
   }
 
   public PrivacyParameters getPrivacyParameters() {
@@ -134,6 +152,10 @@ public class BesuController<C> implements java.io.Closeable {
 
   public SyncState getSyncState() {
     return syncState;
+  }
+
+  public PluginServiceFactory getAdditionalPluginServices() {
+    return additionalPluginServices;
   }
 
   public static class Builder {

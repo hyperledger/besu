@@ -12,8 +12,12 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.common;
+package org.hyperledger.besu.controller;
 
-public interface PoAContext {
-  BlockInterface getBlockInterface();
+import org.hyperledger.besu.services.BesuPluginContextImpl;
+
+public class NoopPluginServiceFactory implements PluginServiceFactory {
+
+  @Override
+  public void appendPluginServices(final BesuPluginContextImpl besuContext) {}
 }

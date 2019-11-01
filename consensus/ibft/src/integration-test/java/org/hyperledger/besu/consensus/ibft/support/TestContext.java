@@ -16,6 +16,7 @@ package org.hyperledger.besu.consensus.ibft.support;
 
 import org.hyperledger.besu.consensus.ibft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.ibft.EventMultiplexer;
+import org.hyperledger.besu.consensus.ibft.IbftExecutors;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.ibft.statemachine.IbftController;
 import org.hyperledger.besu.consensus.ibft.statemachine.IbftFinalState;
@@ -40,6 +41,7 @@ public class TestContext {
 
   private final Map<Address, ValidatorPeer> remotePeers;
   private final MutableBlockchain blockchain;
+  private final IbftExecutors ibftExecutors;
   private final IbftController controller;
   private final IbftFinalState finalState;
   private final EventMultiplexer eventMultiplexer;
@@ -47,14 +49,21 @@ public class TestContext {
   public TestContext(
       final Map<Address, ValidatorPeer> remotePeers,
       final MutableBlockchain blockchain,
+      final IbftExecutors ibftExecutors,
       final IbftController controller,
       final IbftFinalState finalState,
       final EventMultiplexer eventMultiplexer) {
     this.remotePeers = remotePeers;
     this.blockchain = blockchain;
+    this.ibftExecutors = ibftExecutors;
     this.controller = controller;
     this.finalState = finalState;
     this.eventMultiplexer = eventMultiplexer;
+  }
+
+  public void start() {
+    ibftExecutors.start();
+    controller.start();
   }
 
   public MutableBlockchain getBlockchain() {

@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.controller;
 
-import static org.hyperledger.besu.ethereum.eth.manager.MonitoredExecutors.newScheduledThreadPool;
-
 import org.hyperledger.besu.config.IbftConfigOptions;
 import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.EpochManager;
@@ -28,6 +26,7 @@ import org.hyperledger.besu.consensus.ibft.EventMultiplexer;
 import org.hyperledger.besu.consensus.ibft.IbftBlockInterface;
 import org.hyperledger.besu.consensus.ibft.IbftContext;
 import org.hyperledger.besu.consensus.ibft.IbftEventQueue;
+import org.hyperledger.besu.consensus.ibft.IbftExecutors;
 import org.hyperledger.besu.consensus.ibft.IbftGossip;
 import org.hyperledger.besu.consensus.ibft.IbftProcessor;
 import org.hyperledger.besu.consensus.ibft.IbftProtocolSchedule;
@@ -65,11 +64,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.util.Subscribers;
-
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -110,6 +104,7 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder<IbftContext
       final SyncState syncState,
       final EthProtocolManager ethProtocolManager) {
     final MutableBlockchain blockchain = protocolContext.getBlockchain();
+    final IbftExecutors ibftExecutors = IbftExecutors.create(metricsSystem);
 
     final IbftBlockCreatorFactory blockCreatorFactory =
         new IbftBlockCreatorFactory(
@@ -133,9 +128,6 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder<IbftContext
 
     final IbftGossip gossiper = new IbftGossip(uniqueMessageMulticaster);
 
-    final ScheduledExecutorService timerExecutor =
-        newScheduledThreadPool("IbftTimerExecutor", 1, metricsSystem);
-
     final IbftFinalState finalState =
         new IbftFinalState(
             voteTallyCache,
@@ -143,9 +135,9 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder<IbftContext
             Util.publicKeyToAddress(nodeKeys.getPublicKey()),
             proposerSelector,
             uniqueMessageMulticaster,
-            new RoundTimer(ibftEventQueue, ibftConfig.getRequestTimeoutSeconds(), timerExecutor),
+            new RoundTimer(ibftEventQueue, ibftConfig.getRequestTimeoutSeconds(), ibftExecutors),
             new BlockTimer(
-                ibftEventQueue, ibftConfig.getBlockPeriodSeconds(), timerExecutor, clock),
+                ibftEventQueue, ibftConfig.getBlockPeriodSeconds(), ibftExecutors, clock),
             blockCreatorFactory,
             new MessageFactory(nodeKeys),
             clock);
@@ -184,30 +176,23 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder<IbftContext
 
     final EventMultiplexer eventMultiplexer = new EventMultiplexer(ibftController);
     final IbftProcessor ibftProcessor = new IbftProcessor(ibftEventQueue, eventMultiplexer);
-    final ExecutorService processorExecutor = Executors.newSingleThreadExecutor();
-    processorExecutor.execute(ibftProcessor);
 
     final MiningCoordinator ibftMiningCoordinator =
-        new IbftMiningCoordinator(ibftProcessor, blockCreatorFactory, blockchain, ibftEventQueue);
+        new IbftMiningCoordinator(
+            ibftExecutors,
+            ibftController,
+            ibftProcessor,
+            blockCreatorFactory,
+            blockchain,
+            ibftEventQueue);
     ibftMiningCoordinator.enable();
-    addShutdownAction(
-        () -> {
-          ibftProcessor.stop();
-          ibftMiningCoordinator.disable();
-          processorExecutor.shutdownNow();
-          try {
-            processorExecutor.awaitTermination(5, TimeUnit.SECONDS);
-          } catch (final InterruptedException e) {
-            LOG.error("Failed to shutdown ibft processor executor");
-          }
-          timerExecutor.shutdownNow();
-          try {
-            timerExecutor.awaitTermination(5, TimeUnit.SECONDS);
-          } catch (final InterruptedException e) {
-            LOG.error("Failed to shutdown timer executor");
-          }
-        });
+
     return ibftMiningCoordinator;
+  }
+
+  @Override
+  protected PluginServiceFactory createAdditionalPluginServices(final Blockchain blockchain) {
+    return new IbftQueryPluginServiceFactory(blockchain);
   }
 
   @Override
