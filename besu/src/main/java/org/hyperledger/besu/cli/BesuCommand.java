@@ -979,15 +979,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return this;
   }
 
+  @SuppressWarnings("ConstantConditions")
   private void validateMiningParams() {
-    // noinspection ConstantConditions
     if (isMiningEnabled && coinbase == null) {
       throw new ParameterException(
           this.commandLine,
           "Unable to mine without a valid coinbase. Either disable mining (remove --miner-enabled)"
               + "or specify the beneficiary of mining (via --miner-coinbase <Address>)");
     }
-    // noinspection ConstantConditions
     if (!isMiningEnabled && isCpuMiningEnabled) {
       throw new ParameterException(
           this.commandLine,
