@@ -190,6 +190,7 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
 
     try {
       final Path tmpDir = Files.createTempDirectory("data");
+      Files.delete(tmpDir);
       final Path toCopy = Paths.get(url.toURI());
       try (final Stream<Path> pathStream = Files.walk(toCopy)) {
         pathStream.forEach(source -> copy(source, tmpDir.resolve(toCopy.relativize(source))));
