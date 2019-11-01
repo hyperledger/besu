@@ -18,16 +18,17 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.plugin.data.Address;
 import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.services.metrics.PoAMetricsService;
+import org.hyperledger.besu.plugin.services.query.PoaQueryService;
 
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class PoAMetricServiceImpl implements PoAMetricsService {
+public class PoaQueryServiceImpl implements PoaQueryService, PoAMetricsService {
 
   private final BlockInterface blockInterface;
   private final Blockchain blockchain;
 
-  public PoAMetricServiceImpl(final BlockInterface blockInterface, final Blockchain blockchain) {
+  public PoaQueryServiceImpl(final BlockInterface blockInterface, final Blockchain blockchain) {
     this.blockInterface = blockInterface;
     this.blockchain = blockchain;
   }
@@ -40,5 +41,9 @@ public class PoAMetricServiceImpl implements PoAMetricsService {
   @Override
   public Address getProposerOfBlock(final BlockHeader header) {
     return this.blockInterface.getProposerOfBlock(header);
+  }
+
+  protected Blockchain getBlockchain() {
+    return blockchain;
   }
 }
