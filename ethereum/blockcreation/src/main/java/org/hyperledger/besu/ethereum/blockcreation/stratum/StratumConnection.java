@@ -76,7 +76,7 @@ final class StratumConnection {
   private void handleMessage(final byte[] message) {
     if (protocol == null) {
       for (StratumProtocol protocol : protocols) {
-        if (protocol.register(message, this)) {
+        if (protocol.canHandle(message, this)) {
           this.protocol = protocol;
         }
       }

@@ -169,7 +169,7 @@ public class Stratum1Protocol implements StratumProtocol {
   }
 
   @Override
-  public boolean register(final byte[] initialMessage, final StratumConnection conn) {
+  public boolean canHandle(final byte[] initialMessage, final StratumConnection conn) {
     try {
       MinerMessage message = mapper.readValue(initialMessage, MinerMessage.class);
       if (!"mining.subscribe".equals(message.getMethod())

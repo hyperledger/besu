@@ -20,7 +20,7 @@ import java.util.function.Function;
 
 public interface StratumProtocol {
 
-  boolean register(byte[] initialMessage, StratumConnection conn);
+  boolean canHandle(byte[] initialMessage, StratumConnection conn);
 
   void onClose(StratumConnection conn);
 
