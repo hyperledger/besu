@@ -20,9 +20,6 @@ import org.hyperledger.besu.ethereum.chain.EthHashObserver;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
@@ -50,28 +47,27 @@ public class StratumServer implements EthHashObserver {
     this.networkInterface = networkInterface;
   }
 
-  public void start() {
+  public CompletableFuture<?> start() {
     if (started.compareAndSet(false, true)) {
       logger.info("Starting stratum server on {}:{}", networkInterface, port);
       server =
           vertx.createNetServer(new NetServerOptions().setPort(port).setHost(networkInterface));
-      CompletableFuture<Throwable> result = new CompletableFuture<>();
+      CompletableFuture<?> result = new CompletableFuture<>();
       server.connectHandler(this::handle);
       server.listen(
           res -> {
-            result.complete(res.cause());
+            if (res.failed()) {
+              result.completeExceptionally(new StratumServerException(
+                      String.format(
+                              "Failed to bind Stratum Server listener to %s:%s: %s",
+                              networkInterface, port, res.cause().getMessage()));
+            } else {
+              result.complete(null);
+            }
           });
-      try {
-        Throwable t = result.get(10, TimeUnit.SECONDS);
-        if (t != null) {
-          logger.warn(t);
-          throw new RuntimeException(t);
-        }
-      } catch (InterruptedException | ExecutionException | TimeoutException e) {
-        logger.error(e);
-        throw new IllegalStateException(e);
-      }
+      return result;
     }
+    return CompletableFuture.completedFuture(null);
   }
 
   private void handle(final NetSocket socket) {
