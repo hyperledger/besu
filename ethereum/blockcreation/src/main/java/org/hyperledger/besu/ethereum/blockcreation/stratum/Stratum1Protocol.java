@@ -42,14 +42,8 @@ import org.apache.logging.log4j.Logger;
  * <p>This protocol allows miners to submit nonces over a persistent TCP connection.
  */
 public class Stratum1Protocol implements StratumProtocol {
-
-  private EthHashSolverInputs currentInput;
-  private Function<Long, Boolean> submitCallback;
-  private Supplier<String> jobIdSupplier =
-      () -> {
-        BytesValue timeValue = BytesValues.toMinimalBytes(Instant.now().toEpochMilli());
-        return timeValue.slice(timeValue.size() - 4, 4).toUnprefixedString();
-      };
+  private static final Logger LOG = getLogger();
+  private static final JsonMapper mapper = new JsonMapper();
 
   @JsonIgnoreProperties("jsonrpc")
   private static final class MinerMessage {
@@ -157,9 +151,13 @@ public class Stratum1Protocol implements StratumProtocol {
     }
   }
 
-  private static final Logger logger = getLogger();
-  private static final JsonMapper mapper = new JsonMapper();
-
+  private EthHashSolverInputs currentInput;
+  private Function<Long, Boolean> submitCallback;
+  private Supplier<String> jobIdSupplier =
+      () -> {
+        BytesValue timeValue = BytesValues.toMinimalBytes(Instant.now().toEpochMilli());
+        return timeValue.slice(timeValue.size() - 4, 4).toUnprefixedString();
+      };
   private final List<StratumConnection> activeConnections = new ArrayList<>();
 
   public Stratum1Protocol() {}
@@ -175,7 +173,7 @@ public class Stratum1Protocol implements StratumProtocol {
       if (!"mining.subscribe".equals(message.getMethod())
           || message.getParams().length < 2
           || !message.getParams()[1].equals("EthereumStratum/1.0.0")) {
-        logger.debug("Invalid first message method: {}", message.getMethod());
+        LOG.debug("Invalid first message method: {}", message.getMethod());
         return false;
       }
       try {
@@ -194,12 +192,12 @@ public class Stratum1Protocol implements StratumProtocol {
                     null));
         conn.send(notify + "\n");
       } catch (JsonProcessingException e) {
-        logger.debug(e.getMessage(), e);
+        LOG.debug(e.getMessage(), e);
         conn.close(null);
       }
       return true;
     } catch (IOException e) {
-      logger.debug(e.getMessage(), e);
+      LOG.debug(e.getMessage(), e);
       return false;
     }
   }
@@ -216,7 +214,7 @@ public class Stratum1Protocol implements StratumProtocol {
     try {
       conn.send(mapper.writeValueAsString(newWork));
     } catch (JsonProcessingException e) {
-      logger.debug(e.getMessage(), e);
+      LOG.debug(e.getMessage(), e);
     }
   }
 
@@ -250,7 +248,7 @@ public class Stratum1Protocol implements StratumProtocol {
           mapper.writeValueAsString(new MinerNotifyResponse(message.getId(), false, null));
       conn.send(reject + "\n");
     } catch (IOException e) {
-      logger.debug(e.getMessage(), e);
+      LOG.debug(e.getMessage(), e);
       conn.close(null);
     }
   }
@@ -258,7 +256,7 @@ public class Stratum1Protocol implements StratumProtocol {
   @Override
   public void setCurrentWorkTask(final EthHashSolverInputs input) {
     this.currentInput = input;
-    logger.debug("Sending new work to miners: {}", input);
+    LOG.debug("Sending new work to miners: {}", input);
     for (StratumConnection conn : activeConnections) {
       sendNewWork(conn);
     }
