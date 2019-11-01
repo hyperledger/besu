@@ -229,29 +229,35 @@ public class Stratum1Protocol implements StratumProtocol {
     try {
       MinerMessage message = mapper.readValue(bytes, MinerMessage.class);
       if ("mining.authorize".equals(message.getMethod())) {
-        // discard message contents as we don't care for username/password.
-        // send confirmation
-        String confirm =
-            mapper.writeValueAsString(new MinerNotifyResponse(message.getId(), true, null));
-        conn.send(confirm + "\n");
-        // ready for work.
-        registerConnection(conn);
+        handleMiningAuthorize(conn, message);
       } else if ("mining.submit".equals(message.getMethod())) {
-        long nonce = BytesValue.fromHexString(message.getParams()[2]).getLong(0);
-        if (submitCallback.apply(nonce)) {
-          String accept =
-              mapper.writeValueAsString(new MinerNotifyResponse(message.getId(), true, null));
-          conn.send(accept + "\n");
-          return;
-        }
+        handleMiningSubmit(conn, message);
       }
-      String reject =
-          mapper.writeValueAsString(new MinerNotifyResponse(message.getId(), false, null));
-      conn.send(reject + "\n");
+
     } catch (IOException e) {
       LOG.debug(e.getMessage(), e);
       conn.close(null);
     }
+  }
+
+  private void handleMiningSubmit(final StratumConnection conn, final MinerMessage message)
+      throws IOException {
+    long nonce = BytesValue.fromHexString(message.getParams()[2]).getLong(0);
+    boolean result = submitCallback.apply(nonce);
+    String response =
+        mapper.writeValueAsString(new MinerNotifyResponse(message.getId(), result, null));
+    conn.send(response + "\n");
+  }
+
+  private void handleMiningAuthorize(final StratumConnection conn, final MinerMessage message)
+      throws IOException {
+    // discard message contents as we don't care for username/password.
+    // send confirmation
+    String confirm =
+        mapper.writeValueAsString(new MinerNotifyResponse(message.getId(), true, null));
+    conn.send(confirm + "\n");
+    // ready for work.
+    registerConnection(conn);
   }
 
   @Override
