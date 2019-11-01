@@ -100,8 +100,7 @@ public class CliqueMinerExecutorTest {
                 TestClock.fixed(),
                 metricsSystem),
             proposerKeyPair,
-            new MiningParameters(
-                AddressHelpers.ofValue(1), Wei.ZERO, vanityData, false, false, "0.0.0.0", 8008),
+            new MiningParameters(AddressHelpers.ofValue(1), Wei.ZERO, vanityData),
             mock(CliqueBlockScheduler.class),
             new EpochManager(EPOCH_LENGTH),
             Function.identity());
@@ -138,8 +137,7 @@ public class CliqueMinerExecutorTest {
                 TestClock.fixed(),
                 metricsSystem),
             proposerKeyPair,
-            new MiningParameters(
-                AddressHelpers.ofValue(1), Wei.ZERO, vanityData, false, false, "0.0.0.0", 8008),
+            new MiningParameters(AddressHelpers.ofValue(1), Wei.ZERO, vanityData),
             mock(CliqueBlockScheduler.class),
             new EpochManager(EPOCH_LENGTH),
             Function.identity());
@@ -176,14 +174,7 @@ public class CliqueMinerExecutorTest {
                 TestClock.fixed(),
                 metricsSystem),
             proposerKeyPair,
-            new MiningParameters(
-                AddressHelpers.ofValue(1),
-                Wei.ZERO,
-                initialVanityData,
-                false,
-                false,
-                "0.0.0.0",
-                8008),
+            new MiningParameters(AddressHelpers.ofValue(1), Wei.ZERO, initialVanityData),
             mock(CliqueBlockScheduler.class),
             new EpochManager(EPOCH_LENGTH),
             Function.identity());

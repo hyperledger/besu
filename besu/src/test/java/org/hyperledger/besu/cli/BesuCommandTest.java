@@ -763,11 +763,7 @@ public class BesuCommandTest extends CommandTestAbstract {
             new MiningParameters(
                 Address.fromHexString(expectedCoinbase),
                 DefaultCommandValues.DEFAULT_MIN_TRANSACTION_GAS_PRICE,
-                DefaultCommandValues.DEFAULT_EXTRA_DATA,
-                false,
-                false,
-                "0.0.0.0",
-                8008));
+                DefaultCommandValues.DEFAULT_EXTRA_DATA));
   }
 
   @Test
@@ -784,11 +780,7 @@ public class BesuCommandTest extends CommandTestAbstract {
             new MiningParameters(
                 Address.fromHexString(expectedCoinbase),
                 DefaultCommandValues.DEFAULT_MIN_TRANSACTION_GAS_PRICE,
-                DefaultCommandValues.DEFAULT_EXTRA_DATA,
-                false,
-                false,
-                "0.0.0.0",
-                8008));
+                DefaultCommandValues.DEFAULT_EXTRA_DATA));
   }
 
   @Test

@@ -30,6 +30,11 @@ public class MiningParameters {
   private final int stratumPort;
 
   public MiningParameters(
+      final Address coinbase, final Wei minTransactionGasPrice, final BytesValue extraData) {
+    this(coinbase, minTransactionGasPrice, extraData, false, false, "0.0.0.0", 8008);
+  }
+
+  public MiningParameters(
       final Address coinbase,
       final Wei minTransactionGasPrice,
       final BytesValue extraData,
