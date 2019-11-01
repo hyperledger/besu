@@ -61,9 +61,7 @@ public class RocksDBKeyValuePrivacyStorageFactoryAdapter implements PrivacyKeyVa
       throws StorageException {
     if (databaseVersion == null) {
       try {
-        databaseVersion =
-            readDatabaseVersion(
-                commonConfiguration.getStoragePath().resolve(PRIVATE_DATABASE_PATH));
+        databaseVersion = readDatabaseVersion(commonConfiguration);
       } catch (final IOException e) {
         LOG.error("Failed to retrieve the RocksDB database meta version: {}", e.getMessage());
         throw new StorageException(e.getMessage(), e);
@@ -83,25 +81,28 @@ public class RocksDBKeyValuePrivacyStorageFactoryAdapter implements PrivacyKeyVa
     publicFactory.close();
   }
 
-  private int readDatabaseVersion(final Path databaseDir) throws IOException {
+  private int readDatabaseVersion(final BesuConfiguration commonConfiguration) throws IOException {
+    final Path databaseDir = commonConfiguration.getStoragePath().resolve(PRIVATE_DATABASE_PATH);
+    final Path dataDir = commonConfiguration.getDataPath();
     final boolean databaseExists = databaseDir.resolve("IDENTITY").toFile().exists();
     final int databaseVersion;
     if (databaseExists) {
-      databaseVersion = DatabaseMetadata.lookUpFrom(databaseDir).getVersion();
-      LOG.info(
-          "Existing privacy database detected at {}. Version {}", databaseDir, databaseVersion);
+      databaseVersion =
+          DatabaseMetadata.lookUpFrom(commonConfiguration.getStoragePath(), dataDir).maybePrivacyVersion().get();
+      LOG.info("Existing private database detected at {}. Version {}", dataDir, databaseVersion);
     } else {
       databaseVersion = DEFAULT_VERSION;
       LOG.info(
-          "No existing privacy database detected at {}. Using version {}",
-          databaseDir,
+          "No existing private database detected at {}. Using version {}",
+          dataDir,
           databaseVersion);
       Files.createDirectories(databaseDir);
-      new DatabaseMetadata(databaseVersion).writeToDirectory(databaseDir);
+      Files.createDirectories(dataDir);
+      new DatabaseMetadata(publicFactory.getVersion(), databaseVersion).writeToDirectory(dataDir);
     }
 
     if (!SUPPORTED_VERSIONS.contains(databaseVersion)) {
-      final String message = "Unsupported Privacy RocksDB Metadata version of: " + databaseVersion;
+      final String message = "Unsupported RocksDB Metadata version of: " + databaseVersion;
       LOG.error(message);
       throw new StorageException(message);
     }

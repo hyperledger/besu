@@ -18,8 +18,10 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -33,13 +35,33 @@ public class DatabaseMetadata {
   private static ObjectMapper MAPPER = new ObjectMapper();
   private final int version;
 
+  private final Optional<Integer> privacyVersion;
+
   @JsonCreator
   public DatabaseMetadata(@JsonProperty("version") final int version) {
     this.version = version;
+    this.privacyVersion = Optional.empty();
+  }
+
+  @JsonCreator
+  public DatabaseMetadata(
+      @JsonProperty("version") final int version,
+      @JsonProperty("privacyVersion") final int privacyVersion) {
+    this.version = version;
+    this.privacyVersion = Optional.of(privacyVersion);
   }
 
   public int getVersion() {
     return version;
+  }
+
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  public Integer getPrivacyVersion() {
+    return privacyVersion.orElse(null);
+  }
+
+  public Optional<Integer> maybePrivacyVersion() {
+    return privacyVersion;
   }
 
   public static DatabaseMetadata lookUpFrom(final Path databaseDir, final Path dataDir)
@@ -58,17 +80,6 @@ public class DatabaseMetadata {
       LOG.warn(
           "Database metadata file has been copied from old location (database directory). Be aware that the old file might be removed in future release.");
       writeToDirectory(databaseMetadata, dataDir);
-    }
-    return databaseMetadata;
-  }
-
-  // Lookup for privacy metadata
-  public static DatabaseMetadata lookUpFrom(final Path databaseDir) throws IOException {
-    LOG.info("Lookup database metadata file in database directory: {}", databaseDir.toString());
-    File metadataFile = getDefaultMetadataFile(databaseDir);
-    final DatabaseMetadata databaseMetadata = resolveDatabaseMetadata(metadataFile);
-    if (!metadataFile.exists()) {
-      writeToDirectory(databaseMetadata, databaseDir);
     }
     return databaseMetadata;
   }
