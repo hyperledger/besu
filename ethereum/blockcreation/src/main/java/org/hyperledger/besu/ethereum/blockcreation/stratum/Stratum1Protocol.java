@@ -43,12 +43,13 @@ import org.apache.logging.log4j.Logger;
 /**
  * Implementation of the stratum+tcp protocol.
  *
- * <p>This protocol allows miners to submit nonces over a persistent TCP connection.
+ * <p>This protocol allows miners to submit EthHash solutions over a persistent TCP connection.
  */
 public class Stratum1Protocol implements StratumProtocol {
   private static final Logger LOG = getLogger();
   private static final JsonMapper mapper = new JsonMapper();
   private static final String STRATUM_1 = "EthereumStratum/1.0.0";
+  private final String extranonce;
 
   @JsonIgnoreProperties("jsonrpc")
   private static final class MinerMessage {
@@ -171,16 +172,20 @@ public class Stratum1Protocol implements StratumProtocol {
 
   private EthHashSolverInputs currentInput;
   private Function<EthHashSolution, Boolean> submitCallback;
-  private Supplier<String> jobIdSupplier =
-      () -> {
-        BytesValue timeValue = BytesValues.toMinimalBytes(Instant.now().toEpochMilli());
-        return timeValue.slice(timeValue.size() - 4, 4).toUnprefixedString();
-      };
+  private final Supplier<String> jobIdSupplier;
   private final List<StratumConnection> activeConnections = new ArrayList<>();
 
-  public Stratum1Protocol() {}
+  public Stratum1Protocol(final String extranonce) {
+    this(
+        extranonce,
+        () -> {
+          BytesValue timeValue = BytesValues.toMinimalBytes(Instant.now().toEpochMilli());
+          return timeValue.slice(timeValue.size() - 4, 4).toUnprefixedString();
+        });
+  }
 
-  Stratum1Protocol(final Supplier<String> jobIdSupplier) {
+  Stratum1Protocol(final String extranonce, final Supplier<String> jobIdSupplier) {
+    this.extranonce = extranonce;
     this.jobIdSupplier = jobIdSupplier;
   }
 
@@ -209,7 +214,7 @@ public class Stratum1Protocol implements StratumProtocol {
                         createSubscriptionID(), // subscription ID, never reused.
                         STRATUM_1
                       },
-                      "080c" // TODO. For now we use a fixed extranounce.
+                      extranonce
                     },
                     null));
         conn.send(notify + "\n");

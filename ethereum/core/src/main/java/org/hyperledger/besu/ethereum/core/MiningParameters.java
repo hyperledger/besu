@@ -28,13 +28,14 @@ public class MiningParameters {
   private final boolean cpuMiningEnabled;
   private final String stratumNetworkInterface;
   private final int stratumPort;
+  private final String stratumExtranonce;
 
   public MiningParameters(
       final Address coinbase,
       final Wei minTransactionGasPrice,
       final BytesValue extraData,
       final boolean enabled) {
-    this(coinbase, minTransactionGasPrice, extraData, enabled, false, "0.0.0.0", 8008);
+    this(coinbase, minTransactionGasPrice, extraData, enabled, false, "0.0.0.0", 8008, "080c");
   }
 
   public MiningParameters(
@@ -44,7 +45,8 @@ public class MiningParameters {
       final boolean enabled,
       final boolean cpuMiningEnabled,
       final String stratumNetworkInterface,
-      final int stratumPort) {
+      final int stratumPort,
+      final String stratumExtranonce) {
     this.coinbase = Optional.ofNullable(coinbase);
     this.minTransactionGasPrice = minTransactionGasPrice;
     this.extraData = extraData;
@@ -52,6 +54,7 @@ public class MiningParameters {
     this.cpuMiningEnabled = cpuMiningEnabled;
     this.stratumNetworkInterface = stratumNetworkInterface;
     this.stratumPort = stratumPort;
+    this.stratumExtranonce = stratumExtranonce;
   }
 
   public Optional<Address> getCoinbase() {
@@ -82,6 +85,10 @@ public class MiningParameters {
     return stratumPort;
   }
 
+  public String getStratumExtranonce() {
+    return stratumExtranonce;
+  }
+
   @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
@@ -93,7 +100,8 @@ public class MiningParameters {
         && Objects.equals(extraData, that.extraData)
         && Objects.equals(enabled, that.enabled)
         && Objects.equals(cpuMiningEnabled, that.cpuMiningEnabled)
-        && Objects.equals(stratumNetworkInterface, that.stratumNetworkInterface);
+        && Objects.equals(stratumNetworkInterface, that.stratumNetworkInterface)
+        && Objects.equals(stratumExtranonce, that.stratumExtranonce);
   }
 
   @Override
@@ -105,7 +113,8 @@ public class MiningParameters {
         enabled,
         cpuMiningEnabled,
         stratumNetworkInterface,
-        stratumPort);
+        stratumPort,
+        stratumExtranonce);
   }
 
   @Override
@@ -126,6 +135,9 @@ public class MiningParameters {
         + '\''
         + ", stratumPort="
         + stratumPort
+        + ", stratumExtranonce='"
+        + stratumExtranonce
+        + '\''
         + '}';
   }
 }

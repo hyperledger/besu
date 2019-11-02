@@ -570,6 +570,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Stratum port binding (default: ${DEFAULT-VALUE})")
   private final Integer stratumPort = 8008;
 
+  @SuppressWarnings("FieldMayBeFinal") // Because PicoCLI requires Strings to not be final.
+  @Option(
+      hidden = true,
+      names = {"--Xstratum-extranonce"},
+      description = "Extranonce for Stratum network miners (default: ${DEFAULT-VALUE})")
+  private String stratumExtranonce = "080c";
+
   @Option(
       names = {"--miner-coinbase"},
       description =
@@ -1101,7 +1108,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                   isMiningEnabled,
                   isCpuMiningEnabled,
                   stratumNetworkInterface,
-                  stratumPort))
+                  stratumPort,
+                  stratumExtranonce))
           .transactionPoolConfiguration(buildTransactionPoolConfiguration())
           .nodePrivateKeyFile(nodePrivateKeyFile())
           .metricsSystem(metricsSystem.get())

@@ -364,7 +364,8 @@ public class RunnerBuilder {
               new StratumServer(
                   vertx,
                   miningParameters.getStratumPort(),
-                  miningParameters.getStratumNetworkInterface()));
+                  miningParameters.getStratumNetworkInterface(),
+                  miningParameters.getStratumExtranonce()));
       miningCoordinator.addEthHashObserver(stratumServer.get());
     }
 
