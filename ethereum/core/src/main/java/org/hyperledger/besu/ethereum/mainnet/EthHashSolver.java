@@ -175,7 +175,7 @@ public class EthHashSolver {
 
     if (calculatedSolution.isPresent()) {
       LOG.debug("Accepting a solution from a miner");
-      currentJob.get().solvedWith(solution);
+      currentJob.get().solvedWith(calculatedSolution.get());
       return true;
     }
     LOG.debug("Rejecting a solution from a miner");
