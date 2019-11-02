@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -167,6 +168,12 @@ public class Stratum1Protocol implements StratumProtocol {
     this.jobIdSupplier = jobIdSupplier;
   }
 
+  private String createSubscriptionID() {
+    byte[] subscriptionBytes = new byte[16];
+    new Random().nextBytes(subscriptionBytes);
+    return BytesValue.wrap(subscriptionBytes).toUnprefixedString();
+  }
+
   @Override
   public boolean canHandle(final byte[] initialMessage, final StratumConnection conn) {
     try {
@@ -185,7 +192,7 @@ public class Stratum1Protocol implements StratumProtocol {
                     new Object[] {
                       new String[] {
                         "mining.notify",
-                        "ae6812eb4cd7735a302a8a9dd95cf71f", // subscription ID, never reused.
+                        createSubscriptionID(), // subscription ID, never reused.
                         STRATUM_1
                       },
                       "080c" // TODO. For now we use a fixed extranounce.
