@@ -14,19 +14,20 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation.stratum;
 
+import org.hyperledger.besu.ethereum.mainnet.EthHashSolution;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
 
 import java.util.function.Function;
 
 public interface StratumProtocol {
 
-  boolean canHandle(byte[] initialMessage, StratumConnection conn);
+  boolean canHandle(String initialMessage, StratumConnection conn);
 
   void onClose(StratumConnection conn);
 
-  void handle(StratumConnection conn, byte[] message);
+  void handle(StratumConnection conn, String message);
 
   void setCurrentWorkTask(EthHashSolverInputs input);
 
-  void setSubmitCallback(Function<Long, Boolean> submitSolutionCallback);
+  void setSubmitCallback(Function<EthHashSolution, Boolean> submitSolutionCallback);
 }

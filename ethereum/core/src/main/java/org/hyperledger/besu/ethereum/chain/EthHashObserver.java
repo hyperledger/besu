@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.chain;
 
+import org.hyperledger.besu.ethereum.mainnet.EthHashSolution;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
 
 import java.util.function.Function;
@@ -22,5 +23,5 @@ public interface EthHashObserver {
 
   void newJob(EthHashSolverInputs jobInput);
 
-  void setSubmitWorkCallback(Function<Long, Boolean> submitSolutionCallback);
+  void setSubmitWorkCallback(Function<EthHashSolution, Boolean> submitSolutionCallback);
 }

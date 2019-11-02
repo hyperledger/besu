@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
+import org.hyperledger.besu.ethereum.mainnet.EthHashSolution;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
 
 import java.util.Optional;
@@ -67,9 +68,9 @@ public class EthHashMiningCoordinator extends AbstractMiningCoordinator<Void, Et
   }
 
   @Override
-  public boolean submitWork(final long nonce) {
+  public boolean submitWork(final EthHashSolution solution) {
     synchronized (this) {
-      return currentRunningMiner.map(miner -> miner.submitWork(nonce)).orElse(false);
+      return currentRunningMiner.map(miner -> miner.submitWork(solution)).orElse(false);
     }
   }
 

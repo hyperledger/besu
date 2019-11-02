@@ -16,7 +16,9 @@ package org.hyperledger.besu.ethereum.blockcreation.stratum;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.mainnet.DirectAcyclicGraphSeed;
+import org.hyperledger.besu.ethereum.mainnet.EthHashSolution;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
 import org.hyperledger.besu.util.bytes.BytesValue;
 import org.hyperledger.besu.util.bytes.BytesValues;
@@ -24,6 +26,7 @@ import org.hyperledger.besu.util.bytes.BytesValues;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.function.Function;
@@ -77,6 +80,19 @@ public class Stratum1Protocol implements StratumProtocol {
     @JsonProperty("params")
     public String[] getParams() {
       return params;
+    }
+
+    @Override
+    public String toString() {
+      return "MinerMessage{"
+          + "id="
+          + id
+          + ", method='"
+          + method
+          + '\''
+          + ", params="
+          + Arrays.toString(params)
+          + '}';
     }
   }
 
@@ -154,7 +170,7 @@ public class Stratum1Protocol implements StratumProtocol {
   }
 
   private EthHashSolverInputs currentInput;
-  private Function<Long, Boolean> submitCallback;
+  private Function<EthHashSolution, Boolean> submitCallback;
   private Supplier<String> jobIdSupplier =
       () -> {
         BytesValue timeValue = BytesValues.toMinimalBytes(Instant.now().toEpochMilli());
@@ -175,12 +191,10 @@ public class Stratum1Protocol implements StratumProtocol {
   }
 
   @Override
-  public boolean canHandle(final byte[] initialMessage, final StratumConnection conn) {
+  public boolean canHandle(final String initialMessage, final StratumConnection conn) {
     try {
       MinerMessage message = mapper.readValue(initialMessage, MinerMessage.class);
-      if (!"mining.subscribe".equals(message.getMethod())
-          || message.getParams().length < 2
-          || !message.getParams()[1].equals(STRATUM_1)) {
+      if (!"mining.subscribe".equals(message.getMethod())) {
         LOG.debug("Invalid first message method: {}", message.getMethod());
         return false;
       }
@@ -220,7 +234,7 @@ public class Stratum1Protocol implements StratumProtocol {
   private void sendNewWork(final StratumConnection conn) {
     MinerNewWork newWork = new MinerNewWork(jobIdSupplier.get(), currentInput);
     try {
-      conn.send(mapper.writeValueAsString(newWork));
+      conn.send(mapper.writeValueAsString(newWork) + "\n");
     } catch (JsonProcessingException e) {
       LOG.debug(e.getMessage(), e);
     }
@@ -232,7 +246,7 @@ public class Stratum1Protocol implements StratumProtocol {
   }
 
   @Override
-  public void handle(final StratumConnection conn, final byte[] bytes) {
+  public void handle(final StratumConnection conn, final String bytes) {
     try {
       MinerMessage message = mapper.readValue(bytes, MinerMessage.class);
       if ("mining.authorize".equals(message.getMethod())) {
@@ -249,8 +263,17 @@ public class Stratum1Protocol implements StratumProtocol {
 
   private void handleMiningSubmit(final StratumConnection conn, final MinerMessage message)
       throws IOException {
-    long nonce = BytesValue.fromHexString(message.getParams()[2]).getLong(0);
-    boolean result = submitCallback.apply(nonce);
+    LOG.debug("Miner submitted solution {}", message);
+    boolean result = false;
+    final EthHashSolution solution =
+        new EthHashSolution(
+            BytesValue.fromHexString(message.getParams()[2]).getLong(0),
+            Hash.fromHexString(message.getParams()[4]),
+            BytesValue.fromHexString(message.getParams()[3]).getArrayUnsafe());
+    if (Arrays.equals(currentInput.getPrePowHash(), solution.getPowHash())) {
+      result = submitCallback.apply(solution);
+    }
+
     String response =
         mapper.writeValueAsString(new MinerNotifyResponse(message.getId(), result, null));
     conn.send(response + "\n");
@@ -277,7 +300,7 @@ public class Stratum1Protocol implements StratumProtocol {
   }
 
   @Override
-  public void setSubmitCallback(final Function<Long, Boolean> submitSolutionCallback) {
+  public void setSubmitCallback(final Function<EthHashSolution, Boolean> submitSolutionCallback) {
     this.submitCallback = submitSolutionCallback;
   }
 }

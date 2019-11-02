@@ -16,17 +16,18 @@ package org.hyperledger.besu.ethereum.blockcreation.stratum;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.Iterator;
 import java.util.function.Consumer;
 
+import com.google.common.base.Splitter;
 import io.vertx.core.buffer.Buffer;
 import org.apache.logging.log4j.Logger;
 
 final class StratumConnection {
-  private static final Logger logger = getLogger();
+  private static final Logger LOG = getLogger();
 
-  private final ByteBuffer messageBuffer = ByteBuffer.allocate(4096);
+  private String incompleteMessage = "";
 
   private final StratumProtocol[] protocols;
   private final Runnable closeHandle;
@@ -44,26 +45,30 @@ final class StratumConnection {
   }
 
   void handleBuffer(final Buffer buffer) {
-    if (messageBuffer.remaining() < buffer.length()) {
-      logger.debug("Message overflow");
+    LOG.trace("Buffer received {}", buffer);
+    Splitter splitter = Splitter.on('\n');
+    boolean firstMessage = false;
+    String messagesString;
+    try {
+      messagesString = buffer.toString(StandardCharsets.UTF_8);
+    } catch (IllegalArgumentException e) {
+      LOG.debug("Invalid message with non UTF-8 characters: " + e.getMessage(), e);
       closeHandle.run();
       return;
     }
-    int lastMessage = 0;
-    for (int i = 0; i < buffer.length(); i++) {
-      if (buffer.getByte(i) == '\n') {
-        lastMessage = i + 1;
-        messageBuffer.put(buffer.getBytes(0, i), messageBuffer.position(), i);
-        byte[] message = new byte[messageBuffer.position()];
-        messageBuffer.rewind();
-        messageBuffer.get(message, 0, message.length);
-        handleMessage(message);
-        messageBuffer.clear();
+    Iterator<String> messages = splitter.split(messagesString).iterator();
+    while (messages.hasNext()) {
+      String message = messages.next();
+      if (!firstMessage) {
+        message = incompleteMessage + message;
+        firstMessage = true;
       }
-    }
-
-    if (lastMessage != buffer.length()) {
-      messageBuffer.put(buffer.getBytes(lastMessage, buffer.length()));
+      if (!messages.hasNext()) {
+        incompleteMessage = message;
+      } else {
+        LOG.trace("Dispatching message {}", message);
+        handleMessage(message);
+      }
     }
   }
 
@@ -73,7 +78,7 @@ final class StratumConnection {
     }
   }
 
-  private void handleMessage(final byte[] message) {
+  private void handleMessage(final String message) {
     if (protocol == null) {
       for (StratumProtocol protocol : protocols) {
         if (protocol.canHandle(message, this)) {
@@ -81,7 +86,7 @@ final class StratumConnection {
         }
       }
       if (protocol == null) {
-        logger.debug("Invalid first message: {}", new String(message, StandardCharsets.UTF_8));
+        LOG.debug("Invalid first message: {}", message);
         closeHandle.run();
       }
     } else {
@@ -90,7 +95,7 @@ final class StratumConnection {
   }
 
   public void send(final String message) {
-    logger.debug("Sending message {}", message);
+    LOG.debug("Sending message {}", message);
     sender.accept(message);
   }
 }

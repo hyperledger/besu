@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.blockcreation.stratum;
 import static org.apache.logging.log4j.LogManager.getLogger;
 
 import org.hyperledger.besu.ethereum.chain.EthHashObserver;
+import org.hyperledger.besu.ethereum.mainnet.EthHashSolution;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
 
 import java.util.concurrent.CompletableFuture;
@@ -112,7 +113,8 @@ public class StratumServer implements EthHashObserver {
   }
 
   @Override
-  public void setSubmitWorkCallback(final Function<Long, Boolean> submitSolutionCallback) {
+  public void setSubmitWorkCallback(
+      final Function<EthHashSolution, Boolean> submitSolutionCallback) {
     for (StratumProtocol protocol : protocols) {
       protocol.setSubmitCallback(submitSolutionCallback);
     }

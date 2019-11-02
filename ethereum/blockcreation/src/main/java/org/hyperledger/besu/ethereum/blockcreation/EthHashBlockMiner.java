@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.blockcreation;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.mainnet.EthHashSolution;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.util.Subscribers;
@@ -51,7 +52,7 @@ public class EthHashBlockMiner extends BlockMiner<Void, EthHashBlockCreator> {
     return minerBlockCreator.getHashesPerSecond();
   }
 
-  public boolean submitWork(final long nonce) {
-    return minerBlockCreator.submitWork(nonce);
+  public boolean submitWork(final EthHashSolution solution) {
+    return minerBlockCreator.submitWork(solution);
   }
 }
