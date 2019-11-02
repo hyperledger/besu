@@ -276,7 +276,8 @@ public class TestContextBuilder {
             true,
             true,
             "0.0.0.0",
-            8008);
+            8008,
+            "");
 
     final StubGenesisConfigOptions genesisConfigOptions = new StubGenesisConfigOptions();
     genesisConfigOptions.byzantiumBlock(0);
