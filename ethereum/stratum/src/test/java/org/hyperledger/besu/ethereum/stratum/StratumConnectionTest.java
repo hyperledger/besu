@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.blockcreation.stratum;
+package org.hyperledger.besu.ethereum.stratum;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -42,7 +42,7 @@ public class StratumConnectionTest {
     AtomicBoolean called = new AtomicBoolean(false);
     StratumConnection conn =
         new StratumConnection(
-            new StratumProtocol[] {new Stratum1Protocol()}, () -> called.set(true), bytes -> {});
+            new StratumProtocol[] {new Stratum1Protocol("")}, () -> called.set(true), bytes -> {});
     conn.handleBuffer(Buffer.buffer("{}\n"));
     assertThat(called.get()).isTrue();
   }
@@ -56,7 +56,7 @@ public class StratumConnectionTest {
 
     StratumConnection conn =
         new StratumConnection(
-            new StratumProtocol[] {new Stratum1Protocol()}, () -> called.set(true), message::set);
+            new StratumProtocol[] {new Stratum1Protocol("")}, () -> called.set(true), message::set);
     conn.handleBuffer(
         Buffer.buffer(
             "{"
@@ -80,7 +80,7 @@ public class StratumConnectionTest {
 
     AtomicReference<String> message = new AtomicReference<>();
 
-    Stratum1Protocol protocol = new Stratum1Protocol(() -> "abcd");
+    Stratum1Protocol protocol = new Stratum1Protocol("", () -> "abcd");
 
     StratumConnection conn =
         new StratumConnection(

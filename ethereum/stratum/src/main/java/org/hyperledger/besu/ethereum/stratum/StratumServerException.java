@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.blockcreation.stratum;
+package org.hyperledger.besu.ethereum.stratum;
 
 public class StratumServerException extends RuntimeException {
 
