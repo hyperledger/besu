@@ -61,8 +61,6 @@ import org.hyperledger.besu.cli.util.CommandLineUtils;
 import org.hyperledger.besu.cli.util.ConfigOptionSearchAndRunHandler;
 import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.config.GenesisConfigFile;
-import org.hyperledger.besu.consensus.common.PoAContext;
-import org.hyperledger.besu.consensus.common.PoAMetricServiceImpl;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.controller.KeyPairUtil;
@@ -105,7 +103,6 @@ import org.hyperledger.besu.plugin.services.StorageService;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
-import org.hyperledger.besu.plugin.services.metrics.PoAMetricsService;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
 import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.services.BesuEventsImpl;
@@ -549,8 +546,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--logging", "-l"},
       paramLabel = "<LOG VERBOSITY LEVEL>",
       description =
-          "Logging verbosity levels: OFF, FATAL, ERROR, WARN, INFO, DEBUG, TRACE, ALL (default: INFO)")
-  private final Level logLevel = null;
+          "Logging verbosity levels: OFF, FATAL, ERROR, WARN, INFO, DEBUG, TRACE, ALL (default: ${DEFAULT-VALUE})")
+  private final Level logLevel = LogManager.getRootLogger().getLevel();
 
   @Option(
       names = {"--miner-enabled"},
@@ -943,23 +940,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             besuController.getProtocolManager().getBlockBroadcaster(),
             besuController.getTransactionPool(),
             besuController.getSyncState()));
-    addPluginMetrics(besuController);
+    besuPluginContext.addService(MetricsSystem.class, getMetricsSystem());
+    besuController.getAdditionalPluginServices().appendPluginServices(besuPluginContext);
     besuPluginContext.startPlugins();
     return this;
-  }
-
-  private void addPluginMetrics(final BesuController<?> besuController) {
-    besuPluginContext.addService(MetricsSystem.class, getMetricsSystem());
-
-    final Object consensusState = besuController.getProtocolContext().getConsensusState();
-
-    if (consensusState != null && PoAContext.class.isAssignableFrom(consensusState.getClass())) {
-      final PoAMetricServiceImpl service =
-          new PoAMetricServiceImpl(
-              ((PoAContext) consensusState).getBlockInterface(),
-              besuController.getProtocolContext().getBlockchain());
-      besuPluginContext.addService(PoAMetricsService.class, service);
-    }
   }
 
   private void prepareLogging() {
