@@ -16,6 +16,9 @@ package org.hyperledger.besu.ethereum.stratum;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.mainnet.DirectAcyclicGraphSeed;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolution;
@@ -32,12 +35,9 @@ import java.util.Random;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.json.JsonMapper;
+import io.vertx.core.json.JsonObject;
 import org.apache.logging.log4j.Logger;
 
 /**
@@ -49,130 +49,18 @@ public class Stratum1Protocol implements StratumProtocol {
   private static final Logger LOG = getLogger();
   private static final JsonMapper mapper = new JsonMapper();
   private static final String STRATUM_1 = "EthereumStratum/1.0.0";
+
+  private static String createSubscriptionID() {
+    byte[] subscriptionBytes = new byte[16];
+    new Random().nextBytes(subscriptionBytes);
+    return BytesValue.wrap(subscriptionBytes).toUnprefixedString();
+  }
+
   private final String extranonce;
-
-  @JsonIgnoreProperties("jsonrpc")
-  private static final class MinerMessage {
-
-    private int id;
-    private String method;
-    private String[] params;
-
-    @JsonCreator
-    public MinerMessage(
-        final @JsonProperty("id") int id,
-        final @JsonProperty("method") String method,
-        final @JsonProperty("params") String[] params) {
-      this.id = id;
-      this.method = method;
-      this.params = params;
-    }
-
-    @JsonProperty("id")
-    public int getId() {
-      return id;
-    }
-
-    @JsonProperty("method")
-    public String getMethod() {
-      return method;
-    }
-
-    @JsonProperty("params")
-    public String[] getParams() {
-      return params;
-    }
-
-    @Override
-    public String toString() {
-      return "MinerMessage{"
-          + "id="
-          + id
-          + ", method='"
-          + method
-          + '\''
-          + ", params="
-          + Arrays.toString(params)
-          + '}';
-    }
-  }
-
-  @JsonPropertyOrder({"id", "jsonrpc", "result", "error"})
-  private static final class MinerNotifyResponse {
-
-    private final int id;
-    private final Object result;
-    private final Object[] error;
-
-    public MinerNotifyResponse(final int id, final Object result, final Object[] error) {
-      this.id = id;
-      this.result = result;
-      this.error = error;
-    }
-
-    @JsonProperty("id")
-    public int getId() {
-      return id;
-    }
-
-    @JsonProperty("result")
-    public Object getResult() {
-      return result;
-    }
-
-    @JsonProperty("error")
-    public Object[] getError() {
-      return error;
-    }
-
-    @JsonProperty("jsonrpc")
-    public String getJsonrpc() {
-      return "2.0";
-    }
-  }
-
-  @JsonPropertyOrder({"id", "method", "jsonrpc", "params"})
-  private static final class MinerNewWork {
-
-    private final String jobId;
-    private final EthHashSolverInputs input;
-
-    public MinerNewWork(final String jobId, final EthHashSolverInputs input) {
-      this.jobId = jobId;
-      this.input = input;
-    }
-
-    @JsonProperty("id")
-    public String getId() {
-      return null;
-    }
-
-    @JsonProperty("method")
-    public String getMethod() {
-      return "mining.notify";
-    }
-
-    @JsonProperty("params")
-    public Object[] getParams() {
-      final byte[] dagSeed = DirectAcyclicGraphSeed.dagSeed(input.getBlockNumber());
-      return new Object[] {
-        jobId,
-        BytesValue.wrap(input.getPrePowHash()).getHexString(),
-        BytesValue.wrap(dagSeed).getHexString(),
-        input.getTarget().toHexString(),
-        true
-      };
-    }
-
-    @JsonProperty("jsonrpc")
-    public String getJsonrpc() {
-      return "2.0";
-    }
-  }
-
   private EthHashSolverInputs currentInput;
   private Function<EthHashSolution, Boolean> submitCallback;
   private final Supplier<String> jobIdSupplier;
+  private final Supplier<String> subscriptionIdCreator;
   private final List<StratumConnection> activeConnections = new ArrayList<>();
 
   public Stratum1Protocol(final String extranonce) {
@@ -181,52 +69,51 @@ public class Stratum1Protocol implements StratumProtocol {
         () -> {
           BytesValue timeValue = BytesValues.toMinimalBytes(Instant.now().toEpochMilli());
           return timeValue.slice(timeValue.size() - 4, 4).toUnprefixedString();
-        });
+        },
+        Stratum1Protocol::createSubscriptionID);
   }
 
-  Stratum1Protocol(final String extranonce, final Supplier<String> jobIdSupplier) {
+  Stratum1Protocol(
+      final String extranonce,
+      final Supplier<String> jobIdSupplier,
+      final Supplier<String> subscriptionIdCreator) {
     this.extranonce = extranonce;
     this.jobIdSupplier = jobIdSupplier;
-  }
-
-  private String createSubscriptionID() {
-    byte[] subscriptionBytes = new byte[16];
-    new Random().nextBytes(subscriptionBytes);
-    return BytesValue.wrap(subscriptionBytes).toUnprefixedString();
+    this.subscriptionIdCreator = subscriptionIdCreator;
   }
 
   @Override
   public boolean canHandle(final String initialMessage, final StratumConnection conn) {
+    JsonRpcRequest req;
     try {
-      MinerMessage message = mapper.readValue(initialMessage, MinerMessage.class);
-      if (!"mining.subscribe".equals(message.getMethod())) {
-        LOG.debug("Invalid first message method: {}", message.getMethod());
-        return false;
-      }
-      try {
-        String notify =
-            mapper.writeValueAsString(
-                new MinerNotifyResponse(
-                    message.getId(),
-                    new Object[] {
-                      new String[] {
-                        "mining.notify",
-                        createSubscriptionID(), // subscription ID, never reused.
-                        STRATUM_1
-                      },
-                      extranonce
-                    },
-                    null));
-        conn.send(notify + "\n");
-      } catch (JsonProcessingException e) {
-        LOG.debug(e.getMessage(), e);
-        conn.close(null);
-      }
-      return true;
-    } catch (IOException e) {
+      req = new JsonObject(initialMessage).mapTo(JsonRpcRequest.class);
+    } catch (IllegalArgumentException e) {
       LOG.debug(e.getMessage(), e);
       return false;
     }
+    if (!"mining.subscribe".equals(req.getMethod())) {
+      LOG.debug("Invalid first message method: {}", req.getMethod());
+      return false;
+    }
+    try {
+      String notify =
+          mapper.writeValueAsString(
+              new JsonRpcSuccessResponse(
+                  req.getId(),
+                  new Object[] {
+                    new String[] {
+                      "mining.notify",
+                      subscriptionIdCreator.get(), // subscription ID, never reused.
+                      STRATUM_1
+                    },
+                    extranonce
+                  }));
+      conn.send(notify + "\n");
+    } catch (JsonProcessingException e) {
+      LOG.debug(e.getMessage(), e);
+      conn.close(null);
+    }
+    return true;
   }
 
   private void registerConnection(final StratumConnection conn) {
@@ -237,9 +124,18 @@ public class Stratum1Protocol implements StratumProtocol {
   }
 
   private void sendNewWork(final StratumConnection conn) {
-    MinerNewWork newWork = new MinerNewWork(jobIdSupplier.get(), currentInput);
+    byte[] dagSeed = DirectAcyclicGraphSeed.dagSeed(currentInput.getBlockNumber());
+    Object[] params =
+        new Object[] {
+          jobIdSupplier.get(),
+          BytesValue.wrap(currentInput.getPrePowHash()).getHexString(),
+          BytesValue.wrap(dagSeed).getHexString(),
+          currentInput.getTarget().toHexString(),
+          true
+        };
+    JsonRpcRequest req = new JsonRpcRequest("2.0", "mining.notify", params);
     try {
-      conn.send(mapper.writeValueAsString(newWork) + "\n");
+      conn.send(mapper.writeValueAsString(req) + "\n");
     } catch (JsonProcessingException e) {
       LOG.debug(e.getMessage(), e);
     }
@@ -251,45 +147,46 @@ public class Stratum1Protocol implements StratumProtocol {
   }
 
   @Override
-  public void handle(final StratumConnection conn, final String bytes) {
+  public void handle(final StratumConnection conn, final String message) {
     try {
-      MinerMessage message = mapper.readValue(bytes, MinerMessage.class);
-      if ("mining.authorize".equals(message.getMethod())) {
-        handleMiningAuthorize(conn, message);
-      } else if ("mining.submit".equals(message.getMethod())) {
-        handleMiningSubmit(conn, message);
+      JsonRpcRequest req = new JsonObject(message).mapTo(JsonRpcRequest.class);
+      if ("mining.authorize".equals(req.getMethod())) {
+        handleMiningAuthorize(conn, req);
+      } else if ("mining.submit".equals(req.getMethod())) {
+        handleMiningSubmit(conn, req);
       }
-
-    } catch (IOException e) {
+    } catch (IllegalArgumentException | IOException e) {
       LOG.debug(e.getMessage(), e);
       conn.close(null);
     }
   }
 
-  private void handleMiningSubmit(final StratumConnection conn, final MinerMessage message)
+  private void handleMiningSubmit(final StratumConnection conn, final JsonRpcRequest message)
       throws IOException {
     LOG.debug("Miner submitted solution {}", message);
     boolean result = false;
+    JsonRpcParameter parameters = new JsonRpcParameter();
     final EthHashSolution solution =
         new EthHashSolution(
-            BytesValue.fromHexString(message.getParams()[2]).getLong(0),
-            Hash.fromHexString(message.getParams()[4]),
-            BytesValue.fromHexString(message.getParams()[3]).getArrayUnsafe());
+            BytesValue.fromHexString(parameters.required(message.getParams(), 2, String.class))
+                .getLong(0),
+            Hash.fromHexString(parameters.required(message.getParams(), 4, String.class)),
+            BytesValue.fromHexString(parameters.required(message.getParams(), 3, String.class))
+                .getArrayUnsafe());
     if (Arrays.equals(currentInput.getPrePowHash(), solution.getPowHash())) {
       result = submitCallback.apply(solution);
     }
 
     String response =
-        mapper.writeValueAsString(new MinerNotifyResponse(message.getId(), result, null));
+        mapper.writeValueAsString(new JsonRpcSuccessResponse(message.getId(), result));
     conn.send(response + "\n");
   }
 
-  private void handleMiningAuthorize(final StratumConnection conn, final MinerMessage message)
+  private void handleMiningAuthorize(final StratumConnection conn, final JsonRpcRequest message)
       throws IOException {
     // discard message contents as we don't care for username/password.
     // send confirmation
-    String confirm =
-        mapper.writeValueAsString(new MinerNotifyResponse(message.getId(), true, null));
+    String confirm = mapper.writeValueAsString(new JsonRpcSuccessResponse(message.getId(), true));
     conn.send(confirm + "\n");
     // ready for work.
     registerConnection(conn);

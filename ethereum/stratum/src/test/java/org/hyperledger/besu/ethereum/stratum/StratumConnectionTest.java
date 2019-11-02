@@ -56,7 +56,9 @@ public class StratumConnectionTest {
 
     StratumConnection conn =
         new StratumConnection(
-            new StratumProtocol[] {new Stratum1Protocol("")}, () -> called.set(true), message::set);
+            new StratumProtocol[] {new Stratum1Protocol("", () -> "abcd", () -> "abcd")},
+            () -> called.set(true),
+            message::set);
     conn.handleBuffer(
         Buffer.buffer(
             "{"
@@ -70,7 +72,7 @@ public class StratumConnectionTest {
 
     assertThat(message.get())
         .isEqualTo(
-            "{\"id\":23,\"jsonrpc\":\"2.0\",\"result\":[[\"mining.notify\",\"ae6812eb4cd7735a302a8a9dd95cf71f\",\"EthereumStratum/1.0.0\"],\"080c\"],\"error\":null}\n");
+            "{\"jsonrpc\":\"2.0\",\"id\":23,\"result\":[[\"mining.notify\",\"abcd\",\"EthereumStratum/1.0.0\"],\"\"]}\n");
   }
 
   @Test
@@ -80,7 +82,7 @@ public class StratumConnectionTest {
 
     AtomicReference<String> message = new AtomicReference<>();
 
-    Stratum1Protocol protocol = new Stratum1Protocol("", () -> "abcd");
+    Stratum1Protocol protocol = new Stratum1Protocol("", () -> "abcd", () -> "abcd");
 
     StratumConnection conn =
         new StratumConnection(
@@ -111,6 +113,6 @@ public class StratumConnectionTest {
 
     assertThat(message.get())
         .isEqualTo(
-            "{\"id\":null,\"method\":\"mining.notify\",\"jsonrpc\":\"2.0\",\"params\":[\"abcd\",\"0xdeadbeef\",\"0x0000000000000000000000000000000000000000000000000000000000000000\",\"0x0000000000000000000000000000000000000000000000000000000000000003\",true]}");
+            "{\"jsonrpc\":\"2.0\",\"method\":\"mining.notify\",\"params\":[\"abcd\",\"0xdeadbeef\",\"0x0000000000000000000000000000000000000000000000000000000000000000\",\"0x0000000000000000000000000000000000000000000000000000000000000003\",true],\"id\":null}\n");
   }
 }
