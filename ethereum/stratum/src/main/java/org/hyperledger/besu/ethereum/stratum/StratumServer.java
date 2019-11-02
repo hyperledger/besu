@@ -54,7 +54,8 @@ public class StratumServer implements EthHashObserver {
     if (started.compareAndSet(false, true)) {
       logger.info("Starting stratum server on {}:{}", networkInterface, port);
       server =
-          vertx.createNetServer(new NetServerOptions().setPort(port).setHost(networkInterface));
+          vertx.createNetServer(
+              new NetServerOptions().setPort(port).setHost(networkInterface).setTcpKeepAlive(true));
       CompletableFuture<?> result = new CompletableFuture<>();
       server.connectHandler(this::handle);
       server.listen(
