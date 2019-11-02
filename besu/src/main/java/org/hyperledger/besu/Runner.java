@@ -90,8 +90,8 @@ public class Runner implements AutoCloseable {
       if (networkRunner.getNetwork().isP2pEnabled()) {
         besuController.getSynchronizer().start();
       }
-      stratumServer.ifPresent(server -> waitForServiceToStart("stratum", server.start()));
       besuController.getMiningCoordinator().start();
+      stratumServer.ifPresent(server -> waitForServiceToStart("stratum", server.start()));
       vertx.setPeriodic(
           TimeUnit.MINUTES.toMillis(1),
           time ->
@@ -116,7 +116,7 @@ public class Runner implements AutoCloseable {
 
     besuController.getMiningCoordinator().stop();
     waitForServiceToStop("Mining Coordinator", besuController.getMiningCoordinator()::awaitStop);
-    stratumServer.ifPresent(StratumServer::stop);
+    stratumServer.ifPresent(server -> waitForServiceToStop("Stratum", server::stop));
     if (networkRunner.getNetwork().isP2pEnabled()) {
       besuController.getSynchronizer().stop();
       waitForServiceToStop("Synchronizer", besuController.getSynchronizer()::awaitStop);

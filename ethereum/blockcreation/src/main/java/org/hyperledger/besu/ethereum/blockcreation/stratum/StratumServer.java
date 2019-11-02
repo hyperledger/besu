@@ -57,10 +57,11 @@ public class StratumServer implements EthHashObserver {
       server.listen(
           res -> {
             if (res.failed()) {
-              result.completeExceptionally(new StratumServerException(
+              result.completeExceptionally(
+                  new StratumServerException(
                       String.format(
-                              "Failed to bind Stratum Server listener to %s:%s: %s",
-                              networkInterface, port, res.cause().getMessage()));
+                          "Failed to bind Stratum Server listener to %s:%s: %s",
+                          networkInterface, port, res.cause().getMessage())));
             } else {
               result.complete(null);
             }
@@ -78,12 +79,25 @@ public class StratumServer implements EthHashObserver {
     socket.closeHandler(conn::close);
   }
 
-  public void stop() {
+  public CompletableFuture<?> stop() {
     if (started.compareAndSet(true, false)) {
-      server.close();
-    } else {
-      logger.debug("Stopping StratumServer that was not running");
+      CompletableFuture<?> result = new CompletableFuture<>();
+      server.close(
+          res -> {
+            if (res.failed()) {
+              result.completeExceptionally(
+                  new StratumServerException(
+                      String.format(
+                          "Failed to bind Stratum Server listener to %s:%s: %s",
+                          networkInterface, port, res.cause().getMessage())));
+            } else {
+              result.complete(null);
+            }
+          });
+      return result;
     }
+    logger.debug("Stopping StratumServer that was not running");
+    return CompletableFuture.completedFuture(null);
   }
 
   @Override
