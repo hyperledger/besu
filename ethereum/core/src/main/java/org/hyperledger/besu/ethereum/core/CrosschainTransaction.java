@@ -27,6 +27,7 @@ import org.hyperledger.besu.util.bytes.BytesValues;
 import org.hyperledger.besu.util.uint.UInt256;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
@@ -136,10 +137,36 @@ public class CrosschainTransaction extends Transaction {
           || isOriginatingLockableContractDeploy()
           || isSubordinateLockableContractDeploy();
     }
+
+    public boolean isMultichainTransaction() {
+      return isLockableTransaction() || isSubordinateView();
+    }
+
+    public boolean isSubordinate() {
+      return isSubordinateTransaction()
+          || isSubordinateLockableContractDeploy()
+          || isSubordinateView();
+    }
   }
 
   // Type of Crosschain Transaction / View.
   private final CrosschainTransactionType type;
+
+  // Information related to coordinating the transaction across blockchains.
+  private BigInteger crosschainCoordinationBlockchainId;
+  private Address crosschainCoordinationContractAddress;
+  private BigInteger crosschainTransactionTimeoutBlockNumber;
+
+  // The transaction id of the overall crosschain transaction.
+  private BigInteger crosschainTransactionId;
+
+  // The blockchain which initiated the transaction.
+  private BigInteger originatingSidechainId;
+
+  // The blockchain and address of the contract from which the function call in
+  // this transaction started from.
+  private BigInteger crosschainFromSidechainId;
+  private Address crosschainFromAddress;
 
   // Ordered list of Subordinate Transactions and Views.
   private final List<CrosschainTransaction> subordinateTransactionsAndViews;
@@ -157,18 +184,41 @@ public class CrosschainTransaction extends Transaction {
   public static CrosschainTransaction readFrom(final RLPInput input) throws RLPException {
     input.enterList();
 
-    final Builder builder =
-        builderX()
-            .type(input.readLongScalar())
+    Builder builder = builderX().type(input.readLongScalar());
+    boolean isMultichain = builder.type.isMultichainTransaction();
+    if (isMultichain) {
+      builder =
+          builder
+              .crosschainCoordinationBlockchainId(input.readBigIntegerScalar())
+              // TODO: Is the v -> v.size() == 0 ? null : Address.wrap(v) semantics below the
+              // correct way of handling the address?
+              // TODO at this point, the address should exist.
+              .crosschainCoordinationContractAddress(
+                  input.readBytesValue(v -> v.size() == 0 ? null : Address.wrap(v)))
+              .crosschainTransactionTimeoutBlockNumber(input.readBigIntegerScalar())
+              .crosschainTransactionId(input.readBigIntegerScalar());
+      if (builder.type.isSubordinate()) {
+        builder =
+            builder
+                .originatingSidechainId(input.readBigIntegerScalar())
+                .crosschainFromSidechainId(input.readBigIntegerScalar())
+                .crosschainFromAddress(input.readBytesValue(Address::wrap));
+      }
+    }
+    builder =
+        builder
             .nonce(input.readLongScalar())
             .gasPrice(input.readUInt256Scalar(Wei::wrap))
             .gasLimit(input.readLongScalar())
             .to(input.readBytesValue(v -> v.size() == 0 ? null : Address.wrap(v)))
             .value(input.readUInt256Scalar(Wei::wrap))
-            .payload(input.readBytesValue())
-            .subordinateTransactionsAndViews(
-                input.readList(
-                    rlp -> CrosschainTransaction.readFrom(RLP.input(input.readBytesValue()))));
+            .payload(input.readBytesValue());
+    if (isMultichain) {
+      builder =
+          builder.subordinateTransactionsAndViews(
+              input.readList(
+                  rlp -> CrosschainTransaction.readFrom(RLP.input(input.readBytesValue()))));
+    }
 
     // TODO: probably we want to cap the readFrom recursivity at 1 level, because each transaction
     // only has use for the
@@ -201,6 +251,16 @@ public class CrosschainTransaction extends Transaction {
    * Instantiates a transaction instance.
    *
    * @param type The type of Crosschain Transaction.
+   * @param crosschainCoordinationBlockchainId Blockchain ID of the Coordination Blockchain.
+   * @param crosschainCoordinationContractAddress Address of the Crosschain Coordination Contract.
+   * @param crosschainTransactionTimeoutBlockNumber Coodination Blockchain block number when the
+   *     transaction will time-out.
+   * @param crosschainTransactionId Id of the overall crosschain transaction.
+   * @param originatingSidechainId Sidechain id of sidechain the transaction originated from.
+   * @param crosschainFromSidechainId Sidechain id of sidechain the function call which resulted in
+   *     this transaction was called on.
+   * @param crosschainFromAddress Address of contract the function call which resulted in this
+   *     transaction was called on.
    * @param nonce the nonce
    * @param gasPrice the gas price
    * @param gasLimit the gas limit
@@ -218,6 +278,13 @@ public class CrosschainTransaction extends Transaction {
    */
   public CrosschainTransaction(
       final CrosschainTransactionType type,
+      final BigInteger crosschainCoordinationBlockchainId,
+      final Address crosschainCoordinationContractAddress,
+      final BigInteger crosschainTransactionTimeoutBlockNumber,
+      final BigInteger crosschainTransactionId,
+      final BigInteger originatingSidechainId,
+      final BigInteger crosschainFromSidechainId,
+      final Address crosschainFromAddress,
       final long nonce,
       final Wei gasPrice,
       final long gasLimit,
@@ -230,11 +297,49 @@ public class CrosschainTransaction extends Transaction {
       final Optional<BigInteger> chainId) {
     super(nonce, gasPrice, gasLimit, to, value, signature, payload, sender, chainId);
     this.type = type;
-    this.subordinateTransactionsAndViews = subordinateTransactionsAndViews;
+    this.crosschainCoordinationBlockchainId = crosschainCoordinationBlockchainId;
+    this.crosschainCoordinationContractAddress = crosschainCoordinationContractAddress;
+    this.crosschainTransactionTimeoutBlockNumber = crosschainTransactionTimeoutBlockNumber;
+    this.crosschainTransactionId = crosschainTransactionId;
+    this.originatingSidechainId = originatingSidechainId;
+    this.crosschainFromSidechainId = crosschainFromSidechainId;
+    this.crosschainFromAddress = crosschainFromAddress;
+    this.subordinateTransactionsAndViews =
+        subordinateTransactionsAndViews == null
+            ? new ArrayList<CrosschainTransaction>()
+            : subordinateTransactionsAndViews;
   }
 
   public CrosschainTransactionType getType() {
     return this.type;
+  }
+
+  public BigInteger getCrosschainCoordinationBlockchainId() {
+    return this.crosschainCoordinationBlockchainId;
+  }
+
+  public Address getCrosschainCoordinationContractAddress() {
+    return this.crosschainCoordinationContractAddress;
+  }
+
+  public BigInteger getCrosschainTransactionTimeoutBlockNumber() {
+    return this.crosschainTransactionTimeoutBlockNumber;
+  }
+
+  public BigInteger getCrosschainTransactionId() {
+    return this.crosschainTransactionId;
+  }
+
+  public BigInteger getOriginatingSidechainId() {
+    return this.originatingSidechainId;
+  }
+
+  public BigInteger getCrosschainFromSidechainId() {
+    return this.crosschainFromSidechainId;
+  }
+
+  public Address getCrosschainFromAddress() {
+    return this.crosschainFromAddress;
   }
 
   public List<CrosschainTransaction> getSubordinateTransactionsAndViews() {
@@ -278,6 +383,13 @@ public class CrosschainTransaction extends Transaction {
       hashNoSignature =
           computeSenderRecoveryHash(
               type,
+              this.crosschainCoordinationBlockchainId,
+              this.crosschainCoordinationContractAddress,
+              this.crosschainTransactionTimeoutBlockNumber,
+              this.crosschainTransactionId,
+              this.originatingSidechainId,
+              this.crosschainFromSidechainId,
+              this.crosschainFromAddress,
               nonce,
               gasPrice,
               gasLimit,
@@ -292,6 +404,13 @@ public class CrosschainTransaction extends Transaction {
 
   private static Bytes32 computeSenderRecoveryHash(
       final CrosschainTransactionType type,
+      final BigInteger crosschainCoordinationBlockchainId,
+      final Address crosschainCoordinationContractAddress,
+      final BigInteger crosschainTransactionTimeoutBlockNumber,
+      final BigInteger crosschainTransactionId,
+      final BigInteger originatingSidechainId,
+      final BigInteger crosschainFromSidechainId,
+      final Address crosschainFromAddress,
       final long nonce,
       final Wei gasPrice,
       final long gasLimit,
@@ -305,19 +424,32 @@ public class CrosschainTransaction extends Transaction {
             out -> {
               out.startList();
               out.writeLongScalar(type.value);
+              if (crosschainCoordinationBlockchainId != null) {
+                out.writeBigIntegerScalar(crosschainCoordinationBlockchainId);
+                out.writeBytesValue(crosschainCoordinationContractAddress);
+                out.writeBigIntegerScalar(crosschainTransactionTimeoutBlockNumber);
+                out.writeBigIntegerScalar(crosschainTransactionId);
+                if (crosschainFromSidechainId != null) {
+                  out.writeBigIntegerScalar(originatingSidechainId);
+                  out.writeBigIntegerScalar(crosschainFromSidechainId);
+                  out.writeBytesValue(crosschainFromAddress);
+                }
+              }
               out.writeLongScalar(nonce);
               out.writeUInt256Scalar(gasPrice);
               out.writeLongScalar(gasLimit);
               out.writeBytesValue(to == null ? BytesValue.EMPTY : to);
               out.writeUInt256Scalar(value);
               out.writeBytesValue(payload);
-              out.writeList(
-                  subordinateTransactionsAndViews,
-                  ((crosschainTransaction, rlpOutput) -> {
-                    BytesValueRLPOutput temp = new BytesValueRLPOutput();
-                    crosschainTransaction.writeTo(temp);
-                    rlpOutput.writeBytesValue(temp.encoded());
-                  }));
+              if (crosschainCoordinationBlockchainId != null) {
+                out.writeList(
+                    subordinateTransactionsAndViews,
+                    ((crosschainTransaction, rlpOutput) -> {
+                      BytesValueRLPOutput temp = new BytesValueRLPOutput();
+                      crosschainTransaction.writeTo(temp);
+                      rlpOutput.writeBytesValue(temp.encoded());
+                    }));
+              }
               if (chainId.isPresent()) {
                 out.writeBigIntegerScalar(chainId.get());
                 out.writeUInt256Scalar(UInt256.ZERO);
@@ -350,6 +482,17 @@ public class CrosschainTransaction extends Transaction {
     out.startList();
 
     out.writeLongScalar(getType().value);
+    if (crosschainCoordinationBlockchainId != null) {
+      out.writeBigIntegerScalar(crosschainCoordinationBlockchainId);
+      out.writeBytesValue(crosschainCoordinationContractAddress);
+      out.writeBigIntegerScalar(crosschainTransactionTimeoutBlockNumber);
+      out.writeBigIntegerScalar(crosschainTransactionId);
+      if (crosschainFromSidechainId != null) {
+        out.writeBigIntegerScalar(originatingSidechainId);
+        out.writeBigIntegerScalar(crosschainFromSidechainId);
+        out.writeBytesValue(crosschainFromAddress);
+      }
+    }
     out.writeLongScalar(getNonce());
     out.writeUInt256Scalar(getGasPrice());
     out.writeLongScalar(getGasLimit());
@@ -359,11 +502,13 @@ public class CrosschainTransaction extends Transaction {
     //    out.writeBytesValue(this.signedResult != null ? this.signedResult : BytesValue.EMPTY);
 
     // write child transactions and views from a list
-    out.writeList(
-        this.subordinateTransactionsAndViews,
-        (crosschainTransaction, rlp) -> {
-          rlp.writeBytesValue(RLP.encode(crosschainTransaction::writeTo));
-        });
+    if (crosschainCoordinationBlockchainId != null) {
+      out.writeList(
+          this.subordinateTransactionsAndViews,
+          (crosschainTransaction, rlp) -> {
+            rlp.writeBytesValue(RLP.encode(crosschainTransaction::writeTo));
+          });
+    }
 
     writeSignature(out);
 
@@ -379,6 +524,33 @@ public class CrosschainTransaction extends Transaction {
     final CrosschainTransaction that = (CrosschainTransaction) other;
     if (this.chainId.equals(that.chainId)
         && this.type.equals(that.type)
+        && ((this.crosschainCoordinationBlockchainId == null
+                && that.crosschainCoordinationBlockchainId == null)
+            || (this.crosschainCoordinationBlockchainId != null
+                && this.crosschainCoordinationBlockchainId.equals(
+                    that.crosschainCoordinationBlockchainId)))
+        && ((this.crosschainCoordinationContractAddress == null
+                && that.crosschainCoordinationContractAddress == null)
+            || (this.crosschainCoordinationContractAddress != null
+                && this.crosschainCoordinationContractAddress.equals(
+                    that.crosschainCoordinationContractAddress)))
+        && ((this.crosschainTransactionTimeoutBlockNumber == null
+                && that.crosschainTransactionTimeoutBlockNumber == null)
+            || (this.crosschainTransactionTimeoutBlockNumber != null
+                && this.crosschainTransactionTimeoutBlockNumber.equals(
+                    that.crosschainTransactionTimeoutBlockNumber)))
+        && ((this.crosschainTransactionId == null && that.crosschainTransactionId == null)
+            || (this.crosschainTransactionId != null
+                && this.crosschainTransactionId.equals(that.crosschainTransactionId)))
+        && ((this.originatingSidechainId == null && that.originatingSidechainId == null)
+            || (this.originatingSidechainId != null
+                && this.originatingSidechainId.equals(that.originatingSidechainId)))
+        && ((this.crosschainFromSidechainId == null && that.crosschainFromSidechainId == null)
+            || (this.crosschainFromSidechainId != null
+                && this.crosschainFromSidechainId.equals(that.crosschainFromSidechainId)))
+        && ((this.crosschainFromAddress == null && that.crosschainFromAddress == null)
+            || (this.crosschainFromAddress != null
+                && this.crosschainFromAddress.equals(that.crosschainFromAddress)))
         && this.gasLimit == that.gasLimit
         && this.gasPrice.equals(that.gasPrice)
         && this.nonce == that.nonce
@@ -406,6 +578,23 @@ public class CrosschainTransaction extends Transaction {
     final StringBuilder sb = new StringBuilder();
     sb.append(isContractCreation() ? "ContractCreation" : "MessageCall").append("{");
     sb.append("type=").append(getType()).append(", ");
+    if (this.crosschainCoordinationBlockchainId != null) {
+      sb.append("crosschainCoordinationBlockchainId=")
+          .append(this.crosschainCoordinationBlockchainId)
+          .append(", ");
+      sb.append("crosschainCoordinationContractAddress=")
+          .append(this.crosschainCoordinationContractAddress)
+          .append(", ");
+      sb.append("crosschainTransactionTimeoutBlockNumber=")
+          .append(this.crosschainTransactionTimeoutBlockNumber)
+          .append(", ");
+      sb.append("crosschainTransactionId=").append(this.crosschainTransactionId).append(", ");
+      if (this.crosschainFromSidechainId != null) {
+        sb.append("originatingSidechainId=").append(this.originatingSidechainId).append(", ");
+        sb.append("crosschainFromSidechainId=").append(this.crosschainFromSidechainId).append(", ");
+        sb.append("crosschainFromAddress=").append(this.crosschainFromAddress).append(", ");
+      }
+    }
     sb.append("nonce=").append(getNonce()).append(", ");
     sb.append("gasPrice=").append(getGasPrice()).append(", ");
     sb.append("gasLimit=").append(getGasLimit()).append(", ");
@@ -417,12 +606,14 @@ public class CrosschainTransaction extends Transaction {
     sb.append("payload=").append(getPayload()).append(", ");
     if (this.signedResult != null)
       sb.append("signedresult=").append(getSignedResult()).append(", ");
-    sb.append("subordinateTransactionsAndViews=[");
-    sb.append(
-        subordinateTransactionsAndViews.stream()
-            .map(x -> x.toString())
-            .collect(Collectors.joining(", ")));
-    sb.append("]");
+    if (this.crosschainCoordinationBlockchainId != null) {
+      sb.append("subordinateTransactionsAndViews=[");
+      sb.append(
+          subordinateTransactionsAndViews.stream()
+              .map(x -> x.toString())
+              .collect(Collectors.joining(", ")));
+      sb.append("]");
+    }
     return sb.append("}").toString();
   }
 
@@ -437,6 +628,13 @@ public class CrosschainTransaction extends Transaction {
     private Address sender;
     private Optional<BigInteger> chainId = Optional.empty();
     CrosschainTransactionType type;
+    BigInteger crosschainCoordinationBlockchainId;
+    Address crosschainCoordinationContractAddress;
+    BigInteger crosschainTransactionTimeoutBlockNumber;
+    BigInteger crosschainTransactionId;
+    BigInteger originatingSidechainId;
+    BigInteger crosschainFromSidechainId;
+    Address crosschainFromAddress;
     List<CrosschainTransaction> subordinateTransactionsAndViews;
 
     public Builder chainId(final BigInteger chainId) {
@@ -494,6 +692,41 @@ public class CrosschainTransaction extends Transaction {
       return this;
     }
 
+    public Builder crosschainCoordinationBlockchainId(final BigInteger id) {
+      this.crosschainCoordinationBlockchainId = id;
+      return this;
+    }
+
+    public Builder crosschainCoordinationContractAddress(final Address address) {
+      this.crosschainCoordinationContractAddress = address;
+      return this;
+    }
+
+    public Builder crosschainTransactionTimeoutBlockNumber(final BigInteger blockNumber) {
+      this.crosschainTransactionTimeoutBlockNumber = blockNumber;
+      return this;
+    }
+
+    public Builder crosschainTransactionId(final BigInteger id) {
+      this.crosschainTransactionId = id;
+      return this;
+    }
+
+    public Builder originatingSidechainId(final BigInteger id) {
+      this.originatingSidechainId = id;
+      return this;
+    }
+
+    public Builder crosschainFromSidechainId(final BigInteger id) {
+      this.crosschainFromSidechainId = id;
+      return this;
+    }
+
+    public Builder crosschainFromAddress(final Address address) {
+      this.crosschainFromAddress = address;
+      return this;
+    }
+
     public Builder subordinateTransactionsAndViews(
         final List<CrosschainTransaction> subordinateTransactionsAndViews) {
       this.subordinateTransactionsAndViews = subordinateTransactionsAndViews;
@@ -503,6 +736,13 @@ public class CrosschainTransaction extends Transaction {
     public CrosschainTransaction build() {
       return new CrosschainTransaction(
           type,
+          this.crosschainCoordinationBlockchainId,
+          this.crosschainCoordinationContractAddress,
+          this.crosschainTransactionTimeoutBlockNumber,
+          this.crosschainTransactionId,
+          this.originatingSidechainId,
+          this.crosschainFromSidechainId,
+          this.crosschainFromAddress,
           nonce,
           gasPrice,
           gasLimit,
@@ -527,6 +767,13 @@ public class CrosschainTransaction extends Transaction {
       final Bytes32 hash =
           computeSenderRecoveryHash(
               type,
+              this.crosschainCoordinationBlockchainId,
+              this.crosschainCoordinationContractAddress,
+              this.crosschainTransactionTimeoutBlockNumber,
+              this.crosschainTransactionId,
+              this.originatingSidechainId,
+              this.crosschainFromSidechainId,
+              this.crosschainFromAddress,
               nonce,
               gasPrice,
               gasLimit,

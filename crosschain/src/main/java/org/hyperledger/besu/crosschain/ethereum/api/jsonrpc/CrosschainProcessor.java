@@ -145,8 +145,8 @@ public class CrosschainProcessor {
 
   private boolean processSubordinates(
       final CrosschainTransaction transaction, final boolean processSubbordianteTransactions) {
-    for (CrosschainTransaction subordinateTransactionsAndView :
-        transaction.getSubordinateTransactionsAndViews()) {
+    List<CrosschainTransaction> subordinates = transaction.getSubordinateTransactionsAndViews();
+    for (CrosschainTransaction subordinateTransactionsAndView : subordinates) {
       if ((processSubbordianteTransactions
               && subordinateTransactionsAndView.getType().isSubordinateTransaction())
           || (!processSubbordianteTransactions
