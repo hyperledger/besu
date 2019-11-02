@@ -104,12 +104,12 @@ public class EthSubmitWorkTest {
     final JsonRpcRequest request =
         requestWithParams(
             BytesValues.toMinimalBytes(expectedFirstOutput.getNonce()).getHexString(),
-            expectedFirstOutput.getMixHash().getHexString(),
-            BytesValue.wrap(expectedFirstOutput.getPowHash()).getHexString());
+            BytesValue.wrap(expectedFirstOutput.getPowHash()).getHexString(),
+            expectedFirstOutput.getMixHash().getHexString());
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(request.getId(), true);
     when(miningCoordinator.getWorkDefinition()).thenReturn(Optional.of(firstInputs));
     // potentially could use a real miner here.
-    when(miningCoordinator.submitWork(expectedFirstOutput.getNonce())).thenReturn(true);
+    when(miningCoordinator.submitWork(expectedFirstOutput)).thenReturn(true);
 
     final JsonRpcResponse actualResponse = method.response(request);
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);

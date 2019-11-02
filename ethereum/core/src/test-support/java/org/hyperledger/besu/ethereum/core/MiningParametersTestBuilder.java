@@ -64,6 +64,6 @@ public class MiningParametersTestBuilder {
         cpuMiningEnabled,
         "0.0.0.0",
         stratumPort,
-            "080c");
+        "080c");
   }
 }
