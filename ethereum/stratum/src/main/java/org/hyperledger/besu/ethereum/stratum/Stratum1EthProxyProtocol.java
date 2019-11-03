@@ -26,9 +26,7 @@ import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
 import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.function.Function;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -48,7 +46,6 @@ public class Stratum1EthProxyProtocol implements StratumProtocol {
 
   private EthHashSolverInputs currentInput;
   private Function<EthHashSolution, Boolean> submitCallback;
-  private final List<StratumConnection> activeConnections = new ArrayList<>();
 
   @Override
   public boolean canHandle(final String initialMessage, final StratumConnection conn) {
@@ -76,9 +73,7 @@ public class Stratum1EthProxyProtocol implements StratumProtocol {
     return true;
   }
 
-  private void registerConnection(final StratumConnection conn) {
-    activeConnections.add(conn);
-  }
+  private void registerConnection(final StratumConnection conn) {}
 
   private void sendNewWork(final StratumConnection conn, final Object id) {
     byte[] dagSeed = DirectAcyclicGraphSeed.dagSeed(currentInput.getBlockNumber());
@@ -96,9 +91,7 @@ public class Stratum1EthProxyProtocol implements StratumProtocol {
   }
 
   @Override
-  public void onClose(final StratumConnection conn) {
-    activeConnections.remove(conn);
-  }
+  public void onClose(final StratumConnection conn) {}
 
   @Override
   public void handle(final StratumConnection conn, final String message) {
