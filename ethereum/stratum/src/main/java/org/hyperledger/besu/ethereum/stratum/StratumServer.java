@@ -47,7 +47,8 @@ public class StratumServer implements EthHashObserver {
     this.vertx = vertx;
     this.port = port;
     this.networkInterface = networkInterface;
-    protocols = new StratumProtocol[] {new Stratum1Protocol(extraNonce)};
+    protocols =
+        new StratumProtocol[] {new Stratum1Protocol(extraNonce), new Stratum1EthProxyProtocol()};
   }
 
   public CompletableFuture<?> start() {
