@@ -64,7 +64,6 @@ public class Stratum1EthProxyProtocol implements StratumProtocol {
     try {
       String response = mapper.writeValueAsString(new JsonRpcSuccessResponse(req.getId(), true));
       conn.send(response + "\n");
-      registerConnection(conn);
     } catch (JsonProcessingException e) {
       LOG.debug(e.getMessage(), e);
       conn.close(null);
@@ -72,8 +71,6 @@ public class Stratum1EthProxyProtocol implements StratumProtocol {
 
     return true;
   }
-
-  private void registerConnection(final StratumConnection conn) {}
 
   private void sendNewWork(final StratumConnection conn, final Object id) {
     byte[] dagSeed = DirectAcyclicGraphSeed.dagSeed(currentInput.getBlockNumber());
