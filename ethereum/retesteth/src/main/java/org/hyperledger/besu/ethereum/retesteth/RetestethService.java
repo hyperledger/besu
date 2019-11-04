@@ -30,7 +30,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Web3ClientVersion;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
-import org.hyperledger.besu.ethereum.api.jsonrpc.method.JsonRpcMethodsFactory;
 import org.hyperledger.besu.ethereum.retesteth.methods.TestGetLogHash;
 import org.hyperledger.besu.ethereum.retesteth.methods.TestImportRawBlock;
 import org.hyperledger.besu.ethereum.retesteth.methods.TestMineBlocks;
@@ -62,7 +61,7 @@ public class RetestethService {
     final JsonRpcParameter parameters = new JsonRpcParameter();
     final BlockResultFactory blockResult = new BlockResultFactory();
     final Map<String, JsonRpcMethod> jsonRpcMethods = new HashMap<>();
-    JsonRpcMethodsFactory.addMethods(
+    addMethods(
         jsonRpcMethods,
         new Web3ClientVersion(clientVersion),
         new TestSetChainParams(retestethContext),
@@ -111,5 +110,12 @@ public class RetestethService {
 
   public void stop() {
     jsonRpcHttpService.stop();
+  }
+
+  private static void addMethods(
+      final Map<String, JsonRpcMethod> methods, final JsonRpcMethod... rpcMethods) {
+    for (final JsonRpcMethod rpcMethod : rpcMethods) {
+      methods.put(rpcMethod.getName(), rpcMethod);
+    }
   }
 }
