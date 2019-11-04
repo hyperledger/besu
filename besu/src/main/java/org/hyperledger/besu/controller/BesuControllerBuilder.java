@@ -15,7 +15,6 @@
 package org.hyperledger.besu.controller;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 import static org.hyperledger.besu.controller.KeyPairUtil.loadKeyPair;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
@@ -65,7 +64,12 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public abstract class BesuControllerBuilder<C> {
+  private static final Logger LOG = LogManager.getLogger();
+
   protected GenesisConfigFile genesisConfig;
   SynchronizerConfiguration syncConfig;
   EthProtocolConfiguration ethereumWireProtocolConfiguration;
@@ -159,8 +163,8 @@ public abstract class BesuControllerBuilder<C> {
     return this;
   }
 
-  public BesuControllerBuilder<C> isPruningEnabled(final boolean pruningEnabled) {
-    this.isPruningEnabled = pruningEnabled;
+  public BesuControllerBuilder<C> isPruningEnabled(final boolean isPruningEnabled) {
+    this.isPruningEnabled = isPruningEnabled;
     return this;
   }
 
@@ -218,19 +222,21 @@ public abstract class BesuControllerBuilder<C> {
 
     Optional<Pruner> maybePruner = Optional.empty();
     if (isPruningEnabled) {
-      checkState(
-          storageProvider.isWorldStateIterable(),
-          "Cannot enable pruning with current database version. Resync to get the latest version.");
-      maybePruner =
-          Optional.of(
-              new Pruner(
-                  new MarkSweepPruner(
-                      protocolContext.getWorldStateArchive().getWorldStateStorage(),
-                      blockchain,
-                      storageProvider.createPruningStorage(),
-                      metricsSystem),
-                  blockchain,
-                  pruningConfiguration));
+      if (!storageProvider.isWorldStateIterable()) {
+        LOG.warn(
+            "Cannot enable pruning with current database version. Disabling. Resync to get the latest database version or disable pruning explicitly on the command line to remove this warning.");
+      } else {
+        maybePruner =
+            Optional.of(
+                new Pruner(
+                    new MarkSweepPruner(
+                        protocolContext.getWorldStateArchive().getWorldStateStorage(),
+                        blockchain,
+                        storageProvider.createPruningStorage(),
+                        metricsSystem),
+                    blockchain,
+                    pruningConfiguration));
+      }
     }
 
     final boolean fastSyncEnabled = syncConfig.getSyncMode().equals(SyncMode.FAST);
