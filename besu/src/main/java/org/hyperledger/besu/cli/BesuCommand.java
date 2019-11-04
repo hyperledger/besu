@@ -1011,7 +1011,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         logger,
         commandLine,
         "--pruning-enabled",
-        !getPruningDefault(),
+        !isPruningEnabled(),
         asList("--pruning-block-confirmations", "--pruning-blocks-retained"));
   }
 
@@ -1087,7 +1087,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           .clock(Clock.systemUTC())
           .isRevertReasonEnabled(isRevertReasonEnabled)
           .storageProvider(keyStorageProvider(keyValueStorageName))
-          .isPruningEnabled(getPruningDefault())
+          .isPruningEnabled(isPruningEnabled())
           .pruningConfiguration(buildPruningConfiguration())
           .genesisConfigOverrides(genesisConfigOverrides)
           .targetGasLimit(targetGasLimit == null ? Optional.empty() : Optional.of(targetGasLimit))
@@ -1374,7 +1374,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return new PruningConfiguration(pruningBlockConfirmations, pruningBlocksRetained);
   }
 
-  private boolean getPruningDefault() {
+  private boolean isPruningEnabled() {
     return Optional.ofNullable(pruningOverride).orElse(syncMode == SyncMode.FAST);
   }
 
