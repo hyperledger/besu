@@ -347,7 +347,8 @@ public abstract class BesuControllerBuilder<C> {
         syncConfig.getComputationParallelism(),
         clock,
         metricsSystem,
-        ethereumWireProtocolConfiguration);
+        ethereumWireProtocolConfiguration,
+        gatherForks());
   }
 
   private List<PeerValidator> createPeerValidators(final ProtocolSchedule<C> protocolSchedule) {
@@ -372,4 +373,16 @@ public abstract class BesuControllerBuilder<C> {
 
   protected abstract PluginServiceFactory createAdditionalPluginServices(
       final Blockchain blockchain);
+
+  private List<Long> gatherForks() {
+    // todo: may need to check what protocol version is being used. (i.e. if less than x return null to disable this check)
+    List<Long> listb = new ArrayList<>();
+    Map<String, Object> values = genesisConfig.getConfigOptions(genesisConfigOverrides).asMap();
+    values.forEach((x, y) -> {
+      if (y instanceof Long && !x.equals("chainId")) {
+        listb.add((Long) y);
+      }
+    });
+    return listb;
+  }
 }

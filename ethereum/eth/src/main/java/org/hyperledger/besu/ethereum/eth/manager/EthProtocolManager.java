@@ -62,6 +62,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   private final AtomicBoolean stopped = new AtomicBoolean(false);
 
   private final Hash genesisHash;
+  private final ForkId forkId;
   private final BigInteger networkId;
   private final EthPeers ethPeers;
   private final EthMessages ethMessages;
@@ -90,6 +91,8 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
 
     this.shutdown = new CountDownLatch(1);
     genesisHash = blockchain.getBlockHashByNumber(0L).get();
+
+    forkId = ForkId.buildCollection(genesisHash);
 
     ethPeers = new EthPeers(getSupportedProtocol(), clock, metricsSystem);
     ethMessages = new EthMessages();
@@ -151,6 +154,46 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         ethereumWireProtocolConfiguration,
         clock,
         metricsSystem);
+  }
+
+  public EthProtocolManager(
+          final Blockchain blockchain,
+          final WorldStateArchive worldStateArchive,
+          final BigInteger networkId,
+          final List<PeerValidator> peerValidators,
+          final boolean fastSyncEnabled,
+          final int syncWorkers,
+          final int txWorkers,
+          final int computationWorkers,
+          final Clock clock,
+          final MetricsSystem metricsSystem,
+          final EthProtocolConfiguration ethereumWireProtocolConfiguration,
+          final List<Long> forks) {
+    this.networkId = networkId;
+    this.peerValidators = peerValidators;
+    this.scheduler = new EthScheduler(syncWorkers, txWorkers, computationWorkers, metricsSystem);
+    this.blockchain = blockchain;
+    this.fastSyncEnabled = fastSyncEnabled;
+
+    this.shutdown = new CountDownLatch(1);
+    genesisHash = blockchain.getBlockHashByNumber(0L).get();
+
+    // todo: check about modification of the above and related constructor
+    forkId = ForkId.buildCollection(genesisHash, forks, blockchain);
+
+    ethPeers = new EthPeers(getSupportedProtocol(), clock, metricsSystem);
+    ethMessages = new EthMessages();
+    ethContext = new EthContext(ethPeers, ethMessages, scheduler);
+
+    this.blockBroadcaster = new BlockBroadcaster(ethContext);
+
+    // Run validators
+    for (final PeerValidator peerValidator : this.peerValidators) {
+      PeerValidatorRunner.runValidator(ethContext, peerValidator);
+    }
+
+    // Set up request handlers
+    new EthServer(blockchain, worldStateArchive, ethMessages, ethereumWireProtocolConfiguration);
   }
 
   public EthContext ethContext() {
@@ -284,7 +327,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       if (!status.networkId().equals(networkId)) {
         LOG.debug("Disconnecting from peer with mismatched network id: {}", status.networkId());
         peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
-      } else if (!status.genesisHash().equals(genesisHash)) {
+      } else if (forkId.peerCheck(status.genesisHash())) {
         LOG.debug(
             "Disconnecting from peer with matching network id ({}), but non-matching genesis hash: {}",
             networkId,
