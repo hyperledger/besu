@@ -394,7 +394,7 @@ public class JsonRpcMethodsFactory {
     return enabledMethods;
   }
 
-  public static void addMethods(
+  private static void addMethods(
       final Map<String, JsonRpcMethod> methods, final JsonRpcMethod... rpcMethods) {
     for (final JsonRpcMethod rpcMethod : rpcMethods) {
       methods.put(rpcMethod.getName(), rpcMethod);
