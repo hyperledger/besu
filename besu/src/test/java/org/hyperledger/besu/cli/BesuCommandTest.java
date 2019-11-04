@@ -997,6 +997,16 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void identityValueTrueMustBeUsed() {
+    parseCommand("--identity", "test");
+
+    verify(mockRunnerBuilder.identityString(eq(Optional.of("test")))).build();
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
   public void p2pEnabledOptionValueTrueMustBeUsed() {
     parseCommand("--p2p-enabled", "true");
 
