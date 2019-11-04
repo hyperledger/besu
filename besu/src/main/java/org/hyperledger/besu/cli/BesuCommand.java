@@ -210,7 +210,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @Option(
       names = "--identity",
       paramLabel = "<String>",
-      description = "Identification for this node in the Client ID")
+      description = "Identification for this node in the Client ID",
+      arity = "1")
   private final Optional<String> identityString = Optional.empty();
 
   // Completely disables P2P within Besu.
