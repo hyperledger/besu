@@ -207,6 +207,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   // CLI options defined by user at runtime.
   // Options parsing is done with CLI library Picocli https://picocli.info/
 
+  @Option(
+      names = "--identity",
+      paramLabel = "<String>",
+      description = "Identification for this node in the Client ID",
+      arity = "1")
+  private final Optional<String> identityString = Optional.empty();
+
   // Completely disables P2P within Besu.
   @Option(
       names = {"--p2p-enabled"},
@@ -786,7 +793,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   public void run() {
     try {
       prepareLogging();
-      logger.info("Starting Besu version: {}", BesuInfo.version());
+      logger.info("Starting Besu version: {}", BesuInfo.nodeName(identityString));
       validateOptions().configure().controller().startPlugins().startSynchronization();
     } catch (final Exception e) {
       throw new ParameterException(this.commandLine, e.getMessage(), e);
@@ -846,6 +853,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     commandLine.registerConverter(Wei.class, (arg) -> Wei.of(Long.parseUnsignedLong(arg)));
     commandLine.registerConverter(PositiveNumber.class, PositiveNumber::fromString);
     commandLine.registerConverter(Hash.class, Hash::fromHexString);
+    commandLine.registerConverter(Optional.class, Optional::of);
 
     metricCategoryConverter.addCategories(BesuMetricCategory.class);
     metricCategoryConverter.addCategories(StandardMetricCategory.class);
@@ -1413,6 +1421,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .metricsSystem(metricsSystem)
             .metricsConfiguration(metricsConfiguration)
             .staticNodes(staticNodes)
+            .identityString(identityString)
             .build();
 
     addShutdownHook(runner);
