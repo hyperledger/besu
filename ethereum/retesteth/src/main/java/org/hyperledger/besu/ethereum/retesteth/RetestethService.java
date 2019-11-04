@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.retesteth;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcHttpService;
-import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcMethodsFactory;
+import org.hyperledger.besu.ethereum.api.jsonrpc.method.JsonRpcMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.LivenessCheck;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugAccountRange;

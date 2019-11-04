@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
+package org.hyperledger.besu.ethereum.api.jsonrpc.method;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -35,7 +35,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class EthGetUncleByBlockHashAndIndexIntegrationTest {
+public class EthGetUncleByBlockNumberAndIndexIntegrationTest {
 
   private static JsonRpcTestMethodsFactory BLOCKCHAIN;
 
@@ -54,19 +54,11 @@ public class EthGetUncleByBlockHashAndIndexIntegrationTest {
 
   @Before
   public void setUp() {
-    method = BLOCKCHAIN.methods().get("eth_getUncleByBlockHashAndIndex");
+    method = BLOCKCHAIN.methods().get("eth_getUncleByBlockNumberAndIndex");
   }
 
   @Test
   public void shouldGetExpectedBlockResult() {
-    final JsonRpcRequest request =
-        new JsonRpcRequest(
-            "2.0",
-            "eth_getUncleByBlockHashAndIndex",
-            new Object[] {
-              "0x4e9a67b663f9abe03e7e9fd5452c9497998337077122f44ee78a466f6a7358de", "0x0"
-            });
-
     final Map<JsonRpcResponseKey, String> out = new EnumMap<>(JsonRpcResponseKey.class);
     out.put(JsonRpcResponseKey.COINBASE, "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b");
     out.put(JsonRpcResponseKey.DIFFICULTY, "0x20040");
@@ -99,11 +91,16 @@ public class EthGetUncleByBlockHashAndIndexIntegrationTest {
     out.put(
         JsonRpcResponseKey.TRANSACTION_ROOT,
         "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421");
-
     final JsonRpcResponse expected = responseUtils.response(out);
-    final JsonRpcResponse actual = method.response(request);
+    final JsonRpcRequest request = getUncleByBlockNumberAndIndex();
 
-    assertThat(actual).isInstanceOf(JsonRpcSuccessResponse.class);
+    final JsonRpcSuccessResponse actual = (JsonRpcSuccessResponse) method.response(request);
+
     assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
+  }
+
+  private JsonRpcRequest getUncleByBlockNumberAndIndex() {
+    return new JsonRpcRequest(
+        "2.0", "eth_getUncleByBlockNumberAndIndex", new Object[] {"0x4", "0x0"});
   }
 }
