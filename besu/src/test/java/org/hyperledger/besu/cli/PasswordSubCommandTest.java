@@ -22,7 +22,7 @@ import picocli.CommandLine.Model.CommandSpec;
 public class PasswordSubCommandTest extends CommandTestAbstract {
 
   @Test
-  public void passwordSubCommandExistAnbHaveSubCommands() {
+  public void passwordSubCommandExistsWithHashSubCommand() {
     final CommandSpec spec = parseCommand().getSpec();
     assertThat(spec.subcommands()).containsKeys("password");
     assertThat(spec.subcommands().get("password").getSubcommands()).containsKeys("hash");
@@ -39,7 +39,7 @@ public class PasswordSubCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void passwordHashSubCommandExist() {
+  public void passwordHashSubCommandExists() {
     parseCommand("password", "hash");
 
     assertThat(commandOutput.toString()).isEmpty();
