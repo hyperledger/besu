@@ -12,13 +12,12 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
+package org.hyperledger.besu.controller;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
+import org.hyperledger.besu.services.BesuPluginContextImpl;
 
-import java.util.Collection;
-import java.util.Map;
+public class NoopPluginServiceFactory implements PluginServiceFactory {
 
-public interface JsonRpcMethodFactory {
-  Map<String, JsonRpcMethod> createJsonRpcMethods(Collection<RpcApi> enabledRpcApis);
+  @Override
+  public void appendPluginServices(final BesuPluginContextImpl besuContext) {}
 }

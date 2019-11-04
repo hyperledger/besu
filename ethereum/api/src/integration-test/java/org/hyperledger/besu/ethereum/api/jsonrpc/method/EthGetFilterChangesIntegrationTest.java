@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
+package org.hyperledger.besu.ethereum.api.jsonrpc.method;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;

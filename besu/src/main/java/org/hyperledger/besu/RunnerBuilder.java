@@ -28,7 +28,6 @@ import org.hyperledger.besu.ethereum.api.graphql.GraphQLHttpService;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcHttpService;
-import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.LivenessCheck;
@@ -37,6 +36,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterIdGenerat
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterRepository;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.method.JsonRpcMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketRequestHandler;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketService;
@@ -131,6 +131,7 @@ public class RunnerBuilder {
   private ObservableMetricsSystem metricsSystem;
   private Optional<PermissioningConfiguration> permissioningConfiguration = Optional.empty();
   private Collection<EnodeURL> staticNodes = Collections.emptyList();
+  private Optional<String> identityString = Optional.empty();
 
   public RunnerBuilder vertx(final Vertx vertx) {
     this.vertx = vertx;
@@ -247,6 +248,11 @@ public class RunnerBuilder {
     return this;
   }
 
+  public RunnerBuilder identityString(final Optional<String> identityString) {
+    this.identityString = identityString;
+    return this;
+  }
+
   public Runner build() {
 
     Preconditions.checkNotNull(besuController);
@@ -290,7 +296,7 @@ public class RunnerBuilder {
             .setBindPort(p2pListenPort)
             .setMaxPeers(maxPeers)
             .setSupportedProtocols(subProtocols)
-            .setClientId(BesuInfo.version())
+            .setClientId(BesuInfo.nodeName(identityString))
             .setLimitRemoteWireConnectionsEnabled(limitRemoteWireConnectionsEnabled)
             .setFractionRemoteWireConnectionsAllowed(fractionRemoteConnectionsAllowed);
     networkingConfiguration.setRlpx(rlpxConfiguration).setDiscovery(discoveryConfiguration);
@@ -581,7 +587,7 @@ public class RunnerBuilder {
     final Map<String, JsonRpcMethod> methods =
         new JsonRpcMethodsFactory()
             .methods(
-                BesuInfo.version(),
+                BesuInfo.nodeName(identityString),
                 ethNetworkConfig.getNetworkId(),
                 besuController.getGenesisConfigOptions(),
                 network,
