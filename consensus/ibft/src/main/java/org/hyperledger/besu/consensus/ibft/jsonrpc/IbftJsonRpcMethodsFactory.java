@@ -27,8 +27,8 @@ import org.hyperledger.besu.consensus.ibft.jsonrpc.methods.IbftProposeValidatorV
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.method.JsonRpcMethodFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.method.JsonRpcMethodFactory;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 
 import java.util.Collection;

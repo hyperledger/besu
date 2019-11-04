@@ -15,10 +15,10 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.method;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 
 import java.util.Collection;
 import java.util.Map;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 
 public interface JsonRpcMethodFactory {
   Map<String, JsonRpcMethod> createJsonRpcMethods(Collection<RpcApi> enabledRpcApis);
