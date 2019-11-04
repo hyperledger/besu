@@ -2349,10 +2349,21 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void pruningIsEnabledWhenSpecified() throws Exception {
+  public void pruningEnabledExplicitly() {
     parseCommand("--pruning-enabled");
 
     verify(mockControllerBuilder).isPruningEnabled(true);
+    verify(mockControllerBuilder).build();
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void pruningDisabledExplicitly() {
+    parseCommand("--pruning-enabled=false");
+
+    verify(mockControllerBuilder).isPruningEnabled(false);
     verify(mockControllerBuilder).build();
 
     assertThat(commandOutput.toString()).isEmpty();
