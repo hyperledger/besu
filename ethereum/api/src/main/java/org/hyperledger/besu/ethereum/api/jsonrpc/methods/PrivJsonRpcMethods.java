@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
 import org.hyperledger.besu.enclave.Enclave;
-import org.hyperledger.besu.ethereum.api.jsonrpc.LatestNonceProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -29,36 +28,23 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.P
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivGetTransactionCount;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivGetTransactionReceipt;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionHandler;
-import org.hyperledger.besu.ethereum.privacy.markertransaction.FixedKeySigningPrivateMarkerTransactionFactory;
-import org.hyperledger.besu.ethereum.privacy.markertransaction.PrivateMarkerTransactionFactory;
-import org.hyperledger.besu.ethereum.privacy.markertransaction.RandomSigningPrivateMarkerTransactionFactory;
 
 import java.util.Map;
 
-public class PrivJsonRpcMethods extends ApiGroupJsonRpcMethods {
+public class PrivJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
 
   private final JsonRpcParameter parameter = new JsonRpcParameter();
-  private final BlockchainQueries blockchainQueries;
-  private final ProtocolSchedule<?> protocolSchedule;
-  private final TransactionPool transactionPool;
-  private final PrivacyParameters privacyParameters;
 
   public PrivJsonRpcMethods(
       final BlockchainQueries blockchainQueries,
       final ProtocolSchedule<?> protocolSchedule,
       final TransactionPool transactionPool,
       final PrivacyParameters privacyParameters) {
-    ;
-    this.blockchainQueries = blockchainQueries;
-    this.protocolSchedule = protocolSchedule;
-    this.transactionPool = transactionPool;
-    this.privacyParameters = privacyParameters;
+    super(blockchainQueries, protocolSchedule, transactionPool, privacyParameters);
   }
 
   @Override
@@ -67,44 +53,21 @@ public class PrivJsonRpcMethods extends ApiGroupJsonRpcMethods {
   }
 
   @Override
-  protected Map<String, JsonRpcMethod> create() {
-    final PrivateMarkerTransactionFactory markerTransactionFactory =
-        createPrivateMarkerTransactionFactory(
-            privacyParameters, blockchainQueries, transactionPool.getPendingTransactions());
-
-    final PrivateTransactionHandler privateTransactionHandler =
-        new PrivateTransactionHandler(
-            privacyParameters, protocolSchedule.getChainId(), markerTransactionFactory);
-
-    final Enclave enclave = new Enclave(privacyParameters.getEnclaveUri());
-
+  protected Map<String, JsonRpcMethod> create(
+      final PrivateTransactionHandler privateTransactionHandler, Enclave enclave) {
     return mapOf(
-        new PrivGetTransactionReceipt(blockchainQueries, enclave, parameter, privacyParameters),
+        new PrivGetTransactionReceipt(
+            getBlockchainQueries(), enclave, parameter, getPrivacyParameters()),
         new PrivCreatePrivacyGroup(
-            new Enclave(privacyParameters.getEnclaveUri()), privacyParameters, parameter),
+            new Enclave(getPrivacyParameters().getEnclaveUri()), getPrivacyParameters(), parameter),
         new PrivDeletePrivacyGroup(
-            new Enclave(privacyParameters.getEnclaveUri()), privacyParameters, parameter),
-        new PrivFindPrivacyGroup(new Enclave(privacyParameters.getEnclaveUri()), parameter),
-        new PrivGetPrivacyPrecompileAddress(privacyParameters),
+            new Enclave(getPrivacyParameters().getEnclaveUri()), getPrivacyParameters(), parameter),
+        new PrivFindPrivacyGroup(new Enclave(getPrivacyParameters().getEnclaveUri()), parameter),
+        new PrivGetPrivacyPrecompileAddress(getPrivacyParameters()),
         new PrivGetTransactionCount(parameter, privateTransactionHandler),
-        new PrivGetPrivateTransaction(blockchainQueries, enclave, parameter, privacyParameters),
-        new PrivDistributeRawTransaction(privateTransactionHandler, transactionPool, parameter));
-  }
-
-  private PrivateMarkerTransactionFactory createPrivateMarkerTransactionFactory(
-      final PrivacyParameters privacyParameters,
-      final BlockchainQueries blockchainQueries,
-      final PendingTransactions pendingTransactions) {
-
-    final Address privateContractAddress =
-        Address.privacyPrecompiled(privacyParameters.getPrivacyAddress());
-
-    if (privacyParameters.getSigningKeyPair().isPresent()) {
-      return new FixedKeySigningPrivateMarkerTransactionFactory(
-          privateContractAddress,
-          new LatestNonceProvider(blockchainQueries, pendingTransactions),
-          privacyParameters.getSigningKeyPair().get());
-    }
-    return new RandomSigningPrivateMarkerTransactionFactory(privateContractAddress);
+        new PrivGetPrivateTransaction(
+            getBlockchainQueries(), enclave, parameter, getPrivacyParameters()),
+        new PrivDistributeRawTransaction(
+            privateTransactionHandler, getTransactionPool(), parameter));
   }
 }
