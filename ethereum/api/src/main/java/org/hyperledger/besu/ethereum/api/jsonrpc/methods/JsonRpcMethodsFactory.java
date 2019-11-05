@@ -39,6 +39,7 @@ import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import java.math.BigInteger;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -110,76 +111,47 @@ public class JsonRpcMethodsFactory {
       final JsonRpcConfiguration jsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
       final MetricsConfiguration metricsConfiguration) {
+    final Map<String, JsonRpcMethod> enabled = new HashMap<>();
 
-    final Map<String, JsonRpcMethod> enabledMethods = new HashMap<>();
     if (!rpcApis.isEmpty()) {
       final JsonRpcMethod modules = new RpcModules(rpcApis);
-      enabledMethods.put(modules.getName(), modules);
+      enabled.put(modules.getName(), modules);
+
+      final List<JsonRpcMethods> availableApiGroups =
+          List.of(
+              new AdminJsonRpcMethods(
+                  clientVersion, networkId, genesisConfigOptions, p2pNetwork, blockchainQueries),
+              new DebugJsonRpcMethods(blockchainQueries, protocolSchedule, metricsSystem),
+              new EeaJsonRpcMethods(
+                  blockchainQueries, protocolSchedule, transactionPool, privacyParameters),
+              new EthJsonRpcMethods(
+                  blockchainQueries,
+                  synchronizer,
+                  protocolSchedule,
+                  filterManager,
+                  transactionPool,
+                  miningCoordinator,
+                  supportedCapabilities),
+              new NetJsonRpcMethods(
+                  p2pNetwork,
+                  protocolSchedule,
+                  jsonRpcConfiguration,
+                  webSocketConfiguration,
+                  metricsConfiguration),
+              new MinerJsonRpcMethods(miningCoordinator),
+              new PermJsonRpcMethods(accountsWhitelistController, nodeWhitelistController),
+              new PrivJsonRpcMethods(
+                  blockchainQueries, protocolSchedule, transactionPool, privacyParameters),
+              new Web3JsonRpcMethods(clientVersion),
+              // TRACE Methods (Disabled while under development)
+              // new TraceJsonRpcMethods(blockchainQueries,protocolSchedule)
+              new TxPoolJsonRpcMethods(transactionPool));
+
+      for (final JsonRpcMethods apiGroup : availableApiGroups) {
+        enabled.putAll(apiGroup.create(rpcApis));
+      }
     }
 
-    // ETH Methods
-    enabledMethods.putAll(
-        new EthJsonRpcMethods(
-                blockchainQueries,
-                synchronizer,
-                protocolSchedule,
-                filterManager,
-                transactionPool,
-                miningCoordinator,
-                supportedCapabilities)
-            .create(rpcApis));
-
-    // DEBUG Methods
-    enabledMethods.putAll(
-        new DebugJsonRpcMethods(blockchainQueries, protocolSchedule, metricsSystem)
-            .create(rpcApis));
-
-    // NET Methods
-    enabledMethods.putAll(
-        new NetJsonRpcMethods(
-                p2pNetwork,
-                protocolSchedule,
-                jsonRpcConfiguration,
-                webSocketConfiguration,
-                metricsConfiguration)
-            .create(rpcApis));
-
-    // WEB3 Methods
-    enabledMethods.putAll(new Web3JsonRpcMethods(clientVersion).create(rpcApis));
-
-    // MINER Methods
-    enabledMethods.putAll(new MinerJsonRpcMethods(miningCoordinator).create(rpcApis));
-
-    // TX_POOL Methods
-    enabledMethods.putAll(new TxPoolJsonRpcMethods(transactionPool).create(rpcApis));
-
-    // PERM Methods
-    enabledMethods.putAll(
-        new PermJsonRpcMethods(accountsWhitelistController, nodeWhitelistController)
-            .create(rpcApis));
-
-    // ADMIN Methods
-    enabledMethods.putAll(
-        new AdminJsonRpcMethods(
-                clientVersion, networkId, genesisConfigOptions, p2pNetwork, blockchainQueries)
-            .create(rpcApis));
-
-    // TRACE Methods (Disabled while under development)
-    // enabledMethods.putAll(new
-    // TraceJsonRpcMethods(blockchainQueries,protocolSchedule).create(rpcApis));
-
-    // EEA Methods
-    enabledMethods.putAll(
-        new EeaJsonRpcMethods(
-                blockchainQueries, protocolSchedule, transactionPool, privacyParameters)
-            .create(rpcApis));
-
-    // PRIV Methods
-    enabledMethods.putAll(
-        new PrivJsonRpcMethods(
-                blockchainQueries, protocolSchedule, transactionPool, privacyParameters)
-            .create(rpcApis));
-
-    return enabledMethods;
+    return enabled;
   }
 }
