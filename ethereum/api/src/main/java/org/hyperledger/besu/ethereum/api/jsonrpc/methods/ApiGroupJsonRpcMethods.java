@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 public abstract class ApiGroupJsonRpcMethods implements JsonRpcMethods {
 
   @Override
-  public Map<String, JsonRpcMethod> create(Collection<RpcApi> apis) {
+  public Map<String, JsonRpcMethod> create(final Collection<RpcApi> apis) {
     return apis.contains(getApiGroup()) ? create() : Collections.emptyMap();
   }
 
