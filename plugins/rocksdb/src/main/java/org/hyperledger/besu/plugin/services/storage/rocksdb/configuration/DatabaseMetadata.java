@@ -21,6 +21,7 @@ import java.nio.file.Path;
 import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSetter;
@@ -63,6 +64,7 @@ public class DatabaseMetadata {
   }
 
   @JsonInclude(JsonInclude.Include.NON_NULL)
+  @JsonGetter("privacyVersion")
   public Integer getPrivacyVersion() {
     return privacyVersion.orElse(null);
   }
@@ -97,7 +99,16 @@ public class DatabaseMetadata {
 
   private static void writeToDirectory(
       final DatabaseMetadata databaseMetadata, final Path databaseDir) throws IOException {
-    MAPPER.writeValue(getDefaultMetadataFile(databaseDir), databaseMetadata);
+    try {
+      DatabaseMetadata databaseMetadata1 =
+          MAPPER.readValue(getDefaultMetadataFile(databaseDir), DatabaseMetadata.class);
+      if (databaseMetadata1.maybePrivacyVersion().isPresent()) {
+        databaseMetadata.setPrivacyVersion(databaseMetadata1.getPrivacyVersion());
+      }
+      MAPPER.writeValue(getDefaultMetadataFile(databaseDir), databaseMetadata);
+    } catch (FileNotFoundException fnfe) {
+      MAPPER.writeValue(getDefaultMetadataFile(databaseDir), databaseMetadata);
+    }
   }
 
   private static File getDefaultMetadataFile(final Path databaseDir) {
