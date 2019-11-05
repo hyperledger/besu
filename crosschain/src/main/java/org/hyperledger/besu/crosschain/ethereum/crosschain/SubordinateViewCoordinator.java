@@ -79,44 +79,50 @@ public class SubordinateViewCoordinator {
       final CrosschainTransaction subordinateView, final long blockNumber) {
 
     Object resultObj = executor.getResult(subordinateView, blockNumber);
+    TransactionProcessor.Result txResult = null;
     if (resultObj instanceof TransactionSimulatorResult) {
       TransactionSimulatorResult resultTxSim = (TransactionSimulatorResult) resultObj;
       BytesValue resultBytesValue = resultTxSim.getOutput();
       LOG.info("Transaction Simulator Result: " + resultBytesValue.toString());
-      SubordinateViewResult result =
-          new SubordinateViewResult(subordinateView, resultBytesValue, blockNumber);
+      try {
+        SubordinateViewResult result =
+            new SubordinateViewResult(subordinateView, resultBytesValue, blockNumber);
 
-      ArrayList<BlsPointSecretShare> partialSignatures = new ArrayList<>();
-      for (OtherNodeSimulator otherNode : this.otherNodes) {
-        BlsPointSecretShare partialSignature = otherNode.requestSign(result);
-        // TODO check for other node indicating an error
-        partialSignatures.add(partialSignature);
+        ArrayList<BlsPointSecretShare> partialSignatures = new ArrayList<>();
+        for (OtherNodeSimulator otherNode : this.otherNodes) {
+          BlsPointSecretShare partialSignature = otherNode.requestSign(result);
+          // TODO check for other node indicating an error
+          partialSignatures.add(partialSignature);
+        }
+
+        // Sign the result at the local node.
+        BlsPointSecretShare localPartialSignature = this.signer.sign(result);
+        // Use threshold partial signatures to combine to produce signature.
+        BlsPoint signature =
+            this.signer.combineSignatureShares(localPartialSignature, partialSignatures, result);
+        if (signature == null) {
+          LOG.error("Partial signatures could not be combined to create a valid signature");
+          // TODO should log this error and return an error via JSON RPC
+          // TODO should also determine which node produced an invalid partial signature
+          throw new Error("Partial signatures could not be combined to create a valid signature");
+        }
+
+        // TODO Use RLP to combine the resultBytesValue with the serialized signature,
+        //  the blocknumber and either the transaction or the hash or the transaction
+
+        BytesValue signatureAndResult = resultBytesValue;
+
+        // Replace the output with the output and signature in the result object.
+        txResult =
+            MainnetTransactionProcessor.Result.successful(
+                resultTxSim.getResult().getLogs(),
+                resultTxSim.getResult().getGasRemaining(),
+                signatureAndResult,
+                resultTxSim.getValidationResult());
+      } catch (Throwable th) {
+        LOG.error("Error while creating threshold signed result: {}", th.toString());
+        throw th;
       }
-
-      // Sign the result at the local node.
-      BlsPointSecretShare localPartialSignature = this.signer.sign(result);
-      // Use threshold partial signatures to combine to produce signature.
-      BlsPoint signature =
-          this.signer.combineSignatureShares(localPartialSignature, partialSignatures, result);
-      if (signature == null) {
-        // TODO should log this error and return an error via JSON RPC
-        // TODO should also determine which node produced an invalid partial signature
-        throw new Error("Partial signatures could not be combined to create a valid signature");
-      }
-
-      // TODO Use RLP to combine the resultBytesValue with the serialized signature,
-      //  the blocknumber and either the transaction or the hash or the transaction
-
-      BytesValue signatureAndResult = resultBytesValue;
-
-      // Replace the output with the output and signature in the result object.
-      TransactionProcessor.Result txResult =
-          MainnetTransactionProcessor.Result.successful(
-              resultTxSim.getResult().getLogs(),
-              resultTxSim.getResult().getGasRemaining(),
-              signatureAndResult,
-              resultTxSim.getValidationResult());
-
       return new TransactionSimulatorResult(subordinateView, txResult);
     } else {
       // An error occurred - propagate the error.

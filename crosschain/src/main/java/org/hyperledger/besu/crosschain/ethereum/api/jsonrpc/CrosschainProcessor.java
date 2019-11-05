@@ -219,7 +219,7 @@ public class CrosschainProcessor {
 
     if (result.isPresent()) {
       TransactionSimulatorResult simulatorResult = result.get();
-      LOG.info("Transaction Simulation Result {}", simulatorResult.getResult().getStatus());
+      LOG.info("Transaction Simulation Status {}", simulatorResult.getResult().getStatus());
 
       if (simulatorResult.isSuccessful()) {
         return Optional.empty();

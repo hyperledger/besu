@@ -98,18 +98,27 @@ public class EthProcessSubordinateView implements JsonRpcMethod {
     // Maybe we should return a hash, and the result can be fetched later based on the hash?
 
     Object resultOrError = this.crosschainProcessor.getSignedResult(transaction, blockNumber);
+    if (resultOrError == null) {
+      LOG.info("Transaction Simulation returned null as error");
+      throw new Error("Unexpected result: null");
+    }
     if (resultOrError instanceof TransactionSimulatorResult) {
-      LOG.info("Result: " + ((TransactionSimulatorResult) resultOrError).getOutput());
+      LOG.info("Simulator Result: " + ((TransactionSimulatorResult) resultOrError).getOutput());
 
       return new JsonRpcSuccessResponse(
           request.getId(), ((TransactionSimulatorResult) resultOrError).getOutput().toString());
     } else if (resultOrError instanceof TransactionValidator.TransactionInvalidReason) {
+      JsonRpcError error =
+          convertTransactionInvalidReason(
+              (TransactionValidator.TransactionInvalidReason) resultOrError);
+      LOG.info("Transaction Validator Invalid Reason: {}, {}", error.getCode(), error.getMessage());
       return new JsonRpcErrorResponse(
           request.getId(),
           convertTransactionInvalidReason(
               (TransactionValidator.TransactionInvalidReason) resultOrError));
     } else {
-      throw new Error("Can we get here?");
+      LOG.info("Transaction Simulation returned an unknown error: {}", resultOrError);
+      throw new Error("Transaction Simulation returned an unknown error");
     }
   }
 

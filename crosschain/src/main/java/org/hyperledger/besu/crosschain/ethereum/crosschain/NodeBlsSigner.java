@@ -131,7 +131,11 @@ public class NodeBlsSigner {
       final SubordinateViewResult toBeSigned) {
     if (otherNodePartialSignatures.size() <= this.threshold - 1) {
       // TODO
-      throw new Error("Not enough partial signatures to create a signature");
+      throw new Error(
+          "Not enough partial signatures to create a signature. Have "
+              + otherNodePartialSignatures.size()
+              + ", need "
+              + (this.threshold - 1));
     }
 
     // TODO check that all partial signatures have unique x values.
