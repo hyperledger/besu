@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.api.jsonrpc.method;
+package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -20,6 +20,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import java.util.Collection;
 import java.util.Map;
 
-public interface JsonRpcMethodFactory {
-  Map<String, JsonRpcMethod> createJsonRpcMethods(Collection<RpcApi> enabledRpcApis);
+public interface JsonRpcMethods {
+  Map<String, JsonRpcMethod> create(Collection<RpcApi> enabledRpcApis);
 }
