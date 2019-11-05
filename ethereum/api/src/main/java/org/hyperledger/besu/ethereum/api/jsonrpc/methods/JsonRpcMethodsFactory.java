@@ -1,0 +1,185 @@
+/*
+ * Copyright ConsenSys AG.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
+
+import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
+import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.RpcModules;
+import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
+import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.core.Synchronizer;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
+import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioningController;
+import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningController;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.metrics.ObservableMetricsSystem;
+import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
+
+import java.math.BigInteger;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+
+public class JsonRpcMethodsFactory {
+
+  public Map<String, JsonRpcMethod> methods(
+      final String clientVersion,
+      final BigInteger networkId,
+      final GenesisConfigOptions genesisConfigOptions,
+      final P2PNetwork peerNetworkingService,
+      final Blockchain blockchain,
+      final WorldStateArchive worldStateArchive,
+      final Synchronizer synchronizer,
+      final TransactionPool transactionPool,
+      final ProtocolSchedule<?> protocolSchedule,
+      final MiningCoordinator miningCoordinator,
+      final ObservableMetricsSystem metricsSystem,
+      final Set<Capability> supportedCapabilities,
+      final Collection<RpcApi> rpcApis,
+      final FilterManager filterManager,
+      final Optional<AccountLocalConfigPermissioningController> accountsWhitelistController,
+      final Optional<NodeLocalConfigPermissioningController> nodeWhitelistController,
+      final PrivacyParameters privacyParameters,
+      final JsonRpcConfiguration jsonRpcConfiguration,
+      final WebSocketConfiguration webSocketConfiguration,
+      final MetricsConfiguration metricsConfiguration) {
+    final BlockchainQueries blockchainQueries =
+        new BlockchainQueries(blockchain, worldStateArchive);
+    return methods(
+        clientVersion,
+        networkId,
+        genesisConfigOptions,
+        peerNetworkingService,
+        blockchainQueries,
+        synchronizer,
+        protocolSchedule,
+        filterManager,
+        transactionPool,
+        miningCoordinator,
+        metricsSystem,
+        supportedCapabilities,
+        accountsWhitelistController,
+        nodeWhitelistController,
+        rpcApis,
+        privacyParameters,
+        jsonRpcConfiguration,
+        webSocketConfiguration,
+        metricsConfiguration);
+  }
+
+  public Map<String, JsonRpcMethod> methods(
+      final String clientVersion,
+      final BigInteger networkId,
+      final GenesisConfigOptions genesisConfigOptions,
+      final P2PNetwork p2pNetwork,
+      final BlockchainQueries blockchainQueries,
+      final Synchronizer synchronizer,
+      final ProtocolSchedule<?> protocolSchedule,
+      final FilterManager filterManager,
+      final TransactionPool transactionPool,
+      final MiningCoordinator miningCoordinator,
+      final ObservableMetricsSystem metricsSystem,
+      final Set<Capability> supportedCapabilities,
+      final Optional<AccountLocalConfigPermissioningController> accountsWhitelistController,
+      final Optional<NodeLocalConfigPermissioningController> nodeWhitelistController,
+      final Collection<RpcApi> rpcApis,
+      final PrivacyParameters privacyParameters,
+      final JsonRpcConfiguration jsonRpcConfiguration,
+      final WebSocketConfiguration webSocketConfiguration,
+      final MetricsConfiguration metricsConfiguration) {
+
+    final Map<String, JsonRpcMethod> enabledMethods = new HashMap<>();
+    if (!rpcApis.isEmpty()) {
+      final JsonRpcMethod modules = new RpcModules(rpcApis);
+      enabledMethods.put(modules.getName(), modules);
+    }
+
+    // ETH Methods
+    enabledMethods.putAll(
+        new EthJsonRpcMethods(
+                blockchainQueries,
+                synchronizer,
+                protocolSchedule,
+                filterManager,
+                transactionPool,
+                miningCoordinator,
+                supportedCapabilities)
+            .create(rpcApis));
+
+    // DEBUG Methods
+    enabledMethods.putAll(
+        new DebugJsonRpcMethods(blockchainQueries, protocolSchedule, metricsSystem)
+            .create(rpcApis));
+
+    // NET Methods
+    enabledMethods.putAll(
+        new NetJsonRpcMethods(
+                p2pNetwork,
+                protocolSchedule,
+                jsonRpcConfiguration,
+                webSocketConfiguration,
+                metricsConfiguration)
+            .create(rpcApis));
+
+    // WEB3 Methods
+    enabledMethods.putAll(new Web3JsonRpcMethods(clientVersion).create(rpcApis));
+
+    // MINER Methods
+    enabledMethods.putAll(new MinerJsonRpcMethods(miningCoordinator).create(rpcApis));
+
+    // TX_POOL Methods
+    enabledMethods.putAll(new TxPoolJsonRpcMethods(transactionPool).create(rpcApis));
+
+    // PERM Methods
+    enabledMethods.putAll(
+        new PermJsonRpcMethods(accountsWhitelistController, nodeWhitelistController)
+            .create(rpcApis));
+
+    // ADMIN Methods
+    enabledMethods.putAll(
+        new AdminJsonRpcMethods(
+                clientVersion, networkId, genesisConfigOptions, p2pNetwork, blockchainQueries)
+            .create(rpcApis));
+
+    // TRACE Methods (Disabled while under development)
+    // enabledMethods.putAll(new
+    // TraceJsonRpcMethods(blockchainQueries,protocolSchedule).create(rpcApis));
+
+    // EEA Methods
+    enabledMethods.putAll(
+        new EeaJsonRpcMethods(
+                blockchainQueries, protocolSchedule, transactionPool, privacyParameters)
+            .create(rpcApis));
+
+    // PRIV Methods
+    enabledMethods.putAll(
+        new PrivJsonRpcMethods(
+                blockchainQueries, protocolSchedule, transactionPool, privacyParameters)
+            .create(rpcApis));
+
+    return enabledMethods;
+  }
+}
