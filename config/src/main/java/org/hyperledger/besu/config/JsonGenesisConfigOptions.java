@@ -135,18 +135,8 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public OptionalLong getEcip1015BlockNumber() {
-    return getOptionalLong("ecip1015block");
-  }
-
-  @Override
   public OptionalLong getSpuriousDragonBlockNumber() {
     return getOptionalLong("eip158block");
-  }
-
-  @Override
-  public OptionalLong getDieHardBlockNumber() {
-    return getOptionalLong("diehardblock");
   }
 
   @Override
@@ -170,18 +160,13 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public Optional<BigInteger> getChainId() {
-    return getOptionalBigInteger("chainid");
+  public OptionalLong getEcip1015BlockNumber() {
+    return getOptionalLong("ecip1015block");
   }
 
   @Override
-  public OptionalInt getContractSizeLimit() {
-    return getOptionalInt("contractsizelimit");
-  }
-
-  @Override
-  public OptionalInt getEvmStackSize() {
-    return getOptionalInt("evmstacksize");
+  public OptionalLong getDieHardBlockNumber() {
+    return getOptionalLong("diehardblock");
   }
 
   @Override
@@ -197,6 +182,21 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public OptionalLong getAghartaBlockNumber() {
     return getOptionalLong("aghartablock");
+  }
+
+  @Override
+  public Optional<BigInteger> getChainId() {
+    return getOptionalBigInteger("chainid");
+  }
+
+  @Override
+  public OptionalInt getContractSizeLimit() {
+    return getOptionalInt("contractsizelimit");
+  }
+
+  @Override
+  public OptionalInt getEvmStackSize() {
+    return getOptionalInt("evmstacksize");
   }
 
   @Override

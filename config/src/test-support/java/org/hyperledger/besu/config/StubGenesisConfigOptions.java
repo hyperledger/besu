@@ -32,14 +32,14 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private OptionalLong constantinopleBlockNumber = OptionalLong.empty();
   private OptionalLong constantinopleFixBlockNumber = OptionalLong.empty();
   private OptionalLong istanbulBlockNumber = OptionalLong.empty();
-  private Optional<BigInteger> chainId = Optional.empty();
-  private OptionalInt contractSizeLimit = OptionalInt.empty();
-  private OptionalInt stackSizeLimit = OptionalInt.empty();
+  private OptionalLong ecip1015BlockNumber = OptionalLong.empty();
+  private OptionalLong diehardBlockNumber = OptionalLong.empty();
   private OptionalLong defuseDifficultyBombBlockNumber = OptionalLong.empty();
   private OptionalLong atlantisBlockNumber = OptionalLong.empty();
   private OptionalLong aghartaBlockNumber = OptionalLong.empty();
-  private OptionalLong ecip1015BlockNumber = OptionalLong.empty();
-  private OptionalLong diehardBlockNumber = OptionalLong.empty();
+  private Optional<BigInteger> chainId = Optional.empty();
+  private OptionalInt contractSizeLimit = OptionalInt.empty();
+  private OptionalInt stackSizeLimit = OptionalInt.empty();
 
   @Override
   public String getConsensusEngine() {
@@ -102,18 +102,8 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public OptionalLong getEcip1015BlockNumber() {
-    return ecip1015BlockNumber;
-  }
-
-  @Override
   public OptionalLong getSpuriousDragonBlockNumber() {
     return spuriousDragonBlockNumber;
-  }
-
-  @Override
-  public OptionalLong getDieHardBlockNumber() {
-    return diehardBlockNumber;
   }
 
   @Override
@@ -137,18 +127,13 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public OptionalInt getContractSizeLimit() {
-    return contractSizeLimit;
+  public OptionalLong getEcip1015BlockNumber() {
+    return ecip1015BlockNumber;
   }
 
   @Override
-  public OptionalInt getEvmStackSize() {
-    return stackSizeLimit;
-  }
-
-  @Override
-  public Optional<BigInteger> getChainId() {
-    return chainId;
+  public OptionalLong getDieHardBlockNumber() {
+    return diehardBlockNumber;
   }
 
   @Override
@@ -164,6 +149,21 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public OptionalLong getAghartaBlockNumber() {
     return aghartaBlockNumber;
+  }
+
+  @Override
+  public OptionalInt getContractSizeLimit() {
+    return contractSizeLimit;
+  }
+
+  @Override
+  public OptionalInt getEvmStackSize() {
+    return stackSizeLimit;
+  }
+
+  @Override
+  public Optional<BigInteger> getChainId() {
+    return chainId;
   }
 
   @Override
