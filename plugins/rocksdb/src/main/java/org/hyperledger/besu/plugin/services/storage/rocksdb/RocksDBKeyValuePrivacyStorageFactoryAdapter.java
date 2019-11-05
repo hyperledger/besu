@@ -36,7 +36,7 @@ import org.apache.logging.log4j.Logger;
  */
 public class RocksDBKeyValuePrivacyStorageFactoryAdapter implements PrivacyKeyValueStorageFactory {
   private static final Logger LOG = LogManager.getLogger();
-  private final int DEFAULT_VERSION = 1;
+  private static final int DEFAULT_VERSION = 1;
   private static final Set<Integer> SUPPORTED_VERSIONS = Set.of(0, 1);
 
   private static final String PRIVATE_DATABASE_PATH = "private";
@@ -81,33 +81,44 @@ public class RocksDBKeyValuePrivacyStorageFactoryAdapter implements PrivacyKeyVa
     publicFactory.close();
   }
 
+  /**
+   * The METADATA.json is located in the dataDir. Pre-1.3 it is located in the databaseDir. If the
+   * private database exists there may be a "privacyVersion" field in the metadata file otherwise
+   * use the default version
+   */
   private int readDatabaseVersion(final BesuConfiguration commonConfiguration) throws IOException {
-    final Path databaseDir = commonConfiguration.getStoragePath().resolve(PRIVATE_DATABASE_PATH);
+    final Path privacyDatabaseDir =
+        commonConfiguration.getStoragePath().resolve(PRIVATE_DATABASE_PATH);
+    final Path databaseDir = commonConfiguration.getStoragePath();
     final Path dataDir = commonConfiguration.getDataPath();
-    final boolean databaseExists = databaseDir.resolve("IDENTITY").toFile().exists();
-    final int databaseVersion;
-    if (databaseExists) {
-      databaseVersion =
-          DatabaseMetadata.lookUpFrom(commonConfiguration.getStoragePath(), dataDir).maybePrivacyVersion().get();
-      LOG.info("Existing private database detected at {}. Version {}", dataDir, databaseVersion);
+    final boolean privacyDatabaseExists = privacyDatabaseDir.resolve("IDENTITY").toFile().exists();
+    final int privacyDatabaseVersion;
+    if (privacyDatabaseExists) {
+      privacyDatabaseVersion =
+          DatabaseMetadata.lookUpFrom(databaseDir, dataDir)
+              .maybePrivacyVersion()
+              .orElse(DEFAULT_VERSION);
+      LOG.info(
+          "Existing private database detected at {}. Version {}", dataDir, privacyDatabaseVersion);
     } else {
-      databaseVersion = DEFAULT_VERSION;
+      privacyDatabaseVersion = DEFAULT_VERSION;
       LOG.info(
           "No existing private database detected at {}. Using version {}",
           dataDir,
-          databaseVersion);
-      Files.createDirectories(databaseDir);
+          privacyDatabaseVersion);
+      Files.createDirectories(privacyDatabaseDir);
       Files.createDirectories(dataDir);
-      new DatabaseMetadata(publicFactory.getVersion(), databaseVersion).writeToDirectory(dataDir);
+      new DatabaseMetadata(publicFactory.getDefaultVersion(), privacyDatabaseVersion)
+          .writeToDirectory(dataDir);
     }
 
-    if (!SUPPORTED_VERSIONS.contains(databaseVersion)) {
-      final String message = "Unsupported RocksDB Metadata version of: " + databaseVersion;
+    if (!SUPPORTED_VERSIONS.contains(privacyDatabaseVersion)) {
+      final String message = "Unsupported RocksDB Metadata version of: " + privacyDatabaseVersion;
       LOG.error(message);
       throw new StorageException(message);
     }
 
-    return databaseVersion;
+    return privacyDatabaseVersion;
   }
 
   @Override

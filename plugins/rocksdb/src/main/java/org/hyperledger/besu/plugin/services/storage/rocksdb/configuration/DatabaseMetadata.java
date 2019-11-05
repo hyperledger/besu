@@ -23,6 +23,7 @@ import java.util.Optional;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.logging.log4j.LogManager;
@@ -35,24 +36,30 @@ public class DatabaseMetadata {
   private static ObjectMapper MAPPER = new ObjectMapper();
   private final int version;
 
-  private final Optional<Integer> privacyVersion;
+  private Optional<Integer> privacyVersion;
 
   @JsonCreator
   public DatabaseMetadata(@JsonProperty("version") final int version) {
-    this.version = version;
-    this.privacyVersion = Optional.empty();
+    this(version, Optional.empty());
   }
 
-  @JsonCreator
-  public DatabaseMetadata(
-      @JsonProperty("version") final int version,
-      @JsonProperty("privacyVersion") final int privacyVersion) {
+  public DatabaseMetadata(final int version, final Optional<Integer> privacyVersion) {
+    this.version = version;
+    this.privacyVersion = privacyVersion;
+  }
+
+  public DatabaseMetadata(final int version, final int privacyVersion) {
     this.version = version;
     this.privacyVersion = Optional.of(privacyVersion);
   }
 
   public int getVersion() {
     return version;
+  }
+
+  @JsonSetter("privacyVersion")
+  public void setPrivacyVersion(final int privacyVersion) {
+    this.privacyVersion = Optional.of(privacyVersion);
   }
 
   @JsonInclude(JsonInclude.Include.NON_NULL)

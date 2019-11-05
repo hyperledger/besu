@@ -44,11 +44,12 @@ import org.apache.logging.log4j.Logger;
 public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
 
   private static final Logger LOG = LogManager.getLogger();
-  private final int DEFAULT_VERSION;
+  private static final int DEFAULT_VERSION = 1;
   private static final Set<Integer> SUPPORTED_VERSIONS = Set.of(0, 1);
   private static final String NAME = "rocksdb";
   private final RocksDBMetricsFactory rocksDBMetricsFactory;
 
+  private int defaultVersion;
   private Integer databaseVersion;
   private Boolean isSegmentIsolationSupported;
   private SegmentedKeyValueStorage<?> segmentedStorage;
@@ -61,11 +62,11 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
   RocksDBKeyValueStorageFactory(
       final Supplier<RocksDBFactoryConfiguration> configuration,
       final List<SegmentIdentifier> segments,
-      final int DEFAULT_VERSION,
+      final int defaultVersion,
       final RocksDBMetricsFactory rocksDBMetricsFactory) {
     this.configuration = configuration;
     this.segments = segments;
-    this.DEFAULT_VERSION = DEFAULT_VERSION;
+    this.defaultVersion = defaultVersion;
     this.rocksDBMetricsFactory = rocksDBMetricsFactory;
   }
 
@@ -77,9 +78,13 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
         configuration,
         segments,
         /** Source of truth for the default database version. */
-        1,
+        DEFAULT_VERSION,
         rocksDBMetricsFactory);
   }
+
+    public int getDefaultVersion() {
+        return defaultVersion;
+    }
 
   @Override
   public String getName() {
@@ -135,10 +140,6 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
     return commonConfiguration.getStoragePath();
   }
 
-  protected int getVersion() {
-    return this.databaseVersion;
-  }
-
   private void init(final BesuConfiguration commonConfiguration) {
     try {
       databaseVersion = readDatabaseVersion(commonConfiguration);
@@ -166,7 +167,7 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
       databaseVersion = DatabaseMetadata.lookUpFrom(databaseDir, dataDir).getVersion();
       LOG.info("Existing database detected at {}. Version {}", dataDir, databaseVersion);
     } else {
-      databaseVersion = DEFAULT_VERSION;
+      databaseVersion = defaultVersion;
       LOG.info("No existing database detected at {}. Using version {}", dataDir, databaseVersion);
       Files.createDirectories(databaseDir);
       Files.createDirectories(dataDir);
