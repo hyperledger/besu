@@ -703,7 +703,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @Option(
       names = {"--sidechain-nodeCount"},
       description = "Sidechain total node count (default: ${DEFAULT-VALUE}")
-  public int nodeCount = 1;
+  public int nodeCount = 5;
 
   @Option(
       names = {"--sidechain-nodeNum"},
