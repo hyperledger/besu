@@ -31,6 +31,10 @@ import io.vertx.core.net.NetServerOptions;
 import io.vertx.core.net.NetSocket;
 import org.apache.logging.log4j.Logger;
 
+/**
+ * TCP server allowing miners to connect to the client over persistent TCP connections, using the
+ * various Stratum protocols.
+ */
 public class StratumServer implements EthHashObserver {
 
   private static final Logger logger = getLogger();

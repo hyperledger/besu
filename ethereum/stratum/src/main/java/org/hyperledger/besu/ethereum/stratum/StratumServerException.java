@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.stratum;
 
+/** Class of exception occurring while launching the Stratum server. */
 public class StratumServerException extends RuntimeException {
 
   public StratumServerException(final String message) {

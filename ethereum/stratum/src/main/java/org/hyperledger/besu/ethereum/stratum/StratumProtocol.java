@@ -19,14 +19,42 @@ import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
 
 import java.util.function.Function;
 
+/**
+ * Stratum protocol handler.
+ *
+ * <p>
+ */
 public interface StratumProtocol {
 
+  /**
+   * Checks if the protocol can handle a TCP connection, based on the initial message.
+   *
+   * @param initialMessage the initial message sent over the TCP connection.
+   * @param conn the connection itself
+   * @return true if the protocol can handle this connection
+   */
   boolean canHandle(String initialMessage, StratumConnection conn);
 
+  /**
+   * Callback when a stratum connection is closed.
+   *
+   * @param conn the connection that just closed
+   */
   void onClose(StratumConnection conn);
 
+  /**
+   * Handle a message over an established Stratum connection
+   *
+   * @param conn the Stratum connection
+   * @param message the message to handle
+   */
   void handle(StratumConnection conn, String message);
 
+  /**
+   * Sets the current proof-of-work job.
+   *
+   * @param input the new proof-of-work job to send to miners
+   */
   void setCurrentWorkTask(EthHashSolverInputs input);
 
   void setSubmitCallback(Function<EthHashSolution, Boolean> submitSolutionCallback);

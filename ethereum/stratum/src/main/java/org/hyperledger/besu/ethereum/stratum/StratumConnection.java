@@ -24,6 +24,10 @@ import com.google.common.base.Splitter;
 import io.vertx.core.buffer.Buffer;
 import org.apache.logging.log4j.Logger;
 
+/**
+ * Persistent TCP connection using a variant of the Stratum protocol, connecting the client to
+ * miners.
+ */
 final class StratumConnection {
   private static final Logger LOG = getLogger();
 
