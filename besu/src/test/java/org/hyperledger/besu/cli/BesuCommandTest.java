@@ -2302,13 +2302,19 @@ public class BesuCommandTest extends CommandTestAbstract {
         "42",
         "--miner-extra-data",
         "0x1122334455667788990011223344556677889900112233445566778899001122",
-            "--miner-stratum-enabled");
+        "--miner-stratum-enabled");
 
     verifyOptionsConstraintLoggerCall(
-        "--miner-enabled", "--miner-coinbase", "--min-gas-price", "--miner-extra-data", "--miner-stratum-enabled");
+        "--miner-enabled",
+        "--miner-coinbase",
+        "--min-gas-price",
+        "--miner-extra-data",
+        "--miner-stratum-enabled");
 
     assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).startsWith("Unable to mine with Stratum if mining is disabled. Either disable Stratum mining (remove --miner-stratum-enabled)or specify mining is enabled (--miner-enabled)");
+    assertThat(commandErrorOutput.toString())
+        .startsWith(
+            "Unable to mine with Stratum if mining is disabled. Either disable Stratum mining (remove --miner-stratum-enabled)or specify mining is enabled (--miner-enabled)");
   }
 
   @Test

@@ -1020,7 +1020,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         commandLine,
         "--miner-enabled",
         !isMiningEnabled,
-        asList("--miner-coinbase", "--min-gas-price", "--miner-extra-data", "--miner-stratum-enabled"));
+        asList(
+            "--miner-coinbase",
+            "--min-gas-price",
+            "--miner-extra-data",
+            "--miner-stratum-enabled"));
 
     CommandLineUtils.checkOptionDependencies(
         logger,

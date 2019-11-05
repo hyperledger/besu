@@ -44,10 +44,6 @@ public class MiningParametersTestBuilder {
   }
 
   public MiningParameters build() {
-    return new MiningParameters(
-        coinbase,
-        minTransactionGasPrice,
-        extraData,
-        enabled);
+    return new MiningParameters(coinbase, minTransactionGasPrice, extraData, enabled);
   }
 }
