@@ -22,14 +22,14 @@ import org.hyperledger.besu.consensus.clique.CliqueProtocolSchedule;
 import org.hyperledger.besu.consensus.clique.blockcreation.CliqueBlockScheduler;
 import org.hyperledger.besu.consensus.clique.blockcreation.CliqueMinerExecutor;
 import org.hyperledger.besu.consensus.clique.blockcreation.CliqueMiningCoordinator;
-import org.hyperledger.besu.consensus.clique.jsonrpc.CliqueJsonRpcMethodsFactory;
+import org.hyperledger.besu.consensus.clique.jsonrpc.CliqueJsonRpcMethods;
 import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.VoteProposer;
 import org.hyperledger.besu.consensus.common.VoteTallyCache;
 import org.hyperledger.besu.consensus.common.VoteTallyUpdater;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethodFactory;
+import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -65,9 +65,9 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder<CliqueCon
   }
 
   @Override
-  protected JsonRpcMethodFactory createAdditionalJsonRpcMethodFactory(
+  protected JsonRpcMethods createAdditionalJsonRpcMethodFactory(
       final ProtocolContext<CliqueContext> protocolContext) {
-    return new CliqueJsonRpcMethodsFactory(protocolContext);
+    return new CliqueJsonRpcMethods(protocolContext);
   }
 
   @Override
@@ -121,6 +121,11 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder<CliqueCon
     if (blockInterface.validatorsInBlock(genesisBlockHeader).isEmpty()) {
       LOG.warn("Genesis block contains no signers - chain will not progress.");
     }
+  }
+
+  @Override
+  protected PluginServiceFactory createAdditionalPluginServices(final Blockchain blockchain) {
+    return new CliqueQueryPluginServiceFactory(blockchain);
   }
 
   @Override

@@ -21,7 +21,7 @@ import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethodFactory;
+import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
@@ -52,12 +52,13 @@ public class BesuController<C> implements java.io.Closeable {
   private final SubProtocolConfiguration subProtocolConfiguration;
   private final KeyPair keyPair;
   private final Synchronizer synchronizer;
-  private final JsonRpcMethodFactory additionalJsonRpcMethodsFactory;
+  private final JsonRpcMethods additionalJsonRpcMethodsFactory;
 
   private final TransactionPool transactionPool;
   private final MiningCoordinator miningCoordinator;
   private final PrivacyParameters privacyParameters;
   private final List<Closeable> closeables;
+  private final PluginServiceFactory additionalPluginServices;
   private final SyncState syncState;
 
   BesuController(
@@ -71,9 +72,10 @@ public class BesuController<C> implements java.io.Closeable {
       final TransactionPool transactionPool,
       final MiningCoordinator miningCoordinator,
       final PrivacyParameters privacyParameters,
-      final JsonRpcMethodFactory additionalJsonRpcMethodsFactory,
+      final JsonRpcMethods additionalJsonRpcMethodsFactory,
       final KeyPair keyPair,
-      final List<Closeable> closeables) {
+      final List<Closeable> closeables,
+      final PluginServiceFactory additionalPluginServices) {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethProtocolManager = ethProtocolManager;
@@ -87,6 +89,7 @@ public class BesuController<C> implements java.io.Closeable {
     this.miningCoordinator = miningCoordinator;
     this.privacyParameters = privacyParameters;
     this.closeables = closeables;
+    this.additionalPluginServices = additionalPluginServices;
   }
 
   public ProtocolContext<C> getProtocolContext() {
@@ -144,11 +147,15 @@ public class BesuController<C> implements java.io.Closeable {
 
   public Map<String, JsonRpcMethod> getAdditionalJsonRpcMethods(
       final Collection<RpcApi> enabledRpcApis) {
-    return additionalJsonRpcMethodsFactory.createJsonRpcMethods(enabledRpcApis);
+    return additionalJsonRpcMethodsFactory.create(enabledRpcApis);
   }
 
   public SyncState getSyncState() {
     return syncState;
+  }
+
+  public PluginServiceFactory getAdditionalPluginServices() {
+    return additionalPluginServices;
   }
 
   public static class Builder {

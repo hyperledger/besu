@@ -21,7 +21,7 @@ import static org.hyperledger.besu.controller.KeyPairUtil.loadKeyPair;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethodFactory;
+import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
@@ -159,8 +159,8 @@ public abstract class BesuControllerBuilder<C> {
     return this;
   }
 
-  public BesuControllerBuilder<C> isPruningEnabled(final boolean pruningEnabled) {
-    this.isPruningEnabled = pruningEnabled;
+  public BesuControllerBuilder<C> isPruningEnabled(final boolean isPruningEnabled) {
+    this.isPruningEnabled = isPruningEnabled;
     return this;
   }
 
@@ -273,10 +273,13 @@ public abstract class BesuControllerBuilder<C> {
             syncState,
             ethProtocolManager);
 
+    final PluginServiceFactory additionalPluginServices =
+        createAdditionalPluginServices(blockchain);
+
     final SubProtocolConfiguration subProtocolConfiguration =
         createSubProtocolConfiguration(ethProtocolManager);
 
-    final JsonRpcMethodFactory additionalJsonRpcMethodFactory =
+    final JsonRpcMethods additionalJsonRpcMethodFactory =
         createAdditionalJsonRpcMethodFactory(protocolContext);
 
     List<Closeable> closeables = new ArrayList<>();
@@ -298,12 +301,13 @@ public abstract class BesuControllerBuilder<C> {
         privacyParameters,
         additionalJsonRpcMethodFactory,
         nodeKeys,
-        closeables);
+        closeables,
+        additionalPluginServices);
   }
 
   protected void prepForBuild() {}
 
-  protected JsonRpcMethodFactory createAdditionalJsonRpcMethodFactory(
+  protected JsonRpcMethods createAdditionalJsonRpcMethodFactory(
       final ProtocolContext<C> protocolContext) {
     return apis -> Collections.emptyMap();
   }
@@ -365,4 +369,7 @@ public abstract class BesuControllerBuilder<C> {
 
     return validators;
   }
+
+  protected abstract PluginServiceFactory createAdditionalPluginServices(
+      final Blockchain blockchain);
 }
