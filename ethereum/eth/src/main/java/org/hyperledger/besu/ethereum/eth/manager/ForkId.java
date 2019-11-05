@@ -40,17 +40,17 @@ public class ForkId {
   private Long forkNext;
   private Long highestKnownFork = 0L;
   private ForkIdEntry lastKnownEntry;
-  private boolean useForkId;
+//  private boolean useForkId;
   private ArrayDeque<ForkIdEntry> forkAndHashList;
 
   public ForkId(final Hash genesisHash, final Set<Long> forks, final Long currentHead) {
     this.genesisHash = genesisHash;
     this.currentHead = currentHead;
-    if(forks != null){
-      useForkId = true;
+    if (forks != null) {
+//      useForkId = true;
       forkAndHashList = collectForksAndHashes(forks, currentHead);
     } else {
-      useForkId = false;
+//      useForkId = false;
       forkAndHashList = new ArrayDeque<>();
     }
   };
@@ -95,13 +95,13 @@ public class ForkId {
     return this.forkAndHashList;
   }
 
-  public Hash getLatestForkId(){
-    System.out.println("USING FORK ID: " + useForkId); // todo remove dev item
-    if(useForkId){
-      return Hash.fromHexString(lastKnownEntry.hash);
-    } else {
+  public Hash getLatestForkId() {
+    // TODO: implement handling for forkID in status message
+//    if (useForkId) {
+//      return Hash.fromHexString(lastKnownEntry.hash);
+//    } else {
       return genesisHash;
-    }
+//    }
   }
 
   public boolean peerCheck(final String forkHash, final Long peerNext) {
@@ -145,7 +145,6 @@ public class ForkId {
   public boolean peerCheck(final Bytes32 peerGenesisOrCheckSumHash) {
     return !peerGenesisOrCheckSumHash.equals(genesisHash);
   }
-
 
   private boolean isHashKnown(final String forkHash) {
     for (ForkIdEntry j : forkAndHashList) {
