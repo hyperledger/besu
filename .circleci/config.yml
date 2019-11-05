@@ -53,6 +53,7 @@ commands:
             done
       - store_test_results:
           path: build/test-results
+
 jobs:
   assemble:
     executor: besu_executor_xl
@@ -202,7 +203,7 @@ workflows:
             branches:
               only:
                 - master
-                - /^release-.*/
+                #- /^release-.*/
           requires:
             - integrationTests
             - unitTests
@@ -214,7 +215,7 @@ workflows:
             branches:
               only:
                 - master
-                - /^release-.*/
+                #- /^release-.*/
           requires:
             - integrationTests
             - unitTests
