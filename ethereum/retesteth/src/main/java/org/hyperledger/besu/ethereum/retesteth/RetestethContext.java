@@ -149,8 +149,8 @@ public class RetestethContext {
     final Iterable<Long> nonceGenerator = new IncrementingNonceGenerator(0);
     ethHashSolver =
         ("NoProof".equals(sealengine) || "NoReward".equals(sealEngine))
-            ? new EthHashSolver(nonceGenerator, NO_WORK_HASHER, true, Subscribers.none())
-            : new EthHashSolver(nonceGenerator, new EthHasher.Light(), true, Subscribers.none());
+            ? new EthHashSolver(nonceGenerator, NO_WORK_HASHER, false, Subscribers.none())
+            : new EthHashSolver(nonceGenerator, new EthHasher.Light(), false, Subscribers.none());
 
     blockReplay =
         new BlockReplay(

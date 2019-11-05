@@ -40,7 +40,7 @@ public class EthHashSolverTest {
   public void emptyHashRateAndWorkDefinitionIsReportedPriorToSolverStarting() {
     final List<Long> noncesToTry = Arrays.asList(1L, 1L, 1L, 1L, 1L, 1L, 0L);
     final EthHashSolver solver =
-        new EthHashSolver(noncesToTry, new EthHasher.Light(), true, Subscribers.none());
+        new EthHashSolver(noncesToTry, new EthHasher.Light(), false, Subscribers.none());
 
     assertThat(solver.hashesPerSecond()).isEqualTo(Optional.empty());
     assertThat(solver.getWorkDefinition()).isEqualTo(Optional.empty());
@@ -62,7 +62,7 @@ public class EthHashSolverTest {
         .when(hasher)
         .hash(any(), anyLong(), anyLong(), any());
 
-    final EthHashSolver solver = new EthHashSolver(noncesToTry, hasher, true, Subscribers.none());
+    final EthHashSolver solver = new EthHashSolver(noncesToTry, hasher, false, Subscribers.none());
 
     final Stopwatch operationTimer = Stopwatch.createStarted();
     final EthHashSolverInputs inputs = new EthHashSolverInputs(UInt256.ONE, new byte[0], 5);
