@@ -22,7 +22,8 @@ import java.util.function.Function;
 /**
  * Stratum protocol handler.
  *
- * <p>
+ * <p>Manages the lifecycle of a TCP connection according to a particular variant of the Stratum
+ * protocol.
  */
 public interface StratumProtocol {
 
