@@ -100,10 +100,10 @@ public class DatabaseMetadata {
   private static void writeToDirectory(
       final DatabaseMetadata databaseMetadata, final Path databaseDir) throws IOException {
     try {
-      DatabaseMetadata databaseMetadata1 =
+      final DatabaseMetadata curremtMetadata =
           MAPPER.readValue(getDefaultMetadataFile(databaseDir), DatabaseMetadata.class);
-      if (databaseMetadata1.maybePrivacyVersion().isPresent()) {
-        databaseMetadata.setPrivacyVersion(databaseMetadata1.getPrivacyVersion());
+      if (curremtMetadata.maybePrivacyVersion().isPresent()) {
+        databaseMetadata.setPrivacyVersion(curremtMetadata.getPrivacyVersion());
       }
       MAPPER.writeValue(getDefaultMetadataFile(databaseDir), databaseMetadata);
     } catch (FileNotFoundException fnfe) {
@@ -121,7 +121,7 @@ public class DatabaseMetadata {
     try {
       databaseMetadata = MAPPER.readValue(metadataFile, DatabaseMetadata.class);
     } catch (FileNotFoundException fnfe) {
-      databaseMetadata = new DatabaseMetadata(0);
+      databaseMetadata = new DatabaseMetadata(0, 0);
     } catch (JsonProcessingException jpe) {
       throw new IllegalStateException(
           String.format("Invalid metadata file %s", metadataFile.getAbsolutePath()), jpe);

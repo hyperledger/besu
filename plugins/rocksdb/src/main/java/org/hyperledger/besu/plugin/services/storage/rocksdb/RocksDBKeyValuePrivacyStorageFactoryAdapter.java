@@ -95,9 +95,7 @@ public class RocksDBKeyValuePrivacyStorageFactoryAdapter implements PrivacyKeyVa
     final int privacyDatabaseVersion;
     if (privacyDatabaseExists) {
       privacyDatabaseVersion =
-          DatabaseMetadata.lookUpFrom(databaseDir, dataDir)
-              .maybePrivacyVersion()
-              .orElse(DEFAULT_VERSION);
+          DatabaseMetadata.lookUpFrom(databaseDir, dataDir).maybePrivacyVersion().orElse(0);
       LOG.info(
           "Existing private database detected at {}. Version {}", dataDir, privacyDatabaseVersion);
     } else {

@@ -24,6 +24,7 @@ import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.DatabaseMetadata;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBFactoryConfiguration;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -46,6 +47,45 @@ public class RocksDBKeyValuePrivacyStorageFactoryAdapterTest {
   private final ObservableMetricsSystem metricsSystem = new NoOpMetricsSystem();
   private final List<SegmentIdentifier> segments = List.of();
   @Mock private SegmentIdentifier segment;
+
+  @Test
+  public void shouldDetectVersion0DatabaseIfNoMetadataFileFound() throws Exception {
+    final Path tempDataDir = temporaryFolder.newFolder().toPath().resolve("data");
+    final Path tempDatabaseDir = temporaryFolder.newFolder().toPath().resolve("db");
+    final Path tempPrivateDatabaseDir = tempDatabaseDir.resolve("private");
+    Files.createDirectories(tempPrivateDatabaseDir);
+    Files.createDirectories(tempDataDir);
+    Files.createFile(tempPrivateDatabaseDir.resolve("IDENTITY"));
+    Files.createFile(tempDatabaseDir.resolve("IDENTITY"));
+    when(commonConfiguration.getStoragePath()).thenReturn(tempDatabaseDir);
+    when(commonConfiguration.getDataPath()).thenReturn(tempDataDir);
+
+    final RocksDBKeyValuePrivacyStorageFactoryAdapter storageFactory =
+        new RocksDBKeyValuePrivacyStorageFactoryAdapter(
+            new RocksDBKeyValueStorageFactory(() -> rocksDbConfiguration, segments));
+
+    // Side effect is creation of the Metadata version file
+    storageFactory.create(segment, commonConfiguration, metricsSystem);
+
+    assertThat(
+            DatabaseMetadata.lookUpFrom(
+                    commonConfiguration.getStoragePath(), commonConfiguration.getDataPath())
+                .maybePrivacyVersion())
+        .isNotEmpty();
+
+    assertThat(
+            DatabaseMetadata.lookUpFrom(
+                    commonConfiguration.getStoragePath(), commonConfiguration.getDataPath())
+                .getVersion())
+        .isEqualTo(0);
+
+    assertThat(
+            DatabaseMetadata.lookUpFrom(
+                    commonConfiguration.getStoragePath(), commonConfiguration.getDataPath())
+                .maybePrivacyVersion()
+                .get())
+        .isEqualTo(0);
+  }
 
   @Test
   public void shouldCreateCorrectMetadataFileForLatestVersion() throws Exception {
