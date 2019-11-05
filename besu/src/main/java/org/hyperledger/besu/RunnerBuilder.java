@@ -36,7 +36,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterIdGenerat
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterRepository;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.method.JsonRpcMethodsFactory;
+import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketRequestHandler;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketService;
