@@ -80,7 +80,7 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
   }
 
   protected abstract Map<String, JsonRpcMethod> create(
-      PrivateTransactionHandler privateTransactionHandler, Enclave enclave);
+      final PrivateTransactionHandler privateTransactionHandler, final Enclave enclave);
 
   private PrivateMarkerTransactionFactory createPrivateMarkerTransactionFactory(
       final PrivacyParameters privacyParameters,

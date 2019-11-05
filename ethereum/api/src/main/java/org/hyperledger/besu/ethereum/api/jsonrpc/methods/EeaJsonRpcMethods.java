@@ -49,7 +49,7 @@ public class EeaJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
 
   @Override
   protected Map<String, JsonRpcMethod> create(
-      final PrivateTransactionHandler privateTransactionHandler, Enclave enclave) {
+      final PrivateTransactionHandler privateTransactionHandler, final Enclave enclave) {
     return mapOf(
         new EeaSendRawTransaction(privateTransactionHandler, getTransactionPool(), parameter),
         new PrivGetEeaTransactionCount(
