@@ -1,10 +1,25 @@
+/*
+ * Copyright ConsenSys AG.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package org.hyperledger.besu.ethereum.eth.manager;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.util.bytes.BytesValue;
-import org.junit.Test;
 
 import java.util.ArrayDeque;
 import java.util.Arrays;
@@ -12,12 +27,18 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.Test;
 
 public class ForkIdTest {
   private Long[] forksMainnet = {1150000L, 1920000L, 2463000L, 2675000L, 4370000L, 7280000L};
   private String mainnetGenHash =
       "0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3";
+
+  @Test
+  public void checkItFunctionsWithPresentBehavior() {
+    ForkId forkId = new ForkId(Hash.fromHexString(mainnetGenHash), null, null);
+    assertThat(forkId.peerCheck(Hash.fromHexString(mainnetGenHash))).isFalse();
+  }
 
   @Test
   public void checkCorrectMainnetForkIdHashesGenerated() {

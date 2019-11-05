@@ -1,4 +1,20 @@
+/*
+ * Copyright ConsenSys AG.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package org.hyperledger.besu.ethereum.eth.manager;
+
+import static org.hyperledger.besu.util.bytes.BytesValue.wrap;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Hash;
@@ -16,8 +32,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.zip.CRC32;
 
-import static org.hyperledger.besu.util.bytes.BytesValue.wrap;
-
 public class ForkId {
 
   private Hash genesisHash;
@@ -25,12 +39,20 @@ public class ForkId {
   private Long currentHead;
   private Long forkNext;
   private Long highestKnownFork = 0L;
+  private ForkIdEntry lastKnownEntry;
+  private boolean useForkId;
   private ArrayDeque<ForkIdEntry> forkAndHashList;
 
   public ForkId(final Hash genesisHash, final Set<Long> forks, final Long currentHead) {
     this.genesisHash = genesisHash;
     this.currentHead = currentHead;
-    forkAndHashList = collectForksAndHashes(forks, currentHead);
+    if(forks != null){
+      useForkId = true;
+      forkAndHashList = collectForksAndHashes(forks, currentHead);
+    } else {
+      useForkId = false;
+      forkAndHashList = new ArrayDeque<>();
+    }
   };
 
   public static ForkId buildCollection(
@@ -71,6 +93,15 @@ public class ForkId {
 
   public ArrayDeque<ForkIdEntry> getForkAndHashList() {
     return this.forkAndHashList;
+  }
+
+  public Hash getLatestForkId(){
+    System.out.println("USING FORK ID: " + useForkId); // todo remove dev item
+    if(useForkId){
+      return Hash.fromHexString(lastKnownEntry.hash);
+    } else {
+      return genesisHash;
+    }
   }
 
   public boolean peerCheck(final String forkHash, final Long peerNext) {
@@ -114,6 +145,7 @@ public class ForkId {
   public boolean peerCheck(final Bytes32 peerGenesisOrCheckSumHash) {
     return !peerGenesisOrCheckSumHash.equals(genesisHash);
   }
+
 
   private boolean isHashKnown(final String forkHash) {
     for (ForkIdEntry j : forkAndHashList) {
@@ -173,7 +205,8 @@ public class ForkId {
         // most recent fork
         forkList.add(new ForkIdEntry(getCurrentCrcHash(), forkBlockNumber));
         updateCrc(forkBlockNumber);
-        forkList.add(new ForkIdEntry(getCurrentCrcHash(), 0L));
+        lastKnownEntry = new ForkIdEntry(getCurrentCrcHash(), 0L);
+        forkList.add(lastKnownEntry);
         if (currentHead > forkBlockNumber) {
           this.forkNext = 0L;
         } else {

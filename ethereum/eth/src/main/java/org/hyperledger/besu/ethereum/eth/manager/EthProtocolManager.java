@@ -157,18 +157,18 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   }
 
   public EthProtocolManager(
-          final Blockchain blockchain,
-          final WorldStateArchive worldStateArchive,
-          final BigInteger networkId,
-          final List<PeerValidator> peerValidators,
-          final boolean fastSyncEnabled,
-          final int syncWorkers,
-          final int txWorkers,
-          final int computationWorkers,
-          final Clock clock,
-          final MetricsSystem metricsSystem,
-          final EthProtocolConfiguration ethereumWireProtocolConfiguration,
-          final List<Long> forks) {
+      final Blockchain blockchain,
+      final WorldStateArchive worldStateArchive,
+      final BigInteger networkId,
+      final List<PeerValidator> peerValidators,
+      final boolean fastSyncEnabled,
+      final int syncWorkers,
+      final int txWorkers,
+      final int computationWorkers,
+      final Clock clock,
+      final MetricsSystem metricsSystem,
+      final EthProtocolConfiguration ethereumWireProtocolConfiguration,
+      final List<Long> forks) {
     this.networkId = networkId;
     this.peerValidators = peerValidators;
     this.scheduler = new EthScheduler(syncWorkers, txWorkers, computationWorkers, metricsSystem);
@@ -290,7 +290,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
             networkId,
             blockchain.getChainHead().getTotalDifficulty(),
             blockchain.getChainHeadHash(),
-            genesisHash);
+            forkId.getLatestForkId());
     try {
       LOG.debug("Sending status message to {}.", peer);
       peer.send(status);
