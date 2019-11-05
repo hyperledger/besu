@@ -31,7 +31,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcPara
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.ApiGroupJsonRpcMethods;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 
-import java.util.Collection;
 import java.util.Map;
 
 public class IbftJsonRpcMethods extends ApiGroupJsonRpcMethods {
@@ -44,8 +43,8 @@ public class IbftJsonRpcMethods extends ApiGroupJsonRpcMethods {
   }
 
   @Override
-  protected boolean isWithin(Collection<RpcApi> apis) {
-    return apis.contains(IbftRpcApis.IBFT);
+  protected RpcApi getApiGroup() {
+    return IbftRpcApis.IBFT;
   }
 
   @Override

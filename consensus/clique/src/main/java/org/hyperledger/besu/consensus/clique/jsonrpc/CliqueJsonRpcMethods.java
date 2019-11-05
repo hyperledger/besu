@@ -35,7 +35,6 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
-import java.util.Collection;
 import java.util.Map;
 
 public class CliqueJsonRpcMethods extends ApiGroupJsonRpcMethods {
@@ -48,8 +47,8 @@ public class CliqueJsonRpcMethods extends ApiGroupJsonRpcMethods {
   }
 
   @Override
-  protected boolean isWithin(Collection<RpcApi> apis) {
-    return apis.contains(CliqueRpcApis.CLIQUE);
+  protected RpcApi getApiGroup() {
+    return CliqueRpcApis.CLIQUE;
   }
 
   @Override
