@@ -14,6 +14,7 @@ logging="INFO"
 node-private-key-file="./path/to/privateKey"
 
 # P2P network
+identity="PegaSysEng"
 p2p-enabled=true
 nat-method="NONE"
 discovery-enabled=false
@@ -84,6 +85,9 @@ miner-extra-data="0x444F4E27542050414E4943202120484F444C2C20484F444C2C20484F444C
 min-gas-price=1
 miner-stratum-host="0.0.0.0"
 miner-stratum-port=8008
+
+# Pruning
+pruning-enabled=true
 
 # Permissioning
 permissions-nodes-config-file-enabled=false

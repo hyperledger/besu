@@ -996,6 +996,16 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void identityValueTrueMustBeUsed() {
+    parseCommand("--identity", "test");
+
+    verify(mockRunnerBuilder.identityString(eq(Optional.of("test")))).build();
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
   public void p2pEnabledOptionValueTrueMustBeUsed() {
     parseCommand("--p2p-enabled", "true");
 
@@ -2343,10 +2353,43 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void pruningIsEnabledWhenSpecified() throws Exception {
+  public void pruningIsEnabledIfSyncModeIsFast() {
+    parseCommand("--sync-mode", "FAST");
+
+    verify(mockControllerBuilder).isPruningEnabled(true);
+    verify(mockControllerBuilder).build();
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void pruningIsDisabledIfSyncModeIsFull() {
+    parseCommand("--sync-mode", "FULL");
+
+    verify(mockControllerBuilder).isPruningEnabled(false);
+    verify(mockControllerBuilder).build();
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void pruningEnabledExplicitly() {
     parseCommand("--pruning-enabled");
 
     verify(mockControllerBuilder).isPruningEnabled(true);
+    verify(mockControllerBuilder).build();
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void pruningDisabledExplicitly() {
+    parseCommand("--pruning-enabled=false");
+
+    verify(mockControllerBuilder).isPruningEnabled(false);
     verify(mockControllerBuilder).build();
 
     assertThat(commandOutput.toString()).isEmpty();

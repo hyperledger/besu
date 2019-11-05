@@ -21,7 +21,7 @@ import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethodFactory;
+import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
@@ -53,7 +53,7 @@ public class BesuController<C> implements java.io.Closeable {
   private final SubProtocolConfiguration subProtocolConfiguration;
   private final KeyPair keyPair;
   private final Synchronizer synchronizer;
-  private final JsonRpcMethodFactory additionalJsonRpcMethodsFactory;
+  private final JsonRpcMethods additionalJsonRpcMethodsFactory;
 
   private final TransactionPool transactionPool;
   private final MiningCoordinator miningCoordinator;
@@ -75,7 +75,7 @@ public class BesuController<C> implements java.io.Closeable {
       final MiningCoordinator miningCoordinator,
       final PrivacyParameters privacyParameters,
       final MiningParameters miningParameters,
-      final JsonRpcMethodFactory additionalJsonRpcMethodsFactory,
+      final JsonRpcMethods additionalJsonRpcMethodsFactory,
       final KeyPair keyPair,
       final List<Closeable> closeables,
       final PluginServiceFactory additionalPluginServices) {
@@ -155,7 +155,7 @@ public class BesuController<C> implements java.io.Closeable {
 
   public Map<String, JsonRpcMethod> getAdditionalJsonRpcMethods(
       final Collection<RpcApi> enabledRpcApis) {
-    return additionalJsonRpcMethodsFactory.createJsonRpcMethods(enabledRpcApis);
+    return additionalJsonRpcMethodsFactory.create(enabledRpcApis);
   }
 
   public SyncState getSyncState() {
