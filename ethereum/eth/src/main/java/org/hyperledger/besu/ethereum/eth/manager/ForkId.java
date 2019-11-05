@@ -18,9 +18,13 @@ import static org.hyperledger.besu.util.bytes.BytesValue.wrap;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.eth.EthProtocol;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.util.bytes.Bytes32;
+import org.hyperledger.besu.util.bytes.BytesValue;
 import org.hyperledger.besu.util.bytes.BytesValues;
 
 import java.nio.charset.StandardCharsets;
@@ -40,42 +44,52 @@ public class ForkId {
   private Long forkNext;
   private Long highestKnownFork = 0L;
   private ForkIdEntry lastKnownEntry;
-//  private boolean useForkId;
+  private boolean useForkId;
   private ArrayDeque<ForkIdEntry> forkAndHashList;
 
-  public ForkId(final Hash genesisHash, final Set<Long> forks, final Long currentHead) {
+  public ForkId(
+      final Hash genesisHash,
+      final Set<Long> forks,
+      final Long currentHead,
+      final boolean useForkId) {
     this.genesisHash = genesisHash;
     this.currentHead = currentHead;
+    this.useForkId = useForkId;
     if (forks != null) {
-//      useForkId = true;
       forkAndHashList = collectForksAndHashes(forks, currentHead);
     } else {
-//      useForkId = false;
       forkAndHashList = new ArrayDeque<>();
     }
   };
 
   public static ForkId buildCollection(
-      final Hash genesisHash, final List<Long> forks, final Blockchain blockchain) {
+      final Hash genesisHash,
+      final List<Long> forks,
+      final Blockchain blockchain,
+      final List<Capability> caps) {
     if (forks == null) {
-      return new ForkId(genesisHash, null, blockchain.getChainHeadBlockNumber());
+      return new ForkId(genesisHash, null, blockchain.getChainHeadBlockNumber(), false);
     } else {
       Set<Long> forkSet = new LinkedHashSet<>(forks);
-      return new ForkId(genesisHash, forkSet, blockchain.getChainHeadBlockNumber());
+      return new ForkId(
+          genesisHash,
+          forkSet,
+          blockchain.getChainHeadBlockNumber(),
+          caps.contains(Capability.create(EthProtocol.NAME, EthProtocol.EthVersion.V64)));
     }
   };
 
   public static ForkId buildCollection(final Hash genesisHash, final List<Long> forks) {
     if (forks == null) {
-      return new ForkId(genesisHash, null, Long.MAX_VALUE);
+      return new ForkId(genesisHash, null, Long.MAX_VALUE, false);
     } else {
       Set<Long> forkSet = new LinkedHashSet<>(forks);
-      return new ForkId(genesisHash, forkSet, Long.MAX_VALUE);
+      return new ForkId(genesisHash, forkSet, Long.MAX_VALUE, true);
     }
   };
 
   public static ForkId buildCollection(final Hash genesisHash) {
-    return new ForkId(genesisHash, null, Long.MAX_VALUE);
+    return new ForkId(genesisHash, null, Long.MAX_VALUE, false);
   };
 
   public static ForkIdEntry readFrom(final RLPInput in) {
@@ -95,13 +109,13 @@ public class ForkId {
     return this.forkAndHashList;
   }
 
-  public Hash getLatestForkId() {
+  public Hash getLatestForkId(final int protocolVersion) {
     // TODO: implement handling for forkID in status message
-//    if (useForkId) {
-//      return Hash.fromHexString(lastKnownEntry.hash);
-//    } else {
+    if (useForkId && protocolVersion > 63) {
+      return Hash.fromHexString(lastKnownEntry.hash);
+    } else {
       return genesisHash;
-//    }
+    }
   }
 
   public boolean peerCheck(final String forkHash, final Long peerNext) {
@@ -240,10 +254,18 @@ public class ForkId {
   public static class ForkIdEntry {
     String hash;
     long next;
+    BytesValue forkIdRLP;
 
     public ForkIdEntry(final String hash, final long next) {
       this.hash = hash;
       this.next = next;
+      createForkIdRLP();
+    }
+
+    public void createForkIdRLP() {
+      BytesValueRLPOutput out = new BytesValueRLPOutput();
+      out.writeList(asList(), ForkId.ForkIdEntry::writeTo);
+      forkIdRLP = out.encoded();
     }
 
     public void writeTo(final RLPOutput out) {

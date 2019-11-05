@@ -179,7 +179,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     genesisHash = blockchain.getBlockHashByNumber(0L).get();
 
     // todo: check about modification of the above and related constructor
-    forkId = ForkId.buildCollection(genesisHash, forks, blockchain);
+    forkId = ForkId.buildCollection(genesisHash, forks, blockchain, getSupportedCapabilities());
 
     ethPeers = new EthPeers(getSupportedProtocol(), clock, metricsSystem);
     ethMessages = new EthMessages();
@@ -290,7 +290,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
             networkId,
             blockchain.getChainHead().getTotalDifficulty(),
             blockchain.getChainHeadHash(),
-            forkId.getLatestForkId());
+            forkId.getLatestForkId(cap.getVersion()));
     try {
       LOG.debug("Sending status message to {}.", peer);
       peer.send(status);

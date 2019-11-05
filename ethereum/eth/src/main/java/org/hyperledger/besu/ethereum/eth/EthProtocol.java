@@ -120,5 +120,6 @@ public class EthProtocol implements SubProtocol {
   public static class EthVersion {
     public static final int V62 = 62;
     public static final int V63 = 63;
+    public static final int V64 = 64;
   }
 }

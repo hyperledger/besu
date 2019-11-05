@@ -36,7 +36,7 @@ public class ForkIdTest {
 
   @Test
   public void checkItFunctionsWithPresentBehavior() {
-    ForkId forkId = new ForkId(Hash.fromHexString(mainnetGenHash), null, null);
+    ForkId forkId = new ForkId(Hash.fromHexString(mainnetGenHash), null, null, false);
     assertThat(forkId.peerCheck(Hash.fromHexString(mainnetGenHash))).isFalse();
   }
 
@@ -122,7 +122,7 @@ public class ForkIdTest {
     //  {7987396, ID{Hash: 0x668db0af, Next: 0}, nil},
     List<Long> list = Arrays.asList(forksMainnet);
     Set<Long> forkSet = new LinkedHashSet<>(list);
-    ForkId forkId = new ForkId(Hash.fromHexString(mainnetGenHash), forkSet, 7987396L);
+    ForkId forkId = new ForkId(Hash.fromHexString(mainnetGenHash), forkSet, 7987396L, true);
     Boolean result = forkId.peerCheck("0x668db0af", 0L);
     assertThat(result).isTrue();
   }
@@ -134,7 +134,7 @@ public class ForkIdTest {
     //	{7987396, ID{Hash: 0x668db0af, Next: math.MaxUint64}, nil},
     List<Long> list = Arrays.asList(forksMainnet);
     Set<Long> forkSet = new LinkedHashSet<>(list);
-    ForkId forkId = new ForkId(Hash.fromHexString(mainnetGenHash), forkSet, 7987396L);
+    ForkId forkId = new ForkId(Hash.fromHexString(mainnetGenHash), forkSet, 7987396L, true);
     Boolean result = forkId.peerCheck("0x668db0af", Long.MAX_VALUE);
     assertThat(result).isTrue();
   }
@@ -148,7 +148,7 @@ public class ForkIdTest {
     //	{7279999, ID{Hash: 0xa00bc324, Next: 0}, nil},
     List<Long> list = Arrays.asList(forksMainnet);
     Set<Long> forkSet = new LinkedHashSet<>(list);
-    ForkId forkId = new ForkId(Hash.fromHexString(mainnetGenHash), forkSet, 7279999L);
+    ForkId forkId = new ForkId(Hash.fromHexString(mainnetGenHash), forkSet, 7279999L, true);
     Boolean result = forkId.peerCheck("0xa00bc324", 0L);
     assertThat(result).isTrue();
   }
@@ -161,7 +161,7 @@ public class ForkIdTest {
     //	{7279999, ID{Hash: 0xa00bc324, Next: 7280000}, nil},
     List<Long> list = Arrays.asList(forksMainnet);
     Set<Long> forkSet = new LinkedHashSet<>(list);
-    ForkId forkId = new ForkId(Hash.fromHexString(mainnetGenHash), forkSet, 7279999L);
+    ForkId forkId = new ForkId(Hash.fromHexString(mainnetGenHash), forkSet, 7279999L, true);
     Boolean result = forkId.peerCheck("0xa00bc324", 7280000L);
     assertThat(result).isTrue();
   }
@@ -175,7 +175,7 @@ public class ForkIdTest {
     //	{7279999, ID{Hash: 0xa00bc324, Next: math.MaxUint64}, nil},
     List<Long> list = Arrays.asList(forksMainnet);
     Set<Long> forkSet = new LinkedHashSet<>(list);
-    ForkId forkId = new ForkId(Hash.fromHexString(mainnetGenHash), forkSet, 7279999L);
+    ForkId forkId = new ForkId(Hash.fromHexString(mainnetGenHash), forkSet, 7279999L, true);
     Boolean result = forkId.peerCheck("0xa00bc324", Long.MAX_VALUE);
     assertThat(result).isTrue();
   }
@@ -187,7 +187,7 @@ public class ForkIdTest {
     //	{7987396, ID{Hash: 0x668db0af, Next: 7280000}, nil},
     List<Long> list = Arrays.asList(forksMainnet);
     Set<Long> forkSet = new LinkedHashSet<>(list);
-    ForkId forkId = new ForkId(Hash.fromHexString(mainnetGenHash), forkSet, 7987396L);
+    ForkId forkId = new ForkId(Hash.fromHexString(mainnetGenHash), forkSet, 7987396L, true);
     Boolean result = forkId.peerCheck("0x668db0af", 7280000L);
     assertThat(result).isTrue();
   }
@@ -200,7 +200,7 @@ public class ForkIdTest {
     //	{7987396, ID{Hash: 0x3edd5b10, Next: 4370000}, nil},
     List<Long> list = Arrays.asList(forksMainnet);
     Set<Long> forkSet = new LinkedHashSet<>(list);
-    ForkId forkId = new ForkId(Hash.fromHexString(mainnetGenHash), forkSet, 7987396L);
+    ForkId forkId = new ForkId(Hash.fromHexString(mainnetGenHash), forkSet, 7987396L, true);
     Boolean result = forkId.peerCheck("0x3edd5b10", 4370000L);
     assertThat(result).isTrue();
   }
@@ -211,7 +211,7 @@ public class ForkIdTest {
     //	{7279999, ID{Hash: 0x668db0af, Next: 0}, nil},
     List<Long> list = Arrays.asList(forksMainnet);
     Set<Long> forkSet = new LinkedHashSet<>(list);
-    ForkId forkId = new ForkId(Hash.fromHexString(mainnetGenHash), forkSet, 7279999L);
+    ForkId forkId = new ForkId(Hash.fromHexString(mainnetGenHash), forkSet, 7279999L, true);
     Boolean result = forkId.peerCheck("0x668db0af", 0L);
     assertThat(result).isTrue();
   }
@@ -223,7 +223,7 @@ public class ForkIdTest {
     //	{4369999, ID{Hash: 0xa00bc324, Next: 0}, nil},
     List<Long> list = Arrays.asList(forksMainnet);
     Set<Long> forkSet = new LinkedHashSet<>(list);
-    ForkId forkId = new ForkId(Hash.fromHexString(mainnetGenHash), forkSet, 4369999L);
+    ForkId forkId = new ForkId(Hash.fromHexString(mainnetGenHash), forkSet, 4369999L, true);
     Boolean result = forkId.peerCheck("0xa00bc324", 0L);
     assertThat(result).isTrue();
   }
@@ -235,7 +235,7 @@ public class ForkIdTest {
     //	{7987396, ID{Hash: 0xa00bc324, Next: 0}, ErrRemoteStale},
     List<Long> list = Arrays.asList(forksMainnet);
     Set<Long> forkSet = new LinkedHashSet<>(list);
-    ForkId forkId = new ForkId(Hash.fromHexString(mainnetGenHash), forkSet, 7987396L);
+    ForkId forkId = new ForkId(Hash.fromHexString(mainnetGenHash), forkSet, 7987396L, true);
     Boolean result = forkId.peerCheck("0xa00bc324", 0L);
     assertThat(result).isFalse();
   }
@@ -247,7 +247,7 @@ public class ForkIdTest {
     //	{7987396, ID{Hash: 0x5cddc0e1, Next: 0}, ErrLocalIncompatibleOrStale},
     List<Long> list = Arrays.asList(forksMainnet);
     Set<Long> forkSet = new LinkedHashSet<>(list);
-    ForkId forkId = new ForkId(Hash.fromHexString(mainnetGenHash), forkSet, 7987396L);
+    ForkId forkId = new ForkId(Hash.fromHexString(mainnetGenHash), forkSet, 7987396L, true);
     Boolean result = forkId.peerCheck("0x5cddc0e1", 0L);
     assertThat(result).isFalse();
   }
@@ -259,7 +259,7 @@ public class ForkIdTest {
     //	{7279999, ID{Hash: 0x5cddc0e1, Next: 0}, ErrLocalIncompatibleOrStale},
     List<Long> list = Arrays.asList(forksMainnet);
     Set<Long> forkSet = new LinkedHashSet<>(list);
-    ForkId forkId = new ForkId(Hash.fromHexString(mainnetGenHash), forkSet, 7279999L);
+    ForkId forkId = new ForkId(Hash.fromHexString(mainnetGenHash), forkSet, 7279999L, true);
     Boolean result = forkId.peerCheck("0x5cddc0e1", 0L);
     assertThat(result).isFalse();
   }
@@ -270,7 +270,7 @@ public class ForkIdTest {
     //	{7987396, ID{Hash: 0xafec6b27, Next: 0}, ErrLocalIncompatibleOrStale},
     List<Long> list = Arrays.asList(forksMainnet);
     Set<Long> forkSet = new LinkedHashSet<>(list);
-    ForkId forkId = new ForkId(Hash.fromHexString(mainnetGenHash), forkSet, 7987396L);
+    ForkId forkId = new ForkId(Hash.fromHexString(mainnetGenHash), forkSet, 7987396L, true);
     Boolean result = forkId.peerCheck("0xafec6b27", 0L);
     assertThat(result).isFalse();
   }
