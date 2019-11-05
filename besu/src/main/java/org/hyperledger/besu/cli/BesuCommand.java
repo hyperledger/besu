@@ -580,7 +580,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @SuppressWarnings("FieldMayBeFinal") // Because PicoCLI requires Strings to not be final.
   @Option(
       hidden = true,
-      names = {"--Xstratum-extranonce"},
+      names = {"--Xminer-stratum-extranonce"},
       description = "Extranonce for Stratum network miners (default: ${DEFAULT-VALUE})")
   private String stratumExtranonce = "080c";
 
