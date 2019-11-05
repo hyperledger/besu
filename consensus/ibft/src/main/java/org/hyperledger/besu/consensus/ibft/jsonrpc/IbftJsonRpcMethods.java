@@ -28,50 +28,38 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.method.JsonRpcMethodFactory;
+import org.hyperledger.besu.ethereum.api.jsonrpc.methods.ApiGroupJsonRpcMethods;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 
-public class IbftJsonRpcMethodsFactory implements JsonRpcMethodFactory {
+public class IbftJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private final JsonRpcParameter jsonRpcParameter = new JsonRpcParameter();
   private final ProtocolContext<IbftContext> context;
 
-  public IbftJsonRpcMethodsFactory(final ProtocolContext<IbftContext> context) {
+  public IbftJsonRpcMethods(final ProtocolContext<IbftContext> context) {
     this.context = context;
   }
 
   @Override
-  public Map<String, JsonRpcMethod> createJsonRpcMethods(final Collection<RpcApi> jsonRpcApis) {
-    final Map<String, JsonRpcMethod> rpcMethods = new HashMap<>();
-
-    if (jsonRpcApis.contains(IbftRpcApis.IBFT)) {
-      final BlockchainQueries blockchainQueries =
-          new BlockchainQueries(context.getBlockchain(), context.getWorldStateArchive());
-      final VoteProposer voteProposer = context.getConsensusState().getVoteProposer();
-      final BlockInterface blockInterface = new IbftBlockInterface();
-
-      addMethods(
-          rpcMethods,
-          new IbftProposeValidatorVote(voteProposer, jsonRpcParameter),
-          new IbftGetValidatorsByBlockNumber(blockchainQueries, blockInterface, jsonRpcParameter),
-          new IbftDiscardValidatorVote(voteProposer, jsonRpcParameter),
-          new IbftGetValidatorsByBlockHash(
-              context.getBlockchain(), blockInterface, jsonRpcParameter),
-          new IbftGetSignerMetrics(blockInterface, blockchainQueries, jsonRpcParameter),
-          new IbftGetPendingVotes(voteProposer));
-    }
-
-    return rpcMethods;
+  protected RpcApi getApiGroup() {
+    return IbftRpcApis.IBFT;
   }
 
-  private void addMethods(
-      final Map<String, JsonRpcMethod> methods, final JsonRpcMethod... rpcMethods) {
-    for (final JsonRpcMethod rpcMethod : rpcMethods) {
-      methods.put(rpcMethod.getName(), rpcMethod);
-    }
+  @Override
+  protected Map<String, JsonRpcMethod> create() {
+    final BlockchainQueries blockchainQueries =
+        new BlockchainQueries(context.getBlockchain(), context.getWorldStateArchive());
+    final VoteProposer voteProposer = context.getConsensusState().getVoteProposer();
+    final BlockInterface blockInterface = new IbftBlockInterface();
+
+    return mapOf(
+        new IbftProposeValidatorVote(voteProposer, jsonRpcParameter),
+        new IbftGetValidatorsByBlockNumber(blockchainQueries, blockInterface, jsonRpcParameter),
+        new IbftDiscardValidatorVote(voteProposer, jsonRpcParameter),
+        new IbftGetValidatorsByBlockHash(context.getBlockchain(), blockInterface, jsonRpcParameter),
+        new IbftGetSignerMetrics(blockInterface, blockchainQueries, jsonRpcParameter),
+        new IbftGetPendingVotes(voteProposer));
   }
 }
