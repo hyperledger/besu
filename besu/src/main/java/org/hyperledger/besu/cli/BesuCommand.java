@@ -1107,7 +1107,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           .transactionPoolConfiguration(buildTransactionPoolConfiguration())
           .nodePrivateKeyFile(nodePrivateKeyFile())
           .metricsSystem(metricsSystem.get())
-          .storageProvider(keyStorageProvider(keyValueStorageName))
           .privacyParameters(privacyParameters())
           .clock(Clock.systemUTC())
           .isRevertReasonEnabled(isRevertReasonEnabled)
