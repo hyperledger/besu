@@ -207,6 +207,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   // CLI options defined by user at runtime.
   // Options parsing is done with CLI library Picocli https://picocli.info/
 
+  @Option(
+      names = "--identity",
+      paramLabel = "<String>",
+      description = "Identification for this node in the Client ID",
+      arity = "1")
+  private final Optional<String> identityString = Optional.empty();
+
   // Completely disables P2P within Besu.
   @Option(
       names = {"--p2p-enabled"},
@@ -580,10 +587,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   @Option(
       names = {"--pruning-enabled"},
-      hidden = true,
       description =
-          "Enable pruning of world state of blocks older than the retention period (default: ${DEFAULT-VALUE})")
-  private final Boolean isPruningEnabled = false;
+          "Enable pruning of world state of blocks older than the retention period (default: true if fast sync is enabled, false otherwise)")
+  private Boolean pruningOverride;
 
   @Option(
       names = {"--pruning-blocks-retained"},
@@ -786,7 +792,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   public void run() {
     try {
       prepareLogging();
-      logger.info("Starting Besu version: {}", BesuInfo.version());
+      logger.info("Starting Besu version: {}", BesuInfo.nodeName(identityString));
       validateOptions().configure().controller().startPlugins().startSynchronization();
     } catch (final Exception e) {
       throw new ParameterException(this.commandLine, e.getMessage(), e);
@@ -846,6 +852,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     commandLine.registerConverter(Wei.class, (arg) -> Wei.of(Long.parseUnsignedLong(arg)));
     commandLine.registerConverter(PositiveNumber.class, PositiveNumber::fromString);
     commandLine.registerConverter(Hash.class, Hash::fromHexString);
+    commandLine.registerConverter(Optional.class, Optional::of);
 
     metricCategoryConverter.addCategories(BesuMetricCategory.class);
     metricCategoryConverter.addCategories(StandardMetricCategory.class);
@@ -1004,7 +1011,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         logger,
         commandLine,
         "--pruning-enabled",
-        !isPruningEnabled,
+        !isPruningEnabled(),
         asList("--pruning-block-confirmations", "--pruning-blocks-retained"));
   }
 
@@ -1080,7 +1087,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           .clock(Clock.systemUTC())
           .isRevertReasonEnabled(isRevertReasonEnabled)
           .storageProvider(keyStorageProvider(keyValueStorageName))
-          .isPruningEnabled(isPruningEnabled)
+          .isPruningEnabled(isPruningEnabled())
           .pruningConfiguration(buildPruningConfiguration())
           .genesisConfigOverrides(genesisConfigOverrides)
           .targetGasLimit(targetGasLimit == null ? Optional.empty() : Optional.of(targetGasLimit))
@@ -1367,6 +1374,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return new PruningConfiguration(pruningBlockConfirmations, pruningBlocksRetained);
   }
 
+  private boolean isPruningEnabled() {
+    return Optional.ofNullable(pruningOverride).orElse(syncMode == SyncMode.FAST);
+  }
+
   // Blockchain synchronisation from peers.
   private void synchronize(
       final BesuController<?> controller,
@@ -1413,6 +1424,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .metricsSystem(metricsSystem)
             .metricsConfiguration(metricsConfiguration)
             .staticNodes(staticNodes)
+            .identityString(identityString)
             .build();
 
     addShutdownHook(runner);
