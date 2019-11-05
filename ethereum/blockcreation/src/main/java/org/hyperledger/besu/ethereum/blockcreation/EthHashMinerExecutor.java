@@ -32,7 +32,7 @@ import java.util.function.Function;
 public class EthHashMinerExecutor extends AbstractMinerExecutor<Void, EthHashBlockMiner> {
 
   private volatile Optional<Address> coinbase;
-  private boolean cpuMiningEnabled;
+  private boolean stratumMiningEnabled;
 
   public EthHashMinerExecutor(
       final ProtocolContext<Void> protocolContext,
@@ -69,7 +69,10 @@ public class EthHashMinerExecutor extends AbstractMinerExecutor<Void, EthHashBlo
       final BlockHeader parentHeader) {
     final EthHashSolver solver =
         new EthHashSolver(
-            new RandomNonceGenerator(), new EthHasher.Light(), cpuMiningEnabled, ethHashObservers);
+            new RandomNonceGenerator(),
+            new EthHasher.Light(),
+            stratumMiningEnabled,
+            ethHashObservers);
     final Function<BlockHeader, EthHashBlockCreator> blockCreator =
         (header) ->
             new EthHashBlockCreator(
@@ -95,8 +98,8 @@ public class EthHashMinerExecutor extends AbstractMinerExecutor<Void, EthHashBlo
     }
   }
 
-  void setCpuMiningEnabled(final boolean cpuMiningEnabled) {
-    this.cpuMiningEnabled = cpuMiningEnabled;
+  void setStratumMiningEnabled(final boolean stratumMiningEnabled) {
+    this.stratumMiningEnabled = stratumMiningEnabled;
   }
 
   @Override

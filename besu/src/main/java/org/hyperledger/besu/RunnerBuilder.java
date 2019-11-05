@@ -358,7 +358,7 @@ public class RunnerBuilder {
 
     final MiningParameters miningParameters = besuController.getMiningParameters();
     Optional<StratumServer> stratumServer = Optional.empty();
-    if (miningParameters.isMiningEnabled()) {
+    if (miningParameters.isStratumMiningEnabled()) {
       stratumServer =
           Optional.of(
               new StratumServer(

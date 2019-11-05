@@ -81,18 +81,18 @@ public class EthHashSolver {
   private final Iterable<Long> nonceGenerator;
   private final EthHasher ethHasher;
   private volatile long hashesPerSecond = NO_MINING_CONDUCTED;
-  private final Boolean cpuMiningEnabled;
+  private final Boolean stratumMiningEnabled;
   private final Subscribers<EthHashObserver> ethHashObservers;
   private volatile Optional<EthHashSolverJob> currentJob = Optional.empty();
 
   public EthHashSolver(
       final Iterable<Long> nonceGenerator,
       final EthHasher ethHasher,
-      final Boolean cpuMiningEnabled,
+      final Boolean stratumMiningEnabled,
       final Subscribers<EthHashObserver> ethHashObservers) {
     this.nonceGenerator = nonceGenerator;
     this.ethHasher = ethHasher;
-    this.cpuMiningEnabled = cpuMiningEnabled;
+    this.stratumMiningEnabled = stratumMiningEnabled;
     this.ethHashObservers = ethHashObservers;
     ethHashObservers.forEach(observer -> observer.setSubmitWorkCallback(this::submitSolution));
   }
@@ -100,10 +100,10 @@ public class EthHashSolver {
   public EthHashSolution solveFor(final EthHashSolverJob job)
       throws InterruptedException, ExecutionException {
     currentJob = Optional.of(job);
-    if (cpuMiningEnabled) {
-      findValidNonce();
-    } else {
+    if (stratumMiningEnabled) {
       ethHashObservers.forEach(observer -> observer.newJob(job.inputs));
+    } else {
+      findValidNonce();
     }
     return currentJob.get().getSolution();
   }

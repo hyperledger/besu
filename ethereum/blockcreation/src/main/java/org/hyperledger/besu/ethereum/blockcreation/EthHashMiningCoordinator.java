@@ -45,8 +45,8 @@ public class EthHashMiningCoordinator extends AbstractMiningCoordinator<Void, Et
     executor.setCoinbase(coinbase);
   }
 
-  public void setCpuMiningEnabled(final boolean cpuMiningEnabled) {
-    executor.setCpuMiningEnabled(cpuMiningEnabled);
+  public void setStratumMiningEnabled(final boolean stratumMiningEnabled) {
+    executor.setStratumMiningEnabled(stratumMiningEnabled);
   }
 
   @Override

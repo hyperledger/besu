@@ -25,7 +25,7 @@ public class MiningParameters {
   private final Wei minTransactionGasPrice;
   private final BytesValue extraData;
   private final boolean enabled;
-  private final boolean cpuMiningEnabled;
+  private final boolean stratumMiningEnabled;
   private final String stratumNetworkInterface;
   private final int stratumPort;
   private final String stratumExtranonce;
@@ -43,7 +43,7 @@ public class MiningParameters {
       final Wei minTransactionGasPrice,
       final BytesValue extraData,
       final boolean enabled,
-      final boolean cpuMiningEnabled,
+      final boolean stratumMiningEnabled,
       final String stratumNetworkInterface,
       final int stratumPort,
       final String stratumExtranonce) {
@@ -51,7 +51,7 @@ public class MiningParameters {
     this.minTransactionGasPrice = minTransactionGasPrice;
     this.extraData = extraData;
     this.enabled = enabled;
-    this.cpuMiningEnabled = cpuMiningEnabled;
+    this.stratumMiningEnabled = stratumMiningEnabled;
     this.stratumNetworkInterface = stratumNetworkInterface;
     this.stratumPort = stratumPort;
     this.stratumExtranonce = stratumExtranonce;
@@ -73,8 +73,8 @@ public class MiningParameters {
     return enabled;
   }
 
-  public boolean isCpuMiningEnabled() {
-    return cpuMiningEnabled;
+  public boolean isStratumMiningEnabled() {
+    return stratumMiningEnabled;
   }
 
   public String getStratumNetworkInterface() {
@@ -99,7 +99,7 @@ public class MiningParameters {
         && Objects.equals(minTransactionGasPrice, that.minTransactionGasPrice)
         && Objects.equals(extraData, that.extraData)
         && Objects.equals(enabled, that.enabled)
-        && Objects.equals(cpuMiningEnabled, that.cpuMiningEnabled)
+        && Objects.equals(stratumMiningEnabled, that.stratumMiningEnabled)
         && Objects.equals(stratumNetworkInterface, that.stratumNetworkInterface)
         && Objects.equals(stratumExtranonce, that.stratumExtranonce);
   }
@@ -111,7 +111,7 @@ public class MiningParameters {
         minTransactionGasPrice,
         extraData,
         enabled,
-        cpuMiningEnabled,
+        stratumMiningEnabled,
         stratumNetworkInterface,
         stratumPort,
         stratumExtranonce);
@@ -128,8 +128,8 @@ public class MiningParameters {
         + extraData
         + ", enabled="
         + enabled
-        + ", cpuMiningEnabled="
-        + cpuMiningEnabled
+        + ", stratumMiningEnabled="
+        + stratumMiningEnabled
         + ", stratumNetworkInterface='"
         + stratumNetworkInterface
         + '\''
