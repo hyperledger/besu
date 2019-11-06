@@ -116,18 +116,8 @@ public class ProtocolScheduleBuilder<C> {
             config.getContractSizeLimit(), config.getEvmStackSize()));
     addProtocolSpec(
         protocolSchedule,
-        config.getEcip1015BlockNumber(),
-        ClassicProtocolSpecs.tangerineWhistleDefinition(
-            chainId, config.getContractSizeLimit(), config.getEvmStackSize()));
-    addProtocolSpec(
-        protocolSchedule,
         config.getSpuriousDragonBlockNumber(),
         MainnetProtocolSpecs.spuriousDragonDefinition(
-            chainId, config.getContractSizeLimit(), config.getEvmStackSize()));
-    addProtocolSpec(
-        protocolSchedule,
-        config.getDieHardBlockNumber(),
-        ClassicProtocolSpecs.dieHardDefinition(
             chainId, config.getContractSizeLimit(), config.getEvmStackSize()));
     addProtocolSpec(
         protocolSchedule,
@@ -161,6 +151,18 @@ public class ProtocolScheduleBuilder<C> {
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
             isRevertReasonEnabled));
+
+    // specs for Classic network
+    addProtocolSpec(
+        protocolSchedule,
+        config.getEcip1015BlockNumber(),
+        ClassicProtocolSpecs.tangerineWhistleDefinition(
+            chainId, config.getContractSizeLimit(), config.getEvmStackSize()));
+    addProtocolSpec(
+        protocolSchedule,
+        config.getDieHardBlockNumber(),
+        ClassicProtocolSpecs.dieHardDefinition(
+            chainId, config.getContractSizeLimit(), config.getEvmStackSize()));
     addProtocolSpec(
         protocolSchedule,
         config.getDefuseDifficultyBombBlockNumber(),
