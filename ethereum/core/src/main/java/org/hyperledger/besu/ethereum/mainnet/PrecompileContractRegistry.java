@@ -27,11 +27,6 @@ public class PrecompileContractRegistry {
   }
 
   public PrecompiledContract get(final Address address, final int contractAccountVersion) {
-    // TODO SIDECHAINS is this code needed????  START
-    if (address.equals(Address.fromHexString("0xfa"))) {
-      return precompiles.get(Address.fromHexString("0xa"), contractAccountVersion);
-    }
-    // TODO SIDECHAINS is this code needed????  END
     return precompiles.get(address, contractAccountVersion);
   }
 

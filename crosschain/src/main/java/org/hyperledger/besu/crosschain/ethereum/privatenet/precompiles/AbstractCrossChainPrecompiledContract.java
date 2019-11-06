@@ -67,13 +67,12 @@ public abstract class AbstractCrossChainPrecompiledContract extends AbstractPrec
         extractParameter(
             input, actualLengthOfFunctionAndParameters.intValue() - functionSignatureHashLength);
     if (this.offset != input.size()) {
-      // TODO: We need to call the precompile with only an extra 4 bytes, and not an extra 32 bytes.
-      // TODO: While this log message is still appearing, we know we have something to fix.
-      LOG.info(
-          "Actual parameter was longer than needed: Needed: "
+      LOG.error(
+          "Actual parameter did not match required length: Needed: "
               + this.offset
               + ", Actual: "
               + input.size());
+      return null;
     }
 
     // Fetch the transaction which is the context of this pre-compile execution.

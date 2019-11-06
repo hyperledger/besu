@@ -33,6 +33,11 @@ public class CrosschainPrecompiledContractRegistries {
         Account.DEFAULT_VERSION,
         new CrossChainSubViewPrecompiledContract(
             precompiledContractConfiguration.getGasCalculator()));
+    registry.put(
+        Address.CROSSCHAIN_GETINFO,
+        Account.DEFAULT_VERSION,
+        new CrosschainGetInfoPrecompiledContract(
+            precompiledContractConfiguration.getGasCalculator()));
     return registry;
   }
 }
