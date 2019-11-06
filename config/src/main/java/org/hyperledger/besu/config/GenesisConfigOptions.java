@@ -63,4 +63,6 @@ public interface GenesisConfigOptions {
   OptionalInt getEvmStackSize();
 
   Map<String, Object> asMap();
+
+  CustomForksConfigOptions getCustomForks();
 }
