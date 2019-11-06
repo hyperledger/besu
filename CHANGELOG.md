@@ -1,13 +1,42 @@
 # Changelog
 
-### Java 11 Required from v1.2
+## Istanbul Compatibility
 
-From v1.2, Besu requires Java 11.  Besu on Java 8 is no longer supported.
+For compatibility with Ethereum Istanbul upgrade, use v1.3.4 or later. 
 
-### Docker Image Migration 
+## Pruning 
 
-In v1.2, we removed the entry-point script from our Docker image. Refer to the [migration guide](https://besu.hyperledger.org/en/latest/HowTo/Get-Started/Migration-Docker/)
-for information on options that were previously automatically added to the Besu command line. 
+Pruning cannot be used in networks using private transactions. 
+
+### 1.3.4 
+
+- Reverted _Enable pruning by default for fast sync (#135)_ [\#164](https://github.com/hyperledger/besu/pull/164)
+
+### 1.3.3
+
+### Technical Improvements 
+
+- Add --identity flag for client identification in node browsers [\#150](https://github.com/hyperledger/besu/pull/150) 
+- Istanbul Mainnet Block [\#145](https://github.com/hyperledger/besu/pull/150) 
+- Add priv\_getEeaTransactionCount [\#110](https://github.com/hyperledger/besu/pull/110) 
+
+### Additions and Improvements
+
+- Redesign of how JsonRpcMethods are created [\#159](https://github.com/hyperledger/besu/pull/159) 
+- Moving JsonRpcMethods classes into the same package, prior to refactor [\#154](https://github.com/hyperledger/besu/pull/154) 
+- Reflect default logging in CLI help [\#148](https://github.com/hyperledger/besu/pull/148) 
+- Handle zero port better in NAT [\#147](https://github.com/hyperledger/besu/pull/147) 
+- Rework how filter and log query parameters are created/used [\#146](https://github.com/hyperledger/besu/pull/146) 
+- Don't generate shutdown tasks in controller [\#141](https://github.com/hyperledger/besu/pull/141) 
+- Ibft queries [\#138](https://github.com/hyperledger/besu/pull/138) 
+- Enable pruning by default for fast sync [\#135](https://github.com/hyperledger/besu/pull/135) 
+- Ensure spotless runs in CI [\#132](https://github.com/hyperledger/besu/pull/132) 
+- Add more logging around peer disconnects [\#131](https://github.com/hyperledger/besu/pull/131) 
+- Repair EthGetLogs returning incorrect results [\#128](https://github.com/hyperledger/besu/pull/128) 
+- Use Bloombits for Logs queries [\#127](https://github.com/hyperledger/besu/pull/127)
+- Improve message when extraData missing [\#121](https://github.com/hyperledger/besu/pull/121) 
+- Fix miner startup logic [\#104](https://github.com/hyperledger/besu/pull/104) 
+- Support log reordring from reorgs in `LogSubscriptionService` [\#86](https://github.com/hyperledger/besu/pull/86) 
 
 ### 1.3.2 
 

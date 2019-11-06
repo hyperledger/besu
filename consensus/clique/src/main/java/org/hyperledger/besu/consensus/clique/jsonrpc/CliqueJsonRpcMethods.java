@@ -29,56 +29,46 @@ import org.hyperledger.besu.consensus.common.VoteTallyUpdater;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethodFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.methods.ApiGroupJsonRpcMethods;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 
-public class CliqueJsonRpcMethodsFactory implements JsonRpcMethodFactory {
+public class CliqueJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
+  private final JsonRpcParameter parameter = new JsonRpcParameter();
   private final ProtocolContext<CliqueContext> context;
 
-  public CliqueJsonRpcMethodsFactory(final ProtocolContext<CliqueContext> context) {
+  public CliqueJsonRpcMethods(final ProtocolContext<CliqueContext> context) {
     this.context = context;
   }
 
   @Override
-  public Map<String, JsonRpcMethod> createJsonRpcMethods(final Collection<RpcApi> jsonRpcApis) {
-    final Map<String, JsonRpcMethod> rpcMethods = new HashMap<>();
-    if (!jsonRpcApis.contains(CliqueRpcApis.CLIQUE)) {
-      return rpcMethods;
-    }
+  protected RpcApi getApiGroup() {
+    return CliqueRpcApis.CLIQUE;
+  }
+
+  @Override
+  protected Map<String, JsonRpcMethod> create() {
     final MutableBlockchain blockchain = context.getBlockchain();
     final WorldStateArchive worldStateArchive = context.getWorldStateArchive();
     final BlockchainQueries blockchainQueries =
         new BlockchainQueries(blockchain, worldStateArchive);
     final VoteProposer voteProposer = context.getConsensusState().getVoteProposer();
-    final JsonRpcParameter jsonRpcParameter = new JsonRpcParameter();
+
     // Must create our own voteTallyCache as using this would pollute the main voteTallyCache
     final VoteTallyCache voteTallyCache = createVoteTallyCache(context, blockchain);
 
-    final CliqueGetSigners cliqueGetSigners =
-        new CliqueGetSigners(blockchainQueries, voteTallyCache, jsonRpcParameter);
-    final CliqueGetSignersAtHash cliqueGetSignersAtHash =
-        new CliqueGetSignersAtHash(blockchainQueries, voteTallyCache, jsonRpcParameter);
-    final Propose proposeRpc = new Propose(voteProposer, jsonRpcParameter);
-    final Discard discardRpc = new Discard(voteProposer, jsonRpcParameter);
-    final CliqueProposals cliqueProposals = new CliqueProposals(voteProposer);
-    final CliqueGetSignerMetrics cliqueGetSignerMetrics =
-        new CliqueGetSignerMetrics(new CliqueBlockInterface(), blockchainQueries, jsonRpcParameter);
-
-    rpcMethods.put(cliqueGetSigners.getName(), cliqueGetSigners);
-    rpcMethods.put(cliqueGetSignersAtHash.getName(), cliqueGetSignersAtHash);
-    rpcMethods.put(proposeRpc.getName(), proposeRpc);
-    rpcMethods.put(discardRpc.getName(), discardRpc);
-    rpcMethods.put(cliqueProposals.getName(), cliqueProposals);
-    rpcMethods.put(cliqueGetSignerMetrics.getName(), cliqueGetSignerMetrics);
-    return rpcMethods;
+    return mapOf(
+        new CliqueGetSigners(blockchainQueries, voteTallyCache, parameter),
+        new CliqueGetSignersAtHash(blockchainQueries, voteTallyCache, parameter),
+        new Propose(voteProposer, parameter),
+        new Discard(voteProposer, parameter),
+        new CliqueProposals(voteProposer),
+        new CliqueGetSignerMetrics(new CliqueBlockInterface(), blockchainQueries, parameter));
   }
 
   private VoteTallyCache createVoteTallyCache(

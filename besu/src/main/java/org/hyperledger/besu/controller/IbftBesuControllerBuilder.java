@@ -36,7 +36,7 @@ import org.hyperledger.besu.consensus.ibft.UniqueMessageMulticaster;
 import org.hyperledger.besu.consensus.ibft.blockcreation.IbftBlockCreatorFactory;
 import org.hyperledger.besu.consensus.ibft.blockcreation.IbftMiningCoordinator;
 import org.hyperledger.besu.consensus.ibft.blockcreation.ProposerSelector;
-import org.hyperledger.besu.consensus.ibft.jsonrpc.IbftJsonRpcMethodsFactory;
+import org.hyperledger.besu.consensus.ibft.jsonrpc.IbftJsonRpcMethods;
 import org.hyperledger.besu.consensus.ibft.network.ValidatorPeers;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.ibft.protocol.IbftProtocolManager;
@@ -48,7 +48,7 @@ import org.hyperledger.besu.consensus.ibft.statemachine.IbftFinalState;
 import org.hyperledger.besu.consensus.ibft.statemachine.IbftRoundFactory;
 import org.hyperledger.besu.consensus.ibft.validation.MessageValidatorFactory;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethodFactory;
+import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
@@ -82,9 +82,9 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder<IbftContext
   }
 
   @Override
-  protected JsonRpcMethodFactory createAdditionalJsonRpcMethodFactory(
+  protected JsonRpcMethods createAdditionalJsonRpcMethodFactory(
       final ProtocolContext<IbftContext> protocolContext) {
-    return new IbftJsonRpcMethodsFactory(protocolContext);
+    return new IbftJsonRpcMethods(protocolContext);
   }
 
   @Override
