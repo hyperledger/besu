@@ -121,7 +121,7 @@ public class EthHashSolverTest {
         new EthHashSolver(
             Lists.newArrayList(expectedFirstOutput.getNonce(), 0L, expectedSecondOutput.getNonce()),
             new EthHasher.Light(),
-            true,
+            false,
             Subscribers.none());
 
     EthHashSolution soln =
