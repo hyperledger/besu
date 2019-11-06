@@ -45,6 +45,7 @@ import org.hyperledger.besu.cli.error.BesuExceptionHandler;
 import org.hyperledger.besu.cli.options.EthProtocolOptions;
 import org.hyperledger.besu.cli.options.MetricsCLIOptions;
 import org.hyperledger.besu.cli.options.NetworkingOptions;
+import org.hyperledger.besu.cli.options.PrunerOptions;
 import org.hyperledger.besu.cli.options.SynchronizerOptions;
 import org.hyperledger.besu.cli.options.TransactionPoolOptions;
 import org.hyperledger.besu.cli.subcommands.PasswordSubCommand;
@@ -86,7 +87,7 @@ import org.hyperledger.besu.ethereum.permissioning.PermissioningConfigurationBui
 import org.hyperledger.besu.ethereum.permissioning.SmartContractPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
-import org.hyperledger.besu.ethereum.worldstate.PruningConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.PrunerConfiguration;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.MetricCategoryRegistryImpl;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
@@ -185,6 +186,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   final EthProtocolOptions ethProtocolOptions = EthProtocolOptions.create();
   final MetricsCLIOptions metricsCLIOptions = MetricsCLIOptions.create();
   final TransactionPoolOptions transactionPoolOptions = TransactionPoolOptions.create();
+  final PrunerOptions prunerOptions = PrunerOptions.create();
   private final RunnerBuilder runnerBuilder;
   private final BesuController.Builder controllerBuilderFactory;
   private final BesuPluginContextImpl besuPluginContext;
@@ -592,22 +594,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private Boolean pruningOverride;
 
   @Option(
-      names = {"--pruning-blocks-retained"},
-      hidden = true,
-      description =
-          "Minimum number of recent blocks for which to keep entire world state (default: ${DEFAULT-VALUE})",
-      arity = "1")
-  private final Long pruningBlocksRetained = DEFAULT_PRUNING_BLOCKS_RETAINED;
-
-  @Option(
-      names = {"--pruning-block-confirmations"},
-      hidden = true,
-      description =
-          "Minimum number of confirmations on a block before marking begins (default: ${DEFAULT-VALUE})",
-      arity = "1")
-  private final Long pruningBlockConfirmations = DEFAULT_PRUNING_BLOCK_CONFIRMATIONS;
-
-  @Option(
       names = {"--permissions-nodes-config-file-enabled"},
       description = "Enable node level permissions (default: ${DEFAULT-VALUE})")
   private final Boolean permissionsNodesEnabled = false;
@@ -870,6 +856,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .put("P2P Network", networkingOptions)
             .put("Synchronizer", synchronizerOptions)
             .put("TransactionPool", transactionPoolOptions)
+            .put("Pruner", prunerOptions)
             .build();
 
     UnstableOptionsSubCommand.createUnstableOptions(commandLine, unstableOptions);
@@ -1088,7 +1075,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           .isRevertReasonEnabled(isRevertReasonEnabled)
           .storageProvider(keyStorageProvider(keyValueStorageName))
           .isPruningEnabled(isPruningEnabled())
-          .pruningConfiguration(buildPruningConfiguration())
+          .pruningConfiguration(prunerOptions.toDomainObject())
           .genesisConfigOverrides(genesisConfigOverrides)
           .targetGasLimit(targetGasLimit == null ? Optional.empty() : Optional.of(targetGasLimit))
           .requiredBlocks(requiredBlocks);
@@ -1368,10 +1355,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .txPoolMaxSize(txPoolMaxSize)
         .pendingTxRetentionPeriod(pendingTxRetentionPeriod)
         .build();
-  }
-
-  private PruningConfiguration buildPruningConfiguration() {
-    return new PruningConfiguration(pruningBlockConfirmations, pruningBlocksRetained);
   }
 
   private boolean isPruningEnabled() {

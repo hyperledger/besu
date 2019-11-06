@@ -47,7 +47,7 @@ import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.worldstate.MarkSweepPruner;
 import org.hyperledger.besu.ethereum.worldstate.Pruner;
-import org.hyperledger.besu.ethereum.worldstate.PruningConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.PrunerConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 
@@ -85,7 +85,7 @@ public abstract class BesuControllerBuilder<C> {
   GasLimitCalculator gasLimitCalculator;
   private StorageProvider storageProvider;
   private boolean isPruningEnabled;
-  private PruningConfiguration pruningConfiguration;
+  private PrunerConfiguration prunerConfiguration;
   Map<String, String> genesisConfigOverrides;
   private Map<Long, Hash> requiredBlocks = Collections.emptyMap();
 
@@ -169,8 +169,8 @@ public abstract class BesuControllerBuilder<C> {
   }
 
   public BesuControllerBuilder<C> pruningConfiguration(
-      final PruningConfiguration pruningConfiguration) {
-    this.pruningConfiguration = pruningConfiguration;
+      final PrunerConfiguration prunerConfiguration) {
+    this.prunerConfiguration = prunerConfiguration;
     return this;
   }
 
@@ -235,7 +235,7 @@ public abstract class BesuControllerBuilder<C> {
                         storageProvider.createPruningStorage(),
                         metricsSystem),
                     blockchain,
-                    pruningConfiguration));
+                        prunerConfiguration));
       }
     }
 

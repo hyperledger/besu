@@ -54,7 +54,7 @@ import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.SmartContractPermissioningConfiguration;
-import org.hyperledger.besu.ethereum.worldstate.PruningConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.PrunerConfiguration;
 import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatMethod;
@@ -2387,8 +2387,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand(
         "--pruning-enabled", "--pruning-blocks-retained=15", "--pruning-block-confirmations=4");
 
-    final ArgumentCaptor<PruningConfiguration> pruningArg =
-        ArgumentCaptor.forClass(PruningConfiguration.class);
+    final ArgumentCaptor<PrunerConfiguration> pruningArg =
+        ArgumentCaptor.forClass(PrunerConfiguration.class);
 
     verify(mockControllerBuilder).pruningConfiguration(pruningArg.capture());
     verify(mockControllerBuilder).build();
