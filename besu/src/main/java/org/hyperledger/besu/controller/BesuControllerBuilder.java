@@ -159,8 +159,8 @@ public abstract class BesuControllerBuilder<C> {
     return this;
   }
 
-  public BesuControllerBuilder<C> isPruningEnabled(final boolean isPruningEnabled) {
-    this.isPruningEnabled = isPruningEnabled;
+  public BesuControllerBuilder<C> isPruningEnabled(final boolean pruningEnabled) {
+    this.isPruningEnabled = pruningEnabled;
     return this;
   }
 
