@@ -198,11 +198,11 @@ workflows:
       - buildDocker:
           requires:
             - unitTests
-      - publish:
-          filters:
-            branches:
-              only:
-                - master
+      # - publish:
+          # filters:
+            # branches:
+              # only:
+                # - master
                 #- /^release-.*/
           requires:
             - integrationTests
@@ -210,11 +210,11 @@ workflows:
             - acceptanceTests
             - referenceTests
             - buildDocker
-      - publishDocker:
-          filters:
-            branches:
-              only:
-                - master
+      # - publishDocker:
+          # filters:
+            # branches:
+              # only:
+                # - master
                 #- /^release-.*/
           requires:
             - integrationTests
