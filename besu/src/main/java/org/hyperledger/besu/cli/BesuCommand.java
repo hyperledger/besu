@@ -587,7 +587,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   @Option(
       names = {"--pruning-enabled"},
-      hidden = true,
       description =
           "Enable pruning of world state of blocks older than the retention period (default: ${DEFAULT-VALUE})")
   private final Boolean isPruningEnabled = false;
