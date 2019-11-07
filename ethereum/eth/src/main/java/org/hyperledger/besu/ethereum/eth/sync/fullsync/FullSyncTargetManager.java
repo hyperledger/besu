@@ -70,7 +70,7 @@ class FullSyncTargetManager<C> extends SyncTargetManager<C> {
 
   @Override
   protected CompletableFuture<Optional<EthPeer>> selectBestAvailableSyncTarget() {
-    final Optional<EthPeer> maybeBestPeer = ethContext.getEthPeers().bestPeer();
+    final Optional<EthPeer> maybeBestPeer = ethContext.getEthPeers().bestPeerWithHeightEstimate();
     if (!maybeBestPeer.isPresent()) {
       LOG.info("No sync target, wait for peers.");
       return completedFuture(Optional.empty());

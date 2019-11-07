@@ -39,7 +39,7 @@ public class PendingTransactionSubscriptionService implements PendingTransaction
     final List<Subscription> subscriptions = pendingTransactionSubscriptions();
 
     final PendingTransactionResult hashResult =
-        new PendingTransactionResult(pendingTransaction.hash());
+        new PendingTransactionResult(pendingTransaction.getHash());
     final PendingTransactionDetailResult detailResult =
         new PendingTransactionDetailResult(pendingTransaction);
     for (final Subscription subscription : subscriptions) {

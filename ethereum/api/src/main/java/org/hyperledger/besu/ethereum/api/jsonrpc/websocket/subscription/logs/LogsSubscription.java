@@ -14,25 +14,21 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.logs;
 
-import org.hyperledger.besu.ethereum.api.LogsQuery;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.Subscription;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.SubscriptionType;
+import org.hyperledger.besu.ethereum.api.query.LogsQuery;
 
 public class LogsSubscription extends Subscription {
 
-  private final FilterParameter filterParameter;
+  private final LogsQuery logsQuery;
 
   public LogsSubscription(
-      final Long subscriptionId, final String connectionId, final FilterParameter filterParameter) {
+      final Long subscriptionId, final String connectionId, final LogsQuery logsQuery) {
     super(subscriptionId, connectionId, SubscriptionType.LOGS, Boolean.FALSE);
-    this.filterParameter = filterParameter;
+    this.logsQuery = logsQuery;
   }
 
   public LogsQuery getLogsQuery() {
-    return new LogsQuery.Builder()
-        .addresses(filterParameter.getAddresses())
-        .topics(filterParameter.getTopics())
-        .build();
+    return logsQuery;
   }
 }

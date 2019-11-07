@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.queries.TransactionReceiptWithMetadata;
+import org.hyperledger.besu.ethereum.api.query.TransactionReceiptWithMetadata;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Log;
@@ -76,12 +76,12 @@ public abstract class TransactionReceiptResult {
         logReceipts(
             receipt.getLogs(),
             receiptWithMetadata.getBlockNumber(),
-            receiptWithMetadata.getTransaction().hash(),
+            receiptWithMetadata.getTransaction().getHash(),
             receiptWithMetadata.getBlockHash(),
             receiptWithMetadata.getTransactionIndex());
     this.logsBloom = receipt.getBloomFilter().toString();
     this.to = receiptWithMetadata.getTransaction().getTo().map(BytesValue::toString).orElse(null);
-    this.transactionHash = receiptWithMetadata.getTransaction().hash().toString();
+    this.transactionHash = receiptWithMetadata.getTransaction().getHash().toString();
     this.transactionIndex = Quantity.create(receiptWithMetadata.getTransactionIndex());
     this.revertReason = receipt.getRevertReason().map(BytesValue::toString).orElse(null);
   }

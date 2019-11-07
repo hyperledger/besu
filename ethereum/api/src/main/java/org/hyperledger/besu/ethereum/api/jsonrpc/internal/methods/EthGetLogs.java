@@ -14,17 +14,17 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
-import org.hyperledger.besu.ethereum.api.LogsQuery;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.queries.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.LogsResult;
+import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.api.query.LogsQuery;
 
 public class EthGetLogs implements JsonRpcMethod {
 
@@ -46,10 +46,7 @@ public class EthGetLogs implements JsonRpcMethod {
     final FilterParameter filter =
         parameters.required(request.getParams(), 0, FilterParameter.class);
     final LogsQuery query =
-        new LogsQuery.Builder()
-            .addresses(filter.getAddresses())
-            .topics(filter.getTopics().getTopics())
-            .build();
+        new LogsQuery.Builder().addresses(filter.getAddresses()).topics(filter.getTopics()).build();
 
     if (isValid(filter)) {
       return new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);

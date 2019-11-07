@@ -22,14 +22,14 @@ import org.hyperledger.besu.consensus.clique.CliqueProtocolSchedule;
 import org.hyperledger.besu.consensus.clique.blockcreation.CliqueBlockScheduler;
 import org.hyperledger.besu.consensus.clique.blockcreation.CliqueMinerExecutor;
 import org.hyperledger.besu.consensus.clique.blockcreation.CliqueMiningCoordinator;
-import org.hyperledger.besu.consensus.clique.jsonrpc.CliqueJsonRpcMethodsFactory;
+import org.hyperledger.besu.consensus.clique.jsonrpc.CliqueJsonRpcMethods;
 import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.VoteProposer;
 import org.hyperledger.besu.consensus.common.VoteTallyCache;
 import org.hyperledger.besu.consensus.common.VoteTallyUpdater;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethodFactory;
+import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -41,10 +41,6 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -69,9 +65,9 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder<CliqueCon
   }
 
   @Override
-  protected JsonRpcMethodFactory createAdditionalJsonRpcMethodFactory(
+  protected JsonRpcMethods createAdditionalJsonRpcMethodFactory(
       final ProtocolContext<CliqueContext> protocolContext) {
-    return new CliqueJsonRpcMethodsFactory(protocolContext);
+    return new CliqueJsonRpcMethods(protocolContext);
   }
 
   @Override
@@ -82,11 +78,9 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder<CliqueCon
       final MiningParameters miningParameters,
       final SyncState syncState,
       final EthProtocolManager ethProtocolManager) {
-    final ExecutorService minerThreadPool = Executors.newCachedThreadPool();
     final CliqueMinerExecutor miningExecutor =
         new CliqueMinerExecutor(
             protocolContext,
-            minerThreadPool,
             protocolSchedule,
             transactionPool.getPendingTransactions(),
             nodeKeys,
@@ -108,16 +102,6 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder<CliqueCon
 
     // Clique mining is implicitly enabled.
     miningCoordinator.enable();
-    addShutdownAction(
-        () -> {
-          miningCoordinator.disable();
-          minerThreadPool.shutdownNow();
-          try {
-            minerThreadPool.awaitTermination(5, TimeUnit.SECONDS);
-          } catch (final InterruptedException e) {
-            LOG.error("Failed to shutdown miner executor");
-          }
-        });
     return miningCoordinator;
   }
 
@@ -137,6 +121,11 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder<CliqueCon
     if (blockInterface.validatorsInBlock(genesisBlockHeader).isEmpty()) {
       LOG.warn("Genesis block contains no signers - chain will not progress.");
     }
+  }
+
+  @Override
+  protected PluginServiceFactory createAdditionalPluginServices(final Blockchain blockchain) {
+    return new CliqueQueryPluginServiceFactory(blockchain);
   }
 
   @Override

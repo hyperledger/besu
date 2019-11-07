@@ -24,11 +24,12 @@ public class RocksDBCLIOptions {
   public static final int DEFAULT_MAX_BACKGROUND_COMPACTIONS = 4;
   public static final int DEFAULT_BACKGROUND_THREAD_COUNT = 4;
 
-  private static final String MAX_OPEN_FILES_FLAG = "--Xrocksdb-max-open-files";
-  private static final String CACHE_CAPACITY_FLAG = "--Xrocksdb-cache-capacity";
+  private static final String MAX_OPEN_FILES_FLAG = "--Xplugin-rocksdb-max-open-files";
+  private static final String CACHE_CAPACITY_FLAG = "--Xplugin-rocksdb-cache-capacity";
   private static final String MAX_BACKGROUND_COMPACTIONS_FLAG =
-      "--Xrocksdb-max-background-compactions";
-  private static final String BACKGROUND_THREAD_COUNT_FLAG = "--Xrocksdb-background-thread-count";
+      "--Xplugin-rocksdb-max-background-compactions";
+  private static final String BACKGROUND_THREAD_COUNT_FLAG =
+      "--Xplugin-rocksdb-background-thread-count";
 
   @CommandLine.Option(
       names = {MAX_OPEN_FILES_FLAG},

@@ -14,6 +14,6 @@
  */
 package org.hyperledger.besu.consensus.common;
 
-public interface PoAContext {
+public interface PoaContext {
   BlockInterface getBlockInterface();
 }

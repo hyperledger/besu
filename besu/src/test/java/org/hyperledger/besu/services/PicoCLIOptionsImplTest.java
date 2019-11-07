@@ -34,7 +34,7 @@ public class PicoCLIOptionsImplTest {
   }
 
   static final class MixinOptions {
-    @Option(names = "--mixin")
+    @Option(names = "--plugin-Test1-mixin")
     String mixinOption = "defaultmixin";
   }
 
@@ -44,18 +44,18 @@ public class PicoCLIOptionsImplTest {
   private PicoCLIOptionsImpl serviceImpl;
 
   @Before
-  public void setUp() throws Exception {
+  public void setUp() {
     command = new SimpleCommand();
     mixin = new MixinOptions();
     commandLine = new CommandLine(command);
     serviceImpl = new PicoCLIOptionsImpl(commandLine);
 
-    serviceImpl.addPicoCLIOptions("Test 1", mixin);
+    serviceImpl.addPicoCLIOptions("Test1", mixin);
   }
 
   @Test
   public void testSimpleOptionParse() {
-    commandLine.parseArgs("--existing", "1", "--mixin", "2");
+    commandLine.parseArgs("--existing", "1", "--plugin-Test1-mixin", "2");
     assertThat(command.existingOption).isEqualTo("1");
     assertThat(mixin.mixinOption).isEqualTo("2");
   }
@@ -69,7 +69,7 @@ public class PicoCLIOptionsImplTest {
 
   @Test
   public void testMixinOptionOnly() {
-    commandLine.parseArgs("--mixin", "2");
+    commandLine.parseArgs("--plugin-Test1-mixin", "2");
     assertThat(command.existingOption).isEqualTo("defaultexisting");
     assertThat(mixin.mixinOption).isEqualTo("2");
   }

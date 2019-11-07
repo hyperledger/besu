@@ -125,7 +125,19 @@ public class RlpxAgent {
     }
 
     setupListeners();
-    return connectionInitializer.start();
+    return connectionInitializer
+        .start()
+        .thenApply(
+            (socketAddress) -> {
+              LOG.info("P2P RLPx agent started and listening on {}.", socketAddress);
+              return socketAddress.getPort();
+            })
+        .whenComplete(
+            (res, err) -> {
+              if (err != null) {
+                LOG.error("Failed to start P2P RLPx agent.", err);
+              }
+            });
   }
 
   public CompletableFuture<Void> stop() {
@@ -293,6 +305,9 @@ public class RlpxAgent {
         connection -> {
           if (!peerPermissions.allowOngoingConnection(
               connection.getPeer(), connection.initiatedRemotely())) {
+            LOG.debug(
+                "Disconnecting from peer that is not permitted to maintain ongoing connection: {}",
+                connection);
             connection.disconnect(DisconnectReason.REQUESTED);
           }
         });
@@ -320,21 +335,28 @@ public class RlpxAgent {
     final Peer peer = peerConnection.getPeer();
     // Deny connection if our local node isn't ready
     if (!localNode.isReady()) {
+      LOG.debug("Node is not ready. Disconnect incoming connection: {}", peerConnection);
       peerConnection.disconnect(DisconnectReason.UNKNOWN);
       return;
     }
     // Disconnect if too many peers
     if (!peerPrivileges.canExceedConnectionLimits(peer) && getConnectionCount() >= maxConnections) {
+      LOG.debug("Too many peers. Disconnect incoming connection: {}", peerConnection);
       peerConnection.disconnect(DisconnectReason.TOO_MANY_PEERS);
       return;
     }
     // Disconnect if too many remotely-initiated connections
     if (!peerPrivileges.canExceedConnectionLimits(peer) && remoteConnectionLimitReached()) {
+      LOG.debug(
+          "Too many remotely-initiated connections. Disconnect incoming connection: {}",
+          peerConnection);
       peerConnection.disconnect(DisconnectReason.TOO_MANY_PEERS);
       return;
     }
     // Disconnect if not permitted
     if (!peerPermissions.allowNewInboundConnectionFrom(peer)) {
+      LOG.debug(
+          "Node is not permitted to connect. Disconnect incoming connection: {}", peerConnection);
       peerConnection.disconnect(DisconnectReason.UNKNOWN);
       return;
     }
@@ -414,7 +436,13 @@ public class RlpxAgent {
         .filter(RlpxConnection::initiatedRemotely)
         .filter(conn -> !peerPrivileges.canExceedConnectionLimits(conn.getPeer()))
         .skip(maxRemotelyInitiatedConnections)
-        .forEach(c -> c.disconnect(DisconnectReason.TOO_MANY_PEERS));
+        .forEach(
+            conn -> {
+              LOG.debug(
+                  "Too many remotely initiated connections. Disconnect low-priority connection: {}",
+                  conn);
+              conn.disconnect(DisconnectReason.TOO_MANY_PEERS);
+            });
   }
 
   private void enforceConnectionLimits() {
@@ -426,7 +454,11 @@ public class RlpxAgent {
     getActivePrioritizedConnections()
         .skip(maxConnections)
         .filter(c -> !peerPrivileges.canExceedConnectionLimits(c.getPeer()))
-        .forEach(c -> c.disconnect(DisconnectReason.TOO_MANY_PEERS));
+        .forEach(
+            conn -> {
+              LOG.debug("Too many connections. Disconnect low-priority connection: {}", conn);
+              conn.disconnect(DisconnectReason.TOO_MANY_PEERS);
+            });
   }
 
   private Stream<RlpxConnection> getActivePrioritizedConnections() {

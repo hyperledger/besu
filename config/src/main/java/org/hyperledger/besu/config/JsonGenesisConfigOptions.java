@@ -160,6 +160,31 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public OptionalLong getEcip1015BlockNumber() {
+    return getOptionalLong("ecip1015block");
+  }
+
+  @Override
+  public OptionalLong getDieHardBlockNumber() {
+    return getOptionalLong("diehardblock");
+  }
+
+  @Override
+  public OptionalLong getDefuseDifficultyBombBlockNumber() {
+    return getOptionalLong("ecip1041block");
+  }
+
+  @Override
+  public OptionalLong getAtlantisBlockNumber() {
+    return getOptionalLong("atlantisblock");
+  }
+
+  @Override
+  public OptionalLong getAghartaBlockNumber() {
+    return getOptionalLong("aghartablock");
+  }
+
+  @Override
   public Optional<BigInteger> getChainId() {
     return getOptionalBigInteger("chainid");
   }

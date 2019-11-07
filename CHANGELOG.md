@@ -1,14 +1,81 @@
 # Changelog
 
+## Istanbul Compatibility
 
-### Java 11 Required from v1.2
+For compatibility with Ethereum Istanbul upgrade, use v1.3.4 or later. 
 
-From v1.2, Besu requires Java 11.  Besu on Java 8 is no longer supported.
+## Pruning 
 
-### Docker Image Migration 
+Pruning cannot be used in networks using private transactions. 
 
-In v1.2, we removed the entry-point script from our Docker image. Refer to the [migration guide](https://besu.hyperledger.org/en/latest/HowTo/Get-Started/Migration-Docker/)
-for information on options that were previously automatically added to the Besu command line. 
+### 1.3.4 
+
+- Reverted _Enable pruning by default for fast sync (#135)_ [\#164](https://github.com/hyperledger/besu/pull/164)
+
+### 1.3.3
+
+### Technical Improvements 
+
+- Add --identity flag for client identification in node browsers [\#150](https://github.com/hyperledger/besu/pull/150) 
+- Istanbul Mainnet Block [\#145](https://github.com/hyperledger/besu/pull/150) 
+- Add priv\_getEeaTransactionCount [\#110](https://github.com/hyperledger/besu/pull/110) 
+
+### Additions and Improvements
+
+- Redesign of how JsonRpcMethods are created [\#159](https://github.com/hyperledger/besu/pull/159) 
+- Moving JsonRpcMethods classes into the same package, prior to refactor [\#154](https://github.com/hyperledger/besu/pull/154) 
+- Reflect default logging in CLI help [\#148](https://github.com/hyperledger/besu/pull/148) 
+- Handle zero port better in NAT [\#147](https://github.com/hyperledger/besu/pull/147) 
+- Rework how filter and log query parameters are created/used [\#146](https://github.com/hyperledger/besu/pull/146) 
+- Don't generate shutdown tasks in controller [\#141](https://github.com/hyperledger/besu/pull/141) 
+- Ibft queries [\#138](https://github.com/hyperledger/besu/pull/138) 
+- Enable pruning by default for fast sync [\#135](https://github.com/hyperledger/besu/pull/135) 
+- Ensure spotless runs in CI [\#132](https://github.com/hyperledger/besu/pull/132) 
+- Add more logging around peer disconnects [\#131](https://github.com/hyperledger/besu/pull/131) 
+- Repair EthGetLogs returning incorrect results [\#128](https://github.com/hyperledger/besu/pull/128) 
+- Use Bloombits for Logs queries [\#127](https://github.com/hyperledger/besu/pull/127)
+- Improve message when extraData missing [\#121](https://github.com/hyperledger/besu/pull/121) 
+- Fix miner startup logic [\#104](https://github.com/hyperledger/besu/pull/104) 
+- Support log reordring from reorgs in `LogSubscriptionService` [\#86](https://github.com/hyperledger/besu/pull/86) 
+
+### 1.3.2 
+
+### Additions and Improvements 
+
+- besu -v to print plugin versions[\#123](https://github.com/hyperledger/besu/pull/123) 
+
+### Technical Improvements 
+
+- Update Governance and Code of Conduct verbiage [\#120](https://github.com/hyperledger/besu/pull/120)
+- Fix private transaction root mismatch [\#118](https://github.com/hyperledger/besu/pull/118) 
+- Programatically enforce plugin CLI variable names [\#117](https://github.com/hyperledger/besu/pull/117) 
+- Additional unit test for selecting replaced pending transactions [\#116](https://github.com/hyperledger/besu/pull/116) 
+- Only set sync targets that have an estimated height value [\#115](https://github.com/hyperledger/besu/pull/115)
+- Fix rlpx startup [\#114](https://github.com/hyperledger/besu/pull/114) 
+- Expose getPayload in Transaction plugin-api interface. [\#113](https://github.com/hyperledger/besu/pull/113) 
+- Dependency Version Upgrades [\#112](https://github.com/hyperledger/besu/pull/112) 
+- Add hash field in Transaction plugin interface. [\#111](https://github.com/hyperledger/besu/pull/111) 
+- Rework sync status events [\#106](https://github.com/hyperledger/besu/pull/106) 
+
+### 1.3.1 
+
+### Additions and Improvements 
+
+- Added GraphQL query/logs support [\#94](https://github.com/hyperledger/besu/pull/94)
+
+### Technical Improvements 
+
+- Add totalDiffculty to BlockPropagated events. [\#97](https://github.com/hyperledger/besu/pull/97) 
+- Merge BlockchainQueries classes [\#101](https://github.com/hyperledger/besu/pull/101) 
+- Fixed casing of dynamic MetricCategorys [\#99](https://github.com/hyperledger/besu/pull/99) 
+- Fix private transactions breaking evm [\#96](https://github.com/hyperledger/besu/pull/96) 
+- Make SyncState variables thread-safe [\#95](https://github.com/hyperledger/besu/pull/95) 
+- Fix transaction tracking by sender [\#93](https://github.com/hyperledger/besu/pull/93) 
+- Make logic in PersistBlockTask more explicit to fix a LGTM warning [\#92](https://github.com/hyperledger/besu/pull/92) 
+- Removed Unused methods in the transaction simulator. [\#91](https://github.com/hyperledger/besu/pull/91) 
+- Fix ThreadBesuNodeRunner BesuConfiguration setup [\#90](https://github.com/hyperledger/besu/pull/90) 
+- JsonRpc method disabled error condition rewrite and unit test [\#80](https://github.com/hyperledger/besu/pull/80) 
+- Round trip testing of state trie account values [\#31](https://github.com/hyperledger/besu/pull/31) 
 
 ### 1.3 
 
@@ -18,6 +85,7 @@ for information on options that were previously automatically added to the Besu 
 
 ### Additions and Improvements
 
+- Add `--required-block` command line option to deal with chain splits [\#79](https://github.com/hyperledger/besu/pull/79)
 - Store db metadata file in the root data directory. [\#46](https://github.com/hyperledger/besu/pull/46) 
 - Add `--target-gas-limit` command line option. [\#24](https://github.com/hyperledger/besu/pull/24)(thanks to new contributor [cfelde](https://github.com/cfelde))
 - Allow private contracts to access public state. [\#9](https://github.com/hyperledger/besu/pull/9) 

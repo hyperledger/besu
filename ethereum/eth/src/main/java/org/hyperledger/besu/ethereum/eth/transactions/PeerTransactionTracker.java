@@ -35,7 +35,7 @@ public class PeerTransactionTracker implements EthPeer.DisconnectCallback {
   public synchronized void markTransactionsAsSeen(
       final EthPeer peer, final Collection<Transaction> transactions) {
     final Set<Hash> seenTransactionsForPeer = getOrCreateSeenTransactionsForPeer(peer);
-    transactions.stream().map(Transaction::hash).forEach(seenTransactionsForPeer::add);
+    transactions.stream().map(Transaction::getHash).forEach(seenTransactionsForPeer::add);
   }
 
   public synchronized void addToPeerSendQueue(final EthPeer peer, final Transaction transaction) {
@@ -64,7 +64,8 @@ public class PeerTransactionTracker implements EthPeer.DisconnectCallback {
 
   private boolean hasPeerSeenTransaction(final EthPeer peer, final Transaction transaction) {
     final Set<Hash> seenTransactionsForPeer = seenTransactions.get(peer);
-    return seenTransactionsForPeer != null && seenTransactionsForPeer.contains(transaction.hash());
+    return seenTransactionsForPeer != null
+        && seenTransactionsForPeer.contains(transaction.getHash());
   }
 
   private <T> Set<T> createTransactionsSet() {

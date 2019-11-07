@@ -25,7 +25,6 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.ibft.ibftevent.RoundExpiry;
 
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -38,15 +37,15 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.StrictStubs.class)
 public class RoundTimerTest {
-  private ScheduledExecutorService mockExecutorService;
+  private IbftExecutors ibftExecutors;
   private IbftEventQueue queue;
   private RoundTimer timer;
 
   @Before
   public void initialise() {
-    mockExecutorService = mock(ScheduledExecutorService.class);
+    ibftExecutors = mock(IbftExecutors.class);
     queue = new IbftEventQueue(1000);
-    timer = new RoundTimer(queue, 1, mockExecutorService);
+    timer = new RoundTimer(queue, 1, ibftExecutors);
   }
 
   @Test
@@ -84,12 +83,10 @@ public class RoundTimerTest {
     final ConsensusRoundIdentifier round = new ConsensusRoundIdentifier(1, roundNumber);
     final ScheduledFuture<?> mockedFuture = mock(ScheduledFuture.class);
     Mockito.<ScheduledFuture<?>>when(
-            mockExecutorService.schedule(
-                any(Runnable.class), eq(timeout), eq(TimeUnit.MILLISECONDS)))
+            ibftExecutors.scheduleTask(any(Runnable.class), eq(timeout), eq(TimeUnit.MILLISECONDS)))
         .thenReturn(mockedFuture);
     timer.startTimer(round);
-    verify(mockExecutorService)
-        .schedule(any(Runnable.class), eq(timeout), eq(TimeUnit.MILLISECONDS));
+    verify(ibftExecutors).scheduleTask(any(Runnable.class), eq(timeout), eq(TimeUnit.MILLISECONDS));
   }
 
   @Test
@@ -98,11 +95,11 @@ public class RoundTimerTest {
     final ScheduledFuture<?> mockedFuture = mock(ScheduledFuture.class);
     final ArgumentCaptor<Runnable> expiryRunnable = ArgumentCaptor.forClass(Runnable.class);
     Mockito.<ScheduledFuture<?>>when(
-            mockExecutorService.schedule(any(Runnable.class), anyLong(), eq(TimeUnit.MILLISECONDS)))
+            ibftExecutors.scheduleTask(any(Runnable.class), anyLong(), eq(TimeUnit.MILLISECONDS)))
         .thenReturn(mockedFuture);
     timer.startTimer(round);
-    verify(mockExecutorService)
-        .schedule(expiryRunnable.capture(), anyLong(), eq(TimeUnit.MILLISECONDS));
+    verify(ibftExecutors)
+        .scheduleTask(expiryRunnable.capture(), anyLong(), eq(TimeUnit.MILLISECONDS));
     assertThat(queue.poll(0, TimeUnit.MICROSECONDS)).isNull();
     expiryRunnable.getValue().run();
     assertThat(queue.poll(0, TimeUnit.MICROSECONDS)).isEqualTo(new RoundExpiry(round));
@@ -113,7 +110,7 @@ public class RoundTimerTest {
     final ConsensusRoundIdentifier round = new ConsensusRoundIdentifier(1, 0);
     final ScheduledFuture<?> mockedFuture = mock(ScheduledFuture.class);
     Mockito.<ScheduledFuture<?>>when(
-            mockExecutorService.schedule(any(Runnable.class), anyLong(), eq(TimeUnit.MILLISECONDS)))
+            ibftExecutors.scheduleTask(any(Runnable.class), anyLong(), eq(TimeUnit.MILLISECONDS)))
         .thenReturn(mockedFuture);
     timer.startTimer(round);
     verify(mockedFuture, times(0)).cancel(false);
@@ -126,7 +123,7 @@ public class RoundTimerTest {
     final ConsensusRoundIdentifier round = new ConsensusRoundIdentifier(1, 0);
     final ScheduledFuture<?> mockedFuture = mock(ScheduledFuture.class);
     Mockito.<ScheduledFuture<?>>when(
-            mockExecutorService.schedule(any(Runnable.class), anyLong(), eq(TimeUnit.MILLISECONDS)))
+            ibftExecutors.scheduleTask(any(Runnable.class), anyLong(), eq(TimeUnit.MILLISECONDS)))
         .thenReturn(mockedFuture);
     timer.startTimer(round);
     when(mockedFuture.isDone()).thenReturn(false);

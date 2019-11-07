@@ -14,16 +14,23 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
+import static java.util.stream.Collectors.toUnmodifiableList;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.ethereum.api.TopicsParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.LogTopic;
 
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.Lists;
 import org.junit.Test;
 
 public class FilterParameterTest {
@@ -126,8 +133,109 @@ public class FilterParameterTest {
         .isEqualToComparingFieldByFieldRecursively(readJsonAsFilterParameter(jsonWithTopicsLast));
   }
 
+  @Test
+  public void whenTopicsParameterIsArrayOfStringsFilterContainsListOfSingletonLists()
+      throws JsonProcessingException {
+    final List<String> topics =
+        Lists.newArrayList(
+            "0xce8688f853ffa65c042b72302433c25d7a230c322caba0901587534b6551091d",
+            null,
+            "0x000000000000000000000000244a53ab66ea8901c25efc48c8ab84662643cc74");
+    final FilterParameter filter = createFilterWithTopics(topics);
+
+    assertThat(filter.getTopics())
+        .containsExactly(
+            singletonList(
+                LogTopic.fromHexString(
+                    "0xce8688f853ffa65c042b72302433c25d7a230c322caba0901587534b6551091d")),
+            singletonList(null),
+            singletonList(
+                LogTopic.fromHexString(
+                    "0x000000000000000000000000244a53ab66ea8901c25efc48c8ab84662643cc74")));
+  }
+
+  @Test
+  public void whenTopicsParameterContainsArraysFilterContainsListOfSingletonLists()
+      throws JsonProcessingException {
+    final List<List<String>> topics =
+        Lists.newArrayList(
+            singletonList("0xce8688f853ffa65c042b72302433c25d7a230c322caba0901587534b6551091d"),
+            null,
+            singletonList("0x000000000000000000000000244a53ab66ea8901c25efc48c8ab84662643cc74"));
+
+    final FilterParameter filter = createFilterWithTopics(topics);
+
+    assertThat(filter.getTopics())
+        .containsExactly(
+            singletonList(
+                LogTopic.fromHexString(
+                    "0xce8688f853ffa65c042b72302433c25d7a230c322caba0901587534b6551091d")),
+            singletonList(null),
+            singletonList(
+                LogTopic.fromHexString(
+                    "0x000000000000000000000000244a53ab66ea8901c25efc48c8ab84662643cc74")));
+  }
+
+  @Test
+  public void whenTopicArrayContainsNullFilterContainsSingletonListOfAllTopics()
+      throws JsonProcessingException {
+    final List<List<String>> topics =
+        Lists.newArrayList(
+            singletonList("0xce8688f853ffa65c042b72302433c25d7a230c322caba0901587534b6551091d"),
+            null,
+            singletonList("0x000000000000000000000000244a53ab66ea8901c25efc48c8ab84662643cc74"));
+    final FilterParameter filter = createFilterWithTopics(topics);
+
+    assertThat(filter.getTopics())
+        .containsExactly(
+            singletonList(
+                LogTopic.fromHexString(
+                    "0xce8688f853ffa65c042b72302433c25d7a230c322caba0901587534b6551091d")),
+            singletonList(null),
+            singletonList(
+                LogTopic.fromHexString(
+                    "0x000000000000000000000000244a53ab66ea8901c25efc48c8ab84662643cc74")));
+  }
+
+  @Test
+  public void emptyListDecodesCorrectly() throws JsonProcessingException {
+    final List<String> topics = emptyList();
+    final FilterParameter filter = createFilterWithTopics(topics);
+
+    assertThat(filter.getTopics().size()).isZero();
+  }
+
+  @Test
+  public void emptyListAsSubTopicDecodesCorrectly() throws JsonProcessingException {
+    final List<List<String>> topics =
+        Lists.newArrayList(
+            singletonList("0xce8688f853ffa65c042b72302433c25d7a230c322caba0901587534b6551091d"),
+            emptyList());
+    final FilterParameter filter = createFilterWithTopics(topics);
+    assertThat(filter.getTopics())
+        .containsExactly(
+            singletonList(
+                LogTopic.fromHexString(
+                    "0xce8688f853ffa65c042b72302433c25d7a230c322caba0901587534b6551091d")),
+            emptyList());
+  }
+
+  private <T> FilterParameter createFilterWithTopics(final T inputTopics)
+      throws JsonProcessingException {
+    final Map<String, T> payload = new HashMap<>();
+    payload.put("topics", inputTopics);
+
+    final String json = new ObjectMapper().writeValueAsString(payload);
+    return new ObjectMapper().readValue(json, FilterParameter.class);
+  }
+
   private FilterParameter filterParameterWithAddresses(final String... addresses) {
-    return new FilterParameter("latest", "latest", Arrays.asList(addresses), null, null);
+    return new FilterParameter(
+        "latest",
+        "latest",
+        Arrays.stream(addresses).map(Address::fromHexString).collect(toUnmodifiableList()),
+        null,
+        null);
   }
 
   private FilterParameter filterParameterWithAddressAndSingleListOfTopics(
@@ -135,17 +243,19 @@ public class FilterParameterTest {
     return new FilterParameter(
         "latest",
         "latest",
-        Arrays.asList(address),
-        new TopicsParameter(Collections.singletonList(Arrays.asList(topics))),
+        singletonList(Address.fromHexString(address)),
+        singletonList(
+            Arrays.stream(topics).map(LogTopic::fromHexString).collect(toUnmodifiableList())),
         null);
   }
 
   private FilterParameter filterParameterWithAddressAndMultipleListOfTopics(
       final String address, final String... topics) {
-    List<String> topicsList = Arrays.asList(topics);
-    List<List<String>> topicsListList = Arrays.asList(topicsList, topicsList);
+    List<LogTopic> topicsList =
+        Arrays.stream(topics).map(LogTopic::fromHexString).collect(toUnmodifiableList());
+    List<List<LogTopic>> topicsListList = Arrays.asList(topicsList, topicsList);
     return new FilterParameter(
-        "latest", "latest", Arrays.asList(address), new TopicsParameter(topicsListList), null);
+        "latest", "latest", singletonList(Address.fromHexString(address)), topicsListList, null);
   }
 
   private JsonRpcRequest readJsonAsJsonRpcRequest(final String jsonWithSingleAddress)

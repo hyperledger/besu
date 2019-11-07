@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.syncing;
 
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.JsonRpcResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.SyncingResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.Subscription;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.SubscriptionManager;
@@ -26,36 +27,24 @@ import java.util.Optional;
 public class SyncingSubscriptionService {
 
   private final SubscriptionManager subscriptionManager;
-  private Optional<Boolean> lastMessageWasInSync = Optional.empty();
 
   public SyncingSubscriptionService(
       final SubscriptionManager subscriptionManager, final Synchronizer synchronizer) {
     this.subscriptionManager = subscriptionManager;
-    synchronizer.observeSyncStatus(this::sendSyncingToMatchingSubscriptions);
+    synchronizer.subscribeSyncStatus(this::sendSyncingToMatchingSubscriptions);
   }
 
-  private void sendSyncingToMatchingSubscriptions(final SyncStatus syncStatus) {
+  private void sendSyncingToMatchingSubscriptions(final Optional<SyncStatus> syncStatus) {
     subscriptionManager.notifySubscribersOnWorkerThread(
         SubscriptionType.SYNCING,
         Subscription.class,
         syncingSubscriptions -> {
-          if (syncStatus.inSync()) {
-            if (!lastMessageWasInSync.orElse(Boolean.FALSE)) {
-              syncingSubscriptions.forEach(
-                  s ->
-                      subscriptionManager.sendMessage(
-                          s.getSubscriptionId(), new NotSynchronisingResult()));
-              lastMessageWasInSync = Optional.of(Boolean.TRUE);
-            }
-          } else {
-            if (lastMessageWasInSync.orElse(Boolean.TRUE)) {
-              syncingSubscriptions.forEach(
-                  s ->
-                      subscriptionManager.sendMessage(
-                          s.getSubscriptionId(), new SyncingResult(syncStatus)));
-              lastMessageWasInSync = Optional.of(Boolean.FALSE);
-            }
-          }
+          final JsonRpcResult result =
+              syncStatus.isPresent()
+                  ? new SyncingResult(syncStatus.get())
+                  : new NotSynchronisingResult();
+          syncingSubscriptions.forEach(
+              s -> subscriptionManager.sendMessage(s.getSubscriptionId(), result));
         });
   }
 }

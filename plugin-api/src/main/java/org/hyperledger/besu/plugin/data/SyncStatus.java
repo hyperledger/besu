@@ -39,11 +39,4 @@ public interface SyncStatus {
    * @return the height of the highest known block.
    */
   long getHighestBlock();
-
-  /**
-   * Checks if the synchronizer is within a default sync tolerance of the highest known block
-   *
-   * @return true if it is within the tolerance, false otherwise
-   */
-  boolean inSync();
 }

@@ -14,14 +14,15 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.refEq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.ethereum.api.LogsQuery;
-import org.hyperledger.besu.ethereum.api.TopicsParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
@@ -29,10 +30,13 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParam
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.query.LogsQuery;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.LogTopic;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -85,33 +89,32 @@ public class EthNewFilterTest {
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(request.getId(), "0x1");
 
     final LogsQuery expectedLogsQuery = new LogsQuery.Builder().build();
-    when(filterManager.installLogFilter(any(), any(), refEq(expectedLogsQuery))).thenReturn("0x1");
+    when(filterManager.installLogFilter(any(), any(), eq(expectedLogsQuery))).thenReturn("0x1");
 
     final JsonRpcResponse actualResponse = method.response(request);
 
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
     verify(filterManager)
         .installLogFilter(
-            refEq(blockParamLatest()), refEq(blockParamLatest()), refEq(expectedLogsQuery));
+            refEq(blockParamLatest()), refEq(blockParamLatest()), eq(expectedLogsQuery));
   }
 
   @Test
   public void newFilterWithTopicsOnlyParamInstallsExpectedLogFilter() {
-    final List<List<String>> topics = topics();
-    final FilterParameter filterParameter = filterParamWithAddressAndTopics(null, topics);
+    final FilterParameter filterParameter = filterParamWithAddressAndTopics(null, topics());
     final JsonRpcRequest request = ethNewFilter(filterParameter);
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(request.getId(), "0x1");
 
     final LogsQuery expectedLogsQuery =
-        new LogsQuery.Builder().topics(new TopicsParameter(topics)).build();
-    when(filterManager.installLogFilter(any(), any(), refEq(expectedLogsQuery))).thenReturn("0x1");
+        new LogsQuery.Builder().topics(filterParameter.getTopics()).build();
+    when(filterManager.installLogFilter(any(), any(), eq(expectedLogsQuery))).thenReturn("0x1");
 
     final JsonRpcResponse actualResponse = method.response(request);
 
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
     verify(filterManager)
         .installLogFilter(
-            refEq(blockParamLatest()), refEq(blockParamLatest()), refEq(expectedLogsQuery));
+            refEq(blockParamLatest()), refEq(blockParamLatest()), eq(expectedLogsQuery));
   }
 
   @Test
@@ -122,45 +125,51 @@ public class EthNewFilterTest {
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(request.getId(), "0x1");
 
     final LogsQuery expectedLogsQuery = new LogsQuery.Builder().address(address).build();
-    when(filterManager.installLogFilter(any(), any(), refEq(expectedLogsQuery))).thenReturn("0x1");
+    when(filterManager.installLogFilter(any(), any(), eq(expectedLogsQuery))).thenReturn("0x1");
 
     final JsonRpcResponse actualResponse = method.response(request);
 
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
     verify(filterManager)
         .installLogFilter(
-            refEq(blockParamLatest()), refEq(blockParamLatest()), refEq(expectedLogsQuery));
+            refEq(blockParamLatest()), refEq(blockParamLatest()), eq(expectedLogsQuery));
   }
 
   @Test
   public void newFilterWithAddressAndTopicsParamInstallsExpectedLogFilter() {
     final Address address = Address.fromHexString("0x0");
-    final List<List<String>> topics = topics();
+    final List<List<LogTopic>> topics = topics();
     final FilterParameter filterParameter = filterParamWithAddressAndTopics(address, topics);
     final JsonRpcRequest request = ethNewFilter(filterParameter);
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(request.getId(), "0x1");
 
     final LogsQuery expectedLogsQuery =
-        new LogsQuery.Builder().address(address).topics(new TopicsParameter(topics)).build();
-    when(filterManager.installLogFilter(any(), any(), refEq(expectedLogsQuery))).thenReturn("0x1");
+        new LogsQuery.Builder().address(address).topics(filterParameter.getTopics()).build();
+    when(filterManager.installLogFilter(any(), any(), eq(expectedLogsQuery))).thenReturn("0x1");
 
     final JsonRpcResponse actualResponse = method.response(request);
 
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
     verify(filterManager)
         .installLogFilter(
-            refEq(blockParamLatest()), refEq(blockParamLatest()), refEq(expectedLogsQuery));
+            refEq(blockParamLatest()), refEq(blockParamLatest()), eq(expectedLogsQuery));
   }
 
-  private List<List<String>> topics() {
-    return Arrays.asList(
-        Arrays.asList("0x000000000000000000000000a94f5374fce5edbc8e2a8697c15331677e6ebf0b"));
+  private List<List<LogTopic>> topics() {
+    return singletonList(
+        singletonList(
+            LogTopic.fromHexString(
+                "0x000000000000000000000000a94f5374fce5edbc8e2a8697c15331677e6ebf0b")));
   }
 
   private FilterParameter filterParamWithAddressAndTopics(
-      final Address address, final List<List<String>> topics) {
-    final List<String> addresses = address != null ? Arrays.asList(address.toString()) : null;
-    return new FilterParameter("latest", "latest", addresses, new TopicsParameter(topics), null);
+      final Address address, final List<List<LogTopic>> topics) {
+    return new FilterParameter(
+        "latest",
+        "latest",
+        Optional.ofNullable(address).map(Collections::singletonList).orElse(emptyList()),
+        topics,
+        null);
   }
 
   private JsonRpcRequest ethNewFilter(final FilterParameter filterParameter) {

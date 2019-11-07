@@ -3,17 +3,40 @@
     "id": 406,
     "jsonrpc": "2.0",
     "method": "eth_getLogs",
-    "params": [{
-      "fromBlock": "0x17",
-      "toBlock": "0x21",
-      "address": [],
-      "topics": [["0x000000000000000000000000a94f5374fce5edbc8e2a8697c15331677e6ebf0b", null]]
-    }]
+    "params": [
+      {
+        "fromBlock": "0x20",
+        "toBlock": "0x21",
+        "address": [],
+        "topics": [
+          [
+            "0x000000000000000000000000a94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            null
+          ]
+        ]
+      }
+    ]
   },
   "response": {
     "jsonrpc": "2.0",
     "id": 406,
-    "result" : []
+    "result": [
+      {
+        "logIndex": "0x0",
+        "removed": false,
+        "blockNumber": "0x20",
+        "blockHash": "0x71d59849ddd98543bdfbe8548f5eed559b07b8aaf196369f39134500eab68e53",
+        "transactionHash": "0xcef53f2311d7c80e9086d661e69ac11a5f3d081e28e02a9ba9b66749407ac310",
+        "transactionIndex": "0x0",
+        "address": "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f",
+        "data": "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe9000000000000000000000000000000000000000000000000000000000000002a",
+        "topics": [
+          "0x0000000000000000000000000000000000000000000000000000000000000001",
+          "0x000000000000000000000000a94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+          "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+        ]
+      }
+    ]
   },
   "statusCode": 200
 }

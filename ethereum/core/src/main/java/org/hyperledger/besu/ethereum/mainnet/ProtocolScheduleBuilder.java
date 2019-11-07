@@ -152,6 +152,36 @@ public class ProtocolScheduleBuilder<C> {
             config.getEvmStackSize(),
             isRevertReasonEnabled));
 
+    // specs for Classic network
+    addProtocolSpec(
+        protocolSchedule,
+        config.getEcip1015BlockNumber(),
+        ClassicProtocolSpecs.tangerineWhistleDefinition(
+            chainId, config.getContractSizeLimit(), config.getEvmStackSize()));
+    addProtocolSpec(
+        protocolSchedule,
+        config.getDieHardBlockNumber(),
+        ClassicProtocolSpecs.dieHardDefinition(
+            chainId, config.getContractSizeLimit(), config.getEvmStackSize()));
+    addProtocolSpec(
+        protocolSchedule,
+        config.getDefuseDifficultyBombBlockNumber(),
+        ClassicProtocolSpecs.defuseDifficultyBombDefinition(
+            chainId, config.getContractSizeLimit(), config.getEvmStackSize()));
+    addProtocolSpec(
+        protocolSchedule,
+        config.getAtlantisBlockNumber(),
+        ClassicProtocolSpecs.atlantisDefinition(
+            chainId, config.getContractSizeLimit(), config.getEvmStackSize()));
+    addProtocolSpec(
+        protocolSchedule,
+        config.getAghartaBlockNumber(),
+        ClassicProtocolSpecs.aghartaDefinition(
+            chainId,
+            config.getContractSizeLimit(),
+            config.getEvmStackSize(),
+            isRevertReasonEnabled));
+
     LOG.info("Protocol schedule created with milestones: {}", protocolSchedule.listMilestones());
     return protocolSchedule;
   }

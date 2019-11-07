@@ -120,7 +120,7 @@ public class TransactionTest {
       assertThat(actualRlp).isEqualTo(rlp);
 
       assertThat(transaction.getSender()).isEqualTo(expected.getSender());
-      assertThat(transaction.hash()).isEqualTo(expected.getHash());
+      assertThat(transaction.getHash()).isEqualTo(expected.getHash());
     } catch (final Exception e) {
       assertThat(expected.isSucceeds()).isFalse();
     }

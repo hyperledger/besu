@@ -32,6 +32,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private OptionalLong constantinopleBlockNumber = OptionalLong.empty();
   private OptionalLong constantinopleFixBlockNumber = OptionalLong.empty();
   private OptionalLong istanbulBlockNumber = OptionalLong.empty();
+  private OptionalLong ecip1015BlockNumber = OptionalLong.empty();
+  private OptionalLong diehardBlockNumber = OptionalLong.empty();
+  private OptionalLong defuseDifficultyBombBlockNumber = OptionalLong.empty();
+  private OptionalLong atlantisBlockNumber = OptionalLong.empty();
+  private OptionalLong aghartaBlockNumber = OptionalLong.empty();
   private Optional<BigInteger> chainId = Optional.empty();
   private OptionalInt contractSizeLimit = OptionalInt.empty();
   private OptionalInt stackSizeLimit = OptionalInt.empty();
@@ -119,6 +124,31 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public OptionalLong getIstanbulBlockNumber() {
     return istanbulBlockNumber;
+  }
+
+  @Override
+  public OptionalLong getEcip1015BlockNumber() {
+    return ecip1015BlockNumber;
+  }
+
+  @Override
+  public OptionalLong getDieHardBlockNumber() {
+    return diehardBlockNumber;
+  }
+
+  @Override
+  public OptionalLong getDefuseDifficultyBombBlockNumber() {
+    return defuseDifficultyBombBlockNumber;
+  }
+
+  @Override
+  public OptionalLong getAtlantisBlockNumber() {
+    return atlantisBlockNumber;
+  }
+
+  @Override
+  public OptionalLong getAghartaBlockNumber() {
+    return aghartaBlockNumber;
   }
 
   @Override

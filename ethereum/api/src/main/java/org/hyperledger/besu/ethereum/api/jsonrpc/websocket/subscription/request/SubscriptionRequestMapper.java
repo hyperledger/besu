@@ -14,16 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request;
 
-import org.hyperledger.besu.ethereum.api.TopicsParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.UnsignedLongParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods.WebSocketRpcRequest;
+import org.hyperledger.besu.ethereum.api.query.LogsQuery;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 
 public class SubscriptionRequestMapper {
@@ -77,31 +73,8 @@ public class SubscriptionRequestMapper {
 
   private SubscribeRequest parseLogsRequest(
       final WebSocketRpcRequest request, final JsonRpcParameter parameter) {
-    final LogsSubscriptionParam logFilterParams =
-        parameter.required(request.getParams(), 1, LogsSubscriptionParam.class);
-    return new SubscribeRequest(
-        SubscriptionType.LOGS,
-        createFilterParameter(logFilterParams),
-        null,
-        request.getConnectionId());
-  }
-
-  private FilterParameter createFilterParameter(final LogsSubscriptionParam logFilterParams) {
-    final List<String> addresses = hasAddresses(logFilterParams);
-    final List<List<String>> topics = hasTopics(logFilterParams);
-    return new FilterParameter(null, null, addresses, new TopicsParameter(topics), null);
-  }
-
-  private List<String> hasAddresses(final LogsSubscriptionParam logFilterParams) {
-    return logFilterParams.address() != null && !logFilterParams.address().isEmpty()
-        ? logFilterParams.address()
-        : Collections.emptyList();
-  }
-
-  private List<List<String>> hasTopics(final LogsSubscriptionParam logFilterParams) {
-    return logFilterParams.topics() != null && !logFilterParams.topics().isEmpty()
-        ? Arrays.asList(logFilterParams.topics())
-        : Collections.emptyList();
+    final LogsQuery logsQuery = parameter.required(request.getParams(), 1, LogsQuery.class);
+    return new SubscribeRequest(SubscriptionType.LOGS, logsQuery, null, request.getConnectionId());
   }
 
   public UnsubscribeRequest mapUnsubscribeRequest(final JsonRpcRequest jsonRpcRequest)
