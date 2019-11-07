@@ -1,11 +1,11 @@
 package org.hyperledger.besu.cli.options;
 
 import org.hyperledger.besu.ethereum.worldstate.PrunerConfiguration;
-import org.hyperledger.besu.util.number.PositiveNumber;
-import picocli.CommandLine;
 
 import java.util.Arrays;
 import java.util.List;
+
+import picocli.CommandLine;
 
 public class PrunerOptions implements CLIOptions<PrunerConfiguration> {
   private static final String BLOCKS_RETAINED_FLAG = "--Xpruning-blocks-retained";

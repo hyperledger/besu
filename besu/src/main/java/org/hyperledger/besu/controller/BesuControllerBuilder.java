@@ -235,7 +235,7 @@ public abstract class BesuControllerBuilder<C> {
                         storageProvider.createPruningStorage(),
                         metricsSystem),
                     blockchain,
-                        prunerConfiguration));
+                    prunerConfiguration));
       }
     }
 
