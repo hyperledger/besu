@@ -38,7 +38,8 @@ public interface PoaQueryService {
   Address getProposerOfBlock(final BlockHeader header);
 
   /**
-   * Retrieves the signer {@link Address} of the local node.
+   * Retrieves the signer {@link Address} of the local node. This is the address added to the {@link
+   * BlockHeader} to identify that a specific node was a validator during block creation.
    *
    * @return The signer {@link Address} of the local node.
    */

@@ -27,11 +27,12 @@ import org.hyperledger.besu.services.BesuPluginContextImpl;
 public class IbftQueryPluginServiceFactory implements PluginServiceFactory {
 
   private final Blockchain blockchain;
-  private final KeyPair keyPair;
+  private final KeyPair localNodeKeypair;
 
-  public IbftQueryPluginServiceFactory(final Blockchain blockchain, final KeyPair keyPair) {
+  public IbftQueryPluginServiceFactory(
+      final Blockchain blockchain, final KeyPair localNodeKeypair) {
     this.blockchain = blockchain;
-    this.keyPair = keyPair;
+    this.localNodeKeypair = localNodeKeypair;
   }
 
   @Override
@@ -39,7 +40,7 @@ public class IbftQueryPluginServiceFactory implements PluginServiceFactory {
     final BlockInterface blockInterface = new IbftBlockInterface();
 
     final IbftQueryServiceImpl service =
-        new IbftQueryServiceImpl(blockInterface, blockchain, keyPair);
+        new IbftQueryServiceImpl(blockInterface, blockchain, localNodeKeypair);
     besuContext.addService(IbftQueryService.class, service);
     besuContext.addService(PoaQueryService.class, service);
     besuContext.addService(PoAMetricsService.class, service);

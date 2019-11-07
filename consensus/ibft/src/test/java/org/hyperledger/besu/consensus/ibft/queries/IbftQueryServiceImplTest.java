@@ -16,7 +16,6 @@ package org.hyperledger.besu.consensus.ibft.queries;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.ibft.IbftBlockHashing;
@@ -44,11 +43,15 @@ import java.util.stream.Collectors;
 import com.google.common.collect.Lists;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.class)
 public class IbftQueryServiceImplTest {
 
-  private Blockchain blockchain = mock(Blockchain.class);
-  private KeyPair keyPair = mock(KeyPair.class);
+  @Mock private Blockchain blockchain;
+  @Mock private KeyPair keyPair;
 
   private final List<KeyPair> validatorKeys =
       Lists.newArrayList(KeyPair.generate(), KeyPair.generate());

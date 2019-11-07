@@ -26,18 +26,19 @@ import org.hyperledger.besu.services.BesuPluginContextImpl;
 public class CliqueQueryPluginServiceFactory implements PluginServiceFactory {
 
   private final Blockchain blockchain;
-  private final KeyPair keyPair;
+  private final KeyPair localNodeKeypair;
 
-  public CliqueQueryPluginServiceFactory(final Blockchain blockchain, final KeyPair keyPair) {
+  public CliqueQueryPluginServiceFactory(
+      final Blockchain blockchain, final KeyPair localNodeKeypair) {
     this.blockchain = blockchain;
-    this.keyPair = keyPair;
+    this.localNodeKeypair = localNodeKeypair;
   }
 
   @Override
   public void appendPluginServices(final BesuPluginContextImpl besuContext) {
     final BlockInterface blockInterface = new CliqueBlockInterface();
     final PoaQueryServiceImpl service =
-        new PoaQueryServiceImpl(blockInterface, blockchain, keyPair);
+        new PoaQueryServiceImpl(blockInterface, blockchain, localNodeKeypair);
     besuContext.addService(PoaQueryService.class, service);
     besuContext.addService(PoAMetricsService.class, service);
   }

@@ -28,15 +28,15 @@ public class PoaQueryServiceImpl implements PoaQueryService, PoAMetricsService {
 
   private final BlockInterface blockInterface;
   private final Blockchain blockchain;
-  private final KeyPair keyPair;
+  private final KeyPair localNodeKeypair;
 
   public PoaQueryServiceImpl(
       final BlockInterface blockInterface,
       final Blockchain blockchain,
-      final KeyPair localNodeKeyPair) {
+      final KeyPair localNodeKeypair) {
     this.blockInterface = blockInterface;
     this.blockchain = blockchain;
-    this.keyPair = localNodeKeyPair;
+    this.localNodeKeypair = localNodeKeypair;
   }
 
   @Override
@@ -55,6 +55,6 @@ public class PoaQueryServiceImpl implements PoaQueryService, PoAMetricsService {
 
   @Override
   public Address getLocalSignerAddress() {
-    return org.hyperledger.besu.ethereum.core.Address.extract(keyPair.getPublicKey());
+    return org.hyperledger.besu.ethereum.core.Address.extract(localNodeKeypair.getPublicKey());
   }
 }
