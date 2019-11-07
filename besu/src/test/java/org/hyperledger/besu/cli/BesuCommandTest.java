@@ -2371,21 +2371,9 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void pruningOptionsRequiresServiceToBeEnabled() {
-
-    parseCommand("--pruning-blocks-retained", "4", "--pruning-block-confirmations", "1");
-
-    verifyOptionsConstraintLoggerCall(
-        "--pruning-enabled", "--pruning-blocks-retained", "--pruning-block-confirmations");
-
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
-  }
-
-  @Test
   public void pruningParametersAreCaptured() throws Exception {
     parseCommand(
-        "--pruning-enabled", "--pruning-blocks-retained=15", "--pruning-block-confirmations=4");
+        "--pruning-enabled", "--Xpruning-blocks-retained=15", "--Xpruning-block-confirmations=4");
 
     final ArgumentCaptor<PrunerConfiguration> pruningArg =
         ArgumentCaptor.forClass(PrunerConfiguration.class);

@@ -992,13 +992,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         "--sync-mode",
         !SyncMode.FAST.equals(syncMode),
         singletonList("--fast-sync-min-peers"));
-
-    CommandLineUtils.checkOptionDependencies(
-        logger,
-        commandLine,
-        "--pruning-enabled",
-        !isPruningEnabled(),
-        asList("--pruning-block-confirmations", "--pruning-blocks-retained"));
   }
 
   private BesuCommand configure() throws Exception {
