@@ -2660,6 +2660,22 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void privactyWithFastSyncMustError() {
+    parseCommand("--sync-mode=FAST", "--privacy-enabled");
+
+    assertThat(commandErrorOutput.toString()).contains("Fast sync cannot be enabled with privacy.");
+    assertThat(commandOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void privacyWithPruningMustError() {
+    parseCommand("--pruning-enabled", "--privacy-enabled");
+
+    assertThat(commandErrorOutput.toString()).contains("Pruning cannot be enabled with privacy.");
+    assertThat(commandOutput.toString()).isEmpty();
+  }
+
+  @Test
   public void rpcHttpAuthCredentialsFileOptionDisabledUnderDocker() {
     System.setProperty("besu.docker", "true");
 

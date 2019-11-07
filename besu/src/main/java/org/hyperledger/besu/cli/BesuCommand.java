@@ -1304,6 +1304,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     final PrivacyParameters.Builder privacyParametersBuilder = new PrivacyParameters.Builder();
     if (isPrivacyEnabled) {
+      final String errorSuffix = "cannot be enabled with privacy.";
+      if (syncMode == SyncMode.FAST) {
+        throw new ParameterException(commandLine, String.format("%s %s", "Fast sync", errorSuffix));
+      }
+      if (isPruningEnabled()) {
+        throw new ParameterException(commandLine, String.format("%s %s", "Pruning", errorSuffix));
+      }
+
       privacyParametersBuilder.setEnabled(true);
       privacyParametersBuilder.setEnclaveUrl(privacyUrl);
       if (privacyPublicKeyFile() != null) {
