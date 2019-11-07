@@ -2660,7 +2660,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void privactyWithFastSyncMustError() {
+  public void privacyWithFastSyncMustError() {
     parseCommand("--sync-mode=FAST", "--privacy-enabled");
 
     assertThat(commandErrorOutput.toString()).contains("Fast sync cannot be enabled with privacy.");
