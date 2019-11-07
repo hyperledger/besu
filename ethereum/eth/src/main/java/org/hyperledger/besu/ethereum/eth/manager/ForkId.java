@@ -153,7 +153,7 @@ public class ForkId {
   /**
    * Non EIP-2124 behaviour
    *
-   * @param peerGenesisOrCheckSumHash
+   * @param peerGenesisOrCheckSumHash Hash or checksum to be validated.
    * @return boolean
    */
   public boolean peerCheck(final Bytes32 peerGenesisOrCheckSumHash) {
