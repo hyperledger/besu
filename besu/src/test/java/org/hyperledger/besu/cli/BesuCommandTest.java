@@ -2350,7 +2350,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void pruningEnabledExplicitly() {
-    parseCommand("--pruning-enabled");
+    parseCommand("--pruning-enabled", "--sync-mode=FULL");
 
     verify(mockControllerBuilder).isPruningEnabled(true);
     verify(mockControllerBuilder).build();
@@ -2361,7 +2361,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void pruningDisabledExplicitly() {
-    parseCommand("--pruning-enabled=false");
+    parseCommand("--pruning-enabled=false", "--sync-mode=FAST");
 
     verify(mockControllerBuilder).isPruningEnabled(false);
     verify(mockControllerBuilder).build();
