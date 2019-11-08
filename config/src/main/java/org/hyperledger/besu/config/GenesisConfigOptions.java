@@ -63,7 +63,7 @@ public interface GenesisConfigOptions {
    * @return block number to activate the classic fork block
    */
   OptionalLong getClassicForkBlock();
-  
+
   /**
    * Block number for ECIP-1015 fork on Classic network ECIP-1015: Long-term gas cost changes for
    * IO-heavy operations to mitigate transaction spam attacks In reference to EIP-150 (ETH Tangerine
@@ -112,7 +112,7 @@ public interface GenesisConfigOptions {
    * @return block number to remove difficulty bomb on classic network
    */
   OptionalLong getDefuseDifficultyBombBlockNumber();
-  
+
   Optional<BigInteger> getChainId();
 
   OptionalInt getContractSizeLimit();
