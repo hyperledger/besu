@@ -107,7 +107,7 @@ public interface GenesisConfigOptions {
    * Block number to remove difficulty bomb, to meet specification for ECIP-1041.
    *
    * @see <a
-   *     herf="https://ecips.ethereumclassic.org/ECIPs/ecip-1041">https://ecips.ethereumclassic.org/ECIPs/ecip-1041</a>
+   *     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1041">https://ecips.ethereumclassic.org/ECIPs/ecip-1041</a>
    *     ECIP-1041: Remove Difficulty Bomb
    * @return block number to remove difficulty bomb on classic network
    */
