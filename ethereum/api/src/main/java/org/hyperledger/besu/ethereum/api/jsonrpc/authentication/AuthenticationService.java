@@ -18,12 +18,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.NoSuchAlgorithmException;
-import java.util.Base64;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
@@ -33,18 +27,14 @@ import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.AuthProvider;
-import io.vertx.ext.auth.PubSecKeyOptions;
 import io.vertx.ext.auth.User;
 import io.vertx.ext.auth.jwt.JWTAuth;
 import io.vertx.ext.auth.jwt.JWTAuthOptions;
 import io.vertx.ext.jwt.JWTOptions;
 import io.vertx.ext.web.RoutingContext;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /** Provides authentication handlers for use in the http and websocket services */
 public class AuthenticationService {
-  private static final Logger LOG = LogManager.getLogger();
 
   private final JWTAuth jwtAuthProvider;
   @VisibleForTesting public final JWTAuthOptions jwtAuthOptions;
@@ -71,24 +61,11 @@ public class AuthenticationService {
    */
   public static Optional<AuthenticationService> create(
       final Vertx vertx, final JsonRpcConfiguration config) {
-    if (!config.isAuthenticationEnabled() || config.getAuthenticationCredentialsFile() == null) {
-      return Optional.empty();
-    }
-    final Optional<String> externalJwtPublicKey =
-        config.getAuthenticationPublicKeyFile() == null
-            ? Optional.empty()
-            : readPublicKey(config.getAuthenticationPublicKeyFile());
-    final JWTAuthOptions jwtAuthOptions = makeJwtAuthOptions(externalJwtPublicKey);
-    final Optional<AuthProvider> credentialAuthProvider =
-        makeCredentialAuthProvider(
-            vertx, config.isAuthenticationEnabled(), config.getAuthenticationCredentialsFile());
-    if (credentialAuthProvider.isEmpty()) {
-      return Optional.empty();
-    }
-
-    return Optional.of(
-        new AuthenticationService(
-            JWTAuth.create(vertx, jwtAuthOptions), jwtAuthOptions, credentialAuthProvider.get()));
+    return create(
+        vertx,
+        config.isAuthenticationEnabled(),
+        config.getAuthenticationCredentialsFile(),
+        config.getAuthenticationPublicKeyFile());
   }
 
   /**
@@ -103,19 +80,27 @@ public class AuthenticationService {
    */
   public static Optional<AuthenticationService> create(
       final Vertx vertx, final WebSocketConfiguration config) {
-    if (!config.isAuthenticationEnabled() || config.getAuthenticationCredentialsFile() == null) {
+    return create(
+        vertx,
+        config.isAuthenticationEnabled(),
+        config.getAuthenticationCredentialsFile(),
+        config.getAuthenticationPublicKeyFile());
+  }
+
+  private static Optional<AuthenticationService> create(
+      final Vertx vertx,
+      final boolean authenticationEnabled,
+      final String authenticationCredentialsFile,
+      final File authenticationPublicKeyFile) {
+    if (!authenticationEnabled || authenticationCredentialsFile == null) {
       return Optional.empty();
     }
 
-    final Optional<String> externalJwtPublicKey =
-        config.getAuthenticationPublicKeyFile() == null
-            ? Optional.empty()
-            : readPublicKey(config.getAuthenticationPublicKeyFile());
+    final JWTAuthOptionsFactory jwtAuthOptionsFactory = new JWTAuthOptionsFactory();
+    final JWTAuthOptions jwtAuthOptions = jwtAuthOptionsFactory.create(authenticationPublicKeyFile);
 
-    final JWTAuthOptions jwtAuthOptions = makeJwtAuthOptions(externalJwtPublicKey);
     final Optional<AuthProvider> credentialAuthProvider =
-        makeCredentialAuthProvider(
-            vertx, config.isAuthenticationEnabled(), config.getAuthenticationCredentialsFile());
+        makeCredentialAuthProvider(vertx, authenticationEnabled, authenticationCredentialsFile);
     if (credentialAuthProvider.isEmpty()) {
       return Optional.empty();
     }
@@ -123,46 +108,6 @@ public class AuthenticationService {
     return Optional.of(
         new AuthenticationService(
             JWTAuth.create(vertx, jwtAuthOptions), jwtAuthOptions, credentialAuthProvider.get()));
-  }
-
-  private static Optional<String> readPublicKey(final File authenticationPublicKeyFile) {
-    try {
-      return Optional.of(Files.readString(authenticationPublicKeyFile.toPath()));
-    } catch (IOException e) {
-      LOG.error("Authentication RPC public key could not be read", e);
-      return Optional.empty();
-    }
-  }
-
-  private static JWTAuthOptions makeJwtAuthOptions(final Optional<String> publicKey) {
-    if (publicKey.isEmpty()) {
-      final KeyPair keypair = generateJwtKeyPair();
-      return new JWTAuthOptions()
-          .setPermissionsClaimKey("permissions")
-          .addPubSecKey(
-              new PubSecKeyOptions()
-                  .setAlgorithm("RS256")
-                  .setPublicKey(
-                      Base64.getEncoder().encodeToString(keypair.getPublic().getEncoded()))
-                  .setSecretKey(
-                      Base64.getEncoder().encodeToString(keypair.getPrivate().getEncoded())));
-    } else {
-      return new JWTAuthOptions()
-          .setPermissionsClaimKey("permissions")
-          .addPubSecKey(new PubSecKeyOptions().setAlgorithm("RS256").setPublicKey(publicKey.get()));
-    }
-  }
-
-  private static KeyPair generateJwtKeyPair() {
-    final KeyPairGenerator keyGenerator;
-    try {
-      keyGenerator = KeyPairGenerator.getInstance("RSA");
-      keyGenerator.initialize(1024);
-    } catch (final NoSuchAlgorithmException e) {
-      throw new RuntimeException(e);
-    }
-
-    return keyGenerator.generateKeyPair();
   }
 
   private static Optional<AuthProvider> makeCredentialAuthProvider(
