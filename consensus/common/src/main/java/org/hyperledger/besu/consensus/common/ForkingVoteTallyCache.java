@@ -25,24 +25,24 @@ import java.util.Map;
 
 public class ForkingVoteTallyCache extends VoteTallyCache {
 
-  private final Map<Long, List<Address>> overridenValidators;
+  private final Map<Long, List<Address>> overriddenValidators;
 
   public ForkingVoteTallyCache(
       final Blockchain blockchain,
       final VoteTallyUpdater voteTallyUpdater,
       final EpochManager epochManager,
       final BlockInterface blockInterface,
-      final Map<Long, List<Address>> overridenValidators) {
+      final Map<Long, List<Address>> overriddenValidators) {
     super(blockchain, voteTallyUpdater, epochManager, blockInterface);
-    checkNotNull(overridenValidators);
-    this.overridenValidators = overridenValidators;
+    checkNotNull(overriddenValidators);
+    this.overriddenValidators = overriddenValidators;
   }
 
   @Override
   protected VoteTally getValidatorsAfter(final BlockHeader header) {
     final long actualBlockNumber = header.getNumber() + 1L;
-    if (overridenValidators.containsKey(actualBlockNumber)) {
-      return new VoteTally(overridenValidators.get(actualBlockNumber));
+    if (overriddenValidators.containsKey(actualBlockNumber)) {
+      return new VoteTally(overriddenValidators.get(actualBlockNumber));
     }
 
     return super.getValidatorsAfter(header);

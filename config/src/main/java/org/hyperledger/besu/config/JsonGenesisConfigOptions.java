@@ -37,7 +37,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   private static final String IBFT_LEGACY_CONFIG_KEY = "ibft";
   private static final String IBFT2_CONFIG_KEY = "ibft2";
   private static final String CLIQUE_CONFIG_KEY = "clique";
-  private static final String CUSTOM_FORKS_CONFIG_KEY = "customForks";
+  private static final String CUSTOM_FORKS_CONFIG_KEY = "customforks";
   private final ObjectNode configRoot;
   private final Map<String, String> configOverrides = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
   private final CustomForksConfigOptions customForks;

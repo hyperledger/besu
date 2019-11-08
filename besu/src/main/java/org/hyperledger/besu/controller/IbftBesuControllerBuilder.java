@@ -125,12 +125,13 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder<IbftContext
             miningParameters,
             Util.publicKeyToAddress(nodeKeys.getPublicKey()));
 
-    final ProposerSelector proposerSelector =
-        new ProposerSelector(blockchain, blockInterface, true);
-
     // NOTE: peers should not be used for accessing the network as it does not enforce the
     // "only send once" filter applied by the UniqueMessageMulticaster.
     final VoteTallyCache voteTallyCache = protocolContext.getConsensusState().getVoteTallyCache();
+
+    final ProposerSelector proposerSelector =
+        new ProposerSelector(blockchain, blockInterface, true, voteTallyCache);
+
     peers = new ValidatorPeers(voteTallyCache);
 
     final UniqueMessageMulticaster uniqueMessageMulticaster =

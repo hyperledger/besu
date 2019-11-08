@@ -77,4 +77,25 @@ public class ForkingVoteTallyCacheTest extends VoteTallyCacheTestBase {
 
     assertThat(result.getValidators()).containsExactlyElementsOf(forkedValidators);
   }
+
+  @Test
+  public void atHeadApiOperatesIdenticallyToUnderlyingApi() {
+    final List<Address> forkedValidators =
+        Lists.newArrayList(Address.fromHexString("5"), Address.fromHexString("6"));
+    final Map<Long, List<Address>> forkingValidatorMap = new HashMap<>();
+    forkingValidatorMap.put(3L, forkedValidators);
+
+    final VoteTallyUpdater tallyUpdater = mock(VoteTallyUpdater.class);
+    final ForkingVoteTallyCache cache =
+        new ForkingVoteTallyCache(
+            blockChain,
+            tallyUpdater,
+            new EpochManager(30_000L),
+            blockInterface,
+            forkingValidatorMap);
+
+    final VoteTally result = cache.getVoteTallyAtHead();
+
+    assertThat(result.getValidators()).containsExactlyElementsOf(forkedValidators);
+  }
 }
