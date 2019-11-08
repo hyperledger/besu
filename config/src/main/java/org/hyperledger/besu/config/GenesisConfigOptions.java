@@ -56,6 +56,14 @@ public interface GenesisConfigOptions {
 
   OptionalLong getIstanbulBlockNumber();
 
+  /**
+   * Block number for the Dao Fork, this value is used to tell node to connect with peer that did
+   * NOT accept the Dao Fork and instead continued as what is now called the classic network
+   *
+   * @return block number to activate the classic fork block
+   */
+  OptionalLong getClassicForkBlock();
+
   Optional<BigInteger> getChainId();
 
   OptionalInt getContractSizeLimit();
