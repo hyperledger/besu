@@ -589,7 +589,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @Option(
       names = {"--pruning-enabled"},
       description =
-          "Enable pruning of world state of blocks older than the retention period (default: true if fast sync is enabled, false otherwise)")
+          "Enable disk-space saving optimization that removes old state that is unlikely to be required (default: true if fast sync is enabled, false otherwise)")
   private Boolean pruningOverride;
 
   @Option(
