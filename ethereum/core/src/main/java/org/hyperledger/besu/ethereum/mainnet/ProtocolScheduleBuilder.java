@@ -177,6 +177,16 @@ public class ProtocolScheduleBuilder<C> {
         config.getDieHardBlockNumber(),
         ClassicProtocolSpecs.dieHardDefinition(
             chainId, config.getContractSizeLimit(), config.getEvmStackSize()));
+    addProtocolSpec(
+        protocolSchedule,
+        config.getGothamBlockNumber(),
+        ClassicProtocolSpecs.gothamDefinition(
+            chainId, config.getContractSizeLimit(), config.getEvmStackSize()));
+    addProtocolSpec(
+        protocolSchedule,
+        config.getDefuseDifficultyBombBlockNumber(),
+        ClassicProtocolSpecs.defuseDifficultyBombDefinition(
+            chainId, config.getContractSizeLimit(), config.getEvmStackSize()));
 
     LOG.info("Protocol schedule created with milestones: {}", protocolSchedule.listMilestones());
     return protocolSchedule;
