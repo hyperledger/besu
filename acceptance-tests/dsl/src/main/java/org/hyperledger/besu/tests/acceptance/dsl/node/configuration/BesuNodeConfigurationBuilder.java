@@ -130,7 +130,7 @@ public class BesuNodeConfigurationBuilder {
     final WebSocketConfiguration config = WebSocketConfiguration.createDefault();
     config.setEnabled(true);
     config.setPort(0);
-    config.setHostsWhitelist(Collections.singleton("*"));
+    config.setHostsWhitelist(Collections.singletonList("*"));
 
     this.webSocketConfiguration = config;
     return this;

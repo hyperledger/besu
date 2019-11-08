@@ -17,6 +17,9 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.authentication;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
@@ -36,9 +39,12 @@ import io.vertx.ext.auth.jwt.JWTAuth;
 import io.vertx.ext.auth.jwt.JWTAuthOptions;
 import io.vertx.ext.jwt.JWTOptions;
 import io.vertx.ext.web.RoutingContext;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /** Provides authentication handlers for use in the http and websocket services */
 public class AuthenticationService {
+  private static final Logger LOG = LogManager.getLogger();
 
   private final JWTAuth jwtAuthProvider;
   @VisibleForTesting public final JWTAuthOptions jwtAuthOptions;
@@ -65,25 +71,24 @@ public class AuthenticationService {
    */
   public static Optional<AuthenticationService> create(
       final Vertx vertx, final JsonRpcConfiguration config) {
-    final Optional<JWTAuthOptions> jwtAuthOptions =
-        makeJwtAuthOptions(
-            config.isAuthenticationEnabled(), config.getAuthenticationCredentialsFile());
-    if (!jwtAuthOptions.isPresent()) {
+    if (!config.isAuthenticationEnabled() || config.getAuthenticationCredentialsFile() == null) {
       return Optional.empty();
     }
-
+    final Optional<String> externalJwtPublicKey =
+        config.getAuthenticationPublicKeyFile() == null
+            ? Optional.empty()
+            : readPublicKey(config.getAuthenticationPublicKeyFile());
+    final JWTAuthOptions jwtAuthOptions = makeJwtAuthOptions(externalJwtPublicKey);
     final Optional<AuthProvider> credentialAuthProvider =
         makeCredentialAuthProvider(
             vertx, config.isAuthenticationEnabled(), config.getAuthenticationCredentialsFile());
-    if (!credentialAuthProvider.isPresent()) {
+    if (credentialAuthProvider.isEmpty()) {
       return Optional.empty();
     }
 
     return Optional.of(
         new AuthenticationService(
-            jwtAuthOptions.map(o -> JWTAuth.create(vertx, o)).get(),
-            jwtAuthOptions.get(),
-            credentialAuthProvider.get()));
+            JWTAuth.create(vertx, jwtAuthOptions), jwtAuthOptions, credentialAuthProvider.get()));
   }
 
   /**
@@ -98,55 +103,66 @@ public class AuthenticationService {
    */
   public static Optional<AuthenticationService> create(
       final Vertx vertx, final WebSocketConfiguration config) {
-    final Optional<JWTAuthOptions> jwtAuthOptions =
-        makeJwtAuthOptions(
-            config.isAuthenticationEnabled(), config.getAuthenticationCredentialsFile());
-    if (!jwtAuthOptions.isPresent()) {
+    if (!config.isAuthenticationEnabled() || config.getAuthenticationCredentialsFile() == null) {
       return Optional.empty();
     }
 
+    final Optional<String> externalJwtPublicKey =
+        config.getAuthenticationPublicKeyFile() == null
+            ? Optional.empty()
+            : readPublicKey(config.getAuthenticationPublicKeyFile());
+
+    final JWTAuthOptions jwtAuthOptions = makeJwtAuthOptions(externalJwtPublicKey);
     final Optional<AuthProvider> credentialAuthProvider =
         makeCredentialAuthProvider(
             vertx, config.isAuthenticationEnabled(), config.getAuthenticationCredentialsFile());
-    if (!credentialAuthProvider.isPresent()) {
+    if (credentialAuthProvider.isEmpty()) {
       return Optional.empty();
     }
 
     return Optional.of(
         new AuthenticationService(
-            jwtAuthOptions.map(o -> JWTAuth.create(vertx, o)).get(),
-            jwtAuthOptions.get(),
-            credentialAuthProvider.get()));
+            JWTAuth.create(vertx, jwtAuthOptions), jwtAuthOptions, credentialAuthProvider.get()));
   }
 
-  private static Optional<JWTAuthOptions> makeJwtAuthOptions(
-      final boolean authenticationEnabled, @Nullable final String authenticationCredentialsFile) {
-    if (authenticationEnabled && authenticationCredentialsFile != null) {
-      final KeyPairGenerator keyGenerator;
-      try {
-        keyGenerator = KeyPairGenerator.getInstance("RSA");
-        keyGenerator.initialize(1024);
-      } catch (final NoSuchAlgorithmException e) {
-        throw new RuntimeException(e);
-      }
-
-      final KeyPair keypair = keyGenerator.generateKeyPair();
-
-      final JWTAuthOptions jwtAuthOptions =
-          new JWTAuthOptions()
-              .setPermissionsClaimKey("permissions")
-              .addPubSecKey(
-                  new PubSecKeyOptions()
-                      .setAlgorithm("RS256")
-                      .setPublicKey(
-                          Base64.getEncoder().encodeToString(keypair.getPublic().getEncoded()))
-                      .setSecretKey(
-                          Base64.getEncoder().encodeToString(keypair.getPrivate().getEncoded())));
-
-      return Optional.of(jwtAuthOptions);
-    } else {
+  private static Optional<String> readPublicKey(final File authenticationPublicKeyFile) {
+    try {
+      return Optional.of(Files.readString(authenticationPublicKeyFile.toPath()));
+    } catch (IOException e) {
+      LOG.error("Authentication RPC public key could not be read", e);
       return Optional.empty();
     }
+  }
+
+  private static JWTAuthOptions makeJwtAuthOptions(final Optional<String> publicKey) {
+    if (publicKey.isEmpty()) {
+      final KeyPair keypair = generateJwtKeyPair();
+      return new JWTAuthOptions()
+          .setPermissionsClaimKey("permissions")
+          .addPubSecKey(
+              new PubSecKeyOptions()
+                  .setAlgorithm("RS256")
+                  .setPublicKey(
+                      Base64.getEncoder().encodeToString(keypair.getPublic().getEncoded()))
+                  .setSecretKey(
+                      Base64.getEncoder().encodeToString(keypair.getPrivate().getEncoded())));
+    } else {
+      return new JWTAuthOptions()
+          .setPermissionsClaimKey("permissions")
+          .addPubSecKey(new PubSecKeyOptions().setAlgorithm("RS256").setPublicKey(publicKey.get()));
+    }
+  }
+
+  private static KeyPair generateJwtKeyPair() {
+    final KeyPairGenerator keyGenerator;
+    try {
+      keyGenerator = KeyPairGenerator.getInstance("RSA");
+      keyGenerator.initialize(1024);
+    } catch (final NoSuchAlgorithmException e) {
+      throw new RuntimeException(e);
+    }
+
+    return keyGenerator.generateKeyPair();
   }
 
   private static Optional<AuthProvider> makeCredentialAuthProvider(
