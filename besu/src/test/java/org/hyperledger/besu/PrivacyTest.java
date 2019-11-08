@@ -20,14 +20,20 @@ import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.GasLimitCalculator;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
+import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.MiningParametersTestBuilder;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.PrecompiledContract;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyStorageProvider;
 import org.hyperledger.besu.ethereum.privacy.storage.keyvalue.PrivacyKeyValueStorageProviderBuilder;
@@ -43,7 +49,9 @@ import org.hyperledger.besu.testutil.TestClock;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -58,6 +66,79 @@ public class PrivacyTest {
 
   private static final Integer ADDRESS = 9;
   @Rule public final TemporaryFolder folder = new TemporaryFolder();
+
+  @SuppressWarnings({"unchecked", "rawtypes"})
+  @Test
+  public void reorg() throws IOException {
+    final Path dataDir = folder.newFolder().toPath();
+    final Path dbDir = dataDir.resolve("database");
+    final PrivacyParameters privacyParameters =
+        new PrivacyParameters.Builder()
+            .setPrivacyAddress(ADDRESS)
+            .setEnabled(true)
+            .setStorageProvider(createKeyValueStorageProvider(dataDir, dbDir))
+            .build();
+
+    final BesuController besuController =
+        new BesuController.Builder()
+            .fromGenesisConfig(GenesisConfigFile.development())
+            .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
+            .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+            .storageProvider(new InMemoryStorageProvider())
+            .networkId(BigInteger.ONE)
+            .miningParameters(new MiningParametersTestBuilder().enabled(false).build())
+            .nodeKeys(KeyPair.generate())
+            .metricsSystem(new NoOpMetricsSystem())
+            .dataDirectory(dataDir)
+            .clock(TestClock.fixed())
+            .privacyParameters(privacyParameters)
+            .transactionPoolConfiguration(TransactionPoolConfiguration.builder().build())
+            .targetGasLimit(GasLimitCalculator.DEFAULT)
+            .build();
+
+    // Setup an initial blockchain
+    final DefaultBlockchain blockchain =
+        (DefaultBlockchain) besuController.getProtocolContext().getBlockchain();
+    final List<Block> blocksToAdd =
+        generateBlocks(
+            new BlockDataGenerator.BlockOptions()
+                .setBlockNumber(1)
+                .setParentHash(
+                    besuController.getProtocolContext().getBlockchain().getGenesisBlock().getHash())
+                .addTransaction()
+                .addOmmers()
+                .setReceiptsRoot(
+                    Hash.fromHexString(
+                        "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421"))
+                .setGasUsed(0)
+                .setLogsBloom(LogsBloomFilter.empty())
+                .setStateRoot(
+                    Hash.fromHexString(
+                        "0x6553b1838b937f8f883600763505785cc227e9d99fa948f98566f0467f10e1af")));
+    for (int i = 0; i < blocksToAdd.size(); i++) {
+      if (!besuController
+          .getProtocolSchedule()
+          .getByBlockNumber(blockchain.getChainHeadBlockNumber())
+          .getBlockImporter()
+          .importBlock(
+              besuController.getProtocolContext(), blocksToAdd.get(0), HeaderValidationMode.NONE)) {
+        break;
+      }
+    }
+    assertThat(blockchain.getChainHeadBlockNumber()).isEqualTo(1);
+  }
+
+  private List<Block> generateBlocks(final BlockDataGenerator.BlockOptions... blockOptions) {
+    final List<Block> seq = new ArrayList<>(blockOptions.length);
+    final BlockDataGenerator gen = new BlockDataGenerator();
+
+    for (final BlockDataGenerator.BlockOptions blockOption : blockOptions) {
+      final Block next = gen.block(blockOption);
+      seq.add(next);
+    }
+
+    return seq;
+  }
 
   @Test
   public void privacyPrecompiled() throws IOException {
