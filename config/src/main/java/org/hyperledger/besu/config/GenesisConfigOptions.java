@@ -63,6 +63,30 @@ public interface GenesisConfigOptions {
    * @return block number to activate the classic fork block
    */
   OptionalLong getClassicForkBlock();
+  /**
+   * Block number for ECIP-1015 fork on Classic network ECIP-1015: Long-term gas cost changes for
+   * IO-heavy operations to mitigate transaction spam attacks In reference to EIP-150 (ETH Tangerine
+   * Whistle) Note, this fork happens after Homestead (Mainnet definition) and before DieHard fork
+   *
+   * @see <a
+   *     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1015">https://ecips.ethereumclassic.org/ECIPs/ecip-1015</a>
+   * @return block number to activate ECIP-1015 code
+   */
+  OptionalLong getEcip1015BlockNumber();
+
+  /**
+   * Block number for DieHard fork on Classic network The DieHard fork includes changes to meet
+   * specification for ECIP-1010 and EIP-160 Note, this fork happens after ECIP-1015 (classic
+   * tangerine whistle) and before Gotham fork ECIP-1010: Delay Difficulty Bomb Explosion
+   *
+   * @see <a
+   *     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1010">https://ecips.ethereumclassic.org/ECIPs/ecip-1010</a>
+   *     EIP-160: EXP cost increase
+   * @see <a
+   *     href="https://eips.ethereum.org/EIPS/eip-160">https://eips.ethereum.org/EIPS/eip-160</a>
+   * @return block number to activate Classic DieHard fork
+   */
+  OptionalLong getDieHardBlockNumber();
 
   Optional<BigInteger> getChainId();
 

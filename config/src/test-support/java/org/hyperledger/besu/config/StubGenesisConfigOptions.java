@@ -33,6 +33,8 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private OptionalLong constantinopleFixBlockNumber = OptionalLong.empty();
   private OptionalLong istanbulBlockNumber = OptionalLong.empty();
   private OptionalLong classicForkBlock = OptionalLong.empty();
+  private OptionalLong ecip1015BlockNumber = OptionalLong.empty();
+  private OptionalLong diehardBlockNumber = OptionalLong.empty();
   private Optional<BigInteger> chainId = Optional.empty();
   private OptionalInt contractSizeLimit = OptionalInt.empty();
   private OptionalInt stackSizeLimit = OptionalInt.empty();
@@ -125,6 +127,16 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public OptionalLong getClassicForkBlock() {
     return classicForkBlock;
+  }
+
+  @Override
+  public OptionalLong getEcip1015BlockNumber() {
+    return ecip1015BlockNumber;
+  }
+
+  @Override
+  public OptionalLong getDieHardBlockNumber() {
+    return diehardBlockNumber;
   }
 
   @Override
