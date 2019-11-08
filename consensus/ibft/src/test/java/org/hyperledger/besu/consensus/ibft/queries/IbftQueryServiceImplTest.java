@@ -16,7 +16,6 @@ package org.hyperledger.besu.consensus.ibft.queries;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.ibft.IbftBlockHashing;
@@ -44,10 +43,15 @@ import java.util.stream.Collectors;
 import com.google.common.collect.Lists;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.class)
 public class IbftQueryServiceImplTest {
 
-  private Blockchain blockchain = mock(Blockchain.class);
+  @Mock private Blockchain blockchain;
+  @Mock private KeyPair keyPair;
 
   private final List<KeyPair> validatorKeys =
       Lists.newArrayList(KeyPair.generate(), KeyPair.generate());
@@ -104,7 +108,8 @@ public class IbftQueryServiceImplTest {
 
   @Test
   public void roundNumberFromBlockIsReturned() {
-    final IbftQueryService service = new IbftQueryServiceImpl(new IbftBlockInterface(), blockchain);
+    final IbftQueryService service =
+        new IbftQueryServiceImpl(new IbftBlockInterface(), blockchain, keyPair);
 
     assertThat(service.getRoundNumberFrom(blockHeader)).isEqualTo(ROUND_NUMBER_IN_BLOCK);
   }
@@ -115,14 +120,16 @@ public class IbftQueryServiceImplTest {
         new NonBesuBlockHeader(blockHeader.getHash(), blockHeader.getExtraData());
     when(blockchain.getBlockHeader(blockHeader.getHash())).thenReturn(Optional.empty());
 
-    final IbftQueryService service = new IbftQueryServiceImpl(new IbftBlockInterface(), blockchain);
+    final IbftQueryService service =
+        new IbftQueryServiceImpl(new IbftBlockInterface(), blockchain, keyPair);
     assertThatExceptionOfType(RuntimeException.class)
         .isThrownBy(() -> service.getRoundNumberFrom(header));
   }
 
   @Test
   public void getSignersReturnsAddressesOfSignersInBlock() {
-    final IbftQueryService service = new IbftQueryServiceImpl(new IbftBlockInterface(), blockchain);
+    final IbftQueryService service =
+        new IbftQueryServiceImpl(new IbftBlockInterface(), blockchain, keyPair);
 
     final List<Address> signers =
         signingKeys.stream()
@@ -133,12 +140,13 @@ public class IbftQueryServiceImplTest {
   }
 
   @Test
-  public void getSignersTheowsIfBlockIsNotOnTheChain() {
+  public void getSignersThrowsIfBlockIsNotOnTheChain() {
     final NonBesuBlockHeader header =
         new NonBesuBlockHeader(blockHeader.getHash(), blockHeader.getExtraData());
     when(blockchain.getBlockHeader(blockHeader.getHash())).thenReturn(Optional.empty());
 
-    final IbftQueryService service = new IbftQueryServiceImpl(new IbftBlockInterface(), blockchain);
+    final IbftQueryService service =
+        new IbftQueryServiceImpl(new IbftBlockInterface(), blockchain, keyPair);
     assertThatExceptionOfType(RuntimeException.class)
         .isThrownBy(() -> service.getSignersFrom(header));
   }
