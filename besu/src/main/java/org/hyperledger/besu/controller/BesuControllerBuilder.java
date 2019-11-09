@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
+import org.hyperledger.besu.ethereum.eth.peervalidation.ClassicForkPeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.DaoForkPeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.RequiredBlocksPeerValidator;
@@ -159,8 +160,8 @@ public abstract class BesuControllerBuilder<C> {
     return this;
   }
 
-  public BesuControllerBuilder<C> isPruningEnabled(final boolean isPruningEnabled) {
-    this.isPruningEnabled = isPruningEnabled;
+  public BesuControllerBuilder<C> isPruningEnabled(final boolean pruningEnabled) {
+    this.isPruningEnabled = pruningEnabled;
     return this;
   }
 
@@ -360,6 +361,14 @@ public abstract class BesuControllerBuilder<C> {
       // Setup dao validator
       validators.add(
           new DaoForkPeerValidator(protocolSchedule, metricsSystem, daoBlock.getAsLong()));
+    }
+
+    final OptionalLong classicBlock =
+        genesisConfig.getConfigOptions(genesisConfigOverrides).getClassicForkBlock();
+    // setup classic validator
+    if (classicBlock.isPresent()) {
+      validators.add(
+          new ClassicForkPeerValidator(protocolSchedule, metricsSystem, classicBlock.getAsLong()));
     }
 
     for (final Map.Entry<Long, Hash> requiredBlock : requiredBlocks.entrySet()) {

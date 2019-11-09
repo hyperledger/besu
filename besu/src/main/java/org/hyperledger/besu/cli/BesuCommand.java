@@ -611,8 +611,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @Option(
       names = {"--pruning-enabled"},
       description =
-          "Enable pruning of world state of blocks older than the retention period (default: true if fast sync is enabled, false otherwise)")
-  private Boolean pruningOverride;
+          "Enable pruning of world state of blocks older than the retention period (default: ${DEFAULT-VALUE})")
+  private final Boolean isPruningEnabled = false;
 
   @Option(
       names = {"--pruning-blocks-retained"},
@@ -1044,7 +1044,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         logger,
         commandLine,
         "--pruning-enabled",
-        !isPruningEnabled(),
+        !isPruningEnabled,
         asList("--pruning-block-confirmations", "--pruning-blocks-retained"));
   }
 
@@ -1128,7 +1128,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           .clock(Clock.systemUTC())
           .isRevertReasonEnabled(isRevertReasonEnabled)
           .storageProvider(keyStorageProvider(keyValueStorageName))
-          .isPruningEnabled(isPruningEnabled())
+          .isPruningEnabled(isPruningEnabled)
           .pruningConfiguration(buildPruningConfiguration())
           .genesisConfigOverrides(genesisConfigOverrides)
           .targetGasLimit(targetGasLimit == null ? Optional.empty() : Optional.of(targetGasLimit))
@@ -1413,10 +1413,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private PruningConfiguration buildPruningConfiguration() {
     return new PruningConfiguration(pruningBlockConfirmations, pruningBlocksRetained);
-  }
-
-  private boolean isPruningEnabled() {
-    return Optional.ofNullable(pruningOverride).orElse(syncMode == SyncMode.FAST);
   }
 
   // Blockchain synchronisation from peers.
