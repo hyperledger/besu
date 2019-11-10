@@ -121,13 +121,11 @@ allprojects {
     if ("$System.env.JENKINS_URL" == 'https://jenkins.pegasys.tech/') {
       maven { url "https://nexus.int.pegasys.tech/repository/consensys-pegasys/" }
       maven { url "https://nexus.int.pegasys.tech/repository/jcenter/" }
-      maven { url  "https://dl.bintray.com/tuweni/tuweni/" }
     } else {
       jcenter()
       mavenCentral()
       mavenLocal()
       maven { url "https://consensys.bintray.com/pegasys-repo" }
-      maven { url  "https://dl.bintray.com/tuweni/tuweni/" }
     }
   }
 
