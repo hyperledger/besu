@@ -42,7 +42,7 @@ public class ForkingVoteTallyCacheTest extends VoteTallyCacheTestBase {
             tallyUpdater,
             new EpochManager(30_000),
             blockInterface,
-            forkingValidatorMap);
+            new IbftValidatorOverrides(forkingValidatorMap));
 
     final VoteTally result = cache.getVoteTallyAfterBlock(block_2.getHeader());
 
@@ -54,7 +54,11 @@ public class ForkingVoteTallyCacheTest extends VoteTallyCacheTestBase {
     final VoteTallyUpdater tallyUpdater = mock(VoteTallyUpdater.class);
     final ForkingVoteTallyCache cache =
         new ForkingVoteTallyCache(
-            blockChain, tallyUpdater, new EpochManager(30_000), blockInterface, new HashMap<>());
+            blockChain,
+            tallyUpdater,
+            new EpochManager(30_000),
+            blockInterface,
+            new IbftValidatorOverrides(new HashMap<>()));
 
     final VoteTally result = cache.getVoteTallyAfterBlock(block_2.getHeader());
 
@@ -71,7 +75,11 @@ public class ForkingVoteTallyCacheTest extends VoteTallyCacheTestBase {
     final VoteTallyUpdater tallyUpdater = mock(VoteTallyUpdater.class);
     final ForkingVoteTallyCache cache =
         new ForkingVoteTallyCache(
-            blockChain, tallyUpdater, new EpochManager(2L), blockInterface, forkingValidatorMap);
+            blockChain,
+            tallyUpdater,
+            new EpochManager(2L),
+            blockInterface,
+            new IbftValidatorOverrides(forkingValidatorMap));
 
     final VoteTally result = cache.getVoteTallyAfterBlock(block_2.getHeader());
 
@@ -92,7 +100,7 @@ public class ForkingVoteTallyCacheTest extends VoteTallyCacheTestBase {
             tallyUpdater,
             new EpochManager(30_000L),
             blockInterface,
-            forkingValidatorMap);
+            new IbftValidatorOverrides(forkingValidatorMap));
 
     final VoteTally result = cache.getVoteTallyAtHead();
 
