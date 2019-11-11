@@ -125,7 +125,7 @@ public class PeerPermissionsAdapter extends PeerPermissions {
 
   @Override
   public void close() {
-    blockchain.removeObserver(blockchainListenId);
+    blockchain.removeBlockAddedObserver(blockchainListenId);
     nodePermissioningController.unsubscribeFromUpdates(nodePermissioningListenId);
   }
 }

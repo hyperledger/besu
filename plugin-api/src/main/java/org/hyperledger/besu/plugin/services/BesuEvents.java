@@ -15,10 +15,14 @@
 package org.hyperledger.besu.plugin.services;
 
 import org.hyperledger.besu.plugin.Unstable;
+import org.hyperledger.besu.plugin.data.Address;
+import org.hyperledger.besu.plugin.data.LogWithMetadata;
 import org.hyperledger.besu.plugin.data.PropagatedBlockContext;
 import org.hyperledger.besu.plugin.data.SyncStatus;
 import org.hyperledger.besu.plugin.data.Transaction;
+import org.hyperledger.besu.plugin.data.UnformattedData;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -101,6 +105,22 @@ public interface BesuEvents {
    */
   void removeSyncStatusListener(long listenerIdentifier);
 
+  /**
+   * REPLACE ME
+   *
+   * @param syncStatusListener REPLACEME
+   * @return REPLACEME
+   */
+  long addLogListener(
+      List<Address> addresses, List<List<UnformattedData>> topics, LogListener syncStatusListener);
+
+  /**
+   * REPLACE ME
+   *
+   * @param listenerIdentifier REPLACEME
+   */
+  void removeLogListener(long listenerIdentifier);
+
   /** The listener interface for receiving new block propagated events. */
   interface BlockPropagatedListener {
 
@@ -147,5 +167,12 @@ public interface BesuEvents {
      * @param syncStatus the sync status
      */
     void onSyncStatusChanged(Optional<SyncStatus> syncStatus);
+  }
+
+  /** replaceme */
+  interface LogListener {
+
+    /** @param propagatedBlockContext replaceme */
+    void onLogEmitted(LogWithMetadata logWithMetadata);
   }
 }

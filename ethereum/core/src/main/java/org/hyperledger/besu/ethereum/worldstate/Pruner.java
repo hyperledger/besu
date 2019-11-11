@@ -98,7 +98,7 @@ public class Pruner {
     if (state.compareAndSet(State.RUNNING, State.STOPPED)) {
       LOG.info("Stopping Pruner.");
       pruningStrategy.cleanup();
-      blockchain.removeObserver(blockAddedObserverId);
+      blockchain.removeBlockAddedObserver(blockAddedObserverId);
       executorService.shutdownNow();
     }
   }

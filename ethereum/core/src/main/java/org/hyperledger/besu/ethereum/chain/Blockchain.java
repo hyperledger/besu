@@ -190,5 +190,5 @@ public interface Blockchain {
    * @param observerId the ID of the observer to remove
    * @return {@code true} if the observer was removed; otherwise {@code false}
    */
-  boolean removeObserver(long observerId);
+  boolean removeBlockAddedObserver(long observerId);
 }

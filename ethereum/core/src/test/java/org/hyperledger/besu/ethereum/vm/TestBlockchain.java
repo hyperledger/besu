@@ -144,7 +144,7 @@ public class TestBlockchain implements Blockchain {
   }
 
   @Override
-  public boolean removeObserver(final long observerId) {
+  public boolean removeBlockAddedObserver(final long observerId) {
     throw new NonDeterministicOperationException("Listening for new blocks is not deterministic");
   }
 
