@@ -100,6 +100,7 @@ public class ClassicProtocolSpecs {
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
     return gothamDefinition(chainId, configContractSizeLimit, configStackSizeLimit)
         .evmBuilder(MainnetEvmRegistries::byzantium)
+        .gasCalculator(SpuriousDragonGasCalculator::new)
         .skipZeroBlockRewards(true)
         .messageCallProcessorBuilder(
             (evm, precompileContractRegistry) ->
