@@ -153,7 +153,7 @@ public class WebSocketService {
     // Verify Host header to avoid rebind attack.
     router.route().handler(checkWhitelistHostHeader());
 
-    if (authenticationService.isPresent()) {
+    if (authenticationService.map(AuthenticationService::canHandleLogin).orElse(false)) {
       router.route("/login").handler(BodyHandler.create());
       router
           .post("/login")

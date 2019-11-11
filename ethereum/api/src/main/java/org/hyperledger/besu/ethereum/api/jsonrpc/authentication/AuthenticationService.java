@@ -39,15 +39,18 @@ public class AuthenticationService {
   private final JWTAuth jwtAuthProvider;
   @VisibleForTesting public final JWTAuthOptions jwtAuthOptions;
   private final AuthProvider credentialAuthProvider;
+  private final boolean hasExternalPublicKey;
   private static final JWTAuthOptionsFactory jwtAuthOptionsFactory = new JWTAuthOptionsFactory();
 
   private AuthenticationService(
       final JWTAuth jwtAuthProvider,
       final JWTAuthOptions jwtAuthOptions,
-      final AuthProvider credentialAuthProvider) {
+      final AuthProvider credentialAuthProvider,
+      final boolean hasExternalPublicKey) {
     this.jwtAuthProvider = jwtAuthProvider;
     this.jwtAuthOptions = jwtAuthOptions;
     this.credentialAuthProvider = credentialAuthProvider;
+    this.hasExternalPublicKey = hasExternalPublicKey;
   }
 
   /**
@@ -97,8 +100,9 @@ public class AuthenticationService {
       return Optional.empty();
     }
 
+    final boolean hasExternalPublicKey = authenticationPublicKeyFile == null;
     final JWTAuthOptions jwtAuthOptions =
-        authenticationPublicKeyFile == null
+        hasExternalPublicKey
             ? jwtAuthOptionsFactory.createWithGeneratedKeyPair()
             : jwtAuthOptionsFactory.createForExternalPublicKey(authenticationPublicKeyFile);
 
@@ -110,7 +114,10 @@ public class AuthenticationService {
 
     return Optional.of(
         new AuthenticationService(
-            JWTAuth.create(vertx, jwtAuthOptions), jwtAuthOptions, credentialAuthProvider.get()));
+            JWTAuth.create(vertx, jwtAuthOptions),
+            jwtAuthOptions,
+            credentialAuthProvider.get(),
+            hasExternalPublicKey));
   }
 
   private static Optional<AuthProvider> makeCredentialAuthProvider(
@@ -191,5 +198,9 @@ public class AuthenticationService {
 
   public JWTAuth getJwtAuthProvider() {
     return jwtAuthProvider;
+  }
+
+  public boolean canHandleLogin() {
+    return hasExternalPublicKey;
   }
 }
