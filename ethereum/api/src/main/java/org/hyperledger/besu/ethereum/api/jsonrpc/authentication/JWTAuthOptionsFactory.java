@@ -62,7 +62,7 @@ public class JWTAuthOptionsFactory {
     final KeyPairGenerator keyGenerator;
     try {
       keyGenerator = KeyPairGenerator.getInstance("RSA");
-      keyGenerator.initialize(1024);
+      keyGenerator.initialize(2048);
     } catch (final NoSuchAlgorithmException e) {
       throw new RuntimeException(e);
     }
