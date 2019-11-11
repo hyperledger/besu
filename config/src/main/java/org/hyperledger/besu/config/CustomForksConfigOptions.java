@@ -16,27 +16,50 @@ package org.hyperledger.besu.config;
 
 import static java.util.Collections.emptyList;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.collect.Lists;
 
 public class CustomForksConfigOptions {
 
-  private List<IbftFork> ibftForks;
+  public static final String IBFT2_FORKS = "ibft2";
+
+  public static final IbftConfigOptions DEFAULT =
+      new IbftConfigOptions(JsonUtil.createEmptyObjectNode());
+
+  private final ObjectNode customForkConfigRoot;
 
   @JsonCreator
-  public CustomForksConfigOptions(@JsonProperty("ibft2") final List<IbftFork> ibftForks) {
-    this.ibftForks = ibftForks == null ? emptyList() : ibftForks;
-  }
-
-  @JsonSetter("ibft2")
-  public void ibftForks(final List<IbftFork> ibftForks) {
-    this.ibftForks = ibftForks;
+  public CustomForksConfigOptions(final ObjectNode customForkConfigRoot) {
+    this.customForkConfigRoot = customForkConfigRoot;
   }
 
   public List<IbftFork> getIbftForks() {
-    return ibftForks;
+    final Optional<ArrayNode> ibftForksNode =
+        JsonUtil.getArrayNode(customForkConfigRoot, IBFT2_FORKS);
+
+    if (ibftForksNode.isEmpty()) {
+      return emptyList();
+    }
+
+    final List<IbftFork> ibftForks = Lists.newArrayList();
+
+    ibftForksNode
+        .get()
+        .elements()
+        .forEachRemaining(
+            node -> {
+              if (!node.isObject()) {
+                throw new IllegalArgumentException("Ibft2 fork is illegally formatted.");
+              }
+              ibftForks.add(new IbftFork((ObjectNode) node));
+            });
+
+    return Collections.unmodifiableList(ibftForks);
   }
 }

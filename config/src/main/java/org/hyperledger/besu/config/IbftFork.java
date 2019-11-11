@@ -16,51 +16,58 @@ package org.hyperledger.besu.config;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalInt;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.collect.Lists;
 
 public class IbftFork {
 
-  private final long forkBlock;
-  private Integer blockPeriodSeconds;
-  private Integer requestTimeoutSeconds;
-  private List<String> validators;
+  private static final String FORK_BLOCK_KEY = "block";
+  private static final String VALIDATORS_KEY = "validators";
+  private static final String BLOCK_PERIOD_SECONDS_KEY = "blockperiodseconds";
+
+  private final ObjectNode forkConfigRoot;
 
   @JsonCreator
-  public IbftFork(@JsonProperty("block") final long forkBlock) {
-    this.forkBlock = forkBlock;
+  public IbftFork(final ObjectNode forkConfigRoot) {
+    this.forkConfigRoot = forkConfigRoot;
   }
 
   public long getForkBlock() {
-    return forkBlock;
+    return JsonUtil.getLong(forkConfigRoot, FORK_BLOCK_KEY)
+        .orElseThrow(
+            () ->
+                new IllegalArgumentException(
+                    "Fork block not specified for IBFT2 fork in custom forks"));
   }
 
-  public Optional<Integer> getBlockPeriodSeconds() {
-    return Optional.ofNullable(blockPeriodSeconds);
+  public OptionalInt getBlockPeriodSeconds() {
+    return JsonUtil.getInt(forkConfigRoot, BLOCK_PERIOD_SECONDS_KEY);
   }
 
-  public Optional<Integer> getRequestTimeoutSeconds() {
-    return Optional.ofNullable(requestTimeoutSeconds);
-  }
+  public Optional<List<String>> getValidators() throws IllegalArgumentException {
+    final Optional<ArrayNode> validatorNode = JsonUtil.getArrayNode(forkConfigRoot, VALIDATORS_KEY);
 
-  public Optional<List<String>> getValidators() {
-    return Optional.ofNullable(validators);
-  }
+    if (validatorNode.isEmpty()) {
+      return Optional.empty();
+    }
 
-  @JsonSetter("blockperiodseconds")
-  public void blockPeriodSeconds(final int blockPeriodSeconds) {
-    this.blockPeriodSeconds = blockPeriodSeconds;
-  }
+    List<String> validators = Lists.newArrayList();
+    validatorNode
+        .get()
+        .elements()
+        .forEachRemaining(
+            value -> {
+              if (!value.isTextual()) {
+                throw new IllegalArgumentException(
+                    "Ibft Validator fork does not contain a string " + value.toString());
+              }
 
-  @JsonSetter("requesttimeoutseconds")
-  public void requestTimeoutSeconds(final int requestTimeoutSeconds) {
-    this.requestTimeoutSeconds = requestTimeoutSeconds;
-  }
-
-  @JsonSetter("validators")
-  public void validators(final List<String> validators) {
-    this.validators = validators;
+              validators.add(value.asText());
+            });
+    return Optional.of(validators);
   }
 }

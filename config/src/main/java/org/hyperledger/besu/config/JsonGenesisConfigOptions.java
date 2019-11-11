@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.config;
 
-import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 import static java.util.Objects.isNull;
 
@@ -27,7 +26,6 @@ import java.util.OptionalLong;
 import java.util.TreeMap;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
 
@@ -59,14 +57,14 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
 
   private static CustomForksConfigOptions loadCustomForksFrom(final ObjectNode parentNode)
       throws JsonProcessingException {
-    final ObjectMapper mapper = JsonUtil.getObjectMapper();
+
     final Optional<ObjectNode> customForksNode =
         JsonUtil.getObjectNode(parentNode, CUSTOM_FORKS_CONFIG_KEY);
     if (customForksNode.isEmpty()) {
-      return new CustomForksConfigOptions(emptyList());
+      return new CustomForksConfigOptions(JsonUtil.createEmptyObjectNode());
     }
 
-    return mapper.treeToValue(customForksNode.get(), CustomForksConfigOptions.class);
+    return new CustomForksConfigOptions(customForksNode.get());
   }
 
   private JsonGenesisConfigOptions(
