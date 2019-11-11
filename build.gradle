@@ -23,7 +23,7 @@ plugins {
   id 'com.github.ben-manes.versions' version '0.26.0'
   id 'com.github.hierynomus.license' version '0.15.0'
   id 'io.spring.dependency-management' version '1.0.8.RELEASE'
-  id 'me.champeau.gradle.jmh' version '0.4.8' apply false
+  id 'me.champeau.gradle.jmh' version '0.5.0' apply false
   id 'net.ltgt.errorprone' version '1.1.1'
 }
 
@@ -430,6 +430,7 @@ subprojects {
       include = _strListCmdArg('include', [''])
       humanOutputFile = project.file("${project.buildDir}/reports/jmh/results.txt")
       resultFormat = 'JSON'
+      duplicateClassesStrategy = 'warn'
     }
 
     dependencies { jmh 'org.apache.logging.log4j:log4j-api' }
