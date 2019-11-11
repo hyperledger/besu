@@ -20,7 +20,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.privacy.transaction.PrivacyTran
 import java.util.List;
 
 import org.awaitility.Awaitility;
-import org.web3j.protocol.pantheon.response.privacy.PrivacyGroup;
+import org.web3j.protocol.besu.response.privacy.PrivacyGroup;
 import org.web3j.utils.Base64String;
 
 public class ExpectValidPrivacyGroupCreated implements PrivateCondition {

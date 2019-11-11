@@ -46,9 +46,11 @@ public class PrivacyCluster {
   }
 
   public void start(final List<PrivacyNode> nodes) {
+    System.out.println("Hi1");
     if (nodes.isEmpty()) {
       throw new IllegalArgumentException("Can't start a cluster with no nodes");
     }
+
     this.nodes = nodes;
     this.runnableNodes = nodes.stream().map(n -> n.getBesu()).collect(Collectors.toList());
 

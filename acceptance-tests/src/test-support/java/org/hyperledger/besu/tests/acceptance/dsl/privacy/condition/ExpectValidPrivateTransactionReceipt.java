@@ -17,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.transaction.PrivacyTransactions;
 
-import org.web3j.protocol.eea.response.PrivateTransactionReceipt;
+import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
 
 public class ExpectValidPrivateTransactionReceipt implements PrivateCondition {
   private final PrivacyTransactions transactions;

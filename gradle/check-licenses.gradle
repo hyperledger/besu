@@ -43,7 +43,8 @@ ext.acceptedLicenses = [
     'CC0 1.0 Universal License',
     'Common Development and Distribution License 1.0',
     'Unicode/ICU License',
-    'Public Domain (CC0) License 1.0'
+    'Public Domain (CC0) License 1.0',
+    'GNU General Public License Version 2'
 ]*.toLowerCase()
 
 /**
@@ -66,6 +67,7 @@ downloadLicenses {
   ext.cddl = license('Common Development and Distribution License 1.0', 'http://opensource.org/licenses/CDDL-1.0')
   ext.cddl1_1 = license('Common Development and Distribution License 1.0', 'http://oss.oracle.com/licenses/CDDL-1.1')
   ext.cc0 =  license('Public Domain (CC0) License 1.0', 'https://creativecommons.org/publicdomain/zero/1.0')
+  ext.gpl2 = license('GNU General Public License Version 2', 'https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html')
   aliases = [
       (apache)    : [
           'The Apache Software License, Version 2.0',
@@ -122,7 +124,8 @@ downloadLicenses {
               'CDDL 1.1',
               'COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL) Version 1.1',
       ],
-      (cc0): ['Public Domain (CC0) License 1.0', 'CC0']
+      (cc0): ['Public Domain (CC0) License 1.0', 'CC0'],
+      (gpl2): ['GNU General Public License Version 2']
   ]
 
   licenses = [
@@ -147,7 +150,9 @@ downloadLicenses {
       (group('javax.ws.rs')): cddl1_1,
       (group('org.glassfish.jersey.core')): apache,
       (group('org.glassfish.jersey.bundles.repackaged')): apache,
-      (group('org.glassfish.jersey.connectors')): apache
+      (group('org.glassfish.jersey.connectors')): apache,
+
+      (group('com.github.jnr')): gpl2
   ]
 }
 

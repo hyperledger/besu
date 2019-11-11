@@ -21,7 +21,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.web3j.protocol.pantheon.Pantheon;
+import org.web3j.protocol.besu.Besu;
 import org.web3j.utils.Base64String;
 
 public class CreatePrivacyGroupTransaction implements Transaction<String> {
@@ -41,7 +41,7 @@ public class CreatePrivacyGroupTransaction implements Transaction<String> {
 
   @Override
   public String execute(final NodeRequests node) {
-    final Pantheon besu = node.privacy().getBesuClient();
+    final Besu besu = node.privacy().getBesuClient();
     try {
       return besu.privCreatePrivacyGroup(addresses, name, description)
           .send()

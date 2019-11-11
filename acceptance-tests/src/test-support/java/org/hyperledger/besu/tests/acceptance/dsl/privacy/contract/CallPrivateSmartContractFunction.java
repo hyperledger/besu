@@ -20,16 +20,16 @@ import java.math.BigInteger;
 import java.util.List;
 
 import org.web3j.crypto.Credentials;
-import org.web3j.protocol.pantheon.Pantheon;
+import org.web3j.protocol.besu.Besu;
 import org.web3j.tx.LegacyPrivateTransactionManager;
 import org.web3j.tx.PrivateTransactionManager;
-import org.web3j.tx.gas.PantheonPrivacyGasProvider;
+import org.web3j.tx.gas.BesuPrivacyGasProvider;
 import org.web3j.utils.Base64String;
 
 public class CallPrivateSmartContractFunction implements Transaction<String> {
 
-  private static final PantheonPrivacyGasProvider GAS_PROVIDER =
-      new PantheonPrivacyGasProvider(BigInteger.valueOf(1000));
+  private static final BesuPrivacyGasProvider GAS_PROVIDER =
+      new BesuPrivacyGasProvider(BigInteger.valueOf(1000));
   private final String contractAddress;
   private final String encodedFunction;
   private final Credentials senderCredentials;
@@ -55,7 +55,7 @@ public class CallPrivateSmartContractFunction implements Transaction<String> {
 
   @Override
   public String execute(final NodeRequests node) {
-    final Pantheon besu = node.privacy().getBesuClient();
+    final Besu besu = node.privacy().getBesuClient();
 
     final PrivateTransactionManager privateTransactionManager =
         new LegacyPrivateTransactionManager(

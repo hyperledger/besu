@@ -21,19 +21,19 @@ import java.math.BigInteger;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.RemoteCall;
+import org.web3j.tx.BesuPrivateTransactionManager;
 import org.web3j.tx.Contract;
-import org.web3j.tx.PantheonPrivateTransactionManager;
 import org.web3j.tx.PrivateTransactionManager;
 import org.web3j.tx.TransactionManager;
+import org.web3j.tx.gas.BesuPrivacyGasProvider;
 import org.web3j.tx.gas.ContractGasProvider;
-import org.web3j.tx.gas.PantheonPrivacyGasProvider;
 import org.web3j.utils.Base64String;
 
 public class DeployPrivateSmartContractWithPrivacyGroupIdTransaction<T extends Contract>
     implements Transaction<T> {
 
-  private static final PantheonPrivacyGasProvider GAS_PROVIDER =
-      new PantheonPrivacyGasProvider(BigInteger.valueOf(1000));
+  private static final BesuPrivacyGasProvider GAS_PROVIDER =
+      new BesuPrivacyGasProvider(BigInteger.valueOf(1000));
   private static final Object METHOD_IS_STATIC = null;
 
   private final Class<T> clazz;
@@ -58,7 +58,7 @@ public class DeployPrivateSmartContractWithPrivacyGroupIdTransaction<T extends C
   @Override
   public T execute(final NodeRequests node) {
     final PrivateTransactionManager privateTransactionManager =
-        new PantheonPrivateTransactionManager(
+        new BesuPrivateTransactionManager(
             node.privacy().getBesuClient(),
             GAS_PROVIDER,
             senderCredentials,

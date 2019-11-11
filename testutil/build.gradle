@@ -36,5 +36,4 @@ dependencies {
   implementation 'net.consensys:orion'
   implementation 'org.assertj:assertj-core'
   implementation 'org.mockito:mockito-core'
-  implementation 'org.web3j:core'
 }

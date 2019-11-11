@@ -49,9 +49,29 @@ dependencies {
   testSupportImplementation 'org.assertj:assertj-core'
   testSupportImplementation 'org.awaitility:awaitility'
   testSupportImplementation 'org.java-websocket:Java-WebSocket'
-  testSupportImplementation 'org.web3j:abi'
-  testSupportImplementation 'org.web3j:pantheon'
-  testSupportImplementation 'org.web3j:crypto'
+
+  testSupportImplementation files('libs/web3j-abi.jar')
+  testSupportImplementation files('libs/web3j-besu.jar')
+  testSupportImplementation files('libs/web3j-core.jar')
+  testSupportImplementation files('libs/web3j-crypto.jar')
+  testSupportImplementation files('libs/web3j-eea.jar')
+  testSupportImplementation files('libs/web3j-rlp.jar')
+  testSupportImplementation files('libs/web3j-tuples.jar')
+  testSupportImplementation files('libs/web3j-utils.jar')
+
+  testSupportImplementation "org.bouncycastle:bcprov-jdk15on"
+  testSupportImplementation "com.fasterxml.jackson.core:jackson-databind"
+  testSupportImplementation "com.github.jnr:jnr-unixsocket"
+  testSupportImplementation "com.squareup.okhttp3:okhttp"
+  testSupportImplementation "com.squareup.okhttp3:logging-interceptor"
+  testSupportImplementation "io.reactivex.rxjava2:rxjava"
+  testSupportImplementation "org.java-websocket:Java-WebSocket"
+  testSupportImplementation "com.fasterxml.jackson.core:jackson-databind"
+  testSupportImplementation "org.slf4j:slf4j-api"
+
+  //testSupportImplementation 'org.web3j:abi'
+  //testSupportImplementation 'org.web3j:pantheon'
+  //testSupportImplementation 'org.web3j:crypto'
   testSupportImplementation 'tech.pegasys.ethsigner.internal:core'
   testSupportImplementation 'tech.pegasys.ethsigner.internal:file-based'
   testSupportImplementation 'tech.pegasys.ethsigner.internal:signing-api'
@@ -59,8 +79,29 @@ dependencies {
   testImplementation 'junit:junit'
   testImplementation 'net.consensys:orion'
   testImplementation 'org.assertj:assertj-core'
-  testImplementation 'org.web3j:abi'
-  testImplementation 'org.web3j:pantheon'
+  //testImplementation 'org.web3j:abi'
+  //testImplementation 'org.web3j:pantheon'
+
+  testImplementation files('libs/web3j-abi.jar')
+  testImplementation files('libs/web3j-besu.jar')
+  testImplementation files('libs/web3j-core.jar')
+  testImplementation files('libs/web3j-crypto.jar')
+  testImplementation files('libs/web3j-eea.jar')
+  testImplementation files('libs/web3j-rlp.jar')
+  testImplementation files('libs/web3j-tuples.jar')
+  testImplementation files('libs/web3j-utils.jar')
+  testImplementation "org.bouncycastle:bcprov-jdk15on"
+  testImplementation "com.fasterxml.jackson.core:jackson-databind"
+  testImplementation "com.github.jnr:jnr-unixsocket"
+  testImplementation "com.squareup.okhttp3:okhttp"
+  testImplementation "com.squareup.okhttp3:logging-interceptor"
+  testImplementation "io.reactivex.rxjava2:rxjava"
+  testImplementation "org.java-websocket:Java-WebSocket"
+  testImplementation "com.fasterxml.jackson.core:jackson-databind"
+  testImplementation "org.slf4j:slf4j-api"
+
+
+
   testImplementation project(':ethereum:api')
   testImplementation project(':enclave')
   testImplementation 'org.awaitility:awaitility'

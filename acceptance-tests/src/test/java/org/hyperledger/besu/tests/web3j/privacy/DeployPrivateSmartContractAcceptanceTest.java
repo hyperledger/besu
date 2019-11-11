@@ -17,8 +17,10 @@ import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
+@Ignore("CROSSCHAIN: REMOVING DUE TO INCONSISTENCIES BETWEEN WEBB3J AND BESU")
 public class DeployPrivateSmartContractAcceptanceTest extends PrivacyAcceptanceTestBase {
 
   private static final long POW_CHAIN_ID = 2018;

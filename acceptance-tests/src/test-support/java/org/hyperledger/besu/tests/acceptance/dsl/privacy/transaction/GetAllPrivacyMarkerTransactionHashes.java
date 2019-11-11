@@ -21,14 +21,14 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.web3j.protocol.besu.Besu;
 import org.web3j.protocol.core.DefaultBlockParameter;
 import org.web3j.protocol.core.methods.response.EthBlock;
-import org.web3j.protocol.pantheon.Pantheon;
 
 public class GetAllPrivacyMarkerTransactionHashes implements Transaction<List<String>> {
   @Override
   public List<String> execute(final NodeRequests node) {
-    final Pantheon besu = node.privacy().getBesuClient();
+    final Besu besu = node.privacy().getBesuClient();
     final List<String> toReturn = new ArrayList<>();
     try {
       final long blockchainHeight = besu.ethBlockNumber().send().getBlockNumber().longValueExact();

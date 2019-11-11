@@ -41,7 +41,7 @@ public class Enclave {
   private static final Logger LOG = LogManager.getLogger();
   private static final ObjectMapper objectMapper = new ObjectMapper();
   private static final MediaType JSON = MediaType.parse("application/json");
-  private static final MediaType ORION = MediaType.get("application/vnd.orion.v1+json");
+  private static final MediaType ORION = MediaType.parse("application/vnd.orion.v1+json");
 
   private final URI enclaveUri;
   private final OkHttpClient client;
