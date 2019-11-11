@@ -20,6 +20,7 @@ import org.hyperledger.besu.config.IbftFork;
 import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.ForkingVoteTallyCache;
+import org.hyperledger.besu.consensus.common.IbftValidatorOverrides;
 import org.hyperledger.besu.consensus.common.VoteProposer;
 import org.hyperledger.besu.consensus.common.VoteTallyCache;
 import org.hyperledger.besu.consensus.common.VoteTallyUpdater;
@@ -240,7 +241,7 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder<IbftContext
             new VoteTallyUpdater(epochManager, new IbftBlockInterface()),
             epochManager,
             new IbftBlockInterface(),
-            ibftValidatorForkMap),
+            new IbftValidatorOverrides(ibftValidatorForkMap)),
         new VoteProposer(),
         blockInterface);
   }

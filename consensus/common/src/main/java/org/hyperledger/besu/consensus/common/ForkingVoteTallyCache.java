@@ -17,34 +17,30 @@ package org.hyperledger.besu.consensus.common;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-
-import java.util.List;
-import java.util.Map;
 
 public class ForkingVoteTallyCache extends VoteTallyCache {
 
-  private final Map<Long, List<Address>> overriddenValidators;
+  private final IbftValidatorOverrides validatorOverrides;
 
   public ForkingVoteTallyCache(
       final Blockchain blockchain,
       final VoteTallyUpdater voteTallyUpdater,
       final EpochManager epochManager,
       final BlockInterface blockInterface,
-      final Map<Long, List<Address>> overriddenValidators) {
+      final IbftValidatorOverrides validatorOverrides) {
     super(blockchain, voteTallyUpdater, epochManager, blockInterface);
-    checkNotNull(overriddenValidators);
-    this.overriddenValidators = overriddenValidators;
+    checkNotNull(validatorOverrides);
+    this.validatorOverrides = validatorOverrides;
   }
 
   @Override
   protected VoteTally getValidatorsAfter(final BlockHeader header) {
-    final long actualBlockNumber = header.getNumber() + 1L;
-    if (overriddenValidators.containsKey(actualBlockNumber)) {
-      return new VoteTally(overriddenValidators.get(actualBlockNumber));
-    }
+    final long nextBlockNumber = header.getNumber() + 1L;
 
-    return super.getValidatorsAfter(header);
+    return validatorOverrides
+        .getForBlock(nextBlockNumber)
+        .map(VoteTally::new)
+        .orElse(super.getValidatorsAfter(header));
   }
 }

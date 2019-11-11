@@ -37,6 +37,29 @@ public class JsonGenesisConfigOptionsTest {
     }
   }
 
+  private ObjectNode loadConfigWithNoCustomForks() {
+    final ObjectNode configNode = loadCompleteDataSet();
+    configNode.remove("customforks");
+    return configNode;
+  }
+
+  private ObjectNode loadConfigWithNoIbft2Forks() {
+    final ObjectNode configNode = loadCompleteDataSet();
+    final ObjectNode customForksNode = JsonUtil.getObjectNode(configNode, "customforks").get();
+    customForksNode.remove("ibft2");
+
+    return configNode;
+  }
+
+  private ObjectNode loadConfigWithAnIbft2ForkWithMissingValidators() {
+    final ObjectNode configNode = loadCompleteDataSet();
+    final ObjectNode customForksNode = JsonUtil.getObjectNode(configNode, "customforks").get();
+    final ArrayNode ibftNode = JsonUtil.getArrayNode(customForksNode, "ibft2").get();
+    ((ObjectNode) ibftNode.get(0)).remove("validators");
+
+    return configNode;
+  }
+
   @Test
   public void customForksDecodesCorrectlyFromFile() {
     final ObjectNode configNode = loadCompleteDataSet();
@@ -62,8 +85,7 @@ public class JsonGenesisConfigOptionsTest {
 
   @Test
   public void configWithMissingCustomForksIsValid() {
-    final ObjectNode configNode = loadCompleteDataSet();
-    configNode.remove("customforks");
+    final ObjectNode configNode = loadConfigWithNoCustomForks();
 
     final JsonGenesisConfigOptions configOptions =
         JsonGenesisConfigOptions.fromJsonObject(configNode);
@@ -73,10 +95,8 @@ public class JsonGenesisConfigOptionsTest {
   }
 
   @Test
-  public void configWithEmptyCustomForksIsValid() {
-    final ObjectNode configNode = loadCompleteDataSet();
-    final ObjectNode customForksNode = JsonUtil.getObjectNode(configNode, "customforks").get();
-    customForksNode.remove("ibft2");
+  public void configWithNoIbft2ForksIsValid() {
+    final ObjectNode configNode = loadConfigWithNoIbft2Forks();
 
     final JsonGenesisConfigOptions configOptions =
         JsonGenesisConfigOptions.fromJsonObject(configNode);
@@ -87,10 +107,7 @@ public class JsonGenesisConfigOptionsTest {
 
   @Test
   public void configWithAnIbftWithNoValidatorsListedIsValid() {
-    final ObjectNode configNode = loadCompleteDataSet();
-    final ObjectNode customForksNode = JsonUtil.getObjectNode(configNode, "customforks").get();
-    final ArrayNode ibftNode = JsonUtil.getArrayNode(customForksNode, "ibft2").get();
-    ((ObjectNode) ibftNode.get(0)).remove("validators");
+    final ObjectNode configNode = loadConfigWithAnIbft2ForkWithMissingValidators();
 
     final JsonGenesisConfigOptions configOptions =
         JsonGenesisConfigOptions.fromJsonObject(configNode);
