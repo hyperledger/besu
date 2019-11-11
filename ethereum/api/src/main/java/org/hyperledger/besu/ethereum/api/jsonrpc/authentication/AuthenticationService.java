@@ -39,6 +39,7 @@ public class AuthenticationService {
   private final JWTAuth jwtAuthProvider;
   @VisibleForTesting public final JWTAuthOptions jwtAuthOptions;
   private final AuthProvider credentialAuthProvider;
+  private static final JWTAuthOptionsFactory jwtAuthOptionsFactory = new JWTAuthOptionsFactory();
 
   private AuthenticationService(
       final JWTAuth jwtAuthProvider,
@@ -96,8 +97,10 @@ public class AuthenticationService {
       return Optional.empty();
     }
 
-    final JWTAuthOptionsFactory jwtAuthOptionsFactory = new JWTAuthOptionsFactory();
-    final JWTAuthOptions jwtAuthOptions = jwtAuthOptionsFactory.create(authenticationPublicKeyFile);
+    final JWTAuthOptions jwtAuthOptions =
+        authenticationPublicKeyFile == null
+            ? jwtAuthOptionsFactory.createWithGeneratedKeyPair()
+            : jwtAuthOptionsFactory.createForExternalPublicKey(authenticationPublicKeyFile);
 
     final Optional<AuthProvider> credentialAuthProvider =
         makeCredentialAuthProvider(vertx, authenticationEnabled, authenticationCredentialsFile);

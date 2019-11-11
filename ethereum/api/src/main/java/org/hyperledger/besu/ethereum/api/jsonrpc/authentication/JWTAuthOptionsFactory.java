@@ -7,47 +7,40 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
-import java.util.Optional;
 
 import io.vertx.ext.auth.PubSecKeyOptions;
 import io.vertx.ext.auth.jwt.JWTAuthOptions;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class JWTAuthOptionsFactory {
-  private static final Logger LOG = LogManager.getLogger();
 
-  public JWTAuthOptions create(final File externalPublicKeyFile) {
-    final Optional<String> externalJwtPublicKey =
-        externalPublicKeyFile == null ? Optional.empty() : readPublicKey(externalPublicKeyFile);
-    return makeJwtAuthOptions(externalJwtPublicKey);
+  private static final String ALGORITHM = "RS256";
+  private static final String PERMISSIONS = "permissions";
+
+  public JWTAuthOptions createForExternalPublicKey(final File externalPublicKeyFile) {
+    final String externalJwtPublicKey = readPublicKey(externalPublicKeyFile);
+    return new JWTAuthOptions()
+        .setPermissionsClaimKey(PERMISSIONS)
+        .addPubSecKey(
+            new PubSecKeyOptions().setAlgorithm(ALGORITHM).setPublicKey(externalJwtPublicKey));
   }
 
-  private Optional<String> readPublicKey(final File authenticationPublicKeyFile) {
+  public JWTAuthOptions createWithGeneratedKeyPair() {
+    final KeyPair keypair = generateJwtKeyPair();
+    return new JWTAuthOptions()
+        .setPermissionsClaimKey(PERMISSIONS)
+        .addPubSecKey(
+            new PubSecKeyOptions()
+                .setAlgorithm(ALGORITHM)
+                .setPublicKey(Base64.getEncoder().encodeToString(keypair.getPublic().getEncoded()))
+                .setSecretKey(
+                    Base64.getEncoder().encodeToString(keypair.getPrivate().getEncoded())));
+  }
+
+  private String readPublicKey(final File authenticationPublicKeyFile) {
     try {
-      return Optional.of(Files.readString(authenticationPublicKeyFile.toPath()));
+      return Files.readString(authenticationPublicKeyFile.toPath());
     } catch (IOException e) {
-      LOG.error("Authentication RPC public key could not be read", e);
-      return Optional.empty();
-    }
-  }
-
-  private JWTAuthOptions makeJwtAuthOptions(final Optional<String> publicKey) {
-    if (publicKey.isEmpty()) {
-      final KeyPair keypair = generateJwtKeyPair();
-      return new JWTAuthOptions()
-          .setPermissionsClaimKey("permissions")
-          .addPubSecKey(
-              new PubSecKeyOptions()
-                  .setAlgorithm("RS256")
-                  .setPublicKey(
-                      Base64.getEncoder().encodeToString(keypair.getPublic().getEncoded()))
-                  .setSecretKey(
-                      Base64.getEncoder().encodeToString(keypair.getPrivate().getEncoded())));
-    } else {
-      return new JWTAuthOptions()
-          .setPermissionsClaimKey("permissions")
-          .addPubSecKey(new PubSecKeyOptions().setAlgorithm("RS256").setPublicKey(publicKey.get()));
+      throw new IllegalStateException("Authentication RPC public key could not be read", e);
     }
   }
 
