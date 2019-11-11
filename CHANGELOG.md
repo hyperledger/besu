@@ -1,19 +1,23 @@
 # Changelog
 
-### Java 11 Required from v1.2
+## Istanbul Compatibility
 
-From v1.2, Besu requires Java 11.  Besu on Java 8 is no longer supported.
+For compatibility with Ethereum Istanbul upgrade, use v1.3.4 or later. 
 
-### Docker Image Migration 
+## Pruning 
 
-In v1.2, we removed the entry-point script from our Docker image. Refer to the [migration guide](https://besu.hyperledger.org/en/latest/HowTo/Get-Started/Migration-Docker/)
-for information on options that were previously automatically added to the Besu command line. 
+Pruning cannot be used in networks using private transactions. 
+
+### 1.3.4 
+
+- Reverted _Enable pruning by default for fast sync (#135)_ [\#164](https://github.com/hyperledger/besu/pull/164)
 
 ### 1.3.3
 
 ### Technical Improvements 
 
 - Add --identity flag for client identification in node browsers [\#150](https://github.com/hyperledger/besu/pull/150) 
+- Istanbul Mainnet Block [\#145](https://github.com/hyperledger/besu/pull/150) 
 - Add priv\_getEeaTransactionCount [\#110](https://github.com/hyperledger/besu/pull/110) 
 
 ### Additions and Improvements

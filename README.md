@@ -16,7 +16,7 @@ Besu is an Apache 2.0 licensed, MainNet compatible, Ethereum client written in J
 Besu issues are tracked in [Jira](https://pegasys1.atlassian.net/secure/Dashboard.jspa?selectPageId=10117) not GitHub. 
 See our [contribution guidelines](CONTRIBUTING.md) for more detail on searching and creating issues. 
 
-If you've commented on existing issue and have been waiting for a reply, feel free to ping us on [RocketChat].  
+If you've commented on an existing issue and have been waiting for a reply, feel free to ping us on [RocketChat].  
 
 ## Besu Users
 
