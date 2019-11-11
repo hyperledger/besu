@@ -14,15 +14,22 @@
  */
 package org.hyperledger.besu.ethereum.worldstate;
 
-public class PruningConfiguration {
+public class PrunerConfiguration {
+  public static final long DEFAULT_PRUNING_BLOCKS_RETAINED = 1024;
+  public static final long DEFAULT_PRUNING_BLOCK_CONFIRMATIONS = 10;
 
   private final long blocksRetainedBeforeSweeping;
   private final long blockConfirmationsBeforeMarking;
 
-  public PruningConfiguration(
+  public PrunerConfiguration(
       final long blockConfirmationsBeforeMarking, final long blocksRetainedBeforeSweeping) {
     this.blockConfirmationsBeforeMarking = blockConfirmationsBeforeMarking;
     this.blocksRetainedBeforeSweeping = blocksRetainedBeforeSweeping;
+  }
+
+  public static PrunerConfiguration getDefault() {
+    return new PrunerConfiguration(
+        DEFAULT_PRUNING_BLOCK_CONFIRMATIONS, DEFAULT_PRUNING_BLOCKS_RETAINED);
   }
 
   public long getBlocksRetained() {
