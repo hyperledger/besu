@@ -18,11 +18,16 @@ import org.hyperledger.besu.tests.acceptance.dsl.account.Accounts;
 
 import java.lang.reflect.Method;
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.RemoteCall;
 import org.web3j.tx.Contract;
+import org.web3j.tx.TransactionManager;
+import org.web3j.tx.gas.ContractGasProvider;
 
 public class DeploySmartContractTransaction<T extends Contract> implements Transaction<T> {
 
@@ -33,23 +38,50 @@ public class DeploySmartContractTransaction<T extends Contract> implements Trans
       Credentials.create(Accounts.GENESIS_ACCOUNT_ONE_PRIVATE_KEY);
 
   private final Class<T> clazz;
+  private Object[] params;
 
   public DeploySmartContractTransaction(final Class<T> clazz) {
     this.clazz = clazz;
   }
 
+  public DeploySmartContractTransaction(final Class<T> clazz, final Object... params) {
+    this.clazz = clazz;
+    this.params = params;
+  }
+
   @Override
   public T execute(final NodeRequests node) {
     try {
-      final Method method =
-          clazz.getMethod(
-              "deploy", Web3j.class, Credentials.class, BigInteger.class, BigInteger.class);
+      if (params != null) {
+        ArrayList<Class> paramClasses =
+            new ArrayList<>(
+                Arrays.asList(Web3j.class, Credentials.class, BigInteger.class, BigInteger.class));
+        paramClasses.addAll(
+            Arrays.stream(params).map(Object::getClass).collect(Collectors.toList()));
 
-      final Object invoked =
-          method.invoke(
-              METHOD_IS_STATIC, node.eth(), BENEFACTOR_ONE, DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT);
+        ArrayList<Object> allParams =
+            new ArrayList<>(
+                Arrays.asList(node.eth(), BENEFACTOR_ONE, DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT));
+        allParams.addAll(Arrays.asList(params));
 
-      return cast(invoked).send();
+        final Method method =
+            clazz.getMethod("deploy", paramClasses.toArray(new Class[paramClasses.size()]));
+
+        final Object invoked = method.invoke(METHOD_IS_STATIC, allParams.toArray());
+
+        return cast(invoked).send();
+      } else {
+        final Method method =
+            clazz.getMethod(
+                "deploy", Web3j.class, Credentials.class, BigInteger.class, BigInteger.class);
+
+        final Object invoked =
+            method.invoke(
+                METHOD_IS_STATIC, node.eth(), BENEFACTOR_ONE, DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT);
+
+        return cast(invoked).send();
+      }
+
     } catch (final Exception e) {
       throw new RuntimeException(e);
     }

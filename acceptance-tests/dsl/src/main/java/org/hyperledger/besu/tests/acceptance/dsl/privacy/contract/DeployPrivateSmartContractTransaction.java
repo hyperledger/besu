@@ -19,7 +19,10 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
 
 import java.lang.reflect.Method;
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
@@ -43,6 +46,7 @@ public class DeployPrivateSmartContractTransaction<T extends Contract> implement
   private final long chainId;
   private final Base64String privateFrom;
   private final List<Base64String> privateFor;
+  private Object[] params;
 
   public DeployPrivateSmartContractTransaction(
       final Class<T> clazz,
@@ -57,6 +61,21 @@ public class DeployPrivateSmartContractTransaction<T extends Contract> implement
     this.privateFor = Base64String.wrapList(privateFor);
   }
 
+  public DeployPrivateSmartContractTransaction(
+      final Class<T> clazz,
+      final String transactionSigningKey,
+      final long chainId,
+      final String privateFrom,
+      final List<String> privateFor,
+      final Object... params) {
+    this.clazz = clazz;
+    this.senderCredentials = Credentials.create(transactionSigningKey);
+    this.chainId = chainId;
+    this.privateFrom = Base64String.wrap(privateFrom);
+    this.privateFor = Base64String.wrapList(privateFor);
+    this.params = params;
+  }
+
   @Override
   public T execute(final NodeRequests node) {
     final PrivateTransactionManager privateTransactionManager =
@@ -68,18 +87,38 @@ public class DeployPrivateSmartContractTransaction<T extends Contract> implement
             privateFrom,
             privateFor);
     try {
-      final Method method =
-          clazz.getMethod(
-              "deploy", Web3j.class, TransactionManager.class, ContractGasProvider.class);
+      if (params != null) {
+        ArrayList<Class> paramClasses =
+            new ArrayList<>(
+                Arrays.asList(Web3j.class, TransactionManager.class, ContractGasProvider.class));
+        paramClasses.addAll(
+            Arrays.stream(params).map(Object::getClass).collect(Collectors.toList()));
 
-      final Object invoked =
-          method.invoke(
-              METHOD_IS_STATIC,
-              node.privacy().getBesuClient(),
-              privateTransactionManager,
-              GAS_PROVIDER);
+        ArrayList<Object> allParams =
+            new ArrayList<>(
+                Arrays.asList(
+                    node.privacy().getBesuClient(), privateTransactionManager, GAS_PROVIDER));
+        allParams.addAll(Arrays.asList(params));
 
-      return cast(invoked).send();
+        final Method method =
+            clazz.getMethod("deploy", paramClasses.toArray(new Class[paramClasses.size()]));
+
+        final Object invoked = method.invoke(METHOD_IS_STATIC, allParams.toArray());
+
+        return cast(invoked).send();
+      } else {
+        final Method method =
+            clazz.getMethod(
+                "deploy", Web3j.class, TransactionManager.class, ContractGasProvider.class);
+        final Object invoked =
+            method.invoke(
+                METHOD_IS_STATIC,
+                node.privacy().getBesuClient(),
+                privateTransactionManager,
+                GAS_PROVIDER);
+
+        return cast(invoked).send();
+      }
     } catch (final Exception e) {
       throw new RuntimeException(e);
     }
