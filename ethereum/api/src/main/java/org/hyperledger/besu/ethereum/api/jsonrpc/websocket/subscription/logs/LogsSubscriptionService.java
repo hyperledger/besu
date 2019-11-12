@@ -17,13 +17,12 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.logs;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.LogResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.SubscriptionManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.SubscriptionType;
-import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
-import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 
 import java.util.List;
+import java.util.function.Consumer;
 
-public class LogsSubscriptionService implements BlockAddedObserver {
+public class LogsSubscriptionService implements Consumer<LogWithMetadata> {
 
   private final SubscriptionManager subscriptionManager;
 
@@ -32,22 +31,15 @@ public class LogsSubscriptionService implements BlockAddedObserver {
   }
 
   @Override
-  public void onBlockAdded(final BlockAddedEvent event, final Blockchain __) {
+  public void accept(LogWithMetadata logWithMetadata) {
     final List<LogsSubscription> logsSubscriptions =
         subscriptionManager.subscriptionsOfType(SubscriptionType.LOGS, LogsSubscription.class);
 
-    event
-        .getLogsWithMetadata()
+    logsSubscriptions.stream()
+        .filter(logsSubscription -> logsSubscription.getLogsQuery().matches(logWithMetadata))
         .forEach(
-            logWithMetadata ->
-                logsSubscriptions.stream()
-                    .filter(
-                        logsSubscription ->
-                            logsSubscription.getLogsQuery().matches(logWithMetadata))
-                    .forEach(
-                        logsSubscription ->
-                            subscriptionManager.sendMessage(
-                                logsSubscription.getSubscriptionId(),
-                                new LogResult(logWithMetadata))));
+            logsSubscription ->
+                subscriptionManager.sendMessage(
+                    logsSubscription.getSubscriptionId(), new LogResult(logWithMetadata)));
   }
 }

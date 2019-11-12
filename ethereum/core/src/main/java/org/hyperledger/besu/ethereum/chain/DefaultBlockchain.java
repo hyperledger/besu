@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.util.InvalidConfigurationException;
 import org.hyperledger.besu.util.Subscribers;
@@ -43,6 +44,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -548,6 +550,17 @@ public class DefaultBlockchain implements MutableBlockchain {
   @Override
   public boolean removeBlockAddedObserver(final long observerId) {
     return blockAddedObservers.unsubscribe(observerId);
+  }
+
+  @Override
+  public long addLogListener(Consumer<LogWithMetadata> logListener) {
+    return observeBlockAdded(
+        ((event, __) -> event.getLogsWithMetadata().forEach(logListener::accept)));
+  }
+
+  @Override
+  public boolean removeLogListener(long id) {
+    return blockAddedObservers.unsubscribe(id);
   }
 
   @VisibleForTesting
