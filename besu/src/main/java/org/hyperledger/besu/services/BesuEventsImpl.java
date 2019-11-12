@@ -107,10 +107,7 @@ public class BesuEventsImpl implements BesuEvents {
     final List<List<LogTopic>> besuTopics =
         topics.stream()
             .map(
-                subList ->
-                    subList.stream()
-                        .map(bytes -> LogTopic.create(BytesValue.wrap(bytes.getByteArray())))
-                        .collect(toUnmodifiableList()))
+                subList -> subList.stream().map(LogTopic::fromPlugin).collect(toUnmodifiableList()))
             .collect(toUnmodifiableList());
 
     final LogsQuery logsQuery = new LogsQuery(besuAddresses, besuTopics);
