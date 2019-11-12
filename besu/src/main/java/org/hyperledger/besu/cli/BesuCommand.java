@@ -1170,10 +1170,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--rpc-ws-authentication-credentials-file",
             "--rpc-ws-authentication-public-key-file"));
 
-    if (isRpcWsAuthenticationEnabled && rpcWsAuthenticationCredentialsFile() == null) {
+    if (isRpcWsAuthenticationEnabled
+        && rpcWsAuthenticationCredentialsFile() == null
+        && rpcWsAuthenticationPublicKeyFile() == null) {
       throw new ParameterException(
           commandLine,
-          "Unable to authenticate JSON-RPC WebSocket endpoint without a supplied credentials file");
+          "Unable to authenticate JSON-RPC WebSocket endpoint without a supplied credentials file or authentication public key file");
     }
 
     final WebSocketConfiguration webSocketConfiguration = WebSocketConfiguration.createDefault();
