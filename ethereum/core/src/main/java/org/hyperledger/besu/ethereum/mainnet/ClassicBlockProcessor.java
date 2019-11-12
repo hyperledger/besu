@@ -161,8 +161,7 @@ public class ClassicBlockProcessor implements BlockProcessor {
     long remainder = (blockNumber - 1) % eraLength;
     long base = blockNumber - remainder;
     long d = base / eraLength;
-    long dremainder = d % 1;
-    return Math.toIntExact(d - dremainder);
+    return Math.toIntExact(d);
   }
 
   // getRewardByEra gets a block reward at disinflation rate.
