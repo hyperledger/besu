@@ -19,24 +19,42 @@ import org.hyperledger.besu.util.bytes.BytesValue;
 import java.util.Objects;
 import java.util.Optional;
 
-import com.google.common.base.MoreObjects;
-
 public class MiningParameters {
 
   private final Optional<Address> coinbase;
   private final Wei minTransactionGasPrice;
   private final BytesValue extraData;
-  private final Boolean enabled;
+  private final boolean enabled;
+  private final boolean stratumMiningEnabled;
+  private final String stratumNetworkInterface;
+  private final int stratumPort;
+  private final String stratumExtranonce;
 
   public MiningParameters(
       final Address coinbase,
       final Wei minTransactionGasPrice,
       final BytesValue extraData,
-      final Boolean enabled) {
+      final boolean enabled) {
+    this(coinbase, minTransactionGasPrice, extraData, enabled, false, "0.0.0.0", 8008, "080c");
+  }
+
+  public MiningParameters(
+      final Address coinbase,
+      final Wei minTransactionGasPrice,
+      final BytesValue extraData,
+      final boolean enabled,
+      final boolean stratumMiningEnabled,
+      final String stratumNetworkInterface,
+      final int stratumPort,
+      final String stratumExtranonce) {
     this.coinbase = Optional.ofNullable(coinbase);
     this.minTransactionGasPrice = minTransactionGasPrice;
     this.extraData = extraData;
     this.enabled = enabled;
+    this.stratumMiningEnabled = stratumMiningEnabled;
+    this.stratumNetworkInterface = stratumNetworkInterface;
+    this.stratumPort = stratumPort;
+    this.stratumExtranonce = stratumExtranonce;
   }
 
   public Optional<Address> getCoinbase() {
@@ -51,37 +69,75 @@ public class MiningParameters {
     return extraData;
   }
 
-  public Boolean isMiningEnabled() {
+  public boolean isMiningEnabled() {
     return enabled;
+  }
+
+  public boolean isStratumMiningEnabled() {
+    return stratumMiningEnabled;
+  }
+
+  public String getStratumNetworkInterface() {
+    return stratumNetworkInterface;
+  }
+
+  public int getStratumPort() {
+    return stratumPort;
+  }
+
+  public String getStratumExtranonce() {
+    return stratumExtranonce;
   }
 
   @Override
   public boolean equals(final Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    final MiningParameters that = (MiningParameters) o;
-    return Objects.equals(coinbase, that.coinbase)
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    MiningParameters that = (MiningParameters) o;
+    return stratumPort == that.stratumPort
+        && Objects.equals(coinbase, that.coinbase)
         && Objects.equals(minTransactionGasPrice, that.minTransactionGasPrice)
         && Objects.equals(extraData, that.extraData)
-        && Objects.equals(enabled, that.enabled);
+        && Objects.equals(enabled, that.enabled)
+        && Objects.equals(stratumMiningEnabled, that.stratumMiningEnabled)
+        && Objects.equals(stratumNetworkInterface, that.stratumNetworkInterface)
+        && Objects.equals(stratumExtranonce, that.stratumExtranonce);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(coinbase, minTransactionGasPrice, extraData, enabled);
+    return Objects.hash(
+        coinbase,
+        minTransactionGasPrice,
+        extraData,
+        enabled,
+        stratumMiningEnabled,
+        stratumNetworkInterface,
+        stratumPort,
+        stratumExtranonce);
   }
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(this)
-        .add("coinbase", coinbase)
-        .add("minTransactionGasPrice", minTransactionGasPrice)
-        .add("extraData", extraData)
-        .add("enabled", enabled)
-        .toString();
+    return "MiningParameters{"
+        + "coinbase="
+        + coinbase
+        + ", minTransactionGasPrice="
+        + minTransactionGasPrice
+        + ", extraData="
+        + extraData
+        + ", enabled="
+        + enabled
+        + ", stratumMiningEnabled="
+        + stratumMiningEnabled
+        + ", stratumNetworkInterface='"
+        + stratumNetworkInterface
+        + '\''
+        + ", stratumPort="
+        + stratumPort
+        + ", stratumExtranonce='"
+        + stratumExtranonce
+        + '\''
+        + '}';
   }
 }
