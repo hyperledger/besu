@@ -24,7 +24,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class WebsocketServiceLoginAcceptanceTest extends AcceptanceTestBase {
-  private BesuNode node;
+  private BesuNode nodeUsingAuthFile;
   private BesuNode nodeUsingJwtPublicKey;
 
   private static final String TOKEN =
@@ -37,31 +37,31 @@ public class WebsocketServiceLoginAcceptanceTest extends AcceptanceTestBase {
 
   @Before
   public void setUp() throws IOException, URISyntaxException {
-    node = besu.createArchiveNodeWithAuthenticationOverWebSocket("node1");
+    nodeUsingAuthFile = besu.createArchiveNodeWithAuthenticationOverWebSocket("node1");
     nodeUsingJwtPublicKey =
         besu.createArchiveNodeWithAuthenticationUsingJwtPublicKeyOverWebSocket("node2");
-    cluster.start(node, nodeUsingJwtPublicKey);
-    node.useWebSocketsForJsonRpc();
+    cluster.start(nodeUsingAuthFile, nodeUsingJwtPublicKey);
+    nodeUsingAuthFile.useWebSocketsForJsonRpc();
     nodeUsingJwtPublicKey.useWebSocketsForJsonRpc();
   }
 
   @Test
   public void shouldFailLoginWithWrongCredentials() {
-    node.verify(login.failure("user", "badpassword"));
+    nodeUsingAuthFile.verify(login.failure("user", "badpassword"));
   }
 
   @Test
   public void shouldSucceedLoginWithCorrectCredentials() {
-    node.verify(login.success("user", "pegasys"));
+    nodeUsingAuthFile.verify(login.success("user", "pegasys"));
   }
 
   @Test
   public void jsonRpcMethodShouldSucceedWithAuthenticatedUserAndPermission() {
     final String token =
-        node.execute(permissioningTransactions.createSuccessfulLogin("user", "pegasys"));
-    node.useAuthenticationTokenInHeaderForJsonRpc(token);
-    node.verify(net.awaitPeerCount(1));
-    node.verify(net.netVersionUnauthorizedResponse());
+        nodeUsingAuthFile.execute(permissioningTransactions.createSuccessfulLogin("user", "pegasys"));
+    nodeUsingAuthFile.useAuthenticationTokenInHeaderForJsonRpc(token);
+    nodeUsingAuthFile.verify(net.awaitPeerCount(1));
+    nodeUsingAuthFile.verify(net.netVersionUnauthorizedResponse());
   }
 
   @Test

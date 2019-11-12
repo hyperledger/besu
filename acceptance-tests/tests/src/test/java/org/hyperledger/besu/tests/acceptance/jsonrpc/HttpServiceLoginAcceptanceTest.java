@@ -27,10 +27,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class HttpServiceLoginAcceptanceTest extends AcceptanceTestBase {
-
   private Cluster authenticatedCluster;
-  private Cluster authenticatedClusterWithJwtPublicKey;
-  private BesuNode node;
+  private BesuNode nodeUsingAuthFile;
   private BesuNode nodeUsingJwtPublicKey;
 
   private static final String TOKEN =
@@ -45,43 +43,41 @@ public class HttpServiceLoginAcceptanceTest extends AcceptanceTestBase {
   public void setUp() throws IOException, URISyntaxException {
     final ClusterConfiguration clusterConfiguration =
         new ClusterConfigurationBuilder().awaitPeerDiscovery(false).build();
-
     authenticatedCluster = new Cluster(clusterConfiguration, net);
-    node = besu.createArchiveNodeWithAuthentication("node1");
-    authenticatedCluster.start(node);
-    node.verify(login.awaitResponse("user", "badpassword"));
 
-    authenticatedClusterWithJwtPublicKey = new Cluster(clusterConfiguration, net);
+    nodeUsingAuthFile = besu.createArchiveNodeWithAuthentication("node1");
     nodeUsingJwtPublicKey = besu.createArchiveNodeWithAuthenticationUsingJwtPublicKey("node2");
-    authenticatedClusterWithJwtPublicKey.start(nodeUsingJwtPublicKey);
+    authenticatedCluster.start(nodeUsingAuthFile, nodeUsingJwtPublicKey);
+
+    nodeUsingAuthFile.verify(login.awaitResponse("user", "badpassword"));
     nodeUsingJwtPublicKey.verify(login.awaitResponse("user", "badpassword"));
   }
 
   @Test
   public void shouldFailLoginWithWrongCredentials() {
-    node.verify(login.failure("user", "badpassword"));
+    nodeUsingAuthFile.verify(login.failure("user", "badpassword"));
   }
 
   @Test
   public void shouldSucceedLoginWithCorrectCredentials() {
-    node.verify(login.success("user", "pegasys"));
+    nodeUsingAuthFile.verify(login.success("user", "pegasys"));
   }
 
   @Test
   public void jsonRpcMethodShouldSucceedWithAuthenticatedUserAndPermission() {
     final String token =
-        node.execute(permissioningTransactions.createSuccessfulLogin("user", "pegasys"));
-    node.useAuthenticationTokenInHeaderForJsonRpc(token);
+        nodeUsingAuthFile.execute(permissioningTransactions.createSuccessfulLogin("user", "pegasys"));
+    nodeUsingAuthFile.useAuthenticationTokenInHeaderForJsonRpc(token);
 
-    node.verify(net.awaitPeerCount(0));
-    node.verify(net.netVersionUnauthorizedExceptional("Unauthorized"));
+    nodeUsingAuthFile.verify(net.awaitPeerCount(1));
+    nodeUsingAuthFile.verify(net.netVersionUnauthorizedExceptional("Unauthorized"));
   }
 
   @Test
   public void externalJwtPublicKeyUsedOnJsonRpcMethodShouldSucceed() {
     nodeUsingJwtPublicKey.useAuthenticationTokenInHeaderForJsonRpc(TOKEN);
 
-    nodeUsingJwtPublicKey.verify(net.awaitPeerCount(0));
+    nodeUsingJwtPublicKey.verify(net.awaitPeerCount(1));
     nodeUsingJwtPublicKey.verify(net.netVersionUnauthorizedExceptional("Unauthorized"));
   }
 
@@ -93,7 +89,6 @@ public class HttpServiceLoginAcceptanceTest extends AcceptanceTestBase {
   @Override
   public void tearDownAcceptanceTestBase() {
     authenticatedCluster.stop();
-    authenticatedClusterWithJwtPublicKey.stop();
     super.tearDownAcceptanceTestBase();
   }
 }
