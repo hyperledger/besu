@@ -32,7 +32,7 @@ public class LoginDisabledTransaction implements Transaction<Void> {
       Assertions.assertThat(send).isEqualTo("Authentication not enabled");
       return null;
     } catch (final IOException e) {
-      fail("Login request failed with exception: %s", e);
+      fail("Login request failed with exception: ", e);
       return null;
     }
   }

@@ -167,6 +167,19 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
+  public BesuNodeConfigurationBuilder webSocketAuthenticationUsingPublicKeyEnabled()
+      throws URISyntaxException {
+    final File jwtPublicKey =
+        Paths.get(ClassLoader.getSystemResource("authentication/jwt_public_key").toURI())
+            .toAbsolutePath()
+            .toFile();
+
+    this.webSocketConfiguration.setAuthenticationEnabled(true);
+    this.webSocketConfiguration.setAuthenticationPublicKeyFile(jwtPublicKey);
+
+    return this;
+  }
+
   public BesuNodeConfigurationBuilder permissioningConfiguration(
       final PermissioningConfiguration permissioningConfiguration) {
     this.permissioningConfiguration = Optional.of(permissioningConfiguration);

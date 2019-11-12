@@ -160,6 +160,16 @@ public class BesuNodeFactory {
             .build());
   }
 
+  public BesuNode createArchiveNodeWithAuthenticationUsingJwtPublicKeyOverWebSocket(
+      final String name) throws IOException, URISyntaxException {
+    return create(
+        new BesuNodeConfigurationBuilder()
+            .name(name)
+            .webSocketEnabled()
+            .webSocketAuthenticationUsingPublicKeyEnabled()
+            .build());
+  }
+
   public BesuNode createNodeWithP2pDisabled(final String name) throws IOException {
     return create(
         new BesuNodeConfigurationBuilder()
