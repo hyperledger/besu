@@ -167,7 +167,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     besuPluginContext.addService(
         BesuEvents.class,
         new BesuEventsImpl(
-            besuController.getProtocolManager().getBlockBroadcaster(),
+                besuController.getProtocolContext().getBlockchain(), besuController.getProtocolManager().getBlockBroadcaster(),
             besuController.getTransactionPool(),
             besuController.getSyncState()));
     besuPluginContext.startPlugins();

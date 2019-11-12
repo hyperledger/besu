@@ -14,25 +14,39 @@
  */
 package org.hyperledger.besu.services;
 
+import org.hyperledger.besu.ethereum.api.query.LogsQuery;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.LogTopic;
+import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.eth.sync.BlockBroadcaster;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.plugin.data.Address;
 import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.data.PropagatedBlockContext;
 import org.hyperledger.besu.plugin.data.Quantity;
+import org.hyperledger.besu.plugin.data.UnformattedData;
 import org.hyperledger.besu.plugin.services.BesuEvents;
+import org.hyperledger.besu.util.bytes.BytesValue;
 
+import java.util.List;
 import java.util.function.Supplier;
 
+import static java.util.stream.Collectors.toUnmodifiableList;
+
 public class BesuEventsImpl implements BesuEvents {
+  private Blockchain blockchain;
   private final BlockBroadcaster blockBroadcaster;
   private final TransactionPool transactionPool;
   private final SyncState syncState;
 
   public BesuEventsImpl(
+      final Blockchain blockchain,
       final BlockBroadcaster blockBroadcaster,
       final TransactionPool transactionPool,
       final SyncState syncState) {
+    this.blockchain = blockchain;
     this.blockBroadcaster = blockBroadcaster;
     this.transactionPool = transactionPool;
     this.syncState = syncState;

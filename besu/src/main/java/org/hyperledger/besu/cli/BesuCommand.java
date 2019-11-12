@@ -937,6 +937,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     besuPluginContext.addService(
         BesuEvents.class,
         new BesuEventsImpl(
+              besuController.getProtocolContext().getBlockchain(),
             besuController.getProtocolManager().getBlockBroadcaster(),
             besuController.getTransactionPool(),
             besuController.getSyncState()));
