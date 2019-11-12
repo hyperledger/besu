@@ -36,8 +36,7 @@ public class LoginUnauthorizedTransaction implements Transaction<Void> {
   @Override
   public Void execute(final NodeRequests node) {
     try {
-      String send = node.login().send(username, password);
-      Assertions.assertThat(send).isEqualTo("Unauthorized");
+      Assertions.assertThat(node.login().send(username, password)).isEqualTo("Unauthorized");
       return null;
     } catch (final IOException e) {
       fail("Login request failed with exception: %s", e);
