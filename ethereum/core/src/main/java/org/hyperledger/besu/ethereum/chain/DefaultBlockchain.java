@@ -28,7 +28,6 @@ import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
-import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.util.InvalidConfigurationException;
 import org.hyperledger.besu.util.Subscribers;

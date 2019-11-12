@@ -16,14 +16,14 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import static java.util.stream.Collectors.toUnmodifiableList;
+
 import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import com.google.common.base.MoreObjects;
-
-import static java.util.stream.Collectors.toUnmodifiableList;
 
 public class LogWithMetadata extends Log
     implements org.hyperledger.besu.plugin.data.LogWithMetadata {

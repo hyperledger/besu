@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.plugin.data;
 
-import com.google.protobuf.BytesValue;
 import org.hyperledger.besu.plugin.Unstable;
 
 import java.util.List;
