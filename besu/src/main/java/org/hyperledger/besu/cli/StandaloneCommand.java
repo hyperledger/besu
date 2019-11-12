@@ -69,7 +69,7 @@ class StandaloneCommand implements DefaultCommandValues {
       names = {"--rpc-http-authentication-public-key-file"},
       paramLabel = MANDATORY_FILE_FORMAT_HELP,
       description =
-          "External JSON-RPC HTTP authentication public key use for validating JWT issuer.",
+          "External JSON-RPC HTTP authentication public key used for validating JWT",
       arity = "1")
   final File rpcHttpAuthenticationPublicKeyFile = null;
 
@@ -85,7 +85,7 @@ class StandaloneCommand implements DefaultCommandValues {
       names = {"--rpc-ws-authentication-public-key-file"},
       paramLabel = MANDATORY_FILE_FORMAT_HELP,
       description =
-          "Storage file for JSON-RPC WebSocket authentication credentials (default: ${DEFAULT-VALUE})",
+          "External JSON-RPC WebSocket authentication public key used for validating JWT",
       arity = "1")
   final File rpcWsAuthenticationPublicKeyFile = null;
 
