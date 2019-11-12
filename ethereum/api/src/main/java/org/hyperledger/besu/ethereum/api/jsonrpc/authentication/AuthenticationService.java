@@ -88,6 +88,12 @@ public class AuthenticationService {
       final boolean authenticationEnabled,
       final String authenticationCredentialsFile,
       final File authenticationPublicKeyFile) {
+    if (!authenticationEnabled
+        && authenticationCredentialsFile == null
+        && authenticationPublicKeyFile == null) {
+      return Optional.empty();
+    }
+
     final JWTAuthOptions jwtAuthOptions =
         authenticationPublicKeyFile == null
             ? jwtAuthOptionsFactory.createWithGeneratedKeyPair()
