@@ -55,11 +55,11 @@ dependencyManagement {
 
     dependency 'junit:junit:4.12'
 
-    dependency 'org.apache.tuweni:tuweni-bytes:0.9.0-20190709195335'
-    dependency 'org.apache.tuweni:tuweni-io:0.9.0-20190709195335'
-    dependency 'org.apache.tuweni:tuweni-config:0.9.0-20190709195335'
-    dependency 'org.apache.tuweni:tuweni-crypto:0.9.0-20190709195335'
-    dependency 'org.apache.tuweni:tuweni-toml:0.9.0-20190709195335'
+    dependency 'org.apache.tuweni:tuweni-bytes:0.9.0'
+    dependency 'org.apache.tuweni:tuweni-io:0.9.0'
+    dependency 'org.apache.tuweni:tuweni-config:0.9.0'
+    dependency 'org.apache.tuweni:tuweni-crypto:0.9.0'
+    dependency 'org.apache.tuweni:tuweni-toml:0.9.0'
 
     dependency 'net.consensys:orion:1.3.2'
 
