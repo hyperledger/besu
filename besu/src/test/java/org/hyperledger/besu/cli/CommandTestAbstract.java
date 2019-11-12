@@ -32,6 +32,7 @@ import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.options.EthProtocolOptions;
 import org.hyperledger.besu.cli.options.MetricsCLIOptions;
 import org.hyperledger.besu.cli.options.NetworkingOptions;
+import org.hyperledger.besu.cli.options.PrunerOptions;
 import org.hyperledger.besu.cli.options.SynchronizerOptions;
 import org.hyperledger.besu.cli.options.TransactionPoolOptions;
 import org.hyperledger.besu.cli.subcommands.PublicKeySubCommand;
@@ -330,6 +331,10 @@ public abstract class CommandTestAbstract {
 
     public SynchronizerOptions getSynchronizerOptions() {
       return synchronizerOptions;
+    }
+
+    public PrunerOptions getPrunerOptions() {
+      return prunerOptions;
     }
 
     public EthProtocolOptions getEthProtocolOptions() {
