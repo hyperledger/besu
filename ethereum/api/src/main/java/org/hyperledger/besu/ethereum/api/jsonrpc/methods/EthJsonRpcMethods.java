@@ -53,6 +53,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthNewPendingT
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthProtocolVersion;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthSendRawTransaction;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthSendTransaction;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthSubmitWork;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthSyncing;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthUninstallFilter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -157,6 +158,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
         new EthProtocolVersion(supportedCapabilities),
         new EthGasPrice(miningCoordinator),
         new EthGetWork(miningCoordinator),
+        new EthSubmitWork(miningCoordinator, parameter),
         new EthHashrate(miningCoordinator),
         new EthChainId(protocolSchedule.getChainId()));
   }
