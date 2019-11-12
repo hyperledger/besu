@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.vm.MessageFrame;
 
 import java.math.BigInteger;
 import java.util.Collections;
-import java.math.BigInteger;
 import java.util.Optional;
 import java.util.OptionalInt;
 
