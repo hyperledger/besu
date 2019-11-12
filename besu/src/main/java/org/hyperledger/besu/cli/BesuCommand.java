@@ -1133,7 +1133,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--rpc-http-authentication-credentials-file",
             "--rpc-http-authentication-public-key-file"));
 
-    if (isRpcHttpAuthenticationEnabled && rpcHttpAuthenticationCredentialsFile() == null) {
+    if (isRpcHttpAuthenticationEnabled
+        && rpcHttpAuthenticationCredentialsFile() == null
+        && rpcHttpAuthenticationPublicKeyFile() == null) {
       throw new ParameterException(
           commandLine,
           "Unable to authenticate JSON-RPC HTTP endpoint without a supplied credentials file");

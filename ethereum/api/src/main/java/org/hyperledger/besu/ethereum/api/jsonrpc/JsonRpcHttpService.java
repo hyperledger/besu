@@ -204,7 +204,7 @@ public class JsonRpcHttpService {
         .produces(APPLICATION_JSON)
         .handler(this::handleJsonRPCRequest);
 
-    if (authenticationService.map(AuthenticationService::canHandleLogin).orElse(false)) {
+    if (authenticationService.isPresent()) {
       router
           .route("/login")
           .method(HttpMethod.POST)

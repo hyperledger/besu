@@ -21,7 +21,6 @@ import java.io.File;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
-import com.google.common.annotations.VisibleForTesting;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServerResponse;
@@ -37,20 +36,13 @@ import io.vertx.ext.web.RoutingContext;
 public class AuthenticationService {
 
   private final JWTAuth jwtAuthProvider;
-  @VisibleForTesting public final JWTAuthOptions jwtAuthOptions;
-  private final AuthProvider credentialAuthProvider;
-  private final boolean hasExternalPublicKey;
+  private final Optional<AuthProvider> credentialAuthProvider;
   private static final JWTAuthOptionsFactory jwtAuthOptionsFactory = new JWTAuthOptionsFactory();
 
   private AuthenticationService(
-      final JWTAuth jwtAuthProvider,
-      final JWTAuthOptions jwtAuthOptions,
-      final AuthProvider credentialAuthProvider,
-      final boolean hasExternalPublicKey) {
+      final JWTAuth jwtAuthProvider, final Optional<AuthProvider> credentialAuthProvider) {
     this.jwtAuthProvider = jwtAuthProvider;
-    this.jwtAuthOptions = jwtAuthOptions;
     this.credentialAuthProvider = credentialAuthProvider;
-    this.hasExternalPublicKey = hasExternalPublicKey;
   }
 
   /**
@@ -96,28 +88,16 @@ public class AuthenticationService {
       final boolean authenticationEnabled,
       final String authenticationCredentialsFile,
       final File authenticationPublicKeyFile) {
-    if (!authenticationEnabled || authenticationCredentialsFile == null) {
-      return Optional.empty();
-    }
-
-    final boolean hasExternalPublicKey = authenticationPublicKeyFile == null;
     final JWTAuthOptions jwtAuthOptions =
-        hasExternalPublicKey
+        authenticationPublicKeyFile == null
             ? jwtAuthOptionsFactory.createWithGeneratedKeyPair()
             : jwtAuthOptionsFactory.createForExternalPublicKey(authenticationPublicKeyFile);
 
     final Optional<AuthProvider> credentialAuthProvider =
         makeCredentialAuthProvider(vertx, authenticationEnabled, authenticationCredentialsFile);
-    if (credentialAuthProvider.isEmpty()) {
-      return Optional.empty();
-    }
 
     return Optional.of(
-        new AuthenticationService(
-            JWTAuth.create(vertx, jwtAuthOptions),
-            jwtAuthOptions,
-            credentialAuthProvider.get(),
-            hasExternalPublicKey));
+        new AuthenticationService(JWTAuth.create(vertx, jwtAuthOptions), credentialAuthProvider));
   }
 
   private static Optional<AuthProvider> makeCredentialAuthProvider(
@@ -152,6 +132,15 @@ public class AuthenticationService {
    * @param routingContext Routing context associated with this request
    */
   public void handleLogin(final RoutingContext routingContext) {
+    if (credentialAuthProvider.isPresent()) {
+      login(routingContext, credentialAuthProvider.get());
+    } else {
+      handleDisabledLogin(routingContext);
+    }
+  }
+
+  private void login(
+      final RoutingContext routingContext, final AuthProvider credentialAuthProvider) {
     final JsonObject requestBody = routingContext.getBodyAsJson();
 
     if (requestBody == null) {
@@ -198,9 +187,5 @@ public class AuthenticationService {
 
   public JWTAuth getJwtAuthProvider() {
     return jwtAuthProvider;
-  }
-
-  public boolean canHandleLogin() {
-    return hasExternalPublicKey;
   }
 }
