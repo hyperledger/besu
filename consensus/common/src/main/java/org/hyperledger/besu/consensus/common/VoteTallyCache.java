@@ -100,7 +100,7 @@ public class VoteTallyCache {
     return constructMissingCacheEntries(intermediateBlocks, voteTally);
   }
 
-  private VoteTally getValidatorsAfter(final BlockHeader header) {
+  protected VoteTally getValidatorsAfter(final BlockHeader header) {
     if (epochManager.isEpochBlock(header.getNumber())) {
       return new VoteTally(blockInterface.validatorsInBlock(header));
     }
