@@ -44,7 +44,7 @@ public class AuthenticationService {
   private AuthenticationService(
       final JWTAuth jwtAuthProvider,
       final JWTAuthOptions jwtAuthOptions,
-      Optional<AuthProvider> credentialAuthProvider) {
+      final Optional<AuthProvider> credentialAuthProvider) {
     this.jwtAuthProvider = jwtAuthProvider;
     this.jwtAuthOptions = jwtAuthOptions;
     this.credentialAuthProvider = credentialAuthProvider;
