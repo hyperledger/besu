@@ -23,16 +23,14 @@ import java.util.List;
 
 import com.google.common.base.MoreObjects;
 
-public class LogWithMetadata extends Log {
+public class LogWithMetadata extends Log
+    implements org.hyperledger.besu.plugin.data.LogWithMetadata {
 
   private final int logIndex;
   private final long blockNumber;
   private final Hash blockHash;
   private final Hash transactionHash;
   private final int transactionIndex;
-  private final Address address;
-  private final BytesValue data;
-  private final List<LogTopic> topics;
   private final boolean removed;
 
   public LogWithMetadata(
@@ -51,9 +49,6 @@ public class LogWithMetadata extends Log {
     this.blockHash = blockHash;
     this.transactionHash = transactionHash;
     this.transactionIndex = transactionIndex;
-    this.address = address;
-    this.data = data;
-    this.topics = topics;
     this.removed = removed;
   }
 
@@ -123,17 +118,17 @@ public class LogWithMetadata extends Log {
 
   @Override
   public Address getLogger() {
-    return address;
+    return super.getLogger();
   }
 
   @Override
   public BytesValue getData() {
-    return data;
+    return super.getData();
   }
 
   @Override
   public List<LogTopic> getTopics() {
-    return topics;
+    return super.getTopics();
   }
 
   public boolean isRemoved() {
@@ -148,9 +143,9 @@ public class LogWithMetadata extends Log {
         .add("blockHash", blockHash)
         .add("transactionHash", transactionHash)
         .add("transactionIndex", transactionIndex)
-        .add("address", address)
-        .add("data", data)
-        .add("topics", topics)
+        .add("address", getLogger())
+        .add("data", getData())
+        .add("topics", getTopics())
         .add("removed", removed)
         .toString();
   }
