@@ -12,24 +12,24 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.worldstate;
+package org.hyperledger.besu.consensus.common;
 
-public class PruningConfiguration {
+import org.hyperledger.besu.ethereum.core.Address;
 
-  private final long blocksRetainedBeforeSweeping;
-  private final long blockConfirmationsBeforeMarking;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
-  public PruningConfiguration(
-      final long blockConfirmationsBeforeMarking, final long blocksRetainedBeforeSweeping) {
-    this.blockConfirmationsBeforeMarking = blockConfirmationsBeforeMarking;
-    this.blocksRetainedBeforeSweeping = blocksRetainedBeforeSweeping;
+public class IbftValidatorOverrides {
+
+  private final Map<Long, List<Address>> overriddenValidators;
+
+  public IbftValidatorOverrides(final Map<Long, List<Address>> overriddenValidators) {
+    this.overriddenValidators = overriddenValidators;
   }
 
-  public long getBlocksRetained() {
-    return blocksRetainedBeforeSweeping;
-  }
-
-  public long getBlockConfirmations() {
-    return blockConfirmationsBeforeMarking;
+  public Optional<Collection<Address>> getForBlock(final long blockNumber) {
+    return Optional.ofNullable(overriddenValidators.get(blockNumber));
   }
 }

@@ -152,6 +152,32 @@ public class ProtocolScheduleBuilder<C> {
             config.getEvmStackSize(),
             isRevertReasonEnabled));
 
+    // specs for classic network
+    config
+        .getClassicForkBlock()
+        .ifPresent(
+            classicBlockNumber -> {
+              final ProtocolSpec<C> originalProtocolSpce =
+                  protocolSchedule.getByBlockNumber(classicBlockNumber);
+              addProtocolSpec(
+                  protocolSchedule,
+                  OptionalLong.of(classicBlockNumber),
+                  ClassicProtocolSpecs.classicRecoveryInitDefinition(
+                      config.getContractSizeLimit(), config.getEvmStackSize()));
+              protocolSchedule.putMilestone(classicBlockNumber + 10, originalProtocolSpce);
+            });
+
+    addProtocolSpec(
+        protocolSchedule,
+        config.getEcip1015BlockNumber(),
+        ClassicProtocolSpecs.tangerineWhistleDefinition(
+            chainId, config.getContractSizeLimit(), config.getEvmStackSize()));
+    addProtocolSpec(
+        protocolSchedule,
+        config.getDieHardBlockNumber(),
+        ClassicProtocolSpecs.dieHardDefinition(
+            chainId, config.getContractSizeLimit(), config.getEvmStackSize()));
+
     LOG.info("Protocol schedule created with milestones: {}", protocolSchedule.listMilestones());
     return protocolSchedule;
   }

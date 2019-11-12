@@ -54,13 +54,13 @@ public class Pruner {
   Pruner(
       final MarkSweepPruner pruningStrategy,
       final Blockchain blockchain,
-      final PruningConfiguration pruningConfiguration,
+      final PrunerConfiguration prunerConfiguration,
       final Supplier<ExecutorService> executorServiceSupplier) {
     this.pruningStrategy = pruningStrategy;
     this.blockchain = blockchain;
     this.executorServiceSupplier = executorServiceSupplier;
-    this.blocksRetained = pruningConfiguration.getBlocksRetained();
-    this.blockConfirmations = pruningConfiguration.getBlockConfirmations();
+    this.blocksRetained = prunerConfiguration.getBlocksRetained();
+    this.blockConfirmations = prunerConfiguration.getBlockConfirmations();
     checkArgument(
         blockConfirmations >= 0 && blockConfirmations < blocksRetained,
         "blockConfirmations and blocksRetained must be non-negative. blockConfirmations must be less than blockRetained.");
@@ -69,8 +69,8 @@ public class Pruner {
   public Pruner(
       final MarkSweepPruner pruningStrategy,
       final Blockchain blockchain,
-      final PruningConfiguration pruningConfiguration) {
-    this(pruningStrategy, blockchain, pruningConfiguration, getDefaultExecutorSupplier());
+      final PrunerConfiguration prunerConfiguration) {
+    this(pruningStrategy, blockchain, prunerConfiguration, getDefaultExecutorSupplier());
   }
 
   private static Supplier<ExecutorService> getDefaultExecutorSupplier() {
