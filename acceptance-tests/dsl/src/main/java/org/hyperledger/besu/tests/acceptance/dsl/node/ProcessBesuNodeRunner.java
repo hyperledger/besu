@@ -125,6 +125,10 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
         params.add("--rpc-http-authentication-credentials-file");
         params.add(node.jsonRpcConfiguration().getAuthenticationCredentialsFile());
       }
+      if (node.jsonRpcConfiguration().getAuthenticationPublicKeyFile() != null) {
+        params.add("--rpc-http-authentication-public-key-file");
+        params.add(node.jsonRpcConfiguration().getAuthenticationPublicKeyFile().getAbsolutePath());
+      }
     }
 
     if (node.wsRpcEnabled()) {

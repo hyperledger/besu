@@ -29,7 +29,17 @@ import org.junit.Test;
 public class HttpServiceLoginAcceptanceTest extends AcceptanceTestBase {
 
   private Cluster authenticatedCluster;
+  private Cluster authenticatedClusterWithJwtPublicKey;
   private BesuNode node;
+  private BesuNode nodeUsingJwtPublicKey;
+
+  private static final String TOKEN =
+      "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1MTYyMzkwMjI"
+          + "sInBlcm1pc3Npb25zIjpbIm5ldDpwZWVyQ291bnQiXX0.fXi73v4UTEO3hiG0AzPaD-OjQy0rL0SY-tMNCfJMdiVde"
+          + "im7Erwq4sVCrFtmx0tUs-e5Z1t_K-Gx6c_95911T2Jq2VLlwKJDs0FYEGgq2G3W-PMMrT21SPLJM-r7kl9_k51Xbww"
+          + "D7Cku_JFaLmkhd_l8k-EmGCTCWar514HUTlH0pm4nYhDKa7SuMAqMUo8CSZRCEzSD_AeOShJTk02cPtkCqXzClK3XO"
+          + "gfxsO5viuklX13VT35lyG-HNNuReLX6U4nWu_irHv0r7Gl8MVFz0Ohm0bA_G1OUh5ue6y7DcYADOoYTmvfSgkKD0hl"
+          + "bKx3j3tp1PX6Cw_fZUjviFvwxEg";
 
   @Before
   public void setUp() throws IOException, URISyntaxException {
@@ -40,6 +50,11 @@ public class HttpServiceLoginAcceptanceTest extends AcceptanceTestBase {
     node = besu.createArchiveNodeWithAuthentication("node1");
     authenticatedCluster.start(node);
     node.verify(login.awaitResponse("user", "badpassword"));
+
+    authenticatedClusterWithJwtPublicKey = new Cluster(clusterConfiguration, net);
+    nodeUsingJwtPublicKey = besu.createArchiveNodeWithAuthenticationUsingJwtPublicKey("node2");
+    authenticatedClusterWithJwtPublicKey.start(nodeUsingJwtPublicKey);
+    nodeUsingJwtPublicKey.verify(login.awaitResponse("user", "badpassword"));
   }
 
   @Test
@@ -62,9 +77,23 @@ public class HttpServiceLoginAcceptanceTest extends AcceptanceTestBase {
     node.verify(net.netVersionUnauthorizedExceptional("Unauthorized"));
   }
 
+  @Test
+  public void externalJwtPublicKeyUsedOnJsonRpcMethodShouldSucceed() {
+    nodeUsingJwtPublicKey.useAuthenticationTokenInHeaderForJsonRpc(TOKEN);
+
+    nodeUsingJwtPublicKey.verify(net.awaitPeerCount(0));
+    nodeUsingJwtPublicKey.verify(net.netVersionUnauthorizedExceptional("Unauthorized"));
+  }
+
+  @Test
+  public void loginShouldBeDisabledWhenUsingExternalJwtPublicKey() {
+    nodeUsingJwtPublicKey.verify(login.disabled());
+  }
+
   @Override
   public void tearDownAcceptanceTestBase() {
     authenticatedCluster.stop();
+    authenticatedClusterWithJwtPublicKey.stop();
     super.tearDownAcceptanceTestBase();
   }
 }

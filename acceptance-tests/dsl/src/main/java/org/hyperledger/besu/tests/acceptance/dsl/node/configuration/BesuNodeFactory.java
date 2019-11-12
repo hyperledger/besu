@@ -139,6 +139,17 @@ public class BesuNodeFactory {
             .build());
   }
 
+  public BesuNode createArchiveNodeWithAuthenticationUsingJwtPublicKey(final String name)
+      throws IOException, URISyntaxException {
+    return create(
+        new BesuNodeConfigurationBuilder()
+            .name(name)
+            .jsonRpcEnabled()
+            .jsonRpcAuthenticationUsingPublicKeyEnabled()
+            .webSocketEnabled()
+            .build());
+  }
+
   public BesuNode createArchiveNodeWithAuthenticationOverWebSocket(final String name)
       throws IOException, URISyntaxException {
     return create(

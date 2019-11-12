@@ -15,23 +15,13 @@
 package org.hyperledger.besu.tests.acceptance.dsl.condition.login;
 
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
-import org.hyperledger.besu.tests.acceptance.dsl.transaction.login.LoginTransaction;
+import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.login.LoginDisabledTransaction;
 
-public class LoginConditions {
+public class ExpectLoginDisabled implements Condition {
 
-  public Condition success(final String username, final String password) {
-    return new ExpectLoginSuccess(username, password);
-  }
-
-  public Condition failure(final String username, final String password) {
-    return new ExpectLoginUnauthorized(username, password);
-  }
-
-  public Condition disabled() {
-    return new ExpectLoginDisabled();
-  }
-
-  public Condition awaitResponse(final String username, final String password) {
-    return new AwaitLoginResponse<>(new LoginTransaction(username, password));
+  @Override
+  public void verify(final Node node) {
+    node.execute(new LoginDisabledTransaction());
   }
 }

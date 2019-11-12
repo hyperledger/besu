@@ -23,21 +23,13 @@ import java.io.IOException;
 
 import org.assertj.core.api.Assertions;
 
-public class LoginUnauthorizedTransaction implements Transaction<Void> {
-
-  private final String username;
-  private final String password;
-
-  public LoginUnauthorizedTransaction(final String username, final String password) {
-    this.username = username;
-    this.password = password;
-  }
+public class LoginDisabledTransaction implements Transaction<Void> {
 
   @Override
   public Void execute(final NodeRequests node) {
     try {
-      String send = node.login().send(username, password);
-      Assertions.assertThat(send).isEqualTo("Unauthorized");
+      String send = node.login().send("user", "password");
+      Assertions.assertThat(send).isEqualTo("Authentication not enabled");
       return null;
     } catch (final IOException e) {
       fail("Login request failed with exception: %s", e);
