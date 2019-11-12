@@ -2285,6 +2285,25 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void stratumMiningIsEnabledWhenSpecified() throws Exception {
+    final String coinbaseStr = String.format("%040x", 1);
+    parseCommand("--miner-enabled", "--miner-coinbase=" + coinbaseStr, "--miner-stratum-enabled");
+
+    final ArgumentCaptor<MiningParameters> miningArg =
+        ArgumentCaptor.forClass(MiningParameters.class);
+
+    verify(mockControllerBuilder).miningParameters(miningArg.capture());
+    verify(mockControllerBuilder).build();
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(miningArg.getValue().isMiningEnabled()).isTrue();
+    assertThat(miningArg.getValue().getCoinbase())
+        .isEqualTo(Optional.of(Address.fromHexString(coinbaseStr)));
+    assertThat(miningArg.getValue().isStratumMiningEnabled()).isTrue();
+  }
+
+  @Test
   public void miningOptionsRequiresServiceToBeEnabled() {
 
     final Address requestedCoinbase = Address.fromHexString("0000011111222223333344444");
@@ -2294,13 +2313,20 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--min-gas-price",
         "42",
         "--miner-extra-data",
-        "0x1122334455667788990011223344556677889900112233445566778899001122");
+        "0x1122334455667788990011223344556677889900112233445566778899001122",
+        "--miner-stratum-enabled");
 
     verifyOptionsConstraintLoggerCall(
-        "--miner-enabled", "--miner-coinbase", "--min-gas-price", "--miner-extra-data");
+        "--miner-enabled",
+        "--miner-coinbase",
+        "--min-gas-price",
+        "--miner-extra-data",
+        "--miner-stratum-enabled");
 
     assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString())
+        .startsWith(
+            "Unable to mine with Stratum if mining is disabled. Either disable Stratum mining (remove --miner-stratum-enabled)or specify mining is enabled (--miner-enabled)");
   }
 
   @Test
