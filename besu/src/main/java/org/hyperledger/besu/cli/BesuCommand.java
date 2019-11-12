@@ -45,6 +45,7 @@ import org.hyperledger.besu.cli.error.BesuExceptionHandler;
 import org.hyperledger.besu.cli.options.EthProtocolOptions;
 import org.hyperledger.besu.cli.options.MetricsCLIOptions;
 import org.hyperledger.besu.cli.options.NetworkingOptions;
+import org.hyperledger.besu.cli.options.PrunerOptions;
 import org.hyperledger.besu.cli.options.SynchronizerOptions;
 import org.hyperledger.besu.cli.options.TransactionPoolOptions;
 import org.hyperledger.besu.cli.subcommands.PasswordSubCommand;
@@ -86,7 +87,6 @@ import org.hyperledger.besu.ethereum.permissioning.PermissioningConfigurationBui
 import org.hyperledger.besu.ethereum.permissioning.SmartContractPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
-import org.hyperledger.besu.ethereum.worldstate.PruningConfiguration;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.MetricCategoryRegistryImpl;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
@@ -185,6 +185,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   final EthProtocolOptions ethProtocolOptions = EthProtocolOptions.create();
   final MetricsCLIOptions metricsCLIOptions = MetricsCLIOptions.create();
   final TransactionPoolOptions transactionPoolOptions = TransactionPoolOptions.create();
+  final PrunerOptions prunerOptions = PrunerOptions.create();
   private final RunnerBuilder runnerBuilder;
   private final BesuController.Builder controllerBuilderFactory;
   private final BesuPluginContextImpl besuPluginContext;
@@ -611,24 +612,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @Option(
       names = {"--pruning-enabled"},
       description =
-          "Enable pruning of world state of blocks older than the retention period (default: ${DEFAULT-VALUE})")
-  private final Boolean isPruningEnabled = false;
-
-  @Option(
-      names = {"--pruning-blocks-retained"},
-      hidden = true,
-      description =
-          "Minimum number of recent blocks for which to keep entire world state (default: ${DEFAULT-VALUE})",
-      arity = "1")
-  private final Long pruningBlocksRetained = DEFAULT_PRUNING_BLOCKS_RETAINED;
-
-  @Option(
-      names = {"--pruning-block-confirmations"},
-      hidden = true,
-      description =
-          "Minimum number of confirmations on a block before marking begins (default: ${DEFAULT-VALUE})",
-      arity = "1")
-  private final Long pruningBlockConfirmations = DEFAULT_PRUNING_BLOCK_CONFIRMATIONS;
+          "Enable disk-space saving optimization that removes old state that is unlikely to be required (default: true if fast sync is enabled, false otherwise)")
+  private Boolean pruningOverride;
 
   @Option(
       names = {"--permissions-nodes-config-file-enabled"},
@@ -893,6 +878,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .put("P2P Network", networkingOptions)
             .put("Synchronizer", synchronizerOptions)
             .put("TransactionPool", transactionPoolOptions)
+            .put("Pruner", prunerOptions)
             .build();
 
     UnstableOptionsSubCommand.createUnstableOptions(commandLine, unstableOptions);
@@ -1039,13 +1025,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         "--sync-mode",
         !SyncMode.FAST.equals(syncMode),
         singletonList("--fast-sync-min-peers"));
-
-    CommandLineUtils.checkOptionDependencies(
-        logger,
-        commandLine,
-        "--pruning-enabled",
-        !isPruningEnabled,
-        asList("--pruning-block-confirmations", "--pruning-blocks-retained"));
   }
 
   private BesuCommand configure() throws Exception {
@@ -1128,8 +1107,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           .clock(Clock.systemUTC())
           .isRevertReasonEnabled(isRevertReasonEnabled)
           .storageProvider(keyStorageProvider(keyValueStorageName))
-          .isPruningEnabled(isPruningEnabled)
-          .pruningConfiguration(buildPruningConfiguration())
+          .isPruningEnabled(isPruningEnabled())
+          .pruningConfiguration(prunerOptions.toDomainObject())
           .genesisConfigOverrides(genesisConfigOverrides)
           .targetGasLimit(targetGasLimit == null ? Optional.empty() : Optional.of(targetGasLimit))
           .requiredBlocks(requiredBlocks);
@@ -1366,6 +1345,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     final PrivacyParameters.Builder privacyParametersBuilder = new PrivacyParameters.Builder();
     if (isPrivacyEnabled) {
+      final String errorSuffix = "cannot be enabled with privacy.";
+      if (syncMode == SyncMode.FAST) {
+        throw new ParameterException(commandLine, String.format("%s %s", "Fast sync", errorSuffix));
+      }
+      if (isPruningEnabled()) {
+        throw new ParameterException(commandLine, String.format("%s %s", "Pruning", errorSuffix));
+      }
+
       privacyParametersBuilder.setEnabled(true);
       privacyParametersBuilder.setEnclaveUrl(privacyUrl);
       if (privacyPublicKeyFile() != null) {
@@ -1411,8 +1398,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .build();
   }
 
-  private PruningConfiguration buildPruningConfiguration() {
-    return new PruningConfiguration(pruningBlockConfirmations, pruningBlocksRetained);
+  private boolean isPruningEnabled() {
+    return Optional.ofNullable(pruningOverride).orElse(syncMode == SyncMode.FAST);
   }
 
   // Blockchain synchronisation from peers.

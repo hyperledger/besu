@@ -181,6 +181,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
     return builder.build();
   }
 
+  @Override
+  public CustomForksConfigOptions getCustomForks() {
+    return CustomForksConfigOptions.DEFAULT;
+  }
+
   public StubGenesisConfigOptions homesteadBlock(final long blockNumber) {
     homesteadBlockNumber = OptionalLong.of(blockNumber);
     return this;

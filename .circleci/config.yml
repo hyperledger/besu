@@ -198,28 +198,28 @@ workflows:
       - buildDocker:
           requires:
             - unitTests
-      - publish:
-          filters:
-            branches:
-              only:
-                - master
+      # - publish:
+          # filters:
+            # branches:
+              # only:
+                # - master
                 #- /^release-.*/
-          requires:
-            - integrationTests
-            - unitTests
-            - acceptanceTests
-            - referenceTests
-            - buildDocker
-      - publishDocker:
-          filters:
-            branches:
-              only:
-                - master
+          # requires:
+            # - integrationTests
+            # - unitTests
+            # - acceptanceTests
+            # - referenceTests
+            # - buildDocker
+      # - publishDocker:
+          # filters:
+            # branches:
+              # only:
+                # - master
                 #- /^release-.*/
-          requires:
-            - integrationTests
-            - unitTests
-            - acceptanceTests
-            - referenceTests
-            - buildDocker
+          # requires:
+            # - integrationTests
+            # - unitTests
+            # - acceptanceTests
+            # - referenceTests
+            # - buildDocker
 
