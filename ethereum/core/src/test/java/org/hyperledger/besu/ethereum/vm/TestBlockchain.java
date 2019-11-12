@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.util.bytes.BytesValue;
@@ -33,6 +34,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 /**
  * A blockchain mock for the Ethereum reference tests.
@@ -146,6 +148,17 @@ public class TestBlockchain implements Blockchain {
   @Override
   public boolean removeBlockAddedObserver(final long observerId) {
     throw new NonDeterministicOperationException("Listening for new blocks is not deterministic");
+  }
+
+  @Override
+  public long addLogListener(final Consumer<LogWithMetadata> logListener) {
+    return observeBlockAdded(
+        ((event, __) -> event.getLogsWithMetadata().forEach(logListener::accept)));
+  }
+
+  @Override
+  public boolean removeLogListener(final long id) {
+    return removeBlockAddedObserver(id);
   }
 
   public static class NonDeterministicOperationException extends RuntimeException {

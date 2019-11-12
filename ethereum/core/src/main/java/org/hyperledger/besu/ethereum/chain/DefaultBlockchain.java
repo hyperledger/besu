@@ -552,13 +552,13 @@ public class DefaultBlockchain implements MutableBlockchain {
   }
 
   @Override
-  public long addLogListener(Consumer<LogWithMetadata> logListener) {
+  public long addLogListener(final Consumer<LogWithMetadata> logListener) {
     return observeBlockAdded(
         ((event, __) -> event.getLogsWithMetadata().forEach(logListener::accept)));
   }
 
   @Override
-  public boolean removeLogListener(long id) {
+  public boolean removeLogListener(final long id) {
     return blockAddedObservers.unsubscribe(id);
   }
 

@@ -98,22 +98,27 @@ public class LogWithMetadata extends Log
 
   // The index of this log within the entire ordered list of logs associated with the block this log
   // belongs to.
+  @Override
   public int getLogIndex() {
     return logIndex;
   }
 
+  @Override
   public long getBlockNumber() {
     return blockNumber;
   }
 
+  @Override
   public Hash getBlockHash() {
     return blockHash;
   }
 
+  @Override
   public Hash getTransactionHash() {
     return transactionHash;
   }
 
+  @Override
   public int getTransactionIndex() {
     return transactionIndex;
   }
@@ -133,6 +138,7 @@ public class LogWithMetadata extends Log
     return super.getTopics();
   }
 
+  @Override
   public boolean isRemoved() {
     return removed;
   }
@@ -153,7 +159,7 @@ public class LogWithMetadata extends Log
   }
 
   public static LogWithMetadata fromPlugin(
-      org.hyperledger.besu.plugin.data.LogWithMetadata pluginObject) {
+      final org.hyperledger.besu.plugin.data.LogWithMetadata pluginObject) {
     return new LogWithMetadata(
         pluginObject.getLogIndex(),
         pluginObject.getBlockNumber(),

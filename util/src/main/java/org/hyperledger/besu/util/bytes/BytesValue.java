@@ -126,7 +126,7 @@ public interface BytesValue extends Comparable<BytesValue>, UnformattedData {
     };
   }
 
-  static BytesValue fromPlugin(UnformattedData data) {
+  static BytesValue fromPlugin(final UnformattedData data) {
     return wrap(data.getByteArray());
   }
 

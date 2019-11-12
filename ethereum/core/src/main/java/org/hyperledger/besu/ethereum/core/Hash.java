@@ -68,7 +68,7 @@ public class Hash extends DelegatingBytes32 implements org.hyperledger.besu.plug
     return new Hash(Bytes32.fromHexStringLenient(str));
   }
 
-  public static Hash fromPlugin(org.hyperledger.besu.plugin.data.Hash blockHash) {
+  public static Hash fromPlugin(final org.hyperledger.besu.plugin.data.Hash blockHash) {
     return wrap(Bytes32.fromPlugin(blockHash));
   }
 

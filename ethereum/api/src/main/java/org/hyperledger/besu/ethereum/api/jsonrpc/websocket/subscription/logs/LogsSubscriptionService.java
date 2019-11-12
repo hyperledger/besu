@@ -19,7 +19,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.Subscrip
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.SubscriptionType;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 
-import java.util.List;
 import java.util.function.Consumer;
 
 public class LogsSubscriptionService implements Consumer<LogWithMetadata> {
@@ -31,11 +30,8 @@ public class LogsSubscriptionService implements Consumer<LogWithMetadata> {
   }
 
   @Override
-  public void accept(LogWithMetadata logWithMetadata) {
-    final List<LogsSubscription> logsSubscriptions =
-        subscriptionManager.subscriptionsOfType(SubscriptionType.LOGS, LogsSubscription.class);
-
-    logsSubscriptions.stream()
+  public void accept(final LogWithMetadata logWithMetadata) {
+    subscriptionManager.subscriptionsOfType(SubscriptionType.LOGS, LogsSubscription.class).stream()
         .filter(logsSubscription -> logsSubscription.getLogsQuery().matches(logWithMetadata))
         .forEach(
             logsSubscription ->

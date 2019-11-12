@@ -119,12 +119,7 @@ public class BesuEventsImplTest {
             TransactionPoolConfiguration.builder().txPoolMaxSize(1).build());
     syncState = new SyncState(mockBlockchain, mockEthPeers);
 
-    serviceImpl =
-        new BesuEventsImpl(
-            besuController.getProtocolContext().getBlockchain(),
-            blockBroadcaster,
-            transactionPool,
-            syncState);
+    serviceImpl = new BesuEventsImpl(mockBlockchain, blockBroadcaster, transactionPool, syncState);
   }
 
   @Test

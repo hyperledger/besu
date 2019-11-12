@@ -97,7 +97,9 @@ public class BesuEventsImpl implements BesuEvents {
 
   @Override
   public long addLogListener(
-      List<Address> addresses, List<List<UnformattedData>> topics, LogListener logListener) {
+      final List<Address> addresses,
+      final List<List<UnformattedData>> topics,
+      final LogListener logListener) {
     final List<org.hyperledger.besu.ethereum.core.Address> besuAddresses =
         addresses.stream()
             .map(org.hyperledger.besu.ethereum.core.Address::fromPlugin)
@@ -119,7 +121,7 @@ public class BesuEventsImpl implements BesuEvents {
   }
 
   @Override
-  public void removeLogListener(long listenerIdentifier) {}
+  public void removeLogListener(final long listenerIdentifier) {}
 
   private static PropagatedBlockContext blockPropagatedContext(
       final Supplier<BlockHeader> blockHeaderSupplier,

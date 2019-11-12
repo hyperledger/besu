@@ -646,7 +646,7 @@ public class RunnerBuilder {
     final LogsSubscriptionService logsSubscriptionService =
         new LogsSubscriptionService(subscriptionManager);
 
-    blockchain.observeBlockAdded(logsSubscriptionService);
+    blockchain.addLogListener(logsSubscriptionService);
   }
 
   private void createSyncingSubscriptionService(

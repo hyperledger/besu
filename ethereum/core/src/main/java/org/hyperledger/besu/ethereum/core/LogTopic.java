@@ -58,7 +58,7 @@ public class LogTopic extends DelegatingBytesValue {
     return new LogTopic(in.readBytesValue());
   }
 
-  public static LogTopic fromPlugin(UnformattedData data) {
+  public static LogTopic fromPlugin(final UnformattedData data) {
     return wrap(BytesValue.fromPlugin(data));
   }
 
