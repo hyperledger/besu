@@ -306,6 +306,7 @@ public abstract class BesuControllerBuilder<C> {
         transactionPool,
         miningCoordinator,
         privacyParameters,
+        miningParameters,
         additionalJsonRpcMethodFactory,
         nodeKeys,
         closeables,

@@ -420,7 +420,7 @@ public abstract class JsonBlockImporterTest {
         .miningParameters(
             new MiningParametersTestBuilder()
                 .minTransactionGasPrice(Wei.ZERO)
-                .enabled(false)
+                .enabled(true)
                 .build())
         .nodeKeys(KeyPair.generate())
         .metricsSystem(new NoOpMetricsSystem())
