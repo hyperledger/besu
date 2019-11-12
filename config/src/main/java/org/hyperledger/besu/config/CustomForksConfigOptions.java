@@ -29,8 +29,8 @@ public class CustomForksConfigOptions {
 
   public static final String IBFT2_FORKS = "ibft2";
 
-  public static final IbftConfigOptions DEFAULT =
-      new IbftConfigOptions(JsonUtil.createEmptyObjectNode());
+  public static final CustomForksConfigOptions DEFAULT =
+      new CustomForksConfigOptions(JsonUtil.createEmptyObjectNode());
 
   private final ObjectNode customForkConfigRoot;
 

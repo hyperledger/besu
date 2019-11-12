@@ -183,7 +183,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
 
   @Override
   public CustomForksConfigOptions getCustomForks() {
-    return null;
+    return CustomForksConfigOptions.DEFAULT;
   }
 
   public StubGenesisConfigOptions homesteadBlock(final long blockNumber) {
