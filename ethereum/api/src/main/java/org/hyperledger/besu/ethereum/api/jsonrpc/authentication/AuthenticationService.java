@@ -21,6 +21,7 @@ import java.io.File;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServerResponse;
@@ -36,12 +37,16 @@ import io.vertx.ext.web.RoutingContext;
 public class AuthenticationService {
 
   private final JWTAuth jwtAuthProvider;
+  @VisibleForTesting public final JWTAuthOptions jwtAuthOptions;
   private final Optional<AuthProvider> credentialAuthProvider;
   private static final JWTAuthOptionsFactory jwtAuthOptionsFactory = new JWTAuthOptionsFactory();
 
   private AuthenticationService(
-      final JWTAuth jwtAuthProvider, final Optional<AuthProvider> credentialAuthProvider) {
+      final JWTAuth jwtAuthProvider,
+      final JWTAuthOptions jwtAuthOptions,
+      Optional<AuthProvider> credentialAuthProvider) {
     this.jwtAuthProvider = jwtAuthProvider;
+    this.jwtAuthOptions = jwtAuthOptions;
     this.credentialAuthProvider = credentialAuthProvider;
   }
 
@@ -103,7 +108,8 @@ public class AuthenticationService {
         makeCredentialAuthProvider(vertx, authenticationEnabled, authenticationCredentialsFile);
 
     return Optional.of(
-        new AuthenticationService(JWTAuth.create(vertx, jwtAuthOptions), credentialAuthProvider));
+        new AuthenticationService(
+            JWTAuth.create(vertx, jwtAuthOptions), jwtAuthOptions, credentialAuthProvider));
   }
 
   private static Optional<AuthProvider> makeCredentialAuthProvider(
