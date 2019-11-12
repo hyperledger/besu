@@ -14,7 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import static org.apache.logging.log4j.LogManager.getLogger;
+
+import org.hyperledger.besu.ethereum.chain.EthHashObserver;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.util.Subscribers;
 import org.hyperledger.besu.util.bytes.Bytes32;
 import org.hyperledger.besu.util.bytes.BytesValue;
 import org.hyperledger.besu.util.uint.UInt256;
@@ -26,8 +30,11 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Stopwatch;
+import org.apache.logging.log4j.Logger;
 
 public class EthHashSolver {
+
+  private static final Logger LOG = getLogger();
 
   public static class EthHashSolverJob {
 
@@ -74,18 +81,30 @@ public class EthHashSolver {
   private final Iterable<Long> nonceGenerator;
   private final EthHasher ethHasher;
   private volatile long hashesPerSecond = NO_MINING_CONDUCTED;
-
+  private final Boolean stratumMiningEnabled;
+  private final Subscribers<EthHashObserver> ethHashObservers;
   private volatile Optional<EthHashSolverJob> currentJob = Optional.empty();
 
-  public EthHashSolver(final Iterable<Long> nonceGenerator, final EthHasher ethHasher) {
+  public EthHashSolver(
+      final Iterable<Long> nonceGenerator,
+      final EthHasher ethHasher,
+      final Boolean stratumMiningEnabled,
+      final Subscribers<EthHashObserver> ethHashObservers) {
     this.nonceGenerator = nonceGenerator;
     this.ethHasher = ethHasher;
+    this.stratumMiningEnabled = stratumMiningEnabled;
+    this.ethHashObservers = ethHashObservers;
+    ethHashObservers.forEach(observer -> observer.setSubmitWorkCallback(this::submitSolution));
   }
 
   public EthHashSolution solveFor(final EthHashSolverJob job)
       throws InterruptedException, ExecutionException {
     currentJob = Optional.of(job);
-    findValidNonce();
+    if (stratumMiningEnabled) {
+      ethHashObservers.forEach(observer -> observer.newJob(job.inputs));
+    } else {
+      findValidNonce();
+    }
     return currentJob.get().getSolution();
   }
 
@@ -140,12 +159,14 @@ public class EthHashSolver {
   public boolean submitSolution(final EthHashSolution solution) {
     final Optional<EthHashSolverJob> jobSnapshot = currentJob;
     if (jobSnapshot.isEmpty()) {
+      LOG.debug("No current job, rejecting miner work");
       return false;
     }
 
     final EthHashSolverJob job = jobSnapshot.get();
     final EthHashSolverInputs inputs = job.getInputs();
     if (!Arrays.equals(inputs.getPrePowHash(), solution.getPowHash())) {
+      LOG.debug("Miner's solution does not match current job");
       return false;
     }
     final byte[] hashBuffer = new byte[64];
@@ -153,9 +174,11 @@ public class EthHashSolver {
         testNonce(inputs, solution.getNonce(), hashBuffer);
 
     if (calculatedSolution.isPresent()) {
-      currentJob.get().solvedWith(solution);
+      LOG.debug("Accepting a solution from a miner");
+      currentJob.get().solvedWith(calculatedSolution.get());
       return true;
     }
+    LOG.debug("Rejecting a solution from a miner");
     return false;
   }
 
