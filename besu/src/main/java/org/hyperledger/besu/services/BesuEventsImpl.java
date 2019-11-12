@@ -102,10 +102,7 @@ public class BesuEventsImpl implements BesuEvents {
       List<Address> addresses, List<List<UnformattedData>> topics, LogListener logListener) {
     final List<org.hyperledger.besu.ethereum.core.Address> besuAddresses =
         addresses.stream()
-            .map(
-                address ->
-                    org.hyperledger.besu.ethereum.core.Address.wrap(
-                        BytesValue.wrap(address.getByteArray())))
+            .map(org.hyperledger.besu.ethereum.core.Address::fromPlugin)
             .collect(toUnmodifiableList());
     final List<List<LogTopic>> besuTopics =
         topics.stream()
@@ -120,7 +117,7 @@ public class BesuEventsImpl implements BesuEvents {
 
     return blockchain.addLogListener(
         logWithMetadata -> {
-          if (logsQuery.matches(logWithMetadata)) {
+          if (logsQuery.matches(LogWithMetadata.fromPlugin(logWithMetadata))) {
             logListener.onLogEmitted(logWithMetadata);
           }
         });

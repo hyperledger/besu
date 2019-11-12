@@ -18,6 +18,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+import org.hyperledger.besu.plugin.data.UnformattedData;
 import org.hyperledger.besu.util.bytes.BytesValue;
 import org.hyperledger.besu.util.bytes.DelegatingBytesValue;
 
@@ -55,6 +56,10 @@ public class LogTopic extends DelegatingBytesValue {
    */
   public static LogTopic readFrom(final RLPInput in) {
     return new LogTopic(in.readBytesValue());
+  }
+
+  public static LogTopic fromPlugin(UnformattedData data) {
+    return wrap(BytesValue.fromPlugin(data));
   }
 
   /**

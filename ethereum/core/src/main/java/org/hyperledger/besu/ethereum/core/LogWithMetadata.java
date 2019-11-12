@@ -23,6 +23,8 @@ import java.util.List;
 
 import com.google.common.base.MoreObjects;
 
+import static java.util.stream.Collectors.toUnmodifiableList;
+
 public class LogWithMetadata extends Log
     implements org.hyperledger.besu.plugin.data.LogWithMetadata {
 
@@ -148,5 +150,19 @@ public class LogWithMetadata extends Log
         .add("topics", getTopics())
         .add("removed", removed)
         .toString();
+  }
+
+  public static LogWithMetadata fromPlugin(
+      org.hyperledger.besu.plugin.data.LogWithMetadata pluginObject) {
+    return new LogWithMetadata(
+        pluginObject.getLogIndex(),
+        pluginObject.getBlockNumber(),
+        Hash.fromPlugin(pluginObject.getBlockHash()),
+        Hash.fromPlugin(pluginObject.getTransactionHash()),
+        pluginObject.getTransactionIndex(),
+        Address.fromPlugin(pluginObject.getLogger()),
+        BytesValue.fromPlugin(pluginObject.getData()),
+        pluginObject.getTopics().stream().map(LogTopic::fromPlugin).collect(toUnmodifiableList()),
+        pluginObject.isRemoved());
   }
 }
