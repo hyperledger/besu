@@ -97,6 +97,38 @@ public class BesuEventsImpl implements BesuEvents {
     syncState.unsubscribeSyncStatus(listenerIdentifier);
   }
 
+  @Override
+  public long addLogListener(
+      List<Address> addresses, List<List<UnformattedData>> topics, LogListener logListener) {
+    final List<org.hyperledger.besu.ethereum.core.Address> besuAddresses =
+        addresses.stream()
+            .map(
+                address ->
+                    org.hyperledger.besu.ethereum.core.Address.wrap(
+                        BytesValue.wrap(address.getByteArray())))
+            .collect(toUnmodifiableList());
+    final List<List<LogTopic>> besuTopics =
+        topics.stream()
+            .map(
+                subList ->
+                    subList.stream()
+                        .map(bytes -> LogTopic.create(BytesValue.wrap(bytes.getByteArray())))
+                        .collect(toUnmodifiableList()))
+            .collect(toUnmodifiableList());
+
+    final LogsQuery logsQuery = new LogsQuery(besuAddresses, besuTopics);
+
+    return blockchain.addLogListener(
+        logWithMetadata -> {
+          if (logsQuery.matches(logWithMetadata)) {
+            logListener.onLogEmitted(logWithMetadata);
+          }
+        });
+  }
+
+  @Override
+  public void removeLogListener(long listenerIdentifier) {}
+
   private static PropagatedBlockContext blockPropagatedContext(
       final Supplier<BlockHeader> blockHeaderSupplier,
       final Supplier<Quantity> totalDifficultySupplier) {

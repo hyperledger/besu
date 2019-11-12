@@ -108,11 +108,11 @@ public interface BesuEvents {
   /**
    * REPLACE ME
    *
-   * @param syncStatusListener REPLACEME
+   * @param logListener REPLACEME
    * @return REPLACEME
    */
   long addLogListener(
-      List<Address> addresses, List<List<UnformattedData>> topics, LogListener syncStatusListener);
+      List<Address> addresses, List<List<UnformattedData>> topics, LogListener logListener);
 
   /**
    * REPLACE ME
@@ -172,7 +172,7 @@ public interface BesuEvents {
   /** replaceme */
   interface LogListener {
 
-    /** @param propagatedBlockContext replaceme */
+    /** @param logWithMetadata replaceme */
     void onLogEmitted(LogWithMetadata logWithMetadata);
   }
 }

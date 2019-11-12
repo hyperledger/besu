@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.List;
@@ -191,4 +192,8 @@ public interface Blockchain {
    * @return {@code true} if the observer was removed; otherwise {@code false}
    */
   boolean removeBlockAddedObserver(long observerId);
+
+  long addLogListener(BesuEvents.LogListener logListener);
+
+  boolean removeLogListener(long id);
 }
