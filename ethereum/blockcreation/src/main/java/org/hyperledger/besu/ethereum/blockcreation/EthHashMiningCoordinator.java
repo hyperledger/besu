@@ -71,13 +71,9 @@ public class EthHashMiningCoordinator extends AbstractMiningCoordinator<Void, Et
   }
 
   @Override
-  protected void haltCurrentMiningOperation() {
-    currentRunningMiner.ifPresent(
-        miner -> {
-          miner.cancel();
-          miner.getHashesPerSecond().ifPresent(val -> cachedHashesPerSecond = Optional.of(val));
-        });
-    currentRunningMiner = Optional.empty();
+  protected void haltMiner(final EthHashBlockMiner miner) {
+    miner.cancel();
+    miner.getHashesPerSecond().ifPresent(val -> cachedHashesPerSecond = Optional.of(val));
   }
 
   @Override

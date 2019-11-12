@@ -12,8 +12,14 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.common;
+package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
-public interface PoAContext {
-  BlockInterface getBlockInterface();
+import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
+
+import java.util.Collection;
+import java.util.Map;
+
+public interface JsonRpcMethods {
+  Map<String, JsonRpcMethod> create(Collection<RpcApi> enabledRpcApis);
 }

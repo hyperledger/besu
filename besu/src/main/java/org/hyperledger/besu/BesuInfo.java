@@ -16,20 +16,23 @@ package org.hyperledger.besu;
 
 import org.hyperledger.besu.util.PlatformDetector;
 
+import java.util.Optional;
+
 public final class BesuInfo {
-  private static final String CLIENT_IDENTITY = "besu";
-  private static final String VERSION =
-      CLIENT_IDENTITY
-          + "/v"
-          + BesuInfo.class.getPackage().getImplementationVersion()
-          + "/"
-          + PlatformDetector.getOS()
-          + "/"
-          + PlatformDetector.getVM();
+  private static final String CLIENT = "besu";
+  private static final String VERSION = BesuInfo.class.getPackage().getImplementationVersion();
+  private static final String OS = PlatformDetector.getOS();
+  private static final String VM = PlatformDetector.getVM();
 
   private BesuInfo() {}
 
   public static String version() {
-    return VERSION;
+    return String.format("%s/v%s/%s/%s", CLIENT, VERSION, OS, VM);
+  }
+
+  public static String nodeName(final Optional<String> maybeIdentity) {
+    return maybeIdentity
+        .map(identity -> String.format("%s/%s/v%s/%s/%s", CLIENT, identity, VERSION, OS, VM))
+        .orElse(version());
   }
 }

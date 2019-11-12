@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
+import org.hyperledger.besu.ethereum.api.query.LogsQuery;
 
 import java.util.Objects;
 
@@ -22,17 +22,17 @@ public class SubscribeRequest {
 
   private final SubscriptionType subscriptionType;
   private final Boolean includeTransaction;
-  private final FilterParameter filterParameter;
+  private final LogsQuery logsQuery;
   private final String connectionId;
 
   public SubscribeRequest(
       final SubscriptionType subscriptionType,
-      final FilterParameter filterParameter,
+      final LogsQuery logsQuery,
       final Boolean includeTransaction,
       final String connectionId) {
     this.subscriptionType = subscriptionType;
     this.includeTransaction = includeTransaction;
-    this.filterParameter = filterParameter;
+    this.logsQuery = logsQuery;
     this.connectionId = connectionId;
   }
 
@@ -40,8 +40,8 @@ public class SubscribeRequest {
     return subscriptionType;
   }
 
-  public FilterParameter getFilterParameter() {
-    return filterParameter;
+  public LogsQuery getLogsQuery() {
+    return logsQuery;
   }
 
   public Boolean getIncludeTransaction() {
@@ -54,16 +54,9 @@ public class SubscribeRequest {
 
   @Override
   public String toString() {
-    return "SubscribeRequest{"
-        + "subscriptionType="
-        + subscriptionType
-        + ", includeTransaction="
-        + includeTransaction
-        + ", filterParameter="
-        + filterParameter
-        + ", connectionId="
-        + connectionId
-        + '}';
+    return String.format(
+        "SubscribeRequest{subscriptionType=%s, includeTransaction=%s, logsQuery=%s, connectionId=%s}",
+        subscriptionType, includeTransaction, logsQuery, connectionId);
   }
 
   @Override
@@ -77,12 +70,12 @@ public class SubscribeRequest {
     final SubscribeRequest that = (SubscribeRequest) o;
     return subscriptionType == that.subscriptionType
         && Objects.equals(includeTransaction, that.includeTransaction)
-        && Objects.equals(filterParameter, that.filterParameter)
+        && Objects.equals(logsQuery, that.logsQuery)
         && Objects.equals(connectionId, that.connectionId);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(subscriptionType, includeTransaction, filterParameter, connectionId);
+    return Objects.hash(subscriptionType, includeTransaction, logsQuery, connectionId);
   }
 }

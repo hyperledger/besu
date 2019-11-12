@@ -23,8 +23,8 @@ plugins {
   id 'com.github.ben-manes.versions' version '0.26.0'
   id 'com.github.hierynomus.license' version '0.15.0'
   id 'io.spring.dependency-management' version '1.0.8.RELEASE'
-  id 'me.champeau.gradle.jmh' version '0.4.8' apply false
-  id 'net.ltgt.errorprone' version '0.8.1'
+  id 'me.champeau.gradle.jmh' version '0.5.0' apply false
+  id 'net.ltgt.errorprone' version '1.1.1'
 }
 
 if (!JavaVersion.current().java11Compatible) {
@@ -98,7 +98,7 @@ allprojects {
   version = rootProject.version
 
   jacoco {
-    toolVersion = '0.8.2'
+    toolVersion = '0.8.5'
     if (project.tasks.findByName('referenceTests')) {
       applyTo referenceTests
     }
@@ -121,13 +121,11 @@ allprojects {
     if ("$System.env.JENKINS_URL" == 'https://jenkins.pegasys.tech/') {
       maven { url "https://nexus.int.pegasys.tech/repository/consensys-pegasys/" }
       maven { url "https://nexus.int.pegasys.tech/repository/jcenter/" }
-      maven { url  "https://dl.bintray.com/tuweni/tuweni/" }
     } else {
       jcenter()
       mavenCentral()
       mavenLocal()
       maven { url "https://consensys.bintray.com/pegasys-repo" }
-      maven { url  "https://dl.bintray.com/tuweni/tuweni/" }
     }
   }
 
@@ -199,8 +197,12 @@ allprojects {
       check('FieldCanBeFinal', CheckSeverity.OFF)
 
       // This check is broken in Java 12.  See https://github.com/google/error-prone/issues/1257
-      if (JavaVersion.current().java12Compatible) {
+      if (JavaVersion.current() == JavaVersion.VERSION_12) {
         check('Finally', CheckSeverity.OFF)
+      }
+      // This check is broken after Java 12.  See https://github.com/google/error-prone/issues/1352
+      if (JavaVersion.current() > JavaVersion.VERSION_12) {
+        check('TypeParameterUnusedInFormals', CheckSeverity.OFF)
       }
 
       check('InsecureCryptoUsage', CheckSeverity.WARN)
@@ -236,7 +238,7 @@ allprojects {
    */
   test {
     jvmArgs = [
-      '-Xmx4g',
+      '-Xmx2g',
       '-XX:-UseGCOverheadLimit',
       // Mockito and jackson-databind do some strange reflection during tests.
       // This suppresses an illegal access warning.
@@ -285,7 +287,7 @@ task checkMavenCoordinateCollisions {
   }
 }
 
-tasks.register('checkPluginAPIChanges', DefaultTask) { }
+tasks.register('checkPluginAPIChanges', DefaultTask) {}
 checkPluginAPIChanges.dependsOn(':plugin-api:checkAPIChanges')
 check.dependsOn('checkPluginAPIChanges', 'checkMavenCoordinateCollisions')
 
@@ -319,11 +321,11 @@ subprojects {
 
   def sourceSetIsPopulated = { sourceSetName ->
     def result = project.sourceSets.names.contains(sourceSetName) && !project.sourceSets.getAt(sourceSetName).allSource.empty
-    logger.info("Project = "+ project.name + " Has Source Set (" + sourceSetName + ") = " + result + "(" + project.sourceSets.names + ")")
+    logger.info("Project = " + project.name + " Has Source Set (" + sourceSetName + ") = " + result + "(" + project.sourceSets.names + ")")
     return result
   }
 
-  if(sourceSetIsPopulated("main") || sourceSetIsPopulated("testSupport")) {
+  if (sourceSetIsPopulated("main") || sourceSetIsPopulated("testSupport")) {
     apply plugin: 'com.jfrog.bintray'
     apply plugin: 'maven-publish'
 
@@ -332,13 +334,13 @@ subprojects {
         mavenJava(MavenPublication) {
           groupId "org.hyperledger.besu.internal"
           version "${project.version}"
-          if(sourceSetIsPopulated("main")) {
+          if (sourceSetIsPopulated("main")) {
             from components.java
             artifact sourcesJar
             artifact javadocJar
           }
 
-          if(sourceSetIsPopulated("testSupport")) {
+          if (sourceSetIsPopulated("testSupport")) {
             artifact testSupportJar
           }
           versionMapping {
@@ -426,6 +428,7 @@ subprojects {
       include = _strListCmdArg('include', [''])
       humanOutputFile = project.file("${project.buildDir}/reports/jmh/results.txt")
       resultFormat = 'JSON'
+      duplicateClassesStrategy = 'warn'
     }
 
     dependencies { jmh 'org.apache.logging.log4j:log4j-api' }
@@ -546,6 +549,30 @@ task distDocker(type: Exec) {
 
   executable "sh"
   args "-c", "docker build --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${getCheckedOutGitCommitHash()} -t ${image} ."
+}
+
+task dockerUpload(type: Exec) {
+  dependsOn distDocker
+  def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
+  def imageName = "hyperledger/besu"
+  def image = project.hasProperty('release.releaseVersion') ? "${imageName}:" + project.property('release.releaseVersion') : "${imageName}:${project.version}"
+  def cmd = "docker push '${image}'"
+  def additionalTags = []
+
+  if (project.hasProperty('branch') && project.property('branch') == 'master') {
+    additionalTags.add('develop')
+  }
+
+  if (!version ==~ /.*-SNAPSHOT/) {
+    additionalTags.add('latest')
+    additionalTags.add(version.split(/\./)[0..1].join('.'))
+  }
+
+  additionalTags.each { tag ->
+    cmd += " && docker tag '${image}' '${imageName}:${tag.trim()}' && docker push '${imageName}:${tag.trim()}'"
+  }
+  executable "sh"
+  args "-c", cmd
 }
 
 task checkSpdxHeader(type: CheckSpdxHeader) {

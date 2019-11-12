@@ -34,6 +34,9 @@ public final class MainnetBlockHeaderValidator {
   private static final long MAX_GAS_LIMIT = 0x7fffffffffffffffL;
   public static final int TIMESTAMP_TOLERANCE_S = 15;
   public static final int MINIMUM_SECONDS_SINCE_PARENT = 1;
+  public static final BytesValue CLASSIC_FORK_BLOCK_HEADER =
+      BytesValue.fromHexString(
+          "0x94365e3a8c0b35089c1d1195081fe7489b528a84b22199c916180db8b28ade7f");
 
   public static BlockHeaderValidator<Void> create(
       final DifficultyCalculator<Void> difficultyCalculator) {
@@ -49,8 +52,21 @@ public final class MainnetBlockHeaderValidator {
         .build();
   }
 
+  public static BlockHeaderValidator<Void> createClassicValidator(
+      final DifficultyCalculator<Void> difficultyCalculator) {
+    return createValidator(difficultyCalculator)
+        .addRule(
+            new ConstantFieldValidationRule<>(
+                "hash", BlockHeader::getBlockHash, CLASSIC_FORK_BLOCK_HEADER))
+        .build();
+  }
+
   public static boolean validateHeaderForDaoFork(final BlockHeader header) {
     return header.getExtraData().equals(DAO_EXTRA_DATA);
+  }
+
+  public static boolean validateHeaderForClassicFork(final BlockHeader header) {
+    return header.getHash().equals(CLASSIC_FORK_BLOCK_HEADER);
   }
 
   static BlockHeaderValidator<Void> createOmmerValidator(

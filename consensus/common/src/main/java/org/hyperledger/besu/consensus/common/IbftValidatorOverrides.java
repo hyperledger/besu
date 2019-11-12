@@ -12,13 +12,24 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
+package org.hyperledger.besu.consensus.common;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
+import org.hyperledger.besu.ethereum.core.Address;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
-public interface JsonRpcMethodFactory {
-  Map<String, JsonRpcMethod> createJsonRpcMethods(Collection<RpcApi> enabledRpcApis);
+public class IbftValidatorOverrides {
+
+  private final Map<Long, List<Address>> overriddenValidators;
+
+  public IbftValidatorOverrides(final Map<Long, List<Address>> overriddenValidators) {
+    this.overriddenValidators = overriddenValidators;
+  }
+
+  public Optional<Collection<Address>> getForBlock(final long blockNumber) {
+    return Optional.ofNullable(overriddenValidators.get(blockNumber));
+  }
 }
