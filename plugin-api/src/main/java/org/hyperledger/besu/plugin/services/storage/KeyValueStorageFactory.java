@@ -47,7 +47,7 @@ public interface KeyValueStorageFactory extends Closeable {
    * @param configuration common configuration available to plugins, in a populated state.
    * @param metricsSystem metrics component for recording key-value storage events.
    * @return the storage instance reserved for the given segment.
-   * @exception StorageException problem encountered when creating storage for the segment.
+   * @throws StorageException problem encountered when creating storage for the segment.
    */
   KeyValueStorage create(
       SegmentIdentifier segment, BesuConfiguration configuration, MetricsSystem metricsSystem)
