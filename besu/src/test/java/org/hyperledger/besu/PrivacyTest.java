@@ -20,16 +20,20 @@ import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.GasLimitCalculator;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
 import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.MiningParametersTestBuilder;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
@@ -52,7 +56,9 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
+import org.hyperledger.besu.util.uint.UInt256;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -121,11 +127,58 @@ public class PrivacyTest {
           .getByBlockNumber(blockchain.getChainHeadBlockNumber())
           .getBlockImporter()
           .importBlock(
-              besuController.getProtocolContext(), blocksToAdd.get(0), HeaderValidationMode.NONE)) {
+              besuController.getProtocolContext(), blocksToAdd.get(i), HeaderValidationMode.NONE)) {
         break;
       }
     }
     assertThat(blockchain.getChainHeadBlockNumber()).isEqualTo(1);
+    // Create parallel fork of length 1
+    final int forkBlock = 1;
+    final BlockDataGenerator.BlockOptions options =
+            new BlockDataGenerator.BlockOptions()
+                    .setBlockNumber(forkBlock)
+                    .setParentHash(
+                            besuController.getProtocolContext().getBlockchain().getGenesisBlock().getHash())
+                    .addTransaction()
+                    .addOmmers()
+                    .setDifficulty(besuController.getProtocolContext().getBlockchain().getChainHeadHeader().getDifficulty().plus(10L))
+                    .setReceiptsRoot(
+                            Hash.fromHexString(
+                                    "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421"))
+                    .setGasUsed(0)
+                    .setLogsBloom(LogsBloomFilter.empty())
+                    .setStateRoot(
+                            Hash.fromHexString(
+                                    "0x6553b1838b937f8f883600763505785cc227e9d99fa948f98566f0467f10e1af"));
+    final Block fork = generateBlocks(options).get(0);
+
+    besuController
+            .getProtocolSchedule()
+            .getByBlockNumber(blockchain.getChainHeadBlockNumber())
+            .getBlockImporter()
+            .importBlock(
+                    besuController.getProtocolContext(), fork, HeaderValidationMode.NONE);
+
+    // Check chain has reorganized
+    for (int i = 0; i < 1; i++) {
+      assertBlockDataIsStored(blockchain, besuController.getProtocolContext().getBlockchain().getBlockByNumber(i).get());
+    }
+  // Check old transactions have been removed
+    for (final Transaction tx : blocksToAdd.get(0).getBody().getTransactions()) {
+      assertThat(blockchain.getTransactionByHash(tx.getHash())).isNotPresent();
+    }
+
+    assertBlockIsHead(blockchain, fork);
+    assertTotalDifficultiesAreConsistent(blockchain, fork);
+// Old chain head should now be tracked as a fork.
+    final Set<Hash> forks = blockchain.getForks();
+    assertThat(forks.size()).isEqualTo(1);
+    assertThat(forks.stream().anyMatch(f -> f.equals(blocksToAdd.get(0).getHash()))).isTrue();
+// Old chain should not be on canonical chain.
+    for (int i = 0 + 1; i < 0; i++) {
+      assertThat(blockchain.blockIsOnCanonicalChain(besuController.getProtocolContext().getBlockchain().getBlockByNumber(i).get().getHash())).isFalse();
+    }
+
   }
 
   private List<Block> generateBlocks(final BlockDataGenerator.BlockOptions... blockOptions) {
@@ -138,6 +191,48 @@ public class PrivacyTest {
     }
 
     return seq;
+  }
+
+  private void assertBlockDataIsStored(
+          final Blockchain blockchain, final Block block) {
+    final Hash hash = block.getHash();
+    assertThat(blockchain.getBlockHashByNumber(block.getHeader().getNumber()).get())
+            .isEqualTo(hash);
+    assertThat(blockchain.getBlockHeader(block.getHeader().getNumber()).get())
+            .isEqualTo(block.getHeader());
+    assertThat(blockchain.getBlockHeader(hash).get()).isEqualTo(block.getHeader());
+    assertThat(blockchain.getBlockBody(hash).get()).isEqualTo(block.getBody());
+    assertThat(blockchain.blockIsOnCanonicalChain(block.getHash())).isTrue();
+
+    final List<Transaction> txs = block.getBody().getTransactions();
+    for (int i = 0; i < txs.size(); i++) {
+      final Transaction expected = txs.get(i);
+      final Transaction actual = blockchain.getTransactionByHash(expected.getHash()).get();
+      assertThat(actual).isEqualTo(expected);
+    }
+  }
+
+  private void assertBlockIsHead(final Blockchain blockchain, final Block head) {
+    assertThat(blockchain.getChainHeadHash()).isEqualTo(head.getHash());
+    assertThat(blockchain.getChainHeadBlockNumber()).isEqualTo(head.getHeader().getNumber());
+    assertThat(blockchain.getChainHead().getHash()).isEqualTo(head.getHash());
+  }
+
+  private void assertTotalDifficultiesAreConsistent(final Blockchain blockchain, final Block head) {
+    // Check that total difficulties are summed correctly
+    long num = BlockHeader.GENESIS_BLOCK_NUMBER;
+    UInt256 td = UInt256.of(0);
+    while (num <= head.getHeader().getNumber()) {
+      final Hash curHash = blockchain.getBlockHashByNumber(num).get();
+      final BlockHeader curHead = blockchain.getBlockHeader(curHash).get();
+      td = td.plus(curHead.getDifficulty());
+      assertThat(blockchain.getTotalDifficultyByHash(curHash).get()).isEqualTo(td);
+
+      num += 1;
+    }
+
+    // Check reported chainhead td
+    assertThat(blockchain.getChainHead().getTotalDifficulty()).isEqualTo(td);
   }
 
   @Test
