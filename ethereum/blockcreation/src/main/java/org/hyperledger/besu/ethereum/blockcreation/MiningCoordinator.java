@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation;
 
+import org.hyperledger.besu.ethereum.chain.EthHashObserver;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -87,4 +88,6 @@ public interface MiningCoordinator {
       final BlockHeader parentHeader,
       final List<Transaction> transactions,
       final List<BlockHeader> ommers);
+
+  default void addEthHashObserver(final EthHashObserver observer) {}
 }

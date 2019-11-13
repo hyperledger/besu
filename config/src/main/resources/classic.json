@@ -3,6 +3,8 @@
     "chainId": 61,
     "homesteadBlock": 1150000,
     "classicForkBlock": 1920000,
+    "ecip1015Block": 2500000,
+    "diehardBlock": 3000000,
     "ethash": {
 
     }
