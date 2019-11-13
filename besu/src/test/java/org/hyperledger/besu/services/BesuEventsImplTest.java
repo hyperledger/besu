@@ -88,7 +88,6 @@ public class BesuEventsImplTest {
   @Mock private ProtocolSpec<Void> mockProtocolSpec;
   @Mock private WorldStateArchive mockWorldStateArchive;
   @Mock private WorldState mockWorldState;
-  private org.hyperledger.besu.ethereum.core.BlockHeader fakeBlockHeader;
   private TransactionPool transactionPool;
   private BlockBroadcaster blockBroadcaster;
   private BesuEventsImpl serviceImpl;
