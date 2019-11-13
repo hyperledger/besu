@@ -177,7 +177,7 @@ public class Address extends DelegatingBytesValue
   }
 
   public static Address fromPlugin(final org.hyperledger.besu.plugin.data.Address logger) {
-    return wrap(BytesValue.fromPlugin(logger));
+    return logger instanceof Address ? (Address) logger : wrap(BytesValue.fromPlugin(logger));
   }
 
   @Override

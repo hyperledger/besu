@@ -69,7 +69,7 @@ public class Hash extends DelegatingBytes32 implements org.hyperledger.besu.plug
   }
 
   public static Hash fromPlugin(final org.hyperledger.besu.plugin.data.Hash blockHash) {
-    return wrap(Bytes32.fromPlugin(blockHash));
+    return blockHash instanceof Hash ? (Hash) blockHash : wrap(Bytes32.fromPlugin(blockHash));
   }
 
   @Override

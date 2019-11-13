@@ -59,7 +59,7 @@ public class LogTopic extends DelegatingBytesValue {
   }
 
   public static LogTopic fromPlugin(final UnformattedData data) {
-    return wrap(BytesValue.fromPlugin(data));
+    return data instanceof LogTopic ? (LogTopic) data : wrap(BytesValue.fromPlugin(data));
   }
 
   /**

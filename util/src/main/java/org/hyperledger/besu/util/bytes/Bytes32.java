@@ -170,7 +170,7 @@ public interface Bytes32 extends BytesValue {
   }
 
   static Bytes32 fromPlugin(final UnformattedData data) {
-    return wrap(data.getByteArray());
+    return data instanceof Bytes32 ? (Bytes32) data : wrap(data.getByteArray());
   }
 
   @Override
