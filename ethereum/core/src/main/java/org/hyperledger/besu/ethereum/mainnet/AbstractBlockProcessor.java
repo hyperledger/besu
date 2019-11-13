@@ -162,41 +162,4 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final ProcessableBlockHeader header,
       final List<BlockHeader> ommers,
       final boolean skipZeroBlockRewards);
-
-  //    private boolean rewardCoinbase(
-  //            final MutableWorldState worldState,
-  //            final ProcessableBlockHeader header,
-  //            final List<BlockHeader> ommers,
-  //            final boolean skipZeroBlockRewards) {
-  //        if (skipZeroBlockRewards && blockReward.isZero()) {
-  //            return true;
-  //        }
-  //        final Wei coinbaseReward =
-  // blockReward.plus(blockReward.times(ommers.size()).dividedBy(32));
-  //        final WorldUpdater updater = worldState.updater();
-  //        final MutableAccount coinbase = updater.getOrCreate(header.getCoinbase()).getMutable();
-  //
-  //        coinbase.incrementBalance(coinbaseReward);
-  //        for (final BlockHeader ommerHeader : ommers) {
-  //            if (ommerHeader.getNumber() - header.getNumber() > MAX_GENERATION) {
-  //                LOG.warn(
-  //                        "Block processing error: ommer block number {} more than {} generations
-  // current block number {}",
-  //                        ommerHeader.getNumber(),
-  //                        MAX_GENERATION,
-  //                        header.getNumber());
-  //                return false;
-  //            }
-  //
-  //            final MutableAccount ommerCoinbase =
-  //                    updater.getOrCreate(ommerHeader.getCoinbase()).getMutable();
-  //            final long distance = header.getNumber() - ommerHeader.getNumber();
-  //            final Wei ommerReward = blockReward.minus(blockReward.times(distance).dividedBy(8));
-  //            ommerCoinbase.incrementBalance(ommerReward);
-  //        }
-  //
-  //        updater.commit();
-  //
-  //        return true;
-  //    }
 }
