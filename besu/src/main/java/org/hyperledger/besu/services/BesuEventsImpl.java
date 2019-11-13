@@ -121,7 +121,9 @@ public class BesuEventsImpl implements BesuEvents {
   }
 
   @Override
-  public void removeLogListener(final long listenerIdentifier) {}
+  public void removeLogListener(final long listenerIdentifier) {
+    blockchain.removeLogListener(listenerIdentifier);
+  }
 
   private static PropagatedBlockContext blockPropagatedContext(
       final Supplier<BlockHeader> blockHeaderSupplier,
