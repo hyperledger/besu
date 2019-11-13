@@ -28,8 +28,8 @@ public class LoginDisabledTransaction implements Transaction<Void> {
   @Override
   public Void execute(final NodeRequests node) {
     try {
-      String send = node.login().send("user", "password");
-      Assertions.assertThat(send).isEqualTo("Authentication not enabled");
+      final String loginResponse = node.login().send("user", "password");
+      Assertions.assertThat(loginResponse).isEqualTo("Authentication not enabled");
       return null;
     } catch (final IOException e) {
       fail("Login request failed with exception: ", e);
