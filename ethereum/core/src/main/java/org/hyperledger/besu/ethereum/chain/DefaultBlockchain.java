@@ -43,7 +43,6 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -547,19 +546,8 @@ public class DefaultBlockchain implements MutableBlockchain {
   }
 
   @Override
-  public boolean removeBlockAddedObserver(final long observerId) {
+  public boolean removeObserver(final long observerId) {
     return blockAddedObservers.unsubscribe(observerId);
-  }
-
-  @Override
-  public long addLogListener(final Consumer<LogWithMetadata> logListener) {
-    return observeBlockAdded(
-        ((event, __) -> event.getLogsWithMetadata().forEach(logListener::accept)));
-  }
-
-  @Override
-  public boolean removeLogListener(final long id) {
-    return blockAddedObservers.unsubscribe(id);
   }
 
   @VisibleForTesting

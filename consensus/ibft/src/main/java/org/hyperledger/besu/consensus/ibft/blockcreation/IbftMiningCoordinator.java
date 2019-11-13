@@ -87,7 +87,7 @@ public class IbftMiningCoordinator implements MiningCoordinator, BlockAddedObser
   @Override
   public void stop() {
     if (state.compareAndSet(State.RUNNING, State.STOPPED)) {
-      blockchain.removeBlockAddedObserver(blockAddedObserverId);
+      blockchain.removeObserver(blockAddedObserverId);
       ibftProcessor.stop();
       // Make sure the processor has stopped before shutting down the executors
       try {

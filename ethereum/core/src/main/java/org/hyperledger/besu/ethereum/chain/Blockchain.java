@@ -187,14 +187,23 @@ public interface Blockchain {
   long observeBlockAdded(BlockAddedObserver observer);
 
   /**
+   * Adds an observer that will get called on for every added and removed log when a new block is
+   * added.
+   *
+   * <p><i>No guarantees are made about the order in which the observers are invoked.</i>
+   *
+   * @param logObserver the observer to call
+   * @return the observer ID that can be used to remove it later.
+   */
+  default long observeLogs(final Consumer<LogWithMetadata> logObserver) {
+    return observeBlockAdded(((event, __) -> event.getLogsWithMetadata().forEach(logObserver)));
+  }
+
+  /**
    * Removes an previously added observer of any type.
    *
    * @param observerId the ID of the observer to remove
    * @return {@code true} if the observer was removed; otherwise {@code false}
    */
-  boolean removeBlockAddedObserver(long observerId);
-
-  long addLogListener(Consumer<LogWithMetadata> logListener);
-
-  boolean removeLogListener(long id);
+  boolean removeObserver(long observerId);
 }

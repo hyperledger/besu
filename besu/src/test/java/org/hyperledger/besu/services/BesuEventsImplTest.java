@@ -285,7 +285,7 @@ public class BesuEventsImplTest {
   @Test
   public void logEventFiresAfterSubscribe() {
     final List<LogWithMetadata> result = new ArrayList<>();
-    blockchain.addLogListener(result::add);
+    blockchain.observeLogs(result::add);
 
     assertThat(result).isEmpty();
     final var block =
@@ -299,7 +299,7 @@ public class BesuEventsImplTest {
   @Test
   public void logEventDoesNotFireAfterUnsubscribe() {
     final List<LogWithMetadata> result = new ArrayList<>();
-    final long id = blockchain.addLogListener(result::add);
+    final long id = blockchain.observeLogs(result::add);
 
     assertThat(result).isEmpty();
     final var block =

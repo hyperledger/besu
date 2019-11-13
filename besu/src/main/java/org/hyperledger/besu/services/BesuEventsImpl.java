@@ -112,7 +112,7 @@ public class BesuEventsImpl implements BesuEvents {
 
     final LogsQuery logsQuery = new LogsQuery(besuAddresses, besuTopics);
 
-    return blockchain.addLogListener(
+    return blockchain.observeLogs(
         logWithMetadata -> {
           if (logsQuery.matches(LogWithMetadata.fromPlugin(logWithMetadata))) {
             logListener.onLogEmitted(logWithMetadata);
@@ -122,7 +122,7 @@ public class BesuEventsImpl implements BesuEvents {
 
   @Override
   public void removeLogListener(final long listenerIdentifier) {
-    blockchain.removeLogListener(listenerIdentifier);
+    blockchain.removeObserver(listenerIdentifier);
   }
 
   private static PropagatedBlockContext blockPropagatedContext(

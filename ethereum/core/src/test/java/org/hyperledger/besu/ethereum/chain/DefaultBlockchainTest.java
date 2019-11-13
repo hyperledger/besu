@@ -750,7 +750,7 @@ public class DefaultBlockchainTest {
     final Block genesisBlock = gen.genesisBlock();
     final DefaultBlockchain blockchain = createMutableBlockchain(kvStore, genesisBlock);
 
-    assertThat(blockchain.removeBlockAddedObserver(7)).isFalse();
+    assertThat(blockchain.removeObserver(7)).isFalse();
   }
 
   @Test
@@ -764,7 +764,7 @@ public class DefaultBlockchainTest {
     final long observerId = blockchain.observeBlockAdded((block, chain) -> {});
     assertThat(blockchain.observerCount()).isEqualTo(1);
 
-    assertThat(blockchain.removeBlockAddedObserver(observerId)).isTrue();
+    assertThat(blockchain.removeObserver(observerId)).isTrue();
     assertThat(blockchain.observerCount()).isEqualTo(0);
   }
 
@@ -796,13 +796,13 @@ public class DefaultBlockchainTest {
     final long observerId3 = blockchain.observeBlockAdded((block, chain) -> {});
     assertThat(blockchain.observerCount()).isEqualTo(3);
 
-    assertThat(blockchain.removeBlockAddedObserver(observerId1)).isTrue();
+    assertThat(blockchain.removeObserver(observerId1)).isTrue();
     assertThat(blockchain.observerCount()).isEqualTo(2);
 
-    assertThat(blockchain.removeBlockAddedObserver(observerId2)).isTrue();
+    assertThat(blockchain.removeObserver(observerId2)).isTrue();
     assertThat(blockchain.observerCount()).isEqualTo(1);
 
-    assertThat(blockchain.removeBlockAddedObserver(observerId3)).isTrue();
+    assertThat(blockchain.removeObserver(observerId3)).isTrue();
     assertThat(blockchain.observerCount()).isEqualTo(0);
   }
 
