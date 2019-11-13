@@ -14,11 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import org.hyperledger.besu.ethereum.core.Wei;
+
 import java.math.BigInteger;
 import java.util.Optional;
 import java.util.OptionalInt;
 
 public class ClassicProtocolSpecs {
+  private static final Wei MAX_BLOCK_REWARD = Wei.fromEth(5);
 
   public static ProtocolSpecBuilder<Void> classicRecoveryInitDefinition(
       final OptionalInt contractSizeLimit, final OptionalInt configStackSizeLimit) {
@@ -46,5 +49,38 @@ public class ClassicProtocolSpecs {
         .gasCalculator(DieHardGasCalculator::new)
         .difficultyCalculator(ClassicDifficultyCalculators.DIFFICULTY_BOMB_PAUSED)
         .name("DieHard");
+  }
+
+  public static ProtocolSpecBuilder<Void> gothamDefinition(
+      final Optional<BigInteger> chainId,
+      final OptionalInt contractSizeLimit,
+      final OptionalInt configStackSizeLimit) {
+    return dieHardDefinition(chainId, contractSizeLimit, configStackSizeLimit)
+        .blockReward(MAX_BLOCK_REWARD)
+        .difficultyCalculator(ClassicDifficultyCalculators.DIFFICULTY_BOMB_DELAYED)
+        .blockProcessorBuilder(
+            (transactionProcessor,
+                transactionReceiptFactory,
+                blockReward,
+                miningBeneficiaryCalculator,
+                skipZeroBlockRewards) ->
+                new ClassicBlockProcessor(
+                    transactionProcessor,
+                    transactionReceiptFactory,
+                    blockReward,
+                    miningBeneficiaryCalculator,
+                    skipZeroBlockRewards))
+        .name("Gotham");
+  }
+
+  public static ProtocolSpecBuilder<Void> defuseDifficultyBombDefinition(
+      final Optional<BigInteger> chainId,
+      final OptionalInt contractSizeLimit,
+      final OptionalInt configStackSizeLimit) {
+    return gothamDefinition(chainId, contractSizeLimit, configStackSizeLimit)
+        .difficultyCalculator(ClassicDifficultyCalculators.DIFFICULTY_BOMB_REMOVED)
+        .transactionValidatorBuilder(
+            gasCalculator -> new MainnetTransactionValidator(gasCalculator, true, chainId))
+        .name("DefuseDifficultyBomb");
   }
 }
