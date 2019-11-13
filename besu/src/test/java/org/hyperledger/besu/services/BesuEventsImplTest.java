@@ -18,7 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
@@ -99,12 +98,11 @@ public class BesuEventsImplTest {
   @Before
   public void setUp() {
     blockchain =
-        spy(
-            DefaultBlockchain.createMutable(
-                gen.genesisBlock(),
-                new KeyValueStoragePrefixedKeyBlockchainStorage(
-                    new InMemoryKeyValueStorage(), new MainnetBlockHeaderFunctions()),
-                new NoOpMetricsSystem()));
+        DefaultBlockchain.createMutable(
+            gen.genesisBlock(),
+            new KeyValueStoragePrefixedKeyBlockchainStorage(
+                new InMemoryKeyValueStorage(), new MainnetBlockHeaderFunctions()),
+            new NoOpMetricsSystem());
     when(mockEthContext.getEthMessages()).thenReturn(mockEthMessages);
     when(mockEthContext.getEthPeers()).thenReturn(mockEthPeers);
     when(mockEthContext.getScheduler()).thenReturn(mockEthScheduler);
