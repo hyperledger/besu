@@ -124,21 +124,6 @@ public class LogWithMetadata extends Log
   }
 
   @Override
-  public Address getLogger() {
-    return super.getLogger();
-  }
-
-  @Override
-  public BytesValue getData() {
-    return super.getData();
-  }
-
-  @Override
-  public List<LogTopic> getTopics() {
-    return super.getTopics();
-  }
-
-  @Override
   public boolean isRemoved() {
     return removed;
   }
