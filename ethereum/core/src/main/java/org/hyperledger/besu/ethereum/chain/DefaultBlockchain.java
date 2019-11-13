@@ -457,7 +457,7 @@ public class DefaultBlockchain implements MutableBlockchain {
   }
 
   @VisibleForTesting
-  Set<Hash> getForks() {
+  public Set<Hash> getForks() {
     return new HashSet<>(blockchainStorage.getForkHeads());
   }
 
