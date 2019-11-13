@@ -568,7 +568,7 @@ task testDocker(type: Exec) {
 task dockerUpload(type: Exec) {
   dependsOn distDocker
   def imageName = "hyperledger/besu"
-  def image = project.hasProperty('release.releaseVersion') ? "hyperledger/besu:" + project.property('release.releaseVersion') : "hyperledger/besu:${project.version}"
+  def image = project.hasProperty('release.releaseVersion') ? "${imageName}:" + project.property('release.releaseVersion') : "${imageName}:${project.version}"
   def cmd = "docker push '${image}'"
   def additionalTags = []
 
