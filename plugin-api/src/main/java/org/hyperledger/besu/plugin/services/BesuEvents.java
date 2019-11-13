@@ -109,6 +109,8 @@ public interface BesuEvents {
    * Add a listener that consumes every log (both added and removed) that matches the filter
    * parameters when a new block is added to the blockchain.
    *
+   * @param addresses The addresses from which the log filter will be created
+   * @param topics The topics from which the log filter will be created
    * @param logListener The listener that will accept the log.
    * @return The id of the listener to be referred to used to remove the listener.
    */
