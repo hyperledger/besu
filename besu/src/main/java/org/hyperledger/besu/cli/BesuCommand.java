@@ -563,6 +563,29 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Boolean isMiningEnabled = false;
 
   @Option(
+      names = {"--miner-stratum-enabled"},
+      description = "Set if node will perform Stratum mining (default: ${DEFAULT-VALUE})")
+  private final Boolean iStratumMiningEnabled = false;
+
+  @SuppressWarnings("FieldMayBeFinal") // Because PicoCLI requires Strings to not be final.
+  @Option(
+      names = {"--miner-stratum-host"},
+      description = "Host for Stratum network mining service (default: ${DEFAULT-VALUE})")
+  private String stratumNetworkInterface = "0.0.0.0";
+
+  @Option(
+      names = {"--miner-stratum-port"},
+      description = "Stratum port binding (default: ${DEFAULT-VALUE})")
+  private final Integer stratumPort = 8008;
+
+  @SuppressWarnings("FieldMayBeFinal") // Because PicoCLI requires Strings to not be final.
+  @Option(
+      hidden = true,
+      names = {"--Xminer-stratum-extranonce"},
+      description = "Extranonce for Stratum network miners (default: ${DEFAULT-VALUE})")
+  private String stratumExtranonce = "080c";
+
+  @Option(
       names = {"--miner-coinbase"},
       description =
           "Account to which mining rewards are paid. You must specify a valid coinbase if "
@@ -940,13 +963,19 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return this;
   }
 
+  @SuppressWarnings("ConstantConditions")
   private void validateMiningParams() {
-    // noinspection ConstantConditions
     if (isMiningEnabled && coinbase == null) {
       throw new ParameterException(
           this.commandLine,
           "Unable to mine without a valid coinbase. Either disable mining (remove --miner-enabled)"
               + "or specify the beneficiary of mining (via --miner-coinbase <Address>)");
+    }
+    if (!isMiningEnabled && iStratumMiningEnabled) {
+      throw new ParameterException(
+          this.commandLine,
+          "Unable to mine with Stratum if mining is disabled. Either disable Stratum mining (remove --miner-stratum-enabled)"
+              + "or specify mining is enabled (--miner-enabled)");
     }
   }
 
@@ -984,7 +1013,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         commandLine,
         "--miner-enabled",
         !isMiningEnabled,
-        asList("--miner-coinbase", "--min-gas-price", "--miner-extra-data"));
+        asList(
+            "--miner-coinbase",
+            "--min-gas-price",
+            "--miner-extra-data",
+            "--miner-stratum-enabled"));
 
     CommandLineUtils.checkOptionDependencies(
         logger,
@@ -1058,7 +1091,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           .ethProtocolConfiguration(ethProtocolOptions.toDomainObject())
           .dataDirectory(dataDir())
           .miningParameters(
-              new MiningParameters(coinbase, minTransactionGasPrice, extraData, isMiningEnabled))
+              new MiningParameters(
+                  coinbase,
+                  minTransactionGasPrice,
+                  extraData,
+                  isMiningEnabled,
+                  iStratumMiningEnabled,
+                  stratumNetworkInterface,
+                  stratumPort,
+                  stratumExtranonce))
           .transactionPoolConfiguration(buildTransactionPoolConfiguration())
           .nodePrivateKeyFile(nodePrivateKeyFile())
           .metricsSystem(metricsSystem.get())

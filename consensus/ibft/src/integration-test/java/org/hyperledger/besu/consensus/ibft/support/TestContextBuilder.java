@@ -316,7 +316,7 @@ public class TestContextBuilder {
             Util.publicKeyToAddress(nodeKeys.getPublicKey()));
 
     final ProposerSelector proposerSelector =
-        new ProposerSelector(blockChain, blockInterface, true);
+        new ProposerSelector(blockChain, blockInterface, true, voteTallyCache);
 
     final IbftExecutors ibftExecutors = IbftExecutors.create(new NoOpMetricsSystem());
     final IbftFinalState finalState =

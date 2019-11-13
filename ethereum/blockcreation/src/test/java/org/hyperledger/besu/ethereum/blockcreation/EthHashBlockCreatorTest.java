@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.mainnet.ValidationTestUtils;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
+import org.hyperledger.besu.util.Subscribers;
 import org.hyperledger.besu.util.bytes.BytesValue;
 import org.hyperledger.besu.util.uint.UInt256;
 
@@ -74,7 +75,8 @@ public class EthHashBlockCreatorTest {
             .build();
 
     final EthHashSolver solver =
-        new EthHashSolver(Lists.newArrayList(BLOCK_1_NONCE), new EthHasher.Light());
+        new EthHashSolver(
+            Lists.newArrayList(BLOCK_1_NONCE), new EthHasher.Light(), false, Subscribers.none());
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
@@ -122,7 +124,8 @@ public class EthHashBlockCreatorTest {
             .build();
 
     final EthHashSolver solver =
-        new EthHashSolver(Lists.newArrayList(BLOCK_1_NONCE), new EthHasher.Light());
+        new EthHashSolver(
+            Lists.newArrayList(BLOCK_1_NONCE), new EthHasher.Light(), false, Subscribers.none());
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
@@ -165,7 +168,8 @@ public class EthHashBlockCreatorTest {
             .build();
 
     final EthHashSolver solver =
-        new EthHashSolver(Lists.newArrayList(BLOCK_1_NONCE), new EthHasher.Light());
+        new EthHashSolver(
+            Lists.newArrayList(BLOCK_1_NONCE), new EthHasher.Light(), false, Subscribers.none());
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
@@ -224,7 +228,8 @@ public class EthHashBlockCreatorTest {
             .build();
 
     final EthHashSolver solver =
-        new EthHashSolver(Lists.newArrayList(BLOCK_1_NONCE), new EthHasher.Light());
+        new EthHashSolver(
+            Lists.newArrayList(BLOCK_1_NONCE), new EthHasher.Light(), false, Subscribers.none());
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
