@@ -89,6 +89,30 @@ public interface GenesisConfigOptions {
    */
   OptionalLong getDieHardBlockNumber();
 
+  /**
+   * Block number for Gotham fork on Classic network, the Gotham form includes changes to meet
+   * specification for ECIP-1017 and ECIP-1039 both regarding Monetary Policy (rewards).
+   *
+   * @see <a
+   *     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1017">https://ecips.ethereumclassic.org/ECIPs/ecip-1017</a>
+   *     ECIP-1017: Monetary Policy and Final Modification to the Ethereum Classic Emission Schedule
+   * @see <a
+   *     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1039">https://ecips.ethereumclassic.org/ECIPs/ecip-1039</a>
+   *     ECIP-1039: Monetary policy rounding specification
+   * @return block to activate Classic Gotham fork
+   */
+  OptionalLong getGothamBlockNumber();
+
+  /**
+   * Block number to remove difficulty bomb, to meet specification for ECIP-1041.
+   *
+   * @see <a
+   *     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1041">https://ecips.ethereumclassic.org/ECIPs/ecip-1041</a>
+   *     ECIP-1041: Remove Difficulty Bomb
+   * @return block number to remove difficulty bomb on classic network
+   */
+  OptionalLong getDefuseDifficultyBombBlockNumber();
+
   Optional<BigInteger> getChainId();
 
   OptionalInt getContractSizeLimit();

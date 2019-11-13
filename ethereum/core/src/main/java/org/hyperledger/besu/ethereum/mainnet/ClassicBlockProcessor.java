@@ -21,18 +21,21 @@ import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 
+import java.math.BigInteger;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class MainnetBlockProcessor extends AbstractBlockProcessor {
+public class ClassicBlockProcessor extends AbstractBlockProcessor {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  public MainnetBlockProcessor(
+  private static final long ERA_LENGTH = 5_000_000L;
+
+  public ClassicBlockProcessor(
       final TransactionProcessor transactionProcessor,
-      final MainnetBlockProcessor.TransactionReceiptFactory transactionReceiptFactory,
+      final TransactionReceiptFactory transactionReceiptFactory,
       final Wei blockReward,
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
       final boolean skipZeroBlockRewards) {
@@ -53,7 +56,10 @@ public class MainnetBlockProcessor extends AbstractBlockProcessor {
     if (skipZeroBlockRewards && blockReward.isZero()) {
       return true;
     }
-    final Wei coinbaseReward = blockReward.plus(blockReward.times(ommers.size()).dividedBy(32));
+    final int blockEra = getBlockEra(header.getNumber(), ERA_LENGTH);
+    final Wei winnerReward = getBlockWinnerRewardByEra(blockEra);
+    final Wei uncleInclusionReward = winnerReward.dividedBy(32);
+    final Wei coinbaseReward = winnerReward.plus(uncleInclusionReward.times(ommers.size()));
     final WorldUpdater updater = worldState.updater();
     final MutableAccount coinbase = updater.getOrCreate(header.getCoinbase()).getMutable();
 
@@ -70,13 +76,49 @@ public class MainnetBlockProcessor extends AbstractBlockProcessor {
 
       final MutableAccount ommerCoinbase =
           updater.getOrCreate(ommerHeader.getCoinbase()).getMutable();
-      final long distance = header.getNumber() - ommerHeader.getNumber();
-      final Wei ommerReward = blockReward.minus(blockReward.times(distance).dividedBy(8));
-      ommerCoinbase.incrementBalance(ommerReward);
+      ommerCoinbase.incrementBalance(uncleInclusionReward);
     }
 
     updater.commit();
-
     return true;
+  }
+
+  // GetBlockEra gets which "Era" a given block is within, given an era length (ecip-1017 has
+  // era=5,000,000 blocks)
+  // Returns a zero-index era number, so "Era 1": 0, "Era 2": 1, "Era 3": 2 ...
+  private int getBlockEra(final long blockNumber, final long eraLength) {
+    // if genesis block or impossible nagative-numbered block, return zero
+    if (blockNumber < 0) return 0;
+    long remainder = (blockNumber - 1) % eraLength;
+    long base = blockNumber - remainder;
+    long d = base / eraLength;
+    return Math.toIntExact(d);
+  }
+
+  // getRewardByEra gets a block reward at disinflation rate.
+  // Constants MaxBlockReward, DisinflationRateQuotient, and DisinflationRateDivisor assumed.
+  private Wei getBlockWinnerRewardByEra(final int era) {
+    if (era == 0) {
+      return this.blockReward;
+    }
+
+    // MaxBlockReward _r_ * (4/5)**era == MaxBlockReward * (4**era) / (5**era)
+    // since (q/d)**n == q**n / d**n
+    // qed
+
+    BigInteger disinflationRateQuotient = BigInteger.valueOf(4);
+    BigInteger q;
+    q = disinflationRateQuotient.pow(era);
+
+    BigInteger disinflationRateDivisor = BigInteger.valueOf(5);
+    BigInteger d;
+    d = disinflationRateDivisor.pow(era);
+
+    BigInteger maximumBlockReward = BigInteger.valueOf(this.blockReward.toLong());
+    BigInteger r;
+    r = maximumBlockReward.multiply(q);
+
+    r = r.divide(d);
+    return Wei.of(r);
   }
 }
