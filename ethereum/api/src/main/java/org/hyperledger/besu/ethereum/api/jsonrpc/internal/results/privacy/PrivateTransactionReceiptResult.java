@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonPropertyOrder({
@@ -32,8 +33,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
   "from",
   "to",
   "output",
-  "publicHash",
-  "privateHash",
+  "commitmentHash",
+  "transactionHash",
   "privateFrom",
   "privateFor",
   "privacyGroupId",
@@ -41,14 +42,15 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
   "revertReason",
   "logs",
 })
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class PrivateTransactionReceiptResult {
 
   private final String contractAddress;
   private final String from;
   private final String to;
   private final String output;
-  private final String publicHash;
-  private final String privateHash;
+  private final String commitmentHash;
+  private final String transactionHash;
   private final String privateFrom;
   private final List<String> privateFor;
   private final String privacyGroupId;
@@ -65,8 +67,8 @@ public class PrivateTransactionReceiptResult {
       final Hash blockHash,
       final long blockNumber,
       final int txIndex,
-      final Hash publicHash,
-      final Hash privateHash,
+      final Hash commitmentHash,
+      final Hash transactionHash,
       final BytesValue privateFrom,
       final List<BytesValue> privateFor,
       final BytesValue privacyGroupId,
@@ -76,8 +78,8 @@ public class PrivateTransactionReceiptResult {
     this.from = from;
     this.to = to;
     this.output = output.toString();
-    this.publicHash = publicHash.toString();
-    this.privateHash = privateHash.toString();
+    this.commitmentHash = commitmentHash.toString();
+    this.transactionHash = transactionHash.toString();
     this.privateFrom = privateFrom != null ? BytesValues.asBase64String(privateFrom) : null;
     this.privateFor =
         privateFor != null
@@ -87,7 +89,7 @@ public class PrivateTransactionReceiptResult {
         privacyGroupId != null ? BytesValues.asBase64String(privacyGroupId) : null;
     this.revertReason = revertReason != null ? revertReason.toString() : null;
     this.status = status;
-    this.logs = logReceipts(logs, blockNumber, publicHash, blockHash, txIndex);
+    this.logs = logReceipts(logs, blockNumber, commitmentHash, blockHash, txIndex);
   }
 
   @JsonGetter(value = "contractAddress")
@@ -115,14 +117,14 @@ public class PrivateTransactionReceiptResult {
     return logs;
   }
 
-  @JsonGetter("publicHash")
-  public String getPublicHash() {
-    return publicHash;
+  @JsonGetter("commitmentHash")
+  public String getCommitmentHash() {
+    return commitmentHash;
   }
 
-  @JsonGetter("privateHash")
-  public String getPrivateHash() {
-    return privateHash;
+  @JsonGetter("transactionHash")
+  public String getTransactionHash() {
+    return transactionHash;
   }
 
   @JsonGetter("privateFrom")

@@ -142,7 +142,7 @@ public class PrivGetTransactionReceiptTest {
   private final Blockchain blockchain = mock(Blockchain.class);
   private final Enclave enclave = mock(Enclave.class);
   private final PrivacyParameters privacyParameters = mock(PrivacyParameters.class);
-
+  private final PrivateStateStorage privateStateStorage = mock(PrivateStateStorage.class);
   private final Enclave failingEnclave = mock(Enclave.class);
 
   @Before
@@ -165,7 +165,7 @@ public class PrivGetTransactionReceiptTest {
     final BlockHeader mockBlockHeader = mock(BlockHeader.class);
     when(blockchain.getBlockHeader(any(Hash.class))).thenReturn(Optional.of(mockBlockHeader));
     when(mockBlockHeader.getNumber()).thenReturn(0L);
-    final PrivateStateStorage privateStateStorage = mock(PrivateStateStorage.class);
+
     when(privacyParameters.getPrivateStateStorage()).thenReturn(privateStateStorage);
     when(privateStateStorage.getTransactionLogs(any(Bytes32.class))).thenReturn(Optional.empty());
     when(privateStateStorage.getTransactionOutput(any(Bytes32.class))).thenReturn(Optional.empty());
@@ -234,5 +234,23 @@ public class PrivGetTransactionReceiptTest {
 
     final Throwable t = catchThrowable(() -> privGetTransactionReceipt.response(request));
     assertThat(t).isInstanceOf(RuntimeException.class);
+  }
+
+  @Test
+  public void transactionReceiptContainsRevertReasonWhenInvalidTransactionOccurs() {
+    when(privateStateStorage.getRevertReason(any(Bytes32.class)))
+        .thenReturn(Optional.of(BytesValue.fromHexString("0x01")));
+
+    final PrivGetTransactionReceipt privGetTransactionReceipt =
+        new PrivGetTransactionReceipt(blockchainQueries, enclave, parameters, privacyParameters);
+    final Object[] params = new Object[] {transaction.getHash()};
+    final JsonRpcRequest request = new JsonRpcRequest("1", "priv_getTransactionReceipt", params);
+
+    final JsonRpcSuccessResponse response =
+        (JsonRpcSuccessResponse) privGetTransactionReceipt.response(request);
+    final PrivateTransactionReceiptResult result =
+        (PrivateTransactionReceiptResult) response.getResult();
+
+    assertThat(result.getRevertReason()).isEqualTo("0x01");
   }
 }
