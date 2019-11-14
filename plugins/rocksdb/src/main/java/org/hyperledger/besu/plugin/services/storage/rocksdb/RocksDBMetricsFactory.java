@@ -29,7 +29,7 @@ import org.rocksdb.RocksDBException;
 import org.rocksdb.Statistics;
 import org.rocksdb.TransactionDB;
 
-public class RocksDBMetricsFactory implements RocksDBMetricsFactoryInterface {
+public class RocksDBMetricsFactory {
 
   public static RocksDBMetricsFactory PUBLIC_ROCKS_DB_METRICS =
       new RocksDBMetricsFactory(
@@ -51,7 +51,6 @@ public class RocksDBMetricsFactory implements RocksDBMetricsFactoryInterface {
     this.statsDbMetricCategory = statsDbMetricCategory;
   }
 
-  @Override
   public RocksDBMetrics create(
       final MetricsSystem metricsSystem,
       final RocksDBConfiguration rocksDbConfiguration,

@@ -42,11 +42,15 @@ public enum BesuMetricCategory implements MetricCategory {
   public static final Set<MetricCategory> DEFAULT_METRIC_CATEGORIES;
 
   static {
-    // Why not ROCKSDB and KVSTORE_ROCKSDB_STATS, KVSTORE_PRIVATE_ROCKSDB_STATS?  They hurt
-    // performance under load.
+    // Why not KVSTORE_ROCKSDB and KVSTORE_ROCKSDB_STATS, KVSTORE_PRIVATE_ROCKSDB_STATS,
+    // KVSTORE_PRIVATE_ROCKSDB_STATS?  They hurt performance under load.
     final EnumSet<BesuMetricCategory> besuCategories =
         EnumSet.complementOf(
-            EnumSet.of(KVSTORE_ROCKSDB, KVSTORE_ROCKSDB_STATS, KVSTORE_PRIVATE_ROCKSDB_STATS));
+            EnumSet.of(
+                KVSTORE_ROCKSDB,
+                KVSTORE_ROCKSDB_STATS,
+                KVSTORE_PRIVATE_ROCKSDB,
+                KVSTORE_PRIVATE_ROCKSDB_STATS));
 
     DEFAULT_METRIC_CATEGORIES =
         ImmutableSet.<MetricCategory>builder()
