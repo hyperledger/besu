@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcRequestException;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -37,15 +36,12 @@ public class AbstractSendTransaction {
   private static final Logger LOG = LogManager.getLogger();
 
   protected final PrivateTransactionHandler privateTransactionHandler;
-  private final JsonRpcParameter parameters;
   protected final TransactionPool transactionPool;
 
   public AbstractSendTransaction(
       final PrivateTransactionHandler privateTransactionHandler,
-      final TransactionPool transactionPool,
-      final JsonRpcParameter parameters) {
+      final TransactionPool transactionPool) {
     this.privateTransactionHandler = privateTransactionHandler;
-    this.parameters = parameters;
     this.transactionPool = transactionPool;
   }
 
@@ -55,7 +51,7 @@ public class AbstractSendTransaction {
       throw new ErrorResponseException(
           new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS));
     }
-    final String rawPrivateTransaction = parameters.required(request.getParams(), 0, String.class);
+    final String rawPrivateTransaction = request.getRequiredParameter(0, String.class);
     final PrivateTransaction privateTransaction;
     try {
       privateTransaction = decodeRawTransaction(rawPrivateTransaction);

@@ -35,8 +35,6 @@ import org.junit.Test;
 
 public class FilterParameterTest {
 
-  private final JsonRpcParameter parameters = new JsonRpcParameter();
-
   @Test
   public void jsonWithArrayOfAddressesShouldSerializeSuccessfully() throws Exception {
     final String jsonWithAddressArray =
@@ -45,7 +43,7 @@ public class FilterParameterTest {
     final FilterParameter expectedFilterParameter = filterParameterWithAddresses("0x0", "0x1");
 
     final FilterParameter parsedFilterParameter =
-        parameters.required(request.getParams(), 0, FilterParameter.class);
+        request.getRequiredParameter(0, FilterParameter.class);
 
     assertThat(parsedFilterParameter)
         .isEqualToComparingFieldByFieldRecursively(expectedFilterParameter);
@@ -59,7 +57,7 @@ public class FilterParameterTest {
     final FilterParameter expectedFilterParameter = filterParameterWithAddresses("0x0");
 
     final FilterParameter parsedFilterParameter =
-        parameters.required(request.getParams(), 0, FilterParameter.class);
+        request.getRequiredParameter(0, FilterParameter.class);
 
     assertThat(parsedFilterParameter)
         .isEqualToComparingFieldByFieldRecursively(expectedFilterParameter);
@@ -76,7 +74,7 @@ public class FilterParameterTest {
             "0x0", "0x0000000000000000000000000000000000000000000000000000000000000002");
 
     final FilterParameter parsedFilterParameter =
-        parameters.required(request.getParams(), 0, FilterParameter.class);
+        request.getRequiredParameter(0, FilterParameter.class);
 
     assertThat(parsedFilterParameter)
         .isEqualToComparingFieldByFieldRecursively(expectedFilterParameter);
@@ -95,7 +93,7 @@ public class FilterParameterTest {
             "0x0000000000000000000000000000000000000000000000000000000000000003");
 
     final FilterParameter parsedFilterParameter =
-        parameters.required(request.getParams(), 0, FilterParameter.class);
+        request.getRequiredParameter(0, FilterParameter.class);
 
     assertThat(parsedFilterParameter)
         .isEqualToComparingFieldByFieldRecursively(expectedFilterParameter);
@@ -115,7 +113,7 @@ public class FilterParameterTest {
             "0x0000000000000000000000000000000000000000000000000000000000000003");
 
     final FilterParameter parsedFilterParameter =
-        parameters.required(request.getParams(), 0, FilterParameter.class);
+        request.getRequiredParameter(0, FilterParameter.class);
 
     assertThat(parsedFilterParameter)
         .isEqualToComparingFieldByFieldRecursively(expectedFilterParameter);

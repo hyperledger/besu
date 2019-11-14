@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameterOrBlockHash;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockReplay;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -42,28 +41,19 @@ import com.google.common.base.Suppliers;
 
 public class DebugStorageRangeAt implements JsonRpcMethod {
 
-  private final JsonRpcParameter parameters;
   private final Supplier<BlockchainQueries> blockchainQueries;
   private final Supplier<BlockReplay> blockReplay;
   private final boolean shortValues;
 
   public DebugStorageRangeAt(
-      final JsonRpcParameter parameters,
-      final BlockchainQueries blockchainQueries,
-      final BlockReplay blockReplay) {
-    this(
-        parameters,
-        Suppliers.ofInstance(blockchainQueries),
-        Suppliers.ofInstance(blockReplay),
-        false);
+      final BlockchainQueries blockchainQueries, final BlockReplay blockReplay) {
+    this(Suppliers.ofInstance(blockchainQueries), Suppliers.ofInstance(blockReplay), false);
   }
 
   public DebugStorageRangeAt(
-      final JsonRpcParameter parameters,
       final Supplier<BlockchainQueries> blockchainQueries,
       final Supplier<BlockReplay> blockReplay,
       final boolean shortValues) {
-    this.parameters = parameters;
     this.blockchainQueries = blockchainQueries;
     this.blockReplay = blockReplay;
     this.shortValues = shortValues;
@@ -77,12 +67,11 @@ public class DebugStorageRangeAt implements JsonRpcMethod {
   @Override
   public JsonRpcResponse response(final JsonRpcRequest request) {
     final BlockParameterOrBlockHash blockParameterOrBlockHash =
-        parameters.required(request.getParams(), 0, BlockParameterOrBlockHash.class);
-    final int transactionIndex = parameters.required(request.getParams(), 1, Integer.class);
-    final Address accountAddress = parameters.required(request.getParams(), 2, Address.class);
-    final Hash startKey =
-        Hash.fromHexStringLenient(parameters.required(request.getParams(), 3, String.class));
-    final int limit = parameters.required(request.getParams(), 4, Integer.class);
+        request.getRequiredParameter(0, BlockParameterOrBlockHash.class);
+    final int transactionIndex = request.getRequiredParameter(1, Integer.class);
+    final Address accountAddress = request.getRequiredParameter(2, Address.class);
+    final Hash startKey = Hash.fromHexStringLenient(request.getRequiredParameter(3, String.class));
+    final int limit = request.getRequiredParameter(4, Integer.class);
 
     final Optional<Hash> blockHashOptional = hashFromParameter(blockParameterOrBlockHash);
     if (blockHashOptional.isEmpty()) {

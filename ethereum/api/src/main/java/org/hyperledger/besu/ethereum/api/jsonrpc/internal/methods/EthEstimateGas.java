@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -35,15 +34,11 @@ public class EthEstimateGas implements JsonRpcMethod {
 
   private final BlockchainQueries blockchainQueries;
   private final TransactionSimulator transactionSimulator;
-  private final JsonRpcParameter parameters;
 
   public EthEstimateGas(
-      final BlockchainQueries blockchainQueries,
-      final TransactionSimulator transactionSimulator,
-      final JsonRpcParameter parameters) {
+      final BlockchainQueries blockchainQueries, final TransactionSimulator transactionSimulator) {
     this.blockchainQueries = blockchainQueries;
     this.transactionSimulator = transactionSimulator;
-    this.parameters = parameters;
   }
 
   @Override
@@ -53,8 +48,7 @@ public class EthEstimateGas implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequest request) {
-    final JsonCallParameter callParams =
-        parameters.required(request.getParams(), 0, JsonCallParameter.class);
+    final JsonCallParameter callParams = request.getRequiredParameter(0, JsonCallParameter.class);
 
     final BlockHeader blockHeader = blockHeader();
     if (blockHeader == null) {

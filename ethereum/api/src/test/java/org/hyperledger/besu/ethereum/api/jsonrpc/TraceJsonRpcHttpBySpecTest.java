@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.TraceReplayBlockTransactions;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockReplay;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -66,10 +65,7 @@ public class TraceJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpBySpecTest {
     final BlockTracer blockTracer = new BlockTracer(blockReplay);
     final TraceReplayBlockTransactions traceReplayBlockTransactions =
         new TraceReplayBlockTransactions(
-            new JsonRpcParameter(),
-            blockTracer,
-            blockchainQueries,
-            blockchainSetupUtil.getProtocolSchedule());
+            blockTracer, blockchainQueries, blockchainSetupUtil.getProtocolSchedule());
     methods.put(traceReplayBlockTransactions.getName(), traceReplayBlockTransactions);
 
     return methods;

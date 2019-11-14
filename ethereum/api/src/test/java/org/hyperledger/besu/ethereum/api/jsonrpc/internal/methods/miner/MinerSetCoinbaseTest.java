@@ -23,7 +23,6 @@ import static org.mockito.Mockito.verify;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -46,7 +45,7 @@ public class MinerSetCoinbaseTest {
 
   @Before
   public void before() {
-    this.method = new MinerSetCoinbase(miningCoordinator, new JsonRpcParameter());
+    this.method = new MinerSetCoinbase(miningCoordinator);
   }
 
   @Test

@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TransactionTraceParams;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
@@ -34,10 +33,8 @@ public class DebugTraceBlockByNumber extends AbstractBlockParameterMethod {
   private final BlockTracer blockTracer;
 
   public DebugTraceBlockByNumber(
-      final JsonRpcParameter parameters,
-      final BlockTracer blockTracer,
-      final BlockchainQueries blockchain) {
-    super(blockchain, parameters);
+      final BlockTracer blockTracer, final BlockchainQueries blockchain) {
+    super(blockchain);
     this.blockTracer = blockTracer;
   }
 
@@ -48,15 +45,15 @@ public class DebugTraceBlockByNumber extends AbstractBlockParameterMethod {
 
   @Override
   protected BlockParameter blockParameter(final JsonRpcRequest request) {
-    return getParameters().required(request.getParams(), 0, BlockParameter.class);
+    return request.getRequiredParameter(0, BlockParameter.class);
   }
 
   @Override
   protected Object resultByBlockNumber(final JsonRpcRequest request, final long blockNumber) {
     final Optional<Hash> blockHash = getBlockchainQueries().getBlockHashByNumber(blockNumber);
     final TraceOptions traceOptions =
-        getParameters()
-            .optional(request.getParams(), 1, TransactionTraceParams.class)
+        request
+            .getOptionalParameter(1, TransactionTraceParams.class)
             .map(TransactionTraceParams::traceOptions)
             .orElse(TraceOptions.DEFAULT);
 

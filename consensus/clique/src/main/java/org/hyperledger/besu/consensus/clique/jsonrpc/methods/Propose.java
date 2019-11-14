@@ -19,7 +19,6 @@ import org.hyperledger.besu.consensus.common.VoteProposer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -28,11 +27,9 @@ import org.hyperledger.besu.ethereum.core.Address;
 
 public class Propose implements JsonRpcMethod {
   private final VoteProposer proposer;
-  private final JsonRpcParameter parameters;
 
-  public Propose(final VoteProposer proposer, final JsonRpcParameter parameters) {
+  public Propose(final VoteProposer proposer) {
     this.proposer = proposer;
-    this.parameters = parameters;
   }
 
   @Override
@@ -42,8 +39,8 @@ public class Propose implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequest request) {
-    final Address address = parameters.required(request.getParams(), 0, Address.class);
-    final Boolean auth = parameters.required(request.getParams(), 1, Boolean.class);
+    final Address address = request.getRequiredParameter(0, Address.class);
+    final Boolean auth = request.getRequiredParameter(1, Boolean.class);
     if (address.equals(CliqueBlockInterface.NO_VOTE_SUBJECT)) {
       return new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_REQUEST);
     }

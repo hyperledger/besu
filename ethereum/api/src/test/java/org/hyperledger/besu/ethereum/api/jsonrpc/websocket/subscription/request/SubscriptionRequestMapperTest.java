@@ -25,7 +25,6 @@ import static org.junit.internal.matchers.ThrowableMessageMatcher.hasMessage;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods.WebSocketRpcRequest;
 import org.hyperledger.besu.ethereum.api.query.LogsQuery;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -50,7 +49,7 @@ public class SubscriptionRequestMapperTest {
 
   @Before
   public void before() {
-    mapper = new SubscriptionRequestMapper(new JsonRpcParameter());
+    mapper = new SubscriptionRequestMapper();
   }
 
   @Test
