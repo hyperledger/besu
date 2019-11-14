@@ -15,8 +15,9 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.authentication;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.file.Files;
+import java.io.InputStreamReader;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
@@ -24,6 +25,7 @@ import java.util.Base64;
 
 import io.vertx.ext.auth.PubSecKeyOptions;
 import io.vertx.ext.auth.jwt.JWTAuthOptions;
+import org.bouncycastle.util.io.pem.PemReader;
 
 public class JWTAuthOptionsFactory {
 
@@ -31,11 +33,12 @@ public class JWTAuthOptionsFactory {
   private static final String PERMISSIONS = "permissions";
 
   public JWTAuthOptions createForExternalPublicKey(final File externalPublicKeyFile) {
-    final String externalJwtPublicKey = readPublicKey(externalPublicKeyFile);
+    final byte[] externalJwtPublicKey = readPublicKey(externalPublicKeyFile);
+    final String base64EncodedPublicKey = Base64.getEncoder().encodeToString(externalJwtPublicKey);
     return new JWTAuthOptions()
         .setPermissionsClaimKey(PERMISSIONS)
         .addPubSecKey(
-            new PubSecKeyOptions().setAlgorithm(ALGORITHM).setPublicKey(externalJwtPublicKey));
+            new PubSecKeyOptions().setAlgorithm(ALGORITHM).setPublicKey(base64EncodedPublicKey));
   }
 
   public JWTAuthOptions createWithGeneratedKeyPair() {
@@ -50,9 +53,11 @@ public class JWTAuthOptionsFactory {
                     Base64.getEncoder().encodeToString(keypair.getPrivate().getEncoded())));
   }
 
-  private String readPublicKey(final File authenticationPublicKeyFile) {
+  private byte[] readPublicKey(final File authenticationPublicKeyFile) {
     try {
-      return Files.readString(authenticationPublicKeyFile.toPath());
+      final PemReader pemReader =
+          new PemReader(new InputStreamReader(new FileInputStream(authenticationPublicKeyFile)));
+      return pemReader.readPemObject().getContent();
     } catch (IOException e) {
       throw new IllegalStateException("Authentication RPC public key could not be read", e);
     }

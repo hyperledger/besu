@@ -18,9 +18,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.net.URISyntaxException;
+import java.nio.file.Paths;
 
 import io.vertx.ext.auth.PubSecKeyOptions;
 import io.vertx.ext.auth.jwt.JWTAuthOptions;
@@ -62,13 +61,15 @@ public class JWTAuthOptionsFactoryTest {
   }
 
   @Test
-  public void createsOptionsUsingPublicKeyFile() throws IOException {
+  public void createsOptionsUsingPublicKeyFile() throws URISyntaxException {
     final JWTAuthOptionsFactory jwtAuthOptionsFactory = new JWTAuthOptionsFactory();
-    final Path enclavePublicKey = Files.createTempFile("enclave", "pub");
-    Files.writeString(enclavePublicKey, JWT_PUBLIC_KEY);
+    final File enclavePublicKeyFile =
+        Paths.get(ClassLoader.getSystemResource("authentication/jwt_public_key").toURI())
+            .toAbsolutePath()
+            .toFile();
 
     final JWTAuthOptions jwtAuthOptions =
-        jwtAuthOptionsFactory.createForExternalPublicKey(enclavePublicKey.toFile());
+        jwtAuthOptionsFactory.createForExternalPublicKey(enclavePublicKeyFile);
     assertThat(jwtAuthOptions.getPubSecKeys()).hasSize(1);
     assertThat(jwtAuthOptions.getPubSecKeys().get(0).getAlgorithm()).isEqualTo("RS256");
     assertThat(jwtAuthOptions.getPubSecKeys().get(0).getSecretKey()).isNull();
