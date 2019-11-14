@@ -46,8 +46,8 @@ public class HttpServiceLoginAcceptanceTest extends AcceptanceTestBase {
         new ClusterConfigurationBuilder().awaitPeerDiscovery(false).build();
     authenticatedCluster = new Cluster(clusterConfiguration, net);
 
-    nodeUsingAuthFile = besu.createArchiveNodeWithAuthentication("node1");
-    nodeUsingJwtPublicKey = besu.createArchiveNodeWithAuthenticationUsingJwtPublicKey("node2");
+    nodeUsingAuthFile = besu.createNodeWithAuthentication("node1");
+    nodeUsingJwtPublicKey = besu.createNodeWithAuthenticationUsingJwtPublicKey("node2");
     authenticatedCluster.start(nodeUsingAuthFile, nodeUsingJwtPublicKey);
 
     nodeUsingAuthFile.verify(login.awaitResponse("user", "badpassword"));

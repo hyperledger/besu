@@ -16,6 +16,9 @@ package org.hyperledger.besu.tests.acceptance.jsonrpc;
 
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
+import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.Cluster;
+import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.ClusterConfiguration;
+import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.ClusterConfigurationBuilder;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -26,6 +29,7 @@ import org.junit.Test;
 public class WebsocketServiceLoginAcceptanceTest extends AcceptanceTestBase {
   private BesuNode nodeUsingAuthFile;
   private BesuNode nodeUsingJwtPublicKey;
+  private Cluster authenticatedCluster;
 
   // token with payload{"iat": 1516239022,"exp": 4729363200,"permissions": ["net:peerCount"]}
   private static final String TOKEN =
@@ -38,12 +42,18 @@ public class WebsocketServiceLoginAcceptanceTest extends AcceptanceTestBase {
 
   @Before
   public void setUp() throws IOException, URISyntaxException {
-    nodeUsingAuthFile = besu.createArchiveNodeWithAuthenticationOverWebSocket("node1");
-    nodeUsingJwtPublicKey =
-        besu.createArchiveNodeWithAuthenticationUsingJwtPublicKeyOverWebSocket("node2");
-    cluster.start(nodeUsingAuthFile, nodeUsingJwtPublicKey);
+    final ClusterConfiguration clusterConfiguration =
+        new ClusterConfigurationBuilder().awaitPeerDiscovery(false).build();
+    authenticatedCluster = new Cluster(clusterConfiguration, net);
+
+    nodeUsingAuthFile = besu.createNodeWithAuthentication("node1");
+    nodeUsingJwtPublicKey = besu.createNodeWithAuthenticationUsingJwtPublicKey("node2");
     nodeUsingAuthFile.useWebSocketsForJsonRpc();
     nodeUsingJwtPublicKey.useWebSocketsForJsonRpc();
+    authenticatedCluster.start(nodeUsingAuthFile, nodeUsingJwtPublicKey);
+
+    nodeUsingAuthFile.verify(login.awaitResponse("user", "badpassword"));
+    nodeUsingJwtPublicKey.verify(login.awaitResponse("user", "badpassword"));
   }
 
   @Test
@@ -77,5 +87,11 @@ public class WebsocketServiceLoginAcceptanceTest extends AcceptanceTestBase {
   @Test
   public void loginShouldBeDisabledWhenUsingExternalJwtPublicKey() {
     nodeUsingJwtPublicKey.verify(login.disabled());
+  }
+
+  @Override
+  public void tearDownAcceptanceTestBase() {
+    authenticatedCluster.stop();
+    super.tearDownAcceptanceTestBase();
   }
 }
