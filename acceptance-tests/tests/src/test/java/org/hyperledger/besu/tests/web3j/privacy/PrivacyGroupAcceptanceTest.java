@@ -76,7 +76,7 @@ public class PrivacyGroupAcceptanceTest extends PrivacyAcceptanceTestBase {
         new PrivacyGroup(
             privacyGroupId,
             PrivacyGroup.Type.PANTHEON,
-            "Default Name",
+            "",
             "my group description",
             Base64String.wrapList(alice.getEnclaveKey(), bob.getEnclaveKey()));
 
@@ -97,7 +97,7 @@ public class PrivacyGroupAcceptanceTest extends PrivacyAcceptanceTestBase {
             privacyGroupId,
             PrivacyGroup.Type.PANTHEON,
             "myGroupName",
-            "Default Description",
+            "",
             Base64String.wrapList(alice.getEnclaveKey(), bob.getEnclaveKey()));
 
     alice.verify(privateTransactionVerifier.validPrivacyGroupCreated(expected));
@@ -116,8 +116,8 @@ public class PrivacyGroupAcceptanceTest extends PrivacyAcceptanceTestBase {
         new PrivacyGroup(
             privacyGroupId,
             PrivacyGroup.Type.PANTHEON,
-            "Default Name",
-            "Default Description",
+            "",
+            "",
             Base64String.wrapList(alice.getEnclaveKey(), bob.getEnclaveKey()));
 
     alice.verify(privateTransactionVerifier.validPrivacyGroupCreated(expected));
