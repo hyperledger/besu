@@ -27,13 +27,14 @@ public class WebsocketServiceLoginAcceptanceTest extends AcceptanceTestBase {
   private BesuNode nodeUsingAuthFile;
   private BesuNode nodeUsingJwtPublicKey;
 
+  // token with payload{"iat": 1516239022,"exp": 4729363200,"permissions": ["net:peerCount"]}
   private static final String TOKEN =
-      "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1MTYyMzkwMjI"
-          + "sInBlcm1pc3Npb25zIjpbIm5ldDpwZWVyQ291bnQiXX0.fXi73v4UTEO3hiG0AzPaD-OjQy0rL0SY-tMNCfJMdiVde"
-          + "im7Erwq4sVCrFtmx0tUs-e5Z1t_K-Gx6c_95911T2Jq2VLlwKJDs0FYEGgq2G3W-PMMrT21SPLJM-r7kl9_k51Xbww"
-          + "D7Cku_JFaLmkhd_l8k-EmGCTCWar514HUTlH0pm4nYhDKa7SuMAqMUo8CSZRCEzSD_AeOShJTk02cPtkCqXzClK3XO"
-          + "gfxsO5viuklX13VT35lyG-HNNuReLX6U4nWu_irHv0r7Gl8MVFz0Ohm0bA_G1OUh5ue6y7DcYADOoYTmvfSgkKD0hl"
-          + "bKx3j3tp1PX6Cw_fZUjviFvwxEg";
+      "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1MTYyMzkwMjIsImV4cCI6NDcyOTM2MzIwMCwicGVybWl"
+          + "zc2lvbnMiOlsibmV0OnBlZXJDb3VudCJdfQ.Y6mNV0nvjzOdqAgMgxknFAOUTKoeRAo4aifNgNrWtuXbJJgz6-"
+          + "H_0GvLgjlToohPiDZbBJXJJlgb4zzLLB-sRtFnGoPaMgz_d_6z958GjFD7x_Fl0HW-WrTjRNenZNfTyD86OEAf"
+          + "XHy-7N3OYY2a5yeDbppTJy6nnHTq9hY-ad22-oWL1RbK3T_hnUJII_uXCZ9bJggSfu5m-NNUrm3TeqdnQzIaIz"
+          + "DqHlL0wNZwVPB4cFGN7zKghReBpkRJ8OFlxexQ491Q5eSpuYquhef-yGCIaMfy7GVtpDSD3Y-hjOErr7gUNCUh"
+          + "1wlc3Rb7ru_0qNgCWTBPJeRK32GppYotwQ";
 
   @Before
   public void setUp() throws IOException, URISyntaxException {
