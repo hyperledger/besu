@@ -48,10 +48,10 @@ public class WebsocketServiceLoginAcceptanceTest extends AcceptanceTestBase {
 
     nodeUsingAuthFile = besu.createNodeWithAuthentication("node1");
     nodeUsingJwtPublicKey = besu.createNodeWithAuthenticationUsingJwtPublicKey("node2");
-    nodeUsingAuthFile.useWebSocketsForJsonRpc();
-    nodeUsingJwtPublicKey.useWebSocketsForJsonRpc();
     authenticatedCluster.start(nodeUsingAuthFile, nodeUsingJwtPublicKey);
 
+    nodeUsingAuthFile.useWebSocketsForJsonRpc();
+    nodeUsingJwtPublicKey.useWebSocketsForJsonRpc();
     nodeUsingAuthFile.verify(login.awaitResponse("user", "badpassword"));
     nodeUsingJwtPublicKey.verify(login.awaitResponse("user", "badpassword"));
   }
@@ -73,14 +73,27 @@ public class WebsocketServiceLoginAcceptanceTest extends AcceptanceTestBase {
             permissioningTransactions.createSuccessfulLogin("user", "pegasys"));
     nodeUsingAuthFile.useAuthenticationTokenInHeaderForJsonRpc(token);
     nodeUsingAuthFile.verify(net.awaitPeerCount(1));
+  }
+
+  @Test
+  public void jsonRpcMethodShouldFailOnNonPermittedMethod() {
+    final String token =
+        nodeUsingAuthFile.execute(
+            permissioningTransactions.createSuccessfulLogin("user", "pegasys"));
+    nodeUsingAuthFile.useAuthenticationTokenInHeaderForJsonRpc(token);
     nodeUsingAuthFile.verify(net.netVersionUnauthorizedResponse());
   }
 
   @Test
   public void externalJwtPublicKeyUsedOnJsonRpcMethodShouldSucceed() {
     nodeUsingJwtPublicKey.useAuthenticationTokenInHeaderForJsonRpc(TOKEN);
-
     nodeUsingJwtPublicKey.verify(net.awaitPeerCount(1));
+    nodeUsingJwtPublicKey.verify(net.netVersionUnauthorizedResponse());
+  }
+
+  @Test
+  public void externalJwtPublicKeyUsedOnJsonRpcMethodShouldFailOnNonPermittedMethod() {
+    nodeUsingJwtPublicKey.useAuthenticationTokenInHeaderForJsonRpc(TOKEN);
     nodeUsingJwtPublicKey.verify(net.netVersionUnauthorizedResponse());
   }
 

@@ -70,16 +70,27 @@ public class HttpServiceLoginAcceptanceTest extends AcceptanceTestBase {
         nodeUsingAuthFile.execute(
             permissioningTransactions.createSuccessfulLogin("user", "pegasys"));
     nodeUsingAuthFile.useAuthenticationTokenInHeaderForJsonRpc(token);
-
     nodeUsingAuthFile.verify(net.awaitPeerCount(1));
+  }
+
+  @Test
+  public void jsonRpcMethodShouldFailOnNonPermittedMethod() {
+    final String token =
+        nodeUsingAuthFile.execute(
+            permissioningTransactions.createSuccessfulLogin("user", "pegasys"));
+    nodeUsingAuthFile.useAuthenticationTokenInHeaderForJsonRpc(token);
     nodeUsingAuthFile.verify(net.netVersionUnauthorizedExceptional("Unauthorized"));
   }
 
   @Test
   public void externalJwtPublicKeyUsedOnJsonRpcMethodShouldSucceed() {
     nodeUsingJwtPublicKey.useAuthenticationTokenInHeaderForJsonRpc(TOKEN);
-
     nodeUsingJwtPublicKey.verify(net.awaitPeerCount(1));
+  }
+
+  @Test
+  public void externalJwtPublicKeyUsedOnJsonRpcMethodShouldFailOnNonPermittedMethod() {
+    nodeUsingJwtPublicKey.useAuthenticationTokenInHeaderForJsonRpc(TOKEN);
     nodeUsingJwtPublicKey.verify(net.netVersionUnauthorizedExceptional("Unauthorized"));
   }
 
