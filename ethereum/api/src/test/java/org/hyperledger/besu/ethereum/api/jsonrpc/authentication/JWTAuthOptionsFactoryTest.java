@@ -18,7 +18,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import io.vertx.ext.auth.PubSecKeyOptions;
@@ -84,5 +87,17 @@ public class JWTAuthOptionsFactoryTest {
     assertThatThrownBy(() -> jwtAuthOptionsFactory.createForExternalPublicKey(enclavePublicKeyFile))
         .isInstanceOf(IllegalStateException.class)
         .hasMessage("Authentication RPC public key could not be read");
+  }
+
+  @Test
+  public void failsToCreateOptionsWhenPublicKeyFileIsInvalid() throws IOException {
+    final JWTAuthOptionsFactory jwtAuthOptionsFactory = new JWTAuthOptionsFactory();
+    final Path enclavePublicKey = Files.createTempFile("enclave", "pub");
+    Files.writeString(enclavePublicKey, "invalidDataNo---HeadersAndNotBase64");
+
+    assertThatThrownBy(
+            () -> jwtAuthOptionsFactory.createForExternalPublicKey(enclavePublicKey.toFile()))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessage("Authentication RPC public key file format is invalid");
   }
 }

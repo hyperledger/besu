@@ -25,6 +25,7 @@ import java.util.Base64;
 
 import io.vertx.ext.auth.PubSecKeyOptions;
 import io.vertx.ext.auth.jwt.JWTAuthOptions;
+import org.bouncycastle.util.io.pem.PemObject;
 import org.bouncycastle.util.io.pem.PemReader;
 
 public class JWTAuthOptionsFactory {
@@ -57,7 +58,11 @@ public class JWTAuthOptionsFactory {
     try {
       final PemReader pemReader =
           new PemReader(new InputStreamReader(new FileInputStream(authenticationPublicKeyFile)));
-      return pemReader.readPemObject().getContent();
+      final PemObject pemObject = pemReader.readPemObject();
+      if (pemObject == null) {
+        throw new IllegalStateException("Authentication RPC public key file format is invalid");
+      }
+      return pemObject.getContent();
     } catch (IOException e) {
       throw new IllegalStateException("Authentication RPC public key could not be read", e);
     }
