@@ -1,23 +1,21 @@
 ---
 version: 2.1
 executors:
-  besu_executor_med:
+  besu_executor_med: # 2cpu, 4G ram
     docker:
       - image: circleci/openjdk:11.0.4-jdk-stretch
     resource_class: medium
     working_directory: ~/project
     environment:
-      JAVA_TOOL_OPTIONS: -Xmx2048m
-      GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=2 -Xmx2048m
+      GRADLE_OPTS: -Xmx2048m -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=2
 
-  besu_executor_xl:
+  besu_executor_xl: # 8cpu, 16G ram
     docker:
       - image: circleci/openjdk:11.0.4-jdk-stretch
     resource_class: xlarge
     working_directory: ~/project
     environment:
-      JAVA_TOOL_OPTIONS: -Xmx2048m
-      GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=6 -Xmx2048m
+      GRADLE_OPTS: -Xmx4096m -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=4
 
 commands:
   prepare:
@@ -153,6 +151,11 @@ jobs:
           name: build image
           command: |
             ./gradlew --no-daemon distDocker
+      - run:
+          name: test image
+          command: |
+            mkdir -p docker/reports
+            ./gradlew --no-daemon testDocker
 
   publish:
     executor: besu_executor_med
