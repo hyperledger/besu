@@ -57,10 +57,9 @@ public class JWTAuthOptionsFactory {
   }
 
   private byte[] readPublicKey(final File authenticationPublicKeyFile) {
-    try {
-      final PemReader pemReader =
-          new PemReader(
-              new InputStreamReader(new FileInputStream(authenticationPublicKeyFile), UTF_8));
+    try (InputStreamReader keyFileReader =
+        new InputStreamReader(new FileInputStream(authenticationPublicKeyFile), UTF_8)) {
+      final PemReader pemReader = new PemReader(keyFileReader);
       final PemObject pemObject = pemReader.readPemObject();
       if (pemObject == null) {
         throw new IllegalStateException("Authentication RPC public key file format is invalid");
