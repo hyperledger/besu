@@ -238,7 +238,7 @@ allprojects {
    */
   test {
     jvmArgs = [
-      '-Xmx2g',
+      '-Xmx4g',
       '-XX:-UseGCOverheadLimit',
       // Mockito and jackson-databind do some strange reflection during tests.
       // This suppresses an illegal access warning.
@@ -551,9 +551,22 @@ task distDocker(type: Exec) {
   args "-c", "docker build --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${getCheckedOutGitCommitHash()} -t ${image} ."
 }
 
+task testDocker(type: Exec) {
+  dependsOn distDocker
+  def dockerReportsDir = "docker/reports/"
+  def image = project.hasProperty('release.releaseVersion') ? "hyperledger/besu:" + project.property('release.releaseVersion') : "hyperledger/besu:${project.version}"
+  workingDir "docker"
+
+  doFirst {
+    new File(dockerReportsDir).mkdir()
+  }
+
+  executable "sh"
+  args "-c", "bash test.sh ${image}"
+}
+
 task dockerUpload(type: Exec) {
   dependsOn distDocker
-  def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
   def imageName = "hyperledger/besu"
   def image = project.hasProperty('release.releaseVersion') ? "${imageName}:" + project.property('release.releaseVersion') : "${imageName}:${project.version}"
   def cmd = "docker push '${image}'"
