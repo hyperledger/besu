@@ -19,7 +19,6 @@ import static org.apache.logging.log4j.LogManager.getLogger;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -33,12 +32,9 @@ public class PrivGetEeaTransactionCount implements JsonRpcMethod {
 
   private static final Logger LOG = getLogger();
 
-  private final JsonRpcParameter parameters;
   private final PrivateEeaNonceProvider nonceProvider;
 
-  public PrivGetEeaTransactionCount(
-      final JsonRpcParameter parameters, final PrivateEeaNonceProvider nonceProvider) {
-    this.parameters = parameters;
+  public PrivGetEeaTransactionCount(final PrivateEeaNonceProvider nonceProvider) {
     this.nonceProvider = nonceProvider;
   }
 
@@ -53,9 +49,9 @@ public class PrivGetEeaTransactionCount implements JsonRpcMethod {
       return new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
     }
 
-    final Address address = parameters.required(request.getParams(), 0, Address.class);
-    final String privateFrom = parameters.required(request.getParams(), 1, String.class);
-    final String[] privateFor = parameters.required(request.getParams(), 2, String[].class);
+    final Address address = request.getRequiredParameter(0, Address.class);
+    final String privateFrom = request.getRequiredParameter(1, String.class);
+    final String[] privateFor = request.getRequiredParameter(2, String[].class);
 
     try {
       final long nonce = nonceProvider.determineNonce(privateFrom, privateFor, address);

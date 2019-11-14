@@ -22,7 +22,6 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -48,9 +47,7 @@ public class PermRemoveAccountsFromWhitelistTest {
 
   @Before
   public void before() {
-    method =
-        new PermRemoveAccountsFromWhitelist(
-            java.util.Optional.of(accountWhitelist), new JsonRpcParameter());
+    method = new PermRemoveAccountsFromWhitelist(java.util.Optional.of(accountWhitelist));
   }
 
   @Test

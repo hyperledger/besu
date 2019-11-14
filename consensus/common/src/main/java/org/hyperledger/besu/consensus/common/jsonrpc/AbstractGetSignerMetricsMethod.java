@@ -17,7 +17,6 @@ package org.hyperledger.besu.consensus.common.jsonrpc;
 import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -39,23 +38,19 @@ public abstract class AbstractGetSignerMetricsMethod {
 
   private final BlockInterface blockInterface;
   private final BlockchainQueries blockchainQueries;
-  private final JsonRpcParameter parameters;
 
   public AbstractGetSignerMetricsMethod(
-      final BlockInterface blockInterface,
-      final BlockchainQueries blockchainQueries,
-      final JsonRpcParameter parameter) {
+      final BlockInterface blockInterface, final BlockchainQueries blockchainQueries) {
     this.blockInterface = blockInterface;
     this.blockchainQueries = blockchainQueries;
-    this.parameters = parameter;
   }
 
   public JsonRpcResponse response(final JsonRpcRequest request) {
 
     final Optional<BlockParameter> startBlockParameter =
-        parameters.optional(request.getParams(), 0, BlockParameter.class);
+        request.getOptionalParameter(0, BlockParameter.class);
     final Optional<BlockParameter> endBlockParameter =
-        parameters.optional(request.getParams(), 1, BlockParameter.class);
+        request.getOptionalParameter(1, BlockParameter.class);
 
     final long fromBlockNumber = getFromBlockNumber(startBlockParameter);
     final long toBlockNumber = getEndBlockNumber(endBlockParameter);

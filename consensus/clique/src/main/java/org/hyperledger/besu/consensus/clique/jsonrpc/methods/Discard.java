@@ -18,18 +18,15 @@ import org.hyperledger.besu.consensus.common.VoteProposer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.core.Address;
 
 public class Discard implements JsonRpcMethod {
   private final VoteProposer proposer;
-  private final JsonRpcParameter parameters;
 
-  public Discard(final VoteProposer proposer, final JsonRpcParameter parameters) {
+  public Discard(final VoteProposer proposer) {
     this.proposer = proposer;
-    this.parameters = parameters;
   }
 
   @Override
@@ -39,7 +36,7 @@ public class Discard implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequest request) {
-    final Address address = parameters.required(request.getParams(), 0, Address.class);
+    final Address address = request.getRequiredParameter(0, Address.class);
     proposer.discard(address);
     return new JsonRpcSuccessResponse(request.getId(), true);
   }

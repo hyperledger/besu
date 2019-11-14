@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcEnclaveErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -56,17 +55,14 @@ public class PrivGetTransactionReceipt implements JsonRpcMethod {
 
   private final BlockchainQueries blockchain;
   private final Enclave enclave;
-  private final JsonRpcParameter parameters;
   private final PrivacyParameters privacyParameters;
 
   public PrivGetTransactionReceipt(
       final BlockchainQueries blockchain,
       final Enclave enclave,
-      final JsonRpcParameter parameters,
       final PrivacyParameters privacyParameters) {
     this.blockchain = blockchain;
     this.enclave = enclave;
-    this.parameters = parameters;
     this.privacyParameters = privacyParameters;
   }
 
@@ -78,7 +74,7 @@ public class PrivGetTransactionReceipt implements JsonRpcMethod {
   @Override
   public JsonRpcResponse response(final JsonRpcRequest request) {
     LOG.trace("Executing {}", RpcMethod.PRIV_GET_TRANSACTION_RECEIPT.getMethodName());
-    final Hash transactionHash = parameters.required(request.getParams(), 0, Hash.class);
+    final Hash transactionHash = request.getRequiredParameter(0, Hash.class);
     final Optional<TransactionLocation> maybeLocation =
         blockchain.getBlockchain().getTransactionLocation(transactionHash);
     if (!maybeLocation.isPresent()) {

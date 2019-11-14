@@ -27,7 +27,6 @@ import org.hyperledger.besu.consensus.ibft.jsonrpc.methods.IbftProposeValidatorV
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.ApiGroupJsonRpcMethods;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 
@@ -35,7 +34,6 @@ import java.util.Map;
 
 public class IbftJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
-  private final JsonRpcParameter jsonRpcParameter = new JsonRpcParameter();
   private final ProtocolContext<IbftContext> context;
 
   public IbftJsonRpcMethods(final ProtocolContext<IbftContext> context) {
@@ -55,11 +53,11 @@ public class IbftJsonRpcMethods extends ApiGroupJsonRpcMethods {
     final BlockInterface blockInterface = new IbftBlockInterface();
 
     return mapOf(
-        new IbftProposeValidatorVote(voteProposer, jsonRpcParameter),
-        new IbftGetValidatorsByBlockNumber(blockchainQueries, blockInterface, jsonRpcParameter),
-        new IbftDiscardValidatorVote(voteProposer, jsonRpcParameter),
-        new IbftGetValidatorsByBlockHash(context.getBlockchain(), blockInterface, jsonRpcParameter),
-        new IbftGetSignerMetrics(blockInterface, blockchainQueries, jsonRpcParameter),
+        new IbftProposeValidatorVote(voteProposer),
+        new IbftGetValidatorsByBlockNumber(blockchainQueries, blockInterface),
+        new IbftDiscardValidatorVote(voteProposer),
+        new IbftGetValidatorsByBlockHash(context.getBlockchain(), blockInterface),
+        new IbftGetSignerMetrics(blockInterface, blockchainQueries),
         new IbftGetPendingVotes(voteProposer));
   }
 }

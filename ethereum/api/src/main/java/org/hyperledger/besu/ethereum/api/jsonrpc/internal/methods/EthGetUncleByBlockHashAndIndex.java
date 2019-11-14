@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.UnsignedIntParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -28,12 +27,9 @@ import org.hyperledger.besu.ethereum.core.Hash;
 public class EthGetUncleByBlockHashAndIndex implements JsonRpcMethod {
 
   private final BlockchainQueries blockchain;
-  private final JsonRpcParameter parameters;
 
-  public EthGetUncleByBlockHashAndIndex(
-      final BlockchainQueries blockchain, final JsonRpcParameter parameters) {
+  public EthGetUncleByBlockHashAndIndex(final BlockchainQueries blockchain) {
     this.blockchain = blockchain;
-    this.parameters = parameters;
   }
 
   @Override
@@ -47,9 +43,8 @@ public class EthGetUncleByBlockHashAndIndex implements JsonRpcMethod {
   }
 
   private BlockResult blockResult(final JsonRpcRequest request) {
-    final Hash hash = parameters.required(request.getParams(), 0, Hash.class);
-    final int index =
-        parameters.required(request.getParams(), 1, UnsignedIntParameter.class).getValue();
+    final Hash hash = request.getRequiredParameter(0, Hash.class);
+    final int index = request.getRequiredParameter(1, UnsignedIntParameter.class).getValue();
 
     return blockchain.getOmmer(hash, index).map(UncleBlockResult::build).orElse(null);
   }

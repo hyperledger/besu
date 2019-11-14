@@ -21,7 +21,6 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -61,7 +60,7 @@ public class EthEstimateGasTest {
     when(blockHeader.getGasLimit()).thenReturn(Long.MAX_VALUE);
     when(blockHeader.getNumber()).thenReturn(1L);
 
-    method = new EthEstimateGas(blockchainQueries, transactionSimulator, new JsonRpcParameter());
+    method = new EthEstimateGas(blockchainQueries, transactionSimulator);
   }
 
   @Test

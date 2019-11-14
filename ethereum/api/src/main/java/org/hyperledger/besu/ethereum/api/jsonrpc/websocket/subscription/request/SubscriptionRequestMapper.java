@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.UnsignedLongParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods.WebSocketRpcRequest;
 import org.hyperledger.besu.ethereum.api.query.LogsQuery;
@@ -24,11 +23,7 @@ import java.util.Optional;
 
 public class SubscriptionRequestMapper {
 
-  private final JsonRpcParameter parameter;
-
-  public SubscriptionRequestMapper(final JsonRpcParameter parameter) {
-    this.parameter = parameter;
-  }
+  public SubscriptionRequestMapper() {}
 
   public SubscribeRequest mapSubscribeRequest(final JsonRpcRequest jsonRpcRequest)
       throws InvalidSubscriptionRequestException {
@@ -36,7 +31,7 @@ public class SubscriptionRequestMapper {
       final WebSocketRpcRequest webSocketRpcRequest = validateRequest(jsonRpcRequest);
 
       final SubscriptionType subscriptionType =
-          parameter.required(webSocketRpcRequest.getParams(), 0, SubscriptionType.class);
+          webSocketRpcRequest.getRequiredParameter(0, SubscriptionType.class);
       switch (subscriptionType) {
         case NEW_BLOCK_HEADERS:
           {
@@ -45,7 +40,7 @@ public class SubscriptionRequestMapper {
           }
         case LOGS:
           {
-            return parseLogsRequest(webSocketRpcRequest, parameter);
+            return parseLogsRequest(webSocketRpcRequest);
           }
         case NEW_PENDING_TRANSACTIONS:
         case SYNCING:
@@ -61,7 +56,7 @@ public class SubscriptionRequestMapper {
 
   private boolean includeTransactions(final WebSocketRpcRequest webSocketRpcRequest) {
     final Optional<SubscriptionParam> params =
-        parameter.optional(webSocketRpcRequest.getParams(), 1, SubscriptionParam.class);
+        webSocketRpcRequest.getOptionalParameter(1, SubscriptionParam.class);
     return params.isPresent() && params.get().includeTransaction();
   }
 
@@ -71,9 +66,8 @@ public class SubscriptionRequestMapper {
         SubscriptionType.NEW_BLOCK_HEADERS, null, includeTransactions, request.getConnectionId());
   }
 
-  private SubscribeRequest parseLogsRequest(
-      final WebSocketRpcRequest request, final JsonRpcParameter parameter) {
-    final LogsQuery logsQuery = parameter.required(request.getParams(), 1, LogsQuery.class);
+  private SubscribeRequest parseLogsRequest(final WebSocketRpcRequest request) {
+    final LogsQuery logsQuery = request.getRequiredParameter(1, LogsQuery.class);
     return new SubscribeRequest(SubscriptionType.LOGS, logsQuery, null, request.getConnectionId());
   }
 
@@ -83,9 +77,7 @@ public class SubscriptionRequestMapper {
       final WebSocketRpcRequest webSocketRpcRequest = validateRequest(jsonRpcRequest);
 
       final long subscriptionId =
-          parameter
-              .required(webSocketRpcRequest.getParams(), 0, UnsignedLongParameter.class)
-              .getValue();
+          webSocketRpcRequest.getRequiredParameter(0, UnsignedLongParameter.class).getValue();
       return new UnsubscribeRequest(subscriptionId, webSocketRpcRequest.getConnectionId());
     } catch (final Exception e) {
       throw new InvalidSubscriptionRequestException("Error parsing subscribe request", e);
