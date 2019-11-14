@@ -31,11 +31,11 @@ import org.rocksdb.TransactionDB;
 
 public class RocksDBMetricsFactory {
 
-  public static RocksDBMetricsFactory PUBLIC_ROCKS_DB_METRICS =
+  public static final RocksDBMetricsFactory PUBLIC_ROCKS_DB_METRICS =
       new RocksDBMetricsFactory(
           BesuMetricCategory.KVSTORE_ROCKSDB, BesuMetricCategory.KVSTORE_ROCKSDB_STATS);
 
-  public static RocksDBMetricsFactory PRIVATE_ROCKS_DB_METRICS =
+  public static final RocksDBMetricsFactory PRIVATE_ROCKS_DB_METRICS =
       new RocksDBMetricsFactory(
           BesuMetricCategory.KVSTORE_PRIVATE_ROCKSDB,
           BesuMetricCategory.KVSTORE_PRIVATE_ROCKSDB_STATS);

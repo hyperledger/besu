@@ -170,11 +170,6 @@ public class RocksDBStats {
   };
 
   public static void registerRocksDBMetrics(
-      final Statistics stats, final PrometheusMetricsSystem metricsSystem) {
-    registerRocksDBMetrics(stats, metricsSystem, KVSTORE_ROCKSDB_STATS);
-  }
-
-  public static void registerRocksDBMetrics(
       final Statistics stats,
       final PrometheusMetricsSystem metricsSystem,
       final MetricCategory category) {
