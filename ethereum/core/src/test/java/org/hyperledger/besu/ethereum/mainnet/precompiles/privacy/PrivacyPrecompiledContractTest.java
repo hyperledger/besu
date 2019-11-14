@@ -54,7 +54,6 @@ public class PrivacyPrecompiledContractTest {
   @Rule public final TemporaryFolder temp = new TemporaryFolder();
 
   private final String actual = "Test String";
-  private final String publicKey = "public key";
   private final BytesValue key = BytesValue.wrap(actual.getBytes(UTF_8));
   private PrivacyPrecompiledContract privacyPrecompiledContract;
   private PrivacyPrecompiledContract brokenPrivateTransactionHandler;
@@ -134,7 +133,6 @@ public class PrivacyPrecompiledContractTest {
     privacyPrecompiledContract =
         new PrivacyPrecompiledContract(
             new SpuriousDragonGasCalculator(),
-            publicKey,
             mockEnclave(),
             worldStateArchive,
             privateStateStorage);
@@ -142,7 +140,6 @@ public class PrivacyPrecompiledContractTest {
     brokenPrivateTransactionHandler =
         new PrivacyPrecompiledContract(
             new SpuriousDragonGasCalculator(),
-            publicKey,
             brokenMockEnclave(),
             worldStateArchive,
             privateStateStorage);

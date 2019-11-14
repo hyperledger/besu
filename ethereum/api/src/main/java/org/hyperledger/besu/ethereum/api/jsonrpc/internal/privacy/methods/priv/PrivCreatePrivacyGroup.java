@@ -36,7 +36,7 @@ public class PrivCreatePrivacyGroup implements JsonRpcMethod {
 
   private static final Logger LOG = getLogger();
   private final Enclave enclave;
-  private PrivacyParameters privacyParameters;
+  private final PrivacyParameters privacyParameters;
   private final JsonRpcParameter parameters;
 
   public PrivCreatePrivacyGroup(
