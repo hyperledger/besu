@@ -160,11 +160,7 @@ public class PrivacyPrecompiledContractIntegrationTest {
 
     final PrivacyPrecompiledContract privacyPrecompiledContract =
         new PrivacyPrecompiledContract(
-            new SpuriousDragonGasCalculator(),
-            publicKeys.get(0),
-            enclave,
-            worldStateArchive,
-            privateStateStorage);
+            new SpuriousDragonGasCalculator(), enclave, worldStateArchive, privateStateStorage);
 
     privacyPrecompiledContract.setPrivateTransactionProcessor(mockPrivateTxProcessor());
 
