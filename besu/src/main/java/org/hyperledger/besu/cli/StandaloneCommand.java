@@ -68,7 +68,8 @@ class StandaloneCommand implements DefaultCommandValues {
   @CommandLine.Option(
       names = {"--rpc-http-authentication-public-key-file"},
       paramLabel = MANDATORY_FILE_FORMAT_HELP,
-      description = "External JSON-RPC HTTP authentication public key file in PEM format used for validating JWT",
+      description =
+          "External JSON-RPC HTTP authentication public key file in PEM format used for validating JWT",
       arity = "1")
   final File rpcHttpAuthenticationPublicKeyFile = null;
 
@@ -83,7 +84,8 @@ class StandaloneCommand implements DefaultCommandValues {
   @CommandLine.Option(
       names = {"--rpc-ws-authentication-public-key-file"},
       paramLabel = MANDATORY_FILE_FORMAT_HELP,
-      description = "External JSON-RPC WebSocket authentication public key file in PEM format used for validating JWT",
+      description =
+          "External JSON-RPC WebSocket authentication public key file in PEM format used for validating JWT",
       arity = "1")
   final File rpcWsAuthenticationPublicKeyFile = null;
 
