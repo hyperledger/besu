@@ -107,7 +107,7 @@ public class PrivateTransactionHandler {
     try {
       receiveResponse = enclave.receive(receiveRequest);
       return receiveResponse.getPrivacyGroupId();
-    } catch (final Exception e) {
+    } catch (final RuntimeException e) {
       LOG.error("Failed to retrieve private transaction in enclave", e);
       throw e;
     }
