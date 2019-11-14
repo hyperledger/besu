@@ -16,6 +16,9 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.ethereum.core.Hash;
 
+import java.util.Arrays;
+import java.util.Objects;
+
 public class EthHashSolution {
   private final long nonce;
   private final Hash mixHash;
@@ -37,5 +40,22 @@ public class EthHashSolution {
 
   public byte[] getPowHash() {
     return powHash;
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    EthHashSolution that = (EthHashSolution) o;
+    return nonce == that.nonce
+        && Objects.equals(mixHash, that.mixHash)
+        && Arrays.equals(powHash, that.powHash);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = Objects.hash(nonce, mixHash);
+    result = 31 * result + Arrays.hashCode(powHash);
+    return result;
   }
 }

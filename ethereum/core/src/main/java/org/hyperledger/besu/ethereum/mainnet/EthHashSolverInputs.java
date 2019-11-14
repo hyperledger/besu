@@ -16,6 +16,8 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.util.uint.UInt256;
 
+import java.util.Arrays;
+
 public class EthHashSolverInputs {
   private final UInt256 target;
   private final byte[] prePowHash;
@@ -38,5 +40,17 @@ public class EthHashSolverInputs {
 
   public long getBlockNumber() {
     return blockNumber;
+  }
+
+  @Override
+  public String toString() {
+    return "EthHashSolverInputs{"
+        + "target="
+        + target
+        + ", prePowHash="
+        + Arrays.toString(prePowHash)
+        + ", blockNumber="
+        + blockNumber
+        + '}';
   }
 }

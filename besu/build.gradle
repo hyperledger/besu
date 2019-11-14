@@ -44,6 +44,7 @@ dependencies {
   implementation project(':ethereum:p2p')
   implementation project(':ethereum:retesteth')
   implementation project(':ethereum:rlp')
+  implementation project(':ethereum:stratum')
   implementation project(':metrics:core')
   implementation project(':nat')
   implementation project(':plugin-api')
