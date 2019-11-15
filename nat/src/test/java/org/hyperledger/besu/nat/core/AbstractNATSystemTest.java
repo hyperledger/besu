@@ -22,10 +22,8 @@ import static org.mockito.Mockito.verify;
 
 import org.hyperledger.besu.nat.core.domain.NATMethod;
 import org.hyperledger.besu.nat.core.domain.NATPortMapping;
-import org.hyperledger.besu.nat.core.domain.NATServiceType;
 
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import org.junit.Test;
