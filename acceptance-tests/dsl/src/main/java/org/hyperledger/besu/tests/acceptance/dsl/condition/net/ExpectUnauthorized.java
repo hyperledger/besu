@@ -26,7 +26,7 @@ public class ExpectUnauthorized implements Condition {
   private static final String UNAUTHORIZED = "Unauthorized";
   private final Transaction<?> transaction;
 
-  public ExpectUnauthorized(final Transaction transaction) {
+  public ExpectUnauthorized(final Transaction<?> transaction) {
     this.transaction = transaction;
   }
 
