@@ -135,9 +135,9 @@ public class PublicKeySubCommand implements Runnable {
   }
 
   /**
-   * Public key address export sub-command
+   * Account address export sub-command
    *
-   * <p>Export of the public key address is writing the address to the standard output by default.
+   * <p>Export of the account address is writing the address to the standard output by default.
    * An option enables to write it in a file. Indeed, a direct output of the value to standard out
    * is not always recommended as reading can be made difficult as the value can be mixed with other
    * information like logs that are in KeyPairUtil that is inevitable.
@@ -145,7 +145,7 @@ public class PublicKeySubCommand implements Runnable {
   @Command(
       name = "export-address",
       description =
-          "This command outputs the node's public key address. "
+          "This command outputs the node's account address. "
               + "Default output is standard output.",
       mixinStandardHelpOptions = true)
   static class AddressSubCommand implements Runnable {
@@ -180,7 +180,7 @@ public class PublicKeySubCommand implements Runnable {
         try (final BufferedWriter fileWriter = Files.newBufferedWriter(path, UTF_8)) {
           fileWriter.write(address.toString());
         } catch (final IOException e) {
-          LOG.error("An error occurred while trying to write the public key address", e);
+          LOG.error("An error occurred while trying to write the account address", e);
         }
       } else {
         parentCommand.out.println(address.toString());
