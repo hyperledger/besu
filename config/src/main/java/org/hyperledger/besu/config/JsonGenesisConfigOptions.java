@@ -221,6 +221,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public OptionalLong getAtlantisBlockNumber() {
+    return getOptionalLong("atlantisblock");
+  }
+
+  @Override
   public Optional<BigInteger> getChainId() {
     return getOptionalBigInteger("chainid");
   }

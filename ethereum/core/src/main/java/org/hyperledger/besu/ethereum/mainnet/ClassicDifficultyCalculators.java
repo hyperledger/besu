@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.util.uint.UInt256;
 
 import java.math.BigInteger;
@@ -63,6 +64,29 @@ public abstract class ClassicDifficultyCalculators {
                     .add(parentDifficulty));
         return difficulty;
       };
+
+  public static DifficultyCalculator<Void> EIP100 =
+      (time, parent, protocolContext) -> {
+        final BigInteger parentDifficulty = difficulty(parent.getDifficulty());
+        final boolean hasOmmers = !parent.getOmmersHash().equals(Hash.EMPTY_LIST_HASH);
+        final BigInteger difficulty =
+            ensureMinimumDifficulty(
+                BigInteger.valueOf(byzantiumX(time, parent.getTimestamp(), hasOmmers))
+                    .multiply(parentDifficulty.divide(DIFFICULTY_BOUND_DIVISOR))
+                    .add(parentDifficulty));
+        return difficulty;
+      };
+
+  private static long byzantiumX(
+      final long blockTime, final long parentTime, final boolean hasOmmers) {
+    long x = (blockTime - parentTime) / 9L;
+    if (hasOmmers) {
+      x = 2 - x;
+    } else {
+      x = 1 - x;
+    }
+    return Math.max(x, -99L);
+  }
 
   private static BigInteger adjustForDifficultyDelay(
       final long periodCount, final BigInteger difficulty) {
