@@ -88,7 +88,7 @@ public class AdminNodeInfo implements JsonRpcMethod {
     response.put("enode", enode.toString());
     response.put("ip", ip);
     if (enode.isListening()) {
-      int listeningPort = getListeningPort(enode);
+      final int listeningPort = getListeningPort(enode);
       response.put("listenAddr", ip + ":" + listeningPort);
       ports.put("listener", listeningPort);
     }
@@ -120,8 +120,8 @@ public class AdminNodeInfo implements JsonRpcMethod {
     return new JsonRpcSuccessResponse(req.getId(), response);
   }
 
-  private String getIp(EnodeURL enode) {
-    Optional<NATSystem> natSystem = natManager.getNatSystem();
+  private String getIp(final EnodeURL enode) {
+    final Optional<NATSystem> natSystem = natManager.getNatSystem();
     if (natSystem.isPresent()) {
       try {
         return natSystem
@@ -136,8 +136,8 @@ public class AdminNodeInfo implements JsonRpcMethod {
     }
   }
 
-  private int getDiscoveryPort(EnodeURL enode) {
-    AtomicInteger discoveryPort = new AtomicInteger();
+  private int getDiscoveryPort(final EnodeURL enode) {
+    final AtomicInteger discoveryPort = new AtomicInteger();
     natManager
         .getNatSystem()
         .ifPresentOrElse(
@@ -150,8 +150,8 @@ public class AdminNodeInfo implements JsonRpcMethod {
     return discoveryPort.intValue();
   }
 
-  private int getListeningPort(EnodeURL enode) {
-    AtomicInteger listeningPort = new AtomicInteger();
+  private int getListeningPort(final EnodeURL enode) {
+    final AtomicInteger listeningPort = new AtomicInteger();
     natManager
         .getNatSystem()
         .ifPresentOrElse(

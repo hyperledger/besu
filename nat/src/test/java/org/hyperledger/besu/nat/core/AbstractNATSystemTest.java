@@ -24,6 +24,7 @@ import org.hyperledger.besu.nat.core.domain.NATMethod;
 import org.hyperledger.besu.nat.core.domain.NATPortMapping;
 import org.hyperledger.besu.nat.core.domain.NATServiceType;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
@@ -95,7 +96,7 @@ public class AbstractNATSystemTest {
       }
 
       @Override
-      public CompletableFuture<Map<NATServiceType, NATPortMapping>> getPortMappings() {
+      public CompletableFuture<List<NATPortMapping>> getPortMappings() {
         return new CompletableFuture<>();
       }
     };
