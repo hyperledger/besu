@@ -41,7 +41,12 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
-import org.hyperledger.besu.nat.upnp.UpnpNatManager;
+import org.hyperledger.besu.nat.core.NATManager;
+import org.hyperledger.besu.nat.core.NATSystem;
+import org.hyperledger.besu.nat.core.domain.NATMethod;
+import org.hyperledger.besu.nat.core.domain.NATServiceType;
+import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
+import org.hyperledger.besu.nat.upnp.UpnpNatSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.util.bytes.BytesValue;
 
@@ -123,7 +128,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
   private final PeerPermissions peerPermissions;
   private final MaintainedPeers maintainedPeers;
 
-  private Optional<UpnpNatManager> natManager;
+  private NATManager natManager;
   private Optional<String> natExternalAddress;
 
   private OptionalLong peerBondedObserverId = OptionalLong.empty();
@@ -157,7 +162,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
       final SECP256K1.KeyPair keyPair,
       final NetworkingConfiguration config,
       final PeerPermissions peerPermissions,
-      final Optional<UpnpNatManager> natManager,
+      final NATManager natManager,
       final MaintainedPeers maintainedPeers,
       final PeerReputationManager reputationManager) {
 
@@ -201,7 +206,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
                     : configuredDiscoveryPort)
             .join();
 
-    if (natManager.isPresent()) {
+    if (natManager.isNATEnvironment()) {
       this.configureNatEnvironment(listeningPort, discoveryPort);
     }
 
@@ -373,31 +378,30 @@ public class DefaultP2PNetwork implements P2PNetwork {
   }
 
   private void configureNatEnvironment(final int listeningPort, final int discoveryPort) {
-    final CompletableFuture<String> natQueryFuture =
-        this.natManager.orElseThrow().queryExternalIPAddress();
     String externalAddress = null;
     try {
-      final int timeoutSeconds = 60;
+      final NATSystem natSystem = natManager.getNatSystem().orElseThrow();
+      final NATMethod natMethod = natManager.getNatMethod();
+      final CompletableFuture<String> natQueryFuture = natSystem.getExternalIPAddress();
       LOG.info(
           "Querying NAT environment for external IP address, timeout "
-              + timeoutSeconds
+              + NATSystem.TIMEOUT_SECONDS
               + " seconds...");
-      externalAddress = natQueryFuture.get(timeoutSeconds, TimeUnit.SECONDS);
+      externalAddress = natQueryFuture.get(NATSystem.TIMEOUT_SECONDS, TimeUnit.SECONDS);
 
-      // if we're in a NAT environment, request port forwards for every port we
-      // intend to bind to
       if (externalAddress != null) {
         LOG.info("External IP detected: " + externalAddress);
-        this.natManager
-            .get()
-            .requestPortForward(discoveryPort, UpnpNatManager.Protocol.UDP, "besu-discovery");
-        this.natManager
-            .get()
-            .requestPortForward(listeningPort, UpnpNatManager.Protocol.TCP, "besu-rlpx");
+        // if we're in a UPNP NAT environment, request port forwards for every port we
+        // intend to bind to
+        if (natMethod.equals(NATMethod.UPNP)) {
+          UpnpNatSystem upnpNatSystem = (UpnpNatSystem) natSystem;
+          upnpNatSystem.requestPortForward(
+              discoveryPort, NetworkProtocol.UDP, NATServiceType.DISCOVERY);
+          upnpNatSystem.requestPortForward(listeningPort, NetworkProtocol.TCP, NATServiceType.RLPX);
+        }
       } else {
         LOG.info("No external IP detected within timeout.");
       }
-
     } catch (final Exception e) {
       LOG.error("Error configuring NAT environment", e);
     }
@@ -417,7 +421,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
     private MaintainedPeers maintainedPeers = new MaintainedPeers();
     private PeerPermissions peerPermissions = PeerPermissions.noop();
 
-    private Optional<UpnpNatManager> natManager = Optional.empty();
+    private NATManager natManager;
     private MetricsSystem metricsSystem;
 
     public P2PNetwork build() {
@@ -531,12 +535,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
       return this;
     }
 
-    public Builder natManager(final UpnpNatManager natManager) {
-      this.natManager = Optional.ofNullable(natManager);
-      return this;
-    }
-
-    public Builder natManager(final Optional<UpnpNatManager> natManager) {
+    public Builder natManager(final NATManager natManager) {
       this.natManager = natManager;
       return this;
     }

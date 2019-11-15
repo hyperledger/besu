@@ -22,7 +22,8 @@ import org.hyperledger.besu.ethereum.p2p.network.NetworkRunner;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.stratum.StratumServer;
 import org.hyperledger.besu.metrics.prometheus.MetricsService;
-import org.hyperledger.besu.nat.upnp.UpnpNatManager;
+import org.hyperledger.besu.nat.core.NATManager;
+import org.hyperledger.besu.nat.core.NATSystem;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -49,7 +50,7 @@ public class Runner implements AutoCloseable {
   private final CountDownLatch shutdown = new CountDownLatch(1);
 
   private final NetworkRunner networkRunner;
-  private final Optional<UpnpNatManager> natManager;
+  private final NATManager natManager;
   private final Optional<JsonRpcHttpService> jsonRpc;
   private final Optional<GraphQLHttpService> graphQLHttp;
   private final Optional<WebSocketService> websocketRpc;
@@ -62,7 +63,7 @@ public class Runner implements AutoCloseable {
   Runner(
       final Vertx vertx,
       final NetworkRunner networkRunner,
-      final Optional<UpnpNatManager> natManager,
+      final NATManager natManager,
       final Optional<JsonRpcHttpService> jsonRpc,
       final Optional<GraphQLHttpService> graphQLHttp,
       final Optional<WebSocketService> websocketRpc,
@@ -85,7 +86,7 @@ public class Runner implements AutoCloseable {
   public void start() {
     try {
       LOG.info("Starting Ethereum main loop ... ");
-      natManager.ifPresent(UpnpNatManager::start);
+      natManager.getNatSystem().ifPresent(NATSystem::start);
       networkRunner.start();
       if (networkRunner.getNetwork().isP2pEnabled()) {
         besuController.getSynchronizer().start();
@@ -125,7 +126,7 @@ public class Runner implements AutoCloseable {
     networkRunner.stop();
     waitForServiceToStop("Network", networkRunner::awaitStop);
 
-    natManager.ifPresent(UpnpNatManager::stop);
+    natManager.getNatSystem().ifPresent(NATSystem::stop);
     besuController.close();
     vertx.close((res) -> vertxShutdownLatch.countDown());
     waitForServiceToStop("Vertx", vertxShutdownLatch::await);

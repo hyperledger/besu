@@ -22,6 +22,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.nat.core.domain.NATServiceType;
+import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
+
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.URL;
@@ -48,7 +51,7 @@ public final class UpnpNatManagerTest {
   private Registry mockedRegistry;
   private ControlPoint mockedControlPoint;
 
-  private UpnpNatManager upnpManager;
+  private UpnpNatSystem upnpManager;
 
   @Before
   public void initialize() {
@@ -60,7 +63,7 @@ public final class UpnpNatManagerTest {
     when(mockedService.getRegistry()).thenReturn(mockedRegistry);
     when(mockedService.getControlPoint()).thenReturn(mockedControlPoint);
 
-    upnpManager = new UpnpNatManager(mockedService);
+    upnpManager = new UpnpNatSystem(mockedService);
   }
 
   @Test
@@ -104,7 +107,7 @@ public final class UpnpNatManagerTest {
 
     assertThatThrownBy(
             () -> {
-              upnpManager.requestPortForward(80, UpnpNatManager.Protocol.TCP, "");
+              upnpManager.requestPortForward(80, NetworkProtocol.TCP, NATServiceType.JSON_RPC);
             })
         .isInstanceOf(IllegalStateException.class);
   }
@@ -113,7 +116,8 @@ public final class UpnpNatManagerTest {
   public void requestPortForwardThrowsWhenPortIsZero() {
     upnpManager.start();
 
-    assertThatThrownBy(() -> upnpManager.requestPortForward(0, UpnpNatManager.Protocol.TCP, ""))
+    assertThatThrownBy(
+            () -> upnpManager.requestPortForward(0, NetworkProtocol.TCP, NATServiceType.JSON_RPC))
         .isInstanceOf(IllegalArgumentException.class);
   }
 
@@ -122,7 +126,7 @@ public final class UpnpNatManagerTest {
 
     assertThatThrownBy(
             () -> {
-              upnpManager.queryExternalIPAddress();
+              upnpManager.getExternalIPAddress();
             })
         .isInstanceOf(IllegalStateException.class);
   }
@@ -131,7 +135,7 @@ public final class UpnpNatManagerTest {
   public void queryIpDoesNotThrowWhenStarted() throws Exception {
     upnpManager.start();
 
-    upnpManager.queryExternalIPAddress();
+    upnpManager.getExternalIPAddress();
   }
 
   @Test
@@ -144,7 +148,7 @@ public final class UpnpNatManagerTest {
 
     assertThat(listener).isNotNull();
 
-    // create a remote device that matches the WANIPConnection service that UpnpNatManager
+    // create a remote device that matches the WANIPConnection service that UpnpNatSystem
     // is looking for and directly call the registry listener
     RemoteService wanIpConnectionService =
         new RemoteService(
@@ -159,7 +163,7 @@ public final class UpnpNatManagerTest {
     RemoteDevice device =
         new RemoteDevice(
             new RemoteDeviceIdentity(
-                UDN.valueOf(UpnpNatManager.SERVICE_TYPE_WAN_IP_CONNECTION),
+                UDN.valueOf(UpnpNatSystem.SERVICE_TYPE_WAN_IP_CONNECTION),
                 3600,
                 new URL("http://127.63.31.15/"),
                 null,

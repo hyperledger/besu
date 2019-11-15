@@ -80,7 +80,7 @@ class BesuUpnpServiceConfiguration implements UpnpServiceConfiguration {
               public void rejectedExecution(
                   final Runnable runnable, final ThreadPoolExecutor threadPoolExecutor) {
                 // Log and discard
-                UpnpNatManager.LOG.warn("Thread pool rejected execution of " + runnable.getClass());
+                UpnpNatSystem.LOG.warn("Thread pool rejected execution of " + runnable.getClass());
                 super.rejectedExecution(runnable, threadPoolExecutor);
               }
             });

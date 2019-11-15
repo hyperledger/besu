@@ -12,18 +12,18 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.nat;
 
-public enum NatMethod {
-  UPNP,
-  NONE;
+package org.hyperledger.besu.nat.core.domain;
 
-  public static NatMethod fromString(final String str) {
-    for (final NatMethod mode : NatMethod.values()) {
-      if (mode.name().equalsIgnoreCase(str)) {
-        return mode;
-      }
-    }
-    return null;
-  }
+/**
+ * This enum describes all supported NAT methods in Besu.
+ *
+ * <ul>
+ *   <li><b>TCP:</b> Transmission Control Protocol.
+ *   <li><b>UDP:</b> User Datagram Protocol.
+ * </ul>
+ */
+public enum NetworkProtocol {
+  TCP,
+  UDP
 }

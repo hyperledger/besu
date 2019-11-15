@@ -86,8 +86,8 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsService;
-import org.hyperledger.besu.nat.NatMethod;
-import org.hyperledger.besu.nat.upnp.UpnpNatManager;
+import org.hyperledger.besu.nat.core.NATManager;
+import org.hyperledger.besu.nat.core.domain.NATMethod;
 import org.hyperledger.besu.util.NetworkUtility;
 import org.hyperledger.besu.util.bytes.BytesValue;
 
@@ -119,7 +119,7 @@ public class RunnerBuilder {
   private String p2pAdvertisedHost;
   private String p2pListenInterface = NetworkUtility.INADDR_ANY;
   private int p2pListenPort;
-  private NatMethod natMethod = NatMethod.NONE;
+  private NATMethod natMethod = NATMethod.NONE;
   private int maxPeers;
   private boolean limitRemoteWireConnectionsEnabled = false;
   private float fractionRemoteConnectionsAllowed;
@@ -182,7 +182,7 @@ public class RunnerBuilder {
     return this;
   }
 
-  public RunnerBuilder natMethod(final NatMethod natMethod) {
+  public RunnerBuilder natMethod(final NATMethod natMethod) {
     this.natMethod = natMethod;
     return this;
   }
@@ -325,7 +325,7 @@ public class RunnerBuilder {
             .map(nodePerms -> PeerPermissions.combine(nodePerms, bannedNodes))
             .orElse(bannedNodes);
 
-    final Optional<UpnpNatManager> natManager = buildNatManager(natMethod);
+    final NATManager natManager = new NATManager(natMethod);
 
     NetworkBuilder inactiveNetwork = (caps) -> new NoopP2PNetwork();
     NetworkBuilder activeNetwork =
@@ -411,7 +411,8 @@ public class RunnerBuilder {
               privacyParameters,
               jsonRpcConfiguration,
               webSocketConfiguration,
-              metricsConfiguration);
+              metricsConfiguration,
+              natManager);
       jsonRpcHttpService =
           Optional.of(
               new JsonRpcHttpService(
@@ -469,7 +470,8 @@ public class RunnerBuilder {
               privacyParameters,
               jsonRpcConfiguration,
               webSocketConfiguration,
-              metricsConfiguration);
+              metricsConfiguration,
+              natManager);
 
       final SubscriptionManager subscriptionManager =
           createSubscriptionManager(vertx, transactionPool);
@@ -527,16 +529,6 @@ public class RunnerBuilder {
       return Optional.of(nodePermissioningController);
     } else {
       return Optional.empty();
-    }
-  }
-
-  private Optional<UpnpNatManager> buildNatManager(final NatMethod natMethod) {
-    switch (natMethod) {
-      case UPNP:
-        return Optional.of(new UpnpNatManager());
-      case NONE:
-      default:
-        return Optional.ofNullable(null);
     }
   }
 
@@ -599,7 +591,8 @@ public class RunnerBuilder {
       final PrivacyParameters privacyParameters,
       final JsonRpcConfiguration jsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
-      final MetricsConfiguration metricsConfiguration) {
+      final MetricsConfiguration metricsConfiguration,
+      final NATManager natManager) {
     final Map<String, JsonRpcMethod> methods =
         new JsonRpcMethodsFactory()
             .methods(
@@ -622,7 +615,8 @@ public class RunnerBuilder {
                 privacyParameters,
                 jsonRpcConfiguration,
                 webSocketConfiguration,
-                metricsConfiguration);
+                metricsConfiguration,
+                natManager);
     methods.putAll(besuController.getAdditionalJsonRpcMethods(jsonRpcApis));
     return methods;
   }

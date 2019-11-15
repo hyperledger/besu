@@ -32,7 +32,11 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponseType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcUnauthorizedResponse;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
-import org.hyperledger.besu.nat.upnp.UpnpNatManager;
+import org.hyperledger.besu.nat.core.NATManager;
+import org.hyperledger.besu.nat.core.domain.NATMethod;
+import org.hyperledger.besu.nat.core.domain.NATServiceType;
+import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
+import org.hyperledger.besu.nat.upnp.UpnpNatSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
@@ -83,7 +87,7 @@ public class JsonRpcHttpService {
   private final Vertx vertx;
   private final JsonRpcConfiguration config;
   private final Map<String, JsonRpcMethod> rpcMethods;
-  private final Optional<UpnpNatManager> natManager;
+  private final NATManager natManager;
   private final Path dataDir;
   private final LabelledMetric<OperationTimer> requestTimer;
 
@@ -110,7 +114,7 @@ public class JsonRpcHttpService {
       final Path dataDir,
       final JsonRpcConfiguration config,
       final MetricsSystem metricsSystem,
-      final Optional<UpnpNatManager> natManager,
+      final NATManager natManager,
       final Map<String, JsonRpcMethod> methods,
       final HealthService livenessService,
       final HealthService readinessService) {
@@ -131,7 +135,7 @@ public class JsonRpcHttpService {
       final Path dataDir,
       final JsonRpcConfiguration config,
       final MetricsSystem metricsSystem,
-      final Optional<UpnpNatManager> natManager,
+      final NATManager natManager,
       final Map<String, JsonRpcMethod> methods,
       final Optional<AuthenticationService> authenticationService,
       final HealthService livenessService,
@@ -229,12 +233,20 @@ public class JsonRpcHttpService {
                 LOG.info(
                     "JsonRPC service started and listening on {}:{}", config.getHost(), actualPort);
                 config.setPort(actualPort);
-                // Request that a NAT port forward for our server port
-                if (natManager.isPresent()) {
-                  natManager
-                      .get()
-                      .requestPortForward(
-                          config.getPort(), UpnpNatManager.Protocol.TCP, "partheon-json-rpc");
+
+                if (natManager.isNATEnvironment()) {
+                  // Request that a NAT port forward for our server port
+                  final NATMethod natMethod = natManager.getNatMethod();
+                  if (natMethod.equals(NATMethod.UPNP)) {
+                    natManager
+                        .getNatSystem()
+                        .ifPresent(
+                            natSystem -> {
+                              final UpnpNatSystem upnpNatSystem = (UpnpNatSystem) natSystem;
+                              upnpNatSystem.requestPortForward(
+                                  config.getPort(), NetworkProtocol.TCP, NATServiceType.JSON_RPC);
+                            });
+                  }
                 }
                 return;
               }

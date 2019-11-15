@@ -29,7 +29,8 @@ import org.hyperledger.besu.ethereum.p2p.discovery.internal.TimerUtil;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
-import org.hyperledger.besu.nat.upnp.UpnpNatManager;
+import org.hyperledger.besu.nat.core.NATManager;
+import org.hyperledger.besu.nat.core.NATSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.util.NetworkUtility;
 import org.hyperledger.besu.util.Subscribers;
@@ -65,7 +66,7 @@ public abstract class PeerDiscoveryAgent {
   protected final List<DiscoveryPeer> bootstrapPeers;
   private final List<PeerRequirement> peerRequirements = new CopyOnWriteArrayList<>();
   private final PeerPermissions peerPermissions;
-  private final Optional<UpnpNatManager> natManager;
+  private final NATManager natManager;
   private final MetricsSystem metricsSystem;
   /* The peer controller, which takes care of the state machine of peers. */
   protected Optional<PeerDiscoveryController> controller = Optional.empty();
@@ -88,7 +89,7 @@ public abstract class PeerDiscoveryAgent {
       final SECP256K1.KeyPair keyPair,
       final DiscoveryConfiguration config,
       final PeerPermissions peerPermissions,
-      final Optional<UpnpNatManager> natManager,
+      final NATManager natManager,
       final MetricsSystem metricsSystem) {
     this.metricsSystem = metricsSystem;
     checkArgument(keyPair != null, "keypair cannot be null");
@@ -126,12 +127,14 @@ public abstract class PeerDiscoveryAgent {
 
       // override advertised host if we detect an external IP address via NAT manager
       String externalIpAddress = null;
-      if (natManager.isPresent()) {
+      if (natManager.isNATEnvironment()) {
         try {
-          final int timeoutSeconds = 60;
-          LOG.info("Waiting for up to {} seconds to detect external IP address...", timeoutSeconds);
+          final NATSystem natSystem = natManager.getNatSystem().orElseThrow();
+          LOG.info(
+              "Waiting for up to {} seconds to detect external IP address...",
+              NATSystem.TIMEOUT_SECONDS);
           externalIpAddress =
-              natManager.get().queryExternalIPAddress().get(timeoutSeconds, TimeUnit.SECONDS);
+              natSystem.getExternalIPAddress().get(NATSystem.TIMEOUT_SECONDS, TimeUnit.SECONDS);
 
         } catch (Exception e) {
           LOG.warn(
