@@ -16,10 +16,10 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.authentication;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.nio.file.Files;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
@@ -56,10 +56,9 @@ public class JWTAuthOptionsFactory {
                     Base64.getEncoder().encodeToString(keypair.getPrivate().getEncoded())));
   }
 
-  private byte[] readPublicKey(final File authenticationPublicKeyFile) {
-    try (InputStreamReader keyFileReader =
-        new InputStreamReader(new FileInputStream(authenticationPublicKeyFile), UTF_8)) {
-      final PemReader pemReader = new PemReader(keyFileReader);
+  private byte[] readPublicKey(final File publicKeyFile) {
+    try (BufferedReader reader = Files.newBufferedReader(publicKeyFile.toPath(), UTF_8);
+        PemReader pemReader = new PemReader(reader); ) {
       final PemObject pemObject = pemReader.readPemObject();
       if (pemObject == null) {
         throw new IllegalStateException("Authentication RPC public key file format is invalid");
