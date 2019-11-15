@@ -79,8 +79,8 @@ public class HttpServiceLoginAcceptanceTest extends AcceptanceTestBase {
         nodeUsingAuthFile.execute(
             permissioningTransactions.createSuccessfulLogin("user", "pegasys"));
     nodeUsingAuthFile.useAuthenticationTokenInHeaderForJsonRpc(token);
-    nodeUsingAuthFile.verify(net.netVersionUnauthorizedExceptional());
-    nodeUsingAuthFile.verify(net.netServicesUnauthorizedExceptional());
+    nodeUsingAuthFile.verify(net.netVersionUnauthorized());
+    nodeUsingAuthFile.verify(net.netServicesUnauthorized());
   }
 
   @Test
@@ -92,14 +92,14 @@ public class HttpServiceLoginAcceptanceTest extends AcceptanceTestBase {
   @Test
   public void externalJwtPublicKeyUsedOnJsonRpcMethodShouldFailOnNonPermittedMethod() {
     nodeUsingJwtPublicKey.useAuthenticationTokenInHeaderForJsonRpc(TOKEN_ALLOWING_NET_PEER_COUNT);
-    nodeUsingJwtPublicKey.verify(net.netVersionUnauthorizedExceptional());
-    nodeUsingJwtPublicKey.verify(net.netServicesUnauthorizedExceptional());
+    nodeUsingJwtPublicKey.verify(net.netVersionUnauthorized());
+    nodeUsingJwtPublicKey.verify(net.netServicesUnauthorized());
   }
 
   @Test
   public void jsonRpcMethodShouldFailWhenThereIsNoToken() {
-    nodeUsingJwtPublicKey.verify(net.netVersionUnauthorizedExceptional());
-    nodeUsingJwtPublicKey.verify(net.netServicesUnauthorizedExceptional());
+    nodeUsingJwtPublicKey.verify(net.netVersionUnauthorized());
+    nodeUsingJwtPublicKey.verify(net.netServicesUnauthorized());
   }
 
   @Test

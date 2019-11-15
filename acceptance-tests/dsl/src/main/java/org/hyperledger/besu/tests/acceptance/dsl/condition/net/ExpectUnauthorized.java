@@ -21,24 +21,18 @@ import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
 
-import org.web3j.protocol.exceptions.ClientConnectionException;
-
-public class ExpectUnauthorizedException implements Condition {
+public class ExpectUnauthorized implements Condition {
 
   private static final String UNAUTHORIZED = "Unauthorized";
   private final Transaction<?> transaction;
 
-  public ExpectUnauthorizedException(final Transaction transaction) {
+  public ExpectUnauthorized(final Transaction transaction) {
     this.transaction = transaction;
   }
 
   @Override
   public void verify(final Node node) {
     final Throwable thrown = catchThrowable(() -> node.execute(transaction));
-    assertThat(thrown).isInstanceOf(RuntimeException.class);
-
-    final Throwable cause = thrown.getCause();
-    assertThat(cause).isInstanceOf(ClientConnectionException.class);
-    assertThat(cause.getMessage()).contains(UNAUTHORIZED);
+    assertThat(thrown.getMessage()).contains(UNAUTHORIZED);
   }
 }

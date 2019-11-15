@@ -32,7 +32,7 @@ public class WebsocketServiceLoginAcceptanceTest extends AcceptanceTestBase {
   private Cluster authenticatedCluster;
 
   // token with payload{"iat": 1516239022,"exp": 4729363200,"permissions": ["net:peerCount"]}
-  private static final String TOKEN =
+  private static final String TOKEN_ALLOWING_NET_PEER_COUNT =
       "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1MTYyMzkwMjIsImV4cCI6NDcyOTM2MzIwMCwicGVybWl"
           + "zc2lvbnMiOlsibmV0OnBlZXJDb3VudCJdfQ.Y6mNV0nvjzOdqAgMgxknFAOUTKoeRAo4aifNgNrWtuXbJJgz6-"
           + "H_0GvLgjlToohPiDZbBJXJJlgb4zzLLB-sRtFnGoPaMgz_d_6z958GjFD7x_Fl0HW-WrTjRNenZNfTyD86OEAf"
@@ -73,7 +73,6 @@ public class WebsocketServiceLoginAcceptanceTest extends AcceptanceTestBase {
             permissioningTransactions.createSuccessfulLogin("user", "pegasys"));
     nodeUsingAuthFile.useAuthenticationTokenInHeaderForJsonRpc(token);
     nodeUsingAuthFile.verify(net.awaitPeerCount(1));
-    nodeUsingAuthFile.verify(net.netVersionUnauthorizedResponse());
   }
 
   @Test
@@ -82,20 +81,27 @@ public class WebsocketServiceLoginAcceptanceTest extends AcceptanceTestBase {
         nodeUsingAuthFile.execute(
             permissioningTransactions.createSuccessfulLogin("user", "pegasys"));
     nodeUsingAuthFile.useAuthenticationTokenInHeaderForJsonRpc(token);
-    nodeUsingAuthFile.verify(net.netVersionUnauthorizedResponse());
+    nodeUsingAuthFile.verify(net.netVersionUnauthorized());
+    nodeUsingAuthFile.verify(net.netServicesUnauthorized());
   }
 
   @Test
   public void externalJwtPublicKeyUsedOnJsonRpcMethodShouldSucceed() {
-    nodeUsingJwtPublicKey.useAuthenticationTokenInHeaderForJsonRpc(TOKEN);
+    nodeUsingJwtPublicKey.useAuthenticationTokenInHeaderForJsonRpc(TOKEN_ALLOWING_NET_PEER_COUNT);
     nodeUsingJwtPublicKey.verify(net.awaitPeerCount(1));
-    nodeUsingJwtPublicKey.verify(net.netVersionUnauthorizedResponse());
   }
 
   @Test
   public void externalJwtPublicKeyUsedOnJsonRpcMethodShouldFailOnNonPermittedMethod() {
-    nodeUsingJwtPublicKey.useAuthenticationTokenInHeaderForJsonRpc(TOKEN);
-    nodeUsingJwtPublicKey.verify(net.netVersionUnauthorizedResponse());
+    nodeUsingJwtPublicKey.useAuthenticationTokenInHeaderForJsonRpc(TOKEN_ALLOWING_NET_PEER_COUNT);
+    nodeUsingJwtPublicKey.verify(net.netVersionUnauthorized());
+    nodeUsingAuthFile.verify(net.netServicesUnauthorized());
+  }
+
+  @Test
+  public void jsonRpcMethodShouldFailWhenThereIsNoToken() {
+    nodeUsingJwtPublicKey.verify(net.netVersionUnauthorized());
+    nodeUsingJwtPublicKey.verify(net.netServicesUnauthorized());
   }
 
   @Test
