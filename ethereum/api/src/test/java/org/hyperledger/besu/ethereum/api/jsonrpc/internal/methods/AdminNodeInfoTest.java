@@ -32,6 +32,8 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeer;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.nat.core.NATManager;
+import org.hyperledger.besu.nat.core.domain.NATMethod;
 import org.hyperledger.besu.util.bytes.BytesValue;
 import org.hyperledger.besu.util.uint.UInt256;
 
@@ -84,7 +86,8 @@ public class AdminNodeInfoTest {
             BigInteger.valueOf(2018),
             genesisConfigOptions,
             p2pNetwork,
-            blockchainQueries);
+            blockchainQueries,
+            new NATManager(NATMethod.NONE));
   }
 
   @Test

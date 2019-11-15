@@ -41,6 +41,8 @@ import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
+import org.hyperledger.besu.nat.core.NATManager;
+import org.hyperledger.besu.nat.core.domain.NATMethod;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -143,7 +145,8 @@ public class JsonRpcHttpServiceLoginTest {
                     mock(PrivacyParameters.class),
                     mock(JsonRpcConfiguration.class),
                     mock(WebSocketConfiguration.class),
-                    mock(MetricsConfiguration.class)));
+                    mock(MetricsConfiguration.class),
+                    new NATManager(NATMethod.NONE)));
     service = createJsonRpcHttpService();
     jwtAuth = service.authenticationService.get().getJwtAuthProvider();
     service.start().join();
@@ -168,7 +171,7 @@ public class JsonRpcHttpServiceLoginTest {
         folder.newFolder().toPath(),
         config,
         new NoOpMetricsSystem(),
-        Optional.empty(),
+        new NATManager(NATMethod.NONE),
         rpcMethods,
         HealthService.ALWAYS_HEALTHY,
         HealthService.ALWAYS_HEALTHY);

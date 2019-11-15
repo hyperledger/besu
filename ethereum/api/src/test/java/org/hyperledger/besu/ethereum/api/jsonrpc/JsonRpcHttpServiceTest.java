@@ -145,7 +145,8 @@ public class JsonRpcHttpServiceTest {
                     mock(PrivacyParameters.class),
                     mock(JsonRpcConfiguration.class),
                     mock(WebSocketConfiguration.class),
-                    mock(MetricsConfiguration.class)));
+                    mock(MetricsConfiguration.class),
+                    new NATManager(NATMethod.NONE)));
     service = createJsonRpcHttpService();
     service.start().join();
 
