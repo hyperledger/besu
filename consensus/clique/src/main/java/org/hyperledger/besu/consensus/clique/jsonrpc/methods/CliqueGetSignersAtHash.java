@@ -18,7 +18,6 @@ import org.hyperledger.besu.consensus.common.VoteTallyCache;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -35,15 +34,11 @@ import java.util.stream.Collectors;
 public class CliqueGetSignersAtHash implements JsonRpcMethod {
   private final BlockchainQueries blockchainQueries;
   private final VoteTallyCache voteTallyCache;
-  private final JsonRpcParameter parameters;
 
   public CliqueGetSignersAtHash(
-      final BlockchainQueries blockchainQueries,
-      final VoteTallyCache voteTallyCache,
-      final JsonRpcParameter parameter) {
+      final BlockchainQueries blockchainQueries, final VoteTallyCache voteTallyCache) {
     this.blockchainQueries = blockchainQueries;
     this.voteTallyCache = voteTallyCache;
-    this.parameters = parameter;
   }
 
   @Override
@@ -62,7 +57,7 @@ public class CliqueGetSignersAtHash implements JsonRpcMethod {
   }
 
   private Optional<BlockHeader> determineBlockHeader(final JsonRpcRequest request) {
-    final Hash hash = parameters.required(request.getParams(), 0, Hash.class);
+    final Hash hash = request.getRequiredParameter(0, Hash.class);
     return blockchainQueries.blockByHash(hash).map(BlockWithMetadata::getHeader);
   }
 }

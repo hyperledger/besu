@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.stratum;
 import static org.apache.logging.log4j.LogManager.getLogger;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.mainnet.DirectAcyclicGraphSeed;
@@ -165,13 +164,11 @@ public class Stratum1Protocol implements StratumProtocol {
       throws IOException {
     LOG.debug("Miner submitted solution {}", message);
     boolean result = false;
-    JsonRpcParameter parameters = new JsonRpcParameter();
     final EthHashSolution solution =
         new EthHashSolution(
-            BytesValue.fromHexString(parameters.required(message.getParams(), 2, String.class))
-                .getLong(0),
-            Hash.fromHexString(parameters.required(message.getParams(), 4, String.class)),
-            BytesValue.fromHexString(parameters.required(message.getParams(), 3, String.class))
+            BytesValue.fromHexString(message.getRequiredParameter(2, String.class)).getLong(0),
+            Hash.fromHexString(message.getRequiredParameter(4, String.class)),
+            BytesValue.fromHexString(message.getRequiredParameter(3, String.class))
                 .getArrayUnsafe());
     if (Arrays.equals(currentInput.getPrePowHash(), solution.getPowHash())) {
       result = submitCallback.apply(solution);

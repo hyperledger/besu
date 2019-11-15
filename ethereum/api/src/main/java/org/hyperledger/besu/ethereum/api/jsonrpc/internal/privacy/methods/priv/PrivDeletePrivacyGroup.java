@@ -21,7 +21,6 @@ import org.hyperledger.besu.enclave.types.DeletePrivacyGroupRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -34,15 +33,10 @@ public class PrivDeletePrivacyGroup implements JsonRpcMethod {
   private static final Logger LOG = getLogger();
   private final Enclave enclave;
   private PrivacyParameters privacyParameters;
-  private final JsonRpcParameter parameters;
 
-  public PrivDeletePrivacyGroup(
-      final Enclave enclave,
-      final PrivacyParameters privacyParameters,
-      final JsonRpcParameter parameters) {
+  public PrivDeletePrivacyGroup(final Enclave enclave, final PrivacyParameters privacyParameters) {
     this.enclave = enclave;
     this.privacyParameters = privacyParameters;
-    this.parameters = parameters;
   }
 
   @Override
@@ -54,7 +48,7 @@ public class PrivDeletePrivacyGroup implements JsonRpcMethod {
   public JsonRpcResponse response(final JsonRpcRequest request) {
     LOG.trace("Executing {}", RpcMethod.PRIV_DELETE_PRIVACY_GROUP.getMethodName());
 
-    final String privacyGroupId = parameters.required(request.getParams(), 0, String.class);
+    final String privacyGroupId = request.getRequiredParameter(0, String.class);
 
     LOG.trace(
         "Deleting a privacy group with privacyGroupId {} and from {}",
