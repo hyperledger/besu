@@ -19,7 +19,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -35,15 +34,11 @@ import java.util.stream.Collectors;
 public class CliqueGetSigners implements JsonRpcMethod {
   private final BlockchainQueries blockchainQueries;
   private final VoteTallyCache voteTallyCache;
-  private final JsonRpcParameter parameters;
 
   public CliqueGetSigners(
-      final BlockchainQueries blockchainQueries,
-      final VoteTallyCache voteTallyCache,
-      final JsonRpcParameter parameter) {
+      final BlockchainQueries blockchainQueries, final VoteTallyCache voteTallyCache) {
     this.blockchainQueries = blockchainQueries;
     this.voteTallyCache = voteTallyCache;
-    this.parameters = parameter;
   }
 
   @Override
@@ -63,7 +58,7 @@ public class CliqueGetSigners implements JsonRpcMethod {
 
   private Optional<BlockHeader> determineBlockHeader(final JsonRpcRequest request) {
     final Optional<BlockParameter> blockParameter =
-        parameters.optional(request.getParams(), 0, BlockParameter.class);
+        request.getOptionalParameter(0, BlockParameter.class);
     final long latest = blockchainQueries.headBlockNumber();
     final long blockNumber = blockParameter.map(b -> b.getNumber().orElse(latest)).orElse(latest);
     return blockchainQueries.blockByNumber(blockNumber).map(BlockWithMetadata::getHeader);

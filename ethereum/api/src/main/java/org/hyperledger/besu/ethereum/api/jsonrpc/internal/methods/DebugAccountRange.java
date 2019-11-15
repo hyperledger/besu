@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameterOrBlockHash;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugAccountRangeAtResult;
@@ -39,17 +38,13 @@ import com.google.common.base.Suppliers;
 
 public class DebugAccountRange implements JsonRpcMethod {
 
-  private final JsonRpcParameter parameters;
   private final Supplier<BlockchainQueries> blockchainQueries;
 
-  public DebugAccountRange(
-      final JsonRpcParameter parameters, final BlockchainQueries blockchainQueries) {
-    this(parameters, Suppliers.ofInstance(blockchainQueries));
+  public DebugAccountRange(final BlockchainQueries blockchainQueries) {
+    this(Suppliers.ofInstance(blockchainQueries));
   }
 
-  public DebugAccountRange(
-      final JsonRpcParameter parameters, final Supplier<BlockchainQueries> blockchainQueries) {
-    this.parameters = parameters;
+  public DebugAccountRange(final Supplier<BlockchainQueries> blockchainQueries) {
     this.blockchainQueries = blockchainQueries;
   }
 
@@ -62,11 +57,10 @@ public class DebugAccountRange implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequest request) {
-    final Object[] params = request.getParams();
     final BlockParameterOrBlockHash blockParameterOrBlockHash =
-        parameters.required(params, 0, BlockParameterOrBlockHash.class);
-    final String addressHash = parameters.required(params, 2, String.class);
-    final int maxResults = parameters.required(params, 3, Integer.TYPE);
+        request.getRequiredParameter(0, BlockParameterOrBlockHash.class);
+    final String addressHash = request.getRequiredParameter(2, String.class);
+    final int maxResults = request.getRequiredParameter(3, Integer.TYPE);
 
     final Optional<Hash> blockHashOptional = hashFromParameter(blockParameterOrBlockHash);
     if (blockHashOptional.isEmpty()) {

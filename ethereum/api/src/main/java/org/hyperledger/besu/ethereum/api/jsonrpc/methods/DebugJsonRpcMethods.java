@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugTraceBloc
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugTraceBlockByNumber;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugTraceTransaction;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockReplay;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTracer;
@@ -37,7 +36,6 @@ import java.util.Map;
 
 public class DebugJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
-  private final JsonRpcParameter parameter = new JsonRpcParameter();
   private final BlockchainQueries blockchainQueries;
   private final ProtocolSchedule<?> protocolSchedule;
   private final ObservableMetricsSystem metricsSystem;
@@ -65,16 +63,15 @@ public class DebugJsonRpcMethods extends ApiGroupJsonRpcMethods {
             blockchainQueries.getWorldStateArchive());
 
     return mapOf(
-        new DebugTraceTransaction(blockchainQueries, new TransactionTracer(blockReplay), parameter),
-        new DebugAccountRange(parameter, blockchainQueries),
-        new DebugStorageRangeAt(parameter, blockchainQueries, blockReplay),
+        new DebugTraceTransaction(blockchainQueries, new TransactionTracer(blockReplay)),
+        new DebugAccountRange(blockchainQueries),
+        new DebugStorageRangeAt(blockchainQueries, blockReplay),
         new DebugMetrics(metricsSystem),
         new DebugTraceBlock(
-            parameter,
             new BlockTracer(blockReplay),
             ScheduleBasedBlockHeaderFunctions.create(protocolSchedule),
             blockchainQueries),
-        new DebugTraceBlockByNumber(parameter, new BlockTracer(blockReplay), blockchainQueries),
-        new DebugTraceBlockByHash(parameter, new BlockTracer(blockReplay)));
+        new DebugTraceBlockByNumber(new BlockTracer(blockReplay), blockchainQueries),
+        new DebugTraceBlockByHash(new BlockTracer(blockReplay)));
   }
 }
