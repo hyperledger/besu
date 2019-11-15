@@ -3026,7 +3026,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void httpAuthenticationPublicKeyIsConfigured() throws IOException {
     final Path publicKey = Files.createTempFile("public_key", "");
-    parseCommand("--rpc-http-authentication-public-key-file", publicKey.toString());
+    parseCommand("--rpc-http-authentication-jwt-public-key-file", publicKey.toString());
 
     verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
@@ -3049,7 +3049,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void wsAuthenticationPublicKeyIsConfigured() throws IOException {
     final Path publicKey = Files.createTempFile("public_key", "");
-    parseCommand("--rpc-ws-authentication-public-key-file", publicKey.toString());
+    parseCommand("--rpc-ws-authentication-jwt-public-key-file", publicKey.toString());
 
     verify(mockRunnerBuilder).webSocketConfiguration(wsRpcConfigArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
