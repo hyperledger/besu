@@ -19,19 +19,17 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
-import org.hyperledger.besu.tests.acceptance.dsl.transaction.net.NetVersionTransaction;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
 
 import org.web3j.protocol.exceptions.ClientConnectionException;
 
-public class ExpectNetVersionPermissionException implements Condition {
+public class ExpectUnauthorizedException implements Condition {
 
-  private final NetVersionTransaction transaction;
-  private final String expectedMessage;
+  private static final String UNAUTHORIZED = "Unauthorized";
+  private final Transaction<?> transaction;
 
-  public ExpectNetVersionPermissionException(
-      final NetVersionTransaction transaction, final String expectedMessage) {
+  public ExpectUnauthorizedException(final Transaction transaction) {
     this.transaction = transaction;
-    this.expectedMessage = expectedMessage;
   }
 
   @Override
@@ -41,6 +39,6 @@ public class ExpectNetVersionPermissionException implements Condition {
 
     final Throwable cause = thrown.getCause();
     assertThat(cause).isInstanceOf(ClientConnectionException.class);
-    assertThat(cause.getMessage()).contains(expectedMessage);
+    assertThat(cause.getMessage()).contains(UNAUTHORIZED);
   }
 }

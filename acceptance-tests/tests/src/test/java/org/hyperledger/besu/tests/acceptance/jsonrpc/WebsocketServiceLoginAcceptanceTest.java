@@ -73,6 +73,7 @@ public class WebsocketServiceLoginAcceptanceTest extends AcceptanceTestBase {
             permissioningTransactions.createSuccessfulLogin("user", "pegasys"));
     nodeUsingAuthFile.useAuthenticationTokenInHeaderForJsonRpc(token);
     nodeUsingAuthFile.verify(net.awaitPeerCount(1));
+    nodeUsingAuthFile.verify(net.netVersionUnauthorizedResponse());
   }
 
   @Test
