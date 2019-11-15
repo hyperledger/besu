@@ -3,6 +3,11 @@ password = "$2a$10$l3GA7K8g6rJ/Yv.YFSygCuI9byngpEzxgWS9qEg5emYDZomQW7fGC"
 groups = ["admin"]
 permissions = ["eth:*", "perm:*"]
 roles = ["net"]
+enclavePublicKey = "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo="
+
+[Users.userB]
+password = "$2a$10$l3GA7K8g6rJ/Yv.YFSygCuI9byngpEzxgWS9qEg5emYDZomQW7fGC"
+permissions = ["net:*"]
 
 [Groups.admins]
 roles = ["admin"]

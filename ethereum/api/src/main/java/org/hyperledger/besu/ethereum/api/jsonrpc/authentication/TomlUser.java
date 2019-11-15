@@ -21,6 +21,7 @@ import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.AbstractUser;
 import io.vertx.ext.auth.AuthProvider;
+import java.util.Optional;
 
 public class TomlUser extends AbstractUser {
 
@@ -29,18 +30,20 @@ public class TomlUser extends AbstractUser {
   private final List<String> groups;
   private final List<String> permissions;
   private final List<String> roles;
+  private Optional<String> enclavePublicKey;
 
   TomlUser(
       final String username,
       final String password,
       final List<String> groups,
       final List<String> permissions,
-      final List<String> roles) {
+      final List<String> roles, final Optional<String> enclavePublicKey) {
     this.username = username;
     this.password = password;
     this.groups = groups;
     this.permissions = permissions;
     this.roles = roles;
+    this.enclavePublicKey = enclavePublicKey;
   }
 
   @Override
@@ -84,5 +87,9 @@ public class TomlUser extends AbstractUser {
 
   public List<String> getRoles() {
     return roles;
+  }
+
+  public Optional<String> getEnclavePublicKey() {
+    return enclavePublicKey;
   }
 }
