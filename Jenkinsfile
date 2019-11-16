@@ -193,7 +193,7 @@ exit $status
             }
         }
 
-        parallel DockerImage: {
+        DockerImage: {
             def stage_name = 'Docker image node: '
             def docker_folder = 'docker'
             def reports_folder = docker_folder + '/reports'
@@ -229,94 +229,10 @@ exit $status
                         sh "rm -rf ${reports_folder}"
                     }
 
-                    if (shouldPublish()) {
-                        def registry = 'https://registry.hub.docker.com'
-                        def userAccount = 'dockerhub-pegasysengci'
-                        stage(stage_name + 'Push image') {
-                            docker.withRegistry(registry, userAccount) {
-                                docker.image(image).push()
-
-                                def additionalTags = []
-                                if (env.BRANCH_NAME == 'master') {
-                                    additionalTags.add('develop')
-                                }
-                                if (! isSnapshotVersion(version)) {
-                                    additionalTags.add('latest')
-                                    additionalTags.add(version.split(/\./)[0..1].join('.'))
-                                }
-
-                                additionalTags.each { tag ->
-                                    docker.image(image).push tag.trim()
-                                }
-                            }
-                        }
-                    }
                 }
             }
-        }, BintrayPublish: {
-             def stage_name = "Publish distributions: "
-             def version = ''
-             node {
-                 if (shouldPublish()) {
-                     checkout scm
-
-                     docker.image(docker_image_dind).withRun('--privileged') { d ->
-                         docker.image(build_image).inside("--link ${d.id}:docker") {
-
-                             stage(stage_name + 'Calculate variables') {
-                                 def gradleProperties = readProperties file: 'gradle.properties'
-                                 version = gradleProperties.version
-                             }
-
-                             stage(stage_name + 'Prepare') {
-                                 sh './gradlew --no-daemon --parallel clean assemble'
-                             }
-                             stage(stage_name + 'Publish') {
-                                 withCredentials([
-                                 usernamePassword(
-                                     credentialsId: 'pegasys-bintray',
-                                     usernameVariable: 'BINTRAY_USER',
-                                     passwordVariable: 'BINTRAY_KEY'
-                                 )
-                                 ]) {
-                                     sh './gradlew --no-daemon --parallel bintrayUpload'
-                                 }
-                             }
-
-                         }
-                     }
-                 }
-             }
         }
    }
 } catch (e) {
     currentBuild.result = 'FAILURE'
-} finally {
-    // If we're on master and it failed, notify slack
-    if (shouldPublish()) {
-        def currentResult = currentBuild.result ?: 'SUCCESS'
-        def channel = '#priv-pegasys-prod-dev'
-        if (currentResult == 'SUCCESS') {
-            def previousResult = currentBuild.previousBuild?.result
-            if (previousResult != null && (previousResult == 'FAILURE' || previousResult == 'UNSTABLE')) {
-                slackSend(
-                    color: 'good',
-                    message: "Besu branch ${env.BRANCH_NAME} build is back to HEALTHY.\nBuild Number: #${env.BUILD_NUMBER}\n${env.BUILD_URL}",
-                    channel: channel
-                )
-            }
-        } else if (currentBuild.result == 'FAILURE') {
-            slackSend(
-                color: 'danger',
-                message: "Besu branch ${env.BRANCH_NAME} build is FAILING.\nBuild Number: #${env.BUILD_NUMBER}\n${env.BUILD_URL}",
-                channel: channel
-            )
-        } else if (currentBuild.result == 'UNSTABLE') {
-            slackSend(
-                color: 'warning',
-                message: "Besu branch ${env.BRANCH_NAME} build is UNSTABLE.\nBuild Number: #${env.BUILD_NUMBER}\n${env.BUILD_URL}",
-                channel: channel
-            )
-        }
-    }
 }

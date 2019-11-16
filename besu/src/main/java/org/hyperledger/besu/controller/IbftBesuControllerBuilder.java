@@ -14,9 +14,13 @@
  */
 package org.hyperledger.besu.controller;
 
+import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.IbftConfigOptions;
+import org.hyperledger.besu.config.IbftFork;
 import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.EpochManager;
+import org.hyperledger.besu.consensus.common.ForkingVoteTallyCache;
+import org.hyperledger.besu.consensus.common.IbftValidatorOverrides;
 import org.hyperledger.besu.consensus.common.VoteProposer;
 import org.hyperledger.besu.consensus.common.VoteTallyCache;
 import org.hyperledger.besu.consensus.common.VoteTallyUpdater;
@@ -53,6 +57,7 @@ import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Util;
@@ -65,10 +70,16 @@ import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.util.Subscribers;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class IbftBesuControllerBuilder extends BesuControllerBuilder<IbftContext> {
+
   private static final Logger LOG = LogManager.getLogger();
   private IbftEventQueue ibftEventQueue;
   private IbftConfigOptions ibftConfig;
@@ -115,12 +126,13 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder<IbftContext
             miningParameters,
             Util.publicKeyToAddress(nodeKeys.getPublicKey()));
 
-    final ProposerSelector proposerSelector =
-        new ProposerSelector(blockchain, blockInterface, true);
-
     // NOTE: peers should not be used for accessing the network as it does not enforce the
     // "only send once" filter applied by the UniqueMessageMulticaster.
     final VoteTallyCache voteTallyCache = protocolContext.getConsensusState().getVoteTallyCache();
+
+    final ProposerSelector proposerSelector =
+        new ProposerSelector(blockchain, blockInterface, true, voteTallyCache);
+
     peers = new ValidatorPeers(voteTallyCache);
 
     final UniqueMessageMulticaster uniqueMessageMulticaster =
@@ -192,7 +204,7 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder<IbftContext
 
   @Override
   protected PluginServiceFactory createAdditionalPluginServices(final Blockchain blockchain) {
-    return new IbftQueryPluginServiceFactory(blockchain);
+    return new IbftQueryPluginServiceFactory(blockchain, nodeKeys);
   }
 
   @Override
@@ -215,16 +227,39 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder<IbftContext
   @Override
   protected IbftContext createConsensusContext(
       final Blockchain blockchain, final WorldStateArchive worldStateArchive) {
-    final IbftConfigOptions ibftConfig =
-        genesisConfig.getConfigOptions(genesisConfigOverrides).getIbft2ConfigOptions();
+    final GenesisConfigOptions configOptions =
+        genesisConfig.getConfigOptions(genesisConfigOverrides);
+    final IbftConfigOptions ibftConfig = configOptions.getIbft2ConfigOptions();
     final EpochManager epochManager = new EpochManager(ibftConfig.getEpochLength());
+
+    final Map<Long, List<Address>> ibftValidatorForkMap =
+        convertIbftForks(configOptions.getCustomForks().getIbftForks());
+
     return new IbftContext(
-        new VoteTallyCache(
+        new ForkingVoteTallyCache(
             blockchain,
             new VoteTallyUpdater(epochManager, new IbftBlockInterface()),
             epochManager,
-            new IbftBlockInterface()),
+            new IbftBlockInterface(),
+            new IbftValidatorOverrides(ibftValidatorForkMap)),
         new VoteProposer(),
         blockInterface);
+  }
+
+  private Map<Long, List<Address>> convertIbftForks(final List<IbftFork> ibftForks) {
+    final Map<Long, List<Address>> result = new HashMap<>();
+
+    for (final IbftFork fork : ibftForks) {
+      fork.getValidators()
+          .map(
+              validators ->
+                  result.put(
+                      fork.getForkBlock(),
+                      validators.stream()
+                          .map(Address::fromHexString)
+                          .collect(Collectors.toList())));
+    }
+
+    return result;
   }
 }

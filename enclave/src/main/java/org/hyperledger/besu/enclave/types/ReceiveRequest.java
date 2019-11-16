@@ -28,6 +28,10 @@ public class ReceiveRequest {
     this.to = to;
   }
 
+  public ReceiveRequest(final String key) {
+    this(key, null);
+  }
+
   public String getKey() {
     return key;
   }

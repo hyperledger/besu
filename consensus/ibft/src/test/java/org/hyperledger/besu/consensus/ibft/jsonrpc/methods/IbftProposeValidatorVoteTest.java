@@ -21,7 +21,6 @@ import static org.mockito.Mockito.verify;
 import org.hyperledger.besu.consensus.common.VoteProposer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -33,7 +32,6 @@ import org.junit.rules.ExpectedException;
 
 public class IbftProposeValidatorVoteTest {
   private final VoteProposer voteProposer = mock(VoteProposer.class);
-  private final JsonRpcParameter jsonRpcParameter = new JsonRpcParameter();
   private final String IBFT_METHOD = "ibft_proposeValidatorVote";
   private final String JSON_RPC_VERSION = "2.0";
   private IbftProposeValidatorVote method;
@@ -42,7 +40,7 @@ public class IbftProposeValidatorVoteTest {
 
   @Before
   public void setup() {
-    method = new IbftProposeValidatorVote(voteProposer, jsonRpcParameter);
+    method = new IbftProposeValidatorVote(voteProposer);
   }
 
   @Test

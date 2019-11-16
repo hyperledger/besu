@@ -50,6 +50,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.syncing.
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -79,6 +80,7 @@ import org.hyperledger.besu.ethereum.permissioning.account.AccountPermissioningC
 import org.hyperledger.besu.ethereum.permissioning.node.InsufficientPeersPermissioningProvider;
 import org.hyperledger.besu.ethereum.permissioning.node.NodePermissioningController;
 import org.hyperledger.besu.ethereum.permissioning.node.PeerPermissionsAdapter;
+import org.hyperledger.besu.ethereum.stratum.StratumServer;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
@@ -360,6 +362,19 @@ public class RunnerBuilder {
 
     final P2PNetwork peerNetwork = networkRunner.getNetwork();
 
+    final MiningParameters miningParameters = besuController.getMiningParameters();
+    Optional<StratumServer> stratumServer = Optional.empty();
+    if (miningParameters.isStratumMiningEnabled()) {
+      stratumServer =
+          Optional.of(
+              new StratumServer(
+                  vertx,
+                  miningParameters.getStratumPort(),
+                  miningParameters.getStratumNetworkInterface(),
+                  miningParameters.getStratumExtranonce()));
+      miningCoordinator.addEthHashObserver(stratumServer.get());
+    }
+
     staticNodes.stream()
         .map(DefaultPeer::fromEnodeURL)
         .forEach(peerNetwork::addMaintainConnectionPeer);
@@ -484,6 +499,7 @@ public class RunnerBuilder {
         jsonRpcHttpService,
         graphQLHttpService,
         webSocketService,
+        stratumServer,
         metricsService,
         besuController,
         dataDir);
@@ -630,7 +646,7 @@ public class RunnerBuilder {
     final LogsSubscriptionService logsSubscriptionService =
         new LogsSubscriptionService(subscriptionManager);
 
-    blockchain.observeBlockAdded(logsSubscriptionService);
+    blockchain.observeLogs(logsSubscriptionService);
   }
 
   private void createSyncingSubscriptionService(
