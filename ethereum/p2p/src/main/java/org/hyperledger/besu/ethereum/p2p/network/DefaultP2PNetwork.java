@@ -421,7 +421,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
     private MaintainedPeers maintainedPeers = new MaintainedPeers();
     private PeerPermissions peerPermissions = PeerPermissions.noop();
 
-    private NATManager natManager;
+    private NATManager natManager = new NATManager(NATMethod.NONE);
     private MetricsSystem metricsSystem;
 
     public P2PNetwork build() {

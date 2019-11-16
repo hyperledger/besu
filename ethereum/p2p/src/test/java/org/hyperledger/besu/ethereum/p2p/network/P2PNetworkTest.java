@@ -37,8 +37,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.nat.core.NATManager;
-import org.hyperledger.besu.nat.core.domain.NATMethod;
 import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.net.InetAddress;
@@ -334,7 +332,6 @@ public class P2PNetworkTest {
         .config(config)
         .keyPair(KeyPair.generate())
         .metricsSystem(new NoOpMetricsSystem())
-        .natManager(new NATManager(NATMethod.NONE))
         .supportedCapabilities(Arrays.asList(Capability.create("eth", 63)));
   }
 }

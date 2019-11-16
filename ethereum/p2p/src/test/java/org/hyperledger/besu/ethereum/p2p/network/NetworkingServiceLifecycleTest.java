@@ -25,8 +25,6 @@ import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryServiceException
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.nat.core.NATManager;
-import org.hyperledger.besu.nat.core.domain.NATMethod;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -159,7 +157,6 @@ public class NetworkingServiceLifecycleTest {
         .keyPair(keyPair)
         .config(config)
         .metricsSystem(new NoOpMetricsSystem())
-        .natManager(new NATManager(NATMethod.NONE))
         .supportedCapabilities(Arrays.asList(Capability.create("eth", 63)));
   }
 }

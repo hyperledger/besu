@@ -46,7 +46,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.Di
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.nat.core.NATManager;
 import org.hyperledger.besu.nat.core.NATSystem;
-import org.hyperledger.besu.nat.core.domain.NATMethod;
 import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
 import org.hyperledger.besu.nat.upnp.UpnpNatSystem;
 
@@ -351,7 +350,6 @@ public final class DefaultP2PNetworkTest {
         .keyPair(keyPair)
         .maintainedPeers(maintainedPeers)
         .metricsSystem(new NoOpMetricsSystem())
-        .natManager(new NATManager(NATMethod.NONE))
         .supportedCapabilities(Capability.create("eth", 63));
   }
 }

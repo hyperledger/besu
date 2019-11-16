@@ -255,7 +255,6 @@ public class JsonRpcHttpServiceRpcApisTest {
             .vertx(vertx)
             .config(config)
             .metricsSystem(new NoOpMetricsSystem())
-            .natManager(new NATManager(NATMethod.NONE))
             .build();
 
     p2pNetwork.start();
