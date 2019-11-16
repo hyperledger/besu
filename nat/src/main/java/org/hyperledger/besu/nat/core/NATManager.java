@@ -28,17 +28,16 @@ public class NATManager {
 
   private final NATMethod currentNatMethod;
   private final Optional<NATSystem> currentNatSystem;
+  private final boolean natExternalIpUsageEnabled;
 
   public NATManager(final NATMethod natMethod) {
+    this(natMethod, true);
+  }
+
+  public NATManager(final NATMethod natMethod, final boolean natExternalIpUsageEnabled) {
     this.currentNatMethod = natMethod;
-    switch (currentNatMethod) {
-      case UPNP:
-        currentNatSystem = Optional.of(new UpnpNatSystem());
-        break;
-      case NONE:
-      default:
-        currentNatSystem = Optional.empty();
-    }
+    this.currentNatSystem = buildNatSystem();
+    this.natExternalIpUsageEnabled = natExternalIpUsageEnabled;
   }
 
   /**
@@ -48,6 +47,15 @@ public class NATManager {
    */
   public boolean isNATEnvironment() {
     return currentNatMethod != NATMethod.NONE;
+  }
+
+  /**
+   * Returns whether or not the nat external IP usage is enabled.
+   *
+   * @return true if the usage of the nat external ip is enabled, false otherwise.
+   */
+  public boolean isNatExternalIpUsageEnabled() {
+    return natExternalIpUsageEnabled;
   }
 
   /**
@@ -66,5 +74,20 @@ public class NATManager {
    */
   public Optional<NATSystem> getNatSystem() {
     return currentNatSystem;
+  }
+
+  /**
+   * Build the NAT system associated to the current NAT method.
+   *
+   * @return an {@link Optional} wrapping the {@link NATSystem} or empty if not found.
+   */
+  private Optional<NATSystem> buildNatSystem() {
+    switch (currentNatMethod) {
+      case UPNP:
+        return Optional.of(new UpnpNatSystem());
+      case NONE:
+      default:
+        return Optional.empty();
+    }
   }
 }

@@ -122,7 +122,7 @@ public class AdminNodeInfo implements JsonRpcMethod {
 
   private String getIp(final EnodeURL enode) {
     final Optional<NATSystem> natSystem = natManager.getNatSystem();
-    if (natSystem.isPresent()) {
+    if (natSystem.isPresent() && natManager.isNatExternalIpUsageEnabled()) {
       try {
         return natSystem
             .get()

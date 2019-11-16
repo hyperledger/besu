@@ -50,6 +50,8 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.nat.core.NATManager;
+import org.hyperledger.besu.nat.core.domain.NATMethod;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
 import org.hyperledger.besu.util.bytes.BytesValue;
@@ -135,6 +137,7 @@ public class TestNode implements Closeable {
                         .keyPair(this.kp)
                         .config(networkingConfiguration)
                         .metricsSystem(new NoOpMetricsSystem())
+                        .natManager(new NATManager(NATMethod.NONE))
                         .supportedCapabilities(capabilities)
                         .build())
             .metricsSystem(new NoOpMetricsSystem())

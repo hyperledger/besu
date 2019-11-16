@@ -145,6 +145,16 @@ public class UpnpNatSystem extends AbstractNATSystem implements NATSystem {
   }
 
   /**
+   * Sends a UPnP request to the discovered IGD for the external ip address.
+   *
+   * @return A CompletableFuture that can be used to query the result (or error).
+   */
+  @Override
+  public CompletableFuture<String> retrieveExternalIPAddress() {
+    return externalIpQueryFuture.thenApply(x -> x);
+  }
+
+  /**
    * Convenience function to call {@link #requestPortForward(PortMapping)} with the following
    * defaults:
    *
@@ -176,18 +186,10 @@ public class UpnpNatSystem extends AbstractNATSystem implements NATSystem {
   }
 
   /**
-   * Sends a UPnP request to the discovered IGD for the external ip address.
+   * Returns all known port mappings.
    *
-   * @return A CompletableFuture that can be used to query the result (or error).
+   * @return The known port mappings wrapped in a {@link java.util.concurrent.Future}.
    */
-  @Override
-  public CompletableFuture<String> getExternalIPAddress() {
-    if (!isStarted()) {
-      throw new IllegalStateException("Cannot call queryExternalIPAddress() when in stopped state");
-    }
-    return externalIpQueryFuture.thenApply(x -> x);
-  }
-
   @Override
   public CompletableFuture<List<NATPortMapping>> getPortMappings() {
     if (!isStarted()) {

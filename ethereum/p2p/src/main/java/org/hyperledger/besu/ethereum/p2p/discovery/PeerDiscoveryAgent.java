@@ -126,14 +126,14 @@ public abstract class PeerDiscoveryAgent {
       LOG.info("Starting peer discovery agent on host={}, port={}", host, port);
 
       // override advertised host if we detect an external IP address via NAT manager
-      String externalIpAddress = null;
-      if (natManager.isNATEnvironment()) {
+      String foundAddress = null;
+      if (natManager.isNATEnvironment() && natManager.isNatExternalIpUsageEnabled()) {
         try {
           final NATSystem natSystem = natManager.getNatSystem().orElseThrow();
           LOG.info(
               "Waiting for up to {} seconds to detect external IP address...",
               NATSystem.TIMEOUT_SECONDS);
-          externalIpAddress =
+          foundAddress =
               natSystem.getExternalIPAddress().get(NATSystem.TIMEOUT_SECONDS, TimeUnit.SECONDS);
 
         } catch (Exception e) {
@@ -142,10 +142,11 @@ public abstract class PeerDiscoveryAgent {
         }
       }
 
-      final String advertisedAddress =
-          (null != externalIpAddress && !externalIpAddress.equals(""))
-              ? externalIpAddress
-              : config.getAdvertisedHost();
+      if (null == foundAddress || foundAddress.isEmpty()) {
+        foundAddress = config.getAdvertisedHost();
+      }
+
+      final String advertisedAddress = foundAddress;
 
       return listenForConnections()
           .thenApply(

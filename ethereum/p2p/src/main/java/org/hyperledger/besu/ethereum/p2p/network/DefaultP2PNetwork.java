@@ -382,15 +382,16 @@ public class DefaultP2PNetwork implements P2PNetwork {
     try {
       final NATSystem natSystem = natManager.getNatSystem().orElseThrow();
       final NATMethod natMethod = natManager.getNatMethod();
-      final CompletableFuture<String> natQueryFuture = natSystem.getExternalIPAddress();
-      LOG.info(
-          "Querying NAT environment for external IP address, timeout "
-              + NATSystem.TIMEOUT_SECONDS
-              + " seconds...");
-      externalAddress = natQueryFuture.get(NATSystem.TIMEOUT_SECONDS, TimeUnit.SECONDS);
 
-      if (externalAddress != null) {
-        LOG.info("External IP detected: " + externalAddress);
+      if (natManager.isNATEnvironment()) {
+        if (natManager.isNatExternalIpUsageEnabled()) {
+          final CompletableFuture<String> natQueryFuture = natSystem.getExternalIPAddress();
+          LOG.info(
+              "Querying NAT environment for external IP address, timeout "
+                  + NATSystem.TIMEOUT_SECONDS
+                  + " seconds...");
+          externalAddress = natQueryFuture.get(NATSystem.TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        }
         // if we're in a UPNP NAT environment, request port forwards for every port we
         // intend to bind to
         if (natMethod.equals(NATMethod.UPNP)) {
@@ -399,9 +400,8 @@ public class DefaultP2PNetwork implements P2PNetwork {
               discoveryPort, NetworkProtocol.UDP, NATServiceType.DISCOVERY);
           upnpNatSystem.requestPortForward(listeningPort, NetworkProtocol.TCP, NATServiceType.RLPX);
         }
-      } else {
-        LOG.info("No external IP detected within timeout.");
       }
+
     } catch (final Exception e) {
       LOG.error("Error configuring NAT environment", e);
     }
@@ -536,6 +536,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
     }
 
     public Builder natManager(final NATManager natManager) {
+      checkNotNull(natManager);
       this.natManager = natManager;
       return this;
     }

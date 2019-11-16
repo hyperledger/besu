@@ -104,7 +104,7 @@ public class AbstractNATSystemTest {
       public void doStop() {}
 
       @Override
-      public CompletableFuture<String> getExternalIPAddress() {
+      protected CompletableFuture<String> retrieveExternalIPAddress() {
         return new CompletableFuture<>();
       }
 

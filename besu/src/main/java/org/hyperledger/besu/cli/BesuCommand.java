@@ -366,6 +366,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final NATMethod natMethod = DEFAULT_NAT_METHOD;
 
   @Option(
+      names = {"--nat-external-ip-usage-enabled"},
+      description = "Set to use the detected NAT external IP (default: ${DEFAULT-VALUE})")
+  private final Boolean natExternalIpUsageEnabled = true;
+
+  @Option(
       names = {"--network-id"},
       paramLabel = "<BIG INTEGER>",
       description =
@@ -929,6 +934,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         jsonRpcConfiguration,
         webSocketConfiguration,
         metricsConfiguration,
+        natMethod,
+        natExternalIpUsageEnabled,
         permissioningConfiguration,
         staticNodes);
   }
@@ -1026,6 +1033,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         "--sync-mode",
         !SyncMode.FAST.equals(syncMode),
         singletonList("--fast-sync-min-peers"));
+
+    CommandLineUtils.checkOptionDependencies(
+        logger,
+        commandLine,
+        "--nat-method",
+        NATMethod.NONE.equals(natMethod),
+        singletonList("--nat-external-ip-usage-enabled"));
   }
 
   private BesuCommand configure() throws Exception {
@@ -1417,6 +1431,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final JsonRpcConfiguration jsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
       final MetricsConfiguration metricsConfiguration,
+      final NATMethod natMethod,
+      final boolean natExternalIpUsageEnabled,
       final Optional<PermissioningConfiguration> permissioningConfiguration,
       final Collection<EnodeURL> staticNodes) {
 
@@ -1431,6 +1447,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .besuController(controller)
             .p2pEnabled(p2pEnabled)
             .natMethod(natMethod)
+            .natExternalIpUsageEnabled(natExternalIpUsageEnabled)
             .discovery(peerDiscoveryEnabled)
             .ethNetworkConfig(ethNetworkConfig)
             .p2pAdvertisedHost(p2pAdvertisedHost)

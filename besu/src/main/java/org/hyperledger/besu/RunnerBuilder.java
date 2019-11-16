@@ -120,6 +120,8 @@ public class RunnerBuilder {
   private String p2pListenInterface = NetworkUtility.INADDR_ANY;
   private int p2pListenPort;
   private NATMethod natMethod = NATMethod.NONE;
+  private boolean natExternalIpUsageEnabled = true;
+
   private int maxPeers;
   private boolean limitRemoteWireConnectionsEnabled = false;
   private float fractionRemoteConnectionsAllowed;
@@ -184,6 +186,11 @@ public class RunnerBuilder {
 
   public RunnerBuilder natMethod(final NATMethod natMethod) {
     this.natMethod = natMethod;
+    return this;
+  }
+
+  public RunnerBuilder natExternalIpUsageEnabled(final boolean natExternalIpUsageEnabled) {
+    this.natExternalIpUsageEnabled = natExternalIpUsageEnabled;
     return this;
   }
 
@@ -325,7 +332,7 @@ public class RunnerBuilder {
             .map(nodePerms -> PeerPermissions.combine(nodePerms, bannedNodes))
             .orElse(bannedNodes);
 
-    final NATManager natManager = new NATManager(natMethod);
+    final NATManager natManager = new NATManager(natMethod, natExternalIpUsageEnabled);
 
     NetworkBuilder inactiveNetwork = (caps) -> new NoopP2PNetwork();
     NetworkBuilder activeNetwork =

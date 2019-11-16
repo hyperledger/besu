@@ -38,15 +38,18 @@ public abstract class AbstractNATSystem implements NATSystem {
   protected static final Logger LOG = LogManager.getLogger();
 
   protected final NATMethod natMethod;
+
   protected final AtomicBoolean started = new AtomicBoolean();
 
   protected AbstractNATSystem(final NATMethod natMethod) {
     this.natMethod = natMethod;
   }
 
-  public abstract void doStart();
+  protected abstract void doStart();
 
-  public abstract void doStop();
+  protected abstract void doStop();
+
+  protected abstract CompletableFuture<String> retrieveExternalIPAddress();
 
   @Override
   public NATMethod getNatMethod() {
@@ -56,6 +59,14 @@ public abstract class AbstractNATSystem implements NATSystem {
   @Override
   public boolean isStarted() {
     return started.get();
+  }
+
+  @Override
+  public CompletableFuture<String> getExternalIPAddress() {
+    if (!isStarted()) {
+      throw new IllegalStateException("Cannot call getExternalIPAddress() when in stopped state");
+    }
+    return retrieveExternalIPAddress();
   }
 
   @Override
