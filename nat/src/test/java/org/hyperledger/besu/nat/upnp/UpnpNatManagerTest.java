@@ -122,7 +122,7 @@ public final class UpnpNatManagerTest {
   }
 
   @Test
-  public void queryIpThrowsWhenStopped() throws Exception {
+  public void getExternalIPAddressThrowsWhenStopped() throws Exception {
 
     assertThatThrownBy(
             () -> {
@@ -132,7 +132,7 @@ public final class UpnpNatManagerTest {
   }
 
   @Test
-  public void queryIpDoesNotThrowWhenStarted() throws Exception {
+  public void getExternalIPAddressDoesNotThrowWhenStarted() throws Exception {
     upnpManager.start();
 
     upnpManager.getExternalIPAddress();
@@ -175,5 +175,19 @@ public final class UpnpNatManagerTest {
     listener.remoteDeviceAdded(mockedRegistry, device);
 
     assertThat(upnpManager.getWANIPConnectionService().join()).isEqualTo(wanIpConnectionService);
+  }
+
+  @Test
+  public void getPortMappingsThrowsWhenStopped() throws Exception {
+
+    assertThatThrownBy(() -> upnpManager.getPortMappings())
+        .isInstanceOf(IllegalStateException.class);
+  }
+
+  @Test
+  public void getPortMappingsNotThrowWhenStarted() throws Exception {
+    upnpManager.start();
+
+    upnpManager.getPortMappings();
   }
 }

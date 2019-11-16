@@ -23,8 +23,11 @@ import static org.mockito.Mockito.verify;
 import org.hyperledger.besu.nat.core.domain.NATMethod;
 import org.hyperledger.besu.nat.core.domain.NATPortMapping;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -78,6 +81,18 @@ public class AbstractNATSystemTest {
     assertThatThrownBy(() -> buildNATSystem(NATMethod.DOCKER).requireSystemStarted())
         .isInstanceOf(IllegalStateException.class)
         .hasMessageContaining("NAT system must be started.");
+  }
+
+  @Test
+  public void assertThatSystemReturnValidNatMethod() {
+    assertThat(buildNATSystem(NATMethod.DOCKER).getNatMethod()).isEqualTo(NATMethod.DOCKER);
+  }
+
+  @Test
+  public void assertThatSystemReturnValidLocalIpAddress()
+      throws UnknownHostException, ExecutionException, InterruptedException {
+    final String hostAddress = InetAddress.getLocalHost().getHostAddress();
+    assertThat(buildNATSystem(NATMethod.DOCKER).getLocalIPAddress().get()).isEqualTo(hostAddress);
   }
 
   private static AbstractNATSystem buildNATSystem(final NATMethod natMethod) {

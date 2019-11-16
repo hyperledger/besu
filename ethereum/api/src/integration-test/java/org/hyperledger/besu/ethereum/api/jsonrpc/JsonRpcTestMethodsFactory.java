@@ -45,6 +45,8 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
+import org.hyperledger.besu.nat.core.NATManager;
+import org.hyperledger.besu.nat.core.domain.NATMethod;
 
 import java.math.BigInteger;
 import java.util.HashSet;
@@ -97,6 +99,7 @@ public class JsonRpcTestMethodsFactory {
     final JsonRpcConfiguration jsonRpcConfiguration = mock(JsonRpcConfiguration.class);
     final WebSocketConfiguration webSocketConfiguration = mock(WebSocketConfiguration.class);
     final MetricsConfiguration metricsConfiguration = mock(MetricsConfiguration.class);
+    final NATManager natManager = new NATManager(NATMethod.NONE);
 
     return new JsonRpcMethodsFactory()
         .methods(
@@ -118,6 +121,7 @@ public class JsonRpcTestMethodsFactory {
             privacyParameters,
             jsonRpcConfiguration,
             webSocketConfiguration,
-            metricsConfiguration);
+            metricsConfiguration,
+            natManager);
   }
 }

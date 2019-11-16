@@ -159,6 +159,10 @@ public class UpnpNatSystem extends AbstractNATSystem implements NATSystem {
    */
   public void requestPortForward(
       final int port, final NetworkProtocol protocol, final NATServiceType serviceType) {
+    if (!isStarted()) {
+      throw new IllegalStateException("Cannot call queryExternalIPAddress() when in stopped state");
+    }
+    checkArgument(port != 0, "Cannot map to internal port zero.");
     this.requestPortForward(
         new PortMapping(
             true,
@@ -186,6 +190,9 @@ public class UpnpNatSystem extends AbstractNATSystem implements NATSystem {
 
   @Override
   public CompletableFuture<List<NATPortMapping>> getPortMappings() {
+    if (!isStarted()) {
+      throw new IllegalStateException("Cannot call queryExternalIPAddress() when in stopped state");
+    }
     final CompletableFuture<List<NATPortMapping>> future = new CompletableFuture<>();
     Executors.newCachedThreadPool()
         .submit(
@@ -239,9 +246,6 @@ public class UpnpNatSystem extends AbstractNATSystem implements NATSystem {
    * @return A CompletableFuture that can be used to query the result (or error).
    */
   private CompletableFuture<Void> requestPortForward(final PortMapping portMapping) {
-    checkArgument(
-        portMapping.getInternalPort().getValue() != 0, "Cannot map to internal port zero.");
-    requireSystemStarted();
 
     CompletableFuture<Void> upnpQueryFuture = new CompletableFuture<>();
 
@@ -331,10 +335,6 @@ public class UpnpNatSystem extends AbstractNATSystem implements NATSystem {
    * @return A CompletableFuture that will complete when all port forward requests have been made
    */
   private CompletableFuture<Void> releaseAllPortForwards() {
-    if (!isStarted()) {
-      throw new IllegalStateException("Cannot call releaseAllPortForwards() when in stopped state");
-    }
-
     // if we haven't observed the WANIPConnection service yet, we should have no port forwards to
     // release
     CompletableFuture<RemoteService> wanIPConnectionServiceFuture =
