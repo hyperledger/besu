@@ -353,19 +353,19 @@ Pruning cannot be used in networks using private transactions.
   - Added [revert reason](https://besu.hyperledger.org/en/latest/HowTo/Send-Transactions/Revert-Reason/) 
   - Added [admin\_changeLogLevel](https://besu.hyperledger.org/en/latest/Reference/API-Methods/#admin_changeloglevel) JSON RPC API (thanks to [matkt](https://github.com/matkt))
   - Updated for [new Docker image](https://docs.pantheon.pegasys.tech/en/latest/Getting-Started/Run-Docker-Image/) 
-  - Added [Docker image migration content](https://docs.pantheon.pegasys.tech/en/latest/Deploying-Besu/Migration-Docker/) 
-  - Added [transaction validation content](https://docs.pantheon.pegasys.tech/en/latest/Using-Besu/Transactions/Transaction-Validation/) 
+  - Added [Docker image migration content](https://besu.hyperledger.org/en/latest/HowTo/Get-Started/Migration-Docker/) 
+  - Added [transaction validation content](https://besu.hyperledger.org/en/latest/Concepts/Transactions/Transaction-Validation/) 
   - Updated [permissioning overview](https://docs.pantheon.pegasys.tech/en/latest/Permissions/Permissioning-Overview/) for onchain account permissioning 
-  - Updated [quickstart](https://docs.pantheon.pegasys.tech/en/latest/Tutorials/Private-Network-Quickstart/#monitoring-nodes-with-prometheus-and-grafana) to include Prometheus and Grafana 
-  - Added [remote connections limits options](https://docs.pantheon.pegasys.tech/en/latest/Reference/Besu-CLI-Syntax/#remote-connections-limit-enabled)
+  - Updated [quickstart](https://besu.hyperledger.org/en/latest/HowTo/Deploy/Monitoring-Performance/#monitor-node-performance-using-prometheus) to include Prometheus and Grafana 
+  - Added [remote connections limits options](https://besu.hyperledger.org/en/latest/Reference/CLI/CLI-Syntax/#remote-connections-limit-enabled)
   - Updated [web3.js-eea reference](https://docs.pantheon.pegasys.tech/en/latest/Reference/web3js-eea-Methods/) to include privacy group methods 
-  - Updated [onchain permissioning to include account permissioning](https://docs.pantheon.pegasys.tech/en/latest/Permissions/Onchain-Permissioning/Onchain-Permissioning/) and [Permissioning Management Dapp](https://docs.pantheon.pegasys.tech/en/latest/Permissions/Onchain-Permissioning/Production/)
+  - Updated [onchain permissioning to include account permissioning](hhttps://besu.hyperledger.org/en/latest/Concepts/Permissioning/Onchain-Permissioning/) and [Permissioning Management Dapp](https://besu.hyperledger.org/en/latest/Tutorials/Permissioning/Getting-Started-Onchain-Permissioning/#start-the-development-server-for-the-permissioning-management-dapp)
   - Added [deployment procedure for Permissioning Management Dapp](https://docs.pantheon.pegasys.tech/en/latest/Permissions/Onchain-Permissioning/Production/) 
-  - Added privacy content for [EEA-compliant and Besu-extended privacy](https://docs.pantheon.pegasys.tech/en/latest/Privacy/Explanation/Privacy-Groups/) 
-  - Added content on [creating and managing privacy groups](https://docs.pantheon.pegasys.tech/en/latest/Privacy/How-To/Create-Manage-Privacy-Groups/)
-  - Added content on [accessing private and privacy marker transactions](https://docs.pantheon.pegasys.tech/en/latest/Privacy/How-To/Access-Private-Transactions/)
-  - Added content on [system requirements](https://docs.pantheon.pegasys.tech/en/latest/Installation/System-Requirements/)
-  - Added reference to [Besu role on Galaxy to deploy using Ansible](https://docs.pantheon.pegasys.tech/en/latest/Deploying-Besu/Ansible/).  
+  - Added privacy content for [EEA-compliant and Besu-extended privacy](https://besu.hyperledger.org/en/latest/Concepts/Privacy/Privacy-Groups/) 
+  - Added content on [creating and managing privacy groups](https://besu.hyperledger.org/en/latest/Reference/web3js-eea-Methods/#createprivacygroup)
+  - Added content on [accessing private and privacy marker transactions](https://besu.hyperledger.org/en/latest/HowTo/Use-Privacy/Access-Private-Transactions/)
+  - Added content on [system requirements](https://besu.hyperledger.org/en/latest/HowTo/Get-Started/System-Requirements/)
+  - Added reference to [Besu role on Galaxy to deploy using Ansible](https://besu.hyperledger.org/en/latest/HowTo/Deploy/Ansible/).  
 
 ### Technical Improvements 
 
