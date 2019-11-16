@@ -490,13 +490,13 @@ Documentation updates include:
 
 Documentation updates include: 
 
-- Updated [IBFT 2.0 tutorial](https://docs.pantheon.pegasys.tech/en/latest/Tutorials/Create-IBFT-Network/) to use network configuration tool
-- Added [debug\_traceBlock\* methods](https://docs.pantheon.pegasys.tech/en/latest/Reference/Besu-API-Methods/#debug_traceblock) 
-- Reorganised [monitoring documentation](https://docs.pantheon.pegasys.tech/en/latest/Monitoring/Monitoring-Performance/)
-- Added [link to sample Grafana dashboard](https://docs.pantheon.pegasys.tech/en/latest/Monitoring/Monitoring-Performance/#monitor-node-performance-using-prometheus) 
-- Added [note about replacing transactions in transaction pool](https://docs.pantheon.pegasys.tech/en/latest/Using-Besu/Transactions/Transaction-Pool/#replacing-transactions-with-same-nonce)
-- Updated [example transaction scripts](https://docs.pantheon.pegasys.tech/en/latest/Using-Besu/Transactions/Transactions/#example-javascript-scripts)
-- Updated [Alethio Ethstats and Explorer documentation](https://docs.pantheon.pegasys.tech/en/latest/Monitoring/Alethio/Overview/)
+- Updated [IBFT 2.0 tutorial](https://besu.hyperledger.org/en/latest/Tutorials/Private-Network/Create-IBFT-Network/) to use network configuration tool
+- Added [debug\_traceBlock\* methods](https://besu.hyperledger.org/en/latest/Reference/API-Methods/#debug_traceblock) 
+- Reorganised [monitoring documentation](https://besu.hyperledger.org/en/latest/HowTo/Deploy/Monitoring-Performance/)
+- Added [link to sample Grafana dashboard](https://besu.hyperledger.org/en/latest/HowTo/Deploy/Monitoring-Performance/#monitor-node-performance-using-prometheus) 
+- Added [note about replacing transactions in transaction pool](https://besu.hyperledger.org/en/latest/Concepts/Transactions/Transaction-Pool/#replacing-transactions-with-same-nonce)
+- Updated [example transaction scripts](https://besu.hyperledger.org/en/latest/HowTo/Send-Transactions/Transactions/#example-javascript-scripts)
+- Updated [Alethio Ethstats and Explorer documentation](https://besu.hyperledger.org/en/latest/Concepts/AlethioOverview/)
 
 ### Technical Improvements 
 
@@ -535,11 +535,11 @@ Documentation updates include:
 
 Documentation updates include: 
 
-- Added [GraphQL options](https://docs.pantheon.pegasys.tech/en/latest/Reference/Besu-CLI-Syntax/#graphql-http-cors-origins) 
-- Added [troubleshooting point about illegal reflective access error](https://docs.pantheon.pegasys.tech/en/latest/Troubleshooting/Troubleshooting/#illegal-reflective-access-error-on-startup)
-- Added [trusted bootnode behaviour for permissioning](https://docs.pantheon.pegasys.tech/en/latest/Permissions/Onchain-Permissioning/#bootnodes)
-- Added [how to obtain a WS authentication token](https://docs.pantheon.pegasys.tech/en/latest/Besu-API/Authentication/#obtaining-an-authentication-token)
-- Updated [example scripts and added package.json file for creating signed transactions](https://docs.pantheon.pegasys.tech/en/stable/Using-Besu/Transactions/Transactions/)
+- Added [GraphQL options](https://besu.hyperledger.org/en/latest/Reference/CLI/CLI-Syntax/#graphql-http-cors-origins) 
+- Added [troubleshooting point about illegal reflective access error](https://besu.hyperledger.org/en/latest/HowTo/Troubleshoot/Troubleshooting/#illegal-reflective-access-error-on-startup)
+- Added [trusted bootnode behaviour for permissioning](https://besu.hyperledger.org/en/latest/Concepts/Permissioning/Onchain-Permissioning/#bootnodes)
+- Added [how to obtain a WS authentication token](https://besu.hyperledger.org/en/latest/HowTo/Interact/APIs/Authentication/#obtaining-an-authentication-token)
+- Updated [example scripts and added package.json file for creating signed transactions](https://besu.hyperledger.org/en/latest/HowTo/Send-Transactions/Transactions/)
 
 ### Technical Improvements 
 
