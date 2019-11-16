@@ -435,10 +435,10 @@ Pruning cannot be used in networks using private transactions.
 - \[PAN-2746\] Add eea\_createPrivacyGroup & eea\_deletePrivacyGroup endpoint [\#1560](https://github.com/PegaSysEng/pantheon/pull/1560) (thanks to [Puneetha17](https://github.com/Puneetha17))
 
 Documentation updates include: 
-- Added [readiness and liveness endpoints](https://docs.pantheon.pegasys.tech/en/latest/Besu-API/Using-JSON-RPC-API/#readiness-and-liveness-endpoints) 
-- Added [high availability content](https://docs.pantheon.pegasys.tech/en/latest/Deploying-Besu/High-Availability/) 
-- Added [web3js-eea client library](https://docs.pantheon.pegasys.tech/en/latest/Privacy/Private-Transactions/eeajs/) 
-- Added content on [setting CLI options using environment variables](https://docs.pantheon.pegasys.tech/en/latest/Reference/Besu-CLI-Syntax/#specifying-options)
+- Added [readiness and liveness endpoints](https://besu.hyperledger.org/en/latest/HowTo/Interact/APIs/Using-JSON-RPC-API/#readiness-and-liveness-endpoints) 
+- Added [high availability content](https://besu.hyperledger.org/en/latest/HowTo/Configure/Configure-HA/High-Availability/) 
+- Added [web3js-eea client library](https://besu.hyperledger.org/en/latest/Tutorials/Quickstarts/Privacy-Quickstart/#clone-eeajs-libraries) 
+- Added content on [setting CLI options using environment variables](https://besu.hyperledger.org/en/latest/Reference/CLI/CLI-Syntax/#specifying-options)
 
 ### Technical Improvements 
 
