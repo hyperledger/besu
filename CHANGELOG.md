@@ -172,7 +172,7 @@ Pruning cannot be used in networks using private transactions.
   - [Improved navigation](https://docs.pantheon.pegasys.tech/en/latest/)
   - [Added permissioning diagram](https://docs.pantheon.pegasys.tech/en/latest/Concepts/Permissioning/Permissioning-Overview/#onchain)
   - [Added Responsible Disclosure policy](https://docs.pantheon.pegasys.tech/en/latest/Reference/Responsible-Disclosure/)
-  - [Added `blocks export` subcommand](https://docs.pantheon.pegasys.tech/en/latest/Reference/Besu-CLI/Besu-CLI-Subcommands/#export)
+  - [Added `blocks export` subcommand](https://besu.hyperledger.org/en/latest/Reference/CLI/CLI-Subcommands/#export)
 
 ### Technical Improvements  
 - Update the `pantheon blocks export` command usage [\#1887](https://github.com/PegaSysEng/pantheon/pull/1887) (thanks to [matkt](https://github.com/matkt))
@@ -348,10 +348,10 @@ Pruning cannot be used in networks using private transactions.
 - Updated eea send raw transaction with privacy group ID [\#1611](https://github.com/PegaSysEng/pantheon/pull/1611) (thanks to [iikirilov](https://github.com/iikirilov))
 - Added Revert Reason [\#1603](https://github.com/PegaSysEng/pantheon/pull/1603)
 - Documentation updates include: 
-  - Added [UPnP content](https://docs.pantheon.pegasys.tech/en/latest/Configuring-Besu/Networking/Using-UPnP/)
+  - Added [UPnP content](https://besu.hyperledger.org/en/latest/HowTo/Find-and-Connect/Using-UPnP/)
   - Added [load balancer image](https://docs.pantheon.pegasys.tech/en/latest/Deploying-Besu/High-Availability/) 
-  - Added [revert reason](https://docs.pantheon.pegasys.tech/en/latest/Using-Besu/Transactions/Revert-Reason/) 
-  - Added [admin\_changeLogLevel](https://docs.pantheon.pegasys.tech/en/latest/Reference/Besu-API-Methods/#admin_changeloglevel) JSON RPC API (thanks to [matkt](https://github.com/matkt))
+  - Added [revert reason](https://besu.hyperledger.org/en/latest/HowTo/Send-Transactions/Revert-Reason/) 
+  - Added [admin\_changeLogLevel](https://besu.hyperledger.org/en/latest/Reference/API-Methods/#admin_changeloglevel) JSON RPC API (thanks to [matkt](https://github.com/matkt))
   - Updated for [new Docker image](https://docs.pantheon.pegasys.tech/en/latest/Getting-Started/Run-Docker-Image/) 
   - Added [Docker image migration content](https://docs.pantheon.pegasys.tech/en/latest/Deploying-Besu/Migration-Docker/) 
   - Added [transaction validation content](https://docs.pantheon.pegasys.tech/en/latest/Using-Besu/Transactions/Transaction-Validation/) 
