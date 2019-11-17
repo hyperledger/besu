@@ -226,3 +226,8 @@ workflows:
             - referenceTests
             - buildDocker
 
+notify:
+  branches:
+    only:
+      - master
+      - /^release-.*/
