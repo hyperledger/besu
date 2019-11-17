@@ -57,7 +57,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthSubmitWork;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthSyncing;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthUninstallFilter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
@@ -73,7 +72,6 @@ import java.util.Set;
 public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private final BlockResultFactory blockResult = new BlockResultFactory();
-  private final JsonRpcParameter parameter = new JsonRpcParameter();
 
   private final BlockchainQueries blockchainQueries;
   private final Synchronizer synchronizer;
@@ -110,55 +108,51 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
     return mapOf(
         new EthAccounts(),
         new EthBlockNumber(blockchainQueries),
-        new EthGetBalance(blockchainQueries, parameter),
-        new EthGetBlockByHash(blockchainQueries, blockResult, parameter),
-        new EthGetBlockByNumber(blockchainQueries, blockResult, parameter),
-        new EthGetBlockTransactionCountByNumber(blockchainQueries, parameter),
-        new EthGetBlockTransactionCountByHash(blockchainQueries, parameter),
+        new EthGetBalance(blockchainQueries),
+        new EthGetBlockByHash(blockchainQueries, blockResult),
+        new EthGetBlockByNumber(blockchainQueries, blockResult),
+        new EthGetBlockTransactionCountByNumber(blockchainQueries),
+        new EthGetBlockTransactionCountByHash(blockchainQueries),
         new EthCall(
             blockchainQueries,
             new TransactionSimulator(
                 blockchainQueries.getBlockchain(),
                 blockchainQueries.getWorldStateArchive(),
-                protocolSchedule),
-            parameter),
-        new EthGetCode(blockchainQueries, parameter),
-        new EthGetLogs(blockchainQueries, parameter),
-        new EthGetProof(blockchainQueries, parameter),
-        new EthGetUncleCountByBlockHash(blockchainQueries, parameter),
-        new EthGetUncleCountByBlockNumber(blockchainQueries, parameter),
-        new EthGetUncleByBlockNumberAndIndex(blockchainQueries, parameter),
-        new EthGetUncleByBlockHashAndIndex(blockchainQueries, parameter),
+                protocolSchedule)),
+        new EthGetCode(blockchainQueries),
+        new EthGetLogs(blockchainQueries),
+        new EthGetProof(blockchainQueries),
+        new EthGetUncleCountByBlockHash(blockchainQueries),
+        new EthGetUncleCountByBlockNumber(blockchainQueries),
+        new EthGetUncleByBlockNumberAndIndex(blockchainQueries),
+        new EthGetUncleByBlockHashAndIndex(blockchainQueries),
         new EthNewBlockFilter(filterManager),
         new EthNewPendingTransactionFilter(filterManager),
-        new EthNewFilter(filterManager, parameter),
-        new EthGetTransactionByHash(
-            blockchainQueries, transactionPool.getPendingTransactions(), parameter),
-        new EthGetTransactionByBlockHashAndIndex(blockchainQueries, parameter),
-        new EthGetTransactionByBlockNumberAndIndex(blockchainQueries, parameter),
-        new EthGetTransactionCount(
-            blockchainQueries, transactionPool.getPendingTransactions(), parameter),
-        new EthGetTransactionReceipt(blockchainQueries, parameter),
-        new EthUninstallFilter(filterManager, parameter),
-        new EthGetFilterChanges(filterManager, parameter),
-        new EthGetFilterLogs(filterManager, parameter),
+        new EthNewFilter(filterManager),
+        new EthGetTransactionByHash(blockchainQueries, transactionPool.getPendingTransactions()),
+        new EthGetTransactionByBlockHashAndIndex(blockchainQueries),
+        new EthGetTransactionByBlockNumberAndIndex(blockchainQueries),
+        new EthGetTransactionCount(blockchainQueries, transactionPool.getPendingTransactions()),
+        new EthGetTransactionReceipt(blockchainQueries),
+        new EthUninstallFilter(filterManager),
+        new EthGetFilterChanges(filterManager),
+        new EthGetFilterLogs(filterManager),
         new EthSyncing(synchronizer),
-        new EthGetStorageAt(blockchainQueries, parameter),
-        new EthSendRawTransaction(transactionPool, parameter),
+        new EthGetStorageAt(blockchainQueries),
+        new EthSendRawTransaction(transactionPool),
         new EthSendTransaction(),
         new EthEstimateGas(
             blockchainQueries,
             new TransactionSimulator(
                 blockchainQueries.getBlockchain(),
                 blockchainQueries.getWorldStateArchive(),
-                protocolSchedule),
-            parameter),
+                protocolSchedule)),
         new EthMining(miningCoordinator),
         new EthCoinbase(miningCoordinator),
         new EthProtocolVersion(supportedCapabilities),
         new EthGasPrice(miningCoordinator),
         new EthGetWork(miningCoordinator),
-        new EthSubmitWork(miningCoordinator, parameter),
+        new EthSubmitWork(miningCoordinator),
         new EthHashrate(miningCoordinator),
         new EthChainId(protocolSchedule.getChainId()));
   }

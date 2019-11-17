@@ -18,7 +18,6 @@ import static org.apache.logging.log4j.LogManager.getLogger;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -36,12 +35,10 @@ import org.apache.logging.log4j.Logger;
 public class EthSubmitWork implements JsonRpcMethod {
 
   private final MiningCoordinator miner;
-  private final JsonRpcParameter parameters;
   private static final Logger LOG = getLogger();
 
-  public EthSubmitWork(final MiningCoordinator miner, final JsonRpcParameter parameters) {
+  public EthSubmitWork(final MiningCoordinator miner) {
     this.miner = miner;
-    this.parameters = parameters;
   }
 
   @Override
@@ -55,11 +52,9 @@ public class EthSubmitWork implements JsonRpcMethod {
     if (solver.isPresent()) {
       final EthHashSolution solution =
           new EthHashSolution(
-              BytesValue.fromHexString(parameters.required(req.getParams(), 0, String.class))
-                  .getLong(0),
-              parameters.required(req.getParams(), 2, Hash.class),
-              BytesValue.fromHexString(parameters.required(req.getParams(), 1, String.class))
-                  .getArrayUnsafe());
+              BytesValue.fromHexString(req.getRequiredParameter(0, String.class)).getLong(0),
+              req.getRequiredParameter(2, Hash.class),
+              BytesValue.fromHexString(req.getRequiredParameter(1, String.class)).getArrayUnsafe());
       final boolean result = miner.submitWork(solution);
       return new JsonRpcSuccessResponse(req.getId(), result);
     } else {

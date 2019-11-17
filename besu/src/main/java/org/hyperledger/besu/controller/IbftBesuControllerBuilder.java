@@ -233,7 +233,7 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder<IbftContext
     final EpochManager epochManager = new EpochManager(ibftConfig.getEpochLength());
 
     final Map<Long, List<Address>> ibftValidatorForkMap =
-        convertIbftForks(configOptions.getCustomForks().getIbftForks());
+        convertIbftForks(configOptions.getTransitions().getIbftForks());
 
     return new IbftContext(
         new ForkingVoteTallyCache(

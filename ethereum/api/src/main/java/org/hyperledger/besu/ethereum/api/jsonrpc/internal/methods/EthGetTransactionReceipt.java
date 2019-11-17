@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TransactionReceiptResult;
@@ -30,12 +29,9 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionReceiptType;
 public class EthGetTransactionReceipt implements JsonRpcMethod {
 
   private final BlockchainQueries blockchain;
-  private final JsonRpcParameter parameters;
 
-  public EthGetTransactionReceipt(
-      final BlockchainQueries blockchain, final JsonRpcParameter parameters) {
+  public EthGetTransactionReceipt(final BlockchainQueries blockchain) {
     this.blockchain = blockchain;
-    this.parameters = parameters;
   }
 
   @Override
@@ -45,7 +41,7 @@ public class EthGetTransactionReceipt implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequest request) {
-    final Hash hash = parameters.required(request.getParams(), 0, Hash.class);
+    final Hash hash = request.getRequiredParameter(0, Hash.class);
     final TransactionReceiptResult result =
         blockchain
             .transactionReceiptByTransactionHash(hash)

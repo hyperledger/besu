@@ -113,6 +113,18 @@ public interface GenesisConfigOptions {
    */
   OptionalLong getDefuseDifficultyBombBlockNumber();
 
+  /**
+   * Block number for Atlantis fork on Classic network Note, this fork happen after Defuse
+   * Difficulty Bomb fork and before Agharta fork ECIP-1054: Atlantis EVM and Protocol Upgrades
+   * Enable the outstanding Ethereum Foundation Spurious Dragon and Byzantium network protocol
+   * upgrades for the Ethereum Classic network.
+   *
+   * @see <a
+   *     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1054">https://ecips.ethereumclassic.org/ECIPs/ecip-1054</a>
+   * @return block number for Atlantis fork on Classic network
+   */
+  OptionalLong getAtlantisBlockNumber();
+
   Optional<BigInteger> getChainId();
 
   OptionalInt getContractSizeLimit();
@@ -121,5 +133,5 @@ public interface GenesisConfigOptions {
 
   Map<String, Object> asMap();
 
-  CustomForksConfigOptions getCustomForks();
+  TransitionsConfigOptions getTransitions();
 }
