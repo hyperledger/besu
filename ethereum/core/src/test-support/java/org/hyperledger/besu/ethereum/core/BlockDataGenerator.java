@@ -558,6 +558,14 @@ public class BlockDataGenerator {
       return addTransaction(txs.toArray(new Transaction[] {}));
     }
 
+    public BlockOptions addOmmers(final BlockHeader... headers) {
+      if (ommers.isEmpty()) {
+        ommers = Optional.of(new ArrayList<>());
+      }
+      ommers.get().addAll(Arrays.asList(headers));
+      return this;
+    }
+
     public BlockOptions setBlockNumber(final long blockNumber) {
       this.blockNumber = OptionalLong.of(blockNumber);
       return this;
