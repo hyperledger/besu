@@ -62,7 +62,6 @@ public class PrivacyTest {
   private static final int BACKGROUND_THREAD_COUNT = 4;
   private final Vertx vertx = Vertx.vertx();
 
-  private static final Integer ADDRESS = 9;
   @Rule public final TemporaryFolder folder = new TemporaryFolder();
 
   @After
@@ -76,7 +75,7 @@ public class PrivacyTest {
     final Path dbDir = dataDir.resolve("database");
     final PrivacyParameters privacyParameters =
         new PrivacyParameters.Builder()
-            .setPrivacyAddress(ADDRESS)
+            .setPrivacyAddress(Address.PRIVACY)
             .setEnabled(true)
             .setEnclaveUrl(new URI("http://127.0.0.1:8000"))
             .setStorageProvider(createKeyValueStorageProvider(dataDir, dbDir))
@@ -99,7 +98,7 @@ public class PrivacyTest {
             .targetGasLimit(GasLimitCalculator.DEFAULT)
             .build();
 
-    final Address privacyContractAddress = Address.privacyPrecompiled(ADDRESS);
+    final Address privacyContractAddress = Address.DEFAULT_PRIVACY;
     final PrecompiledContract precompiledContract =
         besuController
             .getProtocolSchedule()
