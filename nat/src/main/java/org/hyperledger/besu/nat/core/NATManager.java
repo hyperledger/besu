@@ -20,6 +20,8 @@ import org.hyperledger.besu.nat.core.domain.NATServiceType;
 import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
 import org.hyperledger.besu.nat.upnp.UpnpNatSystem;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -29,10 +31,15 @@ import org.apache.logging.log4j.Logger;
 
 /** Utility class to help interacting with various {@link NATSystem}. */
 public class NATManager {
+
   protected static final Logger LOG = LogManager.getLogger();
+  private static final Map<NATMethod, NATSystem> AVAILABLE_NAT_SYSTEMS = new HashMap<>();
+
+  static {
+    AVAILABLE_NAT_SYSTEMS.put(NATMethod.UPNP, new UpnpNatSystem());
+  }
 
   private final NATMethod currentNatMethod;
-  private Optional<NATSystem> currentNatSystem;
   private final boolean natExternalIpUsageEnabled;
 
   public NATManager(final NATMethod natMethod) {
@@ -40,9 +47,8 @@ public class NATManager {
   }
 
   public NATManager(final NATMethod natMethod, final boolean natExternalIpUsageEnabled) {
-    this.currentNatMethod = natMethod;
-    this.currentNatSystem = buildNatSystem();
     this.natExternalIpUsageEnabled = natExternalIpUsageEnabled;
+    this.currentNatMethod = initializeNatMethod(natMethod);
   }
 
   /**
@@ -78,7 +84,7 @@ public class NATManager {
    * @return an {@link Optional} wrapping the {@link NATSystem} or empty if not found.
    */
   public Optional<NATSystem> getNatSystem() {
-    return currentNatSystem;
+    return Optional.ofNullable(AVAILABLE_NAT_SYSTEMS.get(currentNatMethod));
   }
 
   /**
@@ -147,22 +153,18 @@ public class NATManager {
   }
 
   @VisibleForTesting
-  void setNatSystem(final Optional<NATSystem> natSystem) {
-    this.currentNatSystem = natSystem;
+  void setNatSystem(final NATSystem natSystem) {
+    AVAILABLE_NAT_SYSTEMS.put(natSystem.getNatMethod(), natSystem);
   }
 
-  /**
-   * Build the NAT system associated to the current NAT method.
-   *
-   * @return an {@link Optional} wrapping the {@link NATSystem} or empty if not found.
-   */
-  private Optional<NATSystem> buildNatSystem() {
-    switch (currentNatMethod) {
-      case UPNP:
-        return Optional.of(new UpnpNatSystem());
-      case NONE:
-      default:
-        return Optional.empty();
+  /** Initialize the current NatMethod. */
+  private NATMethod initializeNatMethod(final NATMethod givenNatMethod) {
+    if (givenNatMethod.equals(NATMethod.NONE)) {
+      // try to detect automatically the current nat method
+      for (NATSystem natSystem : AVAILABLE_NAT_SYSTEMS.values()) {
+        if (natSystem.isRunningOn()) return natSystem.getNatMethod();
+      }
     }
+    return givenNatMethod;
   }
 }

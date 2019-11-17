@@ -227,26 +227,25 @@ public class Runner implements AutoCloseable {
   }
 
   private void writeBesuNetworksToFile() {
+    final Properties properties = new Properties();
     if (networkRunner.getNetwork().isP2pEnabled()) {
       networkRunner
           .getNetwork()
           .getLocalEnode()
           .ifPresent(
               enode -> {
-                final Properties properties = new Properties();
                 final String globalIp =
                     natManager.getAdvertisedIp().orElseGet(enode::getIpAsString);
                 properties.setProperty("global-ip", globalIp);
 
                 final String localIp = natManager.getLocalIp().orElseGet(enode::getIpAsString);
                 properties.setProperty("local-ip", localIp);
-
-                // create besu.networks file
-                createBesuFile(
-                    properties,
-                    "networks",
-                    "This file contains the IP Addresses (global and local) used by the running instance of Besu");
               });
+      // create besu.networks file
+      createBesuFile(
+          properties,
+          "networks",
+          "This file contains the IP Addresses (global and local) used by the running instance of Besu");
     }
   }
 

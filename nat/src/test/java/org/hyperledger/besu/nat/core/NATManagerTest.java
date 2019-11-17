@@ -18,7 +18,6 @@ package org.hyperledger.besu.nat.core;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.nat.core.domain.NATMethod;
@@ -69,11 +68,12 @@ public class NATManagerTest {
     final NATSystem natSystem = mock(NATSystem.class);
     when(natSystem.getPortMapping(natPortMapping.getNatServiceType(), natPortMapping.getProtocol()))
         .thenReturn(natPortMapping);
+    when(natSystem.getNatMethod()).thenReturn(NATMethod.UPNP);
 
     final NATManager natManager = new NATManager(NATMethod.UPNP);
-    natManager.setNatSystem(Optional.of(natSystem));
+    natManager.setNatSystem(natSystem);
 
-    Optional<NATPortMapping> portMapping =
+    final Optional<NATPortMapping> portMapping =
         natManager.getPortMapping(natPortMapping.getNatServiceType(), natPortMapping.getProtocol());
 
     verify(natSystem)
@@ -86,15 +86,10 @@ public class NATManagerTest {
   @Test
   public void assertThatGetPortMappingWorksProperlyWithoutNat() {
 
-    final NATSystem natSystem = mock(NATSystem.class);
-
     final NATManager natManager = new NATManager(NATMethod.NONE);
-    natManager.setNatSystem(Optional.of(natSystem));
 
-    Optional<NATPortMapping> portMapping =
+    final Optional<NATPortMapping> portMapping =
         natManager.getPortMapping(NATServiceType.DISCOVERY, NetworkProtocol.TCP);
-
-    verifyNoInteractions(natSystem);
 
     Assertions.assertThat(portMapping).isNotPresent();
   }

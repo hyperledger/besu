@@ -90,4 +90,8 @@ public interface NATSystem {
    */
   NATPortMapping getPortMapping(
       final NATServiceType serviceType, final NetworkProtocol networkProtocol);
+
+  default boolean isRunningOn() {
+    return false;
+  }
 }
