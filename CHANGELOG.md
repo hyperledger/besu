@@ -585,15 +585,15 @@ Documentation updates include:
 
 ### Additions and Improvements 
 
-- [GraphQL](https://docs.pantheon.pegasys.tech/en/latest/Besu-API/GraphQL/) [\#1311](https://github.com/PegaSysEng/pantheon/pull/1311) (thanks to [zyfrank](https://github.com/zyfrank))
-- Added [`--tx-pool-retention-hours`](https://docs.pantheon.pegasys.tech/en/latest/Reference/Besu-CLI-Syntax/#tx-pool-retention-hours) [\#1333](https://github.com/PegaSysEng/pantheon/pull/1333)
+- [GraphQL](https://besu.hyperledger.org/en/latest/HowTo/Interact/APIs/GraphQL/) [\#1311](https://github.com/PegaSysEng/pantheon/pull/1311) (thanks to [zyfrank](https://github.com/zyfrank))
+- Added [`--tx-pool-retention-hours`](https://besu.hyperledger.org/en/latest/Reference/CLI/CLI-Syntax/#tx-pool-retention-hours) [\#1333](https://github.com/PegaSysEng/pantheon/pull/1333)
 - Added Genesis file support for specifying the maximum stack size. [\#1431](https://github.com/PegaSysEng/pantheon/pull/1431) 
 - Included transaction details when subscribed to Pending transactions [\#1410](https://github.com/PegaSysEng/pantheon/pull/1410) 
 - Documentation updates include:
-  - [Added configuration items specified in the genesis file](https://docs.pantheon.pegasys.tech/en/latest/Configuring-Besu/Config-Items/)  
-  - [Added pending transaction details subscription](https://docs.pantheon.pegasys.tech/en/latest/Besu-API/RPC-PubSub/#pending-transactions) 
-  - [Added Troubleshooting content](https://docs.pantheon.pegasys.tech/en/latest/Troubleshooting/Troubleshooting/)
-  - [Added Privacy Quickstart](https://docs.pantheon.pegasys.tech/en/latest/Privacy/Privacy-Quickstart/)  
+  - [Added configuration items specified in the genesis file](https://besu.hyperledger.org/en/latest/Reference/Config-Items/#configuration-items)  
+  - [Added pending transaction details subscription](https://besu.hyperledger.org/en/latest/HowTo/Interact/APIs/RPC-PubSub/#pending-transactionss) 
+  - [Added Troubleshooting content](https://besu.hyperledger.org/en/latest/HowTo/Troubleshoot/Troubleshooting/)
+  - [Added Privacy Quickstart](https://besu.hyperledger.org/en/latest/Tutorials/Quickstarts/Privacy-Quickstart/)  
   - [Added privacy roadmap](https://github.com/PegaSysEng/pantheon/blob/master/PRIVACYROADMAP.MD)  
 
 
@@ -699,15 +699,15 @@ Documentation updates include:
 
 ### Additions and Improvements 
 
-- [Privacy](https://docs.pantheon.pegasys.tech/en/latest/Privacy/Privacy-Overview/) 
-- [Onchain Permissioning](https://docs.pantheon.pegasys.tech/en/latest/Permissions/Onchain-Permissioning/)
-- [Fastsync](https://docs.pantheon.pegasys.tech/en/latest/Reference/Besu-CLI-Syntax/#fast-sync-options) 
+- [Privacy](https://besu.hyperledger.org/en/latest/Concepts/Privacy/Privacy-Overview/) 
+- [Onchain Permissioning](https://besu.hyperledger.org/en/latest/Concepts/Permissioning/Permissioning-Overview/#onchain)
+- [Fastsync](https://besu.hyperledger.org/en/latest/Reference/CLI/CLI-Syntax/#fast-sync-min-peers) 
 - Documentation updates include: 
     - Added JSON-RPC methods: 
-      - [`txpool_pantheonStatistics`](https://docs.pantheon.pegasys.tech/en/latest/Reference/JSON-RPC-API-Methods/#txpool_pantheonstatistics)
-      - [`net_services`](https://docs.pantheon.pegasys.tech/en/latest/Reference/JSON-RPC-API-Methods/#net_services)
-    - [Updated to indicate Docker image doesn't run on Windows](https://docs.pantheon.pegasys.tech/en/latest/Getting-Started/Run-Docker-Image/)
-    - [Added how to configure a free gas network](https://docs.pantheon.pegasys.tech/en/latest/Configuring-Besu/FreeGas/) 
+      - [`txpool_pantheonStatistics`](https://besu.hyperledger.org/en/latest/Reference/API-Methods/#txpool_besustatistics)
+      - [`net_services`](https://besu.hyperledger.org/en/latest/Reference/API-Methods/#net_services)
+    - [Updated to indicate Docker image doesn't run on Windows](https://besu.hyperledger.org/en/latest/HowTo/Get-Started/Run-Docker-Image/)
+    - [Added how to configure a free gas network](https://besu.hyperledger.org/en/latest/HowTo/Configure/FreeGas/) 
 
 ### Technical Improvements 
 
@@ -762,16 +762,16 @@ Documentation updates include:
 
 - Notify of dropped messages [\#1156](https://github.com/PegaSysEng/pantheon/pull/1156) 
 - Documentation updates include: 
-    - Added [Permissioning Overview](https://docs.pantheon.pegasys.tech/en/latest/Permissions/Permissioning-Overview/)
-    - Added content on [Network vs Node Configuration](https://docs.pantheon.pegasys.tech/en/latest/Configuring-Besu/Using-Configuration-File/)   
-    - Updated [RAM requirements](https://docs.pantheon.pegasys.tech/en/latest/Installation/Overview/)  
-    - Added [Privacy Overview](https://docs.pantheon.pegasys.tech/en/latest/Privacy/Privacy-Overview/) and [Processing Private Transactions](https://docs.pantheon.pegasys.tech/en/latest/Privacy/Private-Transaction-Processing/)
-    - Renaming of Ethstats Lite Explorer to [Ethereum Lite Explorer](https://docs.pantheon.pegasys.tech/en/latest/EthStats/Lite-Block-Explorer/) (thanks to [tzapu](https://github.com/tzapu))
-    - Added content on using [Truffle with Besu](https://docs.pantheon.pegasys.tech/en/latest/Using-Besu/Truffle/)
-    - Added [`droppedPendingTransactions` RPC Pub/Sub subscription](https://docs.pantheon.pegasys.tech/en/latest/Using-Besu/RPC-PubSub/#dropped-transactions) 
-    - Added [`eea_*` JSON-RPC API methods](https://docs.pantheon.pegasys.tech/en/latest/Reference/JSON-RPC-API-Methods/#eea-methods)  
-    - Added [architecture diagram](https://docs.pantheon.pegasys.tech/en/latest/Architecture/Overview/) 
-    - Updated [permissioning CLI options](https://docs.pantheon.pegasys.tech/en/latest/Reference/Besu-CLI-Syntax/#permissions-accounts-config-file-enabled) and [permissioned network tutorial](https://docs.pantheon.pegasys.tech/en/latest/Tutorials/Create-Permissioned-Network/)  
+    - Added [Permissioning Overview](https://besu.hyperledger.org/en/latest/Concepts/Permissioning/Permissioning-Overview/)
+    - Added content on [Network vs Node Configuration](https://besu.hyperledger.org/en/latest/HowTo/Configure/Using-Configuration-File/)   
+    - Updated [RAM requirements](https://besu.hyperledger.org/en/latest/HowTo/Get-Started/System-Requirements/#ram)  
+    - Added [Privacy Overview](https://besu.hyperledger.org/en/latest/Concepts/Privacy/Privacy-Overview/) and [Processing Private Transactions](https://besu.hyperledger.org/en/latest/Concepts/Privacy/Private-Transaction-Processing/)
+    - Renaming of Ethstats Lite Explorer to [Ethereum Lite Explorer](https://besu.hyperledger.org/en/latest/HowTo/Deploy/Lite-Block-Explorer/#lite-block-explorer-documentation) (thanks to [tzapu](https://github.com/tzapu))
+    - Added content on using [Truffle with Besu](https://besu.hyperledger.org/en/latest/HowTo/Develop-Dapps/Truffle/)
+    - Added [`droppedPendingTransactions` RPC Pub/Sub subscription](https://besu.hyperledger.org/en/latest/HowTo/Interact/APIs/RPC-PubSub/#dropped-transactions) 
+    - Added [`eea_*` JSON-RPC API methods](https://besu.hyperledger.org/en/latest/Reference/API-Methods/#eea-methods)  
+    - Added [architecture diagram](https://besu.hyperledger.org/en/latest/Concepts/ArchitectureOverview/) 
+    - Updated [permissioning CLI options](https://besu.hyperledger.org/en/latest/Reference/CLI/CLI-Syntax/#permissions-accounts-config-file-enabled) and [permissioned network tutorial](https://docs.pantheon.pegasys.tech/en/latest/Tutorials/Create-Permissioned-Network/)  
 
 ### Technical Improvements 
 
