@@ -38,8 +38,7 @@ public class EthSignerClientTest {
   @ClassRule public static final TemporaryFolder folder = new TemporaryFolder();
 
   @ClassRule
-  public static final WireMockRule wireMockRule =
-      new WireMockRule(wireMockConfig().dynamicPort());
+  public static final WireMockRule wireMockRule = new WireMockRule(wireMockConfig().dynamicPort());
 
   private static final String MOCK_RESPONSE = "mock_transaction_hash";
   private static final String MOCK_SEND_TRANSACTION_RESPONSE =
