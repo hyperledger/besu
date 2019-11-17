@@ -31,8 +31,7 @@ public class PrivGetTransactionCount implements JsonRpcMethod {
   private final PrivacyController privacyController;
   private final EnclavePublicKeyProvider enclavePublicKeyProvider;
 
-  public PrivGetTransactionCount(
-      final PrivacyController privacyController,
+  public PrivGetTransactionCount(final PrivacyController privacyController,
       final EnclavePublicKeyProvider enclavePublicKeyProvider) {
     this.privacyController = privacyController;
     this.enclavePublicKeyProvider = enclavePublicKeyProvider;
