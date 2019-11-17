@@ -62,7 +62,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   private final AtomicBoolean stopped = new AtomicBoolean(false);
 
   private final Hash genesisHash;
-  private final ForkId forkId;
+  private final ForkIdManager forkIdManager;
   private final BigInteger networkId;
   private final EthPeers ethPeers;
   private final EthMessages ethMessages;
@@ -92,7 +92,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     this.shutdown = new CountDownLatch(1);
     genesisHash = blockchain.getBlockHashByNumber(0L).get();
 
-    forkId = ForkId.buildCollection(genesisHash);
+    forkIdManager = ForkIdManager.buildCollection(genesisHash);
 
     ethPeers = new EthPeers(getSupportedProtocol(), clock, metricsSystem);
     ethMessages = new EthMessages();
@@ -179,7 +179,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     genesisHash = blockchain.getBlockHashByNumber(0L).get();
 
     // todo: check about modification of the above and related constructor
-    forkId = ForkId.buildCollection(genesisHash, forks, blockchain, getSupportedCapabilities());
+    forkIdManager = ForkIdManager.buildCollection(genesisHash, forks, blockchain, getSupportedCapabilities());
 
     ethPeers = new EthPeers(getSupportedProtocol(), clock, metricsSystem);
     ethMessages = new EthMessages();
@@ -284,19 +284,37 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     }
 
     final Capability cap = connection.capability(getSupportedProtocol());
-    final StatusMessage status =
-        StatusMessage.create(
-            cap.getVersion(),
-            networkId,
-            blockchain.getChainHead().getTotalDifficulty(),
-            blockchain.getChainHeadHash(),
-            forkId.getLatestForkId(cap.getVersion()));
-    try {
-      LOG.debug("Sending status message to {}.", peer);
-      peer.send(status);
-      peer.registerStatusSent();
-    } catch (final PeerNotConnected peerNotConnected) {
-      // Nothing to do.
+    // TODO: look to consolidate code below if possible
+    if(cap.getVersion() > EthProtocol.EthVersion.V63){
+      final StatusMessage status =
+              StatusMessage.create(
+                      cap.getVersion(),
+                      networkId,
+                      blockchain.getChainHead().getTotalDifficulty(),
+                      blockchain.getChainHeadHash(),
+                       forkIdManager.getLatestForkId());
+      try {
+        LOG.debug("Sending status message to {}.", peer);
+        peer.send(status);
+        peer.registerStatusSent();
+      } catch (final PeerNotConnected peerNotConnected) {
+        // Nothing to do.
+      }
+    } else {
+      final StatusMessage status =
+              StatusMessage.create(
+                      cap.getVersion(),
+                      networkId,
+                      blockchain.getChainHead().getTotalDifficulty(),
+                      blockchain.getChainHeadHash(),
+                      genesisHash);
+      try {
+        LOG.debug("Sending status message to {}.", peer);
+        peer.send(status);
+        peer.registerStatusSent();
+      } catch (final PeerNotConnected peerNotConnected) {
+        // Nothing to do.
+      }
     }
   }
 
@@ -327,7 +345,13 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       if (!status.networkId().equals(networkId)) {
         LOG.debug("Disconnecting from peer with mismatched network id: {}", status.networkId());
         peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
-      } else if (forkId.peerCheck(status.genesisHash())) {
+      } else if (forkIdManager.peerCheck(status.forkId())) {
+        LOG.debug(
+                "Disconnecting from peer with matching network id ({}), but non-matching fork id: {}",
+                networkId,
+                status.forkId());
+        peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
+      } else if (forkIdManager.peerCheck(status.genesisHash())) {
         LOG.debug(
             "Disconnecting from peer with matching network id ({}), but non-matching genesis hash: {}",
             networkId,
