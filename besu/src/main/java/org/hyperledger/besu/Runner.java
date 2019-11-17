@@ -241,12 +241,12 @@ public class Runner implements AutoCloseable {
                 final String localIp = natManager.getLocalIp().orElseGet(enode::getIpAsString);
                 properties.setProperty("local-ip", localIp);
               });
-      // create besu.networks file
-      createBesuFile(
-          properties,
-          "networks",
-          "This file contains the IP Addresses (global and local) used by the running instance of Besu");
     }
+    // create besu.networks file
+    createBesuFile(
+        properties,
+        "networks",
+        "This file contains the IP Addresses (global and local) used by the running instance of Besu");
   }
 
   public Optional<Integer> getJsonRpcPort() {
