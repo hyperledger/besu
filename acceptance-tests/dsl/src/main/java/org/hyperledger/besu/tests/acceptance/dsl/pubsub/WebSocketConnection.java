@@ -115,24 +115,24 @@ public class WebSocketConnection {
   }
 
   private void resetLatestResult() {
-    this.receivedResponse = false;
     this.error = null;
     this.latestEvent = null;
+    this.receivedResponse = false;
   }
 
   private void error(final String response) {
-    this.receivedResponse = true;
     this.error = response;
+    this.receivedResponse = true;
   }
 
   private void success(final JsonRpcSuccessEvent result) {
-    this.receivedResponse = true;
     this.latestEvent = result;
+    this.receivedResponse = true;
   }
 
   private void success(final SubscriptionEvent result) {
-    this.receivedResponse = true;
     this.subscriptionEvents.add(result);
+    this.receivedResponse = true;
   }
 
   public List<SubscriptionEvent> getSubscriptionEvents() {
