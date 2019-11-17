@@ -878,9 +878,9 @@ public class MessageFrame {
   }
 
   /**
-   * Returns whether Message calls will be persisted
+   * Returns the transaction hash of the transaction being processed
    *
-   * @return whether Message calls will be persisted
+   * @return the transaction hash of the transaction being processed
    */
   public Hash getTransactionHash() {
     return transactionHash;
