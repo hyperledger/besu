@@ -33,7 +33,6 @@ import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeer;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.nat.core.NATManager;
-import org.hyperledger.besu.nat.core.domain.NATMethod;
 import org.hyperledger.besu.util.bytes.BytesValue;
 import org.hyperledger.besu.util.uint.UInt256;
 
@@ -80,10 +79,6 @@ public class AdminNodeInfoTest {
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
     when(blockchainQueries.getBlockHashByNumber(anyLong())).thenReturn(Optional.of(Hash.EMPTY));
     when(blockchain.getChainHead()).thenReturn(testChainHead);
-    when(natManager.isNATEnvironment()).thenReturn(true);
-    when(natManager.isNatExternalIpUsageEnabled()).thenReturn(true);
-    when(natManager.getNatSystem()).thenReturn(Optional.empty());
-    when(natManager.getNatMethod()).thenReturn(NATMethod.UPNP);
 
     method =
         new AdminNodeInfo(
