@@ -30,7 +30,7 @@ public class PrivGetTransactionCount extends PrivacyApiMethod {
 
   private final PrivateNonceProvider privateNonceProvider;
 
-  public PrivGetTransactionCount( final PrivacyParameters privacyParameters,
+  public PrivGetTransactionCount(final PrivacyParameters privacyParameters,
       final PrivateNonceProvider privateNonceProvider) {
     super(privacyParameters);
     this.privateNonceProvider = privateNonceProvider;
