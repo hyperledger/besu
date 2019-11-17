@@ -129,7 +129,6 @@ public class DefaultP2PNetwork implements P2PNetwork {
   private final MaintainedPeers maintainedPeers;
 
   private NATManager natManager;
-  private Optional<String> natExternalAddress;
 
   private OptionalLong peerBondedObserverId = OptionalLong.empty();
 
@@ -179,8 +178,6 @@ public class DefaultP2PNetwork implements P2PNetwork {
     final int maxPeers = config.getRlpx().getMaxPeers();
     peerDiscoveryAgent.addPeerRequirement(() -> rlpxAgent.getConnectionCount() >= maxPeers);
     subscribeDisconnect(reputationManager);
-
-    natExternalAddress = Optional.empty();
   }
 
   public static Builder builder() {
@@ -194,6 +191,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
       return;
     }
 
+    final String address = config.getDiscovery().getAdvertisedHost();
     final int configuredDiscoveryPort = config.getDiscovery().getBindPort();
     final int configuredRlpxPort = config.getRlpx().getBindPort();
 
@@ -210,7 +208,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
       this.configureNatEnvironment(listeningPort, discoveryPort);
     }
 
-    setLocalNode(listeningPort, discoveryPort);
+    setLocalNode(address, listeningPort, discoveryPort);
 
     peerBondedObserverId =
         OptionalLong.of(peerDiscoveryAgent.observePeerBondedEvents(this::handlePeerBondedEvent));
@@ -357,13 +355,14 @@ public class DefaultP2PNetwork implements P2PNetwork {
     return Optional.of(localNode.getPeer().getEnodeURL());
   }
 
-  private void setLocalNode(final int listeningPort, final int discoveryPort) {
+  private void setLocalNode(
+      final String address, final int listeningPort, final int discoveryPort) {
     if (localNode.isReady()) {
       // Already set
       return;
     }
 
-    String advertisedAddress = natExternalAddress.orElse(config.getDiscovery().getAdvertisedHost());
+    final String advertisedAddress = natManager.getAdvertisedIp().orElse(address);
 
     final EnodeURL localEnode =
         EnodeURL.builder()
@@ -378,34 +377,23 @@ public class DefaultP2PNetwork implements P2PNetwork {
   }
 
   private void configureNatEnvironment(final int listeningPort, final int discoveryPort) {
-    String externalAddress = null;
+
     try {
       final NATSystem natSystem = natManager.getNatSystem().orElseThrow();
       final NATMethod natMethod = natManager.getNatMethod();
 
-      if (natManager.isNATEnvironment()) {
-        if (natManager.isNatExternalIpUsageEnabled()) {
-          final CompletableFuture<String> natQueryFuture = natSystem.getExternalIPAddress();
-          LOG.info(
-              "Querying NAT environment for external IP address, timeout "
-                  + NATSystem.TIMEOUT_SECONDS
-                  + " seconds...");
-          externalAddress = natQueryFuture.get(NATSystem.TIMEOUT_SECONDS, TimeUnit.SECONDS);
-        }
-        // if we're in a UPNP NAT environment, request port forwards for every port we
-        // intend to bind to
-        if (natMethod.equals(NATMethod.UPNP)) {
-          UpnpNatSystem upnpNatSystem = (UpnpNatSystem) natSystem;
-          upnpNatSystem.requestPortForward(
-              discoveryPort, NetworkProtocol.UDP, NATServiceType.DISCOVERY);
-          upnpNatSystem.requestPortForward(listeningPort, NetworkProtocol.TCP, NATServiceType.RLPX);
-        }
+      // if we're in a UPNP NAT environment, request port forwards for every port we
+      // intend to bind to
+      if (natMethod.equals(NATMethod.UPNP)) {
+        UpnpNatSystem upnpNatSystem = (UpnpNatSystem) natSystem;
+        upnpNatSystem.requestPortForward(
+            discoveryPort, NetworkProtocol.UDP, NATServiceType.DISCOVERY);
+        upnpNatSystem.requestPortForward(listeningPort, NetworkProtocol.TCP, NATServiceType.RLPX);
       }
 
     } catch (final Exception e) {
       LOG.error("Error configuring NAT environment", e);
     }
-    natExternalAddress = Optional.ofNullable(externalAddress);
   }
 
   public static class Builder {

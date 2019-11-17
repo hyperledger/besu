@@ -15,9 +15,7 @@
 package org.hyperledger.besu.ethereum.p2p.network;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -46,7 +44,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.Di
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.nat.core.NATManager;
 import org.hyperledger.besu.nat.core.NATSystem;
-import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
+import org.hyperledger.besu.nat.core.domain.NATMethod;
 import org.hyperledger.besu.nat.upnp.UpnpNatSystem;
 
 import java.util.ArrayList;
@@ -221,38 +219,38 @@ public final class DefaultP2PNetworkTest {
     config.getDiscovery().setBindPort(30301);
 
     UpnpNatSystem upnpNatSystem = mock(UpnpNatSystem.class);
+    lenient().when(natManager.isNATEnvironment()).thenReturn(true);
+    lenient().when(natManager.isNatExternalIpUsageEnabled()).thenReturn(true);
+    lenient().when(natManager.getAdvertisedIp()).thenReturn(Optional.of(externalIp));
     lenient().when(natManager.getNatSystem()).thenReturn(Optional.of(upnpNatSystem));
+    lenient().when(natManager.getNatMethod()).thenReturn(NATMethod.UPNP);
 
-    when(upnpNatSystem.getExternalIPAddress())
-        .thenReturn(CompletableFuture.completedFuture(externalIp));
     final P2PNetwork network = builder().natManager(natManager).build();
 
     network.start();
-    verify(upnpNatSystem)
-        .requestPortForward(eq(config.getRlpx().getBindPort()), eq(NetworkProtocol.TCP), any());
-    verify(upnpNatSystem)
-        .requestPortForward(
-            eq(config.getDiscovery().getBindPort()), eq(NetworkProtocol.UDP), any());
 
     Assertions.assertThat(network.getLocalEnode().get().getIpAsString()).isEqualTo(externalIp);
   }
 
   @Test
-  public void start_withGenericNatManager() {
+  public void start_withoutNatManager() {
     final String externalIp = "127.0.0.3";
     config.getRlpx().setBindPort(30303);
     config.getDiscovery().setBindPort(30301);
 
     NATSystem natSystem = mock(NATSystem.class);
-    lenient().when(natManager.getNatSystem()).thenReturn(Optional.of(natSystem));
 
-    when(natSystem.getExternalIPAddress())
-        .thenReturn(CompletableFuture.completedFuture(externalIp));
+    lenient().when(natManager.isNATEnvironment()).thenReturn(false);
+    lenient().when(natManager.isNatExternalIpUsageEnabled()).thenReturn(true);
+    lenient().when(natManager.getNatSystem()).thenReturn(Optional.of(natSystem));
+    lenient().when(natManager.getAdvertisedIp()).thenReturn(Optional.empty());
+    lenient().when(natManager.getNatMethod()).thenReturn(NATMethod.NONE);
+
     final P2PNetwork network = builder().natManager(natManager).build();
 
     network.start();
 
-    Assertions.assertThat(network.getLocalEnode().get().getIpAsString()).isEqualTo(externalIp);
+    Assertions.assertThat(network.getLocalEnode().get().getIpAsString()).isNotEqualTo(externalIp);
   }
 
   @Test

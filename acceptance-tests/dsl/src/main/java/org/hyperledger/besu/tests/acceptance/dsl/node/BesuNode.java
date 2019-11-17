@@ -416,6 +416,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   public void start(final BesuNodeRunner runner) {
     runner.startNode(this);
     loadPortsFile();
+    loadNetworksFile();
   }
 
   @Override
@@ -435,6 +436,16 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
         new FileInputStream(new File(homeDirectory.toFile(), "besu.ports"))) {
       portsProperties.load(fis);
       LOG.info("Ports for node {}: {}", name, portsProperties);
+    } catch (final IOException e) {
+      throw new RuntimeException("Error reading Besu ports file", e);
+    }
+  }
+
+  private void loadNetworksFile() {
+    try (final FileInputStream fis =
+        new FileInputStream(new File(homeDirectory.toFile(), "besu.networks"))) {
+      portsProperties.load(fis);
+      LOG.info("IP Addresses for node {}: {}", name, portsProperties);
     } catch (final IOException e) {
       throw new RuntimeException("Error reading Besu ports file", e);
     }

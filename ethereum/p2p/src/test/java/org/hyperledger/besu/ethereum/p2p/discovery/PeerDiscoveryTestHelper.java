@@ -27,6 +27,8 @@ import org.hyperledger.besu.ethereum.p2p.discovery.internal.PingPacketData;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
+import org.hyperledger.besu.nat.core.NATManager;
+import org.hyperledger.besu.nat.core.domain.NATMethod;
 import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Arrays;
@@ -186,6 +188,7 @@ public class PeerDiscoveryTestHelper {
     private String advertisedHost = "127.0.0.1";
     private OptionalInt bindPort = OptionalInt.empty();
     private KeyPair keyPair = SECP256K1.KeyPair.generate();
+    private NATManager natManager = new NATManager(NATMethod.NONE);
 
     private AgentBuilder(
         final Map<BytesValue, MockPeerDiscoveryAgent> agents,
@@ -214,6 +217,11 @@ public class PeerDiscoveryTestHelper {
 
     public AgentBuilder peerPermissions(final PeerPermissions peerPermissions) {
       this.peerPermissions = peerPermissions;
+      return this;
+    }
+
+    public AgentBuilder natManager(final NATManager natManager) {
+      this.natManager = natManager;
       return this;
     }
 
@@ -252,7 +260,7 @@ public class PeerDiscoveryTestHelper {
       config.setBindPort(port);
       config.setActive(active);
 
-      return new MockPeerDiscoveryAgent(keyPair, config, peerPermissions, agents);
+      return new MockPeerDiscoveryAgent(keyPair, config, peerPermissions, agents, natManager);
     }
   }
 }

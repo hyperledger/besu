@@ -26,7 +26,7 @@ import org.hyperledger.besu.ethereum.chain.ChainHead;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.nat.core.NATManager;
-import org.hyperledger.besu.nat.core.NATSystem;
+import org.hyperledger.besu.nat.core.domain.NATPortMapping;
 import org.hyperledger.besu.nat.core.domain.NATServiceType;
 import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
 import org.hyperledger.besu.util.bytes.BytesValue;
@@ -35,8 +35,6 @@ import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.common.collect.ImmutableMap;
 
@@ -121,46 +119,22 @@ public class AdminNodeInfo implements JsonRpcMethod {
   }
 
   private String getIp(final EnodeURL enode) {
-    final Optional<NATSystem> natSystem = natManager.getNatSystem();
-    if (natSystem.isPresent() && natManager.isNatExternalIpUsageEnabled()) {
-      try {
-        return natSystem
-            .get()
-            .getExternalIPAddress()
-            .get(NATSystem.TIMEOUT_SECONDS, TimeUnit.SECONDS);
-      } catch (Exception e) {
-        throw new RuntimeException("Unable to retrieve the IP");
-      }
-    } else {
-      return enode.getIpAsString();
-    }
+    return natManager.getAdvertisedIp().orElseGet(enode::getIpAsString);
   }
 
   private int getDiscoveryPort(final EnodeURL enode) {
-    final AtomicInteger discoveryPort = new AtomicInteger();
-    natManager
-        .getNatSystem()
-        .ifPresentOrElse(
-            natSystem ->
-                discoveryPort.set(
-                    natSystem
-                        .getPortMapping(NATServiceType.DISCOVERY, NetworkProtocol.UDP)
-                        .getExternalPort()),
-            () -> discoveryPort.set(enode.getDiscoveryPortOrZero()));
-    return discoveryPort.intValue();
+    final Optional<NATPortMapping> portMapping =
+        natManager.getPortMapping(NATServiceType.DISCOVERY, NetworkProtocol.UDP);
+    return portMapping
+        .map(NATPortMapping::getExternalPort)
+        .orElseGet(enode::getDiscoveryPortOrZero);
   }
 
   private int getListeningPort(final EnodeURL enode) {
-    final AtomicInteger listeningPort = new AtomicInteger();
-    natManager
-        .getNatSystem()
-        .ifPresentOrElse(
-            natSystem ->
-                listeningPort.set(
-                    natSystem
-                        .getPortMapping(NATServiceType.RLPX, NetworkProtocol.TCP)
-                        .getExternalPort()),
-            () -> listeningPort.set(enode.getListeningPort().getAsInt()));
-    return listeningPort.intValue();
+    final Optional<NATPortMapping> portMapping =
+        natManager.getPortMapping(NATServiceType.RLPX, NetworkProtocol.TCP);
+    return portMapping
+        .map(NATPortMapping::getExternalPort)
+        .orElse(enode.getListeningPort().getAsInt());
   }
 }

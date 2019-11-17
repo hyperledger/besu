@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerDiscoveryControl
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.nat.core.NATManager;
-import org.hyperledger.besu.nat.core.domain.NATMethod;
 import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.net.InetSocketAddress;
@@ -43,9 +42,9 @@ public class MockPeerDiscoveryAgent extends PeerDiscoveryAgent {
       final KeyPair keyPair,
       final DiscoveryConfiguration config,
       final PeerPermissions peerPermissions,
-      final Map<BytesValue, MockPeerDiscoveryAgent> agentNetwork) {
-    super(
-        keyPair, config, peerPermissions, new NATManager(NATMethod.NONE), new NoOpMetricsSystem());
+      final Map<BytesValue, MockPeerDiscoveryAgent> agentNetwork,
+      final NATManager natManager) {
+    super(keyPair, config, peerPermissions, natManager, new NoOpMetricsSystem());
     this.agentNetwork = agentNetwork;
   }
 

@@ -56,6 +56,7 @@ public class AdminNodeInfoTest {
   @Mock private P2PNetwork p2pNetwork;
   @Mock private Blockchain blockchain;
   @Mock private BlockchainQueries blockchainQueries;
+  @Mock private NATManager natManager;
 
   private AdminNodeInfo method;
 
@@ -79,6 +80,10 @@ public class AdminNodeInfoTest {
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
     when(blockchainQueries.getBlockHashByNumber(anyLong())).thenReturn(Optional.of(Hash.EMPTY));
     when(blockchain.getChainHead()).thenReturn(testChainHead);
+    when(natManager.isNATEnvironment()).thenReturn(true);
+    when(natManager.isNatExternalIpUsageEnabled()).thenReturn(true);
+    when(natManager.getNatSystem()).thenReturn(Optional.empty());
+    when(natManager.getNatMethod()).thenReturn(NATMethod.UPNP);
 
     method =
         new AdminNodeInfo(
@@ -87,7 +92,7 @@ public class AdminNodeInfoTest {
             genesisConfigOptions,
             p2pNetwork,
             blockchainQueries,
-            new NATManager(NATMethod.NONE));
+            natManager);
   }
 
   @Test

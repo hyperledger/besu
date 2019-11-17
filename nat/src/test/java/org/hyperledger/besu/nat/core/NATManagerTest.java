@@ -16,10 +16,20 @@
 package org.hyperledger.besu.nat.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.nat.core.domain.NATMethod;
+import org.hyperledger.besu.nat.core.domain.NATPortMapping;
+import org.hyperledger.besu.nat.core.domain.NATServiceType;
+import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
 import org.hyperledger.besu.nat.upnp.UpnpNatSystem;
 
+import java.util.Optional;
+
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -47,5 +57,45 @@ public class NATManagerTest {
 
     final NATManager upnpNatManager = new NATManager(NATMethod.UPNP);
     assertThat(upnpNatManager.isNATEnvironment()).isTrue();
+  }
+
+  @SuppressWarnings("OptionalGetWithoutIsPresent")
+  @Test
+  public void assertThatGetPortMappingWorksProperlyWithUpNp() {
+    final String externalIp = "127.0.0.3";
+    final NATPortMapping natPortMapping =
+        new NATPortMapping(
+            NATServiceType.DISCOVERY, NetworkProtocol.UDP, externalIp, externalIp, 1111, 1111);
+    final NATSystem natSystem = mock(NATSystem.class);
+    when(natSystem.getPortMapping(natPortMapping.getNatServiceType(), natPortMapping.getProtocol()))
+        .thenReturn(natPortMapping);
+
+    final NATManager natManager = new NATManager(NATMethod.UPNP);
+    natManager.setNatSystem(Optional.of(natSystem));
+
+    Optional<NATPortMapping> portMapping =
+        natManager.getPortMapping(natPortMapping.getNatServiceType(), natPortMapping.getProtocol());
+
+    verify(natSystem)
+        .getPortMapping(natPortMapping.getNatServiceType(), natPortMapping.getProtocol());
+
+    Assertions.assertThat(portMapping.get()).isEqualTo(natPortMapping);
+  }
+
+  @SuppressWarnings("OptionalGetWithoutIsPresent")
+  @Test
+  public void assertThatGetPortMappingWorksProperlyWithoutNat() {
+
+    final NATSystem natSystem = mock(NATSystem.class);
+
+    final NATManager natManager = new NATManager(NATMethod.NONE);
+    natManager.setNatSystem(Optional.of(natSystem));
+
+    Optional<NATPortMapping> portMapping =
+        natManager.getPortMapping(NATServiceType.DISCOVERY, NetworkProtocol.TCP);
+
+    verifyNoInteractions(natSystem);
+
+    Assertions.assertThat(portMapping).isNotPresent();
   }
 }

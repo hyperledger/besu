@@ -30,7 +30,6 @@ import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
 import org.hyperledger.besu.nat.core.NATManager;
-import org.hyperledger.besu.nat.core.NATSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.util.NetworkUtility;
 import org.hyperledger.besu.util.Subscribers;
@@ -43,7 +42,6 @@ import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -126,27 +124,8 @@ public abstract class PeerDiscoveryAgent {
       LOG.info("Starting peer discovery agent on host={}, port={}", host, port);
 
       // override advertised host if we detect an external IP address via NAT manager
-      String foundAddress = null;
-      if (natManager.isNATEnvironment() && natManager.isNatExternalIpUsageEnabled()) {
-        try {
-          final NATSystem natSystem = natManager.getNatSystem().orElseThrow();
-          LOG.info(
-              "Waiting for up to {} seconds to detect external IP address...",
-              NATSystem.TIMEOUT_SECONDS);
-          foundAddress =
-              natSystem.getExternalIPAddress().get(NATSystem.TIMEOUT_SECONDS, TimeUnit.SECONDS);
-
-        } catch (Exception e) {
-          LOG.warn(
-              "Caught exception while trying to query NAT external IP address (ignoring): {}", e);
-        }
-      }
-
-      if (null == foundAddress || foundAddress.isEmpty()) {
-        foundAddress = config.getAdvertisedHost();
-      }
-
-      final String advertisedAddress = foundAddress;
+      final String advertisedAddress =
+          natManager.getAdvertisedIp().orElseGet(config::getAdvertisedHost);
 
       return listenForConnections()
           .thenApply(

@@ -15,10 +15,15 @@
 package org.hyperledger.besu.nat.core;
 
 import org.hyperledger.besu.nat.core.domain.NATMethod;
+import org.hyperledger.besu.nat.core.domain.NATPortMapping;
+import org.hyperledger.besu.nat.core.domain.NATServiceType;
+import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
 import org.hyperledger.besu.nat.upnp.UpnpNatSystem;
 
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -27,7 +32,7 @@ public class NATManager {
   protected static final Logger LOG = LogManager.getLogger();
 
   private final NATMethod currentNatMethod;
-  private final Optional<NATSystem> currentNatSystem;
+  private Optional<NATSystem> currentNatSystem;
   private final boolean natExternalIpUsageEnabled;
 
   public NATManager(final NATMethod natMethod) {
@@ -74,6 +79,76 @@ public class NATManager {
    */
   public Optional<NATSystem> getNatSystem() {
     return currentNatSystem;
+  }
+
+  /**
+   * Returns a {@link Optional} wrapping the advertised IP address.
+   *
+   * @return The advertised IP address wrapped in a {@link Optional}. Empty if
+   *     `isNatExternalIpUsageEnabled` is false
+   */
+  public Optional<String> getAdvertisedIp() {
+    if (isNATEnvironment() && isNatExternalIpUsageEnabled()) {
+      try {
+        final NATSystem natSystem = getNatSystem().get();
+        LOG.info(
+            "Waiting for up to {} seconds to detect external IP address...",
+            NATSystem.TIMEOUT_SECONDS);
+        return Optional.of(
+            natSystem.getExternalIPAddress().get(NATSystem.TIMEOUT_SECONDS, TimeUnit.SECONDS));
+
+      } catch (Exception e) {
+        LOG.warn(
+            "Caught exception while trying to query NAT external IP address (ignoring): {}", e);
+      }
+    }
+    return Optional.empty();
+  }
+
+  /**
+   * Returns a {@link Optional} wrapping the local IP address.
+   *
+   * @return The local IP address wrapped in a {@link Optional}.
+   */
+  public Optional<String> getLocalIp() throws RuntimeException {
+    if (isNATEnvironment()) {
+      try {
+        final NATSystem natSystem = getNatSystem().orElseThrow();
+        LOG.info(
+            "Waiting for up to {} seconds to detect external IP address...",
+            NATSystem.TIMEOUT_SECONDS);
+        return Optional.of(
+            natSystem.getLocalIPAddress().get(NATSystem.TIMEOUT_SECONDS, TimeUnit.SECONDS));
+      } catch (Exception e) {
+        LOG.warn("Caught exception while trying to query local IP address (ignoring): {}", e);
+      }
+    }
+    return Optional.empty();
+  }
+
+  /**
+   * Returns the port mapping associated to the passed service type.
+   *
+   * @param serviceType The service type {@link NATServiceType}.
+   * @param networkProtocol The network protocol {@link NetworkProtocol}.
+   * @return The port mapping {@link NATPortMapping}
+   */
+  public Optional<NATPortMapping> getPortMapping(
+      final NATServiceType serviceType, final NetworkProtocol networkProtocol) {
+    if (isNATEnvironment()) {
+      try {
+        final NATSystem natSystem = getNatSystem().orElseThrow();
+        return Optional.of(natSystem.getPortMapping(serviceType, networkProtocol));
+      } catch (Exception e) {
+        LOG.warn("Caught exception while trying to query port mapping (ignoring): {}", e);
+      }
+    }
+    return Optional.empty();
+  }
+
+  @VisibleForTesting
+  void setNatSystem(final Optional<NATSystem> natSystem) {
+    this.currentNatSystem = natSystem;
   }
 
   /**
