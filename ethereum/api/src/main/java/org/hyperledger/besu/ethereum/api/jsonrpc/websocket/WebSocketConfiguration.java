@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.websocket;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -37,7 +38,8 @@ public class WebSocketConfiguration {
   private List<RpcApi> rpcApis;
   private boolean authenticationEnabled = false;
   private String authenticationCredentialsFile;
-  private Collection<String> hostsWhitelist = Collections.singletonList("localhost");
+  private List<String> hostsWhitelist = Arrays.asList("localhost", "127.0.0.1");
+  private File authenticationPublicKeyFile;
 
   public static WebSocketConfiguration createDefault() {
     final WebSocketConfiguration config = new WebSocketConfiguration();
@@ -82,38 +84,6 @@ public class WebSocketConfiguration {
     this.rpcApis = rpcApis;
   }
 
-  @Override
-  public String toString() {
-    return MoreObjects.toStringHelper(this)
-        .add("enabled", enabled)
-        .add("port", port)
-        .add("host", host)
-        .add("rpcApis", rpcApis)
-        .add("authenticationEnabled", authenticationEnabled)
-        .add("authenticationCredentialsFile", authenticationCredentialsFile)
-        .toString();
-  }
-
-  @Override
-  public boolean equals(final Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    final WebSocketConfiguration that = (WebSocketConfiguration) o;
-    return enabled == that.enabled
-        && port == that.port
-        && Objects.equals(host, that.host)
-        && Objects.equals(rpcApis, that.rpcApis);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(enabled, port, host, rpcApis);
-  }
-
   public boolean isAuthenticationEnabled() {
     return authenticationEnabled;
   }
@@ -130,11 +100,65 @@ public class WebSocketConfiguration {
     return authenticationCredentialsFile;
   }
 
-  public void setHostsWhitelist(final Collection<String> hostsWhitelist) {
+  public void setHostsWhitelist(final List<String> hostsWhitelist) {
     this.hostsWhitelist = hostsWhitelist;
   }
 
   public Collection<String> getHostsWhitelist() {
     return Collections.unmodifiableCollection(this.hostsWhitelist);
+  }
+
+  public File getAuthenticationPublicKeyFile() {
+    return authenticationPublicKeyFile;
+  }
+
+  public void setAuthenticationPublicKeyFile(final File authenticationPublicKeyFile) {
+    this.authenticationPublicKeyFile = authenticationPublicKeyFile;
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    final WebSocketConfiguration that = (WebSocketConfiguration) o;
+    return enabled == that.enabled
+        && port == that.port
+        && authenticationEnabled == that.authenticationEnabled
+        && Objects.equals(host, that.host)
+        && Objects.equals(rpcApis, that.rpcApis)
+        && Objects.equals(authenticationCredentialsFile, that.authenticationCredentialsFile)
+        && Objects.equals(hostsWhitelist, that.hostsWhitelist)
+        && Objects.equals(authenticationPublicKeyFile, that.authenticationPublicKeyFile);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(
+        enabled,
+        port,
+        host,
+        rpcApis,
+        authenticationEnabled,
+        authenticationCredentialsFile,
+        hostsWhitelist,
+        authenticationPublicKeyFile);
+  }
+
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this)
+        .add("enabled", enabled)
+        .add("port", port)
+        .add("host", host)
+        .add("rpcApis", rpcApis)
+        .add("authenticationEnabled", authenticationEnabled)
+        .add("authenticationCredentialsFile", authenticationCredentialsFile)
+        .add("hostsWhitelist", hostsWhitelist)
+        .add("authenticationPublicKeyFile", authenticationPublicKeyFile)
+        .toString();
   }
 }

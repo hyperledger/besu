@@ -36,6 +36,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNotNull;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.BesuInfo;
@@ -2772,6 +2773,32 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void rpcHttpAuthPublicKeyFileOptionDisabledUnderDocker() {
+    System.setProperty("besu.docker", "true");
+
+    assumeFalse(isFullInstantiation());
+
+    final Path path = Paths.get(".");
+    parseCommand("--rpc-http-authentication-public-key-file", path.toString());
+    assertThat(commandErrorOutput.toString())
+        .startsWith("Unknown options: --rpc-http-authentication-public-key-file, .");
+    assertThat(commandOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void rpcWsAuthPublicKeyFileOptionDisabledUnderDocker() {
+    System.setProperty("besu.docker", "true");
+
+    assumeFalse(isFullInstantiation());
+
+    final Path path = Paths.get(".");
+    parseCommand("--rpc-ws-authentication-public-key-file", path.toString());
+    assertThat(commandErrorOutput.toString())
+        .startsWith("Unknown options: --rpc-ws-authentication-public-key-file, .");
+    assertThat(commandOutput.toString()).isEmpty();
+  }
+
+  @Test
   public void permissionsConfigFileOptionDisabledUnderDocker() {
     System.setProperty("besu.docker", "true");
 
@@ -2994,5 +3021,51 @@ public class BesuCommandTest extends CommandTestAbstract {
         .containsEntry(block1, Hash.fromHexStringLenient(hash1));
     assertThat(requiredBlocksArg.getValue())
         .containsEntry(block2, Hash.fromHexStringLenient(hash2));
+  }
+
+  @Test
+  public void httpAuthenticationPublicKeyIsConfigured() throws IOException {
+    final Path publicKey = Files.createTempFile("public_key", "");
+    parseCommand("--rpc-http-authentication-jwt-public-key-file", publicKey.toString());
+
+    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getAuthenticationPublicKeyFile().getPath())
+        .isEqualTo(publicKey.toString());
+  }
+
+  @Test
+  public void httpAuthenticationWithoutRequiredConfiguredOptionsMustFail() {
+    parseCommand("--rpc-http-enabled", "--rpc-http-authentication-enabled");
+
+    verifyNoInteractions(mockRunnerBuilder);
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString())
+        .contains(
+            "Unable to authenticate JSON-RPC HTTP endpoint without a supplied credentials file or authentication public key file");
+  }
+
+  @Test
+  public void wsAuthenticationPublicKeyIsConfigured() throws IOException {
+    final Path publicKey = Files.createTempFile("public_key", "");
+    parseCommand("--rpc-ws-authentication-jwt-public-key-file", publicKey.toString());
+
+    verify(mockRunnerBuilder).webSocketConfiguration(wsRpcConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(wsRpcConfigArgumentCaptor.getValue().getAuthenticationPublicKeyFile().getPath())
+        .isEqualTo(publicKey.toString());
+  }
+
+  @Test
+  public void wsAuthenticationWithoutRequiredConfiguredOptionsMustFail() {
+    parseCommand("--rpc-ws-enabled", "--rpc-ws-authentication-enabled");
+
+    verifyNoInteractions(mockRunnerBuilder);
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString())
+        .contains(
+            "Unable to authenticate JSON-RPC WebSocket endpoint without a supplied credentials file or authentication public key file");
   }
 }
