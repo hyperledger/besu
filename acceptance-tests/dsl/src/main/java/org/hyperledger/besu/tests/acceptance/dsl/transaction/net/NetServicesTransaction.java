@@ -37,6 +37,9 @@ public class NetServicesTransaction implements Transaction<Map<String, Map<Strin
     } catch (final Exception e) {
       throw new RuntimeException(e);
     }
+    if (netServicesResponse.hasError()) {
+      throw new RuntimeException(netServicesResponse.getError().getMessage());
+    }
     return netServicesResponse.getResult();
   }
 }
