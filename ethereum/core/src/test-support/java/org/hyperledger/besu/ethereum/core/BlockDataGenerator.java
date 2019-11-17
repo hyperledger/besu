@@ -488,8 +488,8 @@ public class BlockDataGenerator {
     private Optional<Hash> parentHash = Optional.empty();
     private Optional<Hash> stateRoot = Optional.empty();
     private Optional<UInt256> difficulty = Optional.empty();
-    private List<Transaction> transactions = new ArrayList<>();
-    private List<BlockHeader> ommers = new ArrayList<>();
+    private Optional<List<Transaction>> transactions = Optional.empty();
+    private Optional<List<BlockHeader>> ommers = Optional.empty();
     private Optional<BytesValue> extraData = Optional.empty();
     private Optional<BlockHeaderFunctions> blockHeaderFunctions = Optional.empty();
     private Optional<Hash> receiptsRoot = Optional.empty();
@@ -501,11 +501,11 @@ public class BlockDataGenerator {
     }
 
     public List<Transaction> getTransactions(final List<Transaction> defaultValue) {
-      return transactions.isEmpty() ? defaultValue : transactions;
+      return transactions.orElse(defaultValue);
     }
 
     public List<BlockHeader> getOmmers(final List<BlockHeader> defaultValue) {
-      return ommers.isEmpty() ? defaultValue : ommers;
+      return ommers.orElse(defaultValue);
     }
 
     public long getBlockNumber(final long defaultValue) {
@@ -545,17 +545,27 @@ public class BlockDataGenerator {
     }
 
     public BlockOptions addTransaction(final Transaction... tx) {
-      transactions.addAll(Arrays.asList(tx));
-      return this;
-    }
-
-    public BlockOptions addOmmers(final BlockHeader... headers) {
-      ommers.addAll(Arrays.asList(headers));
+      if (!transactions.isPresent()) {
+        transactions = Optional.of(new ArrayList<>());
+      }
+      transactions.get().addAll(Arrays.asList(tx));
       return this;
     }
 
     public BlockOptions addTransaction(final Collection<Transaction> txs) {
-      return addTransaction(txs.toArray(new Transaction[] {}));
+      if (!transactions.isPresent()) {
+        transactions = Optional.of(new ArrayList<>());
+      }
+      transactions.get().addAll(txs);
+      return this;
+    }
+
+    public BlockOptions addOmmers(final BlockHeader... headers) {
+      if (ommers.isEmpty()) {
+        ommers = Optional.of(new ArrayList<>());
+      }
+      ommers.get().addAll(Arrays.asList(headers));
+      return this;
     }
 
     public BlockOptions setBlockNumber(final long blockNumber) {
