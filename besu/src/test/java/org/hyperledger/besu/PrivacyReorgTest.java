@@ -102,7 +102,6 @@ public class PrivacyReorgTest {
 
   @Before
   public void setUp() throws IOException {
-
     // Start Enclave
     enclave =
         OrionTestHarnessFactory.create(
@@ -155,8 +154,7 @@ public class PrivacyReorgTest {
             new BlockDataGenerator.BlockOptions()
                 .setBlockNumber(1)
                 .setParentHash(blockchain.getGenesisBlock().getHash())
-                .addTransaction(
-                    generateMarker(BytesValues.fromBase64(sendToEnclave(enclave.clientUrl()))))
+                .addTransaction(generateMarker(getEnclaveKey(enclave.clientUrl())))
                 .addOmmers()
                 .setReceiptsRoot(
                     Hash.fromHexString(
@@ -229,8 +227,7 @@ public class PrivacyReorgTest {
             new BlockDataGenerator.BlockOptions()
                 .setBlockNumber(2)
                 .setParentHash(firstBlock.getHeader().getHash())
-                .addTransaction(
-                    generateMarker(BytesValues.fromBase64(sendToEnclave(enclave.clientUrl()))))
+                .addTransaction(generateMarker(getEnclaveKey(enclave.clientUrl())))
                 .addOmmers()
                 .setReceiptsRoot(
                     Hash.fromHexString(
@@ -299,8 +296,7 @@ public class PrivacyReorgTest {
             new BlockDataGenerator.BlockOptions()
                 .setBlockNumber(1)
                 .setParentHash(blockchain.getGenesisBlock().getHeader().getHash())
-                .addTransaction(
-                    generateMarker(BytesValues.fromBase64(sendToEnclave(enclave.clientUrl()))))
+                .addTransaction(generateMarker(getEnclaveKey(enclave.clientUrl())))
                 .addOmmers()
                 .setReceiptsRoot(
                     Hash.fromHexString(
@@ -403,17 +399,23 @@ public class PrivacyReorgTest {
         .build();
   }
 
-  private String sendToEnclave(final URI enclaveURI) {
+  private BytesValue getEnclaveKey(final URI enclaveURI) {
     final Enclave enclave = new Enclave(enclaveURI);
     final SendRequest sendRequest = createSendRequest(PRIVATE_TRANSACTION);
     final SendResponse sendResponse;
+    sendResponse = enclave.send(sendRequest);
+    final BytesValue payload = BytesValues.fromBase64(sendResponse.getKey());
 
-    try {
-      sendResponse = enclave.send(sendRequest);
-      return sendResponse.getKey();
-    } catch (Exception e) {
-      throw e;
+    // If the key has 0 bytes generate a new key.
+    // This is to keep the gasUsed constant allowing
+    // hard-coded receipt roots in the block headers
+    for (int i = 0; i < payload.size(); i++) {
+      if (payload.get(i) == 0) {
+        return getEnclaveKey(enclaveURI);
+      }
     }
+
+    return payload;
   }
 
   private SendRequest createSendRequest(final PrivateTransaction privateTransaction) {
