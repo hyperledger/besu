@@ -30,6 +30,7 @@ import io.vertx.core.http.RequestOptions;
 import io.vertx.core.http.WebSocket;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.Json;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 
 public class WebSocketConnection {
 
@@ -102,7 +103,11 @@ public class WebSocketConnection {
                       }
 
                     } catch (final DecodeException e) {
-                      error(data.toString());
+                      error(
+                          "Data: "
+                              + data.toString()
+                              + "\nException: "
+                              + ExceptionUtils.getStackTrace(e));
                     }
                   });
             });
