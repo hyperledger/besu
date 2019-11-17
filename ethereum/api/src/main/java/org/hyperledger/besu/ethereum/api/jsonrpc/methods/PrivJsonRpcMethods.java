@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.privacy.PrivateNonceProvider;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionHandler;
 
 import java.util.Map;
@@ -51,7 +52,9 @@ public class PrivJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
 
   @Override
   protected Map<String, JsonRpcMethod> create(
-      final PrivateTransactionHandler privateTransactionHandler, final Enclave enclave) {
+      final PrivateTransactionHandler privateTransactionHandler,
+      final PrivateNonceProvider privateNonceProvider,
+      final Enclave enclave) {
     return mapOf(
         new PrivGetTransactionReceipt(getBlockchainQueries(), enclave, getPrivacyParameters()),
         new PrivCreatePrivacyGroup(
@@ -60,7 +63,7 @@ public class PrivJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
             new Enclave(getPrivacyParameters().getEnclaveUri()), getPrivacyParameters()),
         new PrivFindPrivacyGroup(new Enclave(getPrivacyParameters().getEnclaveUri())),
         new PrivGetPrivacyPrecompileAddress(getPrivacyParameters()),
-        new PrivGetTransactionCount(privateTransactionHandler),
+        new PrivGetTransactionCount(privateNonceProvider),
         new PrivGetPrivateTransaction(getBlockchainQueries(), enclave, getPrivacyParameters()),
         new PrivDistributeRawTransaction(privateTransactionHandler, getTransactionPool()));
   }

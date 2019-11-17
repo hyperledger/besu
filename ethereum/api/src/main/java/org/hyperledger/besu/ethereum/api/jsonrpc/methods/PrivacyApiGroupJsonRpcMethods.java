@@ -23,6 +23,9 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.privacy.ChainHeadPrivateNonceProvider;
+import org.hyperledger.besu.ethereum.privacy.PrivateNonceProvider;
+import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionHandler;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.FixedKeySigningPrivateMarkerTransactionFactory;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.PrivateMarkerTransactionFactory;
@@ -70,17 +73,31 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
         createPrivateMarkerTransactionFactory(
             privacyParameters, blockchainQueries, transactionPool.getPendingTransactions());
 
+    final PrivateStateRootResolver privateStateRootResolver =
+        new PrivateStateRootResolver(privacyParameters.getPrivateStateStorage());
+
+    final PrivateNonceProvider privateNonceProvider =
+        new ChainHeadPrivateNonceProvider(
+            blockchainQueries.getBlockchain(),
+            privateStateRootResolver,
+            privacyParameters.getPrivateWorldStateArchive());
+
     final PrivateTransactionHandler privateTransactionHandler =
         new PrivateTransactionHandler(
-            privacyParameters, protocolSchedule.getChainId(), markerTransactionFactory);
+            privacyParameters,
+            protocolSchedule.getChainId(),
+            markerTransactionFactory,
+            privateNonceProvider);
 
     final Enclave enclave = new Enclave(privacyParameters.getEnclaveUri());
 
-    return create(privateTransactionHandler, enclave);
+    return create(privateTransactionHandler, privateNonceProvider, enclave);
   }
 
   protected abstract Map<String, JsonRpcMethod> create(
-      final PrivateTransactionHandler privateTransactionHandler, final Enclave enclave);
+      final PrivateTransactionHandler privateTransactionHandler,
+      final PrivateNonceProvider privateNonceProvider,
+      final Enclave enclave);
 
   private PrivateMarkerTransactionFactory createPrivateMarkerTransactionFactory(
       final PrivacyParameters privacyParameters,
