@@ -40,8 +40,8 @@ public interface BesuNodeRunner {
 
   boolean isActive(String nodeName);
 
-  default void waitForPortsFile(final Path dataDir) {
-    final File file = new File(dataDir.toFile(), "besu.ports");
+  default void waitForFile(final Path dataDir, final String fileName) {
+    final File file = new File(dataDir.toFile(), fileName);
     Awaitility.waitAtMost(30, TimeUnit.SECONDS)
         .until(
             () -> {

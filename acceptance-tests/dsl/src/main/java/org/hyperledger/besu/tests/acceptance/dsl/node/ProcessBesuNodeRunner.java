@@ -262,7 +262,8 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
       LOG.error("Error starting BesuNode process", e);
     }
 
-    waitForPortsFile(dataDir);
+    waitForFile(dataDir, "besu.ports");
+    waitForFile(dataDir, "besu.networks");
   }
 
   private void printOutput(final BesuNode node, final Process process) {
