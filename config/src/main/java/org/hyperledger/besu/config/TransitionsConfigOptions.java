@@ -25,17 +25,17 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Lists;
 
-public class CustomForksConfigOptions {
+public class TransitionsConfigOptions {
 
   public static final String IBFT2_FORKS = "ibft2";
 
-  public static final CustomForksConfigOptions DEFAULT =
-      new CustomForksConfigOptions(JsonUtil.createEmptyObjectNode());
+  public static final TransitionsConfigOptions DEFAULT =
+      new TransitionsConfigOptions(JsonUtil.createEmptyObjectNode());
 
   private final ObjectNode customForkConfigRoot;
 
   @JsonCreator
-  public CustomForksConfigOptions(final ObjectNode customForkConfigRoot) {
+  public TransitionsConfigOptions(final ObjectNode customForkConfigRoot) {
     this.customForkConfigRoot = customForkConfigRoot;
   }
 
