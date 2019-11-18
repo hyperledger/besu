@@ -12,29 +12,16 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.tests.acceptance.dsl.condition.net;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowable;
+package org.hyperledger.besu.tests.acceptance.dsl.condition.login;
 
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
-import org.hyperledger.besu.tests.acceptance.dsl.transaction.net.NetVersionTransaction;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.login.LoginDisabledTransaction;
 
-public class ExpectNetVersionConnectionExceptionWithCause implements Condition {
-
-  private final NetVersionTransaction transaction;
-  private final Class<? extends Throwable> cause;
-
-  public ExpectNetVersionConnectionExceptionWithCause(
-      final NetVersionTransaction transaction, final Class<? extends Throwable> cause) {
-    this.transaction = transaction;
-    this.cause = cause;
-  }
+public class ExpectLoginDisabled implements Condition {
 
   @Override
   public void verify(final Node node) {
-    final Throwable thrown = catchThrowable(() -> node.execute(transaction));
-    assertThat(thrown).isInstanceOf(cause);
+    node.execute(new LoginDisabledTransaction());
   }
 }

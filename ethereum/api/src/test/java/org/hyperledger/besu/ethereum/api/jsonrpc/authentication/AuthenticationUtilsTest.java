@@ -15,10 +15,29 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.authentication;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
+import java.util.Optional;
+
+import io.vertx.core.Handler;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.auth.User;
+import io.vertx.ext.auth.jwt.JWTAuth;
+import io.vertx.ext.auth.jwt.JWTAuthOptions;
+import io.vertx.ext.auth.jwt.impl.JWTAuthProviderImpl;
 import org.junit.Test;
 
 public class AuthenticationUtilsTest {
+
+  private static String INVALID_TOKEN_WITHOUT_EXP =
+      "ewogICJhbGciOiAibm9uZSIsCiAgInR5cCI6ICJKV1QiCn"
+          + "0.eyJpYXQiOjE1MTYyMzkwMjIsInBlcm1pc3Npb25zIjpbIm5ldDpwZWVyQ291bnQiXX0";
+  private static String VALID_TOKEN =
+      "ewogICJhbGciOiAibm9uZSIsCiAgInR5cCI6ICJKV1QiCn0.eyJpYXQiOjE1"
+          + "MTYyMzkwMjIsImV4cCI6NDcyOTM2MzIwMCwicGVybWlzc2lvbnMiOlsibmV0OnBlZXJDb3VudCJdfQ";
+  private static String VALID_TOKEN_DECODED_PAYLOAD =
+      "{\"iat\": 1516239022,\"exp\": 4729363200," + "\"permissions\": [\"net:peerCount\"]}";
 
   @Test
   public void getJwtTokenFromNullStringShouldReturnNull() {
@@ -54,5 +73,44 @@ public class AuthenticationUtilsTest {
     final String token = AuthenticationUtils.getJwtTokenFromAuthorizationHeaderValue(headerValue);
 
     assertThat(token).isEqualTo("eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9");
+  }
+
+  @Test
+  public void getUserFailsIfTokenDoesNotHaveExpiryClaim() {
+    final AuthenticationService authenticationService = mock(AuthenticationService.class);
+    final JWTAuth jwtAuth = new JWTAuthProviderImpl(null, new JWTAuthOptions());
+    final StubUserHandler handler = new StubUserHandler();
+    when(authenticationService.getJwtAuthProvider()).thenReturn(jwtAuth);
+
+    AuthenticationUtils.getUser(
+        Optional.of(authenticationService), INVALID_TOKEN_WITHOUT_EXP, handler);
+
+    assertThat(handler.getEvent()).isEmpty();
+  }
+
+  @Test
+  public void getUserSucceedsWithValidToken() {
+    final AuthenticationService authenticationService = mock(AuthenticationService.class);
+    final JWTAuth jwtAuth = new JWTAuthProviderImpl(null, new JWTAuthOptions());
+    final StubUserHandler handler = new StubUserHandler();
+    when(authenticationService.getJwtAuthProvider()).thenReturn(jwtAuth);
+
+    AuthenticationUtils.getUser(Optional.of(authenticationService), VALID_TOKEN, handler);
+
+    assertThat(handler.getEvent().get().principal())
+        .isEqualTo(new JsonObject(VALID_TOKEN_DECODED_PAYLOAD));
+  }
+
+  private static class StubUserHandler implements Handler<Optional<User>> {
+    private Optional<User> event;
+
+    @Override
+    public void handle(final Optional<User> event) {
+      this.event = event;
+    }
+
+    public Optional<User> getEvent() {
+      return event;
+    }
   }
 }

@@ -16,14 +16,12 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -111,15 +109,13 @@ public class EeaSendRawTransactionTest {
 
   @Mock private TransactionPool transactionPool;
 
-  @Mock private JsonRpcParameter parameter;
-
   @Mock private EeaSendRawTransaction method;
 
   @Mock private PrivateTransactionHandler privateTxHandler;
 
   @Before
   public void before() {
-    method = new EeaSendRawTransaction(privateTxHandler, transactionPool, parameter);
+    method = new EeaSendRawTransaction(privateTxHandler, transactionPool);
   }
 
   @Test
@@ -163,7 +159,6 @@ public class EeaSendRawTransactionTest {
   @Test
   public void invalidTransactionRlpDecoding() {
     final String rawTransaction = "0x00";
-    when(parameter.required(any(Object[].class), anyInt(), any())).thenReturn(rawTransaction);
 
     final JsonRpcRequest request =
         new JsonRpcRequest("2.0", "eea_sendRawTransaction", new String[] {rawTransaction});
@@ -178,9 +173,6 @@ public class EeaSendRawTransactionTest {
 
   @Test
   public void valueNonZeroTransaction() {
-    when(parameter.required(any(Object[].class), anyInt(), any()))
-        .thenReturn(VALUE_NON_ZERO_TRANSACTION_RLP);
-
     final JsonRpcRequest request =
         new JsonRpcRequest(
             "2.0", "eea_sendRawTransaction", new String[] {VALUE_NON_ZERO_TRANSACTION_RLP});
@@ -195,8 +187,6 @@ public class EeaSendRawTransactionTest {
 
   @Test
   public void validTransactionIsSentToTransactionPool() throws Exception {
-    when(parameter.required(any(Object[].class), anyInt(), any()))
-        .thenReturn(VALID_PRIVATE_TRANSACTION_RLP);
     when(privateTxHandler.sendToOrion(any(PrivateTransaction.class))).thenReturn(MOCK_ORION_KEY);
     when(privateTxHandler.getPrivacyGroup(any(String.class), any(PrivateTransaction.class)))
         .thenReturn(MOCK_PRIVACY_GROUP);
@@ -230,8 +220,6 @@ public class EeaSendRawTransactionTest {
 
   @Test
   public void validTransactionPrivacyGroupIsSentToTransactionPool() throws Exception {
-    when(parameter.required(any(Object[].class), anyInt(), any()))
-        .thenReturn(VALID_PRIVATE_TRANSACTION_RLP_PRIVACY_GROUP);
     when(privateTxHandler.sendToOrion(any(PrivateTransaction.class))).thenReturn(MOCK_ORION_KEY);
     when(privateTxHandler.getPrivacyGroup(any(String.class), any(PrivateTransaction.class)))
         .thenReturn(MOCK_PRIVACY_GROUP);
@@ -268,9 +256,6 @@ public class EeaSendRawTransactionTest {
 
   @Test
   public void transactionPrivacyGroupNoPrivateFromReturnsError() throws Exception {
-    when(parameter.required(any(Object[].class), anyInt(), any()))
-        .thenReturn(PRIVATE_TRANSACTION_RLP_PRIVACY_GROUP_NO_PRIVATE_FROM);
-
     final JsonRpcRequest request =
         new JsonRpcRequest(
             "2.0",
@@ -288,8 +273,6 @@ public class EeaSendRawTransactionTest {
 
   @Test
   public void invalidTransactionIsSentToTransactionPool() throws Exception {
-    when(parameter.required(any(Object[].class), anyInt(), any()))
-        .thenReturn(VALID_PRIVATE_TRANSACTION_RLP);
     when(privateTxHandler.sendToOrion(any(PrivateTransaction.class)))
         .thenThrow(new IOException("enclave failed to execute"));
 
@@ -352,8 +335,7 @@ public class EeaSendRawTransactionTest {
   private void verifyErrorForInvalidTransaction(
       final TransactionInvalidReason transactionInvalidReason, final JsonRpcError expectedError)
       throws Exception {
-    when(parameter.required(any(Object[].class), anyInt(), any()))
-        .thenReturn(VALID_PRIVATE_TRANSACTION_RLP);
+
     when(privateTxHandler.sendToOrion(any(PrivateTransaction.class))).thenReturn(MOCK_ORION_KEY);
     when(privateTxHandler.getPrivacyGroup(any(String.class), any(PrivateTransaction.class)))
         .thenReturn(MOCK_PRIVACY_GROUP);

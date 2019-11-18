@@ -83,9 +83,9 @@ public class GenesisConfigFile {
   }
 
   public GenesisConfigOptions getConfigOptions(final Map<String, String> overrides) {
-    ObjectNode config =
+    final ObjectNode config =
         JsonUtil.getObjectNode(configRoot, "config").orElse(JsonUtil.createEmptyObjectNode());
-    return new JsonGenesisConfigOptions(config, overrides);
+    return JsonGenesisConfigOptions.fromJsonObjectWithOverrides(config, overrides);
   }
 
   public Stream<GenesisAllocation> streamAllocations() {

@@ -45,8 +45,6 @@ public interface DefaultCommandValues {
   String MANDATORY_NETWORK_FORMAT_HELP = "<NETWORK>";
   String MANDATORY_NODE_ID_FORMAT_HELP = "<NODEID>";
   Wei DEFAULT_MIN_TRANSACTION_GAS_PRICE = Wei.of(1000);
-  long DEFAULT_PRUNING_BLOCKS_RETAINED = 1024;
-  long DEFAULT_PRUNING_BLOCK_CONFIRMATIONS = 10;
   BytesValue DEFAULT_EXTRA_DATA = BytesValue.EMPTY;
   long DEFAULT_MAX_REFRESH_DELAY = 3600000;
   long DEFAULT_MIN_REFRESH_DELAY = 1;
@@ -57,6 +55,9 @@ public interface DefaultCommandValues {
       "/etc/besu/rpc_http_auth_config.toml";
   String DOCKER_RPC_WS_AUTHENTICATION_CREDENTIALS_FILE_LOCATION =
       "/etc/besu/rpc_ws_auth_config.toml";
+  String DOCKER_RPC_HTTP_AUTHENTICATION_PUBLIC_KEY_FILE_LOCATION =
+      "/etc/besu/rpc_http_auth_public_key";
+  String DOCKER_RPC_WS_AUTHENTICATION_PUBLIC_KEY_FILE_LOCATION = "/etc/besu/rpc_ws_auth_public_key";
   String DOCKER_PRIVACY_PUBLIC_KEY_FILE = "/etc/besu/privacy_public_key";
   String DOCKER_PERMISSIONS_CONFIG_FILE_LOCATION = "/etc/besu/permissions_config.toml";
   String PERMISSIONING_CONFIG_LOCATION = "permissions_config.toml";

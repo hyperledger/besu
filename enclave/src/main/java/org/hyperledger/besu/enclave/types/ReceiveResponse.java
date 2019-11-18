@@ -21,8 +21,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @JsonPropertyOrder({"payload", "privacyGroupId"})
 public class ReceiveResponse {
 
-  private byte[] payload;
-  private String privacyGroupId;
+  private final byte[] payload;
+  private final String privacyGroupId;
 
   @JsonCreator
   public ReceiveResponse(

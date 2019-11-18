@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.miner;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -28,12 +27,9 @@ import org.hyperledger.besu.ethereum.core.Address;
 public class MinerSetCoinbase implements JsonRpcMethod {
 
   private final MiningCoordinator miningCoordinator;
-  private final JsonRpcParameter parameters;
 
-  public MinerSetCoinbase(
-      final MiningCoordinator miningCoordinator, final JsonRpcParameter parameters) {
+  public MinerSetCoinbase(final MiningCoordinator miningCoordinator) {
     this.miningCoordinator = miningCoordinator;
-    this.parameters = parameters;
   }
 
   @Override
@@ -44,7 +40,7 @@ public class MinerSetCoinbase implements JsonRpcMethod {
   @Override
   public JsonRpcResponse response(final JsonRpcRequest req) {
     try {
-      final Address coinbase = parameters.required(req.getParams(), 0, Address.class);
+      final Address coinbase = req.getRequiredParameter(0, Address.class);
       miningCoordinator.setCoinbase(coinbase);
       return new JsonRpcSuccessResponse(req.getId(), true);
     } catch (final UnsupportedOperationException ex) {

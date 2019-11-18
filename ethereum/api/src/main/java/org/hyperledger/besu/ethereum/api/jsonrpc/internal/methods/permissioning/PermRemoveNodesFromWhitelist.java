@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.permissioning
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.StringListParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -33,13 +32,10 @@ public class PermRemoveNodesFromWhitelist implements JsonRpcMethod {
 
   private final Optional<NodeLocalConfigPermissioningController>
       nodeWhitelistPermissioningController;
-  private final JsonRpcParameter parameters;
 
   public PermRemoveNodesFromWhitelist(
-      final Optional<NodeLocalConfigPermissioningController> nodeWhitelistPermissioningController,
-      final JsonRpcParameter parameters) {
+      final Optional<NodeLocalConfigPermissioningController> nodeWhitelistPermissioningController) {
     this.nodeWhitelistPermissioningController = nodeWhitelistPermissioningController;
-    this.parameters = parameters;
   }
 
   @Override
@@ -50,7 +46,7 @@ public class PermRemoveNodesFromWhitelist implements JsonRpcMethod {
   @Override
   public JsonRpcResponse response(final JsonRpcRequest req) {
     final StringListParameter enodeListParam =
-        parameters.required(req.getParams(), 0, StringListParameter.class);
+        req.getRequiredParameter(0, StringListParameter.class);
     try {
       if (nodeWhitelistPermissioningController.isPresent()) {
         try {

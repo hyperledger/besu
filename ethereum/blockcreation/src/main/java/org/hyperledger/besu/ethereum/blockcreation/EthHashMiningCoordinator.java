@@ -45,6 +45,10 @@ public class EthHashMiningCoordinator extends AbstractMiningCoordinator<Void, Et
     executor.setCoinbase(coinbase);
   }
 
+  public void setStratumMiningEnabled(final boolean stratumMiningEnabled) {
+    executor.setStratumMiningEnabled(stratumMiningEnabled);
+  }
+
   @Override
   public Optional<Long> hashesPerSecond() {
     final Optional<Long> currentHashesPerSecond =

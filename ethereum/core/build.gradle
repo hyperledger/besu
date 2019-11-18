@@ -108,7 +108,9 @@ def generateTestFiles(FileTree jsonPath, File templateFile, String pathstrip, St
       if (!testJsonFile.getName().toString().startsWith(".")) {
         String parentDirectory = testJsonFile.getParentFile().getName()
         String testFile = testJsonFile.getName()
-        if(testJsonFile.getParentFile().getParentFile().getName() != pathstrip) {
+        if(testJsonFile.getParentFile().getName() == pathstrip) {
+          paths << pathstrip + "/" + testFile
+        } else if(testJsonFile.getParentFile().getParentFile().getName() != pathstrip) {
           paths << pathstrip + "/" + testJsonFile.getParentFile().getParentFile().getName() + "/" + parentDirectory + "/" + testFile
         } else {
           paths << pathstrip + "/" + parentDirectory + "/" + testFile

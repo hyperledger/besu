@@ -18,7 +18,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcRequestException;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -44,19 +43,14 @@ public class EthSendRawTransaction implements JsonRpcMethod {
   private final boolean sendEmptyHashOnInvalidBlock;
 
   private final Supplier<TransactionPool> transactionPool;
-  private final JsonRpcParameter parameters;
 
-  public EthSendRawTransaction(
-      final TransactionPool transactionPool, final JsonRpcParameter parameters) {
-    this(Suppliers.ofInstance(transactionPool), parameters, false);
+  public EthSendRawTransaction(final TransactionPool transactionPool) {
+    this(Suppliers.ofInstance(transactionPool), false);
   }
 
   public EthSendRawTransaction(
-      final Supplier<TransactionPool> transactionPool,
-      final JsonRpcParameter parameters,
-      final boolean sendEmptyHashOnInvalidBlock) {
+      final Supplier<TransactionPool> transactionPool, final boolean sendEmptyHashOnInvalidBlock) {
     this.transactionPool = transactionPool;
-    this.parameters = parameters;
     this.sendEmptyHashOnInvalidBlock = sendEmptyHashOnInvalidBlock;
   }
 
@@ -70,7 +64,7 @@ public class EthSendRawTransaction implements JsonRpcMethod {
     if (request.getParamLength() != 1) {
       return new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
     }
-    final String rawTransaction = parameters.required(request.getParams(), 0, String.class);
+    final String rawTransaction = request.getRequiredParameter(0, String.class);
 
     final Transaction transaction;
     try {

@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.AdminNodeInfo;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.AdminPeers;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.AdminRemovePeer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 
@@ -32,7 +31,6 @@ import java.util.Map;
 
 public class AdminJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
-  private final JsonRpcParameter parameter = new JsonRpcParameter();
   private final String clientVersion;
   private final BigInteger networkId;
   private final GenesisConfigOptions genesisConfigOptions;
@@ -60,11 +58,11 @@ public class AdminJsonRpcMethods extends ApiGroupJsonRpcMethods {
   @Override
   protected Map<String, JsonRpcMethod> create() {
     return mapOf(
-        new AdminAddPeer(p2pNetwork, parameter),
-        new AdminRemovePeer(p2pNetwork, parameter),
+        new AdminAddPeer(p2pNetwork),
+        new AdminRemovePeer(p2pNetwork),
         new AdminNodeInfo(
             clientVersion, networkId, genesisConfigOptions, p2pNetwork, blockchainQueries),
         new AdminPeers(p2pNetwork),
-        new AdminChangeLogLevel(parameter));
+        new AdminChangeLogLevel());
   }
 }
