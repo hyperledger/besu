@@ -26,6 +26,7 @@ import java.math.BigInteger;
 import java.util.Collections;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.web3j.protocol.besu.response.privacy.PrivacyGroup;
 import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
@@ -75,7 +76,10 @@ public class EthSignerAcceptanceTest extends PrivacyAcceptanceTestBase {
         privateTransactionVerifier.validPrivateTransactionReceipt(transactionHash, receipt));
   }
 
+  // requires ethsigner jar > 0.3.0
+  // https://bintray.com/consensys/pegasys-repo/ethsigner
   @Test
+  @Ignore
   public void privateSmartContractMustDeployNoNonce() throws IOException {
     final String transactionHash =
         ethSignerClient.eeaSendTransaction(
@@ -136,8 +140,8 @@ public class EthSignerAcceptanceTest extends PrivacyAcceptanceTestBase {
             new PrivacyGroup(
                 privacyGroupId,
                 PrivacyGroup.Type.PANTHEON,
-                "Default Name",
-                "Default Description",
+                "",
+                "",
                 Base64String.wrapList(minerNode.getEnclaveKey()))));
 
     final String transactionHash =
