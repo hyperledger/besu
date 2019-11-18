@@ -49,13 +49,15 @@ public class TomlUser extends AbstractUser {
 
   @Override
   public JsonObject principal() {
-    return new JsonObject()
-        .put("username", username)
-        .put("password", password)
-        .put("groups", groups)
-        .put("permissions", permissions)
-        .put("roles", roles)
-        .put("enclavePublicKey", enclavePublicKey.orElse(null));
+    final JsonObject principle =
+        new JsonObject()
+            .put("username", username)
+            .put("password", password)
+            .put("groups", groups)
+            .put("permissions", permissions)
+            .put("roles", roles);
+    enclavePublicKey.ifPresent(pk -> principle.put("enclavePublicKey", pk));
+    return principle;
   }
 
   @Override
