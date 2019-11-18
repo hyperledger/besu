@@ -1,8 +1,10 @@
 pragma solidity ^0.5.9;
 
-contract PrivacyProxy {
-    address public owner;
-    address public implementation;
+import "./PrivacyInterface.sol";
+
+contract PrivacyProxy is PrivacyInterface{
+    address private owner;
+    address private implementation;
 
     constructor(address _implementation) public {
         owner = msg.sender;
@@ -19,23 +21,18 @@ contract PrivacyProxy {
         _setImplementation(_newImplementation);
     }
 
-    function() payable external {
-        address impl = implementation;
-        require(impl != address(0));
-        assembly {
-            let ptr := mload(0x40)
-            calldatacopy(ptr, 0, calldatasize)
-            let result := delegatecall(gas, impl, ptr, calldatasize, 0, 0)
-            let size := returndatasize
-            returndatacopy(ptr, 0, size)
-
-            switch result
-            case 0 {revert(ptr, size)}
-            default {return (ptr, size)}
-        }
-    }
-
     function _setImplementation(address _newImp) internal {
         implementation = _newImp;
     }
+
+    function addParticipants(address[] memory accounts) public returns (bool) {
+        PrivacyInterface privacyInterface = PrivacyInterface(implementation);
+        return privacyInterface.addParticipants(accounts);
+    }
+
+    function getParticipants() public view returns (address[] memory) {
+        PrivacyInterface privacyInterface = PrivacyInterface(implementation);
+        return privacyInterface.getParticipants();
+    }
+
 }

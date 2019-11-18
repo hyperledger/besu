@@ -1,6 +1,7 @@
 pragma solidity ^0.5.9;
+import "./PrivacyInterface.sol";
 
-contract PrivacyGroup {
+contract PrivacyGroup is PrivacyInterface{
 
     event MemberAdded(
         bool adminAdded,
@@ -8,11 +9,29 @@ contract PrivacyGroup {
         string message
     );
 
-    address[] public whitelist;
+    address private owner;
+    address[] private whitelist;
     mapping(address => uint256) private indexOf;
+    address private proxyAddress;
+
+    constructor() public {
+        addMember(msg.sender);
+        owner = msg.sender;
+    }
+
+
+    modifier onlyProxy() {
+        require(msg.sender == proxyAddress);
+        _;
+    }
 
     modifier onlyMember() {
-        require(isMember(msg.sender));
+        require(isMember(tx.origin));
+        _;
+    }
+
+    modifier onlyOwner() {
+        require(msg.sender == owner);
         _;
     }
 
@@ -28,11 +47,16 @@ contract PrivacyGroup {
         return false;
     }
 
-    function getParticipants() onlyMember public view returns (address[] memory) {
+    function setProxy (address proxy) onlyOwner public {
+        require(proxyAddress != proxy);
+        proxyAddress = proxy;
+    }
+
+    function getParticipants() onlyProxy onlyMember public view returns (address[] memory) {
         return whitelist;
     }
 
-    function addParticipants(address[] memory accounts) public onlyMember returns (bool) {
+    function addParticipants(address[] memory accounts) public onlyProxy onlyMember returns (bool) {
         bool allAdded = true;
         for (uint i = 0; i < accounts.length; i++) {
             if (msg.sender == accounts[i]) {

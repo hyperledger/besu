@@ -16,12 +16,14 @@ package org.hyperledger.besu.tests.web3j.permissioning;
 
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
-import org.hyperledger.besu.tests.web3j.generated.SimpleStorage;
-import org.hyperledger.besu.tests.web3j.generated.permissioning.PrivacyGroup;
 
+import org.hyperledger.besu.tests.web3j.generated.permissioning.PrivacyGroup;
 import org.hyperledger.besu.tests.web3j.generated.permissioning.PrivacyProxy;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.Arrays;
+import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -46,14 +48,10 @@ public class DeployPermissioningContractAcceptanceTest extends AcceptanceTestBas
     contractVerifier.validTransactionReceipt(contractAddress).verify(privacyGroup);
 
     final PrivacyProxy privacyProxy = minerNode.execute(contractTransactions.createSmartContract(PrivacyProxy.class, contractAddress));
+    privacyGroup.setProxy(privacyProxy.getContractAddress()).send();
 
-    assertThat(privacyProxy.implementation().send()).isEqualTo(contractAddress);
-
-
-    final PrivacyGroup fakeProxyPrivacyGroup = minerNode.execute(contractTransactions.loadSmartContract(PrivacyGroup.class, privacyProxy.getContractAddress()));
-
-    fakeProxyPrivacyGroup.getContractAddress();
-
-    fakeProxyPrivacyGroup.getParticipants().send();
+    assertThat(privacyProxy.getParticipants().send().size()).isEqualTo(1);
+    privacyProxy.addParticipants(Collections.singletonList("0xceeeefe21b2f2ea5df62ed2efde1e3f1e5540f96")).send();
+    assertThat(privacyProxy.getParticipants().send().size()).isEqualTo(2);
   }
 }
