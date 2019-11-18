@@ -214,6 +214,11 @@ public class AuthenticationService {
                 new JsonObject()
                     .put("permissions", user.principal().getValue("permissions"))
                     .put("username", user.principal().getValue("username"));
+            final String enclavePublicKey = user.principal().getString("enclavePublicKey");
+            if (enclavePublicKey != null) {
+              jwtContents.put("enclavePublicKey", enclavePublicKey);
+            }
+
             final String token = jwtAuthProvider.generateToken(jwtContents, options);
 
             final JsonObject responseBody = new JsonObject().put("token", token);

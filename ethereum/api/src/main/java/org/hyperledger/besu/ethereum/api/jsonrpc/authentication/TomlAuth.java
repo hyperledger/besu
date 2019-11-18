@@ -33,6 +33,7 @@ import org.springframework.security.crypto.bcrypt.BCrypt;
 
 public class TomlAuth implements AuthProvider {
 
+  public static final String ENCLAVE_PUBLIC_KEY = "enclavePublicKey";
   private final Vertx vertx;
   private final TomlAuthOptions options;
 
@@ -125,9 +126,11 @@ public class TomlAuth implements AuthProvider {
         userData.getArrayOrEmpty("roles").toList().stream()
             .map(Object::toString)
             .collect(Collectors.toList());
-    final Optional<String> enclavePublicKey = Optional.ofNullable(userData.getString("enclavePublicKey"));
+    final Optional<String> enclavePublicKey =
+        Optional.ofNullable(userData.getString(ENCLAVE_PUBLIC_KEY));
 
-    return new TomlUser(username, saltedAndHashedPassword, groups, permissions, roles, enclavePublicKey);
+    return new TomlUser(
+        username, saltedAndHashedPassword, groups, permissions, roles, enclavePublicKey);
   }
 
   private void checkPasswordHash(

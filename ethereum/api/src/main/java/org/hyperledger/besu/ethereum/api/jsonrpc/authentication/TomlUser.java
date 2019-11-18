@@ -15,13 +15,13 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.authentication;
 
 import java.util.List;
+import java.util.Optional;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.AbstractUser;
 import io.vertx.ext.auth.AuthProvider;
-import java.util.Optional;
 
 public class TomlUser extends AbstractUser {
 
@@ -37,7 +37,8 @@ public class TomlUser extends AbstractUser {
       final String password,
       final List<String> groups,
       final List<String> permissions,
-      final List<String> roles, final Optional<String> enclavePublicKey) {
+      final List<String> roles,
+      final Optional<String> enclavePublicKey) {
     this.username = username;
     this.password = password;
     this.groups = groups;
@@ -53,7 +54,8 @@ public class TomlUser extends AbstractUser {
         .put("password", password)
         .put("groups", groups)
         .put("permissions", permissions)
-        .put("roles", roles);
+        .put("roles", roles)
+        .put("enclavePublicKey", enclavePublicKey.orElse(null));
   }
 
   @Override
