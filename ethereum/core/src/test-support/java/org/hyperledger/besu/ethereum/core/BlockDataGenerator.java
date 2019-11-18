@@ -283,15 +283,23 @@ public class BlockDataGenerator {
 
   public BlockBody body(final BlockOptions options) {
     final List<BlockHeader> ommers = new ArrayList<>();
-    final int ommerCount = random.nextInt(3);
-    for (int i = 0; i < ommerCount; i++) {
-      ommers.add(header());
+    if (options.hasOmmers()) {
+      final int ommerCount = random.nextInt(3);
+      for (int i = 0; i < ommerCount; i++) {
+        ommers.add(ommer());
+      }
     }
     final List<Transaction> defaultTxs = new ArrayList<>();
-    defaultTxs.add(transaction());
-    defaultTxs.add(transaction());
+    if (options.hasTransactions()) {
+      defaultTxs.add(transaction());
+      defaultTxs.add(transaction());
+    }
 
-    return new BlockBody(options.getTransactions(defaultTxs), options.getOmmers(ommers));
+    return new BlockBody(options.getTransactions(defaultTxs), ommers);
+  }
+
+  private BlockHeader ommer() {
+    return header(positiveLong(), body(BlockOptions.create().hasOmmers(false)));
   }
 
   public Transaction transaction() {
@@ -488,24 +496,21 @@ public class BlockDataGenerator {
     private Optional<Hash> parentHash = Optional.empty();
     private Optional<Hash> stateRoot = Optional.empty();
     private Optional<UInt256> difficulty = Optional.empty();
-    private Optional<List<Transaction>> transactions = Optional.empty();
-    private Optional<List<BlockHeader>> ommers = Optional.empty();
+    private List<Transaction> transactions = new ArrayList<>();
     private Optional<BytesValue> extraData = Optional.empty();
     private Optional<BlockHeaderFunctions> blockHeaderFunctions = Optional.empty();
     private Optional<Hash> receiptsRoot = Optional.empty();
     private Optional<Long> gasUsed = Optional.empty();
     private Optional<LogsBloomFilter> logsBloom = Optional.empty();
+    private boolean hasOmmers = true;
+    private boolean hasTransactions = true;
 
     public static BlockOptions create() {
       return new BlockOptions();
     }
 
     public List<Transaction> getTransactions(final List<Transaction> defaultValue) {
-      return transactions.orElse(defaultValue);
-    }
-
-    public List<BlockHeader> getOmmers(final List<BlockHeader> defaultValue) {
-      return ommers.orElse(defaultValue);
+      return transactions.isEmpty() ? defaultValue : transactions;
     }
 
     public long getBlockNumber(final long defaultValue) {
@@ -544,27 +549,20 @@ public class BlockDataGenerator {
       return logsBloom.orElse(defaultValue);
     }
 
+    public boolean hasTransactions() {
+      return hasTransactions;
+    }
+
+    public boolean hasOmmers() {
+      return hasOmmers;
+    }
+
     public BlockOptions addTransaction(final Transaction... tx) {
-      if (!transactions.isPresent()) {
-        transactions = Optional.of(new ArrayList<>());
-      }
-      transactions.get().addAll(Arrays.asList(tx));
-      return this;
+      return addTransaction(Arrays.asList(tx));
     }
 
-    public BlockOptions addTransaction(final Collection<Transaction> txs) {
-      if (!transactions.isPresent()) {
-        transactions = Optional.of(new ArrayList<>());
-      }
-      transactions.get().addAll(txs);
-      return this;
-    }
-
-    public BlockOptions addOmmers(final BlockHeader... headers) {
-      if (ommers.isEmpty()) {
-        ommers = Optional.of(new ArrayList<>());
-      }
-      ommers.get().addAll(Arrays.asList(headers));
+    public BlockOptions addTransaction(final Collection<Transaction> tx) {
+      transactions.addAll(tx);
       return this;
     }
 
@@ -610,6 +608,16 @@ public class BlockDataGenerator {
 
     public BlockOptions setLogsBloom(final LogsBloomFilter logsBloom) {
       this.logsBloom = Optional.of(logsBloom);
+      return this;
+    }
+
+    public BlockOptions hasTransactions(final boolean hasTransactions) {
+      this.hasTransactions = hasTransactions;
+      return this;
+    }
+
+    public BlockOptions hasOmmers(final boolean hasOmmers) {
+      this.hasOmmers = hasOmmers;
       return this;
     }
   }
