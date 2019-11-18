@@ -133,5 +133,5 @@ public interface GenesisConfigOptions {
 
   Map<String, Object> asMap();
 
-  CustomForksConfigOptions getCustomForks();
+  TransitionsConfigOptions getTransitions();
 }
