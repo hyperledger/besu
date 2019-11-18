@@ -14,7 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc;
 
+import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.util.Lists.list;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
@@ -63,6 +65,7 @@ import java.util.Set;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.Json;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.KeyStoreOptions;
 import io.vertx.ext.auth.PubSecKeyOptions;
@@ -354,6 +357,41 @@ public class JsonRpcHttpServiceLoginTest {
       final String jwtPayloadString = jwtPayload.encode();
       assertThat(jwtPayloadString.contains("password")).isFalse();
       assertThat(jwtPayloadString.contains("pegasys")).isFalse();
+    }
+  }
+
+  @Test
+  public void loginPopulatesJWTPayloadWithRequiredValues()
+      throws IOException, KeyStoreException, CertificateException, NoSuchAlgorithmException {
+    final RequestBody body =
+        RequestBody.create(JSON, "{\"username\":\"user\",\"password\":\"pegasys\"}");
+    final Request request = new Request.Builder().post(body).url(baseUrl + "/login").build();
+    try (final Response resp = client.newCall(request).execute()) {
+      assertThat(resp.code()).isEqualTo(200);
+      assertThat(resp.message()).isEqualTo("OK");
+      assertThat(resp.body().contentType()).isNotNull();
+      assertThat(resp.body().contentType().type()).isEqualTo("application");
+      assertThat(resp.body().contentType().subtype()).isEqualTo("json");
+      final String bodyString = resp.body().string();
+      assertThat(bodyString).isNotNull();
+      assertThat(bodyString).isNotBlank();
+
+      final JsonObject respBody = new JsonObject(bodyString);
+      final String token = respBody.getString("token");
+      assertThat(token).isNotNull();
+      final JWT jwt = makeJwt(service.authenticationService.get().jwtAuthOptions);
+
+      final JsonObject jwtPayload = jwt.decode(token);
+      assertThat(jwtPayload.getString("username")).isEqualTo("user");
+      assertThat(jwtPayload.getJsonArray("permissions"))
+          .isEqualTo(
+              new JsonArray(list("fakePermission", "eth:blockNumber", "eth:subscribe", "web3:*")));
+      assertThat(jwtPayload.getString("enclavePublicKey"))
+          .isEqualTo("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=");
+      assertThat(jwtPayload.containsKey("iat")).isTrue();
+      assertThat(jwtPayload.containsKey("exp")).isTrue();
+      final long tokenExpiry = jwtPayload.getLong("exp") - jwtPayload.getLong("iat");
+      assertThat(tokenExpiry).isEqualTo(MINUTES.toSeconds(5));
     }
   }
 

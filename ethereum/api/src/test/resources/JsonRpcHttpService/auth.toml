@@ -1,3 +1,4 @@
 [Users.user]
 password = "$2a$10$l3GA7K8g6rJ/Yv.YFSygCuI9byngpEzxgWS9qEg5emYDZomQW7fGC"
 permissions = ["fakePermission","eth:blockNumber","eth:subscribe","web3:*"]
+enclavePublicKey = "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo="
