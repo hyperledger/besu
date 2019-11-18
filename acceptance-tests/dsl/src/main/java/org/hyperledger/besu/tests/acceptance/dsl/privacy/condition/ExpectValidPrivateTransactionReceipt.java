@@ -39,6 +39,6 @@ public class ExpectValidPrivateTransactionReceipt implements PrivateCondition {
   @Override
   public void verify(final PrivacyNode node) {
     assertThat(node.execute(transactions.getPrivateTransactionReceipt(transactionHash)))
-        .isEqualTo(receipt);
+        .isEqualToIgnoringGivenFields(receipt, "commitmentHash");
   }
 }
