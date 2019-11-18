@@ -55,6 +55,9 @@ public interface DefaultCommandValues {
       "/etc/besu/rpc_http_auth_config.toml";
   String DOCKER_RPC_WS_AUTHENTICATION_CREDENTIALS_FILE_LOCATION =
       "/etc/besu/rpc_ws_auth_config.toml";
+  String DOCKER_RPC_HTTP_AUTHENTICATION_PUBLIC_KEY_FILE_LOCATION =
+      "/etc/besu/rpc_http_auth_public_key";
+  String DOCKER_RPC_WS_AUTHENTICATION_PUBLIC_KEY_FILE_LOCATION = "/etc/besu/rpc_ws_auth_public_key";
   String DOCKER_PRIVACY_PUBLIC_KEY_FILE = "/etc/besu/privacy_public_key";
   String DOCKER_PERMISSIONS_CONFIG_FILE_LOCATION = "/etc/besu/permissions_config.toml";
   String PERMISSIONING_CONFIG_LOCATION = "permissions_config.toml";

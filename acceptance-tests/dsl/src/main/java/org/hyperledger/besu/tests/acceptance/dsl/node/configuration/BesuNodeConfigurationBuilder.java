@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationProvider;
 
+import java.io.File;
 import java.net.URISyntaxException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -114,6 +115,19 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
+  public BesuNodeConfigurationBuilder jsonRpcAuthenticationUsingPublicKeyEnabled()
+      throws URISyntaxException {
+    final File jwtPublicKey =
+        Paths.get(ClassLoader.getSystemResource("authentication/jwt_public_key").toURI())
+            .toAbsolutePath()
+            .toFile();
+
+    this.jsonRpcConfiguration.setAuthenticationEnabled(true);
+    this.jsonRpcConfiguration.setAuthenticationPublicKeyFile(jwtPublicKey);
+
+    return this;
+  }
+
   public BesuNodeConfigurationBuilder webSocketConfiguration(
       final WebSocketConfiguration webSocketConfiguration) {
     this.webSocketConfiguration = webSocketConfiguration;
@@ -130,7 +144,7 @@ public class BesuNodeConfigurationBuilder {
     final WebSocketConfiguration config = WebSocketConfiguration.createDefault();
     config.setEnabled(true);
     config.setPort(0);
-    config.setHostsWhitelist(Collections.singleton("*"));
+    config.setHostsWhitelist(Collections.singletonList("*"));
 
     this.webSocketConfiguration = config;
     return this;
@@ -149,6 +163,19 @@ public class BesuNodeConfigurationBuilder {
 
     this.webSocketConfiguration.setAuthenticationEnabled(true);
     this.webSocketConfiguration.setAuthenticationCredentialsFile(authTomlPath);
+
+    return this;
+  }
+
+  public BesuNodeConfigurationBuilder webSocketAuthenticationUsingPublicKeyEnabled()
+      throws URISyntaxException {
+    final File jwtPublicKey =
+        Paths.get(ClassLoader.getSystemResource("authentication/jwt_public_key").toURI())
+            .toAbsolutePath()
+            .toFile();
+
+    this.webSocketConfiguration.setAuthenticationEnabled(true);
+    this.webSocketConfiguration.setAuthenticationPublicKeyFile(jwtPublicKey);
 
     return this;
   }
