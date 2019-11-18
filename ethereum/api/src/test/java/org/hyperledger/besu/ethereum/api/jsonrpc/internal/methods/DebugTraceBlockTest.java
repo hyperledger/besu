@@ -22,7 +22,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
@@ -50,12 +49,10 @@ import org.mockito.Mockito;
 
 public class DebugTraceBlockTest {
 
-  private final JsonRpcParameter parameters = new JsonRpcParameter();
   private final BlockTracer blockTracer = mock(BlockTracer.class);
   private final BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
   private final DebugTraceBlock debugTraceBlock =
-      new DebugTraceBlock(
-          parameters, blockTracer, new MainnetBlockHeaderFunctions(), blockchainQueries);
+      new DebugTraceBlock(blockTracer, new MainnetBlockHeaderFunctions(), blockchainQueries);
 
   @Test
   public void nameShouldBeDebugTraceBlock() {

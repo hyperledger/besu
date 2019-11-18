@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -33,15 +32,11 @@ public class EthGetTransactionByHash implements JsonRpcMethod {
 
   private final BlockchainQueries blockchain;
   private final PendingTransactions pendingTransactions;
-  private final JsonRpcParameter parameters;
 
   public EthGetTransactionByHash(
-      final BlockchainQueries blockchain,
-      final PendingTransactions pendingTransactions,
-      final JsonRpcParameter parameters) {
+      final BlockchainQueries blockchain, final PendingTransactions pendingTransactions) {
     this.blockchain = blockchain;
     this.pendingTransactions = pendingTransactions;
-    this.parameters = parameters;
   }
 
   @Override
@@ -54,7 +49,7 @@ public class EthGetTransactionByHash implements JsonRpcMethod {
     if (request.getParamLength() != 1) {
       return new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
     }
-    final Hash hash = parameters.required(request.getParams(), 0, Hash.class);
+    final Hash hash = request.getRequiredParameter(0, Hash.class);
     final JsonRpcSuccessResponse jsonRpcSuccessResponse =
         new JsonRpcSuccessResponse(request.getId(), getResult(hash));
     return jsonRpcSuccessResponse;

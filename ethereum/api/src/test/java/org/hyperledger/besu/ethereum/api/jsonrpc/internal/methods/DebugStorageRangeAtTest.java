@@ -22,7 +22,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockReplay;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugStorageRangeAtResult;
@@ -57,12 +56,11 @@ public class DebugStorageRangeAtTest {
 
   private static final int TRANSACTION_INDEX = 2;
   private static final Bytes32 START_KEY_HASH = Bytes32.fromHexString("0x22");
-  private final JsonRpcParameter parameters = new JsonRpcParameter();
   private final Blockchain blockchain = mock(Blockchain.class);
   private final BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
   private final BlockReplay blockReplay = mock(BlockReplay.class);
   private final DebugStorageRangeAt debugStorageRangeAt =
-      new DebugStorageRangeAt(parameters, blockchainQueries, blockReplay);
+      new DebugStorageRangeAt(blockchainQueries, blockReplay);
   private final MutableWorldState worldState = mock(MutableWorldState.class);
   private final Account account = mock(Account.class);
   private final TransactionProcessor transactionProcessor = mock(TransactionProcessor.class);

@@ -71,7 +71,7 @@ public class AuthenticationUtils {
       final String token,
       final Handler<Optional<User>> handler) {
     try {
-      if (!authenticationService.isPresent()) {
+      if (authenticationService.isEmpty()) {
         handler.handle(Optional.empty());
       } else {
         authenticationService
@@ -80,12 +80,24 @@ public class AuthenticationUtils {
             .authenticate(
                 new JsonObject().put("jwt", token),
                 (r) -> {
-                  final User user = r.result();
-                  handler.handle(Optional.of(user));
+                  if (r.succeeded()) {
+                    final Optional<User> user = Optional.ofNullable(r.result());
+                    validateExpExists(user);
+                    handler.handle(user);
+                  } else {
+                    LOG.debug("Invalid JWT token", r.cause());
+                    handler.handle(Optional.empty());
+                  }
                 });
       }
     } catch (Exception e) {
       handler.handle(Optional.empty());
+    }
+  }
+
+  private static void validateExpExists(final Optional<User> user) {
+    if (!user.map(User::principal).map(p -> p.containsKey("exp")).orElse(false)) {
+      throw new IllegalStateException("Invalid JWT doesn't have expiry");
     }
   }
 

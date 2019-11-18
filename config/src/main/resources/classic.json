@@ -5,6 +5,9 @@
     "classicForkBlock": 1920000,
     "ecip1015Block": 2500000,
     "diehardBlock": 3000000,
+    "gothamBlock": 5000001,
+    "ecip1041Block": 5900000,
+    "atlantisBlock": 8772000,
     "ethash": {
 
     }

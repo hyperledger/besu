@@ -937,6 +937,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     besuPluginContext.addService(
         BesuEvents.class,
         new BesuEventsImpl(
+            besuController.getProtocolContext().getBlockchain(),
             besuController.getProtocolManager().getBlockBroadcaster(),
             besuController.getTransactionPool(),
             besuController.getSyncState()));
@@ -1150,12 +1151,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--rpc-http-host",
             "--rpc-http-port",
             "--rpc-http-authentication-enabled",
-            "--rpc-http-authentication-credentials-file"));
+            "--rpc-http-authentication-credentials-file",
+            "--rpc-http-authentication-public-key-file"));
 
-    if (isRpcHttpAuthenticationEnabled && rpcHttpAuthenticationCredentialsFile() == null) {
+    if (isRpcHttpAuthenticationEnabled
+        && rpcHttpAuthenticationCredentialsFile() == null
+        && rpcHttpAuthenticationPublicKeyFile() == null) {
       throw new ParameterException(
           commandLine,
-          "Unable to authenticate JSON-RPC HTTP endpoint without a supplied credentials file");
+          "Unable to authenticate JSON-RPC HTTP endpoint without a supplied credentials file or authentication public key file");
     }
 
     final JsonRpcConfiguration jsonRpcConfiguration = JsonRpcConfiguration.createDefault();
@@ -1167,6 +1171,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     jsonRpcConfiguration.setHostsWhitelist(hostsWhitelist);
     jsonRpcConfiguration.setAuthenticationEnabled(isRpcHttpAuthenticationEnabled);
     jsonRpcConfiguration.setAuthenticationCredentialsFile(rpcHttpAuthenticationCredentialsFile());
+    jsonRpcConfiguration.setAuthenticationPublicKeyFile(rpcHttpAuthenticationPublicKeyFile());
     return jsonRpcConfiguration;
   }
 
@@ -1183,12 +1188,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--rpc-ws-host",
             "--rpc-ws-port",
             "--rpc-ws-authentication-enabled",
-            "--rpc-ws-authentication-credentials-file"));
+            "--rpc-ws-authentication-credentials-file",
+            "--rpc-ws-authentication-public-key-file"));
 
-    if (isRpcWsAuthenticationEnabled && rpcWsAuthenticationCredentialsFile() == null) {
+    if (isRpcWsAuthenticationEnabled
+        && rpcWsAuthenticationCredentialsFile() == null
+        && rpcWsAuthenticationPublicKeyFile() == null) {
       throw new ParameterException(
           commandLine,
-          "Unable to authenticate JSON-RPC WebSocket endpoint without a supplied credentials file");
+          "Unable to authenticate JSON-RPC WebSocket endpoint without a supplied credentials file or authentication public key file");
     }
 
     final WebSocketConfiguration webSocketConfiguration = WebSocketConfiguration.createDefault();
@@ -1199,6 +1207,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     webSocketConfiguration.setAuthenticationEnabled(isRpcWsAuthenticationEnabled);
     webSocketConfiguration.setAuthenticationCredentialsFile(rpcWsAuthenticationCredentialsFile());
     webSocketConfiguration.setHostsWhitelist(hostsWhitelist);
+    webSocketConfiguration.setAuthenticationPublicKeyFile(rpcWsAuthenticationPublicKeyFile());
     return webSocketConfiguration;
   }
 
@@ -1677,6 +1686,24 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       RpcAuthFileValidator.validate(commandLine, filename, "WS");
     }
     return filename;
+  }
+
+  private File rpcHttpAuthenticationPublicKeyFile() {
+    if (isDocker) {
+      final File keyFile = new File(DOCKER_RPC_HTTP_AUTHENTICATION_PUBLIC_KEY_FILE_LOCATION);
+      return keyFile.exists() ? keyFile : null;
+    } else {
+      return standaloneCommands.rpcHttpAuthenticationPublicKeyFile;
+    }
+  }
+
+  private File rpcWsAuthenticationPublicKeyFile() {
+    if (isDocker) {
+      final File keyFile = new File(DOCKER_RPC_WS_AUTHENTICATION_PUBLIC_KEY_FILE_LOCATION);
+      return keyFile.exists() ? keyFile : null;
+    } else {
+      return standaloneCommands.rpcWsAuthenticationPublicKeyFile;
+    }
   }
 
   private String nodePermissionsConfigFile() {

@@ -89,6 +89,42 @@ public interface GenesisConfigOptions {
    */
   OptionalLong getDieHardBlockNumber();
 
+  /**
+   * Block number for Gotham fork on Classic network, the Gotham form includes changes to meet
+   * specification for ECIP-1017 and ECIP-1039 both regarding Monetary Policy (rewards).
+   *
+   * @see <a
+   *     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1017">https://ecips.ethereumclassic.org/ECIPs/ecip-1017</a>
+   *     ECIP-1017: Monetary Policy and Final Modification to the Ethereum Classic Emission Schedule
+   * @see <a
+   *     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1039">https://ecips.ethereumclassic.org/ECIPs/ecip-1039</a>
+   *     ECIP-1039: Monetary policy rounding specification
+   * @return block to activate Classic Gotham fork
+   */
+  OptionalLong getGothamBlockNumber();
+
+  /**
+   * Block number to remove difficulty bomb, to meet specification for ECIP-1041.
+   *
+   * @see <a
+   *     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1041">https://ecips.ethereumclassic.org/ECIPs/ecip-1041</a>
+   *     ECIP-1041: Remove Difficulty Bomb
+   * @return block number to remove difficulty bomb on classic network
+   */
+  OptionalLong getDefuseDifficultyBombBlockNumber();
+
+  /**
+   * Block number for Atlantis fork on Classic network Note, this fork happen after Defuse
+   * Difficulty Bomb fork and before Agharta fork ECIP-1054: Atlantis EVM and Protocol Upgrades
+   * Enable the outstanding Ethereum Foundation Spurious Dragon and Byzantium network protocol
+   * upgrades for the Ethereum Classic network.
+   *
+   * @see <a
+   *     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1054">https://ecips.ethereumclassic.org/ECIPs/ecip-1054</a>
+   * @return block number for Atlantis fork on Classic network
+   */
+  OptionalLong getAtlantisBlockNumber();
+
   Optional<BigInteger> getChainId();
 
   OptionalInt getContractSizeLimit();
@@ -97,5 +133,5 @@ public interface GenesisConfigOptions {
 
   Map<String, Object> asMap();
 
-  CustomForksConfigOptions getCustomForks();
+  TransitionsConfigOptions getTransitions();
 }

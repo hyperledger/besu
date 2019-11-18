@@ -50,6 +50,7 @@ dependencies {
   implementation 'io.vertx:vertx-web'
   implementation 'io.vertx:vertx-auth-jwt'
   implementation 'io.vertx:vertx-unit'
+  implementation 'org.bouncycastle:bcprov-jdk15on'
 
   testImplementation 'com.squareup.okhttp3:okhttp'
   testImplementation 'junit:junit'

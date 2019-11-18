@@ -47,7 +47,6 @@ import org.apache.logging.log4j.Logger;
 
 public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
   private final Enclave enclave;
-  private final String enclavePublicKey;
   private final WorldStateArchive privateWorldStateArchive;
   private final PrivateStateStorage privateStateStorage;
   private PrivateTransactionProcessor privateTransactionProcessor;
@@ -59,7 +58,6 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
       final GasCalculator gasCalculator, final PrivacyParameters privacyParameters) {
     this(
         gasCalculator,
-        privacyParameters.getEnclavePublicKey(),
         new Enclave(privacyParameters.getEnclaveUri()),
         privacyParameters.getPrivateWorldStateArchive(),
         privacyParameters.getPrivateStateStorage());
@@ -67,13 +65,11 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
 
   PrivacyPrecompiledContract(
       final GasCalculator gasCalculator,
-      final String publicKey,
       final Enclave enclave,
       final WorldStateArchive worldStateArchive,
       final PrivateStateStorage privateStateStorage) {
     super("Privacy", gasCalculator);
     this.enclave = enclave;
-    this.enclavePublicKey = publicKey;
     this.privateWorldStateArchive = worldStateArchive;
     this.privateStateStorage = privateStateStorage;
   }
@@ -91,12 +87,12 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
   @Override
   public BytesValue compute(final BytesValue input, final MessageFrame messageFrame) {
     final String key = BytesValues.asBase64String(input);
-    final ReceiveRequest receiveRequest = new ReceiveRequest(key, enclavePublicKey);
+    final ReceiveRequest receiveRequest = new ReceiveRequest(key);
 
     final ReceiveResponse receiveResponse;
     try {
       receiveResponse = enclave.receive(receiveRequest);
-    } catch (Exception e) {
+    } catch (final Exception e) {
       LOG.error("Enclave probably does not have private transaction with key {}.", key, e);
       return BytesValue.EMPTY;
     }

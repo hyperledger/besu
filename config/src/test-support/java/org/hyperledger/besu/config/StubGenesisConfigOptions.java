@@ -35,6 +35,9 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private OptionalLong classicForkBlock = OptionalLong.empty();
   private OptionalLong ecip1015BlockNumber = OptionalLong.empty();
   private OptionalLong diehardBlockNumber = OptionalLong.empty();
+  private OptionalLong gothamBlockNumber = OptionalLong.empty();
+  private OptionalLong defuseDifficultyBombBlockNumber = OptionalLong.empty();
+  private OptionalLong atlantisBlockNumber = OptionalLong.empty();
   private Optional<BigInteger> chainId = Optional.empty();
   private OptionalInt contractSizeLimit = OptionalInt.empty();
   private OptionalInt stackSizeLimit = OptionalInt.empty();
@@ -140,6 +143,21 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public OptionalLong getGothamBlockNumber() {
+    return gothamBlockNumber;
+  }
+
+  @Override
+  public OptionalLong getDefuseDifficultyBombBlockNumber() {
+    return defuseDifficultyBombBlockNumber;
+  }
+
+  @Override
+  public OptionalLong getAtlantisBlockNumber() {
+    return atlantisBlockNumber;
+  }
+
+  @Override
   public OptionalInt getContractSizeLimit() {
     return contractSizeLimit;
   }
@@ -194,8 +212,8 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public CustomForksConfigOptions getCustomForks() {
-    return CustomForksConfigOptions.DEFAULT;
+  public TransitionsConfigOptions getTransitions() {
+    return TransitionsConfigOptions.DEFAULT;
   }
 
   public StubGenesisConfigOptions homesteadBlock(final long blockNumber) {

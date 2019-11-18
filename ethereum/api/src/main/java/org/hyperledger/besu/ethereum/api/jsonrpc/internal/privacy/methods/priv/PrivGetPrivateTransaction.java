@@ -22,7 +22,6 @@ import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.privacy.PrivateTransactionGroupResult;
@@ -43,17 +42,14 @@ public class PrivGetPrivateTransaction implements JsonRpcMethod {
 
   private final BlockchainQueries blockchain;
   private final Enclave enclave;
-  private final JsonRpcParameter parameters;
   private final PrivacyParameters privacyParameters;
 
   public PrivGetPrivateTransaction(
       final BlockchainQueries blockchain,
       final Enclave enclave,
-      final JsonRpcParameter parameters,
       final PrivacyParameters privacyParameters) {
     this.blockchain = blockchain;
     this.enclave = enclave;
-    this.parameters = parameters;
     this.privacyParameters = privacyParameters;
   }
 
@@ -66,7 +62,7 @@ public class PrivGetPrivateTransaction implements JsonRpcMethod {
   public JsonRpcResponse response(final JsonRpcRequest request) {
     LOG.trace("Executing {}", RpcMethod.PRIV_GET_PRIVATE_TRANSACTION.getMethodName());
 
-    final Hash hash = parameters.required(request.getParams(), 0, Hash.class);
+    final Hash hash = request.getRequiredParameter(0, Hash.class);
     final TransactionWithMetadata resultTransaction =
         blockchain.transactionByHash(hash).orElse(null);
 

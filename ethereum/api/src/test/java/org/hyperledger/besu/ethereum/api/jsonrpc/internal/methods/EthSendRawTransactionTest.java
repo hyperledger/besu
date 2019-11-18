@@ -16,12 +16,10 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -44,13 +42,11 @@ public class EthSendRawTransactionTest {
       "0xf86d0485174876e800830222e0945aae326516b4f8fe08074b7e972e40a713048d62880de0b6b3a7640000801ba05d4e7998757264daab67df2ce6f7e7a0ae36910778a406ca73898c9899a32b9ea0674700d5c3d1d27f2e6b4469957dfd1a1c49bf92383d80717afc84eb05695d5b";
   @Mock private TransactionPool transactionPool;
 
-  @Mock private JsonRpcParameter parameter;
-
   private EthSendRawTransaction method;
 
   @Before
   public void before() {
-    method = new EthSendRawTransaction(transactionPool, parameter);
+    method = new EthSendRawTransaction(transactionPool);
   }
 
   @Test
@@ -94,7 +90,6 @@ public class EthSendRawTransactionTest {
   @Test
   public void invalidTransactionRlpDecoding() {
     final String rawTransaction = "0x00";
-    when(parameter.required(any(Object[].class), anyInt(), any())).thenReturn(rawTransaction);
 
     final JsonRpcRequest request =
         new JsonRpcRequest("2.0", "eth_sendRawTransaction", new String[] {rawTransaction});
@@ -109,7 +104,6 @@ public class EthSendRawTransactionTest {
 
   @Test
   public void validTransactionIsSentToTransactionPool() {
-    when(parameter.required(any(Object[].class), anyInt(), any())).thenReturn(VALID_TRANSACTION);
     when(transactionPool.addLocalTransaction(any(Transaction.class)))
         .thenReturn(ValidationResult.valid());
 
@@ -172,7 +166,6 @@ public class EthSendRawTransactionTest {
 
   private void verifyErrorForInvalidTransaction(
       final TransactionInvalidReason transactionInvalidReason, final JsonRpcError expectedError) {
-    when(parameter.required(any(Object[].class), anyInt(), any())).thenReturn(VALID_TRANSACTION);
     when(transactionPool.addLocalTransaction(any(Transaction.class)))
         .thenReturn(ValidationResult.invalid(transactionInvalidReason));
 

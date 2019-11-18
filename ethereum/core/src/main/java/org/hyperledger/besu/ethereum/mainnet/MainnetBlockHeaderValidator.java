@@ -57,7 +57,9 @@ public final class MainnetBlockHeaderValidator {
     return createValidator(difficultyCalculator)
         .addRule(
             new ConstantFieldValidationRule<>(
-                "hash", BlockHeader::getBlockHash, CLASSIC_FORK_BLOCK_HEADER))
+                "hash",
+                h -> h.getNumber() == 1920000 ? h.getBlockHash() : CLASSIC_FORK_BLOCK_HEADER,
+                CLASSIC_FORK_BLOCK_HEADER))
         .build();
   }
 
