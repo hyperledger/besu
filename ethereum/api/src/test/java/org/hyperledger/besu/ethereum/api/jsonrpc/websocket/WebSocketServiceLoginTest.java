@@ -14,7 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.websocket;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.util.Lists.list;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
 
@@ -25,6 +28,7 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.net.URISyntaxException;
 import java.nio.file.Paths;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -38,6 +42,7 @@ import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpClientRequest;
 import io.vertx.core.http.RequestOptions;
 import io.vertx.core.http.impl.headers.VertxHttpHeaders;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.User;
 import io.vertx.ext.auth.jwt.JWTAuth;
@@ -249,5 +254,54 @@ public class WebSocketServiceLoginTest {
         });
 
     async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
+  }
+
+  @Test
+  public void loginPopulatesJWTPayloadWithRequiredValues(final TestContext context) {
+    final Async async = context.async();
+    final HttpClientRequest request =
+        httpClient.post(
+            websocketConfiguration.getPort(),
+            websocketConfiguration.getHost(),
+            "/login",
+            response -> {
+              response.bodyHandler(
+                  buffer -> {
+                    final String body = buffer.toString();
+                    assertThat(body).isNotBlank();
+
+                    final JsonObject respBody = new JsonObject(body);
+                    final String token = respBody.getString("token");
+
+                    final JsonObject jwtPayload = decodeJwtPayload(token);
+                    assertThat(jwtPayload.getString("username")).isEqualTo("user");
+                    assertThat(jwtPayload.getJsonArray("permissions"))
+                        .isEqualTo(
+                            new JsonArray(
+                                list(
+                                    "fakePermission",
+                                    "eth:blockNumber",
+                                    "eth:subscribe",
+                                    "web3:*")));
+                    assertThat(jwtPayload.getString("enclavePublicKey"))
+                        .isEqualTo("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=");
+                    assertThat(jwtPayload.containsKey("iat")).isTrue();
+                    assertThat(jwtPayload.containsKey("exp")).isTrue();
+                    final long tokenExpiry = jwtPayload.getLong("exp") - jwtPayload.getLong("iat");
+                    assertThat(tokenExpiry).isEqualTo(MINUTES.toSeconds(5));
+
+                    async.complete();
+                  });
+            });
+    request.putHeader("Content-Type", "application/json; charset=utf-8");
+    request.end("{\"username\":\"user\",\"password\":\"pegasys\"}");
+
+    async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
+  }
+
+  private JsonObject decodeJwtPayload(final String token) {
+    final String[] tokenParts = token.split("\\.");
+    final String payload = tokenParts[1];
+    return new JsonObject(new String(Base64.getUrlDecoder().decode(payload), UTF_8));
   }
 }
