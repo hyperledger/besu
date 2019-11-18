@@ -132,6 +132,10 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
         params.add("--rpc-http-authentication-credentials-file");
         params.add(node.jsonRpcConfiguration().getAuthenticationCredentialsFile());
       }
+      if (node.jsonRpcConfiguration().getAuthenticationPublicKeyFile() != null) {
+        params.add("--rpc-http-authentication-jwt-public-key-file");
+        params.add(node.jsonRpcConfiguration().getAuthenticationPublicKeyFile().getAbsolutePath());
+      }
     }
 
     if (node.wsRpcEnabled()) {
@@ -148,6 +152,11 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
       if (node.webSocketConfiguration().getAuthenticationCredentialsFile() != null) {
         params.add("--rpc-ws-authentication-credentials-file");
         params.add(node.webSocketConfiguration().getAuthenticationCredentialsFile());
+      }
+      if (node.webSocketConfiguration().getAuthenticationPublicKeyFile() != null) {
+        params.add("--rpc-ws-authentication-jwt-public-key-file");
+        params.add(
+            node.webSocketConfiguration().getAuthenticationPublicKeyFile().getAbsolutePath());
       }
     }
 
