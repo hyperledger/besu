@@ -60,7 +60,7 @@ public class WebSocketServiceTest {
 
     websocketConfiguration = WebSocketConfiguration.createDefault();
     websocketConfiguration.setPort(0);
-    websocketConfiguration.setHostsWhitelist(Collections.singleton("*"));
+    websocketConfiguration.setHostsWhitelist(Collections.singletonList("*"));
 
     final Map<String, JsonRpcMethod> websocketMethods =
         new WebSocketMethodsFactory(

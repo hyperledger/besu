@@ -12,30 +12,28 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.tests.acceptance.dsl.transaction.net;
+package org.hyperledger.besu.tests.acceptance.dsl.transaction.login;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Fail.fail;
 
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.NodeRequests;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
 
-import org.web3j.protocol.core.methods.response.NetVersion;
+import java.io.IOException;
 
-public class NetVersionTransaction implements Transaction<String> {
+import org.assertj.core.api.Assertions;
 
-  NetVersionTransaction() {}
+public class LoginDisabledTransaction implements Transaction<Void> {
 
   @Override
-  public String execute(final NodeRequests node) {
+  public Void execute(final NodeRequests node) {
     try {
-      final NetVersion result = node.net().netVersion().send();
-      assertThat(result).isNotNull();
-      if (result.hasError()) {
-        throw new RuntimeException(result.getError().getMessage());
-      }
-      return result.getNetVersion();
-    } catch (final Exception e) {
-      throw new RuntimeException(e);
+      final String loginResponse = node.login().send("user", "password");
+      Assertions.assertThat(loginResponse).isEqualTo("Authentication not enabled");
+      return null;
+    } catch (final IOException e) {
+      fail("Login request failed with exception: ", e);
+      return null;
     }
   }
 }
