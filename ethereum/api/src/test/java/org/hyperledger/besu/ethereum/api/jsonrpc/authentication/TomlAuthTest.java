@@ -105,16 +105,37 @@ public class TomlAuthTest {
   }
 
   @Test
-  public void validPasswordShouldAuthenticateSuccessfully(final TestContext context) {
+  public void validPasswordWithAllValuesShouldAuthenticateAndCreateUserSuccessfully(
+      final TestContext context) {
     JsonObject expectedPrincipal =
         new JsonObject()
             .put("username", "userA")
             .put("password", "$2a$10$l3GA7K8g6rJ/Yv.YFSygCuI9byngpEzxgWS9qEg5emYDZomQW7fGC")
             .put("groups", new JsonArray().add("admin"))
             .put("permissions", new JsonArray().add("eth:*").add("perm:*"))
-            .put("roles", new JsonArray().add("net"));
+            .put("roles", new JsonArray().add("net"))
+            .put("enclavePublicKey", "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=");
 
     JsonObject authInfo = new JsonObject().put("username", "userA").put("password", "pegasys");
+
+    tomlAuth.authenticate(
+        authInfo,
+        context.asyncAssertSuccess(
+            res -> context.assertEquals(expectedPrincipal, res.principal())));
+  }
+
+  @Test
+  public void validPasswordWithOptionalValuesShouldAuthenticateAndCreateUserSuccessfully(
+      final TestContext context) {
+    JsonObject expectedPrincipal =
+        new JsonObject()
+            .put("username", "userB")
+            .put("password", "$2a$10$l3GA7K8g6rJ/Yv.YFSygCuI9byngpEzxgWS9qEg5emYDZomQW7fGC")
+            .put("groups", new JsonArray())
+            .put("permissions", new JsonArray().add("net:*"))
+            .put("roles", new JsonArray());
+
+    JsonObject authInfo = new JsonObject().put("username", "userB").put("password", "pegasys");
 
     tomlAuth.authenticate(
         authInfo,
