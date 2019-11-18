@@ -237,7 +237,7 @@ public class PrivGetTransactionReceiptTest {
         .thenReturn(Optional.of(BytesValue.fromHexString("0x01")));
 
     final PrivGetTransactionReceipt privGetTransactionReceipt =
-        new PrivGetTransactionReceipt(blockchainQueries, enclave, parameters, privacyParameters);
+        new PrivGetTransactionReceipt(blockchainQueries, enclave, privacyParameters);
     final Object[] params = new Object[] {transaction.getHash()};
     final JsonRpcRequest request = new JsonRpcRequest("1", "priv_getTransactionReceipt", params);
 
