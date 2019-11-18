@@ -827,22 +827,22 @@ Documentation updates include:
 - Added `admin_nodeInfo` JSON-RPC [\#1012](https://github.com/PegaSysEng/pantheon/pull/1012) 
 - Added `--metrics-category` CLI to only enable select metrics [\#969](https://github.com/PegaSysEng/pantheon/pull/969) 
 - Documentation updates include: 
-   - Updated endpoints in [Private Network Quickstart](https://docs.pantheon.pegasys.tech/en/latest/Tutorials/Private-Network-Quickstart/) (thanks to [laubai](https://github.com/laubai))
+   - Updated endpoints in [Private Network Quickstart](https://besu.hyperledger.org/en/latest/Tutorials/Quickstarts/Private-Network-Quickstart/) (thanks to [laubai](https://github.com/laubai))
    - Updated [documentation contribution guidelines](https://github.com/PegaSysEng/pantheon/blob/master/DOC-STYLE-GUIDE.md) 
-   - Added [`admin_removePeer`](https://docs.pantheon.pegasys.tech/en/latest/Reference/JSON-RPC-API-Methods/#admin_removepeer) 
-   - Updated [tutorials](https://docs.pantheon.pegasys.tech/en/latest/Tutorials/Create-Private-Clique-Network/) for printing of enode on startup 
+   - Added [`admin_removePeer`](https://besu.hyperledger.org/en/latest/Reference/API-Methods/#admin_removepeer) 
+   - Updated [tutorials](https://besu.hyperledger.org/en/latest/Tutorials/Private-Network/Create-Private-Clique-Network/) for printing of enode on startup 
    - Added [`txpool_pantheonTransactions`](https://docs.pantheon.pegasys.tech/en/latest/Reference/JSON-RPC-API-Methods/#txpool_pantheontransactions) 
-   - Added [Transaction Pool content](https://docs.pantheon.pegasys.tech/en/latest/Using-Besu/Transactions/Transaction-Pool/) 
-   - Added [`tx-pool-max-size` CLI option](https://docs.pantheon.pegasys.tech/en/latest/Reference/Besu-CLI-Syntax/#tx-pool-max-size) 
+   - Added [Transaction Pool content](https://besu.hyperledger.org/en/latest/Concepts/Transactions/Transaction-Pool/) 
+   - Added [`tx-pool-max-size` CLI option](https://besu.hyperledger.org/en/latest/Reference/CLI/CLI-Syntax/#tx-pool-max-size) 
    - Updated [developer build instructions to use installDist](https://github.com/PegaSysEng/pantheon/blob/master/docs/development/running-developer-builds.md) 
-   - Added [Azure quickstart tutorial](https://docs.pantheon.pegasys.tech/en/latest/Tutorials/Azure/Azure-Private-Network-Quickstart/) 
+   - Added [Azure quickstart tutorial](https://besu.hyperledger.org/en/latest/Tutorials/Quickstarts/Azure-Private-Network-Quickstart/) 
    - Enabled copy button in code blocks 
-   - Added [IBFT 1.0](https://docs.pantheon.pegasys.tech/en/latest/Consensus-Protocols/QuorumIBFT/) 
-   - Added section on using [Geth attach with Besu](https://docs.pantheon.pegasys.tech/en/latest/JSON-RPC-API/Using-JSON-RPC-API/#geth-console)    
+   - Added [IBFT 1.0](https://besu.hyperledger.org/en/latest/HowTo/Configure/Consensus-Protocols/QuorumIBFT/) 
+   - Added section on using [Geth attach with Besu](https://besu.hyperledger.org/en/latest/HowTo/Interact/APIs/Using-JSON-RPC-API/#geth-console)    
    - Enabled the edit link doc site to ease external doc contributions 
    - Added [EthStats docs](https://docs.pantheon.pegasys.tech/en/latest/EthStats/Overview/) (thanks to [baxy](https://github.com/baxy))
-   - Updated [Postman collection](https://docs.pantheon.pegasys.tech/en/latest/JSON-RPC-API/Using-JSON-RPC-API/#postman)  
-   - Added [`metrics-category` CLI option](https://docs.pantheon.pegasys.tech/en/latest/Reference/Besu-CLI-Syntax/#metrics-category) 
+   - Updated [Postman collection](https://besu.hyperledger.org/en/latest/HowTo/Interact/APIs/Authentication/#postman)  
+   - Added [`metrics-category` CLI option](https://besu.hyperledger.org/en/latest/Reference/CLI/CLI-Syntax/#metrics-category) 
    - Added information on [block time and timeout settings](https://docs.pantheon.pegasys.tech/en/latest/Consensus-Protocols/IBFT/#block-time) for IBFT 2.0 
    - Added [`admin_nodeInfo`](https://docs.pantheon.pegasys.tech/en/latest/Reference/JSON-RPC-API-Methods/#admin_nodeinfo) 
    - Added [permissions images](https://docs.pantheon.pegasys.tech/en/latest/Permissions/Permissioning/) 
