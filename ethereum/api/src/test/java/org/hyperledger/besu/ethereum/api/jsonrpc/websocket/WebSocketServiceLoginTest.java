@@ -31,8 +31,10 @@ import java.nio.file.Paths;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import io.vertx.core.MultiMap;
 import io.vertx.core.Vertx;
@@ -300,8 +302,8 @@ public class WebSocketServiceLoginTest {
   }
 
   private JsonObject decodeJwtPayload(final String token) {
-    final String[] tokenParts = token.split("\\.");
-    final String payload = tokenParts[1];
+    final List<String> tokenParts = Splitter.on('.').splitToList(token);
+    final String payload = tokenParts.get(1);
     return new JsonObject(new String(Base64.getUrlDecoder().decode(payload), UTF_8));
   }
 }

@@ -56,10 +56,12 @@ import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import com.google.common.base.Splitter;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
@@ -505,8 +507,8 @@ public class JsonRpcHttpServiceLoginTest {
   }
 
   private JsonObject decodeJwtPayload(final String token) {
-    final String[] tokenParts = token.split("\\.");
-    final String payload = tokenParts[1];
+    final List<String> tokenParts = Splitter.on('.').splitToList(token);
+    final String payload = tokenParts.get(1);
     return new JsonObject(new String(Base64.getUrlDecoder().decode(payload), UTF_8));
   }
 }
