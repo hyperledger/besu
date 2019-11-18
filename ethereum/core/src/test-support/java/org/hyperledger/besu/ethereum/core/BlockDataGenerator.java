@@ -283,15 +283,23 @@ public class BlockDataGenerator {
 
   public BlockBody body(final BlockOptions options) {
     final List<BlockHeader> ommers = new ArrayList<>();
-    final int ommerCount = random.nextInt(3);
-    for (int i = 0; i < ommerCount; i++) {
-      ommers.add(header());
+    if (options.hasOmmers()) {
+      final int ommerCount = random.nextInt(3);
+      for (int i = 0; i < ommerCount; i++) {
+        ommers.add(ommer());
+      }
     }
     final List<Transaction> defaultTxs = new ArrayList<>();
-    defaultTxs.add(transaction());
-    defaultTxs.add(transaction());
+    if (options.hasTransactions()) {
+      defaultTxs.add(transaction());
+      defaultTxs.add(transaction());
+    }
 
-    return new BlockBody(options.getTransactions(defaultTxs), options.getOmmers(ommers));
+    return new BlockBody(options.getTransactions(defaultTxs), ommers);
+  }
+
+  private BlockHeader ommer() {
+    return header(positiveLong(), body(BlockOptions.create().hasOmmers(false)));
   }
 
   public Transaction transaction() {
@@ -495,6 +503,8 @@ public class BlockDataGenerator {
     private Optional<Hash> receiptsRoot = Optional.empty();
     private Optional<Long> gasUsed = Optional.empty();
     private Optional<LogsBloomFilter> logsBloom = Optional.empty();
+    private boolean hasOmmers = true;
+    private boolean hasTransactions = true;
 
     public static BlockOptions create() {
       return new BlockOptions();
@@ -542,6 +552,14 @@ public class BlockDataGenerator {
 
     public LogsBloomFilter getLogsBloom(final LogsBloomFilter defaultValue) {
       return logsBloom.orElse(defaultValue);
+    }
+
+    public boolean hasTransactions() {
+      return hasTransactions;
+    }
+
+    public boolean hasOmmers() {
+      return hasOmmers;
     }
 
     public BlockOptions addTransaction(final Transaction... tx) {
@@ -608,6 +626,16 @@ public class BlockDataGenerator {
 
     public BlockOptions setLogsBloom(final LogsBloomFilter logsBloom) {
       this.logsBloom = Optional.of(logsBloom);
+      return this;
+    }
+
+    public BlockOptions hasTransactions(final boolean hasTransactions) {
+      this.hasTransactions = hasTransactions;
+      return this;
+    }
+
+    public BlockOptions hasOmmers(final boolean hasOmmers) {
+      this.hasOmmers = hasOmmers;
       return this;
     }
   }
