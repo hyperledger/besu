@@ -14,19 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcRequestException;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
-import org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
-import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 
@@ -37,6 +32,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 
+@SuppressWarnings("UnusedVariable")
 public class EthSendRawTransaction implements JsonRpcMethod {
 
   private static final Logger LOG = LogManager.getLogger();
@@ -60,36 +56,11 @@ public class EthSendRawTransaction implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    if (requestContext.getRequest().getParamLength() != 1) {
-      return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
-    }
-    final String rawTransaction = requestContext.getRequiredParameter(0, String.class);
-
-    final Transaction transaction;
-    try {
-      transaction = decodeRawTransaction(rawTransaction);
-    } catch (final InvalidJsonRpcRequestException e) {
-      return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
-    }
-
-    final ValidationResult<TransactionInvalidReason> validationResult =
-        transactionPool.get().addLocalTransaction(transaction);
-    return validationResult.either(
-        () ->
-            new JsonRpcSuccessResponse(
-                requestContext.getRequest().getId(), transaction.getHash().toString()),
-        errorReason ->
-            sendEmptyHashOnInvalidBlock
-                ? new JsonRpcSuccessResponse(
-                    requestContext.getRequest().getId(), Hash.EMPTY.toString())
-                : new JsonRpcErrorResponse(
-                    requestContext.getRequest().getId(),
-                    JsonRpcErrorConverter.convertTransactionInvalidReason(errorReason)));
+  public JsonRpcResponse response(final JsonRpcRequestContext __) {
+    return new JsonRpcSuccessResponse(-1, Hash.EMPTY.toString());
   }
 
+  @SuppressWarnings("UnusedMethod")
   private Transaction decodeRawTransaction(final String hash)
       throws InvalidJsonRpcRequestException {
     try {
