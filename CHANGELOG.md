@@ -843,14 +843,14 @@ Documentation updates include:
    - Added [EthStats docs](https://docs.pantheon.pegasys.tech/en/latest/EthStats/Overview/) (thanks to [baxy](https://github.com/baxy))
    - Updated [Postman collection](https://besu.hyperledger.org/en/latest/HowTo/Interact/APIs/Authentication/#postman)  
    - Added [`metrics-category` CLI option](https://besu.hyperledger.org/en/latest/Reference/CLI/CLI-Syntax/#metrics-category) 
-   - Added information on [block time and timeout settings](https://docs.pantheon.pegasys.tech/en/latest/Consensus-Protocols/IBFT/#block-time) for IBFT 2.0 
-   - Added [`admin_nodeInfo`](https://docs.pantheon.pegasys.tech/en/latest/Reference/JSON-RPC-API-Methods/#admin_nodeinfo) 
-   - Added [permissions images](https://docs.pantheon.pegasys.tech/en/latest/Permissions/Permissioning/) 
-   - Added permissioning blog to [Resources](https://docs.pantheon.pegasys.tech/en/latest/Resources/Resources/) 
-   - Updated [Create Permissioned Network](https://docs.pantheon.pegasys.tech/en/latest/Tutorials/Create-Permissioned-Network/) tutorial to use `export-address` 
-   - Updated [Clique](https://docs.pantheon.pegasys.tech/en/latest/Consensus-Protocols/Clique/) and [IBFT 2.0](https://docs.pantheon.pegasys.tech/en/latest/Consensus-Protocols/IBFT/) docs to include complete genesis file  
-   - Updated [Clique tutorial](https://docs.pantheon.pegasys.tech/en/latest/Tutorials/Create-Private-Clique-Network/) to use `export-address` subcommand  
-   - Added IBFT 2.0 [future message configuration options](https://docs.pantheon.pegasys.tech/en/latest/Consensus-Protocols/IBFT/#optional-configuration-options) 
+   - Added information on [block time and timeout settings](https://besu.hyperledger.org/en/latest/HowTo/Configure/Consensus-Protocols/IBFT/#block-time) for IBFT 2.0 
+   - Added [`admin_nodeInfo`](https://besu.hyperledger.org/en/latest/Reference/API-Methods/#admin_nodeinfo) 
+   - Added [permissions images](https://besu.hyperledger.org/en/latest/Concepts/Permissioning/Permissioning-Overview/) 
+   - Added permissioning blog to [Resources](https://besu.hyperledger.org/en/latest/Reference/Resources/) 
+   - Updated [Create Permissioned Network](https://besu.hyperledger.org/en/latest/Tutorials/Permissioning/Create-Permissioned-Network/) tutorial to use `export-address` 
+   - Updated [Clique](https://besu.hyperledger.org/en/latest/HowTo/Configure/Consensus-Protocols/Clique/) and [IBFT 2.0](https://besu.hyperledger.org/en/latest/HowTo/Configure/Consensus-Protocols/IBFT/) docs to include complete genesis file  
+   - Updated [Clique tutorial](https://besu.hyperledger.org/en/latest/Tutorials/Private-Network/Create-Private-Clique-Network/) to use `export-address` subcommand  
+   - Added IBFT 2.0 [future message configuration options](https://besu.hyperledger.org/en/latest/HowTo/Configure/Consensus-Protocols/IBFT/#optional-configuration-options) 
  
 ### Technical Improvements
 - Fixed so self persists to the whitelist [\#1176](https://github.com/PegaSysEng/pantheon/pull/1176)
@@ -1001,22 +1001,22 @@ Public key address export subcommand was missing in 1.0 release.
 ## 1.0 
 
 ### Additions and Improvements 
-- [IBFT 2.0](https://docs.pantheon.pegasys.tech/en/latest/Consensus-Protocols/IBFT/) 
-- [Permissioning](https://docs.pantheon.pegasys.tech/en/latest/Permissions/Permissioning/) 
-- [JSON-RPC Authentication](https://docs.pantheon.pegasys.tech/en/latest/JSON-RPC-API/Authentication/) 
+- [IBFT 2.0](https://besu.hyperledger.org/en/latest/Tutorials/Private-Network/Create-IBFT-Network/) 
+- [Permissioning](https://besu.hyperledger.org/en/latest/Concepts/Permissioning/Permissioning-Overview/) 
+- [JSON-RPC Authentication](https://besu.hyperledger.org/en/latest/HowTo/Interact/APIs/Authentication/) 
 - Added `rlp encode` subcommand [\#965](https://github.com/PegaSysEng/pantheon/pull/965)
 - Method to reload permissions file [\#834](https://github.com/PegaSysEng/pantheon/pull/834) 
 - Added rebind mitigation for Websockets. [\#905](https://github.com/PegaSysEng/pantheon/pull/905) 
 - Support genesis contract code [\#749](https://github.com/PegaSysEng/pantheon/pull/749) (thanks to [kziemianek](https://github.com/kziemianek)). Fixes issue [\#662](https://github.com/PegaSysEng/pantheon/issues/662). 
 - Documentation updates include: 
-  - Added details on [port configuration](https://docs.pantheon.pegasys.tech/en/latest/Configuring-Besu/Networking/#port-configuration)    
-  - Added [Resources page](https://docs.pantheon.pegasys.tech/en/latest/Resources/Resources/) linking to Besu blog posts and webinars 
-  - Added [JSON-RPC Authentication](https://docs.pantheon.pegasys.tech/en/latest/JSON-RPC-API/Authentication/)  
-  - Added [tutorial to create permissioned network](https://docs.pantheon.pegasys.tech/en/latest/Tutorials/Create-Permissioned-Network/) 
-  - Added [Permissioning](https://docs.pantheon.pegasys.tech/en/latest/Permissions/Permissioning/) content 
-  - Added [Permissioning API methods](https://docs.pantheon.pegasys.tech/en/latest/Reference/JSON-RPC-API-Methods/#permissioning-methods) 
-  - Added [tutorial to create Clique private network](https://docs.pantheon.pegasys.tech/en/latest/Tutorials/Create-Private-Clique-Network/)
-  - Added [tutorial to create IBFT 2.0 private network](https://docs.pantheon.pegasys.tech/en/latest/Tutorials/Create-IBFT-Network/)
+  - Added details on [port configuration](https://besu.hyperledger.org/en/latest/HowTo/Find-and-Connect/Configuring-Ports/)    
+  - Added [Resources page](https://besu.hyperledger.org/en/latest/Reference/Resources/) linking to Besu blog posts and webinars 
+  - Added [JSON-RPC Authentication](https://besu.hyperledger.org/en/latest/HowTo/Interact/APIs/Authentication/)  
+  - Added [tutorial to create permissioned network](https://besu.hyperledger.org/en/latest/Tutorials/Permissioning/Create-Permissioned-Network/) 
+  - Added [Permissioning](https://besu.hyperledger.org/en/latest/Concepts/Permissioning/Permissioning-Overview/) content 
+  - Added [Permissioning API methods](https://besu.hyperledger.org/en/latest/Reference/API-Methods/#permissioning-methods) 
+  - Added [tutorial to create Clique private network](https://besu.hyperledger.org/en/latest/Tutorials/Private-Network/Create-Private-Clique-Network/)
+  - Added [tutorial to create IBFT 2.0 private network](https://besu.hyperledger.org/en/latest/Tutorials/Private-Network/Create-IBFT-Network/)
         
 ### Technical Improvements 
 - RoundChangeCertificateValidator requires unique authors [\#997](https://github.com/PegaSysEng/pantheon/pull/997)
@@ -1186,39 +1186,39 @@ The [documentation](https://docs.pantheon.pegasys.tech/en/latest/) has been upda
 
 | Previous Option                     | New Option                                                                                                                                                                                                                                  | Change                            |
 |-------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------|
-| `--config`                          | [`--config-file`](https://docs.pantheon.pegasys.tech/en/latest/Reference/Besu-CLI-Syntax/#config-file)                                                                                                                                  | Renamed                          |
-| `--datadir`                         | [`--data-path`](https://docs.pantheon.pegasys.tech/en/latest/Reference/Besu-CLI-Syntax/#data-path)                                                                                                                                      | Renamed                          |
-| `--dev-mode`                        | [`--network=dev`](https://docs.pantheon.pegasys.tech/en/latest/Reference/Besu-CLI-Syntax/#network)                                                                                                                                     | Replaced by `--network` option   |
-| `--genesis`                         | [`--genesis-file`](https://docs.pantheon.pegasys.tech/en/latest/Reference/Besu-CLI-Syntax/#genesis-file)                                                                                                                                | Renamed                          |
-| `--goerli`                          | [`--network=goerli`](https://docs.pantheon.pegasys.tech/en/latest/Reference/Besu-CLI-Syntax/#network)                                                                                                                                  | Replaced by `--network` option   |
-| `--metrics-listen=<HOST:PORT>`      | [`--metrics-host=<HOST>`](https://docs.pantheon.pegasys.tech/en/latest/Reference/Besu-CLI-Syntax/#metrics-host) and [`--metrics-port=<PORT>`](https://docs.pantheon.pegasys.tech/en/latest/Reference/Besu-CLI-Syntax/#metrics-port) | Split into host and port options |
-| `--miner-extraData`                 | [`--miner-extra-data`](https://docs.pantheon.pegasys.tech/en/latest/Reference/Besu-CLI-Syntax/#miner-extra-data)                                                                                                                       | Renamed                          |
-| `--miner-minTransactionGasPriceWei` | [`--min-gas-price`](https://docs.pantheon.pegasys.tech/en/latest/Reference/Besu-CLI-Syntax/#min-gas-price)                                                                                                                              | Renamed                          |
-| `--no-discovery`                    | [`--discovery-enabled`](https://docs.pantheon.pegasys.tech/en/latest/Reference/Besu-CLI-Syntax/#discovery-enabled)                                                                                                                      | Replaced                         |
-| `--node-private-key`                | [`--node-private-key-file`](https://docs.pantheon.pegasys.tech/en/latest/Reference/Besu-CLI-Syntax/#node-private-key-file)                                                                                                              | Renamed                          |
+| `--config`                          | [`--config-file`](https://besu.hyperledger.org/en/latest/Reference/CLI/CLI-Syntax/#config-file)                                                                                                                                  | Renamed                          |
+| `--datadir`                         | [`--data-path`](https://besu.hyperledger.org/en/latest/Reference/CLI/CLI-Syntax/#data-path)                                                                                                                                      | Renamed                          |
+| `--dev-mode`                        | [`--network=dev`](https://besu.hyperledger.org/en/latest/Reference/CLI/CLI-Syntax/#network)                                                                                                                                     | Replaced by `--network` option   |
+| `--genesis`                         | [`--genesis-file`](https://besu.hyperledger.org/en/latest/Reference/CLI/CLI-Syntax/#genesis-file)                                                                                                                                | Renamed                          |
+| `--goerli`                          | [`--network=goerli`]((https://besu.hyperledger.org/en/latest/Reference/CLI/CLI-Syntax/#network)                                                                                                                                  | Replaced by `--network` option   |
+| `--metrics-listen=<HOST:PORT>`      | [`--metrics-host=<HOST>`](https://besu.hyperledger.org/en/latest/Reference/CLI/CLI-Syntax/#metrics-host) and [`--metrics-port=<PORT>`](https://besu.hyperledger.org/en/latest/Reference/CLI/CLI-Syntax/#metrics-port) | Split into host and port options |
+| `--miner-extraData`                 | [`--miner-extra-data`](https://besu.hyperledger.org/en/latest/Reference/CLI/CLI-Syntax/#miner-extra-data)                                                                                                                       | Renamed                          |
+| `--miner-minTransactionGasPriceWei` | [`--min-gas-price`](https://besu.hyperledger.org/en/latest/Reference/CLI/CLI-Syntax/#min-gas-price)                                                                                                                              | Renamed                          |
+| `--no-discovery`                    | [`--discovery-enabled`](https://besu.hyperledger.org/en/latest/Reference/CLI/CLI-Syntax/#discovery-enabled)                                                                                                                      | Replaced                         |
+| `--node-private-key`                | [`--node-private-key-file`](https://besu.hyperledger.org/en/latest/Reference/CLI/CLI-Syntax/#node-private-key-file)                                                                                                              | Renamed                          |
 | `--ottoman`                         | N/A                                                                                                                                                                                                                                         | Removed                          |
-| `--p2p-listen=<HOST:PORT>`          | [`--p2p-host=<HOST>`](https://docs.pantheon.pegasys.tech/en/latest/Reference/Besu-CLI-Syntax/#p2p-host) and [`--p2p-port=<PORT>`](https://docs.pantheon.pegasys.tech/en/latest/Reference/Besu-CLI-Syntax/#p2p-port) | Split into host and port options |
-| `--rinkeby`                         | [`--network=rinkeby`](https://docs.pantheon.pegasys.tech/en/latest/Reference/Besu-CLI-Syntax/#network)                                                                                                                                     | Replaced by `--network` option   |
-| `--ropsten`                         | [`--network=ropsten`](https://docs.pantheon.pegasys.tech/en/latest/Reference/Besu-CLI-Syntax/#network)                                                                                                                                     | Replaced by `--network` option   |
-| `--rpc-enabled`                     | [` --rpc-http-enabled`](https://docs.pantheon.pegasys.tech/en/latest/Reference/Besu-CLI-Syntax/#rpc-http-enabled)| Renamed| 
-| `--rpc-listen=<HOST:PORT>`          | [`--rpc-http-host=<HOST>`](https://docs.pantheon.pegasys.tech/en/latest/Reference/Besu-CLI-Syntax/#rpc-http-host) and [`--rpc-http-port=<PORT>`](https://docs.pantheon.pegasys.tech/en/latest/Reference/Besu-CLI-Syntax/#rpc-http-port) | Split into host and port options |
-| `--rpc-api`                         | [`--rpc-http-api`](https://docs.pantheon.pegasys.tech/en/latest/Reference/Besu-CLI-Syntax/#rpc-http-api)| Renamed |
-| `--rpc-cors-origins`                | [`--rpc-http-cors-origins`](https://docs.pantheon.pegasys.tech/en/latest/Reference/Besu-CLI-Syntax/#rpc-http-cors-origins) | Renamed | 
-| `--ws-enabled`                      | [`--rpc-ws-enabled`](https://docs.pantheon.pegasys.tech/en/latest/Reference/Besu-CLI-Syntax/#rpc-ws-enabled)  | Renamed | 
-| `--ws-api`                          | [`--rpc-ws-api`](https://docs.pantheon.pegasys.tech/en/latest/Reference/Besu-CLI-Syntax/#rpc-ws-api) | Renamed|
-| `--ws-listen=<HOST:PORT>`           | [`--rpc-ws-host=<HOST>`](https://docs.pantheon.pegasys.tech/en/latest/Reference/Besu-CLI-Syntax/#rpc-ws-host) and [`--rpc-ws-port=<PORT>`](https://docs.pantheon.pegasys.tech/en/latest/Reference/Besu-CLI-Syntax/#rpc-ws-port) | Split into host and port options |
-| `--ws-refresh-delay`                | [`--rpc-ws-refresh-delay`](https://docs.pantheon.pegasys.tech/en/latest/Reference/Besu-CLI-Syntax/#rpc-ws-refresh-delay)|Renamed| 
+| `--p2p-listen=<HOST:PORT>`          | [`--p2p-host=<HOST>`](https://besu.hyperledger.org/en/latest/Reference/CLI/CLI-Syntax/#p2p-hostt) and [`--p2p-port=<PORT>`](https://besu.hyperledger.org/en/latest/Reference/CLI/CLI-Syntax/#p2p-port) | Split into host and port options |
+| `--rinkeby`                         | [`--network=rinkeby`]((https://besu.hyperledger.org/en/latest/Reference/CLI/CLI-Syntax/#network)                                                                                                                                     | Replaced by `--network` option   |
+| `--ropsten`                         | [`--network=ropsten`]((https://besu.hyperledger.org/en/latest/Reference/CLI/CLI-Syntax/#network)                                                                                                                                     | Replaced by `--network` option   |
+| `--rpc-enabled`                     | [` --rpc-http-enabled`](https://besu.hyperledger.org/en/latest/Reference/CLI/CLI-Syntax/#rpc-http-enabled)| Renamed| 
+| `--rpc-listen=<HOST:PORT>`          | [`--rpc-http-host=<HOST>`](https://besu.hyperledger.org/en/latest/Reference/CLI/CLI-Syntax/#rpc-http-host) and [`--rpc-http-port=<PORT>`](https://besu.hyperledger.org/en/latest/Reference/CLI/CLI-Syntax/#rpc-http-port) | Split into host and port options |
+| `--rpc-api`                         | [`--rpc-http-api`](https://besu.hyperledger.org/en/latest/Reference/CLI/CLI-Syntax/#rpc-http-api)| Renamed |
+| `--rpc-cors-origins`                | [`--rpc-http-cors-origins`](https://besu.hyperledger.org/en/latest/Reference/CLI/CLI-Syntax/#rpc-http-cors-origins) | Renamed | 
+| `--ws-enabled`                      | [`--rpc-ws-enabled`](https://besu.hyperledger.org/en/latest/Reference/CLI/CLI-Syntax/#rpc-ws-enabled)  | Renamed | 
+| `--ws-api`                          | [`--rpc-ws-api`](https://besu.hyperledger.org/en/latest/Reference/CLI/CLI-Syntax/#rpc-ws-api) | Renamed|
+| `--ws-listen=<HOST:PORT>`           | [`--rpc-ws-host=<HOST>`](https://besu.hyperledger.org/en/latest/Reference/CLI/CLI-Syntax/#rpc-ws-host) and [`--rpc-ws-port=<PORT>`](https://besu.hyperledger.org/en/latest/Reference/CLI/CLI-Syntax/#rpc-ws-port) | Split into host and port options |
+| `--ws-refresh-delay`                | [`--rpc-ws-refresh-delay`](https://besu.hyperledger.org/en/latest/Reference/CLI/CLI-Syntax/#rpc-ws-refresh-delay)|Renamed| 
 
 | Previous Subcommand                 | New Subcommand                                                                                                                                                                                                                  | Change                            |
 |-------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------|
-| `pantheon import <block-file>`      | [`pantheon blocks import --from=<block-file>`](https://docs.pantheon.pegasys.tech/en/latest/Reference/Besu-CLI-Syntax/#blocks)                                                                                            | Renamed                          |
-| `pantheon export-pub-key <key-file>`| [`pantheon public-key export --to=<key-file>`](https://docs.pantheon.pegasys.tech/en/latest/Reference/Besu-CLI-Syntax/#public-key)                                                                                                      | Renamed                          |
+| `pantheon import <block-file>`      | [`pantheon blocks import --from=<block-file>`](https://besu.hyperledger.org/en/latest/Reference/CLI/CLI-Subcommands/#blocks)                                                                                            | Renamed                          |
+| `pantheon export-pub-key <key-file>`| [`pantheon public-key export --to=<key-file>`](https://besu.hyperledger.org/en/latest/Reference/CLI/CLI-Subcommands/#public-key)                                                                                                      | Renamed                          |
 
 
 ### Private Network Quickstart 
 
 The Private Network Quickstart has been moved from the `pantheon` repository to the `pantheon-quickstart` 
-repository. The [Private Network Quickstart tutorial](https://docs.pantheon.pegasys.tech/en/latest/Tutorials/Private-Network-Quickstart/) 
+repository. The [Private Network Quickstart tutorial](https://besu.hyperledger.org/en/latest/Tutorials/Quickstarts/Private-Network-Quickstart/) 
 has been updated to use the moved quickstart.
 
 ### Additions and Improvements 
@@ -1238,12 +1238,12 @@ has been updated to use the moved quickstart.
 - Added private transaction abstraction [\#592](https://github.com/PegaSysEng/pantheon/pull/592) (thanks to [iikirilov](https://github.com/iikirilov))
 - Added privacy command line commands [\#584](https://github.com/PegaSysEng/pantheon/pull/584) (thanks to [Puneetha17](https://github.com/Puneetha17))
 - Documentation updates include:
-  - Updated [Private Network Quickstart tutorial](https://docs.pantheon.pegasys.tech/en/latest/Tutorials/Private-Network-Quickstart/) 
+  - Updated [Private Network Quickstart tutorial](https://besu.hyperledger.org/en/latest/Tutorials/Quickstarts/Private-Network-Quickstart/) 
     to use quickstart in `pantheon-quickstart` repository and indicate that the quickstart is not supported on Windows.
-  - Added IBFT 2.0 [content](https://docs.pantheon.pegasys.tech/en/latest/Consensus-Protocols/IBFT/) and [JSON RPC API methods](https://docs.pantheon.pegasys.tech/en/latest/Reference/JSON-RPC-API-Methods/#ibft-20-methods). 
-  - Added [consensus protocols content](https://docs.pantheon.pegasys.tech/en/latest/Consensus-Protocols/Comparing-PoA/).
-  - Added content on [events and logs](https://docs.pantheon.pegasys.tech/en/latest/Using-Besu/Events-and-Logs/), and [using filters](https://docs.pantheon.pegasys.tech/en/latest/Using-Besu/Accessing-Logs-Using-JSON-RPC/). 
-  - Added content on integrating with [Prometheus Push Gateway](https://docs.pantheon.pegasys.tech/en/latest/Using-Besu/Debugging/#running-prometheus-with-pantheon-in-push-mode)
+  - Added IBFT 2.0 [content](https://besu.hyperledger.org/en/latest/HowTo/Configure/Consensus-Protocols/IBFT/) and [JSON RPC API methods](https://besu.hyperledger.org/en/latest/Reference/API-Methods/#ibft-20-methods). 
+  - Added [consensus protocols content](https://besu.hyperledger.org/en/latest/Concepts/Consensus-Protocols/Comparing-PoA/).
+  - Added content on [events and logs](https://besu.hyperledger.org/en/latest/Concepts/Events-and-Logs/), and [using filters](https://besu.hyperledger.org/en/latest/HowTo/Interact/Filters/Accessing-Logs-Using-JSON-RPC/). 
+  - Added content on integrating with [Prometheus Push Gateway](https://besu.hyperledger.org/en/latest/HowTo/Deploy/Monitoring-Performance/#running-prometheus-with-besu-in-push-mode)
   
 ### Technical Improvements 
 
@@ -1344,7 +1344,7 @@ fully synchronized to MainNet, the data directory will be ~2TB.
 
 When restarting your node with the v0.8.4 Docker image:
 
-* Save the node key in the [`key` file](https://docs.pantheon.pegasys.tech/en/latest/Configuring-Besu/Node-Keys/#node-private-key) in the data 
+* Save the node key in the [`key` file](https://besu.hyperledger.org/en/latest/Concepts/Node-Keys/#node-private-key) in the data 
     directory or specify the location using the [`--node-private-key` option](https://docs.pantheon.pegasys.tech/en/latest/Configuring-Besu/Node-Keys/#specifying-a-custom-node-private-key-file).  
 * Specify the `<destination_directory` as a [volume for the data directory](https://docs.pantheon.pegasys.tech/en/latest/Getting-Started/Run-Docker-Image/#data-directory). 
 
@@ -1368,8 +1368,8 @@ When restarting your node with the v0.8.4 Docker image:
 - Documentation updates include:
   * Migrated to new [documentation site](https://docs.pantheon.pegasys.tech/en/latest/)  
   * Added [configuration file content](https://docs.pantheon.pegasys.tech/en/latest/Configuring-Besu/Using-Configuration-File/)
-  * Added [tutorial to create private network](https://docs.pantheon.pegasys.tech/en/latest/Tutorials/Create-Private-Network/)
-  * Added content on [enabling non-default APIs](https://docs.pantheon.pegasys.tech/en/latest/Reference/JSON-RPC-API-Methods/)
+  * Added [tutorial to create private network](https://besu.hyperledger.org/en/latest/Tutorials/Private-Network/Create-Private-Network/)
+  * Added content on [enabling non-default APIs](https://besu.hyperledger.org/en/latest/Reference/API-Methods/)
   
 ## Technical Improvements
 
