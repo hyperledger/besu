@@ -224,7 +224,7 @@ public class PrivacyNode implements AutoCloseable {
                             BACKGROUND_THREAD_COUNT,
                             CACHE_CAPACITY),
                     Arrays.asList(KeyValueSegmentIdentifier.values()),
-                RocksDBMetricsFactory.PRIVATE_ROCKS_DB_METRICS))
+                    RocksDBMetricsFactory.PRIVATE_ROCKS_DB_METRICS)))
         .withCommonConfiguration(new BesuConfigurationImpl(dataLocation, dbLocation))
         .withMetricsSystem(new NoOpMetricsSystem())
         .build();

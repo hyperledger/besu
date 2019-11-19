@@ -62,7 +62,10 @@ public class RocksDBKeyValuePrivacyStorageFactoryAdapterTest {
 
     final RocksDBKeyValuePrivacyStorageFactoryAdapter storageFactory =
         new RocksDBKeyValuePrivacyStorageFactoryAdapter(
-            new RocksDBKeyValueStorageFactory(() -> rocksDbConfiguration, segments));
+            new RocksDBKeyValueStorageFactory(
+                () -> rocksDbConfiguration,
+                segments,
+                RocksDBMetricsFactory.PRIVATE_ROCKS_DB_METRICS));
 
     // Side effect is creation of the Metadata version file
     storageFactory.create(segment, commonConfiguration, metricsSystem);
@@ -96,7 +99,10 @@ public class RocksDBKeyValuePrivacyStorageFactoryAdapterTest {
 
     final RocksDBKeyValuePrivacyStorageFactoryAdapter storageFactory =
         new RocksDBKeyValuePrivacyStorageFactoryAdapter(
-            new RocksDBKeyValueStorageFactory(() -> rocksDbConfiguration, segments));
+            new RocksDBKeyValueStorageFactory(
+                () -> rocksDbConfiguration,
+                segments,
+                RocksDBMetricsFactory.PRIVATE_ROCKS_DB_METRICS));
 
     // Side effect is creation of the Metadata version file
     storageFactory.create(segment, commonConfiguration, metricsSystem);
@@ -129,7 +135,8 @@ public class RocksDBKeyValuePrivacyStorageFactoryAdapterTest {
     when(commonConfiguration.getDataPath()).thenReturn(tempDataDir);
 
     final RocksDBKeyValueStorageFactory storageFactory =
-        new RocksDBKeyValueStorageFactory(() -> rocksDbConfiguration, segments);
+        new RocksDBKeyValueStorageFactory(
+            () -> rocksDbConfiguration, segments, RocksDBMetricsFactory.PRIVATE_ROCKS_DB_METRICS);
 
     storageFactory.create(segment, commonConfiguration, metricsSystem);
 

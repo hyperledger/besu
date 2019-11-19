@@ -110,7 +110,7 @@ public class PrivacyTest {
                             BACKGROUND_THREAD_COUNT,
                             CACHE_CAPACITY),
                     Arrays.asList(KeyValueSegmentIdentifier.values()),
-                RocksDBMetricsFactory.PRIVATE_ROCKS_DB_METRICS)))
+                    RocksDBMetricsFactory.PRIVATE_ROCKS_DB_METRICS)))
         .withCommonConfiguration(new BesuConfigurationImpl(dataDir, dbDir))
         .withMetricsSystem(new NoOpMetricsSystem())
         .build();

@@ -44,7 +44,7 @@ public class RocksDBKeyValuePrivacyStorageFactoryAdapter implements PrivacyKeyVa
   private Integer databaseVersion;
 
   public RocksDBKeyValuePrivacyStorageFactoryAdapter(
-          final RocksDBKeyValueStorageFactory publicFactory) {
+      final RocksDBKeyValueStorageFactory publicFactory) {
     this.publicFactory = publicFactory;
   }
 
