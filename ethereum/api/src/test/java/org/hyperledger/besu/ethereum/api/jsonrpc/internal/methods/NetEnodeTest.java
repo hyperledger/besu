@@ -19,6 +19,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -74,9 +75,9 @@ public class NetEnodeTest {
     when(p2PNetwork.isP2pEnabled()).thenReturn(true);
     doReturn(enodeURL).when(p2PNetwork).getLocalEnode();
 
-    final JsonRpcRequest request = netEnodeRequest();
+    final JsonRpcRequestContext request = netEnodeRequest();
     final JsonRpcResponse expectedResponse =
-        new JsonRpcSuccessResponse(request.getId(), enodeURL.get().toString());
+        new JsonRpcSuccessResponse(request.getRequest().getId(), enodeURL.get().toString());
 
     Assertions.assertThat(method.response(request))
         .isEqualToComparingFieldByField(expectedResponse);
@@ -86,9 +87,9 @@ public class NetEnodeTest {
   public void shouldReturnErrorWhenP2pDisabled() {
     when(p2PNetwork.isP2pEnabled()).thenReturn(false);
 
-    final JsonRpcRequest request = netEnodeRequest();
+    final JsonRpcRequestContext request = netEnodeRequest();
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getId(), JsonRpcError.P2P_DISABLED);
+        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.P2P_DISABLED);
 
     Assertions.assertThat(method.response(request))
         .isEqualToComparingFieldByField(expectedResponse);
@@ -99,15 +100,16 @@ public class NetEnodeTest {
     when(p2PNetwork.isP2pEnabled()).thenReturn(true);
     doReturn(Optional.empty()).when(p2PNetwork).getLocalEnode();
 
-    final JsonRpcRequest request = netEnodeRequest();
+    final JsonRpcRequestContext request = netEnodeRequest();
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getId(), JsonRpcError.P2P_NETWORK_NOT_RUNNING);
+        new JsonRpcErrorResponse(
+            request.getRequest().getId(), JsonRpcError.P2P_NETWORK_NOT_RUNNING);
 
     Assertions.assertThat(method.response(request))
         .isEqualToComparingFieldByField(expectedResponse);
   }
 
-  private JsonRpcRequest netEnodeRequest() {
-    return new JsonRpcRequest("2.0", "net_enode", new Object[] {});
+  private JsonRpcRequestContext netEnodeRequest() {
+    return new JsonRpcRequestContext(new JsonRpcRequest("2.0", "net_enode", new Object[] {}));
   }
 }

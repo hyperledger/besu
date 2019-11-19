@@ -20,6 +20,7 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -74,9 +75,12 @@ public class WebSocketRequestHandlerTest {
     final Async async = context.async();
 
     final JsonObject requestJson = new JsonObject().put("id", 1).put("method", "eth_x");
-    final JsonRpcRequest expectedRequest = requestJson.mapTo(WebSocketRpcRequest.class);
+    final JsonRpcRequest requestBody = requestJson.mapTo(WebSocketRpcRequest.class);
+    final JsonRpcRequestContext expectedRequest = new JsonRpcRequestContext(requestBody);
+
     final JsonRpcSuccessResponse expectedResponse =
-        new JsonRpcSuccessResponse(expectedRequest.getId(), null);
+        new JsonRpcSuccessResponse(requestBody.getId(), null);
+
     when(jsonRpcMethodMock.response(eq(expectedRequest))).thenReturn(expectedResponse);
 
     final String websocketId = UUID.randomUUID().toString();
@@ -169,7 +173,8 @@ public class WebSocketRequestHandlerTest {
     final Async async = context.async();
 
     final JsonObject requestJson = new JsonObject().put("id", 1).put("method", "eth_x");
-    final JsonRpcRequest expectedRequest = requestJson.mapTo(WebSocketRpcRequest.class);
+    final JsonRpcRequestContext expectedRequest =
+        new JsonRpcRequestContext(requestJson.mapTo(WebSocketRpcRequest.class));
     when(jsonRpcMethodMock.response(eq(expectedRequest))).thenThrow(new RuntimeException());
     final JsonRpcErrorResponse expectedResponse =
         new JsonRpcErrorResponse(1, JsonRpcError.INTERNAL_ERROR);

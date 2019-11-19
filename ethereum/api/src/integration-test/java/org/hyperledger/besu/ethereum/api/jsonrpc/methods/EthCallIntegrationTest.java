@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 import org.hyperledger.besu.ethereum.api.jsonrpc.BlockchainImporter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcTestMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
@@ -70,7 +71,7 @@ public class EthCallIntegrationTest {
             null,
             null,
             "0x12a7b914");
-    final JsonRpcRequest request = requestWithParams(callParameter, "latest");
+    final JsonRpcRequestContext request = requestWithParams(callParameter, "latest");
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(
             null, "0x0000000000000000000000000000000000000000000000000000000000000001");
@@ -90,7 +91,7 @@ public class EthCallIntegrationTest {
             null,
             null,
             "0x12a7b914");
-    final JsonRpcRequest request = requestWithParams(callParameter, "0x8");
+    final JsonRpcRequestContext request = requestWithParams(callParameter, "0x8");
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(
             null, "0x0000000000000000000000000000000000000000000000000000000000000000");
@@ -105,7 +106,7 @@ public class EthCallIntegrationTest {
     final CallParameter callParameter =
         new JsonCallParameter(
             "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b", null, null, null, null, "0x12a7b914");
-    final JsonRpcRequest request = requestWithParams(callParameter, "latest");
+    final JsonRpcRequestContext request = requestWithParams(callParameter, "latest");
 
     final Throwable thrown = catchThrowable(() -> method.response(request));
 
@@ -125,7 +126,7 @@ public class EthCallIntegrationTest {
             null,
             null,
             "0x12a7b914");
-    final JsonRpcRequest request = requestWithParams(callParameter, "latest");
+    final JsonRpcRequestContext request = requestWithParams(callParameter, "latest");
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(null, JsonRpcError.INTRINSIC_GAS_EXCEEDS_LIMIT);
 
@@ -144,7 +145,7 @@ public class EthCallIntegrationTest {
             "0x10000000000000",
             null,
             "0x12a7b914");
-    final JsonRpcRequest request = requestWithParams(callParameter, "latest");
+    final JsonRpcRequestContext request = requestWithParams(callParameter, "latest");
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(null, JsonRpcError.TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE);
 
@@ -158,7 +159,7 @@ public class EthCallIntegrationTest {
     final CallParameter callParameter =
         new JsonCallParameter(
             null, "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f", null, null, null, null);
-    final JsonRpcRequest request = requestWithParams(callParameter, "latest");
+    final JsonRpcRequestContext request = requestWithParams(callParameter, "latest");
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, "0x");
 
     final JsonRpcResponse response = method.response(request);
@@ -166,7 +167,7 @@ public class EthCallIntegrationTest {
     assertThat(response).isEqualToComparingFieldByField(expectedResponse);
   }
 
-  private JsonRpcRequest requestWithParams(final Object... params) {
-    return new JsonRpcRequest("2.0", "eth_call", params);
+  private JsonRpcRequestContext requestWithParams(final Object... params) {
+    return new JsonRpcRequestContext(new JsonRpcRequest("2.0", "eth_call", params));
   }
 }

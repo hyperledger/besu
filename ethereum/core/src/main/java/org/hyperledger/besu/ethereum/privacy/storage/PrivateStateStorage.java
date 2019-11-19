@@ -32,6 +32,10 @@ public interface PrivateStateStorage {
 
   Optional<BytesValue> getTransactionOutput(Bytes32 transactionHash);
 
+  Optional<BytesValue> getStatus(Bytes32 transactionHash);
+
+  Optional<BytesValue> getRevertReason(Bytes32 transactionHash);
+
   Optional<PrivateTransactionMetadata> getTransactionMetadata(
       Bytes32 blockHash, Bytes32 transactionHash);
 
@@ -49,6 +53,10 @@ public interface PrivateStateStorage {
     Updater putTransactionLogs(Bytes32 transactionHash, LogSeries logs);
 
     Updater putTransactionResult(Bytes32 transactionHash, BytesValue events);
+
+    Updater putTransactionStatus(Bytes32 transactionHash, BytesValue status);
+
+    Updater putTransactionRevertReason(Bytes32 txHash, BytesValue bytesValue);
 
     Updater putTransactionMetadata(
         Bytes32 blockHash, Bytes32 transactionHash, PrivateTransactionMetadata metadata);

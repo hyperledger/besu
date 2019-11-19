@@ -21,6 +21,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.consensus.common.VoteProposer;
 import org.hyperledger.besu.consensus.common.VoteType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -29,6 +30,7 @@ import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
 
 public abstract class AbstractVoteProposerMethodTest {
+
   private final VoteProposer voteProposer = mock(VoteProposer.class);
   private final String JSON_RPC_VERSION = "2.0";
 
@@ -42,8 +44,9 @@ public abstract class AbstractVoteProposerMethodTest {
 
   @Test
   public void testConversionFromVoteTypeToBoolean() {
-    final JsonRpcRequest request =
-        new JsonRpcRequest(JSON_RPC_VERSION, getMethodName(), new Object[] {});
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest(JSON_RPC_VERSION, getMethodName(), new Object[] {}));
 
     when(voteProposer.getProposals())
         .thenReturn(
@@ -55,7 +58,7 @@ public abstract class AbstractVoteProposerMethodTest {
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(
-            request.getId(),
+            request.getRequest().getId(),
             ImmutableMap.of(
                 "0x0000000000000000000000000000000000000001",
                 true,

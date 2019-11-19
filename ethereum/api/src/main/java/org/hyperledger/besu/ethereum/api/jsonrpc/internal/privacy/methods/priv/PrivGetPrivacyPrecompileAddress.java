@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -40,13 +40,15 @@ public class PrivGetPrivacyPrecompileAddress implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest request) {
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
 
     if (privacyEnabled) {
       return new JsonRpcSuccessResponse(
-          request.getId(), Address.privacyPrecompiled(privacyAddress).toString());
+          requestContext.getRequest().getId(),
+          Address.privacyPrecompiled(privacyAddress).toString());
     } else {
-      return new JsonRpcErrorResponse(request.getId(), JsonRpcError.PRIVACY_NOT_ENABLED);
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), JsonRpcError.PRIVACY_NOT_ENABLED);
     }
   }
 }
