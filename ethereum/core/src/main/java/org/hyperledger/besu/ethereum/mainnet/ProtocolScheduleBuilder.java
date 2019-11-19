@@ -164,7 +164,7 @@ public class ProtocolScheduleBuilder<C> {
                   OptionalLong.of(classicBlockNumber),
                   ClassicProtocolSpecs.classicRecoveryInitDefinition(
                       config.getContractSizeLimit(), config.getEvmStackSize()));
-              protocolSchedule.putMilestone(classicBlockNumber + 10, originalProtocolSpce);
+              protocolSchedule.putMilestone(classicBlockNumber + 1, originalProtocolSpce);
             });
 
     addProtocolSpec(
