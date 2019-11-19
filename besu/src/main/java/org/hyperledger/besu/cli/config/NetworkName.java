@@ -21,6 +21,5 @@ public enum NetworkName {
   GOERLI,
   DEV,
   CLASSIC,
-  KOTTI,
-  MORDOR
+  KOTTI
 }
