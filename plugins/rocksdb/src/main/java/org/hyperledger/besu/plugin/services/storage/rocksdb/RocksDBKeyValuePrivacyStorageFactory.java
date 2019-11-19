@@ -34,7 +34,7 @@ import org.apache.logging.log4j.Logger;
  * Takes a public storage factory and enables creating independently versioned privacy storage
  * objects which have the same features as the supported public storage factory
  */
-public class RocksDBKeyValuePrivacyStorageFactoryAdapter implements PrivacyKeyValueStorageFactory {
+public class RocksDBKeyValuePrivacyStorageFactory implements PrivacyKeyValueStorageFactory {
   private static final Logger LOG = LogManager.getLogger();
   private static final int DEFAULT_VERSION = 1;
   private static final Set<Integer> SUPPORTED_VERSIONS = Set.of(0, 1);
@@ -43,8 +43,7 @@ public class RocksDBKeyValuePrivacyStorageFactoryAdapter implements PrivacyKeyVa
   private final RocksDBKeyValueStorageFactory publicFactory;
   private Integer databaseVersion;
 
-  public RocksDBKeyValuePrivacyStorageFactoryAdapter(
-      final RocksDBKeyValueStorageFactory publicFactory) {
+  public RocksDBKeyValuePrivacyStorageFactory(final RocksDBKeyValueStorageFactory publicFactory) {
     this.publicFactory = publicFactory;
   }
 
@@ -120,7 +119,7 @@ public class RocksDBKeyValuePrivacyStorageFactoryAdapter implements PrivacyKeyVa
   }
 
   @Override
-  public int getSchemaVersion() {
+  public int getVersion() {
     return databaseVersion;
   }
 }

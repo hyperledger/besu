@@ -60,6 +60,6 @@ public class PrivacyKeyValueStorageProviderBuilder {
         storageFactory.create(PRIVATE_TRANSACTIONS, commonConfiguration, metricsSystem),
         new LimitedInMemoryKeyValueStorage(DEFAULT_WORLD_STATE_PRE_IMAGE_CACHE_SIZE),
         storageFactory.create(PRIVATE_STATE, commonConfiguration, metricsSystem),
-        storageFactory.getSchemaVersion());
+        storageFactory.getVersion());
   }
 }

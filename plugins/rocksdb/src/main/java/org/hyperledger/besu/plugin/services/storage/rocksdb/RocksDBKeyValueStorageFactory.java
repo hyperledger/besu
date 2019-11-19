@@ -82,7 +82,7 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
         rocksDBMetricsFactory);
   }
 
-  public int getDefaultVersion() {
+  int getDefaultVersion() {
     return defaultVersion;
   }
 

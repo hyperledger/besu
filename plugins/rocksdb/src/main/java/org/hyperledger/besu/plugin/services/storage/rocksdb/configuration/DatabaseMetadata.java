@@ -50,8 +50,7 @@ public class DatabaseMetadata {
   }
 
   public DatabaseMetadata(final int version, final int privacyVersion) {
-    this.version = version;
-    this.privacyVersion = Optional.of(privacyVersion);
+    this(version, Optional.of(privacyVersion));
   }
 
   public int getVersion() {

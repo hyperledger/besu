@@ -36,7 +36,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class RocksDBKeyValuePrivacyStorageFactoryAdapterTest {
+public class RocksDBKeyValuePrivacyStorageFactoryTest {
   //  private static final String METADATA_FILENAME = "DATABASE_METADATA.json";
   private static final int DEFAULT_VERSION = 1;
   private static final int DEFAULT_PRIVACY_VERSION = 1;
@@ -60,8 +60,8 @@ public class RocksDBKeyValuePrivacyStorageFactoryAdapterTest {
     when(commonConfiguration.getStoragePath()).thenReturn(tempDatabaseDir);
     when(commonConfiguration.getDataPath()).thenReturn(tempDataDir);
 
-    final RocksDBKeyValuePrivacyStorageFactoryAdapter storageFactory =
-        new RocksDBKeyValuePrivacyStorageFactoryAdapter(
+    final RocksDBKeyValuePrivacyStorageFactory storageFactory =
+        new RocksDBKeyValuePrivacyStorageFactory(
             new RocksDBKeyValueStorageFactory(
                 () -> rocksDbConfiguration,
                 segments,
@@ -97,8 +97,8 @@ public class RocksDBKeyValuePrivacyStorageFactoryAdapterTest {
     when(commonConfiguration.getStoragePath()).thenReturn(tempDatabaseDir);
     when(commonConfiguration.getDataPath()).thenReturn(tempDataDir);
 
-    final RocksDBKeyValuePrivacyStorageFactoryAdapter storageFactory =
-        new RocksDBKeyValuePrivacyStorageFactoryAdapter(
+    final RocksDBKeyValuePrivacyStorageFactory storageFactory =
+        new RocksDBKeyValuePrivacyStorageFactory(
             new RocksDBKeyValueStorageFactory(
                 () -> rocksDbConfiguration,
                 segments,
@@ -152,8 +152,8 @@ public class RocksDBKeyValuePrivacyStorageFactoryAdapterTest {
                 .getVersion())
         .isEqualTo(DEFAULT_VERSION);
 
-    final RocksDBKeyValuePrivacyStorageFactoryAdapter privacyStorageFactory =
-        new RocksDBKeyValuePrivacyStorageFactoryAdapter(storageFactory);
+    final RocksDBKeyValuePrivacyStorageFactory privacyStorageFactory =
+        new RocksDBKeyValuePrivacyStorageFactory(storageFactory);
 
     privacyStorageFactory.create(segment, commonConfiguration, metricsSystem);
 

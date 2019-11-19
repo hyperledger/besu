@@ -27,7 +27,7 @@ import org.hyperledger.besu.ethereum.privacy.storage.PrivacyStorageProvider;
 import org.hyperledger.besu.ethereum.privacy.storage.keyvalue.PrivacyKeyValueStorageProviderBuilder;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBKeyValuePrivacyStorageFactoryAdapter;
+import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBKeyValuePrivacyStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBKeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBFactoryConfiguration;
@@ -215,7 +215,7 @@ public class PrivacyNode implements AutoCloseable {
       final Path dataLocation, final Path dbLocation) {
     return new PrivacyKeyValueStorageProviderBuilder()
         .withStorageFactory(
-            new RocksDBKeyValuePrivacyStorageFactoryAdapter(
+            new RocksDBKeyValuePrivacyStorageFactory(
                 new RocksDBKeyValueStorageFactory(
                     () ->
                         new RocksDBFactoryConfiguration(

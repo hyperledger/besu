@@ -39,7 +39,7 @@ public class RocksDBPlugin implements BesuPlugin {
   private final RocksDBCLIOptions options;
   private BesuContext context;
   private RocksDBKeyValueStorageFactory factory;
-  private RocksDBKeyValuePrivacyStorageFactoryAdapter privacyFactory;
+  private RocksDBKeyValuePrivacyStorageFactory privacyFactory;
 
   public RocksDBPlugin() {
     this.options = RocksDBCLIOptions.create();
@@ -103,7 +103,7 @@ public class RocksDBPlugin implements BesuPlugin {
     factory =
         new RocksDBKeyValueStorageFactory(
             configuration, segments, RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS);
-    privacyFactory = new RocksDBKeyValuePrivacyStorageFactoryAdapter(factory);
+    privacyFactory = new RocksDBKeyValuePrivacyStorageFactory(factory);
 
     service.registerKeyValueStorage(factory);
     service.registerKeyValueStorage(privacyFactory);

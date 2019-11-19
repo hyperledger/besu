@@ -31,17 +31,17 @@ public class PrivacyKeyValueStorageProvider implements PrivacyStorageProvider {
   private final KeyValueStorage privateWorldStatePreimageStorage;
   private final KeyValueStorage privateStateStorage;
 
-  private int schemaVersion;
+  private int factoryVersion;
 
   public PrivacyKeyValueStorageProvider(
       final KeyValueStorage privateWorldStateStorage,
       final KeyValueStorage privateWorldStatePreimageStorage,
       final KeyValueStorage privateStateStorage,
-      final int schemaVersion) {
+      final int factoryVersion) {
     this.privateWorldStateStorage = privateWorldStateStorage;
     this.privateWorldStatePreimageStorage = privateWorldStatePreimageStorage;
     this.privateStateStorage = privateStateStorage;
-    this.schemaVersion = schemaVersion;
+    this.factoryVersion = factoryVersion;
   }
 
   @Override
@@ -60,8 +60,8 @@ public class PrivacyKeyValueStorageProvider implements PrivacyStorageProvider {
   }
 
   @Override
-  public int getSchemaVersion() {
-    return schemaVersion;
+  public int getFactoryVersion() {
+    return factoryVersion;
   }
 
   @Override

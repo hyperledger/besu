@@ -14,11 +14,17 @@
  */
 package org.hyperledger.besu.plugin.services.storage;
 
+import org.hyperledger.besu.plugin.Unstable;
+
+@Unstable
 public interface PrivacyKeyValueStorageFactory extends KeyValueStorageFactory {
   /**
-   * Retrieves the schema version of the key-value storage factory.
+   * Retrieves the version of the key-value storage factory.
    *
-   * @return the schema version of the key-value storage factory.
+   * <p>Used to trigger automatic migrations in Besu
+   *
+   * @return the version of the key-value storage factory.
    */
-  int getSchemaVersion();
+  @Unstable
+  int getVersion();
 }

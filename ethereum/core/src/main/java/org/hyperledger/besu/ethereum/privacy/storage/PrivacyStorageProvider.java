@@ -27,5 +27,5 @@ public interface PrivacyStorageProvider extends Closeable {
 
   PrivateStateStorage createPrivateStateStorage();
 
-  int getSchemaVersion();
+  int getFactoryVersion();
 }
