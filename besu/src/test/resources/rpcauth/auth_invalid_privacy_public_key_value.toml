@@ -4,7 +4,7 @@ groups = ["admin"]
 permissions = ["eth:*", "perm:*"]
 roles = ["net"]
 # This line is invalid - should be a non-empty value
-enclavePublicKey = ""
+privacyPublicKey = ""
 
 [Users.userB]
 password = "$2a$10$l3GA7K8g6rJ/Yv.YFSygCuI9byngpEzxgWS9qEg5emYDZomQW7fGC"

@@ -186,9 +186,9 @@ public class AuthenticationService {
                 new JsonObject()
                     .put("permissions", user.principal().getValue("permissions"))
                     .put("username", user.principal().getValue("username"));
-            final String enclavePublicKey = user.principal().getString("enclavePublicKey");
-            if (enclavePublicKey != null) {
-              jwtContents.put("enclavePublicKey", enclavePublicKey);
+            final String privacyPublicKey = user.principal().getString("privacyPublicKey");
+            if (privacyPublicKey != null) {
+              jwtContents.put("privacyPublicKey", privacyPublicKey);
             }
 
             final String token = jwtAuthProvider.generateToken(jwtContents, options);

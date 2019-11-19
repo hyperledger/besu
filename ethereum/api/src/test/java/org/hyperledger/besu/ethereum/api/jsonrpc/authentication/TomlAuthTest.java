@@ -114,7 +114,7 @@ public class TomlAuthTest {
             .put("groups", new JsonArray().add("admin"))
             .put("permissions", new JsonArray().add("eth:*").add("perm:*"))
             .put("roles", new JsonArray().add("net"))
-            .put("enclavePublicKey", "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=");
+            .put("privacyPublicKey", "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=");
 
     JsonObject authInfo = new JsonObject().put("username", "userA").put("password", "pegasys");
 

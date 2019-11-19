@@ -43,7 +43,7 @@ public class TomlUserTest {
     assertThat(principal.getJsonArray("permissions"))
         .isEqualTo(new JsonArray(list("eth:*", "perm:*")));
     assertThat(principal.getJsonArray("roles")).isEqualTo(new JsonArray(list("net")));
-    assertThat(principal.getString("enclavePublicKey"))
+    assertThat(principal.getString("privacyPublicKey"))
         .isEqualTo("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=");
   }
 
@@ -58,6 +58,6 @@ public class TomlUserTest {
     assertThat(principal.getJsonArray("groups")).isEqualTo(new JsonArray());
     assertThat(principal.getJsonArray("permissions")).isEqualTo(new JsonArray());
     assertThat(principal.getJsonArray("roles")).isEqualTo(new JsonArray());
-    assertThat(principal.containsKey("enclavePublicKey")).isFalse();
+    assertThat(principal.containsKey("privacyPublicKey")).isFalse();
   }
 }

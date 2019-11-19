@@ -33,8 +33,8 @@ public class RpcAuthFileValidatorTest {
   private static final String INVALID_GROUPS_VALUE_TOML = "/rpcauth/auth_invalid_groups_value.toml";
   private static final String INVALID_PERMISSIONS_VALUE_TOML =
       "/rpcauth/auth_invalid_permissions_value.toml";
-  private static final String INVALID_ENCLAVE_VALUE_TOML =
-      "/rpcauth/auth_invalid_enclave_value.toml";
+  private static final String INVALID_PRIVACY_PUBLIC_KEY_VALUE_TOML =
+      "/rpcauth/auth_invalid_privacy_public_key_value.toml";
   private static final String NO_PASSWORD_TOML = "/rpcauth/auth_no_password.toml";
 
   @Mock CommandLine commandLine;
@@ -92,11 +92,11 @@ public class RpcAuthFileValidatorTest {
   }
 
   @Test
-  public void shouldFailWhenInvalidEmptyEnclavePublicKeyValue() {
+  public void shouldFailWhenInvalidEmptyPrivacyPublicKeyValue() {
     assertThatThrownBy(
             () ->
                 RpcAuthFileValidator.validate(
-                    commandLine, getFilePath(INVALID_ENCLAVE_VALUE_TOML), "HTTP"))
+                    commandLine, getFilePath(INVALID_PRIVACY_PUBLIC_KEY_VALUE_TOML), "HTTP"))
         .isInstanceOf(ParameterException.class)
         .hasMessage("RPC authentication configuration file contains invalid values.");
   }

@@ -30,7 +30,7 @@ public class TomlUser extends AbstractUser {
   private final List<String> groups;
   private final List<String> permissions;
   private final List<String> roles;
-  private Optional<String> enclavePublicKey;
+  private Optional<String> privacyPublicKey;
 
   TomlUser(
       final String username,
@@ -38,13 +38,13 @@ public class TomlUser extends AbstractUser {
       final List<String> groups,
       final List<String> permissions,
       final List<String> roles,
-      final Optional<String> enclavePublicKey) {
+      final Optional<String> privacyPublicKey) {
     this.username = username;
     this.password = password;
     this.groups = groups;
     this.permissions = permissions;
     this.roles = roles;
-    this.enclavePublicKey = enclavePublicKey;
+    this.privacyPublicKey = privacyPublicKey;
   }
 
   @Override
@@ -56,7 +56,7 @@ public class TomlUser extends AbstractUser {
             .put("groups", groups)
             .put("permissions", permissions)
             .put("roles", roles);
-    enclavePublicKey.ifPresent(pk -> principle.put("enclavePublicKey", pk));
+    privacyPublicKey.ifPresent(pk -> principle.put("privacyPublicKey", pk));
     return principle;
   }
 
@@ -93,7 +93,7 @@ public class TomlUser extends AbstractUser {
     return roles;
   }
 
-  public Optional<String> getEnclavePublicKey() {
-    return enclavePublicKey;
+  public Optional<String> getPrivacyPublicKey() {
+    return privacyPublicKey;
   }
 }

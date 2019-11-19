@@ -319,7 +319,7 @@ public class JsonRpcHttpServiceLoginTest {
       assertThat(jwtPayload.getJsonArray("permissions"))
           .isEqualTo(
               new JsonArray(list("fakePermission", "eth:blockNumber", "eth:subscribe", "web3:*")));
-      assertThat(jwtPayload.getString("enclavePublicKey"))
+      assertThat(jwtPayload.getString("privacyPublicKey"))
           .isEqualTo("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=");
       assertThat(jwtPayload.containsKey("iat")).isTrue();
       assertThat(jwtPayload.containsKey("exp")).isTrue();

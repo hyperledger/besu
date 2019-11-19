@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.cli.custom;
 
-import static org.hyperledger.besu.ethereum.api.jsonrpc.authentication.TomlAuth.ENCLAVE_PUBLIC_KEY;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.authentication.TomlAuth.PRIVACY_PUBLIC_KEY;
 
 import org.hyperledger.besu.ethereum.permissioning.TomlConfigFileParser;
 
@@ -103,7 +103,7 @@ public class RpcAuthFileValidator {
   }
 
   private static boolean verifyEntry(final TomlParseResult tomlParseResult, final String key) {
-    if (key.endsWith(ENCLAVE_PUBLIC_KEY)) {
+    if (key.endsWith(PRIVACY_PUBLIC_KEY)) {
       return verifyString(key, tomlParseResult);
     } else {
       return verifyArray(key, tomlParseResult);
