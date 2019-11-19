@@ -37,61 +37,61 @@ public class JsonGenesisConfigOptionsTest {
     }
   }
 
-  private ObjectNode loadConfigWithNoCustomForks() {
+  private ObjectNode loadConfigWithNoTransitions() {
     final ObjectNode configNode = loadCompleteDataSet();
-    configNode.remove("customforks");
+    configNode.remove("transitions");
     return configNode;
   }
 
   private ObjectNode loadConfigWithNoIbft2Forks() {
     final ObjectNode configNode = loadCompleteDataSet();
-    final ObjectNode customForksNode = JsonUtil.getObjectNode(configNode, "customforks").get();
-    customForksNode.remove("ibft2");
+    final ObjectNode transitionsNode = JsonUtil.getObjectNode(configNode, "transitions").get();
+    transitionsNode.remove("ibft2");
 
     return configNode;
   }
 
   private ObjectNode loadConfigWithAnIbft2ForkWithMissingValidators() {
     final ObjectNode configNode = loadCompleteDataSet();
-    final ObjectNode customForksNode = JsonUtil.getObjectNode(configNode, "customforks").get();
-    final ArrayNode ibftNode = JsonUtil.getArrayNode(customForksNode, "ibft2").get();
+    final ObjectNode transitionsNode = JsonUtil.getObjectNode(configNode, "transitions").get();
+    final ArrayNode ibftNode = JsonUtil.getArrayNode(transitionsNode, "ibft2").get();
     ((ObjectNode) ibftNode.get(0)).remove("validators");
 
     return configNode;
   }
 
   @Test
-  public void customForksDecodesCorrectlyFromFile() {
+  public void transitionsDecodesCorrectlyFromFile() {
     final ObjectNode configNode = loadCompleteDataSet();
 
     final JsonGenesisConfigOptions configOptions =
         JsonGenesisConfigOptions.fromJsonObject(configNode);
 
-    assertThat(configOptions.getCustomForks()).isNotNull();
-    assertThat(configOptions.getCustomForks().getIbftForks().size()).isEqualTo(2);
-    assertThat(configOptions.getCustomForks().getIbftForks().get(0).getForkBlock()).isEqualTo(20);
-    assertThat(configOptions.getCustomForks().getIbftForks().get(0).getValidators()).isNotEmpty();
-    assertThat(configOptions.getCustomForks().getIbftForks().get(0).getValidators().get())
+    assertThat(configOptions.getTransitions()).isNotNull();
+    assertThat(configOptions.getTransitions().getIbftForks().size()).isEqualTo(2);
+    assertThat(configOptions.getTransitions().getIbftForks().get(0).getForkBlock()).isEqualTo(20);
+    assertThat(configOptions.getTransitions().getIbftForks().get(0).getValidators()).isNotEmpty();
+    assertThat(configOptions.getTransitions().getIbftForks().get(0).getValidators().get())
         .containsExactly(
             "0x12345678901234567890123456789012345678900x1234567890123456789012345678901234567890",
             "0x98765432109876543210987654321098765432100x9876543210987654321098765432109876543210");
 
-    assertThat(configOptions.getCustomForks().getIbftForks().get(1).getForkBlock()).isEqualTo(25);
-    assertThat(configOptions.getCustomForks().getIbftForks().get(1).getValidators()).isNotEmpty();
-    assertThat(configOptions.getCustomForks().getIbftForks().get(1).getValidators().get())
+    assertThat(configOptions.getTransitions().getIbftForks().get(1).getForkBlock()).isEqualTo(25);
+    assertThat(configOptions.getTransitions().getIbftForks().get(1).getValidators()).isNotEmpty();
+    assertThat(configOptions.getTransitions().getIbftForks().get(1).getValidators().get())
         .containsExactly(
             "0x12345678901234567890123456789012345678900x1234567890123456789012345678901234567890");
   }
 
   @Test
-  public void configWithMissingCustomForksIsValid() {
-    final ObjectNode configNode = loadConfigWithNoCustomForks();
+  public void configWithMissingTransitionsIsValid() {
+    final ObjectNode configNode = loadConfigWithNoTransitions();
 
     final JsonGenesisConfigOptions configOptions =
         JsonGenesisConfigOptions.fromJsonObject(configNode);
 
-    assertThat(configOptions.getCustomForks()).isNotNull();
-    assertThat(configOptions.getCustomForks().getIbftForks().size()).isZero();
+    assertThat(configOptions.getTransitions()).isNotNull();
+    assertThat(configOptions.getTransitions().getIbftForks().size()).isZero();
   }
 
   @Test
@@ -101,8 +101,8 @@ public class JsonGenesisConfigOptionsTest {
     final JsonGenesisConfigOptions configOptions =
         JsonGenesisConfigOptions.fromJsonObject(configNode);
 
-    assertThat(configOptions.getCustomForks()).isNotNull();
-    assertThat(configOptions.getCustomForks().getIbftForks().size()).isZero();
+    assertThat(configOptions.getTransitions()).isNotNull();
+    assertThat(configOptions.getTransitions().getIbftForks().size()).isZero();
   }
 
   @Test
@@ -112,9 +112,9 @@ public class JsonGenesisConfigOptionsTest {
     final JsonGenesisConfigOptions configOptions =
         JsonGenesisConfigOptions.fromJsonObject(configNode);
 
-    assertThat(configOptions.getCustomForks().getIbftForks().get(0).getValidators().isPresent())
+    assertThat(configOptions.getTransitions().getIbftForks().get(0).getValidators().isPresent())
         .isFalse();
-    assertThat(configOptions.getCustomForks().getIbftForks().get(1).getValidators().get().size())
+    assertThat(configOptions.getTransitions().getIbftForks().get(1).getValidators().get().size())
         .isEqualTo(1);
   }
 }

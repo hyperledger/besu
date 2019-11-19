@@ -12,34 +12,28 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.tests.acceptance.dsl.privacy.transaction;
+package org.hyperledger.besu.tests.acceptance.dsl.transaction.login;
+
+import static org.assertj.core.api.Fail.fail;
 
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.NodeRequests;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.stream.Collectors;
 
-import org.web3j.protocol.besu.Besu;
-import org.web3j.protocol.besu.response.privacy.PrivacyGroup;
-import org.web3j.utils.Base64String;
+import org.assertj.core.api.Assertions;
 
-public class FindPrivacyGroupTransaction implements Transaction<List<PrivacyGroup>> {
-  private List<Base64String> nodes;
-
-  public FindPrivacyGroupTransaction(final List<String> nodeEnclaveKeys) {
-
-    this.nodes = nodeEnclaveKeys.stream().map(Base64String::wrap).collect(Collectors.toList());
-  }
+public class LoginDisabledTransaction implements Transaction<Void> {
 
   @Override
-  public List<PrivacyGroup> execute(final NodeRequests node) {
-    final Besu besu = node.privacy().getBesuClient();
+  public Void execute(final NodeRequests node) {
     try {
-      return besu.privFindPrivacyGroup(nodes).send().getGroups();
-    } catch (IOException e) {
-      throw new RuntimeException(e);
+      final String loginResponse = node.login().send("user", "password");
+      Assertions.assertThat(loginResponse).isEqualTo("Authentication not enabled");
+      return null;
+    } catch (final IOException e) {
+      fail("Login request failed with exception: ", e);
+      return null;
     }
   }
 }
