@@ -15,7 +15,13 @@
 package org.hyperledger.besu.nat.upnp;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
+
+import org.hyperledger.besu.nat.NatMethod;
+import org.hyperledger.besu.nat.core.AbstractNatManager;
+import org.hyperledger.besu.nat.core.NatManager;
+import org.hyperledger.besu.nat.core.domain.NatPortMapping;
+import org.hyperledger.besu.nat.core.domain.NatServiceType;
+import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -24,6 +30,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -49,12 +56,12 @@ import org.jupnp.support.model.PortMapping;
  * Manages underlying UPnP library "jupnp" and provides abstractions for asynchronously interacting
  * with the NAT environment through UPnP.
  */
-public class UpnpNatManager {
+public class UpnpNatManager extends AbstractNatManager implements NatManager {
+
   protected static final Logger LOG = LogManager.getLogger();
 
   static final String SERVICE_TYPE_WAN_IP_CONNECTION = "WANIPConnection";
 
-  private boolean started = false;
   private final UpnpService upnpService;
   private final RegistryListener registryListener;
 
@@ -62,14 +69,8 @@ public class UpnpNatManager {
   private final CompletableFuture<String> externalIpQueryFuture = new CompletableFuture<>();
 
   private final Map<String, CompletableFuture<RemoteService>> recognizedServices = new HashMap<>();
-  private final List<PortMapping> forwardedPorts = new ArrayList<>();
+  private final List<NatPortMapping> forwardedPorts = new ArrayList<>();
   private Optional<String> discoveredOnLocalAddress = Optional.empty();
-
-  /** Mirrored enum from PortMapping.Protocol to avoid bleeding jupnp types into calling code */
-  public enum Protocol {
-    UDP,
-    TCP
-  }
 
   /** Empty constructor. Creates in instance of UpnpServiceImpl. */
   public UpnpNatManager() {
@@ -90,6 +91,7 @@ public class UpnpNatManager {
    * @param service is the desired instance of UpnpService.
    */
   UpnpNatManager(final UpnpService service) {
+    super(NatMethod.UPNP);
     upnpService = service;
 
     // prime our recognizedServices map so we can use its key-set later
@@ -111,19 +113,12 @@ public class UpnpNatManager {
    *
    * @throws IllegalStateException if already started.
    */
-  public synchronized void start() {
-    if (started) {
-      LOG.warn("Attempt to start an already-started {}", getClass().getSimpleName());
-      return;
-    }
-
+  @Override
+  public synchronized void doStart() {
     LOG.info("Starting UPnP Service");
     upnpService.startup();
     upnpService.getRegistry().addListener(registryListener);
-
     initiateExternalIpQuery();
-
-    started = true;
   }
 
   /**
@@ -131,12 +126,8 @@ public class UpnpNatManager {
    *
    * @throws IllegalStateException if stopped.
    */
-  public synchronized void stop() {
-    if (!started) {
-      LOG.warn("Attempt to stop an already-stopped {}", getClass().getSimpleName());
-      return;
-    }
-
+  @Override
+  public synchronized void doStop() {
     CompletableFuture<Void> portForwardReleaseFuture = releaseAllPortForwards();
     try {
       LOG.info("Allowing 3 seconds to release all port forwards...");
@@ -151,8 +142,67 @@ public class UpnpNatManager {
 
     upnpService.getRegistry().removeListener(registryListener);
     upnpService.shutdown();
+  }
 
-    started = false;
+  /**
+   * Sends a UPnP request to the discovered IGD for the external ip address.
+   *
+   * @return A CompletableFuture that can be used to query the result (or error).
+   */
+  @Override
+  public CompletableFuture<String> retrieveExternalIPAddress() {
+    return externalIpQueryFuture.thenApply(x -> x);
+  }
+
+  /**
+   * Convenience function to call {@link #requestPortForward(PortMapping)} with the following
+   * defaults:
+   *
+   * <p>enabled: true leaseDurationSeconds: 0 (indefinite) remoteHost: null internalClient: the
+   * local address used to discover gateway
+   *
+   * <p>In addition, port is used for both internal and external port values.
+   *
+   * @param port is the port to be used for both internal and external port values
+   * @param protocol is either UDP or TCP {@link NetworkProtocol}
+   * @param serviceType {@link org.hyperledger.besu.nat.core.domain.NatServiceType}, often displayed
+   *     in router UIs
+   */
+  public void requestPortForward(
+      final int port, final NetworkProtocol protocol, final NatServiceType serviceType) {
+    if (!isStarted()) {
+      throw new IllegalStateException("Cannot call queryExternalIPAddress() when in stopped state");
+    }
+    checkArgument(port != 0, "Cannot map to internal port zero.");
+    this.requestPortForward(
+        new PortMapping(
+            true,
+            new UnsignedIntegerFourBytes(0),
+            null,
+            new UnsignedIntegerTwoBytes(port),
+            new UnsignedIntegerTwoBytes(port),
+            null,
+            toJupnpProtocol(protocol),
+            serviceType.getValue()));
+  }
+
+  /**
+   * Returns all known port mappings.
+   *
+   * @return The known port mappings wrapped in a {@link java.util.concurrent.Future}.
+   */
+  @Override
+  public CompletableFuture<List<NatPortMapping>> getPortMappings() {
+    if (!isStarted()) {
+      throw new IllegalStateException("Cannot call queryExternalIPAddress() when in stopped state");
+    }
+    final CompletableFuture<List<NatPortMapping>> future = new CompletableFuture<>();
+    Executors.newCachedThreadPool()
+        .submit(
+            () -> {
+              future.complete(forwardedPorts);
+            });
+    return future;
   }
 
   /**
@@ -172,7 +222,7 @@ public class UpnpNatManager {
    */
   @VisibleForTesting
   synchronized CompletableFuture<RemoteService> getWANIPConnectionService() {
-    if (!started) {
+    if (!isStarted()) {
       throw new IllegalStateException(
           "Cannot call getWANIPConnectionService() when in stopped state");
     }
@@ -193,118 +243,12 @@ public class UpnpNatManager {
   }
 
   /**
-   * Sends a UPnP request to the discovered IGD for the external ip address.
-   *
-   * @return A CompletableFuture that can be used to query the result (or error).
-   */
-  public synchronized CompletableFuture<String> queryExternalIPAddress() {
-    if (!started) {
-      throw new IllegalStateException("Cannot call queryExternalIPAddress() when in stopped state");
-    }
-    return externalIpQueryFuture.thenApply(x -> x);
-  }
-
-  /**
-   * Sends a UPnP request to the discovered IGD for the external ip address.
-   *
-   * <p>Note that this is not synchronized, as it is expected to be called within an
-   * already-synchronized context ({@link #start()}).
-   */
-  private void initiateExternalIpQuery() {
-    discoverService(SERVICE_TYPE_WAN_IP_CONNECTION)
-        .thenAccept(
-            service -> {
-
-              // our query, which will be handled asynchronously by the jupnp library
-              GetExternalIP callback =
-                  new GetExternalIP(service) {
-
-                    /**
-                     * Override the success(ActionInvocation) version of success so that we can take
-                     * a peek at the network interface that we discovered this on.
-                     *
-                     * <p>Because the underlying jupnp library omits generics info in this method
-                     * signature, we must too when we override it.
-                     */
-                    @Override
-                    @SuppressWarnings("rawtypes")
-                    public void success(final ActionInvocation invocation) {
-                      RemoteService service = (RemoteService) invocation.getAction().getService();
-                      RemoteDevice device = service.getDevice();
-                      RemoteDeviceIdentity identity = device.getIdentity();
-
-                      discoveredOnLocalAddress =
-                          Optional.of(identity.getDiscoveredOnLocalAddress().getHostAddress());
-
-                      super.success(invocation);
-                    }
-
-                    @Override
-                    protected void success(final String result) {
-
-                      LOG.info(
-                          "External IP address {} detected for internal address {}",
-                          result,
-                          discoveredOnLocalAddress.get());
-
-                      externalIpQueryFuture.complete(result);
-                    }
-
-                    /**
-                     * Because the underlying jupnp library omits generics info in this method
-                     * signature, we must too when we override it.
-                     */
-                    @Override
-                    @SuppressWarnings("rawtypes")
-                    public void failure(
-                        final ActionInvocation invocation,
-                        final UpnpResponse operation,
-                        final String msg) {
-                      externalIpQueryFuture.completeExceptionally(new Exception(msg));
-                    }
-                  };
-              upnpService.getControlPoint().execute(callback);
-            });
-  }
-
-  /**
-   * Convenience function to call {@link #requestPortForward(PortMapping)} with the following
-   * defaults:
-   *
-   * <p>enabled: true leaseDurationSeconds: 0 (indefinite) remoteHost: null internalClient: the
-   * local address used to discover gateway
-   *
-   * <p>In addition, port is used for both internal and external port values.
-   *
-   * @param port is the port to be used for both internal and external port values
-   * @param protocol is either UDP or TCP
-   * @param description is a free-form description, often displayed in router UIs
-   */
-  public void requestPortForward(
-      final int port, final Protocol protocol, final String description) {
-
-    this.requestPortForward(
-        new PortMapping(
-            true,
-            new UnsignedIntegerFourBytes(0),
-            null,
-            new UnsignedIntegerTwoBytes(port),
-            new UnsignedIntegerTwoBytes(port),
-            null,
-            toJupnpProtocol(protocol),
-            description));
-  }
-
-  /**
    * Sends a UPnP request to the discovered IGD to request a port forward.
    *
    * @param portMapping is a portMapping object describing the desired port mapping parameters.
    * @return A CompletableFuture that can be used to query the result (or error).
    */
   private CompletableFuture<Void> requestPortForward(final PortMapping portMapping) {
-    checkArgument(
-        portMapping.getInternalPort().getValue() != 0, "Cannot map to internal port zero.");
-    checkState(started, "Cannot call requestPortForward() when in stopped state");
 
     CompletableFuture<Void> upnpQueryFuture = new CompletableFuture<>();
 
@@ -337,7 +281,17 @@ public class UpnpNatManager {
                       portMapping.getExternalPort());
 
                   synchronized (forwardedPorts) {
-                    forwardedPorts.add(portMapping);
+                    final NatServiceType natServiceType =
+                        NatServiceType.fromString(portMapping.getDescription());
+                    final NatPortMapping natPortMapping =
+                        new NatPortMapping(
+                            natServiceType,
+                            NetworkProtocol.valueOf(portMapping.getProtocol().name()),
+                            portMapping.getInternalClient(),
+                            portMapping.getRemoteHost(),
+                            portMapping.getExternalPort().getValue().intValue(),
+                            portMapping.getInternalPort().getValue().intValue());
+                    forwardedPorts.add(natPortMapping);
                   }
 
                   upnpQueryFuture.complete(null);
@@ -384,10 +338,6 @@ public class UpnpNatManager {
    * @return A CompletableFuture that will complete when all port forward requests have been made
    */
   private CompletableFuture<Void> releaseAllPortForwards() {
-    if (!started) {
-      throw new IllegalStateException("Cannot call releaseAllPortForwards() when in stopped state");
-    }
-
     // if we haven't observed the WANIPConnection service yet, we should have no port forwards to
     // release
     CompletableFuture<RemoteService> wanIPConnectionServiceFuture =
@@ -402,9 +352,9 @@ public class UpnpNatManager {
 
     boolean done = false;
     while (!done) {
-      PortMapping portMapping = null;
+      NatPortMapping portMapping;
       synchronized (forwardedPorts) {
-        if (forwardedPorts.size() == 0) {
+        if (forwardedPorts.isEmpty()) {
           done = true;
           continue;
         }
@@ -422,7 +372,7 @@ public class UpnpNatManager {
       CompletableFuture<Void> future = new CompletableFuture<>();
 
       PortMappingDelete callback =
-          new PortMappingDelete(service, portMapping) {
+          new PortMappingDelete(service, toJupnpPortMapping(portMapping)) {
             /**
              * Because the underlying jupnp library omits generics info in this method signature, we
              * must too when we override it.
@@ -496,7 +446,70 @@ public class UpnpNatManager {
     }
   }
 
-  private PortMapping.Protocol toJupnpProtocol(final Protocol protocol) {
+  /**
+   * Sends a UPnP request to the discovered IGD for the external ip address.
+   *
+   * <p>Note that this is not synchronized, as it is expected to be called within an
+   * already-synchronized context ({@link #start()}).
+   */
+  private void initiateExternalIpQuery() {
+    discoverService(SERVICE_TYPE_WAN_IP_CONNECTION)
+        .thenAccept(
+            service -> {
+
+              // our query, which will be handled asynchronously by the jupnp library
+              GetExternalIP callback =
+                  new GetExternalIP(service) {
+
+                    /**
+                     * Override the success(ActionInvocation) version of success so that we can take
+                     * a peek at the network interface that we discovered this on.
+                     *
+                     * <p>Because the underlying jupnp library omits generics info in this method
+                     * signature, we must too when we override it.
+                     */
+                    @Override
+                    @SuppressWarnings("rawtypes")
+                    public void success(final ActionInvocation invocation) {
+                      RemoteService service = (RemoteService) invocation.getAction().getService();
+                      RemoteDevice device = service.getDevice();
+                      RemoteDeviceIdentity identity = device.getIdentity();
+
+                      discoveredOnLocalAddress =
+                          Optional.of(identity.getDiscoveredOnLocalAddress().getHostAddress());
+
+                      super.success(invocation);
+                    }
+
+                    @Override
+                    protected void success(final String result) {
+
+                      LOG.info(
+                          "External IP address {} detected for internal address {}",
+                          result,
+                          discoveredOnLocalAddress.get());
+
+                      externalIpQueryFuture.complete(result);
+                    }
+
+                    /**
+                     * Because the underlying jupnp library omits generics info in this method
+                     * signature, we must too when we override it.
+                     */
+                    @Override
+                    @SuppressWarnings("rawtypes")
+                    public void failure(
+                        final ActionInvocation invocation,
+                        final UpnpResponse operation,
+                        final String msg) {
+                      externalIpQueryFuture.completeExceptionally(new Exception(msg));
+                    }
+                  };
+              upnpService.getControlPoint().execute(callback);
+            });
+  }
+
+  private PortMapping.Protocol toJupnpProtocol(final NetworkProtocol protocol) {
     switch (protocol) {
       case UDP:
         return PortMapping.Protocol.UDP;
@@ -504,5 +517,17 @@ public class UpnpNatManager {
         return PortMapping.Protocol.TCP;
     }
     return null;
+  }
+
+  private PortMapping toJupnpPortMapping(final NatPortMapping natPortMapping) {
+    return new PortMapping(
+        true,
+        new UnsignedIntegerFourBytes(0),
+        null,
+        new UnsignedIntegerTwoBytes(natPortMapping.getExternalPort()),
+        new UnsignedIntegerTwoBytes(natPortMapping.getInternalPort()),
+        null,
+        toJupnpProtocol(natPortMapping.getProtocol()),
+        natPortMapping.getNatServiceType().getValue());
   }
 }

@@ -32,6 +32,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponseType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcUnauthorizedResponse;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.nat.NatMethod;
+import org.hyperledger.besu.nat.NatService;
+import org.hyperledger.besu.nat.core.domain.NatServiceType;
+import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
 import org.hyperledger.besu.nat.upnp.UpnpNatManager;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
@@ -83,7 +87,7 @@ public class JsonRpcHttpService {
   private final Vertx vertx;
   private final JsonRpcConfiguration config;
   private final Map<String, JsonRpcMethod> rpcMethods;
-  private final Optional<UpnpNatManager> natManager;
+  private final NatService natService;
   private final Path dataDir;
   private final LabelledMetric<OperationTimer> requestTimer;
 
@@ -100,7 +104,7 @@ public class JsonRpcHttpService {
    * @param dataDir The data directory where requests can be buffered
    * @param config Configuration for the rpc methods being loaded
    * @param metricsSystem The metrics service that activities should be reported to
-   * @param natManager The NAT environment manager.
+   * @param natService The NAT environment manager.
    * @param methods The json rpc methods that should be enabled
    * @param livenessService A service responsible for reporting whether this node is live
    * @param readinessService A service responsible for reporting whether this node has fully started
@@ -110,7 +114,7 @@ public class JsonRpcHttpService {
       final Path dataDir,
       final JsonRpcConfiguration config,
       final MetricsSystem metricsSystem,
-      final Optional<UpnpNatManager> natManager,
+      final NatService natService,
       final Map<String, JsonRpcMethod> methods,
       final HealthService livenessService,
       final HealthService readinessService) {
@@ -119,7 +123,7 @@ public class JsonRpcHttpService {
         dataDir,
         config,
         metricsSystem,
-        natManager,
+        natService,
         methods,
         AuthenticationService.create(vertx, config),
         livenessService,
@@ -131,7 +135,7 @@ public class JsonRpcHttpService {
       final Path dataDir,
       final JsonRpcConfiguration config,
       final MetricsSystem metricsSystem,
-      final Optional<UpnpNatManager> natManager,
+      final NatService natService,
       final Map<String, JsonRpcMethod> methods,
       final Optional<AuthenticationService> authenticationService,
       final HealthService livenessService,
@@ -146,7 +150,7 @@ public class JsonRpcHttpService {
     validateConfig(config);
     this.config = config;
     this.vertx = vertx;
-    this.natManager = natManager;
+    this.natService = natService;
     this.rpcMethods = methods;
     this.authenticationService = authenticationService;
     this.livenessService = livenessService;
@@ -229,12 +233,20 @@ public class JsonRpcHttpService {
                 LOG.info(
                     "JsonRPC service started and listening on {}:{}", config.getHost(), actualPort);
                 config.setPort(actualPort);
-                // Request that a NAT port forward for our server port
-                if (natManager.isPresent()) {
-                  natManager
-                      .get()
-                      .requestPortForward(
-                          config.getPort(), UpnpNatManager.Protocol.TCP, "partheon-json-rpc");
+
+                if (natService.isNATEnvironment()) {
+                  // Request that a NAT port forward for our server port
+                  final NatMethod natMethod = natService.getNatMethod();
+                  if (natMethod.equals(NatMethod.UPNP)) {
+                    natService
+                        .getNatManager()
+                        .ifPresent(
+                            natSystem -> {
+                              final UpnpNatManager upnpNatSystem = (UpnpNatManager) natSystem;
+                              upnpNatSystem.requestPortForward(
+                                  config.getPort(), NetworkProtocol.TCP, NatServiceType.JSON_RPC);
+                            });
+                  }
                 }
                 return;
               }

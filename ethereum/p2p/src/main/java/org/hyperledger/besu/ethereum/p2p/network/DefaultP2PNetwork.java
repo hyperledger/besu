@@ -41,6 +41,11 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
+import org.hyperledger.besu.nat.NatMethod;
+import org.hyperledger.besu.nat.NatService;
+import org.hyperledger.besu.nat.core.NatManager;
+import org.hyperledger.besu.nat.core.domain.NatServiceType;
+import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
 import org.hyperledger.besu.nat.upnp.UpnpNatManager;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.util.bytes.BytesValue;
@@ -123,8 +128,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
   private final PeerPermissions peerPermissions;
   private final MaintainedPeers maintainedPeers;
 
-  private Optional<UpnpNatManager> natManager;
-  private Optional<String> natExternalAddress;
+  private NatService natService;
 
   private OptionalLong peerBondedObserverId = OptionalLong.empty();
 
@@ -145,7 +149,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
    * @param keyPair This node's keypair.
    * @param config The network configuration to use.
    * @param peerPermissions An object that determines whether peers are allowed to connect
-   * @param natManager The NAT environment manager.
+   * @param natService The NAT environment manager.
    * @param maintainedPeers A collection of peers for which we are expected to maintain connections
    * @param reputationManager An object that inspect disconnections for misbehaving peers that can
    *     then be blacklisted.
@@ -157,7 +161,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
       final SECP256K1.KeyPair keyPair,
       final NetworkingConfiguration config,
       final PeerPermissions peerPermissions,
-      final Optional<UpnpNatManager> natManager,
+      final NatService natService,
       final MaintainedPeers maintainedPeers,
       final PeerReputationManager reputationManager) {
 
@@ -165,7 +169,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
     this.peerDiscoveryAgent = peerDiscoveryAgent;
     this.rlpxAgent = rlpxAgent;
     this.config = config;
-    this.natManager = natManager;
+    this.natService = natService;
     this.maintainedPeers = maintainedPeers;
 
     this.nodeId = keyPair.getPublicKey().getEncodedBytes();
@@ -174,8 +178,6 @@ public class DefaultP2PNetwork implements P2PNetwork {
     final int maxPeers = config.getRlpx().getMaxPeers();
     peerDiscoveryAgent.addPeerRequirement(() -> rlpxAgent.getConnectionCount() >= maxPeers);
     subscribeDisconnect(reputationManager);
-
-    natExternalAddress = Optional.empty();
   }
 
   public static Builder builder() {
@@ -189,6 +191,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
       return;
     }
 
+    final String address = config.getDiscovery().getAdvertisedHost();
     final int configuredDiscoveryPort = config.getDiscovery().getBindPort();
     final int configuredRlpxPort = config.getRlpx().getBindPort();
 
@@ -201,11 +204,11 @@ public class DefaultP2PNetwork implements P2PNetwork {
                     : configuredDiscoveryPort)
             .join();
 
-    if (natManager.isPresent()) {
+    if (natService.isNATEnvironment()) {
       this.configureNatEnvironment(listeningPort, discoveryPort);
     }
 
-    setLocalNode(listeningPort, discoveryPort);
+    setLocalNode(address, listeningPort, discoveryPort);
 
     peerBondedObserverId =
         OptionalLong.of(peerDiscoveryAgent.observePeerBondedEvents(this::handlePeerBondedEvent));
@@ -352,13 +355,14 @@ public class DefaultP2PNetwork implements P2PNetwork {
     return Optional.of(localNode.getPeer().getEnodeURL());
   }
 
-  private void setLocalNode(final int listeningPort, final int discoveryPort) {
+  private void setLocalNode(
+      final String address, final int listeningPort, final int discoveryPort) {
     if (localNode.isReady()) {
       // Already set
       return;
     }
 
-    String advertisedAddress = natExternalAddress.orElse(config.getDiscovery().getAdvertisedHost());
+    final String advertisedAddress = natService.queryExternalIPAddress().orElse(address);
 
     final EnodeURL localEnode =
         EnodeURL.builder()
@@ -373,35 +377,23 @@ public class DefaultP2PNetwork implements P2PNetwork {
   }
 
   private void configureNatEnvironment(final int listeningPort, final int discoveryPort) {
-    final CompletableFuture<String> natQueryFuture =
-        this.natManager.orElseThrow().queryExternalIPAddress();
-    String externalAddress = null;
-    try {
-      final int timeoutSeconds = 60;
-      LOG.info(
-          "Querying NAT environment for external IP address, timeout "
-              + timeoutSeconds
-              + " seconds...");
-      externalAddress = natQueryFuture.get(timeoutSeconds, TimeUnit.SECONDS);
 
-      // if we're in a NAT environment, request port forwards for every port we
+    try {
+      final NatManager natManager = natService.getNatManager().orElseThrow();
+      final NatMethod natMethod = natService.getNatMethod();
+
+      // if we're in a UPNP NAT environment, request port forwards for every port we
       // intend to bind to
-      if (externalAddress != null) {
-        LOG.info("External IP detected: " + externalAddress);
-        this.natManager
-            .get()
-            .requestPortForward(discoveryPort, UpnpNatManager.Protocol.UDP, "besu-discovery");
-        this.natManager
-            .get()
-            .requestPortForward(listeningPort, UpnpNatManager.Protocol.TCP, "besu-rlpx");
-      } else {
-        LOG.info("No external IP detected within timeout.");
+      if (natMethod.equals(NatMethod.UPNP)) {
+        UpnpNatManager upnpNatManager = (UpnpNatManager) natManager;
+        upnpNatManager.requestPortForward(
+            discoveryPort, NetworkProtocol.UDP, NatServiceType.DISCOVERY);
+        upnpNatManager.requestPortForward(listeningPort, NetworkProtocol.TCP, NatServiceType.RLPX);
       }
 
     } catch (final Exception e) {
       LOG.error("Error configuring NAT environment", e);
     }
-    natExternalAddress = Optional.ofNullable(externalAddress);
   }
 
   public static class Builder {
@@ -417,7 +409,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
     private MaintainedPeers maintainedPeers = new MaintainedPeers();
     private PeerPermissions peerPermissions = PeerPermissions.noop();
 
-    private Optional<UpnpNatManager> natManager = Optional.empty();
+    private NatService natService = new NatService(NatMethod.NONE);
     private MetricsSystem metricsSystem;
 
     public P2PNetwork build() {
@@ -445,7 +437,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
           keyPair,
           config,
           peerPermissions,
-          natManager,
+          natService,
           maintainedPeers,
           reputationManager);
     }
@@ -463,7 +455,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
     private PeerDiscoveryAgent createDiscoveryAgent() {
 
       return new VertxPeerDiscoveryAgent(
-          vertx, keyPair, config.getDiscovery(), peerPermissions, natManager, metricsSystem);
+          vertx, keyPair, config.getDiscovery(), peerPermissions, natService, metricsSystem);
     }
 
     private RlpxAgent createRlpxAgent(
@@ -531,13 +523,9 @@ public class DefaultP2PNetwork implements P2PNetwork {
       return this;
     }
 
-    public Builder natManager(final UpnpNatManager natManager) {
-      this.natManager = Optional.ofNullable(natManager);
-      return this;
-    }
-
-    public Builder natManager(final Optional<UpnpNatManager> natManager) {
-      this.natManager = natManager;
+    public Builder natService(final NatService natService) {
+      checkNotNull(natService);
+      this.natService = natService;
       return this;
     }
 

@@ -41,6 +41,8 @@ import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
+import org.hyperledger.besu.nat.NatMethod;
+import org.hyperledger.besu.nat.NatService;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -168,7 +170,7 @@ public class JsonRpcHttpServiceLoginTest {
         folder.newFolder().toPath(),
         config,
         new NoOpMetricsSystem(),
-        Optional.empty(),
+        new NatService(NatMethod.NONE),
         rpcMethods,
         HealthService.ALWAYS_HEALTHY,
         HealthService.ALWAYS_HEALTHY);
