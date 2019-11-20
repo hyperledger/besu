@@ -12,59 +12,54 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.storage.keyvalue;
+package org.hyperledger.besu.ethereum.privacy.storage.keyvalue;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.BLOCKCHAIN;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.PRUNING_STATE;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.WORLD_STATE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.PRIVATE_STATE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.PRIVATE_TRANSACTIONS;
 
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
-import org.hyperledger.besu.plugin.services.storage.KeyValueStorageFactory;
+import org.hyperledger.besu.plugin.services.storage.PrivacyKeyValueStorageFactory;
 import org.hyperledger.besu.services.kvstore.LimitedInMemoryKeyValueStorage;
 
-public class KeyValueStorageProviderBuilder {
+public class PrivacyKeyValueStorageProviderBuilder {
 
   private static final long DEFAULT_WORLD_STATE_PRE_IMAGE_CACHE_SIZE = 5_000L;
 
-  private KeyValueStorageFactory storageFactory;
+  private PrivacyKeyValueStorageFactory storageFactory;
   private BesuConfiguration commonConfiguration;
   private MetricsSystem metricsSystem;
 
-  public KeyValueStorageProviderBuilder withStorageFactory(
-      final KeyValueStorageFactory storageFactory) {
+  public PrivacyKeyValueStorageProviderBuilder withStorageFactory(
+      final PrivacyKeyValueStorageFactory storageFactory) {
     this.storageFactory = storageFactory;
     return this;
   }
 
-  public KeyValueStorageProviderBuilder withCommonConfiguration(
+  public PrivacyKeyValueStorageProviderBuilder withCommonConfiguration(
       final BesuConfiguration commonConfiguration) {
     this.commonConfiguration = commonConfiguration;
     return this;
   }
 
-  public KeyValueStorageProviderBuilder withMetricsSystem(final MetricsSystem metricsSystem) {
+  public PrivacyKeyValueStorageProviderBuilder withMetricsSystem(
+      final MetricsSystem metricsSystem) {
     this.metricsSystem = metricsSystem;
     return this;
   }
 
-  public KeyValueStorageProvider build() {
+  public PrivacyKeyValueStorageProvider build() {
     checkNotNull(storageFactory, "Cannot build a storage provider without a storage factory.");
     checkNotNull(
         commonConfiguration,
         "Cannot build a storage provider without the plugin common configuration.");
     checkNotNull(metricsSystem, "Cannot build a storage provider without a metrics system.");
 
-    final KeyValueStorage worldStatePreImageStorage =
-        new LimitedInMemoryKeyValueStorage(DEFAULT_WORLD_STATE_PRE_IMAGE_CACHE_SIZE);
-
-    return new KeyValueStorageProvider(
-        storageFactory.create(BLOCKCHAIN, commonConfiguration, metricsSystem),
-        storageFactory.create(WORLD_STATE, commonConfiguration, metricsSystem),
-        worldStatePreImageStorage,
-        storageFactory.create(PRUNING_STATE, commonConfiguration, metricsSystem),
-        storageFactory.isSegmentIsolationSupported());
+    return new PrivacyKeyValueStorageProvider(
+        storageFactory.create(PRIVATE_TRANSACTIONS, commonConfiguration, metricsSystem),
+        new LimitedInMemoryKeyValueStorage(DEFAULT_WORLD_STATE_PRE_IMAGE_CACHE_SIZE),
+        storageFactory.create(PRIVATE_STATE, commonConfiguration, metricsSystem),
+        storageFactory.getVersion());
   }
 }

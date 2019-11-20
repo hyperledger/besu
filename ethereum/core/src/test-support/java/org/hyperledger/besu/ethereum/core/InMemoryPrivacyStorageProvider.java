@@ -14,38 +14,18 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
-import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
-import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.storage.StorageProvider;
-import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivacyStorageProvider;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
-import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
-public class InMemoryStorageProvider implements StorageProvider {
-
-  public static MutableBlockchain createInMemoryBlockchain(final Block genesisBlock) {
-    return createInMemoryBlockchain(genesisBlock, new MainnetBlockHeaderFunctions());
-  }
-
-  public static MutableBlockchain createInMemoryBlockchain(
-      final Block genesisBlock, final BlockHeaderFunctions blockHeaderFunctions) {
-    final InMemoryKeyValueStorage keyValueStorage = new InMemoryKeyValueStorage();
-    return DefaultBlockchain.createMutable(
-        genesisBlock,
-        new KeyValueStoragePrefixedKeyBlockchainStorage(keyValueStorage, blockHeaderFunctions),
-        new NoOpMetricsSystem());
-  }
+public class InMemoryPrivacyStorageProvider implements PrivacyStorageProvider {
 
   public static WorldStateArchive createInMemoryWorldStateArchive() {
     return new WorldStateArchive(
@@ -54,15 +34,9 @@ public class InMemoryStorageProvider implements StorageProvider {
   }
 
   public static MutableWorldState createInMemoryWorldState() {
-    final InMemoryStorageProvider provider = new InMemoryStorageProvider();
+    final InMemoryPrivacyStorageProvider provider = new InMemoryPrivacyStorageProvider();
     return new DefaultMutableWorldState(
         provider.createWorldStateStorage(), provider.createWorldStatePreimageStorage());
-  }
-
-  @Override
-  public BlockchainStorage createBlockchainStorage(final ProtocolSchedule<?> protocolSchedule) {
-    return new KeyValueStoragePrefixedKeyBlockchainStorage(
-        new InMemoryKeyValueStorage(), ScheduleBasedBlockHeaderFunctions.create(protocolSchedule));
   }
 
   @Override
@@ -76,13 +50,13 @@ public class InMemoryStorageProvider implements StorageProvider {
   }
 
   @Override
-  public KeyValueStorage createPruningStorage() {
-    return new InMemoryKeyValueStorage();
+  public PrivateStateStorage createPrivateStateStorage() {
+    return new PrivateStateKeyValueStorage(new InMemoryKeyValueStorage());
   }
 
   @Override
-  public boolean isWorldStateIterable() {
-    return true;
+  public int getFactoryVersion() {
+    return 1;
   }
 
   @Override
