@@ -247,7 +247,8 @@ public class PrivGetTransactionReceiptTest {
     final JsonRpcRequest request = new JsonRpcRequest("1", "priv_getTransactionReceipt", params);
 
     final JsonRpcSuccessResponse response =
-        (JsonRpcSuccessResponse) privGetTransactionReceipt.response(request);
+        (JsonRpcSuccessResponse)
+            privGetTransactionReceipt.response(new JsonRpcRequestContext(request));
     final PrivateTransactionReceiptResult result =
         (PrivateTransactionReceiptResult) response.getResult();
 
