@@ -4,9 +4,40 @@
 
 For compatibility with Ethereum Istanbul upgrade, use v1.3.4 or later. 
 
-## Pruning 
+### 1.3.5
 
-Pruning cannot be used in networks using private transactions. 
+### Additions and Improvements
+
+- Log Event Streaming for Plugin API [\#186](https://github.com/hyperledger/besu/pull/186) 
+- Allow use a external JWT public key in authenticated APIs [\#183](https://github.com/hyperledger/besu/pull/183) 
+- ETC Configuration, classic fork peer validator [\#176](https://github.com/hyperledger/besu/pull/176) (thanks to [edwardmack](https://github.com/edwardmack)) 
+- Allow IBFT validators to be changed at a given block [\#173](https://github.com/hyperledger/besu/pull/173) 
+- Support external mining using Stratum [\#140](https://github.com/hyperledger/besu/pull/140) (thanks to [atoulme](https://github.com/atoulme))
+- Add more fields to private transaction receipt [\#85](https://github.com/hyperledger/besu/pull/85) (thanks to [josh-richardson](https://github.com/josh-richardson))
+- [Pruning documentation](https://besu.hyperledger.org/en/latest/Concepts/Pruning/) 
+
+### Technical Improvements
+
+- ETC - Cleanup [\#201](https://github.com/hyperledger/besu/pull/201) (thanks to [GregTheGreek](https://github.com/GregTheGreek))
+- User specific enclave public key configuration in auth file [\#196](https://github.com/hyperledger/besu/pull/196) 
+- Change CustomForks -\> Transitions [\#193](https://github.com/hyperledger/besu/pull/193) 
+- Pass identity information into RpcMethod from Http Service [\#189](https://github.com/hyperledger/besu/pull/189) 
+- Remove the use of JsonRpcParameters from RpcMethods [\#188](https://github.com/hyperledger/besu/pull/188) 
+- Repaired Metrics name collision between Privacy and RocksDB [\#187](https://github.com/hyperledger/besu/pull/187) 
+- Multi-Tenancy: Do not specify a public key anymore when requesting a … [\#185](https://github.com/hyperledger/besu/pull/185) 
+- Updates to circle building acceptance tests [\#184](https://github.com/hyperledger/besu/pull/184) 
+- Move Apache Tuweni dependency to official release [\#181](https://github.com/hyperledger/besu/pull/181) (thanks to [atoulme](https://github.com/atoulme))
+- Update Gradle to 6.0, support Java 13 [\#180](https://github.com/hyperledger/besu/pull/180) 
+- ETC Atlantis fork [\#179](https://github.com/hyperledger/besu/pull/179) (thanks to [edwardmack](https://github.com/edwardmack))
+- ETC Gotham Fork [\#178](https://github.com/hyperledger/besu/pull/178) (thanks to [edwardmack](https://github.com/edwardmack))
+- ETC DieHard fork support [\#177](https://github.com/hyperledger/besu/pull/177) (thanks to [edwardmack](https://github.com/edwardmack))
+- Remove 'parentHash', 'number' and 'gasUsed' fields from the genesis d… [\#175](https://github.com/hyperledger/besu/pull/175) (thanks to [SweeXordious](https://github.com/SweeXordious))
+- Enable pruning by default for fast sync and validate conflicts with privacy [\#172](https://github.com/hyperledger/besu/pull/172) 
+- Update RocksDB [\#170](https://github.com/hyperledger/besu/pull/170) 
+- Vpdate ver to 1.3.5-snapshot [\#169](https://github.com/hyperledger/besu/pull/169) 
+- Added PoaQueryService method that returns local node signer… [\#163](https://github.com/hyperledger/besu/pull/163) 
+- Add versioning to privacy storage [\#149](https://github.com/hyperledger/besu/pull/149) 
+- Update reference tests [\#139](https://github.com/hyperledger/besu/pull/139) 
 
 ### 1.3.4 
 
