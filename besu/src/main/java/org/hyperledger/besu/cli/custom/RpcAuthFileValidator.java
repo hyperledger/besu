@@ -111,8 +111,7 @@ public class RpcAuthFileValidator {
   }
 
   private static boolean verifyString(final String key, final TomlParseResult tomlParseResult) {
-    final String value = tomlParseResult.getString(key);
-    return tomlParseResult.isString(key) && value != null && !value.isEmpty();
+    return tomlParseResult.isString(key) && !tomlParseResult.getString(key, () -> "").isEmpty();
   }
 
   private static boolean verifyArray(final String key, final TomlParseResult tomlParseResult) {
