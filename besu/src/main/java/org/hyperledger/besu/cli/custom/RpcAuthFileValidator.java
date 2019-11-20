@@ -99,10 +99,10 @@ public class RpcAuthFileValidator {
         .dottedKeySet()
         .parallelStream()
         .filter(keySet -> !keySet.contains("password"))
-        .allMatch(dottedKey -> verifyEntry(tomlParseResult, dottedKey));
+        .allMatch(dottedKey -> verifyEntry(dottedKey, tomlParseResult));
   }
 
-  private static boolean verifyEntry(final TomlParseResult tomlParseResult, final String key) {
+  private static boolean verifyEntry(final String key, final TomlParseResult tomlParseResult) {
     if (key.endsWith(PRIVACY_PUBLIC_KEY)) {
       return verifyString(key, tomlParseResult);
     } else {
