@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TransactionTraceParams;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -46,22 +46,23 @@ public class DebugTraceTransaction implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest request) {
-    final Hash hash = request.getRequiredParameter(0, Hash.class);
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
+    final Hash hash = requestContext.getRequiredParameter(0, Hash.class);
     final Optional<TransactionWithMetadata> transactionWithMetadata =
         blockchain.transactionByHash(hash);
     if (transactionWithMetadata.isPresent()) {
       final TraceOptions traceOptions =
-          request
+          requestContext
               .getOptionalParameter(1, TransactionTraceParams.class)
               .map(TransactionTraceParams::traceOptions)
               .orElse(TraceOptions.DEFAULT);
       final DebugTraceTransactionResult debugTraceTransactionResult =
           debugTraceTransactionResult(hash, transactionWithMetadata.get(), traceOptions);
 
-      return new JsonRpcSuccessResponse(request.getId(), debugTraceTransactionResult);
+      return new JsonRpcSuccessResponse(
+          requestContext.getRequest().getId(), debugTraceTransactionResult);
     } else {
-      return new JsonRpcSuccessResponse(request.getId(), null);
+      return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), null);
     }
   }
 

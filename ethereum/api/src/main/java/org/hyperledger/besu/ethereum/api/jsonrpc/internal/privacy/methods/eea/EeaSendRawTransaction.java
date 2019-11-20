@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcEnclaveErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.AbstractSendTransaction;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -42,10 +42,10 @@ public class EeaSendRawTransaction extends AbstractSendTransaction implements Js
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest request) {
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     PrivateTransaction privateTransaction;
     try {
-      privateTransaction = validateAndDecodeRequest(request);
+      privateTransaction = validateAndDecodeRequest(requestContext);
     } catch (ErrorResponseException e) {
       return e.getResponse();
     }
@@ -55,7 +55,7 @@ public class EeaSendRawTransaction extends AbstractSendTransaction implements Js
       enclaveKey = privateTransactionHandler.sendToOrion(privateTransaction);
     } catch (final Exception e) {
       return new JsonRpcErrorResponse(
-          request.getId(),
+          requestContext.getRequest().getId(),
           JsonRpcEnclaveErrorConverter.convertEnclaveInvalidReason(e.getMessage()));
     }
 
@@ -64,12 +64,12 @@ public class EeaSendRawTransaction extends AbstractSendTransaction implements Js
       privacyGroupId = privateTransactionHandler.getPrivacyGroup(enclaveKey, privateTransaction);
     } catch (final Exception e) {
       return new JsonRpcErrorResponse(
-          request.getId(),
+          requestContext.getRequest().getId(),
           JsonRpcEnclaveErrorConverter.convertEnclaveInvalidReason(e.getMessage()));
     }
 
     return validateAndExecute(
-        request,
+        requestContext,
         privateTransaction,
         privacyGroupId,
         () -> {
@@ -81,10 +81,11 @@ public class EeaSendRawTransaction extends AbstractSendTransaction implements Js
               .either(
                   () ->
                       new JsonRpcSuccessResponse(
-                          request.getId(), privacyMarkerTransaction.getHash().toString()),
+                          requestContext.getRequest().getId(),
+                          privacyMarkerTransaction.getHash().toString()),
                   errorReason ->
                       new JsonRpcErrorResponse(
-                          request.getId(),
+                          requestContext.getRequest().getId(),
                           JsonRpcErrorConverter.convertTransactionInvalidReason(errorReason)));
         });
   }

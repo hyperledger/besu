@@ -20,6 +20,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -50,8 +51,10 @@ public class EthNewBlockFilterTest {
   @Test
   public void getResponse() {
     when(filterManager.installBlockFilter()).thenReturn("0x0");
-    final JsonRpcRequest request = new JsonRpcRequest("2.0", ETH_METHOD, new String[] {});
-    final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(request.getId(), "0x0");
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(new JsonRpcRequest("2.0", ETH_METHOD, new String[] {}));
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcSuccessResponse(request.getRequest().getId(), "0x0");
     final JsonRpcResponse actualResponse = method.response(request);
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
     verify(filterManager).installBlockFilter();

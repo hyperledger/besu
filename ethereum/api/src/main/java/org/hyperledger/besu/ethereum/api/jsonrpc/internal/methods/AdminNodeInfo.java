@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -61,16 +61,18 @@ public class AdminNodeInfo implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest req) {
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     final Map<String, Object> response = new HashMap<>();
     final Map<String, Integer> ports = new HashMap<>();
 
     if (!peerNetwork.isP2pEnabled()) {
-      return new JsonRpcErrorResponse(req.getId(), JsonRpcError.P2P_DISABLED);
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), JsonRpcError.P2P_DISABLED);
     }
     final Optional<EnodeURL> maybeEnode = peerNetwork.getLocalEnode();
     if (maybeEnode.isEmpty()) {
-      return new JsonRpcErrorResponse(req.getId(), JsonRpcError.P2P_NETWORK_NOT_RUNNING);
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), JsonRpcError.P2P_NETWORK_NOT_RUNNING);
     }
     final EnodeURL enode = maybeEnode.get();
 
@@ -108,6 +110,6 @@ public class AdminNodeInfo implements JsonRpcMethod {
                 "network",
                 networkId)));
 
-    return new JsonRpcSuccessResponse(req.getId(), response);
+    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), response);
   }
 }

@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.retesteth.methods;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -45,15 +45,15 @@ public class TestMineBlocks implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest request) {
-    long blocksToMine = request.getRequiredParameter(0, Long.class);
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
+    long blocksToMine = requestContext.getRequiredParameter(0, Long.class);
     while (blocksToMine-- > 0) {
       if (!mineNewBlock()) {
-        return new JsonRpcSuccessResponse(request.getId(), false);
+        return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), false);
       }
     }
 
-    return new JsonRpcSuccessResponse(request.getId(), true);
+    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), true);
   }
 
   private boolean mineNewBlock() {

@@ -23,6 +23,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
@@ -61,7 +62,8 @@ public class DebugTraceBlockByNumberTest {
   public void shouldReturnCorrectResponse() {
     final long blockNumber = 1L;
     final Object[] params = new Object[] {Long.toHexString(blockNumber)};
-    final JsonRpcRequest request = new JsonRpcRequest("2.0", "debug_traceBlockByNumber", params);
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(new JsonRpcRequest("2.0", "debug_traceBlockByNumber", params));
 
     final TraceFrame traceFrame =
         new TraceFrame(

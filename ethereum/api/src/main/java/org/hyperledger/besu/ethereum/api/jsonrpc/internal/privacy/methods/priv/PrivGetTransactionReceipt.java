@@ -22,7 +22,7 @@ import org.hyperledger.besu.enclave.types.ReceiveRequest;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcEnclaveErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -73,13 +73,13 @@ public class PrivGetTransactionReceipt implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest request) {
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     LOG.trace("Executing {}", RpcMethod.PRIV_GET_TRANSACTION_RECEIPT.getMethodName());
-    final Hash transactionHash = request.getRequiredParameter(0, Hash.class);
+    final Hash transactionHash = requestContext.getRequiredParameter(0, Hash.class);
     final Optional<TransactionLocation> maybeLocation =
         blockchain.getBlockchain().getTransactionLocation(transactionHash);
     if (!maybeLocation.isPresent()) {
-      return new JsonRpcSuccessResponse(request.getId(), null);
+      return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), null);
     }
     final TransactionLocation location = maybeLocation.get();
     final BlockBody blockBody =
@@ -104,7 +104,7 @@ public class PrivGetTransactionReceipt implements JsonRpcMethod {
     } catch (final EnclaveException e) {
       if (JsonRpcEnclaveErrorConverter.convertEnclaveInvalidReason(e.getMessage())
           == JsonRpcError.ENCLAVE_PAYLOAD_NOT_FOUND) {
-        return new JsonRpcSuccessResponse(request.getId(), null);
+        return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), null);
       }
       throw e;
     }
@@ -172,7 +172,7 @@ public class PrivGetTransactionReceipt implements JsonRpcMethod {
 
     LOG.trace("Created Private Transaction from given Transaction Hash");
 
-    return new JsonRpcSuccessResponse(request.getId(), result);
+    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), result);
   }
 
   private ReceiveResponse getReceiveResponseFromEnclave(

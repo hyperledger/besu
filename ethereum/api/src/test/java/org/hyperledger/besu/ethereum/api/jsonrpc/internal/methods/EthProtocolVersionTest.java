@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
@@ -44,8 +45,9 @@ public class EthProtocolVersionTest {
 
     setupSupportedEthProtocols();
 
-    final JsonRpcRequest request = requestWithParams();
-    final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(request.getId(), "0x3f");
+    final JsonRpcRequestContext request = requestWithParams();
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcSuccessResponse(request.getRequest().getId(), "0x3f");
     final JsonRpcResponse actualResponse = method.response(request);
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
   }
@@ -57,8 +59,9 @@ public class EthProtocolVersionTest {
     supportedCapabilities.add(Capability.create("istanbul", 64));
     method = new EthProtocolVersion(supportedCapabilities);
 
-    final JsonRpcRequest request = requestWithParams();
-    final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(request.getId(), null);
+    final JsonRpcRequestContext request = requestWithParams();
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcSuccessResponse(request.getRequest().getId(), null);
     final JsonRpcResponse actualResponse = method.response(request);
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
   }
@@ -70,14 +73,15 @@ public class EthProtocolVersionTest {
     supportedCapabilities.add(Capability.create("istanbul", 64));
     method = new EthProtocolVersion(supportedCapabilities);
 
-    final JsonRpcRequest request = requestWithParams();
-    final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(request.getId(), "0x3f");
+    final JsonRpcRequestContext request = requestWithParams();
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcSuccessResponse(request.getRequest().getId(), "0x3f");
     final JsonRpcResponse actualResponse = method.response(request);
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
   }
 
-  private JsonRpcRequest requestWithParams(final Object... params) {
-    return new JsonRpcRequest(JSON_RPC_VERSION, ETH_METHOD, params);
+  private JsonRpcRequestContext requestWithParams(final Object... params) {
+    return new JsonRpcRequestContext(new JsonRpcRequest(JSON_RPC_VERSION, ETH_METHOD, params));
   }
 
   private void setupSupportedEthProtocols() {

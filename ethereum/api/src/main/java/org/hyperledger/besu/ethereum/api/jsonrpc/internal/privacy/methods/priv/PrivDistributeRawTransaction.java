@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcEnclaveErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.AbstractSendTransaction;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -41,10 +41,10 @@ public class PrivDistributeRawTransaction extends AbstractSendTransaction implem
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest request) {
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     PrivateTransaction privateTransaction;
     try {
-      privateTransaction = validateAndDecodeRequest(request);
+      privateTransaction = validateAndDecodeRequest(requestContext);
     } catch (ErrorResponseException e) {
       return e.getResponse();
     }
@@ -54,7 +54,7 @@ public class PrivDistributeRawTransaction extends AbstractSendTransaction implem
       enclaveKey = privateTransactionHandler.sendToOrion(privateTransaction);
     } catch (final Exception e) {
       return new JsonRpcErrorResponse(
-          request.getId(),
+          requestContext.getRequest().getId(),
           JsonRpcEnclaveErrorConverter.convertEnclaveInvalidReason(e.getMessage()));
     }
 
@@ -63,16 +63,17 @@ public class PrivDistributeRawTransaction extends AbstractSendTransaction implem
       privacyGroupId = privateTransactionHandler.getPrivacyGroup(enclaveKey, privateTransaction);
     } catch (final Exception e) {
       return new JsonRpcErrorResponse(
-          request.getId(),
+          requestContext.getRequest().getId(),
           JsonRpcEnclaveErrorConverter.convertEnclaveInvalidReason(e.getMessage()));
     }
 
     return validateAndExecute(
-        request,
+        requestContext,
         privateTransaction,
         privacyGroupId,
         () ->
             new JsonRpcSuccessResponse(
-                request.getId(), BytesValues.fromBase64(enclaveKey).toString()));
+                requestContext.getRequest().getId(),
+                BytesValues.fromBase64(enclaveKey).toString()));
   }
 }

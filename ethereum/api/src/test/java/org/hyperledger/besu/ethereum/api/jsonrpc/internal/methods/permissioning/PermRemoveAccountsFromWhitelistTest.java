@@ -21,6 +21,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -118,8 +119,9 @@ public class PermRemoveAccountsFromWhitelistTest {
 
   @Test
   public void whenEmptyParamOnRequestShouldThrowInvalidJsonRpcException() {
-    JsonRpcRequest request =
-        new JsonRpcRequest("2.0", "perm_removeAccountsFromWhitelist", new Object[] {});
+    JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest("2.0", "perm_removeAccountsFromWhitelist", new Object[] {}));
 
     final Throwable thrown = catchThrowable(() -> method.response(request));
     assertThat(thrown)
@@ -128,7 +130,8 @@ public class PermRemoveAccountsFromWhitelistTest {
         .hasMessage("Missing required json rpc parameter at index 0");
   }
 
-  private JsonRpcRequest request(final List<String> accounts) {
-    return new JsonRpcRequest("2.0", "perm_removeAccountsFromWhitelist", new Object[] {accounts});
+  private JsonRpcRequestContext request(final List<String> accounts) {
+    return new JsonRpcRequestContext(
+        new JsonRpcRequest("2.0", "perm_removeAccountsFromWhitelist", new Object[] {accounts}));
   }
 }

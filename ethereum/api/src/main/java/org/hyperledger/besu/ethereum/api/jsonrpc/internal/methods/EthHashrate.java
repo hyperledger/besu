@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
@@ -37,8 +37,9 @@ public class EthHashrate implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest req) {
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     final Optional<Long> hashesPerSecond = miningCoordinator.hashesPerSecond();
-    return new JsonRpcSuccessResponse(req.getId(), Quantity.create(hashesPerSecond.orElse(0L)));
+    return new JsonRpcSuccessResponse(
+        requestContext.getRequest().getId(), Quantity.create(hashesPerSecond.orElse(0L)));
   }
 }
