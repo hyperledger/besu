@@ -53,10 +53,10 @@ public class NatServiceTest {
   @Test
   public void assertThatIsNatEnvironmentReturnCorrectStatus() {
     final NatService nonNatService = new NatService(NatMethod.NONE);
-    assertThat(nonNatService.isNATEnvironment()).isFalse();
+    assertThat(nonNatService.isNatEnvironment()).isFalse();
 
     final NatService upnpNatService = new NatService(NatMethod.UPNP);
-    assertThat(upnpNatService.isNATEnvironment()).isTrue();
+    assertThat(upnpNatService.isNatEnvironment()).isTrue();
   }
 
   @SuppressWarnings("OptionalGetWithoutIsPresent")

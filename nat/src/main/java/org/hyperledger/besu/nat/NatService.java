@@ -45,7 +45,7 @@ public class NatService {
    *
    * @return true if Besu node is running under NAT environment, false otherwise.
    */
-  public boolean isNATEnvironment() {
+  public boolean isNatEnvironment() {
     return currentNatMethod != NatMethod.NONE;
   }
 
@@ -67,6 +67,28 @@ public class NatService {
     return currentNatManager;
   }
 
+  /** Starts the system or service. */
+  public void start() {
+    if (isNatEnvironment()) {
+      try {
+        getNatManager().orElseThrow().start();
+      } catch (Exception e) {
+        LOG.warn("Caught exception while trying to start the system or service", e);
+      }
+    }
+  }
+
+  /** Stops the system or service. */
+  public void stop() {
+    if (isNatEnvironment()) {
+      try {
+        getNatManager().orElseThrow().stop();
+      } catch (Exception e) {
+        LOG.warn("Caught exception while trying to stop the system or service", e);
+      }
+    }
+  }
+
   /**
    * Returns a {@link Optional} wrapping the advertised IP address.
    *
@@ -74,9 +96,9 @@ public class NatService {
    *     `isNatExternalIpUsageEnabled` is false
    */
   public Optional<String> queryExternalIPAddress() {
-    if (isNATEnvironment()) {
+    if (isNatEnvironment()) {
       try {
-        final NatManager natSystem = getNatManager().get();
+        final NatManager natSystem = getNatManager().orElseThrow();
         LOG.info(
             "Waiting for up to {} seconds to detect external IP address...",
             NatManager.TIMEOUT_SECONDS);
@@ -97,7 +119,7 @@ public class NatService {
    * @return The local IP address wrapped in a {@link Optional}.
    */
   public Optional<String> queryLocalIPAddress() throws RuntimeException {
-    if (isNATEnvironment()) {
+    if (isNatEnvironment()) {
       try {
         final NatManager natSystem = getNatManager().orElseThrow();
         LOG.info(
@@ -121,7 +143,7 @@ public class NatService {
    */
   public Optional<NatPortMapping> getPortMapping(
       final NatServiceType serviceType, final NetworkProtocol networkProtocol) {
-    if (isNATEnvironment()) {
+    if (isNatEnvironment()) {
       try {
         final NatManager natSystem = getNatManager().orElseThrow();
         return Optional.of(natSystem.getPortMapping(serviceType, networkProtocol));

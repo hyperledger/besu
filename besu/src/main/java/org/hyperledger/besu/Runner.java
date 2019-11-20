@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.stratum.StratumServer;
 import org.hyperledger.besu.metrics.prometheus.MetricsService;
 import org.hyperledger.besu.nat.NatService;
-import org.hyperledger.besu.nat.core.NatManager;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -50,7 +49,7 @@ public class Runner implements AutoCloseable {
   private final CountDownLatch shutdown = new CountDownLatch(1);
 
   private final NetworkRunner networkRunner;
-  private final NatService natService;
+  private final Optional<NatService> natService;
   private final Optional<JsonRpcHttpService> jsonRpc;
   private final Optional<GraphQLHttpService> graphQLHttp;
   private final Optional<WebSocketService> websocketRpc;
@@ -63,7 +62,7 @@ public class Runner implements AutoCloseable {
   Runner(
       final Vertx vertx,
       final NetworkRunner networkRunner,
-      final NatService natService,
+      final Optional<NatService> natService,
       final Optional<JsonRpcHttpService> jsonRpc,
       final Optional<GraphQLHttpService> graphQLHttp,
       final Optional<WebSocketService> websocketRpc,
@@ -86,7 +85,7 @@ public class Runner implements AutoCloseable {
   public void start() {
     try {
       LOG.info("Starting Ethereum main loop ... ");
-      natService.getNatManager().ifPresent(NatManager::start);
+      natService.ifPresent(NatService::start);
       networkRunner.start();
       if (networkRunner.getNetwork().isP2pEnabled()) {
         besuController.getSynchronizer().start();
@@ -126,7 +125,7 @@ public class Runner implements AutoCloseable {
     networkRunner.stop();
     waitForServiceToStop("Network", networkRunner::awaitStop);
 
-    natService.getNatManager().ifPresent(NatManager::stop);
+    natService.ifPresent(NatService::stop);
     besuController.close();
     vertx.close((res) -> vertxShutdownLatch.countDown());
     waitForServiceToStop("Vertx", vertxShutdownLatch::await);

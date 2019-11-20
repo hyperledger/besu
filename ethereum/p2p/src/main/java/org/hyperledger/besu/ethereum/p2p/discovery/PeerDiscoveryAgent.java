@@ -64,7 +64,7 @@ public abstract class PeerDiscoveryAgent {
   protected final List<DiscoveryPeer> bootstrapPeers;
   private final List<PeerRequirement> peerRequirements = new CopyOnWriteArrayList<>();
   private final PeerPermissions peerPermissions;
-  private final NatService natService;
+  private final Optional<NatService> natService;
   private final MetricsSystem metricsSystem;
   /* The peer controller, which takes care of the state machine of peers. */
   protected Optional<PeerDiscoveryController> controller = Optional.empty();
@@ -87,7 +87,7 @@ public abstract class PeerDiscoveryAgent {
       final SECP256K1.KeyPair keyPair,
       final DiscoveryConfiguration config,
       final PeerPermissions peerPermissions,
-      final NatService natService,
+      final Optional<NatService> natService,
       final MetricsSystem metricsSystem) {
     this.metricsSystem = metricsSystem;
     checkArgument(keyPair != null, "keypair cannot be null");
@@ -124,8 +124,13 @@ public abstract class PeerDiscoveryAgent {
       LOG.info("Starting peer discovery agent on host={}, port={}", host, port);
 
       // override advertised host if we detect an external IP address via NAT manager
-      final String advertisedAddress =
-          natService.queryExternalIPAddress().orElseGet(config::getAdvertisedHost);
+      final String advertisedAddress;
+      if (natService.isPresent()) {
+        advertisedAddress =
+            natService.get().queryExternalIPAddress().orElseGet(config::getAdvertisedHost);
+      } else {
+        advertisedAddress = config.getAdvertisedHost();
+      }
 
       return listenForConnections()
           .thenApply(

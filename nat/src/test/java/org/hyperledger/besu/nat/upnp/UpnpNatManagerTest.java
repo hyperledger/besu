@@ -122,7 +122,7 @@ public final class UpnpNatManagerTest {
   }
 
   @Test
-  public void queryExternalIPAddressThrowsWhenStopped() throws Exception {
+  public void queryIpThrowsWhenStopped() throws Exception {
 
     assertThatThrownBy(
             () -> {
@@ -132,7 +132,7 @@ public final class UpnpNatManagerTest {
   }
 
   @Test
-  public void queryExternalIPAddressDoesNotThrowWhenStarted() throws Exception {
+  public void queryIpDoesNotThrowWhenStarted() throws Exception {
     upnpManager.start();
 
     upnpManager.queryExternalIPAddress();

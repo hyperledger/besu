@@ -128,7 +128,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
   private final PeerPermissions peerPermissions;
   private final MaintainedPeers maintainedPeers;
 
-  private NatService natService;
+  private Optional<NatService> natService;
 
   private OptionalLong peerBondedObserverId = OptionalLong.empty();
 
@@ -161,7 +161,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
       final SECP256K1.KeyPair keyPair,
       final NetworkingConfiguration config,
       final PeerPermissions peerPermissions,
-      final NatService natService,
+      final Optional<NatService> natService,
       final MaintainedPeers maintainedPeers,
       final PeerReputationManager reputationManager) {
 
@@ -204,9 +204,12 @@ public class DefaultP2PNetwork implements P2PNetwork {
                     : configuredDiscoveryPort)
             .join();
 
-    if (natService.isNATEnvironment()) {
-      this.configureNatEnvironment(listeningPort, discoveryPort);
-    }
+    natService.ifPresent(
+        service -> {
+          if (service.isNatEnvironment()) {
+            this.configureNatEnvironment(service, listeningPort, discoveryPort);
+          }
+        });
 
     setLocalNode(address, listeningPort, discoveryPort);
 
@@ -362,7 +365,12 @@ public class DefaultP2PNetwork implements P2PNetwork {
       return;
     }
 
-    final String advertisedAddress = natService.queryExternalIPAddress().orElse(address);
+    final String advertisedAddress;
+    if (natService.isPresent()) {
+      advertisedAddress = natService.get().queryExternalIPAddress().orElse(address);
+    } else {
+      advertisedAddress = address;
+    }
 
     final EnodeURL localEnode =
         EnodeURL.builder()
@@ -376,7 +384,8 @@ public class DefaultP2PNetwork implements P2PNetwork {
     localNode.setEnode(localEnode);
   }
 
-  private void configureNatEnvironment(final int listeningPort, final int discoveryPort) {
+  private void configureNatEnvironment(
+      final NatService natService, final int listeningPort, final int discoveryPort) {
 
     try {
       final NatManager natManager = natService.getNatManager().orElseThrow();
@@ -409,7 +418,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
     private MaintainedPeers maintainedPeers = new MaintainedPeers();
     private PeerPermissions peerPermissions = PeerPermissions.noop();
 
-    private NatService natService = new NatService(NatMethod.NONE);
+    private Optional<NatService> natService = Optional.empty();
     private MetricsSystem metricsSystem;
 
     public P2PNetwork build() {
@@ -524,6 +533,12 @@ public class DefaultP2PNetwork implements P2PNetwork {
     }
 
     public Builder natService(final NatService natService) {
+      checkNotNull(natService);
+      this.natService = Optional.ofNullable(natService);
+      return this;
+    }
+
+    public Builder natService(final Optional<NatService> natService) {
       checkNotNull(natService);
       this.natService = natService;
       return this;

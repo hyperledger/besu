@@ -224,7 +224,7 @@ public final class DefaultP2PNetworkTest {
 
     when(natService.getNatManager()).thenReturn(Optional.of(upnpNatManager));
 
-    when(natService.isNATEnvironment()).thenReturn(true);
+    when(natService.isNatEnvironment()).thenReturn(true);
     when(natService.getNatMethod()).thenReturn(NatMethod.UPNP);
 
     when(natService.queryExternalIPAddress()).thenReturn(Optional.of(externalIp));

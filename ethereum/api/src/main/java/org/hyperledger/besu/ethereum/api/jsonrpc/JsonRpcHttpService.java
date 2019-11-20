@@ -87,7 +87,7 @@ public class JsonRpcHttpService {
   private final Vertx vertx;
   private final JsonRpcConfiguration config;
   private final Map<String, JsonRpcMethod> rpcMethods;
-  private final NatService natService;
+  private final Optional<NatService> natService;
   private final Path dataDir;
   private final LabelledMetric<OperationTimer> requestTimer;
 
@@ -114,7 +114,7 @@ public class JsonRpcHttpService {
       final Path dataDir,
       final JsonRpcConfiguration config,
       final MetricsSystem metricsSystem,
-      final NatService natService,
+      final Optional<NatService> natService,
       final Map<String, JsonRpcMethod> methods,
       final HealthService livenessService,
       final HealthService readinessService) {
@@ -135,7 +135,7 @@ public class JsonRpcHttpService {
       final Path dataDir,
       final JsonRpcConfiguration config,
       final MetricsSystem metricsSystem,
-      final NatService natService,
+      final Optional<NatService> natService,
       final Map<String, JsonRpcMethod> methods,
       final Optional<AuthenticationService> authenticationService,
       final HealthService livenessService,
@@ -234,11 +234,11 @@ public class JsonRpcHttpService {
                     "JsonRPC service started and listening on {}:{}", config.getHost(), actualPort);
                 config.setPort(actualPort);
 
-                if (natService.isNATEnvironment()) {
-                  // Request that a NAT port forward for our server port
-                  final NatMethod natMethod = natService.getNatMethod();
-                  if (natMethod.equals(NatMethod.UPNP)) {
-                    natService
+                if (natService.isPresent()) {
+                  final NatService service = natService.get();
+                  // request that a NAT port forward for our server port (if UPNP Nat Environment)
+                  if (service.isNatEnvironment() && service.getNatMethod().equals(NatMethod.UPNP)) {
+                    service
                         .getNatManager()
                         .ifPresent(
                             natSystem -> {

@@ -44,8 +44,6 @@ import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
-import org.hyperledger.besu.nat.NatMethod;
-import org.hyperledger.besu.nat.NatService;
 import org.hyperledger.besu.testutil.BlockTestUtil.ChainResources;
 
 import java.math.BigInteger;
@@ -179,7 +177,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
             folder.newFolder().toPath(),
             config,
             new NoOpMetricsSystem(),
-            new NatService(NatMethod.NONE),
+            Optional.empty(),
             methods,
             HealthService.ALWAYS_HEALTHY,
             HealthService.ALWAYS_HEALTHY);

@@ -325,7 +325,7 @@ public class RunnerBuilder {
             .map(nodePerms -> PeerPermissions.combine(nodePerms, bannedNodes))
             .orElse(bannedNodes);
 
-    final NatService natService = new NatService(natMethod);
+    final Optional<NatService> natService = Optional.of(new NatService(natMethod));
 
     NetworkBuilder inactiveNetwork = (caps) -> new NoopP2PNetwork();
     NetworkBuilder activeNetwork =
