@@ -25,8 +25,8 @@ import java.math.BigInteger;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
-import org.web3j.protocol.pantheon.response.privacy.PrivateTransactionReceipt;
 import org.web3j.tx.exceptions.ContractCallException;
 
 public class PrivateContractPublicStateAcceptanceTest extends PrivacyAcceptanceTestBase {

@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.privacy.PrivateTransactionReceiptResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.TransactionLocation;
@@ -138,6 +139,17 @@ public class PrivGetTransactionReceipt implements JsonRpcMethod {
             .getTransactionOutput(txHash)
             .orElse(BytesValue.wrap(new byte[0]));
 
+    final BytesValue revertReason =
+        privacyParameters.getPrivateStateStorage().getRevertReason(txHash).orElse(null);
+
+    final String transactionStatus =
+        Quantity.create(
+            BytesValues.asUnsignedBigInteger(
+                privacyParameters
+                    .getPrivateStateStorage()
+                    .getStatus(txHash)
+                    .orElse(BytesValue.wrap(new byte[0]))));
+
     LOG.trace("Processed private transaction output");
 
     final PrivateTransactionReceiptResult result =
@@ -148,9 +160,15 @@ public class PrivGetTransactionReceipt implements JsonRpcMethod {
             transactionLogs,
             transactionOutput,
             blockhash,
-            transactionHash,
             blockNumber,
-            location.getTransactionIndex());
+            location.getTransactionIndex(),
+            transaction.getHash(),
+            privateTransaction.hash(),
+            privateTransaction.getPrivateFrom(),
+            privateTransaction.getPrivateFor().orElse(null),
+            privateTransaction.getPrivacyGroupId().orElse(null),
+            revertReason,
+            transactionStatus);
 
     LOG.trace("Created Private Transaction from given Transaction Hash");
 
