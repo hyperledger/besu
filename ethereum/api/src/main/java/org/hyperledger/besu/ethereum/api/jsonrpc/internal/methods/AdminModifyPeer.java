@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -31,25 +31,30 @@ public abstract class AdminModifyPeer implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest req) {
-    if (req.getParamLength() != 1) {
-      return new JsonRpcErrorResponse(req.getId(), JsonRpcError.INVALID_PARAMS);
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
+    if (requestContext.getRequest().getParamLength() != 1) {
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
     }
     try {
-      final String enodeString = req.getRequiredParameter(0, String.class);
-      return performOperation(req.getId(), enodeString);
+      final String enodeString = requestContext.getRequiredParameter(0, String.class);
+      return performOperation(requestContext.getRequest().getId(), enodeString);
     } catch (final InvalidJsonRpcParameters e) {
-      return new JsonRpcErrorResponse(req.getId(), JsonRpcError.INVALID_PARAMS);
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
     } catch (final IllegalArgumentException e) {
       if (e.getMessage()
           .endsWith(
               "Invalid node ID: node ID must have exactly 128 hexadecimal characters and should not include any '0x' hex prefix.")) {
-        return new JsonRpcErrorResponse(req.getId(), JsonRpcError.ENODE_ID_INVALID);
+        return new JsonRpcErrorResponse(
+            requestContext.getRequest().getId(), JsonRpcError.ENODE_ID_INVALID);
       } else {
-        return new JsonRpcErrorResponse(req.getId(), JsonRpcError.PARSE_ERROR);
+        return new JsonRpcErrorResponse(
+            requestContext.getRequest().getId(), JsonRpcError.PARSE_ERROR);
       }
     } catch (final P2PDisabledException e) {
-      return new JsonRpcErrorResponse(req.getId(), JsonRpcError.P2P_DISABLED);
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), JsonRpcError.P2P_DISABLED);
     }
   }
 

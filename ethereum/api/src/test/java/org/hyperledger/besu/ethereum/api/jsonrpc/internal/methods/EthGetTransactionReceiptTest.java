@@ -20,6 +20,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TransactionReceiptRootResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TransactionReceiptStatusResult;
@@ -126,8 +127,8 @@ public class EthGetTransactionReceiptTest {
   private final Hash receiptHash =
       Hash.fromHexString("cbef69eaf44af151aa66677ae4b8d8c343a09f667c873a3a6f4558fa4051fa5f");
   Object[] params = new Object[] {receiptString};
-  private final JsonRpcRequest request =
-      new JsonRpcRequest("1", "eth_getTransactionReceipt", params);
+  private final JsonRpcRequestContext request =
+      new JsonRpcRequestContext(new JsonRpcRequest("1", "eth_getTransactionReceipt", params));
 
   @Test
   public void shouldCreateAStatusTransactionReceiptWhenStatusTypeProtocol() {

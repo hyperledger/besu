@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.miner;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -38,13 +38,14 @@ public class MinerSetCoinbase implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest req) {
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     try {
-      final Address coinbase = req.getRequiredParameter(0, Address.class);
+      final Address coinbase = requestContext.getRequiredParameter(0, Address.class);
       miningCoordinator.setCoinbase(coinbase);
-      return new JsonRpcSuccessResponse(req.getId(), true);
+      return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), true);
     } catch (final UnsupportedOperationException ex) {
-      return new JsonRpcErrorResponse(req.getId(), JsonRpcError.INVALID_REQUEST);
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), JsonRpcError.INVALID_REQUEST);
     }
   }
 }

@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.UInt256Parameter;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -34,12 +34,13 @@ public class EthGetStorageAt extends AbstractBlockParameterMethod {
   }
 
   @Override
-  protected BlockParameter blockParameter(final JsonRpcRequest request) {
+  protected BlockParameter blockParameter(final JsonRpcRequestContext request) {
     return request.getRequiredParameter(2, BlockParameter.class);
   }
 
   @Override
-  protected String resultByBlockNumber(final JsonRpcRequest request, final long blockNumber) {
+  protected String resultByBlockNumber(
+      final JsonRpcRequestContext request, final long blockNumber) {
     final Address address = request.getRequiredParameter(0, Address.class);
     final UInt256 position = request.getRequiredParameter(1, UInt256Parameter.class).getValue();
     return getBlockchainQueries()
