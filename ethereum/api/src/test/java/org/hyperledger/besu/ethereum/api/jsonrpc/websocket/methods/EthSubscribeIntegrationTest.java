@@ -62,7 +62,7 @@ public class EthSubscribeIntegrationTest {
   public void shouldAddConnectionToMap(final TestContext context) {
     final Async async = context.async();
 
-    final JsonRpcRequest subscribeRequest = createEthSubscribeRequest(CONNECTION_ID_1);
+    final JsonRpcRequest subscribeRequestBody = createEthSubscribeRequestBody(CONNECTION_ID_1);
 
     vertx
         .eventBus()
@@ -78,7 +78,7 @@ public class EthSubscribeIntegrationTest {
         .completionHandler(
             v ->
                 webSocketRequestHandler.handle(
-                    CONNECTION_ID_1, Buffer.buffer(Json.encode(subscribeRequest))));
+                    CONNECTION_ID_1, Buffer.buffer(Json.encode(subscribeRequestBody))));
 
     async.awaitSuccess(ASYNC_TIMEOUT);
   }
@@ -87,8 +87,8 @@ public class EthSubscribeIntegrationTest {
   public void shouldAddMultipleConnectionsToMap(final TestContext context) {
     final Async async = context.async(2);
 
-    final JsonRpcRequest subscribeRequest1 = createEthSubscribeRequest(CONNECTION_ID_1);
-    final JsonRpcRequest subscribeRequest2 = createEthSubscribeRequest(CONNECTION_ID_2);
+    final JsonRpcRequest subscribeRequestBody1 = createEthSubscribeRequestBody(CONNECTION_ID_1);
+    final JsonRpcRequest subscribeRequestBody2 = createEthSubscribeRequestBody(CONNECTION_ID_2);
 
     vertx
         .eventBus()
@@ -119,12 +119,12 @@ public class EthSubscribeIntegrationTest {
                   .completionHandler(
                       v ->
                           webSocketRequestHandler.handle(
-                              CONNECTION_ID_2, Buffer.buffer(Json.encode(subscribeRequest2))));
+                              CONNECTION_ID_2, Buffer.buffer(Json.encode(subscribeRequestBody2))));
             })
         .completionHandler(
             v ->
                 webSocketRequestHandler.handle(
-                    CONNECTION_ID_1, Buffer.buffer(Json.encode(subscribeRequest1))));
+                    CONNECTION_ID_1, Buffer.buffer(Json.encode(subscribeRequestBody1))));
 
     async.awaitSuccess(ASYNC_TIMEOUT);
   }
@@ -134,7 +134,7 @@ public class EthSubscribeIntegrationTest {
         SubscriptionType.SYNCING, SyncingSubscription.class);
   }
 
-  private WebSocketRpcRequest createEthSubscribeRequest(final String connectionId) {
+  private WebSocketRpcRequest createEthSubscribeRequestBody(final String connectionId) {
     return Json.decodeValue(
         "{\"id\": 1, \"method\": \"eth_subscribe\", \"params\": [\"syncing\"], \"connectionId\": \""
             + connectionId

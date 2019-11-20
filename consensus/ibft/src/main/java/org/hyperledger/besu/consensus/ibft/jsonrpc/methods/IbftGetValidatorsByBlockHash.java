@@ -16,7 +16,7 @@ package org.hyperledger.besu.consensus.ibft.jsonrpc.methods;
 
 import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -48,11 +48,12 @@ public class IbftGetValidatorsByBlockHash implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest request) {
-    return new JsonRpcSuccessResponse(request.getId(), blockResult(request));
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
+    return new JsonRpcSuccessResponse(
+        requestContext.getRequest().getId(), blockResult(requestContext));
   }
 
-  private Object blockResult(final JsonRpcRequest request) {
+  private Object blockResult(final JsonRpcRequestContext request) {
     final Hash hash = request.getRequiredParameter(0, Hash.class);
     LOG.trace("Received RPC rpcName={} blockHash={}", getName(), hash);
     final Optional<BlockHeader> blockHeader = blockchain.getBlockHeader(hash);

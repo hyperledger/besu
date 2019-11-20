@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.websocket;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationUtils;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -76,7 +77,8 @@ public class WebSocketRequestHandler {
             LOG.debug("WS-RPC request -> {}", request.getMethod());
             request.setConnectionId(id);
             if (AuthenticationUtils.isPermitted(authenticationService, user, method)) {
-              future.complete(method.response(request));
+              final JsonRpcRequestContext requestContext = new JsonRpcRequestContext(request, user);
+              future.complete(method.response(requestContext));
             } else {
               future.complete(
                   new JsonRpcUnauthorizedResponse(request.getId(), JsonRpcError.UNAUTHORIZED));

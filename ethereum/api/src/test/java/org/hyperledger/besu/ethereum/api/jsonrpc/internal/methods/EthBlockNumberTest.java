@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
@@ -54,11 +55,12 @@ public class EthBlockNumberTest {
 
     when(blockchainQueries.headBlockNumber()).thenReturn(headBlockNumber);
 
-    final JsonRpcRequest request =
-        new JsonRpcRequest(JSON_RPC_VERSION, ETH_METHOD, new Object[] {});
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest(JSON_RPC_VERSION, ETH_METHOD, new Object[] {}));
 
     final JsonRpcResponse expected =
-        new JsonRpcSuccessResponse(request.getId(), Quantity.create(headBlockNumber));
+        new JsonRpcSuccessResponse(request.getRequest().getId(), Quantity.create(headBlockNumber));
     final JsonRpcResponse actual = method.response(request);
 
     assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);

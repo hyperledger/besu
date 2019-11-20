@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.permissioning;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -43,18 +43,20 @@ public class PermGetNodesWhitelist implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest req) {
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     try {
       if (nodeWhitelistPermissioningController.isPresent()) {
         final List<String> enodeList =
             nodeWhitelistPermissioningController.get().getNodesWhitelist();
 
-        return new JsonRpcSuccessResponse(req.getId(), enodeList);
+        return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), enodeList);
       } else {
-        return new JsonRpcErrorResponse(req.getId(), JsonRpcError.NODE_WHITELIST_NOT_ENABLED);
+        return new JsonRpcErrorResponse(
+            requestContext.getRequest().getId(), JsonRpcError.NODE_WHITELIST_NOT_ENABLED);
       }
     } catch (P2PDisabledException e) {
-      return new JsonRpcErrorResponse(req.getId(), JsonRpcError.P2P_DISABLED);
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), JsonRpcError.P2P_DISABLED);
     }
   }
 }

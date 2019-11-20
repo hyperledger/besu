@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -37,25 +37,25 @@ public abstract class AbstractBlockParameterMethod implements JsonRpcMethod {
     this.blockchainQueries = blockchainQueries;
   }
 
-  protected abstract BlockParameter blockParameter(JsonRpcRequest request);
+  protected abstract BlockParameter blockParameter(JsonRpcRequestContext request);
 
-  protected abstract Object resultByBlockNumber(JsonRpcRequest request, long blockNumber);
+  protected abstract Object resultByBlockNumber(JsonRpcRequestContext request, long blockNumber);
 
   protected BlockchainQueries getBlockchainQueries() {
     return blockchainQueries.get();
   }
 
-  protected Object pendingResult(final JsonRpcRequest request) {
+  protected Object pendingResult(final JsonRpcRequestContext request) {
     // TODO: Update once we mine and better understand pending semantics.
     // For now act like we are not mining and just return latest.
     return latestResult(request);
   }
 
-  protected Object latestResult(final JsonRpcRequest request) {
+  protected Object latestResult(final JsonRpcRequestContext request) {
     return resultByBlockNumber(request, blockchainQueries.get().headBlockNumber());
   }
 
-  protected Object findResultByParamType(final JsonRpcRequest request) {
+  protected Object findResultByParamType(final JsonRpcRequestContext request) {
     final BlockParameter blockParam = blockParameter(request);
 
     final Object result;
@@ -73,7 +73,8 @@ public abstract class AbstractBlockParameterMethod implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest request) {
-    return new JsonRpcSuccessResponse(request.getId(), findResultByParamType(request));
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
+    return new JsonRpcSuccessResponse(
+        requestContext.getRequest().getId(), findResultByParamType(requestContext));
   }
 }

@@ -20,7 +20,7 @@ import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.types.ReceiveRequest;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -59,15 +59,15 @@ public class PrivGetPrivateTransaction implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest request) {
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     LOG.trace("Executing {}", RpcMethod.PRIV_GET_PRIVATE_TRANSACTION.getMethodName());
 
-    final Hash hash = request.getRequiredParameter(0, Hash.class);
+    final Hash hash = requestContext.getRequiredParameter(0, Hash.class);
     final TransactionWithMetadata resultTransaction =
         blockchain.transactionByHash(hash).orElse(null);
 
     if (resultTransaction == null) {
-      return new JsonRpcSuccessResponse(request.getId(), null);
+      return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), null);
     }
     try {
       ReceiveResponse receiveResponse =
@@ -83,14 +83,16 @@ public class PrivGetPrivateTransaction implements JsonRpcMethod {
       final PrivateTransaction privateTransaction = PrivateTransaction.readFrom(bytesValueRLPInput);
       if (privateTransaction.getPrivacyGroupId().isPresent()) {
         return new JsonRpcSuccessResponse(
-            request.getId(), new PrivateTransactionGroupResult(privateTransaction));
+            requestContext.getRequest().getId(),
+            new PrivateTransactionGroupResult(privateTransaction));
       } else {
         return new JsonRpcSuccessResponse(
-            request.getId(), new PrivateTransactionLegacyResult(privateTransaction));
+            requestContext.getRequest().getId(),
+            new PrivateTransactionLegacyResult(privateTransaction));
       }
     } catch (Exception e) {
       LOG.error("Failed to fetch private transaction with error " + e.getMessage());
-      return new JsonRpcSuccessResponse(request.getId(), null);
+      return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), null);
     }
   }
 

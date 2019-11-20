@@ -27,6 +27,7 @@ import org.hyperledger.besu.util.bytes.BytesValue;
 import org.hyperledger.besu.util.bytes.BytesValues;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Collections;
 
 import org.junit.Before;
@@ -34,9 +35,9 @@ import org.junit.Test;
 import org.web3j.crypto.Credentials;
 import org.web3j.crypto.RawTransaction;
 import org.web3j.crypto.TransactionEncoder;
+import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
 import org.web3j.protocol.eea.crypto.PrivateTransactionEncoder;
 import org.web3j.protocol.eea.crypto.RawPrivateTransaction;
-import org.web3j.protocol.pantheon.response.privacy.PrivateTransactionReceipt;
 import org.web3j.utils.Base64String;
 import org.web3j.utils.Numeric;
 import org.web3j.utils.Restriction;
@@ -184,7 +185,15 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
             "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
             null,
             eventEmmitterDeployed,
-            Collections.emptyList());
+            Collections.emptyList(),
+            "0x023955c49d6265c579561940287449242704d5fd239ff07ea36a3fc7aface61c",
+            "0x82e521ee16ff13104c5f81e8354ecaaafd5450b710b07f620204032bfe76041a",
+            "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=",
+            new ArrayList<>(
+                Collections.singletonList("Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=")),
+            null,
+            "0x1",
+            null);
 
     alice.verify(
         privateTransactionVerifier.validPrivateTransactionReceipt(

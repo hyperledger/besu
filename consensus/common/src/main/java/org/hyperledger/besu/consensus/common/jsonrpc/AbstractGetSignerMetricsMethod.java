@@ -15,7 +15,7 @@
 package org.hyperledger.besu.consensus.common.jsonrpc;
 
 import org.hyperledger.besu.consensus.common.BlockInterface;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -45,18 +45,19 @@ public abstract class AbstractGetSignerMetricsMethod {
     this.blockchainQueries = blockchainQueries;
   }
 
-  public JsonRpcResponse response(final JsonRpcRequest request) {
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
 
     final Optional<BlockParameter> startBlockParameter =
-        request.getOptionalParameter(0, BlockParameter.class);
+        requestContext.getOptionalParameter(0, BlockParameter.class);
     final Optional<BlockParameter> endBlockParameter =
-        request.getOptionalParameter(1, BlockParameter.class);
+        requestContext.getOptionalParameter(1, BlockParameter.class);
 
     final long fromBlockNumber = getFromBlockNumber(startBlockParameter);
     final long toBlockNumber = getEndBlockNumber(endBlockParameter);
 
     if (!isValidParameters(fromBlockNumber, toBlockNumber)) {
-      return new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
     }
 
     final Map<Address, SignerMetricResult> proposersMap = new HashMap<>();
@@ -92,7 +93,8 @@ public abstract class AbstractGetSignerMetricsMethod {
                   });
             });
 
-    return new JsonRpcSuccessResponse(request.getId(), new ArrayList<>(proposersMap.values()));
+    return new JsonRpcSuccessResponse(
+        requestContext.getRequest().getId(), new ArrayList<>(proposersMap.values()));
   }
 
   private long getFromBlockNumber(final Optional<BlockParameter> startBlockParameter) {
