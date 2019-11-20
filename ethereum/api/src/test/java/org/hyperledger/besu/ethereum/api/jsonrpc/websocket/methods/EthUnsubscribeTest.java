@@ -21,6 +21,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -55,57 +56,58 @@ public class EthUnsubscribeTest {
 
   @Test
   public void responseContainsUnsubscribeStatus() {
-    final JsonRpcRequest request = createJsonRpcRequest();
+    final JsonRpcRequestContext request = createJsonRpcRequest();
     final UnsubscribeRequest unsubscribeRequest = new UnsubscribeRequest(1L, CONNECTION_ID);
     when(mapperMock.mapUnsubscribeRequest(eq(request))).thenReturn(unsubscribeRequest);
     when(subscriptionManagerMock.unsubscribe(eq(unsubscribeRequest))).thenReturn(true);
 
     final JsonRpcSuccessResponse expectedResponse =
-        new JsonRpcSuccessResponse(request.getId(), true);
+        new JsonRpcSuccessResponse(request.getRequest().getId(), true);
 
     assertThat(ethUnsubscribe.response(request)).isEqualTo(expectedResponse);
   }
 
   @Test
   public void invalidUnsubscribeRequestReturnsInvalidRequestResponse() {
-    final JsonRpcRequest request = createJsonRpcRequest();
+    final JsonRpcRequestContext request = createJsonRpcRequest();
     when(mapperMock.mapUnsubscribeRequest(any()))
         .thenThrow(new InvalidSubscriptionRequestException());
 
     final JsonRpcErrorResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_REQUEST);
+        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_REQUEST);
 
     assertThat(ethUnsubscribe.response(request)).isEqualTo(expectedResponse);
   }
 
   @Test
   public void whenSubscriptionNotFoundReturnError() {
-    final JsonRpcRequest request = createJsonRpcRequest();
+    final JsonRpcRequestContext request = createJsonRpcRequest();
     when(mapperMock.mapUnsubscribeRequest(any())).thenReturn(mock(UnsubscribeRequest.class));
     when(subscriptionManagerMock.unsubscribe(any()))
         .thenThrow(new SubscriptionNotFoundException(1L));
 
     final JsonRpcErrorResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getId(), JsonRpcError.SUBSCRIPTION_NOT_FOUND);
+        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.SUBSCRIPTION_NOT_FOUND);
 
     assertThat(ethUnsubscribe.response(request)).isEqualTo(expectedResponse);
   }
 
   @Test
   public void uncaughtErrorOnSubscriptionManagerReturnsInternalErrorResponse() {
-    final JsonRpcRequest request = createJsonRpcRequest();
+    final JsonRpcRequestContext request = createJsonRpcRequest();
     when(mapperMock.mapUnsubscribeRequest(any())).thenReturn(mock(UnsubscribeRequest.class));
     when(subscriptionManagerMock.unsubscribe(any())).thenThrow(new RuntimeException());
 
     final JsonRpcErrorResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getId(), JsonRpcError.INTERNAL_ERROR);
+        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INTERNAL_ERROR);
 
     assertThat(ethUnsubscribe.response(request)).isEqualTo(expectedResponse);
   }
 
-  private JsonRpcRequest createJsonRpcRequest() {
-    return Json.decodeValue(
-        "{\"id\": 1, \"method\": \"eth_unsubscribe\", \"params\": [\"0x0\"]}",
-        JsonRpcRequest.class);
+  private JsonRpcRequestContext createJsonRpcRequest() {
+    return new JsonRpcRequestContext(
+        Json.decodeValue(
+            "{\"id\": 1, \"method\": \"eth_unsubscribe\", \"params\": [\"0x0\"]}",
+            JsonRpcRequest.class));
   }
 }

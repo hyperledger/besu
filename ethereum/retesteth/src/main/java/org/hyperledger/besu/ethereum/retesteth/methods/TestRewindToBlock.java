@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.retesteth.methods;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -33,10 +33,10 @@ public class TestRewindToBlock implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest request) {
-    final long blockNumber = request.getRequiredParameter(0, Long.TYPE);
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
+    final long blockNumber = requestContext.getRequiredParameter(0, Long.TYPE);
 
     return new JsonRpcSuccessResponse(
-        request.getId(), context.getBlockchain().rewindToBlock(blockNumber));
+        requestContext.getRequest().getId(), context.getBlockchain().rewindToBlock(blockNumber));
   }
 }

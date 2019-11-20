@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 
@@ -45,11 +46,12 @@ public class RpcModulesTest {
 
   @Test
   public void shouldReturnCorrectResult() {
-    final JsonRpcRequest request =
-        new JsonRpcRequest(JSON_RPC_VERSION, RPC_METHOD, new Object[] {});
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest(JSON_RPC_VERSION, RPC_METHOD, new Object[] {}));
 
     final JsonRpcResponse expected =
-        new JsonRpcSuccessResponse(request.getId(), ImmutableMap.of("debug", "1.0"));
+        new JsonRpcSuccessResponse(request.getRequest().getId(), ImmutableMap.of("debug", "1.0"));
     final JsonRpcResponse actual = method.response(request);
 
     assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);

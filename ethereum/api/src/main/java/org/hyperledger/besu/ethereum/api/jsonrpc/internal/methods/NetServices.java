@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
@@ -50,7 +50,7 @@ public class NetServices implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest req) {
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     final ImmutableMap.Builder<String, ImmutableMap<String, String>> servicesMapBuilder =
         ImmutableMap.builder();
 
@@ -83,7 +83,8 @@ public class NetServices implements JsonRpcMethod {
               metricsConfiguration.getHost(), metricsConfiguration.getActualPort()));
     }
 
-    return new JsonRpcSuccessResponse(req.getId(), servicesMapBuilder.build());
+    return new JsonRpcSuccessResponse(
+        requestContext.getRequest().getId(), servicesMapBuilder.build());
   }
 
   private ImmutableMap<String, String> createServiceDetailsMap(final String host, final int port) {

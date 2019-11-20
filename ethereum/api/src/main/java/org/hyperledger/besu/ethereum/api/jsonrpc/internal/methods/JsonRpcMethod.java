@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 
 import java.util.ArrayList;
@@ -35,7 +35,7 @@ public interface JsonRpcMethod {
    * @param request input data for the JSON-RPC method.
    * @return output from applying the JSON-RPC method to the input.
    */
-  JsonRpcResponse response(JsonRpcRequest request);
+  JsonRpcResponse response(JsonRpcRequestContext request);
 
   /**
    * The list of Permissions that correspond to this JSON-RPC method. e.g. [net/*, net/listening]

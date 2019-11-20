@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 import static org.apache.logging.log4j.LogManager.getLogger;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -46,7 +46,7 @@ public class EthGetWork implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest req) {
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     final Optional<EthHashSolverInputs> solver = miner.getWorkDefinition();
     if (solver.isPresent()) {
       final EthHashSolverInputs rawResult = solver.get();
@@ -56,10 +56,11 @@ public class EthGetWork implements JsonRpcMethod {
         "0x" + BaseEncoding.base16().lowerCase().encode(dagSeed),
         rawResult.getTarget().toHexString()
       };
-      return new JsonRpcSuccessResponse(req.getId(), result);
+      return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), result);
     } else {
       LOG.trace("Mining is not operational, eth_getWork request cannot be processed");
-      return new JsonRpcErrorResponse(req.getId(), JsonRpcError.NO_MINING_WORK_FOUND);
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), JsonRpcError.NO_MINING_WORK_FOUND);
     }
   }
 }

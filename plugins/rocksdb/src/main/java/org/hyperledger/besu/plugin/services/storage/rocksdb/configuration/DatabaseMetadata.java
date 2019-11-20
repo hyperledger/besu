@@ -18,9 +18,13 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.logging.log4j.LogManager;
@@ -33,13 +37,39 @@ public class DatabaseMetadata {
   private static ObjectMapper MAPPER = new ObjectMapper();
   private final int version;
 
+  private Optional<Integer> privacyVersion;
+
   @JsonCreator
   public DatabaseMetadata(@JsonProperty("version") final int version) {
+    this(version, Optional.empty());
+  }
+
+  public DatabaseMetadata(final int version, final Optional<Integer> privacyVersion) {
     this.version = version;
+    this.privacyVersion = privacyVersion;
+  }
+
+  public DatabaseMetadata(final int version, final int privacyVersion) {
+    this(version, Optional.of(privacyVersion));
   }
 
   public int getVersion() {
     return version;
+  }
+
+  @JsonSetter("privacyVersion")
+  public void setPrivacyVersion(final int privacyVersion) {
+    this.privacyVersion = Optional.of(privacyVersion);
+  }
+
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  @JsonGetter("privacyVersion")
+  public Integer getPrivacyVersion() {
+    return privacyVersion.orElse(null);
+  }
+
+  public Optional<Integer> maybePrivacyVersion() {
+    return privacyVersion;
   }
 
   public static DatabaseMetadata lookUpFrom(final Path databaseDir, final Path dataDir)
@@ -53,15 +83,7 @@ public class DatabaseMetadata {
           databaseDir.toString());
       metadataFile = getDefaultMetadataFile(databaseDir);
     }
-    DatabaseMetadata databaseMetadata;
-    try {
-      databaseMetadata = MAPPER.readValue(metadataFile, DatabaseMetadata.class);
-    } catch (FileNotFoundException fnfe) {
-      databaseMetadata = new DatabaseMetadata(0);
-    } catch (JsonProcessingException jpe) {
-      throw new IllegalStateException(
-          String.format("Invalid metadata file %s", metadataFile.getAbsolutePath()), jpe);
-    }
+    final DatabaseMetadata databaseMetadata = resolveDatabaseMetadata(metadataFile);
     if (shouldLookupInDatabaseDir) {
       LOG.warn(
           "Database metadata file has been copied from old location (database directory). Be aware that the old file might be removed in future release.");
@@ -76,10 +98,33 @@ public class DatabaseMetadata {
 
   private static void writeToDirectory(
       final DatabaseMetadata databaseMetadata, final Path databaseDir) throws IOException {
-    MAPPER.writeValue(getDefaultMetadataFile(databaseDir), databaseMetadata);
+    try {
+      final DatabaseMetadata curremtMetadata =
+          MAPPER.readValue(getDefaultMetadataFile(databaseDir), DatabaseMetadata.class);
+      if (curremtMetadata.maybePrivacyVersion().isPresent()) {
+        databaseMetadata.setPrivacyVersion(curremtMetadata.getPrivacyVersion());
+      }
+      MAPPER.writeValue(getDefaultMetadataFile(databaseDir), databaseMetadata);
+    } catch (FileNotFoundException fnfe) {
+      MAPPER.writeValue(getDefaultMetadataFile(databaseDir), databaseMetadata);
+    }
   }
 
   private static File getDefaultMetadataFile(final Path databaseDir) {
     return databaseDir.resolve(METADATA_FILENAME).toFile();
+  }
+
+  private static DatabaseMetadata resolveDatabaseMetadata(final File metadataFile)
+      throws IOException {
+    DatabaseMetadata databaseMetadata;
+    try {
+      databaseMetadata = MAPPER.readValue(metadataFile, DatabaseMetadata.class);
+    } catch (FileNotFoundException fnfe) {
+      databaseMetadata = new DatabaseMetadata(0, 0);
+    } catch (JsonProcessingException jpe) {
+      throw new IllegalStateException(
+          String.format("Invalid metadata file %s", metadataFile.getAbsolutePath()), jpe);
+    }
+    return databaseMetadata;
   }
 }

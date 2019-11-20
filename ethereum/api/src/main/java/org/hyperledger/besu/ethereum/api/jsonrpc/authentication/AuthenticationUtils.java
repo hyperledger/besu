@@ -82,7 +82,7 @@ public class AuthenticationUtils {
                 (r) -> {
                   if (r.succeeded()) {
                     final Optional<User> user = Optional.ofNullable(r.result());
-                    validateExpExists(user);
+                    validateExpiryExists(user);
                     handler.handle(user);
                   } else {
                     LOG.debug("Invalid JWT token", r.cause());
@@ -95,7 +95,7 @@ public class AuthenticationUtils {
     }
   }
 
-  private static void validateExpExists(final Optional<User> user) {
+  private static void validateExpiryExists(final Optional<User> user) {
     if (!user.map(User::principal).map(p -> p.containsKey("exp")).orElse(false)) {
       throw new IllegalStateException("Invalid JWT doesn't have expiry");
     }

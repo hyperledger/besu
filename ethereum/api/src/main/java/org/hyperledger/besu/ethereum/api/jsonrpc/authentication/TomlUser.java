@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.authentication;
 
 import java.util.List;
+import java.util.Optional;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
@@ -29,28 +30,34 @@ public class TomlUser extends AbstractUser {
   private final List<String> groups;
   private final List<String> permissions;
   private final List<String> roles;
+  private Optional<String> privacyPublicKey;
 
   TomlUser(
       final String username,
       final String password,
       final List<String> groups,
       final List<String> permissions,
-      final List<String> roles) {
+      final List<String> roles,
+      final Optional<String> privacyPublicKey) {
     this.username = username;
     this.password = password;
     this.groups = groups;
     this.permissions = permissions;
     this.roles = roles;
+    this.privacyPublicKey = privacyPublicKey;
   }
 
   @Override
   public JsonObject principal() {
-    return new JsonObject()
-        .put("username", username)
-        .put("password", password)
-        .put("groups", groups)
-        .put("permissions", permissions)
-        .put("roles", roles);
+    final JsonObject principle =
+        new JsonObject()
+            .put("username", username)
+            .put("password", password)
+            .put("groups", groups)
+            .put("permissions", permissions)
+            .put("roles", roles);
+    privacyPublicKey.ifPresent(pk -> principle.put("privacyPublicKey", pk));
+    return principle;
   }
 
   @Override
@@ -84,5 +91,9 @@ public class TomlUser extends AbstractUser {
 
   public List<String> getRoles() {
     return roles;
+  }
+
+  public Optional<String> getPrivacyPublicKey() {
+    return privacyPublicKey;
   }
 }

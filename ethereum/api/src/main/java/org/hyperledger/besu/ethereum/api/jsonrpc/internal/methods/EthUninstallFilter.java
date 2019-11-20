@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -34,9 +34,10 @@ public class EthUninstallFilter implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest request) {
-    final String filterId = request.getRequiredParameter(0, String.class);
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
+    final String filterId = requestContext.getRequiredParameter(0, String.class);
 
-    return new JsonRpcSuccessResponse(request.getId(), filterManager.uninstallFilter(filterId));
+    return new JsonRpcSuccessResponse(
+        requestContext.getRequest().getId(), filterManager.uninstallFilter(filterId));
   }
 }
