@@ -658,6 +658,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Boolean isPrivacyEnabled = false;
 
   @Option(
+      names = {"--privacy-multi-tenancy-enabled"},
+      description = "Enable private transactions (default: ${DEFAULT-VALUE})")
+  private final Boolean isPrivacyMultiTenancyEnabled = false;
+
+  @Option(
       names = {"--revert-reason-enabled"},
       description =
           "Enable passing the revert reason back through TransactionReceipts (default: ${DEFAULT-VALUE})")
@@ -1359,7 +1364,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         commandLine,
         "--privacy-enabled",
         !isPrivacyEnabled,
-        asList("--privacy-url", "--privacy-public-key-file", "--privacy-precompiled-address"));
+        asList(
+            "--privacy-url",
+            "--privacy-public-key-file",
+            "--privacy-precompiled-address",
+            "--privacy-multi-tenancy-enabled"));
 
     final PrivacyParameters.Builder privacyParametersBuilder = new PrivacyParameters.Builder();
     if (isPrivacyEnabled) {
@@ -1371,8 +1380,17 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         throw new ParameterException(commandLine, String.format("%s %s", "Pruning", errorSuffix));
       }
 
+      if (isPrivacyMultiTenancyEnabled
+          && !jsonRpcConfiguration.isAuthenticationEnabled()
+          && !webSocketConfiguration.isAuthenticationEnabled()) {
+        throw new ParameterException(
+            commandLine,
+            "Privacy multi-tenancy requires either http authentication to be enabled or WebSocket authentication to be enabled");
+      }
+
       privacyParametersBuilder.setEnabled(true);
       privacyParametersBuilder.setEnclaveUrl(privacyUrl);
+      privacyParametersBuilder.setMultiTenancyEnabled(isPrivacyMultiTenancyEnabled);
       if (privacyPublicKeyFile() != null) {
         try {
           privacyParametersBuilder.setEnclavePublicKeyUsingFile(privacyPublicKeyFile());
