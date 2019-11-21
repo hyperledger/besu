@@ -26,5 +26,9 @@ dependencies {
   implementation 'com.google.guava:guava'
 
   testCompile group: 'junit', name: 'junit', version: '4.12'
+  // https://mvnrepository.com/artifact/org.assertj/assertj-core
+  testCompile group: 'org.assertj', name: 'assertj-core', version: '3.8.0'
+
+
   implementation 'io.vertx:vertx-core'
 }

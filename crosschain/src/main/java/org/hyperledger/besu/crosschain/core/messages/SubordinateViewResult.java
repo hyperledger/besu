@@ -10,7 +10,7 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package org.hyperledger.besu.crosschain.ethereum.crosschain;
+package org.hyperledger.besu.crosschain.core.messages;
 
 import org.hyperledger.besu.ethereum.core.CrosschainTransaction;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -27,6 +27,8 @@ import org.apache.logging.log4j.Logger;
  */
 public class SubordinateViewResult {
   private static final Logger LOG = LogManager.getLogger();
+
+  // TODO add key version number signing with.
 
   private CrosschainTransaction transaction = null;
   private BytesValue result;

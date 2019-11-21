@@ -10,17 +10,26 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package org.hyperledger.besu.config;
+package org.hyperledger.besu.crosschain.core.keys;
 
-import java.util.Map;
+import org.hyperledger.besu.crosschain.crypto.threshold.crypto.BlsPoint;
+import org.hyperledger.besu.util.bytes.BytesValue;
 
-public class CrosschainConfigOptions {
-  public static final String DEFAULT_PATH = "";
+import java.math.BigInteger;
 
-  // Crosschain feature is enabled
-  public static boolean isEnabled = false;
+/**
+ * Exposes just the Blockchain Public Key and related meta-data. This is all the information that
+ * needs to be stored in the Crosschain Coordination Contract.
+ */
+public interface BlsThresholdPublicKey {
 
-  // Mapping between Sidechain ID (currently chain ID) and RPC address of Sidechain node which is
-  // operating on that sidechain.
-  public static Map<Integer, String> chainsMapping;
+  BlsPoint getPublicKey();
+
+  long getKeyVersion();
+
+  BigInteger getBlockchainId();
+
+  BlsThresholdCryptoSystem getAlgorithm();
+
+  BytesValue getEncodedPublicKey();
 }

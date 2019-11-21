@@ -10,8 +10,10 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package org.hyperledger.besu.crosschain.ethereum.crosschain;
+package org.hyperledger.besu.crosschain.p2p;
 
+import org.hyperledger.besu.crosschain.core.keys.signatures.NodeBlsSigner;
+import org.hyperledger.besu.crosschain.core.messages.SubordinateViewResult;
 import org.hyperledger.besu.crosschain.crypto.threshold.scheme.BlsPointSecretShare;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;

@@ -15,7 +15,7 @@ package org.hyperledger.besu.controller;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.crosschain.ethereum.api.jsonrpc.CrosschainProcessor;
+import org.hyperledger.besu.crosschain.core.CrosschainController;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
@@ -51,7 +51,7 @@ public class BesuController<C> implements java.io.Closeable {
   private final PrivacyParameters privacyParameters;
   private final Runnable close;
   private final SyncState syncState;
-  private final CrosschainProcessor crosschainProcessor;
+  private final CrosschainController crosschainController;
 
   BesuController(
       final ProtocolSchedule<C> protocolSchedule,
@@ -67,7 +67,7 @@ public class BesuController<C> implements java.io.Closeable {
       final Runnable close,
       final JsonRpcMethodFactory additionalJsonRpcMethodsFactory,
       final KeyPair keyPair,
-      final CrosschainProcessor crosschainProcessor) {
+      final CrosschainController crosschainController) {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethProtocolManager = ethProtocolManager;
@@ -81,7 +81,7 @@ public class BesuController<C> implements java.io.Closeable {
     this.miningCoordinator = miningCoordinator;
     this.privacyParameters = privacyParameters;
     this.close = close;
-    this.crosschainProcessor = crosschainProcessor;
+    this.crosschainController = crosschainController;
   }
 
   public ProtocolContext<C> getProtocolContext() {
@@ -125,8 +125,8 @@ public class BesuController<C> implements java.io.Closeable {
     close.run();
   }
 
-  public CrosschainProcessor getCrosschainProcessor() {
-    return this.crosschainProcessor;
+  public CrosschainController getCrosschainController() {
+    return this.crosschainController;
   }
 
   public PrivacyParameters getPrivacyParameters() {

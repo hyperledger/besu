@@ -10,20 +10,10 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package org.hyperledger.besu.crosschain.crypto.threshold.protocol;
+package org.hyperledger.besu.crosschain.core.keys;
 
-import org.hyperledger.besu.crosschain.crypto.threshold.crypto.BlsPoint;
+/** Exposes just the Blockchain Public Key and related information. */
+public interface BlsThresholdPublicKeyWithThreshold extends BlsThresholdPublicKey {
 
-// Crosschain Coordination Contract which sits on the Coordination Blockchain.
-// In this PoC the contract stores the group public key.
-public class CrosschainCoordinationContract {
-  BlsPoint publicKey = null;
-
-  public void setPublicKey(final BlsPoint key) {
-    this.publicKey = key;
-  }
-
-  public BlsPoint getPublicKey() {
-    return this.publicKey;
-  }
+  int getThreshold();
 }

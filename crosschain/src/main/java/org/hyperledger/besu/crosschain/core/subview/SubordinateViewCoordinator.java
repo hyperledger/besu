@@ -10,15 +10,16 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package org.hyperledger.besu.crosschain.ethereum.crosschain;
+package org.hyperledger.besu.crosschain.core.subview;
 
+import org.hyperledger.besu.crosschain.core.keys.signatures.NodeBlsSigner;
+import org.hyperledger.besu.crosschain.core.messages.SubordinateViewResult;
 import org.hyperledger.besu.crosschain.crypto.threshold.crypto.BlsPoint;
 import org.hyperledger.besu.crosschain.crypto.threshold.scheme.BlsPointSecretShare;
+import org.hyperledger.besu.crosschain.p2p.OtherNodeSimulator;
+import org.hyperledger.besu.crosschain.p2p.SubordinateViewExecutor;
 import org.hyperledger.besu.ethereum.core.CrosschainTransaction;
-import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
-import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
-import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
 import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.ArrayList;
@@ -72,62 +73,48 @@ public class SubordinateViewCoordinator {
     this.executor = new SubordinateViewExecutor(transactionSimulator);
   }
 
+  /**
+   * Coordinate with other validator node to sign the result of the Subordinate View.
+   *
+   * @param subordinateView View to be processed.
+   * @param blockNumber block height to process at.
+   * @return Combined signature.
+   */
   // TODO this method would be called from the JSON RPC call.
   // TODO the JSON RPC call should be similar to EthCall, and get the blocknumber using similar code
   // to EthBlockNumber
-  public Object getSignedResult(
-      final CrosschainTransaction subordinateView, final long blockNumber) {
+  public BytesValue getSignedResult(
+      final CrosschainTransaction subordinateView,
+      final long blockNumber,
+      final BytesValue resultBytesValue) {
 
-    Object resultObj = executor.getResult(subordinateView, blockNumber);
-    TransactionProcessor.Result txResult = null;
-    if (resultObj instanceof TransactionSimulatorResult) {
-      TransactionSimulatorResult resultTxSim = (TransactionSimulatorResult) resultObj;
-      BytesValue resultBytesValue = resultTxSim.getOutput();
-      LOG.info("Transaction Simulator Result: " + resultBytesValue.toString());
-      try {
-        SubordinateViewResult result =
-            new SubordinateViewResult(subordinateView, resultBytesValue, blockNumber);
+    SubordinateViewResult result =
+        new SubordinateViewResult(subordinateView, resultBytesValue, blockNumber);
 
-        ArrayList<BlsPointSecretShare> partialSignatures = new ArrayList<>();
-        for (OtherNodeSimulator otherNode : this.otherNodes) {
-          BlsPointSecretShare partialSignature = otherNode.requestSign(result);
-          // TODO check for other node indicating an error
-          partialSignatures.add(partialSignature);
-        }
-
-        // Sign the result at the local node.
-        BlsPointSecretShare localPartialSignature = this.signer.sign(result);
-        // Use threshold partial signatures to combine to produce signature.
-        BlsPoint signature =
-            this.signer.combineSignatureShares(localPartialSignature, partialSignatures, result);
-        if (signature == null) {
-          LOG.error("Partial signatures could not be combined to create a valid signature");
-          // TODO should log this error and return an error via JSON RPC
-          // TODO should also determine which node produced an invalid partial signature
-          throw new Error("Partial signatures could not be combined to create a valid signature");
-        }
-
-        // TODO Use RLP to combine the resultBytesValue with the serialized signature,
-        //  the blocknumber and either the transaction or the hash or the transaction
-
-        BytesValue signatureAndResult = resultBytesValue;
-
-        // Replace the output with the output and signature in the result object.
-        txResult =
-            MainnetTransactionProcessor.Result.successful(
-                resultTxSim.getResult().getLogs(),
-                resultTxSim.getResult().getGasRemaining(),
-                signatureAndResult,
-                resultTxSim.getValidationResult());
-      } catch (Throwable th) {
-        LOG.error("Error while creating threshold signed result: {}", th.toString());
-        throw th;
-      }
-      return new TransactionSimulatorResult(subordinateView, txResult);
-    } else {
-      // An error occurred - propagate the error.
-      LOG.info("Transaction Simulator returned an error");
-      return resultObj;
+    ArrayList<BlsPointSecretShare> partialSignatures = new ArrayList<>();
+    for (OtherNodeSimulator otherNode : this.otherNodes) {
+      BlsPointSecretShare partialSignature = otherNode.requestSign(result);
+      // TODO check for other node indicating an error
+      partialSignatures.add(partialSignature);
     }
+
+    // Sign the result at the local node.
+    BlsPointSecretShare localPartialSignature = this.signer.sign(result);
+    // Use threshold partial signatures to combine to produce signature.
+    BlsPoint signature =
+        this.signer.combineSignatureShares(localPartialSignature, partialSignatures, result);
+    if (signature == null) {
+      LOG.error("Partial signatures could not be combined to create a valid signature");
+      // TODO should log this error and return an error via JSON RPC
+      // TODO should also determine which node produced an invalid partial signature
+      throw new Error("Partial signatures could not be combined to create a valid signature");
+    }
+
+    // TODO Use RLP to combine the resultBytesValue with the serialized signature,
+    //  the blocknumber and either the transaction or the hash or the transaction
+
+    BytesValue signatureAndResult = resultBytesValue;
+
+    return signatureAndResult;
   }
 }

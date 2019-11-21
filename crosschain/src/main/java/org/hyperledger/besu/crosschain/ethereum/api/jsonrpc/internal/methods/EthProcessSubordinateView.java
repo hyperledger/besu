@@ -14,7 +14,7 @@ package org.hyperledger.besu.crosschain.ethereum.api.jsonrpc.internal.methods;
 
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter.convertTransactionInvalidReason;
 
-import org.hyperledger.besu.crosschain.ethereum.api.jsonrpc.CrosschainProcessor;
+import org.hyperledger.besu.crosschain.core.CrosschainController;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcRequestException;
@@ -44,15 +44,15 @@ public class EthProcessSubordinateView implements JsonRpcMethod {
 
   private final BlockchainQueries blockchain;
 
-  private final CrosschainProcessor crosschainProcessor;
+  private final CrosschainController crosschainController;
 
   public EthProcessSubordinateView(
       final BlockchainQueries blockchain,
-      final CrosschainProcessor crosschainProcessor,
+      final CrosschainController crosschainController,
       final JsonRpcParameter parameters) {
     this.parameters = parameters;
     this.blockchain = blockchain;
-    this.crosschainProcessor = crosschainProcessor;
+    this.crosschainController = crosschainController;
   }
 
   @Override
@@ -97,7 +97,8 @@ public class EthProcessSubordinateView implements JsonRpcMethod {
     //   calculation we won't notice this problem.
     // Maybe we should return a hash, and the result can be fetched later based on the hash?
 
-    Object resultOrError = this.crosschainProcessor.getSignedResult(transaction, blockNumber);
+    Object resultOrError =
+        this.crosschainController.getSignedSubordinateViewResult(transaction, blockNumber);
     if (resultOrError == null) {
       LOG.info("Transaction Simulation returned null as error");
       throw new Error("Unexpected result: null");

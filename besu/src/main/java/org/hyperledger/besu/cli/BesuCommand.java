@@ -700,16 +700,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Crosschain config file path (default: ${DEFAULT-VALUE}")
   public String crosschainsConfigPath = CrosschainConfigOptions.DEFAULT_PATH;
 
-  @Option(
-      names = {"--sidechain-nodeCount"},
-      description = "Sidechain total node count (default: ${DEFAULT-VALUE}")
-  public int nodeCount = 5;
-
-  @Option(
-      names = {"--sidechain-nodeNum"},
-      description = "Sidechain node number of this node (default: ${DEFAULT-VALUE}")
-  public int nodeNum = 0;
-
   private EthNetworkConfig ethNetworkConfig;
   private JsonRpcConfiguration jsonRpcConfiguration;
   private GraphQLConfiguration graphQLConfiguration;
@@ -1357,8 +1347,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private void crosschainConfig() {
     if (isCrosschainsEnabled) {
-      CrosschainConfigOptions.nodeCount = nodeCount;
-      CrosschainConfigOptions.nodeNum = nodeNum;
       CrosschainConfigOptions.chainsMapping = new HashMap<>();
       BufferedReader br;
       try {

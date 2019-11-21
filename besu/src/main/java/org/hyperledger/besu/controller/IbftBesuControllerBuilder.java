@@ -238,6 +238,6 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder<IbftContext
             epochManager,
             new IbftBlockInterface()),
         new VoteProposer(),
-        crosschainProcessor);
+        crosschainController);
   }
 }

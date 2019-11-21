@@ -14,7 +14,7 @@ package org.hyperledger.besu.crosschain.ethereum.api.jsonrpc.internal.methods;
 
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter.convertTransactionInvalidReason;
 
-import org.hyperledger.besu.crosschain.ethereum.api.jsonrpc.CrosschainProcessor;
+import org.hyperledger.besu.crosschain.core.CrosschainController;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcRequestException;
@@ -39,12 +39,12 @@ public class EthSendRawCrosschainTransaction implements JsonRpcMethod {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  private final CrosschainProcessor crosschainProcessor;
+  private final CrosschainController crosschainController;
   private final JsonRpcParameter parameters;
 
   public EthSendRawCrosschainTransaction(
-      final CrosschainProcessor crosschainProcessor, final JsonRpcParameter parameters) {
-    this.crosschainProcessor = crosschainProcessor;
+      final CrosschainController crosschainController, final JsonRpcParameter parameters) {
+    this.crosschainController = crosschainController;
     this.parameters = parameters;
   }
 
@@ -72,7 +72,7 @@ public class EthSendRawCrosschainTransaction implements JsonRpcMethod {
     LOG.info(prettyPrintJSON(transaction.toString()));
 
     final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult =
-        this.crosschainProcessor.addLocalTransaction(transaction);
+        this.crosschainController.addLocalTransaction(transaction);
 
     return validationResult.either(
         () -> new JsonRpcSuccessResponse(request.getId(), transaction.hash().toString()),

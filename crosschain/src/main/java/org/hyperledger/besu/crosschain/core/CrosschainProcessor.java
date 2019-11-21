@@ -10,15 +10,13 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package org.hyperledger.besu.crosschain.ethereum.api.jsonrpc;
+package org.hyperledger.besu.crosschain.core;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import org.hyperledger.besu.config.CrosschainConfigOptions;
 import org.hyperledger.besu.crosschain.ethereum.crosschain.CrosschainThreadLocalDataHolder;
-import org.hyperledger.besu.crosschain.ethereum.crosschain.SubordinateViewCoordinator;
 import org.hyperledger.besu.crypto.SECP256K1;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcRequestException;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -26,7 +24,6 @@ import org.hyperledger.besu.ethereum.core.CrosschainTransaction;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
@@ -51,33 +48,25 @@ import io.vertx.core.json.JsonObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-// TODO: This class needs to be moved to its own module, and it needs to use the Vertx, rather than
-// blocking,
-// TODO and use the main Vertx instance.
 public class CrosschainProcessor {
   protected static final Logger LOG = LogManager.getLogger();
 
-  SubordinateViewCoordinator subordinateViewCoordinator;
   TransactionSimulator transactionSimulator;
   TransactionPool transactionPool;
   SECP256K1.KeyPair nodeKeys;
   Blockchain blockchain;
   WorldStateArchive worldStateArchive;
-  int sidechainId;
+  BigInteger sidechainId;
 
   Vertx vertx;
 
-  public CrosschainProcessor() {}
-
   public void init(
-      final SubordinateViewCoordinator subordinateViewCoordinator,
       final TransactionSimulator transactionSimulator,
       final TransactionPool transactionPool,
-      final int sidechainId,
+      final BigInteger sidechainId,
       final SECP256K1.KeyPair nodeKeys,
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive) {
-    this.subordinateViewCoordinator = subordinateViewCoordinator;
     this.transactionSimulator = transactionSimulator;
     this.transactionPool = transactionPool;
     this.sidechainId = sidechainId;
@@ -89,67 +78,21 @@ public class CrosschainProcessor {
   }
 
   /**
-   * Execute a subordinate transaction.
+   * Process subordinate transactions or subordinate views.
    *
-   * @param transaction Subordinate Transaction to execute.
-   * @return Validaiton result.
+   * @param transaction The Originating Transaction, Subordinate Transaction or Subordinate View to
+   *     fetch the subordinate Subordinate Transactions or Views from.
+   * @param processSubordinateTransactions true if transactions rather than views should be
+   *     processed.
+   * @return true if execution failed.
    */
-  public ValidationResult<TransactionValidator.TransactionInvalidReason> addLocalTransaction(
-      final CrosschainTransaction transaction) {
-    // Get Subordinate View results.
-    if (processSubordinates(transaction, false)) {
-      return ValidationResult.invalid(
-          TransactionValidator.TransactionInvalidReason.CROSSCHAIN_FAILED_SUBORDINATE_VIEW);
-    }
-
-    Optional<ValidationResult<TransactionValidator.TransactionInvalidReason>> executionError =
-        trialExecution(transaction);
-    if (executionError.isPresent()) {
-      return executionError.get();
-    }
-
-    // Dispatch Subordinate Transactions if the trial execution worked OK.
-    if (processSubordinates(transaction, true)) {
-      return ValidationResult.invalid(
-          TransactionValidator.TransactionInvalidReason.CROSSCHAIN_FAILED_SUBORDINATE_TRANSACTION);
-    }
-
-    // TODO there is a synchronized inside this call. This should be surrounded by a Vertx
-    // blockingExecutor, maybe
-    ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult =
-        this.transactionPool.addLocalTransaction(transaction);
-
-    if (transaction.getType().isLockableTransaction()) {
-      validationResult.ifValid(
-          () -> {
-            startCrosschainTransactionCommitIgnoreTimeOut(transaction);
-          });
-    }
-    return validationResult;
-  }
-
-  /**
-   * Execute a subordinate view.
-   *
-   * @param transaction The subordinate view to process.
-   * @param blockNumber Execute view at this block number.
-   * @return Result or an error.
-   */
-  public Object getSignedResult(final CrosschainTransaction transaction, final long blockNumber) {
-    // Get Subordinate View results.
-    if (processSubordinates(transaction, false)) {
-      return TransactionValidator.TransactionInvalidReason.CROSSCHAIN_FAILED_SUBORDINATE_VIEW;
-    }
-    return this.subordinateViewCoordinator.getSignedResult(transaction, blockNumber);
-  }
-
-  private boolean processSubordinates(
-      final CrosschainTransaction transaction, final boolean processSubbordianteTransactions) {
+  boolean processSubordinates(
+      final CrosschainTransaction transaction, final boolean processSubordinateTransactions) {
     List<CrosschainTransaction> subordinates = transaction.getSubordinateTransactionsAndViews();
     for (CrosschainTransaction subordinateTransactionsAndView : subordinates) {
-      if ((processSubbordianteTransactions
+      if ((processSubordinateTransactions
               && subordinateTransactionsAndView.getType().isSubordinateTransaction())
-          || (!processSubbordianteTransactions
+          || (!processSubordinateTransactions
               && subordinateTransactionsAndView.getType().isSubordinateView())) {
 
         String method =
@@ -206,7 +149,7 @@ public class CrosschainProcessor {
    * @return Empty if the transaction and subordinate views execute correctly, otherwise an error is
    *     returned.
    */
-  public Optional<ValidationResult<TransactionValidator.TransactionInvalidReason>> trialExecution(
+  Optional<ValidationResult<TransactionValidator.TransactionInvalidReason>> trialExecution(
       final CrosschainTransaction subordinateTransaction) {
     // Add to thread local storage.
     CrosschainThreadLocalDataHolder.setCrosschainTransaciton(subordinateTransaction);
@@ -240,6 +183,23 @@ public class CrosschainProcessor {
     return Optional.of(
         ValidationResult.invalid(
             TransactionValidator.TransactionInvalidReason.CROSSCHAIN_UNKNOWN_FAILURE));
+  }
+
+  /**
+   * TODO THIS METHOD SHOULD PROBABLY MERGE WITH THE ONE ABOVE Process the Subordinate View for this
+   * block number.
+   *
+   * @param subordinateView Subordinate view to execute.
+   * @param blockNumber block number to execute the view call at.
+   * @return TransactionSimulatorResult if the execution completed. TransactionInvalidReason if
+   *     there was an error.
+   */
+  public Object executeSubordinateView(
+      final CrosschainTransaction subordinateView, final long blockNumber) {
+    return this.transactionSimulator
+        .process(subordinateView, blockNumber)
+        .map(result -> result.getValidationResult().either((() -> result), reason -> reason))
+        .orElse(null);
   }
 
   // TODO this should be implemented as a Vertx HTTPS Client. We should probably submit all
@@ -283,8 +243,7 @@ public class CrosschainProcessor {
     return BytesValue.fromHexString(result);
   }
 
-  private void startCrosschainTransactionCommitIgnoreTimeOut(
-      final CrosschainTransaction transaction) {
+  void startCrosschainTransactionCommitIgnoreTimeOut(final CrosschainTransaction transaction) {
     this.vertx.setTimer(
         2000,
         id -> {
@@ -296,47 +255,13 @@ public class CrosschainProcessor {
   }
 
   /**
-   * Called by the JSON RPC Call CrossCheckUnlock.
-   *
-   * <p>If a contract is lockable and locked, then check with the Crosschain Coordination Contract
-   * which is coordinating the Crosschain Transaction to see if the transaction has completed and if
-   * the contract can be unlocked.
-   *
-   * @param address Address of contract to check.
-   */
-  public void checkUnlock(final Address address) {
-
-    // TODO For the moment just unlock the contract.
-
-    // Is the contract lockable and is it locked?
-    Hash latestBlockStateRootHash = this.blockchain.getChainHeadBlock().getHeader().getStateRoot();
-    final Optional<WorldState> maybeWorldState = worldStateArchive.get(latestBlockStateRootHash);
-    if (maybeWorldState.isEmpty()) {
-      LOG.error("Crosschain Signalling Transaction: Can't fetch world state");
-      return;
-    }
-    WorldState worldState = maybeWorldState.get();
-    final Account contract = worldState.get(address);
-
-    if (!contract.isLockable()) {
-      throw new InvalidJsonRpcRequestException("Contract is not lockable");
-    }
-
-    if (contract.isLocked()) {
-      // TODO here we need to check the Crosschain Coordination Contract.
-
-      sendSignallingTransaction(address);
-    }
-  }
-
-  /**
    * Send a signalling transaction to an address to unlock a contract.
    *
    * <p>TODO we should probably check the response and retry if appropriate.
    *
    * @param toAddress Address of contract to unlock / send the signalling transaction to.
    */
-  private void sendSignallingTransaction(final Address toAddress) {
+  void sendSignallingTransaction(final Address toAddress) {
     LOG.debug("Crosschain Signalling Transaction: Initiated");
 
     // Work out sender's nonce.
@@ -373,7 +298,7 @@ public class CrosschainProcessor {
             .to(toAddress)
             .value(Wei.ZERO)
             .payload(BytesValue.EMPTY)
-            .chainId(BigInteger.valueOf(this.sidechainId))
+            .chainId(this.sidechainId)
             .subordinateTransactionsAndViews(emptyList)
             .signAndBuild(this.nodeKeys);
 
