@@ -101,13 +101,13 @@ public class WebSocketServiceTest {
     httpClient.websocket(
         "/",
         webSocket -> {
-          webSocket.write(Buffer.buffer(request));
-
           webSocket.handler(
               buffer -> {
                 context.assertEquals(expectedResponse, buffer.toString());
                 async.complete();
               });
+
+          webSocket.writeTextMessage(request);
         });
 
     async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);

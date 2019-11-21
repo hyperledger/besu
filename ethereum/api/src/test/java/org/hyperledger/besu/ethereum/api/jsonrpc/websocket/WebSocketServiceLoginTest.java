@@ -38,7 +38,6 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import io.vertx.core.MultiMap;
 import io.vertx.core.Vertx;
-import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpClientRequest;
@@ -209,7 +208,7 @@ public class WebSocketServiceLoginTest {
         options,
         headers,
         webSocket -> {
-          webSocket.write(Buffer.buffer(request));
+          webSocket.writeTextMessage(request);
 
           webSocket.handler(
               buffer -> {
@@ -246,7 +245,7 @@ public class WebSocketServiceLoginTest {
         options,
         headers,
         webSocket -> {
-          webSocket.write(Buffer.buffer(requestSub));
+          webSocket.writeTextMessage(requestSub);
 
           webSocket.handler(
               buffer -> {
