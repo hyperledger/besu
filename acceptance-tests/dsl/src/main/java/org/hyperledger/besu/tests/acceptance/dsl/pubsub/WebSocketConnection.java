@@ -30,6 +30,7 @@ import io.vertx.core.http.RequestOptions;
 import io.vertx.core.http.WebSocket;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.Json;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 
 public class WebSocketConnection {
 
@@ -102,7 +103,11 @@ public class WebSocketConnection {
                       }
 
                     } catch (final DecodeException e) {
-                      error(data.toString());
+                      error(
+                          "Data: "
+                              + data.toString()
+                              + "\nException: "
+                              + ExceptionUtils.getStackTrace(e));
                     }
                   });
             });
@@ -115,24 +120,24 @@ public class WebSocketConnection {
   }
 
   private void resetLatestResult() {
-    this.receivedResponse = false;
     this.error = null;
     this.latestEvent = null;
+    this.receivedResponse = false;
   }
 
   private void error(final String response) {
-    this.receivedResponse = true;
     this.error = response;
+    this.receivedResponse = true;
   }
 
   private void success(final JsonRpcSuccessEvent result) {
-    this.receivedResponse = true;
     this.latestEvent = result;
+    this.receivedResponse = true;
   }
 
   private void success(final SubscriptionEvent result) {
-    this.receivedResponse = true;
     this.subscriptionEvents.add(result);
+    this.receivedResponse = true;
   }
 
   public List<SubscriptionEvent> getSubscriptionEvents() {
