@@ -76,7 +76,10 @@ jobs:
           paths:
             - ./
       - store_artifacts:
-          path:  ~/project/build/distributions/*
+          name: Distribution artifacts
+          path:  build/distributions
+          destination: distributions
+          when: always
 
   unitTests:
     executor: besu_executor_xl
