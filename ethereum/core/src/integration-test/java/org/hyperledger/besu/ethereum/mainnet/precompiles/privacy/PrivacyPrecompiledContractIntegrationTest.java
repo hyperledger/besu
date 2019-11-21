@@ -46,7 +46,6 @@ import org.hyperledger.orion.testutil.OrionKeyConfiguration;
 import org.hyperledger.orion.testutil.OrionTestHarness;
 import org.hyperledger.orion.testutil.OrionTestHarnessFactory;
 
-import java.io.IOException;
 import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
@@ -145,7 +144,7 @@ public class PrivacyPrecompiledContractIntegrationTest {
   }
 
   @Test
-  public void testUpCheck() throws IOException {
+  public void testUpCheck() throws InterruptedException {
     assertThat(enclave.upCheck()).isTrue();
   }
 

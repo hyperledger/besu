@@ -42,6 +42,8 @@ import org.hyperledger.besu.testutil.TestClock;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.Arrays;
 
@@ -60,13 +62,14 @@ public class PrivacyTest {
   @Rule public final TemporaryFolder folder = new TemporaryFolder();
 
   @Test
-  public void privacyPrecompiled() throws IOException {
+  public void privacyPrecompiled() throws IOException, URISyntaxException {
     final Path dataDir = folder.newFolder().toPath();
     final Path dbDir = dataDir.resolve("database");
     final PrivacyParameters privacyParameters =
         new PrivacyParameters.Builder()
             .setPrivacyAddress(ADDRESS)
             .setEnabled(true)
+            .setEnclaveUrl(new URI("http://127.0.0.1:8000"))
             .setStorageProvider(createKeyValueStorageProvider(dataDir, dbDir))
             .build();
     final BesuController<?> besuController =

@@ -72,7 +72,7 @@ public class EnclaveTest {
   }
 
   @Test
-  public void testUpCheck() throws IOException {
+  public void testUpCheck() throws InterruptedException {
     assertThat(enclave.upCheck()).isTrue();
   }
 
