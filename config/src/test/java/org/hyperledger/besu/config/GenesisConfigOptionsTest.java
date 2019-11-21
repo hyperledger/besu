@@ -134,6 +134,12 @@ public class GenesisConfigOptionsTest {
   }
 
   @Test
+  public void shouldGetEIP2384BlockNumber() {
+    final GenesisConfigOptions config = fromConfigOptions(singletonMap("EIP2384Block", 1000));
+    assertThat(config.getEIP2384BlockNumber()).hasValue(1000);
+  }
+
+  @Test
   public void shouldNotReturnEmptyOptionalWhenBlockNumberNotSpecified() {
     final GenesisConfigOptions config = fromConfigOptions(emptyMap());
     assertThat(config.getHomesteadBlockNumber()).isEmpty();
@@ -144,6 +150,7 @@ public class GenesisConfigOptionsTest {
     assertThat(config.getConstantinopleBlockNumber()).isEmpty();
     assertThat(config.getConstantinopleFixBlockNumber()).isEmpty();
     assertThat(config.getIstanbulBlockNumber()).isEmpty();
+    assertThat(config.getEIP2384BlockNumber()).isEmpty();
   }
 
   @Test

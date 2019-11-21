@@ -314,6 +314,16 @@ public abstract class MainnetProtocolSpecs {
         .name("Istanbul");
   }
 
+  static ProtocolSpecBuilder<Void> eip2384Definition(
+      final Optional<BigInteger> chainId,
+      final OptionalInt contractSizeLimit,
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason) {
+    return istanbulDefinition(chainId, contractSizeLimit, configStackSizeLimit, enableRevertReason)
+        .difficultyCalculator(MainnetDifficultyCalculators.EIP2384)
+        .name("EIP2384");
+  }
+
   private static TransactionReceipt frontierTransactionReceiptFactory(
       final TransactionProcessor.Result result, final WorldState worldState, final long gasUsed) {
     return new TransactionReceipt(

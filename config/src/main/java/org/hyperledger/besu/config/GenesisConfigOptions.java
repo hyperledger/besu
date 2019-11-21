@@ -56,6 +56,8 @@ public interface GenesisConfigOptions {
 
   OptionalLong getIstanbulBlockNumber();
 
+  OptionalLong getEIP2384BlockNumber();
+
   /**
    * Block number for the Dao Fork, this value is used to tell node to connect with peer that did
    * NOT accept the Dao Fork and instead continued as what is now called the classic network

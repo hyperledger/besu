@@ -20,6 +20,7 @@ import org.hyperledger.besu.util.uint.UInt256;
 
 import java.math.BigInteger;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.primitives.Ints;
 
 /** Provides the various difficultly calculates used on mainnet hard forks. */
@@ -37,6 +38,7 @@ public abstract class MainnetDifficultyCalculators {
 
   private static final long BYZANTIUM_FAKE_BLOCK_OFFSET = 2_999_999L;
   private static final long CONSTANTINOPLE_FAKE_BLOCK_OFFSET = 4_999_999L;
+  private static final long EIP2384_FAKE_BLOCK_OFFSET = 8_999_999L;
 
   private MainnetDifficultyCalculators() {}
 
@@ -67,15 +69,20 @@ public abstract class MainnetDifficultyCalculators {
         return periodCount > 1 ? adjustForPeriod(periodCount, difficulty) : difficulty;
       };
 
+  @VisibleForTesting
   public static DifficultyCalculator<Void> BYZANTIUM =
       (time, parent, protocolContext) ->
-          calculateByzantiumDifficulty(time, parent, BYZANTIUM_FAKE_BLOCK_OFFSET);
+          calculateThawedDifficulty(time, parent, BYZANTIUM_FAKE_BLOCK_OFFSET);
 
-  public static DifficultyCalculator<Void> CONSTANTINOPLE =
+  static DifficultyCalculator<Void> CONSTANTINOPLE =
       (time, parent, protocolContext) ->
-          calculateByzantiumDifficulty(time, parent, CONSTANTINOPLE_FAKE_BLOCK_OFFSET);
+          calculateThawedDifficulty(time, parent, CONSTANTINOPLE_FAKE_BLOCK_OFFSET);
 
-  private static BigInteger calculateByzantiumDifficulty(
+  static DifficultyCalculator<Void> EIP2384 =
+      (time, parent, protocolContext) ->
+          calculateThawedDifficulty(time, parent, EIP2384_FAKE_BLOCK_OFFSET);
+
+  private static BigInteger calculateThawedDifficulty(
       final long time, final BlockHeader parent, final long fakeBlockOffset) {
     final BigInteger parentDifficulty = difficulty(parent.getDifficulty());
     final boolean hasOmmers = !parent.getOmmersHash().equals(Hash.EMPTY_LIST_HASH);

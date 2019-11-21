@@ -151,6 +151,14 @@ public class ProtocolScheduleBuilder<C> {
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
             isRevertReasonEnabled));
+    addProtocolSpec(
+        protocolSchedule,
+        config.getEIP2384BlockNumber(),
+        MainnetProtocolSpecs.eip2384Definition(
+            chainId,
+            config.getContractSizeLimit(),
+            config.getEvmStackSize(),
+            isRevertReasonEnabled));
 
     // specs for classic network
     config
@@ -252,6 +260,7 @@ public class ProtocolScheduleBuilder<C> {
         validateForkOrder(
             "ConstantinopleFix", config.getConstantinopleFixBlockNumber(), lastForkBlock);
     lastForkBlock = validateForkOrder("Istanbul", config.getIstanbulBlockNumber(), lastForkBlock);
+    lastForkBlock = validateForkOrder("EIP2384", config.getEIP2384BlockNumber(), lastForkBlock);
     assert (lastForkBlock >= 0);
   }
 
