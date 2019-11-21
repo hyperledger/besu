@@ -75,6 +75,8 @@ jobs:
           root: ~/project
           paths:
             - ./
+      - store_artifacts:
+          path:  ~/project/build/distributions/*
 
   unitTests:
     executor: besu_executor_xl
