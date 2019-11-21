@@ -1453,7 +1453,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     final ObservableMetricsSystem metricsSystem = this.metricsSystem.get();
     final Runner runner =
         runnerBuilder
-            .vertx(Vertx.vertx(createVertxOptions(metricsSystem)))
+            .vertx(createVertx(createVertxOptions(metricsSystem)))
             .besuController(controller)
             .p2pEnabled(p2pEnabled)
             .natMethod(natMethod)
@@ -1481,6 +1481,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     addShutdownHook(runner);
     runner.start();
     runner.awaitStop();
+  }
+
+  protected Vertx createVertx(final VertxOptions vertxOptions) {
+    return Vertx.vertx(vertxOptions);
   }
 
   private VertxOptions createVertxOptions(final MetricsSystem metricsSystem) {
