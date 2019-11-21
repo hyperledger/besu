@@ -30,7 +30,7 @@ public class PrivGetTransactionCount implements JsonRpcMethod {
 
   private final PrivateNonceProvider privateNonceProvider;
 
-  public PrivGetTransactionCount( final PrivateNonceProvider privateNonceProvider) {
+  public PrivGetTransactionCount(final PrivateNonceProvider privateNonceProvider) {
     this.privateNonceProvider = privateNonceProvider;
   }
 

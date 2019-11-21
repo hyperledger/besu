@@ -60,7 +60,7 @@ public class PrivJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
             new Enclave(getPrivacyParameters().getEnclaveUri()), getPrivacyParameters()),
         new PrivFindPrivacyGroup(new Enclave(getPrivacyParameters().getEnclaveUri())),
         new PrivGetPrivacyPrecompileAddress(getPrivacyParameters()),
-        new PrivGetTransactionCount(privateTransactionHandler),
+        new PrivGetTransactionCount(getPrivateNonceProvider()),
         new PrivGetPrivateTransaction(getBlockchainQueries(), enclave, getPrivacyParameters()),
         new PrivDistributeRawTransaction(privateTransactionHandler, getTransactionPool()));
   }
