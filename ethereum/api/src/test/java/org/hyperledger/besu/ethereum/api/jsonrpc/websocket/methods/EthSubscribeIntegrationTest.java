@@ -29,7 +29,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import io.vertx.core.Vertx;
-import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.Json;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
@@ -77,8 +76,7 @@ public class EthSubscribeIntegrationTest {
             })
         .completionHandler(
             v ->
-                webSocketRequestHandler.handle(
-                    CONNECTION_ID_1, Buffer.buffer(Json.encode(subscribeRequestBody))));
+                webSocketRequestHandler.handle(CONNECTION_ID_1, Json.encode(subscribeRequestBody)));
 
     async.awaitSuccess(ASYNC_TIMEOUT);
   }
@@ -119,12 +117,12 @@ public class EthSubscribeIntegrationTest {
                   .completionHandler(
                       v ->
                           webSocketRequestHandler.handle(
-                              CONNECTION_ID_2, Buffer.buffer(Json.encode(subscribeRequestBody2))));
+                              CONNECTION_ID_2, Json.encode(subscribeRequestBody2)));
             })
         .completionHandler(
             v ->
                 webSocketRequestHandler.handle(
-                    CONNECTION_ID_1, Buffer.buffer(Json.encode(subscribeRequestBody1))));
+                    CONNECTION_ID_1, Json.encode(subscribeRequestBody1)));
 
     async.awaitSuccess(ASYNC_TIMEOUT);
   }

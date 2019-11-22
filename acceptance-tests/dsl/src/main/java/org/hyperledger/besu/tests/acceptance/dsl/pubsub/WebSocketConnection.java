@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
 import io.vertx.core.Vertx;
-import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.RequestOptions;
 import io.vertx.core.http.WebSocket;
@@ -70,7 +69,7 @@ public class WebSocketConnection {
 
   private JsonRpcSuccessEvent send(final String json) {
 
-    connection.writeBinaryMessage(Buffer.buffer(json));
+    connection.writeTextMessage(json);
 
     WaitUtils.waitFor(() -> assertThat(receivedResponse).isEqualTo(true));
 

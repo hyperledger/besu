@@ -32,7 +32,6 @@ import java.util.Map;
 import java.util.UUID;
 
 import io.vertx.core.Vertx;
-import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
@@ -93,7 +92,7 @@ public class WebSocketRequestHandlerTest {
               context.assertEquals(Json.encode(expectedResponse), msg.body());
               async.complete();
             })
-        .completionHandler(v -> handler.handle(websocketId, Buffer.buffer(requestJson.toString())));
+        .completionHandler(v -> handler.handle(websocketId, requestJson.toString()));
 
     async.awaitSuccess(WebSocketRequestHandlerTest.VERTX_AWAIT_TIMEOUT_MILLIS);
   }
@@ -116,7 +115,7 @@ public class WebSocketRequestHandlerTest {
               verifyZeroInteractions(jsonRpcMethodMock);
               async.complete();
             })
-        .completionHandler(v -> handler.handle(websocketId, Buffer.buffer("")));
+        .completionHandler(v -> handler.handle(websocketId, ""));
 
     async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
   }
@@ -139,7 +138,7 @@ public class WebSocketRequestHandlerTest {
               verifyZeroInteractions(jsonRpcMethodMock);
               async.complete();
             })
-        .completionHandler(v -> handler.handle(websocketId, Buffer.buffer("{}")));
+        .completionHandler(v -> handler.handle(websocketId, "{}"));
 
     async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
   }
@@ -163,7 +162,7 @@ public class WebSocketRequestHandlerTest {
               context.assertEquals(Json.encode(expectedResponse), msg.body());
               async.complete();
             })
-        .completionHandler(v -> handler.handle(websocketId, Buffer.buffer(requestJson.toString())));
+        .completionHandler(v -> handler.handle(websocketId, requestJson.toString()));
 
     async.awaitSuccess(WebSocketRequestHandlerTest.VERTX_AWAIT_TIMEOUT_MILLIS);
   }
@@ -189,7 +188,7 @@ public class WebSocketRequestHandlerTest {
               context.assertEquals(Json.encode(expectedResponse), msg.body());
               async.complete();
             })
-        .completionHandler(v -> handler.handle(websocketId, Buffer.buffer(requestJson.toString())));
+        .completionHandler(v -> handler.handle(websocketId, requestJson.toString()));
 
     async.awaitSuccess(WebSocketRequestHandlerTest.VERTX_AWAIT_TIMEOUT_MILLIS);
   }
