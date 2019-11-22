@@ -22,6 +22,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockReplay;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugStorageRangeAtResult;
@@ -94,13 +95,18 @@ public class DebugStorageRangeAtTest {
             Collections.emptyList(),
             UInt256.ONE,
             1);
-    final JsonRpcRequest request =
-        new JsonRpcRequest(
-            "2.0",
-            "debug_storageRangeAt",
-            new Object[] {
-              blockHash.toString(), TRANSACTION_INDEX, accountAddress, START_KEY_HASH.toString(), 10
-            });
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest(
+                "2.0",
+                "debug_storageRangeAt",
+                new Object[] {
+                  blockHash.toString(),
+                  TRANSACTION_INDEX,
+                  accountAddress,
+                  START_KEY_HASH.toString(),
+                  10
+                }));
 
     when(blockchainQueries.blockByHash(blockHash)).thenReturn(Optional.of(blockWithMetadata));
     when(blockchainQueries.transactionByBlockHashAndIndex(blockHash, TRANSACTION_INDEX))

@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseUtils;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcTestMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -178,7 +179,7 @@ public class EthGetBlockByHashIntegrationTest {
             "0x812742182a79a8e67733edc58cfa3767aa2d7ad06439d156ddbbb33e3403b4ed");
 
     final JsonRpcResponse expected = responseUtils.response(expectedResult, transactions);
-    final JsonRpcRequest request =
+    final JsonRpcRequestContext request =
         requestWithParams(
             "0x10aaf14a53caf27552325374429d3558398a36d3682ede6603c2c6511896e9f9", false);
     final JsonRpcResponse actual = ethGetBlockByHash().response(request);
@@ -186,8 +187,8 @@ public class EthGetBlockByHashIntegrationTest {
     assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
   }
 
-  private JsonRpcRequest requestWithParams(final Object... params) {
-    return new JsonRpcRequest(JSON_RPC_VERSION, ETH_METHOD, params);
+  private JsonRpcRequestContext requestWithParams(final Object... params) {
+    return new JsonRpcRequestContext(new JsonRpcRequest(JSON_RPC_VERSION, ETH_METHOD, params));
   }
 
   private JsonRpcMethod ethGetBlockByHash() {

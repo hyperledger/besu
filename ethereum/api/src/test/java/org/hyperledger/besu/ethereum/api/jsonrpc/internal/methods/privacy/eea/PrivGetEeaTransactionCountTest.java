@@ -19,6 +19,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivGetEeaTransactionCount;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivateEeaNonceProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
@@ -33,7 +34,7 @@ import org.junit.Test;
 public class PrivGetEeaTransactionCountTest {
 
   private final PrivateEeaNonceProvider nonceProvider = mock(PrivateEeaNonceProvider.class);
-  private JsonRpcRequest request;
+  private JsonRpcRequestContext request;
 
   private final String privateFrom = "thePrivateFromKey";
   private final String[] privateFor = new String[] {"first", "second", "third"};
@@ -42,7 +43,9 @@ public class PrivGetEeaTransactionCountTest {
   @Before
   public void setup() {
     final Object[] jsonBody = new Object[] {address.toString(), privateFrom, privateFor};
-    request = new JsonRpcRequest("2.0", "priv_getEeaTransactionCount", jsonBody);
+    request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest("2.0", "priv_getEeaTransactionCount", jsonBody));
   }
 
   @Test

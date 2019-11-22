@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.UnsignedIntParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -41,13 +41,13 @@ public class EthGetTransactionByBlockHashAndIndex implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest request) {
-    final Hash hash = request.getRequiredParameter(0, Hash.class);
-    final int index = request.getRequiredParameter(1, UnsignedIntParameter.class).getValue();
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
+    final Hash hash = requestContext.getRequiredParameter(0, Hash.class);
+    final int index = requestContext.getRequiredParameter(1, UnsignedIntParameter.class).getValue();
     final Optional<TransactionWithMetadata> transactionWithMetadata =
         blockchain.transactionByBlockHashAndIndex(hash, index);
     final TransactionResult result =
         transactionWithMetadata.map(TransactionCompleteResult::new).orElse(null);
-    return new JsonRpcSuccessResponse(request.getId(), result);
+    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), result);
   }
 }

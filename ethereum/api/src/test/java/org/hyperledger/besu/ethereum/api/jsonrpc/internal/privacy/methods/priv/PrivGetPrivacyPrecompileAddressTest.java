@@ -19,6 +19,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -44,8 +45,9 @@ public class PrivGetPrivacyPrecompileAddressTest {
     final PrivGetPrivacyPrecompileAddress privGetPrivacyPrecompileAddress =
         new PrivGetPrivacyPrecompileAddress(privacyParameters);
 
-    final JsonRpcRequest request =
-        new JsonRpcRequest("1", "priv_getPrivacyPrecompileAddress", new Object[0]);
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest("1", "priv_getPrivacyPrecompileAddress", new Object[0]));
 
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) privGetPrivacyPrecompileAddress.response(request);
@@ -61,8 +63,9 @@ public class PrivGetPrivacyPrecompileAddressTest {
     final PrivGetPrivacyPrecompileAddress privGetPrivacyPrecompileAddress =
         new PrivGetPrivacyPrecompileAddress(privacyParameters);
 
-    final JsonRpcRequest request =
-        new JsonRpcRequest("1", "priv_getPrivacyPrecompileAddress", new Object[0]);
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest("1", "priv_getPrivacyPrecompileAddress", new Object[0]));
 
     final JsonRpcResponse response = privGetPrivacyPrecompileAddress.response(request);
 

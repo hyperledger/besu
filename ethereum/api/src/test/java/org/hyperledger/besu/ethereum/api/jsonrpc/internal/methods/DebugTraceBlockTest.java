@@ -22,6 +22,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
@@ -74,7 +75,8 @@ public class DebugTraceBlockTest {
                     .setParentHash(parentBlock.getHash()));
 
     final Object[] params = new Object[] {block.toRlp().toString()};
-    final JsonRpcRequest request = new JsonRpcRequest("2.0", "debug_traceBlock", params);
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(new JsonRpcRequest("2.0", "debug_traceBlock", params));
 
     final TraceFrame traceFrame =
         new TraceFrame(
@@ -129,7 +131,8 @@ public class DebugTraceBlockTest {
                     .setBlockHeaderFunctions(new MainnetBlockHeaderFunctions()));
 
     final Object[] params = new Object[] {block.toRlp().toString()};
-    final JsonRpcRequest request = new JsonRpcRequest("2.0", "debug_traceBlock", params);
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(new JsonRpcRequest("2.0", "debug_traceBlock", params));
 
     when(blockchainQueries.blockByHash(any())).thenReturn(Optional.empty());
 

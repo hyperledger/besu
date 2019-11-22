@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcRequestException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -60,28 +60,33 @@ public class EthSendRawTransaction implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest request) {
-    if (request.getParamLength() != 1) {
-      return new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
+    if (requestContext.getRequest().getParamLength() != 1) {
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
     }
-    final String rawTransaction = request.getRequiredParameter(0, String.class);
+    final String rawTransaction = requestContext.getRequiredParameter(0, String.class);
 
     final Transaction transaction;
     try {
       transaction = decodeRawTransaction(rawTransaction);
     } catch (final InvalidJsonRpcRequestException e) {
-      return new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
     }
 
     final ValidationResult<TransactionInvalidReason> validationResult =
         transactionPool.get().addLocalTransaction(transaction);
     return validationResult.either(
-        () -> new JsonRpcSuccessResponse(request.getId(), transaction.getHash().toString()),
+        () ->
+            new JsonRpcSuccessResponse(
+                requestContext.getRequest().getId(), transaction.getHash().toString()),
         errorReason ->
             sendEmptyHashOnInvalidBlock
-                ? new JsonRpcSuccessResponse(request.getId(), Hash.EMPTY.toString())
+                ? new JsonRpcSuccessResponse(
+                    requestContext.getRequest().getId(), Hash.EMPTY.toString())
                 : new JsonRpcErrorResponse(
-                    request.getId(),
+                    requestContext.getRequest().getId(),
                     JsonRpcErrorConverter.convertTransactionInvalidReason(errorReason)));
   }
 

@@ -20,6 +20,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -51,11 +52,12 @@ public class EthSendRawTransactionTest {
 
   @Test
   public void requestIsMissingParameter() {
-    final JsonRpcRequest request =
-        new JsonRpcRequest("2.0", "eth_sendRawTransaction", new String[] {});
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest("2.0", "eth_sendRawTransaction", new String[] {}));
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
+        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
 
     final JsonRpcResponse actualResponse = method.response(request);
 
@@ -64,10 +66,11 @@ public class EthSendRawTransactionTest {
 
   @Test
   public void requestHasNullObjectParameter() {
-    final JsonRpcRequest request = new JsonRpcRequest("2.0", "eth_sendRawTransaction", null);
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(new JsonRpcRequest("2.0", "eth_sendRawTransaction", null));
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
+        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
 
     final JsonRpcResponse actualResponse = method.response(request);
 
@@ -76,11 +79,12 @@ public class EthSendRawTransactionTest {
 
   @Test
   public void requestHasNullArrayParameter() {
-    final JsonRpcRequest request =
-        new JsonRpcRequest("2.0", "eth_sendRawTransaction", new String[] {null});
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest("2.0", "eth_sendRawTransaction", new String[] {null}));
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
+        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
 
     final JsonRpcResponse actualResponse = method.response(request);
 
@@ -91,11 +95,12 @@ public class EthSendRawTransactionTest {
   public void invalidTransactionRlpDecoding() {
     final String rawTransaction = "0x00";
 
-    final JsonRpcRequest request =
-        new JsonRpcRequest("2.0", "eth_sendRawTransaction", new String[] {rawTransaction});
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest("2.0", "eth_sendRawTransaction", new String[] {rawTransaction}));
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
+        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
 
     final JsonRpcResponse actualResponse = method.response(request);
 
@@ -107,12 +112,14 @@ public class EthSendRawTransactionTest {
     when(transactionPool.addLocalTransaction(any(Transaction.class)))
         .thenReturn(ValidationResult.valid());
 
-    final JsonRpcRequest request =
-        new JsonRpcRequest("2.0", "eth_sendRawTransaction", new String[] {VALID_TRANSACTION});
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest("2.0", "eth_sendRawTransaction", new String[] {VALID_TRANSACTION}));
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(
-            request.getId(), "0xbaabcc1bd699e7378451e4ce5969edb9bdcae76cb79bdacae793525c31e423c7");
+            request.getRequest().getId(),
+            "0xbaabcc1bd699e7378451e4ce5969edb9bdcae76cb79bdacae793525c31e423c7");
 
     final JsonRpcResponse actualResponse = method.response(request);
 
@@ -169,11 +176,12 @@ public class EthSendRawTransactionTest {
     when(transactionPool.addLocalTransaction(any(Transaction.class)))
         .thenReturn(ValidationResult.invalid(transactionInvalidReason));
 
-    final JsonRpcRequest request =
-        new JsonRpcRequest("2.0", "eth_sendRawTransaction", new String[] {VALID_TRANSACTION});
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest("2.0", "eth_sendRawTransaction", new String[] {VALID_TRANSACTION}));
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getId(), expectedError);
+        new JsonRpcErrorResponse(request.getRequest().getId(), expectedError);
 
     final JsonRpcResponse actualResponse = method.response(request);
 

@@ -25,6 +25,7 @@ import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.types.ReceiveRequest;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.privacy.PrivateTransactionGroupResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.privacy.PrivateTransactionLegacyResult;
@@ -119,7 +120,8 @@ public class PrivGetPrivateTransactionTest {
     final PrivGetPrivateTransaction privGetPrivateTransaction =
         new PrivGetPrivateTransaction(blockchain, enclave, privacyParameters);
     final Object[] params = new Object[] {enclaveKey};
-    final JsonRpcRequest request = new JsonRpcRequest("1", "priv_getPrivateTransaction", params);
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(new JsonRpcRequest("1", "priv_getPrivateTransaction", params));
 
     final BytesValueRLPOutput bvrlp = new BytesValueRLPOutput();
     privateTransaction.writeTo(bvrlp);
@@ -153,7 +155,8 @@ public class PrivGetPrivateTransactionTest {
         new PrivGetPrivateTransaction(blockchain, enclave, privacyParameters);
 
     final Object[] params = new Object[] {enclaveKey};
-    final JsonRpcRequest request = new JsonRpcRequest("1", "priv_getPrivateTransaction", params);
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(new JsonRpcRequest("1", "priv_getPrivateTransaction", params));
 
     final BytesValueRLPOutput bvrlp = new BytesValueRLPOutput();
     privateTransaction.writeTo(bvrlp);

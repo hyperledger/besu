@@ -23,6 +23,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.consensus.common.VoteTally;
 import org.hyperledger.besu.consensus.common.VoteTallyCache;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -82,7 +83,8 @@ public class CliqueGetSignersTest {
   @Test
   @SuppressWarnings("unchecked")
   public void returnsValidatorsWhenNoParam() {
-    final JsonRpcRequest request = new JsonRpcRequest("2.0", "clique_getSigners", new Object[] {});
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(new JsonRpcRequest("2.0", "clique_getSigners", new Object[] {}));
 
     when(blockchainQueries.headBlockNumber()).thenReturn(3065995L);
     when(blockchainQueries.blockByNumber(3065995L)).thenReturn(Optional.of(blockWithMetadata));
@@ -97,8 +99,9 @@ public class CliqueGetSignersTest {
   @Test
   @SuppressWarnings("unchecked")
   public void returnsValidatorsForBlockNumber() {
-    final JsonRpcRequest request =
-        new JsonRpcRequest("2.0", "clique_getSigners", new Object[] {"0x2EC88B"});
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest("2.0", "clique_getSigners", new Object[] {"0x2EC88B"}));
 
     when(blockchainQueries.blockByNumber(3065995L)).thenReturn(Optional.of(blockWithMetadata));
     when(blockWithMetadata.getHeader()).thenReturn(blockHeader);
@@ -111,8 +114,9 @@ public class CliqueGetSignersTest {
 
   @Test
   public void failsOnInvalidBlockNumber() {
-    final JsonRpcRequest request =
-        new JsonRpcRequest("2.0", "clique_getSigners", new Object[] {"0x1234"});
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest("2.0", "clique_getSigners", new Object[] {"0x1234"}));
 
     when(blockchainQueries.blockByNumber(4660)).thenReturn(Optional.empty());
 
