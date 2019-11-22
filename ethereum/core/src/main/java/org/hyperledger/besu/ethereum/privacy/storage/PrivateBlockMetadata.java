@@ -31,7 +31,8 @@ public class PrivateBlockMetadata {
 
   public PrivateBlockMetadata(
       final List<PrivateTransactionMetadata> privateTransactionMetadataList) {
-    this.privateTransactionMetadataList = privateTransactionMetadataList;
+    this.privateTransactionMetadataList =
+        privateTransactionMetadataList == null ? new ArrayList<>() : privateTransactionMetadataList;
   }
 
   public List<PrivateTransactionMetadata> getPrivateTransactionMetadataList() {
