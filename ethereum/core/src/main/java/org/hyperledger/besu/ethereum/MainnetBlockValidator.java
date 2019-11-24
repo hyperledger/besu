@@ -90,6 +90,10 @@ public class MainnetBlockValidator<C> implements BlockValidator<C> {
       return Optional.empty();
     }
 
+    // get all groups
+    // for each group check if there is a PMT for that group in this block and update the head
+    // for all other groups copy the head from the parent of this block being processed
+
     final List<TransactionReceipt> receipts = result.getReceipts();
     if (!blockBodyValidator.validateBody(
         context, block, receipts, worldState.rootHash(), ommerValidationMode)) {

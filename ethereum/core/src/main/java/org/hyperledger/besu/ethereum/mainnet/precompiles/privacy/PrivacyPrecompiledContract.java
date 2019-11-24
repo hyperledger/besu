@@ -112,6 +112,10 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
         privateTransaction.hash(),
         privacyGroupId);
 
+    // Check if this is tracked privacy group - if not then assume empty state and add to list of
+    // tracked privacy groups
+    // If it is a tracked privacy group get the current head of this group
+
     // get the last world state root hash or create a new one
     final Hash lastRootHash =
         privateStateRootResolver.resolveLastStateRoot(

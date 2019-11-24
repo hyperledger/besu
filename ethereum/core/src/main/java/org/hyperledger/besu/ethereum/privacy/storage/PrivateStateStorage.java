@@ -36,6 +36,8 @@ public interface PrivateStateStorage {
 
   Optional<BytesValue> getPrivacyGroupHead(Bytes32 blockHash, Bytes32 privacyGroupId);
 
+  Optional<List<BytesValue>> getPrivacyGroups();
+
   boolean isPrivateStateAvailable(Bytes32 transactionHash);
 
   boolean isWorldStateAvailable(Bytes32 rootHash);
@@ -57,6 +59,8 @@ public interface PrivateStateStorage {
 
     PrivateStateKeyValueStorage.Updater putPrivacyGroupHead(
         Bytes32 blockHash, Bytes32 privacyGroupId, Bytes32 latestBlockHash);
+
+    PrivateStateKeyValueStorage.Updater putPrivacyGroups(List<BytesValue> bytes);
 
     void commit();
 
