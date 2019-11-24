@@ -28,6 +28,7 @@ import org.hyperledger.besu.enclave.types.SendResponse;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -41,6 +42,7 @@ import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpClientRequest;
 import io.vertx.core.http.HttpClientResponse;
+import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
 
 public class Enclave {
@@ -55,18 +57,34 @@ public class Enclave {
   public Enclave(final URI enclaveUri) {
     final HttpClientOptions clientOptions = new HttpClientOptions();
     clientOptions.setDefaultHost(enclaveUri.getHost());
-    clientOptions.setDefaultPort(enclaveUri.getPort());
+    if (enclaveUri.getPort() != -1) {
+      clientOptions.setDefaultPort(enclaveUri.getPort());
+    }
 
     vertx = Vertx.vertx();
     this.client = vertx.createHttpClient(clientOptions);
   }
 
-  public boolean upCheck() throws ExecutionException, InterruptedException {
-    final CompletableFuture<Boolean> result = new CompletableFuture<>();
-    final HttpClientRequest request = client.request(HttpMethod.GET, "/upcheck").setTimeout(1000);
-    request.end(asyncResult -> result.complete(asyncResult.succeeded()));
+  public boolean upCheck() {
+    final CompletableFuture<Boolean> responseFuture = new CompletableFuture<>();
+    final HttpClientRequest request = client.request(HttpMethod.GET, "/upcheck").setTimeout(100);
+    request.exceptionHandler(responseFuture::completeExceptionally);
+    request.handler(
+        response ->
+            response.bodyHandler(
+                body -> {
+                  if (response.statusCode() == 200) {
+                    final String bodyContent = body.toString(StandardCharsets.UTF_8);
+                    responseFuture.complete(bodyContent.equals("I'm up!"));
+                  }
+                }));
+    request.end();
 
-    return result.get();
+    try {
+      return responseFuture.get();
+    } catch (final Exception e) {
+      return false;
+    }
   }
 
   public SendResponse send(final SendRequest content) {
@@ -99,7 +117,7 @@ public class Enclave {
       final CompletableFuture<T> result = new CompletableFuture<>();
       final HttpClientRequest request = client.request(HttpMethod.POST, endpoint);
       request.handler(response -> handleResponse(response, responseType, result));
-      request.putHeader("content-Type", mediaType);
+      request.putHeader(HttpHeaders.CONTENT_TYPE, mediaType);
       request.exceptionHandler(result::completeExceptionally);
       request.setChunked(false);
       request.end(objectMapper.writeValueAsString(content));

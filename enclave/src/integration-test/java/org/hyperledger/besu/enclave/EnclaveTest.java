@@ -31,9 +31,9 @@ import org.hyperledger.orion.testutil.OrionKeyConfiguration;
 import org.hyperledger.orion.testutil.OrionTestHarness;
 import org.hyperledger.orion.testutil.OrionTestHarnessFactory;
 
-import java.io.IOException;
 import java.net.URI;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import com.google.common.collect.Lists;
 import org.junit.After;
@@ -72,7 +72,7 @@ public class EnclaveTest {
   }
 
   @Test
-  public void testUpCheck() throws InterruptedException {
+  public void testUpCheck() throws InterruptedException, ExecutionException {
     assertThat(enclave.upCheck()).isTrue();
   }
 
@@ -182,8 +182,6 @@ public class EnclaveTest {
 
   @Test
   public void whenUpCheckFailsThrows() {
-    final Throwable thrown = catchThrowable(() -> new Enclave(URI.create("http://null")).upCheck());
-    assertThat(thrown).isInstanceOf(IOException.class);
-    assertThat(thrown).hasMessageContaining("Failed to perform upcheck");
+    assertThat(new Enclave(URI.create("http://127.0.0.1:65535")).upCheck()).isFalse();
   }
 }
