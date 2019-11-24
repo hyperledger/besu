@@ -37,6 +37,8 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
   private static final Bytes METADATA_KEY_SUFFIX = Bytes.of("METADATA".getBytes(UTF_8));
   private static final Bytes STATUS_KEY_SUFFIX = Bytes.of("STATUS".getBytes(UTF_8));
   private static final Bytes REVERT_KEY_SUFFIX = Bytes.of("REVERT".getBytes(UTF_8));
+  private static final Bytes PRIVACY_GROUP_HEAD_KEY_SUFFIX =
+          Bytes.of("HEAD".getBytes(UTF_8));
 
   private final KeyValueStorage keyValueStorage;
 
@@ -91,6 +93,12 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
     return get(BytesValues.concatenate(blockHash, privacyGroupId), METADATA_KEY_SUFFIX)
         .map(this::rlpDecodePrivateBlockMetadata);
 >>>>>>> WIP - need to fix AT
+  }
+
+  @Override
+  public Optional<Bytes> getPrivacyGroupHead(
+      final Bytes32 blockHash, final Bytes32 privacyGroupId) {
+    return get(BytesValues.concatenate(blockHash, privacyGroupId), PRIVACY_GROUP_HEAD_KEY_SUFFIX);
   }
 
   @Override
@@ -169,6 +177,16 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
           Bytes.concatenate(blockHash, privacyGroupId),
           METADATA_KEY_SUFFIX,
           RLP.encode(metadata::writeTo));
+      return this;
+    }
+
+    @Override
+    public Updater putPrivacyGroupHead(
+        final Bytes32 blockHash, final Bytes32 privacyGroupId, final Bytes32 latestBlockHash) {
+      set(
+          Bytes.concatenate(blockHash, privacyGroupId),
+          PRIVACY_GROUP_HEAD_KEY_SUFFIX,
+          latestBlockHash);
       return this;
     }
 
