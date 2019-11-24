@@ -45,6 +45,7 @@ import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.Restriction;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyStorageProvider;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.privacy.storage.keyvalue.PrivacyKeyValueStorageProviderBuilder;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
@@ -55,6 +56,7 @@ import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactor
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBFactoryConfiguration;
 import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.testutil.TestClock;
+import org.hyperledger.besu.util.bytes.Bytes32;
 import org.hyperledger.besu.util.bytes.BytesValue;
 import org.hyperledger.besu.util.bytes.BytesValues;
 import org.hyperledger.besu.util.uint.UInt256;
@@ -115,6 +117,7 @@ public class PrivacyReorgTest {
   private BesuController besuController;
   private OrionTestHarness enclave;
   private PrivateStateRootResolver privateStateRootResolver;
+  private PrivacyParameters privacyParameters;
 
   @Before
   public void setUp() throws IOException {
@@ -130,7 +133,7 @@ public class PrivacyReorgTest {
     final Path dbDir = dataDir.resolve("database");
 
     // Configure Privacy
-    final PrivacyParameters privacyParameters =
+    privacyParameters =
         new PrivacyParameters.Builder()
             .setEnabled(true)
             .setStorageProvider(createKeyValueStorageProvider(dataDir, dbDir))
@@ -157,6 +160,65 @@ public class PrivacyReorgTest {
             .transactionPoolConfiguration(TransactionPoolConfiguration.builder().build())
             .targetGasLimit(GasLimitCalculator.DEFAULT)
             .build();
+  }
+
+  @Test
+  public void privacyGroupHeadIsTracked() {
+    // Setup an initial blockchain with one private transaction
+    final ProtocolContext<?> protocolContext = besuController.getProtocolContext();
+    final DefaultBlockchain blockchain = (DefaultBlockchain) protocolContext.getBlockchain();
+    final PrivateStateStorage privateStateStorage = privacyParameters.getPrivateStateStorage();
+    final BytesValue privacyGroupId =
+        BytesValue.fromHexString(
+            "0xfd3d679c20d01667629ab31c47efd69b1aca3ae3eafe5096a7cdb7948310baa6");
+
+    final Block firstBlock =
+        gen.block(
+            new BlockDataGenerator.BlockOptions()
+                .setBlockNumber(1)
+                .setParentHash(blockchain.getGenesisBlock().getHash())
+                .addTransaction(generateMarker(getEnclaveKey(enclave.clientUrl())))
+                .hasOmmers(false)
+                .setReceiptsRoot(
+                    Hash.fromHexString(
+                        "0xc8267b3f9ed36df3ff8adb51a6d030716f23eeb50270e7fce8d9822ffa7f0461"))
+                .setGasUsed(23176)
+                .setLogsBloom(LogsBloomFilter.empty())
+                .setStateRoot(
+                    Hash.fromHexString(
+                        "0x16979b290f429e06d86a43584c7d8689d4292ade9a602e5c78e2867c6ebd904e")));
+
+    appendBlock(besuController, blockchain, protocolContext, firstBlock);
+
+    assertThat(
+            privateStateStorage.getPrivacyGroupHead(
+                blockchain.getGenesisBlock().getHash(), Bytes32.wrap(privacyGroupId)))
+        .isEmpty();
+    assertThat(
+            privateStateStorage.getPrivacyGroupHead(
+                firstBlock.getHash(), Bytes32.wrap(privacyGroupId)))
+        .contains(firstBlock.getHash());
+
+    final Block secondBlock =
+        gen.block(
+            new BlockDataGenerator.BlockOptions()
+                .setBlockNumber(2)
+                .setParentHash(firstBlock.getHeader().getHash())
+                .addTransaction(generateMarker(getEnclaveKey(enclave.clientUrl())))
+                .hasOmmers(false)
+                .setReceiptsRoot(
+                    Hash.fromHexString(
+                        "0xc8267b3f9ed36df3ff8adb51a6d030716f23eeb50270e7fce8d9822ffa7f0461"))
+                .setGasUsed(23176)
+                .setLogsBloom(LogsBloomFilter.empty())
+                .setStateRoot(
+                    Hash.fromHexString(
+                        "0x35c315ee7d272e5b612d454ee87c948657310ab33208b57122f8d0525e91f35e")));
+
+    assertThat(
+            privateStateStorage.getPrivacyGroupHead(
+                secondBlock.getHash(), Bytes32.wrap(privacyGroupId)))
+        .contains(firstBlock.getHash());
   }
 
   @Test
