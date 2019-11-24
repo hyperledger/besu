@@ -51,6 +51,8 @@ public class Enclave {
   private static final AsciiString JSON = APPLICATION_JSON;
   private static final AsciiString ORION = AsciiString.of("application/vnd.orion.v1+json");
 
+  private static final long REQUEST_TIMEOUT_MS = 500L;
+
   private final Vertx vertx;
   private final HttpClient client;
 
@@ -67,18 +69,20 @@ public class Enclave {
 
   public boolean upCheck() {
     final CompletableFuture<Boolean> responseFuture = new CompletableFuture<>();
-    final HttpClientRequest request = client.request(HttpMethod.GET, "/upcheck").setTimeout(100);
-    request.exceptionHandler(responseFuture::completeExceptionally);
-    request.handler(
-        response ->
-            response.bodyHandler(
-                body -> {
-                  if (response.statusCode() == 200) {
-                    final String bodyContent = body.toString(StandardCharsets.UTF_8);
-                    responseFuture.complete(bodyContent.equals("I'm up!"));
-                  }
-                }));
-    request.end();
+    client
+        .request(HttpMethod.GET, "/upcheck")
+        .setTimeout(REQUEST_TIMEOUT_MS)
+        .exceptionHandler(responseFuture::completeExceptionally)
+        .handler(
+            response ->
+                response.bodyHandler(
+                    body -> {
+                      if (response.statusCode() == 200) {
+                        final String bodyContent = body.toString(StandardCharsets.UTF_8);
+                        responseFuture.complete(bodyContent.equals("I'm up!"));
+                      }
+                    }))
+        .end();
 
     try {
       return responseFuture.get();
@@ -115,12 +119,13 @@ public class Enclave {
 
     try {
       final CompletableFuture<T> result = new CompletableFuture<>();
-      final HttpClientRequest request = client.request(HttpMethod.POST, endpoint);
-      request.handler(response -> handleResponse(response, responseType, result));
-      request.putHeader(HttpHeaders.CONTENT_TYPE, mediaType);
-      request.exceptionHandler(result::completeExceptionally);
-      request.setChunked(false);
-      request.end(objectMapper.writeValueAsString(content));
+      client.request(HttpMethod.POST, endpoint)
+          .handler(response -> handleResponse(response, responseType, result))
+          .putHeader(HttpHeaders.CONTENT_TYPE, mediaType)
+          .setTimeout(REQUEST_TIMEOUT_MS)
+          .exceptionHandler(result::completeExceptionally)
+          .setChunked(false)
+          .end(objectMapper.writeValueAsString(content));
       return result.get();
     } catch (final JsonProcessingException e) {
       throw new EnclaveException("Failed to serialise request to json body.");
