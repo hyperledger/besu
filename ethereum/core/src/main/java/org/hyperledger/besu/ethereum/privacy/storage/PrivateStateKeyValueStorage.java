@@ -18,7 +18,9 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
+import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
@@ -38,7 +40,9 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
   private static final Bytes STATUS_KEY_SUFFIX = Bytes.of("STATUS".getBytes(UTF_8));
   private static final Bytes REVERT_KEY_SUFFIX = Bytes.of("REVERT".getBytes(UTF_8));
   private static final Bytes PRIVACY_GROUP_HEAD_KEY_SUFFIX =
-          Bytes.of("HEAD".getBytes(UTF_8));
+      Bytes.of("HEAD".getBytes(UTF_8));
+  private static final Bytes PRIVACY_GROUPS_KEY_SUFFIX =
+      Bytes.of("GROUPS".getBytes(UTF_8));
 
   private final KeyValueStorage keyValueStorage;
 
@@ -102,6 +106,11 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
   }
 
   @Override
+  public Optional<List<Bytes>> getPrivacyGroups() {
+    return get(Bytes.EMPTY, PRIVACY_GROUPS_KEY_SUFFIX).map(this::rlpDecodeList);
+  }
+
+  @Override
   public boolean isPrivateStateAvailable(final Bytes32 transactionHash) {
     return false;
   }
@@ -119,8 +128,12 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
     return RLP.input(bytes).readList(Log::readFrom);
   }
 
-  private PrivateBlockMetadata rlpDecodePrivateBlockMetadata(final BytesValue bytes) {
+  private PrivateBlockMetadata rlpDecodePrivateBlockMetadata(final Bytes bytes) {
     return PrivateBlockMetadata.readFrom(RLP.input(bytes));
+  }
+
+  private List<Bytes> rlpDecodeList(final Bytes bytes) {
+    return RLP.input(bytes).readList(RLPInput::readBytesValue);
   }
 
   @Override
@@ -187,6 +200,16 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
           Bytes.concatenate(blockHash, privacyGroupId),
           PRIVACY_GROUP_HEAD_KEY_SUFFIX,
           latestBlockHash);
+      return this;
+    }
+
+    @Override
+    public Updater putPrivacyGroups(final List<Bytes> bytes) {
+      final BytesValueRLPOutput bytesValueRLPOutput = new BytesValueRLPOutput();
+      bytesValueRLPOutput.startList();
+      bytes.forEach(bytesValueRLPOutput::writeBytesValue);
+      bytesValueRLPOutput.endList();
+      set(Bytes.EMPTY, PRIVACY_GROUPS_KEY_SUFFIX, bytesValueRLPOutput.encoded());
       return this;
     }
 
