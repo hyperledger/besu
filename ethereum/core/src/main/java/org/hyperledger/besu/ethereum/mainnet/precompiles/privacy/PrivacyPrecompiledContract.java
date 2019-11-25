@@ -134,6 +134,17 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
               messageFrame.getBlockchain(),
               messageFrame.getBlockchain().getBlockHeader(blockHeaderHash).get(),
               privacyGroupId);
+    } else if (privateStateStorage
+        .getPrivateBlockMetadata(
+            ((BlockHeader) messageFrame.getBlockHeader()).getHash(), Bytes32.wrap(privacyGroupId))
+        .isPresent()) {
+      lastRootHash =
+          privateStateStorage
+              .getPrivateBlockMetadata(
+                  ((BlockHeader) messageFrame.getBlockHeader()).getHash(),
+                  Bytes32.wrap(privacyGroupId))
+              .get()
+              .getLatestStateRoot();
     } else {
       lastRootHash = EMPTY_ROOT_HASH;
     }
