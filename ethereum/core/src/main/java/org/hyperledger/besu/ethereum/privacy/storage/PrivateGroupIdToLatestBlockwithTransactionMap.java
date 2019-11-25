@@ -22,37 +22,58 @@ import org.hyperledger.besu.util.bytes.Bytes32;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class PrivateGroupIdToLatestBlockwithTransactionMap {
-    private final Map<Bytes32, Hash> map;
+  private final Map<Bytes32, Hash> map;
 
-    public final static PrivateGroupIdToLatestBlockwithTransactionMap EMPTY = new PrivateGroupIdToLatestBlockwithTransactionMap(new HashMap<>());
+  public static final PrivateGroupIdToLatestBlockwithTransactionMap EMPTY =
+      new PrivateGroupIdToLatestBlockwithTransactionMap(new HashMap<>());
 
-    public PrivateGroupIdToLatestBlockwithTransactionMap(final Map<Bytes32, Hash> map) {
-        this.map= map;
-    }
+  public PrivateGroupIdToLatestBlockwithTransactionMap(final Map<Bytes32, Hash> map) {
+    this.map = map;
+  }
 
-    public Map<Bytes32, Hash> getMap() {
-        return map;
-    }
+  public Map<Bytes32, Hash> getMap() {
+    return map;
+  }
 
-    public void writeTo(final RLPOutput out) {
-        out.startList();
+  public void writeTo(final RLPOutput out) {
+    out.startList();
 
-        map.entrySet().stream().forEach(e -> {
-            out.writeBytesValue(e.getKey());
-            out.writeBytesValue(e.getValue());
-        });
+    map.entrySet()
+        .forEach(
+            e -> {
+              out.startList();
+              out.writeBytesValue(e.getKey());
+              out.writeBytesValue(e.getValue());
+              out.endList();
+            });
 
-        out.endList();
-    }
+    out.endList();
+  }
 
-    public static PrivateGroupIdToLatestBlockwithTransactionMap readFrom(final RLPInput input) {
-        final List<PrivateGroupIdBlockHashMapEntry> entries = input.readList(PrivateGroupIdBlockHashMapEntry::readFrom);
+  public static PrivateGroupIdToLatestBlockwithTransactionMap readFrom(final RLPInput input) {
+    final List<PrivateGroupIdBlockHashMapEntry> entries =
+        input.readList(PrivateGroupIdBlockHashMapEntry::readFrom);
 
-        final HashMap<Bytes32, Hash> map = new HashMap<>();
-        entries.stream().forEach(e -> map.put(e.getPrivacyGroup(), e.getBlockHash()));
+    final HashMap<Bytes32, Hash> map = new HashMap<>();
+    entries.stream().forEach(e -> map.put(e.getPrivacyGroup(), e.getBlockHash()));
 
-        return new PrivateGroupIdToLatestBlockwithTransactionMap(map);
-    }
+    return new PrivateGroupIdToLatestBlockwithTransactionMap(map);
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    final PrivateGroupIdToLatestBlockwithTransactionMap that =
+        (PrivateGroupIdToLatestBlockwithTransactionMap) o;
+    return map.equals(that.map);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(map);
+  }
 }

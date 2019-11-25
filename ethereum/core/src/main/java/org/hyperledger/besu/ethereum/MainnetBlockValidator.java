@@ -16,19 +16,33 @@ package org.hyperledger.besu.ethereum;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
+import org.hyperledger.besu.enclave.Enclave;
+import org.hyperledger.besu.enclave.types.ReceiveRequest;
+import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.BlockBodyValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivateGroupIdToLatestBlockwithTransactionMap;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
+import org.hyperledger.besu.util.bytes.Bytes32;
+import org.hyperledger.besu.util.bytes.BytesValue;
+import org.hyperledger.besu.util.bytes.BytesValues;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
+import com.google.common.collect.Maps;
 import org.apache.logging.log4j.Logger;
 
 public class MainnetBlockValidator<C> implements BlockValidator<C> {
@@ -40,14 +54,30 @@ public class MainnetBlockValidator<C> implements BlockValidator<C> {
   private final BlockBodyValidator<C> blockBodyValidator;
 
   private final BlockProcessor blockProcessor;
+  private PrivacyParameters privacyParameters;
+
+  private PrivateStateStorage privateStateStorage;
+  private Address address;
+  private Enclave enclave;
 
   public MainnetBlockValidator(
       final BlockHeaderValidator<C> blockHeaderValidator,
       final BlockBodyValidator<C> blockBodyValidator,
-      final BlockProcessor blockProcessor) {
+      final BlockProcessor blockProcessor,
+      final PrivacyParameters privacyParameters) {
     this.blockHeaderValidator = blockHeaderValidator;
     this.blockBodyValidator = blockBodyValidator;
     this.blockProcessor = blockProcessor;
+    this.privacyParameters = privacyParameters;
+    setUpForPrivacy(privacyParameters);
+  }
+
+  private void setUpForPrivacy(final PrivacyParameters privacyParameters) {
+    if (privacyParameters.isEnabled()) {
+      privateStateStorage = privacyParameters.getPrivateStateStorage();
+      address = Address.privacyPrecompiled(privacyParameters.getPrivacyAddress());
+      enclave = new Enclave(privacyParameters.getEnclaveUri());
+    }
   }
 
   @Override
@@ -90,9 +120,33 @@ public class MainnetBlockValidator<C> implements BlockValidator<C> {
       return Optional.empty();
     }
 
-    // get all groups
-    // for each group check if there is a PMT for that group in this block and update the head
-    // for all other groups copy the head from the parent of this block being processed
+    if (privacyParameters.isEnabled()) {
+      // get all groups
+      final HashMap<Bytes32, Hash> privacyGroupToLatestBlockWithTransactionMap =
+          Maps.newHashMap(
+              privateStateStorage
+                  .getPrivacyGroupToLatestBlockWithTransactionMap(block.getHeader().getParentHash())
+                  .map(PrivateGroupIdToLatestBlockwithTransactionMap::getMap)
+                  .orElse(Collections.emptyMap()));
+      block.getBody().getTransactions().stream()
+          .filter(t -> t.getTo().isPresent() && t.getTo().get().equals(address))
+          .forEach(
+              t -> {
+                final String key = BytesValues.asBase64String(t.getData().get());
+                final ReceiveResponse receiveResponse = enclave.receive(new ReceiveRequest(key));
+                final BytesValue privacyGroupId =
+                    BytesValues.fromBase64(receiveResponse.getPrivacyGroupId());
+                privacyGroupToLatestBlockWithTransactionMap.put(
+                    Bytes32.wrap(privacyGroupId), block.getHash());
+              });
+      privateStateStorage
+          .updater()
+          .putPrivacyGroupToLatestBlockWithTransactionMap(
+              block.getHash(),
+              new PrivateGroupIdToLatestBlockwithTransactionMap(
+                  privacyGroupToLatestBlockWithTransactionMap))
+          .commit();
+    }
 
     final List<TransactionReceipt> receipts = result.getReceipts();
     if (!blockBodyValidator.validateBody(
