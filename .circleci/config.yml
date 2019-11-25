@@ -183,7 +183,8 @@ jobs:
       - run:
           name: Publish Docker
           command: |
-            docker login --username "${DOCKER_USER}" --password "${DOCKER_PASSWORD}"
+            docker login --username "${DOCKER_USER}" -p "${DOCKER_PASSWORD}"
+            docker login $ACR_REPO -u "${ACR_DOCKER_USER}" -p "${ACR_DOCKER_PASSWORD}"
             ./gradlew --no-daemon --parallel "-Pbranch=${CIRCLE_BRANCH}" dockerUpload
 
 workflows:
