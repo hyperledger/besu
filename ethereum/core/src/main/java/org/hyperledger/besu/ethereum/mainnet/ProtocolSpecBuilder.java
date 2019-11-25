@@ -313,8 +313,7 @@ public class ProtocolSpecBuilder<T> {
             miningBeneficiaryCalculator,
             skipZeroBlockRewards);
     final BlockValidator<T> blockValidator =
-        blockValidatorBuilder.apply(
-            blockHeaderValidator, blockBodyValidator, blockProcessor, privacyParameters);
+        blockValidatorBuilder.apply(blockHeaderValidator, blockBodyValidator, blockProcessor);
     final BlockImporter<T> blockImporter = blockImporterBuilder.apply(blockValidator);
     return new ProtocolSpec<>(
         name,
@@ -371,8 +370,7 @@ public class ProtocolSpecBuilder<T> {
     BlockValidator<T> apply(
         BlockHeaderValidator<T> blockHeaderValidator,
         BlockBodyValidator<T> blockBodyValidator,
-        BlockProcessor blockProcessor,
-        PrivacyParameters privacyParameters);
+        BlockProcessor blockProcessor);
   }
 
   public interface BlockImporterBuilder<T> {
