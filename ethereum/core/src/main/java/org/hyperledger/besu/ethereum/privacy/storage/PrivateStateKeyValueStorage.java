@@ -80,12 +80,12 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
   }
 
   @Override
-  public Optional<PrivateGroupIdToLatestBlockwithTransactionMap>
+  public Optional<PrivateGroupIdToLatestBlockWithTransactionMap>
       getPrivacyGroupToLatestBlockWithTransactionMap(final Bytes32 blockHash) {
     return get(blockHash, PRIVACY_GROUP_TO_LATEST_BLOCK_WITH_TX_MAP_PREFIX)
         .map(
             b ->
-                PrivateGroupIdToLatestBlockwithTransactionMap.readFrom(
+                PrivateGroupIdToLatestBlockWithTransactionMap.readFrom(
                     new BytesValueRLPInput(b, false)));
   }
 
@@ -166,7 +166,7 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
 
     @Override
     public PrivateStateStorage.Updater putPrivacyGroupToLatestBlockWithTransactionMap(
-        final Bytes32 blockHash, final PrivateGroupIdToLatestBlockwithTransactionMap map) {
+        final Bytes32 blockHash, final PrivateGroupIdToLatestBlockWithTransactionMap map) {
       set(blockHash, PRIVACY_GROUP_TO_LATEST_BLOCK_WITH_TX_MAP_PREFIX, RLP.encode(map::writeTo));
       return this;
     }

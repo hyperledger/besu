@@ -85,7 +85,7 @@ public class PrivateStateRootResolverTest {
   }
 
   @Test
-  public void mustResolveStateRootIfChainHeadIsNotCommited() {
+  public void mustResolveStateRootIfChainHeadIsNotCommitted() {
     final BlockDataGenerator.BlockOptions options =
         new BlockDataGenerator.BlockOptions()
             .setBlockNumber(BLOCKCHAIN.getChainHeadBlockNumber())
@@ -135,14 +135,14 @@ public class PrivateStateRootResolverTest {
         BLOCKCHAIN.getBlockByNumber(16).get().getHash(),
         Bytes32.wrap(privacyGroupId),
         new PrivateBlockMetadata(
-            Arrays.asList(
+            Collections.singletonList(
                 new PrivateTransactionMetadata(
                     BLOCK_GENERATOR.transaction().getHash(), pmt1StateHash))));
     updater.putPrivateBlockMetadata(
         BLOCKCHAIN.getBlockByNumber(16).get().getHash(),
         Bytes32.wrap(failingPrivacyGroupId),
         new PrivateBlockMetadata(
-            Arrays.asList(
+            Collections.singletonList(
                 new PrivateTransactionMetadata(
                     BLOCK_GENERATOR.transaction().getHash(), pmt2StateHash))));
     updater.commit();
