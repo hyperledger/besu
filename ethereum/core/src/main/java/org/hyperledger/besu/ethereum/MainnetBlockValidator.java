@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum;
 import static org.apache.logging.log4j.LogManager.getLogger;
 
 import org.hyperledger.besu.enclave.Enclave;
+import org.hyperledger.besu.enclave.EnclaveException;
 import org.hyperledger.besu.enclave.types.ReceiveRequest;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -31,7 +32,7 @@ import org.hyperledger.besu.ethereum.mainnet.BlockBodyValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
-import org.hyperledger.besu.ethereum.privacy.storage.PrivateGroupIdToLatestBlockwithTransactionMap;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivateGroupIdToLatestBlockWithTransactionMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.util.bytes.Bytes32;
 import org.hyperledger.besu.util.bytes.BytesValue;
@@ -126,24 +127,28 @@ public class MainnetBlockValidator<C> implements BlockValidator<C> {
           Maps.newHashMap(
               privateStateStorage
                   .getPrivacyGroupToLatestBlockWithTransactionMap(block.getHeader().getParentHash())
-                  .map(PrivateGroupIdToLatestBlockwithTransactionMap::getMap)
+                  .map(PrivateGroupIdToLatestBlockWithTransactionMap::getMap)
                   .orElse(Collections.emptyMap()));
       block.getBody().getTransactions().stream()
           .filter(t -> t.getTo().isPresent() && t.getTo().get().equals(address))
           .forEach(
               t -> {
                 final String key = BytesValues.asBase64String(t.getData().get());
-                final ReceiveResponse receiveResponse = enclave.receive(new ReceiveRequest(key));
-                final BytesValue privacyGroupId =
-                    BytesValues.fromBase64(receiveResponse.getPrivacyGroupId());
-                privacyGroupToLatestBlockWithTransactionMap.put(
-                    Bytes32.wrap(privacyGroupId), block.getHash());
+                try {
+                  final ReceiveResponse receiveResponse = enclave.receive(new ReceiveRequest(key));
+                  final BytesValue privacyGroupId =
+                      BytesValues.fromBase64(receiveResponse.getPrivacyGroupId());
+                  privacyGroupToLatestBlockWithTransactionMap.put(
+                      Bytes32.wrap(privacyGroupId), block.getHash());
+                } catch (final EnclaveException e) {
+                  LOG.warn("Enclave does not have private transaction with key {}.", key, e);
+                }
               });
       privateStateStorage
           .updater()
           .putPrivacyGroupToLatestBlockWithTransactionMap(
               block.getHash(),
-              new PrivateGroupIdToLatestBlockwithTransactionMap(
+              new PrivateGroupIdToLatestBlockWithTransactionMap(
                   privacyGroupToLatestBlockWithTransactionMap))
           .commit();
     }

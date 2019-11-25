@@ -24,13 +24,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-public class PrivateGroupIdToLatestBlockwithTransactionMap {
+public class PrivateGroupIdToLatestBlockWithTransactionMap {
   private final Map<Bytes32, Hash> map;
 
-  public static final PrivateGroupIdToLatestBlockwithTransactionMap EMPTY =
-      new PrivateGroupIdToLatestBlockwithTransactionMap(new HashMap<>());
+  public static final PrivateGroupIdToLatestBlockWithTransactionMap EMPTY =
+      new PrivateGroupIdToLatestBlockWithTransactionMap(new HashMap<>());
 
-  public PrivateGroupIdToLatestBlockwithTransactionMap(final Map<Bytes32, Hash> map) {
+  public PrivateGroupIdToLatestBlockWithTransactionMap(final Map<Bytes32, Hash> map) {
     this.map = map;
   }
 
@@ -53,22 +53,22 @@ public class PrivateGroupIdToLatestBlockwithTransactionMap {
     out.endList();
   }
 
-  public static PrivateGroupIdToLatestBlockwithTransactionMap readFrom(final RLPInput input) {
+  public static PrivateGroupIdToLatestBlockWithTransactionMap readFrom(final RLPInput input) {
     final List<PrivateGroupIdBlockHashMapEntry> entries =
         input.readList(PrivateGroupIdBlockHashMapEntry::readFrom);
 
     final HashMap<Bytes32, Hash> map = new HashMap<>();
     entries.stream().forEach(e -> map.put(e.getPrivacyGroup(), e.getBlockHash()));
 
-    return new PrivateGroupIdToLatestBlockwithTransactionMap(map);
+    return new PrivateGroupIdToLatestBlockWithTransactionMap(map);
   }
 
   @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    final PrivateGroupIdToLatestBlockwithTransactionMap that =
-        (PrivateGroupIdToLatestBlockwithTransactionMap) o;
+    final PrivateGroupIdToLatestBlockWithTransactionMap that =
+        (PrivateGroupIdToLatestBlockWithTransactionMap) o;
     return map.equals(that.map);
   }
 
