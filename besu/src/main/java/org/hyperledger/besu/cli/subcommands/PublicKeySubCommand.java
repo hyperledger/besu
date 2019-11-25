@@ -137,9 +137,9 @@ public class PublicKeySubCommand implements Runnable {
   /**
    * Account address export sub-command
    *
-   * <p>Export of the account address is writing the address to the standard output by default.
-   * An option enables to write it in a file. Indeed, a direct output of the value to standard out
-   * is not always recommended as reading can be made difficult as the value can be mixed with other
+   * <p>Export of the account address is writing the address to the standard output by default. An
+   * option enables to write it in a file. Indeed, a direct output of the value to standard out is
+   * not always recommended as reading can be made difficult as the value can be mixed with other
    * information like logs that are in KeyPairUtil that is inevitable.
    */
   @Command(
