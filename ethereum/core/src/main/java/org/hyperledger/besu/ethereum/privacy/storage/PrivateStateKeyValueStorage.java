@@ -18,6 +18,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -39,10 +40,8 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
   private static final Bytes METADATA_KEY_SUFFIX = Bytes.of("METADATA".getBytes(UTF_8));
   private static final Bytes STATUS_KEY_SUFFIX = Bytes.of("STATUS".getBytes(UTF_8));
   private static final Bytes REVERT_KEY_SUFFIX = Bytes.of("REVERT".getBytes(UTF_8));
-  private static final Bytes PRIVACY_GROUP_HEAD_KEY_SUFFIX =
-      Bytes.of("HEAD".getBytes(UTF_8));
-  private static final Bytes PRIVACY_GROUPS_KEY_SUFFIX =
-      Bytes.of("GROUPS".getBytes(UTF_8));
+  private static final Bytes PRIVACY_GROUP_TO_LATEST_BLOCK_WITH_TX_MAP_PREFIX = Bytes.of("MAP".getBytes(UTF_8));
+
 
   private final KeyValueStorage keyValueStorage;
 
@@ -100,14 +99,8 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
   }
 
   @Override
-  public Optional<Bytes> getPrivacyGroupHead(
-      final Bytes32 blockHash, final Bytes32 privacyGroupId) {
-    return get(BytesValues.concatenate(blockHash, privacyGroupId), PRIVACY_GROUP_HEAD_KEY_SUFFIX);
-  }
-
-  @Override
-  public Optional<List<Bytes>> getPrivacyGroups() {
-    return get(Bytes.EMPTY, PRIVACY_GROUPS_KEY_SUFFIX).map(this::rlpDecodeList);
+  public Optional<PrivateGroupIdToLatestBlockwithTransactionMap> getPrivacyGroupToLatestBlockWithTransactionMap(final Bytes32 blockHash) {
+    return get(blockHash, PRIVACY_GROUP_TO_LATEST_BLOCK_WITH_TX_MAP_PREFIX).map(b -> PrivateGroupIdToLatestBlockwithTransactionMap.readFrom(new BytesValueRLPInput(b, false)));
   }
 
   @Override
@@ -194,22 +187,8 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
     }
 
     @Override
-    public Updater putPrivacyGroupHead(
-        final Bytes32 blockHash, final Bytes32 privacyGroupId, final Bytes32 latestBlockHash) {
-      set(
-          Bytes.concatenate(blockHash, privacyGroupId),
-          PRIVACY_GROUP_HEAD_KEY_SUFFIX,
-          latestBlockHash);
-      return this;
-    }
-
-    @Override
-    public Updater putPrivacyGroups(final List<Bytes> bytes) {
-      final BytesValueRLPOutput bytesValueRLPOutput = new BytesValueRLPOutput();
-      bytesValueRLPOutput.startList();
-      bytes.forEach(bytesValueRLPOutput::writeBytesValue);
-      bytesValueRLPOutput.endList();
-      set(Bytes.EMPTY, PRIVACY_GROUPS_KEY_SUFFIX, bytesValueRLPOutput.encoded());
+    public PrivateStateStorage.Updater putPrivacyGroupToLatestBlockWithTransactionMap(final Bytes32 blockHash, final PrivateGroupIdToLatestBlockwithTransactionMap map) {
+      set(blockHash, PRIVACY_GROUP_TO_LATEST_BLOCK_WITH_TX_MAP_PREFIX, RLP.encode(map::writeTo));
       return this;
     }
 
