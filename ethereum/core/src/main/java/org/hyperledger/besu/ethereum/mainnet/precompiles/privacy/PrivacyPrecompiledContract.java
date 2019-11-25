@@ -32,10 +32,12 @@ import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateBlockMetadata;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivateGroupIdToLatestBlockWithTransactionMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateTransactionMetadata;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
+import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
@@ -44,10 +46,14 @@ import org.hyperledger.besu.util.bytes.Bytes32;
 import org.hyperledger.besu.util.bytes.BytesValue;
 import org.hyperledger.besu.util.bytes.BytesValues;
 
+import java.util.Collections;
+import java.util.Map;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
+  private static final Hash EMPTY_ROOT_HASH = Hash.wrap(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
 
   private final Enclave enclave;
   private final WorldStateArchive privateWorldStateArchive;
@@ -97,7 +103,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
     try {
       receiveResponse = enclave.receive(receiveRequest);
     } catch (final Exception e) {
-      LOG.debug("Enclave probably does not have private transaction payload with key {}", key, e);
+      LOG.debug("Enclave does not have private transaction payload with key {}", key, e);
       return BytesValue.EMPTY;
     }
 
@@ -107,19 +113,30 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
     final WorldUpdater publicWorldState = messageFrame.getWorldState();
     final BytesValue privacyGroupId = BytesValues.fromBase64(receiveResponse.getPrivacyGroupId());
 
-    LOG.trace(
-        "Processing private transaction {} in privacy group {}",
-        privateTransaction.hash(),
-        privacyGroupId);
+  LOG.trace(
+          "Processing private transaction {} in privacy group {}",
+          privateTransaction.getHash(),
+          privacyGroupId);
 
-    // Check if this is tracked privacy group - if not then assume empty state and add to list of
-    // tracked privacy groups
-    // If it is a tracked privacy group get the current head of this group
+    final Map<Bytes32, Hash> privacyGroupToLatestBlockWithTransactionMap =
+        privateStateStorage
+            .getPrivacyGroupToLatestBlockWithTransactionMap(
+                messageFrame.getBlockHeader().getParentHash())
+            .map(PrivateGroupIdToLatestBlockWithTransactionMap::getMap)
+            .orElse(Collections.emptyMap());
 
-    // get the last world state root hash or create a new one
-    final Hash lastRootHash =
-        privateStateRootResolver.resolveLastStateRoot(
-            messageFrame.getBlockchain(), messageFrame.getBlockHeader(), privacyGroupId);
+    final Hash lastRootHash;
+    if (privacyGroupToLatestBlockWithTransactionMap.containsKey(Bytes32.wrap(privacyGroupId))) {
+      final Hash blockHeaderHash =
+          privacyGroupToLatestBlockWithTransactionMap.get(Bytes32.wrap(privacyGroupId));
+      lastRootHash =
+          privateStateRootResolver.resolveLastStateRoot(
+              messageFrame.getBlockchain(),
+              messageFrame.getBlockchain().getBlockHeader(blockHeaderHash).get(),
+              privacyGroupId);
+    } else {
+      lastRootHash = EMPTY_ROOT_HASH;
+    }
 
     final MutableWorldState disposablePrivateState =
         privateWorldStateArchive.getMutable(lastRootHash).get();
@@ -140,7 +157,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
     if (result.isInvalid() || !result.isSuccessful()) {
       LOG.error(
           "Failed to process private transaction {}: {}",
-          privateTransaction.hash(),
+          privateTransaction.getHash(),
           result.getValidationResult().getErrorMessage());
       return BytesValue.EMPTY;
     }
