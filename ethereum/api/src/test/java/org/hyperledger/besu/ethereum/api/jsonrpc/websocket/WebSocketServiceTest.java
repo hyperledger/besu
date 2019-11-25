@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.websocket;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods.WebSocketMethodsFactory;
@@ -34,7 +35,9 @@ import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpClientRequest;
 import io.vertx.core.http.HttpServerOptions;
+import io.vertx.core.http.WebSocket;
 import io.vertx.core.http.WebSocketBase;
+import io.vertx.core.http.WebSocketFrame;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
@@ -98,13 +101,13 @@ public class WebSocketServiceTest {
     httpClient.websocket(
         "/",
         webSocket -> {
-          webSocket.write(Buffer.buffer(request));
-
           webSocket.handler(
               buffer -> {
                 context.assertEquals(expectedResponse, buffer.toString());
                 async.complete();
               });
+
+          webSocket.writeTextMessage(request);
         });
 
     async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
@@ -181,5 +184,35 @@ public class WebSocketServiceTest {
             });
     request.putHeader("Content-Type", "application/json; charset=utf-8");
     request.end("{\"username\":\"user\",\"password\":\"pass\"}");
+  }
+
+  @Test
+  public void webSocketDoesNotToHandlePingPayloadAsJsonRpcRequest(final TestContext context) {
+    final Async async = context.async();
+
+    httpClient.webSocket(
+        "/",
+        result -> {
+          WebSocket websocket = result.result();
+
+          websocket.handler(
+              buffer -> {
+                final String payload = buffer.toString();
+                if (!payload.equals("foo")) {
+                  context.fail("Only expected PONG response with same payload as PING request");
+                }
+              });
+
+          websocket.closeHandler(
+              h -> {
+                verifyNoInteractions(webSocketRequestHandlerSpy);
+                async.complete();
+              });
+
+          websocket.writeFrame(WebSocketFrame.pingFrame(Buffer.buffer("foo")));
+          websocket.close();
+        });
+
+    async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
   }
 }

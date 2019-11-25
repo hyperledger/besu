@@ -20,6 +20,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -55,11 +56,11 @@ public class EthCoinbaseTest {
 
   @Test
   public void shouldReturnExpectedValueWhenMiningCoordinatorExists() {
-    final JsonRpcRequest request = requestWithParams();
+    final JsonRpcRequestContext request = requestWithParams();
     final String expectedAddressString = "fe3b557e8fb62b89f4916b721be55ceb828dbd73";
     final Address expectedAddress = Address.fromHexString(expectedAddressString);
     final JsonRpcResponse expectedResponse =
-        new JsonRpcSuccessResponse(request.getId(), "0x" + expectedAddressString);
+        new JsonRpcSuccessResponse(request.getRequest().getId(), "0x" + expectedAddressString);
     when(miningCoordinator.getCoinbase()).thenReturn(Optional.of(expectedAddress));
 
     final JsonRpcResponse actualResponse = method.response(request);
@@ -70,16 +71,16 @@ public class EthCoinbaseTest {
 
   @Test
   public void shouldReturnErrorWhenCoinbaseNotSpecified() {
-    final JsonRpcRequest request = requestWithParams();
+    final JsonRpcRequestContext request = requestWithParams();
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getId(), JsonRpcError.COINBASE_NOT_SPECIFIED);
+        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.COINBASE_NOT_SPECIFIED);
     when(miningCoordinator.getCoinbase()).thenReturn(Optional.empty());
 
     final JsonRpcResponse actualResponse = method.response(request);
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
   }
 
-  private JsonRpcRequest requestWithParams(final Object... params) {
-    return new JsonRpcRequest(JSON_RPC_VERSION, ETH_METHOD, params);
+  private JsonRpcRequestContext requestWithParams(final Object... params) {
+    return new JsonRpcRequestContext(new JsonRpcRequest(JSON_RPC_VERSION, ETH_METHOD, params));
   }
 }

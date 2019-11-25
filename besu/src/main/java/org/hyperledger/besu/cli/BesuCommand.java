@@ -85,6 +85,8 @@ import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfigurati
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfigurationBuilder;
 import org.hyperledger.besu.ethereum.permissioning.SmartContractPermissioningConfiguration;
+import org.hyperledger.besu.ethereum.privacy.storage.keyvalue.PrivacyKeyValueStorageProvider;
+import org.hyperledger.besu.ethereum.privacy.storage.keyvalue.PrivacyKeyValueStorageProviderBuilder;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -103,6 +105,7 @@ import org.hyperledger.besu.plugin.services.StorageService;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
+import org.hyperledger.besu.plugin.services.storage.PrivacyKeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
 import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.services.BesuEventsImpl;
@@ -1373,10 +1376,25 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       privacyParametersBuilder.setPrivacyAddress(privacyPrecompiledAddress);
       privacyParametersBuilder.setPrivateKeyPath(privacyMarkerTransactionSigningKeyPath);
       privacyParametersBuilder.setStorageProvider(
-          keyStorageProvider(keyValueStorageName + "-privacy"));
+          privacyKeyStorageProvider(keyValueStorageName + "-privacy"));
     }
 
     return privacyParametersBuilder.build();
+  }
+
+  private PrivacyKeyValueStorageProvider privacyKeyStorageProvider(final String name) {
+    return new PrivacyKeyValueStorageProviderBuilder()
+        .withStorageFactory(
+            (PrivacyKeyValueStorageFactory)
+                storageService
+                    .getByName(name)
+                    .orElseThrow(
+                        () ->
+                            new StorageException(
+                                "No KeyValueStorageFactory found for key: " + name)))
+        .withCommonConfiguration(pluginCommonConfiguration)
+        .withMetricsSystem(getMetricsSystem())
+        .build();
   }
 
   private KeyValueStorageProvider keyStorageProvider(final String name) {
@@ -1435,7 +1453,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     final ObservableMetricsSystem metricsSystem = this.metricsSystem.get();
     final Runner runner =
         runnerBuilder
-            .vertx(Vertx.vertx(createVertxOptions(metricsSystem)))
+            .vertx(createVertx(createVertxOptions(metricsSystem)))
             .besuController(controller)
             .p2pEnabled(p2pEnabled)
             .natMethod(natMethod)
@@ -1463,6 +1481,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     addShutdownHook(runner);
     runner.start();
     runner.awaitStop();
+  }
+
+  protected Vertx createVertx(final VertxOptions vertxOptions) {
+    return Vertx.vertx(vertxOptions);
   }
 
   private VertxOptions createVertxOptions(final MetricsSystem metricsSystem) {

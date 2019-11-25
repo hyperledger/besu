@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
@@ -43,12 +43,13 @@ public class EthCall extends AbstractBlockParameterMethod {
   }
 
   @Override
-  protected BlockParameter blockParameter(final JsonRpcRequest request) {
+  protected BlockParameter blockParameter(final JsonRpcRequestContext request) {
     return request.getRequiredParameter(1, BlockParameter.class);
   }
 
   @Override
-  protected Object resultByBlockNumber(final JsonRpcRequest request, final long blockNumber) {
+  protected Object resultByBlockNumber(
+      final JsonRpcRequestContext request, final long blockNumber) {
     final CallParameter callParams = validateAndGetCallParams(request);
 
     return transactionSimulator
@@ -60,24 +61,24 @@ public class EthCall extends AbstractBlockParameterMethod {
                     .either(
                         (() ->
                             new JsonRpcSuccessResponse(
-                                request.getId(), result.getOutput().toString())),
+                                request.getRequest().getId(), result.getOutput().toString())),
                         reason ->
                             new JsonRpcErrorResponse(
-                                request.getId(),
+                                request.getRequest().getId(),
                                 JsonRpcErrorConverter.convertTransactionInvalidReason(reason))))
         .orElse(validRequestBlockNotFound(request));
   }
 
-  private JsonRpcSuccessResponse validRequestBlockNotFound(final JsonRpcRequest request) {
-    return new JsonRpcSuccessResponse(request.getId(), null);
+  private JsonRpcSuccessResponse validRequestBlockNotFound(final JsonRpcRequestContext request) {
+    return new JsonRpcSuccessResponse(request.getRequest().getId(), null);
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest request) {
-    return (JsonRpcResponse) findResultByParamType(request);
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
+    return (JsonRpcResponse) findResultByParamType(requestContext);
   }
 
-  private CallParameter validateAndGetCallParams(final JsonRpcRequest request) {
+  private CallParameter validateAndGetCallParams(final JsonRpcRequestContext request) {
     final JsonCallParameter callParams = request.getRequiredParameter(0, JsonCallParameter.class);
     if (callParams.getTo() == null) {
       throw new InvalidJsonRpcParameters("Missing \"to\" field in call arguments");

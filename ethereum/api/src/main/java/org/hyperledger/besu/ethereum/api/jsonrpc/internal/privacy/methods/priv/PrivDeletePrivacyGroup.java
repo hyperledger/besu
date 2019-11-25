@@ -19,7 +19,7 @@ import static org.apache.logging.log4j.LogManager.getLogger;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.types.DeletePrivacyGroupRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -45,10 +45,10 @@ public class PrivDeletePrivacyGroup implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest request) {
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     LOG.trace("Executing {}", RpcMethod.PRIV_DELETE_PRIVACY_GROUP.getMethodName());
 
-    final String privacyGroupId = request.getRequiredParameter(0, String.class);
+    final String privacyGroupId = requestContext.getRequiredParameter(0, String.class);
 
     LOG.trace(
         "Deleting a privacy group with privacyGroupId {} and from {}",
@@ -63,8 +63,9 @@ public class PrivDeletePrivacyGroup implements JsonRpcMethod {
     } catch (Exception e) {
       LOG.error("Failed to fetch transaction from Enclave with error " + e.getMessage());
       LOG.error(e);
-      return new JsonRpcSuccessResponse(request.getId(), JsonRpcError.DELETE_PRIVACY_GROUP_ERROR);
+      return new JsonRpcSuccessResponse(
+          requestContext.getRequest().getId(), JsonRpcError.DELETE_PRIVACY_GROUP_ERROR);
     }
-    return new JsonRpcSuccessResponse(request.getId(), response);
+    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), response);
   }
 }

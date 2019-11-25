@@ -20,6 +20,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -54,42 +55,51 @@ public class EthSubscribeTest {
 
   @Test
   public void responseContainsSubscriptionId() {
-    final WebSocketRpcRequest request = createWebSocketRpcRequest();
+    final WebSocketRpcRequest webSocketRequest = createWebSocketRpcRequest();
+    final JsonRpcRequestContext jsonRpcrequestContext = new JsonRpcRequestContext(webSocketRequest);
 
     final SubscribeRequest subscribeRequest =
-        new SubscribeRequest(SubscriptionType.SYNCING, null, null, request.getConnectionId());
+        new SubscribeRequest(
+            SubscriptionType.SYNCING, null, null, webSocketRequest.getConnectionId());
 
-    when(mapperMock.mapSubscribeRequest(eq(request))).thenReturn(subscribeRequest);
+    when(mapperMock.mapSubscribeRequest(eq(jsonRpcrequestContext))).thenReturn(subscribeRequest);
     when(subscriptionManagerMock.subscribe(eq(subscribeRequest))).thenReturn(1L);
 
     final JsonRpcSuccessResponse expectedResponse =
-        new JsonRpcSuccessResponse(request.getId(), Quantity.create((1L)));
+        new JsonRpcSuccessResponse(
+            jsonRpcrequestContext.getRequest().getId(), Quantity.create((1L)));
 
-    assertThat(ethSubscribe.response(request)).isEqualTo(expectedResponse);
+    assertThat(ethSubscribe.response(jsonRpcrequestContext)).isEqualTo(expectedResponse);
   }
 
   @Test
   public void invalidSubscribeRequestRespondsInvalidRequestResponse() {
-    final WebSocketRpcRequest request = createWebSocketRpcRequest();
+    final WebSocketRpcRequest webSocketRequest = createWebSocketRpcRequest();
+    final JsonRpcRequestContext jsonRpcrequestContext = new JsonRpcRequestContext(webSocketRequest);
+
     when(mapperMock.mapSubscribeRequest(any()))
         .thenThrow(new InvalidSubscriptionRequestException());
 
     final JsonRpcErrorResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_REQUEST);
+        new JsonRpcErrorResponse(
+            jsonRpcrequestContext.getRequest().getId(), JsonRpcError.INVALID_REQUEST);
 
-    assertThat(ethSubscribe.response(request)).isEqualTo(expectedResponse);
+    assertThat(ethSubscribe.response(jsonRpcrequestContext)).isEqualTo(expectedResponse);
   }
 
   @Test
   public void uncaughtErrorOnSubscriptionManagerShouldRespondInternalErrorResponse() {
-    final WebSocketRpcRequest request = createWebSocketRpcRequest();
+    final WebSocketRpcRequest webSocketRequest = createWebSocketRpcRequest();
+    final JsonRpcRequestContext jsonRpcrequestContext = new JsonRpcRequestContext(webSocketRequest);
+
     when(mapperMock.mapSubscribeRequest(any())).thenReturn(mock(SubscribeRequest.class));
     when(subscriptionManagerMock.subscribe(any())).thenThrow(new RuntimeException());
 
     final JsonRpcErrorResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getId(), JsonRpcError.INTERNAL_ERROR);
+        new JsonRpcErrorResponse(
+            jsonRpcrequestContext.getRequest().getId(), JsonRpcError.INTERNAL_ERROR);
 
-    assertThat(ethSubscribe.response(request)).isEqualTo(expectedResponse);
+    assertThat(ethSubscribe.response(jsonRpcrequestContext)).isEqualTo(expectedResponse);
   }
 
   private WebSocketRpcRequest createWebSocketRpcRequest() {

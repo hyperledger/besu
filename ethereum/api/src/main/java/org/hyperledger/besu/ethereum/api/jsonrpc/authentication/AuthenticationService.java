@@ -186,6 +186,11 @@ public class AuthenticationService {
                 new JsonObject()
                     .put("permissions", user.principal().getValue("permissions"))
                     .put("username", user.principal().getValue("username"));
+            final String privacyPublicKey = user.principal().getString("privacyPublicKey");
+            if (privacyPublicKey != null) {
+              jwtContents.put("privacyPublicKey", privacyPublicKey);
+            }
+
             final String token = jwtAuthProvider.generateToken(jwtContents, options);
 
             final JsonObject responseBody = new JsonObject().put("token", token);

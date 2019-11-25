@@ -20,6 +20,7 @@ import static java.util.stream.Collectors.toUnmodifiableList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.LogTopic;
 
@@ -39,7 +40,8 @@ public class FilterParameterTest {
   public void jsonWithArrayOfAddressesShouldSerializeSuccessfully() throws Exception {
     final String jsonWithAddressArray =
         "{\"jsonrpc\":\"2.0\",\"method\":\"eth_getLogs\",\"params\":[{\"address\":[\"0x0\",\"0x1\"]}],\"id\":1}";
-    final JsonRpcRequest request = readJsonAsJsonRpcRequest(jsonWithAddressArray);
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(readJsonAsJsonRpcRequest(jsonWithAddressArray));
     final FilterParameter expectedFilterParameter = filterParameterWithAddresses("0x0", "0x1");
 
     final FilterParameter parsedFilterParameter =
@@ -53,7 +55,8 @@ public class FilterParameterTest {
   public void jsonWithSingleAddressShouldSerializeSuccessfully() throws Exception {
     final String jsonWithSingleAddress =
         "{\"jsonrpc\":\"2.0\",\"method\":\"eth_getLogs\",\"params\":[{\"address\":\"0x0\"}],\"id\":1}";
-    final JsonRpcRequest request = readJsonAsJsonRpcRequest(jsonWithSingleAddress);
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(readJsonAsJsonRpcRequest(jsonWithSingleAddress));
     final FilterParameter expectedFilterParameter = filterParameterWithAddresses("0x0");
 
     final FilterParameter parsedFilterParameter =
@@ -68,7 +71,8 @@ public class FilterParameterTest {
     final String jsonWithSingleAddress =
         "{\"jsonrpc\":\"2.0\",\"method\":\"eth_getLogs\",\"params\":[{\"address\":\"0x0\", \"topics\":\"0x0000000000000000000000000000000000000000000000000000000000000002\" }],\"id\":1}";
 
-    final JsonRpcRequest request = readJsonAsJsonRpcRequest(jsonWithSingleAddress);
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(readJsonAsJsonRpcRequest(jsonWithSingleAddress));
     final FilterParameter expectedFilterParameter =
         filterParameterWithAddressAndSingleListOfTopics(
             "0x0", "0x0000000000000000000000000000000000000000000000000000000000000002");
@@ -85,7 +89,8 @@ public class FilterParameterTest {
     final String jsonWithSingleAddress =
         "{\"jsonrpc\":\"2.0\",\"method\":\"eth_getLogs\",\"params\":[{\"address\":\"0x0\", \"topics\":[[\"0x0000000000000000000000000000000000000000000000000000000000000002\",\"0x0000000000000000000000000000000000000000000000000000000000000003\"]]}],\"id\":1}";
 
-    final JsonRpcRequest request = readJsonAsJsonRpcRequest(jsonWithSingleAddress);
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(readJsonAsJsonRpcRequest(jsonWithSingleAddress));
     final FilterParameter expectedFilterParameter =
         filterParameterWithAddressAndSingleListOfTopics(
             "0x0",
@@ -105,7 +110,8 @@ public class FilterParameterTest {
     final String jsonWithSingleAddress =
         "{\"jsonrpc\":\"2.0\",\"method\":\"eth_getLogs\",\"params\":[{\"address\":\"0x0\", \"topics\":[[\"0x0000000000000000000000000000000000000000000000000000000000000002\",\"0x0000000000000000000000000000000000000000000000000000000000000003\"],[\"0x0000000000000000000000000000000000000000000000000000000000000002\",\"0x0000000000000000000000000000000000000000000000000000000000000003\"]]}],\"id\":1}";
 
-    final JsonRpcRequest request = readJsonAsJsonRpcRequest(jsonWithSingleAddress);
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(readJsonAsJsonRpcRequest(jsonWithSingleAddress));
     final FilterParameter expectedFilterParameter =
         filterParameterWithAddressAndMultipleListOfTopics(
             "0x0",

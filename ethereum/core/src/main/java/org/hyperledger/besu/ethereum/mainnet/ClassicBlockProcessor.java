@@ -20,7 +20,6 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
-import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor.TransactionReceiptFactory;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -59,8 +58,7 @@ public class ClassicBlockProcessor extends AbstractBlockProcessor {
     }
     final int blockEra = getBlockEra(header.getNumber(), ERA_LENGTH);
     final Wei winnerReward = getBlockWinnerRewardByEra(blockEra);
-    final Wei uncleInclusionReward = winnerReward.dividedBy(32);
-    final Wei coinbaseReward = winnerReward.plus(uncleInclusionReward.times(ommers.size()));
+    final Wei coinbaseReward = winnerReward.plus(winnerReward.times(ommers.size()).dividedBy(32));
     final WorldUpdater updater = worldState.updater();
     final MutableAccount coinbase = updater.getOrCreate(header.getCoinbase()).getMutable();
 
@@ -77,11 +75,23 @@ public class ClassicBlockProcessor extends AbstractBlockProcessor {
 
       final MutableAccount ommerCoinbase =
           updater.getOrCreate(ommerHeader.getCoinbase()).getMutable();
-      ommerCoinbase.incrementBalance(uncleInclusionReward);
+      final long distance = header.getNumber() - ommerHeader.getNumber();
+      final Wei ommerReward = calculateOmmerReward(blockEra, distance);
+      ommerCoinbase.incrementBalance(ommerReward);
     }
 
     updater.commit();
     return true;
+  }
+
+  // getUncleInclusionReword return reward for including
+  //  an uncle block
+  private Wei calculateOmmerReward(final int era, final long distance) {
+    Wei winnerReward = getBlockWinnerRewardByEra(era);
+    if (era < 1) {
+      return winnerReward.minus(winnerReward.times(distance).dividedBy(8));
+    }
+    return winnerReward.dividedBy(32);
   }
 
   // GetBlockEra gets which "Era" a given block is within, given an era length (ecip-1017 has

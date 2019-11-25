@@ -24,6 +24,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
@@ -63,7 +64,7 @@ public class EthNewFilterTest {
   @Test
   public void newFilterWithoutFromBlockParamUsesLatestAsDefault() {
     final FilterParameter filterParameter = new FilterParameter(null, null, null, null, null);
-    final JsonRpcRequest request = ethNewFilter(filterParameter);
+    final JsonRpcRequestContext request = ethNewFilter(filterParameter);
 
     method.response(request);
 
@@ -73,7 +74,7 @@ public class EthNewFilterTest {
   @Test
   public void newFilterWithoutToBlockParamUsesLatestAsDefault() {
     final FilterParameter filterParameter = new FilterParameter(null, null, null, null, null);
-    final JsonRpcRequest request = ethNewFilter(filterParameter);
+    final JsonRpcRequestContext request = ethNewFilter(filterParameter);
 
     method.response(request);
 
@@ -84,8 +85,9 @@ public class EthNewFilterTest {
   public void newFilterWithoutAddressAndTopicsParamsInstallsEmptyLogFilter() {
     final FilterParameter filterParameter =
         new FilterParameter("latest", "latest", null, null, null);
-    final JsonRpcRequest request = ethNewFilter(filterParameter);
-    final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(request.getId(), "0x1");
+    final JsonRpcRequestContext request = ethNewFilter(filterParameter);
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcSuccessResponse(request.getRequest().getId(), "0x1");
 
     final LogsQuery expectedLogsQuery = new LogsQuery.Builder().build();
     when(filterManager.installLogFilter(any(), any(), eq(expectedLogsQuery))).thenReturn("0x1");
@@ -101,8 +103,9 @@ public class EthNewFilterTest {
   @Test
   public void newFilterWithTopicsOnlyParamInstallsExpectedLogFilter() {
     final FilterParameter filterParameter = filterParamWithAddressAndTopics(null, topics());
-    final JsonRpcRequest request = ethNewFilter(filterParameter);
-    final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(request.getId(), "0x1");
+    final JsonRpcRequestContext request = ethNewFilter(filterParameter);
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcSuccessResponse(request.getRequest().getId(), "0x1");
 
     final LogsQuery expectedLogsQuery =
         new LogsQuery.Builder().topics(filterParameter.getTopics()).build();
@@ -120,8 +123,9 @@ public class EthNewFilterTest {
   public void newFilterWithAddressOnlyParamInstallsExpectedLogFilter() {
     final Address address = Address.fromHexString("0x0");
     final FilterParameter filterParameter = filterParamWithAddressAndTopics(address, null);
-    final JsonRpcRequest request = ethNewFilter(filterParameter);
-    final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(request.getId(), "0x1");
+    final JsonRpcRequestContext request = ethNewFilter(filterParameter);
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcSuccessResponse(request.getRequest().getId(), "0x1");
 
     final LogsQuery expectedLogsQuery = new LogsQuery.Builder().address(address).build();
     when(filterManager.installLogFilter(any(), any(), eq(expectedLogsQuery))).thenReturn("0x1");
@@ -139,8 +143,9 @@ public class EthNewFilterTest {
     final Address address = Address.fromHexString("0x0");
     final List<List<LogTopic>> topics = topics();
     final FilterParameter filterParameter = filterParamWithAddressAndTopics(address, topics);
-    final JsonRpcRequest request = ethNewFilter(filterParameter);
-    final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(request.getId(), "0x1");
+    final JsonRpcRequestContext request = ethNewFilter(filterParameter);
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcSuccessResponse(request.getRequest().getId(), "0x1");
 
     final LogsQuery expectedLogsQuery =
         new LogsQuery.Builder().address(address).topics(filterParameter.getTopics()).build();
@@ -171,8 +176,9 @@ public class EthNewFilterTest {
         null);
   }
 
-  private JsonRpcRequest ethNewFilter(final FilterParameter filterParameter) {
-    return new JsonRpcRequest("2.0", ETH_METHOD, new Object[] {filterParameter});
+  private JsonRpcRequestContext ethNewFilter(final FilterParameter filterParameter) {
+    return new JsonRpcRequestContext(
+        new JsonRpcRequest("2.0", ETH_METHOD, new Object[] {filterParameter}));
   }
 
   private BlockParameter blockParamLatest() {

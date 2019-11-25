@@ -1,7 +1,8 @@
 [Users.userA]
 password = "$2a$10$l3GA7K8g6rJ/Yv.YFSygCuI9byngpEzxgWS9qEg5emYDZomQW7fGC"
 groups = ["admin"]
-permissions = ["eth:*", "perm:*"]
+# This line is invalid - should be an array
+permissions = "eth:*"
 roles = ["net"]
 
 [Users.userB]

@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameterOrBlockHash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockReplay;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -65,23 +65,24 @@ public class DebugStorageRangeAt implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest request) {
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     final BlockParameterOrBlockHash blockParameterOrBlockHash =
-        request.getRequiredParameter(0, BlockParameterOrBlockHash.class);
-    final int transactionIndex = request.getRequiredParameter(1, Integer.class);
-    final Address accountAddress = request.getRequiredParameter(2, Address.class);
-    final Hash startKey = Hash.fromHexStringLenient(request.getRequiredParameter(3, String.class));
-    final int limit = request.getRequiredParameter(4, Integer.class);
+        requestContext.getRequiredParameter(0, BlockParameterOrBlockHash.class);
+    final int transactionIndex = requestContext.getRequiredParameter(1, Integer.class);
+    final Address accountAddress = requestContext.getRequiredParameter(2, Address.class);
+    final Hash startKey =
+        Hash.fromHexStringLenient(requestContext.getRequiredParameter(3, String.class));
+    final int limit = requestContext.getRequiredParameter(4, Integer.class);
 
     final Optional<Hash> blockHashOptional = hashFromParameter(blockParameterOrBlockHash);
     if (blockHashOptional.isEmpty()) {
-      return emptyResponse(request);
+      return emptyResponse(requestContext);
     }
     final Hash blockHash = blockHashOptional.get();
     final Optional<BlockHeader> blockHeaderOptional =
         blockchainQueries.get().blockByHash(blockHash).map(BlockWithMetadata::getHeader);
     if (blockHeaderOptional.isEmpty()) {
-      return emptyResponse(request);
+      return emptyResponse(requestContext);
     }
 
     final Optional<TransactionWithMetadata> optional =
@@ -96,8 +97,9 @@ public class DebugStorageRangeAt implements JsonRpcMethod {
                         blockHash,
                         transactionWithMetadata.getTransaction().getHash(),
                         (transaction, blockHeader, blockchain, worldState, transactionProcessor) ->
-                            extractStorageAt(request, accountAddress, startKey, limit, worldState))
-                    .orElseGet(() -> emptyResponse(request))))
+                            extractStorageAt(
+                                requestContext, accountAddress, startKey, limit, worldState))
+                    .orElseGet(() -> emptyResponse(requestContext))))
         .orElseGet(
             () ->
                 blockchainQueries
@@ -105,8 +107,9 @@ public class DebugStorageRangeAt implements JsonRpcMethod {
                     .getWorldState(blockHeaderOptional.get().getNumber())
                     .map(
                         worldState ->
-                            extractStorageAt(request, accountAddress, startKey, limit, worldState))
-                    .orElseGet(() -> emptyResponse(request)));
+                            extractStorageAt(
+                                requestContext, accountAddress, startKey, limit, worldState))
+                    .orElseGet(() -> emptyResponse(requestContext)));
   }
 
   private Optional<Hash> hashFromParameter(final BlockParameterOrBlockHash blockParameter) {
@@ -125,7 +128,7 @@ public class DebugStorageRangeAt implements JsonRpcMethod {
   }
 
   private JsonRpcSuccessResponse extractStorageAt(
-      final JsonRpcRequest request,
+      final JsonRpcRequestContext requestContext,
       final Address accountAddress,
       final Hash startKey,
       final int limit,
@@ -140,12 +143,13 @@ public class DebugStorageRangeAt implements JsonRpcMethod {
       entries.remove(nextKey);
     }
     return new JsonRpcSuccessResponse(
-        request.getId(), new DebugStorageRangeAtResult(entries, nextKey, shortValues));
+        requestContext.getRequest().getId(),
+        new DebugStorageRangeAtResult(entries, nextKey, shortValues));
   }
 
-  private JsonRpcSuccessResponse emptyResponse(final JsonRpcRequest request) {
+  private JsonRpcSuccessResponse emptyResponse(final JsonRpcRequestContext requestContext) {
     return new JsonRpcSuccessResponse(
-        request.getId(),
+        requestContext.getRequest().getId(),
         new DebugStorageRangeAtResult(Collections.emptyNavigableMap(), null, shortValues));
   }
 }

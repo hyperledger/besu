@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -63,16 +64,16 @@ public class EthSubmitWorkTest {
 
   @Test
   public void shouldFailIfNoMiningEnabled() {
-    final JsonRpcRequest request = requestWithParams();
+    final JsonRpcRequestContext request = requestWithParams();
     final JsonRpcResponse actualResponse = method.response(request);
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getId(), JsonRpcError.NO_MINING_WORK_FOUND);
+        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.NO_MINING_WORK_FOUND);
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
   }
 
   @Test
   public void shouldFailIfMissingArguments() {
-    final JsonRpcRequest request = requestWithParams();
+    final JsonRpcRequestContext request = requestWithParams();
     final EthHashSolverInputs values =
         new EthHashSolverInputs(
             UInt256.fromHexString(hexValue), BaseEncoding.base16().lowerCase().decode(hexValue), 0);
@@ -100,12 +101,13 @@ public class EthSubmitWorkTest {
             Hash.fromHexString(
                 "0xc5e3c33c86d64d0641dd3c86e8ce4628fe0aac0ef7b4c087c5fcaa45d5046d90"),
             firstInputs.getPrePowHash());
-    final JsonRpcRequest request =
+    final JsonRpcRequestContext request =
         requestWithParams(
             BytesValues.toMinimalBytes(expectedFirstOutput.getNonce()).getHexString(),
             BytesValue.wrap(expectedFirstOutput.getPowHash()).getHexString(),
             expectedFirstOutput.getMixHash().getHexString());
-    final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(request.getId(), true);
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcSuccessResponse(request.getRequest().getId(), true);
     when(miningCoordinator.getWorkDefinition()).thenReturn(Optional.of(firstInputs));
     // potentially could use a real miner here.
     when(miningCoordinator.submitWork(expectedFirstOutput)).thenReturn(true);
@@ -116,16 +118,16 @@ public class EthSubmitWorkTest {
 
   @Test
   public void shouldReturnErrorOnNoneMiningNode() {
-    final JsonRpcRequest request = requestWithParams();
+    final JsonRpcRequestContext request = requestWithParams();
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getId(), JsonRpcError.NO_MINING_WORK_FOUND);
+        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.NO_MINING_WORK_FOUND);
     when(miningCoordinator.getWorkDefinition()).thenReturn(Optional.empty());
 
     final JsonRpcResponse actualResponse = method.response(request);
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
   }
 
-  private JsonRpcRequest requestWithParams(final Object... params) {
-    return new JsonRpcRequest("2.0", ETH_METHOD, params);
+  private JsonRpcRequestContext requestWithParams(final Object... params) {
+    return new JsonRpcRequestContext(new JsonRpcRequest("2.0", ETH_METHOD, params));
   }
 }
