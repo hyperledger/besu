@@ -95,7 +95,14 @@ class SimulatedThresholdKeyGenContractSingleKeyGen {
     return this.nodeIdArray.get(index);
   }
 
+  boolean nodeCoefficientsCommitmentsSet(final BigInteger address) {
+    return this.coefPublicPointCommitments.get(address) != null;
+  }
+
   public BlsPoint getCoefficientPublicValue(final BigInteger fromAddress, final int coefNumber) {
+    if (this.coefficientPublicValues.get(fromAddress) == null) {
+      return null;
+    }
     return this.coefficientPublicValues.get(fromAddress)[coefNumber];
   }
 }

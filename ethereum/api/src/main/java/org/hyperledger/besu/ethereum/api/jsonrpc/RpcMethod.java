@@ -110,12 +110,24 @@ public enum RpcMethod {
   TX_POOL_BESU_TRANSACTIONS("txpool_besuTransactions"),
   WEB3_CLIENT_VERSION("web3_clientVersion"),
   WEB3_SHA3("web3_sha3"),
-  ETH_IS_LOCKABLE("eth_isLockable"),
-  ETH_IS_LOCKED("eth_isLocked"),
-  ETH_SEND_RAW_CROSSCHAIN_TRANSACTION("eth_sendRawCrosschainTransaction"),
-  ETH_PROCESS_RAW_SUBORDINATE_VIEW("eth_processSubordinateView"),
+  CROSS_ADD_COORDINAITON_CONTRACT("cross_addCoordinationContract"),
+  CROSS_ACTIVE_KEY("cross_activateKey"),
   CROSS_CHECK_UNLOCK("cross_checkUnlock"),
-  CROSS_GET_BLOCKCHAIN_PUBLIC_KEY("cross_getBlockchainPublicKey");
+  CROSS_GET_BLOCKCHAIN_PUBLIC_KEY("cross_getBlockchainPublicKey"),
+  CROSS_GET_KEY_ACTIVE_NODES("cross_getKeyActiveNodes"),
+  CROSS_GET_KEY_GEN_FAILURE_REASON("cross_getKeyGenFailureReason"),
+  CROSS_GET_KEY_GEN_NODES_DROPPED_OUT_OF_KEY_GENERATION(
+      "cross_getKeyGenNodesDroppedOutOfKeyGeneration"),
+  CROSS_GET_KEY_STATUS("cross_getKeyStatus"),
+  CROSS_GET_ACTIVE_KEY_VERSION("cross_getActiveKeyVersion"),
+  CROSS_IS_LOCKABLE("cross_isLockable"),
+  CROSS_IS_LOCKED("cross_isLocked"),
+  CROSS_LIST_COORDINAITON_CONTRACTS("cross_listCoordinationContracts"),
+  CROSS_PROCESS_RAW_SUBORDINATE_VIEW("cross_processSubordinateView"),
+  CROSS_REMOVE_COORDINAITON_CONTRACT("cross_removeCoordinationContract"),
+  CROSS_SEND_RAW_CROSSCHAIN_TRANSACTION("cross_sendRawCrosschainTransaction"),
+  CROSS_SET_KEY_GENERATION_CONTRACT_ADDRESS("cross_setKeyGenerationContractAddress"),
+  CROSS_START_THRESHOLD_KEY_GENERATION("cross_startThresholdKeyGeneration");
 
   private final String methodName;
 

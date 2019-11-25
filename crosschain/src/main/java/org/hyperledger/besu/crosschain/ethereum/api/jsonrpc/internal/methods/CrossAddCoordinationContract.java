@@ -13,42 +13,58 @@
 package org.hyperledger.besu.crosschain.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.crosschain.core.CrosschainController;
-import org.hyperledger.besu.crosschain.core.keys.BlsThresholdPublicKey;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.core.Address;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.math.BigInteger;
 
-/** Return the Blockchain Public key, if such a key exists. */
-public class CrossBlockchainPublicKey implements JsonRpcMethod {
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+/** Sets the address of the key generation contract to use. */
+public class CrossAddCoordinationContract implements JsonRpcMethod {
+
+  private static final Logger LOG = LogManager.getLogger();
+
   private final CrosschainController crosschainController;
+  private final JsonRpcParameter parameters;
 
-  public CrossBlockchainPublicKey(final CrosschainController crosschainController) {
+  public CrossAddCoordinationContract(
+      final CrosschainController crosschainController, final JsonRpcParameter parameters) {
     this.crosschainController = crosschainController;
+    this.parameters = parameters;
   }
 
   @Override
   public String getName() {
-    return RpcMethod.CROSS_GET_BLOCKCHAIN_PUBLIC_KEY.getMethodName();
+    return RpcMethod.CROSS_ADD_COORDINAITON_CONTRACT.getMethodName();
   }
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequest request) {
-    if (request.getParamLength() != 0) {
+    if (request.getParamLength() != 3) {
       return new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
     }
+    final BigInteger blockchainId =
+        this.parameters.required(request.getParams(), 0, BigInteger.class);
+    final Address address = this.parameters.required(request.getParams(), 1, Address.class);
+    final String ipAddressAndPort = this.parameters.required(request.getParams(), 2, String.class);
 
-    final Map<String, Object> response = new HashMap<>();
-    BlsThresholdPublicKey credentials = this.crosschainController.getBlockchainPublicKey();
+    LOG.trace(
+        "JSON RPC {}: Blockchain Id: {}, Address: {}, IPAddress: {}",
+        getName(),
+        blockchainId,
+        address,
+        ipAddressAndPort);
 
-    response.put("pubkey", credentials.getEncodedPublicKey());
-
-    return new JsonRpcSuccessResponse(request.getId(), response);
+    this.crosschainController.addCoordinaitonContract(blockchainId, address, ipAddressAndPort);
+    return new JsonRpcSuccessResponse(request.getId());
   }
 }

@@ -21,14 +21,19 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.queries.BlockchainQuer
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.core.Address;
 
-public class EthIsLockable extends AbstractBlockParameterMethod {
-  public EthIsLockable(final BlockchainQueries blockchain, final JsonRpcParameter parameters) {
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+public class CrossIsLockable extends AbstractBlockParameterMethod {
+  private static final Logger LOG = LogManager.getLogger();
+
+  public CrossIsLockable(final BlockchainQueries blockchain, final JsonRpcParameter parameters) {
     super(blockchain, parameters);
   }
 
   @Override
   public String getName() {
-    return RpcMethod.ETH_IS_LOCKABLE.getMethodName();
+    return RpcMethod.CROSS_IS_LOCKABLE.getMethodName();
   }
 
   @Override
@@ -39,9 +44,17 @@ public class EthIsLockable extends AbstractBlockParameterMethod {
   @Override
   protected String resultByBlockNumber(final JsonRpcRequest request, final long blockNumber) {
     final Address address = getParameters().required(request.getParams(), 0, Address.class);
-    return getBlockchainQueries()
-        .isContractLockable(address, blockNumber)
-        .map(Quantity::create)
-        .orElse(null);
+    String result =
+        getBlockchainQueries()
+            .isContractLockable(address, blockNumber)
+            .map(Quantity::create)
+            .orElse(null);
+    LOG.trace(
+        "JSON RPC {}: Address: {}, Block number: {}, IsLockable: {}",
+        getName(),
+        address,
+        blockNumber,
+        result);
+    return result;
   }
 }

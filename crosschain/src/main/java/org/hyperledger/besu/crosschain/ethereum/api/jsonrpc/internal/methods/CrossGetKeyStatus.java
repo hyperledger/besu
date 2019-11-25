@@ -13,41 +13,26 @@
 package org.hyperledger.besu.crosschain.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.crosschain.core.CrosschainController;
+import org.hyperledger.besu.crosschain.core.keys.KeyStatus;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+public class CrossGetKeyStatus extends AbstractCrossWithKeyVersionParam {
 
-/**
- * Request that the Crosschain Processor check with the Crosschain Coordination Contract whether the
- * contract should be unlocked or not.
- *
- * <p>This function is typically called from other Ethereum nodes that are part of the same
- * multi-chain node.
- */
-public class CrossCheckUnlock implements JsonRpcMethod {
-  private static final Logger LOG = LogManager.getLogger();
-
-  private final JsonRpcParameter parameters;
-  private final CrosschainController crosschainController;
-
-  public CrossCheckUnlock(
+  public CrossGetKeyStatus(
       final CrosschainController crosschainController, final JsonRpcParameter parameters) {
-    this.parameters = parameters;
-    this.crosschainController = crosschainController;
+    super(crosschainController, parameters);
   }
 
   @Override
   public String getName() {
-    return RpcMethod.CROSS_CHECK_UNLOCK.getMethodName();
+    return RpcMethod.CROSS_GET_KEY_STATUS.getMethodName();
   }
 
   @Override
@@ -55,10 +40,10 @@ public class CrossCheckUnlock implements JsonRpcMethod {
     if (request.getParamLength() != 1) {
       return new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
     }
-    final Address address = this.parameters.required(request.getParams(), 0, Address.class);
-    LOG.trace("JSON RPC {}: Called with address: {}", getName(), address);
+    final long keyVersion = getKeyVersionParameter(request);
 
-    this.crosschainController.checkUnlock(address);
-    return new JsonRpcSuccessResponse(request.getId());
+    KeyStatus keyStatus = this.crosschainController.getKeyStatus(keyVersion);
+    LOG.trace("JSON RPC {}: Version: {}, Status: {}", getName(), keyVersion, keyStatus.value);
+    return new JsonRpcSuccessResponse(request.getId(), Quantity.create(keyStatus.value));
   }
 }

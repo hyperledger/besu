@@ -35,14 +35,14 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /** Process either a Crosschain Originating Transaction or a Subordinate Transaction. */
-public class EthSendRawCrosschainTransaction implements JsonRpcMethod {
+public class CrossSendRawCrosschainTransaction implements JsonRpcMethod {
 
   private static final Logger LOG = LogManager.getLogger();
 
   private final CrosschainController crosschainController;
   private final JsonRpcParameter parameters;
 
-  public EthSendRawCrosschainTransaction(
+  public CrossSendRawCrosschainTransaction(
       final CrosschainController crosschainController, final JsonRpcParameter parameters) {
     this.crosschainController = crosschainController;
     this.parameters = parameters;
@@ -50,7 +50,7 @@ public class EthSendRawCrosschainTransaction implements JsonRpcMethod {
 
   @Override
   public String getName() {
-    return RpcMethod.ETH_SEND_RAW_CROSSCHAIN_TRANSACTION.getMethodName();
+    return RpcMethod.CROSS_SEND_RAW_CROSSCHAIN_TRANSACTION.getMethodName();
   }
 
   @Override

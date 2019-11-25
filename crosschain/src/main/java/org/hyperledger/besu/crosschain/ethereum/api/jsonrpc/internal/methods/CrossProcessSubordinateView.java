@@ -36,7 +36,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /** Process a Crosschain Subordinate View. */
-public class EthProcessSubordinateView implements JsonRpcMethod {
+public class CrossProcessSubordinateView implements JsonRpcMethod {
 
   private static final Logger LOG = LogManager.getLogger();
 
@@ -46,7 +46,7 @@ public class EthProcessSubordinateView implements JsonRpcMethod {
 
   private final CrosschainController crosschainController;
 
-  public EthProcessSubordinateView(
+  public CrossProcessSubordinateView(
       final BlockchainQueries blockchain,
       final CrosschainController crosschainController,
       final JsonRpcParameter parameters) {
@@ -57,7 +57,7 @@ public class EthProcessSubordinateView implements JsonRpcMethod {
 
   @Override
   public String getName() {
-    return RpcMethod.ETH_PROCESS_RAW_SUBORDINATE_VIEW.getMethodName();
+    return RpcMethod.CROSS_PROCESS_RAW_SUBORDINATE_VIEW.getMethodName();
   }
 
   @Override

@@ -16,49 +16,38 @@ import org.hyperledger.besu.crosschain.core.CrosschainController;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-/**
- * Request that the Crosschain Processor check with the Crosschain Coordination Contract whether the
- * contract should be unlocked or not.
- *
- * <p>This function is typically called from other Ethereum nodes that are part of the same
- * multi-chain node.
- */
-public class CrossCheckUnlock implements JsonRpcMethod {
+public class CrossGetActiveKeyVersion implements JsonRpcMethod {
+
   private static final Logger LOG = LogManager.getLogger();
 
-  private final JsonRpcParameter parameters;
   private final CrosschainController crosschainController;
 
-  public CrossCheckUnlock(
-      final CrosschainController crosschainController, final JsonRpcParameter parameters) {
-    this.parameters = parameters;
+  public CrossGetActiveKeyVersion(final CrosschainController crosschainController) {
     this.crosschainController = crosschainController;
   }
 
   @Override
   public String getName() {
-    return RpcMethod.CROSS_CHECK_UNLOCK.getMethodName();
+    return RpcMethod.CROSS_GET_ACTIVE_KEY_VERSION.getMethodName();
   }
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequest request) {
-    if (request.getParamLength() != 1) {
+    if (request.getParamLength() != 0) {
       return new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
     }
-    final Address address = this.parameters.required(request.getParams(), 0, Address.class);
-    LOG.trace("JSON RPC {}: Called with address: {}", getName(), address);
 
-    this.crosschainController.checkUnlock(address);
-    return new JsonRpcSuccessResponse(request.getId());
+    long keyVersion = this.crosschainController.getActiveKeyVersion();
+    LOG.trace("JSON RPC {}: Key Version: {}", getName(), keyVersion);
+    return new JsonRpcSuccessResponse(request.getId(), Quantity.create(keyVersion));
   }
 }

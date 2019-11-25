@@ -12,6 +12,7 @@
  */
 package org.hyperledger.besu.crosschain.crypto.threshold.crypto.altbn128;
 
+import org.hyperledger.besu.crosschain.crypto.threshold.crypto.BlsCryptoProvider;
 import org.hyperledger.besu.crosschain.crypto.threshold.crypto.BlsPoint;
 import org.hyperledger.besu.crypto.altbn128.AltBn128Point;
 import org.hyperledger.besu.crypto.altbn128.Fq;
@@ -26,6 +27,11 @@ public class AltBn128PointWrapper implements BlsPoint {
 
   AltBn128PointWrapper(final AltBn128Point point) {
     this.point = point;
+  }
+
+  @Override
+  public BlsCryptoProvider.CryptoProviderTypes getType() {
+    return BlsCryptoProvider.CryptoProviderTypes.LOCAL_ALT_BN_128;
   }
 
   // Add a point to this point.

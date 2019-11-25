@@ -26,28 +26,23 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-/**
- * Request that the Crosschain Processor check with the Crosschain Coordination Contract whether the
- * contract should be unlocked or not.
- *
- * <p>This function is typically called from other Ethereum nodes that are part of the same
- * multi-chain node.
- */
-public class CrossCheckUnlock implements JsonRpcMethod {
+/** Sets the address of the key generation contract to use. */
+public class CrossSetKeyGenerationContractAddress implements JsonRpcMethod {
+
   private static final Logger LOG = LogManager.getLogger();
 
-  private final JsonRpcParameter parameters;
   private final CrosschainController crosschainController;
+  private final JsonRpcParameter parameters;
 
-  public CrossCheckUnlock(
+  public CrossSetKeyGenerationContractAddress(
       final CrosschainController crosschainController, final JsonRpcParameter parameters) {
-    this.parameters = parameters;
     this.crosschainController = crosschainController;
+    this.parameters = parameters;
   }
 
   @Override
   public String getName() {
-    return RpcMethod.CROSS_CHECK_UNLOCK.getMethodName();
+    return RpcMethod.CROSS_SET_KEY_GENERATION_CONTRACT_ADDRESS.getMethodName();
   }
 
   @Override
@@ -56,9 +51,10 @@ public class CrossCheckUnlock implements JsonRpcMethod {
       return new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
     }
     final Address address = this.parameters.required(request.getParams(), 0, Address.class);
-    LOG.trace("JSON RPC {}: Called with address: {}", getName(), address);
 
-    this.crosschainController.checkUnlock(address);
+    LOG.trace("JSON RPC {}: Address: {}", getName(), address);
+
+    this.crosschainController.setKeyGenerationContractAddress(address);
     return new JsonRpcSuccessResponse(request.getId());
   }
 }

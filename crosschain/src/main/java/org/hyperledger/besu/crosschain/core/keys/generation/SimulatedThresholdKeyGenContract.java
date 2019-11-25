@@ -21,9 +21,24 @@ import java.util.TreeMap;
 
 // Simulates a contract which sits on the sidechain.
 class SimulatedThresholdKeyGenContract {
-  private long expectedNextVersion = 0;
+  private long expectedNextVersion;
 
   private Map<Long, SimulatedThresholdKeyGenContractSingleKeyGen> keyGens = new TreeMap<>();
+
+  public SimulatedThresholdKeyGenContract() {
+    this(0);
+  }
+
+  /**
+   * Typically, the key version will always start from 0. However, if a bug was found in the
+   * contract, and a new version of the contract needed to be deployed, then the version should be
+   * set to the key version the old contract was up to.
+   *
+   * @param version Key version to start from.
+   */
+  public SimulatedThresholdKeyGenContract(final long version) {
+    this.expectedNextVersion = version;
+  }
 
   void startNewKeyGeneration(
       final long version,
@@ -72,6 +87,10 @@ class SimulatedThresholdKeyGenContract {
 
   BigInteger getNodeAddress(final long version, final int index) {
     return getKeyGenInstance(version).getNodeAddress(index);
+  }
+
+  boolean nodeCoefficientsCommitmentsSet(final long version, final BigInteger address) {
+    return getKeyGenInstance(version).nodeCoefficientsCommitmentsSet(address);
   }
 
   BlsPoint getCoefficientPublicValue(

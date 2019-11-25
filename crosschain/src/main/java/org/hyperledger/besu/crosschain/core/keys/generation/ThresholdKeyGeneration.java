@@ -12,6 +12,9 @@
  */
 package org.hyperledger.besu.crosschain.core.keys.generation;
 
+import org.hyperledger.besu.crosschain.core.keys.BlsThresholdCredentials;
+import org.hyperledger.besu.crosschain.core.keys.BlsThresholdCryptoSystem;
+import org.hyperledger.besu.crosschain.core.keys.KeyStatus;
 import org.hyperledger.besu.crosschain.crypto.threshold.crypto.BlsCryptoProvider;
 import org.hyperledger.besu.crosschain.crypto.threshold.crypto.BlsPoint;
 import org.hyperledger.besu.crosschain.crypto.threshold.scheme.ThresholdScheme;
@@ -27,8 +30,10 @@ import org.hyperledger.besu.util.bytes.BytesValue;
 import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 import org.apache.logging.log4j.LogManager;
@@ -38,13 +43,24 @@ public class ThresholdKeyGeneration {
   protected static final Logger LOG = LogManager.getLogger();
 
   private int threshold;
+  private BigInteger blockchainId;
+  private BlsThresholdCryptoSystem algorithm;
+  private KeyStatus keyGenerationStatus = KeyStatus.UNKNOWN_KEY;
+
   private SecureRandom prng = new PRNGSecureRandom();
 
   private Map<BigInteger, BigInteger> mySecretShares;
   private BlsPoint[] myCoeffsPublicValues;
   private Bytes32[] myCoeffsPublicValueCommitments;
   private BigInteger myNodeAddress;
-  private List<BigInteger> nodesStillActiveInKeyGeneration;
+  private HashSet<BigInteger> nodesStillActiveInKeyGeneration;
+
+  // For each node that drops out of the key generation, record why is dropped out.
+  private Map<BigInteger, KeyGenFailureToCompleteReason> nodesNoLongerInKeyGeneration;
+
+  // This will indicate why, overall, the key generation failed.
+  private KeyGenFailureToCompleteReason failureReason =
+      KeyGenFailureToCompleteReason.NO_FAILURE_THUS_FAR;
 
   private Map<BigInteger, BigInteger> receivedSecretShares = new TreeMap<>();
 
@@ -61,18 +77,33 @@ public class ThresholdKeyGeneration {
 
   private ThresholdScheme thresholdScheme;
 
+  private long keyVersionNumber;
+
   public ThresholdKeyGeneration(
       final int threshold,
+      final BigInteger blockchainId,
+      final BlsThresholdCryptoSystem algorithm,
       final SECP256K1.KeyPair nodeKeyPair,
       final ThresholdKeyGenContractInterface thresholdKeyGenContract,
       final CrosschainDevP2PInterface p2p) {
     this.threshold = threshold;
+    this.blockchainId = blockchainId;
     this.thresholdKeyGenContract = thresholdKeyGenContract;
     this.p2p = p2p;
-    this.cryptoProvider =
-        BlsCryptoProvider.getInstance(
-            BlsCryptoProvider.CryptoProviderTypes.LOCAL_ALT_BN_128,
-            BlsCryptoProvider.DigestAlgorithm.KECCAK256);
+
+    this.algorithm = algorithm;
+    switch (algorithm) {
+      case ALT_BN_128_WITH_KECCAK256:
+        this.cryptoProvider =
+            BlsCryptoProvider.getInstance(
+                BlsCryptoProvider.CryptoProviderTypes.LOCAL_ALT_BN_128,
+                BlsCryptoProvider.DigestAlgorithm.KECCAK256);
+        break;
+      default:
+        String msg = "Unknown threshold key generation algorithm: " + algorithm;
+        LOG.error(msg);
+        throw new RuntimeException(msg);
+    }
 
     this.thresholdScheme = new ThresholdScheme(this.cryptoProvider, this.threshold, this.prng);
 
@@ -84,7 +115,12 @@ public class ThresholdKeyGeneration {
 
   public long startKeyGeneration() {
     try {
-      long keyVersionNumber = this.thresholdKeyGenContract.getExpectedKeyGenerationVersion();
+      this.nodesStillActiveInKeyGeneration = new HashSet<>(this.p2p.getAllPeers());
+      this.nodesStillActiveInKeyGeneration.add(this.myNodeAddress);
+      this.nodesNoLongerInKeyGeneration = new TreeMap<>();
+
+      this.keyVersionNumber = this.thresholdKeyGenContract.getExpectedKeyGenerationVersion();
+      this.keyGenerationStatus = KeyStatus.KEY_GEN_POST_XVALUE;
 
       this.p2p.setSecretShareCallback(new CrosschainPartSecretShareCallbackImpl());
       this.p2p.setMyNodeAddress(this.myNodeAddress);
@@ -100,25 +136,36 @@ public class ThresholdKeyGeneration {
       // TODO Use vertix
       // Probably have to wait multiple block times.
       // Thread.sleep(2000);
+      this.keyGenerationStatus = KeyStatus.KEY_GEN_POST_COMMITMENT;
       this.p2p.requestPostCommits(keyVersionNumber);
 
+      // Work out which nodes have dropped out of the key generation process.
       int numberOfNodes = this.thresholdKeyGenContract.getNumberOfNodes(keyVersionNumber);
-      if (numberOfNodes < this.threshold) {
-        // Key generation has failed. Not enough nodes participated by posting X values.
-        // TODO indicate failure some how
-        throw new RuntimeException("Number of nodes less than threshold");
+      ArrayList<BigInteger> nodeAddresses = new ArrayList<>();
+      for (int i = 0; i < numberOfNodes; i++) {
+        BigInteger address = this.thresholdKeyGenContract.getNodeAddress(keyVersionNumber, i);
+        nodeAddresses.add(address);
+        if (!this.nodesStillActiveInKeyGeneration.contains(address)) {
+          String msg = "Unknown node attempting to participate in key generation: " + address;
+          LOG.error(msg);
+          // Ignore the unknown node and continue.
+        }
+      }
+      for (Iterator<BigInteger> iterator = this.nodesStillActiveInKeyGeneration.iterator();
+          iterator.hasNext(); ) {
+        BigInteger nodeAddress = iterator.next();
+        if (!nodeAddresses.contains(nodeAddress)) {
+          iterator.remove();
+          this.nodesNoLongerInKeyGeneration.put(
+              nodeAddress, KeyGenFailureToCompleteReason.DID_NOT_POST_XVALUE);
+        }
+      }
+      if (belowThreshold(KeyGenFailureToCompleteReason.DID_NOT_POST_XVALUE)) {
+        return keyVersionNumber;
       }
 
       // Post Commitments Round
-      this.nodesStillActiveInKeyGeneration = new ArrayList<>();
-      BigInteger[] nodeAddresses = new BigInteger[numberOfNodes];
-      for (int i = 0; i < numberOfNodes; i++) {
-        BigInteger address = this.thresholdKeyGenContract.getNodeAddress(keyVersionNumber, i);
-        this.nodesStillActiveInKeyGeneration.add(address);
-        nodeAddresses[i] = address;
-      }
-
-      generatePartsOfKeySharesPublicValueAndCommitments(nodeAddresses);
+      generatePartsOfKeySharesPublicValueAndCommitments(nodeAddresses.toArray(BigInteger[]::new));
       this.thresholdKeyGenContract.setNodeCoefficientsCommitments(
           keyVersionNumber, this.myCoeffsPublicValueCommitments);
 
@@ -126,7 +173,25 @@ public class ThresholdKeyGeneration {
       // Probably have to wait multiple block times.
       // Thread.sleep(2000);
 
+      // Work out which nodes have dropped out of the key generation process.
+      for (Iterator<BigInteger> iterator = this.nodesStillActiveInKeyGeneration.iterator();
+          iterator.hasNext(); ) {
+        BigInteger nodeAddress = iterator.next();
+        boolean postedCommitments =
+            this.thresholdKeyGenContract.nodeCoefficientsCommitmentsSet(
+                keyVersionNumber, nodeAddress);
+        if (!postedCommitments) {
+          iterator.remove();
+          this.nodesNoLongerInKeyGeneration.put(
+              nodeAddress, KeyGenFailureToCompleteReason.DID_NOT_POST_COMMITMENT);
+        }
+      }
+      if (belowThreshold(KeyGenFailureToCompleteReason.DID_NOT_POST_COMMITMENT)) {
+        return keyVersionNumber;
+      }
+
       // Post Public Values Round.
+      this.keyGenerationStatus = KeyStatus.KEY_GEN_PUBLIC_VALUES;
       this.p2p.requestPostPublicValues(keyVersionNumber);
       LOG.info("Post Public Values");
       // TODO only publish the public values after all of the commitments are posted.
@@ -139,39 +204,63 @@ public class ThresholdKeyGeneration {
       // Get all of the other node's coefficient public values.
       LOG.info("Get all of the other node's coefficient public values.");
       this.otherNodeCoefficients = new TreeMap<BigInteger, BlsPoint[]>();
-      LOG.info("****** other node created!!!");
-      LOG.info("my address: {}", this.myNodeAddress);
-      for (BigInteger nodeAddress : this.nodesStillActiveInKeyGeneration) {
-        LOG.info("getting coeff public values for node: {}", nodeAddress);
+      for (Iterator<BigInteger> iterator = this.nodesStillActiveInKeyGeneration.iterator();
+          iterator.hasNext(); ) {
+        BigInteger nodeAddress = iterator.next();
         if (!nodeAddress.equals(this.myNodeAddress)) {
           BlsPoint[] points = new BlsPoint[this.myCoeffsPublicValues.length];
           for (int j = 0; j < this.myCoeffsPublicValues.length; j++) {
-            LOG.info(
-                "this.thresholdKeyGenContract.getCoefficientPublicValue for node: {}", nodeAddress);
             points[j] =
                 this.thresholdKeyGenContract.getCoefficientPublicValue(
                     keyVersionNumber, nodeAddress, j);
           }
-          this.otherNodeCoefficients.put(nodeAddress, points);
-          LOG.info("other coeffs added for node: {}", nodeAddress);
+          if (points[0] == null) {
+            iterator.remove();
+            this.nodesNoLongerInKeyGeneration.put(
+                nodeAddress, KeyGenFailureToCompleteReason.DID_NOT_POST_COEFFICIENT_PUBLIC_VALUES);
+          } else {
+            this.otherNodeCoefficients.put(nodeAddress, points);
+          }
         }
+      }
+      if (belowThreshold(KeyGenFailureToCompleteReason.DID_NOT_POST_COEFFICIENT_PUBLIC_VALUES)) {
+        return keyVersionNumber;
       }
       this.p2p.requestGetOtherNodeCoefs(keyVersionNumber);
 
       // TODO send private values
       // TODO Note that the nodeAddresses will have had some purged for nodes that have not posted
       // the commitments or public values.
+      this.keyGenerationStatus = KeyStatus.KEY_GEN_PRIVATE_VALUES;
       this.p2p.sendPrivateValues(
           this.myNodeAddress, this.nodesStillActiveInKeyGeneration, this.mySecretShares);
       this.p2p.requestSendPrivateValues(keyVersionNumber);
 
+      // TODO Wait some time here for the values to be sent.
+
       this.p2p.requestNodesCompleteKeyGen();
       // Calculate private key shares and public key round.
       // TODO need to account for some private key shares not being sent / nefarious actors.
+
+      // Work out which nodes have dropped out of the key generation process.
+      for (Iterator<BigInteger> iterator = this.nodesStillActiveInKeyGeneration.iterator();
+          iterator.hasNext(); ) {
+        BigInteger nodeAddress = iterator.next();
+        if (!nodeAddress.equals(this.myNodeAddress)
+            && this.receivedSecretShares.get(nodeAddress) == null) {
+          iterator.remove();
+          this.nodesNoLongerInKeyGeneration.put(
+              nodeAddress, KeyGenFailureToCompleteReason.DID_NOT_SEND_PRIVATE_VALUES);
+        }
+      }
+      if (belowThreshold(KeyGenFailureToCompleteReason.DID_NOT_SEND_PRIVATE_VALUES)) {
+        return keyVersionNumber;
+      }
       this.privateKeyShare = calculateMyPrivateKeyShare();
 
       this.publicKey = calculatePublicKey();
 
+      this.keyGenerationStatus = KeyStatus.KEY_GEN_COMPLETE;
       return keyVersionNumber;
     } catch (Exception ex) {
       throw new RuntimeException(ex);
@@ -218,6 +307,38 @@ public class ThresholdKeyGeneration {
 
   public BlsPoint getPublicKey() {
     return this.publicKey;
+  }
+
+  public KeyStatus getKeyStatus() {
+    return this.keyGenerationStatus;
+  }
+
+  public KeyGenFailureToCompleteReason getFailureReason() {
+    return this.failureReason;
+  }
+
+  public Map<BigInteger, KeyGenFailureToCompleteReason> getNodesNoLongerInKeyGeneration() {
+    return this.nodesNoLongerInKeyGeneration;
+  }
+
+  public Set<BigInteger> getNodesStillActiveInKeyGeneration() {
+    return this.nodesStillActiveInKeyGeneration;
+  }
+
+  public BlsThresholdCredentials getCredentials() {
+    return new BlsThresholdCredentials.Builder()
+        .keyVersion(this.keyVersionNumber)
+        .threshold(this.threshold)
+        .publicKey(this.publicKey)
+        .blockchainId(this.blockchainId)
+        .algorithm(this.algorithm)
+        .mySecretShares(this.mySecretShares)
+        .myNodeAddress(this.myNodeAddress)
+        .nodesStillActiveInKeyGeneration(this.nodesStillActiveInKeyGeneration)
+        .nodesNoLongerInKeyGeneration(this.nodesNoLongerInKeyGeneration)
+        .failureReason(this.failureReason)
+        .keyStatus(this.keyGenerationStatus)
+        .build();
   }
 
   /**
@@ -280,5 +401,28 @@ public class ThresholdKeyGeneration {
 
   public BigInteger getMyNodeAddress() {
     return this.myNodeAddress;
+  }
+
+  /**
+   * Check that enough node are still participating in the key generation.
+   *
+   * @param reason Reason for failure.
+   * @return true if the number of participating nodes is now below the threshold.
+   */
+  private boolean belowThreshold(final KeyGenFailureToCompleteReason reason) {
+    int numberOfActiveNodes = this.nodesStillActiveInKeyGeneration.size();
+    if (numberOfActiveNodes < this.threshold) {
+      this.failureReason = reason;
+      String msg =
+          "Key generation failed ("
+              + reason.value
+              + ") Number of nodes "
+              + numberOfActiveNodes
+              + " less than threshold "
+              + this.threshold;
+      LOG.error(msg);
+      return true;
+    }
+    return false;
   }
 }

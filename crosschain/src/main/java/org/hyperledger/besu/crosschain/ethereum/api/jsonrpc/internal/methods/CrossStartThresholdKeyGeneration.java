@@ -13,6 +13,7 @@
 package org.hyperledger.besu.crosschain.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.crosschain.core.CrosschainController;
+import org.hyperledger.besu.crosschain.core.keys.BlsThresholdCryptoSystem;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -21,44 +22,52 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-/**
- * Request that the Crosschain Processor check with the Crosschain Coordination Contract whether the
- * contract should be unlocked or not.
- *
- * <p>This function is typically called from other Ethereum nodes that are part of the same
- * multi-chain node.
- */
-public class CrossCheckUnlock implements JsonRpcMethod {
+public class CrossStartThresholdKeyGeneration implements JsonRpcMethod {
+
   private static final Logger LOG = LogManager.getLogger();
 
-  private final JsonRpcParameter parameters;
   private final CrosschainController crosschainController;
+  private final JsonRpcParameter parameters;
 
-  public CrossCheckUnlock(
+  public CrossStartThresholdKeyGeneration(
       final CrosschainController crosschainController, final JsonRpcParameter parameters) {
-    this.parameters = parameters;
     this.crosschainController = crosschainController;
+    this.parameters = parameters;
   }
 
   @Override
   public String getName() {
-    return RpcMethod.CROSS_CHECK_UNLOCK.getMethodName();
+    return RpcMethod.CROSS_START_THRESHOLD_KEY_GENERATION.getMethodName();
   }
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequest request) {
-    if (request.getParamLength() != 1) {
+    if (request.getParamLength() != 2) {
       return new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
     }
-    final Address address = this.parameters.required(request.getParams(), 0, Address.class);
-    LOG.trace("JSON RPC {}: Called with address: {}", getName(), address);
+    Object[] params = request.getParams();
+    final int threshold = parameters.required(params, 0, Integer.TYPE);
+    final int algorithmInt = parameters.required(params, 1, Integer.TYPE);
+    BlsThresholdCryptoSystem algorithm;
+    try {
+      algorithm = BlsThresholdCryptoSystem.create(algorithmInt);
+    } catch (RuntimeException ex) {
+      return new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
+    }
+    LOG.trace("JSON RPC {}: Threshold: {}, Algorithm: {}", getName(), threshold, algorithm);
 
-    this.crosschainController.checkUnlock(address);
-    return new JsonRpcSuccessResponse(request.getId());
+    long keyVersion = this.crosschainController.startThresholdKeyGeneration(threshold, algorithm);
+    LOG.trace(
+        "JSON RPC {}: Threshold: {}, Algorithm: {}: Key Version: {}",
+        getName(),
+        threshold,
+        algorithm,
+        keyVersion);
+    return new JsonRpcSuccessResponse(request.getId(), Quantity.create(keyVersion));
   }
 }

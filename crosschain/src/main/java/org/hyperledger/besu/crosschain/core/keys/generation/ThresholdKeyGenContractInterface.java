@@ -51,6 +51,8 @@ public interface ThresholdKeyGenContractInterface {
 
   BigInteger getNodeAddress(final long version, final int index);
 
+  boolean nodeCoefficientsCommitmentsSet(final long version, final BigInteger address);
+
   BlsPoint getCoefficientPublicValue(
       final long version, final BigInteger fromAddress, final int coefNumber);
 

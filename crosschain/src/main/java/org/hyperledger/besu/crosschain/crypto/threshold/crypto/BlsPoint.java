@@ -19,11 +19,18 @@ import java.math.BigInteger;
 
 /** BLS public key - either a share or the group public key. */
 public interface BlsPoint {
+  /**
+   * Gets the ECC curve being used.
+   *
+   * @return Curve that the point is on.
+   */
+  BlsCryptoProvider.CryptoProviderTypes getType();
+
   // Add a point to this point.
-  BlsPoint add(BlsPoint other);
+  BlsPoint add(final BlsPoint other);
 
   // Multiple this point by a scalar.
-  BlsPoint scalarMul(BigInteger scalar);
+  BlsPoint scalarMul(final BigInteger scalar);
 
   // Return true if this point is the point at infinity.
   boolean isAtInfity();

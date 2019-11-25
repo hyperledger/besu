@@ -136,6 +136,11 @@ public class SimulatedThresholdKeyGenContractWrapper implements ThresholdKeyGenC
   }
 
   @Override
+  public boolean nodeCoefficientsCommitmentsSet(final long version, final BigInteger address) {
+    return this.keyGen.nodeCoefficientsCommitmentsSet(version, address);
+  }
+
+  @Override
   public BlsPoint getCoefficientPublicValue(
       final long version, final BigInteger fromAddress, final int coefNumber) {
     return this.keyGen.getCoefficientPublicValue(version, fromAddress, coefNumber);
