@@ -57,7 +57,7 @@ public class PrivateTransactionHandler {
       final Optional<BigInteger> chainId,
       final PrivateMarkerTransactionFactory privateMarkerTransactionFactory) {
     this(
-        new Enclave(privacyParameters.getEnclaveUri()),
+        privacyParameters.getEnclave(),
         privacyParameters.getEnclavePublicKey(),
         privacyParameters.getPrivateStateStorage(),
         privacyParameters.getPrivateWorldStateArchive(),
@@ -80,7 +80,7 @@ public class PrivateTransactionHandler {
     this.privateMarkerTransactionFactory = privateMarkerTransactionFactory;
   }
 
-  public String sendToOrion(final PrivateTransaction privateTransaction) throws Exception {
+  public String sendToOrion(final PrivateTransaction privateTransaction) {
     final SendRequest sendRequest = createSendRequest(privateTransaction);
     final SendResponse sendResponse;
 

@@ -23,6 +23,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.enclave.Enclave;
+import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.enclave.types.SendRequest;
 import org.hyperledger.besu.enclave.types.SendRequestLegacy;
 import org.hyperledger.besu.enclave.types.SendResponse;
@@ -51,6 +52,7 @@ import java.util.List;
 import java.util.Optional;
 
 import com.google.common.collect.Lists;
+import io.vertx.core.Vertx;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -85,6 +87,7 @@ public class PrivacyPrecompiledContractIntegrationTest {
   private static WorldStateArchive worldStateArchive;
   private static PrivateStateStorage privateStateStorage;
   private static PrivateStateStorage.Updater storageUpdater;
+  private static Vertx vertx = Vertx.vertx();
 
   private PrivateTransactionProcessor mockPrivateTxProcessor() {
     final PrivateTransactionProcessor mockPrivateTransactionProcessor =
@@ -118,7 +121,8 @@ public class PrivacyPrecompiledContractIntegrationTest {
 
     testHarness.start();
 
-    enclave = new Enclave(testHarness.clientUrl());
+    final EnclaveFactory factory = new EnclaveFactory(vertx);
+    enclave = factory.createVertxEnclave(testHarness.clientUrl());
     messageFrame = mock(MessageFrame.class);
 
     worldStateArchive = mock(WorldStateArchive.class);
@@ -141,6 +145,7 @@ public class PrivacyPrecompiledContractIntegrationTest {
   @AfterClass
   public static void tearDownOnce() {
     testHarness.getOrion().stop();
+    vertx.close();
   }
 
   @Test

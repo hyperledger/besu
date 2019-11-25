@@ -32,10 +32,11 @@ import org.hyperledger.orion.testutil.OrionTestHarness;
 import org.hyperledger.orion.testutil.OrionTestHarnessFactory;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 import com.google.common.collect.Lists;
+import io.vertx.core.Vertx;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -49,6 +50,7 @@ public class EnclaveTest {
   private static final String PAYLOAD = "a wonderful transaction";
   private static final String MOCK_KEY = "iOCzoGo5kwtZU0J41Z9xnGXHN6ZNukIa9MspvHtu3Jk=";
   private static Enclave enclave;
+  private EnclaveFactory factory;
 
   private static OrionTestHarness testHarness;
 
@@ -63,7 +65,9 @@ public class EnclaveTest {
 
     testHarness.start();
 
-    enclave = new Enclave(testHarness.clientUrl());
+    factory = new EnclaveFactory(Vertx.vertx());
+
+    enclave = factory.createVertxEnclave(testHarness.clientUrl());
   }
 
   @After
@@ -72,7 +76,7 @@ public class EnclaveTest {
   }
 
   @Test
-  public void testUpCheck() throws InterruptedException, ExecutionException {
+  public void testUpCheck() {
     assertThat(enclave.upCheck()).isTrue();
   }
 
@@ -181,7 +185,7 @@ public class EnclaveTest {
   }
 
   @Test
-  public void whenUpCheckFailsThrows() {
-    assertThat(new Enclave(URI.create("http://127.0.0.1:65535")).upCheck()).isFalse();
+  public void upcheckReturnsFalseIfNoResposneReceived() throws URISyntaxException {
+    assertThat(factory.createVertxEnclave(new URI("http://8.8.8.8:65535")).upCheck()).isFalse();
   }
 }
