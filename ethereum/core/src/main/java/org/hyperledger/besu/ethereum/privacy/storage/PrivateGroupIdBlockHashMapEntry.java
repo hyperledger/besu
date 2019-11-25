@@ -19,39 +19,54 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.util.bytes.Bytes32;
 
+import java.util.Objects;
+
 public class PrivateGroupIdBlockHashMapEntry {
-    private final Bytes32 privacyGroup;
-    private final Hash blockHash;
+  private final Bytes32 privacyGroup;
+  private final Hash blockHash;
 
-    public PrivateGroupIdBlockHashMapEntry(final Bytes32 privacyGroup, final Hash blockHash) {
-        this.privacyGroup = privacyGroup;
-        this.blockHash = blockHash;
-    }
+  public PrivateGroupIdBlockHashMapEntry(final Bytes32 privacyGroup, final Hash blockHash) {
+    this.privacyGroup = privacyGroup;
+    this.blockHash = blockHash;
+  }
 
-    public Hash getBlockHash() {
-        return blockHash;
-    }
+  public Hash getBlockHash() {
+    return blockHash;
+  }
 
-    public Bytes32 getPrivacyGroup() {
-        return privacyGroup;
-    }
+  public Bytes32 getPrivacyGroup() {
+    return privacyGroup;
+  }
 
-    public void writeTo(final RLPOutput out) {
-        out.startList();
+  public void writeTo(final RLPOutput out) {
+    out.startList();
 
-        out.writeBytesValue(privacyGroup);
-        out.writeBytesValue(blockHash);
+    out.writeBytesValue(privacyGroup);
+    out.writeBytesValue(blockHash);
 
-        out.endList();
-    }
+    out.endList();
+  }
 
-    public static PrivateGroupIdBlockHashMapEntry readFrom(final RLPInput input) {
-        input.enterList();
+  public static PrivateGroupIdBlockHashMapEntry readFrom(final RLPInput input) {
+    input.enterList();
 
-        final PrivateGroupIdBlockHashMapEntry privateTransactionMetadata =
-                new PrivateGroupIdBlockHashMapEntry(input.readBytes32(), Hash.wrap(input.readBytes32()));
+    final PrivateGroupIdBlockHashMapEntry privateTransactionMetadata =
+        new PrivateGroupIdBlockHashMapEntry(input.readBytes32(), Hash.wrap(input.readBytes32()));
 
-        input.leaveList();
-        return privateTransactionMetadata;
-    }
+    input.leaveList();
+    return privateTransactionMetadata;
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    final PrivateGroupIdBlockHashMapEntry that = (PrivateGroupIdBlockHashMapEntry) o;
+    return privacyGroup.equals(that.privacyGroup) && blockHash.equals(that.blockHash);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(privacyGroup, blockHash);
+  }
 }

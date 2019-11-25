@@ -45,6 +45,7 @@ import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.Restriction;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyStorageProvider;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivateGroupIdToLatestBlockwithTransactionMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.privacy.storage.keyvalue.PrivacyKeyValueStorageProviderBuilder;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -168,9 +169,6 @@ public class PrivacyReorgTest {
     final ProtocolContext<?> protocolContext = besuController.getProtocolContext();
     final DefaultBlockchain blockchain = (DefaultBlockchain) protocolContext.getBlockchain();
     final PrivateStateStorage privateStateStorage = privacyParameters.getPrivateStateStorage();
-    final BytesValue privacyGroupId =
-        BytesValue.fromHexString(
-            "0xfd3d679c20d01667629ab31c47efd69b1aca3ae3eafe5096a7cdb7948310baa6");
 
     final Block firstBlock =
         gen.block(
@@ -190,21 +188,32 @@ public class PrivacyReorgTest {
 
     appendBlock(besuController, blockchain, protocolContext, firstBlock);
 
+    final PrivateGroupIdToLatestBlockwithTransactionMap expected =
+        new PrivateGroupIdToLatestBlockwithTransactionMap(
+            Collections.singletonMap(
+                Bytes32.fromHexString(
+                    "0xf250d523ae9164722b06ca25cfa2a7f3c45df96b09e215236f886c876f715bfa"),
+                firstBlock.getHash()));
+
     assertThat(
-            privateStateStorage.getPrivacyGroupHead(
-                blockchain.getGenesisBlock().getHash(), Bytes32.wrap(privacyGroupId)))
+            privateStateStorage.getPrivacyGroupToLatestBlockWithTransactionMap(
+                blockchain.getGenesisBlock().getHash()))
         .isEmpty();
     assertThat(
-            privateStateStorage.getPrivacyGroupHead(
-                firstBlock.getHash(), Bytes32.wrap(privacyGroupId)))
-        .contains(firstBlock.getHash());
+            privateStateStorage.getPrivacyGroupToLatestBlockWithTransactionMap(
+                firstBlock.getHash()))
+        .isNotEmpty();
+    assertThat(
+            privateStateStorage.getPrivacyGroupToLatestBlockWithTransactionMap(
+                firstBlock.getHash()))
+        .contains(expected);
 
     final Block secondBlock =
         gen.block(
             new BlockDataGenerator.BlockOptions()
                 .setBlockNumber(2)
                 .setParentHash(firstBlock.getHeader().getHash())
-                .addTransaction(generateMarker(getEnclaveKey(enclave.clientUrl())))
+                .hasTransactions(false)
                 .hasOmmers(false)
                 .setReceiptsRoot(
                     Hash.fromHexString(
@@ -215,10 +224,17 @@ public class PrivacyReorgTest {
                     Hash.fromHexString(
                         "0x35c315ee7d272e5b612d454ee87c948657310ab33208b57122f8d0525e91f35e")));
 
+    appendBlock(besuController, blockchain, protocolContext, secondBlock);
+
     assertThat(
-            privateStateStorage.getPrivacyGroupHead(
-                secondBlock.getHash(), Bytes32.wrap(privacyGroupId)))
-        .contains(firstBlock.getHash());
+            privateStateStorage.getPrivacyGroupToLatestBlockWithTransactionMap(
+                secondBlock.getHash()))
+        .isNotEmpty();
+
+    assertThat(
+            privateStateStorage.getPrivacyGroupToLatestBlockWithTransactionMap(
+                firstBlock.getHash()))
+        .contains(expected);
   }
 
   @Test

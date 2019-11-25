@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.retesteth;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.MainnetBlockValidator;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
+import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
@@ -50,7 +51,8 @@ public class NoRewardProtocolScheduleWrapper<C> implements ProtocolSchedule<C> {
         new MainnetBlockValidator<>(
             original.getBlockHeaderValidator(),
             original.getBlockBodyValidator(),
-            noRewardBlockProcessor);
+            noRewardBlockProcessor,
+            PrivacyParameters.DEFAULT);
     final BlockImporter<C> noRewardBlockImporter =
         new MainnetBlockImporter<>(noRewardBlockValidator);
     return new ProtocolSpec<>(
