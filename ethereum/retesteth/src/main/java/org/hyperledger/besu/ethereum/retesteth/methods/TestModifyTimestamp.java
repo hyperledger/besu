@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.retesteth.methods;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -34,9 +34,9 @@ public class TestModifyTimestamp implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest request) {
-    final long epochSeconds = request.getRequiredParameter(0, Long.class);
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
+    final long epochSeconds = requestContext.getRequiredParameter(0, Long.class);
     context.getRetestethClock().resetTime(epochSeconds);
-    return new JsonRpcSuccessResponse(request.getId(), true);
+    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), true);
   }
 }

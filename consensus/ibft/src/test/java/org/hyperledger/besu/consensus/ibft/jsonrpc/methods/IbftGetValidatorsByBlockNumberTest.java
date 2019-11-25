@@ -19,6 +19,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.ibft.IbftBlockInterface;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -40,7 +41,7 @@ public class IbftGetValidatorsByBlockNumberTest {
   @Mock private BlockchainQueries blockchainQueries;
   @Mock private BlockHeader blockHeader;
   @Mock private IbftBlockInterface ibftBlockInterface;
-  @Mock private JsonRpcRequest request;
+  @Mock private JsonRpcRequestContext request;
 
   private IbftGetValidatorsByBlockNumber method;
 
@@ -51,7 +52,7 @@ public class IbftGetValidatorsByBlockNumberTest {
 
   @Test
   public void blockParameterIsParameter0() {
-    request = new JsonRpcRequest("?", "ignore", new String[] {"0x1245"});
+    request = new JsonRpcRequestContext(new JsonRpcRequest("?", "ignore", new String[] {"0x1245"}));
     BlockParameter blockParameter = method.blockParameter(request);
     assertThat(blockParameter.getNumber().getAsLong()).isEqualTo(0x1245);
   }

@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.permissioning;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -44,17 +44,19 @@ public class PermReloadPermissionsFromFile implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest request) {
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     if (!accountWhitelistController.isPresent() && !nodesWhitelistController.isPresent()) {
-      return new JsonRpcErrorResponse(request.getId(), JsonRpcError.PERMISSIONING_NOT_ENABLED);
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), JsonRpcError.PERMISSIONING_NOT_ENABLED);
     }
 
     try {
       accountWhitelistController.ifPresent(AccountLocalConfigPermissioningController::reload);
       nodesWhitelistController.ifPresent(NodeLocalConfigPermissioningController::reload);
-      return new JsonRpcSuccessResponse(request.getId());
+      return new JsonRpcSuccessResponse(requestContext.getRequest().getId());
     } catch (Exception e) {
-      return new JsonRpcErrorResponse(request.getId(), JsonRpcError.WHITELIST_RELOAD_ERROR);
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), JsonRpcError.WHITELIST_RELOAD_ERROR);
     }
   }
 }

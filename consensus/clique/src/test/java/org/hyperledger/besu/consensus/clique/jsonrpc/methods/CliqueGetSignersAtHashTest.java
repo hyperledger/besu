@@ -24,6 +24,7 @@ import org.hyperledger.besu.consensus.clique.CliqueBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.VoteTally;
 import org.hyperledger.besu.consensus.common.VoteTallyCache;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -94,8 +95,9 @@ public class CliqueGetSignersAtHashTest {
   @Test
   @SuppressWarnings("unchecked")
   public void failsWhenNoParam() {
-    final JsonRpcRequest request =
-        new JsonRpcRequest("2.0", "clique_getSignersAtHash", new Object[] {});
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest("2.0", "clique_getSignersAtHash", new Object[] {}));
 
     final Throwable thrown = AssertionsForClassTypes.catchThrowable(() -> method.response(request));
 
@@ -107,8 +109,9 @@ public class CliqueGetSignersAtHashTest {
   @Test
   @SuppressWarnings("unchecked")
   public void returnsValidatorsForBlockHash() {
-    final JsonRpcRequest request =
-        new JsonRpcRequest("2.0", "clique_getSignersAtHash", new Object[] {BLOCK_HASH});
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest("2.0", "clique_getSignersAtHash", new Object[] {BLOCK_HASH}));
 
     when(blockchainQueries.blockByHash(Hash.fromHexString(BLOCK_HASH)))
         .thenReturn(Optional.of(blockWithMetadata));
@@ -122,8 +125,9 @@ public class CliqueGetSignersAtHashTest {
 
   @Test
   public void failsOnInvalidBlockHash() {
-    final JsonRpcRequest request =
-        new JsonRpcRequest("2.0", "clique_getSigners", new Object[] {BLOCK_HASH});
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest("2.0", "clique_getSigners", new Object[] {BLOCK_HASH}));
 
     when(blockchainQueries.blockByHash(Hash.fromHexString(BLOCK_HASH)))
         .thenReturn(Optional.empty());

@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.SyncingResult;
@@ -39,10 +39,10 @@ public class EthSyncing implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest req) {
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     // Returns false when not synchronizing.
     final Object result =
         synchronizer.getSyncStatus().map(s -> (Object) new SyncingResult(s)).orElse(false);
-    return new JsonRpcSuccessResponse(req.getId(), result);
+    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), result);
   }
 }
