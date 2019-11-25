@@ -217,12 +217,12 @@ public class PrivacyReorgTest {
                 .hasOmmers(false)
                 .setReceiptsRoot(
                     Hash.fromHexString(
-                        "0xc8267b3f9ed36df3ff8adb51a6d030716f23eeb50270e7fce8d9822ffa7f0461"))
-                .setGasUsed(23176)
+                        "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421"))
+                .setGasUsed(0)
                 .setLogsBloom(LogsBloomFilter.empty())
                 .setStateRoot(
                     Hash.fromHexString(
-                        "0x35c315ee7d272e5b612d454ee87c948657310ab33208b57122f8d0525e91f35e")));
+                        "0xd86a520e49caf215e7e4028262924db50540a5b26e415ab7c944e46a0c01d704")));
 
     appendBlock(besuController, blockchain, protocolContext, secondBlock);
 

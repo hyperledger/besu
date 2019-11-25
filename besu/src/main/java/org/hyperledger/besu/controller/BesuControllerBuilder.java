@@ -45,6 +45,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfigurati
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolFactory;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
+import org.hyperledger.besu.ethereum.privacy.PrivacyBlockAddedObserver;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.worldstate.MarkSweepPruner;
 import org.hyperledger.besu.ethereum.worldstate.Pruner;
@@ -294,6 +295,9 @@ public abstract class BesuControllerBuilder<C> {
     if (privacyParameters.getPrivateStorageProvider() != null) {
       closeables.add(privacyParameters.getPrivateStorageProvider());
     }
+    if (privacyParameters.isEnabled()) {
+      createNewBlockHeadersPrivacyObserver(blockchain, privacyParameters);
+    }
 
     return new BesuController<>(
         protocolSchedule,
@@ -332,6 +336,14 @@ public abstract class BesuControllerBuilder<C> {
       MiningParameters miningParameters,
       SyncState syncState,
       EthProtocolManager ethProtocolManager);
+
+  private void createNewBlockHeadersPrivacyObserver(
+      final MutableBlockchain blockchain, final PrivacyParameters privacyParameters) {
+    final PrivacyBlockAddedObserver privacyBlockAddedObserver =
+        new PrivacyBlockAddedObserver(privacyParameters);
+
+    blockchain.observeBlockAdded(privacyBlockAddedObserver);
+  }
 
   protected abstract ProtocolSchedule<C> createProtocolSchedule();
 
