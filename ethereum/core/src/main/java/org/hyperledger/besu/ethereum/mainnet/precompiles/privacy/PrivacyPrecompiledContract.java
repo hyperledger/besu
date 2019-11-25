@@ -124,6 +124,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
 
     final Hash lastRootHash;
     if (privacyGroupToLatestBlockWithTransactionMap.containsKey(Bytes32.wrap(privacyGroupId))) {
+      // Check this PG head block is being tracked
       final Hash blockHeaderHash =
           privacyGroupToLatestBlockWithTransactionMap.get(Bytes32.wrap(privacyGroupId));
       lastRootHash =
@@ -131,10 +132,13 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
               messageFrame.getBlockchain(),
               messageFrame.getBlockchain().getBlockHeader(blockHeaderHash).get(),
               privacyGroupId);
-    } else if (privateStateStorage
-        .getPrivateBlockMetadata(
-            ((BlockHeader) messageFrame.getBlockHeader()).getHash(), Bytes32.wrap(privacyGroupId))
-        .isPresent()) {
+    } else if (BlockHeader.class.isAssignableFrom(messageFrame.getBlockHeader().getClass())
+        && privateStateStorage
+            .getPrivateBlockMetadata(
+                ((BlockHeader) messageFrame.getBlockHeader()).getHash(),
+                Bytes32.wrap(privacyGroupId))
+            .isPresent()) {
+      // Check if PG is not tracked and this is not the first transaction for this PG
       lastRootHash =
           privateStateStorage
               .getPrivateBlockMetadata(
@@ -143,6 +147,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
               .get()
               .getLatestStateRoot();
     } else {
+      // First transaction for this PG
       lastRootHash = EMPTY_ROOT_HASH;
     }
 
