@@ -17,10 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.authentication;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.NoSuchAlgorithmException;
-import java.util.Base64;
+import java.io.File;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
@@ -30,7 +27,6 @@ import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.AuthProvider;
-import io.vertx.ext.auth.PubSecKeyOptions;
 import io.vertx.ext.auth.User;
 import io.vertx.ext.auth.jwt.JWTAuth;
 import io.vertx.ext.auth.jwt.JWTAuthOptions;
@@ -42,12 +38,13 @@ public class AuthenticationService {
 
   private final JWTAuth jwtAuthProvider;
   @VisibleForTesting public final JWTAuthOptions jwtAuthOptions;
-  private final AuthProvider credentialAuthProvider;
+  private final Optional<AuthProvider> credentialAuthProvider;
+  private static final JWTAuthOptionsFactory jwtAuthOptionsFactory = new JWTAuthOptionsFactory();
 
   private AuthenticationService(
       final JWTAuth jwtAuthProvider,
       final JWTAuthOptions jwtAuthOptions,
-      final AuthProvider credentialAuthProvider) {
+      final Optional<AuthProvider> credentialAuthProvider) {
     this.jwtAuthProvider = jwtAuthProvider;
     this.jwtAuthOptions = jwtAuthOptions;
     this.credentialAuthProvider = credentialAuthProvider;
@@ -65,25 +62,11 @@ public class AuthenticationService {
    */
   public static Optional<AuthenticationService> create(
       final Vertx vertx, final JsonRpcConfiguration config) {
-    final Optional<JWTAuthOptions> jwtAuthOptions =
-        makeJwtAuthOptions(
-            config.isAuthenticationEnabled(), config.getAuthenticationCredentialsFile());
-    if (!jwtAuthOptions.isPresent()) {
-      return Optional.empty();
-    }
-
-    final Optional<AuthProvider> credentialAuthProvider =
-        makeCredentialAuthProvider(
-            vertx, config.isAuthenticationEnabled(), config.getAuthenticationCredentialsFile());
-    if (!credentialAuthProvider.isPresent()) {
-      return Optional.empty();
-    }
-
-    return Optional.of(
-        new AuthenticationService(
-            jwtAuthOptions.map(o -> JWTAuth.create(vertx, o)).get(),
-            jwtAuthOptions.get(),
-            credentialAuthProvider.get()));
+    return create(
+        vertx,
+        config.isAuthenticationEnabled(),
+        config.getAuthenticationCredentialsFile(),
+        config.getAuthenticationPublicKeyFile());
   }
 
   /**
@@ -98,55 +81,35 @@ public class AuthenticationService {
    */
   public static Optional<AuthenticationService> create(
       final Vertx vertx, final WebSocketConfiguration config) {
-    final Optional<JWTAuthOptions> jwtAuthOptions =
-        makeJwtAuthOptions(
-            config.isAuthenticationEnabled(), config.getAuthenticationCredentialsFile());
-    if (!jwtAuthOptions.isPresent()) {
+    return create(
+        vertx,
+        config.isAuthenticationEnabled(),
+        config.getAuthenticationCredentialsFile(),
+        config.getAuthenticationPublicKeyFile());
+  }
+
+  private static Optional<AuthenticationService> create(
+      final Vertx vertx,
+      final boolean authenticationEnabled,
+      final String authenticationCredentialsFile,
+      final File authenticationPublicKeyFile) {
+    if (!authenticationEnabled
+        && authenticationCredentialsFile == null
+        && authenticationPublicKeyFile == null) {
       return Optional.empty();
     }
 
+    final JWTAuthOptions jwtAuthOptions =
+        authenticationPublicKeyFile == null
+            ? jwtAuthOptionsFactory.createWithGeneratedKeyPair()
+            : jwtAuthOptionsFactory.createForExternalPublicKey(authenticationPublicKeyFile);
+
     final Optional<AuthProvider> credentialAuthProvider =
-        makeCredentialAuthProvider(
-            vertx, config.isAuthenticationEnabled(), config.getAuthenticationCredentialsFile());
-    if (!credentialAuthProvider.isPresent()) {
-      return Optional.empty();
-    }
+        makeCredentialAuthProvider(vertx, authenticationEnabled, authenticationCredentialsFile);
 
     return Optional.of(
         new AuthenticationService(
-            jwtAuthOptions.map(o -> JWTAuth.create(vertx, o)).get(),
-            jwtAuthOptions.get(),
-            credentialAuthProvider.get()));
-  }
-
-  private static Optional<JWTAuthOptions> makeJwtAuthOptions(
-      final boolean authenticationEnabled, @Nullable final String authenticationCredentialsFile) {
-    if (authenticationEnabled && authenticationCredentialsFile != null) {
-      final KeyPairGenerator keyGenerator;
-      try {
-        keyGenerator = KeyPairGenerator.getInstance("RSA");
-        keyGenerator.initialize(1024);
-      } catch (final NoSuchAlgorithmException e) {
-        throw new RuntimeException(e);
-      }
-
-      final KeyPair keypair = keyGenerator.generateKeyPair();
-
-      final JWTAuthOptions jwtAuthOptions =
-          new JWTAuthOptions()
-              .setPermissionsClaimKey("permissions")
-              .addPubSecKey(
-                  new PubSecKeyOptions()
-                      .setAlgorithm("RS256")
-                      .setPublicKey(
-                          Base64.getEncoder().encodeToString(keypair.getPublic().getEncoded()))
-                      .setSecretKey(
-                          Base64.getEncoder().encodeToString(keypair.getPrivate().getEncoded())));
-
-      return Optional.of(jwtAuthOptions);
-    } else {
-      return Optional.empty();
-    }
+            JWTAuth.create(vertx, jwtAuthOptions), jwtAuthOptions, credentialAuthProvider));
   }
 
   private static Optional<AuthProvider> makeCredentialAuthProvider(
@@ -181,6 +144,15 @@ public class AuthenticationService {
    * @param routingContext Routing context associated with this request
    */
   public void handleLogin(final RoutingContext routingContext) {
+    if (credentialAuthProvider.isPresent()) {
+      login(routingContext, credentialAuthProvider.get());
+    } else {
+      handleDisabledLogin(routingContext);
+    }
+  }
+
+  private void login(
+      final RoutingContext routingContext, final AuthProvider credentialAuthProvider) {
     final JsonObject requestBody = routingContext.getBodyAsJson();
 
     if (requestBody == null) {
@@ -214,6 +186,11 @@ public class AuthenticationService {
                 new JsonObject()
                     .put("permissions", user.principal().getValue("permissions"))
                     .put("username", user.principal().getValue("username"));
+            final String privacyPublicKey = user.principal().getString("privacyPublicKey");
+            if (privacyPublicKey != null) {
+              jwtContents.put("privacyPublicKey", privacyPublicKey);
+            }
+
             final String token = jwtAuthProvider.generateToken(jwtContents, options);
 
             final JsonObject responseBody = new JsonObject().put("token", token);

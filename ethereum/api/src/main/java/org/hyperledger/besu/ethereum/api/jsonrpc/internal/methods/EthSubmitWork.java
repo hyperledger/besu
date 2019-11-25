@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 import static org.apache.logging.log4j.LogManager.getLogger;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -47,19 +47,22 @@ public class EthSubmitWork implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest req) {
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     final Optional<EthHashSolverInputs> solver = miner.getWorkDefinition();
     if (solver.isPresent()) {
       final EthHashSolution solution =
           new EthHashSolution(
-              BytesValue.fromHexString(req.getRequiredParameter(0, String.class)).getLong(0),
-              req.getRequiredParameter(2, Hash.class),
-              BytesValue.fromHexString(req.getRequiredParameter(1, String.class)).getArrayUnsafe());
+              BytesValue.fromHexString(requestContext.getRequiredParameter(0, String.class))
+                  .getLong(0),
+              requestContext.getRequiredParameter(2, Hash.class),
+              BytesValue.fromHexString(requestContext.getRequiredParameter(1, String.class))
+                  .getArrayUnsafe());
       final boolean result = miner.submitWork(solution);
-      return new JsonRpcSuccessResponse(req.getId(), result);
+      return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), result);
     } else {
       LOG.trace("Mining is not operational, eth_submitWork request cannot be processed");
-      return new JsonRpcErrorResponse(req.getId(), JsonRpcError.NO_MINING_WORK_FOUND);
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), JsonRpcError.NO_MINING_WORK_FOUND);
     }
   }
 }

@@ -22,11 +22,12 @@ import org.hyperledger.besu.enclave.types.ReceiveRequest;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcEnclaveErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.privacy.PrivateTransactionReceiptResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.TransactionLocation;
@@ -72,13 +73,13 @@ public class PrivGetTransactionReceipt implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest request) {
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     LOG.trace("Executing {}", RpcMethod.PRIV_GET_TRANSACTION_RECEIPT.getMethodName());
-    final Hash transactionHash = request.getRequiredParameter(0, Hash.class);
+    final Hash transactionHash = requestContext.getRequiredParameter(0, Hash.class);
     final Optional<TransactionLocation> maybeLocation =
         blockchain.getBlockchain().getTransactionLocation(transactionHash);
     if (!maybeLocation.isPresent()) {
-      return new JsonRpcSuccessResponse(request.getId(), null);
+      return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), null);
     }
     final TransactionLocation location = maybeLocation.get();
     final BlockBody blockBody =
@@ -103,7 +104,7 @@ public class PrivGetTransactionReceipt implements JsonRpcMethod {
     } catch (final EnclaveException e) {
       if (JsonRpcEnclaveErrorConverter.convertEnclaveInvalidReason(e.getMessage())
           == JsonRpcError.ENCLAVE_PAYLOAD_NOT_FOUND) {
-        return new JsonRpcSuccessResponse(request.getId(), null);
+        return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), null);
       }
       throw e;
     }
@@ -138,6 +139,17 @@ public class PrivGetTransactionReceipt implements JsonRpcMethod {
             .getTransactionOutput(txHash)
             .orElse(BytesValue.wrap(new byte[0]));
 
+    final BytesValue revertReason =
+        privacyParameters.getPrivateStateStorage().getRevertReason(txHash).orElse(null);
+
+    final String transactionStatus =
+        Quantity.create(
+            BytesValues.asUnsignedBigInteger(
+                privacyParameters
+                    .getPrivateStateStorage()
+                    .getStatus(txHash)
+                    .orElse(BytesValue.wrap(new byte[0]))));
+
     LOG.trace("Processed private transaction output");
 
     final PrivateTransactionReceiptResult result =
@@ -148,13 +160,19 @@ public class PrivGetTransactionReceipt implements JsonRpcMethod {
             transactionLogs,
             transactionOutput,
             blockhash,
-            transactionHash,
             blockNumber,
-            location.getTransactionIndex());
+            location.getTransactionIndex(),
+            transaction.getHash(),
+            privateTransaction.hash(),
+            privateTransaction.getPrivateFrom(),
+            privateTransaction.getPrivateFor().orElse(null),
+            privateTransaction.getPrivacyGroupId().orElse(null),
+            revertReason,
+            transactionStatus);
 
     LOG.trace("Created Private Transaction from given Transaction Hash");
 
-    return new JsonRpcSuccessResponse(request.getId(), result);
+    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), result);
   }
 
   private ReceiveResponse getReceiveResponseFromEnclave(

@@ -35,6 +35,10 @@ public class NetConditions {
     return new ExpectNetServicesReturnsOnlyJsonRpcActive(transactions.netServices());
   }
 
+  public Condition netServicesUnauthorized() {
+    return new ExpectUnauthorized(transactions.netServices());
+  }
+
   public Condition netVersion() {
     return new ExpectNetVersionIsNotBlank(transactions.netVersion());
   }
@@ -47,16 +51,8 @@ public class NetConditions {
     return new ExpectNetVersionConnectionException(transactions.netVersion(), expectedMessage);
   }
 
-  public Condition netVersionExceptional(final Class<? extends Throwable> cause) {
-    return new ExpectNetVersionConnectionExceptionWithCause(transactions.netVersion(), cause);
-  }
-
-  public Condition netVersionUnauthorizedExceptional(final String expectedMessage) {
-    return new ExpectNetVersionPermissionException(transactions.netVersion(), expectedMessage);
-  }
-
-  public Condition netVersionUnauthorizedResponse() {
-    return new ExpectNetVersionPermissionJsonRpcUnauthorizedResponse(transactions.netVersion());
+  public Condition netVersionUnauthorized() {
+    return new ExpectUnauthorized(transactions.netVersion());
   }
 
   public Condition awaitPeerCountExceptional() {

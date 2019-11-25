@@ -35,10 +35,10 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   private static final String IBFT_LEGACY_CONFIG_KEY = "ibft";
   private static final String IBFT2_CONFIG_KEY = "ibft2";
   private static final String CLIQUE_CONFIG_KEY = "clique";
-  private static final String CUSTOM_FORKS_CONFIG_KEY = "customforks";
+  private static final String TRANSITIONS_CONFIG_KEY = "transitions";
   private final ObjectNode configRoot;
   private final Map<String, String> configOverrides = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-  private final CustomForksConfigOptions customForks;
+  private final TransitionsConfigOptions transitions;
 
   public static JsonGenesisConfigOptions fromJsonObject(final ObjectNode configRoot) {
     return fromJsonObjectWithOverrides(configRoot, emptyMap());
@@ -46,41 +46,41 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
 
   static JsonGenesisConfigOptions fromJsonObjectWithOverrides(
       final ObjectNode configRoot, final Map<String, String> configOverrides) {
-    final CustomForksConfigOptions customForksConfigOptions;
+    final TransitionsConfigOptions transitionsConfigOptions;
     try {
-      customForksConfigOptions = loadCustomForksFrom(configRoot);
+      transitionsConfigOptions = loadTransitionsFrom(configRoot);
     } catch (final JsonProcessingException e) {
-      throw new RuntimeException("CustomForks section of genesis file failed to decode.", e);
+      throw new RuntimeException("Transitions section of genesis file failed to decode.", e);
     }
-    return new JsonGenesisConfigOptions(configRoot, configOverrides, customForksConfigOptions);
+    return new JsonGenesisConfigOptions(configRoot, configOverrides, transitionsConfigOptions);
   }
 
-  private static CustomForksConfigOptions loadCustomForksFrom(final ObjectNode parentNode)
+  private static TransitionsConfigOptions loadTransitionsFrom(final ObjectNode parentNode)
       throws JsonProcessingException {
 
-    final Optional<ObjectNode> customForksNode =
-        JsonUtil.getObjectNode(parentNode, CUSTOM_FORKS_CONFIG_KEY);
-    if (customForksNode.isEmpty()) {
-      return new CustomForksConfigOptions(JsonUtil.createEmptyObjectNode());
+    final Optional<ObjectNode> transitionsNode =
+        JsonUtil.getObjectNode(parentNode, TRANSITIONS_CONFIG_KEY);
+    if (transitionsNode.isEmpty()) {
+      return new TransitionsConfigOptions(JsonUtil.createEmptyObjectNode());
     }
 
-    return new CustomForksConfigOptions(customForksNode.get());
+    return new TransitionsConfigOptions(transitionsNode.get());
   }
 
   private JsonGenesisConfigOptions(
-      final ObjectNode maybeConfig, final CustomForksConfigOptions customForksConfig) {
-    this(maybeConfig, Collections.emptyMap(), customForksConfig);
+      final ObjectNode maybeConfig, final TransitionsConfigOptions transitionsConfig) {
+    this(maybeConfig, Collections.emptyMap(), transitionsConfig);
   }
 
   JsonGenesisConfigOptions(
       final ObjectNode maybeConfig,
       final Map<String, String> configOverrides,
-      final CustomForksConfigOptions customForksConfig) {
+      final TransitionsConfigOptions transitionsConfig) {
     this.configRoot = isNull(maybeConfig) ? JsonUtil.createEmptyObjectNode() : maybeConfig;
     if (configOverrides != null) {
       this.configOverrides.putAll(configOverrides);
     }
-    this.customForks = customForksConfig;
+    this.transitions = transitionsConfig;
   }
 
   @Override
@@ -147,8 +147,8 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public CustomForksConfigOptions getCustomForks() {
-    return customForks;
+  public TransitionsConfigOptions getTransitions() {
+    return transitions;
   }
 
   @Override

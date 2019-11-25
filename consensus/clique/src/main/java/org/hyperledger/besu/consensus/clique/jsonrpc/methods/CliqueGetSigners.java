@@ -16,7 +16,7 @@ package org.hyperledger.besu.consensus.clique.jsonrpc.methods;
 
 import org.hyperledger.besu.consensus.common.VoteTallyCache;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
@@ -47,16 +47,19 @@ public class CliqueGetSigners implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest request) {
-    final Optional<BlockHeader> blockHeader = determineBlockHeader(request);
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
+    final Optional<BlockHeader> blockHeader = determineBlockHeader(requestContext);
     return blockHeader
         .map(bh -> voteTallyCache.getVoteTallyAfterBlock(bh).getValidators())
         .map(addresses -> addresses.stream().map(Objects::toString).collect(Collectors.toList()))
-        .<JsonRpcResponse>map(addresses -> new JsonRpcSuccessResponse(request.getId(), addresses))
-        .orElse(new JsonRpcErrorResponse(request.getId(), JsonRpcError.INTERNAL_ERROR));
+        .<JsonRpcResponse>map(
+            addresses -> new JsonRpcSuccessResponse(requestContext.getRequest().getId(), addresses))
+        .orElse(
+            new JsonRpcErrorResponse(
+                requestContext.getRequest().getId(), JsonRpcError.INTERNAL_ERROR));
   }
 
-  private Optional<BlockHeader> determineBlockHeader(final JsonRpcRequest request) {
+  private Optional<BlockHeader> determineBlockHeader(final JsonRpcRequestContext request) {
     final Optional<BlockParameter> blockParameter =
         request.getOptionalParameter(0, BlockParameter.class);
     final long latest = blockchainQueries.headBlockNumber();

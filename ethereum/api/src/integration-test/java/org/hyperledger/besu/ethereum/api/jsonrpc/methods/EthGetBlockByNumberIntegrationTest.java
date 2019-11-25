@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseUtils;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcTestMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -107,7 +108,7 @@ public class EthGetBlockByNumberIntegrationTest {
         JsonRpcResponseKey.TRANSACTION_ROOT,
         "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421");
     final JsonRpcResponse expected = responseUtils.response(out);
-    final JsonRpcRequest request = requestWithParams("earliest", false);
+    final JsonRpcRequestContext request = requestWithParams("earliest", false);
 
     final JsonRpcResponse actual = ethGetBlockNumber().response(request);
 
@@ -149,7 +150,7 @@ public class EthGetBlockByNumberIntegrationTest {
         JsonRpcResponseKey.TRANSACTION_ROOT,
         "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421");
     final JsonRpcResponse expected = responseUtils.response(out);
-    final JsonRpcRequest request = requestWithParams("earliest", true);
+    final JsonRpcRequestContext request = requestWithParams("earliest", true);
 
     final JsonRpcResponse actual = ethGetBlockNumber().response(request);
 
@@ -198,7 +199,7 @@ public class EthGetBlockByNumberIntegrationTest {
   @Test
   public void latestBlockHashes() {
     final JsonRpcResponse expected = expectedLatestBlockHashes();
-    final JsonRpcRequest request = requestWithParams("latest", false);
+    final JsonRpcRequestContext request = requestWithParams("latest", false);
 
     final JsonRpcResponse actual = ethGetBlockNumber().response(request);
 
@@ -261,7 +262,7 @@ public class EthGetBlockByNumberIntegrationTest {
   @Test
   public void latestBlockTransactions() {
     final JsonRpcResponse expected = expectedLatestBlockTransactions();
-    final JsonRpcRequest request = requestWithParams("latest", true);
+    final JsonRpcRequestContext request = requestWithParams("latest", true);
 
     final JsonRpcResponse actual = ethGetBlockNumber().response(request);
 
@@ -271,7 +272,7 @@ public class EthGetBlockByNumberIntegrationTest {
   @Test
   public void pendingBlockHashes() {
     final JsonRpcResponse expected = expectedLatestBlockHashes();
-    final JsonRpcRequest request = requestWithParams("pending", false);
+    final JsonRpcRequestContext request = requestWithParams("pending", false);
 
     final JsonRpcResponse actual = ethGetBlockNumber().response(request);
 
@@ -281,7 +282,7 @@ public class EthGetBlockByNumberIntegrationTest {
   @Test
   public void pendingBlockTransactions() {
     final JsonRpcResponse expected = expectedLatestBlockTransactions();
-    final JsonRpcRequest request = requestWithParams("pending", true);
+    final JsonRpcRequestContext request = requestWithParams("pending", true);
 
     final JsonRpcResponse actual = ethGetBlockNumber().response(request);
 
@@ -326,7 +327,7 @@ public class EthGetBlockByNumberIntegrationTest {
         responseUtils.transactions(
             "0xec7e53d1b99ef586b3e43c1c7068311f6861d51ac3d6fbf257ac0b54ba3f2032");
     final JsonRpcResponse expected = responseUtils.response(out, transactions);
-    final JsonRpcRequest request = requestWithParams("0x5", false);
+    final JsonRpcRequestContext request = requestWithParams("0x5", false);
 
     final JsonRpcResponse actual = ethGetBlockNumber().response(request);
 
@@ -385,7 +386,7 @@ public class EthGetBlockByNumberIntegrationTest {
                 "0x1c07bd41fc821f95b9f543b080c520654727f9cf829800f789c3b03b8de8b326",
                 "0x259c8aceea2d462192d95f9d6b7cb9e0bf2a6d549c3a4111194fdd22105728f5"));
     final JsonRpcResponse expected = responseUtils.response(out, transactions);
-    final JsonRpcRequest request = requestWithParams("0x5", true);
+    final JsonRpcRequestContext request = requestWithParams("0x5", true);
 
     final JsonRpcResponse actual = ethGetBlockNumber().response(request);
 
@@ -395,7 +396,7 @@ public class EthGetBlockByNumberIntegrationTest {
   /** The Tag | Quantity is the first parameter, either a String or a number */
   @Test
   public void missingTagParameterBlockHashes() {
-    final JsonRpcRequest request = requestWithParams(false);
+    final JsonRpcRequestContext request = requestWithParams(false);
 
     final Throwable thrown = catchThrowable(() -> ethGetBlockNumber().response(request));
 
@@ -407,7 +408,7 @@ public class EthGetBlockByNumberIntegrationTest {
   /** The Tag | Quantity is the first parameter, either a String or a number */
   @Test
   public void missingTagParameterBlockTransactions() {
-    final JsonRpcRequest request = requestWithParams(true);
+    final JsonRpcRequestContext request = requestWithParams(true);
 
     final Throwable thrown = catchThrowable(() -> ethGetBlockNumber().response(request));
 
@@ -422,7 +423,7 @@ public class EthGetBlockByNumberIntegrationTest {
    */
   @Test
   public void missingHashesOrTransactionParameter() {
-    final JsonRpcRequest request = requestWithParams("earliest");
+    final JsonRpcRequestContext request = requestWithParams("earliest");
 
     final Throwable thrown = catchThrowable(() -> ethGetBlockNumber().response(request));
 
@@ -438,7 +439,7 @@ public class EthGetBlockByNumberIntegrationTest {
    */
   @Test
   public void missingAllParameters() {
-    final JsonRpcRequest request = requestWithParams();
+    final JsonRpcRequestContext request = requestWithParams();
 
     final Throwable thrown = catchThrowable(() -> ethGetBlockNumber().response(request));
 
@@ -448,8 +449,8 @@ public class EthGetBlockByNumberIntegrationTest {
         .hasMessage("Missing required json rpc parameter at index 0");
   }
 
-  private JsonRpcRequest requestWithParams(final Object... params) {
-    return new JsonRpcRequest(JSON_RPC_VERSION, ETH_METHOD, params);
+  private JsonRpcRequestContext requestWithParams(final Object... params) {
+    return new JsonRpcRequestContext(new JsonRpcRequest(JSON_RPC_VERSION, ETH_METHOD, params));
   }
 
   private JsonRpcMethod ethGetBlockNumber() {

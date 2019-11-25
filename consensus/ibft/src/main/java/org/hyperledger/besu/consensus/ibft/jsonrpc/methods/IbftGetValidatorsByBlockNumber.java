@@ -16,7 +16,7 @@ package org.hyperledger.besu.consensus.ibft.jsonrpc.methods;
 
 import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.AbstractBlockParameterMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
@@ -42,12 +42,13 @@ public class IbftGetValidatorsByBlockNumber extends AbstractBlockParameterMethod
   }
 
   @Override
-  protected BlockParameter blockParameter(final JsonRpcRequest request) {
+  protected BlockParameter blockParameter(final JsonRpcRequestContext request) {
     return request.getRequiredParameter(0, BlockParameter.class);
   }
 
   @Override
-  protected Object resultByBlockNumber(final JsonRpcRequest request, final long blockNumber) {
+  protected Object resultByBlockNumber(
+      final JsonRpcRequestContext request, final long blockNumber) {
     final Optional<BlockHeader> blockHeader =
         getBlockchainQueries().getBlockHeaderByNumber(blockNumber);
     LOG.trace("Received RPC rpcName={} block={}", getName(), blockNumber);
