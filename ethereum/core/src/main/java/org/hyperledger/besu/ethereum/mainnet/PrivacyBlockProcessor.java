@@ -51,7 +51,7 @@ public class PrivacyBlockProcessor extends AbstractBlockProcessor {
     privacyParameters
         .getPrivateStateStorage()
         .updater()
-        .putPrivacyGroupHeadBlockHash(blockHeader.getHash(), privacyGroupHeadBlockHash)
+        .putPrivacyGroupHeadBlockMap(blockHeader.getHash(), privacyGroupHeadBlockHash)
         .commit();
     return blockProcessor.processBlock(blockchain, worldState, blockHeader, transactions, ommers);
   }
