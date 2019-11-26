@@ -34,6 +34,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public abstract class AbstractBlockProcessor implements BlockProcessor {
+
   @FunctionalInterface
   public interface TransactionReceiptFactory {
 
