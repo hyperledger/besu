@@ -16,7 +16,20 @@ package org.hyperledger.besu.enclave;
 
 public interface RequestTransmitter {
 
-  <T> T postRequest(String mediaType, Object content, String endpoint, Class<T> responseType);
+  @FunctionalInterface
+  public static interface ResponseBodyHandler<T> {
+    T convertResponse(final int statusCode, final byte[] body);
+  }
 
-  <T> T getRequest(String mediaType, Object content, String endpoint, Class<T> responseType);
+  <T> T postRequest(
+      String mediaType,
+      String content,
+      String endpoint,
+      ResponseBodyHandler<T> responseBodyHandler);
+
+  <T> T getRequest(
+      String mediaType,
+      String content,
+      String endpoint,
+      ResponseBodyHandler<T> responseBodyHandler);
 }
