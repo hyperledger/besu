@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.privacy.storage;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.LogSeries;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
@@ -81,7 +80,7 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
   }
 
   @Override
-  public Optional<PrivacyGroupHeadBlockMap> getPrivacyGroupHeadBlockMap(final Hash blockHash) {
+  public Optional<PrivacyGroupHeadBlockMap> getPrivacyGroupHeadBlockMap(final Bytes32 blockHash) {
     return get(blockHash, PRIVACY_GROUP_HEAD_BLOCK_MAP_PREFIX)
         .map(b -> PrivacyGroupHeadBlockMap.readFrom(new BytesValueRLPInput(b, false)));
   }
@@ -162,8 +161,8 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
     }
 
     @Override
-    public PrivateStateStorage.Updater putPrivacyGroupHeadBlockHash(
-        final Hash blockHash, final PrivacyGroupHeadBlockMap map) {
+    public PrivateStateStorage.Updater putPrivacyGroupHeadBlockMap(
+        final Bytes32 blockHash, final PrivacyGroupHeadBlockMap map) {
       set(blockHash, PRIVACY_GROUP_HEAD_BLOCK_MAP_PREFIX, RLP.encode(map::writeTo));
       return this;
     }

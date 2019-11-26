@@ -37,6 +37,7 @@ import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.mainnet.SpuriousDragonGasCalculator;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
@@ -147,6 +148,14 @@ public class PrivacyPrecompiledContractIntegrationTest {
 
     privateStateStorage = mock(PrivateStateStorage.class);
     storageUpdater = mock(PrivateStateStorage.Updater.class);
+    when(privateStateStorage.getPrivacyGroupHeadBlockMap(any()))
+        .thenReturn(Optional.of(PrivacyGroupHeadBlockMap.EMPTY));
+    when(privateStateStorage.getPrivateBlockMetadata(any(), any())).thenReturn(Optional.empty());
+    when(storageUpdater.putPrivateBlockMetadata(
+            nullable(Bytes32.class), nullable(Bytes32.class), any()))
+        .thenReturn(storageUpdater);
+    when(storageUpdater.putPrivacyGroupHeadBlockMap(nullable(Bytes32.class), any()))
+        .thenReturn(storageUpdater);
     when(storageUpdater.putPrivateBlockMetadata(
             nullable(Bytes32.class), nullable(Bytes32.class), any()))
         .thenReturn(storageUpdater);
