@@ -67,13 +67,20 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
+import io.vertx.core.Vertx;
+import io.vertx.core.VertxOptions;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.awaitility.Awaitility;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -99,6 +106,8 @@ public abstract class CommandTestAbstract {
   protected final ByteArrayOutputStream commandErrorOutput = new ByteArrayOutputStream();
   private final PrintStream errPrintStream = new PrintStream(commandErrorOutput);
   private final HashMap<String, String> environment = new HashMap<>();
+
+  private final List<TestBesuCommand> besuCommands = new ArrayList<>();
 
   @Mock protected RunnerBuilder mockRunnerBuilder;
   @Mock protected Runner mockRunner;
@@ -229,6 +238,7 @@ public abstract class CommandTestAbstract {
 
     errPrintStream.close();
     commandErrorOutput.close();
+    besuCommands.forEach(TestBesuCommand::close);
   }
 
   protected void setEnvironemntVariable(final String name, final String value) {
@@ -270,6 +280,7 @@ public abstract class CommandTestAbstract {
             mockBesuPluginContext,
             environment,
             storageService);
+    besuCommands.add(besuCommand);
 
     besuCommand.setBesuConfiguration(commonPluginConfiguration);
 
@@ -287,6 +298,7 @@ public abstract class CommandTestAbstract {
 
     @CommandLine.Spec CommandLine.Model.CommandSpec spec;
     private final PublicKeySubCommand.KeyLoader keyLoader;
+    private Vertx vertx;
 
     @Override
     protected PublicKeySubCommand.KeyLoader getKeyLoader() {
@@ -322,6 +334,12 @@ public abstract class CommandTestAbstract {
       // For testing, don't actually query for networking interfaces to validate this option
     }
 
+    @Override
+    protected Vertx createVertx(final VertxOptions vertxOptions) {
+      vertx = super.createVertx(vertxOptions);
+      return vertx;
+    }
+
     public CommandSpec getSpec() {
       return spec;
     }
@@ -348,6 +366,14 @@ public abstract class CommandTestAbstract {
 
     public MetricsCLIOptions getMetricsCLIOptions() {
       return metricsCLIOptions;
+    }
+
+    public void close() {
+      if (vertx != null) {
+        final AtomicBoolean closed = new AtomicBoolean(false);
+        vertx.close(event -> closed.set(true));
+        Awaitility.waitAtMost(30, TimeUnit.SECONDS).until(closed::get);
+      }
     }
   }
 }

@@ -65,7 +65,6 @@ import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.controller.KeyPairUtil;
-import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
@@ -740,7 +739,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private BesuConfiguration pluginCommonConfiguration;
   private final Supplier<ObservableMetricsSystem> metricsSystem =
       Suppliers.memoize(() -> PrometheusMetricsSystem.init(metricsConfiguration()));
-  private Vertx vertx;
 
   public BesuCommand(
       final Logger logger,
@@ -808,9 +806,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       logger.info("Starting Besu version: {}", BesuInfo.nodeName(identityString));
 
       // Need to create vertx after cmdline has been parsed, such that metricSystem is configurable
-      vertx = Vertx.vertx(createVertxOptions(metricsSystem.get()));
+      vertx = createVertx(createVertxOptions(metricsSystem.get()));
 
-      // create EnclaveInterface here (then injhect to controller and runner)
       validateOptions().configure().controller().startPlugins().startSynchronization();
     } catch (final Exception e) {
       throw new ParameterException(this.commandLine, e.getMessage(), e);
@@ -1491,7 +1488,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     runner.awaitStop();
   }
 
-  private static VertxOptions createVertxOptions(final MetricsSystem metricsSystem) {
+  protected Vertx createVertx(final VertxOptions vertxOptions) {
+    return Vertx.vertx(vertxOptions);
+  }
+
+  private VertxOptions createVertxOptions(final MetricsSystem metricsSystem) {
     return new VertxOptions()
         .setMetricsOptions(
             new MetricsOptions()
