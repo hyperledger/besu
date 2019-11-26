@@ -34,8 +34,8 @@ import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.mainnet.AbstractPrecompiledContract;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateBlockMetadata;
-import org.hyperledger.besu.ethereum.privacy.storage.PrivateGroupIdToLatestBlockWithTransactionMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateTransactionMetadata;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
@@ -49,8 +49,8 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import java.util.Base64;
 import java.util.List;
 
-import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -99,6 +99,13 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
 
   @Override
   public Bytes compute(final Bytes input, final MessageFrame messageFrame) {
+    final ProcessableBlockHeader currentBlockHeader = messageFrame.getBlockHeader();
+    if (!BlockHeader.class.isAssignableFrom(currentBlockHeader.getClass())) {
+      LOG.info("Privacy works with BlockHeader only!.");
+      return Bytes.EMPTY;
+    }
+    final Hash currentBlockHash = ((BlockHeader) currentBlockHeader).getHash();
+
     final String key = input.toBase64String();
 
     final ReceiveResponse receiveResponse;
@@ -127,22 +134,13 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
           privateTransaction.getHash(),
           privacyGroupId);
 
-    final ProcessableBlockHeader currentBlockHeader = messageFrame.getBlockHeader();
-    final Map<Bytes32, Hash> privacyGroupToLatestBlockWithTransactionMap =
-        privateStateStorage
-            .getPrivacyGroupToLatestBlockWithTransactionMap(currentBlockHeader.getParentHash())
-            .map(PrivateGroupIdToLatestBlockWithTransactionMap::getMap)
-            .orElse(Collections.emptyMap());
+    final PrivacyGroupHeadBlockMap privacyGroupHeadBlockMap =
+        privateStateStorage.getPrivacyGroupHeadBlockMap(currentBlockHash).orElseThrow();
 
     final Blockchain currentBlockchain = messageFrame.getBlockchain();
-    final Hash currentBlockHash = ((BlockHeader) currentBlockHeader).getHash();
 
     final Hash lastRootHash =
-        getLastRootHash(
-            privacyGroupId,
-            currentBlockHeader,
-            privacyGroupToLatestBlockWithTransactionMap,
-            currentBlockHash);
+        getLastRootHash(privacyGroupId, privacyGroupHeadBlockMap, currentBlockHash);
 
     final MutableWorldState disposablePrivateState =
         privateWorldStateArchive.getMutable(lastRootHash).get();
@@ -203,36 +201,25 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
           Bytes.of(result.getStatus() == PrivateTransactionProcessor.Result.Status.SUCCESSFUL ? 1 : 0));
       privateStateUpdater.putTransactionResult(txHash, result.getOutput());
 
-      // TODO: could check whether the map already contains the right block hash
-      privacyGroupToLatestBlockWithTransactionMap.put(
-          Bytes32.wrap(privacyGroupId), currentBlockHash);
-      privateStateUpdater.putPrivacyGroupToLatestBlockWithTransactionMap(
-          currentBlockHash,
-          new PrivateGroupIdToLatestBlockWithTransactionMap(
-              privacyGroupToLatestBlockWithTransactionMap));
-
+      if (privacyGroupHeadBlockMap.wasModified()) {
+        privateStateUpdater.putPrivacyGroupHeadBlockHash(
+            currentBlockHash, new PrivacyGroupHeadBlockMap(privacyGroupHeadBlockMap));
+      }
       privateStateUpdater.commit();
     }
-
     return result.getOutput();
   }
 
   private Hash getLastRootHash(
       final BytesValue privacyGroupId,
-      final ProcessableBlockHeader currentBlockHeader,
       final Map<Bytes32, Hash> privacyGroupToLatestBlockWithTransactionMap,
       final Hash currentBlockHash) {
     final Hash lastRootHash;
-    if (BlockHeader.class.isAssignableFrom(currentBlockHeader.getClass())
-        && privateStateStorage
-            .getPrivateBlockMetadata(currentBlockHash, Bytes32.wrap(privacyGroupId))
-            .isPresent()) {
+    final Optional<PrivateBlockMetadata> privateBlockMetadataOptional =
+        privateStateStorage.getPrivateBlockMetadata(currentBlockHash, Bytes32.wrap(privacyGroupId));
+    if (privateBlockMetadataOptional.isPresent()) {
       // Check if block already has meta data for the privacy group
-      lastRootHash =
-          privateStateStorage
-              .getPrivateBlockMetadata(currentBlockHash, Bytes32.wrap(privacyGroupId))
-              .get()
-              .getLatestStateRoot();
+      lastRootHash = privateBlockMetadataOptional.get().getLatestStateRoot();
     } else if (privacyGroupToLatestBlockWithTransactionMap.containsKey(
         Bytes32.wrap(privacyGroupId))) {
       // Check this PG head block is being tracked
@@ -246,6 +233,8 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
     } else {
       // First transaction for this PG
       lastRootHash = EMPTY_ROOT_HASH;
+      privacyGroupToLatestBlockWithTransactionMap.put(
+          Bytes32.wrap(privacyGroupId), currentBlockHash);
     }
     return lastRootHash;
   }

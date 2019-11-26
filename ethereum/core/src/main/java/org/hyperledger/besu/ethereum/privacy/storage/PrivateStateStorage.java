@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.privacy.storage;
 
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Log;
 
 import java.util.List;
@@ -29,17 +28,13 @@ public interface PrivateStateStorage {
 
   Optional<Bytes> getTransactionOutput(Bytes32 transactionHash);
 
-  Optional<PrivateGroupIdToLatestBlockWithTransactionMap>
-      getPrivacyGroupToLatestBlockWithTransactionMap(Hash blockHash);
-
-  Optional<PrivateTransactionMetadata> getTransactionMetadata(
-      Bytes32 blockHash, Hash transactionHash);
-
   Optional<Bytes> getStatus(Bytes32 transactionHash);
 
   Optional<Bytes> getRevertReason(Bytes32 transactionHash);
 
   Optional<PrivateBlockMetadata> getPrivateBlockMetadata(Bytes32 blockHash, Bytes32 privacyGroupId);
+
+  Optional<PrivacyGroupHeadBlockMap> getPrivacyGroupHeadBlockMap(Bytes32 blockHash);
 
   boolean isPrivateStateAvailable(Bytes32 transactionHash);
 
@@ -60,8 +55,7 @@ public interface PrivateStateStorage {
     Updater putPrivateBlockMetadata(
         Bytes32 blockHash, Bytes32 privacyGroupId, PrivateBlockMetadata metadata);
 
-    Updater putPrivacyGroupToLatestBlockWithTransactionMap(
-        Hash blockHash, PrivateGroupIdToLatestBlockWithTransactionMap map);
+    Updater putPrivacyGroupHeadBlockHash(Bytes32 blockHash, PrivacyGroupHeadBlockMap map);
 
     void commit();
 
