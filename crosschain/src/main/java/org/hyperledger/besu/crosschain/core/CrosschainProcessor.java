@@ -97,8 +97,8 @@ public class CrosschainProcessor {
 
         String method =
             subordinateTransactionsAndView.getType().isSubordinateView()
-                ? "eth_processSubordinateView"
-                : "eth_sendRawCrosschainTransaction";
+                ? "cross_processSubordinateView"
+                : "cross_sendRawCrosschainTransaction";
 
         BytesValueRLPOutput out = new BytesValueRLPOutput();
         subordinateTransactionsAndView.writeTo(out);

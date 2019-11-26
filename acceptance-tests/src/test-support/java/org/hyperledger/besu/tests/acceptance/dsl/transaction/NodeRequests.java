@@ -23,12 +23,12 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyRequ
 
 import java.util.Optional;
 
-import org.web3j.protocol.Web3j;
+import org.web3j.protocol.besu.JsonRpc2_0Besu;
 import org.web3j.protocol.websocket.WebSocketService;
 
 public class NodeRequests {
 
-  private final Web3j netEth;
+  private final JsonRpc2_0Besu netEth;
   private final CliqueRequestFactory clique;
   private final Ibft2RequestFactory ibft;
   private final PermissioningJsonRpcRequestFactory perm;
@@ -40,7 +40,7 @@ public class NodeRequests {
   private final MinerRequestFactory miner;
 
   public NodeRequests(
-      final Web3j netEth,
+      final JsonRpc2_0Besu netEth,
       final CliqueRequestFactory clique,
       final Ibft2RequestFactory ibft,
       final PermissioningJsonRpcRequestFactory perm,
@@ -62,11 +62,11 @@ public class NodeRequests {
     this.login = login;
   }
 
-  public Web3j eth() {
+  public JsonRpc2_0Besu eth() {
     return netEth;
   }
 
-  public Web3j net() {
+  public JsonRpc2_0Besu net() {
     return netEth;
   }
 

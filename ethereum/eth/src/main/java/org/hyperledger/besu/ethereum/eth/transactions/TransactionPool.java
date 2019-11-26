@@ -64,7 +64,11 @@ public class TransactionPool implements BlockAddedObserver {
   private final ProtocolContext<?> protocolContext;
   private final TransactionBatchAddedListener transactionBatchAddedListener;
   private final SyncState syncState;
-  private final Wei minTransactionGasPrice;
+
+  // Added for the purposes of crosschain acceptance tests. TO BE REMOVED LATER
+  // private final Wei minTransactionGasPrice;
+  private Wei minTransactionGasPrice;
+
   private final LabelledMetric<Counter> duplicateTransactionCounter;
   private final PeerTransactionTracker peerTransactionTracker;
 
@@ -101,6 +105,11 @@ public class TransactionPool implements BlockAddedObserver {
     for (final Transaction transaction : localTransactions) {
       peerTransactionTracker.addToPeerSendQueue(peer, transaction);
     }
+  }
+
+  // Added for the purposes of crosschain acceptance tests. TO BE REMOVED LATER
+  public void resetMinGasPrice() {
+    minTransactionGasPrice = Wei.of(0);
   }
 
   public List<Transaction> getLocalTransactions() {

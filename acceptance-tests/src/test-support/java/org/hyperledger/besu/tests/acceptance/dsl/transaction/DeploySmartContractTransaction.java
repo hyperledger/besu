@@ -30,22 +30,67 @@ public class DeploySmartContractTransaction<T extends Contract> implements Trans
   private static final Credentials BENEFACTOR_ONE =
       Credentials.create(Accounts.GENESIS_ACCOUNT_ONE_PRIVATE_KEY);
 
+  int option;
+
   private final Class<T> clazz;
+
+  private String string;
+  private BigInteger bigInteger;
 
   public DeploySmartContractTransaction(final Class<T> clazz) {
     this.clazz = clazz;
+    this.option = 0;
+  }
+
+  public DeploySmartContractTransaction(
+      final Class<T> clazz, final String string, final BigInteger bigInteger) {
+    this.clazz = clazz;
+    this.string = string;
+    this.bigInteger = bigInteger;
+    this.option = 1;
   }
 
   @Override
   public T execute(final NodeRequests node) {
     try {
-      final Method method =
-          clazz.getMethod(
-              "deploy", Web3j.class, Credentials.class, BigInteger.class, BigInteger.class);
-
-      final Object invoked =
-          method.invoke(
-              METHOD_IS_STATIC, node.eth(), BENEFACTOR_ONE, DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT);
+      final Method method;
+      final Object invoked;
+      switch (this.option) {
+        case 0:
+          method =
+              clazz.getMethod(
+                  "deploy", Web3j.class, Credentials.class, BigInteger.class, BigInteger.class);
+          invoked =
+              method.invoke(
+                  METHOD_IS_STATIC,
+                  node.eth(),
+                  BENEFACTOR_ONE,
+                  DEFAULT_GAS_PRICE,
+                  DEFAULT_GAS_LIMIT);
+          break;
+        case 1:
+          method =
+              clazz.getMethod(
+                  "deploy",
+                  Web3j.class,
+                  Credentials.class,
+                  BigInteger.class,
+                  BigInteger.class,
+                  String.class,
+                  BigInteger.class);
+          invoked =
+              method.invoke(
+                  METHOD_IS_STATIC,
+                  node.eth(),
+                  BENEFACTOR_ONE,
+                  DEFAULT_GAS_PRICE,
+                  DEFAULT_GAS_LIMIT,
+                  this.string,
+                  this.bigInteger);
+          break;
+        default:
+          throw new Error();
+      }
 
       return cast(invoked).send();
     } catch (final Exception e) {

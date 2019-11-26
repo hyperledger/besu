@@ -64,12 +64,11 @@ import org.awaitility.Awaitility;
 import org.awaitility.core.ConditionTimeoutException;
 import org.java_websocket.exceptions.WebsocketNotConnectedException;
 import org.web3j.protocol.Web3jService;
-import org.web3j.protocol.core.JsonRpc2_0Web3j;
+import org.web3j.protocol.besu.JsonRpc2_0Besu;
 import org.web3j.protocol.http.HttpService;
 import org.web3j.protocol.websocket.WebSocketClient;
 import org.web3j.protocol.websocket.WebSocketListener;
 import org.web3j.protocol.websocket.WebSocketService;
-import org.web3j.utils.Async;
 
 public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable {
 
@@ -309,7 +308,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
 
       nodeRequests =
           new NodeRequests(
-              new JsonRpc2_0Web3j(web3jService, 2000, Async.defaultExecutorService()),
+              new JsonRpc2_0Besu(web3jService, 2000),
               new CliqueRequestFactory(web3jService),
               new Ibft2RequestFactory(web3jService),
               new PermissioningJsonRpcRequestFactory(web3jService),
@@ -622,5 +621,13 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   @Override
   public void verify(final Condition expected) {
     expected.verify(this);
+  }
+
+  public JsonRpc2_0Besu getJsonRpc() {
+    return nodeRequests().eth();
+  }
+
+  public Web3jService getJsonRpcWeb3jServiceFromHttpUrl(final String fallbackUrl) {
+    return jsonRpcBaseUrl().map(HttpService::new).orElse(new HttpService(fallbackUrl));
   }
 }

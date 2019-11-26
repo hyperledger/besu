@@ -30,6 +30,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.account.AccountTran
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.admin.AdminTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.clique.CliqueTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.contract.ContractTransactions;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.crosschain.CrossTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.eth.EthTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.ibft2.Ibft2Transactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.miner.MinerTransactions;
@@ -52,6 +53,7 @@ public class AcceptanceTestBase {
   protected final ContractVerifier contractVerifier;
   protected final ContractTransactions contractTransactions;
   protected final EthConditions eth;
+  protected final CrossTransactions crossTransactions;
   protected final EthTransactions ethTransactions;
   protected final Ibft2Transactions ibftTwoTransactions;
   protected final Ibft2Conditions ibftTwo;
@@ -66,6 +68,7 @@ public class AcceptanceTestBase {
 
   protected AcceptanceTestBase() {
     ethTransactions = new EthTransactions();
+    crossTransactions = new CrossTransactions();
     accounts = new Accounts(ethTransactions);
     adminTransactions = new AdminTransactions();
     cliqueTransactions = new CliqueTransactions();
