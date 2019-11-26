@@ -135,6 +135,22 @@ public class ClassicProtocolSpecs {
         .name("Atlantis");
   }
 
+  public static ProtocolSpecBuilder<Void> aghartaDefinition(
+      final Optional<BigInteger> chainId,
+      final OptionalInt configContractSizeLimit,
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason) {
+    return atlantisDefinition(
+            chainId, configContractSizeLimit, configStackSizeLimit, enableRevertReason)
+        .evmBuilder(MainnetEvmRegistries::constantinople)
+        .gasCalculator(IstanbulGasCalculator::new)
+        .evmBuilder(
+            gasCalculator ->
+                MainnetEvmRegistries.istanbul(gasCalculator, chainId.orElse(BigInteger.ZERO)))
+        .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::istanbul)
+        .name("Agharta");
+  }
+
   private static TransactionReceipt byzantiumTransactionReceiptFactory(
       final TransactionProcessor.Result result, final WorldState worldState, final long gasUsed) {
     return new TransactionReceipt(
