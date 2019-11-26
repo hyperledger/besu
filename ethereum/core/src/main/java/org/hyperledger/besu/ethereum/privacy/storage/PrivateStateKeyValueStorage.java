@@ -38,11 +38,10 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
   private static final BytesValue LOGS_KEY_SUFFIX = BytesValue.of("LOGS".getBytes(UTF_8));
   private static final BytesValue OUTPUT_KEY_SUFFIX = BytesValue.of("OUTPUT".getBytes(UTF_8));
   private static final BytesValue METADATA_KEY_SUFFIX = BytesValue.of("METADATA".getBytes(UTF_8));
-  private static final BytesValue PRIVACY_GROUP_TO_LATEST_BLOCK_WITH_TX_MAP_PREFIX =
-      BytesValue.of("MAP".getBytes(UTF_8));
-
   private static final BytesValue STATUS_KEY_SUFFIX = BytesValue.of("STATUS".getBytes(UTF_8));
   private static final BytesValue REVERT_KEY_SUFFIX = BytesValue.of("REVERT".getBytes(UTF_8));
+  private static final BytesValue PRIVACY_GROUP_HEAD_BLOCK_MAP_PREFIX =
+      BytesValue.of("MAP".getBytes(UTF_8));
 
   private final KeyValueStorage keyValueStorage;
 
@@ -65,15 +64,8 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
   }
 
   @Override
-  public Optional<PrivateTransactionMetadata> getTransactionMetadata(
-      final Bytes32 blockHash, final Hash transactionHash) {
-    return get(BytesValues.concatenate(blockHash, transactionHash), METADATA_KEY_SUFFIX)
-        .map(b -> PrivateTransactionMetadata.readFrom(new BytesValueRLPInput(b, false)));
-  }
-
-  @Override
   public Optional<BytesValue> getStatus(final Bytes32 transactionHash) {
-    return Optional.empty();
+    return get(transactionHash, STATUS_KEY_SUFFIX);
   }
 
   @Override
@@ -89,13 +81,9 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
   }
 
   @Override
-  public Optional<PrivateGroupIdToLatestBlockWithTransactionMap>
-      getPrivacyGroupToLatestBlockWithTransactionMap(final Hash blockHash) {
-    return get(blockHash, PRIVACY_GROUP_TO_LATEST_BLOCK_WITH_TX_MAP_PREFIX)
-        .map(
-            b ->
-                PrivateGroupIdToLatestBlockWithTransactionMap.readFrom(
-                    new BytesValueRLPInput(b, false)));
+  public Optional<PrivacyGroupHeadBlockMap> getPrivacyGroupHeadBlockMap(final Hash blockHash) {
+    return get(blockHash, PRIVACY_GROUP_HEAD_BLOCK_MAP_PREFIX)
+        .map(b -> PrivacyGroupHeadBlockMap.readFrom(new BytesValueRLPInput(b, false)));
   }
 
   @Override
@@ -174,9 +162,9 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
     }
 
     @Override
-    public PrivateStateStorage.Updater putPrivacyGroupToLatestBlockWithTransactionMap(
-        final Hash blockHash, final PrivateGroupIdToLatestBlockWithTransactionMap map) {
-      set(blockHash, PRIVACY_GROUP_TO_LATEST_BLOCK_WITH_TX_MAP_PREFIX, RLP.encode(map::writeTo));
+    public PrivateStateStorage.Updater putPrivacyGroupHeadBlockHash(
+        final Hash blockHash, final PrivacyGroupHeadBlockMap map) {
+      set(blockHash, PRIVACY_GROUP_HEAD_BLOCK_MAP_PREFIX, RLP.encode(map::writeTo));
       return this;
     }
 
