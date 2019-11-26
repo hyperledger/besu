@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.privacy.storage;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.LogSeries;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
@@ -37,10 +38,11 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
   private static final BytesValue LOGS_KEY_SUFFIX = BytesValue.of("LOGS".getBytes(UTF_8));
   private static final BytesValue OUTPUT_KEY_SUFFIX = BytesValue.of("OUTPUT".getBytes(UTF_8));
   private static final BytesValue METADATA_KEY_SUFFIX = BytesValue.of("METADATA".getBytes(UTF_8));
-  private static final BytesValue STATUS_KEY_SUFFIX = BytesValue.of("STATUS".getBytes(UTF_8));
-  private static final BytesValue REVERT_KEY_SUFFIX = BytesValue.of("REVERT".getBytes(UTF_8));
   private static final BytesValue PRIVACY_GROUP_TO_LATEST_BLOCK_WITH_TX_MAP_PREFIX =
       BytesValue.of("MAP".getBytes(UTF_8));
+
+  private static final BytesValue STATUS_KEY_SUFFIX = BytesValue.of("STATUS".getBytes(UTF_8));
+  private static final BytesValue REVERT_KEY_SUFFIX = BytesValue.of("REVERT".getBytes(UTF_8));
 
   private final KeyValueStorage keyValueStorage;
 
@@ -63,8 +65,15 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
   }
 
   @Override
+  public Optional<PrivateTransactionMetadata> getTransactionMetadata(
+      final Bytes32 blockHash, final Hash transactionHash) {
+    return get(BytesValues.concatenate(blockHash, transactionHash), METADATA_KEY_SUFFIX)
+        .map(b -> PrivateTransactionMetadata.readFrom(new BytesValueRLPInput(b, false)));
+  }
+
+  @Override
   public Optional<BytesValue> getStatus(final Bytes32 transactionHash) {
-    return get(transactionHash, STATUS_KEY_SUFFIX);
+    return Optional.empty();
   }
 
   @Override
@@ -81,7 +90,7 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
 
   @Override
   public Optional<PrivateGroupIdToLatestBlockWithTransactionMap>
-      getPrivacyGroupToLatestBlockWithTransactionMap(final Bytes32 blockHash) {
+      getPrivacyGroupToLatestBlockWithTransactionMap(final Hash blockHash) {
     return get(blockHash, PRIVACY_GROUP_TO_LATEST_BLOCK_WITH_TX_MAP_PREFIX)
         .map(
             b ->
@@ -166,7 +175,7 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
 
     @Override
     public PrivateStateStorage.Updater putPrivacyGroupToLatestBlockWithTransactionMap(
-        final Bytes32 blockHash, final PrivateGroupIdToLatestBlockWithTransactionMap map) {
+        final Hash blockHash, final PrivateGroupIdToLatestBlockWithTransactionMap map) {
       set(blockHash, PRIVACY_GROUP_TO_LATEST_BLOCK_WITH_TX_MAP_PREFIX, RLP.encode(map::writeTo));
       return this;
     }
