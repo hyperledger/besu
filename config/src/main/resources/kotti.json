@@ -3,6 +3,7 @@
     "chainId": 6,
     "ecip1041Block": 0,
     "atlantisBlock": 716617,
+    "aghartaBlock": 1705549,
     "clique":{
       "blockperiodseconds":15,
       "epochlength":30000
