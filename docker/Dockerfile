@@ -16,7 +16,8 @@ ENV BESU_RPC_HTTP_HOST 0.0.0.0
 ENV BESU_RPC_WS_HOST 0.0.0.0
 ENV BESU_GRAPHQL_HTTP_HOST 0.0.0.0
 
-ENTRYPOINT ["/opt/besu/bin/besu"]
+ENV PATH="/opt/besu/bin:${PATH}"
+ENTRYPOINT ["besu"]
 
 # Build-time metadata as defined at http://label-schema.org
 ARG BUILD_DATE
