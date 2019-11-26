@@ -39,7 +39,7 @@ public class Web3Sha3 implements JsonRpcMethod {
       return new JsonRpcErrorResponse(req.getId(), JsonRpcError.INVALID_PARAMS);
     }
 
-    final String data = req.getParams()[0].toString();
+    final String data = req.getRequiredParameter(0, String.class);
 
     if (!data.isEmpty() && !data.startsWith("0x")) {
       return new JsonRpcErrorResponse(req.getId(), JsonRpcError.INVALID_PARAMS);

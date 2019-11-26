@@ -86,6 +86,13 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
       params.add("--miner-enabled");
       params.add("--miner-coinbase");
       params.add(node.getMiningParameters().getCoinbase().get().toString());
+      params.add("--miner-stratum-port");
+      params.add(Integer.toString(node.getMiningParameters().getStratumPort()));
+      params.add("--miner-stratum-host");
+      params.add(node.getMiningParameters().getStratumNetworkInterface());
+    }
+    if (node.getMiningParameters().isStratumMiningEnabled()) {
+      params.add("--miner-stratum-enabled");
     }
 
     if (node.getPrivacyParameters().isEnabled()) {
@@ -125,6 +132,10 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
         params.add("--rpc-http-authentication-credentials-file");
         params.add(node.jsonRpcConfiguration().getAuthenticationCredentialsFile());
       }
+      if (node.jsonRpcConfiguration().getAuthenticationPublicKeyFile() != null) {
+        params.add("--rpc-http-authentication-jwt-public-key-file");
+        params.add(node.jsonRpcConfiguration().getAuthenticationPublicKeyFile().getAbsolutePath());
+      }
     }
 
     if (node.wsRpcEnabled()) {
@@ -141,6 +152,11 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
       if (node.webSocketConfiguration().getAuthenticationCredentialsFile() != null) {
         params.add("--rpc-ws-authentication-credentials-file");
         params.add(node.webSocketConfiguration().getAuthenticationCredentialsFile());
+      }
+      if (node.webSocketConfiguration().getAuthenticationPublicKeyFile() != null) {
+        params.add("--rpc-ws-authentication-jwt-public-key-file");
+        params.add(
+            node.webSocketConfiguration().getAuthenticationPublicKeyFile().getAbsolutePath());
       }
     }
 

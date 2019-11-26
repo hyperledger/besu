@@ -178,6 +178,10 @@ public class Address extends DelegatingBytesValue
                 })));
   }
 
+  public static Address fromPlugin(final org.hyperledger.besu.plugin.data.Address logger) {
+    return logger instanceof Address ? (Address) logger : wrap(BytesValue.fromPlugin(logger));
+  }
+
   @Override
   public Address copy() {
     final BytesValue copiedStorage = wrapped.copy();

@@ -18,7 +18,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceTypeParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
@@ -51,11 +50,10 @@ public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
   private final ProtocolSchedule<?> protocolSchedule;
 
   public TraceReplayBlockTransactions(
-      final JsonRpcParameter parameters,
       final BlockTracer blockTracer,
       final BlockchainQueries queries,
       final ProtocolSchedule<?> protocolSchedule) {
-    super(queries, parameters);
+    super(queries);
     this.blockTracer = blockTracer;
     this.protocolSchedule = protocolSchedule;
   }
@@ -67,13 +65,13 @@ public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
 
   @Override
   protected BlockParameter blockParameter(final JsonRpcRequest request) {
-    return getParameters().required(request.getParams(), 0, BlockParameter.class);
+    return request.getRequiredParameter(0, BlockParameter.class);
   }
 
   @Override
   protected Object resultByBlockNumber(final JsonRpcRequest request, final long blockNumber) {
     final TraceTypeParameter traceTypeParameter =
-        getParameters().required(request.getParams(), 1, TraceTypeParameter.class);
+        request.getRequiredParameter(1, TraceTypeParameter.class);
 
     // TODO : method returns an error if any option other than “trace” is supplied.
     // remove when others options are implemented

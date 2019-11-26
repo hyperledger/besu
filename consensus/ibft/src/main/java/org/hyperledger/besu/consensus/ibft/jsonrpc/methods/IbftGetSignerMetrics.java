@@ -18,16 +18,13 @@ import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.jsonrpc.AbstractGetSignerMetricsMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 
 public class IbftGetSignerMetrics extends AbstractGetSignerMetricsMethod implements JsonRpcMethod {
 
   public IbftGetSignerMetrics(
-      final BlockInterface blockInterface,
-      final BlockchainQueries blockchainQueries,
-      final JsonRpcParameter parameter) {
-    super(blockInterface, blockchainQueries, parameter);
+      final BlockInterface blockInterface, final BlockchainQueries blockchainQueries) {
+    super(blockInterface, blockchainQueries);
   }
 
   @Override

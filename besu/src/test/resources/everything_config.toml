@@ -50,6 +50,7 @@ rpc-http-apis=["DEBUG","ETH"]
 rpc-http-cors-origins=["none"]
 rpc-http-authentication-enabled=false
 rpc-http-authentication-credentials-file="none"
+rpc-http-authentication-jwt-public-key-file="none"
 
 # GRAPHQL HTTP
 graphql-http-enabled=false
@@ -65,6 +66,7 @@ rpc-ws-host="9.10.11.12"
 rpc-ws-port=9101
 rpc-ws-authentication-enabled=false
 rpc-ws-authentication-credentials-file="none"
+rpc-ws-authentication-jwt-public-key-file="none"
 
 # Prometheus Metrics Endpoint
 metrics-enabled=false
@@ -79,9 +81,12 @@ metrics-push-prometheus-job="besu-everything"
 
 # Mining
 miner-enabled=false
+miner-stratum-enabled=false
 miner-coinbase="0x0000000000000000000000000000000000000002"
 miner-extra-data="0x444F4E27542050414E4943202120484F444C2C20484F444C2C20484F444C2021"
 min-gas-price=1
+miner-stratum-host="0.0.0.0"
+miner-stratum-port=8008
 
 # Pruning
 pruning-enabled=true

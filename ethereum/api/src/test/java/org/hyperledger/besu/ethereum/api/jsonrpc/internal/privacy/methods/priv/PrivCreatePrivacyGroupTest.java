@@ -26,7 +26,6 @@ import org.hyperledger.besu.enclave.types.CreatePrivacyGroupRequest;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.parameters.CreatePrivacyGroupParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -46,7 +45,6 @@ public class PrivCreatePrivacyGroupTest {
   private final Enclave enclave = mock(Enclave.class);
   private final Enclave failingEnclave = mock(Enclave.class);
   private final PrivacyParameters privacyParameters = mock(PrivacyParameters.class);
-  private final JsonRpcParameter parameters = new JsonRpcParameter();
 
   @Before
   public void setUp() {
@@ -63,7 +61,7 @@ public class PrivCreatePrivacyGroupTest {
     when(privacyParameters.getEnclavePublicKey()).thenReturn(FROM);
 
     final PrivCreatePrivacyGroup privCreatePrivacyGroup =
-        new PrivCreatePrivacyGroup(enclave, privacyParameters, parameters);
+        new PrivCreatePrivacyGroup(enclave, privacyParameters);
 
     final CreatePrivacyGroupParameter param =
         new CreatePrivacyGroupParameter(ADDRESSES, NAME, DESCRIPTION);
@@ -89,7 +87,7 @@ public class PrivCreatePrivacyGroupTest {
     when(privacyParameters.getEnclavePublicKey()).thenReturn(FROM);
 
     final PrivCreatePrivacyGroup privCreatePrivacyGroup =
-        new PrivCreatePrivacyGroup(enclave, privacyParameters, parameters);
+        new PrivCreatePrivacyGroup(enclave, privacyParameters);
 
     final Object[] params =
         new Object[] {
@@ -123,7 +121,7 @@ public class PrivCreatePrivacyGroupTest {
     when(privacyParameters.getEnclavePublicKey()).thenReturn(FROM);
 
     final PrivCreatePrivacyGroup privCreatePrivacyGroup =
-        new PrivCreatePrivacyGroup(enclave, privacyParameters, parameters);
+        new PrivCreatePrivacyGroup(enclave, privacyParameters);
 
     final Object[] params =
         new Object[] {
@@ -157,7 +155,7 @@ public class PrivCreatePrivacyGroupTest {
     when(privacyParameters.getEnclavePublicKey()).thenReturn(FROM);
 
     final PrivCreatePrivacyGroup privCreatePrivacyGroup =
-        new PrivCreatePrivacyGroup(enclave, privacyParameters, parameters);
+        new PrivCreatePrivacyGroup(enclave, privacyParameters);
 
     final Object[] params =
         new Object[] {
@@ -188,7 +186,7 @@ public class PrivCreatePrivacyGroupTest {
     when(privacyParameters.getEnclavePublicKey()).thenReturn(FROM);
 
     final PrivCreatePrivacyGroup privCreatePrivacyGroup =
-        new PrivCreatePrivacyGroup(enclave, privacyParameters, parameters);
+        new PrivCreatePrivacyGroup(enclave, privacyParameters);
 
     final Object[] params =
         new Object[] {
@@ -216,7 +214,7 @@ public class PrivCreatePrivacyGroupTest {
   public void returnsCorrectExceptionMissingParam() {
 
     final PrivCreatePrivacyGroup privCreatePrivacyGroup =
-        new PrivCreatePrivacyGroup(enclave, privacyParameters, parameters);
+        new PrivCreatePrivacyGroup(enclave, privacyParameters);
 
     final Object[] params = new Object[] {};
 
@@ -232,7 +230,7 @@ public class PrivCreatePrivacyGroupTest {
   @Test
   public void returnsCorrectErrorEnclaveError() {
     final PrivCreatePrivacyGroup privCreatePrivacyGroup =
-        new PrivCreatePrivacyGroup(failingEnclave, privacyParameters, parameters);
+        new PrivCreatePrivacyGroup(failingEnclave, privacyParameters);
 
     final CreatePrivacyGroupParameter param =
         new CreatePrivacyGroupParameter(ADDRESSES, NAME, DESCRIPTION);

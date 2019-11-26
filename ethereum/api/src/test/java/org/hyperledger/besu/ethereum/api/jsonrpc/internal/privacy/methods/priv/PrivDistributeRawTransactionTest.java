@@ -16,12 +16,10 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -53,21 +51,17 @@ public class PrivDistributeRawTransactionTest {
 
   @Mock private TransactionPool transactionPool;
 
-  @Mock private JsonRpcParameter parameter;
-
   @Mock private PrivDistributeRawTransaction method;
 
   @Mock private PrivateTransactionHandler privateTxHandler;
 
   @Before
   public void before() {
-    method = new PrivDistributeRawTransaction(privateTxHandler, transactionPool, parameter);
+    method = new PrivDistributeRawTransaction(privateTxHandler, transactionPool);
   }
 
   @Test
   public void validTransactionHashReturnedAfterDistribute() throws Exception {
-    when(parameter.required(any(Object[].class), anyInt(), any()))
-        .thenReturn(VALID_PRIVATE_TRANSACTION_RLP_PRIVACY_GROUP);
     when(privateTxHandler.sendToOrion(any(PrivateTransaction.class))).thenReturn(MOCK_ORION_KEY);
     when(privateTxHandler.getPrivacyGroup(any(String.class), any(PrivateTransaction.class)))
         .thenReturn(MOCK_PRIVACY_GROUP);

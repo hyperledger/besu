@@ -107,8 +107,8 @@ public class EthSignerAcceptanceTest extends PrivacyAcceptanceTestBase {
             new PrivacyGroup(
                 privacyGroupId,
                 PrivacyGroup.Type.PANTHEON,
-                "Default Name",
-                "Default Description",
+                "",
+                "",
                 Base64String.wrapList(minerNode.getEnclaveKey()))));
 
     final String transactionHash =

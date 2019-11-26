@@ -68,6 +68,10 @@ public class Hash extends DelegatingBytes32 implements org.hyperledger.besu.plug
     return new Hash(Bytes32.fromHexStringLenient(str));
   }
 
+  public static Hash fromPlugin(final org.hyperledger.besu.plugin.data.Hash blockHash) {
+    return blockHash instanceof Hash ? (Hash) blockHash : wrap(Bytes32.fromPlugin(blockHash));
+  }
+
   @Override
   public byte[] getByteArray() {
     return super.getByteArray();

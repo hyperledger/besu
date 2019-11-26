@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -28,13 +27,12 @@ import com.google.common.base.Suppliers;
 
 public class EthGetBalance extends AbstractBlockParameterMethod {
 
-  public EthGetBalance(final BlockchainQueries blockchain, final JsonRpcParameter parameters) {
-    this(Suppliers.ofInstance(blockchain), parameters);
+  public EthGetBalance(final BlockchainQueries blockchain) {
+    this(Suppliers.ofInstance(blockchain));
   }
 
-  public EthGetBalance(
-      final Supplier<BlockchainQueries> blockchain, final JsonRpcParameter parameters) {
-    super(blockchain, parameters);
+  public EthGetBalance(final Supplier<BlockchainQueries> blockchain) {
+    super(blockchain);
   }
 
   @Override
@@ -44,12 +42,12 @@ public class EthGetBalance extends AbstractBlockParameterMethod {
 
   @Override
   protected BlockParameter blockParameter(final JsonRpcRequest request) {
-    return getParameters().required(request.getParams(), 1, BlockParameter.class);
+    return request.getRequiredParameter(1, BlockParameter.class);
   }
 
   @Override
   protected String resultByBlockNumber(final JsonRpcRequest request, final long blockNumber) {
-    final Address address = getParameters().required(request.getParams(), 0, Address.class);
+    final Address address = request.getRequiredParameter(0, Address.class);
     return getBlockchainQueries()
         .accountBalance(address, blockNumber)
         .map(Quantity::create)

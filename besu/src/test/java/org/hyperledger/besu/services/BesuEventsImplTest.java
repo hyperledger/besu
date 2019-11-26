@@ -22,9 +22,11 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
+import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.core.Wei;
@@ -39,19 +41,25 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolFactory;
+import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.data.LogWithMetadata;
 import org.hyperledger.besu.plugin.data.PropagatedBlockContext;
 import org.hyperledger.besu.plugin.data.SyncStatus;
 import org.hyperledger.besu.plugin.data.Transaction;
+import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import org.hyperledger.besu.testutil.TestClock;
 import org.hyperledger.besu.util.uint.UInt256;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
@@ -76,28 +84,29 @@ public class BesuEventsImplTest {
   @Mock private EthContext mockEthContext;
   @Mock private EthMessages mockEthMessages;
   @Mock private EthScheduler mockEthScheduler;
-  @Mock private MutableBlockchain mockBlockchain;
   @Mock private TransactionValidator mockTransactionValidator;
   @Mock private ProtocolSpec<Void> mockProtocolSpec;
   @Mock private WorldStateArchive mockWorldStateArchive;
   @Mock private WorldState mockWorldState;
-  private org.hyperledger.besu.ethereum.core.BlockHeader fakeBlockHeader;
   private TransactionPool transactionPool;
   private BlockBroadcaster blockBroadcaster;
   private BesuEventsImpl serviceImpl;
+  private MutableBlockchain blockchain;
+  private final BlockDataGenerator gen = new BlockDataGenerator();
 
   @Before
   public void setUp() {
-    fakeBlockHeader =
-        new org.hyperledger.besu.ethereum.core.BlockHeader(
-            null, null, null, null, null, null, null, null, 1, 1, 1, 1, null, null, 1, null);
-
-    when(mockBlockchain.getBlockHeader(any())).thenReturn(Optional.of(fakeBlockHeader));
+    blockchain =
+        DefaultBlockchain.createMutable(
+            gen.genesisBlock(),
+            new KeyValueStoragePrefixedKeyBlockchainStorage(
+                new InMemoryKeyValueStorage(), new MainnetBlockHeaderFunctions()),
+            new NoOpMetricsSystem());
     when(mockEthContext.getEthMessages()).thenReturn(mockEthMessages);
     when(mockEthContext.getEthPeers()).thenReturn(mockEthPeers);
     when(mockEthContext.getScheduler()).thenReturn(mockEthScheduler);
     when(mockEthPeers.streamAvailablePeers()).thenReturn(Stream.empty()).thenReturn(Stream.empty());
-    when(mockProtocolContext.getBlockchain()).thenReturn(mockBlockchain);
+    when(mockProtocolContext.getBlockchain()).thenReturn(blockchain);
     when(mockProtocolContext.getWorldStateArchive()).thenReturn(mockWorldStateArchive);
     when(mockProtocolSchedule.getByBlockNumber(anyLong())).thenReturn(mockProtocolSpec);
     when(mockProtocolSpec.getTransactionValidator()).thenReturn(mockTransactionValidator);
@@ -107,6 +116,7 @@ public class BesuEventsImplTest {
     when(mockWorldStateArchive.get(any())).thenReturn(Optional.of(mockWorldState));
 
     blockBroadcaster = new BlockBroadcaster(mockEthContext);
+    syncState = new SyncState(blockchain, mockEthPeers);
     transactionPool =
         TransactionPoolFactory.createTransactionPool(
             mockProtocolSchedule,
@@ -117,9 +127,8 @@ public class BesuEventsImplTest {
             syncState,
             Wei.ZERO,
             TransactionPoolConfiguration.builder().txPoolMaxSize(1).build());
-    syncState = new SyncState(mockBlockchain, mockEthPeers);
 
-    serviceImpl = new BesuEventsImpl(blockBroadcaster, transactionPool, syncState);
+    serviceImpl = new BesuEventsImpl(blockchain, blockBroadcaster, transactionPool, syncState);
   }
 
   @Test
@@ -157,7 +166,10 @@ public class BesuEventsImplTest {
   }
 
   private void setSyncTarget() {
-    syncState.setSyncTarget(mock(EthPeer.class), fakeBlockHeader);
+    syncState.setSyncTarget(
+        mock(EthPeer.class),
+        new org.hyperledger.besu.ethereum.core.BlockHeader(
+            null, null, null, null, null, null, null, null, 1, 1, 1, 1, null, null, 1, null));
   }
 
   private void clearSyncTarget() {
@@ -268,6 +280,43 @@ public class BesuEventsImplTest {
 
     transactionPool.addLocalTransaction(TX2);
     assertThat(result.get()).isNull();
+  }
+
+  @Test
+  public void logEventFiresAfterSubscribe() {
+    final List<LogWithMetadata> result = new ArrayList<>();
+    blockchain.observeLogs(result::add);
+
+    assertThat(result).isEmpty();
+    final var block =
+        gen.block(
+            new BlockDataGenerator.BlockOptions()
+                .setParentHash(blockchain.getGenesisBlock().getHash()));
+    blockchain.appendBlock(block, gen.receipts(block));
+    assertThat(result).hasSize(4);
+  }
+
+  @Test
+  public void logEventDoesNotFireAfterUnsubscribe() {
+    final List<LogWithMetadata> result = new ArrayList<>();
+    final long id = blockchain.observeLogs(result::add);
+
+    assertThat(result).isEmpty();
+    final var block =
+        gen.block(
+            new BlockDataGenerator.BlockOptions()
+                .setParentHash(blockchain.getGenesisBlock().getHash()));
+    blockchain.appendBlock(block, gen.receipts(block));
+    assertThat(result).hasSize(4);
+
+    result.clear();
+
+    serviceImpl.removeLogListener(id);
+    final var block2 =
+        gen.block(new BlockDataGenerator.BlockOptions().setParentHash(block.getHash()));
+    blockchain.appendBlock(block2, gen.receipts(block2));
+
+    assertThat(result).isEmpty();
   }
 
   private Block generateBlock() {

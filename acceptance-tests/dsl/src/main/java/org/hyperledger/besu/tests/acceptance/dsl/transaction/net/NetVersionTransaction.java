@@ -30,6 +30,9 @@ public class NetVersionTransaction implements Transaction<String> {
     try {
       final NetVersion result = node.net().netVersion().send();
       assertThat(result).isNotNull();
+      if (result.hasError()) {
+        throw new RuntimeException(result.getError().getMessage());
+      }
       return result.getNetVersion();
     } catch (final Exception e) {
       throw new RuntimeException(e);

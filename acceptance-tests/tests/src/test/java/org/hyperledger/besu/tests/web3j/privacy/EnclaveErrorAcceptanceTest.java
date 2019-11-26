@@ -152,7 +152,7 @@ public class EnclaveErrorAcceptanceTest extends PrivacyAcceptanceTestBase {
                         alice.getEnclaveKey(),
                         bob.getEnclaveKey())));
 
-    assertThat(throwable).hasMessageContaining("NodePushingToPeer");
+    assertThat(throwable).hasMessageContaining("NodePropagatingToAllPeers");
   }
 
   @Test

@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.permissioning
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -30,14 +29,11 @@ import java.util.Optional;
 
 public class PermAddAccountsToWhitelist implements JsonRpcMethod {
 
-  private final JsonRpcParameter parameters;
   private final Optional<AccountLocalConfigPermissioningController> whitelistController;
 
   public PermAddAccountsToWhitelist(
-      final Optional<AccountLocalConfigPermissioningController> whitelistController,
-      final JsonRpcParameter parameters) {
+      final Optional<AccountLocalConfigPermissioningController> whitelistController) {
     this.whitelistController = whitelistController;
-    this.parameters = parameters;
   }
 
   @Override
@@ -48,7 +44,7 @@ public class PermAddAccountsToWhitelist implements JsonRpcMethod {
   @Override
   @SuppressWarnings("unchecked")
   public JsonRpcResponse response(final JsonRpcRequest request) {
-    final List<String> accountsList = parameters.required(request.getParams(), 0, List.class);
+    final List<String> accountsList = request.getRequiredParameter(0, List.class);
 
     if (whitelistController.isPresent()) {
       final WhitelistOperationResult addResult =

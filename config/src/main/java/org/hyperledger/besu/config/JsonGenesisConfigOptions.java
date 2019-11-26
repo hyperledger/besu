@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.config;
 
+import static java.util.Collections.emptyMap;
 import static java.util.Objects.isNull;
 
 import java.math.BigInteger;
@@ -24,6 +25,7 @@ import java.util.OptionalInt;
 import java.util.OptionalLong;
 import java.util.TreeMap;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
 
@@ -33,23 +35,52 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   private static final String IBFT_LEGACY_CONFIG_KEY = "ibft";
   private static final String IBFT2_CONFIG_KEY = "ibft2";
   private static final String CLIQUE_CONFIG_KEY = "clique";
+  private static final String TRANSITIONS_CONFIG_KEY = "transitions";
   private final ObjectNode configRoot;
   private final Map<String, String> configOverrides = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+  private final TransitionsConfigOptions transitions;
 
   public static JsonGenesisConfigOptions fromJsonObject(final ObjectNode configRoot) {
-    return new JsonGenesisConfigOptions(configRoot);
+    return fromJsonObjectWithOverrides(configRoot, emptyMap());
   }
 
-  private JsonGenesisConfigOptions(final ObjectNode maybeConfig) {
-    this(maybeConfig, Collections.emptyMap());
+  static JsonGenesisConfigOptions fromJsonObjectWithOverrides(
+      final ObjectNode configRoot, final Map<String, String> configOverrides) {
+    final TransitionsConfigOptions transitionsConfigOptions;
+    try {
+      transitionsConfigOptions = loadTransitionsFrom(configRoot);
+    } catch (final JsonProcessingException e) {
+      throw new RuntimeException("Transitions section of genesis file failed to decode.", e);
+    }
+    return new JsonGenesisConfigOptions(configRoot, configOverrides, transitionsConfigOptions);
+  }
+
+  private static TransitionsConfigOptions loadTransitionsFrom(final ObjectNode parentNode)
+      throws JsonProcessingException {
+
+    final Optional<ObjectNode> transitionsNode =
+        JsonUtil.getObjectNode(parentNode, TRANSITIONS_CONFIG_KEY);
+    if (transitionsNode.isEmpty()) {
+      return new TransitionsConfigOptions(JsonUtil.createEmptyObjectNode());
+    }
+
+    return new TransitionsConfigOptions(transitionsNode.get());
+  }
+
+  private JsonGenesisConfigOptions(
+      final ObjectNode maybeConfig, final TransitionsConfigOptions transitionsConfig) {
+    this(maybeConfig, Collections.emptyMap(), transitionsConfig);
   }
 
   JsonGenesisConfigOptions(
-      final ObjectNode maybeConfig, final Map<String, String> configOverrides) {
+      final ObjectNode maybeConfig,
+      final Map<String, String> configOverrides,
+      final TransitionsConfigOptions transitionsConfig) {
     this.configRoot = isNull(maybeConfig) ? JsonUtil.createEmptyObjectNode() : maybeConfig;
     if (configOverrides != null) {
       this.configOverrides.putAll(configOverrides);
     }
+    this.transitions = transitionsConfig;
   }
 
   @Override
@@ -116,6 +147,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public TransitionsConfigOptions getTransitions() {
+    return transitions;
+  }
+
+  @Override
   public OptionalLong getHomesteadBlockNumber() {
     return getOptionalLong("homesteadblock");
   }
@@ -157,6 +193,36 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public OptionalLong getIstanbulBlockNumber() {
     return getOptionalLong("istanbulblock");
+  }
+
+  @Override
+  public OptionalLong getClassicForkBlock() {
+    return getOptionalLong("classicforkblock");
+  }
+
+  @Override
+  public OptionalLong getEcip1015BlockNumber() {
+    return getOptionalLong("ecip1015block");
+  }
+
+  @Override
+  public OptionalLong getDieHardBlockNumber() {
+    return getOptionalLong("diehardblock");
+  }
+
+  @Override
+  public OptionalLong getGothamBlockNumber() {
+    return getOptionalLong("gothamblock");
+  }
+
+  @Override
+  public OptionalLong getDefuseDifficultyBombBlockNumber() {
+    return getOptionalLong("ecip1041block");
+  }
+
+  @Override
+  public OptionalLong getAtlantisBlockNumber() {
+    return getOptionalLong("atlantisblock");
   }
 
   @Override
