@@ -14,59 +14,57 @@
  */
 package org.hyperledger.besu.ethereum.privacy.storage;
 
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-import org.hyperledger.besu.util.bytes.Bytes32;
+import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Objects;
 
-public class PrivateGroupIdBlockHashMapEntry {
-  private final Bytes32 privacyGroup;
-  private final Hash blockHash;
+public class RLPMapEntry {
+  private final BytesValue key;
+  private final BytesValue value;
 
-  public PrivateGroupIdBlockHashMapEntry(final Bytes32 privacyGroup, final Hash blockHash) {
-    this.privacyGroup = privacyGroup;
-    this.blockHash = blockHash;
+  public RLPMapEntry(final BytesValue key, final BytesValue value) {
+    this.key = key;
+    this.value = value;
   }
 
-  public Hash getBlockHash() {
-    return blockHash;
+  public BytesValue getKey() {
+    return key;
   }
 
-  public Bytes32 getPrivacyGroup() {
-    return privacyGroup;
+  public BytesValue getValue() {
+    return value;
   }
 
   public void writeTo(final RLPOutput out) {
     out.startList();
 
-    out.writeBytesValue(privacyGroup);
-    out.writeBytesValue(blockHash);
+    out.writeBytesValue(key);
+    out.writeBytesValue(value);
 
     out.endList();
   }
 
-  public static PrivateGroupIdBlockHashMapEntry readFrom(final RLPInput input) {
+  public static RLPMapEntry readFrom(final RLPInput input) {
     input.enterList();
 
-    final PrivateGroupIdBlockHashMapEntry privateTransactionMetadata =
-        new PrivateGroupIdBlockHashMapEntry(input.readBytes32(), Hash.wrap(input.readBytes32()));
+    final RLPMapEntry rlpMapEntry = new RLPMapEntry(input.readBytesValue(), input.readBytesValue());
 
     input.leaveList();
-    return privateTransactionMetadata;
+    return rlpMapEntry;
   }
 
   @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    final PrivateGroupIdBlockHashMapEntry that = (PrivateGroupIdBlockHashMapEntry) o;
-    return privacyGroup.equals(that.privacyGroup) && blockHash.equals(that.blockHash);
+    final RLPMapEntry rlpMapEntry = (RLPMapEntry) o;
+    return key.equals(rlpMapEntry.key) && value.equals(rlpMapEntry.value);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(privacyGroup, blockHash);
+    return Objects.hash(key, value);
   }
 }

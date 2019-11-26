@@ -34,6 +34,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public abstract class AbstractBlockProcessor implements BlockProcessor {
+
   @FunctionalInterface
   public interface TransactionReceiptFactory {
 
@@ -88,6 +89,15 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
   private final boolean skipZeroBlockRewards;
 
   private final MiningBeneficiaryCalculator miningBeneficiaryCalculator;
+
+  public AbstractBlockProcessor(final AbstractBlockProcessor blockProcessor) {
+    this(
+        blockProcessor.transactionProcessor,
+        blockProcessor.transactionReceiptFactory,
+        blockProcessor.blockReward,
+        blockProcessor.miningBeneficiaryCalculator,
+        blockProcessor.skipZeroBlockRewards);
+  }
 
   public AbstractBlockProcessor(
       final TransactionProcessor transactionProcessor,
