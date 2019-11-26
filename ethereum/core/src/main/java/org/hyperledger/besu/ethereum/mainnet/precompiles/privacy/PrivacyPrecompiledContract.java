@@ -21,16 +21,17 @@ import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.enclave.EnclaveIOException;
 import org.hyperledger.besu.enclave.EnclaveServerException;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.mainnet.AbstractPrecompiledContract;
-import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateBlockMetadata;
@@ -62,7 +63,6 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
   private final Enclave enclave;
   private final WorldStateArchive privateWorldStateArchive;
   private final PrivateStateStorage privateStateStorage;
-  private final PrivateStateRootResolver privateStateRootResolver;
   private PrivateTransactionProcessor privateTransactionProcessor;
 
   private static final Logger LOG = LogManager.getLogger();
@@ -85,7 +85,6 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
     this.enclave = enclave;
     this.privateWorldStateArchive = worldStateArchive;
     this.privateStateStorage = privateStateStorage;
-    this.privateStateRootResolver = new PrivateStateRootResolver(privateStateStorage);
   }
 
   public void setPrivateTransactionProcessor(
@@ -128,41 +127,22 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
           privateTransaction.getHash(),
           privacyGroupId);
 
+    final ProcessableBlockHeader currentBlockHeader = messageFrame.getBlockHeader();
     final Map<Bytes32, Hash> privacyGroupToLatestBlockWithTransactionMap =
         privateStateStorage
-            .getPrivacyGroupToLatestBlockWithTransactionMap(
-                messageFrame.getBlockHeader().getParentHash())
+            .getPrivacyGroupToLatestBlockWithTransactionMap(currentBlockHeader.getParentHash())
             .map(PrivateGroupIdToLatestBlockWithTransactionMap::getMap)
             .orElse(Collections.emptyMap());
 
-    final Hash lastRootHash;
-    if (privacyGroupToLatestBlockWithTransactionMap.containsKey(Bytes32.wrap(privacyGroupId))) {
-      // Check this PG head block is being tracked
-      final Hash blockHeaderHash =
-          privacyGroupToLatestBlockWithTransactionMap.get(Bytes32.wrap(privacyGroupId));
-      lastRootHash =
-          privateStateRootResolver.resolveLastStateRoot(
-              messageFrame.getBlockchain(),
-              messageFrame.getBlockchain().getBlockHeader(blockHeaderHash).get(),
-              privacyGroupId);
-    } else if (BlockHeader.class.isAssignableFrom(messageFrame.getBlockHeader().getClass())
-        && privateStateStorage
-            .getPrivateBlockMetadata(
-                ((BlockHeader) messageFrame.getBlockHeader()).getHash(),
-                Bytes32.wrap(privacyGroupId))
-            .isPresent()) {
-      // Check if PG is not tracked and this is not the first transaction for this PG
-      lastRootHash =
-          privateStateStorage
-              .getPrivateBlockMetadata(
-                  ((BlockHeader) messageFrame.getBlockHeader()).getHash(),
-                  Bytes32.wrap(privacyGroupId))
-              .get()
-              .getLatestStateRoot();
-    } else {
-      // First transaction for this PG
-      lastRootHash = EMPTY_ROOT_HASH;
-    }
+    final Blockchain currentBlockchain = messageFrame.getBlockchain();
+    final Hash currentBlockHash = ((BlockHeader) currentBlockHeader).getHash();
+
+    final Hash lastRootHash =
+        getLastRootHash(
+            privacyGroupId,
+            currentBlockHeader,
+            privacyGroupToLatestBlockWithTransactionMap,
+            currentBlockHash);
 
     final MutableWorldState disposablePrivateState =
         privateWorldStateArchive.getMutable(lastRootHash).get();
@@ -170,10 +150,10 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
     final WorldUpdater privateWorldStateUpdater = disposablePrivateState.updater();
     final PrivateTransactionProcessor.Result result =
         privateTransactionProcessor.processTransaction(
-            messageFrame.getBlockchain(),
+            currentBlockchain,
             publicWorldState,
             privateWorldStateUpdater,
-            messageFrame.getBlockHeader(),
+            currentBlockHeader,
             privateTransaction,
             messageFrame.getMiningBeneficiary(),
             new DebugOperationTracer(TraceOptions.DEFAULT),
@@ -197,16 +177,15 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
       disposablePrivateState.persist();
 
       final PrivateStateStorage.Updater privateStateUpdater = privateStateStorage.updater();
-      final BlockHeader headerWithHash = (BlockHeader) messageFrame.getBlockHeader();
       final PrivateBlockMetadata privateBlockMetadata =
           privateStateStorage
-              .getPrivateBlockMetadata(headerWithHash.getHash(), Bytes32.wrap(privacyGroupId))
+              .getPrivateBlockMetadata(currentBlockHash, Bytes32.wrap(privacyGroupId))
               .orElseGet(PrivateBlockMetadata::empty);
       privateBlockMetadata.addPrivateTransactionMetadata(
           new PrivateTransactionMetadata(
               messageFrame.getTransactionHash(), disposablePrivateState.rootHash()));
       privateStateUpdater.putPrivateBlockMetadata(
-          Bytes32.wrap(headerWithHash.getBlockHash().getByteArray()),
+          Bytes32.wrap(currentBlockHash.getByteArray()),
           Bytes32.wrap(privacyGroupId),
           privateBlockMetadata);
 
@@ -223,9 +202,51 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
           txHash,
           Bytes.of(result.getStatus() == PrivateTransactionProcessor.Result.Status.SUCCESSFUL ? 1 : 0));
       privateStateUpdater.putTransactionResult(txHash, result.getOutput());
+
+      // TODO: could check whether the map already contains the right block hash
+      privacyGroupToLatestBlockWithTransactionMap.put(
+          Bytes32.wrap(privacyGroupId), currentBlockHash);
+      privateStateUpdater.putPrivacyGroupToLatestBlockWithTransactionMap(
+          currentBlockHash,
+          new PrivateGroupIdToLatestBlockWithTransactionMap(
+              privacyGroupToLatestBlockWithTransactionMap));
+
       privateStateUpdater.commit();
     }
 
     return result.getOutput();
+  }
+
+  private Hash getLastRootHash(
+      final BytesValue privacyGroupId,
+      final ProcessableBlockHeader currentBlockHeader,
+      final Map<Bytes32, Hash> privacyGroupToLatestBlockWithTransactionMap,
+      final Hash currentBlockHash) {
+    final Hash lastRootHash;
+    if (BlockHeader.class.isAssignableFrom(currentBlockHeader.getClass())
+        && privateStateStorage
+            .getPrivateBlockMetadata(currentBlockHash, Bytes32.wrap(privacyGroupId))
+            .isPresent()) {
+      // Check if block already has meta data for the privacy group
+      lastRootHash =
+          privateStateStorage
+              .getPrivateBlockMetadata(currentBlockHash, Bytes32.wrap(privacyGroupId))
+              .get()
+              .getLatestStateRoot();
+    } else if (privacyGroupToLatestBlockWithTransactionMap.containsKey(
+        Bytes32.wrap(privacyGroupId))) {
+      // Check this PG head block is being tracked
+      final Hash blockHashForLastBlockWithTx =
+          privacyGroupToLatestBlockWithTransactionMap.get(Bytes32.wrap(privacyGroupId));
+      lastRootHash =
+          privateStateStorage
+              .getPrivateBlockMetadata(blockHashForLastBlockWithTx, Bytes32.wrap(privacyGroupId))
+              .get()
+              .getLatestStateRoot();
+    } else {
+      // First transaction for this PG
+      lastRootHash = EMPTY_ROOT_HASH;
+    }
+    return lastRootHash;
   }
 }
