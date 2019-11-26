@@ -2,6 +2,7 @@
   "config": {
     "chainId": 63,
     "atlantisBlock": 0,
+    "aghartaBlock": 301243,
     "ethash": {}
   },
   "nonce": "0x0000000000000000",
