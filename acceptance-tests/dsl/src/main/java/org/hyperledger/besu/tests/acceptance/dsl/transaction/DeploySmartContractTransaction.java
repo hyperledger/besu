@@ -20,14 +20,13 @@ import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.RemoteCall;
 import org.web3j.tx.Contract;
-import org.web3j.tx.TransactionManager;
-import org.web3j.tx.gas.ContractGasProvider;
 
 public class DeploySmartContractTransaction<T extends Contract> implements Transaction<T> {
 
@@ -57,7 +56,10 @@ public class DeploySmartContractTransaction<T extends Contract> implements Trans
             new ArrayList<>(
                 Arrays.asList(Web3j.class, Credentials.class, BigInteger.class, BigInteger.class));
         paramClasses.addAll(
-            Arrays.stream(params).map(Object::getClass).collect(Collectors.toList()));
+            Arrays.stream(params)
+                .map(Object::getClass)
+                .map(c -> c == ArrayList.class ? List.class : c)
+                .collect(Collectors.toList()));
 
         ArrayList<Object> allParams =
             new ArrayList<>(

@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.mainnet.precompiles.ECRECPrecompiledContrac
 import org.hyperledger.besu.ethereum.mainnet.precompiles.IDPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.RIPEMD160PrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.SHA256PrecompiledContract;
+import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.GroupManagementPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.PrivacyPrecompiledContract;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 
@@ -124,6 +125,21 @@ public abstract class MainnetPrecompiledContractRegistries {
         new PrivacyPrecompiledContract(
             precompiledContractConfiguration.getGasCalculator(),
             precompiledContractConfiguration.getPrivacyParameters()));
+    return registry;
+  }
+
+  static PrecompileContractRegistry appendPrivacyV2(
+      final PrecompileContractRegistry registry,
+      final PrecompiledContractConfiguration precompiledContractConfiguration,
+      final int accountVersion) {
+    final Address address =
+        Address.privacyPrecompiled(
+            precompiledContractConfiguration.getPrivacyParameters().getPrivacyAddressV2());
+    registry.put(
+        address,
+        accountVersion,
+        new GroupManagementPrecompiledContract(
+            "Group Management Contract", precompiledContractConfiguration.getGasCalculator()));
     return registry;
   }
 }

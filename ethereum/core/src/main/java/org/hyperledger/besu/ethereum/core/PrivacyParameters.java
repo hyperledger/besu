@@ -38,6 +38,7 @@ public class PrivacyParameters {
   public static final PrivacyParameters DEFAULT = new PrivacyParameters();
 
   private Integer privacyAddress = Address.PRIVACY;
+  private Integer privacyAddressV2 = Address.PRIVACY_V2;
   private boolean enabled;
   private URI enclaveUri;
   private String enclavePublicKey;
@@ -47,6 +48,14 @@ public class PrivacyParameters {
   private WorldStateArchive privateWorldStateArchive;
   private StorageProvider privateStorageProvider;
   private PrivateStateStorage privateStateStorage;
+
+  public Integer getPrivacyAddressV2() {
+    return privacyAddressV2;
+  }
+
+  public void setPrivacyAddressV2(final Integer privacyAddressV2) {
+    this.privacyAddressV2 = privacyAddressV2;
+  }
 
   public Integer getPrivacyAddress() {
     return privacyAddress;
@@ -134,9 +143,15 @@ public class PrivacyParameters {
     private String enclavePublicKey;
     private Path privateKeyPath;
     private StorageProvider storageProvider;
+    private Integer privacyAddressV2;
 
     public Builder setPrivacyAddress(final Integer privacyAddress) {
       this.privacyAddress = privacyAddress;
+      return this;
+    }
+
+    public Builder setPrivacyAddressV2(final Integer privacyAddressV2) {
+      this.privacyAddressV2 = privacyAddressV2;
       return this;
     }
 
@@ -185,6 +200,7 @@ public class PrivacyParameters {
       config.setEnabled(enabled);
       config.setEnclaveUri(enclaveUrl);
       config.setPrivacyAddress(privacyAddress);
+      config.setPrivacyAddressV2(privacyAddressV2);
       return config;
     }
 

@@ -1,7 +1,9 @@
 pragma solidity ^0.5.9;
+
 import "./PrivacyInterface.sol";
 
-contract PrivacyGroup is PrivacyInterface{
+contract UpgradedPrivacyGroup is PrivacyInterface {
+
 
     event MemberAdded(
         bool adminAdded,
@@ -74,6 +76,36 @@ contract PrivacyGroup is PrivacyInterface{
             }
         }
         return allAdded;
+    }
+
+    function find(bytes32 value) internal view returns (uint) {
+        uint i = 0;
+        while (whitelist[i] != value) {
+            i++;
+        }
+        return i;
+    }
+
+    function removeByIndex(uint i) internal {
+        while (i < whitelist.length - 1) {
+            whitelist[i] = whitelist[i + 1];
+            i++;
+        }
+        whitelist.length--;
+    }
+
+    function removeByValue(bytes32 value) internal {
+        uint i = find(value);
+        removeByIndex(i);
+    }
+
+    function removeParticipant(bytes32 enclaveKey, bytes32 member) public returns (bool) {
+        if (isMember(member)) {
+            removeByValue(member);
+            indexOf[member] = 0;
+            return true;
+        }
+        return false;
     }
 
 

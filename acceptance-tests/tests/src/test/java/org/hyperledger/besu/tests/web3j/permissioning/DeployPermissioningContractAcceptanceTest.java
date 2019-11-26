@@ -14,44 +14,88 @@
  */
 package org.hyperledger.besu.tests.web3j.permissioning;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
-
 import org.hyperledger.besu.tests.web3j.generated.permissioning.PrivacyGroup;
 import org.hyperledger.besu.tests.web3j.generated.permissioning.PrivacyProxy;
-import org.junit.Before;
-import org.junit.Test;
+import org.hyperledger.besu.tests.web3j.generated.permissioning.UpgradedPrivacyGroup;
+import org.hyperledger.besu.util.bytes.Bytes32;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collections;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.Before;
+import org.junit.Test;
+import org.web3j.tx.exceptions.ContractCallException;
 
 public class DeployPermissioningContractAcceptanceTest extends AcceptanceTestBase {
 
   private BesuNode minerNode;
+  private PrivacyProxy privacyProxy;
+  private UpgradedPrivacyGroup upgradedPrivacyGroup;
+
+  private byte[] firstMemberKey =
+      Bytes32.fromHexString("357c2fd7f6bec286163f99bf8324345d3e2a85285b3baacdd3d80a3b8648b734")
+          .getByteArray();
+  private byte[] secondMemberKey =
+      Bytes32.fromHexString("357c2fd7f6bec286163f99bf8324345d3e2a85285b3baacdd3d80a3b8648b735")
+          .getByteArray();
+
+  private byte[] unauthorizedMemberKey =
+      Bytes32.fromHexString("357c2fd7f6bec286163f99bf8324345d3e2a85285b3baacdd3d80a3b8648b736")
+          .getByteArray();
 
   @Before
   public void setUp() throws Exception {
     minerNode = besu.createMinerNode("miner-node");
     cluster.start(minerNode);
+
+    final PrivacyGroup privacyGroup = minerNode.execute(
+            contractTransactions.createSmartContract(
+                    PrivacyGroup.class, firstMemberKey, new ArrayList<byte[]>(), "Name", "Description"));
+    final String contractAddress = "0x42699a7612a82f1d9c36148af9c77354759b210b";
+    contractVerifier.validTransactionReceipt(contractAddress).verify(privacyGroup);
+    privacyProxy =
+        minerNode.execute(
+            contractTransactions.createSmartContract(PrivacyProxy.class, contractAddress));
+    privacyGroup.setProxy(firstMemberKey, privacyProxy.getContractAddress()).send();
+
+    upgradedPrivacyGroup =
+            minerNode.execute(
+                    contractTransactions.createSmartContract(
+                            UpgradedPrivacyGroup.class,
+                            firstMemberKey,
+                            new ArrayList<byte[]>(),
+                            "Name",
+                            "Description"));
   }
-
-
 
   @Test
   public void deployingProxyMustReturnValidPrivacyContractAddress() throws Exception {
-    final String contractAddress = "0x42699a7612a82f1d9c36148af9c77354759b210b";
+    assertThat(privacyProxy.getParticipants(firstMemberKey).send().size()).isEqualTo(1);
+    privacyProxy.addParticipants(firstMemberKey, Collections.singletonList(secondMemberKey)).send();
+    assertThat(privacyProxy.getParticipants(firstMemberKey).send().size()).isEqualTo(2);
+  }
 
-    final PrivacyGroup privacyGroup =
-        minerNode.execute(contractTransactions.createSmartContract(PrivacyGroup.class));
-    contractVerifier.validTransactionReceipt(contractAddress).verify(privacyGroup);
+  @Test
+  public void upgradingPrivacyContractMustWork() throws Exception {
+    privacyProxy.upgradeTo(upgradedPrivacyGroup.getContractAddress()).send();
+    upgradedPrivacyGroup.setProxy(firstMemberKey, privacyProxy.getContractAddress()).send();
 
-    final PrivacyProxy privacyProxy = minerNode.execute(contractTransactions.createSmartContract(PrivacyProxy.class, contractAddress));
-    privacyGroup.setProxy(privacyProxy.getContractAddress()).send();
+    privacyProxy.addParticipants(firstMemberKey, Collections.singletonList(secondMemberKey)).send();
 
-    assertThat(privacyProxy.getParticipants().send().size()).isEqualTo(1);
-    privacyProxy.addParticipants(Collections.singletonList("0xceeeefe21b2f2ea5df62ed2efde1e3f1e5540f96")).send();
-    assertThat(privacyProxy.getParticipants().send().size()).isEqualTo(2);
+
+    assertThat(privacyProxy.getParticipants(firstMemberKey).send().size()).isEqualTo(2);
+    upgradedPrivacyGroup.removeParticipant(firstMemberKey, secondMemberKey).send();
+    assertThat(privacyProxy.getParticipants(firstMemberKey).send().size()).isEqualTo(1);
+  }
+
+  @Test
+  public void unauthorizedPersonsShouldBeUnableToAccessContract() throws Exception {
+    assertThatThrownBy(() -> privacyProxy.getParticipants(unauthorizedMemberKey).send())
+        .isInstanceOf(ContractCallException.class);
   }
 }

@@ -45,7 +45,9 @@ public class Address extends DelegatingBytesValue
 
   // Last address that can be generated for a pre-compiled contract
   public static final Integer PRIVACY = Byte.MAX_VALUE - 1;
+  public static final Integer PRIVACY_V2 = Byte.MAX_VALUE - 2;
   public static final Address DEFAULT_PRIVACY = Address.precompiled(PRIVACY);
+  public static final Address DEFAULT_PRIVACY_V2 = Address.precompiled(PRIVACY_V2);
 
   public static final Address ZERO = Address.fromHexString("0x0");
 

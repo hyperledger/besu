@@ -15,16 +15,13 @@
 package org.hyperledger.besu.tests.acceptance.dsl.transaction;
 
 import org.hyperledger.besu.tests.acceptance.dsl.account.Accounts;
-import org.web3j.crypto.Credentials;
-import org.web3j.protocol.Web3j;
-import org.web3j.protocol.core.RemoteCall;
-import org.web3j.tx.Contract;
 
 import java.lang.reflect.Method;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.stream.Collectors;
+
+import org.web3j.crypto.Credentials;
+import org.web3j.protocol.Web3j;
+import org.web3j.tx.Contract;
 
 public class LoadSmartContract<T extends Contract> implements Transaction<T> {
 
@@ -46,11 +43,23 @@ public class LoadSmartContract<T extends Contract> implements Transaction<T> {
   @Override
   public T execute(final NodeRequests node) {
     try {
-        final Method method =
-            clazz.getMethod(
-                "load", String.class, Web3j.class, Credentials.class, BigInteger.class, BigInteger.class);
+      final Method method =
+          clazz.getMethod(
+              "load",
+              String.class,
+              Web3j.class,
+              Credentials.class,
+              BigInteger.class,
+              BigInteger.class);
 
-        return (T) method.invoke(METHOD_IS_STATIC, address, node.eth(), BENEFACTOR_ONE, DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT);
+      return (T)
+          method.invoke(
+              METHOD_IS_STATIC,
+              address,
+              node.eth(),
+              BENEFACTOR_ONE,
+              DEFAULT_GAS_PRICE,
+              DEFAULT_GAS_LIMIT);
     } catch (final Exception e) {
       throw new RuntimeException(e);
     }

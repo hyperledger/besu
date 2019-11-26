@@ -25,14 +25,14 @@ contract PrivacyProxy is PrivacyInterface{
         implementation = _newImp;
     }
 
-    function addParticipants(address[] memory accounts) public returns (bool) {
+    function addParticipants(bytes32 enclaveKey, bytes32[] memory accounts) public returns (bool) {
         PrivacyInterface privacyInterface = PrivacyInterface(implementation);
-        return privacyInterface.addParticipants(accounts);
+        return privacyInterface.addParticipants(enclaveKey, accounts);
     }
 
-    function getParticipants() public view returns (address[] memory) {
+    function getParticipants(bytes32 enclaveKey) view public returns (bytes32[] memory) {
         PrivacyInterface privacyInterface = PrivacyInterface(implementation);
-        return privacyInterface.getParticipants();
+        return privacyInterface.getParticipants(enclaveKey);
     }
 
 }
