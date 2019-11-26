@@ -206,7 +206,7 @@ Please follow these steps to have your contribution considered by the approvers:
 
 1. Ensure all commits have a Sign-off for DCO, as described in [DCO.md].
 2. Follow all instructions in [PULL-REQUEST-TEMPLATE.md](.github/pull_request_template.md).
-3. Include appropriate test coverage. Testing is 100% automated. There is no such thing as a manual test.
+3. Include appropriate test coverage. Testing is 100% automated. All submissions must be testable in an automated fashion.
 4. Follow the [Style Guides](#style-guides).
 5. After you submit your pull request, verify that all [status checks](https://help.github.com/articles/about-status-checks/) 
 are passing.
@@ -220,7 +220,6 @@ The following guidelines, based on Hyperledger Fabic's [contribution guidelines]
 <details><summary>Minimize LOCs per PR</summary>PRs get near exponentially longer to review as the number of lines of code increase. Ideally, try and keep your changes to under 300 LOC. If that is not possible, try and break up your PR into smaller ones for reviewers to review sequentially. One way to do this if, for some reason, the change has to all go in the codebase at once, is to have a PR open on the Besu repository linking to smaller PRs on your Besu fork.</details>
 <details><summary>Write Meaningful Commit Messages</summary>As mentioned above, your commit title should include the JIRA ticket number (i.e. `[BESU-99]`) while the description should link to the jira ticket. Please include a comprehensive description of the changes in your commit description. </details>
 <details><summary>Be Responsive</summary>Don't let a PR sit idle with unaddressed comments until it gets to a point where you need to rebase the whole thing. If you are pausing your work on an issue, please indicate it in the PR comments.</details>
-
 <details><summary>What if the status checks are failing?</summary>If a status check is failing, 
 and you believe that the failure is unrelated to your change, please leave a comment on the pull request 
 explaining why you believe the failure is unrelated. A maintainer will re-run the status check for you. 
