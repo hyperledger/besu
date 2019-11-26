@@ -161,7 +161,7 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
     }
 
     @Override
-    public PrivateStateStorage.Updater putPrivacyGroupHeadBlockHash(
+    public PrivateStateStorage.Updater putPrivacyGroupHeadBlockMap(
         final Bytes32 blockHash, final PrivacyGroupHeadBlockMap map) {
       set(blockHash, PRIVACY_GROUP_HEAD_BLOCK_MAP_PREFIX, RLP.encode(map::writeTo));
       return this;

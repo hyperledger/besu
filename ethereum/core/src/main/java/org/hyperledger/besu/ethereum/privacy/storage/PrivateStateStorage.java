@@ -55,7 +55,7 @@ public interface PrivateStateStorage {
     Updater putPrivateBlockMetadata(
         Bytes32 blockHash, Bytes32 privacyGroupId, PrivateBlockMetadata metadata);
 
-    Updater putPrivacyGroupHeadBlockHash(Bytes32 blockHash, PrivacyGroupHeadBlockMap map);
+    Updater putPrivacyGroupHeadBlockMap(Bytes32 blockHash, PrivacyGroupHeadBlockMap map);
 
     void commit();
 

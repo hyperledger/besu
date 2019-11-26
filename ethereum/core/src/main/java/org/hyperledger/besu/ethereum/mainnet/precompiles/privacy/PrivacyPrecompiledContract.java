@@ -191,7 +191,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
       privateStateUpdater.putTransactionResult(txHash, result.getOutput());
 
       if (privacyGroupHeadBlockMap.wasModified()) {
-        privateStateUpdater.putPrivacyGroupHeadBlockHash(
+        privateStateUpdater.putPrivacyGroupHeadBlockMap(
             currentBlockHash, new PrivacyGroupHeadBlockMap(privacyGroupHeadBlockMap));
       }
       privateStateUpdater.commit();
