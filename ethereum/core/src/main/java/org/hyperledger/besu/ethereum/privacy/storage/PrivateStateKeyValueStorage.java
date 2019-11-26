@@ -39,7 +39,7 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
   private static final BytesValue METADATA_KEY_SUFFIX = BytesValue.of("METADATA".getBytes(UTF_8));
   private static final BytesValue STATUS_KEY_SUFFIX = BytesValue.of("STATUS".getBytes(UTF_8));
   private static final BytesValue REVERT_KEY_SUFFIX = BytesValue.of("REVERT".getBytes(UTF_8));
-  private static final BytesValue PRIVACY_GROUP_TO_LATEST_BLOCK_WITH_TX_MAP_PREFIX =
+  private static final BytesValue PRIVACY_GROUP_HEAD_BLOCK_MAP_PREFIX =
       BytesValue.of("MAP".getBytes(UTF_8));
 
   private final KeyValueStorage keyValueStorage;
@@ -80,13 +80,9 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
   }
 
   @Override
-  public Optional<PrivateGroupIdToLatestBlockWithTransactionMap>
-      getPrivacyGroupToLatestBlockWithTransactionMap(final Bytes32 blockHash) {
-    return get(blockHash, PRIVACY_GROUP_TO_LATEST_BLOCK_WITH_TX_MAP_PREFIX)
-        .map(
-            b ->
-                PrivateGroupIdToLatestBlockWithTransactionMap.readFrom(
-                    new BytesValueRLPInput(b, false)));
+  public Optional<PrivacyGroupHeadBlockMap> getPrivacyGroupHeadBlockMap(final Bytes32 blockHash) {
+    return get(blockHash, PRIVACY_GROUP_HEAD_BLOCK_MAP_PREFIX)
+        .map(b -> PrivacyGroupHeadBlockMap.readFrom(new BytesValueRLPInput(b, false)));
   }
 
   @Override
@@ -165,9 +161,9 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
     }
 
     @Override
-    public PrivateStateStorage.Updater putPrivacyGroupToLatestBlockWithTransactionMap(
-        final Bytes32 blockHash, final PrivateGroupIdToLatestBlockWithTransactionMap map) {
-      set(blockHash, PRIVACY_GROUP_TO_LATEST_BLOCK_WITH_TX_MAP_PREFIX, RLP.encode(map::writeTo));
+    public PrivateStateStorage.Updater putPrivacyGroupHeadBlockHash(
+        final Bytes32 blockHash, final PrivacyGroupHeadBlockMap map) {
+      set(blockHash, PRIVACY_GROUP_HEAD_BLOCK_MAP_PREFIX, RLP.encode(map::writeTo));
       return this;
     }
 

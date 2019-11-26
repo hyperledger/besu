@@ -44,8 +44,8 @@ import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.Restriction;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyStorageProvider;
-import org.hyperledger.besu.ethereum.privacy.storage.PrivateGroupIdToLatestBlockWithTransactionMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.privacy.storage.keyvalue.PrivacyKeyValueStorageProviderBuilder;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -188,24 +188,18 @@ public class PrivacyReorgTest {
 
     appendBlock(besuController, blockchain, protocolContext, firstBlock);
 
-    final PrivateGroupIdToLatestBlockWithTransactionMap expected =
-        new PrivateGroupIdToLatestBlockWithTransactionMap(
+    final PrivacyGroupHeadBlockMap expected =
+        new PrivacyGroupHeadBlockMap(
             Collections.singletonMap(
                 Bytes32.fromHexString(
                     "0xf250d523ae9164722b06ca25cfa2a7f3c45df96b09e215236f886c876f715bfa"),
                 firstBlock.getHash()));
 
     assertThat(
-            privateStateStorage.getPrivacyGroupToLatestBlockWithTransactionMap(
-                blockchain.getGenesisBlock().getHash()))
+            privateStateStorage.getPrivacyGroupHeadBlockMap(blockchain.getGenesisBlock().getHash()))
         .isEmpty();
-    assertThat(
-            privateStateStorage.getPrivacyGroupToLatestBlockWithTransactionMap(
-                firstBlock.getHash()))
-        .isNotEmpty();
-    assertThat(
-            privateStateStorage.getPrivacyGroupToLatestBlockWithTransactionMap(
-                firstBlock.getHash()))
+    assertThat(privateStateStorage.getPrivacyGroupHeadBlockMap(firstBlock.getHash())).isNotEmpty();
+    assertThat(privateStateStorage.getPrivacyGroupHeadBlockMap(firstBlock.getHash()))
         .contains(expected);
 
     final Block secondBlock =
@@ -226,14 +220,9 @@ public class PrivacyReorgTest {
 
     appendBlock(besuController, blockchain, protocolContext, secondBlock);
 
-    assertThat(
-            privateStateStorage.getPrivacyGroupToLatestBlockWithTransactionMap(
-                secondBlock.getHash()))
-        .isNotEmpty();
+    assertThat(privateStateStorage.getPrivacyGroupHeadBlockMap(secondBlock.getHash())).isNotEmpty();
 
-    assertThat(
-            privateStateStorage.getPrivacyGroupToLatestBlockWithTransactionMap(
-                firstBlock.getHash()))
+    assertThat(privateStateStorage.getPrivacyGroupHeadBlockMap(firstBlock.getHash()))
         .contains(expected);
   }
 

@@ -281,6 +281,20 @@ public class ProtocolSpecBuilder<T> {
         transactionProcessorBuilder.apply(
             gasCalculator, transactionValidator, contractCreationProcessor, messageCallProcessor);
 
+    final BlockHeaderValidator<T> blockHeaderValidator =
+        blockHeaderValidatorBuilder.apply(difficultyCalculator);
+    final BlockHeaderValidator<T> ommerHeaderValidator =
+        ommerHeaderValidatorBuilder.apply(difficultyCalculator);
+    final BlockBodyValidator<T> blockBodyValidator =
+        blockBodyValidatorBuilder.apply(protocolSchedule);
+
+    BlockProcessor blockProcessor =
+        blockProcessorBuilder.apply(
+            transactionProcessor,
+            transactionReceiptFactory,
+            blockReward,
+            miningBeneficiaryCalculator,
+            skipZeroBlockRewards);
     // Set private Tx Processor
     if (privacyParameters.isEnabled()) {
       final PrivateTransactionValidator privateTransactionValidator =
@@ -297,21 +311,12 @@ public class ProtocolSpecBuilder<T> {
           (PrivacyPrecompiledContract)
               precompileContractRegistry.get(address, Account.DEFAULT_VERSION);
       privacyPrecompiledContract.setPrivateTransactionProcessor(privateTransactionProcessor);
+      if (AbstractBlockProcessor.class.isAssignableFrom(blockProcessor.getClass())) {
+        blockProcessor =
+            new PrivacyBlockProcessor((AbstractBlockProcessor) blockProcessor, privacyParameters);
+      }
     }
 
-    final BlockHeaderValidator<T> blockHeaderValidator =
-        blockHeaderValidatorBuilder.apply(difficultyCalculator);
-    final BlockHeaderValidator<T> ommerHeaderValidator =
-        ommerHeaderValidatorBuilder.apply(difficultyCalculator);
-    final BlockBodyValidator<T> blockBodyValidator =
-        blockBodyValidatorBuilder.apply(protocolSchedule);
-    final BlockProcessor blockProcessor =
-        blockProcessorBuilder.apply(
-            transactionProcessor,
-            transactionReceiptFactory,
-            blockReward,
-            miningBeneficiaryCalculator,
-            skipZeroBlockRewards);
     final BlockValidator<T> blockValidator =
         blockValidatorBuilder.apply(blockHeaderValidator, blockBodyValidator, blockProcessor);
     final BlockImporter<T> blockImporter = blockImporterBuilder.apply(blockValidator);

@@ -34,8 +34,7 @@ public interface PrivateStateStorage {
 
   Optional<PrivateBlockMetadata> getPrivateBlockMetadata(Bytes32 blockHash, Bytes32 privacyGroupId);
 
-  Optional<PrivateGroupIdToLatestBlockWithTransactionMap>
-      getPrivacyGroupToLatestBlockWithTransactionMap(Bytes32 blockHash);
+  Optional<PrivacyGroupHeadBlockMap> getPrivacyGroupHeadBlockMap(Bytes32 blockHash);
 
   boolean isPrivateStateAvailable(Bytes32 transactionHash);
 
@@ -56,8 +55,7 @@ public interface PrivateStateStorage {
     Updater putPrivateBlockMetadata(
         Bytes32 blockHash, Bytes32 privacyGroupId, PrivateBlockMetadata metadata);
 
-    Updater putPrivacyGroupToLatestBlockWithTransactionMap(
-        Bytes32 blockHash, PrivateGroupIdToLatestBlockWithTransactionMap map);
+    Updater putPrivacyGroupHeadBlockHash(Bytes32 blockHash, PrivacyGroupHeadBlockMap map);
 
     void commit();
 
