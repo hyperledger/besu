@@ -92,15 +92,15 @@ public abstract class CrosschainAcceptanceTestBase extends AcceptanceTestBase {
     JsonRpc2_0Besu coordinationWeb3j = this.nodeOnCoordinationBlockchain.getJsonRpc();
 
     this.transactionManagerBlockchain1 =
-            new CrosschainTransactionManager(
-                    blockchain1Web3j,
-                    BENEFACTOR_ONE,
-                    CHAINID_BLOCKCHAIN1,
-                    BLOCKCHAIN1_RETRY_ATTEMPTS,
-                    BLOCKCHAIN1_SLEEP_DURATION,
-                    coordinationWeb3j,
-                    CHAINID_COORDINATION_BLOCKCHAIN,
-                    this.coordContract.getContractAddress(),
-                    CROSSCHAIN_TRANSACTION_TIMEOUT);
+        new CrosschainTransactionManager(
+            blockchain1Web3j,
+            BENEFACTOR_ONE,
+            CHAINID_BLOCKCHAIN1,
+            BLOCKCHAIN1_RETRY_ATTEMPTS,
+            BLOCKCHAIN1_SLEEP_DURATION,
+            coordinationWeb3j,
+            CHAINID_COORDINATION_BLOCKCHAIN,
+            this.coordContract.getContractAddress(),
+            CROSSCHAIN_TRANSACTION_TIMEOUT);
   }
 }

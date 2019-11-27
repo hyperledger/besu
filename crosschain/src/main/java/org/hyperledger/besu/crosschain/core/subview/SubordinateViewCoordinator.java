@@ -47,6 +47,7 @@ public class SubordinateViewCoordinator {
    *
    * @param sidechainId Sidechain ID of this node.
    * @param numNodes number of other simulated nodes to be created.
+   * @param nodeNum The node number.
    * @param transactionSimulator executor to be supplied to simulated nodes.
    * @return a subordinate view coordinator which simulates other nodes.
    */
@@ -78,6 +79,7 @@ public class SubordinateViewCoordinator {
    *
    * @param subordinateView View to be processed.
    * @param blockNumber block height to process at.
+   * @param resultBytesValue Result to be signed.
    * @return Combined signature.
    */
   // TODO this method would be called from the JSON RPC call.

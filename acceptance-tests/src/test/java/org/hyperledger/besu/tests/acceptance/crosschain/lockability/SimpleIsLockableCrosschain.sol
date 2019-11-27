@@ -11,10 +11,9 @@
  * specific language governing permissions and limitations under the License.
  */
 pragma solidity ^0.5.0;
-import "../common/Crosschain.sol";
 
 // Simple contract for use with IsLockable tests
-contract SimpleIsLockableCrosschain is Crosschain {
+contract SimpleIsLockableCrosschain {
     uint256 public value;
 
     function setValue(uint256 _val) external {

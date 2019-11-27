@@ -19,5 +19,4 @@ contract SimpleIsLockable {
     function setValue(uint256 _val) external {
         value = _val;
     }
-
 }
