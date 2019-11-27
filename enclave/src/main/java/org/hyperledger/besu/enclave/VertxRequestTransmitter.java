@@ -32,7 +32,7 @@ public class VertxRequestTransmitter implements RequestTransmitter {
   }
 
   @Override
-  public <T> T postRequest(
+  public <T> T post(
       final String mediaType,
       final String content,
       final String endpoint,
@@ -41,7 +41,7 @@ public class VertxRequestTransmitter implements RequestTransmitter {
   }
 
   @Override
-  public <T> T getRequest(
+  public <T> T get(
       final String mediaType,
       final String content,
       final String endpoint,

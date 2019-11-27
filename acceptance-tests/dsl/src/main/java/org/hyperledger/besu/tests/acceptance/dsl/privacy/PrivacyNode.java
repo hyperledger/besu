@@ -108,8 +108,8 @@ public class PrivacyNode implements AutoCloseable {
             Arrays.toString(otherNodes.stream().map(node -> node.besu.getName()).toArray()),
             Arrays.toString(otherNodes.stream().map(node -> node.orion.nodeUrl()).toArray())));
     final EnclaveFactory factory = new EnclaveFactory(vertx);
-    Enclave enclaveClient = factory.createVertxEnclave(orion.clientUrl());
-    SendRequest sendRequest1 =
+    final Enclave enclaveClient = factory.createVertxEnclave(orion.clientUrl());
+    final SendRequest sendRequest1 =
         new SendRequestLegacy(
             "SGVsbG8sIFdvcmxkIQ==",
             orion.getDefaultPublicKey(),

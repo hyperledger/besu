@@ -17,17 +17,17 @@ package org.hyperledger.besu.enclave;
 public interface RequestTransmitter {
 
   @FunctionalInterface
-  public static interface ResponseBodyHandler<T> {
+  interface ResponseBodyHandler<T> {
     T convertResponse(final int statusCode, final byte[] body);
   }
 
-  <T> T postRequest(
+  <T> T post(
       String mediaType,
       String content,
       String endpoint,
       ResponseBodyHandler<T> responseBodyHandler);
 
-  <T> T getRequest(
+  <T> T get(
       String mediaType,
       String content,
       String endpoint,

@@ -106,7 +106,7 @@ public class Enclave {
       throw new EnclaveException("Unable to serialise object to json representation.");
     }
 
-    return requestTransmitter.postRequest(mediaType, bodyText, endpoint, responseBodyHandler);
+    return requestTransmitter.post(mediaType, bodyText, endpoint, responseBodyHandler);
   }
 
   private <T> T getRequest(
@@ -121,7 +121,7 @@ public class Enclave {
       throw new EnclaveException("Unable to serialise object to json representation.");
     }
 
-    return requestTransmitter.getRequest(mediaType, bodyText, endpoint, responseBodyHandler);
+    return requestTransmitter.get(mediaType, bodyText, endpoint, responseBodyHandler);
   }
 
   private <T> T handleJsonResponse(
