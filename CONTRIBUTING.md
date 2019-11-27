@@ -215,16 +215,26 @@ are passing.
 
 The following guidelines, based on Hyperledger Fabic's [contribution guidelines](https://hyperledger-fabric.readthedocs.io/en/latest/CONTRIBUTING.html#what-makes-a-good-pull-request) will help ensure that your pull request gets promptly reviewed. 
 
-<details><summary>One Pull Request, One Change</summary>This limits the surface area of the change, and makes it easier to identify root causes when issues arise.</details>
-<details><summary>Link to JIRA</summary>When submitting your PR, include the JIRA ticket's link in the description and number in the title (i.e. `[BESU-99] My Awesome PR`), this helps provide more context on your work and auto-update the JIRA ticket to include a link to your PR.</details>
-<details><summary>Minimize LOCs per PR</summary>PRs get near exponentially longer to review as the number of lines of code increase. Ideally, try and keep your changes to under 300 LOC. If that is not possible, try and break up your PR into smaller ones for reviewers to review sequentially. One way to do this if, for some reason, the change has to all go in the codebase at once, is to have a PR open on the Besu repository linking to smaller PRs on your Besu fork.</details>
-<details><summary>Write Meaningful Commit Messages</summary>As mentioned above, your commit title should include the JIRA ticket number (i.e. `[BESU-99]`) while the description should link to the jira ticket. Please include a comprehensive description of the changes in your commit description. </details>
-<details><summary>Be Responsive</summary>Don't let a PR sit idle with unaddressed comments until it gets to a point where you need to rebase the whole thing. If you are pausing your work on an issue, please indicate it in the PR comments.</details>
-<details><summary>What if the status checks are failing?</summary>If a status check is failing, 
-and you believe that the failure is unrelated to your change, please leave a comment on the pull request 
-explaining why you believe the failure is unrelated. A maintainer will re-run the status check for you. 
-If we conclude that the failure was a false positive, then we will open an issue to track that problem 
-with our status check suite.</details>
+##### One Pull Request, One Change
+* This limits the surface area of the change, and makes it easier to identify root causes when issues arise.
+
+##### Link to JIRA
+* When submitting your PR, include the JIRA ticket's link in the description and number in the title (i.e. `[BESU-99] My Awesome PR`), this helps provide more context on your work and auto-update the JIRA ticket to include a link to your PR.
+
+##### Minimize LOCs per PR 
+* PRs get near exponentially longer to review as the number of lines of code increase. Ideally, try and keep your changes to under 300 LOC. If that is not possible, try and break up your PR into smaller ones for reviewers to review sequentially. 
+* One way to do this if, for some reason, the change has to all go in the codebase at once, is to have a PR open on the Besu repository linking to smaller PRs on your Besu fork.
+
+##### Write Meaningful Commit Messages
+* As mentioned above, your commit title should include the JIRA ticket number (i.e. `[BESU-99]`) while the description should link to the jira ticket. Please include a comprehensive description of the changes in your commit description.
+
+##### Be Responsive 
+* Don't let a PR sit idle with unaddressed comments until it gets to a point where you need to rebase the whole thing. If you are pausing your work on an issue, please indicate it in the PR comments.
+
+##### What if the status checks are failing? 
+* If a status check is failing,  and you believe that the failure is unrelated to your change, please leave a comment on the pull request  explaining why you believe the failure is unrelated. A maintainer will re-run the status check for you. 
+* If we conclude that the failure was a false positive, then we will open an issue to track that problem 
+with our status check suite.
 
 ## Code Review
 While the prerequisites above must be satisfied prior to having your pull request reviewed, the reviewer(s) 
