@@ -32,7 +32,6 @@ public class PrivacyGroupHeadBlockMap implements Map<Bytes32, Hash> {
 
   public static final PrivacyGroupHeadBlockMap EMPTY =
       new PrivacyGroupHeadBlockMap(Collections.emptyMap());
-  private boolean wasModified = false;
 
   public PrivacyGroupHeadBlockMap(final Map<Bytes32, Hash> map) {
     this.map = new HashMap<>(map);
@@ -55,21 +54,21 @@ public class PrivacyGroupHeadBlockMap implements Map<Bytes32, Hash> {
     return new PrivacyGroupHeadBlockMap(map);
   }
 
-  public boolean wasModified() {
-    return wasModified;
-  }
-
   @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     final PrivacyGroupHeadBlockMap that = (PrivacyGroupHeadBlockMap) o;
-    return wasModified == that.wasModified && map.equals(that.map);
+    return map.equals(that.map);
+  }
+
+  public boolean contains(final Bytes32 key, final Hash value) {
+    return map.containsKey(key) && map.get(key).equals(value);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(map, wasModified);
+    return Objects.hash(map);
   }
 
   @Override
@@ -99,7 +98,6 @@ public class PrivacyGroupHeadBlockMap implements Map<Bytes32, Hash> {
 
   @Override
   public Hash put(final Bytes32 key, final Hash value) {
-    this.wasModified = true;
     return map.put(key, value);
   }
 
