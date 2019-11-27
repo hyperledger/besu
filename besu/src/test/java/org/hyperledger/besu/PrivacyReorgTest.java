@@ -548,9 +548,8 @@ public class PrivacyReorgTest {
       final String expected) {
     assertThat(
             psrr.resolveLastStateRoot(
-                blockchain,
-                blockchain.getChainHeadHeader(),
-                BytesValues.fromBase64("8lDVI66RZHIrBsolz6Kn88Rd+WsJ4hUjb4hsh29xW/o=")))
+                BytesValues.fromBase64("8lDVI66RZHIrBsolz6Kn88Rd+WsJ4hUjb4hsh29xW/o="),
+                blockchain.getChainHeadHash()))
         .isEqualTo(Hash.fromHexString(expected));
   }
 }

@@ -40,7 +40,7 @@ public class ChainHeadPrivateNonceProvider implements PrivateNonceProvider {
   public long getNonce(final Address sender, final BytesValue privacyGroupId) {
     final BlockHeader chainHeadHeader = blockchain.getChainHeadHeader();
     final Hash stateRoot =
-        privateStateRootResolver.resolveLastStateRoot(blockchain, chainHeadHeader, privacyGroupId);
+        privateStateRootResolver.resolveLastStateRoot(privacyGroupId, chainHeadHeader.getHash());
     return privateWorldStateArchive
         .get(stateRoot)
         .map(

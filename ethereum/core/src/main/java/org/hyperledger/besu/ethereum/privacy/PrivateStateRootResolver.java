@@ -14,11 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.privacy;
 
-import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateBlockMetadata;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
@@ -36,40 +33,31 @@ public class PrivateStateRootResolver {
     this.privateStateStorage = privateStateStorage;
   }
 
-  public Hash resolveLastStateRoot(
-      final Blockchain blockchain,
-      final ProcessableBlockHeader latestBlockHeader,
-      final BytesValue privacyGroupId) {
-    Hash currentBlockHash;
-    if (latestBlockHeader instanceof BlockHeader) {
-      currentBlockHash = ((BlockHeader) latestBlockHeader).getHash();
-      final Optional<Hash> privateStateRootOptional =
-          resolveStateRootFor(currentBlockHash, privacyGroupId);
-      if (privateStateRootOptional.isPresent()) {
-        return privateStateRootOptional.get();
-      }
+  public Hash resolveLastStateRoot(final BytesValue privacyGroupId, final Hash blockHash) {
+    final Optional<PrivateBlockMetadata> privateBlockMetadataOptional =
+        privateStateStorage.getPrivateBlockMetadata(blockHash, Bytes32.wrap(privacyGroupId));
+    if (privateBlockMetadataOptional.isPresent()) {
+      // Check if block already has meta data for the privacy group
+      return privateBlockMetadataOptional.get().getLatestStateRoot();
     }
-    currentBlockHash = latestBlockHeader.getParentHash();
-    while (isNotGenesisBlockParentHash(currentBlockHash, blockchain)) {
-      final Optional<Hash> privateStateRootOptional =
-          resolveStateRootFor(currentBlockHash, privacyGroupId);
-      if (privateStateRootOptional.isPresent()) {
-        return privateStateRootOptional.get();
-      }
-      final Block parentBlock = blockchain.getBlockByHash(currentBlockHash).get();
-      currentBlockHash = parentBlock.getHeader().getParentHash();
+    final PrivacyGroupHeadBlockMap privacyGroupHeadBlockMap =
+        privateStateStorage
+            .getPrivacyGroupHeadBlockMap(blockHash)
+            .orElse(PrivacyGroupHeadBlockMap.EMPTY);
+    final Hash lastRootHash;
+    if (privacyGroupHeadBlockMap.containsKey(Bytes32.wrap(privacyGroupId))) {
+      // Check this PG head block is being tracked
+      final Hash blockHashForLastBlockWithTx =
+          privacyGroupHeadBlockMap.get(Bytes32.wrap(privacyGroupId));
+      lastRootHash =
+          privateStateStorage
+              .getPrivateBlockMetadata(blockHashForLastBlockWithTx, Bytes32.wrap(privacyGroupId))
+              .get()
+              .getLatestStateRoot();
+    } else {
+      // First transaction for this PG
+      lastRootHash = EMPTY_ROOT_HASH;
     }
-    return EMPTY_ROOT_HASH;
-  }
-
-  private Optional<Hash> resolveStateRootFor(
-      final Hash blockHash, final BytesValue privacyGroupId) {
-    return privateStateStorage
-        .getPrivateBlockMetadata(blockHash, Bytes32.wrap(privacyGroupId))
-        .map(PrivateBlockMetadata::getLatestStateRoot);
-  }
-
-  private boolean isNotGenesisBlockParentHash(final Hash hash, final Blockchain blockchain) {
-    return !hash.equals(blockchain.getGenesisBlock().getHeader().getParentHash());
+    return lastRootHash;
   }
 }
