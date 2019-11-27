@@ -10,7 +10,7 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package org.hyperledger.besu.tests.acceptance.crosschain;
+package org.hyperledger.besu.tests.acceptance.crosschain.common;
 
 import org.hyperledger.besu.tests.acceptance.crosschain.generated.CrosschainCoordinationV1;
 import org.hyperledger.besu.tests.acceptance.crosschain.generated.VotingAlgMajorityWhoVoted;
@@ -86,5 +86,21 @@ public abstract class CrosschainAcceptanceTestBase extends AcceptanceTestBase {
     nodeOnBlockchain2 = besu.createCrosschainBlockchain2Ibft2Node("bc2-node");
     Cluster clusterBc2 = new Cluster(this.net);
     clusterBc2.start(nodeOnBlockchain2);
+
+    JsonRpc2_0Besu blockchain1Web3j = this.nodeOnBlockchain1.getJsonRpc();
+    final Credentials BENEFACTOR_ONE = Credentials.create(Accounts.GENESIS_ACCOUNT_ONE_PRIVATE_KEY);
+    JsonRpc2_0Besu coordinationWeb3j = this.nodeOnCoordinationBlockchain.getJsonRpc();
+
+    this.transactionManagerBlockchain1 =
+            new CrosschainTransactionManager(
+                    blockchain1Web3j,
+                    BENEFACTOR_ONE,
+                    CHAINID_BLOCKCHAIN1,
+                    BLOCKCHAIN1_RETRY_ATTEMPTS,
+                    BLOCKCHAIN1_SLEEP_DURATION,
+                    coordinationWeb3j,
+                    CHAINID_COORDINATION_BLOCKCHAIN,
+                    this.coordContract.getContractAddress(),
+                    CROSSCHAIN_TRANSACTION_TIMEOUT);
   }
 }

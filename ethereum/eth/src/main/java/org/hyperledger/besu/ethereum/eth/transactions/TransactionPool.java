@@ -107,11 +107,6 @@ public class TransactionPool implements BlockAddedObserver {
     }
   }
 
-  // Added for the purposes of crosschain acceptance tests. TO BE REMOVED LATER
-  public void resetMinGasPrice() {
-    minTransactionGasPrice = Wei.of(0);
-  }
-
   public List<Transaction> getLocalTransactions() {
     return pendingTransactions.getLocalTransactions();
   }

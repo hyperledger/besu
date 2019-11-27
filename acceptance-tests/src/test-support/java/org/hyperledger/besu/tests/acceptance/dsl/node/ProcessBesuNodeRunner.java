@@ -84,6 +84,8 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
       params.add("--miner-enabled");
       params.add("--miner-coinbase");
       params.add(node.getMiningParameters().getCoinbase().get().toString());
+      params.add("--min-gas-price");
+      params.add(node.getMiningParameters().getMinTransactionGasPrice().toString());
     }
 
     if (node.getPrivacyParameters().isEnabled()) {

@@ -65,9 +65,6 @@ public class EthSendRawTransaction implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequest request) {
-    // Added for the purposes of crosschain tests. To be modified later.
-    transactionPool.get().resetMinGasPrice();
-
     if (request.getParamLength() != 1) {
       return new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
     }

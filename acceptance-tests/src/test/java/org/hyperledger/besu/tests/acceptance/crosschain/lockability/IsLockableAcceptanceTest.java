@@ -15,7 +15,7 @@ package org.hyperledger.besu.tests.acceptance.crosschain.lockability;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertThat;
 
-import org.hyperledger.besu.tests.acceptance.crosschain.CrosschainAcceptanceTestBase;
+import org.hyperledger.besu.tests.acceptance.crosschain.common.CrosschainAcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.crosschain.lockability.generated.SimpleIsLockable;
 import org.hyperledger.besu.tests.acceptance.crosschain.lockability.generated.SimpleIsLockableCrosschain;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.crosschain.CrossIsLockableTransaction;

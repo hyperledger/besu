@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.MiningParametersTestBuilder;
+import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
@@ -65,6 +66,13 @@ public class BesuNodeConfigurationBuilder {
 
   public BesuNodeConfigurationBuilder miningEnabled() {
     this.miningParameters = new MiningParametersTestBuilder().enabled(true).build();
+    this.jsonRpcConfiguration.addRpcApi(RpcApis.MINER);
+    return this;
+  }
+
+  public BesuNodeConfigurationBuilder miningEnabledWithZeroMinTxGasPrice() {
+    this.miningParameters =
+        new MiningParametersTestBuilder().minTransactionGasPrice(Wei.ZERO).enabled(true).build();
     this.jsonRpcConfiguration.addRpcApi(RpcApis.MINER);
     return this;
   }

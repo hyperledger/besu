@@ -281,7 +281,7 @@ public class BesuNodeFactory {
     return create(
         new BesuNodeConfigurationBuilder()
             .name(name)
-            .miningEnabled()
+            .miningEnabledWithZeroMinTxGasPrice()
             .jsonRpcConfiguration(node.createJsonRpcWithCrosschainEnabledConfig())
             .webSocketConfiguration(node.createWebSocketEnabledConfig())
             .devMode(false)
@@ -293,7 +293,7 @@ public class BesuNodeFactory {
     return create(
         new BesuNodeConfigurationBuilder()
             .name(name)
-            .miningEnabled()
+            .miningEnabledWithZeroMinTxGasPrice()
             .jsonRpcConfiguration(node.createJsonRpcWithCrosschainEnabledConfig())
             .webSocketConfiguration(node.createWebSocketEnabledConfig())
             .devMode(false)
@@ -305,7 +305,7 @@ public class BesuNodeFactory {
     return create(
         new BesuNodeConfigurationBuilder()
             .name(name)
-            .miningEnabled()
+            .miningEnabledWithZeroMinTxGasPrice()
             .jsonRpcConfiguration(node.createJsonRpcWithCrosschainEnabledConfig())
             .webSocketConfiguration(node.createWebSocketEnabledConfig())
             .devMode(false)
