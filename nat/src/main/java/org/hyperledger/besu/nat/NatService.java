@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.nat;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import org.hyperledger.besu.nat.core.NatManager;
 import org.hyperledger.besu.nat.core.domain.NatPortMapping;
 import org.hyperledger.besu.nat.core.domain.NatServiceType;
@@ -22,8 +24,8 @@ import org.hyperledger.besu.nat.upnp.UpnpNatManager;
 
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -32,12 +34,12 @@ public class NatService {
 
   protected static final Logger LOG = LogManager.getLogger();
 
-  private final NatMethod currentNatMethod;
+  private NatMethod currentNatMethod;
   private Optional<NatManager> currentNatManager;
 
-  public NatService(final NatMethod natMethod) {
-    this.currentNatMethod = natMethod;
-    this.currentNatManager = buildNatSystem(currentNatMethod);
+  public NatService(final Optional<NatManager> natManager) {
+    this.currentNatMethod = retrieveNatMethod(natManager);
+    this.currentNatManager = natManager;
   }
 
   /**
@@ -52,14 +54,14 @@ public class NatService {
   /**
    * Returns the NAT method.
    *
-   * @return an {@link Optional} wrapping the {@link NatMethod} or empty if not found.
+   * @return the current NatMethod.
    */
   public NatMethod getNatMethod() {
     return currentNatMethod;
   }
 
   /**
-   * Returns the NAT system associated to the current NAT method.
+   * Returns the NAT manager associated to the current NAT method.
    *
    * @return an {@link Optional} wrapping the {@link NatManager} or empty if not found.
    */
@@ -98,12 +100,12 @@ public class NatService {
   public Optional<String> queryExternalIPAddress() {
     if (isNatEnvironment()) {
       try {
-        final NatManager natSystem = getNatManager().orElseThrow();
+        final NatManager natManager = getNatManager().orElseThrow();
         LOG.info(
             "Waiting for up to {} seconds to detect external IP address...",
             NatManager.TIMEOUT_SECONDS);
         return Optional.of(
-            natSystem.queryExternalIPAddress().get(NatManager.TIMEOUT_SECONDS, TimeUnit.SECONDS));
+            natManager.queryExternalIPAddress().get(NatManager.TIMEOUT_SECONDS, TimeUnit.SECONDS));
 
       } catch (Exception e) {
         LOG.warn(
@@ -121,12 +123,12 @@ public class NatService {
   public Optional<String> queryLocalIPAddress() throws RuntimeException {
     if (isNatEnvironment()) {
       try {
-        final NatManager natSystem = getNatManager().orElseThrow();
+        final NatManager natManager = getNatManager().orElseThrow();
         LOG.info(
             "Waiting for up to {} seconds to detect external IP address...",
             NatManager.TIMEOUT_SECONDS);
         return Optional.of(
-            natSystem.queryLocalIPAddress().get(NatManager.TIMEOUT_SECONDS, TimeUnit.SECONDS));
+            natManager.queryLocalIPAddress().get(NatManager.TIMEOUT_SECONDS, TimeUnit.SECONDS));
       } catch (Exception e) {
         LOG.warn("Caught exception while trying to query local IP address (ignoring): {}", e);
       }
@@ -145,8 +147,8 @@ public class NatService {
       final NatServiceType serviceType, final NetworkProtocol networkProtocol) {
     if (isNatEnvironment()) {
       try {
-        final NatManager natSystem = getNatManager().orElseThrow();
-        return Optional.of(natSystem.getPortMapping(serviceType, networkProtocol));
+        final NatManager natManager = getNatManager().orElseThrow();
+        return Optional.of(natManager.getPortMapping(serviceType, networkProtocol));
       } catch (Exception e) {
         LOG.warn("Caught exception while trying to query port mapping (ignoring): {}", e);
       }
@@ -154,19 +156,46 @@ public class NatService {
     return Optional.empty();
   }
 
-  @VisibleForTesting
-  void setNatSystem(final NatManager natManager) {
-    this.currentNatManager = Optional.of(natManager);
+  /**
+   * Retrieve the current NatMethod.
+   *
+   * @param natManager The natManager wrapped in a {@link Optional}.
+   * @return the current NatMethod.
+   */
+  private NatMethod retrieveNatMethod(final Optional<NatManager> natManager) {
+    final AtomicReference<NatMethod> natMethod = new AtomicReference<>();
+    natManager
+        .map(NatManager::getNatMethod)
+        .ifPresentOrElse(natMethod::set, () -> natMethod.set(NatMethod.NONE));
+    return natMethod.get();
   }
 
-  /** Initialize the current NatMethod. */
-  private Optional<NatManager> buildNatSystem(final NatMethod givenNatMethod) {
-    switch (givenNatMethod) {
-      case UPNP:
-        return Optional.of(new UpnpNatManager());
-      case NONE:
-      default:
-        return Optional.empty();
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static class Builder {
+    private NatMethod natMethod = NatMethod.NONE;
+
+    public Builder natMethod(final NatMethod natMethod) {
+      checkNotNull(natMethod);
+      this.natMethod = natMethod;
+      return this;
+    }
+
+    public NatService build() {
+      return new NatService(buildNatManager(natMethod));
+    }
+
+    /** Initialize the current NatManager. */
+    private Optional<NatManager> buildNatManager(final NatMethod givenNatMethod) {
+      switch (givenNatMethod) {
+        case UPNP:
+          return Optional.of(new UpnpNatManager());
+        case NONE:
+        default:
+          return Optional.empty();
+      }
     }
   }
 }

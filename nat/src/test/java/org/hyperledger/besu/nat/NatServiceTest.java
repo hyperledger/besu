@@ -39,23 +39,25 @@ public class NatServiceTest {
 
   @SuppressWarnings("OptionalGetWithoutIsPresent")
   @Test
-  public void assertThatGetNatSystemReturnValidSystem() {
-    final NatService natService = new NatService(NatMethod.UPNP);
+  public void assertThatGetNatManagerReturnValidManager() {
+    final NatService natService = new NatService(Optional.of(new UpnpNatManager()));
+    assertThat(natService.getNatMethod()).isEqualTo(NatMethod.UPNP);
     assertThat(natService.getNatManager().get()).isInstanceOf(UpnpNatManager.class);
   }
 
   @Test
-  public void assertThatGetNatSystemNotReturnSystemWhenNatMethodIsNone() {
-    final NatService natService = new NatService(NatMethod.NONE);
+  public void assertThatGetNatManagerNotReturnManagerWhenNatMethodIsNone() {
+    final NatService natService = new NatService(Optional.empty());
+    assertThat(natService.getNatMethod()).isEqualTo(NatMethod.NONE);
     assertThat(natService.getNatManager()).isNotPresent();
   }
 
   @Test
   public void assertThatIsNatEnvironmentReturnCorrectStatus() {
-    final NatService nonNatService = new NatService(NatMethod.NONE);
+    final NatService nonNatService = new NatService(Optional.empty());
     assertThat(nonNatService.isNatEnvironment()).isFalse();
 
-    final NatService upnpNatService = new NatService(NatMethod.UPNP);
+    final NatService upnpNatService = new NatService(Optional.of(new UpnpNatManager()));
     assertThat(upnpNatService.isNatEnvironment()).isTrue();
   }
 
@@ -66,17 +68,17 @@ public class NatServiceTest {
     final NatPortMapping natPortMapping =
         new NatPortMapping(
             NatServiceType.DISCOVERY, NetworkProtocol.UDP, externalIp, externalIp, 1111, 1111);
-    final NatManager natSystem = mock(NatManager.class);
-    when(natSystem.getPortMapping(natPortMapping.getNatServiceType(), natPortMapping.getProtocol()))
+    final NatManager natManager = mock(NatManager.class);
+    when(natManager.getPortMapping(
+            natPortMapping.getNatServiceType(), natPortMapping.getProtocol()))
         .thenReturn(natPortMapping);
 
-    final NatService natService = new NatService(NatMethod.UPNP);
-    natService.setNatSystem(natSystem);
+    final NatService natService = new NatService(Optional.of(natManager));
 
     final Optional<NatPortMapping> portMapping =
         natService.getPortMapping(natPortMapping.getNatServiceType(), natPortMapping.getProtocol());
 
-    verify(natSystem)
+    verify(natManager)
         .getPortMapping(natPortMapping.getNatServiceType(), natPortMapping.getProtocol());
 
     Assertions.assertThat(portMapping.get()).isEqualTo(natPortMapping);
@@ -85,7 +87,7 @@ public class NatServiceTest {
   @Test
   public void assertThatGetPortMappingWorksProperlyWithoutNat() {
 
-    final NatService natService = new NatService(NatMethod.NONE);
+    final NatService natService = new NatService(Optional.empty());
 
     final Optional<NatPortMapping> portMapping =
         natService.getPortMapping(NatServiceType.DISCOVERY, NetworkProtocol.TCP);
@@ -101,8 +103,7 @@ public class NatServiceTest {
     when(natManager.queryExternalIPAddress())
         .thenReturn(CompletableFuture.completedFuture(externalIp));
 
-    final NatService natService = new NatService(NatMethod.UPNP);
-    natService.setNatSystem(natManager);
+    final NatService natService = new NatService(Optional.of(natManager));
 
     final Optional<String> resultIp = natService.queryExternalIPAddress();
 
@@ -114,7 +115,7 @@ public class NatServiceTest {
   @Test
   public void assertThatQueryExternalIpWorksProperlyWithoutNat() {
 
-    final NatService natService = new NatService(NatMethod.NONE);
+    final NatService natService = new NatService(Optional.empty());
 
     final Optional<String> resultIp = natService.queryExternalIPAddress();
 
@@ -129,8 +130,7 @@ public class NatServiceTest {
     when(natManager.queryLocalIPAddress())
         .thenReturn(CompletableFuture.completedFuture(externalIp));
 
-    final NatService natService = new NatService(NatMethod.UPNP);
-    natService.setNatSystem(natManager);
+    final NatService natService = new NatService(Optional.of(natManager));
 
     final Optional<String> resultIp = natService.queryLocalIPAddress();
 
@@ -142,7 +142,7 @@ public class NatServiceTest {
   @Test
   public void assertThatQueryLocalIPAddressWorksProperlyWithoutNat() {
 
-    final NatService natService = new NatService(NatMethod.NONE);
+    final NatService natService = new NatService(Optional.empty());
 
     final Optional<String> resultIp = natService.queryLocalIPAddress();
 

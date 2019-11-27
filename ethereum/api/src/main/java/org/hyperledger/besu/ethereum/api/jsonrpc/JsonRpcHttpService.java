@@ -234,20 +234,16 @@ public class JsonRpcHttpService {
                     "JsonRPC service started and listening on {}:{}", config.getHost(), actualPort);
                 config.setPort(actualPort);
 
-                if (natService.isPresent()) {
-                  final NatService service = natService.get();
-                  // request that a NAT port forward for our server port (if UPNP Nat Environment)
-                  if (service.isNatEnvironment() && service.getNatMethod().equals(NatMethod.UPNP)) {
-                    service
-                        .getNatManager()
-                        .ifPresent(
-                            natSystem -> {
-                              final UpnpNatManager upnpNatSystem = (UpnpNatManager) natSystem;
-                              upnpNatSystem.requestPortForward(
-                                  config.getPort(), NetworkProtocol.TCP, NatServiceType.JSON_RPC);
-                            });
-                  }
-                }
+                natService
+                    .filter(NatService::isNatEnvironment)
+                    .filter(s -> NatMethod.UPNP.equals(s.getNatMethod()))
+                    .flatMap(NatService::getNatManager)
+                    .map(natManager -> (UpnpNatManager) natManager)
+                    .ifPresent(
+                        upnpNatManager ->
+                            upnpNatManager.requestPortForward(
+                                config.getPort(), NetworkProtocol.TCP, NatServiceType.JSON_RPC));
+
                 return;
               }
               httpServer = null;

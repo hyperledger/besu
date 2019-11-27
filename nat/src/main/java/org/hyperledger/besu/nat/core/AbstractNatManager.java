@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.nat.core;
 
+import static com.google.common.base.Preconditions.checkState;
+
 import org.hyperledger.besu.nat.NatMethod;
 import org.hyperledger.besu.nat.core.domain.NatPortMapping;
 import org.hyperledger.besu.nat.core.domain.NatServiceType;
@@ -22,7 +24,6 @@ import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -63,9 +64,7 @@ public abstract class AbstractNatManager implements NatManager {
 
   @Override
   public CompletableFuture<String> queryExternalIPAddress() {
-    if (!isStarted()) {
-      throw new IllegalStateException("Cannot call queryExternalIPAddress() when in stopped state");
-    }
+    checkState(isStarted(), "Cannot call queryExternalIPAddress() when in stopped state");
     return retrieveExternalIPAddress();
   }
 
@@ -115,10 +114,11 @@ public abstract class AbstractNatManager implements NatManager {
                       c.getNatServiceType().equals(serviceType)
                           && c.getProtocol().equals(networkProtocol))
               .findFirst();
-      return foundPortMapping.orElseThrow();
-    } catch (NoSuchElementException e) {
-      throw new IllegalArgumentException(
-          String.format("Required service type not found : %s %s", serviceType, networkProtocol));
+      return foundPortMapping.orElseThrow(
+          () ->
+              new IllegalArgumentException(
+                  String.format(
+                      "Required service type not found : %s %s", serviceType, networkProtocol)));
     } catch (InterruptedException | ExecutionException | TimeoutException e) {
       throw new RuntimeException(
           String.format("Unable to retrieve the service type : %s", serviceType.toString()));

@@ -35,67 +35,67 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class AbstractNATSystemTest {
+public class AbstractNatManagerTest {
 
   @Test
-  public void assertThatSystemIsStartedAfterStart() {
-    final AbstractNatManager natSystem = buildNATSystem(NatMethod.UPNP);
-    assertThat(natSystem.isStarted()).isFalse();
-    natSystem.start();
-    assertThat(natSystem.isStarted()).isTrue();
+  public void assertThatManagerIsStartedAfterStart() {
+    final AbstractNatManager natManager = buildNatManager(NatMethod.UPNP);
+    assertThat(natManager.isStarted()).isFalse();
+    natManager.start();
+    assertThat(natManager.isStarted()).isTrue();
   }
 
   @Test
-  public void assertThatSystemIsStoppedAfterStopped() {
-    final AbstractNatManager natSystem = buildNATSystem(NatMethod.UPNP);
-    assertThat(natSystem.isStarted()).isFalse();
-    natSystem.start();
-    assertThat(natSystem.isStarted()).isTrue();
-    natSystem.stop();
-    assertThat(natSystem.isStarted()).isFalse();
+  public void assertThatManagerIsStoppedAfterStopped() {
+    final AbstractNatManager natManager = buildNatManager(NatMethod.UPNP);
+    assertThat(natManager.isStarted()).isFalse();
+    natManager.start();
+    assertThat(natManager.isStarted()).isTrue();
+    natManager.stop();
+    assertThat(natManager.isStarted()).isFalse();
   }
 
   @Test
   public void assertThatDoStartIsCalledOnlyOnce() {
-    final AbstractNatManager natSystem = Mockito.spy(buildNATSystem(NatMethod.UPNP));
-    natSystem.start();
-    natSystem.start();
-    verify(natSystem, times(2)).start();
-    verify(natSystem).doStart();
+    final AbstractNatManager natManager = Mockito.spy(buildNatManager(NatMethod.UPNP));
+    natManager.start();
+    natManager.start();
+    verify(natManager, times(2)).start();
+    verify(natManager).doStart();
   }
 
   @Test
   public void assertThatDoStopIsCalledOnlyOnce() {
-    final AbstractNatManager natSystem = Mockito.spy(buildNATSystem(NatMethod.UPNP));
-    natSystem.start();
-    natSystem.stop();
-    natSystem.stop();
-    verify(natSystem).start();
-    verify(natSystem).doStart();
-    verify(natSystem, times(2)).stop();
-    verify(natSystem).doStop();
+    final AbstractNatManager natManager = Mockito.spy(buildNatManager(NatMethod.UPNP));
+    natManager.start();
+    natManager.stop();
+    natManager.stop();
+    verify(natManager).start();
+    verify(natManager).doStart();
+    verify(natManager, times(2)).stop();
+    verify(natManager).doStop();
   }
 
   @Test
-  public void assertThatRequireSystemStartedThrowExceptionIfNotStarted() {
-    assertThatThrownBy(() -> buildNATSystem(NatMethod.UPNP).requireSystemStarted())
+  public void assertThatRequireManagerStartedThrowExceptionIfNotStarted() {
+    assertThatThrownBy(() -> buildNatManager(NatMethod.UPNP).requireManagerStarted())
         .isInstanceOf(IllegalStateException.class)
-        .hasMessageContaining("NAT system must be started.");
+        .hasMessageContaining("NAT manager must be started.");
   }
 
   @Test
-  public void assertThatSystemReturnValidNatMethod() {
-    assertThat(buildNATSystem(NatMethod.UPNP).getNatMethod()).isEqualTo(NatMethod.UPNP);
+  public void assertThatManagerReturnValidNatMethod() {
+    assertThat(buildNatManager(NatMethod.UPNP).getNatMethod()).isEqualTo(NatMethod.UPNP);
   }
 
   @Test
-  public void assertThatSystemReturnValidLocalIpAddress()
+  public void assertThatManagerReturnValidLocalIpAddress()
       throws UnknownHostException, ExecutionException, InterruptedException {
     final String hostAddress = InetAddress.getLocalHost().getHostAddress();
-    assertThat(buildNATSystem(NatMethod.UPNP).queryLocalIPAddress().get()).isEqualTo(hostAddress);
+    assertThat(buildNatManager(NatMethod.UPNP).queryLocalIPAddress().get()).isEqualTo(hostAddress);
   }
 
-  private static AbstractNatManager buildNATSystem(final NatMethod natMethod) {
+  private static AbstractNatManager buildNatManager(final NatMethod natMethod) {
     return new AbstractNatManager(natMethod) {
       @Override
       public void doStart() {}

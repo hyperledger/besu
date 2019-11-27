@@ -40,16 +40,6 @@ public class NatPortMapping {
     this.internalPort = internalPort;
   }
 
-  /**
-   * Builds an empty representation of a {@link NatPortMapping}
-   *
-   * @param protocol the {@link NetworkProtocol} associated to the representation.
-   * @return the built {@link NatPortMapping}
-   */
-  public static NatPortMapping emptyPortMapping(final NetworkProtocol protocol) {
-    return new NatPortMapping(null, protocol, "", "", 0, 0);
-  }
-
   public NatServiceType getNatServiceType() {
     return natServiceType;
   }

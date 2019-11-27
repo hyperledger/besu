@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.nat.core;
 
+import static com.google.common.base.Preconditions.checkState;
+
 import org.hyperledger.besu.nat.NatMethod;
 import org.hyperledger.besu.nat.core.domain.NatPortMapping;
 import org.hyperledger.besu.nat.core.domain.NatServiceType;
@@ -54,10 +56,8 @@ public interface NatManager {
    * Checks if the system is started and throws an {@link IllegalStateException} in case it is not
    * started. Convenient method to perform actions only if service is started.
    */
-  default void requireSystemStarted() {
-    if (!isStarted()) {
-      throw new IllegalStateException("NAT system must be started.");
-    }
+  default void requireManagerStarted() {
+    checkState(isStarted(), "NAT manager must be started.");
   }
 
   /**

@@ -42,6 +42,7 @@ import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -124,14 +125,11 @@ public abstract class PeerDiscoveryAgent {
       LOG.info("Starting peer discovery agent on host={}, port={}", host, port);
 
       // override advertised host if we detect an external IP address via NAT manager
-      final String advertisedAddress;
-      if (natService.isPresent()) {
-        advertisedAddress =
-            natService.get().queryExternalIPAddress().orElseGet(config::getAdvertisedHost);
-      } else {
-        advertisedAddress = config.getAdvertisedHost();
-      }
-
+      final AtomicReference<String> advertisedAddress = new AtomicReference<>();
+      natService
+          .flatMap(NatService::queryExternalIPAddress)
+          .ifPresentOrElse(
+              advertisedAddress::set, () -> advertisedAddress.set(config.getAdvertisedHost()));
       return listenForConnections()
           .thenApply(
               (InetSocketAddress localAddress) -> {
@@ -141,7 +139,7 @@ public abstract class PeerDiscoveryAgent {
                     DiscoveryPeer.fromEnode(
                         EnodeURL.builder()
                             .nodeId(id)
-                            .ipAddress(advertisedAddress)
+                            .ipAddress(advertisedAddress.get())
                             .listeningPort(tcpPort)
                             .discoveryPort(discoveryPort)
                             .build());
