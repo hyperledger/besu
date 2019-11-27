@@ -69,24 +69,24 @@ public class NatService {
     return currentNatManager;
   }
 
-  /** Starts the system or service. */
+  /** Starts the manager or service. */
   public void start() {
     if (isNatEnvironment()) {
       try {
         getNatManager().orElseThrow().start();
       } catch (Exception e) {
-        LOG.warn("Caught exception while trying to start the system or service", e);
+        LOG.warn("Caught exception while trying to start the manager or service", e);
       }
     }
   }
 
-  /** Stops the system or service. */
+  /** Stops the manager or service. */
   public void stop() {
     if (isNatEnvironment()) {
       try {
         getNatManager().orElseThrow().stop();
       } catch (Exception e) {
-        LOG.warn("Caught exception while trying to stop the system or service", e);
+        LOG.warn("Caught exception while trying to stop the manager or service", e);
       }
     }
   }

@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * This class describes the behaviour of any supported NAT system. Internal API to support Network
+ * This class describes the behaviour of any supported NAT manager. Internal API to support Network
  * Address Translation (NAT) technologies in Besu.
  */
 public interface NatManager {
@@ -33,27 +33,27 @@ public interface NatManager {
   int TIMEOUT_SECONDS = 60;
 
   /**
-   * Returns the NAT method associated to this system.
+   * Returns the NAT method associated to this manager.
    *
    * @return the {@link NatMethod}
    */
   NatMethod getNatMethod();
 
-  /** Starts the system or service. */
+  /** Starts the manager or service. */
   void start();
 
-  /** Stops the system or service. */
+  /** Stops the manager or service. */
   void stop();
 
   /**
-   * Returns whether or not the system is started.
+   * Returns whether or not the manager is started.
    *
    * @return true if started, false otherwise.
    */
   boolean isStarted();
 
   /**
-   * Checks if the system is started and throws an {@link IllegalStateException} in case it is not
+   * Checks if the manager is started and throws an {@link IllegalStateException} in case it is not
    * started. Convenient method to perform actions only if service is started.
    */
   default void requireManagerStarted() {
