@@ -21,6 +21,7 @@ import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.GasLimitCalculator;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.enclave.Enclave;
+import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.enclave.types.SendRequest;
 import org.hyperledger.besu.enclave.types.SendRequestBesu;
 import org.hyperledger.besu.enclave.types.SendRequestLegacy;
@@ -74,6 +75,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import io.vertx.core.Vertx;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -486,7 +488,7 @@ public class PrivacyReorgTest {
   }
 
   private BytesValue getEnclaveKey(final URI enclaveURI) {
-    final Enclave enclave = new Enclave(enclaveURI);
+    final Enclave enclave = new EnclaveFactory(Vertx.vertx()).createVertxEnclave(enclaveURI);
     final SendRequest sendRequest = createSendRequest(PRIVATE_TRANSACTION);
     final SendResponse sendResponse;
     sendResponse = enclave.send(sendRequest);
