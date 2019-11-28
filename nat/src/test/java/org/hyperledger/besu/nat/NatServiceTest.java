@@ -72,6 +72,7 @@ public class NatServiceTest {
     when(natManager.getPortMapping(
             natPortMapping.getNatServiceType(), natPortMapping.getProtocol()))
         .thenReturn(natPortMapping);
+    when(natManager.getNatMethod()).thenReturn(NatMethod.UPNP);
 
     final NatService natService = new NatService(Optional.of(natManager));
 
@@ -102,6 +103,7 @@ public class NatServiceTest {
     final NatManager natManager = mock(NatManager.class);
     when(natManager.queryExternalIPAddress())
         .thenReturn(CompletableFuture.completedFuture(externalIp));
+    when(natManager.getNatMethod()).thenReturn(NatMethod.UPNP);
 
     final NatService natService = new NatService(Optional.of(natManager));
 
@@ -129,6 +131,7 @@ public class NatServiceTest {
     final NatManager natManager = mock(NatManager.class);
     when(natManager.queryLocalIPAddress())
         .thenReturn(CompletableFuture.completedFuture(externalIp));
+    when(natManager.getNatMethod()).thenReturn(NatMethod.UPNP);
 
     final NatService natService = new NatService(Optional.of(natManager));
 

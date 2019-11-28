@@ -24,7 +24,6 @@ import org.hyperledger.besu.nat.upnp.UpnpNatManager;
 
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -163,11 +162,7 @@ public class NatService {
    * @return the current NatMethod.
    */
   private NatMethod retrieveNatMethod(final Optional<NatManager> natManager) {
-    final AtomicReference<NatMethod> natMethod = new AtomicReference<>();
-    natManager
-        .map(NatManager::getNatMethod)
-        .ifPresentOrElse(natMethod::set, () -> natMethod.set(NatMethod.NONE));
-    return natMethod.get();
+    return natManager.map(NatManager::getNatMethod).orElse(NatMethod.NONE);
   }
 
   public static Builder builder() {

@@ -63,7 +63,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -367,15 +366,13 @@ public class DefaultP2PNetwork implements P2PNetwork {
     }
 
     // override advertised host if we detect an external IP address via NAT manager
-    final AtomicReference<String> advertisedAddress = new AtomicReference<>();
-    natService
-        .flatMap(NatService::queryExternalIPAddress)
-        .ifPresentOrElse(advertisedAddress::set, () -> advertisedAddress.set(address));
+    final String advertisedAddress =
+        natService.flatMap(NatService::queryExternalIPAddress).orElse(address);
 
     final EnodeURL localEnode =
         EnodeURL.builder()
             .nodeId(nodeId)
-            .ipAddress(advertisedAddress.get())
+            .ipAddress(advertisedAddress)
             .listeningPort(listeningPort)
             .discoveryPort(discoveryPort)
             .build();
