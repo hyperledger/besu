@@ -37,8 +37,8 @@ public class PrivCreatePrivacyGroup implements JsonRpcMethod {
   private final Enclave enclave;
   private PrivacyParameters privacyParameters;
 
-  public PrivCreatePrivacyGroup(final Enclave enclave, final PrivacyParameters privacyParameters) {
-    this.enclave = enclave;
+  public PrivCreatePrivacyGroup(final PrivacyParameters privacyParameters) {
+    this.enclave = privacyParameters.getEnclave();
     this.privacyParameters = privacyParameters;
   }
 

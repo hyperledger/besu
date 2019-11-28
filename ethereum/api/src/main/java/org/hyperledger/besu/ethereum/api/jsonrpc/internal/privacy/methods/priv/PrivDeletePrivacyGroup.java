@@ -34,8 +34,8 @@ public class PrivDeletePrivacyGroup implements JsonRpcMethod {
   private final Enclave enclave;
   private PrivacyParameters privacyParameters;
 
-  public PrivDeletePrivacyGroup(final Enclave enclave, final PrivacyParameters privacyParameters) {
-    this.enclave = enclave;
+  public PrivDeletePrivacyGroup(final PrivacyParameters privacyParameters) {
+    this.enclave = privacyParameters.getEnclave();
     this.privacyParameters = privacyParameters;
   }
 
