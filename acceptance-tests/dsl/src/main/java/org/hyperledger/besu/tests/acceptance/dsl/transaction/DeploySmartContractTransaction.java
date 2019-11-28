@@ -27,11 +27,18 @@ import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.RemoteCall;
 import org.web3j.tx.Contract;
+import org.web3j.tx.RawTransactionManager;
+import org.web3j.tx.TransactionManager;
+import org.web3j.tx.gas.ContractGasProvider;
+import org.web3j.tx.gas.StaticGasProvider;
 
 public class DeploySmartContractTransaction<T extends Contract> implements Transaction<T> {
 
   private static final BigInteger DEFAULT_GAS_PRICE = BigInteger.valueOf(1000);
-  private static final BigInteger DEFAULT_GAS_LIMIT = BigInteger.valueOf(3000000);
+  private static final BigInteger DEFAULT_GAS_LIMIT = BigInteger.valueOf(10000000);
+  private static final ContractGasProvider GAS_PROVIDER =
+      new StaticGasProvider(DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT);
+
   private static final Object METHOD_IS_STATIC = null;
   private static final Credentials BENEFACTOR_ONE =
       Credentials.create(Accounts.GENESIS_ACCOUNT_ONE_PRIVATE_KEY);
@@ -49,12 +56,15 @@ public class DeploySmartContractTransaction<T extends Contract> implements Trans
   }
 
   @Override
+  @SuppressWarnings("rawtypes")
   public T execute(final NodeRequests node) {
+    final RawTransactionManager clientTransactionManager =
+        new RawTransactionManager(node.privacy().getBesuClient(), BENEFACTOR_ONE, 15, 1000);
     try {
       if (params != null) {
         ArrayList<Class> paramClasses =
             new ArrayList<>(
-                Arrays.asList(Web3j.class, Credentials.class, BigInteger.class, BigInteger.class));
+                Arrays.asList(Web3j.class, TransactionManager.class, ContractGasProvider.class));
         paramClasses.addAll(
             Arrays.stream(params)
                 .map(Object::getClass)
@@ -62,8 +72,7 @@ public class DeploySmartContractTransaction<T extends Contract> implements Trans
                 .collect(Collectors.toList()));
 
         ArrayList<Object> allParams =
-            new ArrayList<>(
-                Arrays.asList(node.eth(), BENEFACTOR_ONE, DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT));
+            new ArrayList<>(Arrays.asList(node.eth(), clientTransactionManager, GAS_PROVIDER));
         allParams.addAll(Arrays.asList(params));
 
         final Method method =

@@ -77,6 +77,7 @@ public class DeployPrivateSmartContractTransaction<T extends Contract> implement
   }
 
   @Override
+  @SuppressWarnings("rawtypes")
   public T execute(final NodeRequests node) {
     final PrivateTransactionManager privateTransactionManager =
         new LegacyPrivateTransactionManager(
@@ -85,7 +86,9 @@ public class DeployPrivateSmartContractTransaction<T extends Contract> implement
             senderCredentials,
             chainId,
             privateFrom,
-            privateFor);
+            privateFor,
+            15,
+            1000);
     try {
       if (params != null) {
         ArrayList<Class> paramClasses =

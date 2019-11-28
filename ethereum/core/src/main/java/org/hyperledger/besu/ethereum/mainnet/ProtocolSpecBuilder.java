@@ -143,8 +143,8 @@ public class ProtocolSpecBuilder<T> {
                 registry, precompiledContractConfiguration, Account.DEFAULT_VERSION);
             MainnetPrecompiledContractRegistries.appendPrivacy(
                 registry, precompiledContractConfiguration, 1);
-            MainnetPrecompiledContractRegistries.appendPrivacyV2(
-                registry, precompiledContractConfiguration, 1);
+//            MainnetPrecompiledContractRegistries.appendPrivacyV2(
+//                registry, precompiledContractConfiguration, 1);
           }
           return registry;
         };

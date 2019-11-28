@@ -15,21 +15,12 @@
 package org.hyperledger.besu.ethereum.mainnet.precompiles.privacy;
 
 import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.mainnet.AbstractPrecompiledContract;
-import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.util.bytes.BytesValue;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 public class GroupManagementPrecompiledContract extends AbstractPrecompiledContract {
-
-  private static final Hash EMPTY_ROOT_HASH = Hash.wrap(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
-
-  private static final Logger LOG = LogManager.getLogger();
 
   public GroupManagementPrecompiledContract(final String name, final GasCalculator gasCalculator) {
     super(name, gasCalculator);

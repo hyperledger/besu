@@ -34,7 +34,7 @@ public class LoadSmartContract<T extends Contract> implements Transaction<T> {
   private final Class<T> clazz;
   private final String address;
 
-  public LoadSmartContract(final Class<T> clazz, String address) {
+  public LoadSmartContract(final Class<T> clazz, final String address) {
     this.clazz = clazz;
     this.address = address;
   }

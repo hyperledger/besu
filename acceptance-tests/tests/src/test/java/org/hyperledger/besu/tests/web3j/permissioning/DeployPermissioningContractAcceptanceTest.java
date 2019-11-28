@@ -53,10 +53,15 @@ public class DeployPermissioningContractAcceptanceTest extends AcceptanceTestBas
     minerNode = besu.createMinerNode("miner-node");
     cluster.start(minerNode);
 
-    final PrivacyGroup privacyGroup = minerNode.execute(
+    final PrivacyGroup privacyGroup =
+        minerNode.execute(
             contractTransactions.createSmartContract(
-                    PrivacyGroup.class, firstMemberKey, new ArrayList<byte[]>(), "Name", "Description"));
-    final String contractAddress = "0x42699a7612a82f1d9c36148af9c77354759b210b";
+                PrivacyGroup.class,
+                firstMemberKey,
+                new ArrayList<byte[]>(),
+                "Name",
+                "Description"));
+    final String contractAddress = privacyGroup.getContractAddress();
     contractVerifier.validTransactionReceipt(contractAddress).verify(privacyGroup);
     privacyProxy =
         minerNode.execute(
@@ -64,13 +69,13 @@ public class DeployPermissioningContractAcceptanceTest extends AcceptanceTestBas
     privacyGroup.setProxy(firstMemberKey, privacyProxy.getContractAddress()).send();
 
     upgradedPrivacyGroup =
-            minerNode.execute(
-                    contractTransactions.createSmartContract(
-                            UpgradedPrivacyGroup.class,
-                            firstMemberKey,
-                            new ArrayList<byte[]>(),
-                            "Name",
-                            "Description"));
+        minerNode.execute(
+            contractTransactions.createSmartContract(
+                UpgradedPrivacyGroup.class,
+                firstMemberKey,
+                new ArrayList<byte[]>(),
+                "Name",
+                "Description"));
   }
 
   @Test
@@ -87,14 +92,13 @@ public class DeployPermissioningContractAcceptanceTest extends AcceptanceTestBas
 
     privacyProxy.addParticipants(firstMemberKey, Collections.singletonList(secondMemberKey)).send();
 
-
     assertThat(privacyProxy.getParticipants(firstMemberKey).send().size()).isEqualTo(2);
     upgradedPrivacyGroup.removeParticipant(firstMemberKey, secondMemberKey).send();
     assertThat(privacyProxy.getParticipants(firstMemberKey).send().size()).isEqualTo(1);
   }
 
   @Test
-  public void unauthorizedPersonsShouldBeUnableToAccessContract() throws Exception {
+  public void unauthorizedPersonsShouldBeUnableToAccessContract() {
     assertThatThrownBy(() -> privacyProxy.getParticipants(unauthorizedMemberKey).send())
         .isInstanceOf(ContractCallException.class);
   }
