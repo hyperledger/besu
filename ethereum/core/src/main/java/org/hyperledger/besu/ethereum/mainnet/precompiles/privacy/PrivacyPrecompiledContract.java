@@ -198,6 +198,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
       }
       privateStateUpdater.commit();
     }
+
     return result.getOutput();
   }
 }
