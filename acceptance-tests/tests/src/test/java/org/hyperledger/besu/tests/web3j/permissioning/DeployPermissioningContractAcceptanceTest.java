@@ -73,7 +73,7 @@ public class DeployPermissioningContractAcceptanceTest extends AcceptanceTestBas
             contractTransactions.createSmartContract(
                 UpgradedPrivacyGroup.class,
                 firstMemberKey,
-                new ArrayList<byte[]>(),
+                new ArrayList<byte[]>(Collections.singletonList(firstMemberKey)),
                 "Name",
                 "Description"));
   }

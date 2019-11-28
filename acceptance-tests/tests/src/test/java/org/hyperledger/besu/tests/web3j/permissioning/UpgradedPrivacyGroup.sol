@@ -100,6 +100,7 @@ contract UpgradedPrivacyGroup is PrivacyInterface {
     }
 
     function removeParticipant(bytes32 enclaveKey, bytes32 member) public returns (bool) {
+        require(isMember(enclaveKey));
         if (isMember(member)) {
             removeByValue(member);
             indexOf[member] = 0;
@@ -107,6 +108,5 @@ contract UpgradedPrivacyGroup is PrivacyInterface {
         }
         return false;
     }
-
 
 }
