@@ -141,6 +141,7 @@ public class PrivacyReorgTest {
             .setEnabled(true)
             .setStorageProvider(createKeyValueStorageProvider(dataDir, dbDir))
             .setEnclaveUrl(enclave.clientUrl())
+            .setEnclaveFactory(new EnclaveFactory(Vertx.vertx()))
             .build();
     privacyParameters.setEnclavePublicKey("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=");
 
