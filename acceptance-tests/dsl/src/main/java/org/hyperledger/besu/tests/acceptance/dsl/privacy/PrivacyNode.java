@@ -109,7 +109,7 @@ public class PrivacyNode implements AutoCloseable {
             Arrays.toString(otherNodes.stream().map(node -> node.orion.nodeUrl()).toArray())));
     final EnclaveFactory factory = new EnclaveFactory(vertx);
     final Enclave enclaveClient = factory.createVertxEnclave(orion.clientUrl());
-    final SendRequest sendRequest1 =
+    final SendRequest sendRequest =
         new SendRequestLegacy(
             "SGVsbG8sIFdvcmxkIQ==",
             orion.getDefaultPublicKey(),
@@ -121,7 +121,7 @@ public class PrivacyNode implements AutoCloseable {
         .until(
             () -> {
               try {
-                enclaveClient.send(sendRequest1);
+                enclaveClient.send(sendRequest);
                 return true;
               } catch (final EnclaveException e) {
                 LOG.info("Waiting for enclave connectivity");

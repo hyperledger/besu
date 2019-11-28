@@ -14,10 +14,12 @@
  */
 package org.hyperledger.besu.enclave;
 
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 import io.vertx.core.http.HttpClient;
+import io.vertx.core.http.HttpClientRequest;
 import io.vertx.core.http.HttpClientResponse;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
@@ -33,38 +35,41 @@ public class VertxRequestTransmitter implements RequestTransmitter {
 
   @Override
   public <T> T post(
-      final String mediaType,
+      final String contentType,
       final String content,
       final String endpoint,
       final ResponseBodyHandler<T> responseHandler) {
-    return sendRequest(HttpMethod.POST, mediaType, content, endpoint, responseHandler);
+    return sendRequest(
+        HttpMethod.POST, Optional.of(contentType), Optional.of(content), endpoint, responseHandler);
   }
 
   @Override
-  public <T> T get(
-      final String mediaType,
-      final String content,
-      final String endpoint,
-      final ResponseBodyHandler<T> responseHandler) {
-    return sendRequest(HttpMethod.GET, mediaType, content, endpoint, responseHandler);
+  public <T> T get(final String endpoint, final ResponseBodyHandler<T> responseHandler) {
+    return sendRequest(
+        HttpMethod.GET, Optional.empty(), Optional.empty(), endpoint, responseHandler);
   }
 
   protected <T> T sendRequest(
       final HttpMethod method,
-      final String mediaType,
-      final String content,
+      final Optional<String> contentType,
+      final Optional<String> content,
       final String endpoint,
       final ResponseBodyHandler<T> responseHandler) {
     try {
       final CompletableFuture<T> result = new CompletableFuture<>();
-      client
-          .request(method, endpoint)
-          .handler(response -> handleResponse(response, responseHandler, result))
-          .putHeader(HttpHeaders.CONTENT_TYPE, mediaType)
-          .setTimeout(REQUEST_TIMEOUT_MS)
-          .exceptionHandler(result::completeExceptionally)
-          .setChunked(false)
-          .end(content);
+      final HttpClientRequest request =
+          client
+              .request(method, endpoint)
+              .handler(response -> handleResponse(response, responseHandler, result))
+              .setTimeout(REQUEST_TIMEOUT_MS)
+              .exceptionHandler(result::completeExceptionally)
+              .setChunked(false);
+      contentType.ifPresent(ct -> request.putHeader(HttpHeaders.CONTENT_TYPE, ct));
+      if (content.isPresent()) {
+        request.end(content.get());
+      } else {
+        request.end();
+      }
       return result.get();
     } catch (final ExecutionException e) {
       if (e.getCause() instanceof EnclaveException) {

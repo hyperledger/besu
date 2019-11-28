@@ -27,9 +27,5 @@ public interface RequestTransmitter {
       String endpoint,
       ResponseBodyHandler<T> responseBodyHandler);
 
-  <T> T get(
-      String mediaType,
-      String content,
-      String endpoint,
-      ResponseBodyHandler<T> responseBodyHandler);
+  <T> T get(String endpoint, ResponseBodyHandler<T> responseBodyHandler);
 }

@@ -47,7 +47,7 @@ public class Enclave {
 
   public boolean upCheck() {
     try {
-      final String upcheckResponse = getRequest("", "", "/upcheck", this::handleRawResponse);
+      final String upcheckResponse = requestTransmitter.get("/upcheck", this::handleRawResponse);
       return upcheckResponse.equals("I'm up!");
     } catch (final Exception e) {
       return false;
@@ -55,7 +55,7 @@ public class Enclave {
   }
 
   public SendResponse send(final SendRequest content) {
-    return postRequest(
+    return post(
         JSON,
         content,
         "/send",
@@ -63,7 +63,7 @@ public class Enclave {
   }
 
   public ReceiveResponse receive(final ReceiveRequest content) {
-    return postRequest(
+    return post(
         ORION,
         content,
         "/receive",
@@ -71,7 +71,7 @@ public class Enclave {
   }
 
   public PrivacyGroup createPrivacyGroup(final CreatePrivacyGroupRequest content) {
-    return postRequest(
+    return post(
         JSON,
         content,
         "/createPrivacyGroup",
@@ -79,7 +79,7 @@ public class Enclave {
   }
 
   public String deletePrivacyGroup(final DeletePrivacyGroupRequest content) {
-    return postRequest(
+    return post(
         JSON,
         content,
         "/deletePrivacyGroup",
@@ -87,14 +87,14 @@ public class Enclave {
   }
 
   public PrivacyGroup[] findPrivacyGroup(final FindPrivacyGroupRequest content) {
-    return postRequest(
+    return post(
         JSON,
         content,
         "/findPrivacyGroup",
         (statusCode, body) -> handleJsonResponse(statusCode, body, PrivacyGroup[].class));
   }
 
-  private <T> T postRequest(
+  private <T> T post(
       final String mediaType,
       final Object content,
       final String endpoint,
@@ -107,21 +107,6 @@ public class Enclave {
     }
 
     return requestTransmitter.post(mediaType, bodyText, endpoint, responseBodyHandler);
-  }
-
-  private <T> T getRequest(
-      final String mediaType,
-      final Object content,
-      final String endpoint,
-      final ResponseBodyHandler<T> responseBodyHandler) {
-    final String bodyText;
-    try {
-      bodyText = objectMapper.writeValueAsString(content);
-    } catch (final JsonProcessingException e) {
-      throw new EnclaveException("Unable to serialise object to json representation.");
-    }
-
-    return requestTransmitter.get(mediaType, bodyText, endpoint, responseBodyHandler);
   }
 
   private <T> T handleJsonResponse(
