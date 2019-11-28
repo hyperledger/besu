@@ -292,8 +292,8 @@ public class ProtocolSpecBuilder<T> {
               contractCreationProcessor,
               messageCallProcessor,
               privateTransactionValidator);
-      Address address = Address.privacyPrecompiled(privacyParameters.getPrivacyAddress());
-      PrivacyPrecompiledContract privacyPrecompiledContract =
+      final Address address = Address.privacyPrecompiled(privacyParameters.getPrivacyAddress());
+      final PrivacyPrecompiledContract privacyPrecompiledContract =
           (PrivacyPrecompiledContract)
               precompileContractRegistry.get(address, Account.DEFAULT_VERSION);
       privacyPrecompiledContract.setPrivateTransactionProcessor(privateTransactionProcessor);

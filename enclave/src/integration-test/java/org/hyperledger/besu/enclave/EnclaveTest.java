@@ -31,11 +31,12 @@ import org.hyperledger.orion.testutil.OrionKeyConfiguration;
 import org.hyperledger.orion.testutil.OrionTestHarness;
 import org.hyperledger.orion.testutil.OrionTestHarnessFactory;
 
-import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 
 import com.google.common.collect.Lists;
+import io.vertx.core.Vertx;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -49,6 +50,7 @@ public class EnclaveTest {
   private static final String PAYLOAD = "a wonderful transaction";
   private static final String MOCK_KEY = "iOCzoGo5kwtZU0J41Z9xnGXHN6ZNukIa9MspvHtu3Jk=";
   private static Enclave enclave;
+  private EnclaveFactory factory;
 
   private static OrionTestHarness testHarness;
 
@@ -63,7 +65,9 @@ public class EnclaveTest {
 
     testHarness.start();
 
-    enclave = new Enclave(testHarness.clientUrl());
+    factory = new EnclaveFactory(Vertx.vertx());
+
+    enclave = factory.createVertxEnclave(testHarness.clientUrl());
   }
 
   @After
@@ -72,7 +76,7 @@ public class EnclaveTest {
   }
 
   @Test
-  public void testUpCheck() throws IOException {
+  public void testUpCheck() {
     assertThat(enclave.upCheck()).isTrue();
   }
 
@@ -181,9 +185,7 @@ public class EnclaveTest {
   }
 
   @Test
-  public void whenUpCheckFailsThrows() {
-    final Throwable thrown = catchThrowable(() -> new Enclave(URI.create("http://null")).upCheck());
-    assertThat(thrown).isInstanceOf(IOException.class);
-    assertThat(thrown).hasMessageContaining("Failed to perform upcheck");
+  public void upcheckReturnsFalseIfNoResposneReceived() throws URISyntaxException {
+    assertThat(factory.createVertxEnclave(new URI("http://8.8.8.8:65535")).upCheck()).isFalse();
   }
 }

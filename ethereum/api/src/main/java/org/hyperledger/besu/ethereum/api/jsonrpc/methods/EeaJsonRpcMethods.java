@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
-import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -46,10 +45,11 @@ public class EeaJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
 
   @Override
   protected Map<String, JsonRpcMethod> create(
-      final PrivateTransactionHandler privateTransactionHandler, final Enclave enclave) {
+      final PrivateTransactionHandler privateTransactionHandler) {
     return mapOf(
         new EeaSendRawTransaction(privateTransactionHandler, getTransactionPool()),
         new PrivGetEeaTransactionCount(
-            new PrivateEeaNonceProvider(enclave, privateTransactionHandler)));
+            new PrivateEeaNonceProvider(
+                getPrivacyParameters().getEnclave(), privateTransactionHandler)));
   }
 }

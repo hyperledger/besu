@@ -18,6 +18,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.enclave.Enclave;
+import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyStorageProvider;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -43,6 +45,7 @@ public class PrivacyParameters {
   private String enclavePublicKey;
   private File enclavePublicKeyFile;
   private Optional<SECP256K1.KeyPair> signingKeyPair = Optional.empty();
+  private Enclave enclave;
 
   private PrivacyStorageProvider privateStorageProvider;
   private WorldStateArchive privateWorldStateArchive;
@@ -120,6 +123,14 @@ public class PrivacyParameters {
     this.privateStateStorage = privateStateStorage;
   }
 
+  public Enclave getEnclave() {
+    return enclave;
+  }
+
+  public void setEnclave(final Enclave enclave) {
+    this.enclave = enclave;
+  }
+
   @Override
   public String toString() {
     return "PrivacyParameters{" + "enabled=" + enabled + ", enclaveUri='" + enclaveUri + '\'' + '}';
@@ -134,6 +145,7 @@ public class PrivacyParameters {
     private String enclavePublicKey;
     private Path privateKeyPath;
     private PrivacyStorageProvider storageProvider;
+    private EnclaveFactory enclaveFactory;
 
     public Builder setPrivacyAddress(final Integer privacyAddress) {
       this.privacyAddress = privacyAddress;
@@ -160,6 +172,11 @@ public class PrivacyParameters {
       return this;
     }
 
+    public Builder setEnclaveFactory(final EnclaveFactory enclaveFactory) {
+      this.enclaveFactory = enclaveFactory;
+      return this;
+    }
+
     public PrivacyParameters build() throws IOException {
       final PrivacyParameters config = new PrivacyParameters();
       if (enabled) {
@@ -177,6 +194,7 @@ public class PrivacyParameters {
         config.setEnclavePublicKeyFile(enclavePublicKeyFile);
         config.setPrivateStorageProvider(storageProvider);
         config.setPrivateStateStorage(privateStateStorage);
+        config.setEnclave(enclaveFactory.createVertxEnclave(enclaveUrl));
 
         if (privateKeyPath != null) {
           config.setSigningKeyPair(KeyPair.load(privateKeyPath.toFile()));
