@@ -50,8 +50,9 @@ public class EeaJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
       final PrivateNonceProvider privateNonceProvider) {
     return mapOf(
         new EeaSendRawTransaction(
-            getPrivacyParameters(),privateTransactionHandler, getTransactionPool()),
-        new PrivGetEeaTransactionCount(getPrivacyParameters(),
+            getPrivacyParameters(), privateTransactionHandler, getTransactionPool()),
+        new PrivGetEeaTransactionCount(
+            getPrivacyParameters(),
             new PrivateEeaNonceProvider(
                 getPrivacyParameters().getEnclave(), privateNonceProvider)));
   }
