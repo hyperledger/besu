@@ -52,6 +52,7 @@ public class PrivCreatePrivacyGroupTest {
     when(failingEnclave.createPrivacyGroup(any(CreatePrivacyGroupRequest.class)))
         .thenThrow(new EnclaveException(""));
     when(privacyParameters.getEnclave()).thenReturn(enclave);
+    when(privacyParameters.isEnabled()).thenReturn(true);
   }
 
   @Test
@@ -255,5 +256,20 @@ public class PrivCreatePrivacyGroupTest {
     final JsonRpcError result = response.getError();
 
     assertThat(result).isEqualTo(JsonRpcError.ENCLAVE_ERROR);
+  }
+
+  @Test
+  public void returnPrivacyDisabledErrorWhenPrivacyIsDisabled() {
+    when(privacyParameters.isEnabled()).thenReturn(false);
+    final PrivCreatePrivacyGroup privCreatePrivacyGroup =
+        new PrivCreatePrivacyGroup(privacyParameters);
+
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest("1", "priv_createPrivacyGroup", new Object[] {}));
+    final JsonRpcErrorResponse response =
+        (JsonRpcErrorResponse) privCreatePrivacyGroup.response(request);
+
+    assertThat(response.getError()).isEqualTo(JsonRpcError.PRIVACY_NOT_ENABLED);
   }
 }

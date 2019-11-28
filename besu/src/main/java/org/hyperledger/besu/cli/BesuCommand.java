@@ -1386,8 +1386,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       privacyParametersBuilder.setEnclaveFactory(new EnclaveFactory(vertx));
     } else {
       if (anyPrivacyApiEnabled()) {
-        logger.warn(
-            "Privacy is disabled. Cannot use EEA/PRIV API methods when not using Privacy.");
+        logger.warn("Privacy is disabled. Cannot use EEA/PRIV API methods when not using Privacy.");
       }
     }
 
@@ -1395,8 +1394,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private boolean anyPrivacyApiEnabled() {
-    return rpcHttpApis.contains(RpcApis.EEA) || rpcWsApis.contains(RpcApis.EEA) ||
-        rpcHttpApis.contains(RpcApis.PRIV) || rpcWsApis.contains(RpcApis.PRIV);
+    return rpcHttpApis.contains(RpcApis.EEA)
+        || rpcWsApis.contains(RpcApis.EEA)
+        || rpcHttpApis.contains(RpcApis.PRIV)
+        || rpcWsApis.contains(RpcApis.PRIV);
   }
 
   private PrivacyKeyValueStorageProvider privacyKeyStorageProvider(final String name) {

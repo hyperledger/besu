@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.Abstra
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
@@ -31,9 +32,10 @@ import org.hyperledger.besu.ethereum.privacy.PrivateTransactionHandler;
 public class EeaSendRawTransaction extends AbstractSendTransaction implements JsonRpcMethod {
 
   public EeaSendRawTransaction(
+      final PrivacyParameters privacyParameters,
       final PrivateTransactionHandler privateTransactionHandler,
       final TransactionPool transactionPool) {
-    super(privateTransactionHandler, transactionPool);
+    super(privacyParameters, privateTransactionHandler, transactionPool);
   }
 
   @Override
@@ -42,7 +44,7 @@ public class EeaSendRawTransaction extends AbstractSendTransaction implements Js
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
+  public JsonRpcResponse doResponse(final JsonRpcRequestContext requestContext) {
     PrivateTransaction privateTransaction;
     try {
       privateTransaction = validateAndDecodeRequest(requestContext);

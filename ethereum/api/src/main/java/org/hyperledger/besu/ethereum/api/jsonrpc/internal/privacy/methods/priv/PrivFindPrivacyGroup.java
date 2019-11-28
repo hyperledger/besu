@@ -21,22 +21,23 @@ import org.hyperledger.besu.enclave.types.FindPrivacyGroupRequest;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 
 import java.util.Arrays;
 
 import org.apache.logging.log4j.Logger;
 
-public class PrivFindPrivacyGroup implements JsonRpcMethod {
+public class PrivFindPrivacyGroup extends PrivacyApiMethod {
 
   private static final Logger LOG = getLogger();
   private final Enclave enclave;
 
-  public PrivFindPrivacyGroup(final Enclave enclave) {
-    this.enclave = enclave;
+  public PrivFindPrivacyGroup(final PrivacyParameters privacyParameters) {
+    super(privacyParameters);
+    this.enclave = privacyParameters.getEnclave();
   }
 
   @Override
@@ -45,7 +46,7 @@ public class PrivFindPrivacyGroup implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
+  public JsonRpcResponse doResponse(final JsonRpcRequestContext requestContext) {
     LOG.trace("Executing {}", RpcMethod.PRIV_FIND_PRIVACY_GROUP.getMethodName());
 
     final String[] addresses = requestContext.getRequiredParameter(0, String[].class);
