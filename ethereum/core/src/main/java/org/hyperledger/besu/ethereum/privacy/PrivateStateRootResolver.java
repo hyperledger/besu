@@ -47,17 +47,18 @@ public class PrivateStateRootResolver {
     return resolveLastStateRoot(privacyGroupId, privacyGroupHeadBlockMap);
   }
 
-  private Hash resolveLastStateRoot(final BytesValue privacyGroupId, final PrivacyGroupHeadBlockMap privacyGroupHeadBlockMap) {
+  private Hash resolveLastStateRoot(
+      final BytesValue privacyGroupId, final PrivacyGroupHeadBlockMap privacyGroupHeadBlockMap) {
     final Hash lastRootHash;
     if (privacyGroupHeadBlockMap.containsKey(Bytes32.wrap(privacyGroupId))) {
       // Check this PG head block is being tracked
       final Hash blockHashForLastBlockWithTx =
-              privacyGroupHeadBlockMap.get(Bytes32.wrap(privacyGroupId));
+          privacyGroupHeadBlockMap.get(Bytes32.wrap(privacyGroupId));
       lastRootHash =
-              privateStateStorage
-                      .getPrivateBlockMetadata(blockHashForLastBlockWithTx, Bytes32.wrap(privacyGroupId))
-                      .get()
-                      .getLatestStateRoot();
+          privateStateStorage
+              .getPrivateBlockMetadata(blockHashForLastBlockWithTx, Bytes32.wrap(privacyGroupId))
+              .get()
+              .getLatestStateRoot();
     } else {
       // First transaction for this PG
       lastRootHash = EMPTY_ROOT_HASH;

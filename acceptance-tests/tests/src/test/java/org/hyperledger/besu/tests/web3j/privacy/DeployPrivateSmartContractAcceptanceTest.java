@@ -14,13 +14,9 @@
  */
 package org.hyperledger.besu.tests.web3j.privacy;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyAcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
-
-import java.math.BigInteger;
 
 import org.junit.Before;
 import org.junit.Test;
