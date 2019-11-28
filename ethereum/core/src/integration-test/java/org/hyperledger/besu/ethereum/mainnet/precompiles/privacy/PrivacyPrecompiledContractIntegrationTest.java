@@ -146,12 +146,6 @@ public class PrivacyPrecompiledContractIntegrationTest {
     final PrivateStateStorage.Updater storageUpdater = mock(PrivateStateStorage.Updater.class);
     when(privateStateStorage.getPrivacyGroupHeadBlockMap(any()))
         .thenReturn(Optional.of(PrivacyGroupHeadBlockMap.EMPTY));
-    when(privateStateStorage.getPrivateBlockMetadata(any(), any())).thenReturn(Optional.empty());
-    when(storageUpdater.putPrivateBlockMetadata(
-            nullable(Bytes32.class), nullable(Bytes32.class), any()))
-        .thenReturn(storageUpdater);
-    when(storageUpdater.putPrivacyGroupHeadBlockMap(nullable(Bytes32.class), any()))
-        .thenReturn(storageUpdater);
     when(storageUpdater.putPrivateBlockMetadata(
             nullable(Bytes32.class), nullable(Bytes32.class), any()))
         .thenReturn(storageUpdater);
