@@ -36,8 +36,7 @@ import org.junit.Test;
 public class PrivGetTransactionCountTest {
 
   private final PrivacyParameters privacyParameters = mock(PrivacyParameters.class);
-  private final PrivateNonceProvider privateNonceProvider =
-      mock(PrivateNonceProvider.class);
+  private final PrivateNonceProvider privateNonceProvider = mock(PrivateNonceProvider.class);
 
   private final String privacyGroupId =
       BytesValues.asBase64String(BytesValue.wrap("0x123".getBytes(UTF_8)));
@@ -49,7 +48,8 @@ public class PrivGetTransactionCountTest {
   @Before
   public void before() {
     when(privacyParameters.isEnabled()).thenReturn(true);
-    when(privateNonceProvider.getNonce(senderAddress, BytesValues.fromBase64(privacyGroupId))).thenReturn(NONCE);
+    when(privateNonceProvider.getNonce(senderAddress, BytesValues.fromBase64(privacyGroupId)))
+        .thenReturn(NONCE);
   }
 
   @Test
