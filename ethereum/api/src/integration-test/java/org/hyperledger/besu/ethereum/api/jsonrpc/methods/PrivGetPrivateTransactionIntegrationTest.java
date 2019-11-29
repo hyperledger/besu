@@ -137,6 +137,7 @@ public class PrivGetPrivateTransactionIntegrationTest {
 
   @Before
   public void before() {
+    when(privacyParameters.isEnabled()).thenReturn(true);
     when(privacyParameters.getEnclave()).thenReturn(enclave);
   }
 
