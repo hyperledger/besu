@@ -111,6 +111,7 @@ public enum RpcMethod {
   WEB3_CLIENT_VERSION("web3_clientVersion"),
   WEB3_SHA3("web3_sha3"),
   CROSS_ADD_COORDINAITON_CONTRACT("cross_addCoordinationContract"),
+  CROSS_ADD_MULTICHAIN_NODE("cross_addMultichainNode"),
   CROSS_ACTIVE_KEY("cross_activateKey"),
   CROSS_CHECK_UNLOCK("cross_checkUnlock"),
   CROSS_GET_BLOCKCHAIN_PUBLIC_KEY("cross_getBlockchainPublicKey"),
@@ -123,11 +124,19 @@ public enum RpcMethod {
   CROSS_IS_LOCKABLE("cross_isLockable"),
   CROSS_IS_LOCKED("cross_isLocked"),
   CROSS_LIST_COORDINAITON_CONTRACTS("cross_listCoordinationContracts"),
-  CROSS_PROCESS_RAW_SUBORDINATE_VIEW("cross_processSubordinateView"),
+  CROSS_LIST_MULTICHAIN_NODES("cross_listMultichainNodes"),
+  CROSS_PROCESS_RAW_SUBORDINATE_VIEW(Constants.CROSS_PROCESS_SUBORDINATE_VIEW),
   CROSS_REMOVE_COORDINAITON_CONTRACT("cross_removeCoordinationContract"),
-  CROSS_SEND_RAW_CROSSCHAIN_TRANSACTION("cross_sendRawCrosschainTransaction"),
+  CROSS_REMOVE_MULTICHAIN_NODE("cross_removeMultichainNode"),
+  CROSS_SEND_RAW_CROSSCHAIN_TRANSACTION(Constants.CROSS_SEND_RAW_CROSSCHAIN_TRANSACTION_STR),
   CROSS_SET_KEY_GENERATION_CONTRACT_ADDRESS("cross_setKeyGenerationContractAddress"),
   CROSS_START_THRESHOLD_KEY_GENERATION("cross_startThresholdKeyGeneration");
+
+  public static class Constants {
+    public static final String CROSS_PROCESS_SUBORDINATE_VIEW = "cross_processSubordinateView";
+    public static final String CROSS_SEND_RAW_CROSSCHAIN_TRANSACTION_STR =
+        "cross_sendRawCrosschainTransaction";
+  }
 
   private final String methodName;
 

@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.core.Address;
 
 import java.math.BigInteger;
 
@@ -29,14 +28,14 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /** Sets the address of the key generation contract to use. */
-public class CrossRemoveCoordinationContract implements JsonRpcMethod {
+public class CrossAddMultichainNode implements JsonRpcMethod {
 
   private static final Logger LOG = LogManager.getLogger();
 
   private final CrosschainController crosschainController;
   private final JsonRpcParameter parameters;
 
-  public CrossRemoveCoordinationContract(
+  public CrossAddMultichainNode(
       final CrosschainController crosschainController, final JsonRpcParameter parameters) {
     this.crosschainController = crosschainController;
     this.parameters = parameters;
@@ -44,7 +43,7 @@ public class CrossRemoveCoordinationContract implements JsonRpcMethod {
 
   @Override
   public String getName() {
-    return RpcMethod.CROSS_REMOVE_COORDINAITON_CONTRACT.getMethodName();
+    return RpcMethod.CROSS_ADD_MULTICHAIN_NODE.getMethodName();
   }
 
   @Override
@@ -54,11 +53,17 @@ public class CrossRemoveCoordinationContract implements JsonRpcMethod {
     }
     final BigInteger blockchainId =
         this.parameters.required(request.getParams(), 0, BigInteger.class);
-    final Address address = this.parameters.required(request.getParams(), 1, Address.class);
+    final String ipAddressAndPort = this.parameters.required(request.getParams(), 1, String.class);
 
-    LOG.trace("JSON RPC {}: Blockchain Id: {}, Address: {}", getName(), blockchainId, address);
+    // TODO check that ipAddressAndPort is valid
 
-    this.crosschainController.removeCoordinationContract(blockchainId, address);
+    LOG.trace(
+        "JSON RPC {}: Blockchain Id: {}, , IPAddress: {}",
+        getName(),
+        blockchainId,
+        ipAddressAndPort);
+
+    this.crosschainController.addMultichainNode(blockchainId, ipAddressAndPort);
     return new JsonRpcSuccessResponse(request.getId());
   }
 }

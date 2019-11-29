@@ -12,15 +12,8 @@
  */
 package org.hyperledger.besu.config;
 
-import java.util.Map;
-
 public class CrosschainConfigOptions {
-  public static final String DEFAULT_PATH = "";
-
-  // Crosschain feature is enabled
+  // Crosschain feature is enabled.
+  // TODO at present this is not used.
   public static boolean isEnabled = false;
-
-  // Mapping between Sidechain ID (currently chain ID) and RPC address of Sidechain node which is
-  // operating on that sidechain.
-  public static Map<Integer, String> chainsMapping;
 }

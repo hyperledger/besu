@@ -64,8 +64,11 @@ public class CrosschainController {
   CrosschainProcessor processor;
   CrosschainKeyManager crosschainKeyManager;
 
+  MultichainManager multichainManager;
+
   public CrosschainController() {
-    this.processor = new CrosschainProcessor();
+    this.multichainManager = new MultichainManager();
+    this.processor = new CrosschainProcessor(this.multichainManager);
     this.crosschainKeyManager = CrosschainKeyManager.getCrosschainKeyManager();
   }
 
@@ -309,16 +312,28 @@ public class CrosschainController {
     this.crosschainKeyManager.setKeyGenerationContractAddress(address);
   }
 
-  public void addCoordinaitonContract(
+  public void addCoordinationContract(
       final BigInteger blockchainId, final Address address, final String ipAddressAndPort) {
     this.crosschainKeyManager.addCoordinationContract(blockchainId, address, ipAddressAndPort);
   }
 
-  public void removeCoordinaitonContract(final BigInteger blockchainId, final Address address) {
+  public void removeCoordinationContract(final BigInteger blockchainId, final Address address) {
     this.crosschainKeyManager.removeCoordinationContract(blockchainId, address);
   }
 
   public Collection<CoordinationContractInformation> listCoordinationContracts() {
     return this.crosschainKeyManager.getAllCoordinationContracts();
+  }
+
+  public void addMultichainNode(final BigInteger blockchainId, final String ipAddressAndPort) {
+    this.multichainManager.addNode(blockchainId, ipAddressAndPort);
+  }
+
+  public void removeMultichainNode(final BigInteger blockchainId) {
+    this.multichainManager.removeNode(blockchainId);
+  }
+
+  public Set<BigInteger> listMultichainNodes() {
+    return this.multichainManager.listAllNodes();
   }
 }

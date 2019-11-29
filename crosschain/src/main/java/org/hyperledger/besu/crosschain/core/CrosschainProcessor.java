@@ -14,9 +14,9 @@ package org.hyperledger.besu.crosschain.core;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-import org.hyperledger.besu.config.CrosschainConfigOptions;
 import org.hyperledger.besu.crosschain.ethereum.crosschain.CrosschainThreadLocalDataHolder;
 import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -60,6 +60,12 @@ public class CrosschainProcessor {
 
   Vertx vertx;
 
+  private MultichainManager multichainManager;
+
+  public CrosschainProcessor(final MultichainManager multichainManager) {
+    this.multichainManager = multichainManager;
+  }
+
   public void init(
       final TransactionSimulator transactionSimulator,
       final TransactionPool transactionPool,
@@ -97,8 +103,8 @@ public class CrosschainProcessor {
 
         String method =
             subordinateTransactionsAndView.getType().isSubordinateView()
-                ? "cross_processSubordinateView"
-                : "cross_sendRawCrosschainTransaction";
+                ? RpcMethod.Constants.CROSS_PROCESS_SUBORDINATE_VIEW
+                : RpcMethod.Constants.CROSS_SEND_RAW_CROSSCHAIN_TRANSACTION_STR;
 
         BytesValueRLPOutput out = new BytesValueRLPOutput();
         subordinateTransactionsAndView.writeTo(out);
@@ -113,10 +119,10 @@ public class CrosschainProcessor {
         Optional<BigInteger> optionalSidechainId = subordinateTransactionsAndView.getChainId();
         BigInteger sidechainId = optionalSidechainId.orElse(BigInteger.ZERO);
         // TODO Allow for BigInteger chainids.
-        int chainId = sidechainId.intValue();
 
+        //        int chainId = sidechainId.intValue();
         // Get the address from chain mapping.
-        String ipAddress = CrosschainConfigOptions.chainsMapping.get(chainId);
+        String ipAddress = this.multichainManager.getIpAddressAndPort(sidechainId);
         String response = null;
         LOG.debug("Sending Crosschain Transaction or view to chain at " + ipAddress);
         try {

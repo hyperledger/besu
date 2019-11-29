@@ -16,49 +16,39 @@ import org.hyperledger.besu.crosschain.core.CrosschainController;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.core.Address;
 
 import java.math.BigInteger;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-/** Sets the address of the key generation contract to use. */
-public class CrossRemoveCoordinationContract implements JsonRpcMethod {
-
+/** Returns the list of nodes that make up this Multichain Node. */
+public class CrossListMultichainNodes implements JsonRpcMethod {
   private static final Logger LOG = LogManager.getLogger();
-
   private final CrosschainController crosschainController;
-  private final JsonRpcParameter parameters;
 
-  public CrossRemoveCoordinationContract(
-      final CrosschainController crosschainController, final JsonRpcParameter parameters) {
+  public CrossListMultichainNodes(final CrosschainController crosschainController) {
     this.crosschainController = crosschainController;
-    this.parameters = parameters;
   }
 
   @Override
   public String getName() {
-    return RpcMethod.CROSS_REMOVE_COORDINAITON_CONTRACT.getMethodName();
+    return RpcMethod.CROSS_LIST_MULTICHAIN_NODES.getMethodName();
   }
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequest request) {
-    if (request.getParamLength() != 2) {
+    if (request.getParamLength() != 0) {
       return new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
     }
-    final BigInteger blockchainId =
-        this.parameters.required(request.getParams(), 0, BigInteger.class);
-    final Address address = this.parameters.required(request.getParams(), 1, Address.class);
 
-    LOG.trace("JSON RPC {}: Blockchain Id: {}, Address: {}", getName(), blockchainId, address);
-
-    this.crosschainController.removeCoordinationContract(blockchainId, address);
-    return new JsonRpcSuccessResponse(request.getId());
+    Set<BigInteger> info = this.crosschainController.listMultichainNodes();
+    LOG.trace("JSON RPC {}: Size: {}", getName(), info.size());
+    return new JsonRpcSuccessResponse(request.getId(), info);
   }
 }

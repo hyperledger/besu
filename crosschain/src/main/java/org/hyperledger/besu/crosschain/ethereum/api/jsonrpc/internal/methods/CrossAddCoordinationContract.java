@@ -57,6 +57,8 @@ public class CrossAddCoordinationContract implements JsonRpcMethod {
     final Address address = this.parameters.required(request.getParams(), 1, Address.class);
     final String ipAddressAndPort = this.parameters.required(request.getParams(), 2, String.class);
 
+    // TODO check that ipAddressAndPort is valid
+
     LOG.trace(
         "JSON RPC {}: Blockchain Id: {}, Address: {}, IPAddress: {}",
         getName(),
@@ -64,7 +66,7 @@ public class CrossAddCoordinationContract implements JsonRpcMethod {
         address,
         ipAddressAndPort);
 
-    this.crosschainController.addCoordinaitonContract(blockchainId, address, ipAddressAndPort);
+    this.crosschainController.addCoordinationContract(blockchainId, address, ipAddressAndPort);
     return new JsonRpcSuccessResponse(request.getId());
   }
 }

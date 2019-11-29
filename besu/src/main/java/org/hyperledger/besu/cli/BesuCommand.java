@@ -111,7 +111,6 @@ import org.hyperledger.besu.util.number.Fraction;
 import org.hyperledger.besu.util.number.PositiveNumber;
 import org.hyperledger.besu.util.uint.UInt256;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -120,13 +119,11 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.URI;
 import java.net.UnknownHostException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -694,11 +691,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--crosschain-enabled"},
       description = "Enable crosschain features (default: ${DEFAULT-VALUE}")
   public final Boolean isCrosschainsEnabled = false;
-
-  @Option(
-      names = {"--crosschain-config"},
-      description = "Crosschain config file path (default: ${DEFAULT-VALUE}")
-  public String crosschainsConfigPath = CrosschainConfigOptions.DEFAULT_PATH;
 
   private EthNetworkConfig ethNetworkConfig;
   private JsonRpcConfiguration jsonRpcConfiguration;
@@ -1347,41 +1339,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private void crosschainConfig() {
     if (isCrosschainsEnabled) {
-      CrosschainConfigOptions.chainsMapping = new HashMap<>();
-      BufferedReader br;
-      try {
-        br = Files.newBufferedReader(Paths.get(crosschainsConfigPath), UTF_8);
-      } catch (IOException ioe) {
-        throw new ParameterException(
-            this.commandLine,
-            "Unable to read from the crosschains config file "
-                + Paths.get(crosschainsConfigPath)
-                + ". Make sure --crosschains-config is used and correct path is provided.  Exception:"
-                + ioe.toString());
-      }
-      String line;
-      try {
-        while ((line = br.readLine()) != null) {
-          String[] splited = line.split("\\s+", -1);
-          String id = splited[0];
-          String address = splited[1];
-          if (id.startsWith("#")) {
-            continue;
-          }
-          if (!id.startsWith("chainId:")) throw new Exception();
-          if (!address.startsWith("RPC:")) throw new Exception();
-          id = id.substring(8);
-          address = address.substring(4);
-          CrosschainConfigOptions.chainsMapping.put(Integer.valueOf(id), address);
-        }
-      } catch (Exception e) {
-        throw new ParameterException(
-            this.commandLine,
-            "Error during read from the crosschains config file "
-                + Paths.get(crosschainsConfigPath)
-                + ". IO Exception occurs or malformed config file is provided. Exception:"
-                + e.toString());
-      }
+      CrosschainConfigOptions.isEnabled = true;
+      // TODO put any crosschain specific stuff here.
     }
   }
 

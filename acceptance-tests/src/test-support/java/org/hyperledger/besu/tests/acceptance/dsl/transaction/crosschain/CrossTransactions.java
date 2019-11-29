@@ -12,9 +12,24 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.transaction.crosschain;
 
+import java.math.BigInteger;
+
 public class CrossTransactions {
+
+  public CrossAddMultichainNode getAddMultichainNode(
+      final BigInteger blockchainId, final String ipAddressAndPort) {
+    return new CrossAddMultichainNode(blockchainId, ipAddressAndPort);
+  }
 
   public CrossIsLockableTransaction getIsLockable(final String address) {
     return new CrossIsLockableTransaction(address);
+  }
+
+  public CrossListMultichainNodes getListMultichainNodes() {
+    return new CrossListMultichainNodes();
+  }
+
+  public CrossRemoveMultichainNode getRemoveMultichainNode(final BigInteger blockchainId) {
+    return new CrossRemoveMultichainNode(blockchainId);
   }
 }

@@ -44,11 +44,13 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyRequ
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.net.ConnectException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -462,12 +464,26 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     }
   }
 
+  public String jsonRpcListenHost1() {
+    if (isJsonRpcEnabled()) {
+      return jsonRpcConfiguration().getHost();
+    }
+    throw new RuntimeException("JSON RPC Not Enabled");
+  }
+
   Optional<Integer> jsonRpcListenPort() {
     if (isJsonRpcEnabled()) {
       return Optional.of(jsonRpcConfiguration().getPort());
     } else {
       return Optional.empty();
     }
+  }
+
+  public int jsonRpcListenPort1() {
+    if (isJsonRpcEnabled()) {
+      return jsonRpcConfiguration().getPort();
+    }
+    throw new RuntimeException("JSON RPC Not Enabled");
   }
 
   boolean wsRpcEnabled() {
@@ -601,6 +617,20 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   @Override
   public GenesisConfigurationProvider getGenesisConfigProvider() {
     return genesisConfigProvider;
+  }
+
+  public BigInteger getChainId() {
+    String genesisFile = this.genesisConfigProvider.create(Collections.emptyList()).get();
+
+    final String chainIdStr = "chainId\": ";
+    int offsetOfChainId = genesisFile.indexOf(chainIdStr);
+    if (offsetOfChainId == -1) {
+      throw new RuntimeException("No chain Id found in genesis file");
+    }
+    int offsetOfComa = genesisFile.indexOf(',', offsetOfChainId);
+    String chainIdValue =
+        genesisFile.substring(offsetOfChainId + chainIdStr.length(), offsetOfComa);
+    return new BigInteger(chainIdValue);
   }
 
   @Override

@@ -29,25 +29,25 @@ public abstract class CrosschainAcceptanceTestBase extends AcceptanceTestBase {
   public static final int VOTING_TIME_OUT = 2;
   public static final long CROSSCHAIN_TRANSACTION_TIMEOUT = 10;
 
+  protected Cluster clusterCoordinationBlockchain;
   protected BesuNode nodeOnCoordinationBlockchain;
   protected CrosschainCoordinationV1 coordContract;
-  protected static final BigInteger CHAINID_COORDINATION_BLOCKCHAIN = BigInteger.valueOf(50);
 
+  protected Cluster clusterBc1;
   protected BesuNode nodeOnBlockchain1;
-  protected static final BigInteger CHAINID_BLOCKCHAIN1 = BigInteger.valueOf(51);
   protected CrosschainTransactionManager transactionManagerBlockchain1;
-  long BLOCKCHAIN1_SLEEP_DURATION = 2000;
-  int BLOCKCHAIN1_RETRY_ATTEMPTS = 3;
+  private long BLOCKCHAIN1_SLEEP_DURATION = 2000;
+  private int BLOCKCHAIN1_RETRY_ATTEMPTS = 3;
 
+  protected Cluster clusterBc2;
   protected BesuNode nodeOnBlockchain2;
-  protected BigInteger CHAINID_BLOCKCHAIN2 = BigInteger.valueOf(52);
   protected CrosschainTransactionManager transactionManagerBlockchain2;
 
   public void setUpCoordiantionChain() throws Exception {
     nodeOnCoordinationBlockchain =
         besu.createCrosschainCoordinationBlockchainIbft2Node("coord-node");
-    Cluster clusterCoordinationBlockchain = new Cluster(this.net);
-    clusterCoordinationBlockchain.start(nodeOnCoordinationBlockchain);
+    this.clusterCoordinationBlockchain = new Cluster(this.net);
+    this.clusterCoordinationBlockchain.start(nodeOnCoordinationBlockchain);
 
     final VotingAlgMajorityWhoVoted votingContract =
         nodeOnCoordinationBlockchain.execute(
@@ -62,8 +62,8 @@ public abstract class CrosschainAcceptanceTestBase extends AcceptanceTestBase {
 
   public void setUpBlockchain1() throws Exception {
     this.nodeOnBlockchain1 = besu.createCrosschainBlockchain1Ibft2Node("bc1-node");
-    Cluster clusterBc1 = new Cluster(this.net);
-    clusterBc1.start(nodeOnBlockchain1);
+    this.clusterBc1 = new Cluster(this.net);
+    this.clusterBc1.start(nodeOnBlockchain1);
 
     JsonRpc2_0Besu blockchain1Web3j = this.nodeOnBlockchain1.getJsonRpc();
     final Credentials BENEFACTOR_ONE = Credentials.create(Accounts.GENESIS_ACCOUNT_ONE_PRIVATE_KEY);
@@ -73,34 +73,43 @@ public abstract class CrosschainAcceptanceTestBase extends AcceptanceTestBase {
         new CrosschainTransactionManager(
             blockchain1Web3j,
             BENEFACTOR_ONE,
-            CHAINID_BLOCKCHAIN1,
+            this.nodeOnBlockchain1.getChainId(),
             BLOCKCHAIN1_RETRY_ATTEMPTS,
             BLOCKCHAIN1_SLEEP_DURATION,
             coordinationWeb3j,
-            CHAINID_COORDINATION_BLOCKCHAIN,
+            this.nodeOnCoordinationBlockchain.getChainId(),
             this.coordContract.getContractAddress(),
             CROSSCHAIN_TRANSACTION_TIMEOUT);
   }
 
   public void setUpBlockchain2() throws Exception {
-    nodeOnBlockchain2 = besu.createCrosschainBlockchain2Ibft2Node("bc2-node");
-    Cluster clusterBc2 = new Cluster(this.net);
-    clusterBc2.start(nodeOnBlockchain2);
+    this.nodeOnBlockchain2 = besu.createCrosschainBlockchain2Ibft2Node("bc2-node");
+    this.clusterBc2 = new Cluster(this.net);
+    this.clusterBc2.start(nodeOnBlockchain2);
 
-    JsonRpc2_0Besu blockchain1Web3j = this.nodeOnBlockchain1.getJsonRpc();
+    JsonRpc2_0Besu blockchain2Web3j = this.nodeOnBlockchain2.getJsonRpc();
     final Credentials BENEFACTOR_ONE = Credentials.create(Accounts.GENESIS_ACCOUNT_ONE_PRIVATE_KEY);
     JsonRpc2_0Besu coordinationWeb3j = this.nodeOnCoordinationBlockchain.getJsonRpc();
 
-    this.transactionManagerBlockchain1 =
+    this.transactionManagerBlockchain2 =
         new CrosschainTransactionManager(
-            blockchain1Web3j,
+            blockchain2Web3j,
             BENEFACTOR_ONE,
-            CHAINID_BLOCKCHAIN1,
+            this.nodeOnBlockchain2.getChainId(),
             BLOCKCHAIN1_RETRY_ATTEMPTS,
             BLOCKCHAIN1_SLEEP_DURATION,
             coordinationWeb3j,
-            CHAINID_COORDINATION_BLOCKCHAIN,
+            this.nodeOnCoordinationBlockchain.getChainId(),
             this.coordContract.getContractAddress(),
             CROSSCHAIN_TRANSACTION_TIMEOUT);
+  }
+
+  public void addMultichainNode(final BesuNode node, final BesuNode nodeToAdd) {
+    String ipAddress = nodeToAdd.jsonRpcListenHost1();
+    int port = nodeToAdd.jsonRpcListenPort1();
+    String ipAddressAndPort = ipAddress + ":" + port;
+    BigInteger chainId = nodeToAdd.getChainId();
+
+    node.execute(crossTransactions.getAddMultichainNode(chainId, ipAddressAndPort));
   }
 }
