@@ -21,13 +21,13 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.List;
 
-import org.web3j.protocol.besu.response.crosschain.CrossListMultichainNodesResponse;
+import org.web3j.protocol.besu.response.crosschain.ListNodesResponse;
 
 public class CrossListMultichainNodes implements Transaction<List<BigInteger>> {
   @Override
   public List<BigInteger> execute(final NodeRequests node) {
     try {
-      final CrossListMultichainNodesResponse result = node.eth().crossListMultichainNodes().send();
+      final ListNodesResponse result = node.eth().crossListMultichainNodes().send();
       assertThat(result).isNotNull();
       assertThat(result.hasError()).isFalse();
       return result.getNodes();

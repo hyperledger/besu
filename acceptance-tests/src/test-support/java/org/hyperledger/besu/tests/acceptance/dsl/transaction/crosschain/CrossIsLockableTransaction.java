@@ -20,7 +20,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
 
 import java.io.IOException;
 
-import org.web3j.protocol.besu.response.crosschain.CrosschainIsLockable;
+import org.web3j.protocol.besu.response.crosschain.CrossIsLockableResponse;
 
 public class CrossIsLockableTransaction implements Transaction<Boolean> {
 
@@ -33,7 +33,7 @@ public class CrossIsLockableTransaction implements Transaction<Boolean> {
   @Override
   public Boolean execute(final NodeRequests node) {
     try {
-      final CrosschainIsLockable result = node.eth().crosschainIsLockable(address, LATEST).send();
+      final CrossIsLockableResponse result = node.eth().crossIsLockable(address, LATEST).send();
       assertThat(result).isNotNull();
       assertThat(result.hasError()).isFalse();
 
