@@ -30,8 +30,8 @@ public class PrivGetTransactionCount extends PrivacyApiMethod {
 
   private final PrivateNonceProvider privateNonceProvider;
 
-  public PrivGetTransactionCount(final PrivacyParameters privacyParameters,
-      final PrivateNonceProvider privateNonceProvider) {
+  public PrivGetTransactionCount(
+      final PrivacyParameters privacyParameters, final PrivateNonceProvider privateNonceProvider) {
     super(privacyParameters);
     this.privateNonceProvider = privateNonceProvider;
   }
@@ -51,7 +51,8 @@ public class PrivGetTransactionCount extends PrivacyApiMethod {
     final Address address = requestContext.getRequiredParameter(0, Address.class);
     final String privacyGroupId = requestContext.getRequiredParameter(1, String.class);
 
-    final long nonce = privateNonceProvider.getNonce(address, BytesValues.fromBase64(privacyGroupId));
+    final long nonce =
+        privateNonceProvider.getNonce(address, BytesValues.fromBase64(privacyGroupId));
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), Quantity.create(nonce));
   }
 }
