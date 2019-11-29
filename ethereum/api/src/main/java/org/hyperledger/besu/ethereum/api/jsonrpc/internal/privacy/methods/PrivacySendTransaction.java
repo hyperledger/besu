@@ -33,14 +33,14 @@ import org.hyperledger.besu.util.bytes.BytesValue;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public abstract class AbstractSendTransaction extends PrivacyApiMethod {
+public abstract class PrivacySendTransaction extends PrivacyApiMethod {
 
   private static final Logger LOG = LogManager.getLogger();
 
   protected final PrivateTransactionHandler privateTransactionHandler;
   protected final TransactionPool transactionPool;
 
-  public AbstractSendTransaction(
+  public PrivacySendTransaction(
       final PrivacyParameters privacyParameters,
       final PrivateTransactionHandler privateTransactionHandler,
       final TransactionPool transactionPool) {

@@ -1,7 +1,6 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.enclave.Enclave;
@@ -13,17 +12,19 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.class)
 public class PrivFindPrivacyGroupTest {
 
-  private Enclave enclave;
-  private PrivacyParameters privacyParameters;
+  @Mock private Enclave enclave;
+  @Mock private PrivacyParameters privacyParameters;
   private PrivFindPrivacyGroup privFindPrivacyGroup;
 
   @Before
   public void before() {
-    enclave = mock(Enclave.class);
-    privacyParameters = mock(PrivacyParameters.class);
     when(privacyParameters.getEnclave()).thenReturn(enclave);
     privFindPrivacyGroup = new PrivFindPrivacyGroup(privacyParameters);
   }

@@ -16,7 +16,7 @@ public abstract class PrivacyApiMethod implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
+  public final JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     if (privacyParameters.isEnabled()) {
       return doResponse(requestContext);
     } else {
