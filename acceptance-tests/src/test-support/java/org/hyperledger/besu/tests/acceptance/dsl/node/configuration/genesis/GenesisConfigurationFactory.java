@@ -90,7 +90,7 @@ public class GenesisConfigurationFactory {
 
   public Optional<String> createCrosschainBlockchain2GenesisConfig(
       final Collection<? extends RunnableNode> validators) {
-    final String template = readGenesisFile("/crosschain/crosschain_coordination_blockchain.json");
+    final String template = readGenesisFile("/crosschain/crosschain_blockchain_02.json");
     return updateGenesisExtraData(
         validators, template, IbftExtraData::createGenesisExtraDataString);
   }
