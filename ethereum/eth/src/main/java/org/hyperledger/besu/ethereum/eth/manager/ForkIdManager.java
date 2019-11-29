@@ -50,11 +50,13 @@ public class ForkIdManager {
   public ForkIdManager(final Hash genesisHash, final Set<Long> forks, final Long currentHead) {
     this.genesisHash = genesisHash;
     this.currentHead = currentHead;
+    System.out.println(currentHead); // todo remove dev item
     if (forks != null) {
       forkAndHashList = collectForksAndHashes(forks, currentHead);
     } else {
       forkAndHashList = new ArrayDeque<>();
     }
+    System.out.println(forkAndHashList); // todo remove dev item
   };
 
   public static ForkIdManager buildCollection(

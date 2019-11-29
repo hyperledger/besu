@@ -285,6 +285,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
 
     final Capability cap = connection.capability(getSupportedProtocol());
     // TODO: look to consolidate code below if possible
+    // making status non-final and implementing it above would be one way.
     if(cap.getVersion() > EthProtocol.EthVersion.V63){
       final StatusMessage status =
               StatusMessage.create(

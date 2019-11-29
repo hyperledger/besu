@@ -15,14 +15,20 @@
 package org.hyperledger.besu.config;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
 import static org.hyperledger.besu.config.JsonUtil.normalizeKeys;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Streams;
 import com.google.common.io.Resources;
@@ -129,6 +135,19 @@ public class GenesisConfigFile {
 
   public long getTimestamp() {
     return parseLong("timestamp", JsonUtil.getValueAsString(configRoot, "timestamp", "0x0"));
+  }
+
+  // TODO look into how to handle invalid or exceptional (i.e. null or "") fork values
+  public List<Long> getForks() {
+    return JsonUtil.getObjectNode(configRoot, "config").stream()
+                .flatMap(node ->
+                        Streams.stream(node.fieldNames())
+                                .filter(name -> !name.toLowerCase().equals("chainid"))
+                                .filter(name -> node.get(name).canConvertToLong())
+                                .filter(name -> name.contains("block"))
+                                .map(name -> node.get(name).asLong())
+                )
+                .collect(toList());
   }
 
   private String getRequiredString(final String key) {

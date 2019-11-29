@@ -16,6 +16,7 @@ package org.hyperledger.besu.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.InstanceOfAssertFactories.LIST;
 
 import java.math.BigInteger;
 import java.util.HashMap;
@@ -228,6 +229,7 @@ public class GenesisConfigFileTest {
     override.put("chainId", bigBlockString);
     override.put("contractSizeLimit", bigBlockString);
 
+    assertThat(config.getForks().size()).isPositive();
     assertThat(config.getConfigOptions(override).getIstanbulBlockNumber()).hasValue(bigBlock);
     assertThat(config.getConfigOptions(override).getChainId())
         .hasValue(BigInteger.valueOf(bigBlock));
@@ -242,6 +244,7 @@ public class GenesisConfigFileTest {
     override.put("chainId", null);
     override.put("contractSizeLimit", null);
 
+    assertThat(config.getForks().size()).isPositive();
     assertThat(config.getConfigOptions(override).getIstanbulBlockNumber()).isNotPresent();
     assertThat(config.getConfigOptions(override).getChainId()).isNotPresent();
     assertThat(config.getConfigOptions(override).getContractSizeLimit()).isNotPresent();
@@ -290,6 +293,14 @@ public class GenesisConfigFileTest {
     assertThat(config.getConfigOptions().getEvmStackSize()).isNotPresent();
   }
 
+  @Test
+  public void shouldLoadMainnetForks() {
+    final GenesisConfigFile config = GenesisConfigFile.mainnet();
+
+    assertThat(config.getForks()).contains(1150000L, 1920000L, 2463000L, 2675000L, 2675000L, 4370000L, 7280000L, 9069000L);
+    assertThat(config.getConfigOptions().getChainId()).hasValue(MAINNET_CHAIN_ID);
+  }
+
   private GenesisConfigFile configWithProperty(final String key, final String value) {
     return GenesisConfigFile.fromConfig("{\"" + key + "\":\"" + value + "\"}");
   }
@@ -299,4 +310,6 @@ public class GenesisConfigFileTest {
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("Invalid genesis block configuration");
   }
+
+
 }
