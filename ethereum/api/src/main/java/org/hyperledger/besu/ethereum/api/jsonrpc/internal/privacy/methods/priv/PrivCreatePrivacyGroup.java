@@ -17,9 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 import static org.apache.logging.log4j.LogManager.getLogger;
 
 import org.hyperledger.besu.enclave.Enclave;
-import org.hyperledger.besu.enclave.types.CreatePrivacyGroupRequest;
-import org.hyperledger.besu.enclave.types.PrivacyGroup;
-import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcEnclaveErrorConverter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.parameters.CreatePrivacyGroupParameter;
@@ -27,18 +25,41 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
+import org.hyperledger.besu.ethereum.privacy.PrivateTransactionHandler;
+import org.hyperledger.besu.ethereum.privacy.privatetransaction.GroupCreationTransactionFactory;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.util.bytes.BytesValue;
+import org.hyperledger.besu.util.bytes.BytesValues;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.Logger;
 
 public class PrivCreatePrivacyGroup extends PrivacyApiMethod {
 
   private static final Logger LOG = getLogger();
-  private final Enclave enclave;
+  private PrivateTransactionHandler privateTransactionHandler;
+  private GroupCreationTransactionFactory groupCreationTransactionFactory;
+  private TransactionPool transactionPool;
 
-  public PrivCreatePrivacyGroup(final PrivacyParameters privacyParameters) {
-    super(privacyParameters);
-    this.enclave = privacyParameters.getEnclave();
-  }
+    public PrivCreatePrivacyGroup(
+            final PrivacyParameters privacyParameters,
+            final GroupCreationTransactionFactory groupCreationTransactionFactory,
+            final PrivateTransactionHandler privateTransactionHandler,
+            final TransactionPool transactionPool) {
+        super(privacyParameters);
+        this.groupCreationTransactionFactory = groupCreationTransactionFactory;
+        this.privateTransactionHandler = privateTransactionHandler;
+        this.transactionPool = transactionPool;
+    }
 
   @Override
   public String getName() {
@@ -57,22 +78,54 @@ public class PrivCreatePrivacyGroup extends PrivacyApiMethod {
         parameter.getName(),
         parameter.getDescription());
 
-    final CreatePrivacyGroupRequest createPrivacyGroupRequest =
-        new CreatePrivacyGroupRequest(
-            parameter.getAddresses(),
-            privacyParameters.getEnclavePublicKey(),
+    // FIXME: enclave.generatePrivacyGroupId() ? or createPrivacyGroupId(keccak256(rlp(participants
+    // + creatorNonce??))
+    final BytesValue pgId =
+        generateLegacyGroup(
+            BytesValues.fromBase64(privacyParameters.getEnclavePublicKey()),
+            Arrays.stream(parameter.getAddresses())
+                .map(BytesValues::fromBase64)
+                .collect(Collectors.toList()));
+
+    final PrivateTransaction privateTransaction =
+        groupCreationTransactionFactory.create(
+            pgId,
+            BytesValues.fromBase64(privacyParameters.getEnclavePublicKey()),
+            Arrays.stream(parameter.getAddresses())
+                .map(BytesValues::fromBase64)
+                .collect(Collectors.toList()),
             parameter.getName(),
             parameter.getDescription());
-    final PrivacyGroup response;
-    try {
-      response = enclave.createPrivacyGroup(createPrivacyGroupRequest);
-    } catch (Exception e) {
-      LOG.error("Failed to create privacy group", e);
-      return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(),
-          JsonRpcEnclaveErrorConverter.convertEnclaveInvalidReason(e.getMessage()));
-    }
-    return new JsonRpcSuccessResponse(
-        requestContext.getRequest().getId(), response.getPrivacyGroupId());
+    privateTransactionHandler.sendToOrion(privateTransaction);
+    final Transaction privacyMarkerTransaction =
+        privateTransactionHandler.createPrivacyMarkerTransaction(
+            privacyParameters.getEnclavePublicKey(), privateTransaction);
+    return transactionPool
+        .addLocalTransaction(privacyMarkerTransaction)
+        .either(
+            () ->
+                // TODO: return privacy group creation receipt which has PMT hash and PGID
+                new JsonRpcSuccessResponse(
+                        requestContext.getRequest().getId(), privacyMarkerTransaction.getHash().toString()),
+            errorReason ->
+                new JsonRpcErrorResponse(
+                        requestContext.getRequest().getId(),
+                    JsonRpcErrorConverter.convertTransactionInvalidReason(errorReason)));
+  }
+
+  private static BytesValue generateLegacyGroup(
+      final BytesValue privateFrom, final List<BytesValue> privateFor) {
+    final List<byte[]> stringList = new ArrayList<>();
+    stringList.add(Base64.getDecoder().decode(privateFrom.toString()));
+    privateFor.forEach(item -> stringList.add(item.getArrayUnsafe()));
+
+    final BytesValueRLPOutput bytesValueRLPOutput = new BytesValueRLPOutput();
+    bytesValueRLPOutput.startList();
+    stringList.stream()
+        .distinct()
+        .sorted(Comparator.comparing(Arrays::hashCode))
+        .forEach(e -> bytesValueRLPOutput.writeBytesValue(BytesValue.wrap(e)));
+    bytesValueRLPOutput.endList();
+    return bytesValueRLPOutput.encoded();
   }
 }

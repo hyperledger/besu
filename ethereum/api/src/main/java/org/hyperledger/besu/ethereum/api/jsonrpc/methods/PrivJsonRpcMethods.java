@@ -55,7 +55,11 @@ public class PrivJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
       final PrivateNonceProvider privateNonceProvider) {
     return mapOf(
         new PrivGetTransactionReceipt(getBlockchainQueries(), getPrivacyParameters()),
-        new PrivCreatePrivacyGroup(getPrivacyParameters()),
+        new PrivCreatePrivacyGroup(
+            getPrivacyParameters(),
+            null,
+            privateTransactionHandler,
+            getTransactionPool()),
         new PrivDeletePrivacyGroup(getPrivacyParameters()),
         new PrivFindPrivacyGroup(getPrivacyParameters()),
         new PrivGetPrivacyPrecompileAddress(getPrivacyParameters()),
