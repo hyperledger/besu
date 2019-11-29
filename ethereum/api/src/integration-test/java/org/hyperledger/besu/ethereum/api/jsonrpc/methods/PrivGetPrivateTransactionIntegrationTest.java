@@ -54,6 +54,7 @@ import java.util.Optional;
 import com.google.common.collect.Lists;
 import io.vertx.core.Vertx;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -134,11 +135,17 @@ public class PrivGetPrivateTransactionIntegrationTest {
 
   private final BlockchainQueries blockchain = mock(BlockchainQueries.class);
 
+  @Before
+  public void before() {
+    when(privacyParameters.isEnabled()).thenReturn(true);
+    when(privacyParameters.getEnclave()).thenReturn(enclave);
+  }
+
   @Test
   public void returnsStoredPrivateTransaction() {
 
     final PrivGetPrivateTransaction privGetPrivateTransaction =
-        new PrivGetPrivateTransaction(blockchain, enclave, privacyParameters);
+        new PrivGetPrivateTransaction(blockchain, privacyParameters);
 
     when(blockchain.transactionByHash(any(Hash.class)))
         .thenReturn(Optional.of(returnedTransaction));

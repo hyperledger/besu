@@ -107,7 +107,7 @@ public enum JsonRpcError {
   // Private transaction errors
   ENCLAVE_ERROR(-50100, "Error communicating with enclave"),
   UNIMPLEMENTED_PRIVATE_TRANSACTION_TYPE(-50100, "Unimplemented private transaction type"),
-  PRIVACY_NOT_ENABLED(-50100, "Privacy is not enabled to get the precompiled address"),
+  PRIVACY_NOT_ENABLED(-50100, "Privacy is not enabled"),
   CREATE_PRIVACY_GROUP_ERROR(-50100, "Error creating privacy group"),
   DELETE_PRIVACY_GROUP_ERROR(-50100, "Error deleting privacy group"),
   FIND_PRIVACY_GROUP_ERROR(-50100, "Error finding privacy group"),
