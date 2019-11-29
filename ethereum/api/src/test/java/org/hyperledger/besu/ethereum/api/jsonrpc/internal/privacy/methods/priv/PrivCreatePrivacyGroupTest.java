@@ -51,6 +51,7 @@ public class PrivCreatePrivacyGroupTest {
   public void setUp() {
     when(failingEnclave.createPrivacyGroup(any(CreatePrivacyGroupRequest.class)))
         .thenThrow(new EnclaveException(""));
+    when(privacyParameters.getEnclave()).thenReturn(enclave);
   }
 
   @Test
@@ -62,7 +63,7 @@ public class PrivCreatePrivacyGroupTest {
     when(privacyParameters.getEnclavePublicKey()).thenReturn(FROM);
 
     final PrivCreatePrivacyGroup privCreatePrivacyGroup =
-        new PrivCreatePrivacyGroup(enclave, privacyParameters);
+        new PrivCreatePrivacyGroup(privacyParameters);
 
     final CreatePrivacyGroupParameter param =
         new CreatePrivacyGroupParameter(ADDRESSES, NAME, DESCRIPTION);
@@ -89,7 +90,7 @@ public class PrivCreatePrivacyGroupTest {
     when(privacyParameters.getEnclavePublicKey()).thenReturn(FROM);
 
     final PrivCreatePrivacyGroup privCreatePrivacyGroup =
-        new PrivCreatePrivacyGroup(enclave, privacyParameters);
+        new PrivCreatePrivacyGroup(privacyParameters);
 
     final Object[] params =
         new Object[] {
@@ -124,7 +125,7 @@ public class PrivCreatePrivacyGroupTest {
     when(privacyParameters.getEnclavePublicKey()).thenReturn(FROM);
 
     final PrivCreatePrivacyGroup privCreatePrivacyGroup =
-        new PrivCreatePrivacyGroup(enclave, privacyParameters);
+        new PrivCreatePrivacyGroup(privacyParameters);
 
     final Object[] params =
         new Object[] {
@@ -159,7 +160,7 @@ public class PrivCreatePrivacyGroupTest {
     when(privacyParameters.getEnclavePublicKey()).thenReturn(FROM);
 
     final PrivCreatePrivacyGroup privCreatePrivacyGroup =
-        new PrivCreatePrivacyGroup(enclave, privacyParameters);
+        new PrivCreatePrivacyGroup(privacyParameters);
 
     final Object[] params =
         new Object[] {
@@ -191,7 +192,7 @@ public class PrivCreatePrivacyGroupTest {
     when(privacyParameters.getEnclavePublicKey()).thenReturn(FROM);
 
     final PrivCreatePrivacyGroup privCreatePrivacyGroup =
-        new PrivCreatePrivacyGroup(enclave, privacyParameters);
+        new PrivCreatePrivacyGroup(privacyParameters);
 
     final Object[] params =
         new Object[] {
@@ -220,7 +221,7 @@ public class PrivCreatePrivacyGroupTest {
   public void returnsCorrectExceptionMissingParam() {
 
     final PrivCreatePrivacyGroup privCreatePrivacyGroup =
-        new PrivCreatePrivacyGroup(enclave, privacyParameters);
+        new PrivCreatePrivacyGroup(privacyParameters);
 
     final Object[] params = new Object[] {};
 
@@ -236,8 +237,9 @@ public class PrivCreatePrivacyGroupTest {
 
   @Test
   public void returnsCorrectErrorEnclaveError() {
+    when(privacyParameters.getEnclave()).thenReturn(failingEnclave);
     final PrivCreatePrivacyGroup privCreatePrivacyGroup =
-        new PrivCreatePrivacyGroup(failingEnclave, privacyParameters);
+        new PrivCreatePrivacyGroup(privacyParameters);
 
     final CreatePrivacyGroupParameter param =
         new CreatePrivacyGroupParameter(ADDRESSES, NAME, DESCRIPTION);

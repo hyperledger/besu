@@ -51,14 +51,13 @@ public class PrivJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
 
   @Override
   protected Map<String, JsonRpcMethod> create(
-      final PrivateTransactionHandler privateTransactionHandler, final Enclave enclave) {
+      final PrivateTransactionHandler privateTransactionHandler) {
+    final Enclave enclave = getPrivacyParameters().getEnclave();
     return mapOf(
         new PrivGetTransactionReceipt(getBlockchainQueries(), enclave, getPrivacyParameters()),
-        new PrivCreatePrivacyGroup(
-            new Enclave(getPrivacyParameters().getEnclaveUri()), getPrivacyParameters()),
-        new PrivDeletePrivacyGroup(
-            new Enclave(getPrivacyParameters().getEnclaveUri()), getPrivacyParameters()),
-        new PrivFindPrivacyGroup(new Enclave(getPrivacyParameters().getEnclaveUri())),
+        new PrivCreatePrivacyGroup(getPrivacyParameters()),
+        new PrivDeletePrivacyGroup(getPrivacyParameters()),
+        new PrivFindPrivacyGroup(getPrivacyParameters().getEnclave()),
         new PrivGetPrivacyPrecompileAddress(getPrivacyParameters()),
         new PrivGetTransactionCount(privateTransactionHandler),
         new PrivGetPrivateTransaction(getBlockchainQueries(), enclave, getPrivacyParameters()),

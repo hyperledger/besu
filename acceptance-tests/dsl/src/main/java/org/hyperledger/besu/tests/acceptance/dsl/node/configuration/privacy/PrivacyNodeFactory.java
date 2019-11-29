@@ -23,13 +23,20 @@ import org.hyperledger.orion.testutil.OrionKeyConfiguration;
 
 import java.io.IOException;
 
+import io.vertx.core.Vertx;
+
 public class PrivacyNodeFactory {
 
   private final GenesisConfigurationFactory genesis = new GenesisConfigurationFactory();
   private final NodeConfigurationFactory node = new NodeConfigurationFactory();
+  private final Vertx vertx;
+
+  public PrivacyNodeFactory(final Vertx vertx) {
+    this.vertx = vertx;
+  }
 
   private PrivacyNode create(final PrivacyNodeConfiguration privacyNodeConfig) throws IOException {
-    return new PrivacyNode(privacyNodeConfig);
+    return new PrivacyNode(privacyNodeConfig, vertx);
   }
 
   public PrivacyNode createPrivateTransactionEnabledMinerNode(

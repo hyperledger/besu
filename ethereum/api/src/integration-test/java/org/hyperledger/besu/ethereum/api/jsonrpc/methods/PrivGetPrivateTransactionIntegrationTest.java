@@ -22,6 +22,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.enclave.Enclave;
+import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.enclave.types.SendRequest;
 import org.hyperledger.besu.enclave.types.SendRequestLegacy;
 import org.hyperledger.besu.enclave.types.SendResponse;
@@ -51,6 +52,7 @@ import java.util.Base64;
 import java.util.Optional;
 
 import com.google.common.collect.Lists;
+import io.vertx.core.Vertx;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -69,6 +71,8 @@ public class PrivGetPrivateTransactionIntegrationTest {
 
   private final Transaction justTransaction = mock(Transaction.class);
 
+  private static Vertx vertx = Vertx.vertx();
+
   @BeforeClass
   public static void setUpOnce() throws Exception {
     folder.create();
@@ -79,13 +83,14 @@ public class PrivGetPrivateTransactionIntegrationTest {
             new OrionKeyConfiguration("orion_key_0.pub", "orion_key_0.key"));
 
     testHarness.start();
-
-    enclave = new Enclave(testHarness.clientUrl());
+    final EnclaveFactory factory = new EnclaveFactory(vertx);
+    enclave = factory.createVertxEnclave(testHarness.clientUrl());
   }
 
   @AfterClass
   public static void tearDownOnce() {
     testHarness.close();
+    vertx.close();
   }
 
   private final Address sender =
