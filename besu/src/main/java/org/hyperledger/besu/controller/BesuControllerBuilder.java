@@ -389,5 +389,4 @@ public abstract class BesuControllerBuilder<C> {
 
   protected abstract PluginServiceFactory createAdditionalPluginServices(
       final Blockchain blockchain);
-
 }

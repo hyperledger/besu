@@ -77,7 +77,6 @@ public class StatusMessageTest {
 
     final MessageData msg = StatusMessage.create(version, networkId, td, bestHash, forkId);
 
-    // Make a message copy from serialized data and check deserialized results
     final StatusMessage copy = new StatusMessage(msg.getData());
 
     assertThat(copy.protocolVersion()).isEqualTo(version);

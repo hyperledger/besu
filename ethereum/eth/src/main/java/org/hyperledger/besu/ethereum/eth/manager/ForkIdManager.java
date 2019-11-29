@@ -14,11 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager;
 
-import static org.hyperledger.besu.util.bytes.BytesValue.wrap;
-
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.messages.StatusMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -28,7 +25,6 @@ import org.hyperledger.besu.util.bytes.Bytes32;
 import org.hyperledger.besu.util.bytes.BytesValue;
 import org.hyperledger.besu.util.bytes.BytesValues;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -50,13 +46,11 @@ public class ForkIdManager {
   public ForkIdManager(final Hash genesisHash, final Set<Long> forks, final Long currentHead) {
     this.genesisHash = genesisHash;
     this.currentHead = currentHead;
-    System.out.println(currentHead); // todo remove dev item
     if (forks != null) {
       forkAndHashList = collectForksAndHashes(forks, currentHead);
     } else {
       forkAndHashList = new ArrayDeque<>();
     }
-    System.out.println(forkAndHashList); // todo remove dev item
   };
 
   public static ForkIdManager buildCollection(
@@ -103,7 +97,6 @@ public class ForkIdManager {
   }
 
   public ForkId getLatestForkId() {
-    // TODO: implement handling for forkID in status message
     return lastKnownEntry;
   }
 
@@ -111,10 +104,18 @@ public class ForkIdManager {
     return forkAndHashList.size() != 0;
   }
 
-  public boolean peerCheck(final ForkId forkId /* final String forkHash, final Long peerNext*/) {
-    System.out.println(forkId); // todo remove dev item
-    System.out.println(forkNext); // todo remove dev item
-    if (!forkIdCapable() || forkId == null) {
+  public boolean peerCheck(final StatusMessage status) {
+    if (status.forkId() == null && status.genesisHash() != null) {
+      return peerCheck(status.genesisHash());
+    } else if (status.forkId() != null) {
+      return peerCheck(status.forkId());
+    } else {
+      return false;
+    }
+  }
+
+  public boolean peerCheck(final ForkId forkId) {
+    if (forkId == null) {
       return false;
     }
     // Run the fork checksum validation ruleset:
@@ -155,9 +156,6 @@ public class ForkIdManager {
    * @return boolean
    */
   public boolean peerCheck(final Bytes32 peerGenesisOrCheckSumHash) {
-    if (forkIdCapable()) {
-      return false;
-    }
     return !peerGenesisOrCheckSumHash.equals(genesisHash);
   }
 
