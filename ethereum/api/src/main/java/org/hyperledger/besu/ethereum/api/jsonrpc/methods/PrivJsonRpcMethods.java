@@ -57,6 +57,7 @@ public class PrivJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
         new PrivGetTransactionReceipt(getBlockchainQueries(), getPrivacyParameters()),
         new PrivCreatePrivacyGroup(
             getPrivacyParameters(),
+            // FIXME: pass in a group creation transaction factory
             null,
             privateTransactionHandler,
             getTransactionPool()),

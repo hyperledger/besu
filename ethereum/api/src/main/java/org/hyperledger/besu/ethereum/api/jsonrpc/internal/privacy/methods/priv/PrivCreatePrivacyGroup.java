@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
-import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -50,16 +49,16 @@ public class PrivCreatePrivacyGroup extends PrivacyApiMethod {
   private GroupCreationTransactionFactory groupCreationTransactionFactory;
   private TransactionPool transactionPool;
 
-    public PrivCreatePrivacyGroup(
-            final PrivacyParameters privacyParameters,
-            final GroupCreationTransactionFactory groupCreationTransactionFactory,
-            final PrivateTransactionHandler privateTransactionHandler,
-            final TransactionPool transactionPool) {
-        super(privacyParameters);
-        this.groupCreationTransactionFactory = groupCreationTransactionFactory;
-        this.privateTransactionHandler = privateTransactionHandler;
-        this.transactionPool = transactionPool;
-    }
+  public PrivCreatePrivacyGroup(
+      final PrivacyParameters privacyParameters,
+      final GroupCreationTransactionFactory groupCreationTransactionFactory,
+      final PrivateTransactionHandler privateTransactionHandler,
+      final TransactionPool transactionPool) {
+    super(privacyParameters);
+    this.groupCreationTransactionFactory = groupCreationTransactionFactory;
+    this.privateTransactionHandler = privateTransactionHandler;
+    this.transactionPool = transactionPool;
+  }
 
   @Override
   public String getName() {
