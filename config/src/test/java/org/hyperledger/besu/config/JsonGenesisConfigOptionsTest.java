@@ -79,8 +79,7 @@ public class JsonGenesisConfigOptionsTest {
     assertThat(configOptions.getTransitions().getIbftForks().get(1).getForkBlock()).isEqualTo(25);
     assertThat(configOptions.getTransitions().getIbftForks().get(1).getValidators()).isNotEmpty();
     assertThat(configOptions.getTransitions().getIbftForks().get(1).getValidators().get())
-        .containsExactly(
-            "0x1234567890123456789012345678901234567890");
+        .containsExactly("0x1234567890123456789012345678901234567890");
   }
 
   @Test
