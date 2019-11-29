@@ -72,7 +72,6 @@ import java.util.concurrent.TimeUnit;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
-import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
@@ -320,13 +319,12 @@ public final class RunnerTest {
           WebSocketConfiguration.DEFAULT_WEBSOCKET_HOST,
           "/",
           ws -> {
-            ws.write(
-                Buffer.buffer(
-                    "{\"id\": 1, \"method\": \"eth_subscribe\", \"params\": [\"syncing\"]}"));
-            ws.handler(
-                buffer -> {
+            ws.writeTextMessage(
+                "{\"id\": 1, \"method\": \"eth_subscribe\", \"params\": [\"syncing\"]}");
+            ws.textMessageHandler(
+                payload -> {
                   final boolean matches =
-                      buffer.toString().equals("{\"jsonrpc\":\"2.0\",\"id\":2,\"result\":\"0x0\"}");
+                      payload.equals("{\"jsonrpc\":\"2.0\",\"id\":2,\"result\":\"0x0\"}");
                   if (matches) {
                     future.complete();
                   } else {

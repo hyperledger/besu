@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.mainnet.AbstractPrecompiledContract;
+import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
@@ -45,6 +46,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
+
   private final Enclave enclave;
   private final WorldStateArchive privateWorldStateArchive;
   private final PrivateStateStorage privateStateStorage;
@@ -57,7 +59,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
       final GasCalculator gasCalculator, final PrivacyParameters privacyParameters) {
     this(
         gasCalculator,
-        new Enclave(privacyParameters.getEnclaveUri()),
+        privacyParameters.getEnclave(),
         privacyParameters.getPrivateWorldStateArchive(),
         privacyParameters.getPrivateStateStorage());
   }
@@ -148,6 +150,14 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
       if (!logs.isEmpty()) {
         privateStateUpdater.putTransactionLogs(txHash, result.getLogs());
       }
+      if (result.getRevertReason().isPresent()) {
+        privateStateUpdater.putTransactionRevertReason(txHash, result.getRevertReason().get());
+      }
+
+      privateStateUpdater.putTransactionStatus(
+          txHash,
+          BytesValue.of(
+              result.getStatus() == TransactionProcessor.Result.Status.SUCCESSFUL ? 1 : 0));
       privateStateUpdater.putTransactionResult(txHash, result.getOutput());
       privateStateUpdater.commit();
     }

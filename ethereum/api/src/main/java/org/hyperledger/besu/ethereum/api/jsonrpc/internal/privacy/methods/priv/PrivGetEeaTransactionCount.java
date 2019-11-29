@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 import static org.apache.logging.log4j.LogManager.getLogger;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -44,22 +44,24 @@ public class PrivGetEeaTransactionCount implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest request) {
-    if (request.getParamLength() != 3) {
-      return new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
+    if (requestContext.getRequest().getParamLength() != 3) {
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
     }
 
-    final Address address = request.getRequiredParameter(0, Address.class);
-    final String privateFrom = request.getRequiredParameter(1, String.class);
-    final String[] privateFor = request.getRequiredParameter(2, String[].class);
+    final Address address = requestContext.getRequiredParameter(0, Address.class);
+    final String privateFrom = requestContext.getRequiredParameter(1, String.class);
+    final String[] privateFor = requestContext.getRequiredParameter(2, String[].class);
 
     try {
       final long nonce = nonceProvider.determineNonce(privateFrom, privateFor, address);
-      return new JsonRpcSuccessResponse(request.getId(), Quantity.create(nonce));
+      return new JsonRpcSuccessResponse(
+          requestContext.getRequest().getId(), Quantity.create(nonce));
     } catch (final Exception e) {
       LOG.error(e.getMessage(), e);
       return new JsonRpcErrorResponse(
-          request.getId(), JsonRpcError.GET_PRIVATE_TRANSACTION_NONCE_ERROR);
+          requestContext.getRequest().getId(), JsonRpcError.GET_PRIVATE_TRANSACTION_NONCE_ERROR);
     }
   }
 }

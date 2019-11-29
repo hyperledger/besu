@@ -18,6 +18,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.ibft.IbftBlockInterface;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -45,7 +46,7 @@ public class IbftGetValidatorsByBlockHashTest {
   @Mock private Blockchain blockchain;
   @Mock private BlockHeader blockHeader;
   @Mock private IbftBlockInterface ibftBlockInterface;
-  @Mock private JsonRpcRequest request;
+  @Mock private JsonRpcRequestContext request;
 
   private IbftGetValidatorsByBlockHash method;
 
@@ -70,7 +71,7 @@ public class IbftGetValidatorsByBlockHashTest {
     Assertions.assertThat(response.getResult()).isEqualTo(expectedOutput);
   }
 
-  private JsonRpcRequest requestWithParams(final Object... params) {
-    return new JsonRpcRequest(JSON_RPC_VERSION, ETH_METHOD, params);
+  private JsonRpcRequestContext requestWithParams(final Object... params) {
+    return new JsonRpcRequestContext(new JsonRpcRequest(JSON_RPC_VERSION, ETH_METHOD, params));
   }
 }

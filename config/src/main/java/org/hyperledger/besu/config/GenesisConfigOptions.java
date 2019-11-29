@@ -125,6 +125,17 @@ public interface GenesisConfigOptions {
    */
   OptionalLong getAtlantisBlockNumber();
 
+  /**
+   * Block number for Agharta fork on Classic network. Enable the outstanding Ethereum Foundation
+   * Constaninople and Petersburg network protocol upgrades on the Ethereum Classic network in a
+   * hard-fork code-named Agharta to enable maximum compatibility across these networks.
+   *
+   * @see <a
+   *     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1056">https://ecips.ethereumclassic.org/ECIPs/ecip-1056</a>
+   * @return block number for Agharta fork on Classic network
+   */
+  OptionalLong getAghartaBlockNumber();
+
   Optional<BigInteger> getChainId();
 
   OptionalInt getContractSizeLimit();
@@ -133,5 +144,5 @@ public interface GenesisConfigOptions {
 
   Map<String, Object> asMap();
 
-  CustomForksConfigOptions getCustomForks();
+  TransitionsConfigOptions getTransitions();
 }

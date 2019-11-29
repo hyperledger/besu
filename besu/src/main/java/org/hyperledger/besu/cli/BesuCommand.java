@@ -65,6 +65,7 @@ import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.controller.KeyPairUtil;
+import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
@@ -85,6 +86,8 @@ import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfigurati
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfigurationBuilder;
 import org.hyperledger.besu.ethereum.permissioning.SmartContractPermissioningConfiguration;
+import org.hyperledger.besu.ethereum.privacy.storage.keyvalue.PrivacyKeyValueStorageProvider;
+import org.hyperledger.besu.ethereum.privacy.storage.keyvalue.PrivacyKeyValueStorageProviderBuilder;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -103,6 +106,7 @@ import org.hyperledger.besu.plugin.services.StorageService;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
+import org.hyperledger.besu.plugin.services.storage.PrivacyKeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
 import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.services.BesuEventsImpl;
@@ -736,6 +740,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private BesuConfiguration pluginCommonConfiguration;
   private final Supplier<ObservableMetricsSystem> metricsSystem =
       Suppliers.memoize(() -> PrometheusMetricsSystem.init(metricsConfiguration()));
+  private Vertx vertx;
 
   public BesuCommand(
       final Logger logger,
@@ -801,6 +806,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     try {
       prepareLogging();
       logger.info("Starting Besu version: {}", BesuInfo.nodeName(identityString));
+
+      // Need to create vertx after cmdline has been parsed, such that metricSystem is configurable
+      vertx = createVertx(createVertxOptions(metricsSystem.get()));
+
       validateOptions().configure().controller().startPlugins().startSynchronization();
     } catch (final Exception e) {
       throw new ParameterException(this.commandLine, e.getMessage(), e);
@@ -1151,12 +1160,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--rpc-http-host",
             "--rpc-http-port",
             "--rpc-http-authentication-enabled",
-            "--rpc-http-authentication-credentials-file"));
+            "--rpc-http-authentication-credentials-file",
+            "--rpc-http-authentication-public-key-file"));
 
-    if (isRpcHttpAuthenticationEnabled && rpcHttpAuthenticationCredentialsFile() == null) {
+    if (isRpcHttpAuthenticationEnabled
+        && rpcHttpAuthenticationCredentialsFile() == null
+        && rpcHttpAuthenticationPublicKeyFile() == null) {
       throw new ParameterException(
           commandLine,
-          "Unable to authenticate JSON-RPC HTTP endpoint without a supplied credentials file");
+          "Unable to authenticate JSON-RPC HTTP endpoint without a supplied credentials file or authentication public key file");
     }
 
     final JsonRpcConfiguration jsonRpcConfiguration = JsonRpcConfiguration.createDefault();
@@ -1168,6 +1180,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     jsonRpcConfiguration.setHostsWhitelist(hostsWhitelist);
     jsonRpcConfiguration.setAuthenticationEnabled(isRpcHttpAuthenticationEnabled);
     jsonRpcConfiguration.setAuthenticationCredentialsFile(rpcHttpAuthenticationCredentialsFile());
+    jsonRpcConfiguration.setAuthenticationPublicKeyFile(rpcHttpAuthenticationPublicKeyFile());
     return jsonRpcConfiguration;
   }
 
@@ -1184,12 +1197,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--rpc-ws-host",
             "--rpc-ws-port",
             "--rpc-ws-authentication-enabled",
-            "--rpc-ws-authentication-credentials-file"));
+            "--rpc-ws-authentication-credentials-file",
+            "--rpc-ws-authentication-public-key-file"));
 
-    if (isRpcWsAuthenticationEnabled && rpcWsAuthenticationCredentialsFile() == null) {
+    if (isRpcWsAuthenticationEnabled
+        && rpcWsAuthenticationCredentialsFile() == null
+        && rpcWsAuthenticationPublicKeyFile() == null) {
       throw new ParameterException(
           commandLine,
-          "Unable to authenticate JSON-RPC WebSocket endpoint without a supplied credentials file");
+          "Unable to authenticate JSON-RPC WebSocket endpoint without a supplied credentials file or authentication public key file");
     }
 
     final WebSocketConfiguration webSocketConfiguration = WebSocketConfiguration.createDefault();
@@ -1200,6 +1216,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     webSocketConfiguration.setAuthenticationEnabled(isRpcWsAuthenticationEnabled);
     webSocketConfiguration.setAuthenticationCredentialsFile(rpcWsAuthenticationCredentialsFile());
     webSocketConfiguration.setHostsWhitelist(hostsWhitelist);
+    webSocketConfiguration.setAuthenticationPublicKeyFile(rpcWsAuthenticationPublicKeyFile());
     return webSocketConfiguration;
   }
 
@@ -1365,10 +1382,26 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       privacyParametersBuilder.setPrivacyAddress(privacyPrecompiledAddress);
       privacyParametersBuilder.setPrivateKeyPath(privacyMarkerTransactionSigningKeyPath);
       privacyParametersBuilder.setStorageProvider(
-          keyStorageProvider(keyValueStorageName + "-privacy"));
+          privacyKeyStorageProvider(keyValueStorageName + "-privacy"));
+      privacyParametersBuilder.setEnclaveFactory(new EnclaveFactory(vertx));
     }
 
     return privacyParametersBuilder.build();
+  }
+
+  private PrivacyKeyValueStorageProvider privacyKeyStorageProvider(final String name) {
+    return new PrivacyKeyValueStorageProviderBuilder()
+        .withStorageFactory(
+            (PrivacyKeyValueStorageFactory)
+                storageService
+                    .getByName(name)
+                    .orElseThrow(
+                        () ->
+                            new StorageException(
+                                "No KeyValueStorageFactory found for key: " + name)))
+        .withCommonConfiguration(pluginCommonConfiguration)
+        .withMetricsSystem(getMetricsSystem())
+        .build();
   }
 
   private KeyValueStorageProvider keyStorageProvider(final String name) {
@@ -1427,7 +1460,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     final ObservableMetricsSystem metricsSystem = this.metricsSystem.get();
     final Runner runner =
         runnerBuilder
-            .vertx(Vertx.vertx(createVertxOptions(metricsSystem)))
+            .vertx(vertx)
             .besuController(controller)
             .p2pEnabled(p2pEnabled)
             .natMethod(natMethod)
@@ -1455,6 +1488,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     addShutdownHook(runner);
     runner.start();
     runner.awaitStop();
+  }
+
+  protected Vertx createVertx(final VertxOptions vertxOptions) {
+    return Vertx.vertx(vertxOptions);
   }
 
   private VertxOptions createVertxOptions(final MetricsSystem metricsSystem) {
@@ -1678,6 +1715,24 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       RpcAuthFileValidator.validate(commandLine, filename, "WS");
     }
     return filename;
+  }
+
+  private File rpcHttpAuthenticationPublicKeyFile() {
+    if (isDocker) {
+      final File keyFile = new File(DOCKER_RPC_HTTP_AUTHENTICATION_PUBLIC_KEY_FILE_LOCATION);
+      return keyFile.exists() ? keyFile : null;
+    } else {
+      return standaloneCommands.rpcHttpAuthenticationPublicKeyFile;
+    }
+  }
+
+  private File rpcWsAuthenticationPublicKeyFile() {
+    if (isDocker) {
+      final File keyFile = new File(DOCKER_RPC_WS_AUTHENTICATION_PUBLIC_KEY_FILE_LOCATION);
+      return keyFile.exists() ? keyFile : null;
+    } else {
+      return standaloneCommands.rpcWsAuthenticationPublicKeyFile;
+    }
   }
 
   private String nodePermissionsConfigFile() {

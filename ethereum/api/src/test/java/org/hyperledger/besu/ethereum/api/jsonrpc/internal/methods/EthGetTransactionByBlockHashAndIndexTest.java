@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.crypto.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -43,10 +44,11 @@ public class EthGetTransactionByBlockHashAndIndexTest {
     assertThat(response.getResult()).isEqualTo(null);
   }
 
-  private JsonRpcRequest request(final Bytes32 hash, final long index) {
-    return new JsonRpcRequest(
-        "2.0",
-        "eth_getTransactionByBlockHashAndIndex",
-        new Object[] {String.valueOf(hash), Quantity.create(index)});
+  private JsonRpcRequestContext request(final Bytes32 hash, final long index) {
+    return new JsonRpcRequestContext(
+        new JsonRpcRequest(
+            "2.0",
+            "eth_getTransactionByBlockHashAndIndex",
+            new Object[] {String.valueOf(hash), Quantity.create(index)}));
   }
 }

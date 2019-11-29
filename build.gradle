@@ -118,15 +118,10 @@ allprojects {
   targetCompatibility = 11
 
   repositories {
-    if ("$System.env.JENKINS_URL" == 'https://jenkins.pegasys.tech/') {
-      maven { url "https://nexus.int.pegasys.tech/repository/consensys-pegasys/" }
-      maven { url "https://nexus.int.pegasys.tech/repository/jcenter/" }
-    } else {
-      jcenter()
-      mavenCentral()
-      mavenLocal()
-      maven { url "https://consensys.bintray.com/pegasys-repo" }
-    }
+    jcenter()
+    mavenCentral()
+    mavenLocal()
+    maven { url "https://consensys.bintray.com/pegasys-repo" }
   }
 
   dependencies { errorprone("com.google.errorprone:error_prone_core") }
@@ -568,6 +563,7 @@ task testDocker(type: Exec) {
 task dockerUpload(type: Exec) {
   dependsOn distDocker
   def imageName = "hyperledger/besu"
+  def azureImageName = "hyperledger.azurecr.io/besu"
   def image = project.hasProperty('release.releaseVersion') ? "${imageName}:" + project.property('release.releaseVersion') : "${imageName}:${project.version}"
   def cmd = "docker push '${image}'"
   def additionalTags = []
@@ -576,13 +572,14 @@ task dockerUpload(type: Exec) {
     additionalTags.add('develop')
   }
 
-  if (!version ==~ /.*-SNAPSHOT/) {
+  if (! version ==~ /.*-SNAPSHOT/) {
     additionalTags.add('latest')
     additionalTags.add(version.split(/\./)[0..1].join('.'))
   }
 
   additionalTags.each { tag ->
     cmd += " && docker tag '${image}' '${imageName}:${tag.trim()}' && docker push '${imageName}:${tag.trim()}'"
+    cmd += " && docker tag '${image}' '${azureImageName}:${tag.trim()}' && docker push '${azureImageName}:${tag.trim()}'"
   }
   executable "sh"
   args "-c", cmd

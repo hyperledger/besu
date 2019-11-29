@@ -16,7 +16,7 @@ package org.hyperledger.besu.consensus.common.jsonrpc;
 
 import org.hyperledger.besu.consensus.common.VoteProposer;
 import org.hyperledger.besu.consensus.common.VoteType;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 
@@ -31,7 +31,7 @@ public class AbstractVoteProposerMethod {
     this.voteProposer = voteProposer;
   }
 
-  public JsonRpcResponse response(final JsonRpcRequest request) {
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     final Map<String, Boolean> proposals =
         voteProposer.getProposals().entrySet().stream()
             .collect(
@@ -39,6 +39,6 @@ public class AbstractVoteProposerMethod {
                     proposal -> proposal.getKey().toString(),
                     proposal -> proposal.getValue() == VoteType.ADD));
 
-    return new JsonRpcSuccessResponse(request.getId(), proposals);
+    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), proposals);
   }
 }

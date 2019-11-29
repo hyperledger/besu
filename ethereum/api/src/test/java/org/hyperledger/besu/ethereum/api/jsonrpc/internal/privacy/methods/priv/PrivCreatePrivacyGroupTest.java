@@ -25,6 +25,7 @@ import org.hyperledger.besu.enclave.EnclaveException;
 import org.hyperledger.besu.enclave.types.CreatePrivacyGroupRequest;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.parameters.CreatePrivacyGroupParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
@@ -50,6 +51,7 @@ public class PrivCreatePrivacyGroupTest {
   public void setUp() {
     when(failingEnclave.createPrivacyGroup(any(CreatePrivacyGroupRequest.class)))
         .thenThrow(new EnclaveException(""));
+    when(privacyParameters.getEnclave()).thenReturn(enclave);
   }
 
   @Test
@@ -61,14 +63,15 @@ public class PrivCreatePrivacyGroupTest {
     when(privacyParameters.getEnclavePublicKey()).thenReturn(FROM);
 
     final PrivCreatePrivacyGroup privCreatePrivacyGroup =
-        new PrivCreatePrivacyGroup(enclave, privacyParameters);
+        new PrivCreatePrivacyGroup(privacyParameters);
 
     final CreatePrivacyGroupParameter param =
         new CreatePrivacyGroupParameter(ADDRESSES, NAME, DESCRIPTION);
 
     final Object[] params = new Object[] {param};
 
-    final JsonRpcRequest request = new JsonRpcRequest("1", "priv_createPrivacyGroup", params);
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(new JsonRpcRequest("1", "priv_createPrivacyGroup", params));
 
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) privCreatePrivacyGroup.response(request);
@@ -87,7 +90,7 @@ public class PrivCreatePrivacyGroupTest {
     when(privacyParameters.getEnclavePublicKey()).thenReturn(FROM);
 
     final PrivCreatePrivacyGroup privCreatePrivacyGroup =
-        new PrivCreatePrivacyGroup(enclave, privacyParameters);
+        new PrivCreatePrivacyGroup(privacyParameters);
 
     final Object[] params =
         new Object[] {
@@ -102,7 +105,8 @@ public class PrivCreatePrivacyGroupTest {
           }
         };
 
-    final JsonRpcRequest request = new JsonRpcRequest("1", "priv_createPrivacyGroup", params);
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(new JsonRpcRequest("1", "priv_createPrivacyGroup", params));
 
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) privCreatePrivacyGroup.response(request);
@@ -121,7 +125,7 @@ public class PrivCreatePrivacyGroupTest {
     when(privacyParameters.getEnclavePublicKey()).thenReturn(FROM);
 
     final PrivCreatePrivacyGroup privCreatePrivacyGroup =
-        new PrivCreatePrivacyGroup(enclave, privacyParameters);
+        new PrivCreatePrivacyGroup(privacyParameters);
 
     final Object[] params =
         new Object[] {
@@ -136,7 +140,8 @@ public class PrivCreatePrivacyGroupTest {
           }
         };
 
-    final JsonRpcRequest request = new JsonRpcRequest("1", "priv_createPrivacyGroup", params);
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(new JsonRpcRequest("1", "priv_createPrivacyGroup", params));
 
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) privCreatePrivacyGroup.response(request);
@@ -155,7 +160,7 @@ public class PrivCreatePrivacyGroupTest {
     when(privacyParameters.getEnclavePublicKey()).thenReturn(FROM);
 
     final PrivCreatePrivacyGroup privCreatePrivacyGroup =
-        new PrivCreatePrivacyGroup(enclave, privacyParameters);
+        new PrivCreatePrivacyGroup(privacyParameters);
 
     final Object[] params =
         new Object[] {
@@ -166,7 +171,8 @@ public class PrivCreatePrivacyGroupTest {
           }
         };
 
-    final JsonRpcRequest request = new JsonRpcRequest("1", "priv_createPrivacyGroup", params);
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(new JsonRpcRequest("1", "priv_createPrivacyGroup", params));
 
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) privCreatePrivacyGroup.response(request);
@@ -186,7 +192,7 @@ public class PrivCreatePrivacyGroupTest {
     when(privacyParameters.getEnclavePublicKey()).thenReturn(FROM);
 
     final PrivCreatePrivacyGroup privCreatePrivacyGroup =
-        new PrivCreatePrivacyGroup(enclave, privacyParameters);
+        new PrivCreatePrivacyGroup(privacyParameters);
 
     final Object[] params =
         new Object[] {
@@ -201,7 +207,8 @@ public class PrivCreatePrivacyGroupTest {
           }
         };
 
-    final JsonRpcRequest request = new JsonRpcRequest("1", "priv_createPrivacyGroup", params);
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(new JsonRpcRequest("1", "priv_createPrivacyGroup", params));
 
     final Throwable response =
         catchThrowableOfType(
@@ -214,11 +221,12 @@ public class PrivCreatePrivacyGroupTest {
   public void returnsCorrectExceptionMissingParam() {
 
     final PrivCreatePrivacyGroup privCreatePrivacyGroup =
-        new PrivCreatePrivacyGroup(enclave, privacyParameters);
+        new PrivCreatePrivacyGroup(privacyParameters);
 
     final Object[] params = new Object[] {};
 
-    final JsonRpcRequest request = new JsonRpcRequest("1", "priv_createPrivacyGroup", params);
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(new JsonRpcRequest("1", "priv_createPrivacyGroup", params));
 
     final Throwable response =
         catchThrowableOfType(
@@ -229,15 +237,17 @@ public class PrivCreatePrivacyGroupTest {
 
   @Test
   public void returnsCorrectErrorEnclaveError() {
+    when(privacyParameters.getEnclave()).thenReturn(failingEnclave);
     final PrivCreatePrivacyGroup privCreatePrivacyGroup =
-        new PrivCreatePrivacyGroup(failingEnclave, privacyParameters);
+        new PrivCreatePrivacyGroup(privacyParameters);
 
     final CreatePrivacyGroupParameter param =
         new CreatePrivacyGroupParameter(ADDRESSES, NAME, DESCRIPTION);
 
     final Object[] params = new Object[] {param};
 
-    final JsonRpcRequest request = new JsonRpcRequest("1", "priv_createPrivacyGroup", params);
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(new JsonRpcRequest("1", "priv_createPrivacyGroup", params));
 
     final JsonRpcErrorResponse response =
         (JsonRpcErrorResponse) privCreatePrivacyGroup.response(request);

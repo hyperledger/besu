@@ -75,6 +75,11 @@ jobs:
           root: ~/project
           paths:
             - ./
+      - store_artifacts:
+          name: Distribution artifacts
+          path:  build/distributions
+          destination: distributions
+          when: always
 
   unitTests:
     executor: besu_executor_xl
@@ -179,6 +184,7 @@ jobs:
           name: Publish Docker
           command: |
             docker login --username "${DOCKER_USER}" --password "${DOCKER_PASSWORD}"
+            docker login "${ACR_REPO}" --username "${ACR_DOCKER_USER}" --password "${ACR_DOCKER_PASSWORD}"
             ./gradlew --no-daemon --parallel "-Pbranch=${CIRCLE_BRANCH}" dockerUpload
 
 workflows:

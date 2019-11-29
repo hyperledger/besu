@@ -83,22 +83,22 @@ public class Stratum1Protocol implements StratumProtocol {
 
   @Override
   public boolean canHandle(final String initialMessage, final StratumConnection conn) {
-    JsonRpcRequest req;
+    final JsonRpcRequest requestBody;
     try {
-      req = new JsonObject(initialMessage).mapTo(JsonRpcRequest.class);
+      requestBody = new JsonObject(initialMessage).mapTo(JsonRpcRequest.class);
     } catch (IllegalArgumentException e) {
       LOG.debug(e.getMessage(), e);
       return false;
     }
-    if (!"mining.subscribe".equals(req.getMethod())) {
-      LOG.debug("Invalid first message method: {}", req.getMethod());
+    if (!"mining.subscribe".equals(requestBody.getMethod())) {
+      LOG.debug("Invalid first message method: {}", requestBody.getMethod());
       return false;
     }
     try {
       String notify =
           mapper.writeValueAsString(
               new JsonRpcSuccessResponse(
-                  req.getId(),
+                  requestBody.getId(),
                   new Object[] {
                     new String[] {
                       "mining.notify",
