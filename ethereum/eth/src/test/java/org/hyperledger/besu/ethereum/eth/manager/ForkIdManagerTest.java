@@ -307,28 +307,13 @@ public class ForkIdManagerTest {
     assertThat(forkIdEntry.equals(decodedEntry)).isTrue();
   }
 
-  //  OLD VERSION
-  //  @Test
-  //  public void createAndDecodeRLP() {
-  //    ForkIdManager.ForkId forkIdEntry = ForkIdManager.createIdEntry("0xa00bc324", 7280000L);
-  //    BytesValueRLPOutput out = new BytesValueRLPOutput();
-  //    out.writeList(forkIdEntry.asList(), ForkIdManager.ForkId::writeTo);
-  //    BytesValue bytesValue = out.encoded();
-  //    BytesValueRLPInput in = new BytesValueRLPInput(bytesValue, false);
-  //    List<ForkIdManager.ForkId> forkId = in.readList(ForkIdManager::readFrom);
-  //    ForkIdManager.ForkId decodedEntry = forkId.get(0);
-  //    assertThat(forkIdEntry.equals(decodedEntry)).isTrue();
-  //  }
-
   @Test
   public void check1ZeroZeroProperRLPEncoding() {
     ForkIdManager.ForkId forkIdEntry = ForkIdManager.createIdEntry("0", "0x");
-    System.out.println(forkIdEntry); // todo remove dev item
     BytesValueRLPOutput out = new BytesValueRLPOutput();
     forkIdEntry.writeTo(out);
     String str1 = "0xc6840000000080";
     BytesValue bytesValue = out.encoded();
-    System.out.println(bytesValue); // todo remove dev item
     assertThat(str1.equals(bytesValue.toString())).isTrue();
     BytesValueRLPInput in = new BytesValueRLPInput(bytesValue, false);
     ForkIdManager.ForkId decodedEntry = ForkIdManager.readFrom(in);

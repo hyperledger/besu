@@ -31,6 +31,7 @@ public class EthProtocol implements SubProtocol {
   public static final String NAME = "eth";
   public static final Capability ETH62 = Capability.create(NAME, EthVersion.V62);
   public static final Capability ETH63 = Capability.create(NAME, EthVersion.V63);
+  public static final Capability ETH64 = Capability.create(NAME, EthVersion.V64);
   private static final EthProtocol INSTANCE = new EthProtocol();
 
   private static final List<Integer> eth62Messages =

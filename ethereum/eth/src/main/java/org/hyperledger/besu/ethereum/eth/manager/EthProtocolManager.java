@@ -179,7 +179,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     genesisHash = blockchain.getBlockHashByNumber(0L).get();
 
     forkIdManager =
-        ForkIdManager.buildCollection(genesisHash, forks, blockchain, getSupportedCapabilities());
+        ForkIdManager.buildCollection(genesisHash, forks, blockchain);
 
     ethPeers = new EthPeers(getSupportedProtocol(), clock, metricsSystem);
     ethMessages = new EthMessages();
@@ -330,7 +330,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       if (!status.networkId().equals(networkId)) {
         LOG.debug("Disconnecting from peer with mismatched network id: {}", status.networkId());
         peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
-      } else if (forkIdManager.peerCheck(status.forkId())) {
+      } else if (!forkIdManager.peerCheck(status.forkId()) && status.protocolVersion() > 63) {
         LOG.debug(
                 "Disconnecting from peer with matching network id ({}), but non-matching fork id: {}",
                 networkId,
