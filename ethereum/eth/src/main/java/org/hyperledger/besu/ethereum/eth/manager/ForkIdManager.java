@@ -26,9 +26,7 @@ import org.hyperledger.besu.util.bytes.BytesValues;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.zip.CRC32;
 
 public class ForkIdManager {
@@ -41,7 +39,7 @@ public class ForkIdManager {
   private ForkId lastKnownEntry = null;
   private ArrayDeque<ForkId> forkAndHashList;
 
-  public ForkIdManager(final Hash genesisHash, final Set<Long> forks, final Long currentHead) {
+  public ForkIdManager(final Hash genesisHash, final List<Long> forks, final Long currentHead) {
     this.genesisHash = genesisHash;
     this.currentHead = currentHead;
     if (forks != null) {
@@ -56,8 +54,7 @@ public class ForkIdManager {
     if (forks == null) {
       return new ForkIdManager(genesisHash, null, blockchain.getChainHeadBlockNumber());
     } else {
-      Set<Long> forkSet = new LinkedHashSet<>(forks);
-      return new ForkIdManager(genesisHash, forkSet, blockchain.getChainHeadBlockNumber());
+      return new ForkIdManager(genesisHash, forks, blockchain.getChainHeadBlockNumber());
     }
   };
 
@@ -65,8 +62,7 @@ public class ForkIdManager {
     if (forks == null) {
       return new ForkIdManager(genesisHash, null, Long.MAX_VALUE);
     } else {
-      Set<Long> forkSet = new LinkedHashSet<>(forks);
-      return new ForkIdManager(genesisHash, forkSet, Long.MAX_VALUE);
+      return new ForkIdManager(genesisHash, forks, Long.MAX_VALUE);
     }
   };
 
@@ -99,8 +95,6 @@ public class ForkIdManager {
     in.leaveList();
     return new ForkId(hash, next);
   }
-
-
 
   /**
    * EIP-2124 behaviour
@@ -146,11 +140,11 @@ public class ForkIdManager {
   /**
    * Non EIP-2124 behaviour
    *
-   * @param peerGenesisOrCheckSumHash Hash or checksum to be validated.
+   * @param peerGenesisHash Hash to be validated.
    * @return boolean
    */
-  public boolean peerCheck(final Bytes32 peerGenesisOrCheckSumHash) {
-    return !peerGenesisOrCheckSumHash.equals(genesisHash);
+  public boolean peerCheck(final Bytes32 peerGenesisHash) {
+    return !peerGenesisHash.equals(genesisHash);
   }
 
   private boolean isHashKnown(final BytesValue forkHash) {
@@ -189,8 +183,8 @@ public class ForkIdManager {
     return false;
   }
 
-  // TODO: sort these when the list of forks is first gathered
-  private ArrayDeque<ForkId> collectForksAndHashes(final Set<Long> forks, final Long currentHead) {
+  // TODO: should sort these when first gathering the list of forks to ensure order
+  private ArrayDeque<ForkId> collectForksAndHashes(final List<Long> forks, final Long currentHead) {
     boolean first = true;
     ArrayDeque<ForkId> forkList = new ArrayDeque<>();
     Iterator<Long> iterator = forks.iterator();
@@ -235,7 +229,8 @@ public class ForkIdManager {
   }
 
   private BytesValue updateCrc(final String hash) {
-    byte[] byteRepresentation = hexStringToByteArray(hash);
+    BytesValue bv = BytesValue.fromHexString(hash);
+    byte[] byteRepresentation = bv.extractArray();
     crc.update(byteRepresentation, 0, byteRepresentation.length);
     return getCurrentCrcHash();
   }
@@ -244,8 +239,6 @@ public class ForkIdManager {
     return BytesValues.ofUnsignedInt(crc.getValue());
   }
 
-  // TODO use Hash class instead of string for checksum.  convert to or from string only when needed
-  // ^ the crc is not hashed/checksum-ed any further so the hash class is not suited for this case
   public static class ForkId {
     BytesValue hash;
     BytesValue next;
@@ -258,12 +251,12 @@ public class ForkIdManager {
     }
 
     ForkId(final String hash, final String next) {
-      this.hash = BytesValue.wrap(hexStringToByteArray(hash));
+      this.hash = BytesValue.fromHexString((hash.length() % 2 == 0 ? "" : "0") + hash);
       if (this.hash.size() < 4) {
         this.hash = padToEightBytes(this.hash);
       }
       if (next.equals("") || next.equals("0x")) {
-        this.next = BytesValue.wrap(hexStringToByteArray("0x"));
+        this.next = BytesValue.EMPTY;
       } else if (next.startsWith("0x")) {
         long asLong = Long.parseLong(next.replaceFirst("0x", ""), 16);
         this.next = BytesValues.trimLeadingZeros(BytesValue.wrap(longToBigEndian(asLong)));
@@ -274,7 +267,7 @@ public class ForkIdManager {
     }
 
     ForkId(final String hash, final long next) {
-      this.hash = BytesValue.wrap(hexStringToByteArray(hash));
+      this.hash = BytesValue.fromHexString(hash);
       this.next = BytesValue.wrap(longToBigEndian(next));
       createForkIdRLP();
     }
@@ -340,7 +333,7 @@ public class ForkIdManager {
     private static BytesValue padToEightBytes(final BytesValue hash) {
       if (hash.size() < 4) {
         BytesValue padded =
-                BytesValues.concatenate(hash, BytesValue.wrap(hexStringToByteArray("0x00")));
+                BytesValues.concatenate(hash, BytesValue.fromHexString("0x00"));
         return padToEightBytes(padded);
       } else {
         return hash;
@@ -368,17 +361,7 @@ public class ForkIdManager {
     }
   }
 
-  // TODO: Ask / look to see if there is a helper for these below <----------
-  private static byte[] hexStringToByteArray(final String s) {
-    String string = "";
-    if (s.startsWith("0x")) {
-      string = s.replaceFirst("0x", "");
-    }
-    string = (string.length() % 2 == 0 ? "" : "0") + string;
-    return decodeHexString(string);
-  }
-
-  // next three methods adopted from:
+  // next two methods adopted from:
   // https://github.com/bcgit/bc-java/blob/master/core/src/main/java/org/bouncycastle/util/Pack.java
   private static byte[] longToBigEndian(final long n) {
     byte[] bs = new byte[8];
@@ -393,31 +376,5 @@ public class ForkIdManager {
     bs[++off] = (byte) (n >>> 16);
     bs[++off] = (byte) (n >>> 8);
     bs[++off] = (byte) (n);
-  }
-
-  private static byte[] decodeHexString(final String hexString) {
-    if (hexString.length() % 2 == 1) {
-      throw new IllegalArgumentException("Invalid hexadecimal String supplied.");
-    }
-
-    byte[] bytes = new byte[hexString.length() / 2];
-    for (int i = 0; i < hexString.length(); i += 2) {
-      bytes[i / 2] = hexToByte(hexString.substring(i, i + 2));
-    }
-    return bytes;
-  }
-
-  private static byte hexToByte(final String hexString) {
-    int firstDigit = toDigit(hexString.charAt(0));
-    int secondDigit = toDigit(hexString.charAt(1));
-    return (byte) ((firstDigit << 4) + secondDigit);
-  }
-
-  private static int toDigit(final char hexChar) {
-    int digit = Character.digit(hexChar, 16);
-    if (digit == -1) {
-      throw new IllegalArgumentException("Invalid Hexadecimal Character: " + hexChar);
-    }
-    return digit;
   }
 }
