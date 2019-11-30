@@ -314,14 +314,14 @@ public class ForkIdManagerTest {
 
   @Test
   public void check3MaximumsProperRLPEncoding() {
-    ForkIdManager.ForkId forkIdEntry = ForkIdManager.createIdEntry("0xffffffff", Long.MAX_VALUE);
+    ForkIdManager.ForkId forkIdEntry =
+        ForkIdManager.createIdEntry("0xffffffff", Long.parseUnsignedLong("ffffffffffffffff", 16));
     BytesValueRLPOutput out = new BytesValueRLPOutput();
     forkIdEntry.writeTo(out);
-    // ce84ffffffff88ffffffffffffffff; // Check value supplied in EIP-2124 spec via GO lang
-    // math.MaxUint64
     String str1 =
-        "0xce84ffffffff887fffffffffffffff"; // Long.MAX_VALUE is smaller than GO lang math.MaxUint64
+        "0xce84ffffffff88ffffffffffffffff"; // Check value supplied in EIP-2124 spec via GO lang
     BytesValue bytesValue = out.encoded();
+    System.out.println(bytesValue); // todo remove dev item
     assertThat(str1.equals(bytesValue.toString())).isTrue();
     BytesValueRLPInput in = new BytesValueRLPInput(bytesValue, false);
     ForkIdManager.ForkId decodedEntry = ForkIdManager.readFrom(in);
