@@ -76,7 +76,8 @@ public class StatusMessageTest {
     final Hash genesisHash = randHash(2L);
     final ForkIdManager.ForkId forkId = ForkIdManager.createIdEntry("0xa00bc334", 0L);
 
-    final MessageData msg = StatusMessage.create(version, networkId, td, bestHash, genesisHash, forkId);
+    final MessageData msg =
+        StatusMessage.create(version, networkId, td, bestHash, genesisHash, forkId);
 
     final StatusMessage copy = new StatusMessage(msg.getData());
 

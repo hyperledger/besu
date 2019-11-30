@@ -48,7 +48,6 @@ public class ForkIdManagerTest {
       ForkIdManager.createIdEntry("0x3edd5b10", 4370000L), // First Spurious block
       ForkIdManager.createIdEntry("0xa00bc324", 7280000L), // First Byzantium block
       ForkIdManager.createIdEntry("0x668db0af", 0L) // Today Petersburg block
-
     };
     List<Long> list = Arrays.asList(forksMainnet);
     ForkIdManager forkIdManager =
@@ -328,4 +327,4 @@ public class ForkIdManagerTest {
     ForkIdManager.ForkId decodedEntry = ForkIdManager.readFrom(in);
     assertThat(forkIdEntry.equals(decodedEntry)).isTrue();
   }
-  }
+}

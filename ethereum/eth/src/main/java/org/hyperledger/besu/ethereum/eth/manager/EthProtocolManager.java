@@ -178,8 +178,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     this.shutdown = new CountDownLatch(1);
     genesisHash = blockchain.getBlockHashByNumber(0L).get();
 
-    forkIdManager =
-        ForkIdManager.buildCollection(genesisHash, forks, blockchain);
+    forkIdManager = ForkIdManager.buildCollection(genesisHash, forks, blockchain);
 
     ethPeers = new EthPeers(getSupportedProtocol(), clock, metricsSystem);
     ethMessages = new EthMessages();
@@ -287,13 +286,13 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     // TODO: look to consolidate code below if possible
     // making status non-final and implementing it above would be one way.
     final StatusMessage status =
-            StatusMessage.create(
-                    cap.getVersion(),
-                    networkId,
-                    blockchain.getChainHead().getTotalDifficulty(),
-                    blockchain.getChainHeadHash(),
-                    genesisHash,
-                    forkIdManager.getLatestForkId());
+        StatusMessage.create(
+            cap.getVersion(),
+            networkId,
+            blockchain.getChainHead().getTotalDifficulty(),
+            blockchain.getChainHeadHash(),
+            genesisHash,
+            forkIdManager.getLatestForkId());
     try {
       LOG.debug("Sending status message to {}.", peer);
       peer.send(status);
@@ -332,9 +331,9 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
       } else if (!forkIdManager.peerCheck(status.forkId()) && status.protocolVersion() > 63) {
         LOG.debug(
-                "Disconnecting from peer with matching network id ({}), but non-matching fork id: {}",
-                networkId,
-                status.forkId());
+            "Disconnecting from peer with matching network id ({}), but non-matching fork id: {}",
+            networkId,
+            status.forkId());
         peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
       } else if (forkIdManager.peerCheck(status.genesisHash())) {
         LOG.debug(

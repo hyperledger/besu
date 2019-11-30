@@ -50,7 +50,7 @@ public class ForkIdManager {
   };
 
   static ForkIdManager buildCollection(
-          final Hash genesisHash, final List<Long> forks, final Blockchain blockchain) {
+      final Hash genesisHash, final List<Long> forks, final Blockchain blockchain) {
     if (forks == null) {
       return new ForkIdManager(genesisHash, null, blockchain.getChainHeadBlockNumber());
     } else {
@@ -332,8 +332,7 @@ public class ForkIdManager {
 
     private static BytesValue padToEightBytes(final BytesValue hash) {
       if (hash.size() < 4) {
-        BytesValue padded =
-                BytesValues.concatenate(hash, BytesValue.fromHexString("0x00"));
+        BytesValue padded = BytesValues.concatenate(hash, BytesValue.fromHexString("0x00"));
         return padToEightBytes(padded);
       } else {
         return hash;
