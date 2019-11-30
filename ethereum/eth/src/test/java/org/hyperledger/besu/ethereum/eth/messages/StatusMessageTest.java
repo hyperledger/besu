@@ -73,9 +73,10 @@ public class StatusMessageTest {
     final BigInteger networkId = BigInteger.ONE;
     final UInt256 td = UInt256.of(1000L);
     final Hash bestHash = randHash(1L);
+    final Hash genesisHash = randHash(2L);
     final ForkIdManager.ForkId forkId = ForkIdManager.createIdEntry("0xa00bc334", 0L);
 
-    final MessageData msg = StatusMessage.create(version, networkId, td, bestHash, forkId);
+    final MessageData msg = StatusMessage.create(version, networkId, td, bestHash, genesisHash, forkId);
 
     final StatusMessage copy = new StatusMessage(msg.getData());
 
@@ -83,6 +84,7 @@ public class StatusMessageTest {
     assertThat(copy.networkId()).isEqualTo(networkId);
     assertThat(copy.totalDifficulty()).isEqualTo(td);
     assertThat(copy.bestHash()).isEqualTo(bestHash);
+    assertThat(copy.genesisHash()).isEqualTo(genesisHash);
     assertThat(copy.forkId()).isEqualTo(forkId);
   }
 

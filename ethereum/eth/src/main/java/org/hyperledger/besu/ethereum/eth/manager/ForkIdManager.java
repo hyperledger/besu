@@ -16,8 +16,6 @@ package org.hyperledger.besu.ethereum.eth.manager;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.eth.messages.StatusMessage;
-import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
@@ -28,9 +26,7 @@ import org.hyperledger.besu.util.bytes.BytesValues;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.zip.CRC32;
 
 public class ForkIdManager {
@@ -40,10 +36,10 @@ public class ForkIdManager {
   private Long currentHead;
   private Long forkNext;
   private Long highestKnownFork = 0L;
-  private ForkId lastKnownEntry;
+  private ForkId lastKnownEntry = null;
   private ArrayDeque<ForkId> forkAndHashList;
 
-  public ForkIdManager(final Hash genesisHash, final Set<Long> forks, final Long currentHead) {
+  public ForkIdManager(final Hash genesisHash, final List<Long> forks, final Long currentHead) {
     this.genesisHash = genesisHash;
     this.currentHead = currentHead;
     if (forks != null) {
@@ -53,16 +49,12 @@ public class ForkIdManager {
     }
   };
 
-  public static ForkIdManager buildCollection(
-      final Hash genesisHash,
-      final List<Long> forks,
-      final Blockchain blockchain,
-      final List<Capability> caps) {
+  static ForkIdManager buildCollection(
+          final Hash genesisHash, final List<Long> forks, final Blockchain blockchain) {
     if (forks == null) {
       return new ForkIdManager(genesisHash, null, blockchain.getChainHeadBlockNumber());
     } else {
-      Set<Long> forkSet = new LinkedHashSet<>(forks);
-      return new ForkIdManager(genesisHash, forkSet, blockchain.getChainHeadBlockNumber());
+      return new ForkIdManager(genesisHash, forks, blockchain.getChainHeadBlockNumber());
     }
   };
 
@@ -70,25 +62,21 @@ public class ForkIdManager {
     if (forks == null) {
       return new ForkIdManager(genesisHash, null, Long.MAX_VALUE);
     } else {
-      Set<Long> forkSet = new LinkedHashSet<>(forks);
-      return new ForkIdManager(genesisHash, forkSet, Long.MAX_VALUE);
+      return new ForkIdManager(genesisHash, forks, Long.MAX_VALUE);
     }
   };
 
-  public static ForkIdManager buildCollection(final Hash genesisHash) {
+  static ForkIdManager buildCollection(final Hash genesisHash) {
     return new ForkIdManager(genesisHash, null, Long.MAX_VALUE);
   };
 
-  public static ForkId readFrom(final RLPInput in) {
-    in.enterList();
-    final BytesValue hash = in.readBytesValue();
-    final long next = in.readLong();
-    in.leaveList();
+  // Non-generated entry (for tests)
+  public static ForkId createIdEntry(final String hash, final long next) {
     return new ForkId(hash, next);
   }
 
-  // Non-RLP entry (for tests)
-  public static ForkId createIdEntry(final String hash, final long next) {
+  // Non-generated entry (for tests)
+  public static ForkId createIdEntry(final String hash, final String next) {
     return new ForkId(hash, next);
   }
 
@@ -96,27 +84,27 @@ public class ForkIdManager {
     return this.forkAndHashList;
   }
 
-  public ForkId getLatestForkId() {
+  ForkId getLatestForkId() {
     return lastKnownEntry;
   }
 
-  public boolean forkIdCapable() {
-    return forkAndHashList.size() != 0;
+  public static ForkId readFrom(final RLPInput in) {
+    in.enterList();
+    final BytesValue hash = in.readBytesValue();
+    final BytesValue next = in.readBytesValue();
+    in.leaveList();
+    return new ForkId(hash, next);
   }
 
-  public boolean peerCheck(final StatusMessage status) {
-    if (status.forkId() == null && status.genesisHash() != null) {
-      return peerCheck(status.genesisHash());
-    } else if (status.forkId() != null) {
-      return peerCheck(status.forkId());
-    } else {
-      return false;
-    }
-  }
-
+  /**
+   * EIP-2124 behaviour
+   *
+   * @param forkId to be validated.
+   * @return boolean (peer valid (true) or invalid (false))
+   */
   public boolean peerCheck(final ForkId forkId) {
     if (forkId == null) {
-      return false;
+      return true; // Another method must be used to validate (i.e. genesis hash)
     }
     // Run the fork checksum validation ruleset:
     //   1. If local and remote FORK_CSUM matches, connect.
@@ -134,12 +122,12 @@ public class ForkIdManager {
     //        the remote, but at this current point in time we don't have enough
     //        information.
     //   4. Reject in all other cases.
-    if (isHashKnown(forkId.hash)) {
+    if (isHashKnown(forkId.getHash())) {
       if (currentHead < forkNext) {
         return true;
       } else {
-        if (isForkKnown(forkId.next)) {
-          return isRemoteAwareOfPresent(forkId.hash, forkId.next);
+        if (isForkKnown(forkId.getNext())) {
+          return isRemoteAwareOfPresent(forkId.getHash(), forkId.getNext());
         } else {
           return false;
         }
@@ -152,16 +140,16 @@ public class ForkIdManager {
   /**
    * Non EIP-2124 behaviour
    *
-   * @param peerGenesisOrCheckSumHash Hash or checksum to be validated.
+   * @param peerGenesisHash Hash to be validated.
    * @return boolean
    */
-  public boolean peerCheck(final Bytes32 peerGenesisOrCheckSumHash) {
-    return !peerGenesisOrCheckSumHash.equals(genesisHash);
+  public boolean peerCheck(final Bytes32 peerGenesisHash) {
+    return !peerGenesisHash.equals(genesisHash);
   }
 
   private boolean isHashKnown(final BytesValue forkHash) {
     for (ForkId j : forkAndHashList) {
-      if (forkHash.equals(j.hash)) {
+      if (forkHash.equals(j.getHash())) {
         return true;
       }
     }
@@ -173,7 +161,7 @@ public class ForkIdManager {
       return true;
     }
     for (ForkId j : forkAndHashList) {
-      if (nextFork.equals(j.next)) {
+      if (nextFork.equals(j.getNext())) {
         return true;
       }
     }
@@ -182,11 +170,11 @@ public class ForkIdManager {
 
   private boolean isRemoteAwareOfPresent(final BytesValue forkHash, final Long nextFork) {
     for (ForkId j : forkAndHashList) {
-      if (forkHash.equals(j.hash)) {
-        if (nextFork.equals(j.next)) {
+      if (forkHash.equals(j.getHash())) {
+        if (nextFork.equals(j.getNext())) {
           return true;
-        } else if (j.next == 0L) {
-          return highestKnownFork <= nextFork; // Remote aware of future fork
+        } else if (j.getNext() == 0L) {
+          return highestKnownFork <= nextFork; // Remote aware of an additional future fork
         } else {
           return false;
         }
@@ -195,7 +183,8 @@ public class ForkIdManager {
     return false;
   }
 
-  private ArrayDeque<ForkId> collectForksAndHashes(final Set<Long> forks, final Long currentHead) {
+  // TODO: should sort these when first gathering the list of forks to ensure order
+  private ArrayDeque<ForkId> collectForksAndHashes(final List<Long> forks, final Long currentHead) {
     boolean first = true;
     ArrayDeque<ForkId> forkList = new ArrayDeque<>();
     Iterator<Long> iterator = forks.iterator();
@@ -215,11 +204,14 @@ public class ForkIdManager {
         // most recent fork
         forkList.add(new ForkId(getCurrentCrcHash(), forkBlockNumber));
         updateCrc(forkBlockNumber);
-        lastKnownEntry = new ForkId(getCurrentCrcHash(), 0L);
-        forkList.add(lastKnownEntry);
+        // next fork or no future fork known
         if (currentHead > forkBlockNumber) {
+          lastKnownEntry = new ForkId(getCurrentCrcHash(), 0L);
+          forkList.add(lastKnownEntry);
           this.forkNext = 0L;
         } else {
+          lastKnownEntry = new ForkId(getCurrentCrcHash(), forkBlockNumber);
+          forkList.add(lastKnownEntry);
           this.forkNext = forkBlockNumber;
         }
 
@@ -231,56 +223,90 @@ public class ForkIdManager {
     return forkList;
   }
 
-  private BytesValue updateCrc(final Long block) {
+  private void updateCrc(final Long block) {
     byte[] byteRepresentationFork = longToBigEndian(block);
     crc.update(byteRepresentationFork, 0, byteRepresentationFork.length);
-    return getCurrentCrcHash();
   }
 
   private BytesValue updateCrc(final String hash) {
-    byte[] byteRepresentation = hexStringToByteArray(hash);
+    BytesValue bv = BytesValue.fromHexString(hash);
+    byte[] byteRepresentation = bv.extractArray();
     crc.update(byteRepresentation, 0, byteRepresentation.length);
     return getCurrentCrcHash();
   }
 
-  public BytesValue getCurrentCrcHash() {
-    //    return "0x" + encodeHexString(BytesValues.ofUnsignedInt(crc.getValue()).getByteArray());
-    //    System.out.println("0x" +
-    // encodeHexString(BytesValues.ofUnsignedInt(crc.getValue()).getByteArray())); // todo remove
-    // dev item
+  private BytesValue getCurrentCrcHash() {
     return BytesValues.ofUnsignedInt(crc.getValue());
   }
 
-  // TODO use Hash class instead of string for checksum.  convert to or from string only when needed
-  // ^ the crc is not hashed/checksum-ed any further so the hash class is not suited for this case
   public static class ForkId {
     BytesValue hash;
-    long next;
+    BytesValue next;
     BytesValue forkIdRLP;
 
-    public ForkId(final String hash, final long next) {
-      this.hash = BytesValue.wrap(hexStringToByteArray(hash));
-      this.next = next;
-      createForkIdRLP();
-    }
-
-    public ForkId(final BytesValue hash, final long next) {
+    ForkId(final BytesValue hash, final BytesValue next) {
       this.hash = hash;
       this.next = next;
       createForkIdRLP();
     }
 
-    public void createForkIdRLP() {
+    ForkId(final String hash, final String next) {
+      this.hash = BytesValue.fromHexString((hash.length() % 2 == 0 ? "" : "0") + hash);
+      if (this.hash.size() < 4) {
+        this.hash = padToEightBytes(this.hash);
+      }
+      if (next.equals("") || next.equals("0x")) {
+        this.next = BytesValue.EMPTY;
+      } else if (next.startsWith("0x")) {
+        long asLong = Long.parseLong(next.replaceFirst("0x", ""), 16);
+        this.next = BytesValues.trimLeadingZeros(BytesValue.wrap(longToBigEndian(asLong)));
+      } else {
+        this.next = BytesValue.wrap(longToBigEndian(Long.parseLong(next)));
+      }
+      createForkIdRLP();
+    }
+
+    ForkId(final String hash, final long next) {
+      this.hash = BytesValue.fromHexString(hash);
+      this.next = BytesValue.wrap(longToBigEndian(next));
+      createForkIdRLP();
+    }
+
+    ForkId(final BytesValue hash, final long next) {
+      this.hash = hash;
+      this.next = BytesValue.wrap(longToBigEndian(next));
+      createForkIdRLP();
+    }
+
+    public long getNext() {
+      return BytesValues.extractLong(next);
+    }
+
+    public BytesValue getHash() {
+      return hash;
+    }
+
+    void createForkIdRLP() {
       BytesValueRLPOutput out = new BytesValueRLPOutput();
-      out.writeList(asList(), ForkId::writeTo);
+      writeTo(out);
       forkIdRLP = out.encoded();
     }
 
     public void writeTo(final RLPOutput out) {
       out.startList();
       out.writeBytesValue(hash);
-      out.writeLong(next);
+      out.writeBytesValue(next);
       out.endList();
+    }
+
+    // Non-RLP entry (for tests)
+    public BytesValue createNotAsListForkIdRLP() {
+      BytesValueRLPOutput outPlain = new BytesValueRLPOutput();
+      outPlain.startList();
+      outPlain.writeBytesValue(hash);
+      outPlain.writeBytesValue(next);
+      outPlain.endList();
+      return outPlain.encoded();
     }
 
     public static ForkId readFrom(final RLPInput in) {
@@ -294,7 +320,7 @@ public class ForkIdManager {
     public List<byte[]> asByteList() {
       ArrayList<byte[]> forRLP = new ArrayList<byte[]>();
       forRLP.add(hash.getByteArray());
-      forRLP.add(longToBigEndian(next));
+      forRLP.add(next.getByteArray());
       return forRLP;
     }
 
@@ -304,16 +330,27 @@ public class ForkIdManager {
       return forRLP;
     }
 
+    private static BytesValue padToEightBytes(final BytesValue hash) {
+      if (hash.size() < 4) {
+        BytesValue padded =
+                BytesValues.concatenate(hash, BytesValue.fromHexString("0x00"));
+        return padToEightBytes(padded);
+      } else {
+        return hash;
+      }
+    }
+
     @Override
     public String toString() {
-      return "ForkId(hash=" + this.hash + ", next=" + this.next + ")";
+      return "ForkId(hash=" + this.hash + ", next=" + BytesValues.extractLong(next) + ")";
     }
 
     @Override
     public boolean equals(final Object obj) {
       if (obj instanceof ForkId) {
         ForkId other = (ForkId) obj;
-        return other.hash.equals(this.hash) && other.next == this.next;
+        Long thisNext = BytesValues.extractLong(next);
+        return other.getHash().equals(this.hash) && thisNext.equals(other.getNext());
       }
       return false;
     }
@@ -324,17 +361,7 @@ public class ForkIdManager {
     }
   }
 
-  // TODO: Ask / look to see if there is a helper for these below <----------
-  private static byte[] hexStringToByteArray(final String s) {
-    String string = "";
-    if (s.startsWith("0x")) {
-      string = s.replaceFirst("0x", "");
-    }
-    string = (string.length() % 2 == 0 ? "" : "0") + string;
-    return decodeHexString(string);
-  }
-
-  // next three methods adopted from:
+  // next two methods adopted from:
   // https://github.com/bcgit/bc-java/blob/master/core/src/main/java/org/bouncycastle/util/Pack.java
   private static byte[] longToBigEndian(final long n) {
     byte[] bs = new byte[8];
@@ -349,31 +376,5 @@ public class ForkIdManager {
     bs[++off] = (byte) (n >>> 16);
     bs[++off] = (byte) (n >>> 8);
     bs[++off] = (byte) (n);
-  }
-
-  private static byte[] decodeHexString(final String hexString) {
-    if (hexString.length() % 2 == 1) {
-      throw new IllegalArgumentException("Invalid hexadecimal String supplied.");
-    }
-
-    byte[] bytes = new byte[hexString.length() / 2];
-    for (int i = 0; i < hexString.length(); i += 2) {
-      bytes[i / 2] = hexToByte(hexString.substring(i, i + 2));
-    }
-    return bytes;
-  }
-
-  private static byte hexToByte(final String hexString) {
-    int firstDigit = toDigit(hexString.charAt(0));
-    int secondDigit = toDigit(hexString.charAt(1));
-    return (byte) ((firstDigit << 4) + secondDigit);
-  }
-
-  private static int toDigit(final char hexChar) {
-    int digit = Character.digit(hexChar, 16);
-    if (digit == -1) {
-      throw new IllegalArgumentException("Invalid Hexadecimal Character: " + hexChar);
-    }
-    return digit;
   }
 }

@@ -23,9 +23,7 @@ import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.ArrayDeque;
 import java.util.Arrays;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.junit.Test;
 
@@ -50,9 +48,11 @@ public class ForkIdManagerTest {
       ForkIdManager.createIdEntry("0x3edd5b10", 4370000L), // First Spurious block
       ForkIdManager.createIdEntry("0xa00bc324", 7280000L), // First Byzantium block
       ForkIdManager.createIdEntry("0x668db0af", 0L) // Today Petersburg block
+
     };
     List<Long> list = Arrays.asList(forksMainnet);
-    ForkIdManager forkIdManager = ForkIdManager.buildCollection(Hash.fromHexString(mainnetGenHash), list);
+    ForkIdManager forkIdManager =
+        ForkIdManager.buildCollection(Hash.fromHexString(mainnetGenHash), list);
     ArrayDeque<ForkIdManager.ForkId> entries = forkIdManager.getForkAndHashList();
     for (ForkIdManager.ForkId id : checkIds) {
       ForkIdManager.ForkId testVal = entries.poll();
@@ -119,9 +119,9 @@ public class ForkIdManagerTest {
   public void check1PetersburgWithRemoteAnnouncingTheSame() {
     // 1 Local is mainnet Petersburg, remote announces the same. No future fork is announced.
     //  {7987396, ID{Hash: 0x668db0af, Next: 0}, nil},
-    List<Long> list = Arrays.asList(forksMainnet);
-    Set<Long> forkSet = new LinkedHashSet<>(list);
-    ForkIdManager forkIdManager = new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkSet, 7987396L);
+    List<Long> forkList = Arrays.asList(forksMainnet);
+    ForkIdManager forkIdManager =
+        new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkList, 7987396L);
     Boolean result = forkIdManager.peerCheck(ForkIdManager.createIdEntry("0x668db0af", 0L));
     assertThat(result).isTrue();
   }
@@ -131,10 +131,11 @@ public class ForkIdManagerTest {
     // 2 Local is mainnet Petersburg, remote announces the same. Remote also announces a next fork
     // at block 0xffffffff, but that is uncertain.
     //	{7987396, ID{Hash: 0x668db0af, Next: math.MaxUint64}, nil},
-    List<Long> list = Arrays.asList(forksMainnet);
-    Set<Long> forkSet = new LinkedHashSet<>(list);
-    ForkIdManager forkIdManager = new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkSet, 7987396L);
-    Boolean result = forkIdManager.peerCheck(ForkIdManager.createIdEntry("0x668db0af", Long.MAX_VALUE));
+    List<Long> forkList = Arrays.asList(forksMainnet);
+    ForkIdManager forkIdManager =
+        new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkList, 7987396L);
+    Boolean result =
+        forkIdManager.peerCheck(ForkIdManager.createIdEntry("0x668db0af", Long.MAX_VALUE));
     assertThat(result).isTrue();
   }
 
@@ -145,9 +146,9 @@ public class ForkIdManagerTest {
     // the fork).
     // In this case we don't know if Petersburg passed yet or not.
     //	{7279999, ID{Hash: 0xa00bc324, Next: 0}, nil},
-    List<Long> list = Arrays.asList(forksMainnet);
-    Set<Long> forkSet = new LinkedHashSet<>(list);
-    ForkIdManager forkIdManager = new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkSet, 7279999L);
+    List<Long> forkList = Arrays.asList(forksMainnet);
+    ForkIdManager forkIdManager =
+        new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkList, 7279999L);
     Boolean result = forkIdManager.peerCheck(ForkIdManager.createIdEntry("0xa00bc324", 0L));
     assertThat(result).isTrue();
   }
@@ -158,9 +159,9 @@ public class ForkIdManagerTest {
     // announces  also Byzantium, and it's also aware of Petersburg (e.g. updated node before the
     // fork). We don't know if Petersburg passed yet (will pass) or not.
     //	{7279999, ID{Hash: 0xa00bc324, Next: 7280000}, nil},
-    List<Long> list = Arrays.asList(forksMainnet);
-    Set<Long> forkSet = new LinkedHashSet<>(list);
-    ForkIdManager forkIdManager = new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkSet, 7279999L);
+    List<Long> forkList = Arrays.asList(forksMainnet);
+    ForkIdManager forkIdManager =
+        new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkList, 7279999L);
     Boolean result = forkIdManager.peerCheck(ForkIdManager.createIdEntry("0xa00bc324", 7280000L));
     assertThat(result).isTrue();
   }
@@ -172,10 +173,11 @@ public class ForkIdManagerTest {
     // Petersburg).
     // As neither forks passed at neither nodes, they may mismatch, but we still connect for now.
     //	{7279999, ID{Hash: 0xa00bc324, Next: math.MaxUint64}, nil},
-    List<Long> list = Arrays.asList(forksMainnet);
-    Set<Long> forkSet = new LinkedHashSet<>(list);
-    ForkIdManager forkIdManager = new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkSet, 7279999L);
-    Boolean result = forkIdManager.peerCheck(ForkIdManager.createIdEntry("0xa00bc324", Long.MAX_VALUE));
+    List<Long> forkList = Arrays.asList(forksMainnet);
+    ForkIdManager forkIdManager =
+        new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkList, 7279999L);
+    Boolean result =
+        forkIdManager.peerCheck(ForkIdManager.createIdEntry("0xa00bc324", Long.MAX_VALUE));
     assertThat(result).isTrue();
   }
 
@@ -184,9 +186,9 @@ public class ForkIdManagerTest {
     // 6 Local is mainnet Petersburg, remote announces Byzantium + knowledge about Petersburg.
     // Remote is simply out of sync, accept.
     //	{7987396, ID{Hash: 0x668db0af, Next: 7280000}, nil},
-    List<Long> list = Arrays.asList(forksMainnet);
-    Set<Long> forkSet = new LinkedHashSet<>(list);
-    ForkIdManager forkIdManager = new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkSet, 7987396L);
+    List<Long> forkList = Arrays.asList(forksMainnet);
+    ForkIdManager forkIdManager =
+        new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkList, 7987396L);
     Boolean result = forkIdManager.peerCheck(ForkIdManager.createIdEntry("0x668db0af", 7280000L));
     assertThat(result).isTrue();
   }
@@ -197,9 +199,9 @@ public class ForkIdManagerTest {
     // Remote is definitely out of sync. It may or may not need the Petersburg update, we don't know
     // yet.
     //	{7987396, ID{Hash: 0x3edd5b10, Next: 4370000}, nil},
-    List<Long> list = Arrays.asList(forksMainnet);
-    Set<Long> forkSet = new LinkedHashSet<>(list);
-    ForkIdManager forkIdManager = new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkSet, 7987396L);
+    List<Long> forkList = Arrays.asList(forksMainnet);
+    ForkIdManager forkIdManager =
+        new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkList, 7987396L);
     Boolean result = forkIdManager.peerCheck(ForkIdManager.createIdEntry("0x3edd5b10", 4370000L));
     assertThat(result).isTrue();
   }
@@ -208,9 +210,9 @@ public class ForkIdManagerTest {
   public void check8ByzantiumWithRemoteAnnouncingPetersburgLocalOutOfSync() {
     // 8 Local is mainnet Byzantium, remote announces Petersburg. Local is out of sync, accept.
     //	{7279999, ID{Hash: 0x668db0af, Next: 0}, nil},
-    List<Long> list = Arrays.asList(forksMainnet);
-    Set<Long> forkSet = new LinkedHashSet<>(list);
-    ForkIdManager forkIdManager = new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkSet, 7279999L);
+    List<Long> forkList = Arrays.asList(forksMainnet);
+    ForkIdManager forkIdManager =
+        new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkList, 7279999L);
     Boolean result = forkIdManager.peerCheck(ForkIdManager.createIdEntry("0x668db0af", 0L));
     assertThat(result).isTrue();
   }
@@ -220,9 +222,9 @@ public class ForkIdManagerTest {
     // 9 Local is mainnet Spurious, remote announces Byzantium, but is not aware of Petersburg.
     // Local out of sync. Local also knows about a future fork, but that is uncertain yet.
     //	{4369999, ID{Hash: 0xa00bc324, Next: 0}, nil},
-    List<Long> list = Arrays.asList(forksMainnet);
-    Set<Long> forkSet = new LinkedHashSet<>(list);
-    ForkIdManager forkIdManager = new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkSet, 4369999L);
+    List<Long> forkList = Arrays.asList(forksMainnet);
+    ForkIdManager forkIdManager =
+        new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkList, 4369999L);
     Boolean result = forkIdManager.peerCheck(ForkIdManager.createIdEntry("0xa00bc324", 0L));
     assertThat(result).isTrue();
   }
@@ -232,9 +234,9 @@ public class ForkIdManagerTest {
     // 10 Local is mainnet Petersburg. remote announces Byzantium but is not aware of further forks.
     // Remote needs software update.
     //	{7987396, ID{Hash: 0xa00bc324, Next: 0}, ErrRemoteStale},
-    List<Long> list = Arrays.asList(forksMainnet);
-    Set<Long> forkSet = new LinkedHashSet<>(list);
-    ForkIdManager forkIdManager = new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkSet, 7987396L);
+    List<Long> forkList = Arrays.asList(forksMainnet);
+    ForkIdManager forkIdManager =
+        new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkList, 7987396L);
     Boolean result = forkIdManager.peerCheck(ForkIdManager.createIdEntry("0xa00bc324", 0L));
     assertThat(result).isFalse();
   }
@@ -244,9 +246,9 @@ public class ForkIdManagerTest {
     // 11 Local is mainnet Petersburg, and isn't aware of more forks. Remote announces Petersburg +
     // 0xffffffff. Local needs software update, reject.
     //	{7987396, ID{Hash: 0x5cddc0e1, Next: 0}, ErrLocalIncompatibleOrStale},
-    List<Long> list = Arrays.asList(forksMainnet);
-    Set<Long> forkSet = new LinkedHashSet<>(list);
-    ForkIdManager forkIdManager = new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkSet, 7987396L);
+    List<Long> forkList = Arrays.asList(forksMainnet);
+    ForkIdManager forkIdManager =
+        new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkList, 7987396L);
     Boolean result = forkIdManager.peerCheck(ForkIdManager.createIdEntry("0x5cddc0e1", 0L));
     assertThat(result).isFalse();
   }
@@ -256,9 +258,9 @@ public class ForkIdManagerTest {
     // 12 Local is mainnet Byzantium, and is aware of Petersburg. Remote announces Petersburg +
     // 0xffffffff. Local needs software update, reject.
     //	{7279999, ID{Hash: 0x5cddc0e1, Next: 0}, ErrLocalIncompatibleOrStale},
-    List<Long> list = Arrays.asList(forksMainnet);
-    Set<Long> forkSet = new LinkedHashSet<>(list);
-    ForkIdManager forkIdManager = new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkSet, 7279999L);
+    List<Long> forkList = Arrays.asList(forksMainnet);
+    ForkIdManager forkIdManager =
+        new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkList, 7279999L);
     Boolean result = forkIdManager.peerCheck(ForkIdManager.createIdEntry("0x5cddc0e1", 0L));
     assertThat(result).isFalse();
   }
@@ -267,9 +269,9 @@ public class ForkIdManagerTest {
   public void check13ByzantiumWithRemoteAnnouncingRinkebyPetersburg() {
     // 13 Local is mainnet Petersburg, remote is Rinkeby Petersburg.
     //	{7987396, ID{Hash: 0xafec6b27, Next: 0}, ErrLocalIncompatibleOrStale},
-    List<Long> list = Arrays.asList(forksMainnet);
-    Set<Long> forkSet = new LinkedHashSet<>(list);
-    ForkIdManager forkIdManager = new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkSet, 7987396L);
+    List<Long> forkList = Arrays.asList(forksMainnet);
+    ForkIdManager forkIdManager =
+        new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkList, 7987396L);
     Boolean result = forkIdManager.peerCheck(ForkIdManager.createIdEntry("0xafec6b27", 0L));
     assertThat(result).isFalse();
   }
@@ -278,11 +280,52 @@ public class ForkIdManagerTest {
   public void createAndDecodeRLP() {
     ForkIdManager.ForkId forkIdEntry = ForkIdManager.createIdEntry("0xa00bc324", 7280000L);
     BytesValueRLPOutput out = new BytesValueRLPOutput();
-    out.writeList(forkIdEntry.asList(), ForkIdManager.ForkId::writeTo);
+    forkIdEntry.writeTo(out);
     BytesValue bytesValue = out.encoded();
     BytesValueRLPInput in = new BytesValueRLPInput(bytesValue, false);
-    List<ForkIdManager.ForkId> forkId = in.readList(ForkIdManager::readFrom);
-    ForkIdManager.ForkId decodedEntry = forkId.get(0);
+    ForkIdManager.ForkId decodedEntry = ForkIdManager.readFrom(in);
     assertThat(forkIdEntry.equals(decodedEntry)).isTrue();
   }
-}
+
+  @Test
+  public void check1ZeroZeroProperRLPEncoding() {
+    ForkIdManager.ForkId forkIdEntry = ForkIdManager.createIdEntry("0", "0x");
+    BytesValueRLPOutput out = new BytesValueRLPOutput();
+    forkIdEntry.writeTo(out);
+    String str1 = "0xc6840000000080";
+    BytesValue bytesValue = out.encoded();
+    assertThat(str1.equals(bytesValue.toString())).isTrue();
+    BytesValueRLPInput in = new BytesValueRLPInput(bytesValue, false);
+    ForkIdManager.ForkId decodedEntry = ForkIdManager.readFrom(in);
+    assertThat(forkIdEntry.equals(decodedEntry)).isTrue();
+  }
+
+  @Test
+  public void check2ArbitraryProperRLPEncoding() {
+    ForkIdManager.ForkId forkIdEntry = ForkIdManager.createIdEntry("0xdeadbeef", "0xBADDCAFE");
+    BytesValueRLPOutput out = new BytesValueRLPOutput();
+    forkIdEntry.writeTo(out);
+    String str1 = "0xca84deadbeef84baddcafe";
+    BytesValue bytesValue = out.encoded();
+    assertThat(str1.equals(bytesValue.toString())).isTrue();
+    BytesValueRLPInput in = new BytesValueRLPInput(bytesValue, false);
+    ForkIdManager.ForkId decodedEntry = ForkIdManager.readFrom(in);
+    assertThat(forkIdEntry.equals(decodedEntry)).isTrue();
+  }
+
+  @Test
+  public void check3MaximumsProperRLPEncoding() {
+    ForkIdManager.ForkId forkIdEntry = ForkIdManager.createIdEntry("0xffffffff", Long.MAX_VALUE);
+    BytesValueRLPOutput out = new BytesValueRLPOutput();
+    forkIdEntry.writeTo(out);
+    // ce84ffffffff88ffffffffffffffff; // Check value supplied in EIP-2124 spec via GO lang
+    // math.MaxUint64
+    String str1 =
+        "0xce84ffffffff887fffffffffffffff"; // Long.MAX_VALUE is smaller than GO lang math.MaxUint64
+    BytesValue bytesValue = out.encoded();
+    assertThat(str1.equals(bytesValue.toString())).isTrue();
+    BytesValueRLPInput in = new BytesValueRLPInput(bytesValue, false);
+    ForkIdManager.ForkId decodedEntry = ForkIdManager.readFrom(in);
+    assertThat(forkIdEntry.equals(decodedEntry)).isTrue();
+  }
+  }
