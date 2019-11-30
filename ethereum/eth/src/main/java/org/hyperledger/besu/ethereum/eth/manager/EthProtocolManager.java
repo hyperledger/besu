@@ -286,36 +286,20 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     final Capability cap = connection.capability(getSupportedProtocol());
     // TODO: look to consolidate code below if possible
     // making status non-final and implementing it above would be one way.
-    if (cap.getVersion() > EthProtocol.EthVersion.V63) {
-      final StatusMessage status =
-          StatusMessage.create(
-              cap.getVersion(),
-              networkId,
-              blockchain.getChainHead().getTotalDifficulty(),
-              blockchain.getChainHeadHash(),
-              forkIdManager.getLatestForkId());
-      try {
-        LOG.debug("Sending status message to {}.", peer);
-        peer.send(status);
-        peer.registerStatusSent();
-      } catch (final PeerNotConnected peerNotConnected) {
-        // Nothing to do.
-      }
-    } else {
-      final StatusMessage status =
-          StatusMessage.create(
-              cap.getVersion(),
-              networkId,
-              blockchain.getChainHead().getTotalDifficulty(),
-              blockchain.getChainHeadHash(),
-              genesisHash);
-      try {
-        LOG.debug("Sending status message to {}.", peer);
-        peer.send(status);
-        peer.registerStatusSent();
-      } catch (final PeerNotConnected peerNotConnected) {
-        // Nothing to do.
-      }
+    final StatusMessage status =
+            StatusMessage.create(
+                    cap.getVersion(),
+                    networkId,
+                    blockchain.getChainHead().getTotalDifficulty(),
+                    blockchain.getChainHeadHash(),
+                    genesisHash,
+                    forkIdManager.getLatestForkId());
+    try {
+      LOG.debug("Sending status message to {}.", peer);
+      peer.send(status);
+      peer.registerStatusSent();
+    } catch (final PeerNotConnected peerNotConnected) {
+      // Nothing to do.
     }
   }
 
@@ -346,18 +330,17 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       if (!status.networkId().equals(networkId)) {
         LOG.debug("Disconnecting from peer with mismatched network id: {}", status.networkId());
         peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
-      } else if (forkIdManager.peerCheck(status)) {
-        if (status.genesisHash() != null) {
-          LOG.debug(
-              "Disconnecting from peer with matching network id ({}), but non-matching genesis hash: {}",
-              networkId,
-              status.genesisHash());
-        } else {
-          LOG.debug(
-              "Disconnecting from peer with matching network id ({}), but non-matching fork id: {}",
-              networkId,
-              status.forkId());
-        }
+      } else if (forkIdManager.peerCheck(status.forkId())) {
+        LOG.debug(
+                "Disconnecting from peer with matching network id ({}), but non-matching fork id: {}",
+                networkId,
+                status.forkId());
+        peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
+      } else if (forkIdManager.peerCheck(status.genesisHash())) {
+        LOG.debug(
+            "Disconnecting from peer with matching network id ({}), but non-matching genesis hash: {}",
+            networkId,
+            status.genesisHash());
         peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
       } else {
         LOG.debug("Received status message from {}: {}", peer, status);

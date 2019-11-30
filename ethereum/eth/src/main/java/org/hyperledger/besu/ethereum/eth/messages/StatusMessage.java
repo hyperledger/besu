@@ -55,9 +55,10 @@ public final class StatusMessage extends AbstractMessageData {
       final BigInteger networkId,
       final UInt256 totalDifficulty,
       final Hash bestHash,
+      final Hash genesisHash,
       final ForkIdManager.ForkId forkId) {
     final EthStatus status =
-        new EthStatus(protocolVersion, networkId, totalDifficulty, bestHash, forkId);
+        new EthStatus(protocolVersion, networkId, totalDifficulty, bestHash, genesisHash, forkId);
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     status.writeTo(out);
 
@@ -108,9 +109,7 @@ public final class StatusMessage extends AbstractMessageData {
     return status().genesisHash;
   }
 
-  /**
-   * @return The fork id of the network the associated node is participating in.
-   */
+  /** @return The fork id of the network the associated node is participating in. */
   public ForkIdManager.ForkId forkId() {
     return status().forkId;
   }
@@ -150,13 +149,14 @@ public final class StatusMessage extends AbstractMessageData {
         final BigInteger networkId,
         final UInt256 totalDifficulty,
         final Hash bestHash,
+        final Hash genesisHash,
         final ForkIdManager.ForkId forkHash) {
       this.protocolVersion = protocolVersion;
       this.networkId = networkId;
       this.totalDifficulty = totalDifficulty;
       this.bestHash = bestHash;
+      this.genesisHash = genesisHash;
       this.forkId = forkHash;
-      this.genesisHash = null;
     }
 
     public void writeTo(final RLPOutput out) {
@@ -166,10 +166,9 @@ public final class StatusMessage extends AbstractMessageData {
       out.writeBigIntegerScalar(networkId);
       out.writeUInt256Scalar(totalDifficulty);
       out.writeBytesValue(bestHash);
+      out.writeBytesValue(genesisHash);
       if (forkId != null) {
         forkId.writeTo(out);
-      } else {
-        out.writeBytesValue(genesisHash);
       }
 
       out.endList();
@@ -182,18 +181,16 @@ public final class StatusMessage extends AbstractMessageData {
       final BigInteger networkId = in.readBigIntegerScalar();
       final UInt256 totalDifficulty = in.readUInt256Scalar();
       final Hash bestHash = Hash.wrap(in.readBytes32());
+      final Hash genesisHash = Hash.wrap(in.readBytes32());
       if (in.nextIsList()) {
         final ForkIdManager.ForkId forkId = ForkIdManager.ForkId.readFrom(in);
         in.leaveList();
-
-        return new EthStatus(protocolVersion, networkId, totalDifficulty, bestHash, forkId);
-      } else {
-        final Hash genesisHash = Hash.wrap(in.readBytes32());
-
-        in.leaveList();
-
-        return new EthStatus(protocolVersion, networkId, totalDifficulty, bestHash, genesisHash);
+        return new EthStatus(
+            protocolVersion, networkId, totalDifficulty, bestHash, genesisHash, forkId);
       }
+      in.leaveList();
+
+      return new EthStatus(protocolVersion, networkId, totalDifficulty, bestHash, genesisHash);
     }
   }
 }

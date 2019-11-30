@@ -19,14 +19,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+// import org.hyperledger.besu.ethereum.rlp.RLP;
+//import org.hyperledger.besu.ethereum.rlp.RLPException;
+// import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.ArrayDeque;
+// import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+//import org.hyperledger.besu.util.bytes.BytesValues;
 import org.junit.Test;
 
 public class ForkIdManagerTest {
@@ -50,9 +55,11 @@ public class ForkIdManagerTest {
       ForkIdManager.createIdEntry("0x3edd5b10", 4370000L), // First Spurious block
       ForkIdManager.createIdEntry("0xa00bc324", 7280000L), // First Byzantium block
       ForkIdManager.createIdEntry("0x668db0af", 0L) // Today Petersburg block
+
     };
     List<Long> list = Arrays.asList(forksMainnet);
-    ForkIdManager forkIdManager = ForkIdManager.buildCollection(Hash.fromHexString(mainnetGenHash), list);
+    ForkIdManager forkIdManager =
+        ForkIdManager.buildCollection(Hash.fromHexString(mainnetGenHash), list);
     ArrayDeque<ForkIdManager.ForkId> entries = forkIdManager.getForkAndHashList();
     for (ForkIdManager.ForkId id : checkIds) {
       ForkIdManager.ForkId testVal = entries.poll();
@@ -121,7 +128,8 @@ public class ForkIdManagerTest {
     //  {7987396, ID{Hash: 0x668db0af, Next: 0}, nil},
     List<Long> list = Arrays.asList(forksMainnet);
     Set<Long> forkSet = new LinkedHashSet<>(list);
-    ForkIdManager forkIdManager = new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkSet, 7987396L);
+    ForkIdManager forkIdManager =
+        new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkSet, 7987396L);
     Boolean result = forkIdManager.peerCheck(ForkIdManager.createIdEntry("0x668db0af", 0L));
     assertThat(result).isTrue();
   }
@@ -133,8 +141,10 @@ public class ForkIdManagerTest {
     //	{7987396, ID{Hash: 0x668db0af, Next: math.MaxUint64}, nil},
     List<Long> list = Arrays.asList(forksMainnet);
     Set<Long> forkSet = new LinkedHashSet<>(list);
-    ForkIdManager forkIdManager = new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkSet, 7987396L);
-    Boolean result = forkIdManager.peerCheck(ForkIdManager.createIdEntry("0x668db0af", Long.MAX_VALUE));
+    ForkIdManager forkIdManager =
+        new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkSet, 7987396L);
+    Boolean result =
+        forkIdManager.peerCheck(ForkIdManager.createIdEntry("0x668db0af", Long.MAX_VALUE));
     assertThat(result).isTrue();
   }
 
@@ -147,7 +157,8 @@ public class ForkIdManagerTest {
     //	{7279999, ID{Hash: 0xa00bc324, Next: 0}, nil},
     List<Long> list = Arrays.asList(forksMainnet);
     Set<Long> forkSet = new LinkedHashSet<>(list);
-    ForkIdManager forkIdManager = new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkSet, 7279999L);
+    ForkIdManager forkIdManager =
+        new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkSet, 7279999L);
     Boolean result = forkIdManager.peerCheck(ForkIdManager.createIdEntry("0xa00bc324", 0L));
     assertThat(result).isTrue();
   }
@@ -160,7 +171,8 @@ public class ForkIdManagerTest {
     //	{7279999, ID{Hash: 0xa00bc324, Next: 7280000}, nil},
     List<Long> list = Arrays.asList(forksMainnet);
     Set<Long> forkSet = new LinkedHashSet<>(list);
-    ForkIdManager forkIdManager = new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkSet, 7279999L);
+    ForkIdManager forkIdManager =
+        new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkSet, 7279999L);
     Boolean result = forkIdManager.peerCheck(ForkIdManager.createIdEntry("0xa00bc324", 7280000L));
     assertThat(result).isTrue();
   }
@@ -174,8 +186,10 @@ public class ForkIdManagerTest {
     //	{7279999, ID{Hash: 0xa00bc324, Next: math.MaxUint64}, nil},
     List<Long> list = Arrays.asList(forksMainnet);
     Set<Long> forkSet = new LinkedHashSet<>(list);
-    ForkIdManager forkIdManager = new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkSet, 7279999L);
-    Boolean result = forkIdManager.peerCheck(ForkIdManager.createIdEntry("0xa00bc324", Long.MAX_VALUE));
+    ForkIdManager forkIdManager =
+        new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkSet, 7279999L);
+    Boolean result =
+        forkIdManager.peerCheck(ForkIdManager.createIdEntry("0xa00bc324", Long.MAX_VALUE));
     assertThat(result).isTrue();
   }
 
@@ -186,7 +200,8 @@ public class ForkIdManagerTest {
     //	{7987396, ID{Hash: 0x668db0af, Next: 7280000}, nil},
     List<Long> list = Arrays.asList(forksMainnet);
     Set<Long> forkSet = new LinkedHashSet<>(list);
-    ForkIdManager forkIdManager = new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkSet, 7987396L);
+    ForkIdManager forkIdManager =
+        new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkSet, 7987396L);
     Boolean result = forkIdManager.peerCheck(ForkIdManager.createIdEntry("0x668db0af", 7280000L));
     assertThat(result).isTrue();
   }
@@ -199,7 +214,8 @@ public class ForkIdManagerTest {
     //	{7987396, ID{Hash: 0x3edd5b10, Next: 4370000}, nil},
     List<Long> list = Arrays.asList(forksMainnet);
     Set<Long> forkSet = new LinkedHashSet<>(list);
-    ForkIdManager forkIdManager = new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkSet, 7987396L);
+    ForkIdManager forkIdManager =
+        new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkSet, 7987396L);
     Boolean result = forkIdManager.peerCheck(ForkIdManager.createIdEntry("0x3edd5b10", 4370000L));
     assertThat(result).isTrue();
   }
@@ -210,7 +226,8 @@ public class ForkIdManagerTest {
     //	{7279999, ID{Hash: 0x668db0af, Next: 0}, nil},
     List<Long> list = Arrays.asList(forksMainnet);
     Set<Long> forkSet = new LinkedHashSet<>(list);
-    ForkIdManager forkIdManager = new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkSet, 7279999L);
+    ForkIdManager forkIdManager =
+        new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkSet, 7279999L);
     Boolean result = forkIdManager.peerCheck(ForkIdManager.createIdEntry("0x668db0af", 0L));
     assertThat(result).isTrue();
   }
@@ -222,7 +239,8 @@ public class ForkIdManagerTest {
     //	{4369999, ID{Hash: 0xa00bc324, Next: 0}, nil},
     List<Long> list = Arrays.asList(forksMainnet);
     Set<Long> forkSet = new LinkedHashSet<>(list);
-    ForkIdManager forkIdManager = new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkSet, 4369999L);
+    ForkIdManager forkIdManager =
+        new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkSet, 4369999L);
     Boolean result = forkIdManager.peerCheck(ForkIdManager.createIdEntry("0xa00bc324", 0L));
     assertThat(result).isTrue();
   }
@@ -234,7 +252,8 @@ public class ForkIdManagerTest {
     //	{7987396, ID{Hash: 0xa00bc324, Next: 0}, ErrRemoteStale},
     List<Long> list = Arrays.asList(forksMainnet);
     Set<Long> forkSet = new LinkedHashSet<>(list);
-    ForkIdManager forkIdManager = new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkSet, 7987396L);
+    ForkIdManager forkIdManager =
+        new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkSet, 7987396L);
     Boolean result = forkIdManager.peerCheck(ForkIdManager.createIdEntry("0xa00bc324", 0L));
     assertThat(result).isFalse();
   }
@@ -246,7 +265,8 @@ public class ForkIdManagerTest {
     //	{7987396, ID{Hash: 0x5cddc0e1, Next: 0}, ErrLocalIncompatibleOrStale},
     List<Long> list = Arrays.asList(forksMainnet);
     Set<Long> forkSet = new LinkedHashSet<>(list);
-    ForkIdManager forkIdManager = new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkSet, 7987396L);
+    ForkIdManager forkIdManager =
+        new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkSet, 7987396L);
     Boolean result = forkIdManager.peerCheck(ForkIdManager.createIdEntry("0x5cddc0e1", 0L));
     assertThat(result).isFalse();
   }
@@ -258,7 +278,8 @@ public class ForkIdManagerTest {
     //	{7279999, ID{Hash: 0x5cddc0e1, Next: 0}, ErrLocalIncompatibleOrStale},
     List<Long> list = Arrays.asList(forksMainnet);
     Set<Long> forkSet = new LinkedHashSet<>(list);
-    ForkIdManager forkIdManager = new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkSet, 7279999L);
+    ForkIdManager forkIdManager =
+        new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkSet, 7279999L);
     Boolean result = forkIdManager.peerCheck(ForkIdManager.createIdEntry("0x5cddc0e1", 0L));
     assertThat(result).isFalse();
   }
@@ -269,7 +290,8 @@ public class ForkIdManagerTest {
     //	{7987396, ID{Hash: 0xafec6b27, Next: 0}, ErrLocalIncompatibleOrStale},
     List<Long> list = Arrays.asList(forksMainnet);
     Set<Long> forkSet = new LinkedHashSet<>(list);
-    ForkIdManager forkIdManager = new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkSet, 7987396L);
+    ForkIdManager forkIdManager =
+        new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkSet, 7987396L);
     Boolean result = forkIdManager.peerCheck(ForkIdManager.createIdEntry("0xafec6b27", 0L));
     assertThat(result).isFalse();
   }
@@ -278,11 +300,67 @@ public class ForkIdManagerTest {
   public void createAndDecodeRLP() {
     ForkIdManager.ForkId forkIdEntry = ForkIdManager.createIdEntry("0xa00bc324", 7280000L);
     BytesValueRLPOutput out = new BytesValueRLPOutput();
-    out.writeList(forkIdEntry.asList(), ForkIdManager.ForkId::writeTo);
+    forkIdEntry.writeTo(out);
     BytesValue bytesValue = out.encoded();
     BytesValueRLPInput in = new BytesValueRLPInput(bytesValue, false);
-    List<ForkIdManager.ForkId> forkId = in.readList(ForkIdManager::readFrom);
-    ForkIdManager.ForkId decodedEntry = forkId.get(0);
+    ForkIdManager.ForkId decodedEntry = ForkIdManager.readFrom(in);
     assertThat(forkIdEntry.equals(decodedEntry)).isTrue();
   }
-}
+
+  //  OLD VERSION
+  //  @Test
+  //  public void createAndDecodeRLP() {
+  //    ForkIdManager.ForkId forkIdEntry = ForkIdManager.createIdEntry("0xa00bc324", 7280000L);
+  //    BytesValueRLPOutput out = new BytesValueRLPOutput();
+  //    out.writeList(forkIdEntry.asList(), ForkIdManager.ForkId::writeTo);
+  //    BytesValue bytesValue = out.encoded();
+  //    BytesValueRLPInput in = new BytesValueRLPInput(bytesValue, false);
+  //    List<ForkIdManager.ForkId> forkId = in.readList(ForkIdManager::readFrom);
+  //    ForkIdManager.ForkId decodedEntry = forkId.get(0);
+  //    assertThat(forkIdEntry.equals(decodedEntry)).isTrue();
+  //  }
+
+  @Test
+  public void check1ZeroZeroProperRLPEncoding() {
+    ForkIdManager.ForkId forkIdEntry = ForkIdManager.createIdEntry("0", "0x");
+    System.out.println(forkIdEntry); // todo remove dev item
+    BytesValueRLPOutput out = new BytesValueRLPOutput();
+    forkIdEntry.writeTo(out);
+    String str1 = "0xc6840000000080";
+    BytesValue bytesValue = out.encoded();
+    System.out.println(bytesValue); // todo remove dev item
+    assertThat(str1.equals(bytesValue.toString())).isTrue();
+    BytesValueRLPInput in = new BytesValueRLPInput(bytesValue, false);
+    ForkIdManager.ForkId decodedEntry = ForkIdManager.readFrom(in);
+    assertThat(forkIdEntry.equals(decodedEntry)).isTrue();
+  }
+
+  @Test
+  public void check2ArbitraryProperRLPEncoding() {
+    ForkIdManager.ForkId forkIdEntry = ForkIdManager.createIdEntry("0xdeadbeef", "0xBADDCAFE");
+    BytesValueRLPOutput out = new BytesValueRLPOutput();
+    forkIdEntry.writeTo(out);
+    String str1 = "0xca84deadbeef84baddcafe";
+    BytesValue bytesValue = out.encoded();
+    assertThat(str1.equals(bytesValue.toString())).isTrue();
+    BytesValueRLPInput in = new BytesValueRLPInput(bytesValue, false);
+    ForkIdManager.ForkId decodedEntry = ForkIdManager.readFrom(in);
+    assertThat(forkIdEntry.equals(decodedEntry)).isTrue();
+  }
+
+  @Test
+  public void check3MaximumsProperRLPEncoding() {
+    ForkIdManager.ForkId forkIdEntry = ForkIdManager.createIdEntry("0xffffffff", Long.MAX_VALUE);
+    BytesValueRLPOutput out = new BytesValueRLPOutput();
+    forkIdEntry.writeTo(out);
+    // ce84ffffffff88ffffffffffffffff; // Check value supplied in EIP-2124 spec via GO lang
+    // math.MaxUint64
+    String str1 =
+        "0xce84ffffffff887fffffffffffffff"; // Long.MAX_VALUE is smaller than GO lang math.MaxUint64
+    BytesValue bytesValue = out.encoded();
+    assertThat(str1.equals(bytesValue.toString())).isTrue();
+    BytesValueRLPInput in = new BytesValueRLPInput(bytesValue, false);
+    ForkIdManager.ForkId decodedEntry = ForkIdManager.readFrom(in);
+    assertThat(forkIdEntry.equals(decodedEntry)).isTrue();
+  }
+  }
