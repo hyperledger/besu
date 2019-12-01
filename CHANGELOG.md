@@ -360,7 +360,7 @@ For compatibility with Ethereum Istanbul upgrade, use v1.3.4 or later.
 - Implement `eth_getproof` JSON RPC API [#1824](https://github.com/PegaSysEng/pantheon/pull/1824)
 - Database versioning and enable multi-column database [#1830](https://github.com/PegaSysEng/pantheon/pull/1830)
 - Disable smoke tests on windows [#1847](https://github.com/PegaSysEng/pantheon/pull/1847)
-- Add read-only blockchain factory method [#1845](https://github.com/PegaSysEng/pantheon/pull/)
+- Add read-only blockchain factory method [#1845](https://github.com/PegaSysEng/pantheon/pull/1845)
 
 ## 1.2 
 
