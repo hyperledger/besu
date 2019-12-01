@@ -30,13 +30,13 @@ import org.hyperledger.besu.ethereum.eth.manager.exceptions.PeerDisconnectedExce
 import org.hyperledger.besu.ethereum.eth.messages.NodeDataMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNotConnected;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.concurrent.CancellationException;
 import java.util.function.Consumer;
 
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -59,9 +59,11 @@ public class EthPeersTest {
   public void comparesPeersWithHeightAndTd() {
     // Set peerA with better height, lower td
     final EthPeer peerA =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, UInt256.of(50), 20).getEthPeer();
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, UInt256.valueOf(50), 20)
+            .getEthPeer();
     final EthPeer peerB =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, UInt256.of(100), 10).getEthPeer();
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, UInt256.valueOf(100), 10)
+            .getEthPeer();
 
     assertThat(EthPeers.CHAIN_HEIGHT.compare(peerA, peerB)).isGreaterThan(0);
     assertThat(EthPeers.TOTAL_DIFFICULTY.compare(peerA, peerB)).isLessThan(0);
@@ -80,11 +82,11 @@ public class EthPeersTest {
   public void comparesPeersWithTdAndNoHeight() {
     final EthPeer peerA =
         EthProtocolManagerTestUtil.createPeer(
-                ethProtocolManager, UInt256.of(100), OptionalLong.empty())
+                ethProtocolManager, UInt256.valueOf(100), OptionalLong.empty())
             .getEthPeer();
     final EthPeer peerB =
         EthProtocolManagerTestUtil.createPeer(
-                ethProtocolManager, UInt256.of(50), OptionalLong.empty())
+                ethProtocolManager, UInt256.valueOf(50), OptionalLong.empty())
             .getEthPeer();
 
     // Sanity check

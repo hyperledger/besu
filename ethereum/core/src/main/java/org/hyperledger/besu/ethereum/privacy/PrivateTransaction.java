@@ -25,16 +25,16 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.BytesValues;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 /** An operation submitted by an external actor to be applied to the system. */
 public class PrivateTransaction {
@@ -64,15 +64,15 @@ public class PrivateTransaction {
 
   private final SECP256K1.Signature signature;
 
-  private final BytesValue payload;
+  private final Bytes payload;
 
   private final Optional<BigInteger> chainId;
 
-  private final BytesValue privateFrom;
+  private final Bytes privateFrom;
 
-  private final Optional<List<BytesValue>> privateFor;
+  private final Optional<List<Bytes>> privateFor;
 
-  private final Optional<BytesValue> privacyGroupId;
+  private final Optional<Bytes> privacyGroupId;
 
   private final Restriction restriction;
 
@@ -99,11 +99,11 @@ public class PrivateTransaction {
     final Builder builder =
         builder()
             .nonce(input.readLongScalar())
-            .gasPrice(input.readUInt256Scalar(Wei::wrap))
+            .gasPrice(Wei.of(input.readUInt256Scalar()))
             .gasLimit(input.readLongScalar())
-            .to(input.readBytesValue(v -> v.size() == 0 ? null : Address.wrap(v)))
-            .value(input.readUInt256Scalar(Wei::wrap))
-            .payload(input.readBytesValue());
+            .to(input.readBytes(v -> v.size() == 0 ? null : Address.wrap(v)))
+            .value(Wei.of(input.readUInt256Scalar()))
+            .payload(input.readBytes());
 
     final BigInteger v = input.readBigIntegerScalar();
     final byte recId;
@@ -117,13 +117,13 @@ public class PrivateTransaction {
       throw new RuntimeException(
           String.format("An unsupported encoded `v` value of %s was found", v));
     }
-    final BigInteger r = BytesValues.asUnsignedBigInteger(input.readUInt256Scalar().getBytes());
-    final BigInteger s = BytesValues.asUnsignedBigInteger(input.readUInt256Scalar().getBytes());
+    final BigInteger r = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
+    final BigInteger s = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
     final SECP256K1.Signature signature = SECP256K1.Signature.create(r, s, recId);
 
-    final BytesValue privateFrom = input.readBytesValue();
+    final Bytes privateFrom = input.readBytes();
     final Object privateForOrPrivacyGroupId = resolvePrivateForOrPrivacyGroupId(input.readAsRlp());
-    final Restriction restriction = convertToEnum(input.readBytesValue());
+    final Restriction restriction = convertToEnum(input.readBytes());
 
     input.leaveList();
 
@@ -133,27 +133,27 @@ public class PrivateTransaction {
       return builder
           .signature(signature)
           .privateFrom(privateFrom)
-          .privateFor((List<BytesValue>) privateForOrPrivacyGroupId)
+          .privateFor((List<Bytes>) privateForOrPrivacyGroupId)
           .restriction(restriction)
           .build();
     } else {
       return builder
           .signature(signature)
           .privateFrom(privateFrom)
-          .privacyGroupId((BytesValue) privateForOrPrivacyGroupId)
+          .privacyGroupId((Bytes) privateForOrPrivacyGroupId)
           .restriction(restriction)
           .build();
     }
   }
 
   private static Object resolvePrivateForOrPrivacyGroupId(final RLPInput item) {
-    return item.nextIsList() ? item.readList(RLPInput::readBytesValue) : item.readBytesValue();
+    return item.nextIsList() ? item.readList(RLPInput::readBytes) : item.readBytes();
   }
 
-  private static Restriction convertToEnum(final BytesValue readBytesValue) {
-    if (readBytesValue.equals(Restriction.RESTRICTED.getBytes())) {
+  private static Restriction convertToEnum(final Bytes readBytes) {
+    if (readBytes.equals(Restriction.RESTRICTED.getBytes())) {
       return Restriction.RESTRICTED;
-    } else if (readBytesValue.equals(Restriction.UNRESTRICTED.getBytes())) {
+    } else if (readBytes.equals(Restriction.UNRESTRICTED.getBytes())) {
       return Restriction.UNRESTRICTED;
     }
     return Restriction.UNSUPPORTED;
@@ -188,12 +188,12 @@ public class PrivateTransaction {
       final Optional<Address> to,
       final Wei value,
       final SECP256K1.Signature signature,
-      final BytesValue payload,
+      final Bytes payload,
       final Address sender,
       final Optional<BigInteger> chainId,
-      final BytesValue privateFrom,
-      final Optional<List<BytesValue>> privateFor,
-      final Optional<BytesValue> privacyGroupId,
+      final Bytes privateFrom,
+      final Optional<List<Bytes>> privateFor,
+      final Optional<Bytes> privacyGroupId,
       final Restriction restriction) {
     this.nonce = nonce;
     this.gasPrice = gasPrice;
@@ -272,7 +272,7 @@ public class PrivateTransaction {
    *
    * @return the transaction payload
    */
-  public BytesValue getPayload() {
+  public Bytes getPayload() {
     return payload;
   }
 
@@ -293,7 +293,7 @@ public class PrivateTransaction {
    *
    * @return the enclave public key of the sender.
    */
-  public BytesValue getPrivateFrom() {
+  public Bytes getPrivateFrom() {
     return privateFrom;
   }
 
@@ -302,7 +302,7 @@ public class PrivateTransaction {
    *
    * @return the enclave public keys of the receivers
    */
-  public Optional<List<BytesValue>> getPrivateFor() {
+  public Optional<List<Bytes>> getPrivateFor() {
     return privateFor;
   }
 
@@ -311,7 +311,7 @@ public class PrivateTransaction {
    *
    * @return the enclave privacy group id.
    */
-  public Optional<BytesValue> getPrivacyGroupId() {
+  public Optional<Bytes> getPrivacyGroupId() {
     return privacyGroupId;
   }
 
@@ -372,15 +372,15 @@ public class PrivateTransaction {
     out.writeLongScalar(getNonce());
     out.writeUInt256Scalar(getGasPrice());
     out.writeLongScalar(getGasLimit());
-    out.writeBytesValue(getTo().isPresent() ? getTo().get() : BytesValue.EMPTY);
+    out.writeBytes(getTo().isPresent() ? getTo().get() : Bytes.EMPTY);
     out.writeUInt256Scalar(getValue());
-    out.writeBytesValue(getPayload());
+    out.writeBytes(getPayload());
     writeSignature(out);
-    out.writeBytesValue(getPrivateFrom());
+    out.writeBytes(getPrivateFrom());
     getPrivateFor()
-        .ifPresent(privateFor -> out.writeList(privateFor, (bv, rlpO) -> rlpO.writeBytesValue(bv)));
-    getPrivacyGroupId().ifPresent(out::writeBytesValue);
-    out.writeBytesValue(getRestriction().getBytes());
+        .ifPresent(privateFor -> out.writeList(privateFor, (bv, rlpO) -> rlpO.writeBytes(bv)));
+    getPrivacyGroupId().ifPresent(out::writeBytes);
+    out.writeBytes(getRestriction().getBytes());
 
     out.endList();
   }
@@ -417,7 +417,7 @@ public class PrivateTransaction {
    */
   public Hash hash() {
     if (hash == null) {
-      final BytesValue rlp = RLP.encode(this::writeTo);
+      final Bytes rlp = RLP.encode(this::writeTo);
       hash = Hash.hash(rlp);
     }
     return hash;
@@ -438,7 +438,7 @@ public class PrivateTransaction {
    * @return the up-front cost for the gas the transaction can use.
    */
   public Wei getUpfrontGasCost() {
-    return Wei.of(getGasLimit()).times(getGasPrice());
+    return getGasPrice().multiply(getGasLimit());
   }
 
   /**
@@ -451,7 +451,7 @@ public class PrivateTransaction {
    * @return the up-front gas cost for the transaction
    */
   public Wei getUpfrontCost() {
-    return getUpfrontGasCost().plus(getValue());
+    return getUpfrontGasCost().add(getValue());
   }
 
   private static Bytes32 computeSenderRecoveryHash(
@@ -460,12 +460,12 @@ public class PrivateTransaction {
       final long gasLimit,
       final Address to,
       final Wei value,
-      final BytesValue payload,
+      final Bytes payload,
       final Optional<BigInteger> chainId,
-      final BytesValue privateFrom,
-      final Optional<List<BytesValue>> privateFor,
-      final Optional<BytesValue> privacyGroupId,
-      final BytesValue restriction) {
+      final Bytes privateFrom,
+      final Optional<List<Bytes>> privateFor,
+      final Optional<Bytes> privacyGroupId,
+      final Bytes restriction) {
     return keccak256(
         RLP.encode(
             out -> {
@@ -473,18 +473,18 @@ public class PrivateTransaction {
               out.writeLongScalar(nonce);
               out.writeUInt256Scalar(gasPrice);
               out.writeLongScalar(gasLimit);
-              out.writeBytesValue(to == null ? BytesValue.EMPTY : to);
+              out.writeBytes(to == null ? Bytes.EMPTY : to);
               out.writeUInt256Scalar(value);
-              out.writeBytesValue(payload);
+              out.writeBytes(payload);
               if (chainId.isPresent()) {
                 out.writeBigIntegerScalar(chainId.get());
                 out.writeUInt256Scalar(UInt256.ZERO);
                 out.writeUInt256Scalar(UInt256.ZERO);
               }
-              out.writeBytesValue(privateFrom);
-              privateFor.ifPresent(pF -> out.writeList(pF, (bv, rlpO) -> rlpO.writeBytesValue(bv)));
-              privacyGroupId.ifPresent(out::writeBytesValue);
-              out.writeBytesValue(restriction);
+              out.writeBytes(privateFrom);
+              privateFor.ifPresent(pF -> out.writeList(pF, (bv, rlpO) -> rlpO.writeBytes(bv)));
+              privacyGroupId.ifPresent(out::writeBytes);
+              out.writeBytes(restriction);
               out.endList();
             }));
   }
@@ -568,17 +568,17 @@ public class PrivateTransaction {
 
     protected SECP256K1.Signature signature;
 
-    protected BytesValue payload;
+    protected Bytes payload;
 
     protected Address sender;
 
     protected Optional<BigInteger> chainId = Optional.empty();
 
-    protected BytesValue privateFrom;
+    protected Bytes privateFrom;
 
-    protected Optional<List<BytesValue>> privateFor = Optional.empty();
+    protected Optional<List<Bytes>> privateFor = Optional.empty();
 
-    protected Optional<BytesValue> privacyGroupId = Optional.empty();
+    protected Optional<Bytes> privacyGroupId = Optional.empty();
 
     protected Restriction restriction;
 
@@ -612,7 +612,7 @@ public class PrivateTransaction {
       return this;
     }
 
-    public Builder payload(final BytesValue payload) {
+    public Builder payload(final Bytes payload) {
       this.payload = payload;
       return this;
     }
@@ -627,17 +627,17 @@ public class PrivateTransaction {
       return this;
     }
 
-    public Builder privacyGroupId(final BytesValue privacyGroupId) {
+    public Builder privacyGroupId(final Bytes privacyGroupId) {
       this.privacyGroupId = Optional.of(privacyGroupId);
       return this;
     }
 
-    public Builder privateFrom(final BytesValue privateFrom) {
+    public Builder privateFrom(final Bytes privateFrom) {
       this.privateFrom = privateFrom;
       return this;
     }
 
-    public Builder privateFor(final List<BytesValue> privateFor) {
+    public Builder privateFor(final List<Bytes> privateFor) {
       this.privateFor = Optional.of(privateFor);
       return this;
     }

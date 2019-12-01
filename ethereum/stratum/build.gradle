@@ -34,6 +34,8 @@ dependencies {
   implementation project(':ethereum:api')
   implementation project(':ethereum:core')
 
+  implementation 'org.apache.tuweni:tuweni-bytes'
+  implementation 'org.apache.tuweni:tuweni-units'
   implementation 'com.google.guava:guava'
   implementation 'io.vertx:vertx-core'
 

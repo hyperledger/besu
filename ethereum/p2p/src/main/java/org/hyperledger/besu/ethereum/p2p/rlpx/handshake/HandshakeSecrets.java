@@ -16,12 +16,11 @@ package org.hyperledger.besu.ethereum.p2p.rlpx.handshake;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-
 import java.util.Arrays;
 import java.util.Objects;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.bouncycastle.crypto.digests.KeccakDigest;
 
 /**
@@ -141,15 +140,15 @@ public class HandshakeSecrets {
   public String toString() {
     return "HandshakeSecrets{"
         + "aesSecret="
-        + BytesValue.wrap(aesSecret)
+        + Bytes.wrap(aesSecret)
         + ", macSecret="
-        + BytesValue.wrap(macSecret)
+        + Bytes.wrap(macSecret)
         + ", token="
-        + BytesValue.wrap(token)
+        + Bytes.wrap(token)
         + ", egressMac="
-        + BytesValue.wrap(snapshot(egressMac))
+        + Bytes.wrap(snapshot(egressMac))
         + ", ingressMac="
-        + BytesValue.wrap(snapshot(ingressMac))
+        + Bytes.wrap(snapshot(ingressMac))
         + '}';
   }
 

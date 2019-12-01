@@ -18,8 +18,9 @@ import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.vm.AbstractOperation;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class GasLimitOperation extends AbstractOperation {
 
@@ -35,7 +36,7 @@ public class GasLimitOperation extends AbstractOperation {
   @Override
   public void execute(final MessageFrame frame) {
     final Gas gasLimit = Gas.of(frame.getBlockHeader().getGasLimit());
-    final Bytes32 value = Bytes32.leftPad(BytesValue.of(gasLimit.getBytes()));
+    final Bytes32 value = Bytes32.leftPad(Bytes.of(gasLimit.getBytes()));
     frame.pushStackItem(value);
   }
 }

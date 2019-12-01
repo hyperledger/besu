@@ -14,15 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
-import static org.hyperledger.besu.util.uint.UInt256s.greaterThanOrEqualTo256;
-
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.vm.AbstractOperation;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.Bytes32s;
-import org.hyperledger.besu.util.uint.UInt256;
+
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class ShlOperation extends AbstractOperation {
 
@@ -37,13 +35,13 @@ public class ShlOperation extends AbstractOperation {
 
   @Override
   public void execute(final MessageFrame frame) {
-    final UInt256 shiftAmount = frame.popStackItem().asUInt256();
+    final UInt256 shiftAmount = UInt256.fromBytes(frame.popStackItem());
     final Bytes32 value = frame.popStackItem();
 
-    if (greaterThanOrEqualTo256(shiftAmount)) {
+    if (!shiftAmount.fitsInt() || shiftAmount.intValue() >= 256) {
       frame.pushStackItem(Bytes32.ZERO);
     } else {
-      frame.pushStackItem(Bytes32s.shiftLeft(value, shiftAmount.toInt()));
+      frame.pushStackItem(value.shiftLeft(shiftAmount.intValue()));
     }
   }
 }

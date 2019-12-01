@@ -20,14 +20,13 @@ import org.hyperledger.besu.crypto.SECP256K1.PublicKey;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.DelegatingBytesValue;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.DelegatingBytes;
 
 /** A 160-bits account address. */
-public class Address extends DelegatingBytesValue
-    implements org.hyperledger.besu.plugin.data.Address {
+public class Address extends DelegatingBytes implements org.hyperledger.besu.plugin.data.Address {
 
   public static final int SIZE = 20;
 
@@ -49,16 +48,16 @@ public class Address extends DelegatingBytesValue
 
   public static final Address ZERO = Address.fromHexString("0x0");
 
-  protected Address(final BytesValue bytes) {
+  protected Address(final Bytes bytes) {
     super(bytes);
-    checkArgument(
-        bytes.size() == SIZE,
-        "An account address must be be %s bytes long, got %s",
-        SIZE,
-        bytes.size());
   }
 
-  public static Address wrap(final BytesValue value) {
+  public static Address wrap(final Bytes value) {
+    checkArgument(
+        value.size() == SIZE,
+        "An account address must be be %s bytes long, got %s",
+        SIZE,
+        value.size());
     return new Address(value);
   }
 
@@ -69,7 +68,7 @@ public class Address extends DelegatingBytesValue
    * @return the input's corresponding address
    */
   public static Address readFrom(final RLPInput input) {
-    final BytesValue bytes = input.readBytesValue();
+    final Bytes bytes = input.readBytes();
     if (bytes.size() != SIZE) {
       throw new RLPException(
           String.format("Address unexpected size of %s (needs %s)", bytes.size(), SIZE));
@@ -102,8 +101,7 @@ public class Address extends DelegatingBytesValue
   @JsonCreator
   public static Address fromHexString(final String str) {
     if (str == null) return null;
-
-    return new Address(BytesValue.fromHexStringLenient(str, SIZE));
+    return wrap(Bytes.fromHexStringLenient(str, SIZE));
   }
 
   /**
@@ -117,8 +115,13 @@ public class Address extends DelegatingBytesValue
    */
   public static Address fromHexStringStrict(final String str) {
     checkArgument(str != null);
-
-    return new Address(BytesValue.fromHexString(str));
+    final Bytes value = Bytes.fromHexString(str);
+    checkArgument(
+        value.size() == SIZE,
+        "An account address must be be %s bytes long, got %s",
+        SIZE,
+        value.size());
+    return new Address(value);
   }
 
   private static Address precompiled(final int value) {
@@ -126,7 +129,7 @@ public class Address extends DelegatingBytesValue
     checkArgument(value < Byte.MAX_VALUE);
     final byte[] address = new byte[SIZE];
     address[SIZE - 1] = (byte) value;
-    return new Address(BytesValue.wrap(address));
+    return new Address(Bytes.wrap(address));
   }
 
   public static Address privacyPrecompiled(final int value) {
@@ -148,7 +151,7 @@ public class Address extends DelegatingBytesValue
             RLP.encode(
                 out -> {
                   out.startList();
-                  out.writeBytesValue(senderAddress);
+                  out.writeBytes(senderAddress);
                   out.writeLongScalar(nonce);
                   out.endList();
                 })));
@@ -163,26 +166,30 @@ public class Address extends DelegatingBytesValue
    * @return The generated address of the created private contract.
    */
   public static Address privateContractAddress(
-      final Address senderAddress, final long nonce, final BytesValue privacyGroupId) {
+      final Address senderAddress, final long nonce, final Bytes privacyGroupId) {
     return Address.extract(
         Hash.hash(
             RLP.encode(
                 out -> {
                   out.startList();
-                  out.writeBytesValue(senderAddress);
+                  out.writeBytes(senderAddress);
                   out.writeLongScalar(nonce);
-                  out.writeBytesValue(privacyGroupId);
+                  out.writeBytes(privacyGroupId);
                   out.endList();
                 })));
   }
 
   public static Address fromPlugin(final org.hyperledger.besu.plugin.data.Address logger) {
-    return logger instanceof Address ? (Address) logger : wrap(BytesValue.fromPlugin(logger));
+    return logger instanceof Address ? (Address) logger : wrap(Bytes.wrap(logger.getByteArray()));
   }
 
   @Override
-  public Address copy() {
-    final BytesValue copiedStorage = wrapped.copy();
-    return Address.wrap(copiedStorage);
+  public byte[] getByteArray() {
+    return toArrayUnsafe();
+  }
+
+  @Override
+  public String getHexString() {
+    return toHexString();
   }
 }

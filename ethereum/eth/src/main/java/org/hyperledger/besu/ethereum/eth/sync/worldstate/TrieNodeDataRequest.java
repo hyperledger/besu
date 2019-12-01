@@ -17,11 +17,12 @@ package org.hyperledger.besu.ethereum.eth.sync.worldstate;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.trie.Node;
 import org.hyperledger.besu.ethereum.trie.TrieNodeDecoder;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
+
+import org.apache.tuweni.bytes.Bytes;
 
 abstract class TrieNodeDataRequest extends NodeDataRequest {
 
@@ -36,7 +37,7 @@ abstract class TrieNodeDataRequest extends NodeDataRequest {
       return Stream.empty();
     }
 
-    final List<Node<BytesValue>> nodes = TrieNodeDecoder.decodeNodes(getData());
+    final List<Node<Bytes>> nodes = TrieNodeDecoder.decodeNodes(getData());
     return nodes.stream()
         .flatMap(
             node -> {
@@ -50,11 +51,11 @@ abstract class TrieNodeDataRequest extends NodeDataRequest {
             });
   }
 
-  private boolean nodeIsHashReferencedDescendant(final Node<BytesValue> node) {
+  private boolean nodeIsHashReferencedDescendant(final Node<Bytes> node) {
     return !Objects.equals(node.getHash(), getHash()) && node.isReferencedByHash();
   }
 
   protected abstract NodeDataRequest createChildNodeDataRequest(final Hash childHash);
 
-  protected abstract Stream<NodeDataRequest> getRequestsFromTrieNodeValue(final BytesValue value);
+  protected abstract Stream<NodeDataRequest> getRequestsFromTrieNodeValue(final Bytes value);
 }

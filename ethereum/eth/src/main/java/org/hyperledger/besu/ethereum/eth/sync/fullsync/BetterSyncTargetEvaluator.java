@@ -18,9 +18,10 @@ import org.hyperledger.besu.ethereum.eth.manager.ChainState;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.Optional;
+
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class BetterSyncTargetEvaluator {
 
@@ -50,7 +51,7 @@ public class BetterSyncTargetEvaluator {
               final UInt256 tdDifference =
                   bestPeerChainState
                       .getEstimatedTotalDifficulty()
-                      .minus(currentPeerChainState.getBestBlock().getTotalDifficulty());
+                      .subtract(currentPeerChainState.getBestBlock().getTotalDifficulty());
               if (tdDifference.compareTo(config.getDownloaderChangeTargetThresholdByTd()) > 0) {
                 return true;
               }

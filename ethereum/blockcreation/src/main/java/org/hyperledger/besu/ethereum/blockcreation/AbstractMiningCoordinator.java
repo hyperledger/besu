@@ -28,13 +28,13 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.util.Subscribers;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 public abstract class AbstractMiningCoordinator<
         C, M extends BlockMiner<C, ? extends AbstractBlockCreator<C>>>
@@ -204,7 +204,7 @@ public abstract class AbstractMiningCoordinator<
   }
 
   @Override
-  public void setExtraData(final BytesValue extraData) {
+  public void setExtraData(final Bytes extraData) {
     executor.setExtraData(extraData);
   }
 

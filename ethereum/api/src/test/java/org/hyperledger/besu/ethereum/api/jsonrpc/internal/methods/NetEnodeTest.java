@@ -27,10 +27,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeer;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
@@ -43,8 +43,8 @@ public class NetEnodeTest {
 
   private NetEnode method;
 
-  private final BytesValue nodeId =
-      BytesValue.fromHexString(
+  private final Bytes nodeId =
+      Bytes.fromHexString(
           "0x0f1b319e32017c3fcb221841f0f978701b4e9513fe6a567a2db43d43381a9c7e3dfe7cae13cbc2f56943400bacaf9082576ab087cd51983b17d729ae796f6807");
 
   private final DefaultPeer defaultPeer =

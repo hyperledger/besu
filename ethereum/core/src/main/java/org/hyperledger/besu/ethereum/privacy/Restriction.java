@@ -16,20 +16,20 @@ package org.hyperledger.besu.ethereum.privacy;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-import org.hyperledger.besu.util.bytes.BytesValue;
+import org.apache.tuweni.bytes.Bytes;
 
 public enum Restriction {
-  RESTRICTED(BytesValue.wrap("restricted".getBytes(UTF_8))),
-  UNRESTRICTED(BytesValue.wrap("unrestricted".getBytes(UTF_8))),
-  UNSUPPORTED(BytesValue.EMPTY);
+  RESTRICTED(Bytes.wrap("restricted".getBytes(UTF_8))),
+  UNRESTRICTED(Bytes.wrap("unrestricted".getBytes(UTF_8))),
+  UNSUPPORTED(Bytes.EMPTY);
 
-  private final BytesValue bytes;
+  private final Bytes bytes;
 
-  Restriction(final BytesValue bytes) {
+  Restriction(final Bytes bytes) {
     this.bytes = bytes;
   }
 
-  public BytesValue getBytes() {
+  public Bytes getBytes() {
     return bytes;
   }
 }

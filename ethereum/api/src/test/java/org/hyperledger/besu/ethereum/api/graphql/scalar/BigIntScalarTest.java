@@ -17,13 +17,13 @@ package org.hyperledger.besu.ethereum.api.graphql.scalar;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.api.graphql.internal.Scalars;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import graphql.language.StringValue;
 import graphql.schema.CoercingParseLiteralException;
 import graphql.schema.CoercingParseValueException;
 import graphql.schema.CoercingSerializeException;
 import graphql.schema.GraphQLScalarType;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;

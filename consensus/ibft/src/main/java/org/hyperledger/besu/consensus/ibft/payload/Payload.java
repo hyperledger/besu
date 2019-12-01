@@ -18,13 +18,14 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-import org.hyperledger.besu.util.bytes.BytesValue;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public interface Payload extends RoundSpecific {
 
   void writeTo(final RLPOutput rlpOutput);
 
-  default BytesValue encoded() {
+  default Bytes encoded() {
     BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
     writeTo(rlpOutput);
 

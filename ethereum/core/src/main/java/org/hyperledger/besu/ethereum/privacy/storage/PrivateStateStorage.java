@@ -17,24 +17,25 @@ package org.hyperledger.besu.ethereum.privacy.storage;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.LogSeries;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+
 public interface PrivateStateStorage {
 
   @Deprecated
-  Optional<Hash> getLatestStateRoot(BytesValue privacyId);
+  Optional<Hash> getLatestStateRoot(Bytes privacyId);
 
   Optional<List<Log>> getTransactionLogs(Bytes32 transactionHash);
 
-  Optional<BytesValue> getTransactionOutput(Bytes32 transactionHash);
+  Optional<Bytes> getTransactionOutput(Bytes32 transactionHash);
 
-  Optional<BytesValue> getStatus(Bytes32 transactionHash);
+  Optional<Bytes> getStatus(Bytes32 transactionHash);
 
-  Optional<BytesValue> getRevertReason(Bytes32 transactionHash);
+  Optional<Bytes> getRevertReason(Bytes32 transactionHash);
 
   Optional<PrivateTransactionMetadata> getTransactionMetadata(
       Bytes32 blockHash, Bytes32 transactionHash);
@@ -48,15 +49,15 @@ public interface PrivateStateStorage {
   interface Updater {
 
     @Deprecated
-    Updater putLatestStateRoot(BytesValue privacyId, Hash privateStateHash);
+    Updater putLatestStateRoot(Bytes privacyId, Hash privateStateHash);
 
     Updater putTransactionLogs(Bytes32 transactionHash, LogSeries logs);
 
-    Updater putTransactionResult(Bytes32 transactionHash, BytesValue events);
+    Updater putTransactionResult(Bytes32 transactionHash, Bytes events);
 
-    Updater putTransactionStatus(Bytes32 transactionHash, BytesValue status);
+    Updater putTransactionStatus(Bytes32 transactionHash, Bytes status);
 
-    Updater putTransactionRevertReason(Bytes32 txHash, BytesValue bytesValue);
+    Updater putTransactionRevertReason(Bytes32 txHash, Bytes bytesValue);
 
     Updater putTransactionMetadata(
         Bytes32 blockHash, Bytes32 transactionHash, PrivateTransactionMetadata metadata);

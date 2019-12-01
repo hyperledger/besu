@@ -26,11 +26,11 @@ import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.BytesValues;
 
 import java.net.InetAddress;
 import java.util.Optional;
+
+import org.apache.tuweni.bytes.Bytes;
 
 /**
  * Controller that can read from a smart contract that exposes the permissioning call
@@ -44,24 +44,22 @@ public class NodeSmartContractPermissioningController implements NodePermissioni
   private static final String FUNCTION_SIGNATURE =
       "connectionAllowed(bytes32,bytes32,bytes16,uint16,bytes32,bytes32,bytes16,uint16)";
   // hashed function signature for connection allowed call
-  private static final BytesValue FUNCTION_SIGNATURE_HASH = hashSignature(FUNCTION_SIGNATURE);
+  private static final Bytes FUNCTION_SIGNATURE_HASH = hashSignature(FUNCTION_SIGNATURE);
   private final Counter checkCounter;
   private final Counter checkCounterPermitted;
   private final Counter checkCounterUnpermitted;
 
   // The first 4 bytes of the hash of the full textual signature of the function is used in
   // contract calls to determine the function being called
-  private static BytesValue hashSignature(final String signature) {
-    return Hash.keccak256(BytesValue.of(signature.getBytes(UTF_8))).slice(0, 4);
+  private static Bytes hashSignature(final String signature) {
+    return Hash.keccak256(Bytes.of(signature.getBytes(UTF_8))).slice(0, 4);
   }
 
   // True from a contract is 1 filled to 32 bytes
-  private static final BytesValue TRUE_RESPONSE =
-      BytesValue.fromHexString(
-          "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-  private static final BytesValue FALSE_RESPONSE =
-      BytesValue.fromHexString(
-          "0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+  private static final Bytes TRUE_RESPONSE =
+      Bytes.fromHexString("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+  private static final Bytes FALSE_RESPONSE =
+      Bytes.fromHexString("0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 
   /**
    * Creates a permissioning controller attached to a blockchain
@@ -104,7 +102,7 @@ public class NodeSmartContractPermissioningController implements NodePermissioni
   @Override
   public boolean isPermitted(final EnodeURL sourceEnode, final EnodeURL destinationEnode) {
     this.checkCounter.inc();
-    final BytesValue payload = createPayload(sourceEnode, destinationEnode);
+    final Bytes payload = createPayload(sourceEnode, destinationEnode);
     final CallParameter callParams =
         new CallParameter(null, contractAddress, -1, null, null, payload);
 
@@ -140,17 +138,17 @@ public class NodeSmartContractPermissioningController implements NodePermissioni
 
   // Checks the returned bytes from the permissioning contract call to see if it's a value we
   // understand
-  public static Boolean checkTransactionResult(final BytesValue result) {
+  public static Boolean checkTransactionResult(final Bytes result) {
     // booleans are padded to 32 bytes
     if (result.size() != 32) {
       throw new IllegalArgumentException("Unexpected result size");
     }
 
     // 0 is false
-    if (result.compareTo(FALSE_RESPONSE) == 0) {
+    if (result.equals(FALSE_RESPONSE)) {
       return false;
       // 1 filled to 32 bytes is true
-    } else if (result.compareTo(TRUE_RESPONSE) == 0) {
+    } else if (result.equals(TRUE_RESPONSE)) {
       return true;
       // Anything else is wrong
     } else {
@@ -159,29 +157,28 @@ public class NodeSmartContractPermissioningController implements NodePermissioni
   }
 
   // Assemble the bytevalue payload to call the contract
-  public static BytesValue createPayload(
-      final EnodeURL sourceEnode, final EnodeURL destinationEnode) {
+  public static Bytes createPayload(final EnodeURL sourceEnode, final EnodeURL destinationEnode) {
     return createPayload(FUNCTION_SIGNATURE_HASH, sourceEnode, destinationEnode);
   }
 
-  public static BytesValue createPayload(
-      final BytesValue signature, final EnodeURL sourceEnode, final EnodeURL destinationEnode) {
-    return BytesValues.concatenate(
+  public static Bytes createPayload(
+      final Bytes signature, final EnodeURL sourceEnode, final EnodeURL destinationEnode) {
+    return Bytes.concatenate(
         signature, encodeEnodeUrl(sourceEnode), encodeEnodeUrl(destinationEnode));
   }
 
-  public static BytesValue createPayload(final BytesValue signature, final EnodeURL enodeURL) {
-    return BytesValues.concatenate(signature, encodeEnodeUrl(enodeURL));
+  public static Bytes createPayload(final Bytes signature, final EnodeURL enodeURL) {
+    return Bytes.concatenate(signature, encodeEnodeUrl(enodeURL));
   }
 
-  private static BytesValue encodeEnodeUrl(final EnodeURL enode) {
-    return BytesValues.concatenate(
+  private static Bytes encodeEnodeUrl(final EnodeURL enode) {
+    return Bytes.concatenate(
         enode.getNodeId(), encodeIp(enode.getIp()), encodePort(enode.getListeningPortOrZero()));
   }
 
   // As a function parameter an ip needs to be the appropriate number of bytes, big endian, and
   // filled to 32 bytes
-  private static BytesValue encodeIp(final InetAddress addr) {
+  private static Bytes encodeIp(final InetAddress addr) {
     // InetAddress deals with giving us the right number of bytes
     final byte[] address = addr.getAddress();
     final byte[] res = new byte[32];
@@ -195,14 +192,14 @@ public class NodeSmartContractPermissioningController implements NodePermissioni
     } else {
       System.arraycopy(address, 0, res, 0, address.length);
     }
-    return BytesValue.wrap(res);
+    return Bytes.wrap(res);
   }
 
   // The port, a uint16, needs to be 2 bytes, little endian, and filled to 32 bytes
-  private static BytesValue encodePort(final Integer port) {
+  private static Bytes encodePort(final Integer port) {
     final byte[] res = new byte[32];
     res[31] = (byte) ((port) & 0xFF);
     res[30] = (byte) ((port >> 8) & 0xFF);
-    return BytesValue.wrap(res);
+    return Bytes.wrap(res);
   }
 }

@@ -43,7 +43,9 @@ dependencies {
   implementation project(':crypto')
 
   implementation 'org.springframework.security:spring-security-crypto'
+  implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.apache.tuweni:tuweni-toml'
+  implementation 'org.apache.tuweni:tuweni-units'
   implementation 'com.graphql-java:graphql-java'
   implementation 'com.google.guava:guava'
   implementation 'io.vertx:vertx-core'

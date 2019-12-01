@@ -26,9 +26,10 @@ import org.hyperledger.besu.crypto.SECP256K1.Signature;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Util;
-import org.hyperledger.besu.util.bytes.BytesValues;
 
 import java.util.Optional;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class MessageFactory {
 
@@ -86,9 +87,8 @@ public class MessageFactory {
 
   public static Hash hashForSignature(final Payload unsignedMessageData) {
     return Hash.hash(
-        BytesValues.concatenate(
-            BytesValues.ofUnsignedByte(unsignedMessageData.getMessageType()),
-            unsignedMessageData.encoded()));
+        Bytes.concatenate(
+            Bytes.of(unsignedMessageData.getMessageType()), unsignedMessageData.encoded()));
   }
 
   private static Signature sign(final Payload unsignedMessageData, final KeyPair nodeKeys) {

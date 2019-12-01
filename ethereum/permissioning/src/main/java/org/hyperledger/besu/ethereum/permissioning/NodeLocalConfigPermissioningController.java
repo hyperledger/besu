@@ -21,7 +21,6 @@ import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.util.Subscribers;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.io.IOException;
 import java.net.URI;
@@ -38,6 +37,7 @@ import java.util.stream.Collectors;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 public class NodeLocalConfigPermissioningController implements NodePermissioningProvider {
 
@@ -45,7 +45,7 @@ public class NodeLocalConfigPermissioningController implements NodePermissioning
 
   private LocalPermissioningConfiguration configuration;
   private final List<EnodeURL> fixedNodes;
-  private final BytesValue localNodeId;
+  private final Bytes localNodeId;
   private final List<EnodeURL> nodesWhitelist = new ArrayList<>();
   private final WhitelistPersistor whitelistPersistor;
   private final Subscribers<Consumer<NodeWhitelistUpdatedEvent>> nodeWhitelistUpdatedObservers =
@@ -58,7 +58,7 @@ public class NodeLocalConfigPermissioningController implements NodePermissioning
   public NodeLocalConfigPermissioningController(
       final LocalPermissioningConfiguration permissioningConfiguration,
       final List<EnodeURL> fixedNodes,
-      final BytesValue localNodeId,
+      final Bytes localNodeId,
       final MetricsSystem metricsSystem) {
     this(
         permissioningConfiguration,
@@ -71,7 +71,7 @@ public class NodeLocalConfigPermissioningController implements NodePermissioning
   public NodeLocalConfigPermissioningController(
       final LocalPermissioningConfiguration configuration,
       final List<EnodeURL> fixedNodes,
-      final BytesValue localNodeId,
+      final Bytes localNodeId,
       final WhitelistPersistor whitelistPersistor,
       final MetricsSystem metricsSystem) {
     this.configuration = configuration;

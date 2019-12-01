@@ -20,10 +20,11 @@ import static org.hyperledger.besu.crypto.Hash.keccak256;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.plugin.data.UnformattedData;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.MutableBytesValue;
 
 import java.util.Collection;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.MutableBytes;
 
 /*
  * Bloom filter implementation for storing persistent logs, describes a 2048-bit representation of
@@ -41,13 +42,13 @@ public class LogsBloomFilter implements UnformattedData {
   private static final int LEAST_SIGNIFICANT_THREE_BITS = 0x7;
   private static final int BITS_IN_BYTE = 8;
 
-  private final MutableBytesValue data;
+  private final MutableBytes data;
 
   public LogsBloomFilter() {
-    this.data = MutableBytesValue.create(BYTE_SIZE);
+    this.data = MutableBytes.create(BYTE_SIZE);
   }
 
-  public LogsBloomFilter(final BytesValue data) {
+  public LogsBloomFilter(final Bytes data) {
     checkArgument(
         data.size() == BYTE_SIZE,
         "Invalid size for bloom filter backing array: expected %s but got %s",
@@ -57,11 +58,11 @@ public class LogsBloomFilter implements UnformattedData {
   }
 
   public static LogsBloomFilter fromHexString(final String hexString) {
-    return new LogsBloomFilter(BytesValue.fromHexString(hexString));
+    return new LogsBloomFilter(Bytes.fromHexString(hexString));
   }
 
   public static LogsBloomFilter empty() {
-    return new LogsBloomFilter(BytesValue.wrap(new byte[LogsBloomFilter.BYTE_SIZE]));
+    return new LogsBloomFilter(Bytes.wrap(new byte[LogsBloomFilter.BYTE_SIZE]));
   }
 
   /**
@@ -76,9 +77,9 @@ public class LogsBloomFilter implements UnformattedData {
     return bloom;
   }
 
-  public static LogsBloomFilter computeBytes(final BytesValue bytesValue) {
+  public static LogsBloomFilter computeBytes(final Bytes value) {
     final LogsBloomFilter bloom = new LogsBloomFilter();
-    bloom.insertBytesValue(bytesValue);
+    bloom.insertBytes(value);
     return bloom;
   }
 
@@ -89,7 +90,7 @@ public class LogsBloomFilter implements UnformattedData {
    * @return the input's corresponding bloom filter
    */
   public static LogsBloomFilter readFrom(final RLPInput input) {
-    final BytesValue bytes = input.readBytesValue();
+    final Bytes bytes = input.readBytes();
     if (bytes.size() != BYTE_SIZE) {
       throw new RLPException(
           String.format(
@@ -104,7 +105,7 @@ public class LogsBloomFilter implements UnformattedData {
    *
    * @param hashValue The hash of the log item.
    */
-  private void setBits(final BytesValue hashValue) {
+  private void setBits(final Bytes hashValue) {
     for (int counter = 0; counter < 6; counter += 2) {
       final int setBloomBit =
           ((hashValue.get(counter) & LEAST_SIGNIFICANT_THREE_BITS) << BITS_IN_BYTE)
@@ -130,20 +131,24 @@ public class LogsBloomFilter implements UnformattedData {
     return data.hashCode();
   }
 
-  public BytesValue getBytes() {
+  public Bytes getBytes() {
     return data;
   }
 
   public void insertLog(final Log log) {
-    insertBytesValue(log.getLogger());
+    insertBytes((Bytes) log.getLogger());
 
-    for (final LogTopic topic : log.getTopics()) {
-      insertBytesValue(topic);
+    for (final UnformattedData topic : log.getTopics()) {
+      insertBytes(topic);
     }
   }
 
-  private void insertBytesValue(final BytesValue bytesValue) {
-    setBits(keccak256(bytesValue));
+  private void insertBytes(final Bytes value) {
+    setBits(keccak256(value));
+  }
+
+  private void insertBytes(final UnformattedData value) {
+    insertBytes(Bytes.wrap(value.getByteArray()));
   }
 
   private void setBit(final int index) {
@@ -181,7 +186,7 @@ public class LogsBloomFilter implements UnformattedData {
 
   @Override
   public byte[] getByteArray() {
-    return data.getByteArray();
+    return data.toArray();
   }
 
   @Override
@@ -191,6 +196,6 @@ public class LogsBloomFilter implements UnformattedData {
 
   @Override
   public String getHexString() {
-    return data.getHexString();
+    return data.toHexString();
   }
 }

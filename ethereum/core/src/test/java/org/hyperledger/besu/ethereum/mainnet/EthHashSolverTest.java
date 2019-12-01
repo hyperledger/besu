@@ -22,7 +22,6 @@ import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.util.Subscribers;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.Arrays;
 import java.util.List;
@@ -32,6 +31,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Lists;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Test;
 
 public class EthHashSolverTest {

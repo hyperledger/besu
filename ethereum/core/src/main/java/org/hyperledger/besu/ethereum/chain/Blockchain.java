@@ -21,11 +21,12 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
+
+import org.apache.tuweni.units.bigints.UInt256;
 
 /** An interface for reading data from the blockchain. */
 public interface Blockchain {

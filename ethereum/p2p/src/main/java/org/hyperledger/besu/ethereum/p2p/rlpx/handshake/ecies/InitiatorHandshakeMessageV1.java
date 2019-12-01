@@ -19,11 +19,10 @@ import static org.hyperledger.besu.crypto.SECP256K1.calculateKeyAgreement;
 
 import org.hyperledger.besu.crypto.Hash;
 import org.hyperledger.besu.crypto.SECP256K1;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.Bytes32s;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.MutableBytes32;
-import org.hyperledger.besu.util.bytes.MutableBytesValue;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.bytes.MutableBytes;
 
 /**
  * The initiator's handshake message.
@@ -87,9 +86,7 @@ public final class InitiatorHandshakeMessageV1 implements InitiatorHandshakeMess
     final Bytes32 ephPubKeyHash = Hash.keccak256(ephKeyPair.getPublicKey().getEncodedBytes());
 
     // XOR of the static shared secret and the generated nonce.
-    final MutableBytes32 toSign = MutableBytes32.create();
-    Bytes32s.xor(staticSharedSecret, nonce, toSign);
-    final SECP256K1.Signature signature = SECP256K1.sign(toSign, ephKeyPair);
+    final SECP256K1.Signature signature = SECP256K1.sign(staticSharedSecret.xor(nonce), ephKeyPair);
     return new InitiatorHandshakeMessageV1(
         ourPubKey, signature, ephKeyPair.getPublicKey(), ephPubKeyHash, nonce, token);
   }
@@ -102,7 +99,7 @@ public final class InitiatorHandshakeMessageV1 implements InitiatorHandshakeMess
    * @return The decoded message.
    */
   public static InitiatorHandshakeMessageV1 decode(
-      final BytesValue bytes, final SECP256K1.KeyPair keyPair) {
+      final Bytes bytes, final SECP256K1.KeyPair keyPair) {
     checkState(bytes.size() == MESSAGE_LENGTH);
 
     int offset = 0;
@@ -123,9 +120,8 @@ public final class InitiatorHandshakeMessageV1 implements InitiatorHandshakeMess
     final boolean token = bytes.get(offset) == 0x01;
 
     final Bytes32 staticSharedSecret = calculateKeyAgreement(keyPair.getPrivateKey(), pubKey);
-    final Bytes32 toSign = Bytes32s.xor(staticSharedSecret, nonce);
     final SECP256K1.PublicKey ephPubKey =
-        SECP256K1.PublicKey.recoverFromSignature(toSign, signature)
+        SECP256K1.PublicKey.recoverFromSignature(staticSharedSecret.xor(nonce), signature)
             .orElseThrow(() -> new RuntimeException("Could not recover public key from signature"));
 
     return new InitiatorHandshakeMessageV1(
@@ -133,8 +129,8 @@ public final class InitiatorHandshakeMessageV1 implements InitiatorHandshakeMess
   }
 
   @Override
-  public BytesValue encode() {
-    final MutableBytesValue bytes = MutableBytesValue.create(MESSAGE_LENGTH);
+  public Bytes encode() {
+    final MutableBytes bytes = MutableBytes.create(MESSAGE_LENGTH);
     signature.encodedBytes().copyTo(bytes, 0);
     ephPubKeyHash.copyTo(bytes, ECIESHandshaker.SIGNATURE_LENGTH);
     pubKey

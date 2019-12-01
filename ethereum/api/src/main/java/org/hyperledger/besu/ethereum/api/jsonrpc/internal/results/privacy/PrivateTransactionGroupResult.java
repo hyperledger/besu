@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.privacy;
 
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
-import org.hyperledger.besu.util.bytes.BytesValues;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -45,7 +44,7 @@ public class PrivateTransactionGroupResult extends PrivateTransactionResult {
 
   public PrivateTransactionGroupResult(final PrivateTransaction tx) {
     super(tx);
-    this.privacyGroupId = BytesValues.asBase64String(tx.getPrivacyGroupId().get());
+    this.privacyGroupId = tx.getPrivacyGroupId().get().toBase64String();
   }
 
   @JsonGetter(value = "privacyGroupId")

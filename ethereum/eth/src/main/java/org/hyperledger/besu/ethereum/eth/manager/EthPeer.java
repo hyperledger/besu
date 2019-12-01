@@ -28,8 +28,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNotConnected;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.time.Clock;
 import java.util.Collections;
@@ -45,6 +43,8 @@ import java.util.function.Consumer;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class EthPeer {
   private static final Logger LOG = LogManager.getLogger();
@@ -355,7 +355,7 @@ public class EthPeer {
     return outstandingRequests() < MAX_OUTSTANDING_REQUESTS;
   }
 
-  public BytesValue nodeId() {
+  public Bytes nodeId() {
     return connection.getPeerInfo().getNodeId();
   }
 

@@ -27,7 +27,6 @@ import org.hyperledger.besu.ethereum.p2p.discovery.internal.PingPacketData;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -39,11 +38,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.tuweni.bytes.Bytes;
+
 public class PeerDiscoveryTestHelper {
   private static final String LOOPBACK_IP_ADDR = "127.0.0.1";
 
   private final AtomicInteger nextAvailablePort = new AtomicInteger(1);
-  Map<BytesValue, MockPeerDiscoveryAgent> agents = new HashMap<>();
+  Map<Bytes, MockPeerDiscoveryAgent> agents = new HashMap<>();
 
   public static List<SECP256K1.KeyPair> generateKeyPairs(final int count) {
     return Stream.generate(SECP256K1.KeyPair::generate).limit(count).collect(Collectors.toList());
@@ -68,7 +69,7 @@ public class PeerDiscoveryTestHelper {
   }
 
   public DiscoveryPeer createDiscoveryPeer(final KeyPair keyPair) {
-    final BytesValue peerId = keyPair.getPublicKey().getEncodedBytes();
+    final Bytes peerId = keyPair.getPublicKey().getEncodedBytes();
     final int port = nextAvailablePort.incrementAndGet();
     return DiscoveryPeer.fromEnode(
         EnodeURL.builder()
@@ -177,7 +178,7 @@ public class PeerDiscoveryTestHelper {
   }
 
   public static class AgentBuilder {
-    private final Map<BytesValue, MockPeerDiscoveryAgent> agents;
+    private final Map<Bytes, MockPeerDiscoveryAgent> agents;
     private final AtomicInteger nextAvailablePort;
 
     private List<EnodeURL> bootnodes = Collections.emptyList();
@@ -188,8 +189,7 @@ public class PeerDiscoveryTestHelper {
     private KeyPair keyPair = SECP256K1.KeyPair.generate();
 
     private AgentBuilder(
-        final Map<BytesValue, MockPeerDiscoveryAgent> agents,
-        final AtomicInteger nextAvailablePort) {
+        final Map<Bytes, MockPeerDiscoveryAgent> agents, final AtomicInteger nextAvailablePort) {
       this.agents = agents;
       this.nextAvailablePort = nextAvailablePort;
     }

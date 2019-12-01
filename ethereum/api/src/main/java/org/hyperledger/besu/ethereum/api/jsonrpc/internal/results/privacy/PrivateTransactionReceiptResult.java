@@ -17,8 +17,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.privacy;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TransactionReceiptLogResult;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Log;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.BytesValues;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +25,7 @@ import java.util.stream.Collectors;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import org.apache.tuweni.bytes.Bytes;
 
 @JsonPropertyOrder({
   "contractAddress",
@@ -63,16 +62,16 @@ public class PrivateTransactionReceiptResult {
       final String from,
       final String to,
       final List<Log> logs,
-      final BytesValue output,
+      final Bytes output,
       final Hash blockHash,
       final long blockNumber,
       final int txIndex,
       final Hash commitmentHash,
       final Hash transactionHash,
-      final BytesValue privateFrom,
-      final List<BytesValue> privateFor,
-      final BytesValue privacyGroupId,
-      final BytesValue revertReason,
+      final Bytes privateFrom,
+      final List<Bytes> privateFor,
+      final Bytes privacyGroupId,
+      final Bytes revertReason,
       final String status) {
     this.contractAddress = contractAddress;
     this.from = from;
@@ -80,13 +79,12 @@ public class PrivateTransactionReceiptResult {
     this.output = output.toString();
     this.commitmentHash = commitmentHash.toString();
     this.transactionHash = transactionHash.toString();
-    this.privateFrom = privateFrom != null ? BytesValues.asBase64String(privateFrom) : null;
+    this.privateFrom = privateFrom != null ? privateFrom.toBase64String() : null;
     this.privateFor =
         privateFor != null
-            ? privateFor.stream().map(BytesValues::asBase64String).collect(Collectors.toList())
+            ? privateFor.stream().map(Bytes::toBase64String).collect(Collectors.toList())
             : null;
-    this.privacyGroupId =
-        privacyGroupId != null ? BytesValues.asBase64String(privacyGroupId) : null;
+    this.privacyGroupId = privacyGroupId != null ? privacyGroupId.toBase64String() : null;
     this.revertReason = revertReason != null ? revertReason.toString() : null;
     this.status = status;
     this.logs = logReceipts(logs, blockNumber, commitmentHash, blockHash, txIndex);

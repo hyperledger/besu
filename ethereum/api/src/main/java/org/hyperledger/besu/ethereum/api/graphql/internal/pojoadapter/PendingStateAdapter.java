@@ -25,8 +25,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.List;
 import java.util.Map;
@@ -34,6 +32,8 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import graphql.schema.DataFetchingEnvironment;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 
 @SuppressWarnings("unused") // reflected by GraphQL
 public class PendingStateAdapter extends AdapterBase {
@@ -88,7 +88,7 @@ public class PendingStateAdapter extends AdapterBase {
     final Long gas = (Long) callData.get("gas");
     final UInt256 gasPrice = (UInt256) callData.get("gasPrice");
     final UInt256 value = (UInt256) callData.get("value");
-    final BytesValue data = (BytesValue) callData.get("data");
+    final Bytes data = (Bytes) callData.get("data");
 
     final BlockchainQueries query = getBlockchainQueries(environment);
     final ProtocolSchedule<?> protocolSchedule =

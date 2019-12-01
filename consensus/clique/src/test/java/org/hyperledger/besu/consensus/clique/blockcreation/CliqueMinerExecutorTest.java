@@ -44,13 +44,13 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfigurati
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.List;
 import java.util.Random;
 import java.util.function.Function;
 
 import com.google.common.collect.Lists;
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -88,7 +88,7 @@ public class CliqueMinerExecutorTest {
 
   @Test
   public void extraDataCreatedOnEpochBlocksContainsValidators() {
-    final BytesValue vanityData = generateRandomVanityData();
+    final Bytes vanityData = generateRandomVanityData();
 
     final CliqueMinerExecutor executor =
         new CliqueMinerExecutor(
@@ -108,7 +108,7 @@ public class CliqueMinerExecutorTest {
     // NOTE: Passing in the *parent* block, so must be 1 less than EPOCH
     final BlockHeader header = blockHeaderBuilder.number(EPOCH_LENGTH - 1).buildHeader();
 
-    final BytesValue extraDataBytes = executor.calculateExtraData(header);
+    final Bytes extraDataBytes = executor.calculateExtraData(header);
 
     final CliqueExtraData cliqueExtraData =
         CliqueExtraData.decode(
@@ -125,7 +125,7 @@ public class CliqueMinerExecutorTest {
 
   @Test
   public void extraDataForNonEpochBlocksDoesNotContainValidaors() {
-    final BytesValue vanityData = generateRandomVanityData();
+    final Bytes vanityData = generateRandomVanityData();
 
     final CliqueMinerExecutor executor =
         new CliqueMinerExecutor(
@@ -145,7 +145,7 @@ public class CliqueMinerExecutorTest {
     // Parent block was epoch, so the next block should contain no validators.
     final BlockHeader header = blockHeaderBuilder.number(EPOCH_LENGTH).buildHeader();
 
-    final BytesValue extraDataBytes = executor.calculateExtraData(header);
+    final Bytes extraDataBytes = executor.calculateExtraData(header);
 
     final CliqueExtraData cliqueExtraData =
         CliqueExtraData.decode(
@@ -161,8 +161,8 @@ public class CliqueMinerExecutorTest {
 
   @Test
   public void shouldUseLatestVanityData() {
-    final BytesValue initialVanityData = generateRandomVanityData();
-    final BytesValue modifiedVanityData = generateRandomVanityData();
+    final Bytes initialVanityData = generateRandomVanityData();
+    final Bytes modifiedVanityData = generateRandomVanityData();
 
     final CliqueMinerExecutor executor =
         new CliqueMinerExecutor(
@@ -180,7 +180,7 @@ public class CliqueMinerExecutorTest {
             Function.identity());
 
     executor.setExtraData(modifiedVanityData);
-    final BytesValue extraDataBytes = executor.calculateExtraData(blockHeaderBuilder.buildHeader());
+    final Bytes extraDataBytes = executor.calculateExtraData(blockHeaderBuilder.buildHeader());
 
     final CliqueExtraData cliqueExtraData =
         CliqueExtraData.decode(
@@ -192,9 +192,9 @@ public class CliqueMinerExecutorTest {
     assertThat(cliqueExtraData.getVanityData()).isEqualTo(modifiedVanityData);
   }
 
-  private BytesValue generateRandomVanityData() {
+  private Bytes generateRandomVanityData() {
     final byte[] vanityData = new byte[32];
     random.nextBytes(vanityData);
-    return BytesValue.wrap(vanityData);
+    return Bytes.wrap(vanityData);
   }
 }

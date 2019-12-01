@@ -36,11 +36,11 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.Before;
@@ -76,7 +76,7 @@ public class CliqueGetSignersAtHashTest {
     blockHeader =
         new BlockHeaderTestFixture()
             .blockHeaderFunctions(new CliqueBlockHeaderFunctions())
-            .extraData(BytesValue.wrap(genesisBlockExtraData))
+            .extraData(Bytes.wrap(genesisBlockExtraData))
             .buildHeader();
 
     validators =

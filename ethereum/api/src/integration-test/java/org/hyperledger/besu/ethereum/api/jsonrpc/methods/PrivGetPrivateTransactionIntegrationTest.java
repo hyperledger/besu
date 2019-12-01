@@ -41,8 +41,6 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.Restriction;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.BytesValues;
 import org.hyperledger.orion.testutil.OrionKeyConfiguration;
 import org.hyperledger.orion.testutil.OrionTestHarness;
 import org.hyperledger.orion.testutil.OrionTestHarnessFactory;
@@ -53,6 +51,7 @@ import java.util.Optional;
 
 import com.google.common.collect.Lists;
 import io.vertx.core.Vertx;
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -110,7 +109,7 @@ public class PrivGetPrivateTransactionIntegrationTest {
           .to(null)
           .value(Wei.ZERO)
           .payload(
-              BytesValue.fromHexString(
+              Bytes.fromHexString(
                   "0x608060405234801561001057600080fd5b5060d08061001f60003960"
                       + "00f3fe60806040526004361060485763ffffffff7c01000000"
                       + "00000000000000000000000000000000000000000000000000"
@@ -123,11 +122,10 @@ public class PrivGetPrivateTransactionIntegrationTest {
                       + "daa4f6b2f003d1b0180029"))
           .sender(sender)
           .chainId(BigInteger.valueOf(2018))
-          .privateFrom(
-              BytesValue.wrap("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=".getBytes(UTF_8)))
+          .privateFrom(Bytes.wrap("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=".getBytes(UTF_8)))
           .privateFor(
               Lists.newArrayList(
-                  BytesValue.wrap("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=".getBytes(UTF_8))))
+                  Bytes.wrap("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=".getBytes(UTF_8))))
           .restriction(Restriction.RESTRICTED)
           .signAndBuild(KEY_PAIR);
 
@@ -156,13 +154,13 @@ public class PrivGetPrivateTransactionIntegrationTest {
 
     final SendRequest sendRequest =
         new SendRequestLegacy(
-            Base64.getEncoder().encodeToString(bvrlp.encoded().extractArray()),
+            Base64.getEncoder().encodeToString(bvrlp.encoded().toArray()),
             "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=",
             Lists.newArrayList("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo="));
     final SendResponse sendResponse = enclave.send(sendRequest);
 
-    final BytesValue hexKey = BytesValues.fromBase64(sendResponse.getKey());
-    when(justTransaction.getPayload()).thenReturn(hexKey);
+    final Bytes hexKey = Bytes.fromBase64String(sendResponse.getKey());
+    when(justTransaction.getPayloadBytes()).thenReturn(hexKey);
 
     final Object[] params = new Object[] {Hash.ZERO};
 

@@ -22,14 +22,15 @@ import org.hyperledger.besu.ethereum.trie.Proof;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.SortedMap;
 import java.util.TreeMap;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class WorldStateProofProvider {
 
@@ -48,7 +49,7 @@ public class WorldStateProofProvider {
       return Optional.empty();
     } else {
       final Hash addressHash = Hash.hash(accountAddress);
-      final Proof<BytesValue> accountProof =
+      final Proof<Bytes> accountProof =
           newAccountStateTrie(worldStateRoot).getValueWithProof(addressHash);
 
       return accountProof
@@ -57,29 +58,29 @@ public class WorldStateProofProvider {
           .map(StateTrieAccountValue::readFrom)
           .map(
               account -> {
-                final SortedMap<UInt256, Proof<BytesValue>> storageProofs =
+                final SortedMap<UInt256, Proof<Bytes>> storageProofs =
                     getStorageProofs(account, accountStorageKeys);
                 return new WorldStateProof(account, accountProof, storageProofs);
               });
     }
   }
 
-  private SortedMap<UInt256, Proof<BytesValue>> getStorageProofs(
+  private SortedMap<UInt256, Proof<Bytes>> getStorageProofs(
       final StateTrieAccountValue account, final List<UInt256> accountStorageKeys) {
-    final MerklePatriciaTrie<Bytes32, BytesValue> storageTrie =
+    final MerklePatriciaTrie<Bytes32, Bytes> storageTrie =
         newAccountStorageTrie(account.getStorageRoot());
-    final SortedMap<UInt256, Proof<BytesValue>> storageProofs = new TreeMap<>();
+    final SortedMap<UInt256, Proof<Bytes>> storageProofs = new TreeMap<>();
     accountStorageKeys.forEach(
-        key -> storageProofs.put(key, storageTrie.getValueWithProof(Hash.hash(key.getBytes()))));
+        key -> storageProofs.put(key, storageTrie.getValueWithProof(Hash.hash(key.toBytes()))));
     return storageProofs;
   }
 
-  private MerklePatriciaTrie<Bytes32, BytesValue> newAccountStateTrie(final Bytes32 rootHash) {
+  private MerklePatriciaTrie<Bytes32, Bytes> newAccountStateTrie(final Bytes32 rootHash) {
     return new StoredMerklePatriciaTrie<>(
         worldStateStorage::getAccountStateTrieNode, rootHash, b -> b, b -> b);
   }
 
-  private MerklePatriciaTrie<Bytes32, BytesValue> newAccountStorageTrie(final Bytes32 rootHash) {
+  private MerklePatriciaTrie<Bytes32, Bytes> newAccountStorageTrie(final Bytes32 rootHash) {
     return new StoredMerklePatriciaTrie<>(
         worldStateStorage::getAccountStorageTrieNode, rootHash, b -> b, b -> b);
   }

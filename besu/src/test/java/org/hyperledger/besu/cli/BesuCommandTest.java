@@ -62,7 +62,6 @@ import org.hyperledger.besu.ethereum.worldstate.PrunerConfiguration;
 import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatMethod;
-import org.hyperledger.besu.util.bytes.BytesValue;
 import org.hyperledger.besu.util.number.Fraction;
 import org.hyperledger.besu.util.number.Percentage;
 
@@ -87,6 +86,7 @@ import com.google.common.collect.Lists;
 import com.google.common.io.Resources;
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.text.StringEscapeUtils;
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.toml.Toml;
 import org.apache.tuweni.toml.TomlParseResult;
 import org.junit.Rule;
@@ -190,7 +190,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString()).isEmpty();
     assertThat(miningArg.getValue().getCoinbase()).isEqualTo(Optional.empty());
     assertThat(miningArg.getValue().getMinTransactionGasPrice()).isEqualTo(Wei.of(1000));
-    assertThat(miningArg.getValue().getExtraData()).isEqualTo(BytesValue.EMPTY);
+    assertThat(miningArg.getValue().getExtraData()).isEqualTo(Bytes.EMPTY);
     assertThat(ethNetworkArg.getValue().getNetworkId()).isEqualTo(1);
     assertThat(ethNetworkArg.getValue().getBootNodes()).isEqualTo(MAINNET_BOOTSTRAP_NODES);
   }
@@ -1157,23 +1157,23 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void bannedNodeIdsOptionMustBeUsed() {
-    final BytesValue[] nodes = {
-      BytesValue.fromHexString(
+    final Bytes[] nodes = {
+      Bytes.fromHexString(
           "6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0"),
-      BytesValue.fromHexString(
+      Bytes.fromHexString(
           "7f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0"),
-      BytesValue.fromHexString(
+      Bytes.fromHexString(
           "0x8f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0")
     };
 
     final String nodeIdsArg =
-        Arrays.stream(nodes).map(BytesValue::toUnprefixedString).collect(Collectors.joining(","));
+        Arrays.stream(nodes).map(Bytes::toShortHexString).collect(Collectors.joining(","));
     parseCommand("--banned-node-ids", nodeIdsArg);
 
-    verify(mockRunnerBuilder).bannedNodeIds(bytesValueCollectionCollector.capture());
+    verify(mockRunnerBuilder).bannedNodeIds(bytesCollectionCollector.capture());
     verify(mockRunnerBuilder).build();
 
-    assertThat(bytesValueCollectionCollector.getValue().toArray()).isEqualTo(nodes);
+    assertThat(bytesCollectionCollector.getValue().toArray()).isEqualTo(nodes);
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
@@ -2352,8 +2352,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString()).isEmpty();
     assertThat(miningArg.getValue().getCoinbase()).isEqualTo(Optional.of(requestedCoinbase));
     assertThat(miningArg.getValue().getMinTransactionGasPrice()).isEqualTo(Wei.of(15));
-    assertThat(miningArg.getValue().getExtraData())
-        .isEqualTo(BytesValue.fromHexString(extraDataString));
+    assertThat(miningArg.getValue().getExtraData()).isEqualTo(Bytes.fromHexString(extraDataString));
   }
 
   @Test

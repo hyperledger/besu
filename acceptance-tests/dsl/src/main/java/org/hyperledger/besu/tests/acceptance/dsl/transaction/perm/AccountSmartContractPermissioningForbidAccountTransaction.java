@@ -22,21 +22,19 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.NodeRequests;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.BytesValues;
 
 import java.io.IOException;
 import java.math.BigInteger;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.web3j.crypto.RawTransaction;
 import org.web3j.crypto.TransactionEncoder;
 
 public class AccountSmartContractPermissioningForbidAccountTransaction
     implements Transaction<Hash> {
 
-  private static final BytesValue REMOVE_ACCOUNT_SIGNATURE =
-      org.hyperledger.besu.crypto.Hash.keccak256(
-              BytesValue.of("removeAccount(address)".getBytes(UTF_8)))
+  private static final Bytes REMOVE_ACCOUNT_SIGNATURE =
+      org.hyperledger.besu.crypto.Hash.keccak256(Bytes.of("removeAccount(address)".getBytes(UTF_8)))
           .slice(0, 4);
 
   private final Account sender;
@@ -63,11 +61,9 @@ public class AccountSmartContractPermissioningForbidAccountTransaction
   }
 
   private String signedTransactionData() {
-    final BytesValue payload =
-        BytesValues.concatenate(
-            REMOVE_ACCOUNT_SIGNATURE,
-            BytesValue.fromHexString("0x000000000000000000000000"),
-            account);
+    final Bytes payload =
+        Bytes.concatenate(
+            REMOVE_ACCOUNT_SIGNATURE, Bytes.fromHexString("0x000000000000000000000000"), account);
 
     RawTransaction transaction =
         RawTransaction.createTransaction(

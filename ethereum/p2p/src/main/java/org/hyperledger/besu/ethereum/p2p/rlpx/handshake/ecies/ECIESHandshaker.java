@@ -15,9 +15,8 @@
 package org.hyperledger.besu.ethereum.p2p.rlpx.handshake.ecies;
 
 import static com.google.common.base.Preconditions.checkState;
+import static org.apache.tuweni.bytes.Bytes.concatenate;
 import static org.hyperledger.besu.crypto.Hash.keccak256;
-import static org.hyperledger.besu.util.bytes.Bytes32s.xor;
-import static org.hyperledger.besu.util.bytes.BytesValues.concatenate;
 
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.crypto.SECP256K1.PublicKey;
@@ -25,8 +24,6 @@ import org.hyperledger.besu.crypto.SecureRandomProvider;
 import org.hyperledger.besu.ethereum.p2p.rlpx.handshake.HandshakeException;
 import org.hyperledger.besu.ethereum.p2p.rlpx.handshake.HandshakeSecrets;
 import org.hyperledger.besu.ethereum.p2p.rlpx.handshake.Handshaker;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.security.SecureRandom;
 import java.util.Optional;
@@ -37,6 +34,8 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 
 /**
@@ -67,8 +66,8 @@ public class ECIESHandshaker implements Handshaker {
   // Messages, for later MAC calculation.
   private InitiatorHandshakeMessage initiatorMsg;
   private ResponderHandshakeMessage responderMsg;
-  private BytesValue initiatorMsgEnc;
-  private BytesValue responderMsgEnc;
+  private Bytes initiatorMsgEnc;
+  private Bytes responderMsgEnc;
 
   // Nonces.
   private Bytes32 initiatorNonce;
@@ -151,7 +150,7 @@ public class ECIESHandshaker implements Handshaker {
 
     LOG.trace("First ECIES handshake message under INITIATOR role: {}", initiatorMsg);
 
-    return Unpooled.wrappedBuffer(initiatorMsgEnc.extractArray());
+    return Unpooled.wrappedBuffer(initiatorMsgEnc.toArray());
   }
 
   @Override
@@ -182,9 +181,9 @@ public class ECIESHandshaker implements Handshaker {
     final ByteBuf bufferedBytes = buf.readSlice(expectedLength);
     final byte[] encryptedBytes = new byte[bufferedBytes.readableBytes()];
     bufferedBytes.getBytes(0, encryptedBytes);
-    BytesValue bytes = BytesValue.wrap(encryptedBytes);
+    Bytes bytes = Bytes.wrap(encryptedBytes);
 
-    BytesValue encryptedMsg = bytes;
+    Bytes encryptedMsg = bytes;
     try {
       // Decrypt the message with our private key.
       try {
@@ -198,7 +197,7 @@ public class ECIESHandshaker implements Handshaker {
           final byte[] fullMessage = new byte[size + 2];
           bufferedBytes.readBytes(fullMessage, 0, expectedLength);
           buf.readBytes(fullMessage, expectedLength, size - expectedLength + 2);
-          encryptedMsg = BytesValue.wrap(fullMessage);
+          encryptedMsg = Bytes.wrap(fullMessage);
           bytes = EncryptedMessage.decryptMsgEIP8(encryptedMsg, identityKeyPair.getPrivateKey());
           version4 = true;
         } else {
@@ -210,7 +209,7 @@ public class ECIESHandshaker implements Handshaker {
       throw new HandshakeException("Decrypting an incoming handshake message failed", e);
     }
 
-    Optional<BytesValue> nextMsg = Optional.empty();
+    Optional<Bytes> nextMsg = Optional.empty();
     if (initiator) {
       // If we are the initiator, we have already sent our request and we're waiting for the
       // responder's ack;
@@ -299,7 +298,7 @@ public class ECIESHandshaker implements Handshaker {
 
     status.set(Handshaker.HandshakeStatus.SUCCESS);
     LOG.trace("Handshake status set to {}", status.get());
-    return nextMsg.map(bv -> Unpooled.wrappedBuffer(bv.extractArray()));
+    return nextMsg.map(bv -> Unpooled.wrappedBuffer(bv.toArray()));
   }
 
   /**
@@ -340,9 +339,9 @@ public class ECIESHandshaker implements Handshaker {
 
   /** Computes the secrets from the two exchanged messages. */
   void computeSecrets() {
-    final BytesValue agreedSecret =
+    final Bytes agreedSecret =
         SECP256K1.calculateKeyAgreement(ephKeyPair.getPrivateKey(), partyEphPubKey);
-    final BytesValue sharedSecret =
+    final Bytes sharedSecret =
         keccak256(
             concatenate(agreedSecret, keccak256(concatenate(responderNonce, initiatorNonce))));
 
@@ -351,27 +350,26 @@ public class ECIESHandshaker implements Handshaker {
     final Bytes32 token = keccak256(sharedSecret);
 
     final HandshakeSecrets secrets =
-        new HandshakeSecrets(
-            aesSecret.extractArray(), macSecret.extractArray(), token.extractArray());
+        new HandshakeSecrets(aesSecret.toArray(), macSecret.toArray(), token.toArray());
 
-    final BytesValue initiatorMac = concatenate(xor(macSecret, responderNonce), initiatorMsgEnc);
-    final BytesValue responderMac = concatenate(xor(macSecret, initiatorNonce), responderMsgEnc);
+    final Bytes initiatorMac = concatenate(macSecret.xor(responderNonce), initiatorMsgEnc);
+    final Bytes responderMac = concatenate(macSecret.xor(initiatorNonce), responderMsgEnc);
 
     if (initiator) {
-      secrets.updateEgress(initiatorMac.extractArray());
-      secrets.updateIngress(responderMac.extractArray());
+      secrets.updateEgress(initiatorMac.toArray());
+      secrets.updateIngress(responderMac.toArray());
     } else {
-      secrets.updateIngress(initiatorMac.extractArray());
-      secrets.updateEgress(responderMac.extractArray());
+      secrets.updateIngress(initiatorMac.toArray());
+      secrets.updateEgress(responderMac.toArray());
     }
 
     this.secrets = secrets;
   }
 
-  static BytesValue random(final int size) {
+  static Bytes random(final int size) {
     final byte[] iv = new byte[size];
     RANDOM.nextBytes(iv);
-    return BytesValue.wrap(iv);
+    return Bytes.wrap(iv);
   }
 
   // ---------------------------------------------
@@ -419,12 +417,12 @@ public class ECIESHandshaker implements Handshaker {
   }
 
   @VisibleForTesting
-  void setInitiatorMsgEnc(final BytesValue initiatorMsgEnc) {
+  void setInitiatorMsgEnc(final Bytes initiatorMsgEnc) {
     this.initiatorMsgEnc = initiatorMsgEnc;
   }
 
   @VisibleForTesting
-  void setResponderMsgEnc(final BytesValue responderMsgEnc) {
+  void setResponderMsgEnc(final Bytes responderMsgEnc) {
     this.responderMsgEnc = responderMsgEnc;
   }
 }

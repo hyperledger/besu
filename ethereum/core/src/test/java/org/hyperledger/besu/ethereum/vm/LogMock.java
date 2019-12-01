@@ -17,13 +17,14 @@ package org.hyperledger.besu.ethereum.vm;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.LogTopic;
-import org.hyperledger.besu.util.bytes.BytesValue;
+import org.hyperledger.besu.ethereum.core.UnformattedDataWrapper;
 
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.tuweni.bytes.Bytes;
 
 public class LogMock extends Log {
 
@@ -41,9 +42,7 @@ public class LogMock extends Log {
       @JsonProperty("topics") final String[] topics) {
     super(
         Address.fromHexString(address),
-        BytesValue.fromHexString(data),
-        Arrays.stream(topics)
-            .map(s -> LogTopic.wrap(BytesValue.fromHexString(s)))
-            .collect(Collectors.toList()));
+        new UnformattedDataWrapper(Bytes.fromHexString(data)),
+        Arrays.stream(topics).map(LogTopic::fromHexString).collect(Collectors.toList()));
   }
 }

@@ -17,10 +17,10 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.tuweni.bytes.Bytes;
 
 public class JsonCallParameter extends CallParameter {
   @JsonCreator
@@ -37,6 +37,6 @@ public class JsonCallParameter extends CallParameter {
         gasLimit != null ? Long.decode(gasLimit) : -1,
         gasPrice != null ? Wei.fromHexString(gasPrice) : null,
         value != null ? Wei.fromHexString(value) : null,
-        payload != null ? BytesValue.fromHexString(payload) : null);
+        payload != null ? Bytes.fromHexString(payload) : null);
   }
 }

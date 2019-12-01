@@ -16,7 +16,8 @@
 package org.hyperledger.besu.ethereum.eth.manager;
 
 import org.hyperledger.besu.ethereum.chain.ChainHead;
-import org.hyperledger.besu.util.uint.UInt256;
+
+import org.apache.tuweni.units.bigints.UInt256;
 
 public interface ChainHeadEstimate {
 

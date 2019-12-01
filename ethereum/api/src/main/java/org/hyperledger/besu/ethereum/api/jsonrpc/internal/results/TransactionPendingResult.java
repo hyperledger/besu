@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
+import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -57,7 +57,7 @@ public class TransactionPendingResult implements TransactionResult {
     this.hash = transaction.getHash().toString();
     this.input = transaction.getPayload().toString();
     this.nonce = Quantity.create(transaction.getNonce());
-    this.to = transaction.getTo().map(BytesValue::toString).orElse(null);
+    this.to = transaction.getTo().map(Address::toHexString).orElse(null);
     this.value = Quantity.create(transaction.getValue());
     this.v = Quantity.create(transaction.getV());
     this.r = Quantity.create(transaction.getR());

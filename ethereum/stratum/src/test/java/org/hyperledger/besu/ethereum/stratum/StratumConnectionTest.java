@@ -17,13 +17,13 @@ package org.hyperledger.besu.ethereum.stratum;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import io.vertx.core.buffer.Buffer;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Test;
 
 public class StratumConnectionTest {
@@ -109,7 +109,7 @@ public class StratumConnectionTest {
     // now send work without waiting.
     protocol.setCurrentWorkTask(
         new EthHashSolverInputs(
-            UInt256.of(3), BytesValue.fromHexString("deadbeef").getArrayUnsafe(), 42));
+            UInt256.valueOf(3), Bytes.fromHexString("deadbeef").toArrayUnsafe(), 42));
 
     assertThat(message.get())
         .isEqualTo(

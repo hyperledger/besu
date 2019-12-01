@@ -115,10 +115,8 @@ import org.hyperledger.besu.services.PicoCLIOptionsImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
 import org.hyperledger.besu.util.NetworkUtility;
 import org.hyperledger.besu.util.PermissioningConfigurationValidator;
-import org.hyperledger.besu.util.bytes.BytesValue;
 import org.hyperledger.besu.util.number.Fraction;
 import org.hyperledger.besu.util.number.PositiveNumber;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.io.File;
 import java.io.IOException;
@@ -154,6 +152,8 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 import picocli.CommandLine;
 import picocli.CommandLine.AbstractParseResultHandler;
 import picocli.CommandLine.Command;
@@ -315,7 +315,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
-  private Collection<BytesValue> bannedNodeIds = new ArrayList<>();
+  private Collection<Bytes> bannedNodeIds = new ArrayList<>();
 
   @Option(
       names = {"--sync-mode"},
@@ -611,7 +611,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "A hex string representing the (32) bytes to be included in the extra data "
               + "field of a mined block (default: ${DEFAULT-VALUE})",
       arity = "1")
-  private final BytesValue extraData = DEFAULT_EXTRA_DATA;
+  private final Bytes extraData = DEFAULT_EXTRA_DATA;
 
   @Option(
       names = {"--pruning-enabled"},
@@ -862,10 +862,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private BesuCommand registerConverters() {
     commandLine.registerConverter(Address.class, Address::fromHexStringStrict);
-    commandLine.registerConverter(BytesValue.class, BytesValue::fromHexString);
+    commandLine.registerConverter(Bytes.class, Bytes::fromHexString);
     commandLine.registerConverter(Level.class, Level::valueOf);
     commandLine.registerConverter(SyncMode.class, SyncMode::fromString);
-    commandLine.registerConverter(UInt256.class, (arg) -> UInt256.of(new BigInteger(arg)));
+    commandLine.registerConverter(UInt256.class, (arg) -> UInt256.valueOf(new BigInteger(arg)));
     commandLine.registerConverter(Wei.class, (arg) -> Wei.of(Long.parseUnsignedLong(arg)));
     commandLine.registerConverter(PositiveNumber.class, PositiveNumber::fromString);
     commandLine.registerConverter(Hash.class, Hash::fromHexString);

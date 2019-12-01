@@ -18,15 +18,15 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Optional;
 
 import com.google.common.base.MoreObjects;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class TraceFrame {
 
@@ -39,7 +39,7 @@ public class TraceFrame {
   private final Optional<Bytes32[]> stack;
   private final Optional<Bytes32[]> memory;
   private final Optional<Map<UInt256, UInt256>> storage;
-  private final Optional<BytesValue> revertReason;
+  private final Optional<Bytes> revertReason;
   private final Optional<Map<Address, Wei>> maybeRefunds;
 
   public TraceFrame(
@@ -52,7 +52,7 @@ public class TraceFrame {
       final Optional<Bytes32[]> stack,
       final Optional<Bytes32[]> memory,
       final Optional<Map<UInt256, UInt256>> storage,
-      final Optional<BytesValue> revertReason,
+      final Optional<Bytes> revertReason,
       final Optional<Map<Address, Wei>> maybeRefunds) {
     this.pc = pc;
     this.opcode = opcode;
@@ -77,7 +77,7 @@ public class TraceFrame {
       final Optional<Bytes32[]> stack,
       final Optional<Bytes32[]> memory,
       final Optional<Map<UInt256, UInt256>> storage,
-      final Optional<BytesValue> revertReason) {
+      final Optional<Bytes> revertReason) {
     this(
         pc,
         opcode,
@@ -151,7 +151,7 @@ public class TraceFrame {
     return storage;
   }
 
-  public Optional<BytesValue> getRevertReason() {
+  public Optional<Bytes> getRevertReason() {
     return revertReason;
   }
 

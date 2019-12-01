@@ -18,14 +18,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
-import static org.hyperledger.besu.util.bytes.BytesValues.asUnsignedBigInteger;
-
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.BytesValues;
-import org.hyperledger.besu.util.bytes.MutableBytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
-import org.hyperledger.besu.util.uint.UInt256Bytes;
 
 import java.io.File;
 import java.io.IOException;
@@ -43,6 +35,10 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.UnaryOperator;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.bytes.MutableBytes;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.bouncycastle.asn1.sec.SECNamedCurves;
 import org.bouncycastle.asn1.x9.X9ECParameters;
 import org.bouncycastle.asn1.x9.X9IntegerConverter;
@@ -160,7 +156,7 @@ public class SECP256K1 {
       return null;
     }
     // 1.5. Compute e from M using Steps 2 and 3 of ECDSA signature verification.
-    final BigInteger e = asUnsignedBigInteger(dataHash);
+    final BigInteger e = dataHash.toUnsignedBigInteger();
     // 1.6. For k from 1 to 2 do the following. (loop is outside this function via
     // iterating recId)
     // 1.6.1. Compute a candidate public key as:
@@ -195,10 +191,10 @@ public class SECP256K1 {
 
     final ECPrivateKeyParameters privKey =
         new ECPrivateKeyParameters(
-            asUnsignedBigInteger(keyPair.getPrivateKey().getEncodedBytes()), CURVE);
+            keyPair.getPrivateKey().getEncodedBytes().toUnsignedBigInteger(), CURVE);
     signer.init(true, privKey);
 
-    final BigInteger[] components = signer.generateSignature(dataHash.getArrayUnsafe());
+    final BigInteger[] components = signer.generateSignature(dataHash.toArrayUnsafe());
     final BigInteger r = components[0];
     BigInteger s = components[1];
 
@@ -220,7 +216,7 @@ public class SECP256K1 {
 
     // Now we have to work backwards to figure out the recId needed to recover the signature.
     int recId = -1;
-    final BigInteger publicKeyBI = asUnsignedBigInteger(keyPair.getPublicKey().getEncodedBytes());
+    final BigInteger publicKeyBI = keyPair.getPublicKey().getEncodedBytes().toUnsignedBigInteger();
     for (int i = 0; i < 4; i++) {
       final BigInteger k = recoverFromSignature(i, r, s, dataHash);
       if (k != null && k.equals(publicKeyBI)) {
@@ -247,15 +243,14 @@ public class SECP256K1 {
    * @param pub The public key bytes to use.
    * @return True if the verification is successful.
    */
-  public static boolean verify(
-      final BytesValue data, final Signature signature, final PublicKey pub) {
+  public static boolean verify(final Bytes data, final Signature signature, final PublicKey pub) {
     final ECDSASigner signer = new ECDSASigner();
-    final BytesValue toDecode = BytesValue.wrap(BytesValue.of((byte) 4), pub.getEncodedBytes());
+    final Bytes toDecode = Bytes.wrap(Bytes.of((byte) 4), pub.getEncodedBytes());
     final ECPublicKeyParameters params =
-        new ECPublicKeyParameters(CURVE.getCurve().decodePoint(toDecode.extractArray()), CURVE);
+        new ECPublicKeyParameters(CURVE.getCurve().decodePoint(toDecode.toArrayUnsafe()), CURVE);
     signer.init(false, params);
     try {
-      return signer.verifySignature(data.extractArray(), signature.r, signature.s);
+      return signer.verifySignature(data.toArrayUnsafe(), signature.r, signature.s);
     } catch (final NullPointerException e) {
       // Bouncy Castle contains a bug that can cause NPEs given specially crafted signatures. Those
       // signatures
@@ -276,10 +271,10 @@ public class SECP256K1 {
    * @return True if the verification is successful.
    */
   public static boolean verify(
-      final BytesValue data,
+      final Bytes data,
       final Signature signature,
       final PublicKey pub,
-      final UnaryOperator<BytesValue> preprocessor) {
+      final UnaryOperator<Bytes> preprocessor) {
     checkArgument(preprocessor != null, "preprocessor must not be null");
     return verify(preprocessor.apply(data), signature, pub);
   }
@@ -303,7 +298,7 @@ public class SECP256K1 {
     agreement.init(privKeyP);
     final BigInteger agreed = agreement.calculateAgreement(pubKeyP);
 
-    return UInt256.of(agreed).getBytes();
+    return UInt256.valueOf(agreed).toBytes();
   }
 
   public static class PrivateKey implements java.security.PrivateKey {
@@ -316,21 +311,11 @@ public class SECP256K1 {
 
     public static PrivateKey create(final BigInteger key) {
       checkNotNull(key);
-      return create(toBytes32(key.toByteArray()));
+      return create(UInt256.valueOf(key).toBytes());
     }
 
     public static PrivateKey create(final Bytes32 key) {
       return new PrivateKey(key);
-    }
-
-    private static Bytes32 toBytes32(final byte[] backing) {
-      if (backing.length == Bytes32.SIZE) {
-        return Bytes32.wrap(backing);
-      } else if (backing.length > Bytes32.SIZE) {
-        return Bytes32.wrap(backing, backing.length - Bytes32.SIZE);
-      } else {
-        return Bytes32.leftPad(BytesValue.wrap(backing));
-      }
     }
 
     public static PrivateKey load(final File file)
@@ -347,7 +332,7 @@ public class SECP256K1 {
     }
 
     public ECPoint asEcPoint() {
-      return CURVE.getCurve().decodePoint(encoded.extractArray());
+      return CURVE.getCurve().decodePoint(encoded.toArrayUnsafe());
     }
 
     @Override
@@ -362,7 +347,7 @@ public class SECP256K1 {
 
     @Override
     public byte[] getEncoded() {
-      return encoded.getArrayUnsafe();
+      return encoded.toArrayUnsafe();
     }
 
     public Bytes32 getEncodedBytes() {
@@ -370,7 +355,7 @@ public class SECP256K1 {
     }
 
     public BigInteger getD() {
-      return asUnsignedBigInteger(encoded);
+      return encoded.toUnsignedBigInteger();
     }
 
     @Override
@@ -406,10 +391,10 @@ public class SECP256K1 {
 
     private static final int BYTE_LENGTH = 64;
 
-    private final BytesValue encoded;
+    private final Bytes encoded;
 
     public static PublicKey create(final PrivateKey privateKey) {
-      BigInteger privKey = asUnsignedBigInteger(privateKey.getEncodedBytes());
+      BigInteger privKey = privateKey.getEncodedBytes().toUnsignedBigInteger();
 
       /*
        * TODO: FixedPointCombMultiplier currently doesn't support scalars longer than the group
@@ -420,17 +405,17 @@ public class SECP256K1 {
       }
 
       final ECPoint point = new FixedPointCombMultiplier().multiply(CURVE.getG(), privKey);
-      return PublicKey.create(BytesValue.wrap(Arrays.copyOfRange(point.getEncoded(false), 1, 65)));
+      return PublicKey.create(Bytes.wrap(Arrays.copyOfRange(point.getEncoded(false), 1, 65)));
     }
 
-    private static BytesValue toBytes64(final byte[] backing) {
+    private static Bytes toBytes64(final byte[] backing) {
       if (backing.length == BYTE_LENGTH) {
-        return BytesValue.wrap(backing);
+        return Bytes.wrap(backing);
       } else if (backing.length > BYTE_LENGTH) {
-        return BytesValue.wrap(backing, backing.length - BYTE_LENGTH, BYTE_LENGTH);
+        return Bytes.wrap(backing, backing.length - BYTE_LENGTH, BYTE_LENGTH);
       } else {
-        final MutableBytesValue res = MutableBytesValue.create(BYTE_LENGTH);
-        BytesValue.wrap(backing).copyTo(res, BYTE_LENGTH - backing.length);
+        final MutableBytes res = MutableBytes.create(BYTE_LENGTH);
+        Bytes.wrap(backing).copyTo(res, BYTE_LENGTH - backing.length);
         return res;
       }
     }
@@ -440,7 +425,7 @@ public class SECP256K1 {
       return create(toBytes64(key.toByteArray()));
     }
 
-    public static PublicKey create(final BytesValue encoded) {
+    public static PublicKey create(final Bytes encoded) {
       return new PublicKey(encoded);
     }
 
@@ -452,7 +437,7 @@ public class SECP256K1 {
       return Optional.ofNullable(publicKeyBI).map(PublicKey::create);
     }
 
-    private PublicKey(final BytesValue encoded) {
+    private PublicKey(final Bytes encoded) {
       checkNotNull(encoded);
       checkArgument(
           encoded.size() == BYTE_LENGTH,
@@ -470,8 +455,8 @@ public class SECP256K1 {
      */
     public ECPoint asEcPoint() {
       // 0x04 is the prefix for uncompressed keys.
-      final BytesValue val = BytesValues.concatenate(BytesValue.of(0x04), encoded);
-      return CURVE.getCurve().decodePoint(val.extractArray());
+      final Bytes val = Bytes.concatenate(Bytes.of(0x04), encoded);
+      return CURVE.getCurve().decodePoint(val.toArrayUnsafe());
     }
 
     @Override
@@ -486,10 +471,10 @@ public class SECP256K1 {
 
     @Override
     public byte[] getEncoded() {
-      return encoded.getArrayUnsafe();
+      return encoded.toArrayUnsafe();
     }
 
-    public BytesValue getEncodedBytes() {
+    public Bytes getEncodedBytes() {
       return encoded;
     }
 
@@ -636,20 +621,20 @@ public class SECP256K1 {
       }
     }
 
-    public static Signature decode(final BytesValue bytes) {
+    public static Signature decode(final Bytes bytes) {
       checkArgument(
           bytes.size() == BYTES_REQUIRED, "encoded SECP256K1 signature must be 65 bytes long");
 
-      final BigInteger r = asUnsignedBigInteger(bytes.slice(0, 32));
-      final BigInteger s = asUnsignedBigInteger(bytes.slice(32, 32));
+      final BigInteger r = bytes.slice(0, 32).toUnsignedBigInteger();
+      final BigInteger s = bytes.slice(32, 32).toUnsignedBigInteger();
       final byte recId = bytes.get(64);
       return SECP256K1.Signature.create(r, s, recId);
     }
 
-    public BytesValue encodedBytes() {
-      final MutableBytesValue bytes = MutableBytesValue.create(BYTES_REQUIRED);
-      UInt256Bytes.of(r).copyTo(bytes, 0);
-      UInt256Bytes.of(s).copyTo(bytes, 32);
+    public Bytes encodedBytes() {
+      final MutableBytes bytes = MutableBytes.create(BYTES_REQUIRED);
+      UInt256.valueOf(r).toBytes().copyTo(bytes, 0);
+      UInt256.valueOf(s).toBytes().copyTo(bytes, 32);
       bytes.set(64, recId);
       return bytes;
     }

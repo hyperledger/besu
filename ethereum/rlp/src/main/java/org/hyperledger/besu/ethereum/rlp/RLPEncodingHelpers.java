@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.rlp;
 
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.MutableBytesValue;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.MutableBytes;
 
 /**
  * Helper static methods to facilitate RLP encoding <b>within this package</b>. Neither this class
@@ -24,11 +24,11 @@ import org.hyperledger.besu.util.bytes.MutableBytesValue;
 class RLPEncodingHelpers {
   private RLPEncodingHelpers() {}
 
-  static boolean isSingleRLPByte(final BytesValue value) {
+  static boolean isSingleRLPByte(final Bytes value) {
     return value.size() == 1 && value.get(0) >= 0;
   }
 
-  static boolean isShortElement(final BytesValue value) {
+  static boolean isShortElement(final Bytes value) {
     return value.size() <= 55;
   }
 
@@ -37,7 +37,7 @@ class RLPEncodingHelpers {
   }
 
   /** The encoded size of the provided value. */
-  static int elementSize(final BytesValue value) {
+  static int elementSize(final Bytes value) {
     if (isSingleRLPByte(value)) return 1;
 
     if (isShortElement(value)) return 1 + value.size();
@@ -56,8 +56,7 @@ class RLPEncodingHelpers {
    * Writes the result of encoding the provided value to the provided destination (which must be big
    * enough).
    */
-  static int writeElement(
-      final BytesValue value, final MutableBytesValue dest, final int destOffset) {
+  static int writeElement(final Bytes value, final MutableBytes dest, final int destOffset) {
     final int size = value.size();
     if (isSingleRLPByte(value)) {
       dest.set(destOffset, value.get(0));
@@ -79,8 +78,7 @@ class RLPEncodingHelpers {
    * Writes the encoded header of a list provided its encoded payload size to the provided
    * destination (which must be big enough).
    */
-  static int writeListHeader(
-      final int payloadSize, final MutableBytesValue dest, final int destOffset) {
+  static int writeListHeader(final int payloadSize, final MutableBytes dest, final int destOffset) {
     if (isShortList(payloadSize)) {
       dest.set(destOffset, (byte) (0xc0 + payloadSize));
       return destOffset + 1;
@@ -90,7 +88,7 @@ class RLPEncodingHelpers {
   }
 
   private static int writeLongMetadata(
-      final int baseCode, final int size, final MutableBytesValue dest, final int destOffset) {
+      final int baseCode, final int size, final MutableBytes dest, final int destOffset) {
     final int sizeLength = sizeLength(size);
     dest.set(destOffset, (byte) (baseCode + sizeLength));
     int shift = 0;

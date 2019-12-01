@@ -39,7 +39,6 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.util.FutureUtils;
 import org.hyperledger.besu.util.Subscribers;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -56,6 +55,7 @@ import java.util.stream.Stream;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 public class RlpxAgent {
   private static final Logger LOG = LogManager.getLogger();
@@ -70,8 +70,7 @@ public class RlpxAgent {
   private final int maxConnections;
   private final int maxRemotelyInitiatedConnections;
 
-  @VisibleForTesting
-  final Map<BytesValue, RlpxConnection> connectionsById = new ConcurrentHashMap<>();
+  @VisibleForTesting final Map<Bytes, RlpxConnection> connectionsById = new ConcurrentHashMap<>();
 
   private final AtomicBoolean started = new AtomicBoolean(false);
   private final AtomicBoolean stopped = new AtomicBoolean(false);
@@ -173,7 +172,7 @@ public class RlpxAgent {
         .forEach(this::connect);
   }
 
-  public void disconnect(final BytesValue peerId, final DisconnectReason reason) {
+  public void disconnect(final Bytes peerId, final DisconnectReason reason) {
     RlpxConnection connection = connectionsById.remove(peerId);
     if (connection != null) {
       connection.disconnect(reason);
@@ -272,7 +271,7 @@ public class RlpxAgent {
     cleanUpPeerConnection(peerConnection.getPeer().getId());
   }
 
-  private void cleanUpPeerConnection(final BytesValue peerId) {
+  private void cleanUpPeerConnection(final Bytes peerId) {
     connectionsById.compute(
         peerId,
         (id, trackedConnection) -> {
@@ -496,8 +495,8 @@ public class RlpxAgent {
       return a.isFailedOrDisconnected() ? 1 : -1;
     }
 
-    final BytesValue peerId = a.getPeer().getId();
-    final BytesValue localId = localNode.getPeer().getId();
+    final Bytes peerId = a.getPeer().getId();
+    final Bytes localId = localNode.getPeer().getId();
     if (a.initiatedRemotely() != b.initiatedRemotely()) {
       // If we have connections initiated in different directions, keep the connection initiated
       // by the node with the lower id

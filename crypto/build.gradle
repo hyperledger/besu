@@ -33,6 +33,8 @@ dependencies {
 
   api 'org.bouncycastle:bcprov-jdk15on'
 
+  implementation 'org.apache.tuweni:tuweni-bytes'
+  implementation 'org.apache.tuweni:tuweni-units'
   implementation 'com.google.guava:guava'
   implementation 'org.apache.logging.log4j:log4j-api'
 

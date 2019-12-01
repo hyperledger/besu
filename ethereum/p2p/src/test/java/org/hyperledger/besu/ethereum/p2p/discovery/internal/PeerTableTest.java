@@ -25,11 +25,11 @@ import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerTable.EvictResul
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerTable.EvictResult.EvictOutcome;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.List;
 import java.util.OptionalInt;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
 public class PeerTableTest {
@@ -82,7 +82,7 @@ public class PeerTableTest {
   @Test
   public void peerExists_withDifferentIp() {
     final PeerTable table = new PeerTable(Peer.randomId(), 16);
-    final BytesValue peerId = KeyPair.generate().getPublicKey().getEncodedBytes();
+    final Bytes peerId = KeyPair.generate().getPublicKey().getEncodedBytes();
     final DiscoveryPeer peer =
         DiscoveryPeer.fromIdAndEndpoint(
             peerId, new Endpoint("1.1.1.1", 30303, OptionalInt.empty()));
@@ -103,7 +103,7 @@ public class PeerTableTest {
   @Test
   public void peerExists_withDifferentUdpPort() {
     final PeerTable table = new PeerTable(Peer.randomId(), 16);
-    final BytesValue peerId = KeyPair.generate().getPublicKey().getEncodedBytes();
+    final Bytes peerId = KeyPair.generate().getPublicKey().getEncodedBytes();
     final DiscoveryPeer peer =
         DiscoveryPeer.fromIdAndEndpoint(
             peerId, new Endpoint("1.1.1.1", 30303, OptionalInt.empty()));
@@ -124,7 +124,7 @@ public class PeerTableTest {
   @Test
   public void peerExists_withDifferentIdAndUdpPort() {
     final PeerTable table = new PeerTable(Peer.randomId(), 16);
-    final BytesValue peerId = KeyPair.generate().getPublicKey().getEncodedBytes();
+    final Bytes peerId = KeyPair.generate().getPublicKey().getEncodedBytes();
     final DiscoveryPeer peer =
         DiscoveryPeer.fromIdAndEndpoint(
             peerId, new Endpoint("1.1.1.1", 30303, OptionalInt.empty()));

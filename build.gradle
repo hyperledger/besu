@@ -122,6 +122,7 @@ allprojects {
     mavenCentral()
     mavenLocal()
     maven { url "https://consensys.bintray.com/pegasys-repo" }
+    maven { url "https://repository.apache.org/content/repositories/snapshots/" }
   }
 
   dependencies { errorprone("com.google.errorprone:error_prone_core") }

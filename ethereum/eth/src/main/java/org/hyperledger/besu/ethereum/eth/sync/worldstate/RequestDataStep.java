@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.eth.manager.task.RetryingGetNodeDataFromPee
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.services.tasks.Task;
 import org.hyperledger.besu.util.ExceptionUtils;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Collections;
 import java.util.List;
@@ -36,10 +35,11 @@ import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 public class RequestDataStep {
   private static final Logger LOG = LogManager.getLogger();
-  private final BiFunction<List<Hash>, Long, EthTask<Map<Hash, BytesValue>>> getNodeDataTaskFactory;
+  private final BiFunction<List<Hash>, Long, EthTask<Map<Hash, Bytes>>> getNodeDataTaskFactory;
 
   public RequestDataStep(final EthContext ethContext, final MetricsSystem metricsSystem) {
     this(
@@ -49,7 +49,7 @@ public class RequestDataStep {
   }
 
   RequestDataStep(
-      final BiFunction<List<Hash>, Long, EthTask<Map<Hash, BytesValue>>> getNodeDataTaskFactory) {
+      final BiFunction<List<Hash>, Long, EthTask<Map<Hash, Bytes>>> getNodeDataTaskFactory) {
     this.getNodeDataTaskFactory = getNodeDataTaskFactory;
   }
 
@@ -68,7 +68,7 @@ public class RequestDataStep {
             data -> {
               for (final Task<NodeDataRequest> task : requestTasks) {
                 final NodeDataRequest request = task.getData();
-                final BytesValue matchingData = data.get(request.getHash());
+                final Bytes matchingData = data.get(request.getHash());
                 if (matchingData != null) {
                   request.setData(matchingData);
                 }
@@ -77,11 +77,11 @@ public class RequestDataStep {
             });
   }
 
-  private CompletableFuture<Map<Hash, BytesValue>> sendRequest(
+  private CompletableFuture<Map<Hash, Bytes>> sendRequest(
       final BlockHeader blockHeader,
       final List<Hash> hashes,
       final WorldDownloadState downloadState) {
-    final EthTask<Map<Hash, BytesValue>> task =
+    final EthTask<Map<Hash, Bytes>> task =
         getNodeDataTaskFactory.apply(hashes, blockHeader.getNumber());
     downloadState.addOutstandingTask(task);
     return task.run()

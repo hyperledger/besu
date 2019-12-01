@@ -25,11 +25,11 @@ import org.hyperledger.besu.ethereum.p2p.discovery.internal.Packet;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PacketType;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PingPacketData;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
 public class PeerDiscoveryBootstrappingTest {
@@ -80,9 +80,9 @@ public class PeerDiscoveryBootstrappingTest {
           bootstrapAgent.getIncomingPackets().stream().map(p -> p.packet).collect(toList());
 
       // Assert that the node IDs we received belong to the test agents.
-      final List<BytesValue> senderIds =
+      final List<Bytes> senderIds =
           packets.stream().map(Packet::getNodeId).distinct().collect(toList());
-      final List<BytesValue> agentIds =
+      final List<Bytes> agentIds =
           agents.stream()
               .map(PeerDiscoveryAgent::getAdvertisedPeer)
               .map(Optional::get)
@@ -117,8 +117,8 @@ public class PeerDiscoveryBootstrappingTest {
     final List<MockPeerDiscoveryAgent> otherAgents =
         helper.startDiscoveryAgents(5, singletonList(bootstrapAgent.getAdvertisedPeer().get()));
 
-    final BytesValue[] otherPeersIds =
-        otherAgents.stream().map(PeerDiscoveryAgent::getId).toArray(BytesValue[]::new);
+    final Bytes[] otherPeersIds =
+        otherAgents.stream().map(PeerDiscoveryAgent::getId).toArray(Bytes[]::new);
 
     assertThat(bootstrapAgent.streamDiscoveredPeers())
         .extracting(Peer::getId)

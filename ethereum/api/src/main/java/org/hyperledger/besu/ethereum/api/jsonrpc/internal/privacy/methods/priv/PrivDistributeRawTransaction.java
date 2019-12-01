@@ -25,7 +25,8 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionHandler;
-import org.hyperledger.besu.util.bytes.BytesValues;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class PrivDistributeRawTransaction extends PrivacySendTransaction {
 
@@ -75,6 +76,6 @@ public class PrivDistributeRawTransaction extends PrivacySendTransaction {
         () ->
             new JsonRpcSuccessResponse(
                 requestContext.getRequest().getId(),
-                BytesValues.fromBase64(enclaveKey).toString()));
+                Bytes.fromBase64String(enclaveKey).toString()));
   }
 }

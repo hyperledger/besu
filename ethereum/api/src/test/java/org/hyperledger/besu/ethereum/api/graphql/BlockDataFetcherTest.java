@@ -16,10 +16,10 @@ package org.hyperledger.besu.ethereum.api.graphql;
 
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentMatchers;
@@ -31,7 +31,7 @@ public class BlockDataFetcherTest extends AbstractDataFetcherTest {
 
   @Test
   public void bothNumberAndHashThrows() throws Exception {
-    final Hash fakedHash = Hash.hash(BytesValue.of(1));
+    final Hash fakedHash = Hash.hash(Bytes.of(1));
     Mockito.when(environment.getArgument(ArgumentMatchers.eq("number"))).thenReturn(1L);
     Mockito.when(environment.getArgument(ArgumentMatchers.eq("hash"))).thenReturn(fakedHash);
 

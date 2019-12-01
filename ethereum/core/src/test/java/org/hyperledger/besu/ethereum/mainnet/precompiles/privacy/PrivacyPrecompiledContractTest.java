@@ -39,12 +39,12 @@ import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Base64;
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -54,7 +54,7 @@ public class PrivacyPrecompiledContractTest {
   @Rule public final TemporaryFolder temp = new TemporaryFolder();
 
   private final String actual = "Test String";
-  private final BytesValue key = BytesValue.wrap(actual.getBytes(UTF_8));
+  private final Bytes key = Bytes.wrap(actual.getBytes(UTF_8));
   private PrivacyPrecompiledContract privacyPrecompiledContract;
   private PrivacyPrecompiledContract brokenPrivateTransactionHandler;
   private MessageFrame messageFrame;
@@ -63,7 +63,7 @@ public class PrivacyPrecompiledContractTest {
   private static final byte[] VALID_PRIVATE_TRANSACTION_RLP_BASE64 =
       Base64.getEncoder()
           .encode(
-              BytesValue.fromHexString(
+              Bytes.fromHexString(
                       "0xf90113800182520894095e7baea6a6c7c4c2dfeb977efac326af552d87"
                           + "a0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
                           + "ffff801ba048b55bfa915ac795c431978d8a6a992b628d557da5ff759b307d"
@@ -74,7 +74,7 @@ public class PrivacyPrecompiledContractTest {
                           + "6c393153476f3dac4b6f32625671442b6e4e6c4e594c35454537793349644f"
                           + "6e766966746a69697a706a52742b4854754642733d8a726573747269637465"
                           + "64")
-                  .extractArray());
+                  .toArray());
 
   private Enclave mockEnclave() {
     final Enclave mockEnclave = mock(Enclave.class);
@@ -89,7 +89,7 @@ public class PrivacyPrecompiledContractTest {
     final LogSeries logs = mock(LogSeries.class);
     final PrivateTransactionProcessor.Result result =
         PrivateTransactionProcessor.Result.successful(
-            logs, 0, BytesValue.fromHexString(DEFAULT_OUTPUT), null);
+            logs, 0, Bytes.fromHexString(DEFAULT_OUTPUT), null);
     when(mockPrivateTransactionProcessor.processTransaction(
             nullable(Blockchain.class),
             nullable(WorldUpdater.class),
@@ -99,7 +99,7 @@ public class PrivacyPrecompiledContractTest {
             nullable(Address.class),
             nullable(OperationTracer.class),
             nullable(BlockHashLookup.class),
-            nullable(BytesValue.class)))
+            nullable(Bytes.class)))
         .thenReturn(result);
 
     return mockPrivateTransactionProcessor;
@@ -148,15 +148,15 @@ public class PrivacyPrecompiledContractTest {
 
   @Test
   public void testPrivacyPrecompiledContract() {
-    final BytesValue actual = privacyPrecompiledContract.compute(key, messageFrame);
+    final Bytes actual = privacyPrecompiledContract.compute(key, messageFrame);
 
-    assertThat(actual).isEqualTo(BytesValue.fromHexString(DEFAULT_OUTPUT));
+    assertThat(actual).isEqualTo(Bytes.fromHexString(DEFAULT_OUTPUT));
   }
 
   @Test
   public void enclaveIsDownWhileHandling() {
-    final BytesValue expected = brokenPrivateTransactionHandler.compute(key, messageFrame);
+    final Bytes expected = brokenPrivateTransactionHandler.compute(key, messageFrame);
 
-    assertThat(expected).isEqualTo(BytesValue.EMPTY);
+    assertThat(expected).isEqualTo(Bytes.EMPTY);
   }
 }

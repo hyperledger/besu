@@ -14,18 +14,18 @@
  */
 package org.hyperledger.besu.ethereum.trie;
 
-import org.hyperledger.besu.util.bytes.BytesValue;
-
 import java.util.ArrayList;
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
+
 interface NodeFactory<V> {
 
-  Node<V> createExtension(BytesValue path, Node<V> child);
+  Node<V> createExtension(Bytes path, Node<V> child);
 
   Node<V> createBranch(byte leftIndex, Node<V> left, byte rightIndex, Node<V> right);
 
   Node<V> createBranch(ArrayList<Node<V>> newChildren, Optional<V> value);
 
-  Node<V> createLeaf(BytesValue path, V value);
+  Node<V> createLeaf(Bytes path, V value);
 }

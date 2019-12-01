@@ -17,7 +17,6 @@ package org.hyperledger.besu.services.kvstore;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -32,6 +31,7 @@ import java.util.stream.Collectors;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import org.apache.tuweni.bytes.Bytes;
 
 /**
  * This KeyValueStorage will keep data in memory up to some maximum number of elements. Elements are
@@ -39,7 +39,7 @@ import com.google.common.cache.CacheBuilder;
  */
 public class LimitedInMemoryKeyValueStorage implements KeyValueStorage {
 
-  private final Cache<BytesValue, byte[]> storage;
+  private final Cache<Bytes, byte[]> storage;
   private final ReadWriteLock rwLock = new ReentrantReadWriteLock();
 
   public LimitedInMemoryKeyValueStorage(final long maxSize) {
@@ -62,7 +62,7 @@ public class LimitedInMemoryKeyValueStorage implements KeyValueStorage {
     final Lock lock = rwLock.readLock();
     lock.lock();
     try {
-      return storage.getIfPresent(BytesValue.wrap(key)) != null;
+      return storage.getIfPresent(Bytes.wrap(key)) != null;
     } finally {
       lock.unlock();
     }
@@ -76,7 +76,7 @@ public class LimitedInMemoryKeyValueStorage implements KeyValueStorage {
     final Lock lock = rwLock.readLock();
     lock.lock();
     try {
-      return Optional.ofNullable(storage.getIfPresent(BytesValue.wrap(key)));
+      return Optional.ofNullable(storage.getIfPresent(Bytes.wrap(key)));
     } finally {
       lock.unlock();
     }
@@ -85,14 +85,14 @@ public class LimitedInMemoryKeyValueStorage implements KeyValueStorage {
   @Override
   public long removeAllKeysUnless(final Predicate<byte[]> retainCondition) throws StorageException {
     final long initialSize = storage.size();
-    storage.asMap().keySet().removeIf(key -> !retainCondition.test(key.getArrayUnsafe()));
+    storage.asMap().keySet().removeIf(key -> !retainCondition.test(key.toArrayUnsafe()));
     return initialSize - storage.size();
   }
 
   @Override
   public Set<byte[]> getAllKeysThat(final Predicate<byte[]> returnCondition) {
     return storage.asMap().keySet().stream()
-        .map(BytesValue::getArrayUnsafe)
+        .map(Bytes::toArrayUnsafe)
         .filter(returnCondition)
         .collect(Collectors.toSet());
   }
@@ -104,19 +104,19 @@ public class LimitedInMemoryKeyValueStorage implements KeyValueStorage {
 
   private class MemoryTransaction implements KeyValueStorageTransaction {
 
-    private Map<BytesValue, byte[]> updatedValues = new HashMap<>();
-    private Set<BytesValue> removedKeys = new HashSet<>();
+    private Map<Bytes, byte[]> updatedValues = new HashMap<>();
+    private Set<Bytes> removedKeys = new HashSet<>();
 
     @Override
     public void put(final byte[] key, final byte[] value) {
-      updatedValues.put(BytesValue.wrap(key), value);
-      removedKeys.remove(BytesValue.wrap(key));
+      updatedValues.put(Bytes.wrap(key), value);
+      removedKeys.remove(Bytes.wrap(key));
     }
 
     @Override
     public void remove(final byte[] key) {
-      removedKeys.add(BytesValue.wrap(key));
-      updatedValues.remove(BytesValue.wrap(key));
+      removedKeys.add(Bytes.wrap(key));
+      updatedValues.remove(Bytes.wrap(key));
     }
 
     @Override

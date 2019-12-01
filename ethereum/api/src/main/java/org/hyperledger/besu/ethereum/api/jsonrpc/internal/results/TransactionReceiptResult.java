@@ -19,7 +19,6 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +26,7 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import org.apache.tuweni.bytes.Bytes;
 
 @JsonPropertyOrder({
   "blockHash",
@@ -80,10 +80,10 @@ public abstract class TransactionReceiptResult {
             receiptWithMetadata.getBlockHash(),
             receiptWithMetadata.getTransactionIndex());
     this.logsBloom = receipt.getBloomFilter().toString();
-    this.to = receiptWithMetadata.getTransaction().getTo().map(BytesValue::toString).orElse(null);
+    this.to = receiptWithMetadata.getTransaction().getTo().map(Bytes::toHexString).orElse(null);
     this.transactionHash = receiptWithMetadata.getTransaction().getHash().toString();
     this.transactionIndex = Quantity.create(receiptWithMetadata.getTransactionIndex());
-    this.revertReason = receipt.getRevertReason().map(BytesValue::toString).orElse(null);
+    this.revertReason = receipt.getRevertReason().map(Bytes::toString).orElse(null);
   }
 
   @JsonGetter(value = "blockHash")

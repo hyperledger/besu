@@ -20,7 +20,8 @@ import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.vm.AbstractOperation;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.util.bytes.Bytes32;
+
+import org.apache.tuweni.bytes.Bytes32;
 
 public class SelfBalanceOperation extends AbstractOperation {
 
@@ -37,6 +38,6 @@ public class SelfBalanceOperation extends AbstractOperation {
   public void execute(final MessageFrame frame) {
     final Address accountAddress = frame.getContractAddress();
     final Account account = frame.getWorldState().get(accountAddress);
-    frame.pushStackItem(account == null ? Bytes32.ZERO : account.getBalance().getBytes());
+    frame.pushStackItem(account == null ? Bytes32.ZERO : account.getBalance().toBytes());
   }
 }

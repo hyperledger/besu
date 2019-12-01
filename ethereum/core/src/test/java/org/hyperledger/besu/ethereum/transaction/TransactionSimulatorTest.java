@@ -37,10 +37,10 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor.Result;
 import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor.Result.Status;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -127,7 +127,7 @@ public class TransactionSimulatorTest {
             .to(DEFAULT_FROM)
             .sender(Address.fromHexString("0x0"))
             .value(Wei.ZERO)
-            .payload(BytesValue.EMPTY)
+            .payload(Bytes.EMPTY)
             .signature(FAKE_SIGNATURE)
             .build();
     mockProcessorStatusForTransaction(1L, expectedTransaction, Status.SUCCESSFUL);
@@ -152,7 +152,7 @@ public class TransactionSimulatorTest {
             .to(DEFAULT_FROM)
             .sender(Address.fromHexString("0x0"))
             .value(Wei.ZERO)
-            .payload(BytesValue.EMPTY)
+            .payload(Bytes.EMPTY)
             .signature(FAKE_SIGNATURE)
             .build();
     mockProcessorStatusForTransaction(1L, expectedTransaction, Status.SUCCESSFUL);
@@ -241,7 +241,7 @@ public class TransactionSimulatorTest {
             .to(DEFAULT_FROM)
             .sender(Address.fromHexString("0x0"))
             .value(Wei.ZERO)
-            .payload(BytesValue.EMPTY)
+            .payload(Bytes.EMPTY)
             .signature(FAKE_SIGNATURE)
             .build();
     mockProcessorStatusForTransaction(1L, expectedTransaction, Status.SUCCESSFUL);
@@ -266,7 +266,7 @@ public class TransactionSimulatorTest {
             .to(DEFAULT_FROM)
             .sender(Address.fromHexString("0x0"))
             .value(Wei.ZERO)
-            .payload(BytesValue.EMPTY)
+            .payload(Bytes.EMPTY)
             .signature(FAKE_SIGNATURE)
             .build();
     mockProcessorStatusForTransaction(1L, expectedTransaction, Status.SUCCESSFUL);
@@ -364,6 +364,6 @@ public class TransactionSimulatorTest {
         0,
         Wei.of(0),
         Wei.of(0),
-        BytesValue.EMPTY);
+        Bytes.EMPTY);
   }
 }

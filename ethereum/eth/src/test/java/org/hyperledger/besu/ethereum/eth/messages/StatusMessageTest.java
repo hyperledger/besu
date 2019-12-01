@@ -19,12 +19,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.math.BigInteger;
 import java.util.Random;
 
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Test;
 
 public class StatusMessageTest {
@@ -33,7 +33,7 @@ public class StatusMessageTest {
   public void getters() {
     final int version = EthProtocol.EthVersion.V62;
     final BigInteger networkId = BigInteger.ONE;
-    final UInt256 td = UInt256.of(1000L);
+    final UInt256 td = UInt256.valueOf(1000L);
     final Hash bestHash = randHash(1L);
     final Hash genesisHash = randHash(2L);
 
@@ -50,7 +50,7 @@ public class StatusMessageTest {
   public void serializeDeserialize() {
     final int version = EthProtocol.EthVersion.V62;
     final BigInteger networkId = BigInteger.ONE;
-    final UInt256 td = UInt256.of(1000L);
+    final UInt256 td = UInt256.valueOf(1000L);
     final Hash bestHash = randHash(1L);
     final Hash genesisHash = randHash(2L);
 

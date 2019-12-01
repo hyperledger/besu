@@ -26,11 +26,11 @@ import org.hyperledger.besu.consensus.ibft.network.ValidatorMulticaster;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.List;
 
 import com.google.common.collect.Lists;
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -42,7 +42,7 @@ public class UniqueMessageMulticasterTest {
   private final ValidatorMulticaster multicaster = mock(ValidatorMulticaster.class);
   private final UniqueMessageMulticaster uniqueMessageMulticaster =
       new UniqueMessageMulticaster(multicaster, messageTracker);
-  private final RawMessage messageSent = new RawMessage(5, BytesValue.wrap(new byte[5]));
+  private final RawMessage messageSent = new RawMessage(5, Bytes.wrap(new byte[5]));
 
   @Test
   public void previouslySentMessageIsNotSentAgain() {

@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.permissioning.account.TransactionPermission
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -33,6 +32,7 @@ import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 public class AccountLocalConfigPermissioningController implements TransactionPermissioningProvider {
 
@@ -194,8 +194,8 @@ public class AccountLocalConfigPermissioningController implements TransactionPer
       if (account == null || !account.startsWith("0x")) {
         return false;
       }
-      BytesValue bytesValue = BytesValue.fromHexString(account);
-      return bytesValue.size() == ACCOUNT_BYTES_SIZE;
+      Bytes bytes = Bytes.fromHexString(account);
+      return bytes.size() == ACCOUNT_BYTES_SIZE;
     } catch (NullPointerException | IndexOutOfBoundsException | IllegalArgumentException e) {
       return false;
     }

@@ -18,18 +18,19 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.LogTopic;
+import org.hyperledger.besu.ethereum.core.UnformattedDataWrapper;
 import org.hyperledger.besu.ethereum.vm.AbstractOperation;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.EnumSet;
 import java.util.Optional;
 
 import com.google.common.collect.ImmutableList;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class LogOperation extends AbstractOperation {
 
@@ -42,8 +43,8 @@ public class LogOperation extends AbstractOperation {
 
   @Override
   public Gas cost(final MessageFrame frame) {
-    final UInt256 dataOffset = frame.getStackItem(0).asUInt256();
-    final UInt256 dataLength = frame.getStackItem(1).asUInt256();
+    final UInt256 dataOffset = UInt256.fromBytes(frame.getStackItem(0));
+    final UInt256 dataLength = UInt256.fromBytes(frame.getStackItem(1));
 
     return gasCalculator().logOperationGasCost(frame, dataOffset, dataLength, numTopics);
   }
@@ -52,17 +53,17 @@ public class LogOperation extends AbstractOperation {
   public void execute(final MessageFrame frame) {
     final Address address = frame.getRecipientAddress();
 
-    final UInt256 dataLocation = frame.popStackItem().asUInt256();
-    final UInt256 numBytes = frame.popStackItem().asUInt256();
-    final BytesValue data = frame.readMemory(dataLocation, numBytes);
+    final UInt256 dataLocation = UInt256.fromBytes(frame.popStackItem());
+    final UInt256 numBytes = UInt256.fromBytes(frame.popStackItem());
+    final Bytes data = frame.readMemory(dataLocation, numBytes);
 
     final ImmutableList.Builder<LogTopic> builder =
         ImmutableList.builderWithExpectedSize(numTopics);
     for (int i = 0; i < numTopics; i++) {
-      builder.add(LogTopic.of(frame.popStackItem()));
+      builder.add(LogTopic.create(frame.popStackItem()));
     }
 
-    frame.addLog(new Log(address, data, builder.build()));
+    frame.addLog(new Log(address, new UnformattedDataWrapper(data), builder.build()));
   }
 
   @Override

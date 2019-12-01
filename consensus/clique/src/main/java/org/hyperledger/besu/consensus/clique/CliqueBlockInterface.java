@@ -20,17 +20,16 @@ import org.hyperledger.besu.consensus.common.VoteType;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Collection;
 import java.util.Optional;
 
 import com.google.common.collect.ImmutableBiMap;
+import org.apache.tuweni.bytes.Bytes;
 
 public class CliqueBlockInterface implements BlockInterface {
 
-  public static final Address NO_VOTE_SUBJECT =
-      Address.wrap(BytesValue.wrap(new byte[Address.SIZE]));
+  public static final Address NO_VOTE_SUBJECT = Address.wrap(Bytes.wrap(new byte[Address.SIZE]));
 
   public static final long ADD_NONCE = 0xFFFFFFFFFFFFFFFFL;
   public static final long DROP_NONCE = 0x0L;

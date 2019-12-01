@@ -33,8 +33,6 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeer;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.math.BigInteger;
 import java.util.Collections;
@@ -43,6 +41,8 @@ import java.util.Map;
 import java.util.Optional;
 
 import com.google.common.collect.ImmutableMap;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -58,8 +58,8 @@ public class AdminNodeInfoTest {
 
   private AdminNodeInfo method;
 
-  private final BytesValue nodeId =
-      BytesValue.fromHexString(
+  private final Bytes nodeId =
+      Bytes.fromHexString(
           "0x0f1b319e32017c3fcb221841f0f978701b4e9513fe6a567a2db43d43381a9c7e3dfe7cae13cbc2f56943400bacaf9082576ab087cd51983b17d729ae796f6807");
   private final ChainHead testChainHead = new ChainHead(Hash.EMPTY, UInt256.ONE, 1L);
   private final GenesisConfigOptions genesisConfigOptions =

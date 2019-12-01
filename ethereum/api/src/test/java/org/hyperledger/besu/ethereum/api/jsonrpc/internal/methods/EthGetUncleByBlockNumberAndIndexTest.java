@@ -36,13 +36,13 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -148,6 +148,6 @@ public class EthGetUncleByBlockNumberAndIndexTest {
     final List<Hash> ommers = new ArrayList<>();
     ommers.add(Hash.ZERO);
 
-    return new BlockWithMetadata<>(header, transactions, ommers, header.getDifficulty(), 0);
+    return new BlockWithMetadata<>(header, transactions, ommers, header.internalGetDifficulty(), 0);
   }
 }

@@ -65,8 +65,6 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -83,6 +81,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.awaitility.Awaitility;
 import org.awaitility.core.ConditionTimeoutException;
 import org.junit.BeforeClass;
@@ -901,7 +901,7 @@ public final class EthProtocolManagerTest {
             EthProtocolConfiguration.defaultConfig())) {
       // Setup node data query
 
-      final List<BytesValue> expectedResults = new ArrayList<>();
+      final List<Bytes> expectedResults = new ArrayList<>();
       final List<Hash> requestedHashes = new ArrayList<>();
 
       final long startBlock = blockchain.getChainHeadBlockNumber() - 5;
@@ -922,7 +922,7 @@ public final class EthProtocolManagerTest {
             }
             assertThat(message.getCode()).isEqualTo(EthPV63.NODE_DATA);
             final NodeDataMessage receiptsMessage = NodeDataMessage.readFrom(message);
-            final List<BytesValue> nodeData = receiptsMessage.nodeData();
+            final List<Bytes> nodeData = receiptsMessage.nodeData();
             assertThat(nodeData.size()).isEqualTo(blockCount);
             for (int i = 0; i < blockCount; i++) {
               assertThat(expectedResults.get(i)).isEqualTo(nodeData.get(i));

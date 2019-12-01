@@ -18,8 +18,9 @@ import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.vm.AbstractOperation;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.uint.UInt256;
+
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class MStore8Operation extends AbstractOperation {
 
@@ -29,14 +30,14 @@ public class MStore8Operation extends AbstractOperation {
 
   @Override
   public Gas cost(final MessageFrame frame) {
-    final UInt256 offset = frame.getStackItem(0).asUInt256();
+    final UInt256 offset = UInt256.fromBytes(frame.getStackItem(0));
 
     return gasCalculator().mStore8OperationGasCost(frame, offset);
   }
 
   @Override
   public void execute(final MessageFrame frame) {
-    final UInt256 location = frame.popStackItem().asUInt256();
+    final UInt256 location = UInt256.fromBytes(frame.popStackItem());
     final Bytes32 value = frame.popStackItem();
 
     frame.writeMemory(location, value.get(Bytes32.SIZE - 1));

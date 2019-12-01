@@ -26,18 +26,18 @@ import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.messages.GetNodeDataMessage;
 import org.hyperledger.besu.ethereum.eth.messages.NodeDataMessage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.Test;
 
 public class EthServerTest {
 
-  private static final BytesValue VALUE1 = BytesValue.of(1);
-  private static final BytesValue VALUE2 = BytesValue.of(2);
-  private static final BytesValue VALUE3 = BytesValue.of(3);
+  private static final Bytes VALUE1 = Bytes.of(1);
+  private static final Bytes VALUE2 = Bytes.of(2);
+  private static final Bytes VALUE3 = Bytes.of(3);
   private static final Hash HASH1 = Hash.hash(VALUE1);
   private static final Hash HASH2 = Hash.hash(VALUE2);
   private static final Hash HASH3 = Hash.hash(VALUE3);

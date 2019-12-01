@@ -17,7 +17,6 @@ package org.hyperledger.besu.services.kvstore;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -30,16 +29,18 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import org.apache.tuweni.bytes.Bytes;
+
 public class InMemoryKeyValueStorage implements KeyValueStorage {
 
-  private final Map<BytesValue, byte[]> hashValueStore;
+  private final Map<Bytes, byte[]> hashValueStore;
   private final ReadWriteLock rwLock = new ReentrantReadWriteLock();
 
   public InMemoryKeyValueStorage() {
     this(new HashMap<>());
   }
 
-  protected InMemoryKeyValueStorage(final Map<BytesValue, byte[]> hashValueStore) {
+  protected InMemoryKeyValueStorage(final Map<Bytes, byte[]> hashValueStore) {
     this.hashValueStore = hashValueStore;
   }
 
@@ -59,7 +60,7 @@ public class InMemoryKeyValueStorage implements KeyValueStorage {
     final Lock lock = rwLock.readLock();
     lock.lock();
     try {
-      return hashValueStore.containsKey(BytesValue.wrap(key));
+      return hashValueStore.containsKey(Bytes.wrap(key));
     } finally {
       lock.unlock();
     }
@@ -70,7 +71,7 @@ public class InMemoryKeyValueStorage implements KeyValueStorage {
     final Lock lock = rwLock.readLock();
     lock.lock();
     try {
-      return Optional.ofNullable(hashValueStore.get(BytesValue.wrap(key)));
+      return Optional.ofNullable(hashValueStore.get(Bytes.wrap(key)));
     } finally {
       lock.unlock();
     }
@@ -82,7 +83,7 @@ public class InMemoryKeyValueStorage implements KeyValueStorage {
     lock.lock();
     try {
       long initialSize = hashValueStore.keySet().size();
-      hashValueStore.keySet().removeIf(key -> !retainCondition.test(key.getArrayUnsafe()));
+      hashValueStore.keySet().removeIf(key -> !retainCondition.test(key.toArrayUnsafe()));
       return initialSize - hashValueStore.keySet().size();
     } finally {
       lock.unlock();
@@ -92,7 +93,7 @@ public class InMemoryKeyValueStorage implements KeyValueStorage {
   @Override
   public Set<byte[]> getAllKeysThat(final Predicate<byte[]> returnCondition) {
     return hashValueStore.keySet().stream()
-        .map(BytesValue::getArrayUnsafe)
+        .map(Bytes::toArrayUnsafe)
         .filter(returnCondition)
         .collect(Collectors.toSet());
   }
@@ -105,25 +106,25 @@ public class InMemoryKeyValueStorage implements KeyValueStorage {
     return new KeyValueStorageTransactionTransitionValidatorDecorator(new InMemoryTransaction());
   }
 
-  public Set<BytesValue> keySet() {
+  public Set<Bytes> keySet() {
     return Set.copyOf(hashValueStore.keySet());
   }
 
   private class InMemoryTransaction implements KeyValueStorageTransaction {
 
-    private Map<BytesValue, byte[]> updatedValues = new HashMap<>();
-    private Set<BytesValue> removedKeys = new HashSet<>();
+    private Map<Bytes, byte[]> updatedValues = new HashMap<>();
+    private Set<Bytes> removedKeys = new HashSet<>();
 
     @Override
     public void put(final byte[] key, final byte[] value) {
-      updatedValues.put(BytesValue.wrap(key), value);
-      removedKeys.remove(BytesValue.wrap(key));
+      updatedValues.put(Bytes.wrap(key), value);
+      removedKeys.remove(Bytes.wrap(key));
     }
 
     @Override
     public void remove(final byte[] key) {
-      removedKeys.add(BytesValue.wrap(key));
-      updatedValues.remove(BytesValue.wrap(key));
+      removedKeys.add(Bytes.wrap(key));
+      updatedValues.remove(Bytes.wrap(key));
     }
 
     @Override

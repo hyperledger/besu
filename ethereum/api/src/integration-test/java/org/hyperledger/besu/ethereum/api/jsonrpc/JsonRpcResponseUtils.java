@@ -47,10 +47,9 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.UnformattedDataWrapper;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -59,6 +58,8 @@ import java.util.Map;
 import java.util.Optional;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class JsonRpcResponseUtils {
 
@@ -83,7 +84,7 @@ public class JsonRpcResponseUtils {
     final Hash receiptsRoot = hash(values.get(RECEIPTS_ROOT));
     final LogsBloomFilter logsBloom = logsBloom(values.get(LOGS_BLOOM));
     final UInt256 difficulty = unsignedInt256(values.get(DIFFICULTY));
-    final BytesValue extraData = bytes(values.get(EXTRA_DATA));
+    final Bytes extraData = bytes(values.get(EXTRA_DATA));
     final BlockHeaderFunctions blockHeaderFunctions = new MainnetBlockHeaderFunctions();
     final long number = unsignedLong(values.get(NUMBER));
     final long gasLimit = unsignedLong(values.get(GAS_LIMIT));
@@ -163,7 +164,7 @@ public class JsonRpcResponseUtils {
     when(transaction.getHash()).thenReturn(hash(hash));
     when(transaction.getTo()).thenReturn(Optional.ofNullable(address(toAddress)));
     when(transaction.getSender()).thenReturn(address(fromAddress));
-    when(transaction.getPayload()).thenReturn(bytes(input));
+    when(transaction.getPayload()).thenReturn(new UnformattedDataWrapper(bytes(input)));
     when(transaction.getValue()).thenReturn(wei(value));
     when(transaction.getGasLimit()).thenReturn(unsignedLong(gas));
 
@@ -213,7 +214,7 @@ public class JsonRpcResponseUtils {
     return UInt256.fromHexString(hex);
   }
 
-  private BytesValue bytes(final String hex) {
-    return BytesValue.fromHexString(hex);
+  private Bytes bytes(final String hex) {
+    return Bytes.fromHexString(hex);
   }
 }

@@ -18,7 +18,6 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -27,8 +26,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
-public class RetryingGetNodeDataFromPeerTask
-    extends AbstractRetryingPeerTask<Map<Hash, BytesValue>> {
+import org.apache.tuweni.bytes.Bytes;
+
+public class RetryingGetNodeDataFromPeerTask extends AbstractRetryingPeerTask<Map<Hash, Bytes>> {
 
   private final EthContext ethContext;
   private final Set<Hash> hashes;
@@ -56,7 +56,7 @@ public class RetryingGetNodeDataFromPeerTask
   }
 
   @Override
-  protected CompletableFuture<Map<Hash, BytesValue>> executePeerTask(
+  protected CompletableFuture<Map<Hash, Bytes>> executePeerTask(
       final Optional<EthPeer> assignedPeer) {
     final GetNodeDataFromPeerTask task =
         GetNodeDataFromPeerTask.forHashes(ethContext, hashes, pivotBlockNumber, metricsSystem);

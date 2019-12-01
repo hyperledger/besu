@@ -35,12 +35,12 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -80,7 +80,7 @@ public class SpuriousBehaviourTest {
 
   @Test
   public void badlyFormedRlpDoesNotPreventOngoingIbftOperation() {
-    final MessageData illegalCommitMsg = new RawMessage(IbftV2.PREPARE, BytesValue.EMPTY);
+    final MessageData illegalCommitMsg = new RawMessage(IbftV2.PREPARE, Bytes.EMPTY);
     peers.getNonProposing(0).injectMessage(illegalCommitMsg);
 
     peers.getProposer().injectProposal(roundId, proposedBlock);
@@ -89,7 +89,7 @@ public class SpuriousBehaviourTest {
 
   @Test
   public void messageWithIllegalMessageCodeAreDiscardedAndDoNotPreventOngoingIbftOperation() {
-    final MessageData illegalCommitMsg = new RawMessage(IbftV2.MESSAGE_SPACE, BytesValue.EMPTY);
+    final MessageData illegalCommitMsg = new RawMessage(IbftV2.MESSAGE_SPACE, Bytes.EMPTY);
     peers.getNonProposing(0).injectMessage(illegalCommitMsg);
 
     peers.getProposer().injectProposal(roundId, proposedBlock);

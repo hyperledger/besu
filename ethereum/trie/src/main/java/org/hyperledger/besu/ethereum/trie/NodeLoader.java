@@ -14,11 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.trie;
 
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+
 public interface NodeLoader {
-  Optional<BytesValue> getNode(Bytes32 hash);
+  Optional<Bytes> getNode(Bytes32 hash);
 }

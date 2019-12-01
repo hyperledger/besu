@@ -17,10 +17,10 @@ package org.hyperledger.besu.ethereum.eth.messages;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Arrays;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
@@ -29,7 +29,7 @@ public final class GetBlockHeadersMessageTest {
   @Test
   public void roundTripWithHash() {
     for (final boolean reverse : Arrays.asList(true, false)) {
-      final Hash hash = Hash.hash(BytesValue.wrap(new byte[10]));
+      final Hash hash = Hash.hash(Bytes.wrap(new byte[10]));
       final int skip = 10;
       final int maxHeaders = 128;
       final GetBlockHeadersMessage initialMessage =

@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.trie;
 
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 public interface NodeUpdater {
-  void store(Bytes32 hash, BytesValue value);
+  void store(Bytes32 hash, Bytes value);
 }

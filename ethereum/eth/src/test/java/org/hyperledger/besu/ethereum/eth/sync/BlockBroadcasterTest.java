@@ -29,11 +29,11 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.messages.NewBlockMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.Collections;
 import java.util.stream.Stream;
 
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Test;
 
 public class BlockBroadcasterTest {
@@ -50,7 +50,7 @@ public class BlockBroadcasterTest {
     final BlockBroadcaster blockBroadcaster = new BlockBroadcaster(ethContext);
     final Block block = generateBlock();
     final NewBlockMessage newBlockMessage =
-        NewBlockMessage.create(block, block.getHeader().getDifficulty());
+        NewBlockMessage.create(block, block.getHeader().internalGetDifficulty());
 
     blockBroadcaster.propagate(block, UInt256.ZERO);
 
@@ -73,7 +73,7 @@ public class BlockBroadcasterTest {
     final BlockBroadcaster blockBroadcaster = new BlockBroadcaster(ethContext);
     final Block block = generateBlock();
     final NewBlockMessage newBlockMessage =
-        NewBlockMessage.create(block, block.getHeader().getDifficulty());
+        NewBlockMessage.create(block, block.getHeader().internalGetDifficulty());
 
     blockBroadcaster.propagate(block, UInt256.ZERO);
 

@@ -15,10 +15,11 @@
 package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.math.BigInteger;
 import java.util.Optional;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class TransactionTestFixture {
 
@@ -33,7 +34,7 @@ public class TransactionTestFixture {
 
   private Wei value = Wei.of(4);
 
-  private BytesValue payload = BytesValue.EMPTY;
+  private Bytes payload = Bytes.EMPTY;
 
   private Optional<BigInteger> chainId = Optional.of(BigInteger.valueOf(2018));
 
@@ -83,7 +84,7 @@ public class TransactionTestFixture {
     return this;
   }
 
-  public TransactionTestFixture payload(final BytesValue payload) {
+  public TransactionTestFixture payload(final Bytes payload) {
     this.payload = payload;
     return this;
   }

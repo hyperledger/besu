@@ -21,13 +21,13 @@ import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.util.NetworkUtility;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.net.InetAddress;
 import java.util.Objects;
 import java.util.OptionalInt;
 
 import com.google.common.net.InetAddresses;
+import org.apache.tuweni.bytes.Bytes;
 
 /**
  * Encapsulates the network coordinates of a {@link DiscoveryPeer} as well as serialization logic
@@ -62,7 +62,7 @@ public class Endpoint {
     return new Endpoint(enode.getIp().getHostAddress(), discoveryPort, listeningPort);
   }
 
-  public EnodeURL toEnode(final BytesValue nodeId) {
+  public EnodeURL toEnode(final Bytes nodeId) {
     return EnodeURL.builder()
         .nodeId(nodeId)
         .ipAddress(host)

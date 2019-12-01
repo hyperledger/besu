@@ -31,8 +31,6 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -43,6 +41,9 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class BlockchainQueries {
 
@@ -113,8 +114,8 @@ public class BlockchainQueries {
    * @param blockNumber The height of the block to be checked.
    * @return The code associated with this address.
    */
-  public Optional<BytesValue> getCode(final Address address, final long blockNumber) {
-    return fromAccount(address, blockNumber, Account::getCode, BytesValue.EMPTY);
+  public Optional<Bytes> getCode(final Address address, final long blockNumber) {
+    return fromAccount(address, blockNumber, Account::getCode, Bytes.EMPTY);
   }
 
   /**

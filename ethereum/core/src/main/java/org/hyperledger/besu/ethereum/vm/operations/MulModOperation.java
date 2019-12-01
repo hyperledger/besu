@@ -18,7 +18,9 @@ import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.vm.AbstractOperation;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.util.uint.UInt256;
+
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class MulModOperation extends AbstractOperation {
 
@@ -33,12 +35,15 @@ public class MulModOperation extends AbstractOperation {
 
   @Override
   public void execute(final MessageFrame frame) {
-    final UInt256 value0 = frame.popStackItem().asUInt256();
-    final UInt256 value1 = frame.popStackItem().asUInt256();
-    final UInt256 value2 = frame.popStackItem().asUInt256();
+    final UInt256 value0 = UInt256.fromBytes(frame.popStackItem());
+    final UInt256 value1 = UInt256.fromBytes(frame.popStackItem());
+    final UInt256 value2 = UInt256.fromBytes(frame.popStackItem());
 
-    final UInt256 result = value0.timesModulo(value1, value2);
-
-    frame.pushStackItem(result.getBytes());
+    if (value2.isZero()) {
+      frame.pushStackItem(Bytes32.ZERO);
+    } else {
+      final UInt256 result = value0.multiplyMod(value1, value2);
+      frame.pushStackItem(result.toBytes());
+    }
   }
 }

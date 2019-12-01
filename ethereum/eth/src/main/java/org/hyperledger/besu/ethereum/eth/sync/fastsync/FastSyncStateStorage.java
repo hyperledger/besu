@@ -18,7 +18,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,6 +26,7 @@ import java.nio.file.Path;
 import com.google.common.io.Files;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 /**
  * Supports persisting fast sync state to disk to enable resuming after a restart.
@@ -54,7 +54,7 @@ public class FastSyncStateStorage {
       if (!isFastSyncInProgress()) {
         return FastSyncState.EMPTY_SYNC_STATE;
       }
-      final BytesValue rlp = BytesValue.wrap(Files.toByteArray(pivotBlockHeaderFile));
+      final Bytes rlp = Bytes.wrap(Files.toByteArray(pivotBlockHeaderFile));
       return new FastSyncState(
           BlockHeader.readFrom(new BytesValueRLPInput(rlp, false), blockHeaderFunctions));
     } catch (final IOException e) {
@@ -74,7 +74,7 @@ public class FastSyncStateStorage {
     try {
       final BytesValueRLPOutput output = new BytesValueRLPOutput();
       state.getPivotBlockHeader().get().writeTo(output);
-      Files.write(output.encoded().getArrayUnsafe(), pivotBlockHeaderFile);
+      Files.write(output.encoded().toArrayUnsafe(), pivotBlockHeaderFile);
     } catch (final IOException e) {
       throw new IllegalStateException(
           "Unable to store fast sync status file: " + pivotBlockHeaderFile.getAbsolutePath());

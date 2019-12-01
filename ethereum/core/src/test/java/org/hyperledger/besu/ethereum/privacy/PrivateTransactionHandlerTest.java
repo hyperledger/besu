@@ -41,14 +41,13 @@ import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.FixedKeySigningPrivateMarkerTransactionFactory;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.BytesValues;
 import org.hyperledger.orion.testutil.OrionKeyUtils;
 
 import java.math.BigInteger;
 import java.util.Optional;
 
 import com.google.common.collect.Lists;
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -75,7 +74,7 @@ public class PrivateTransactionHandlerTest {
           .gasLimit(3000000)
           .to(Address.fromHexString("0x627306090abab3a6e1400e9345bc60c78a8bef57"))
           .value(Wei.ZERO)
-          .payload(BytesValues.fromBase64(TRANSACTION_KEY))
+          .payload(Bytes.fromBase64String(TRANSACTION_KEY))
           .sender(Address.fromHexString("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"))
           .chainId(BigInteger.valueOf(2018))
           .signAndBuild(KEY_PAIR);
@@ -105,7 +104,7 @@ public class PrivateTransactionHandlerTest {
   public void setUp() throws Exception {
     PrivateStateStorage privateStateStorage = mock(PrivateStateStorage.class);
     Hash mockHash = mock(Hash.class);
-    when(privateStateStorage.getLatestStateRoot(any(BytesValue.class)))
+    when(privateStateStorage.getLatestStateRoot(any(Bytes.class)))
         .thenReturn(Optional.of(mockHash));
     WorldStateArchive worldStateArchive = mock(WorldStateArchive.class);
     Account account = mock(Account.class);
@@ -224,19 +223,19 @@ public class PrivateTransactionHandlerTest {
 
   private static PrivateTransaction buildLegacyPrivateTransaction(final long nonce) {
     return buildPrivateTransaction(nonce)
-        .privateFrom(BytesValues.fromBase64("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo="))
+        .privateFrom(Bytes.fromBase64String("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo="))
         .privateFor(
             Lists.newArrayList(
-                BytesValues.fromBase64("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo="),
-                BytesValues.fromBase64("Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=")))
+                Bytes.fromBase64String("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo="),
+                Bytes.fromBase64String("Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=")))
         .signAndBuild(KEY_PAIR);
   }
 
   private static PrivateTransaction buildBesuPrivateTransaction(final long nonce) {
 
     return buildPrivateTransaction(nonce)
-        .privateFrom(BytesValues.fromBase64("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo="))
-        .privacyGroupId(BytesValues.fromBase64("DyAOiF/ynpc+JXa2YAGB0bCitSlOMNm+ShmB/7M6C4w="))
+        .privateFrom(Bytes.fromBase64String("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo="))
+        .privacyGroupId(Bytes.fromBase64String("DyAOiF/ynpc+JXa2YAGB0bCitSlOMNm+ShmB/7M6C4w="))
         .signAndBuild(KEY_PAIR);
   }
 
@@ -247,7 +246,7 @@ public class PrivateTransactionHandlerTest {
         .gasLimit(3000000)
         .to(Address.fromHexString("0x627306090abab3a6e1400e9345bc60c78a8bef57"))
         .value(Wei.ZERO)
-        .payload(BytesValue.fromHexString("0x"))
+        .payload(Bytes.fromHexString("0x"))
         .sender(Address.fromHexString("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"))
         .chainId(BigInteger.valueOf(2018))
         .restriction(Restriction.RESTRICTED);

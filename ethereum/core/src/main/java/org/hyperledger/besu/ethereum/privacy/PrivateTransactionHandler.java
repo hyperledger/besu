@@ -31,7 +31,6 @@ import org.hyperledger.besu.ethereum.privacy.markertransaction.PrivateMarkerTran
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.util.bytes.BytesValues;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -40,6 +39,7 @@ import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 public class PrivateTransactionHandler {
 
@@ -96,13 +96,11 @@ public class PrivateTransactionHandler {
 
   public String getPrivacyGroup(final String key, final PrivateTransaction privateTransaction) {
     if (privateTransaction.getPrivacyGroupId().isPresent()) {
-      return BytesValues.asBase64String(privateTransaction.getPrivacyGroupId().get());
+      return privateTransaction.getPrivacyGroupId().get().toBase64String();
     }
     final ReceiveRequest receiveRequest =
-        new ReceiveRequest(key, BytesValues.asBase64String(privateTransaction.getPrivateFrom()));
-    LOG.debug(
-        "Getting privacy group for {}",
-        BytesValues.asBase64String(privateTransaction.getPrivateFrom()));
+        new ReceiveRequest(key, privateTransaction.getPrivateFrom().toBase64String());
+    LOG.debug("Getting privacy group for {}", privateTransaction.getPrivateFrom().toBase64String());
     final ReceiveResponse receiveResponse;
     try {
       receiveResponse = enclave.receive(receiveRequest);
@@ -127,32 +125,30 @@ public class PrivateTransactionHandler {
   private SendRequest createSendRequest(final PrivateTransaction privateTransaction) {
     final BytesValueRLPOutput bvrlp = new BytesValueRLPOutput();
     privateTransaction.writeTo(bvrlp);
-    final String payload = BytesValues.asBase64String(bvrlp.encoded());
+    final String payload = bvrlp.encoded().toBase64String();
 
     if (privateTransaction.getPrivacyGroupId().isPresent()) {
       return new SendRequestBesu(
-          payload,
-          enclavePublicKey,
-          BytesValues.asBase64String(privateTransaction.getPrivacyGroupId().get()));
+          payload, enclavePublicKey, privateTransaction.getPrivacyGroupId().get().toBase64String());
     } else {
       final List<String> privateFor =
           privateTransaction.getPrivateFor().get().stream()
-              .map(BytesValues::asBase64String)
+              .map(Bytes::toBase64String)
               .collect(Collectors.toList());
 
       // FIXME: orion should accept empty privateFor
       if (privateFor.isEmpty()) {
-        privateFor.add(BytesValues.asBase64String(privateTransaction.getPrivateFrom()));
+        privateFor.add(privateTransaction.getPrivateFrom().toBase64String());
       }
 
       return new SendRequestLegacy(
-          payload, BytesValues.asBase64String(privateTransaction.getPrivateFrom()), privateFor);
+          payload, privateTransaction.getPrivateFrom().toBase64String(), privateFor);
     }
   }
 
   public long getSenderNonce(final Address sender, final String privacyGroupId) {
     return privateStateStorage
-        .getLatestStateRoot(BytesValues.fromBase64(privacyGroupId))
+        .getLatestStateRoot(Bytes.fromBase64String(privacyGroupId))
         .map(
             lastRootHash ->
                 privateWorldStateArchive

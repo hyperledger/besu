@@ -18,8 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.BytesValues;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,6 +27,7 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.Function;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -80,7 +79,7 @@ public abstract class AbstractKeyValueStorageTest {
     tx.put(bytesFromHexString("11"), bytesFromHexString("0ABC"));
     tx.put(bytesFromHexString("12"), bytesFromHexString("0ABC"));
     tx.commit();
-    store.removeAllKeysUnless(bv -> BytesValue.wrap(bv).toString().contains("1"));
+    store.removeAllKeysUnless(bv -> Bytes.wrap(bv).toString().contains("1"));
     assertThat(store.containsKey(bytesFromHexString("0F"))).isFalse();
     assertThat(store.containsKey(bytesFromHexString("10"))).isTrue();
     assertThat(store.containsKey(bytesFromHexString("11"))).isTrue();
@@ -96,7 +95,7 @@ public abstract class AbstractKeyValueStorageTest {
     tx.put(bytesFromHexString("11"), bytesFromHexString("0ABC"));
     tx.put(bytesFromHexString("12"), bytesFromHexString("0ABC"));
     tx.commit();
-    Set<byte[]> keys = store.getAllKeysThat(bv -> BytesValue.wrap(bv).toString().contains("1"));
+    Set<byte[]> keys = store.getAllKeysThat(bv -> Bytes.wrap(bv).toString().contains("1"));
     assertThat(keys.size()).isEqualTo(3);
     assertThat(keys)
         .containsExactlyInAnyOrder(
@@ -171,7 +170,7 @@ public abstract class AbstractKeyValueStorageTest {
                   try {
                     for (int i = 0; i < keyCount; i++) {
                       KeyValueStorageTransaction tx = store.startTransaction();
-                      tx.put(BytesValues.toMinimalBytes(i).getArrayUnsafe(), value);
+                      tx.put(Bytes.minimalBytes(i).toArrayUnsafe(), value);
                       tx.commit();
                     }
                   } finally {
@@ -180,15 +179,15 @@ public abstract class AbstractKeyValueStorageTest {
                 });
 
     // Run 2 concurrent transactions that write a bunch of values to the same keys
-    final byte[] a = BytesValue.of(10).getArrayUnsafe();
-    final byte[] b = BytesValue.of(20).getArrayUnsafe();
+    final byte[] a = Bytes.of(10).toArrayUnsafe();
+    final byte[] b = Bytes.of(20).toArrayUnsafe();
     updater.apply(a).start();
     updater.apply(b).start();
 
     finishedLatch.await();
 
     for (int i = 0; i < keyCount; i++) {
-      final byte[] key = BytesValues.toMinimalBytes(i).getArrayUnsafe();
+      final byte[] key = Bytes.minimalBytes(i).toArrayUnsafe();
       final byte[] actual = store.get(key).get();
       assertThat(Arrays.equals(actual, a) || Arrays.equals(actual, b)).isTrue();
     }
@@ -367,7 +366,7 @@ public abstract class AbstractKeyValueStorageTest {
                 () -> {
                   final KeyValueStorageTransaction tx = store.startTransaction();
                   for (int i = 0; i < keyCount; i++) {
-                    tx.put(BytesValues.toMinimalBytes(i).getArrayUnsafe(), value);
+                    tx.put(Bytes.minimalBytes(i).toArrayUnsafe(), value);
                   }
                   try {
                     tx.commit();
@@ -387,7 +386,7 @@ public abstract class AbstractKeyValueStorageTest {
     // Check that transaction results are isolated (not interleaved)
     final List<byte[]> finalValues = new ArrayList<>(keyCount);
     for (int i = 0; i < keyCount; i++) {
-      final byte[] key = BytesValues.toMinimalBytes(i).getArrayUnsafe();
+      final byte[] key = Bytes.minimalBytes(i).toArrayUnsafe();
       finalValues.add(store.get(key).get());
     }
 
@@ -403,13 +402,13 @@ public abstract class AbstractKeyValueStorageTest {
   }
 
   /*
-   * Used to mimic the wrapping with BytesValue performed in Besu
+   * Used to mimic the wrapping with Bytes performed in Besu
    */
   protected byte[] bytesFromHexString(final String hex) {
-    return BytesValue.fromHexString(hex).getArrayUnsafe();
+    return Bytes.fromHexString(hex).toArrayUnsafe();
   }
 
   protected byte[] bytesOf(final int... bytes) {
-    return BytesValue.of(bytes).getArrayUnsafe();
+    return Bytes.of(bytes).toArrayUnsafe();
   }
 }

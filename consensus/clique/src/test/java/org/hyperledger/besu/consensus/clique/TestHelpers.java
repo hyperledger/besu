@@ -21,9 +21,10 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.List;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class TestHelpers {
 
@@ -35,7 +36,7 @@ public class TestHelpers {
     final BlockHeader unsealedHeader =
         blockHeaderBuilder
             .blockHeaderFunctions(new CliqueBlockHeaderFunctions())
-            .extraData(CliqueExtraData.encodeUnsealed(BytesValue.wrap(new byte[32]), validators))
+            .extraData(CliqueExtraData.encodeUnsealed(Bytes.wrap(new byte[32]), validators))
             .buildHeader();
     final CliqueExtraData unsignedExtraData = CliqueExtraData.decodeRaw(unsealedHeader);
 
@@ -44,7 +45,7 @@ public class TestHelpers {
 
     final Signature proposerSignature = SECP256K1.sign(signingHash, signer);
 
-    final BytesValue signedExtraData =
+    final Bytes signedExtraData =
         new CliqueExtraData(
                 unsignedExtraData.getVanityData(),
                 proposerSignature,

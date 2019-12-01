@@ -20,8 +20,8 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
 public class DisconnectMessageTest {
@@ -29,7 +29,7 @@ public class DisconnectMessageTest {
   @Test
   public void readFromWithReason() {
     MessageData messageData =
-        new RawMessage(WireMessageCodes.DISCONNECT, BytesValue.fromHexString("0xC103"));
+        new RawMessage(WireMessageCodes.DISCONNECT, Bytes.fromHexString("0xC103"));
     DisconnectMessage disconnectMessage = DisconnectMessage.readFrom(messageData);
 
     DisconnectReason reason = disconnectMessage.getReason();
@@ -39,7 +39,7 @@ public class DisconnectMessageTest {
   @Test
   public void readFromWithNoReason() {
     MessageData messageData =
-        new RawMessage(WireMessageCodes.DISCONNECT, BytesValue.fromHexString("0xC180"));
+        new RawMessage(WireMessageCodes.DISCONNECT, Bytes.fromHexString("0xC180"));
     DisconnectMessage disconnectMessage = DisconnectMessage.readFrom(messageData);
 
     DisconnectReason reason = disconnectMessage.getReason();
@@ -59,7 +59,7 @@ public class DisconnectMessageTest {
 
     for (String invalidReason : invalidReasons) {
       MessageData messageData =
-          new RawMessage(WireMessageCodes.DISCONNECT, BytesValue.fromHexString(invalidReason));
+          new RawMessage(WireMessageCodes.DISCONNECT, Bytes.fromHexString(invalidReason));
       DisconnectMessage disconnectMessage = DisconnectMessage.readFrom(messageData);
       DisconnectReason reason = disconnectMessage.getReason();
       assertThat(reason).isEqualTo(DisconnectReason.UNKNOWN);
@@ -68,8 +68,7 @@ public class DisconnectMessageTest {
 
   @Test
   public void readFromWithWrongMessageType() {
-    MessageData messageData =
-        new RawMessage(WireMessageCodes.PING, BytesValue.fromHexString("0xC103"));
+    MessageData messageData = new RawMessage(WireMessageCodes.PING, Bytes.fromHexString("0xC103"));
     assertThatThrownBy(() -> DisconnectMessage.readFrom(messageData))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("Message has code 2 and thus is not a DisconnectMessage");

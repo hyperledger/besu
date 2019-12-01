@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.HelloMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.WireMessageCodes;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.List;
 import java.util.Optional;
@@ -39,6 +38,7 @@ import io.netty.handler.codec.ByteToMessageDecoder;
 import io.netty.handler.codec.MessageToByteEncoder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 abstract class AbstractHandshakeHandler extends SimpleChannelInboundHandler<ByteBuf> {
 
@@ -89,7 +89,7 @@ abstract class AbstractHandshakeHandler extends SimpleChannelInboundHandler<Byte
       LOG.debug("waiting for more bytes");
     } else {
 
-      final BytesValue nodeId = handshaker.partyPubKey().getEncodedBytes();
+      final Bytes nodeId = handshaker.partyPubKey().getEncodedBytes();
       if (!localNode.isReady()) {
         // If we're handling a connection before the node is fully up, just disconnect
         LOG.debug("Rejecting connection because local node is not ready {}", nodeId);

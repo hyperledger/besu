@@ -29,18 +29,18 @@ import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import org.hyperledger.besu.services.tasks.CachingTaskCollection;
 import org.hyperledger.besu.services.tasks.InMemoryTaskQueue;
 import org.hyperledger.besu.testutil.TestClock;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.Test;
 
 public class WorldDownloadStateTest {
 
-  private static final BytesValue ROOT_NODE_DATA = BytesValue.of(1, 2, 3, 4);
+  private static final Bytes ROOT_NODE_DATA = Bytes.of(1, 2, 3, 4);
   private static final Hash ROOT_NODE_HASH = Hash.hash(ROOT_NODE_DATA);
   private static final int MAX_REQUESTS_WITHOUT_PROGRESS = 10;
   private static final long MIN_MILLIS_BEFORE_STALLING = 50_000;

@@ -20,13 +20,14 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.util.Subscribers;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class WorldStateKeyValueStorage implements WorldStateStorage {
 
@@ -38,40 +39,40 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
   }
 
   @Override
-  public Optional<BytesValue> getCode(final Bytes32 codeHash) {
+  public Optional<Bytes> getCode(final Bytes32 codeHash) {
     if (codeHash.equals(Hash.EMPTY)) {
-      return Optional.of(BytesValue.EMPTY);
+      return Optional.of(Bytes.EMPTY);
     } else {
-      return keyValueStorage.get(codeHash.getArrayUnsafe()).map(BytesValue::wrap);
+      return keyValueStorage.get(codeHash.toArrayUnsafe()).map(Bytes::wrap);
     }
   }
 
   @Override
-  public Optional<BytesValue> getAccountStateTrieNode(final Bytes32 nodeHash) {
+  public Optional<Bytes> getAccountStateTrieNode(final Bytes32 nodeHash) {
     return getTrieNode(nodeHash);
   }
 
   @Override
-  public Optional<BytesValue> getAccountStorageTrieNode(final Bytes32 nodeHash) {
+  public Optional<Bytes> getAccountStorageTrieNode(final Bytes32 nodeHash) {
     return getTrieNode(nodeHash);
   }
 
-  private Optional<BytesValue> getTrieNode(final Bytes32 nodeHash) {
+  private Optional<Bytes> getTrieNode(final Bytes32 nodeHash) {
     if (nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
       return Optional.of(MerklePatriciaTrie.EMPTY_TRIE_NODE);
     } else {
-      return keyValueStorage.get(nodeHash.getArrayUnsafe()).map(BytesValue::wrap);
+      return keyValueStorage.get(nodeHash.toArrayUnsafe()).map(Bytes::wrap);
     }
   }
 
   @Override
-  public Optional<BytesValue> getNodeData(final Bytes32 hash) {
+  public Optional<Bytes> getNodeData(final Bytes32 hash) {
     if (hash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
       return Optional.of(MerklePatriciaTrie.EMPTY_TRIE_NODE);
     } else if (hash.equals(Hash.EMPTY)) {
-      return Optional.of(BytesValue.EMPTY);
+      return Optional.of(Bytes.EMPTY);
     } else {
-      return keyValueStorage.get(hash.getArrayUnsafe()).map(BytesValue::wrap);
+      return keyValueStorage.get(hash.toArrayUnsafe()).map(Bytes::wrap);
     }
   }
 
@@ -115,41 +116,41 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
 
     @Override
     public Updater removeAccountStateTrieNode(final Bytes32 nodeHash) {
-      transaction.remove(nodeHash.getArrayUnsafe());
+      transaction.remove(nodeHash.toArrayUnsafe());
       return this;
     }
 
     @Override
-    public Updater putCode(final Bytes32 codeHash, final BytesValue code) {
+    public Updater putCode(final Bytes32 codeHash, final Bytes code) {
       if (code.size() == 0) {
         // Don't save empty values
         return this;
       }
 
       addedNodes.add(codeHash);
-      transaction.put(codeHash.getArrayUnsafe(), code.getArrayUnsafe());
+      transaction.put(codeHash.toArrayUnsafe(), code.toArrayUnsafe());
       return this;
     }
 
     @Override
-    public Updater putAccountStateTrieNode(final Bytes32 nodeHash, final BytesValue node) {
+    public Updater putAccountStateTrieNode(final Bytes32 nodeHash, final Bytes node) {
       if (nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
         // Don't save empty nodes
         return this;
       }
       addedNodes.add(nodeHash);
-      transaction.put(nodeHash.getArrayUnsafe(), node.getArrayUnsafe());
+      transaction.put(nodeHash.toArrayUnsafe(), node.toArrayUnsafe());
       return this;
     }
 
     @Override
-    public Updater putAccountStorageTrieNode(final Bytes32 nodeHash, final BytesValue node) {
+    public Updater putAccountStorageTrieNode(final Bytes32 nodeHash, final Bytes node) {
       if (nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
         // Don't save empty nodes
         return this;
       }
       addedNodes.add(nodeHash);
-      transaction.put(nodeHash.getArrayUnsafe(), node.getArrayUnsafe());
+      transaction.put(nodeHash.toArrayUnsafe(), node.toArrayUnsafe());
       return this;
     }
 

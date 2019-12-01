@@ -59,7 +59,6 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.PrivacyKeyValueStorageFactory;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -80,6 +79,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 import org.awaitility.Awaitility;
 import org.junit.After;
 import org.junit.Before;
@@ -132,7 +132,7 @@ public abstract class CommandTestAbstract {
   @Mock protected Logger mockLogger;
   @Mock protected BesuPluginContextImpl mockBesuPluginContext;
 
-  @Captor protected ArgumentCaptor<Collection<BytesValue>> bytesValueCollectionCollector;
+  @Captor protected ArgumentCaptor<Collection<Bytes>> bytesCollectionCollector;
   @Captor protected ArgumentCaptor<Path> pathArgumentCaptor;
   @Captor protected ArgumentCaptor<File> fileArgumentCaptor;
   @Captor protected ArgumentCaptor<String> stringArgumentCaptor;

@@ -22,13 +22,12 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.BytesValues;
 
 import java.math.BigInteger;
 import java.util.Optional;
 
 import com.google.common.collect.Lists;
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
 public class PrivateTransactionTest {
@@ -95,7 +94,7 @@ public class PrivateTransactionTest {
           Wei.of(1),
           21000L,
           Optional.of(
-              Address.wrap(BytesValue.fromHexString("0x095e7baea6a6c7c4c2dfeb977efac326af552d87"))),
+              Address.wrap(Bytes.fromHexString("0x095e7baea6a6c7c4c2dfeb977efac326af552d87"))),
           Wei.of(
               new BigInteger(
                   "115792089237316195423570985008687907853269984665640564039457584007913129639935")),
@@ -105,14 +104,14 @@ public class PrivateTransactionTest {
               new BigInteger(
                   "14473701025599600909210599917245952381483216609124029382871721729679842002948"),
               Byte.valueOf("0")),
-          BytesValue.fromHexString("0x"),
-          Address.wrap(BytesValue.fromHexString("0x8411b12666f68ef74cace3615c9d5a377729d03f")),
+          Bytes.fromHexString("0x"),
+          Address.wrap(Bytes.fromHexString("0x8411b12666f68ef74cace3615c9d5a377729d03f")),
           Optional.empty(),
-          BytesValues.fromBase64("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo="),
+          Bytes.fromBase64String("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo="),
           Optional.of(
               Lists.newArrayList(
-                  BytesValues.fromBase64("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo="),
-                  BytesValues.fromBase64("Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs="))),
+                  Bytes.fromBase64String("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo="),
+                  Bytes.fromBase64String("Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs="))),
           Optional.empty(),
           Restriction.RESTRICTED);
 
@@ -122,7 +121,7 @@ public class PrivateTransactionTest {
           Wei.of(1),
           21000L,
           Optional.of(
-              Address.wrap(BytesValue.fromHexString("0x095e7baea6a6c7c4c2dfeb977efac326af552d87"))),
+              Address.wrap(Bytes.fromHexString("0x095e7baea6a6c7c4c2dfeb977efac326af552d87"))),
           Wei.of(
               new BigInteger(
                   "115792089237316195423570985008687907853269984665640564039457584007913129639935")),
@@ -132,12 +131,12 @@ public class PrivateTransactionTest {
               new BigInteger(
                   "14473701025599600909210599917245952381483216609124029382871721729679842002948"),
               Byte.valueOf("0")),
-          BytesValue.fromHexString("0x"),
-          Address.wrap(BytesValue.fromHexString("0x8411b12666f68ef74cace3615c9d5a377729d03f")),
+          Bytes.fromHexString("0x"),
+          Address.wrap(Bytes.fromHexString("0x8411b12666f68ef74cace3615c9d5a377729d03f")),
           Optional.empty(),
-          BytesValues.fromBase64("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo="),
+          Bytes.fromBase64String("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo="),
           Optional.empty(),
-          Optional.of(BytesValues.fromBase64("DyAOiF/ynpc+JXa2YAGB0bCitSlOMNm+ShmB/7M6C4w=")),
+          Optional.of(Bytes.fromBase64String("DyAOiF/ynpc+JXa2YAGB0bCitSlOMNm+ShmB/7M6C4w=")),
           Restriction.RESTRICTED);
 
   private static final PrivateTransaction VALID_SIGNED_PRIVATE_TRANSACTION =
@@ -148,7 +147,7 @@ public class PrivateTransactionTest {
           .to(null)
           .value(Wei.ZERO)
           .payload(
-              BytesValue.fromHexString(
+              Bytes.fromHexString(
                   "0x608060405234801561001057600080fd5b5060d08061001f6000396000"
                       + "f3fe60806040526004361060485763ffffffff7c010000000000"
                       + "0000000000000000000000000000000000000000000000600035"
@@ -159,13 +158,12 @@ public class PrivateTransactionTest {
                       + "600055565b6000549056fea165627a7a72305820cb1d0935d14b"
                       + "589300b12fcd0ab849a7e9019c81da24d6daa4f6b2f003d1b018"
                       + "0029"))
-          .sender(
-              Address.wrap(BytesValue.fromHexString("0x1c9a6e1ee3b7ac6028e786d9519ae3d24ee31e79")))
+          .sender(Address.wrap(Bytes.fromHexString("0x1c9a6e1ee3b7ac6028e786d9519ae3d24ee31e79")))
           .chainId(BigInteger.valueOf(4))
-          .privateFrom(BytesValues.fromBase64("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo="))
+          .privateFrom(Bytes.fromBase64String("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo="))
           .privateFor(
               Lists.newArrayList(
-                  BytesValues.fromBase64("Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=")))
+                  Bytes.fromBase64String("Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=")))
           .restriction(Restriction.RESTRICTED)
           .signAndBuild(
               SECP256K1.KeyPair.create(
@@ -182,7 +180,7 @@ public class PrivateTransactionTest {
           .to(null)
           .value(Wei.ZERO)
           .payload(
-              BytesValue.fromHexString(
+              Bytes.fromHexString(
                   "0x608060405234801561001057600080fd5b5060d08061001f6000396000"
                       + "f3fe60806040526004361060485763ffffffff7c010000000000"
                       + "0000000000000000000000000000000000000000000000600035"
@@ -193,13 +191,12 @@ public class PrivateTransactionTest {
                       + "600055565b6000549056fea165627a7a72305820cb1d0935d14b"
                       + "589300b12fcd0ab849a7e9019c81da24d6daa4f6b2f003d1b018"
                       + "0029"))
-          .sender(
-              Address.wrap(BytesValue.fromHexString("0x1c9a6e1ee3b7ac6028e786d9519ae3d24ee31e79")))
+          .sender(Address.wrap(Bytes.fromHexString("0x1c9a6e1ee3b7ac6028e786d9519ae3d24ee31e79")))
           .chainId(BigInteger.valueOf(2147483647))
-          .privateFrom(BytesValues.fromBase64("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo="))
+          .privateFrom(Bytes.fromBase64String("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo="))
           .privateFor(
               Lists.newArrayList(
-                  BytesValues.fromBase64("Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=")))
+                  Bytes.fromBase64String("Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=")))
           .restriction(Restriction.RESTRICTED)
           .signAndBuild(
               SECP256K1.KeyPair.create(
@@ -241,7 +238,7 @@ public class PrivateTransactionTest {
   public void testReadFrom() {
     PrivateTransaction p =
         PrivateTransaction.readFrom(
-            new BytesValueRLPInput(BytesValue.fromHexString(VALID_PRIVATE_TRANSACTION_RLP), false));
+            new BytesValueRLPInput(Bytes.fromHexString(VALID_PRIVATE_TRANSACTION_RLP), false));
 
     assertThat(p).isEqualTo(VALID_PRIVATE_TRANSACTION);
   }
@@ -251,7 +248,7 @@ public class PrivateTransactionTest {
     PrivateTransaction p =
         PrivateTransaction.readFrom(
             new BytesValueRLPInput(
-                BytesValue.fromHexString(VALID_PRIVATE_TRANSACTION_RLP_PRIVACY_GROUP), false));
+                Bytes.fromHexString(VALID_PRIVATE_TRANSACTION_RLP_PRIVACY_GROUP), false));
 
     assertThat(p).isEqualTo(VALID_PRIVATE_TRANSACTION_PRIVACY_GROUP);
   }
@@ -261,15 +258,14 @@ public class PrivateTransactionTest {
     PrivateTransaction p =
         PrivateTransaction.readFrom(
             new BytesValueRLPInput(
-                BytesValue.fromHexString(VALID_SIGNED_PRIVATE_TRANSACTION_RLP), false));
+                Bytes.fromHexString(VALID_SIGNED_PRIVATE_TRANSACTION_RLP), false));
 
     assertThat(p).isEqualTo(VALID_SIGNED_PRIVATE_TRANSACTION);
   }
 
   @Test(expected = RLPException.class)
   public void testReadFromInvalid() {
-    PrivateTransaction.readFrom(
-        new BytesValueRLPInput(BytesValue.fromHexString(INVALID_RLP), false));
+    PrivateTransaction.readFrom(new BytesValueRLPInput(Bytes.fromHexString(INVALID_RLP), false));
   }
 
   @Test
@@ -277,8 +273,7 @@ public class PrivateTransactionTest {
     PrivateTransaction p =
         PrivateTransaction.readFrom(
             new BytesValueRLPInput(
-                BytesValue.fromHexString(VALID_SIGNED_PRIVATE_TRANSACTION_LARGE_CHAINID_RLP),
-                false));
+                Bytes.fromHexString(VALID_SIGNED_PRIVATE_TRANSACTION_LARGE_CHAINID_RLP), false));
 
     assertThat(p).isEqualTo(VALID_SIGNED_PRIVATE_TRANSACTION_LARGE_CHAINID);
   }
@@ -291,15 +286,15 @@ public class PrivateTransactionTest {
         .gasLimit(3000000)
         .to(Address.fromHexString("0x627306090abab3a6e1400e9345bc60c78a8bef57"))
         .value(Wei.ZERO)
-        .payload(BytesValue.fromHexString("0x"))
+        .payload(Bytes.fromHexString("0x"))
         .sender(Address.fromHexString("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"))
         .chainId(BigInteger.valueOf(2018))
-        .privacyGroupId(BytesValues.fromBase64("DyAOiF/ynpc+JXa2YAGB0bCitSlOMNm+ShmB/7M6C4w="))
-        .privateFrom(BytesValues.fromBase64("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo="))
+        .privacyGroupId(Bytes.fromBase64String("DyAOiF/ynpc+JXa2YAGB0bCitSlOMNm+ShmB/7M6C4w="))
+        .privateFrom(Bytes.fromBase64String("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo="))
         .privateFor(
             Lists.newArrayList(
-                BytesValues.fromBase64("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo="),
-                BytesValues.fromBase64("Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=")))
+                Bytes.fromBase64String("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo="),
+                Bytes.fromBase64String("Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=")))
         .restriction(Restriction.RESTRICTED)
         .build();
   }

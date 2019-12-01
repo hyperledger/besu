@@ -15,11 +15,12 @@
 package org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+
+import org.apache.tuweni.units.bigints.UInt256;
 
 @SuppressWarnings("unused") // reflected by GraphQL
 class UncleBlockAdapter extends BlockAdapterBase {
@@ -33,7 +34,7 @@ class UncleBlockAdapter extends BlockAdapterBase {
   }
 
   public Optional<UInt256> getTotalDifficulty() {
-    return Optional.of(UInt256.of(0));
+    return Optional.of(UInt256.ZERO);
   }
 
   public Optional<Integer> getOmmerCount() {

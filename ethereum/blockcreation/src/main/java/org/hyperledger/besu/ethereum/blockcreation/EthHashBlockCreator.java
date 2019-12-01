@@ -26,14 +26,14 @@ import org.hyperledger.besu.ethereum.mainnet.EthHashSolution;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolver;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.util.bytes.BytesValues;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.math.BigInteger;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
+
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class EthHashBlockCreator extends AbstractBlockCreator<Void> {
 
@@ -85,12 +85,11 @@ public class EthHashBlockCreator extends AbstractBlockCreator<Void> {
 
   private EthHashSolverInputs generateNonceSolverInputs(
       final SealableBlockHeader sealableBlockHeader) {
-    final BigInteger difficulty =
-        BytesValues.asUnsignedBigInteger(sealableBlockHeader.getDifficulty().getBytes());
+    final BigInteger difficulty = sealableBlockHeader.internalGetDifficulty().toBigInteger();
     final UInt256 target =
         difficulty.equals(BigInteger.ONE)
             ? UInt256.MAX_VALUE
-            : UInt256.of(EthHash.TARGET_UPPER_BOUND.divide(difficulty));
+            : UInt256.valueOf(EthHash.TARGET_UPPER_BOUND.divide(difficulty));
 
     return new EthHashSolverInputs(
         target, EthHash.hashHeader(sealableBlockHeader), sealableBlockHeader.getNumber());

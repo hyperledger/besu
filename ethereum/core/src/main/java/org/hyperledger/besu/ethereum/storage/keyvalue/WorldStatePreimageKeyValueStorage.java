@@ -18,11 +18,12 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.Optional;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class WorldStatePreimageKeyValueStorage implements WorldStatePreimageStorage {
   private final KeyValueStorage keyValueStorage;
@@ -34,18 +35,18 @@ public class WorldStatePreimageKeyValueStorage implements WorldStatePreimageStor
   @Override
   public Optional<UInt256> getStorageTrieKeyPreimage(final Bytes32 trieKey) {
     return keyValueStorage
-        .get(trieKey.getArrayUnsafe())
-        .filter(val -> val.length == UInt256.SIZE)
+        .get(trieKey.toArrayUnsafe())
+        .filter(val -> val.length == Bytes32.SIZE)
         .map(Bytes32::wrap)
-        .map(UInt256::wrap);
+        .map(UInt256::fromBytes);
   }
 
   @Override
   public Optional<Address> getAccountTrieKeyPreimage(final Bytes32 trieKey) {
     return keyValueStorage
-        .get(trieKey.getArrayUnsafe())
+        .get(trieKey.toArrayUnsafe())
         .filter(val -> val.length == Address.SIZE)
-        .map(val -> Address.wrap(BytesValue.wrap(val)));
+        .map(val -> Address.wrap(Bytes.wrap(val)));
   }
 
   @Override
@@ -63,14 +64,14 @@ public class WorldStatePreimageKeyValueStorage implements WorldStatePreimageStor
     @Override
     public WorldStatePreimageStorage.Updater putStorageTrieKeyPreimage(
         final Bytes32 trieKey, final UInt256 preimage) {
-      transaction.put(trieKey.getArrayUnsafe(), preimage.getBytes().getArrayUnsafe());
+      transaction.put(trieKey.toArrayUnsafe(), preimage.toBytes().toArrayUnsafe());
       return this;
     }
 
     @Override
     public WorldStatePreimageStorage.Updater putAccountTrieKeyPreimage(
         final Bytes32 trieKey, final Address preimage) {
-      transaction.put(trieKey.getArrayUnsafe(), preimage.getArrayUnsafe());
+      transaction.put(trieKey.toArrayUnsafe(), preimage.toArrayUnsafe());
       return this;
     }
 

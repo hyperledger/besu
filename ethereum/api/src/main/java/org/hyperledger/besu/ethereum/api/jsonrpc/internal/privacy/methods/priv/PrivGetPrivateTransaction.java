@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.logging.log4j.LogManager.getLogger;
 
 import org.hyperledger.besu.enclave.Enclave;
@@ -31,9 +32,9 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
-import org.hyperledger.besu.util.bytes.BytesValues;
 
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 public class PrivGetPrivateTransaction extends PrivacyApiMethod {
 
@@ -68,15 +69,16 @@ public class PrivGetPrivateTransaction extends PrivacyApiMethod {
     try {
       ReceiveResponse receiveResponse =
           getReceiveResponseFromEnclave(
-              BytesValues.asBase64String(resultTransaction.getTransaction().getPayload()),
+              resultTransaction.getTransaction().getPayloadBytes().toBase64String(),
               privacyParameters.getEnclavePublicKey());
 
       LOG.trace("Received transaction information from Enclave");
 
-      final BytesValueRLPInput bytesValueRLPInput =
-          new BytesValueRLPInput(BytesValues.fromBase64(receiveResponse.getPayload()), false);
+      final BytesValueRLPInput input =
+          new BytesValueRLPInput(
+              Bytes.fromBase64String(new String(receiveResponse.getPayload(), UTF_8)), false);
 
-      final PrivateTransaction privateTransaction = PrivateTransaction.readFrom(bytesValueRLPInput);
+      final PrivateTransaction privateTransaction = PrivateTransaction.readFrom(input);
       if (privateTransaction.getPrivacyGroupId().isPresent()) {
         return new JsonRpcSuccessResponse(
             requestContext.getRequest().getId(),

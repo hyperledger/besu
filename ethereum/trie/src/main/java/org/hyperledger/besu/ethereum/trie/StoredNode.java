@@ -15,11 +15,12 @@
 package org.hyperledger.besu.ethereum.trie;
 
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.List;
 import java.util.Optional;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 class StoredNode<V> implements Node<V> {
   private final StoredNodeFactory<V> nodeFactory;
@@ -45,7 +46,7 @@ class StoredNode<V> implements Node<V> {
   }
 
   @Override
-  public Node<V> accept(final PathNodeVisitor<V> visitor, final BytesValue path) {
+  public Node<V> accept(final PathNodeVisitor<V> visitor, final Bytes path) {
     final Node<V> node = load();
     return node.accept(visitor, path);
   }
@@ -57,7 +58,7 @@ class StoredNode<V> implements Node<V> {
   }
 
   @Override
-  public BytesValue getPath() {
+  public Bytes getPath() {
     return load().getPath();
   }
 
@@ -72,12 +73,12 @@ class StoredNode<V> implements Node<V> {
   }
 
   @Override
-  public BytesValue getRlp() {
+  public Bytes getRlp() {
     return load().getRlp();
   }
 
   @Override
-  public BytesValue getRlpRef() {
+  public Bytes getRlpRef() {
     // If this node was stored, then it must have a rlp larger than a hash
     return RLP.encodeOne(hash);
   }
@@ -94,7 +95,7 @@ class StoredNode<V> implements Node<V> {
   }
 
   @Override
-  public Node<V> replacePath(final BytesValue path) {
+  public Node<V> replacePath(final Bytes path) {
     return load().replacePath(path);
   }
 

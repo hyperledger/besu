@@ -51,7 +51,7 @@ public class SynchronizerOptionsTest
         .downloaderChangeTargetThresholdByHeight(
             SynchronizerConfiguration.DEFAULT_DOWNLOADER_CHANGE_TARGET_THRESHOLD_BY_HEIGHT + 2)
         .downloaderChangeTargetThresholdByTd(
-            SynchronizerConfiguration.DEFAULT_DOWNLOADER_CHANGE_TARGET_THRESHOLD_BY_TD.plus(2L))
+            SynchronizerConfiguration.DEFAULT_DOWNLOADER_CHANGE_TARGET_THRESHOLD_BY_TD.add(2L))
         .downloaderHeadersRequestSize(
             SynchronizerConfiguration.DEFAULT_DOWNLOADER_HEADER_REQUEST_SIZE + 2)
         .downloaderCheckpointTimeoutsPermitted(

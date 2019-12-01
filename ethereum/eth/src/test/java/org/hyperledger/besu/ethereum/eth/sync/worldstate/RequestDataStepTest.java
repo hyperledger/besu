@@ -29,7 +29,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 import org.hyperledger.besu.services.tasks.Task;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.List;
 import java.util.Map;
@@ -37,28 +36,29 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
 
 import com.google.common.collect.ImmutableMap;
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.Test;
 
 public class RequestDataStepTest {
 
   private static final long BLOCK_NUMBER = 492L;
-  private static final BytesValue DATA1 = BytesValue.of(1, 1, 1, 1);
-  private static final BytesValue DATA2 = BytesValue.of(2, 2, 2, 2);
+  private static final Bytes DATA1 = Bytes.of(1, 1, 1, 1);
+  private static final Bytes DATA2 = Bytes.of(2, 2, 2, 2);
   private static final Hash HASH1 = Hash.hash(DATA1);
   private static final Hash HASH2 = Hash.hash(DATA2);
 
   @SuppressWarnings("unchecked")
-  private final BiFunction<List<Hash>, Long, EthTask<Map<Hash, BytesValue>>>
-      getNodeDataTaskFactory = mock(BiFunction.class);
+  private final BiFunction<List<Hash>, Long, EthTask<Map<Hash, Bytes>>> getNodeDataTaskFactory =
+      mock(BiFunction.class);
 
   @SuppressWarnings("unchecked")
-  private final EthTask<Map<Hash, BytesValue>> ethTask = mock(EthTask.class);
+  private final EthTask<Map<Hash, Bytes>> ethTask = mock(EthTask.class);
 
   private final WorldDownloadState downloadState = mock(WorldDownloadState.class);
   private final BlockHeader blockHeader =
       new BlockHeaderTestFixture().number(BLOCK_NUMBER).buildHeader();
-  private final CompletableFuture<Map<Hash, BytesValue>> getDataFuture = new CompletableFuture<>();
+  private final CompletableFuture<Map<Hash, Bytes>> getDataFuture = new CompletableFuture<>();
 
   private final RequestDataStep requestDataStep = new RequestDataStep(getNodeDataTaskFactory);
 

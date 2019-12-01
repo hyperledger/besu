@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.util.bytes.Bytes32;
 
 import java.util.HashSet;
 import java.util.List;
@@ -29,6 +28,7 @@ import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class MainnetBlockBodyValidator<C> implements BlockBodyValidator<C> {
 

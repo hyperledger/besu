@@ -17,8 +17,8 @@ package org.hyperledger.besu.ethereum.vm;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
 public class AddressTest {
@@ -26,16 +26,16 @@ public class AddressTest {
   @Test
   public void accountAddressToString() {
     final Address addr =
-        Address.wrap(BytesValue.fromHexString("0x0000000000000000000000000000000000101010"));
+        Address.wrap(Bytes.fromHexString("0x0000000000000000000000000000000000101010"));
     assertThat(addr.toString()).isEqualTo("0x0000000000000000000000000000000000101010");
   }
 
   @Test
   public void accountAddressEquals() {
     final Address addr =
-        Address.wrap(BytesValue.fromHexString("0x0000000000000000000000000000000000101010"));
+        Address.wrap(Bytes.fromHexString("0x0000000000000000000000000000000000101010"));
     final Address addr2 =
-        Address.wrap(BytesValue.fromHexString("0x0000000000000000000000000000000000101010"));
+        Address.wrap(Bytes.fromHexString("0x0000000000000000000000000000000000101010"));
 
     assertThat(addr2).isEqualByComparingTo(addr);
   }
@@ -43,16 +43,16 @@ public class AddressTest {
   @Test
   public void accountAddresHashCode() {
     final Address addr =
-        Address.wrap(BytesValue.fromHexString("0x0000000000000000000000000000000000101010"));
+        Address.wrap(Bytes.fromHexString("0x0000000000000000000000000000000000101010"));
     final Address addr2 =
-        Address.wrap(BytesValue.fromHexString("0x0000000000000000000000000000000000101010"));
+        Address.wrap(Bytes.fromHexString("0x0000000000000000000000000000000000101010"));
 
     assertThat(addr2.hashCode()).isEqualTo(addr.hashCode());
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void invalidAccountAddress() {
-    Address.wrap(BytesValue.fromHexString("0x00101010"));
+    Address.wrap(Bytes.fromHexString("0x00101010"));
   }
 
   @Test(expected = IllegalArgumentException.class)

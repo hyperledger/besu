@@ -19,9 +19,9 @@ import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.ethereum.mainnet.SpuriousDragonGasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -459,9 +459,9 @@ public class ECRECPrecompiledContractTest {
 
   @Test
   public void shouldRecoverAddress() {
-    final BytesValue input = BytesValue.fromHexString(this.input);
-    final BytesValue expected =
-        expectedResult == null ? BytesValue.EMPTY : Bytes32.fromHexString(expectedResult);
+    final Bytes input = Bytes.fromHexString(this.input);
+    final Bytes expected =
+        expectedResult == null ? Bytes.EMPTY : Bytes32.fromHexString(expectedResult);
     assertThat(contract.compute(input, messageFrame)).isEqualTo(expected);
   }
 }

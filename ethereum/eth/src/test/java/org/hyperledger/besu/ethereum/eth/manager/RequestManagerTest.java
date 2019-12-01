@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
 import org.hyperledger.besu.testutil.TestClock;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -32,6 +31,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
 public class RequestManagerTest {
@@ -212,7 +212,7 @@ public class RequestManagerTest {
   }
 
   private EthMessage mockMessage(final EthPeer peer) {
-    return new EthMessage(peer, new RawMessage(1, BytesValue.EMPTY));
+    return new EthMessage(peer, new RawMessage(1, Bytes.EMPTY));
   }
 
   private EthPeer createPeer() {

@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import org.hyperledger.besu.util.uint.UInt256;
-
 import java.util.Arrays;
+
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class EthHashSolverInputs {
   private final UInt256 target;

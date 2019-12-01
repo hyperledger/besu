@@ -14,16 +14,15 @@
  */
 package org.hyperledger.besu.ethereum.rlp;
 
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
-import org.hyperledger.besu.util.uint.UInt256Value;
-
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 /**
  * An input used to decode data in RLP encoding.
@@ -36,11 +35,11 @@ import java.util.function.Function;
  *   Bytes ::= a binary value (comprised of an arbitrary number of bytes).
  * </pre>
  *
- * In other words, RLP encodes binary data organized in arbitrary nested lists.
+ * <p>In other words, RLP encodes binary data organized in arbitrary nested lists.
  *
  * <p>A {@link RLPInput} thus provides methods to decode both lists and binary values. A list in the
  * input is "entered" by calling {@link #enterList()} and left by calling {@link #leaveList()}.
- * Binary values can be read directly with {@link #readBytesValue()} ()}, but the {@link RLPInput}
+ * Binary values can be read directly with {@link #readBytes()} ()}, but the {@link RLPInput}
  * interface provides a wealth of convenience methods to read specific types of data that are in
  * specific encoding.
  *
@@ -50,7 +49,7 @@ import java.util.function.Function;
  * (by opposition to {@link #readLong}), but rather one that is "up to" 8 bytes.
  *
  * @see BytesValueRLPInput for a {@link RLPInput} that decode an RLP encoded value stored in a
- *     {@link BytesValue}.
+ *     {@link Bytes}.
  */
 public interface RLPInput {
 
@@ -70,7 +69,7 @@ public interface RLPInput {
 
   /**
    * Whether the next element to read from this input is an RLP "null" (that is, {@link
-   * BytesValue#EMPTY}).
+   * Bytes#EMPTY}).
    *
    * @return {@code true} if the input is not done and the next item to read is an empty value.
    */
@@ -169,24 +168,6 @@ public interface RLPInput {
   UInt256 readUInt256Scalar();
 
   /**
-   * Reads a scalar of maximum 32 bytes from the input and pass it to the provided value to create a
-   * corresponding {@link UInt256Value}.
-   *
-   * <p>Note that for convenience, any exception thrown by the provided method will be wrapped in a
-   * {@link RLPException} (it is considered as a "decoding error").
-   *
-   * @param bytesWrapper A function that provided a 32 bytes value creates a specific 32 bytes
-   *     unsigned integer value.
-   * @param <T> Type of the value created, which must be 32 bytes unsigned integer variant.
-   * @return The value created from applying {@code bytesWrapper} to the scalar read from that input
-   *     (eventually padded to fit 32 bytes).
-   * @throws RLPException if the next item to read is a list, the input is at the end of its current
-   *     list (and {@link #leaveList()} hasn't been called) or if the next item is either too big to
-   *     fit a {@link UInt256} or has leading zeros.
-   */
-  <T extends UInt256Value<T>> T readUInt256Scalar(Function<Bytes32, T> bytesWrapper);
-
-  /**
    * Reads the next item of this input (which must be exactly 1 byte) as a byte.
    *
    * @return The byte corresponding to the next item of this input.
@@ -274,7 +255,7 @@ public interface RLPInput {
    * @throws RLPException if the next item to read is a list or the input is at the end of its
    *     current list (and {@link #leaveList()} hasn't been called).
    */
-  BytesValue readBytesValue();
+  Bytes readBytes();
 
   /**
    * Reads the next item of this input (assuming it is not a list) that must be exact 32 bytes.
@@ -291,7 +272,7 @@ public interface RLPInput {
    * provided mapping function.
    *
    * <p>Note that the only benefit of this method over calling the mapper function on the result of
-   * {@link #readBytesValue()} is that any error thrown by the mapper will be wrapped by a {@link
+   * {@link #readBytes()} is that any error thrown by the mapper will be wrapped by a {@link
    * RLPException}, which can make error handling more convenient (having a particular decoded value
    * not match what is expected is not fundamentally different from trying to read an unsigned short
    * from an item with strictly more or less than 2 bytes).
@@ -303,7 +284,7 @@ public interface RLPInput {
    *     list (and {@link #leaveList()} hasn't been called) or {@code mapper} throws an exception
    *     when applied.
    */
-  <T> T readBytesValue(Function<BytesValue, T> mapper);
+  <T> T readBytes(Function<Bytes, T> mapper);
 
   /**
    * Returns the current element as a standalone RLP element.
@@ -316,11 +297,11 @@ public interface RLPInput {
   RLPInput readAsRlp();
 
   /**
-   * Returns a raw {@link BytesValue} representation of this RLP.
+   * Returns a raw {@link Bytes} representation of this RLP.
    *
    * @return The raw RLP.
    */
-  BytesValue raw();
+  Bytes raw();
 
   /** Resets this RLP input to the start. */
   void reset();

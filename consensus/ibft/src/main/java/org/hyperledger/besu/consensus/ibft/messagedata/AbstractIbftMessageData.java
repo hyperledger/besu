@@ -16,12 +16,13 @@ package org.hyperledger.besu.consensus.ibft.messagedata;
 
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractMessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.function.Function;
 
+import org.apache.tuweni.bytes.Bytes;
+
 public abstract class AbstractIbftMessageData extends AbstractMessageData {
-  protected AbstractIbftMessageData(final BytesValue data) {
+  protected AbstractIbftMessageData(final Bytes data) {
     super(data);
   }
 
@@ -29,7 +30,7 @@ public abstract class AbstractIbftMessageData extends AbstractMessageData {
       final MessageData messageData,
       final int messageCode,
       final Class<T> clazz,
-      final Function<BytesValue, T> constructor) {
+      final Function<Bytes, T> constructor) {
     if (clazz.isInstance(messageData)) {
       @SuppressWarnings("unchecked")
       T castMessage = (T) messageData;

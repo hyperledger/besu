@@ -34,14 +34,14 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 
 @JsonIgnoreProperties({"_info", "postState", "postStateHash"})
 public class BlockchainReferenceTestCaseSpec {
@@ -168,9 +168,9 @@ public class BlockchainReferenceTestCaseSpec {
           Long.decode(gasLimit), // gasLimit
           Long.decode(gasUsed), // gasUsed
           Long.decode(timestamp), // timestamp
-          BytesValue.fromHexString(extraData), // extraData
+          Bytes.fromHexString(extraData), // extraData
           Hash.fromHexString(mixHash), // mixHash
-          BytesValue.fromHexString(nonce).getLong(0),
+          Bytes.fromHexString(nonce).getLong(0),
           new BlockHeaderFunctions() {
             @Override
             public Hash hash(final BlockHeader header) {
@@ -201,7 +201,7 @@ public class BlockchainReferenceTestCaseSpec {
   })
   public static class CandidateBlock {
 
-    private final BytesValue rlp;
+    private final Bytes rlp;
 
     private final Boolean valid;
 
@@ -213,9 +213,9 @@ public class BlockchainReferenceTestCaseSpec {
         @JsonProperty("uncleHeaders") final Object uncleHeaders) {
       Boolean valid = true;
       // The BLOCK__WrongCharAtRLP_0 test has an invalid character in its rlp string.
-      BytesValue rlpAttempt = null;
+      Bytes rlpAttempt = null;
       try {
-        rlpAttempt = BytesValue.fromHexString(rlp);
+        rlpAttempt = Bytes.fromHexString(rlp);
       } catch (final IllegalArgumentException e) {
         valid = false;
       }

@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.p2p.discovery.internal;
 
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryStatus;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.List;
 import java.util.Map;
@@ -31,11 +30,12 @@ import java.util.stream.Collectors;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 public class RecursivePeerRefreshState {
   private static final Logger LOG = LogManager.getLogger();
   private static final int MAX_CONCURRENT_REQUESTS = 3;
-  private BytesValue target;
+  private Bytes target;
   private final PeerDiscoveryPermissions peerPermissions;
   private final PeerTable peerTable;
   private final DiscoveryPeer localPeer;
@@ -47,7 +47,7 @@ public class RecursivePeerRefreshState {
   private final int maxRounds;
   private int currentRound;
 
-  private final SortedMap<BytesValue, MetadataPeer> oneTrueMap = new TreeMap<>();
+  private final SortedMap<Bytes, MetadataPeer> oneTrueMap = new TreeMap<>();
 
   private final TimerUtil timerUtil;
   private final int timeoutPeriodInSeconds;
@@ -73,7 +73,7 @@ public class RecursivePeerRefreshState {
     this.maxRounds = maxRounds;
   }
 
-  void start(final List<DiscoveryPeer> initialPeers, final BytesValue target) {
+  void start(final List<DiscoveryPeer> initialPeers, final Bytes target) {
     if (iterativeSearchInProgress) {
       LOG.debug("Skip peer search because previous search is still in progress.");
       return;
@@ -135,7 +135,7 @@ public class RecursivePeerRefreshState {
 
   private void bondingCancelOutstandingRequests() {
     LOG.debug("Bonding round timed out");
-    for (final Map.Entry<BytesValue, MetadataPeer> entry : oneTrueMap.entrySet()) {
+    for (final Map.Entry<Bytes, MetadataPeer> entry : oneTrueMap.entrySet()) {
       final MetadataPeer metadataPeer = entry.getValue();
       if (metadataPeer.hasOutstandingBondRequest()) {
         // We're setting bonding to "complete" here, by "cancelling" the outstanding request.
@@ -170,7 +170,7 @@ public class RecursivePeerRefreshState {
 
   private void neighboursCancelOutstandingRequests() {
     LOG.debug("Neighbours round timed out");
-    for (final Map.Entry<BytesValue, MetadataPeer> entry : oneTrueMap.entrySet()) {
+    for (final Map.Entry<Bytes, MetadataPeer> entry : oneTrueMap.entrySet()) {
       final MetadataPeer metadataPeer = entry.getValue();
       if (metadataPeer.hasOutstandingNeighboursRequest()) {
         metadataPeer.findNeighboursFailed();
@@ -225,7 +225,7 @@ public class RecursivePeerRefreshState {
   }
 
   private boolean neighboursRoundTermination() {
-    for (final Map.Entry<BytesValue, MetadataPeer> entry : oneTrueMap.entrySet()) {
+    for (final Map.Entry<Bytes, MetadataPeer> entry : oneTrueMap.entrySet()) {
       final MetadataPeer metadataPeer = entry.getValue();
       if (metadataPeer.hasOutstandingNeighboursRequest()) {
         return false;
@@ -235,7 +235,7 @@ public class RecursivePeerRefreshState {
   }
 
   private boolean bondingRoundTermination() {
-    for (final Map.Entry<BytesValue, MetadataPeer> entry : oneTrueMap.entrySet()) {
+    for (final Map.Entry<Bytes, MetadataPeer> entry : oneTrueMap.entrySet()) {
       final MetadataPeer metadataPeer = entry.getValue();
       if (metadataPeer.hasOutstandingBondRequest()) {
         return false;
@@ -354,7 +354,7 @@ public class RecursivePeerRefreshState {
      * @param peer the peer to interrogate
      * @param target the target node ID to find
      */
-    void findNeighbours(final DiscoveryPeer peer, final BytesValue target);
+    void findNeighbours(final DiscoveryPeer peer, final Bytes target);
   }
 
   @FunctionalInterface

@@ -19,11 +19,12 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.PeerInfo;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.util.bytes.BytesValue;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public final class HelloMessage extends AbstractMessageData {
 
-  private HelloMessage(final BytesValue data) {
+  private HelloMessage(final Bytes data) {
     super(data);
   }
 

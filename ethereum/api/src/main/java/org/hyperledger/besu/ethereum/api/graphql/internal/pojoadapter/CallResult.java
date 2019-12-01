@@ -14,15 +14,16 @@
  */
 package org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter;
 
-import org.hyperledger.besu.util.bytes.BytesValue;
+import org.apache.tuweni.bytes.Bytes;
 
-@SuppressWarnings("unused") // reflected by GraphQL
+@SuppressWarnings("unused")
+// reflected by GraphQL
 class CallResult {
   private final Long status;
   private final Long gasUsed;
-  private final BytesValue data;
+  private final Bytes data;
 
-  CallResult(final Long status, final Long gasUsed, final BytesValue data) {
+  CallResult(final Long status, final Long gasUsed, final Bytes data) {
     this.status = status;
     this.gasUsed = gasUsed;
     this.data = data;
@@ -36,7 +37,7 @@ class CallResult {
     return gasUsed;
   }
 
-  public BytesValue getData() {
+  public Bytes getData() {
     return data;
   }
 }

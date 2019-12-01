@@ -20,9 +20,10 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.function.Supplier;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class CliqueBlockHashing {
   /**
@@ -36,7 +37,7 @@ public class CliqueBlockHashing {
    */
   public static Hash calculateDataHashForProposerSeal(
       final BlockHeader header, final CliqueExtraData cliqueExtraData) {
-    final BytesValue headerRlp = serializeHeaderWithoutProposerSeal(header, cliqueExtraData);
+    final Bytes headerRlp = serializeHeaderWithoutProposerSeal(header, cliqueExtraData);
     return Hash.hash(headerRlp); // Proposer hash is the hash of the RLP
   }
 
@@ -60,37 +61,36 @@ public class CliqueBlockHashing {
     return Util.signatureToAddress(cliqueExtraData.getProposerSeal().get(), proposerHash);
   }
 
-  private static BytesValue serializeHeaderWithoutProposerSeal(
+  private static Bytes serializeHeaderWithoutProposerSeal(
       final BlockHeader header, final CliqueExtraData cliqueExtraData) {
     return serializeHeader(header, () -> encodeExtraDataWithoutProposerSeal(cliqueExtraData));
   }
 
-  private static BytesValue encodeExtraDataWithoutProposerSeal(
-      final CliqueExtraData cliqueExtraData) {
-    final BytesValue extraDataBytes = cliqueExtraData.encode();
+  private static Bytes encodeExtraDataWithoutProposerSeal(final CliqueExtraData cliqueExtraData) {
+    final Bytes extraDataBytes = cliqueExtraData.encode();
     // Always trim off final 65 bytes (which maybe zeros)
     return extraDataBytes.slice(0, extraDataBytes.size() - Signature.BYTES_REQUIRED);
   }
 
-  private static BytesValue serializeHeader(
-      final BlockHeader header, final Supplier<BytesValue> extraDataSerializer) {
+  private static Bytes serializeHeader(
+      final BlockHeader header, final Supplier<Bytes> extraDataSerializer) {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.startList();
 
-    out.writeBytesValue(header.getParentHash());
-    out.writeBytesValue(header.getOmmersHash());
-    out.writeBytesValue(header.getCoinbase());
-    out.writeBytesValue(header.getStateRoot());
-    out.writeBytesValue(header.getTransactionsRoot());
-    out.writeBytesValue(header.getReceiptsRoot());
-    out.writeBytesValue(header.getLogsBloom().getBytes());
-    out.writeUInt256Scalar(header.getDifficulty());
+    out.writeBytes(header.getParentHash());
+    out.writeBytes(header.getOmmersHash());
+    out.writeBytes(header.getCoinbase());
+    out.writeBytes(header.getStateRoot());
+    out.writeBytes(header.getTransactionsRoot());
+    out.writeBytes(header.getReceiptsRoot());
+    out.writeBytes(header.getLogsBloom().getBytes());
+    out.writeBytes(header.internalGetDifficulty().toMinimalBytes());
     out.writeLongScalar(header.getNumber());
     out.writeLongScalar(header.getGasLimit());
     out.writeLongScalar(header.getGasUsed());
     out.writeLongScalar(header.getTimestamp());
-    out.writeBytesValue(extraDataSerializer.get());
-    out.writeBytesValue(header.getMixHash());
+    out.writeBytes(extraDataSerializer.get());
+    out.writeBytes(header.getMixHash());
     out.writeLong(header.getNonce());
     out.endList();
     return out.encoded();

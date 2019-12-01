@@ -14,23 +14,23 @@
  */
 package org.hyperledger.besu.ethereum.rlp;
 
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.MutableBytesValue;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.MutableBytes;
 
-/** An {@link RLPOutput} that writes RLP encoded data to a {@link BytesValue}. */
+/** An {@link RLPOutput} that writes RLP encoded data to a {@link Bytes}. */
 public class BytesValueRLPOutput extends AbstractRLPOutput {
   /**
    * Computes the final encoded data.
    *
    * @return A value containing the data written to this output RLP-encoded.
    */
-  public BytesValue encoded() {
+  public Bytes encoded() {
     final int size = encodedSize();
     if (size == 0) {
-      return BytesValue.EMPTY;
+      return Bytes.EMPTY;
     }
 
-    final MutableBytesValue output = MutableBytesValue.create(size);
+    final MutableBytes output = MutableBytes.create(size);
     writeEncoded(output);
     return output;
   }

@@ -24,11 +24,11 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Base64;
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -68,8 +68,8 @@ public class FixedKeySigningPrivateMarkerTransactionFactoryTest {
     assertThat(transaction.getSender())
         .isEqualTo(Util.publicKeyToAddress(signingKeys.getPublicKey()));
     assertThat(transaction.getTo()).isEqualTo(Optional.of(precompiledAddress));
-    assertThat(transaction.getPayload())
-        .isEqualTo(BytesValue.wrap(Base64.getDecoder().decode(enclaveKey)));
+    assertThat(transaction.getPayloadBytes())
+        .isEqualTo(Bytes.wrap(Base64.getDecoder().decode(enclaveKey)));
 
     final Transaction nextTransaction = factory.create("enclaveKey", privTransaction);
     assertThat(nextTransaction.getSender()).isEqualTo(transaction.getSender());

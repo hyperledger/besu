@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.eth.sync.tasks.RetryingGetHeaderFromPeerByN
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.util.FutureUtils;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.time.Duration;
 import java.util.Collection;
@@ -39,6 +38,7 @@ import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 /**
  * This task will query {@code numberOfPeersToQuery} peers for a particular block number. If any
@@ -64,7 +64,7 @@ class PivotBlockConfirmer<C> {
 
   private final CompletableFuture<FastSyncState> result = new CompletableFuture<>();
   private final Collection<CompletableFuture<?>> runningQueries = new ConcurrentLinkedQueue<>();
-  private final Map<BytesValue, RetryingGetHeaderFromPeerByNumberTask> pivotBlockQueriesByPeerId =
+  private final Map<Bytes, RetryingGetHeaderFromPeerByNumberTask> pivotBlockQueriesByPeerId =
       new ConcurrentHashMap<>();
   private final Map<BlockHeader, AtomicInteger> pivotBlockVotes = new ConcurrentHashMap<>();
 

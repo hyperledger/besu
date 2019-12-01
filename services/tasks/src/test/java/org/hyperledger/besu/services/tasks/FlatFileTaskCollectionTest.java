@@ -16,31 +16,30 @@ package org.hyperledger.besu.services.tasks;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.util.bytes.BytesValue;
-
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 public class FlatFileTaskCollectionTest
-    extends AbstractTaskQueueTest<FlatFileTaskCollection<BytesValue>> {
+    extends AbstractTaskQueueTest<FlatFileTaskCollection<Bytes>> {
 
   private static final int ROLL_SIZE = 10;
   @Rule public final TemporaryFolder folder = new TemporaryFolder();
 
   @Override
-  protected FlatFileTaskCollection<BytesValue> createQueue() throws IOException {
+  protected FlatFileTaskCollection<Bytes> createQueue() throws IOException {
     final Path dataDir = folder.newFolder().toPath();
     return createQueue(dataDir);
   }
 
-  private FlatFileTaskCollection<BytesValue> createQueue(final Path dataDir) {
+  private FlatFileTaskCollection<Bytes> createQueue(final Path dataDir) {
     return new FlatFileTaskCollection<>(
         dataDir, Function.identity(), Function.identity(), ROLL_SIZE);
   }
@@ -48,8 +47,8 @@ public class FlatFileTaskCollectionTest
   @Test
   public void shouldRollFilesWhenSizeExceeded() throws Exception {
     final Path dataDir = folder.newFolder().toPath();
-    try (final FlatFileTaskCollection<BytesValue> queue = createQueue(dataDir)) {
-      final List<BytesValue> tasks = new ArrayList<>();
+    try (final FlatFileTaskCollection<Bytes> queue = createQueue(dataDir)) {
+      final List<Bytes> tasks = new ArrayList<>();
 
       addItem(queue, tasks, 0);
       assertThat(queue.getWriteFileNumber()).isEqualTo(0);
@@ -66,7 +65,7 @@ public class FlatFileTaskCollectionTest
       addItem(queue, tasks, 123);
       addItem(queue, tasks, 124);
 
-      final List<BytesValue> removedTasks = new ArrayList<>();
+      final List<Bytes> removedTasks = new ArrayList<>();
       // Read through all the items in the first file.
       for (int i = 0; i < tasksInFirstFile; i++) {
         removedTasks.add(queue.remove().getData());
@@ -84,10 +83,8 @@ public class FlatFileTaskCollectionTest
   }
 
   private void addItem(
-      final FlatFileTaskCollection<BytesValue> queue,
-      final List<BytesValue> tasks,
-      final int value) {
-    tasks.add(BytesValue.of(value));
-    queue.add(BytesValue.of(value));
+      final FlatFileTaskCollection<Bytes> queue, final List<Bytes> tasks, final int value) {
+    tasks.add(Bytes.of(value));
+    queue.add(Bytes.of(value));
   }
 }

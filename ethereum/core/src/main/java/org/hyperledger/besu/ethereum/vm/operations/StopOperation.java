@@ -18,7 +18,8 @@ import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.vm.AbstractOperation;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.util.bytes.BytesValue;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class StopOperation extends AbstractOperation {
 
@@ -34,6 +35,6 @@ public class StopOperation extends AbstractOperation {
   @Override
   public void execute(final MessageFrame frame) {
     frame.setState(MessageFrame.State.CODE_SUCCESS);
-    frame.setOutputData(BytesValue.EMPTY);
+    frame.setOutputData(Bytes.EMPTY);
   }
 }

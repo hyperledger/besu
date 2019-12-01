@@ -18,7 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryEvent.PeerBondedEvent;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.MockPeerDiscoveryAgent;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -30,6 +29,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
@@ -111,7 +111,7 @@ public class PeerDiscoveryObserversTest {
     agent.observePeerBondedEvents(events::add);
     agent.start(BROADCAST_TCP_PORT).join();
 
-    final HashSet<BytesValue> seenPeers = new HashSet<>();
+    final HashSet<Bytes> seenPeers = new HashSet<>();
     List<DiscoveryPeer> discoveredPeers =
         events.stream()
             .map(PeerDiscoveryEvent::getPeer)

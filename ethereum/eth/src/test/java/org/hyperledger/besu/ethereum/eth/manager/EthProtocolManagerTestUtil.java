@@ -33,11 +33,12 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.OptionalLong;
+
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class EthProtocolManagerTestUtil {
 

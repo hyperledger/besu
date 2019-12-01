@@ -32,7 +32,6 @@ import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsService;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -46,6 +45,7 @@ import java.util.Optional;
 import io.vertx.core.Vertx;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.ExecutionException;
@@ -192,7 +192,7 @@ public class BlocksSubCommand implements Runnable {
       final Wei minTransactionGasPrice = Wei.ZERO;
       // Extradata and coinbase can be configured on a per-block level via the json file
       final Address coinbase = Address.ZERO;
-      final BytesValue extraData = BytesValue.EMPTY;
+      final Bytes extraData = Bytes.EMPTY;
       return new MiningParameters(coinbase, minTransactionGasPrice, extraData, false);
     }
 

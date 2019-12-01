@@ -25,11 +25,11 @@ import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
 public class DaoForkPeerValidatorTest extends AbstractPeerBlockValidatorTest {
@@ -77,8 +77,7 @@ public class DaoForkPeerValidatorTest extends AbstractPeerBlockValidatorTest {
     final BlockDataGenerator gen = new BlockDataGenerator(1);
     final long daoBlockNumber = 500;
     final Block daoBlock =
-        gen.block(
-            BlockOptions.create().setBlockNumber(daoBlockNumber).setExtraData(BytesValue.EMPTY));
+        gen.block(BlockOptions.create().setBlockNumber(daoBlockNumber).setExtraData(Bytes.EMPTY));
 
     final PeerValidator validator =
         new DaoForkPeerValidator(

@@ -16,21 +16,20 @@ package org.hyperledger.besu.ethereum.rlp;
 
 import static java.lang.String.format;
 
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.MutableBytesValue;
-
 import java.util.function.Consumer;
 
 import io.vertx.core.buffer.Buffer;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.MutableBytes;
 
 /** Static methods to work with RLP encoding/decoding. */
 public abstract class RLP {
   private RLP() {}
 
   /** The RLP encoding of a single empty value, also known as RLP null. */
-  public static final BytesValue NULL = encodeOne(BytesValue.EMPTY);
+  public static final Bytes NULL = encodeOne(Bytes.EMPTY);
 
-  public static final BytesValue EMPTY_LIST;
+  public static final Bytes EMPTY_LIST;
 
   static {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
@@ -52,7 +51,7 @@ public abstract class RLP {
    *     the input will not be detected by this method call, but will be later when the input is
    *     read.
    */
-  public static RLPInput input(final BytesValue encoded) {
+  public static RLPInput input(final Bytes encoded) {
     return new BytesValueRLPInput(encoded, false);
   }
 
@@ -73,7 +72,8 @@ public abstract class RLP {
    *     call, but only later when the input is read.
    */
   public static BytesValueRLPInput input(final Buffer buffer, final int offset) {
-    return new BytesValueRLPInput(BytesValue.wrapBuffer(buffer, offset), false, false);
+    return new BytesValueRLPInput(
+        Bytes.wrapBuffer(buffer, offset, buffer.length() - offset), false, false);
   }
 
   /**
@@ -92,13 +92,13 @@ public abstract class RLP {
    *
    * Foo f = ...;
    * // RLP encode f
-   * BytesValue encoded = RLPs.encode(f::writeTo);
+   * Bytes encoded = RLPs.encode(f::writeTo);
    * }</pre>
    *
    * @param writer A method that given an {@link RLPOutput}, writes some data to it.
    * @return The RLP encoding of the data written by {@code writer}.
    */
-  public static BytesValue encode(final Consumer<RLPOutput> writer) {
+  public static Bytes encode(final Consumer<RLPOutput> writer) {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     writer.accept(out);
     return out.encoded();
@@ -113,20 +113,21 @@ public abstract class RLP {
    * {
    *   &#64;code
    *   BytesValueRLPOutput out = new BytesValueRLPOutput();
-   *   out.writeBytesValue(value);
+   *   out.writeBytes(value);
    *   return out.encoded();
    * }
    * </pre>
    *
-   * So note in particular that the value is encoded as is (and so not as a scalar in particular).
+   * <p>So note in particular that the value is encoded as is (and so not as a scalar in
+   * particular).
    *
    * @param value The value to encode.
    * @return The RLP encoding containing only {@code value}.
    */
-  public static BytesValue encodeOne(final BytesValue value) {
+  public static Bytes encodeOne(final Bytes value) {
     if (RLPEncodingHelpers.isSingleRLPByte(value)) return value;
 
-    final MutableBytesValue res = MutableBytesValue.create(RLPEncodingHelpers.elementSize(value));
+    final MutableBytes res = MutableBytes.create(RLPEncodingHelpers.elementSize(value));
     RLPEncodingHelpers.writeElement(value, res, 0);
     return res;
   }
@@ -137,17 +138,18 @@ public abstract class RLP {
    * <p>This is equivalent (but possibly more efficient) to:
    *
    * <pre>{@code
-   * return input(value).readBytesValue();
+   * return input(value).readBytes();
    * }</pre>
    *
-   * So note in particular that the value is decoded as is (and so not as a scalar in particular).
+   * <p>So note in particular that the value is decoded as is (and so not as a scalar in
+   * particular).
    *
    * @param encodedValue The encoded RLP value.
    * @return The single value encoded in {@code encodedValue}.
    * @throws RLPException if {@code encodedValue} is not a valid RLP encoding or if it does not
    *     contains a single non-list item.
    */
-  public static BytesValue decodeOne(final BytesValue encodedValue) {
+  public static Bytes decodeOne(final Bytes encodedValue) {
     if (encodedValue.size() == 0) {
       throw new RLPException("Invalid empty input for RLP decoding");
     }
@@ -177,7 +179,7 @@ public abstract class RLP {
                 encodedValue, sizeLength + 1, encodedValue.size()));
       }
       offset = 1 + sizeLength;
-      size = RLPDecodingHelpers.extractSize(encodedValue::get, 1, sizeLength);
+      size = RLPDecodingHelpers.extractSize((index) -> encodedValue.get(index), 1, sizeLength);
     }
     if (offset + size != encodedValue.size()) {
       throw new RLPException(
@@ -195,7 +197,7 @@ public abstract class RLP {
    * @param encodedValue The value to check.
    * @throws RLPException if {@code encodedValue} is not a valid RLP encoding.
    */
-  public static void validate(final BytesValue encodedValue) {
+  public static void validate(final Bytes encodedValue) {
     final RLPInput in = input(encodedValue);
     while (!in.isDone()) {
       if (in.nextIsList()) {
@@ -210,13 +212,14 @@ public abstract class RLP {
   }
 
   /**
-   * Given a {@link BytesValue} containing rlp-encoded data, determines the full length of the
-   * encoded value (including the prefix) by inspecting the prefixed metadata.
+   * Given a {@link Bytes} containing rlp-encoded data, determines the full length of the encoded
+   * value (including the prefix) by inspecting the prefixed metadata.
    *
    * @param value the rlp-encoded byte string
    * @return the length of the encoded data, according to the prefixed metadata
    */
-  public static int calculateSize(final BytesValue value) {
-    return RLPDecodingHelpers.rlpElementMetadata(value::get, value.size(), 0).getEncodedSize();
+  public static int calculateSize(final Bytes value) {
+    return RLPDecodingHelpers.rlpElementMetadata((index) -> value.get((int) index), value.size(), 0)
+        .getEncodedSize();
   }
 }

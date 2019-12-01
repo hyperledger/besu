@@ -28,12 +28,12 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Util;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.List;
 import java.util.Optional;
 
 import com.google.common.collect.Lists;
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
 public class IbftCoinbaseValidationRuleTest {
@@ -51,7 +51,7 @@ public class IbftCoinbaseValidationRuleTest {
     final IbftExtraData ibftExtraData =
         IbftExtraDataFixture.createExtraData(
             header,
-            BytesValue.wrap(new byte[IbftExtraData.EXTRA_VANITY_LENGTH]),
+            Bytes.wrap(new byte[IbftExtraData.EXTRA_VANITY_LENGTH]),
             Optional.of(Vote.authVote(Address.fromHexString("1"))),
             validators,
             committerKeyPairs);

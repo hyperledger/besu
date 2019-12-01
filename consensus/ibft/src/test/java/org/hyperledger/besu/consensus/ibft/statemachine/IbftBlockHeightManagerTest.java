@@ -59,7 +59,6 @@ import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.util.Subscribers;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.math.BigInteger;
 import java.time.Clock;
@@ -68,6 +67,7 @@ import java.util.List;
 import java.util.Optional;
 
 import com.google.common.collect.Lists;
+import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
@@ -108,8 +108,7 @@ public class IbftBlockHeightManagerTest {
   private void buildCreatedBlock() {
 
     final IbftExtraData extraData =
-        new IbftExtraData(
-            BytesValue.wrap(new byte[32]), emptyList(), Optional.empty(), 0, validators);
+        new IbftExtraData(Bytes.wrap(new byte[32]), emptyList(), Optional.empty(), 0, validators);
 
     headerTestFixture.extraData(extraData.encode());
     final BlockHeader header = headerTestFixture.buildHeader();

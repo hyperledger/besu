@@ -21,19 +21,19 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.ethtaskutils.PeerMessageTaskTest;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import com.google.common.collect.Lists;
+import org.apache.tuweni.bytes.Bytes;
 
-public class GetNodeDataFromPeerTaskTest extends PeerMessageTaskTest<Map<Hash, BytesValue>> {
+public class GetNodeDataFromPeerTaskTest extends PeerMessageTaskTest<Map<Hash, Bytes>> {
 
   @Override
-  protected Map<Hash, BytesValue> generateDataToBeRequested() {
-    final Map<Hash, BytesValue> requestedData = new HashMap<>();
+  protected Map<Hash, Bytes> generateDataToBeRequested() {
+    final Map<Hash, Bytes> requestedData = new HashMap<>();
     for (int i = 0; i < 3; i++) {
       final BlockHeader blockHeader = blockchain.getBlockHeader(10 + i).get();
       requestedData.put(
@@ -45,8 +45,8 @@ public class GetNodeDataFromPeerTaskTest extends PeerMessageTaskTest<Map<Hash, B
   }
 
   @Override
-  protected EthTask<AbstractPeerTask.PeerTaskResult<Map<Hash, BytesValue>>> createTask(
-      final Map<Hash, BytesValue> requestedData) {
+  protected EthTask<AbstractPeerTask.PeerTaskResult<Map<Hash, Bytes>>> createTask(
+      final Map<Hash, Bytes> requestedData) {
     final List<Hash> hashes = Lists.newArrayList(requestedData.keySet());
     return GetNodeDataFromPeerTask.forHashes(
         ethContext, hashes, GENESIS_BLOCK_NUMBER, metricsSystem);
@@ -54,21 +54,21 @@ public class GetNodeDataFromPeerTaskTest extends PeerMessageTaskTest<Map<Hash, B
 
   @Override
   protected void assertPartialResultMatchesExpectation(
-      final Map<Hash, BytesValue> requestedData, final Map<Hash, BytesValue> partialResponse) {
+      final Map<Hash, Bytes> requestedData, final Map<Hash, Bytes> partialResponse) {
     assertThat(partialResponse.size()).isLessThanOrEqualTo(requestedData.size());
     assertThat(partialResponse.size()).isGreaterThan(0);
-    for (Map.Entry<Hash, BytesValue> data : partialResponse.entrySet()) {
+    for (Map.Entry<Hash, Bytes> data : partialResponse.entrySet()) {
       assertThat(requestedData.get(data.getKey())).isEqualTo(data.getValue());
     }
   }
 
   @Override
   protected void assertResultMatchesExpectation(
-      final Map<Hash, BytesValue> requestedData,
-      final AbstractPeerTask.PeerTaskResult<Map<Hash, BytesValue>> response,
+      final Map<Hash, Bytes> requestedData,
+      final AbstractPeerTask.PeerTaskResult<Map<Hash, Bytes>> response,
       final EthPeer respondingPeer) {
     assertThat(response.getResult().size()).isEqualTo(requestedData.size());
-    for (Map.Entry<Hash, BytesValue> data : response.getResult().entrySet()) {
+    for (Map.Entry<Hash, Bytes> data : response.getResult().entrySet()) {
       assertThat(requestedData.get(data.getKey())).isEqualTo(data.getValue());
     }
   }

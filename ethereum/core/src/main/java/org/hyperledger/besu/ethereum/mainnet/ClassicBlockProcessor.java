@@ -58,7 +58,7 @@ public class ClassicBlockProcessor extends AbstractBlockProcessor {
     }
     final int blockEra = getBlockEra(header.getNumber(), ERA_LENGTH);
     final Wei winnerReward = getBlockWinnerRewardByEra(blockEra);
-    final Wei coinbaseReward = winnerReward.plus(winnerReward.times(ommers.size()).dividedBy(32));
+    final Wei coinbaseReward = winnerReward.plus(winnerReward.multiply(ommers.size()).divide(32));
     final WorldUpdater updater = worldState.updater();
     final MutableAccount coinbase = updater.getOrCreate(header.getCoinbase()).getMutable();
 
@@ -89,9 +89,9 @@ public class ClassicBlockProcessor extends AbstractBlockProcessor {
   private Wei calculateOmmerReward(final int era, final long distance) {
     Wei winnerReward = getBlockWinnerRewardByEra(era);
     if (era < 1) {
-      return winnerReward.minus(winnerReward.times(distance).dividedBy(8));
+      return winnerReward.subtract(winnerReward.multiply(distance).divide(8));
     }
-    return winnerReward.dividedBy(32);
+    return winnerReward.divide(32);
   }
 
   // GetBlockEra gets which "Era" a given block is within, given an era length (ecip-1017 has
@@ -125,7 +125,7 @@ public class ClassicBlockProcessor extends AbstractBlockProcessor {
     BigInteger d;
     d = disinflationRateDivisor.pow(era);
 
-    BigInteger maximumBlockReward = BigInteger.valueOf(this.blockReward.toLong());
+    BigInteger maximumBlockReward = this.blockReward.toBigInteger();
     BigInteger r;
     r = maximumBlockReward.multiply(q);
 

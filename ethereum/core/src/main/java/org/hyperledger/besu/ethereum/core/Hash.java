@@ -17,11 +17,11 @@ package org.hyperledger.besu.ethereum.core;
 import static org.hyperledger.besu.crypto.Hash.keccak256;
 
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.DelegatingBytes32;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.bytes.DelegatingBytes32;
 
 /** A 32-bytes hash value as used in Ethereum blocks, that is the result of the KEC algorithm. */
 public class Hash extends DelegatingBytes32 implements org.hyperledger.besu.plugin.data.Hash {
@@ -32,13 +32,13 @@ public class Hash extends DelegatingBytes32 implements org.hyperledger.besu.plug
 
   public static final Hash EMPTY_LIST_HASH = Hash.hash(RLP.EMPTY_LIST);
 
-  public static final Hash EMPTY = hash(BytesValue.EMPTY);
+  public static final Hash EMPTY = hash(Bytes.EMPTY);
 
   private Hash(final Bytes32 bytes) {
     super(bytes);
   }
 
-  public static Hash hash(final BytesValue value) {
+  public static Hash hash(final Bytes value) {
     return new Hash(keccak256(value));
   }
 
@@ -69,16 +69,23 @@ public class Hash extends DelegatingBytes32 implements org.hyperledger.besu.plug
   }
 
   public static Hash fromPlugin(final org.hyperledger.besu.plugin.data.Hash blockHash) {
-    return blockHash instanceof Hash ? (Hash) blockHash : wrap(Bytes32.fromPlugin(blockHash));
+    return blockHash instanceof Hash
+        ? (Hash) blockHash
+        : wrap(Bytes32.wrap(blockHash.getByteArray()));
   }
 
   @Override
   public byte[] getByteArray() {
-    return super.getByteArray();
+    return toArrayUnsafe();
   }
 
   @Override
   public String getHexString() {
-    return super.getHexString();
+    return toHexString();
+  }
+
+  @Override
+  public int size() {
+    return super.size();
   }
 }

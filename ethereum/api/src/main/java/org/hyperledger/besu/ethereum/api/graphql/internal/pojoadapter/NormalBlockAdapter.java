@@ -19,13 +19,13 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 import graphql.schema.DataFetchingEnvironment;
+import org.apache.tuweni.units.bigints.UInt256;
 
 @SuppressWarnings("unused") // reflected by GraphQL
 public class NormalBlockAdapter extends BlockAdapterBase {

@@ -18,9 +18,6 @@ import static org.hyperledger.besu.crypto.Hash.keccak256;
 
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.BytesValues;
 
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
@@ -28,15 +25,18 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+
 class ExtensionNode<V> implements Node<V> {
-  private final BytesValue path;
+  private final Bytes path;
   private final Node<V> child;
   private final NodeFactory<V> nodeFactory;
-  private WeakReference<BytesValue> rlp;
+  private WeakReference<Bytes> rlp;
   private SoftReference<Bytes32> hash;
   private boolean dirty = false;
 
-  ExtensionNode(final BytesValue path, final Node<V> child, final NodeFactory<V> nodeFactory) {
+  ExtensionNode(final Bytes path, final Node<V> child, final NodeFactory<V> nodeFactory) {
     assert (path.size() > 0);
     assert (path.get(path.size() - 1) != CompactEncoding.LEAF_TERMINATOR)
         : "Extension path ends in a leaf terminator";
@@ -46,7 +46,7 @@ class ExtensionNode<V> implements Node<V> {
   }
 
   @Override
-  public Node<V> accept(final PathNodeVisitor<V> visitor, final BytesValue path) {
+  public Node<V> accept(final PathNodeVisitor<V> visitor, final Bytes path) {
     return visitor.visit(this, path);
   }
 
@@ -56,7 +56,7 @@ class ExtensionNode<V> implements Node<V> {
   }
 
   @Override
-  public BytesValue getPath() {
+  public Bytes getPath() {
     return path;
   }
 
@@ -75,25 +75,25 @@ class ExtensionNode<V> implements Node<V> {
   }
 
   @Override
-  public BytesValue getRlp() {
+  public Bytes getRlp() {
     if (rlp != null) {
-      final BytesValue encoded = rlp.get();
+      final Bytes encoded = rlp.get();
       if (encoded != null) {
         return encoded;
       }
     }
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.startList();
-    out.writeBytesValue(CompactEncoding.encode(path));
+    out.writeBytes(CompactEncoding.encode(path));
     out.writeRLPUnsafe(child.getRlpRef());
     out.endList();
-    final BytesValue encoded = out.encoded();
+    final Bytes encoded = out.encoded();
     rlp = new WeakReference<>(encoded);
     return encoded;
   }
 
   @Override
-  public BytesValue getRlpRef() {
+  public Bytes getRlpRef() {
     if (isReferencedByHash()) {
       return RLP.encodeOne(getHash());
     } else {
@@ -109,7 +109,7 @@ class ExtensionNode<V> implements Node<V> {
         return hashed;
       }
     }
-    final BytesValue rlp = getRlp();
+    final Bytes rlp = getRlp();
     final Bytes32 hashed = keccak256(rlp);
     hash = new SoftReference<>(hashed);
     return hashed;
@@ -117,11 +117,11 @@ class ExtensionNode<V> implements Node<V> {
 
   public Node<V> replaceChild(final Node<V> updatedChild) {
     // collapse this extension - if the child is a branch, it will create a new extension
-    return updatedChild.replacePath(BytesValues.concatenate(path, updatedChild.getPath()));
+    return updatedChild.replacePath(Bytes.concatenate(path, updatedChild.getPath()));
   }
 
   @Override
-  public Node<V> replacePath(final BytesValue path) {
+  public Node<V> replacePath(final Bytes path) {
     if (path.size() == 0) {
       return child;
     }

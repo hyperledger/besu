@@ -17,11 +17,11 @@ package org.hyperledger.besu.ethereum.vm;
 import org.hyperledger.besu.ethereum.core.BlockHeaderMock;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.WorldState;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.tuweni.bytes.Bytes;
 
 /**
  * A VM test case specification.
@@ -35,7 +35,7 @@ public class VMReferenceTestCaseSpec {
   private final EnvironmentInformation exec;
 
   /** The VM output. */
-  private final BytesValue out;
+  private final Bytes out;
 
   private final Gas finalGas;
 
@@ -61,7 +61,7 @@ public class VMReferenceTestCaseSpec {
     if (finalGas != null && out != null && finalWorldState != null) {
       this.finalGas = Gas.fromHexString(finalGas);
       this.finalWorldState = finalWorldState;
-      this.out = BytesValue.fromHexString(out);
+      this.out = Bytes.fromHexString(out);
       this.exceptionalHaltExpected = false;
     } else {
       this.exceptionalHaltExpected = true;
@@ -109,7 +109,7 @@ public class VMReferenceTestCaseSpec {
    *
    * @return The expected VM return value.
    */
-  public BytesValue getOut() {
+  public Bytes getOut() {
     return out;
   }
 

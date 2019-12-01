@@ -49,7 +49,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.Di
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.PingMessage;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Arrays;
 import java.util.List;
@@ -60,6 +59,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
@@ -236,8 +236,8 @@ public class RlpxAgentTest {
 
   @Test
   public void incomingConnection_deduplicatedWhenAlreadyConnected_peerWithHigherValueNodeId() {
-    final BytesValue localNodeId = BytesValue.fromHexString("0x01", EnodeURL.NODE_ID_SIZE);
-    final BytesValue remoteNodeId = BytesValue.fromHexString("0x02", EnodeURL.NODE_ID_SIZE);
+    final Bytes localNodeId = Bytes.fromHexString("0x01", EnodeURL.NODE_ID_SIZE);
+    final Bytes remoteNodeId = Bytes.fromHexString("0x02", EnodeURL.NODE_ID_SIZE);
 
     startAgent(localNodeId);
 
@@ -257,8 +257,8 @@ public class RlpxAgentTest {
   @Test
   public void incomingConnection_deduplicatedWhenAlreadyConnected_peerWithLowerValueNodeId()
       throws ExecutionException, InterruptedException {
-    final BytesValue localNodeId = BytesValue.fromHexString("0x02", EnodeURL.NODE_ID_SIZE);
-    final BytesValue remoteNodeId = BytesValue.fromHexString("0x01", EnodeURL.NODE_ID_SIZE);
+    final Bytes localNodeId = Bytes.fromHexString("0x02", EnodeURL.NODE_ID_SIZE);
+    final Bytes remoteNodeId = Bytes.fromHexString("0x01", EnodeURL.NODE_ID_SIZE);
 
     startAgent(localNodeId);
 
@@ -963,7 +963,7 @@ public class RlpxAgentTest {
     startAgent();
   }
 
-  private void startAgent(final BytesValue nodeId) {
+  private void startAgent(final Bytes nodeId) {
     agent.start();
     localNode.setEnode(enodeBuilder().nodeId(nodeId).build());
   }

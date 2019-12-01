@@ -34,6 +34,7 @@ dependencies {
   implementation project(':ethereum:permissioning')
   implementation project(':util')
 
+  implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'io.vertx:vertx-core'
 
   testImplementation "junit:junit"

@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.cli.subcommands.rlp;
 
-import org.hyperledger.besu.util.bytes.BytesValue;
-
 import java.io.IOException;
+
+import org.apache.tuweni.bytes.Bytes;
 
 /** Behaviour of objects that can be encoded from JSON to RLP */
 interface JSONToRLP {
@@ -28,5 +28,5 @@ interface JSONToRLP {
    * @return the RLP encoded object.
    * @throws IOException if an error occurs while reading data
    */
-  BytesValue encode(String json) throws IOException;
+  Bytes encode(String json) throws IOException;
 }

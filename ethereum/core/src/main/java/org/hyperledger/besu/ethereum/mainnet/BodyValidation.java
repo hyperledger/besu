@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.hyperledger.besu.crypto.Hash.keccak256;
-import static org.hyperledger.besu.util.bytes.BytesValues.trimLeadingZeros;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
@@ -25,10 +24,11 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.SimpleMerklePatriciaTrie;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.List;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 
 /** A utility class for body validation tasks. */
 public final class BodyValidation {
@@ -37,11 +37,11 @@ public final class BodyValidation {
     // Utility Class
   }
 
-  private static BytesValue indexKey(final int i) {
-    return RLP.encodeOne(trimLeadingZeros(UInt256.of(i).getBytes()));
+  private static Bytes indexKey(final int i) {
+    return RLP.encodeOne(UInt256.valueOf(i).toBytes().trimLeadingZeros());
   }
 
-  private static MerklePatriciaTrie<BytesValue, BytesValue> trie() {
+  private static MerklePatriciaTrie<Bytes, Bytes> trie() {
     return new SimpleMerklePatriciaTrie<>(b -> b);
   }
 
@@ -52,7 +52,7 @@ public final class BodyValidation {
    * @return the transaction root
    */
   public static Hash transactionsRoot(final List<Transaction> transactions) {
-    final MerklePatriciaTrie<BytesValue, BytesValue> trie = trie();
+    final MerklePatriciaTrie<Bytes, Bytes> trie = trie();
 
     for (int i = 0; i < transactions.size(); ++i) {
       trie.put(indexKey(i), RLP.encode(transactions.get(i)::writeTo));
@@ -68,7 +68,7 @@ public final class BodyValidation {
    * @return the receipt root
    */
   public static Hash receiptsRoot(final List<TransactionReceipt> receipts) {
-    final MerklePatriciaTrie<BytesValue, BytesValue> trie = trie();
+    final MerklePatriciaTrie<Bytes, Bytes> trie = trie();
 
     for (int i = 0; i < receipts.size(); ++i) {
       trie.put(indexKey(i), RLP.encode(receipts.get(i)::writeTo));

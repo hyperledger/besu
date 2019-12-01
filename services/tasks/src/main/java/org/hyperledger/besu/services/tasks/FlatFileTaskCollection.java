@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.services.tasks;
 
-import org.hyperledger.besu.util.bytes.BytesValue;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -30,6 +28,7 @@ import java.util.function.Function;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 public class FlatFileTaskCollection<T> implements TaskCollection<T> {
   private static final Logger LOG = LogManager.getLogger();
@@ -38,8 +37,8 @@ public class FlatFileTaskCollection<T> implements TaskCollection<T> {
   private final Set<FlatFileTask<T>> outstandingTasks = new HashSet<>();
 
   private final Path storageDirectory;
-  private final Function<T, BytesValue> serializer;
-  private final Function<BytesValue, T> deserializer;
+  private final Function<T, Bytes> serializer;
+  private final Function<Bytes, T> deserializer;
   private final long rollWhenFileSizeExceedsBytes;
 
   private final ByteBuffer lengthBuffer = ByteBuffer.allocate(Integer.BYTES);
@@ -53,15 +52,15 @@ public class FlatFileTaskCollection<T> implements TaskCollection<T> {
 
   public FlatFileTaskCollection(
       final Path storageDirectory,
-      final Function<T, BytesValue> serializer,
-      final Function<BytesValue, T> deserializer) {
+      final Function<T, Bytes> serializer,
+      final Function<Bytes, T> deserializer) {
     this(storageDirectory, serializer, deserializer, DEFAULT_FILE_ROLL_SIZE_BYTES);
   }
 
   FlatFileTaskCollection(
       final Path storageDirectory,
-      final Function<T, BytesValue> serializer,
-      final Function<BytesValue, T> deserializer,
+      final Function<T, Bytes> serializer,
+      final Function<Bytes, T> deserializer,
       final long rollWhenFileSizeExceedsBytes) {
     this.storageDirectory = storageDirectory;
     this.serializer = serializer;
@@ -96,7 +95,7 @@ public class FlatFileTaskCollection<T> implements TaskCollection<T> {
 
   @Override
   public synchronized void add(final T taskData) {
-    final BytesValue data = serializer.apply(taskData);
+    final Bytes data = serializer.apply(taskData);
     try {
       writeTaskData(data);
       size++;
@@ -118,7 +117,7 @@ public class FlatFileTaskCollection<T> implements TaskCollection<T> {
     }
     try {
       final ByteBuffer dataBuffer = readNextTaskData();
-      final T data = deserializer.apply(BytesValue.wrapBuffer(dataBuffer));
+      final T data = deserializer.apply(Bytes.wrapByteBuffer(dataBuffer));
       final FlatFileTask<T> task = new FlatFileTask<>(this, data);
       outstandingTasks.add(task);
       size--;
@@ -135,10 +134,10 @@ public class FlatFileTaskCollection<T> implements TaskCollection<T> {
     return dataBuffer;
   }
 
-  private void writeTaskData(final BytesValue data) throws IOException {
+  private void writeTaskData(final Bytes data) throws IOException {
     final long offset = writeFileChannel.size();
     writeDataLength(data.size(), offset);
-    writeFileChannel.write(ByteBuffer.wrap(data.getArrayUnsafe()), offset + Integer.BYTES);
+    writeFileChannel.write(ByteBuffer.wrap(data.toArrayUnsafe()), offset + Integer.BYTES);
   }
 
   private int readDataLength() throws IOException {

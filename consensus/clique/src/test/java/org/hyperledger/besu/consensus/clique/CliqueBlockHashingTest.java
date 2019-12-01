@@ -21,12 +21,12 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -82,9 +82,9 @@ public class CliqueBlockHashingTest {
     // The following text was a dump from the geth console of the 30_000 block on Rinkeby.
     // eth.getBlock(30000)
     final BlockHeaderBuilder builder = new BlockHeaderBuilder();
-    builder.difficulty(UInt256.of(2));
+    builder.difficulty(UInt256.valueOf(2));
     builder.extraData(
-        BytesValue.fromHexString(
+        Bytes.fromHexString(
             "0xd783010600846765746887676f312e372e33856c696e7578000000000000000042eb768f2244c8811c63729a21a3569731535f067ffc57839b00206d1ad20c69a1981b489f772031b279182d99e65703f0076e4812653aab85fca0f0c5bc40d0535af16266714ccb26fc49448c10bdf2969411514707d7442956b3397b09a980f4bea9347f70eea52183326247a0239b6d01fa0b07afc44e8a05463301"));
     builder.gasLimit(4712388);
     builder.gasUsed(0);
@@ -117,9 +117,9 @@ public class CliqueBlockHashingTest {
   private BlockHeader createGenesisBlock() {
     // The following was taken from the Rinkeby genesis file
     final BlockHeaderBuilder builder = new BlockHeaderBuilder();
-    builder.difficulty(UInt256.of(1));
+    builder.difficulty(UInt256.valueOf(1));
     builder.extraData(
-        BytesValue.fromHexString(
+        Bytes.fromHexString(
             "0x52657370656374206d7920617574686f7269746168207e452e436172746d616e42eb768f2244c8811c63729a21a3569731535f067ffc57839b00206d1ad20c69a1981b489f772031b279182d99e65703f0076e4812653aab85fca0f00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"));
     builder.gasLimit(4700000);
     builder.gasUsed(0);

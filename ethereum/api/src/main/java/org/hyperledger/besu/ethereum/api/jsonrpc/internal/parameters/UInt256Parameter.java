@@ -14,9 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
-import org.hyperledger.besu.util.uint.UInt256;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class UInt256Parameter {
 

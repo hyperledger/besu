@@ -34,6 +34,7 @@ dependencies {
   implementation project(':metrics:core')
   implementation project(':metrics:rocksdb')
 
+  implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'com.google.guava:guava'
   implementation 'io.prometheus:simpleclient'
   implementation 'org.apache.logging.log4j:log4j-api'

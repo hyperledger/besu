@@ -44,11 +44,6 @@ import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions.Action;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissionsBlacklist;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.util.Subscribers;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.MutableBytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
-import org.hyperledger.besu.util.uint.UInt256Value;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -61,6 +56,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.bytes.MutableBytes;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.assertj.core.api.Assertions;
 import org.junit.After;
 import org.junit.Before;
@@ -349,7 +348,7 @@ public class PeerDiscoveryControllerTest {
 
     // Send a PONG packet from peer 1, with an incorrect hash.
     final PongPacketData packetData =
-        PongPacketData.create(localPeer.getEndpoint(), BytesValue.fromHexString("1212"));
+        PongPacketData.create(localPeer.getEndpoint(), Bytes.fromHexString("1212"));
     final Packet packet = Packet.create(PacketType.PONG, packetData, keyPairs.get(1));
     controller.onMessage(packet, peers.get(1));
 
@@ -425,7 +424,7 @@ public class PeerDiscoveryControllerTest {
   }
 
   private void respondWithPong(
-      final DiscoveryPeer discoveryPeer, final KeyPair keyPair, final BytesValue hash) {
+      final DiscoveryPeer discoveryPeer, final KeyPair keyPair, final Bytes hash) {
     final PongPacketData packetData0 = PongPacketData.create(localPeer.getEndpoint(), hash);
     final Packet pongPacket0 = Packet.create(PacketType.PONG, packetData0, keyPair);
     controller.onMessage(pongPacket0, discoveryPeer);
@@ -1182,7 +1181,7 @@ public class PeerDiscoveryControllerTest {
     final PingPacketData pingPacketData =
         PingPacketData.create(from.getEndpoint(), to.getEndpoint());
     when(packet.getPacketData(any())).thenReturn(Optional.of(pingPacketData));
-    final BytesValue id = from.getId();
+    final Bytes id = from.getId();
     when(packet.getNodeId()).thenReturn(id);
     when(packet.getType()).thenReturn(PacketType.PING);
     when(packet.getHash()).thenReturn(Bytes32.ZERO);
@@ -1196,7 +1195,7 @@ public class PeerDiscoveryControllerTest {
     // Flipping the most significant bit of the keccak256 will place the peer
     // in the last bucket for the corresponding host peer.
     final Bytes32 keccak256 = host.keccak256();
-    final MutableBytesValue template = MutableBytesValue.create(keccak256.size());
+    final MutableBytes template = MutableBytes.create(keccak256.size());
     byte msb = keccak256.get(0);
     msb ^= MOST_SIGNFICANT_BIT_MASK;
     template.set(0, msb);
@@ -1204,8 +1203,8 @@ public class PeerDiscoveryControllerTest {
     for (int i = 0; i < n; i++) {
       template.setInt(template.size() - 4, i);
       final Bytes32 keccak = Bytes32.leftPad(template.copy());
-      final MutableBytesValue id = MutableBytesValue.create(64);
-      UInt256.of(i).getBytes().copyTo(id, id.size() - UInt256Value.SIZE);
+      final MutableBytes id = MutableBytes.create(64);
+      UInt256.valueOf(i).toBytes().copyTo(id, id.size() - Bytes32.SIZE);
       final DiscoveryPeer peer =
           spy(
               DiscoveryPeer.fromEnode(

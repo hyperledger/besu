@@ -26,11 +26,11 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.services.tasks.Task;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
 public class PersistDataStepTest {
@@ -39,7 +39,7 @@ public class PersistDataStepTest {
       new InMemoryStorageProvider().createWorldStateStorage();
   private final WorldDownloadState downloadState = mock(WorldDownloadState.class);
 
-  private final BytesValue rootNodeData = BytesValue.of(1, 1, 1, 1);
+  private final Bytes rootNodeData = Bytes.of(1, 1, 1, 1);
   private final BlockHeader blockHeader =
       new BlockHeaderTestFixture().stateRoot(Hash.hash(rootNodeData)).buildHeader();
 
@@ -88,20 +88,20 @@ public class PersistDataStepTest {
   }
 
   private Task<NodeDataRequest> createTaskWithData(final int... bytes) {
-    return createTaskWithData(BytesValue.of(bytes));
+    return createTaskWithData(Bytes.of(bytes));
   }
 
-  private Task<NodeDataRequest> createTaskWithData(final BytesValue data) {
+  private Task<NodeDataRequest> createTaskWithData(final Bytes data) {
     final StubTask task = createTaskWithoutData(data);
     task.getData().setData(data);
     return task;
   }
 
   private StubTask createTaskWithoutData(final int... data) {
-    return createTaskWithoutData(BytesValue.of(data));
+    return createTaskWithoutData(Bytes.of(data));
   }
 
-  private StubTask createTaskWithoutData(final BytesValue data) {
+  private StubTask createTaskWithoutData(final Bytes data) {
     final Hash hash = Hash.hash(data);
     final AccountTrieNodeDataRequest request = NodeDataRequest.createAccountDataRequest(hash);
     return new StubTask(request);

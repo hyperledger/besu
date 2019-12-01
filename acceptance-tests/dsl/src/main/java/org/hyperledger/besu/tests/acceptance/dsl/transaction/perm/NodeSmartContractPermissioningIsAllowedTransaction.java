@@ -24,16 +24,16 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 import org.hyperledger.besu.tests.acceptance.dsl.node.RunnableNode;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.NodeRequests;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.io.IOException;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.web3j.protocol.core.DefaultBlockParameterName;
 
 public class NodeSmartContractPermissioningIsAllowedTransaction implements Transaction<Boolean> {
 
-  private static final BytesValue IS_NODE_ALLOWED_SIGNATURE =
-      Hash.keccak256(BytesValue.of("enodeAllowed(bytes32,bytes32,bytes16,uint16)".getBytes(UTF_8)))
+  private static final Bytes IS_NODE_ALLOWED_SIGNATURE =
+      Hash.keccak256(Bytes.of("enodeAllowed(bytes32,bytes32,bytes16,uint16)".getBytes(UTF_8)))
           .slice(0, 4);
 
   private final Address contractAddress;
@@ -50,7 +50,7 @@ public class NodeSmartContractPermissioningIsAllowedTransaction implements Trans
     try {
       final String value =
           node.eth().ethCall(payload(), DefaultBlockParameterName.LATEST).send().getValue();
-      return checkTransactionResult(BytesValue.fromHexString(value));
+      return checkTransactionResult(Bytes.fromHexString(value));
     } catch (final IOException e) {
       throw new RuntimeException(e);
     }
@@ -58,23 +58,21 @@ public class NodeSmartContractPermissioningIsAllowedTransaction implements Trans
 
   // Checks the returned bytes from the permissioning contract call to see if it's a value we
   // understand
-  static Boolean checkTransactionResult(final BytesValue result) {
+  static Boolean checkTransactionResult(final Bytes result) {
     // booleans are padded to 32 bytes
     if (result.size() != 32) {
       throw new IllegalArgumentException("Unexpected result size");
     }
 
     // 0 is false
-    if (result.compareTo(
-            BytesValue.fromHexString(
-                "0x0000000000000000000000000000000000000000000000000000000000000000"))
-        == 0) {
+    if (result.equals(
+        Bytes.fromHexString(
+            "0x0000000000000000000000000000000000000000000000000000000000000000"))) {
       return false;
       // 1 filled to 32 bytes is true
-    } else if (result.compareTo(
-            BytesValue.fromHexString(
-                "0x0000000000000000000000000000000000000000000000000000000000000001"))
-        == 0) {
+    } else if (result.equals(
+        Bytes.fromHexString(
+            "0x0000000000000000000000000000000000000000000000000000000000000001"))) {
       return true;
       // Anything else is wrong
     } else {
@@ -84,7 +82,7 @@ public class NodeSmartContractPermissioningIsAllowedTransaction implements Trans
 
   private org.web3j.protocol.core.methods.request.Transaction payload() {
     final String sourceEnodeURL = ((RunnableNode) node).enodeUrl().toASCIIString();
-    final BytesValue payload =
+    final Bytes payload =
         NodeSmartContractPermissioningController.createPayload(
             IS_NODE_ALLOWED_SIGNATURE, EnodeURL.fromString(sourceEnodeURL));
 

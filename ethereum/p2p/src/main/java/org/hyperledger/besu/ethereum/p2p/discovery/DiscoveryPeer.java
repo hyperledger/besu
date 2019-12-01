@@ -19,7 +19,8 @@ import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-import org.hyperledger.besu.util.bytes.BytesValue;
+
+import org.apache.tuweni.bytes.Bytes;
 
 /**
  * Represents an Ethereum node that we interacting with through the discovery and wire protocols.
@@ -44,7 +45,7 @@ public class DiscoveryPeer extends DefaultPeer {
     return new DiscoveryPeer(enode, Endpoint.fromEnode(enode));
   }
 
-  public static DiscoveryPeer fromIdAndEndpoint(final BytesValue id, final Endpoint endpoint) {
+  public static DiscoveryPeer fromIdAndEndpoint(final Bytes id, final Endpoint endpoint) {
     return new DiscoveryPeer(endpoint.toEnode(id), endpoint);
   }
 
@@ -53,7 +54,7 @@ public class DiscoveryPeer extends DefaultPeer {
 
     // The last list item will be the id, pass size - 1 to Endpoint
     final Endpoint endpoint = Endpoint.decodeInline(in, size - 1);
-    final BytesValue id = in.readBytesValue();
+    final Bytes id = in.readBytes();
     in.leaveList();
 
     return DiscoveryPeer.fromIdAndEndpoint(id, endpoint);
@@ -62,7 +63,7 @@ public class DiscoveryPeer extends DefaultPeer {
   public void writeTo(final RLPOutput out) {
     out.startList();
     endpoint.encodeInline(out);
-    out.writeBytesValue(getId());
+    out.writeBytes(getId());
     out.endList();
   }
 

@@ -14,11 +14,11 @@
  */
 package org.hyperledger.besu.crypto;
 
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 /** Various utilities for providing hashes (digests) of arbitrary data. */
 public abstract class Hash {
@@ -37,7 +37,7 @@ public abstract class Hash {
    * @param alg The name of the digest algorithm to use.
    * @return A digest.
    */
-  private static byte[] digestUsingAlgorithm(final BytesValue input, final String alg) {
+  private static byte[] digestUsingAlgorithm(final Bytes input, final String alg) {
     try {
       final MessageDigest digest = MessageDigestFactory.create(alg);
       input.update(digest);
@@ -53,7 +53,7 @@ public abstract class Hash {
    * @param input The input bytes to produce the digest for.
    * @return A digest.
    */
-  public static Bytes32 sha256(final BytesValue input) {
+  public static Bytes32 sha256(final Bytes input) {
     return Bytes32.wrap(digestUsingAlgorithm(input, SHA256_ALG));
   }
 
@@ -63,7 +63,7 @@ public abstract class Hash {
    * @param input The input bytes to produce the digest for.
    * @return A digest.
    */
-  public static Bytes32 keccak256(final BytesValue input) {
+  public static Bytes32 keccak256(final Bytes input) {
     return Bytes32.wrap(digestUsingAlgorithm(input, KECCAK256_ALG));
   }
 
@@ -73,8 +73,8 @@ public abstract class Hash {
    * @param input The input bytes to produce the digest for.
    * @return A digest.
    */
-  public static BytesValue ripemd160(final BytesValue input) {
-    return BytesValue.wrap(digestUsingAlgorithm(input, RIPEMD160));
+  public static Bytes ripemd160(final Bytes input) {
+    return Bytes.wrap(digestUsingAlgorithm(input, RIPEMD160));
   }
 
   /**
@@ -83,7 +83,7 @@ public abstract class Hash {
    * @param input The input bytes to produce the digest for.
    * @return A digest.
    */
-  public static BytesValue blake2bf(final BytesValue input) {
-    return BytesValue.wrap(digestUsingAlgorithm(input, BLAKE2BF_ALG));
+  public static Bytes blake2bf(final Bytes input) {
+    return Bytes.wrap(digestUsingAlgorithm(input, BLAKE2BF_ALG));
   }
 }

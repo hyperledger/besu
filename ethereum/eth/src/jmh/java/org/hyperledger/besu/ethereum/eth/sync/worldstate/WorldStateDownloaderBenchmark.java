@@ -45,7 +45,6 @@ import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksD
 import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.services.tasks.CachingTaskCollection;
 import org.hyperledger.besu.services.tasks.FlatFileTaskCollection;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.nio.file.Path;
 import java.time.Clock;
@@ -58,6 +57,7 @@ import java.util.concurrent.CompletableFuture;
 import com.google.common.io.Files;
 import com.google.common.io.MoreFiles;
 import com.google.common.io.RecursiveDeleteOption;
+import org.apache.tuweni.bytes.Bytes;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.Level;
 import org.openjdk.jmh.annotations.Scope;
@@ -145,14 +145,14 @@ public class WorldStateDownloaderBenchmark {
   }
 
   @Benchmark
-  public Optional<BytesValue> downloadWorldState() {
+  public Optional<Bytes> downloadWorldState() {
     final CompletableFuture<Void> result = worldStateDownloader.run(blockHeader);
     if (result.isDone()) {
       throw new IllegalStateException("World state download was already complete");
     }
     peer.respondWhileOtherThreadsWork(responder, () -> !result.isDone());
     result.getNow(null);
-    final Optional<BytesValue> rootData = worldStateStorage.getNodeData(blockHeader.getStateRoot());
+    final Optional<Bytes> rootData = worldStateStorage.getNodeData(blockHeader.getStateRoot());
     if (!rootData.isPresent()) {
       throw new IllegalStateException("World state download did not complete.");
     }

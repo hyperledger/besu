@@ -31,6 +31,8 @@ dependencies {
   api project(':plugin-api')
   api project(':util')
 
+  implementation 'org.apache.tuweni:tuweni-bytes'
+  implementation 'org.apache.tuweni:tuweni-units'
   implementation 'com.google.guava:guava'
   implementation 'io.vertx:vertx-core'
 
@@ -38,7 +40,7 @@ dependencies {
 
   jmh project(':util')
 
-  testImplementation project(path:':ethereum:referencetests', configuration: 'testOutput')
+  testImplementation project(path: ':ethereum:referencetests', configuration: 'testOutput')
   testImplementation project(':testutil')
 
   testImplementation 'org.assertj:assertj-core'

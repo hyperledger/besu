@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.p2p.rlpx.wire;
 
-import org.hyperledger.besu.util.bytes.BytesValue;
+import org.apache.tuweni.bytes.Bytes;
 
 /** A P2P Network Message's Data. */
 public interface MessageData {
@@ -38,5 +38,5 @@ public interface MessageData {
    *
    * @return the serialized representation of this message
    */
-  BytesValue getData();
+  Bytes getData();
 }

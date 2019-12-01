@@ -31,14 +31,14 @@ import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.vm.ehalt.ExceptionalHaltException;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
 
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -124,9 +124,9 @@ public class DebugOperationTracerTest {
     final Bytes32 word1 = Bytes32.fromHexString("0x01");
     final Bytes32 word2 = Bytes32.fromHexString("0x02");
     final Bytes32 word3 = Bytes32.fromHexString("0x03");
-    frame.writeMemory(UInt256.ZERO, UInt256.of(32), word1);
-    frame.writeMemory(UInt256.of(32), UInt256.of(32), word2);
-    frame.writeMemory(UInt256.of(64), UInt256.of(32), word3);
+    frame.writeMemory(UInt256.ZERO, UInt256.valueOf(32), word1);
+    frame.writeMemory(UInt256.valueOf(32), UInt256.valueOf(32), word2);
+    frame.writeMemory(UInt256.valueOf(64), UInt256.valueOf(32), word3);
     final TraceFrame traceFrame = traceFrame(frame, Gas.ZERO, new TraceOptions(false, true, false));
     assertThat(traceFrame.getMemory()).isPresent();
     assertThat(traceFrame.getMemory().get()).containsExactly(word1, word2, word3);
@@ -219,15 +219,15 @@ public class DebugOperationTracerTest {
     when(worldUpdater.getAccount(frame.getRecipientAddress())).thenReturn(account);
 
     final Map<UInt256, UInt256> updatedStorage = new TreeMap<>();
-    updatedStorage.put(UInt256.ZERO, UInt256.of(233));
-    updatedStorage.put(UInt256.ONE, UInt256.of(2424));
+    updatedStorage.put(UInt256.ZERO, UInt256.valueOf(233));
+    updatedStorage.put(UInt256.ONE, UInt256.valueOf(2424));
     when(mutableAccount.getUpdatedStorage()).thenReturn(updatedStorage);
     final Bytes32 word1 = Bytes32.fromHexString("0x01");
     final Bytes32 word2 = Bytes32.fromHexString("0x02");
     final Bytes32 word3 = Bytes32.fromHexString("0x03");
-    frame.writeMemory(UInt256.ZERO, UInt256.of(32), word1);
-    frame.writeMemory(UInt256.of(32), UInt256.of(32), word2);
-    frame.writeMemory(UInt256.of(64), UInt256.of(32), word3);
+    frame.writeMemory(UInt256.ZERO, UInt256.valueOf(32), word1);
+    frame.writeMemory(UInt256.valueOf(32), UInt256.valueOf(32), word2);
+    frame.writeMemory(UInt256.valueOf(64), UInt256.valueOf(32), word3);
     return updatedStorage;
   }
 }

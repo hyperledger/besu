@@ -19,11 +19,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.ethereum.p2p.discovery.Endpoint;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.OptionalInt;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Test;
 
 public class PongPacketDataTest {
@@ -35,7 +35,7 @@ public class PongPacketDataTest {
     final Bytes32 hash = Bytes32.fromHexStringLenient("0x1234");
 
     final PongPacketData packet = PongPacketData.create(to, hash);
-    final BytesValue serialized = RLP.encode(packet::writeTo);
+    final Bytes serialized = RLP.encode(packet::writeTo);
     final PongPacketData deserialized = PongPacketData.readFrom(RLP.input(serialized));
 
     assertThat(deserialized.getTo()).isEqualTo(to);
@@ -52,10 +52,10 @@ public class PongPacketDataTest {
     BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.startList();
     to.encodeStandalone(out);
-    out.writeBytesValue(hash);
+    out.writeBytes(hash);
     out.writeLongScalar(time);
     out.endList();
-    final BytesValue encoded = out.encoded();
+    final Bytes encoded = out.encoded();
 
     final PongPacketData deserialized = PongPacketData.readFrom(RLP.input(encoded));
     assertThat(deserialized.getTo()).isEqualTo(to);
@@ -72,12 +72,12 @@ public class PongPacketDataTest {
     BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.startList();
     to.encodeStandalone(out);
-    out.writeBytesValue(hash);
+    out.writeBytes(hash);
     out.writeLongScalar(time);
     // Add random fields
     out.writeLong(1234L);
     out.endList();
-    final BytesValue encoded = out.encoded();
+    final Bytes encoded = out.encoded();
 
     final PongPacketData deserialized = PongPacketData.readFrom(RLP.input(encoded));
     assertThat(deserialized.getTo()).isEqualTo(to);

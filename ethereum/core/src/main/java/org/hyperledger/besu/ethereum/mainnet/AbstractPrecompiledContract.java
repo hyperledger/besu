@@ -17,7 +17,8 @@ package org.hyperledger.besu.ethereum.mainnet;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.util.bytes.BytesValue;
+
+import org.apache.tuweni.bytes.Bytes;
 
 /** Skeleton class for @{link PrecompileContract} implementations. */
 public abstract class AbstractPrecompiledContract implements PrecompiledContract {
@@ -41,8 +42,8 @@ public abstract class AbstractPrecompiledContract implements PrecompiledContract
   }
 
   @Override
-  public abstract Gas gasRequirement(BytesValue input);
+  public abstract Gas gasRequirement(Bytes input);
 
   @Override
-  public abstract BytesValue compute(BytesValue input, MessageFrame messageFrame);
+  public abstract Bytes compute(Bytes input, MessageFrame messageFrame);
 }

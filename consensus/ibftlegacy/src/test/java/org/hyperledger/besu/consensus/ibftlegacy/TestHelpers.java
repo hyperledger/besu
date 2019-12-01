@@ -21,10 +21,11 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Collections;
 import java.util.List;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class TestHelpers {
 
@@ -34,7 +35,7 @@ public class TestHelpers {
       final List<Address> validators) {
 
     final IbftExtraData unsignedExtraData =
-        new IbftExtraData(BytesValue.wrap(new byte[32]), Collections.emptyList(), null, validators);
+        new IbftExtraData(Bytes.wrap(new byte[32]), Collections.emptyList(), null, validators);
     blockHeaderBuilder.extraData(unsignedExtraData.encode());
 
     final Hash signingHash =

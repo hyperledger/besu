@@ -35,12 +35,12 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.proof.WorldStateProof;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.Collections;
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -188,14 +188,14 @@ public class EthGetProofTest {
     when(worldStateProof.getAccountProof())
         .thenReturn(
             Collections.singletonList(
-                BytesValue.fromHexString(
+                Bytes.fromHexString(
                     "0x1111111111111111111111111111111111111111111111111111111111111111")));
     when(worldStateProof.getStateTrieAccountValue()).thenReturn(stateTrieAccountValue);
     when(worldStateProof.getStorageKeys()).thenReturn(Collections.singletonList(storageKey));
     when(worldStateProof.getStorageProof(storageKey))
         .thenReturn(
             Collections.singletonList(
-                BytesValue.fromHexString(
+                Bytes.fromHexString(
                     "0x2222222222222222222222222222222222222222222222222222222222222222")));
     when(worldStateProof.getStorageValue(storageKey)).thenReturn(UInt256.ZERO);
 

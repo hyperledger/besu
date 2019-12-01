@@ -32,12 +32,14 @@ dependencies {
   implementation project(':ethereum:rlp')
   implementation project(':services:kvstore')
 
+  implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'com.google.guava:guava'
   implementation 'org.bouncycastle:bcprov-jdk15on'
 
   testImplementation project(path: ':ethereum:referencetests', configuration: 'testOutput')
   testImplementation project(':testutil')
 
+  testImplementation 'org.apache.tuweni:tuweni-units'
   testImplementation 'com.fasterxml.jackson.core:jackson-databind'
   testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'

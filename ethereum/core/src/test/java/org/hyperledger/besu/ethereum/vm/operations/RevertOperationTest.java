@@ -19,10 +19,10 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.mainnet.ConstantinopleGasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -37,20 +37,20 @@ public class RevertOperationTest {
   @Mock private MessageFrame messageFrame;
   private final RevertOperation operation = new RevertOperation(new ConstantinopleGasCalculator());
 
-  private final BytesValue revertReasonBytes =
-      BytesValue.fromHexString("726576657274206d657373616765");
+  private final Bytes revertReasonBytes = Bytes.fromHexString("726576657274206d657373616765");
 
   @Before
   public void setUp() {
     when(messageFrame.popStackItem())
         .thenReturn(Bytes32.fromHexString("0x00"))
         .thenReturn(Bytes32.fromHexString("0x0e"));
-    when(messageFrame.readMemory(UInt256.ZERO, UInt256.of(0x0e))).thenReturn(revertReasonBytes);
+    when(messageFrame.readMemory(UInt256.ZERO, UInt256.valueOf(0x0e)))
+        .thenReturn(revertReasonBytes);
   }
 
   @Test
   public void shouldReturnReason() {
-    ArgumentCaptor<BytesValue> arg = ArgumentCaptor.forClass(BytesValue.class);
+    ArgumentCaptor<Bytes> arg = ArgumentCaptor.forClass(Bytes.class);
     operation.execute(messageFrame);
     Mockito.verify(messageFrame).setRevertReason(arg.capture());
     assertThat(arg.getValue()).isEqualTo(revertReasonBytes);

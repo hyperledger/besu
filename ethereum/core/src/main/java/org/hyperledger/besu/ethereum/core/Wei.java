@@ -14,32 +14,33 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.uint.BaseUInt256Value;
-import org.hyperledger.besu.util.uint.Counter;
-import org.hyperledger.besu.util.uint.UInt256;
+import org.hyperledger.besu.plugin.data.Quantity;
 
 import java.math.BigInteger;
 
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.BaseUInt256Value;
+import org.apache.tuweni.units.bigints.UInt256;
+
 /** A particular quantity of Wei, the Ethereum currency. */
-public final class Wei extends BaseUInt256Value<Wei> {
+public final class Wei extends BaseUInt256Value<Wei> implements Quantity {
 
   public static final Wei ZERO = of(0);
 
-  protected Wei(final Bytes32 bytes) {
-    super(bytes, WeiCounter::new);
+  protected Wei(final UInt256 value) {
+    super(value, Wei::new);
   }
 
   private Wei(final long v) {
-    super(v, WeiCounter::new);
+    this(UInt256.valueOf(v));
   }
 
   private Wei(final BigInteger v) {
-    super(v, WeiCounter::new);
+    this(UInt256.valueOf(v));
   }
 
   private Wei(final String hexString) {
-    super(hexString, WeiCounter::new);
+    this(UInt256.fromHexString(hexString));
   }
 
   public static Wei of(final long value) {
@@ -51,11 +52,11 @@ public final class Wei extends BaseUInt256Value<Wei> {
   }
 
   public static Wei of(final UInt256 value) {
-    return new Wei(value.getBytes().copy());
+    return new Wei(value);
   }
 
   public static Wei wrap(final Bytes32 value) {
-    return new Wei(value);
+    return new Wei(UInt256.fromBytes(value));
   }
 
   public static Wei fromHexString(final String str) {
@@ -66,9 +67,28 @@ public final class Wei extends BaseUInt256Value<Wei> {
     return Wei.of(BigInteger.valueOf(eth).multiply(BigInteger.TEN.pow(18)));
   }
 
-  private static class WeiCounter extends Counter<Wei> {
-    private WeiCounter() {
-      super(Wei::new);
-    }
+  @Override
+  public Number getValue() {
+    return toBigInteger();
+  }
+
+  @Override
+  public byte[] getByteArray() {
+    return toBytes().toArray();
+  }
+
+  @Override
+  public String getHexString() {
+    return toHexString();
+  }
+
+  @Override
+  public int size() {
+    return toMinimalBytes().size();
+  }
+
+  @Override
+  public Wei copy() {
+    return super.copy();
   }
 }

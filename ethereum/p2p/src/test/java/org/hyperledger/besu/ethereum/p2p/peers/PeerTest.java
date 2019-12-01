@@ -14,22 +14,22 @@
  */
 package org.hyperledger.besu.ethereum.p2p.peers;
 
+import static org.apache.tuweni.bytes.Bytes.fromHexString;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.hyperledger.besu.util.bytes.BytesValue.fromHexString;
 
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryStatus;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import com.google.common.net.InetAddresses;
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
 public class PeerTest {
 
   @Test
   public void notEquals() {
-    final BytesValue id =
+    final Bytes id =
         fromHexString(
             "c7849b663d12a2b5bf05b1ebf5810364f4870d5f1053fbd7500d38bc54c705b453d7511ca8a4a86003d34d4c8ee0bbfcd387aa724f5b240b3ab4bbb994a1e09b");
     final Peer peer =
@@ -51,7 +51,7 @@ public class PeerTest {
 
   @Test
   public void differentHashCode() {
-    final BytesValue id =
+    final Bytes id =
         fromHexString(
             "c7849b663d12a2b5bf05b1ebf5810364f4870d5f1053fbd7500d38bc54c705b453d7511ca8a4a86003d34d4c8ee0bbfcd387aa724f5b240b3ab4bbb994a1e09b");
     final Peer peer =

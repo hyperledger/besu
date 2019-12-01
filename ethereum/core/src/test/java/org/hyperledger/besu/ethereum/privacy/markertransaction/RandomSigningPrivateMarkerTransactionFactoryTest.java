@@ -22,11 +22,11 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Base64;
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -60,8 +60,8 @@ public class RandomSigningPrivateMarkerTransactionFactoryTest {
     assertThat(transaction.getGasPrice()).isEqualTo(privTransaction.getGasPrice());
     assertThat(transaction.getValue()).isEqualTo(privTransaction.getValue());
     assertThat(transaction.getTo()).isEqualTo(Optional.of(precompiledAddress));
-    assertThat(transaction.getPayload())
-        .isEqualTo(BytesValue.wrap(Base64.getDecoder().decode(enclaveKey)));
+    assertThat(transaction.getPayloadBytes())
+        .isEqualTo(Bytes.wrap(Base64.getDecoder().decode(enclaveKey)));
 
     final Transaction nextTransaction = factory.create("enclaveKey", privTransaction);
     assertThat(nextTransaction.getSender()).isNotEqualTo(transaction.getSender());

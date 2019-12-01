@@ -23,10 +23,10 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.mainnet.ConstantinopleGasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -117,14 +117,15 @@ public class Create2OperationTest {
   public void setUp() {
     when(messageFrame.getRecipientAddress()).thenReturn(Address.fromHexString(sender));
     final Bytes32 memoryOffset = Bytes32.fromHexString("0xFF");
-    final BytesValue codeBytes = BytesValue.fromHexString(code);
-    final UInt256 memoryLength = UInt256.of(codeBytes.size());
+    final Bytes codeBytes = Bytes.fromHexString(code);
+    final UInt256 memoryLength = UInt256.valueOf(codeBytes.size());
     when(messageFrame.getStackItem(1)).thenReturn(memoryOffset);
-    when(messageFrame.getStackItem(2)).thenReturn(memoryLength.getBytes());
+    when(messageFrame.getStackItem(2)).thenReturn(memoryLength.toBytes());
     when(messageFrame.getStackItem(3)).thenReturn(Bytes32.fromHexString(salt));
-    when(messageFrame.readMemory(memoryOffset.asUInt256(), memoryLength)).thenReturn(codeBytes);
-    when(messageFrame.memoryWordSize()).thenReturn(UInt256.of(500));
-    when(messageFrame.calculateMemoryExpansion(any(), any())).thenReturn(UInt256.of(500));
+    when(messageFrame.readMemory(UInt256.fromBytes(memoryOffset), memoryLength))
+        .thenReturn(codeBytes);
+    when(messageFrame.memoryWordSize()).thenReturn(UInt256.valueOf(500));
+    when(messageFrame.calculateMemoryExpansion(any(), any())).thenReturn(UInt256.valueOf(500));
   }
 
   @Test

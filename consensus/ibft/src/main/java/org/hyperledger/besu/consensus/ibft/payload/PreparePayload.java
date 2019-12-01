@@ -45,7 +45,7 @@ public class PreparePayload implements Payload {
   public void writeTo(final RLPOutput rlpOutput) {
     rlpOutput.startList();
     roundIdentifier.writeTo(rlpOutput);
-    rlpOutput.writeBytesValue(digest);
+    rlpOutput.writeBytes(digest);
     rlpOutput.endList();
   }
 

@@ -14,24 +14,23 @@
  */
 package org.hyperledger.besu.ethereum.rlp;
 
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.BytesValues;
-
 import java.math.BigInteger;
 
-/** An {@link RLPInput} that reads RLP encoded data from a {@link BytesValue}. */
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+
+/** An {@link RLPInput} that reads RLP encoded data from a {@link Bytes}. */
 public class BytesValueRLPInput extends AbstractRLPInput {
 
   // The RLP encoded data.
-  private final BytesValue value;
+  private final Bytes value;
 
-  public BytesValueRLPInput(final BytesValue value, final boolean lenient) {
+  public BytesValueRLPInput(final Bytes value, final boolean lenient) {
     this(value, lenient, true);
   }
 
   public BytesValueRLPInput(
-      final BytesValue value, final boolean lenient, final boolean shouldFitExactly) {
+      final Bytes value, final boolean lenient, final boolean shouldFitExactly) {
     super(lenient);
     this.value = value;
     init(value.size(), shouldFitExactly);
@@ -39,17 +38,17 @@ public class BytesValueRLPInput extends AbstractRLPInput {
 
   @Override
   protected byte inputByte(final long offset) {
-    return value.get(offset);
+    return value.get((int) offset);
   }
 
   @Override
-  protected BytesValue inputSlice(final long offset, final int length) {
+  protected Bytes inputSlice(final long offset, final int length) {
     return value.slice(Math.toIntExact(offset), length);
   }
 
   @Override
   protected Bytes32 inputSlice32(final long offset) {
-    return Bytes32.wrap(value, Math.toIntExact(offset));
+    return Bytes32.wrap(inputSlice(offset, 32));
   }
 
   @Override
@@ -59,7 +58,7 @@ public class BytesValueRLPInput extends AbstractRLPInput {
 
   @Override
   protected BigInteger getUnsignedBigInteger(final long offset, final int length) {
-    return BytesValues.asUnsignedBigInteger(value.slice(Math.toIntExact(offset), length));
+    return value.slice(Math.toIntExact(offset), length).toUnsignedBigInteger();
   }
 
   @Override
@@ -73,7 +72,7 @@ public class BytesValueRLPInput extends AbstractRLPInput {
   }
 
   @Override
-  public BytesValue raw() {
+  public Bytes raw() {
     return value;
   }
 }

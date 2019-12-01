@@ -32,9 +32,6 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValue
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,6 +40,9 @@ import java.util.TreeMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Test;
 
 // TODO: make that an abstract mutable world state test, and create sub-class for all world state
@@ -210,7 +210,11 @@ public class DefaultMutableWorldStateTest {
     updater.commit();
 
     final boolean accountAIsFirst =
-        accountA.getAddressHash().compareTo(accountB.getAddressHash()) < 0;
+        accountA
+                .getAddressHash()
+                .toUnsignedBigInteger()
+                .compareTo(accountB.getAddressHash().toUnsignedBigInteger())
+            < 0;
     final Hash startHash = accountAIsFirst ? accountA.getAddressHash() : accountB.getAddressHash();
 
     // Get first account
@@ -230,7 +234,7 @@ public class DefaultMutableWorldStateTest {
         .hasValue(accountAIsFirst ? accountB.getAddress() : accountA.getAddress());
 
     // Get second account
-    final Bytes32 startHashForSecondAccount = startHash.asUInt256().plus(1L).getBytes();
+    final Bytes32 startHashForSecondAccount = UInt256.fromBytes(startHash).add(1L).toBytes();
     final List<StreamableAccount> secondAccount =
         worldState.streamAccounts(startHashForSecondAccount, 100).collect(Collectors.toList());
     assertThat(secondAccount.size()).isEqualTo(1L);
@@ -354,9 +358,9 @@ public class DefaultMutableWorldStateTest {
     final WorldUpdater updater = worldState.updater();
     final MutableAccount account = updater.createAccount(ADDRESS).getMutable();
     account.setBalance(Wei.of(100000));
-    account.setStorageValue(UInt256.ONE, UInt256.of(2));
+    account.setStorageValue(UInt256.ONE, UInt256.valueOf(2));
     updater.commit();
-    assertThat(worldState.get(ADDRESS).getStorageValue(UInt256.ONE)).isEqualTo(UInt256.of(2));
+    assertThat(worldState.get(ADDRESS).getStorageValue(UInt256.ONE)).isEqualTo(UInt256.valueOf(2));
     assertThat(worldState.rootHash())
         .isEqualTo(
             Hash.fromHexString(
@@ -369,10 +373,10 @@ public class DefaultMutableWorldStateTest {
     final WorldUpdater updater = worldState.updater();
     final MutableAccount account = updater.createAccount(ADDRESS).getMutable();
     account.setBalance(Wei.of(100000));
-    account.setStorageValue(UInt256.ONE, UInt256.of(2));
-    account.setStorageValue(UInt256.ONE, UInt256.of(3));
+    account.setStorageValue(UInt256.ONE, UInt256.valueOf(2));
+    account.setStorageValue(UInt256.ONE, UInt256.valueOf(3));
     updater.commit();
-    assertThat(worldState.get(ADDRESS).getStorageValue(UInt256.ONE)).isEqualTo(UInt256.of(3));
+    assertThat(worldState.get(ADDRESS).getStorageValue(UInt256.ONE)).isEqualTo(UInt256.valueOf(3));
     assertThat(worldState.rootHash())
         .isEqualTo(
             Hash.fromHexString(
@@ -385,7 +389,7 @@ public class DefaultMutableWorldStateTest {
     final WorldUpdater updater = worldState.updater();
     final MutableAccount account = updater.createAccount(ADDRESS).getMutable();
     account.setBalance(Wei.of(100000));
-    account.setStorageValue(UInt256.ONE, UInt256.of(2));
+    account.setStorageValue(UInt256.ONE, UInt256.valueOf(2));
     account.setStorageValue(UInt256.ONE, UInt256.ZERO);
     updater.commit();
     assertThat(worldState.rootHash())
@@ -399,15 +403,15 @@ public class DefaultMutableWorldStateTest {
     final MutableWorldState worldState = createEmpty();
     final WorldUpdater setupUpdater = worldState.updater();
     final MutableAccount setupAccount = setupUpdater.createAccount(ADDRESS).getMutable();
-    setupAccount.setStorageValue(UInt256.ONE, UInt256.of(2));
+    setupAccount.setStorageValue(UInt256.ONE, UInt256.valueOf(2));
     setupUpdater.commit();
 
     final WorldUpdater updater = worldState.updater();
     final MutableAccount account = updater.getOrCreate(ADDRESS).getMutable();
-    assertThat(account.getOriginalStorageValue(UInt256.ONE)).isEqualTo(UInt256.of(2));
+    assertThat(account.getOriginalStorageValue(UInt256.ONE)).isEqualTo(UInt256.valueOf(2));
 
-    account.setStorageValue(UInt256.ONE, UInt256.of(3));
-    assertThat(account.getOriginalStorageValue(UInt256.ONE)).isEqualTo(UInt256.of(2));
+    account.setStorageValue(UInt256.ONE, UInt256.valueOf(3));
+    assertThat(account.getOriginalStorageValue(UInt256.ONE)).isEqualTo(UInt256.valueOf(2));
   }
 
   @Test
@@ -415,7 +419,7 @@ public class DefaultMutableWorldStateTest {
     final MutableWorldState worldState = createEmpty();
     final WorldUpdater setupUpdater = worldState.updater();
     final MutableAccount setupAccount = setupUpdater.createAccount(ADDRESS).getMutable();
-    setupAccount.setStorageValue(UInt256.ONE, UInt256.of(2));
+    setupAccount.setStorageValue(UInt256.ONE, UInt256.valueOf(2));
     setupUpdater.commit();
 
     final WorldUpdater updater = worldState.updater();
@@ -427,8 +431,8 @@ public class DefaultMutableWorldStateTest {
 
   @Test
   public void clearStorage() {
-    final UInt256 storageKey = UInt256.of(1L);
-    final UInt256 storageValue = UInt256.of(2L);
+    final UInt256 storageKey = UInt256.ONE;
+    final UInt256 storageValue = UInt256.valueOf(2L);
 
     // Create a world state with one account
     final MutableWorldState worldState = createEmpty();
@@ -460,8 +464,8 @@ public class DefaultMutableWorldStateTest {
 
   @Test
   public void clearStorage_AfterPersisting() {
-    final UInt256 storageKey = UInt256.of(1L);
-    final UInt256 storageValue = UInt256.of(2L);
+    final UInt256 storageKey = UInt256.ONE;
+    final UInt256 storageValue = UInt256.valueOf(2L);
 
     // Create a world state with one account
     final MutableWorldState worldState = createEmpty();
@@ -497,9 +501,9 @@ public class DefaultMutableWorldStateTest {
 
   @Test
   public void clearStorageThenEdit() {
-    final UInt256 storageKey = UInt256.of(1L);
-    final UInt256 originalStorageValue = UInt256.of(2L);
-    final UInt256 newStorageValue = UInt256.of(3L);
+    final UInt256 storageKey = UInt256.ONE;
+    final UInt256 originalStorageValue = UInt256.valueOf(2L);
+    final UInt256 newStorageValue = UInt256.valueOf(3L);
 
     // Create a world state with one account
     final MutableWorldState worldState = createEmpty();
@@ -532,9 +536,9 @@ public class DefaultMutableWorldStateTest {
 
   @Test
   public void clearStorageThenEditAfterPersisting() {
-    final UInt256 storageKey = UInt256.of(1L);
-    final UInt256 originalStorageValue = UInt256.of(2L);
-    final UInt256 newStorageValue = UInt256.of(3L);
+    final UInt256 storageKey = UInt256.ONE;
+    final UInt256 originalStorageValue = UInt256.valueOf(2L);
+    final UInt256 newStorageValue = UInt256.valueOf(3L);
 
     // Create a world state with one account
     final MutableWorldState worldState = createEmpty();
@@ -574,11 +578,11 @@ public class DefaultMutableWorldStateTest {
     final WorldUpdater updater = worldState.updater();
     final MutableAccount account = updater.createAccount(ADDRESS).getMutable();
     account.setBalance(Wei.of(100000));
-    account.setCode(BytesValue.of(1, 2, 3));
+    account.setCode(Bytes.of(1, 2, 3));
     account.setVersion(Account.DEFAULT_VERSION);
-    account.setCode(BytesValue.of(3, 2, 1));
+    account.setCode(Bytes.of(3, 2, 1));
     updater.commit();
-    assertThat(worldState.get(ADDRESS).getCode()).isEqualByComparingTo(BytesValue.of(3, 2, 1));
+    assertThat(worldState.get(ADDRESS).getCode()).isEqualTo(Bytes.of(3, 2, 1));
     assertThat(worldState.get(ADDRESS).getVersion()).isEqualTo(Account.DEFAULT_VERSION);
     assertThat(worldState.rootHash())
         .isEqualTo(
@@ -634,25 +638,28 @@ public class DefaultMutableWorldStateTest {
     WorldUpdater updater = worldState.updater();
     MutableAccount account = updater.createAccount(ADDRESS).getMutable();
     account.setBalance(Wei.of(100000));
-    account.setStorageValue(UInt256.ONE, UInt256.of(2));
-    account.setStorageValue(UInt256.of(2), UInt256.of(5));
+    account.setStorageValue(UInt256.ONE, UInt256.valueOf(2));
+    account.setStorageValue(UInt256.valueOf(2), UInt256.valueOf(5));
     updater.commit();
 
     final List<AccountStorageEntry> initialSetOfEntries = new ArrayList<>();
-    initialSetOfEntries.add(AccountStorageEntry.forKeyAndValue(UInt256.ONE, UInt256.of(2)));
-    initialSetOfEntries.add(AccountStorageEntry.forKeyAndValue(UInt256.of(2), UInt256.of(5)));
+    initialSetOfEntries.add(AccountStorageEntry.forKeyAndValue(UInt256.ONE, UInt256.valueOf(2)));
+    initialSetOfEntries.add(
+        AccountStorageEntry.forKeyAndValue(UInt256.valueOf(2), UInt256.valueOf(5)));
     final Map<Bytes32, AccountStorageEntry> initialEntries = new TreeMap<>();
     initialSetOfEntries.forEach(entry -> initialEntries.put(entry.getKeyHash(), entry));
 
     updater = worldState.updater();
     account = updater.getAccount(ADDRESS).getMutable();
-    account.setStorageValue(UInt256.ONE, UInt256.of(3));
-    account.setStorageValue(UInt256.of(3), UInt256.of(6));
+    account.setStorageValue(UInt256.ONE, UInt256.valueOf(3));
+    account.setStorageValue(UInt256.valueOf(3), UInt256.valueOf(6));
 
     final List<AccountStorageEntry> finalSetOfEntries = new ArrayList<>();
-    finalSetOfEntries.add(AccountStorageEntry.forKeyAndValue(UInt256.ONE, UInt256.of(3)));
-    finalSetOfEntries.add(AccountStorageEntry.forKeyAndValue(UInt256.of(2), UInt256.of(5)));
-    finalSetOfEntries.add(AccountStorageEntry.forKeyAndValue(UInt256.of(3), UInt256.of(6)));
+    finalSetOfEntries.add(AccountStorageEntry.forKeyAndValue(UInt256.ONE, UInt256.valueOf(3)));
+    finalSetOfEntries.add(
+        AccountStorageEntry.forKeyAndValue(UInt256.valueOf(2), UInt256.valueOf(5)));
+    finalSetOfEntries.add(
+        AccountStorageEntry.forKeyAndValue(UInt256.valueOf(3), UInt256.valueOf(6)));
     final Map<Bytes32, AccountStorageEntry> finalEntries = new TreeMap<>();
     finalSetOfEntries.forEach(entry -> finalEntries.put(entry.getKeyHash(), entry));
 

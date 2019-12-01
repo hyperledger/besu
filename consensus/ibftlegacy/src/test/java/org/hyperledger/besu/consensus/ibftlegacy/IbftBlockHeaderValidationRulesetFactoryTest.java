@@ -34,13 +34,13 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.math.BigInteger;
 import java.util.Collection;
 import java.util.List;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Test;
 
 public class IbftBlockHeaderValidationRulesetFactoryTest {
@@ -125,7 +125,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
     // Construct an extraData block
     final IbftExtraData initialIbftExtraData =
         new IbftExtraData(
-            BytesValue.wrap(new byte[IbftExtraData.EXTRA_VANITY_LENGTH]),
+            Bytes.wrap(new byte[IbftExtraData.EXTRA_VANITY_LENGTH]),
             emptyList(),
             Signature.create(BigInteger.ONE, BigInteger.ONE, (byte) 0),
             validators);
@@ -139,7 +139,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
 
     final IbftExtraData proposedData =
         new IbftExtraData(
-            BytesValue.wrap(new byte[IbftExtraData.EXTRA_VANITY_LENGTH]),
+            Bytes.wrap(new byte[IbftExtraData.EXTRA_VANITY_LENGTH]),
             singletonList(proposerSignature),
             proposerSignature,
             validators);
@@ -151,7 +151,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
 
     final IbftExtraData sealedData =
         new IbftExtraData(
-            BytesValue.wrap(new byte[IbftExtraData.EXTRA_VANITY_LENGTH]),
+            Bytes.wrap(new byte[IbftExtraData.EXTRA_VANITY_LENGTH]),
             singletonList(proposerAsCommitterSignature),
             proposerSignature,
             validators);

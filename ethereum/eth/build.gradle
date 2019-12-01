@@ -28,6 +28,9 @@ jar {
 }
 
 dependencies {
+  implementation 'org.apache.tuweni:tuweni-bytes'
+  implementation 'org.apache.tuweni:tuweni-units'
+
   implementation project(':ethereum:core')
   implementation project(':ethereum:p2p')
   implementation project(':ethereum:rlp')

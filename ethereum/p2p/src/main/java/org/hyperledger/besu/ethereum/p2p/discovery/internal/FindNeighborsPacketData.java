@@ -18,18 +18,19 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-import org.hyperledger.besu.util.bytes.BytesValue;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class FindNeighborsPacketData implements PacketData {
   private static final int TARGET_SIZE = 64;
 
   /* Node ID. */
-  private final BytesValue target;
+  private final Bytes target;
 
   /* In millis after epoch. */
   private final long expiration;
 
-  private FindNeighborsPacketData(final BytesValue target, final long expiration) {
+  private FindNeighborsPacketData(final Bytes target, final long expiration) {
     checkArgument(target != null && target.size() == TARGET_SIZE, "target must be a valid node id");
     checkArgument(expiration >= 0, "expiration must be positive");
 
@@ -37,7 +38,7 @@ public class FindNeighborsPacketData implements PacketData {
     this.expiration = expiration;
   }
 
-  public static FindNeighborsPacketData create(final BytesValue target) {
+  public static FindNeighborsPacketData create(final Bytes target) {
     return new FindNeighborsPacketData(
         target, System.currentTimeMillis() + PacketData.DEFAULT_EXPIRATION_PERIOD_MS);
   }
@@ -45,14 +46,14 @@ public class FindNeighborsPacketData implements PacketData {
   @Override
   public void writeTo(final RLPOutput out) {
     out.startList();
-    out.writeBytesValue(target);
+    out.writeBytes(target);
     out.writeLongScalar(expiration);
     out.endList();
   }
 
   public static FindNeighborsPacketData readFrom(final RLPInput in) {
     in.enterList();
-    final BytesValue target = in.readBytesValue();
+    final Bytes target = in.readBytes();
     final long expiration = in.readLongScalar();
     in.leaveListLenient();
     return new FindNeighborsPacketData(target, expiration);
@@ -62,7 +63,7 @@ public class FindNeighborsPacketData implements PacketData {
     return expiration;
   }
 
-  public BytesValue getTarget() {
+  public Bytes getTarget() {
     return target;
   }
 

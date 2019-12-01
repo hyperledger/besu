@@ -15,12 +15,13 @@
 package org.hyperledger.besu.ethereum.p2p.rlpx.handshake.ecies;
 
 import org.hyperledger.besu.crypto.SECP256K1;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 public interface InitiatorHandshakeMessage {
 
-  BytesValue encode();
+  Bytes encode();
 
   Bytes32 getNonce();
 

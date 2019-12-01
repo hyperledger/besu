@@ -26,15 +26,15 @@ import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
@@ -67,21 +67,21 @@ public class WorldStateProofProviderTest {
 
   @Test
   public void getProofWhenWorldStateAvailable() {
-    final MerklePatriciaTrie<Bytes32, BytesValue> worldStateTrie = emptyWorldStateTrie();
-    final MerklePatriciaTrie<Bytes32, BytesValue> storageTrie = emptyStorageTrie();
+    final MerklePatriciaTrie<Bytes32, Bytes> worldStateTrie = emptyWorldStateTrie();
+    final MerklePatriciaTrie<Bytes32, Bytes> storageTrie = emptyStorageTrie();
 
     final WorldStateStorage.Updater updater = worldStateStorage.updater();
 
     // Add some storage values
-    writeStorageValue(storageTrie, UInt256.of(1L), UInt256.of(2L));
-    writeStorageValue(storageTrie, UInt256.of(2L), UInt256.of(4L));
-    writeStorageValue(storageTrie, UInt256.of(3L), UInt256.of(6L));
+    writeStorageValue(storageTrie, UInt256.ONE, UInt256.valueOf(2L));
+    writeStorageValue(storageTrie, UInt256.valueOf(2L), UInt256.valueOf(4L));
+    writeStorageValue(storageTrie, UInt256.valueOf(3L), UInt256.valueOf(6L));
     // Save to Storage
     storageTrie.commit(updater::putAccountStorageTrieNode);
 
     // Define account value
     final Hash addressHash = Hash.hash(address);
-    final Hash codeHash = Hash.hash(BytesValue.fromHexString("0x1122"));
+    final Hash codeHash = Hash.hash(Bytes.fromHexString("0x1122"));
     final StateTrieAccountValue accountValue =
         new StateTrieAccountValue(
             1L, Wei.of(2L), Hash.wrap(storageTrie.getRootHash()), codeHash, 0);
@@ -92,7 +92,8 @@ public class WorldStateProofProviderTest {
     // Persist updates
     updater.commit();
 
-    final List<UInt256> storageKeys = Arrays.asList(UInt256.of(1L), UInt256.of(3L), UInt256.of(6L));
+    final List<UInt256> storageKeys =
+        Arrays.asList(UInt256.ONE, UInt256.valueOf(3L), UInt256.valueOf(6L));
     final Optional<WorldStateProof> accountProof =
         worldStateProofProvider.getAccountProof(
             Hash.wrap(worldStateTrie.getRootHash()), address, storageKeys);
@@ -104,22 +105,22 @@ public class WorldStateProofProviderTest {
     // Check storage fields
     assertThat(accountProof.get().getStorageKeys()).isEqualTo(storageKeys);
     // Check key 1
-    UInt256 storageKey = UInt256.of(1L);
-    assertThat(accountProof.get().getStorageValue(storageKey)).isEqualTo(UInt256.of(2L));
+    UInt256 storageKey = UInt256.ONE;
+    assertThat(accountProof.get().getStorageValue(storageKey)).isEqualTo(UInt256.valueOf(2L));
     assertThat(accountProof.get().getStorageProof(storageKey).size()).isGreaterThanOrEqualTo(1);
     // Check key 3
-    storageKey = UInt256.of(3L);
-    assertThat(accountProof.get().getStorageValue(storageKey)).isEqualTo(UInt256.of(6L));
+    storageKey = UInt256.valueOf(3L);
+    assertThat(accountProof.get().getStorageValue(storageKey)).isEqualTo(UInt256.valueOf(6L));
     assertThat(accountProof.get().getStorageProof(storageKey).size()).isGreaterThanOrEqualTo(1);
     // Check key 6
-    storageKey = UInt256.of(6L);
-    assertThat(accountProof.get().getStorageValue(storageKey)).isEqualTo(UInt256.of(0L));
+    storageKey = UInt256.valueOf(6L);
+    assertThat(accountProof.get().getStorageValue(storageKey)).isEqualTo(UInt256.ZERO);
     assertThat(accountProof.get().getStorageProof(storageKey).size()).isGreaterThanOrEqualTo(1);
   }
 
   @Test
   public void getProofWhenStateTrieAccountUnavailable() {
-    final MerklePatriciaTrie<Bytes32, BytesValue> worldStateTrie = emptyWorldStateTrie();
+    final MerklePatriciaTrie<Bytes32, Bytes> worldStateTrie = emptyWorldStateTrie();
 
     final Optional<WorldStateProof> accountProof =
         worldStateProofProvider.getAccountProof(
@@ -129,26 +130,26 @@ public class WorldStateProofProviderTest {
   }
 
   private void writeStorageValue(
-      final MerklePatriciaTrie<Bytes32, BytesValue> storageTrie,
+      final MerklePatriciaTrie<Bytes32, Bytes> storageTrie,
       final UInt256 key,
       final UInt256 value) {
     storageTrie.put(storageKeyHash(key), encodeStorageValue(value));
   }
 
   private Bytes32 storageKeyHash(final UInt256 storageKey) {
-    return Hash.hash(storageKey.getBytes());
+    return Hash.hash(storageKey.toBytes());
   }
 
-  private BytesValue encodeStorageValue(final UInt256 storageValue) {
-    return RLP.encode(out -> out.writeUInt256Scalar(storageValue));
+  private Bytes encodeStorageValue(final UInt256 storageValue) {
+    return RLP.encode(out -> out.writeBytes(storageValue.toMinimalBytes()));
   }
 
-  private MerklePatriciaTrie<Bytes32, BytesValue> emptyStorageTrie() {
+  private MerklePatriciaTrie<Bytes32, Bytes> emptyStorageTrie() {
     return new StoredMerklePatriciaTrie<>(
         worldStateStorage::getAccountStateTrieNode, b -> b, b -> b);
   }
 
-  private MerklePatriciaTrie<Bytes32, BytesValue> emptyWorldStateTrie() {
+  private MerklePatriciaTrie<Bytes32, Bytes> emptyWorldStateTrie() {
     return new StoredMerklePatriciaTrie<>(
         worldStateStorage::getAccountStorageTrieNode, b -> b, b -> b);
   }

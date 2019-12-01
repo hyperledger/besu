@@ -14,27 +14,27 @@
  */
 package org.hyperledger.besu.ethereum.trie;
 
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+
 public interface Node<V> {
 
-  Node<V> accept(PathNodeVisitor<V> visitor, BytesValue path);
+  Node<V> accept(PathNodeVisitor<V> visitor, Bytes path);
 
   void accept(NodeVisitor<V> visitor);
 
-  BytesValue getPath();
+  Bytes getPath();
 
   Optional<V> getValue();
 
   List<Node<V>> getChildren();
 
-  BytesValue getRlp();
+  Bytes getRlp();
 
-  BytesValue getRlpRef();
+  Bytes getRlpRef();
 
   /**
    * Whether a reference to this node should be represented as a hash of the rlp, or the node rlp
@@ -49,7 +49,7 @@ public interface Node<V> {
 
   Bytes32 getHash();
 
-  Node<V> replacePath(BytesValue path);
+  Node<V> replacePath(Bytes path);
 
   /** Marks the node as needing to be persisted */
   void markDirty();

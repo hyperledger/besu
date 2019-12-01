@@ -27,9 +27,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionHandler;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.BytesValues;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -39,8 +38,7 @@ public class PrivGetTransactionCountTest {
   private final PrivateTransactionHandler privateTransactionHandler =
       mock(PrivateTransactionHandler.class);
 
-  private final String privacyGroupId =
-      BytesValues.asBase64String(BytesValue.wrap("0x123".getBytes(UTF_8)));
+  private final String privacyGroupId = Bytes.wrap("0x123".getBytes(UTF_8)).toBase64String();
 
   private final Address senderAddress =
       Address.fromHexString("0x627306090abab3a6e1400e9345bc60c78a8bef57");

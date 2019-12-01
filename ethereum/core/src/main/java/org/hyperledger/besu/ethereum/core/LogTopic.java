@@ -14,38 +14,37 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.plugin.data.UnformattedData;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.DelegatingBytesValue;
 
-public class LogTopic extends DelegatingBytesValue {
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.DelegatingBytes32;
 
-  public static final int SIZE = 32;
+public class LogTopic extends DelegatingBytes32 implements UnformattedData {
 
-  private LogTopic(final BytesValue bytes) {
+  protected LogTopic(final Bytes bytes) {
     super(bytes);
-    checkArgument(
-        bytes.size() == SIZE, "A log topic must be be %s bytes long, got %s", SIZE, bytes.size());
   }
 
-  public static LogTopic create(final BytesValue bytes) {
+  public static LogTopic create(final UnformattedData data) {
+    return create(Bytes.wrap(data.getByteArray()));
+  }
+
+  public static LogTopic create(final Bytes bytes) {
     return new LogTopic(bytes);
   }
 
-  public static LogTopic wrap(final BytesValue bytes) {
+  public static LogTopic wrap(final Bytes bytes) {
     return new LogTopic(bytes);
   }
 
-  public static LogTopic of(final BytesValue bytes) {
+  public static LogTopic of(final Bytes bytes) {
     return new LogTopic(bytes.copy());
   }
 
   public static LogTopic fromHexString(final String str) {
-    return str == null ? null : LogTopic.create(BytesValue.fromHexString(str));
+    return str == null ? null : LogTopic.create(Bytes.fromHexString(str));
   }
 
   /**
@@ -55,11 +54,7 @@ public class LogTopic extends DelegatingBytesValue {
    * @return the read log topic.
    */
   public static LogTopic readFrom(final RLPInput in) {
-    return new LogTopic(in.readBytesValue());
-  }
-
-  public static LogTopic fromPlugin(final UnformattedData data) {
-    return data instanceof LogTopic ? (LogTopic) data : wrap(BytesValue.fromPlugin(data));
+    return new LogTopic(in.readBytes());
   }
 
   /**
@@ -68,6 +63,16 @@ public class LogTopic extends DelegatingBytesValue {
    * @param out the output in which to encode the log topic.
    */
   public void writeTo(final RLPOutput out) {
-    out.writeBytesValue(this);
+    out.writeBytes(this);
+  }
+
+  @Override
+  public byte[] getByteArray() {
+    return toArray();
+  }
+
+  @Override
+  public String getHexString() {
+    return toHexString();
   }
 }

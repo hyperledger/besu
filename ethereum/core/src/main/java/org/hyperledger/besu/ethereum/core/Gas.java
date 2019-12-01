@@ -14,13 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.uint.UInt256;
-
 import java.math.BigInteger;
 import javax.annotation.concurrent.Immutable;
 
 import com.google.common.primitives.Longs;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 /** A particular quantity of Gas as used by the Ethereum VM. */
 @Immutable
@@ -59,7 +58,7 @@ public final class Gas {
   }
 
   public static Gas of(final Bytes32 value) {
-    return Gas.of(UInt256.wrap(value));
+    return Gas.of(UInt256.fromBytes(value));
   }
 
   public static Gas fromHexString(final String str) {
@@ -78,7 +77,7 @@ public final class Gas {
    * @return The price of this amount of gas for a per unit of gas price of {@code gasPrice}.
    */
   public Wei priceFor(final Wei gasPrice) {
-    return gasPrice.times(Wei.of(value));
+    return gasPrice.multiply(value);
   }
 
   public Gas max(final Gas other) {
@@ -118,7 +117,7 @@ public final class Gas {
   }
 
   public UInt256 asUInt256() {
-    return UInt256.of(value);
+    return UInt256.valueOf(value);
   }
 
   public int compareTo(final Gas other) {

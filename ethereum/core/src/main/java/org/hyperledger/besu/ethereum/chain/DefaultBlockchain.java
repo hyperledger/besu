@@ -31,8 +31,6 @@ import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.util.InvalidConfigurationException;
 import org.hyperledger.besu.util.Subscribers;
-import org.hyperledger.besu.util.bytes.BytesValues;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -48,6 +46,7 @@ import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class DefaultBlockchain implements MutableBlockchain {
 
@@ -87,9 +86,7 @@ public class DefaultBlockchain implements MutableBlockchain {
         BesuMetricCategory.BLOCKCHAIN,
         "difficulty_total",
         "Total difficulty of the chainhead",
-        () ->
-            BytesValues.asUnsignedBigInteger(this.getChainHead().getTotalDifficulty().getBytes())
-                .longValue());
+        () -> this.getChainHead().getTotalDifficulty().toLong());
 
     metricsSystem.createLongGauge(
         BesuMetricCategory.BLOCKCHAIN,
@@ -259,7 +256,7 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   private UInt256 calculateTotalDifficulty(final Block block) {
     if (block.getHeader().getNumber() == BlockHeader.GENESIS_BLOCK_NUMBER) {
-      return block.getHeader().getDifficulty();
+      return block.getHeader().internalGetDifficulty();
     }
 
     final UInt256 parentTotalDifficulty =
@@ -267,7 +264,7 @@ public class DefaultBlockchain implements MutableBlockchain {
             .getTotalDifficulty(block.getHeader().getParentHash())
             .orElseThrow(
                 () -> new IllegalStateException("Blockchain is missing total difficulty data."));
-    return block.getHeader().getDifficulty().plus(parentTotalDifficulty);
+    return block.getHeader().internalGetDifficulty().add(parentTotalDifficulty);
   }
 
   private BlockAddedEvent updateCanonicalChainData(

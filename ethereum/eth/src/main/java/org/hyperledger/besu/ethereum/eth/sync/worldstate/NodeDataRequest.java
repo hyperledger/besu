@@ -21,15 +21,16 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import org.apache.tuweni.bytes.Bytes;
+
 public abstract class NodeDataRequest {
   private final RequestType requestType;
   private final Hash hash;
-  private BytesValue data;
+  private Bytes data;
   private boolean requiresPersisting = true;
 
   protected NodeDataRequest(final RequestType requestType, final Hash hash) {
@@ -49,11 +50,11 @@ public abstract class NodeDataRequest {
     return new CodeNodeDataRequest(hash);
   }
 
-  public static BytesValue serialize(final NodeDataRequest request) {
+  public static Bytes serialize(final NodeDataRequest request) {
     return RLP.encode(request::writeTo);
   }
 
-  public static NodeDataRequest deserialize(final BytesValue encoded) {
+  public static NodeDataRequest deserialize(final Bytes encoded) {
     final RLPInput in = RLP.input(encoded);
     in.enterList();
     final RequestType requestType = RequestType.fromValue(in.readByte());
@@ -83,7 +84,7 @@ public abstract class NodeDataRequest {
   private void writeTo(final RLPOutput out) {
     out.startList();
     out.writeByte(requestType.getValue());
-    out.writeBytesValue(hash);
+    out.writeBytes(hash);
     out.endList();
   }
 
@@ -95,11 +96,11 @@ public abstract class NodeDataRequest {
     return hash;
   }
 
-  public BytesValue getData() {
+  public Bytes getData() {
     return data;
   }
 
-  public NodeDataRequest setData(final BytesValue data) {
+  public NodeDataRequest setData(final Bytes data) {
     this.data = data;
     return this;
   }
@@ -120,5 +121,5 @@ public abstract class NodeDataRequest {
 
   public abstract Stream<NodeDataRequest> getChildRequests();
 
-  public abstract Optional<BytesValue> getExistingData(final WorldStateStorage worldStateStorage);
+  public abstract Optional<Bytes> getExistingData(final WorldStateStorage worldStateStorage);
 }

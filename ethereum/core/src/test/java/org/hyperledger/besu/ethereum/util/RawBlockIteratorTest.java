@@ -104,6 +104,6 @@ public class RawBlockIteratorTest {
     out.writeList(block.getBody().getTransactions(), Transaction::writeTo);
     out.writeList(block.getBody().getOmmers(), BlockHeader::writeTo);
     out.endList();
-    return out.encoded().extractArray();
+    return out.encoded().toArray();
   }
 }

@@ -32,12 +32,12 @@ import org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotBlockConfirmer.Conte
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -296,7 +296,7 @@ public class PivotBlockConfirmerTest {
               Optional.of(
                   new BlockHeaderTestFixture()
                       .number(blockNumber)
-                      .extraData(BytesValue.of(1))
+                      .extraData(Bytes.of(1))
                       .buildHeader()));
     }
 

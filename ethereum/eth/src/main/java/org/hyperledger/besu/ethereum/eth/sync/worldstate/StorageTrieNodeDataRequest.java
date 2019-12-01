@@ -17,10 +17,11 @@ package org.hyperledger.besu.ethereum.eth.sync.worldstate;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage.Updater;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Optional;
 import java.util.stream.Stream;
+
+import org.apache.tuweni.bytes.Bytes;
 
 class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
 
@@ -34,7 +35,7 @@ class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
   }
 
   @Override
-  public Optional<BytesValue> getExistingData(final WorldStateStorage worldStateStorage) {
+  public Optional<Bytes> getExistingData(final WorldStateStorage worldStateStorage) {
     return worldStateStorage.getAccountStorageTrieNode(getHash());
   }
 
@@ -44,7 +45,7 @@ class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
   }
 
   @Override
-  protected Stream<NodeDataRequest> getRequestsFromTrieNodeValue(final BytesValue value) {
+  protected Stream<NodeDataRequest> getRequestsFromTrieNodeValue(final Bytes value) {
     // Nothing to do for terminal storage node
     return Stream.empty();
   }

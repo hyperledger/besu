@@ -19,8 +19,9 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.vm.AbstractOperation;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class Sha3Operation extends AbstractOperation {
 
@@ -30,18 +31,18 @@ public class Sha3Operation extends AbstractOperation {
 
   @Override
   public Gas cost(final MessageFrame frame) {
-    final UInt256 offset = frame.getStackItem(0).asUInt256();
-    final UInt256 length = frame.getStackItem(1).asUInt256();
+    final UInt256 offset = UInt256.fromBytes(frame.getStackItem(0));
+    final UInt256 length = UInt256.fromBytes(frame.getStackItem(1));
 
     return gasCalculator().sha3OperationGasCost(frame, offset, length);
   }
 
   @Override
   public void execute(final MessageFrame frame) {
-    final UInt256 from = frame.popStackItem().asUInt256();
-    final UInt256 length = frame.popStackItem().asUInt256();
+    final UInt256 from = UInt256.fromBytes(frame.popStackItem());
+    final UInt256 length = UInt256.fromBytes(frame.popStackItem());
 
-    final BytesValue bytes = frame.readMemory(from, length);
+    final Bytes bytes = frame.readMemory(from, length);
     frame.pushStackItem(Hash.hash(bytes));
   }
 }

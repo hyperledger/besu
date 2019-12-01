@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.vm;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import org.hyperledger.besu.util.bytes.Bytes32;
+import org.apache.tuweni.bytes.Bytes32;
 
 /**
  * An operand stack for the Ethereum Virtual machine (EVM).

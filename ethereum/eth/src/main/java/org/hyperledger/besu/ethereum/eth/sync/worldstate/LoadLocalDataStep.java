@@ -20,10 +20,11 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.services.pipeline.Pipe;
 import org.hyperledger.besu.services.tasks.Task;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Optional;
 import java.util.stream.Stream;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class LoadLocalDataStep {
 
@@ -43,7 +44,7 @@ public class LoadLocalDataStep {
   public Stream<Task<NodeDataRequest>> loadLocalData(
       final Task<NodeDataRequest> task, final Pipe<Task<NodeDataRequest>> completedTasks) {
     final NodeDataRequest request = task.getData();
-    final Optional<BytesValue> existingData = request.getExistingData(worldStateStorage);
+    final Optional<Bytes> existingData = request.getExistingData(worldStateStorage);
     if (existingData.isPresent()) {
       existingNodeCounter.inc();
       request.setData(existingData.get());

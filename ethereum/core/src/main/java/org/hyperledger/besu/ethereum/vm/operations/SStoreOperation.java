@@ -22,10 +22,11 @@ import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.EnumSet;
 import java.util.Optional;
+
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class SStoreOperation extends AbstractOperation {
 
@@ -41,8 +42,8 @@ public class SStoreOperation extends AbstractOperation {
 
   @Override
   public Gas cost(final MessageFrame frame) {
-    final UInt256 key = frame.getStackItem(0).asUInt256();
-    final UInt256 newValue = frame.getStackItem(1).asUInt256();
+    final UInt256 key = UInt256.fromBytes(frame.getStackItem(0));
+    final UInt256 newValue = UInt256.fromBytes(frame.getStackItem(1));
 
     final Account account = frame.getWorldState().get(frame.getRecipientAddress());
     return gasCalculator().calculateStorageCost(account, key, newValue);
@@ -50,8 +51,8 @@ public class SStoreOperation extends AbstractOperation {
 
   @Override
   public void execute(final MessageFrame frame) {
-    final UInt256 key = frame.popStackItem().asUInt256();
-    final UInt256 value = frame.popStackItem().asUInt256();
+    final UInt256 key = UInt256.fromBytes(frame.popStackItem());
+    final UInt256 value = UInt256.fromBytes(frame.popStackItem());
 
     final MutableAccount account =
         frame.getWorldState().getAccount(frame.getRecipientAddress()).getMutable();
@@ -60,7 +61,7 @@ public class SStoreOperation extends AbstractOperation {
     // Increment the refund counter.
     frame.incrementGasRefund(gasCalculator().calculateStorageRefundAmount(account, key, value));
 
-    account.setStorageValue(key.copy(), value.copy());
+    account.setStorageValue(key, value);
   }
 
   @Override

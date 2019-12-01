@@ -14,16 +14,16 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import org.hyperledger.besu.util.bytes.BytesValue;
-
 import java.util.Objects;
 import java.util.Optional;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class MiningParameters {
 
   private final Optional<Address> coinbase;
   private final Wei minTransactionGasPrice;
-  private final BytesValue extraData;
+  private final Bytes extraData;
   private final boolean enabled;
   private final boolean stratumMiningEnabled;
   private final String stratumNetworkInterface;
@@ -33,7 +33,7 @@ public class MiningParameters {
   public MiningParameters(
       final Address coinbase,
       final Wei minTransactionGasPrice,
-      final BytesValue extraData,
+      final Bytes extraData,
       final boolean enabled) {
     this(coinbase, minTransactionGasPrice, extraData, enabled, false, "0.0.0.0", 8008, "080c");
   }
@@ -41,7 +41,7 @@ public class MiningParameters {
   public MiningParameters(
       final Address coinbase,
       final Wei minTransactionGasPrice,
-      final BytesValue extraData,
+      final Bytes extraData,
       final boolean enabled,
       final boolean stratumMiningEnabled,
       final String stratumNetworkInterface,
@@ -65,7 +65,7 @@ public class MiningParameters {
     return minTransactionGasPrice;
   }
 
-  public BytesValue getExtraData() {
+  public Bytes getExtraData() {
     return extraData;
   }
 

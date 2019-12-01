@@ -30,11 +30,11 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.util.Lists;
 import org.junit.Before;
 import org.junit.Test;
@@ -95,7 +95,7 @@ public class IbftMiningCoordinatorTest {
 
   @Test
   public void setsTheExtraData() {
-    final BytesValue extraData = BytesValue.fromHexStringLenient("0x1234");
+    final Bytes extraData = Bytes.fromHexStringLenient("0x1234");
     ibftMiningCoordinator.setExtraData(extraData);
     verify(ibftBlockCreatorFactory).setExtraData(extraData);
   }

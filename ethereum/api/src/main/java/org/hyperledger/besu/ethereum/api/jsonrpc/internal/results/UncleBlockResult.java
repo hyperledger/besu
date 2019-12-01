@@ -17,9 +17,10 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.Collections;
+
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class UncleBlockResult {
 

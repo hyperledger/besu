@@ -89,7 +89,6 @@ import org.hyperledger.besu.metrics.prometheus.MetricsService;
 import org.hyperledger.besu.nat.NatMethod;
 import org.hyperledger.besu.nat.upnp.UpnpNatManager;
 import org.hyperledger.besu.util.NetworkUtility;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -106,6 +105,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import graphql.GraphQL;
 import io.vertx.core.Vertx;
+import org.apache.tuweni.bytes.Bytes;
 
 public class RunnerBuilder {
 
@@ -113,7 +113,7 @@ public class RunnerBuilder {
   private BesuController<?> besuController;
 
   private NetworkingConfiguration networkingConfiguration = NetworkingConfiguration.create();
-  private Collection<BytesValue> bannedNodeIds = new ArrayList<>();
+  private Collection<Bytes> bannedNodeIds = new ArrayList<>();
   private boolean p2pEnabled = true;
   private boolean discovery;
   private String p2pAdvertisedHost;
@@ -230,7 +230,7 @@ public class RunnerBuilder {
     return this;
   }
 
-  public RunnerBuilder bannedNodeIds(final Collection<BytesValue> bannedNodeIds) {
+  public RunnerBuilder bannedNodeIds(final Collection<Bytes> bannedNodeIds) {
     this.bannedNodeIds.addAll(bannedNodeIds);
     return this;
   }
@@ -314,7 +314,7 @@ public class RunnerBuilder {
         new TransactionSimulator(
             context.getBlockchain(), context.getWorldStateArchive(), protocolSchedule);
 
-    final BytesValue localNodeId = keyPair.getPublicKey().getEncodedBytes();
+    final Bytes localNodeId = keyPair.getPublicKey().getEncodedBytes();
     final Optional<NodePermissioningController> nodePermissioningController =
         buildNodePermissioningController(
             bootnodes, synchronizer, transactionSimulator, localNodeId);
@@ -509,7 +509,7 @@ public class RunnerBuilder {
       final List<EnodeURL> bootnodesAsEnodeURLs,
       final Synchronizer synchronizer,
       final TransactionSimulator transactionSimulator,
-      final BytesValue localNodeId) {
+      final Bytes localNodeId) {
     final Collection<EnodeURL> fixedNodes = getFixedNodes(bootnodesAsEnodeURLs, staticNodes);
 
     if (permissioningConfiguration.isPresent()) {

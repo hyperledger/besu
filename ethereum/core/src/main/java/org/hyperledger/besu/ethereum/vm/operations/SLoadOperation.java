@@ -19,7 +19,9 @@ import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.vm.AbstractOperation;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.util.uint.UInt256;
+
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class SLoadOperation extends AbstractOperation {
 
@@ -34,11 +36,11 @@ public class SLoadOperation extends AbstractOperation {
 
   @Override
   public void execute(final MessageFrame frame) {
-    final UInt256 key = frame.popStackItem().asUInt256();
+    final Bytes32 key = frame.popStackItem();
 
     final Account account = frame.getWorldState().get(frame.getRecipientAddress());
-    assert account != null : "VM account should exists";
+    assert account != null : "VM account should exist";
 
-    frame.pushStackItem(account.getStorageValue(key).getBytes());
+    frame.pushStackItem(account.getStorageValue(UInt256.fromBytes(key)).toBytes());
   }
 }

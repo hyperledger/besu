@@ -14,18 +14,18 @@
  */
 package org.hyperledger.besu.ethereum.trie;
 
-import org.hyperledger.besu.util.bytes.BytesValue;
-
 import java.util.List;
 import java.util.Optional;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class Proof<V> {
 
   private final Optional<V> value;
 
-  private final List<BytesValue> proofRelatedNodes;
+  private final List<Bytes> proofRelatedNodes;
 
-  public Proof(final Optional<V> value, final List<BytesValue> proofRelatedNodes) {
+  public Proof(final Optional<V> value, final List<Bytes> proofRelatedNodes) {
     this.value = value;
     this.proofRelatedNodes = proofRelatedNodes;
   }
@@ -34,7 +34,7 @@ public class Proof<V> {
     return value;
   }
 
-  public List<BytesValue> getProofRelatedNodes() {
+  public List<Bytes> getProofRelatedNodes() {
     return proofRelatedNodes;
   }
 }

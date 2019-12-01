@@ -14,12 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.trie;
 
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 class NullNode<V> implements Node<V> {
   @SuppressWarnings("rawtypes")
@@ -33,7 +33,7 @@ class NullNode<V> implements Node<V> {
   }
 
   @Override
-  public Node<V> accept(final PathNodeVisitor<V> visitor, final BytesValue path) {
+  public Node<V> accept(final PathNodeVisitor<V> visitor, final Bytes path) {
     return visitor.visit(this, path);
   }
 
@@ -43,8 +43,8 @@ class NullNode<V> implements Node<V> {
   }
 
   @Override
-  public BytesValue getPath() {
-    return BytesValue.EMPTY;
+  public Bytes getPath() {
+    return Bytes.EMPTY;
   }
 
   @Override
@@ -58,12 +58,12 @@ class NullNode<V> implements Node<V> {
   }
 
   @Override
-  public BytesValue getRlp() {
+  public Bytes getRlp() {
     return MerklePatriciaTrie.EMPTY_TRIE_NODE;
   }
 
   @Override
-  public BytesValue getRlpRef() {
+  public Bytes getRlpRef() {
     return MerklePatriciaTrie.EMPTY_TRIE_NODE;
   }
 
@@ -73,7 +73,7 @@ class NullNode<V> implements Node<V> {
   }
 
   @Override
-  public Node<V> replacePath(final BytesValue path) {
+  public Node<V> replacePath(final Bytes path) {
     return this;
   }
 

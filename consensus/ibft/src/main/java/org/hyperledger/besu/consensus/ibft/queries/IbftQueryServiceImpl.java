@@ -24,10 +24,11 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.plugin.data.Address;
 import org.hyperledger.besu.plugin.services.query.IbftQueryService;
-import org.hyperledger.besu.util.bytes.Bytes32;
 
 import java.util.Collection;
 import java.util.Collections;
+
+import org.apache.tuweni.bytes.Bytes32;
 
 public class IbftQueryServiceImpl extends PoaQueryServiceImpl implements IbftQueryService {
 

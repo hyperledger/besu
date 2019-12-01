@@ -14,25 +14,25 @@
  */
 package org.hyperledger.besu.ethereum.trie;
 
-import org.hyperledger.besu.util.bytes.BytesValue;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.function.Function;
 
+import org.apache.tuweni.bytes.Bytes;
+
 class DefaultNodeFactory<V> implements NodeFactory<V> {
   @SuppressWarnings("rawtypes")
   private static final Node NULL_NODE = NullNode.instance();
 
-  private final Function<V, BytesValue> valueSerializer;
+  private final Function<V, Bytes> valueSerializer;
 
-  DefaultNodeFactory(final Function<V, BytesValue> valueSerializer) {
+  DefaultNodeFactory(final Function<V, Bytes> valueSerializer) {
     this.valueSerializer = valueSerializer;
   }
 
   @Override
-  public Node<V> createExtension(final BytesValue path, final Node<V> child) {
+  public Node<V> createExtension(final Bytes path, final Node<V> child) {
     return new ExtensionNode<>(path, child, this);
   }
 
@@ -65,7 +65,7 @@ class DefaultNodeFactory<V> implements NodeFactory<V> {
   }
 
   @Override
-  public Node<V> createLeaf(final BytesValue path, final V value) {
+  public Node<V> createLeaf(final Bytes path, final V value) {
     return new LeafNode<>(path, value, this, valueSerializer);
   }
 }

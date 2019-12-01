@@ -97,8 +97,8 @@ public class StateTrieAccountValue {
 
     out.writeLongScalar(nonce);
     out.writeUInt256Scalar(balance);
-    out.writeBytesValue(storageRoot);
-    out.writeBytesValue(codeHash);
+    out.writeBytes(storageRoot);
+    out.writeBytes(codeHash);
 
     if (version != Account.DEFAULT_VERSION) {
       // version of zero is never written out.
@@ -112,7 +112,7 @@ public class StateTrieAccountValue {
     in.enterList();
 
     final long nonce = in.readLongScalar();
-    final Wei balance = in.readUInt256Scalar(Wei::wrap);
+    final Wei balance = Wei.of(in.readUInt256Scalar());
     final Hash storageRoot = Hash.wrap(in.readBytes32());
     final Hash codeHash = Hash.wrap(in.readBytes32());
     final int version;

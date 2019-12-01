@@ -132,14 +132,14 @@ public class GeneralStateReferenceTestTools {
     final Hash expectedRootHash = spec.expectedRootHash();
     assertThat(worldState.rootHash())
         .withFailMessage("Unexpected world state root hash; computed state: %s", worldState)
-        .isEqualByComparingTo(expectedRootHash);
+        .isEqualTo(expectedRootHash);
 
     // Check the logs.
     final Hash expectedLogsHash = spec.expectedLogsHash();
     final LogSeries logs = result.getLogs();
     assertThat(Hash.hash(RLP.encode(logs::writeTo)))
         .withFailMessage("Unmatched logs hash. Generated logs: %s", logs)
-        .isEqualByComparingTo(expectedLogsHash);
+        .isEqualTo(expectedLogsHash);
   }
 
   private static boolean shouldClearEmptyAccounts(final String eip) {

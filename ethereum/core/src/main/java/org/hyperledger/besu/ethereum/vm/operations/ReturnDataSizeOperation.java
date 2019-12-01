@@ -18,8 +18,9 @@ import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.vm.AbstractOperation;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256Bytes;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class ReturnDataSizeOperation extends AbstractOperation {
 
@@ -34,7 +35,7 @@ public class ReturnDataSizeOperation extends AbstractOperation {
 
   @Override
   public void execute(final MessageFrame frame) {
-    final BytesValue returnData = frame.getReturnData();
-    frame.pushStackItem(UInt256Bytes.of(returnData.size()));
+    final Bytes returnData = frame.getReturnData();
+    frame.pushStackItem(UInt256.valueOf(returnData.size()).toBytes());
   }
 }

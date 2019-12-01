@@ -16,8 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.util.uint.UInt256;
-
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Test;
 
 public class FilterIdGeneratorTest {
@@ -26,7 +25,7 @@ public class FilterIdGeneratorTest {
   public void idIsAHexString() {
     final FilterIdGenerator generator = new FilterIdGenerator();
     final String s = generator.nextId();
-    final UInt256 bytesValue = UInt256.fromHexString(s);
-    assertThat(bytesValue.toShortHexString()).isEqualTo(s);
+    final UInt256 bytes = UInt256.fromHexString(s);
+    assertThat(bytes.toShortHexString()).isEqualTo(s);
   }
 }

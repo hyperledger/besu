@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.util.Subscribers;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
@@ -36,6 +35,7 @@ import java.util.function.Function;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 public abstract class AbstractMinerExecutor<
     C, M extends BlockMiner<C, ? extends AbstractBlockCreator<C>>> {
@@ -49,7 +49,7 @@ public abstract class AbstractMinerExecutor<
   protected final AbstractBlockScheduler blockScheduler;
   protected final Function<Long, Long> gasLimitCalculator;
 
-  protected volatile BytesValue extraData;
+  protected volatile Bytes extraData;
   protected volatile Wei minTransactionGasPrice;
 
   private final AtomicBoolean stopped = new AtomicBoolean(false);
@@ -101,7 +101,7 @@ public abstract class AbstractMinerExecutor<
       final Subscribers<EthHashObserver> ethHashObservers,
       final BlockHeader parentHeader);
 
-  public void setExtraData(final BytesValue extraData) {
+  public void setExtraData(final Bytes extraData) {
     this.extraData = extraData.copy();
   }
 

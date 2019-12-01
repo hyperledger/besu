@@ -37,6 +37,8 @@ dependencies {
   implementation project(':plugin-api')
   implementation project(':services:kvstore')
 
+  implementation 'org.apache.tuweni:tuweni-bytes'
+  implementation 'org.apache.tuweni:tuweni-units'
   implementation 'com.fasterxml.jackson.core:jackson-databind'
   implementation 'com.google.guava:guava'
   implementation 'io.vertx:vertx-core'
@@ -51,6 +53,8 @@ dependencies {
   testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.mockito:mockito-core'
+  testImplementation 'org.apache.tuweni:tuweni-bytes'
+  testImplementation 'org.apache.tuweni:tuweni-units'
 
   integrationTestImplementation project(path: ':config', configuration: 'testSupportArtifacts')
 

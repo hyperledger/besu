@@ -37,11 +37,11 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInv
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionHandler;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.math.BigInteger;
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -94,7 +94,7 @@ public class EeaSendRawTransactionTest {
           Wei.of(1),
           21000L,
           Optional.of(
-              Address.wrap(BytesValue.fromHexString("0x095e7baea6a6c7c4c2dfeb977efac326af552d87"))),
+              Address.wrap(Bytes.fromHexString("0x095e7baea6a6c7c4c2dfeb977efac326af552d87"))),
           Wei.ZERO,
           SECP256K1.Signature.create(
               new BigInteger(
@@ -102,8 +102,8 @@ public class EeaSendRawTransactionTest {
               new BigInteger(
                   "14473701025599600909210599917245952381483216609124029382871721729679842002948"),
               Byte.valueOf("0")),
-          BytesValue.fromHexString("0x"),
-          Address.wrap(BytesValue.fromHexString("0x8411b12666f68ef74cace3615c9d5a377729d03f")),
+          Bytes.fromHexString("0x"),
+          Address.wrap(Bytes.fromHexString("0x8411b12666f68ef74cace3615c9d5a377729d03f")),
           Optional.empty());
 
   final String MOCK_ORION_KEY = "";

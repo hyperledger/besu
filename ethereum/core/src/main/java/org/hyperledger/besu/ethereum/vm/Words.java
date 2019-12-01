@@ -15,9 +15,10 @@
 package org.hyperledger.besu.ethereum.vm;
 
 import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.MutableBytes32;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.bytes.MutableBytes32;
 
 /** Static utility methods to work with VM words (that is, {@link Bytes32} values). */
 public abstract class Words {
@@ -32,7 +33,7 @@ public abstract class Words {
    */
   public static Bytes32 fromAddress(final Address address) {
     final MutableBytes32 bytes = MutableBytes32.create();
-    address.copyTo(bytes, bytes.size() - Address.SIZE);
+    address.copyTo(bytes, Bytes32.SIZE - Address.SIZE);
     return bytes;
   }
 
@@ -55,7 +56,7 @@ public abstract class Words {
    * @param input the input to check.
    * @return the number of (32 bytes) words that {@code input} spans.
    */
-  public static int numWords(final BytesValue input) {
+  public static int numWords(final Bytes input) {
     // m/n round up == (m + n - 1)/n: http://www.cs.nott.ac.uk/~psarb2/G51MPC/slides/NumberLogic.pdf
     return (input.size() + Bytes32.SIZE - 1) / Bytes32.SIZE;
   }

@@ -20,8 +20,8 @@ import static org.mockito.Mockito.mock;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.mainnet.ConstantinopleFixGasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -91,9 +91,9 @@ public class BLAKE2BFPrecompileContractTest {
 
   @Test
   public void shouldRunFCompression() {
-    final BytesValue input = BytesValue.fromHexString(this.input);
-    final BytesValue expectedComputation =
-        expectedResult == null ? null : BytesValue.fromHexString(expectedResult);
+    final Bytes input = Bytes.fromHexString(this.input);
+    final Bytes expectedComputation =
+        expectedResult == null ? null : Bytes.fromHexString(expectedResult);
     assertThat(contract.compute(input, messageFrame)).isEqualTo(expectedComputation);
     assertThat(contract.gasRequirement(input)).isEqualTo(Gas.of(expectedGasUsed));
   }

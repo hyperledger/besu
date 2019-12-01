@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.ethtaskutils.RetryingMessageTaskTest;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.List;
 import java.util.Map;
@@ -31,15 +30,15 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 import com.google.common.collect.Lists;
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Ignore;
 import org.junit.Test;
 
-public class RetryingGetNodeDataFromPeerTaskTest
-    extends RetryingMessageTaskTest<Map<Hash, BytesValue>> {
+public class RetryingGetNodeDataFromPeerTaskTest extends RetryingMessageTaskTest<Map<Hash, Bytes>> {
 
   @Override
-  protected Map<Hash, BytesValue> generateDataToBeRequested() {
-    final Map<Hash, BytesValue> requestedData = new TreeMap<>();
+  protected Map<Hash, Bytes> generateDataToBeRequested() {
+    final Map<Hash, Bytes> requestedData = new TreeMap<>();
     for (int i = 0; i < 3; i++) {
       final BlockHeader blockHeader = blockchain.getBlockHeader(10 + i).get();
       requestedData.put(
@@ -51,7 +50,7 @@ public class RetryingGetNodeDataFromPeerTaskTest
   }
 
   @Override
-  protected EthTask<Map<Hash, BytesValue>> createTask(final Map<Hash, BytesValue> requestedData) {
+  protected EthTask<Map<Hash, Bytes>> createTask(final Map<Hash, Bytes> requestedData) {
     final List<Hash> hashes = Lists.newArrayList(requestedData.keySet());
     return RetryingGetNodeDataFromPeerTask.forHashes(
         ethContext, hashes, GENESIS_BLOCK_NUMBER, metricsSystem);
@@ -68,9 +67,9 @@ public class RetryingGetNodeDataFromPeerTaskTest
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
 
     // Execute task and wait for response
-    final Map<Hash, BytesValue> requestedData = generateDataToBeRequested();
-    final EthTask<Map<Hash, BytesValue>> task = createTask(requestedData);
-    final CompletableFuture<Map<Hash, BytesValue>> future = task.run();
+    final Map<Hash, Bytes> requestedData = generateDataToBeRequested();
+    final EthTask<Map<Hash, Bytes>> task = createTask(requestedData);
+    final CompletableFuture<Map<Hash, Bytes>> future = task.run();
 
     // Respond with partial data.
     respondingPeer.respond(

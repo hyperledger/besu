@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.permissioning.node.NodePermissioningProvide
 import org.hyperledger.besu.ethereum.permissioning.node.provider.SyncStatusNodePermissioningProvider;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -30,6 +29,7 @@ import java.util.Optional;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 public class NodePermissioningControllerFactory {
 
@@ -39,7 +39,7 @@ public class NodePermissioningControllerFactory {
       final PermissioningConfiguration permissioningConfiguration,
       final Synchronizer synchronizer,
       final Collection<EnodeURL> fixedNodes,
-      final BytesValue localNodeId,
+      final Bytes localNodeId,
       final TransactionSimulator transactionSimulator,
       final MetricsSystem metricsSystem) {
 

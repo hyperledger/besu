@@ -14,15 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
-import static org.hyperledger.besu.util.uint.UInt256s.greaterThanOrEqualTo256;
-
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.vm.AbstractOperation;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.Bytes32s;
-import org.hyperledger.besu.util.uint.UInt256;
+
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class SarOperation extends AbstractOperation {
 
@@ -40,25 +38,25 @@ public class SarOperation extends AbstractOperation {
 
   @Override
   public void execute(final MessageFrame frame) {
-    final UInt256 shiftAmount = frame.popStackItem().asUInt256();
+    final UInt256 shiftAmount = UInt256.fromBytes(frame.popStackItem());
     Bytes32 value = frame.popStackItem();
 
     final boolean negativeNumber = value.get(0) < 0;
 
     // short circuit result if we are shifting more than the width of the data.
-    if (greaterThanOrEqualTo256(shiftAmount)) {
+    if (!shiftAmount.fitsInt() || shiftAmount.intValue() >= 256) {
       final Bytes32 overflow = negativeNumber ? ALL_BITS : Bytes32.ZERO;
       frame.pushStackItem(overflow);
       return;
     }
 
     // first perform standard shift right.
-    value = Bytes32s.shiftRight(value, shiftAmount.toInt());
+    value = value.shiftRight(shiftAmount.intValue());
 
     // if a negative number, carry through the sign.
     if (negativeNumber) {
-      final Bytes32 significantBits = Bytes32s.shiftLeft(ALL_BITS, 256 - shiftAmount.toInt());
-      value = Bytes32s.or(value, significantBits);
+      final Bytes32 significantBits = ALL_BITS.shiftLeft(256 - shiftAmount.intValue());
+      value = value.or(significantBits);
     }
     frame.pushStackItem(value);
   }

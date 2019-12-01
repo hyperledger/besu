@@ -33,11 +33,11 @@ import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Util;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.List;
 
 import com.google.common.collect.Lists;
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -67,9 +67,8 @@ public class CliqueExtraDataValidationRuleTest {
 
   @Test
   public void missingSignerFailsValidation() {
-    final BytesValue extraData =
-        CliqueExtraData.createWithoutProposerSeal(
-            BytesValue.wrap(new byte[32]), Lists.newArrayList());
+    final Bytes extraData =
+        CliqueExtraData.createWithoutProposerSeal(Bytes.wrap(new byte[32]), Lists.newArrayList());
 
     final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
     final BlockHeader parent = headerBuilder.number(1).buildHeader();

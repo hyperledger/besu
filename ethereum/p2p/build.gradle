@@ -34,6 +34,8 @@ dependencies {
   implementation project(':metrics:core')
   implementation project(':nat')
 
+  implementation 'org.apache.tuweni:tuweni-bytes'
+  implementation 'org.apache.tuweni:tuweni-units'
   implementation 'com.google.guava:guava'
   implementation 'io.prometheus:simpleclient'
   implementation 'io.vertx:vertx-core'

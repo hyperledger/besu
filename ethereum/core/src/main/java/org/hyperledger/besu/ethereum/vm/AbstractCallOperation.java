@@ -18,9 +18,10 @@ import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 /**
  * A skeleton class for implementing call operations.
@@ -154,15 +155,15 @@ public abstract class AbstractCallOperation extends AbstractOperation {
     final Account account = frame.getWorldState().get(frame.getRecipientAddress());
     final Wei balance = account.getBalance();
     if (value(frame).compareTo(balance) > 0 || frame.getMessageStackDepth() >= 1024) {
-      frame.expandMemory(inputDataOffset(frame).toLong(), inputDataLength(frame).toInt());
-      frame.expandMemory(outputDataOffset(frame).toLong(), outputDataLength(frame).toInt());
+      frame.expandMemory(inputDataOffset(frame).toLong(), inputDataLength(frame).intValue());
+      frame.expandMemory(outputDataOffset(frame).toLong(), outputDataLength(frame).intValue());
       frame.incrementRemainingGas(gasAvailableForChildCall(frame));
       frame.popStackItems(getStackItemsConsumed());
       frame.pushStackItem(Bytes32.ZERO);
       return;
     }
 
-    final BytesValue inputData = frame.readMemory(inputDataOffset(frame), inputDataLength(frame));
+    final Bytes inputData = frame.readMemory(inputDataOffset(frame), inputDataLength(frame));
 
     final MessageFrame childFrame =
         MessageFrame.builder()
@@ -181,7 +182,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
             .sender(sender(frame))
             .value(value(frame))
             .apparentValue(apparentValue(frame))
-            .code(new Code(contract != null ? contract.getCode() : BytesValue.EMPTY))
+            .code(new Code(contract != null ? contract.getCode() : Bytes.EMPTY))
             .blockHeader(frame.getBlockHeader())
             .depth(frame.getMessageStackDepth() + 1)
             .isStatic(isStatic(frame))
@@ -200,12 +201,12 @@ public abstract class AbstractCallOperation extends AbstractOperation {
 
     final UInt256 outputOffset = outputDataOffset(frame);
     final UInt256 outputSize = outputDataLength(frame);
-    final BytesValue outputData = childFrame.getOutputData();
-    final int outputSizeAsInt = outputSize.toInt();
+    final Bytes outputData = childFrame.getOutputData();
+    final int outputSizeAsInt = outputSize.intValue();
 
     if (outputSizeAsInt > outputData.size()) {
       frame.expandMemory(outputOffset.toLong(), outputSizeAsInt);
-      frame.writeMemory(outputOffset, UInt256.of(outputData.size()), outputData);
+      frame.writeMemory(outputOffset, UInt256.valueOf(outputData.size()), outputData);
     } else {
       frame.writeMemory(outputOffset, outputSize, outputData);
     }
@@ -221,7 +222,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
     frame.popStackItems(getStackItemsConsumed());
 
     if (childFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
-      frame.pushStackItem(UInt256.ONE.getBytes());
+      frame.pushStackItem(UInt256.ONE.toBytes());
     } else {
       frame.pushStackItem(Bytes32.ZERO);
     }

@@ -21,14 +21,15 @@ import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.Code;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.MessageFrame.Type;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 import java.util.Optional;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class MessageFrameTestFixture {
 
@@ -47,8 +48,8 @@ public class MessageFrameTestFixture {
   private int contractAccountVersion = Account.DEFAULT_VERSION;
   private Wei gasPrice = Wei.ZERO;
   private Wei value = Wei.ZERO;
-  private BytesValue inputData = BytesValue.EMPTY;
-  private Code code = new Code(BytesValue.EMPTY);
+  private Bytes inputData = Bytes.EMPTY;
+  private Code code = new Code(Bytes.EMPTY);
   private final List<Bytes32> stackItems = new ArrayList<>();
   private Optional<BlockHeader> blockHeader = Optional.empty();
   private int depth = 0;
@@ -126,7 +127,7 @@ public class MessageFrameTestFixture {
     return this;
   }
 
-  public MessageFrameTestFixture inputData(final BytesValue inputData) {
+  public MessageFrameTestFixture inputData(final Bytes inputData) {
     this.inputData = inputData;
     return this;
   }

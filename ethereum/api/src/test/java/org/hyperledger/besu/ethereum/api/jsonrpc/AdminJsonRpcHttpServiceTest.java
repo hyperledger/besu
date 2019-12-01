@@ -20,7 +20,6 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.PeerInfo;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -36,6 +35,7 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
 public class AdminJsonRpcHttpServiceTest extends JsonRpcHttpServiceTest {
@@ -48,11 +48,11 @@ public class AdminJsonRpcHttpServiceTest extends JsonRpcHttpServiceTest {
     caps.add(Capability.create("eth", 62));
     final List<PeerConnection> peerList = new ArrayList<>();
     final PeerInfo info1 =
-        new PeerInfo(4, CLIENT_VERSION, caps, 30302, BytesValue.fromHexString("0001"));
+        new PeerInfo(4, CLIENT_VERSION, caps, 30302, Bytes.fromHexString("0001"));
     final PeerInfo info2 =
-        new PeerInfo(4, CLIENT_VERSION, caps, 60302, BytesValue.fromHexString("0002"));
+        new PeerInfo(4, CLIENT_VERSION, caps, 60302, Bytes.fromHexString("0002"));
     final PeerInfo info3 =
-        new PeerInfo(4, CLIENT_VERSION, caps, 60303, BytesValue.fromHexString("0003"));
+        new PeerInfo(4, CLIENT_VERSION, caps, 60303, Bytes.fromHexString("0003"));
     final InetSocketAddress addr30301 = new InetSocketAddress("localhost", 30301);
     final InetSocketAddress addr30302 = new InetSocketAddress("localhost", 30302);
     final InetSocketAddress addr60301 = new InetSocketAddress("localhost", 60301);
@@ -97,7 +97,7 @@ public class AdminJsonRpcHttpServiceTest extends JsonRpcHttpServiceTest {
       final String jsonClient = peerJson.getString("name");
       final List<Capability> caps = getCapabilities(peerJson.getJsonArray("caps"));
       final int jsonPort = Integer.decode(peerJson.getString("port"));
-      final BytesValue jsonNodeId = BytesValue.fromHexString(peerJson.getString("id"));
+      final Bytes jsonNodeId = Bytes.fromHexString(peerJson.getString("id"));
 
       final PeerInfo jsonPeer = new PeerInfo(jsonVersion, jsonClient, caps, jsonPort, jsonNodeId);
       assertThat(peerConn.getPeerInfo()).isEqualTo(jsonPeer);

@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.core.ParsedExtraData;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -33,6 +32,7 @@ import java.util.StringJoiner;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 /**
  * Represents the data structure stored in the extraData field of the BlockHeader used when
@@ -43,14 +43,14 @@ public class IbftExtraData implements ParsedExtraData {
 
   public static final int EXTRA_VANITY_LENGTH = 32;
 
-  private final BytesValue vanityData;
+  private final Bytes vanityData;
   private final Collection<Signature> seals;
   private final Optional<Vote> vote;
   private final int round;
   private final Collection<Address> validators;
 
   public IbftExtraData(
-      final BytesValue vanityData,
+      final Bytes vanityData,
       final Collection<Signature> seals,
       final Optional<Vote> vote,
       final int round,
@@ -69,7 +69,7 @@ public class IbftExtraData implements ParsedExtraData {
 
   public static IbftExtraData fromAddresses(final Collection<Address> addresses) {
     return new IbftExtraData(
-        BytesValue.wrap(new byte[32]), Collections.emptyList(), Optional.empty(), 0, addresses);
+        Bytes.wrap(new byte[32]), Collections.emptyList(), Optional.empty(), 0, addresses);
   }
 
   public static IbftExtraData decode(final BlockHeader blockHeader) {
@@ -80,18 +80,18 @@ public class IbftExtraData implements ParsedExtraData {
     LOG.warn(
         "Expected a IbftExtraData instance but got {}. Reparsing required.",
         inputExtraData != null ? inputExtraData.getClass().getName() : "null");
-    return decodeRaw(blockHeader.getExtraData());
+    return decodeRaw(blockHeader.internalGetExtraData());
   }
 
-  static IbftExtraData decodeRaw(final BytesValue input) {
+  static IbftExtraData decodeRaw(final Bytes input) {
     if (input.isEmpty()) {
-      throw new IllegalArgumentException("Invalid BytesValue supplied - Ibft Extra Data required.");
+      throw new IllegalArgumentException("Invalid Bytes supplied - Ibft Extra Data required.");
     }
 
     final RLPInput rlpInput = new BytesValueRLPInput(input, false);
 
     rlpInput.enterList(); // This accounts for the "root node" which contains IBFT data items.
-    final BytesValue vanityData = rlpInput.readBytesValue();
+    final Bytes vanityData = rlpInput.readBytes();
     final List<Address> validators = rlpInput.readList(Address::readFrom);
     final Optional<Vote> vote;
     if (rlpInput.nextIsNull()) {
@@ -101,21 +101,21 @@ public class IbftExtraData implements ParsedExtraData {
       vote = Optional.of(Vote.readFrom(rlpInput));
     }
     final int round = rlpInput.readInt();
-    final List<Signature> seals = rlpInput.readList(rlp -> Signature.decode(rlp.readBytesValue()));
+    final List<Signature> seals = rlpInput.readList(rlp -> Signature.decode(rlp.readBytes()));
     rlpInput.leaveList();
 
     return new IbftExtraData(vanityData, seals, vote, round, validators);
   }
 
-  public BytesValue encode() {
+  public Bytes encode() {
     return encode(EncodingType.ALL);
   }
 
-  public BytesValue encodeWithoutCommitSeals() {
+  public Bytes encodeWithoutCommitSeals() {
     return encode(EncodingType.EXCLUDE_COMMIT_SEALS);
   }
 
-  public BytesValue encodeWithoutCommitSealsAndRoundNumber() {
+  public Bytes encodeWithoutCommitSealsAndRoundNumber() {
     return encode(EncodingType.EXCLUDE_COMMIT_SEALS_AND_ROUND_NUMBER);
   }
 
@@ -125,12 +125,12 @@ public class IbftExtraData implements ParsedExtraData {
     EXCLUDE_COMMIT_SEALS_AND_ROUND_NUMBER
   }
 
-  private BytesValue encode(final EncodingType encodingType) {
+  private Bytes encode(final EncodingType encodingType) {
 
     final BytesValueRLPOutput encoder = new BytesValueRLPOutput();
     encoder.startList();
-    encoder.writeBytesValue(vanityData);
-    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytesValue(validator));
+    encoder.writeBytes(vanityData);
+    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator));
     if (vote.isPresent()) {
       vote.get().writeTo(encoder);
     } else {
@@ -140,7 +140,7 @@ public class IbftExtraData implements ParsedExtraData {
     if (encodingType != EncodingType.EXCLUDE_COMMIT_SEALS_AND_ROUND_NUMBER) {
       encoder.writeInt(round);
       if (encodingType != EncodingType.EXCLUDE_COMMIT_SEALS) {
-        encoder.writeList(seals, (committer, rlp) -> rlp.writeBytesValue(committer.encodedBytes()));
+        encoder.writeList(seals, (committer, rlp) -> rlp.writeBytes(committer.encodedBytes()));
       }
     }
     encoder.endList();
@@ -151,16 +151,12 @@ public class IbftExtraData implements ParsedExtraData {
   public static String createGenesisExtraDataString(final List<Address> validators) {
     final IbftExtraData extraData =
         new IbftExtraData(
-            BytesValue.wrap(new byte[32]),
-            Collections.emptyList(),
-            Optional.empty(),
-            0,
-            validators);
+            Bytes.wrap(new byte[32]), Collections.emptyList(), Optional.empty(), 0, validators);
     return extraData.encode().toString();
   }
 
   // Accessors
-  public BytesValue getVanityData() {
+  public Bytes getVanityData() {
     return vanityData;
   }
 

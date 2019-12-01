@@ -21,8 +21,9 @@ import org.hyperledger.besu.ethereum.vm.AbstractOperation;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.Words;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class ExtCodeCopyOperation extends AbstractOperation {
 
@@ -32,8 +33,8 @@ public class ExtCodeCopyOperation extends AbstractOperation {
 
   @Override
   public Gas cost(final MessageFrame frame) {
-    final UInt256 offset = frame.getStackItem(1).asUInt256();
-    final UInt256 length = frame.getStackItem(3).asUInt256();
+    final UInt256 offset = UInt256.fromBytes(frame.getStackItem(1));
+    final UInt256 length = UInt256.fromBytes(frame.getStackItem(3));
 
     return gasCalculator().extCodeCopyOperationGasCost(frame, offset, length);
   }
@@ -42,11 +43,11 @@ public class ExtCodeCopyOperation extends AbstractOperation {
   public void execute(final MessageFrame frame) {
     final Address address = Words.toAddress(frame.popStackItem());
     final Account account = frame.getWorldState().get(address);
-    final BytesValue code = account != null ? account.getCode() : BytesValue.EMPTY;
+    final Bytes code = account != null ? account.getCode() : Bytes.EMPTY;
 
-    final UInt256 memOffset = frame.popStackItem().asUInt256();
-    final UInt256 sourceOffset = frame.popStackItem().asUInt256();
-    final UInt256 numBytes = frame.popStackItem().asUInt256();
+    final UInt256 memOffset = UInt256.fromBytes(frame.popStackItem());
+    final UInt256 sourceOffset = UInt256.fromBytes(frame.popStackItem());
+    final UInt256 numBytes = UInt256.fromBytes(frame.popStackItem());
 
     frame.writeMemory(memOffset, sourceOffset, numBytes, code);
   }

@@ -23,12 +23,13 @@ import org.hyperledger.besu.ethereum.vm.Code;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.math.BigInteger;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.function.Consumer;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class TestCodeExecutor {
 
@@ -60,7 +61,7 @@ public class TestCodeExecutor {
             .signature(Signature.create(BigInteger.ONE, BigInteger.TEN, (byte) 1))
             .gasLimit(gasLimit)
             .to(SENDER_ADDRESS)
-            .payload(BytesValue.EMPTY)
+            .payload(Bytes.EMPTY)
             .gasPrice(Wei.ZERO)
             .nonce(0)
             .build();
@@ -75,10 +76,10 @@ public class TestCodeExecutor {
             .contract(SENDER_ADDRESS)
             .contractAccountVersion(accountVersion)
             .gasPrice(transaction.getGasPrice())
-            .inputData(transaction.getPayload())
+            .inputData(transaction.getPayloadBytes())
             .sender(SENDER_ADDRESS)
             .value(transaction.getValue())
-            .code(new Code(BytesValue.fromHexString(code)))
+            .code(new Code(Bytes.fromHexString(code)))
             .blockHeader(blockHeader)
             .depth(0)
             .build();

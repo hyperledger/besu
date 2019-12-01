@@ -25,7 +25,6 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.ChainHead;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.math.BigInteger;
 import java.util.HashMap;
@@ -33,6 +32,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import com.google.common.collect.ImmutableMap;
+import org.apache.tuweni.bytes.Bytes;
 
 public class AdminNodeInfo implements JsonRpcMethod {
 
@@ -76,13 +76,13 @@ public class AdminNodeInfo implements JsonRpcMethod {
     }
     final EnodeURL enode = maybeEnode.get();
 
-    final BytesValue nodeId = enode.getNodeId();
+    final Bytes nodeId = enode.getNodeId();
     response.put("enode", enode.toString());
     response.put("ip", enode.getIpAsString());
     if (enode.isListening()) {
       response.put("listenAddr", enode.getIpAsString() + ":" + enode.getListeningPort().getAsInt());
     }
-    response.put("id", nodeId.toUnprefixedString());
+    response.put("id", nodeId.toUnprefixedHexString());
     response.put("name", clientVersion);
 
     if (enode.isRunningDiscovery()) {

@@ -32,6 +32,9 @@ dependencies {
   implementation 'io.vertx:vertx-core'
   implementation 'junit:junit'
   implementation 'net.consensys:orion'
+
+  implementation 'org.apache.tuweni:tuweni-bytes'
+  implementation 'org.apache.tuweni:tuweni-units'
   implementation 'org.apache.logging.log4j:log4j-api'
   implementation 'org.assertj:assertj-core'
   implementation 'org.awaitility:awaitility'

@@ -20,14 +20,15 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import org.apache.tuweni.bytes.Bytes;
+
 public final class DisconnectMessage extends AbstractMessageData {
 
-  private DisconnectMessage(final BytesValue data) {
+  private DisconnectMessage(final Bytes data) {
     super(data);
   }
 
@@ -74,13 +75,13 @@ public final class DisconnectMessage extends AbstractMessageData {
 
     public void writeTo(final RLPOutput out) {
       out.startList();
-      out.writeBytesValue(reason.getValue());
+      out.writeBytes(reason.getValue());
       out.endList();
     }
 
     public static Data readFrom(final RLPInput in) {
       in.enterList();
-      BytesValue reasonData = in.readBytesValue();
+      Bytes reasonData = in.readBytes();
       in.leaveList();
 
       // Disconnect reason should be at most 1 byte, otherwise, just return UNKNOWN
@@ -147,8 +148,8 @@ public final class DisconnectMessage extends AbstractMessageData {
       this.code = Optional.ofNullable(code);
     }
 
-    public BytesValue getValue() {
-      return code.map(BytesValue::of).orElse(BytesValue.EMPTY);
+    public Bytes getValue() {
+      return code.map(Bytes::of).orElse(Bytes.EMPTY);
     }
 
     @Override

@@ -20,10 +20,11 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.ArrayList;
 import java.util.Collection;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public final class GetReceiptsMessage extends AbstractMessageData {
 
@@ -42,12 +43,12 @@ public final class GetReceiptsMessage extends AbstractMessageData {
   public static GetReceiptsMessage create(final Iterable<Hash> hashes) {
     final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
     tmp.startList();
-    hashes.forEach(tmp::writeBytesValue);
+    hashes.forEach(tmp::writeBytes);
     tmp.endList();
     return new GetReceiptsMessage(tmp.encoded());
   }
 
-  private GetReceiptsMessage(final BytesValue data) {
+  private GetReceiptsMessage(final Bytes data) {
     super(data);
   }
 

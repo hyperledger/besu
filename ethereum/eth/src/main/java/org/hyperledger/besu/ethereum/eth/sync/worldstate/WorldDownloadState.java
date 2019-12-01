@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage.Updater;
 import org.hyperledger.besu.services.tasks.CachingTaskCollection;
 import org.hyperledger.besu.services.tasks.Task;
 import org.hyperledger.besu.util.ExceptionUtils;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.time.Clock;
 import java.util.Collections;
@@ -34,6 +33,7 @@ import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 class WorldDownloadState {
   private static final Logger LOG = LogManager.getLogger();
@@ -50,7 +50,7 @@ class WorldDownloadState {
   private volatile int requestsSinceLastProgress = 0;
   private final long minMillisBeforeStalling;
   private volatile long timestampOfLastProgress;
-  private BytesValue rootNodeData;
+  private Bytes rootNodeData;
   private WorldStateDownloadProcess worldStateDownloadProcess;
 
   public WorldDownloadState(
@@ -151,7 +151,7 @@ class WorldDownloadState {
     return null;
   }
 
-  public synchronized void setRootNodeData(final BytesValue rootNodeData) {
+  public synchronized void setRootNodeData(final Bytes rootNodeData) {
     this.rootNodeData = rootNodeData;
   }
 

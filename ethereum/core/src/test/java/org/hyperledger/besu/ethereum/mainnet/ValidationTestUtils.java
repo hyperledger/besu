@@ -20,19 +20,19 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.io.IOException;
 import java.util.List;
 
 import com.google.common.io.Resources;
+import org.apache.tuweni.bytes.Bytes;
 
 public final class ValidationTestUtils {
 
   public static BlockHeader readHeader(final long num) throws IOException {
     final RLPInput input =
         new BytesValueRLPInput(
-            BytesValue.wrap(
+            Bytes.wrap(
                 Resources.toByteArray(
                     EthHashTest.class.getResource(String.format("block_%d.blocks", num)))),
             false);
@@ -43,7 +43,7 @@ public final class ValidationTestUtils {
   public static BlockBody readBody(final long num) throws IOException {
     final RLPInput input =
         new BytesValueRLPInput(
-            BytesValue.wrap(
+            Bytes.wrap(
                 Resources.toByteArray(
                     EthHashTest.class.getResource(String.format("block_%d.blocks", num)))),
             false);
@@ -58,7 +58,7 @@ public final class ValidationTestUtils {
   public static Block readBlock(final long num) throws IOException {
     final RLPInput input =
         new BytesValueRLPInput(
-            BytesValue.wrap(
+            Bytes.wrap(
                 Resources.toByteArray(
                     EthHashTest.class.getResource(String.format("block_%d.blocks", num)))),
             false);

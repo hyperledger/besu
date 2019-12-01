@@ -17,10 +17,10 @@ package org.hyperledger.besu.ethereum.p2p.rlpx.handshake.ecies;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import org.hyperledger.besu.crypto.SECP256K1;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.math.BigInteger;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.bouncycastle.crypto.BasicAgreement;
 import org.bouncycastle.crypto.BufferedBlockCipher;
 import org.bouncycastle.crypto.CipherParameters;
@@ -108,10 +108,8 @@ public class ECIESEncryptionEngine {
    * @return An engine prepared for decryption.
    */
   public static ECIESEncryptionEngine forDecryption(
-      final SECP256K1.PrivateKey privKey,
-      final SECP256K1.PublicKey ephPubKey,
-      final BytesValue iv) {
-    final byte[] ivb = iv.extractArray();
+      final SECP256K1.PrivateKey privKey, final SECP256K1.PublicKey ephPubKey, final Bytes iv) {
+    final byte[] ivb = iv.toArray();
 
     // Create parameters.
     final ECDomainParameters dp = SECP256K1.CURVE;
@@ -135,7 +133,7 @@ public class ECIESEncryptionEngine {
     final SECP256K1.KeyPair ephKeyPair = SECP256K1.KeyPair.generate();
 
     // Create random iv.
-    final byte[] ivb = ECIESHandshaker.random(CIPHER_BLOCK_SIZE).extractArray();
+    final byte[] ivb = ECIESHandshaker.random(CIPHER_BLOCK_SIZE).toArray();
 
     // Create parameters.
     final CipherParameters pubParam =
@@ -153,13 +151,12 @@ public class ECIESEncryptionEngine {
    * @return The ciphertext.
    * @throws InvalidCipherTextException Thrown if an error occured during encryption.
    */
-  public BytesValue encrypt(final BytesValue in) throws InvalidCipherTextException {
-    return BytesValue.wrap(encrypt(in.extractArray(), 0, in.size(), null));
+  public Bytes encrypt(final Bytes in) throws InvalidCipherTextException {
+    return Bytes.wrap(encrypt(in.toArray(), 0, in.size(), null));
   }
 
-  public BytesValue encrypt(final BytesValue in, final byte[] macData)
-      throws InvalidCipherTextException {
-    return BytesValue.wrap(encrypt(in.extractArray(), 0, in.size(), macData));
+  public Bytes encrypt(final Bytes in, final byte[] macData) throws InvalidCipherTextException {
+    return Bytes.wrap(encrypt(in.toArray(), 0, in.size(), macData));
   }
 
   private byte[] encrypt(final byte[] in, final int inOff, final int inLen, final byte[] macData)
@@ -226,13 +223,12 @@ public class ECIESEncryptionEngine {
    * @return The plaintext.
    * @throws InvalidCipherTextException Thrown if an error occured during decryption.
    */
-  public BytesValue decrypt(final BytesValue in) throws InvalidCipherTextException {
-    return BytesValue.wrap(decrypt(in.extractArray(), 0, in.size(), null));
+  public Bytes decrypt(final Bytes in) throws InvalidCipherTextException {
+    return Bytes.wrap(decrypt(in.toArray(), 0, in.size(), null));
   }
 
-  public BytesValue decrypt(final BytesValue in, final byte[] commonMac)
-      throws InvalidCipherTextException {
-    return BytesValue.wrap(decrypt(in.extractArray(), 0, in.size(), commonMac));
+  public Bytes decrypt(final Bytes in, final byte[] commonMac) throws InvalidCipherTextException {
+    return Bytes.wrap(decrypt(in.toArray(), 0, in.size(), commonMac));
   }
 
   private byte[] decrypt(
@@ -309,8 +305,8 @@ public class ECIESEncryptionEngine {
    *
    * @return The initialization vector in use.
    */
-  public BytesValue getIv() {
-    return BytesValue.wrap(iv);
+  public Bytes getIv() {
+    return Bytes.wrap(iv);
   }
 
   /**

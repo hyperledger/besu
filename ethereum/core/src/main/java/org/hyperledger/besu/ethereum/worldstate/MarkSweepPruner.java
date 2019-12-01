@@ -24,8 +24,6 @@ import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -37,12 +35,14 @@ import java.util.function.Function;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class MarkSweepPruner {
 
   private static final int DEFAULT_OPS_PER_TRANSACTION = 1000;
   private static final Logger LOG = LogManager.getLogger();
-  private static final byte[] IN_USE = BytesValue.of(1).getArrayUnsafe();
+  private static final byte[] IN_USE = Bytes.of(1).toArrayUnsafe();
 
   private final int operationsPerTransaction;
   private final WorldStateStorage worldStateStorage;
@@ -164,14 +164,14 @@ public class MarkSweepPruner {
   }
 
   private boolean isMarked(final Bytes32 key) {
-    return pendingMarks.contains(key) || markStorage.containsKey(key.getArrayUnsafe());
+    return pendingMarks.contains(key) || markStorage.containsKey(key.toArrayUnsafe());
   }
 
   private boolean isMarked(final byte[] key) {
     return pendingMarks.contains(Bytes32.wrap(key)) || markStorage.containsKey(key);
   }
 
-  private MerklePatriciaTrie<Bytes32, BytesValue> createStateTrie(final Bytes32 rootHash) {
+  private MerklePatriciaTrie<Bytes32, Bytes> createStateTrie(final Bytes32 rootHash) {
     return new StoredMerklePatriciaTrie<>(
         worldStateStorage::getAccountStateTrieNode,
         rootHash,
@@ -179,7 +179,7 @@ public class MarkSweepPruner {
         Function.identity());
   }
 
-  private MerklePatriciaTrie<Bytes32, BytesValue> createStorageTrie(final Bytes32 rootHash) {
+  private MerklePatriciaTrie<Bytes32, Bytes> createStorageTrie(final Bytes32 rootHash) {
     return new StoredMerklePatriciaTrie<>(
         worldStateStorage::getAccountStorageTrieNode,
         rootHash,
@@ -187,7 +187,7 @@ public class MarkSweepPruner {
         Function.identity());
   }
 
-  private void processAccountState(final BytesValue value) {
+  private void processAccountState(final Bytes value) {
     final StateTrieAccountValue accountValue = StateTrieAccountValue.readFrom(RLP.input(value));
     markNode(accountValue.getCodeHash());
 
@@ -228,7 +228,7 @@ public class MarkSweepPruner {
     markLock.lock();
     try {
       final KeyValueStorageTransaction transaction = markStorage.startTransaction();
-      pendingMarks.forEach(node -> transaction.put(node.getArrayUnsafe(), IN_USE));
+      pendingMarks.forEach(node -> transaction.put(node.toArrayUnsafe(), IN_USE));
       transaction.commit();
       pendingMarks.clear();
     } finally {

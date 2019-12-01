@@ -28,9 +28,9 @@ import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.retesteth.RetestethClock;
 import org.hyperledger.besu.ethereum.retesteth.RetestethContext;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import com.google.common.base.Functions;
+import org.apache.tuweni.bytes.Bytes;
 
 public class TestMineBlocks implements JsonRpcMethod {
   private final RetestethContext context;
@@ -65,7 +65,7 @@ public class TestMineBlocks implements JsonRpcMethod {
     final EthHashBlockCreator blockCreator =
         new EthHashBlockCreator(
             context.getCoinbase(),
-            header -> BytesValue.of(),
+            header -> Bytes.of(),
             context.getTransactionPool().getPendingTransactions(),
             protocolContext,
             protocolSchedule,

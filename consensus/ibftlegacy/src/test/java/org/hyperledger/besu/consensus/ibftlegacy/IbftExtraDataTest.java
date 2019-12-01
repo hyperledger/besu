@@ -20,7 +20,6 @@ import org.hyperledger.besu.crypto.SECP256K1.Signature;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -28,6 +27,7 @@ import java.util.List;
 import java.util.Random;
 
 import com.google.common.collect.Lists;
+import org.apache.tuweni.bytes.Bytes;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.Test;
 
@@ -41,16 +41,15 @@ public class IbftExtraDataTest {
 
     final BytesValueRLPOutput encoder = new BytesValueRLPOutput();
     encoder.startList();
-    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytesValue(validator));
-    encoder.writeBytesValue(proposerSeal.encodedBytes());
-    encoder.writeList(
-        committerSeals, (committer, rlp) -> rlp.writeBytesValue(committer.encodedBytes()));
+    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator));
+    encoder.writeBytes(proposerSeal.encodedBytes());
+    encoder.writeList(committerSeals, (committer, rlp) -> rlp.writeBytes(committer.encodedBytes()));
     encoder.endList();
 
     // Create a byte buffer with no data.
     final byte[] vanity_bytes = new byte[32];
-    final BytesValue vanity_data = BytesValue.wrap(vanity_bytes);
-    final BytesValue bufferToInject = BytesValue.wrap(vanity_data, encoder.encoded());
+    final Bytes vanity_data = Bytes.wrap(vanity_bytes);
+    final Bytes bufferToInject = Bytes.wrap(vanity_data, encoder.encoded());
 
     final IbftExtraData extraData = IbftExtraData.decodeRaw(bufferToInject);
 
@@ -71,17 +70,16 @@ public class IbftExtraDataTest {
 
     final BytesValueRLPOutput encoder = new BytesValueRLPOutput();
     encoder.startList(); // This is required to create a "root node" for all RLP'd data
-    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytesValue(validator));
-    encoder.writeBytesValue(proposerSeal.encodedBytes());
-    encoder.writeList(
-        committerSeals, (committer, rlp) -> rlp.writeBytesValue(committer.encodedBytes()));
+    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator));
+    encoder.writeBytes(proposerSeal.encodedBytes());
+    encoder.writeList(committerSeals, (committer, rlp) -> rlp.writeBytes(committer.encodedBytes()));
     encoder.endList();
 
     // Create randomised vanity data.
     final byte[] vanity_bytes = new byte[32];
     new Random().nextBytes(vanity_bytes);
-    final BytesValue vanity_data = BytesValue.wrap(vanity_bytes);
-    final BytesValue bufferToInject = BytesValue.wrap(vanity_data, encoder.encoded());
+    final Bytes vanity_data = Bytes.wrap(vanity_bytes);
+    final Bytes bufferToInject = Bytes.wrap(vanity_data, encoder.encoded());
 
     final IbftExtraData extraData = IbftExtraData.decodeRaw(bufferToInject);
 
@@ -99,15 +97,13 @@ public class IbftExtraDataTest {
 
     final BytesValueRLPOutput encoder = new BytesValueRLPOutput();
     encoder.startList();
-    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytesValue(validator));
-    encoder.writeBytesValue(proposerSeal.encodedBytes());
-    encoder.writeList(
-        committerSeals, (committer, rlp) -> rlp.writeBytesValue(committer.encodedBytes()));
+    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator));
+    encoder.writeBytes(proposerSeal.encodedBytes());
+    encoder.writeList(committerSeals, (committer, rlp) -> rlp.writeBytes(committer.encodedBytes()));
     encoder.writeLong(1);
     encoder.endList();
 
-    final BytesValue bufferToInject =
-        BytesValue.wrap(BytesValue.wrap(new byte[32]), encoder.encoded());
+    final Bytes bufferToInject = Bytes.wrap(Bytes.wrap(new byte[32]), encoder.encoded());
 
     IbftExtraData.decodeRaw(bufferToInject);
   }
@@ -123,14 +119,12 @@ public class IbftExtraDataTest {
 
     final BytesValueRLPOutput encoder = new BytesValueRLPOutput();
     encoder.startList();
-    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytesValue(validator));
-    encoder.writeBytesValue(proposerSeal.encodedBytes());
-    encoder.writeList(
-        committerSeals, (committer, rlp) -> rlp.writeBytesValue(committer.encodedBytes()));
+    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator));
+    encoder.writeBytes(proposerSeal.encodedBytes());
+    encoder.writeList(committerSeals, (committer, rlp) -> rlp.writeBytes(committer.encodedBytes()));
     encoder.endList();
 
-    final BytesValue bufferToInject =
-        BytesValue.wrap(BytesValue.wrap(new byte[31]), encoder.encoded());
+    final Bytes bufferToInject = Bytes.wrap(Bytes.wrap(new byte[31]), encoder.encoded());
 
     IbftExtraData.decodeRaw(bufferToInject);
   }
@@ -141,7 +135,7 @@ public class IbftExtraDataTest {
         Hex.decode(
             "0000000000000000000000000000000000000000000000000000000000000000f89af85494c332d0db1704d18f89a590e7586811e36d37ce049424defc2d149861d3d245749b81fe0e6b28e04f31943814f17bd4b7ce47ab8146684b3443c0a4b2fc2c942a813d7db3de19b07f92268b6d4125ed295cbe00b8410000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000c0");
 
-    final BytesValue bufferToInject = BytesValue.wrap(genesisBlockExtraData);
+    final Bytes bufferToInject = Bytes.wrap(genesisBlockExtraData);
 
     final IbftExtraData extraData = IbftExtraData.decodeRaw(bufferToInject);
     assertThat(extraData.getProposerSeal()).isNull();

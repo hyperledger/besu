@@ -50,8 +50,6 @@ import org.hyperledger.besu.ethereum.vm.TestBlockchain;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.math.BigInteger;
 import java.time.Instant;
@@ -60,6 +58,8 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 import com.google.common.collect.Lists;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
@@ -172,10 +172,7 @@ public class BlockTransactionSelectorTest {
             any(), any(), any(), any(), any(), any(), anyBoolean(), any()))
         .thenReturn(
             MainnetTransactionProcessor.Result.successful(
-                new LogSeries(Lists.newArrayList()),
-                0,
-                BytesValue.EMPTY,
-                ValidationResult.valid()));
+                new LogSeries(Lists.newArrayList()), 0, Bytes.EMPTY, ValidationResult.valid()));
     when(transactionProcessor.processTransaction(
             any(),
             any(),
@@ -230,10 +227,7 @@ public class BlockTransactionSelectorTest {
             any(), any(), any(), any(), any(), any(), anyBoolean(), any()))
         .thenReturn(
             MainnetTransactionProcessor.Result.successful(
-                new LogSeries(Lists.newArrayList()),
-                0,
-                BytesValue.EMPTY,
-                ValidationResult.valid()));
+                new LogSeries(Lists.newArrayList()), 0, Bytes.EMPTY, ValidationResult.valid()));
 
     final ProcessableBlockHeader blockHeader = createBlockWithGasLimit(301);
 
@@ -301,10 +295,7 @@ public class BlockTransactionSelectorTest {
             any(), any(), any(), any(), any(), any(), anyBoolean(), any()))
         .thenReturn(
             MainnetTransactionProcessor.Result.successful(
-                new LogSeries(Lists.newArrayList()),
-                0,
-                BytesValue.EMPTY,
-                ValidationResult.valid()));
+                new LogSeries(Lists.newArrayList()), 0, Bytes.EMPTY, ValidationResult.valid()));
 
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
     final BlockTransactionSelector selector =
@@ -358,10 +349,7 @@ public class BlockTransactionSelectorTest {
             any(), any(), any(), any(), any(), any(), anyBoolean(), any()))
         .thenReturn(
             MainnetTransactionProcessor.Result.successful(
-                new LogSeries(Lists.newArrayList()),
-                0,
-                BytesValue.EMPTY,
-                ValidationResult.valid()));
+                new LogSeries(Lists.newArrayList()), 0, Bytes.EMPTY, ValidationResult.valid()));
 
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
     final BlockTransactionSelector selector =
@@ -454,7 +442,7 @@ public class BlockTransactionSelectorTest {
             any()))
         .thenReturn(
             MainnetTransactionProcessor.Result.successful(
-                LogSeries.empty(), 10000, BytesValue.EMPTY, ValidationResult.valid()));
+                LogSeries.empty(), 10000, Bytes.EMPTY, ValidationResult.valid()));
     when(transactionProcessor.processTransaction(
             eq(blockchain),
             any(WorldUpdater.class),
@@ -527,7 +515,7 @@ public class BlockTransactionSelectorTest {
         .gasLimit(100)
         .gasPrice(Wei.of(5))
         .nonce(transactionNumber)
-        .payload(BytesValue.EMPTY)
+        .payload(Bytes.EMPTY)
         .to(Address.ID)
         .value(Wei.of(transactionNumber))
         .sender(Address.ID)

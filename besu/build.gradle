@@ -54,6 +54,8 @@ dependencies {
   implementation 'com.fasterxml.jackson.core:jackson-databind'
   compile group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jdk8', version: '2.9.8'
   implementation 'com.graphql-java:graphql-java'
+  implementation 'org.apache.tuweni:tuweni-bytes'
+  implementation 'org.apache.tuweni:tuweni-units'
   implementation 'com.google.guava:guava'
   implementation 'info.picocli:picocli'
   implementation 'io.vertx:vertx-core'
@@ -68,6 +70,8 @@ dependencies {
   testImplementation project(':testutil')
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
 
+  testImplementation 'org.apache.tuweni:tuweni-bytes'
+  testImplementation 'org.apache.tuweni:tuweni-units'
   testImplementation 'com.squareup.okhttp3:okhttp'
   testImplementation 'com.google.auto.service:auto-service'
   testImplementation 'junit:junit'

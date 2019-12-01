@@ -31,13 +31,13 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
 public class DebugTraceBlockByHashTest {
@@ -84,8 +84,8 @@ public class DebugTraceBlockByHashTest {
     when(transaction2Trace.getTraceFrames()).thenReturn(Arrays.asList(traceFrame));
     when(transaction1Trace.getResult()).thenReturn(transaction1Result);
     when(transaction2Trace.getResult()).thenReturn(transaction2Result);
-    when(transaction1Result.getOutput()).thenReturn(BytesValue.fromHexString("1234"));
-    when(transaction2Result.getOutput()).thenReturn(BytesValue.fromHexString("1234"));
+    when(transaction1Result.getOutput()).thenReturn(Bytes.fromHexString("1234"));
+    when(transaction2Result.getOutput()).thenReturn(Bytes.fromHexString("1234"));
     when(blockTracer.trace(eq(blockHash), any())).thenReturn(Optional.of(blockTrace));
 
     final JsonRpcSuccessResponse response =

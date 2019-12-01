@@ -52,7 +52,6 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -65,6 +64,7 @@ import java.util.concurrent.CompletableFuture;
 import io.vertx.core.Vertx;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 public class TestNode implements Closeable {
 
@@ -163,11 +163,11 @@ public class TestNode implements Closeable {
     selfPeer = DefaultPeer.fromEnodeURL(network.getLocalEnode().get());
   }
 
-  public BytesValue id() {
+  public Bytes id() {
     return kp.getPublicKey().getEncodedBytes();
   }
 
-  public static String shortId(final BytesValue id) {
+  public static String shortId(final Bytes id) {
     return id.slice(62).toString().substring(2);
   }
 

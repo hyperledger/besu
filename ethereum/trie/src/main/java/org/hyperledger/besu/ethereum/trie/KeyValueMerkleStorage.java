@@ -16,33 +16,34 @@ package org.hyperledger.besu.ethereum.trie;
 
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+
 public class KeyValueMerkleStorage implements MerkleStorage {
 
   private final KeyValueStorage keyValueStorage;
-  private final Map<Bytes32, BytesValue> pendingUpdates = new HashMap<>();
+  private final Map<Bytes32, Bytes> pendingUpdates = new HashMap<>();
 
   public KeyValueMerkleStorage(final KeyValueStorage keyValueStorage) {
     this.keyValueStorage = keyValueStorage;
   }
 
   @Override
-  public Optional<BytesValue> get(final Bytes32 hash) {
-    final Optional<BytesValue> value =
+  public Optional<Bytes> get(final Bytes32 hash) {
+    final Optional<Bytes> value =
         pendingUpdates.containsKey(hash)
             ? Optional.of(pendingUpdates.get(hash))
-            : keyValueStorage.get(hash.getArrayUnsafe()).map(BytesValue::wrap);
+            : keyValueStorage.get(hash.toArrayUnsafe()).map(Bytes::wrap);
     return value;
   }
 
   @Override
-  public void put(final Bytes32 hash, final BytesValue value) {
+  public void put(final Bytes32 hash, final Bytes value) {
     pendingUpdates.put(hash, value);
   }
 
@@ -53,8 +54,8 @@ public class KeyValueMerkleStorage implements MerkleStorage {
       return;
     }
     final KeyValueStorageTransaction kvTx = keyValueStorage.startTransaction();
-    for (final Map.Entry<Bytes32, BytesValue> entry : pendingUpdates.entrySet()) {
-      kvTx.put(entry.getKey().getArrayUnsafe(), entry.getValue().getArrayUnsafe());
+    for (final Map.Entry<Bytes32, Bytes> entry : pendingUpdates.entrySet()) {
+      kvTx.put(entry.getKey().toArrayUnsafe(), entry.getValue().toArrayUnsafe());
     }
     kvTx.commit();
 

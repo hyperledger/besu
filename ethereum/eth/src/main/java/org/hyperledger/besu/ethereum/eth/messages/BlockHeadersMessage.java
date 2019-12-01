@@ -22,10 +22,11 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractMessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Arrays;
 import java.util.List;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public final class BlockHeadersMessage extends AbstractMessageData {
 
@@ -55,7 +56,7 @@ public final class BlockHeadersMessage extends AbstractMessageData {
     return new BlockHeadersMessage(tmp.encoded());
   }
 
-  private BlockHeadersMessage(final BytesValue data) {
+  private BlockHeadersMessage(final Bytes data) {
     super(data);
   }
 

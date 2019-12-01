@@ -20,11 +20,12 @@ import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.mainnet.AbstractPrecompiledContract;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.MutableBytesValue;
 
 import java.math.BigInteger;
 import java.util.Arrays;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.MutableBytes;
 
 public class AltBN128MulPrecompiledContract extends AbstractPrecompiledContract {
 
@@ -48,12 +49,12 @@ public class AltBN128MulPrecompiledContract extends AbstractPrecompiledContract 
   }
 
   @Override
-  public Gas gasRequirement(final BytesValue input) {
+  public Gas gasRequirement(final Bytes input) {
     return gasCost;
   }
 
   @Override
-  public BytesValue compute(final BytesValue input, final MessageFrame messageFrame) {
+  public Bytes compute(final Bytes input, final MessageFrame messageFrame) {
     final BigInteger x = extractParameter(input, 0, 32);
     final BigInteger y = extractParameter(input, 32, 32);
     final BigInteger n = extractParameter(input, 64, 32);
@@ -64,9 +65,9 @@ public class AltBN128MulPrecompiledContract extends AbstractPrecompiledContract 
     }
     final AltBn128Point product = p.multiply(n);
 
-    final BytesValue xResult = product.getX().toBytesValue();
-    final BytesValue yResult = product.getY().toBytesValue();
-    final MutableBytesValue result = MutableBytesValue.create(64);
+    final Bytes xResult = product.getX().toBytes();
+    final Bytes yResult = product.getY().toBytes();
+    final MutableBytes result = MutableBytes.create(64);
     xResult.copyTo(result, 32 - xResult.size());
     yResult.copyTo(result, 64 - yResult.size());
 
@@ -74,11 +75,11 @@ public class AltBN128MulPrecompiledContract extends AbstractPrecompiledContract 
   }
 
   private static BigInteger extractParameter(
-      final BytesValue input, final int offset, final int length) {
+      final Bytes input, final int offset, final int length) {
     if (offset > input.size() || length == 0) {
       return BigInteger.ZERO;
     }
-    final byte[] raw = Arrays.copyOfRange(input.extractArray(), offset, offset + length);
+    final byte[] raw = Arrays.copyOfRange(input.toArray(), offset, offset + length);
     return new BigInteger(1, raw);
   }
 }

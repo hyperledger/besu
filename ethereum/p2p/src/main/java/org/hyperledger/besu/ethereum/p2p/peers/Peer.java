@@ -15,7 +15,8 @@
 package org.hyperledger.besu.ethereum.p2p.peers;
 
 import org.hyperledger.besu.crypto.SecureRandomProvider;
-import org.hyperledger.besu.util.bytes.BytesValue;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public interface Peer extends PeerId {
 
@@ -27,10 +28,10 @@ public interface Peer extends PeerId {
    *
    * @return The generated peer ID.
    */
-  static BytesValue randomId() {
+  static Bytes randomId() {
     final byte[] id = new byte[EnodeURL.NODE_ID_SIZE];
     SecureRandomProvider.publicSecureRandom().nextBytes(id);
-    return BytesValue.wrap(id);
+    return Bytes.wrap(id);
   }
 
   /**

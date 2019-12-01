@@ -46,11 +46,11 @@ import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.plugin.data.SyncStatus;
 import org.hyperledger.besu.plugin.services.BesuEvents.SyncStatusListener;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -61,14 +61,14 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class SyncStateTest {
 
-  private static final UInt256 standardDifficultyPerBlock = UInt256.of(1L);
+  private static final UInt256 standardDifficultyPerBlock = UInt256.ONE;
   private static final long OUR_CHAIN_HEAD_NUMBER = 20;
   private static final UInt256 OUR_CHAIN_DIFFICULTY =
-      standardDifficultyPerBlock.times(OUR_CHAIN_HEAD_NUMBER);
+      standardDifficultyPerBlock.multiply(OUR_CHAIN_HEAD_NUMBER);
   private static final long TARGET_CHAIN_DELTA = 20;
   private static final long TARGET_CHAIN_HEIGHT = OUR_CHAIN_HEAD_NUMBER + TARGET_CHAIN_DELTA;
   private static final UInt256 TARGET_DIFFICULTY =
-      standardDifficultyPerBlock.times(TARGET_CHAIN_HEIGHT);
+      standardDifficultyPerBlock.multiply(TARGET_CHAIN_HEIGHT);
 
   private final InSyncListener inSyncListener = mock(InSyncListener.class);
   private final InSyncListener inSyncListenerExact = mock(InSyncListener.class);
@@ -115,7 +115,8 @@ public class SyncStateTest {
 
   @Test
   public void isInSync_singlePeerWithWorseChainBetterHeight() {
-    updateChainState(otherPeer.getEthPeer(), TARGET_CHAIN_HEIGHT, OUR_CHAIN_DIFFICULTY.minus(1L));
+    updateChainState(
+        otherPeer.getEthPeer(), TARGET_CHAIN_HEIGHT, OUR_CHAIN_DIFFICULTY.subtract(1L));
     final EthPeer peer = mockWorseChain(otherPeer.getEthPeer());
     doReturn(Optional.of(peer)).when(ethPeers).bestPeerWithHeightEstimate();
 
@@ -127,7 +128,7 @@ public class SyncStateTest {
   @Test
   public void isInSync_singlePeerWithWorseChainWorseHeight() {
     updateChainState(
-        otherPeer.getEthPeer(), OUR_CHAIN_HEAD_NUMBER - 1L, OUR_CHAIN_DIFFICULTY.minus(1L));
+        otherPeer.getEthPeer(), OUR_CHAIN_HEAD_NUMBER - 1L, OUR_CHAIN_DIFFICULTY.subtract(1L));
     final EthPeer peer = mockWorseChain(otherPeer.getEthPeer());
     doReturn(Optional.of(peer)).when(ethPeers).bestPeerWithHeightEstimate();
 
@@ -205,7 +206,7 @@ public class SyncStateTest {
     updateChainState(
         otherPeer.getEthPeer(),
         TARGET_CHAIN_HEIGHT + heightDifference,
-        TARGET_DIFFICULTY.plus(heightDifference));
+        TARGET_DIFFICULTY.add(heightDifference));
     doReturn(Optional.of(otherPeer.getEthPeer())).when(ethPeers).bestPeerWithHeightEstimate();
 
     assertThat(syncState.isInSync()).isFalse();
@@ -286,7 +287,7 @@ public class SyncStateTest {
     updateChainState(
         syncTargetPeer.getEthPeer(),
         TARGET_CHAIN_HEIGHT + Synchronizer.DEFAULT_IN_SYNC_TOLERANCE + 1L,
-        TARGET_DIFFICULTY.plus(10L));
+        TARGET_DIFFICULTY.add(10L));
 
     final ArgumentCaptor<Boolean> inSyncEventCaptor = ArgumentCaptor.forClass(Boolean.class);
     verify(newListener, times(3)).onInSyncStatusChange(inSyncEventCaptor.capture());
@@ -315,7 +316,7 @@ public class SyncStateTest {
     updateChainState(
         syncTargetPeer.getEthPeer(),
         TARGET_CHAIN_HEIGHT + syncTolerance + 1L,
-        TARGET_DIFFICULTY.plus(10L));
+        TARGET_DIFFICULTY.add(10L));
 
     final ArgumentCaptor<Boolean> inSyncEventCaptor = ArgumentCaptor.forClass(Boolean.class);
     verify(newListener, times(3)).onInSyncStatusChange(inSyncEventCaptor.capture());
@@ -341,7 +342,7 @@ public class SyncStateTest {
     updateChainState(
         syncTargetPeer.getEthPeer(),
         TARGET_CHAIN_HEIGHT + Synchronizer.DEFAULT_IN_SYNC_TOLERANCE + 1L,
-        TARGET_DIFFICULTY.plus(10L));
+        TARGET_DIFFICULTY.add(10L));
     verify(newListener).onInSyncStatusChange(false);
     verify(newListener, never()).onInSyncStatusChange(true);
 
@@ -369,7 +370,7 @@ public class SyncStateTest {
     updateChainState(
         syncTargetPeer.getEthPeer(),
         TARGET_CHAIN_HEIGHT + syncTolerance + 1L,
-        TARGET_DIFFICULTY.plus(10L));
+        TARGET_DIFFICULTY.add(10L));
     verify(newListener).onInSyncStatusChange(false);
     verify(newListener, never()).onInSyncStatusChange(true);
 
@@ -402,7 +403,7 @@ public class SyncStateTest {
     updateChainState(
         syncTargetPeer.getEthPeer(),
         TARGET_CHAIN_HEIGHT + syncTolerance + 1L,
-        TARGET_DIFFICULTY.plus(10L));
+        TARGET_DIFFICULTY.add(10L));
 
     // We should not register the sync event
     verify(newListener, never()).onInSyncStatusChange(anyBoolean());
@@ -436,7 +437,7 @@ public class SyncStateTest {
     updateChainState(
         syncTargetPeer.getEthPeer(),
         TARGET_CHAIN_HEIGHT + syncTolerance + 1L,
-        TARGET_DIFFICULTY.plus(10L));
+        TARGET_DIFFICULTY.add(10L));
 
     // We should not register the in-sync event
     verify(listenerToRemove, never()).onInSyncStatusChange(anyBoolean());
@@ -480,7 +481,7 @@ public class SyncStateTest {
     updateChainState(
         syncTargetPeer.getEthPeer(),
         TARGET_CHAIN_HEIGHT + syncTolerance + 1L,
-        TARGET_DIFFICULTY.plus(10L));
+        TARGET_DIFFICULTY.add(10L));
 
     // We should not register the sync event
     verify(listenerToRemove, never()).onInSyncStatusChange(anyBoolean());

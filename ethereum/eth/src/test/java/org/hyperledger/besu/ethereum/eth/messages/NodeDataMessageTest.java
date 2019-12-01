@@ -17,12 +17,12 @@ package org.hyperledger.besu.ethereum.eth.messages;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
@@ -32,7 +32,7 @@ public final class NodeDataMessageTest {
   public void roundTripTest() {
     // Generate some data
     final BlockDataGenerator gen = new BlockDataGenerator(1);
-    final List<BytesValue> nodeData = new ArrayList<>();
+    final List<Bytes> nodeData = new ArrayList<>();
     final int nodeCount = 20;
     for (int i = 0; i < nodeCount; ++i) {
       nodeData.add(gen.bytesValue());
@@ -45,7 +45,7 @@ public final class NodeDataMessageTest {
     final NodeDataMessage message = NodeDataMessage.readFrom(raw);
 
     // Read data back out after round trip and check they match originals.
-    final Iterator<BytesValue> readData = message.nodeData().iterator();
+    final Iterator<Bytes> readData = message.nodeData().iterator();
     for (int i = 0; i < nodeCount; ++i) {
       Assertions.assertThat(readData.next()).isEqualTo(nodeData.get(i));
     }

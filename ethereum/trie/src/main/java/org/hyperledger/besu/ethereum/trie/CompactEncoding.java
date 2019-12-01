@@ -16,16 +16,16 @@ package org.hyperledger.besu.ethereum.trie;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.MutableBytesValue;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.MutableBytes;
 
 abstract class CompactEncoding {
   private CompactEncoding() {}
 
   static final byte LEAF_TERMINATOR = 0x10;
 
-  public static BytesValue bytesToPath(final BytesValue bytes) {
-    final MutableBytesValue path = MutableBytesValue.create(bytes.size() * 2 + 1);
+  public static Bytes bytesToPath(final Bytes bytes) {
+    final MutableBytes path = MutableBytes.create(bytes.size() * 2 + 1);
     int j = 0;
     for (int i = 0; i < bytes.size(); i += 1, j += 2) {
       final byte b = bytes.get(i);
@@ -36,10 +36,10 @@ abstract class CompactEncoding {
     return path;
   }
 
-  public static BytesValue pathToBytes(final BytesValue path) {
+  public static Bytes pathToBytes(final Bytes path) {
     checkArgument(!path.isEmpty(), "Path must not be empty");
     checkArgument(path.get(path.size() - 1) == LEAF_TERMINATOR, "Path must be a leaf path");
-    final MutableBytesValue bytes = MutableBytesValue.create((path.size() - 1) / 2);
+    final MutableBytes bytes = MutableBytes.create((path.size() - 1) / 2);
     int bytesPos = 0;
     for (int pathPos = 0; pathPos < path.size() - 1; pathPos += 2, bytesPos += 1) {
       final byte high = path.get(pathPos);
@@ -52,14 +52,14 @@ abstract class CompactEncoding {
     return bytes;
   }
 
-  public static BytesValue encode(final BytesValue path) {
+  public static Bytes encode(final Bytes path) {
     int size = path.size();
     final boolean isLeaf = size > 0 && path.get(size - 1) == LEAF_TERMINATOR;
     if (isLeaf) {
       size = size - 1;
     }
 
-    final MutableBytesValue encoded = MutableBytesValue.create((size + 2) / 2);
+    final MutableBytes encoded = MutableBytes.create((size + 2) / 2);
     int i = 0;
     int j = 0;
 
@@ -88,7 +88,7 @@ abstract class CompactEncoding {
     return encoded;
   }
 
-  public static BytesValue decode(final BytesValue encoded) {
+  public static Bytes decode(final Bytes encoded) {
     final int size = encoded.size();
     checkArgument(size > 0);
     final byte metadata = encoded.get(0);
@@ -97,15 +97,15 @@ abstract class CompactEncoding {
     final boolean isLeaf = (metadata & 0x20) != 0;
 
     final int pathLength = ((size - 1) * 2) + (isLeaf ? 1 : 0);
-    final MutableBytesValue path;
+    final MutableBytes path;
     int i = 0;
 
     if ((metadata & 0x10) != 0) {
       // need to use lower nibble of metadata
-      path = MutableBytesValue.create(pathLength + 1);
+      path = MutableBytes.create(pathLength + 1);
       path.set(i++, (byte) (metadata & 0x0f));
     } else {
-      path = MutableBytesValue.create(pathLength);
+      path = MutableBytes.create(pathLength);
     }
 
     for (int j = 1; j < size; j++) {

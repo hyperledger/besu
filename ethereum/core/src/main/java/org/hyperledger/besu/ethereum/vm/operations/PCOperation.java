@@ -18,7 +18,8 @@ import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.vm.AbstractOperation;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.util.uint.UInt256Bytes;
+
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class PCOperation extends AbstractOperation {
 
@@ -33,6 +34,6 @@ public class PCOperation extends AbstractOperation {
 
   @Override
   public void execute(final MessageFrame frame) {
-    frame.pushStackItem(UInt256Bytes.of(frame.getPC()));
+    frame.pushStackItem(UInt256.valueOf(frame.getPC()).toBytes());
   }
 }

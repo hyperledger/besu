@@ -26,7 +26,6 @@ import org.hyperledger.besu.consensus.ibft.IbftExtraData;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Util;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.io.File;
 import java.io.IOException;
@@ -46,6 +45,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.io.Resources;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
@@ -191,7 +191,7 @@ public class OperatorSubCommand implements Runnable {
 
       try {
         final SECP256K1.PublicKey publicKey =
-            SECP256K1.PublicKey.create(BytesValue.fromHexString(publicKeyText));
+            SECP256K1.PublicKey.create(Bytes.fromHexString(publicKeyText));
         writeKeypair(publicKey, null);
         LOG.info("Public key imported from configuration.({})", publicKey.toString());
       } catch (IOException e) {

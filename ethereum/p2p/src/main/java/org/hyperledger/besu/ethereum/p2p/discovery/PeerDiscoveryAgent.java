@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.p2p.discovery;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.hyperledger.besu.util.bytes.BytesValue.wrapBuffer;
+import static org.apache.tuweni.bytes.Bytes.wrapBuffer;
 
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
@@ -33,7 +33,6 @@ import org.hyperledger.besu.nat.upnp.UpnpNatManager;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.util.NetworkUtility;
 import org.hyperledger.besu.util.Subscribers;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.net.InetSocketAddress;
 import java.net.SocketException;
@@ -50,6 +49,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.net.InetAddresses;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 /**
  * The peer discovery agent is the network component that sends and receives peer discovery messages
@@ -72,7 +72,7 @@ public abstract class PeerDiscoveryAgent {
 
   /* The keypair used to sign messages. */
   protected final SECP256K1.KeyPair keyPair;
-  private final BytesValue id;
+  private final Bytes id;
   protected final DiscoveryConfiguration config;
 
   /* This is the {@link org.hyperledger.besu.ethereum.p2p.Peer} object representing our local node.
@@ -261,7 +261,7 @@ public abstract class PeerDiscoveryAgent {
     return localNode;
   }
 
-  public BytesValue getId() {
+  public Bytes getId() {
     return id;
   }
 
