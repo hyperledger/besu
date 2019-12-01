@@ -158,7 +158,8 @@ public abstract class AbstractJsonRpcHttpServiceTest {
             privacyParameters,
             config,
             mock(WebSocketConfiguration.class),
-            mock(MetricsConfiguration.class));
+            mock(MetricsConfiguration.class),
+            Optional.empty());
   }
 
   protected void startService() throws Exception {

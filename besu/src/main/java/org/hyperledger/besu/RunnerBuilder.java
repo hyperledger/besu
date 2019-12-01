@@ -412,7 +412,8 @@ public class RunnerBuilder {
               privacyParameters,
               jsonRpcConfiguration,
               webSocketConfiguration,
-              metricsConfiguration);
+              metricsConfiguration,
+              natService);
       jsonRpcHttpService =
           Optional.of(
               new JsonRpcHttpService(
@@ -470,7 +471,8 @@ public class RunnerBuilder {
               privacyParameters,
               jsonRpcConfiguration,
               webSocketConfiguration,
-              metricsConfiguration);
+              metricsConfiguration,
+              natService);
 
       final SubscriptionManager subscriptionManager =
           createSubscriptionManager(vertx, transactionPool);
@@ -590,7 +592,8 @@ public class RunnerBuilder {
       final PrivacyParameters privacyParameters,
       final JsonRpcConfiguration jsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
-      final MetricsConfiguration metricsConfiguration) {
+      final MetricsConfiguration metricsConfiguration,
+      final Optional<NatService> natService) {
     final Map<String, JsonRpcMethod> methods =
         new JsonRpcMethodsFactory()
             .methods(
@@ -613,7 +616,8 @@ public class RunnerBuilder {
                 privacyParameters,
                 jsonRpcConfiguration,
                 webSocketConfiguration,
-                metricsConfiguration);
+                metricsConfiguration,
+                natService);
     methods.putAll(besuController.getAdditionalJsonRpcMethods(jsonRpcApis));
     return methods;
   }

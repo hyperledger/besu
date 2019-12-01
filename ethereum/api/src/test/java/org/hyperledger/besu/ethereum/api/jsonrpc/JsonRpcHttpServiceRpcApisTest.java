@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc;
 
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
@@ -44,6 +45,7 @@ import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioni
 import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningController;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
+import org.hyperledger.besu.nat.NatService;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -206,7 +208,8 @@ public class JsonRpcHttpServiceRpcApisTest {
                     mock(PrivacyParameters.class),
                     mock(JsonRpcConfiguration.class),
                     mock(WebSocketConfiguration.class),
-                    mock(MetricsConfiguration.class)));
+                    mock(MetricsConfiguration.class),
+                    Optional.empty()));
     final JsonRpcHttpService jsonRpcHttpService =
         new JsonRpcHttpService(
             vertx,
@@ -266,7 +269,8 @@ public class JsonRpcHttpServiceRpcApisTest {
       final JsonRpcConfiguration jsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
       final P2PNetwork p2pNetwork,
-      final MetricsConfiguration metricsConfiguration)
+      final MetricsConfiguration metricsConfiguration,
+      final Optional<NatService> natService)
       throws Exception {
     final Set<Capability> supportedCapabilities = new HashSet<>();
     supportedCapabilities.add(EthProtocol.ETH62);
@@ -296,7 +300,8 @@ public class JsonRpcHttpServiceRpcApisTest {
                     mock(PrivacyParameters.class),
                     jsonRpcConfiguration,
                     webSocketConfiguration,
-                    metricsConfiguration));
+                    metricsConfiguration,
+                    natService));
     final JsonRpcHttpService jsonRpcHttpService =
         new JsonRpcHttpService(
             vertx,
@@ -387,6 +392,8 @@ public class JsonRpcHttpServiceRpcApisTest {
     WebSocketConfiguration webSocketConfiguration = WebSocketConfiguration.createDefault();
     P2PNetwork p2pNetwork = mock(P2PNetwork.class);
     MetricsConfiguration metricsConfiguration = MetricsConfiguration.builder().build();
+    NatService natService = mock(NatService.class);
+    lenient().when(natService.isNatEnvironment()).thenReturn(false);
 
     if (enabledNetServices[netServices.indexOf("jsonrpc")]) {
       jsonRpcConfiguration = createJsonRpcConfiguration();
@@ -403,7 +410,11 @@ public class JsonRpcHttpServiceRpcApisTest {
     }
 
     return createJsonRpcHttpService(
-        jsonRpcConfiguration, webSocketConfiguration, p2pNetwork, metricsConfiguration);
+        jsonRpcConfiguration,
+        webSocketConfiguration,
+        p2pNetwork,
+        metricsConfiguration,
+        Optional.of(natService));
   }
 
   @Test
@@ -414,7 +425,8 @@ public class JsonRpcHttpServiceRpcApisTest {
             JsonRpcConfiguration.createDefault(),
             WebSocketConfiguration.createDefault(),
             mock(P2PNetwork.class),
-            MetricsConfiguration.builder().build());
+            MetricsConfiguration.builder().build(),
+            Optional.empty());
     final RequestBody body = createNetServicesRequestBody();
 
     try (final Response resp = client.newCall(buildRequest(body)).execute()) {

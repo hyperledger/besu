@@ -143,7 +143,8 @@ public class JsonRpcHttpServiceTest {
                     mock(PrivacyParameters.class),
                     mock(JsonRpcConfiguration.class),
                     mock(WebSocketConfiguration.class),
-                    mock(MetricsConfiguration.class)));
+                    mock(MetricsConfiguration.class),
+                    Optional.empty()));
     service = createJsonRpcHttpService();
     service.start().join();
 

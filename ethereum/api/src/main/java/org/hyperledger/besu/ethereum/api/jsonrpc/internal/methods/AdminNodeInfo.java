@@ -25,9 +25,14 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.ChainHead;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.nat.NatService;
+import org.hyperledger.besu.nat.core.domain.NatPortMapping;
+import org.hyperledger.besu.nat.core.domain.NatServiceType;
+import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
 import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.math.BigInteger;
+import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -41,18 +46,21 @@ public class AdminNodeInfo implements JsonRpcMethod {
   private final GenesisConfigOptions genesisConfigOptions;
   private final P2PNetwork peerNetwork;
   private final BlockchainQueries blockchainQueries;
+  private final Optional<NatService> natService;
 
   public AdminNodeInfo(
       final String clientVersion,
       final BigInteger networkId,
       final GenesisConfigOptions genesisConfigOptions,
       final P2PNetwork peerNetwork,
-      final BlockchainQueries blockchainQueries) {
+      final BlockchainQueries blockchainQueries,
+      final Optional<NatService> natService) {
     this.peerNetwork = peerNetwork;
     this.clientVersion = clientVersion;
     this.genesisConfigOptions = genesisConfigOptions;
     this.blockchainQueries = blockchainQueries;
     this.networkId = networkId;
+    this.natService = natService;
   }
 
   @Override
@@ -75,19 +83,25 @@ public class AdminNodeInfo implements JsonRpcMethod {
     final EnodeURL enode = maybeEnode.get();
 
     final BytesValue nodeId = enode.getNodeId();
-    response.put("enode", enode.toString());
-    response.put("ip", enode.getIpAsString());
+
+    final String ip = getIp(enode);
+    final int listeningPort = getListeningPort(enode);
+    final int discoveryPort = getDiscoveryPort(enode);
+
+    response.put("enode", getNodeAsString(enode, ip, listeningPort, discoveryPort).toString());
+    response.put("ip", ip);
+
     if (enode.isListening()) {
-      response.put("listenAddr", enode.getIpAsString() + ":" + enode.getListeningPort().getAsInt());
+      response.put("listenAddr", ip + ":" + listeningPort);
     }
     response.put("id", nodeId.toUnprefixedString());
     response.put("name", clientVersion);
 
     if (enode.isRunningDiscovery()) {
-      ports.put("discovery", enode.getDiscoveryPortOrZero());
+      ports.put("discovery", discoveryPort);
     }
     if (enode.isListening()) {
-      ports.put("listener", enode.getListeningPort().getAsInt());
+      ports.put("listener", listeningPort);
     }
     response.put("ports", ports);
 
@@ -109,5 +123,40 @@ public class AdminNodeInfo implements JsonRpcMethod {
                 networkId)));
 
     return new JsonRpcSuccessResponse(req.getId(), response);
+  }
+
+  private URI getNodeAsString(
+      final EnodeURL enodeURL, final String ip, final int listeningPort, final int discoveryPort) {
+    final String uri =
+        String.format(
+            "enode://%s@%s:%d", enodeURL.getNodeId().toUnprefixedString(), ip, listeningPort);
+    if (listeningPort != discoveryPort) {
+      return URI.create(uri + String.format("?discport=%d", discoveryPort));
+    } else {
+      return URI.create(uri);
+    }
+  }
+
+  private String getIp(final EnodeURL enode) {
+    return natService
+        .filter(NatService::isNatEnvironment)
+        .flatMap(NatService::queryExternalIPAddress)
+        .orElseGet(enode::getIpAsString);
+  }
+
+  private int getDiscoveryPort(final EnodeURL enode) {
+    return natService
+        .filter(NatService::isNatEnvironment)
+        .flatMap(s -> s.getPortMapping(NatServiceType.DISCOVERY, NetworkProtocol.UDP))
+        .map(NatPortMapping::getExternalPort)
+        .orElseGet(enode::getDiscoveryPortOrZero);
+  }
+
+  private int getListeningPort(final EnodeURL enode) {
+    return natService
+        .filter(NatService::isNatEnvironment)
+        .flatMap(s -> s.getPortMapping(NatServiceType.RLPX, NetworkProtocol.TCP))
+        .map(NatPortMapping::getExternalPort)
+        .orElse(enode.getListeningPortOrZero());
   }
 }

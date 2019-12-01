@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningC
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
+import org.hyperledger.besu.nat.NatService;
 
 import java.math.BigInteger;
 import java.util.Collection;
@@ -66,7 +67,8 @@ public class JsonRpcMethodsFactory {
       final PrivacyParameters privacyParameters,
       final JsonRpcConfiguration jsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
-      final MetricsConfiguration metricsConfiguration) {
+      final MetricsConfiguration metricsConfiguration,
+      final Optional<NatService> natService) {
     final BlockchainQueries blockchainQueries =
         new BlockchainQueries(blockchain, worldStateArchive);
     return methods(
@@ -88,7 +90,8 @@ public class JsonRpcMethodsFactory {
         privacyParameters,
         jsonRpcConfiguration,
         webSocketConfiguration,
-        metricsConfiguration);
+        metricsConfiguration,
+        natService);
   }
 
   public Map<String, JsonRpcMethod> methods(
@@ -110,7 +113,8 @@ public class JsonRpcMethodsFactory {
       final PrivacyParameters privacyParameters,
       final JsonRpcConfiguration jsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
-      final MetricsConfiguration metricsConfiguration) {
+      final MetricsConfiguration metricsConfiguration,
+      final Optional<NatService> natService) {
     final Map<String, JsonRpcMethod> enabled = new HashMap<>();
 
     if (!rpcApis.isEmpty()) {
@@ -120,7 +124,12 @@ public class JsonRpcMethodsFactory {
       final List<JsonRpcMethods> availableApiGroups =
           List.of(
               new AdminJsonRpcMethods(
-                  clientVersion, networkId, genesisConfigOptions, p2pNetwork, blockchainQueries),
+                  clientVersion,
+                  networkId,
+                  genesisConfigOptions,
+                  p2pNetwork,
+                  blockchainQueries,
+                  natService),
               new DebugJsonRpcMethods(blockchainQueries, protocolSchedule, metricsSystem),
               new EeaJsonRpcMethods(
                   blockchainQueries, protocolSchedule, transactionPool, privacyParameters),
