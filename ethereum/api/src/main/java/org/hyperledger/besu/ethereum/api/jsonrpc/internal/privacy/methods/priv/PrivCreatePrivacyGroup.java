@@ -116,10 +116,11 @@ public class PrivCreatePrivacyGroup extends PrivacyApiMethod {
         .either(
             () ->
                 // TODO: return privacy group creation receipt which has PMT hash and PGID
-                new JsonRpcSuccessResponse(requestContext.getRequest().getId(), BytesValues.asBase64String(pgId)),
+                new JsonRpcSuccessResponse(
+                    requestContext.getRequest().getId(), BytesValues.asBase64String(pgId)),
             errorReason ->
                 new JsonRpcErrorResponse(
-                        requestContext.getRequest().getId(),
+                    requestContext.getRequest().getId(),
                     JsonRpcErrorConverter.convertTransactionInvalidReason(errorReason)));
   }
 

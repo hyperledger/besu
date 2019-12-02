@@ -101,7 +101,7 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
             blockchainQueries.getBlockchain(),
             privateStateRootResolver,
             privacyParameters.getPrivateWorldStateArchive()),
-            groupCreationTransactionFactory);
+        groupCreationTransactionFactory);
   }
 
   protected abstract Map<String, JsonRpcMethod> create(

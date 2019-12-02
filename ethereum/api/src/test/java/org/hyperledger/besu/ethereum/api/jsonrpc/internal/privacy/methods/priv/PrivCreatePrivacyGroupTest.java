@@ -59,6 +59,7 @@ public class PrivCreatePrivacyGroupTest {
   private static final String DESCRIPTION = "testDesc";
   private static final String[] ADDRESSES =
       new String[] {FROM, "1mY8srzYiV7TO8dmOx9w7q9XkGVZbisBx8ZPFvVDTjg="};
+  private static final String PRIVACY_GROUP_ID = "pjsupmFSHZdZF3iYoGWmn5gzv5Ew8i3AAbH3iWtfvKI=";
   private static final Transaction PUBLIC_TRANSACTION =
       Transaction.builder()
           .nonce(0)
@@ -111,8 +112,7 @@ public class PrivCreatePrivacyGroupTest {
         (JsonRpcSuccessResponse) privCreatePrivacyGroup.response(request);
 
     final String result = (String) response.getResult();
-    final String expected = "0xb7efb14455a2e55023531a6957f502b7ff1ef705be231075964e7354206a575b";
-    assertThat(result).isEqualTo(expected);
+    assertThat(result).isEqualTo(PRIVACY_GROUP_ID);
   }
 
   @Test
@@ -144,8 +144,7 @@ public class PrivCreatePrivacyGroupTest {
         (JsonRpcSuccessResponse) privCreatePrivacyGroup.response(request);
 
     final String result = (String) response.getResult();
-    final String expected = "0xb7efb14455a2e55023531a6957f502b7ff1ef705be231075964e7354206a575b";
-    assertThat(result).isEqualTo(expected);
+    assertThat(result).isEqualTo(PRIVACY_GROUP_ID);
   }
 
   @Test
@@ -177,8 +176,7 @@ public class PrivCreatePrivacyGroupTest {
         (JsonRpcSuccessResponse) privCreatePrivacyGroup.response(request);
 
     final String result = (String) response.getResult();
-    final String expected = "0xb7efb14455a2e55023531a6957f502b7ff1ef705be231075964e7354206a575b";
-    assertThat(result).isEqualTo(expected);
+    assertThat(result).isEqualTo(PRIVACY_GROUP_ID);
   }
 
   @Test
@@ -206,8 +204,7 @@ public class PrivCreatePrivacyGroupTest {
         (JsonRpcSuccessResponse) privCreatePrivacyGroup.response(request);
 
     final String result = (String) response.getResult();
-    final String expected = "0xb7efb14455a2e55023531a6957f502b7ff1ef705be231075964e7354206a575b";
-    assertThat(result).isEqualTo(expected);
+    assertThat(result).isEqualTo(PRIVACY_GROUP_ID);
   }
 
   @Test
@@ -295,18 +292,18 @@ public class PrivCreatePrivacyGroupTest {
 
   @Test
   public void returnPrivacyDisabledErrorWhenPrivacyIsDisabled() {
-      final PrivateTransactionHandler failingTransactionHandler =
-              mock(PrivateTransactionHandler.class);
-      when(failingTransactionHandler.sendToOrion(any(PrivateTransaction.class)))
-              .thenThrow(new EnclaveException(""));
+    final PrivateTransactionHandler failingTransactionHandler =
+        mock(PrivateTransactionHandler.class);
+    when(failingTransactionHandler.sendToOrion(any(PrivateTransaction.class)))
+        .thenThrow(new EnclaveException(""));
 
     when(privacyParameters.isEnabled()).thenReturn(false);
-      final PrivCreatePrivacyGroup privCreatePrivacyGroup =
-              new PrivCreatePrivacyGroup(
-                      privacyParameters,
-                      new RandomSigningGroupCreationTransactionFactory(Address.DEFAULT_PRIVACY),
-                      failingTransactionHandler,
-                      transactionPool);
+    final PrivCreatePrivacyGroup privCreatePrivacyGroup =
+        new PrivCreatePrivacyGroup(
+            privacyParameters,
+            new RandomSigningGroupCreationTransactionFactory(Address.DEFAULT_PRIVACY),
+            failingTransactionHandler,
+            transactionPool);
 
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
