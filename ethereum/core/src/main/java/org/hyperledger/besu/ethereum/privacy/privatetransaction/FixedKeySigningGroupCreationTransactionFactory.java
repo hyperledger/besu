@@ -32,10 +32,7 @@ public class FixedKeySigningGroupCreationTransactionFactory
   private final Address sender;
 
   public FixedKeySigningGroupCreationTransactionFactory(
-      final Address privacyPrecompileAddress,
-      final NonceProvider nonceProvider,
-      final KeyPair signingKey) {
-    super(privacyPrecompileAddress);
+      final NonceProvider nonceProvider, final KeyPair signingKey) {
     this.nonceProvider = nonceProvider;
     this.signingKey = signingKey;
     this.sender = Util.publicKeyToAddress(signingKey.getPublicKey());

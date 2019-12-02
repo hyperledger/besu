@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.privacy.privatetransaction;
 
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.util.bytes.BytesValue;
 
@@ -23,10 +22,6 @@ import java.util.List;
 import java.util.Optional;
 
 public class RandomSigningGroupCreationTransactionFactory extends GroupCreationTransactionFactory {
-
-  public RandomSigningGroupCreationTransactionFactory(final Address privacyPrecompileAddress) {
-    super(privacyPrecompileAddress);
-  }
 
   @Override
   public PrivateTransaction create(

@@ -31,6 +31,8 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
+import org.hyperledger.besu.ethereum.core.DefaultEvmAccount;
+import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
@@ -142,7 +144,12 @@ public class PrivacyPrecompiledContractIntegrationTest {
 
     worldStateArchive = mock(WorldStateArchive.class);
     final MutableWorldState mutableWorldState = mock(MutableWorldState.class);
-    when(mutableWorldState.updater()).thenReturn(mock(WorldUpdater.class));
+    final WorldUpdater worldUpdater = mock(WorldUpdater.class);
+    final DefaultEvmAccount privacyProxyAccount = mock(DefaultEvmAccount.class);
+    when(worldUpdater.createAccount(any(Address.class))).thenReturn(privacyProxyAccount);
+    final MutableAccount mutablePrivacyProxyAccount = mock(MutableAccount.class);
+    when(privacyProxyAccount.getMutable()).thenReturn(mutablePrivacyProxyAccount);
+    when(mutableWorldState.updater()).thenReturn(worldUpdater);
     when(worldStateArchive.getMutable()).thenReturn(mutableWorldState);
     when(worldStateArchive.getMutable(any())).thenReturn(Optional.of(mutableWorldState));
 
@@ -167,7 +174,7 @@ public class PrivacyPrecompiledContractIntegrationTest {
   }
 
   @Test
-  public void testUpCheck() throws InterruptedException {
+  public void testUpCheck() {
     assertThat(enclave.upCheck()).isTrue();
   }
 

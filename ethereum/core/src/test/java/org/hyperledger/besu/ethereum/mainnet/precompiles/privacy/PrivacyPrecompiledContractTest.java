@@ -29,7 +29,9 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
+import org.hyperledger.besu.ethereum.core.DefaultEvmAccount;
 import org.hyperledger.besu.ethereum.core.LogSeries;
+import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
@@ -122,7 +124,13 @@ public class PrivacyPrecompiledContractTest {
     final WorldStateArchive worldStateArchive;
     worldStateArchive = mock(WorldStateArchive.class);
     final MutableWorldState mutableWorldState = mock(MutableWorldState.class);
-    when(mutableWorldState.updater()).thenReturn(mock(WorldUpdater.class));
+    final WorldUpdater worldUpdater = mock(WorldUpdater.class);
+    final DefaultEvmAccount privacyProxyAccount = mock(DefaultEvmAccount.class);
+    final MutableAccount mutablePrivacyProxyAccount = mock(MutableAccount.class);
+
+    when(privacyProxyAccount.getMutable()).thenReturn(mutablePrivacyProxyAccount);
+    when(worldUpdater.createAccount(any(Address.class))).thenReturn(privacyProxyAccount);
+    when(mutableWorldState.updater()).thenReturn(worldUpdater);
     when(worldStateArchive.getMutable()).thenReturn(mutableWorldState);
     when(worldStateArchive.getMutable(any())).thenReturn(Optional.of(mutableWorldState));
 

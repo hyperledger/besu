@@ -131,15 +131,11 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
       final BlockchainQueries blockchainQueries,
       final PendingTransactions pendingTransactions) {
 
-    final Address privateContractAddress =
-        Address.privacyPrecompiled(privacyParameters.getPrivacyAddress());
-
     if (privacyParameters.getSigningKeyPair().isPresent()) {
       return new FixedKeySigningGroupCreationTransactionFactory(
-          privateContractAddress,
           new LatestNonceProvider(blockchainQueries, pendingTransactions),
           privacyParameters.getSigningKeyPair().get());
     }
-    return new RandomSigningGroupCreationTransactionFactory(privateContractAddress);
+    return new RandomSigningGroupCreationTransactionFactory();
   }
 }
