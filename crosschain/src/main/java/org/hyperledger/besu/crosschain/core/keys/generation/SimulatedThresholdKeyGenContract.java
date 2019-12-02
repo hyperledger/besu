@@ -22,11 +22,12 @@ import java.util.TreeMap;
 // Simulates a contract which sits on the sidechain.
 class SimulatedThresholdKeyGenContract {
   private long expectedNextVersion;
+  private static final long KEY_VERSION_OF_FIRST_KEY = 1;
 
   private Map<Long, SimulatedThresholdKeyGenContractSingleKeyGen> keyGens = new TreeMap<>();
 
   public SimulatedThresholdKeyGenContract() {
-    this(0);
+    this(KEY_VERSION_OF_FIRST_KEY);
   }
 
   /**

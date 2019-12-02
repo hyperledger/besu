@@ -57,7 +57,7 @@ public class CrosschainKeyManager {
 
   Map<String, CoordinationContractInformation> coordinationContracts = new TreeMap<>();
 
-  private long NO_ACTIVE_VERSION = -1;
+  private long NO_ACTIVE_VERSION = 0;
   long activeKeyVersion = NO_ACTIVE_VERSION;
 
   public Map<Long, ThresholdKeyGeneration> activeKeyGenerations = new TreeMap<>();
