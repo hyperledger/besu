@@ -106,7 +106,7 @@ public abstract class CrosschainAcceptanceTestBase extends AcceptanceTestBase {
 
   public void addMultichainNode(final BesuNode node, final BesuNode nodeToAdd) {
     String ipAddress = nodeToAdd.jsonRpcListenHost1();
-    int port = nodeToAdd.jsonRpcListenPort1();
+    int port = nodeToAdd.getJsonRpcSocketPort1().intValue();
     String ipAddressAndPort = ipAddress + ":" + port;
     BigInteger chainId = nodeToAdd.getChainId();
 

@@ -272,6 +272,13 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     }
   }
 
+  public Integer getJsonRpcSocketPort1() {
+    if (isWebSocketsRpcEnabled()) {
+      return Integer.valueOf(portsProperties.getProperty("json-rpc"));
+    }
+    throw new RuntimeException("JSON RPC Not Enabled");
+  }
+
   @Override
   public String getHostName() {
     return LOCALHOST;
@@ -479,13 +486,6 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     }
   }
 
-  public int jsonRpcListenPort1() {
-    if (isJsonRpcEnabled()) {
-      return jsonRpcConfiguration().getPort();
-    }
-    throw new RuntimeException("JSON RPC Not Enabled");
-  }
-
   boolean wsRpcEnabled() {
     return isWebSocketsRpcEnabled();
   }
@@ -655,9 +655,5 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
 
   public JsonRpc2_0Besu getJsonRpc() {
     return nodeRequests().eth();
-  }
-
-  public Web3jService getJsonRpcWeb3jServiceFromHttpUrl(final String fallbackUrl) {
-    return jsonRpcBaseUrl().map(HttpService::new).orElse(new HttpService(fallbackUrl));
   }
 }

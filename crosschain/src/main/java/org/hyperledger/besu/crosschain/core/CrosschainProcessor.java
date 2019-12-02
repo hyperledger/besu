@@ -300,7 +300,7 @@ public class CrosschainProcessor {
                     .UNLOCK_COMMIT_SIGNALLING_TRANSACTION)
             .nonce(nonce)
             .gasPrice(Wei.ZERO)
-            .gasLimit(10000000)
+            .gasLimit(100000)
             .to(toAddress)
             .value(Wei.ZERO)
             .payload(BytesValue.EMPTY)
