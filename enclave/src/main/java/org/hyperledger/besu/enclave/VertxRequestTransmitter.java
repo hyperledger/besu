@@ -27,7 +27,7 @@ import io.vertx.core.http.HttpMethod;
 public class VertxRequestTransmitter implements RequestTransmitter {
 
   private final HttpClient client;
-  private static final long REQUEST_TIMEOUT_MS = 1000L;
+  private static final long REQUEST_TIMEOUT_MS = 5000L;
 
   public VertxRequestTransmitter(final HttpClient httpClient) {
     this.client = httpClient;

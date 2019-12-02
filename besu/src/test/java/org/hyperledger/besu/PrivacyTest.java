@@ -49,6 +49,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 
 import io.vertx.core.Vertx;
+import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -59,9 +60,15 @@ public class PrivacyTest {
   private static final long CACHE_CAPACITY = 8388608;
   private static final int MAX_BACKGROUND_COMPACTIONS = 4;
   private static final int BACKGROUND_THREAD_COUNT = 4;
+  private final Vertx vertx = Vertx.vertx();
 
   private static final Integer ADDRESS = 9;
   @Rule public final TemporaryFolder folder = new TemporaryFolder();
+
+  @After
+  public void cleanUp() {
+    vertx.close();
+  }
 
   @Test
   public void privacyPrecompiled() throws IOException, URISyntaxException {
@@ -73,7 +80,7 @@ public class PrivacyTest {
             .setEnabled(true)
             .setEnclaveUrl(new URI("http://127.0.0.1:8000"))
             .setStorageProvider(createKeyValueStorageProvider(dataDir, dbDir))
-            .setEnclaveFactory(new EnclaveFactory(Vertx.vertx()))
+            .setEnclaveFactory(new EnclaveFactory(vertx))
             .build();
     final BesuController<?> besuController =
         new BesuController.Builder()
