@@ -32,7 +32,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private OptionalLong constantinopleBlockNumber = OptionalLong.empty();
   private OptionalLong constantinopleFixBlockNumber = OptionalLong.empty();
   private OptionalLong istanbulBlockNumber = OptionalLong.empty();
-  private OptionalLong eip2384BlockNumber = OptionalLong.empty();
+  private OptionalLong muirGlacierBlockNumber = OptionalLong.empty();
   private final OptionalLong classicForkBlock = OptionalLong.empty();
   private final OptionalLong ecip1015BlockNumber = OptionalLong.empty();
   private final OptionalLong diehardBlockNumber = OptionalLong.empty();
@@ -129,8 +129,8 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public OptionalLong getEIP2384BlockNumber() {
-    return eip2384BlockNumber;
+  public OptionalLong getMuirGlacierBlockNumber() {
+    return muirGlacierBlockNumber;
   }
 
   @Override
@@ -200,7 +200,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
     getConstantinopleBlockNumber().ifPresent(l -> builder.put("constantinopleBlock", l));
     getConstantinopleFixBlockNumber().ifPresent(l -> builder.put("constantinopleFixBlock", l));
     getIstanbulBlockNumber().ifPresent(l -> builder.put("istanbulBlock", l));
-    getEIP2384BlockNumber().ifPresent(l -> builder.put("eip2384Block", l));
+    getMuirGlacierBlockNumber().ifPresent(l -> builder.put("muirGlacierBlock", l));
     getContractSizeLimit().ifPresent(l -> builder.put("contractSizeLimit", l));
     getEvmStackSize().ifPresent(l -> builder.put("evmStackSize", l));
     if (isClique()) {
@@ -263,8 +263,8 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
     return this;
   }
 
-  public StubGenesisConfigOptions eip2384Block(final long blockNumber) {
-    eip2384BlockNumber = OptionalLong.of(blockNumber);
+  public StubGenesisConfigOptions muirGlacierBlock(final long blockNumber) {
+    muirGlacierBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
 

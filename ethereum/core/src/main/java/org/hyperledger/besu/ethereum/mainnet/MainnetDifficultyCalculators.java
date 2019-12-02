@@ -38,7 +38,7 @@ public abstract class MainnetDifficultyCalculators {
 
   private static final long BYZANTIUM_FAKE_BLOCK_OFFSET = 2_999_999L;
   private static final long CONSTANTINOPLE_FAKE_BLOCK_OFFSET = 4_999_999L;
-  private static final long EIP2384_FAKE_BLOCK_OFFSET = 8_999_999L;
+  private static final long MUIR_GLACIER_FAKE_BLOCK_OFFSET = 8_999_999L;
 
   private MainnetDifficultyCalculators() {}
 
@@ -78,9 +78,9 @@ public abstract class MainnetDifficultyCalculators {
       (time, parent, protocolContext) ->
           calculateThawedDifficulty(time, parent, CONSTANTINOPLE_FAKE_BLOCK_OFFSET);
 
-  static DifficultyCalculator<Void> EIP2384 =
+  static DifficultyCalculator<Void> MUIR_GLACIER =
       (time, parent, protocolContext) ->
-          calculateThawedDifficulty(time, parent, EIP2384_FAKE_BLOCK_OFFSET);
+          calculateThawedDifficulty(time, parent, MUIR_GLACIER_FAKE_BLOCK_OFFSET);
 
   private static BigInteger calculateThawedDifficulty(
       final long time, final BlockHeader parent, final long fakeBlockOffset) {

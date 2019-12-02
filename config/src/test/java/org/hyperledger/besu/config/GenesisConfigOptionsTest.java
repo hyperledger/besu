@@ -134,9 +134,9 @@ public class GenesisConfigOptionsTest {
   }
 
   @Test
-  public void shouldGetEIP2384BlockNumber() {
-    final GenesisConfigOptions config = fromConfigOptions(singletonMap("EIP2384Block", 1000));
-    assertThat(config.getEIP2384BlockNumber()).hasValue(1000);
+  public void shouldGetMuirGlacierBlockNumber() {
+    final GenesisConfigOptions config = fromConfigOptions(singletonMap("muirGlacierBlock", 1000));
+    assertThat(config.getMuirGlacierBlockNumber()).hasValue(1000);
   }
 
   @Test
@@ -150,7 +150,7 @@ public class GenesisConfigOptionsTest {
     assertThat(config.getConstantinopleBlockNumber()).isEmpty();
     assertThat(config.getConstantinopleFixBlockNumber()).isEmpty();
     assertThat(config.getIstanbulBlockNumber()).isEmpty();
-    assertThat(config.getEIP2384BlockNumber()).isEmpty();
+    assertThat(config.getMuirGlacierBlockNumber()).isEmpty();
   }
 
   @Test

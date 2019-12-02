@@ -56,7 +56,7 @@ public interface GenesisConfigOptions {
 
   OptionalLong getIstanbulBlockNumber();
 
-  OptionalLong getEIP2384BlockNumber();
+  OptionalLong getMuirGlacierBlockNumber();
 
   /**
    * Block number for the Dao Fork, this value is used to tell node to connect with peer that did

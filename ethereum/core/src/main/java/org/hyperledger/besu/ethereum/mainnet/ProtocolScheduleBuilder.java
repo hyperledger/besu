@@ -153,8 +153,8 @@ public class ProtocolScheduleBuilder<C> {
             isRevertReasonEnabled));
     addProtocolSpec(
         protocolSchedule,
-        config.getEIP2384BlockNumber(),
-        MainnetProtocolSpecs.eip2384Definition(
+        config.getMuirGlacierBlockNumber(),
+        MainnetProtocolSpecs.muirGlacierDefinition(
             chainId,
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
@@ -260,7 +260,8 @@ public class ProtocolScheduleBuilder<C> {
         validateForkOrder(
             "ConstantinopleFix", config.getConstantinopleFixBlockNumber(), lastForkBlock);
     lastForkBlock = validateForkOrder("Istanbul", config.getIstanbulBlockNumber(), lastForkBlock);
-    lastForkBlock = validateForkOrder("EIP2384", config.getEIP2384BlockNumber(), lastForkBlock);
+    lastForkBlock =
+        validateForkOrder("MuirGlacier", config.getMuirGlacierBlockNumber(), lastForkBlock);
     assert (lastForkBlock >= 0);
   }
 

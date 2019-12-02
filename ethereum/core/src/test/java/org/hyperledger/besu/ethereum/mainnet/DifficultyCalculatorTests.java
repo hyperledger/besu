@@ -92,12 +92,24 @@ public class DifficultyCalculatorTests {
           MainnetProtocolSchedule.fromConfig(
               GenesisConfigFile.fromConfig("{\"config\": {\"constantinopleBlock\":0}}")
                   .getConfigOptions())
-          // },
-          // new Object[] {
-          //  "/BasicTests/difficultyEIP2384_random.json",
-          //  MainnetProtocolSchedule.fromConfig(
-          //      GenesisConfigFile.fromConfig("{\"config\": {\"Eip2384Block\":0}}")
-          //          .getConfigOptions())
+        },
+        new Object[] {
+          "/BasicTests/difficultyEIP2384.json",
+          MainnetProtocolSchedule.fromConfig(
+              GenesisConfigFile.fromConfig("{\"config\":{\"muirGlacierBlock\":0}}")
+                  .getConfigOptions())
+        },
+        new Object[] {
+          "/BasicTests/difficultyEIP2384_random.json",
+          MainnetProtocolSchedule.fromConfig(
+              GenesisConfigFile.fromConfig("{\"config\":{\"muirGlacierBlock\":0}}")
+                  .getConfigOptions())
+        },
+        new Object[] {
+          "/BasicTests/difficultyEIP2384_random_to20M.json",
+          MainnetProtocolSchedule.fromConfig(
+              GenesisConfigFile.fromConfig("{\"config\":{\"muirGlacierBlock\":0}}")
+                  .getConfigOptions())
         });
   }
 

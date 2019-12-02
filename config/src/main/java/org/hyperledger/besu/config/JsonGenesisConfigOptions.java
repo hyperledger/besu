@@ -196,8 +196,8 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public OptionalLong getEIP2384BlockNumber() {
-    return getOptionalLong("eip2384block");
+  public OptionalLong getMuirGlacierBlockNumber() {
+    return getOptionalLong("muirglacierblock");
   }
 
   @Override
@@ -273,7 +273,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     getConstantinopleBlockNumber().ifPresent(l -> builder.put("constantinopleBlock", l));
     getConstantinopleFixBlockNumber().ifPresent(l -> builder.put("constantinopleFixBlock", l));
     getIstanbulBlockNumber().ifPresent(l -> builder.put("istanbulBlock", l));
-    getEIP2384BlockNumber().ifPresent(l -> builder.put("EIP2384Block", l));
+    getMuirGlacierBlockNumber().ifPresent(l -> builder.put("muirGlacierBlock", l));
     getContractSizeLimit().ifPresent(l -> builder.put("contractSizeLimit", l));
     getEvmStackSize().ifPresent(l -> builder.put("evmstacksize", l));
     if (isClique()) {

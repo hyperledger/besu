@@ -314,14 +314,14 @@ public abstract class MainnetProtocolSpecs {
         .name("Istanbul");
   }
 
-  static ProtocolSpecBuilder<Void> eip2384Definition(
+  static ProtocolSpecBuilder<Void> muirGlacierDefinition(
       final Optional<BigInteger> chainId,
       final OptionalInt contractSizeLimit,
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason) {
     return istanbulDefinition(chainId, contractSizeLimit, configStackSizeLimit, enableRevertReason)
-        .difficultyCalculator(MainnetDifficultyCalculators.EIP2384)
-        .name("EIP2384");
+        .difficultyCalculator(MainnetDifficultyCalculators.MUIR_GLACIER)
+        .name("MuirGlacier");
   }
 
   private static TransactionReceipt frontierTransactionReceiptFactory(
