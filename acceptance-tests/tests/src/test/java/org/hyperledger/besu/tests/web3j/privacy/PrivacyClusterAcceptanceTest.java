@@ -17,6 +17,7 @@ package org.hyperledger.besu.tests.web3j.privacy;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.enclave.Enclave;
+import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.enclave.types.ReceiveRequest;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -30,6 +31,8 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 
+import io.vertx.core.Vertx;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.web3j.crypto.Credentials;
@@ -52,6 +55,8 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
   private PrivacyNode alice;
   private PrivacyNode bob;
   private PrivacyNode charlie;
+  private final Vertx vertx = Vertx.vertx();
+  private final EnclaveFactory enclaveFactory = new EnclaveFactory(vertx);
 
   @Before
   public void setUp() throws Exception {
@@ -63,6 +68,11 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
     charlie =
         privacyBesu.createPrivateTransactionEnabledNode("node3", privacyAccountResolver.resolve(2));
     privacyCluster.start(alice, bob, charlie);
+  }
+
+  @After
+  public void cleanUp() {
+    vertx.close();
   }
 
   @Test
@@ -148,14 +158,14 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
     final String transactionKey =
         alice.execute(privacyTransactions.privDistributeTransaction(signedPrivateTransaction));
 
-    final Enclave aliceEnclave = new Enclave(alice.getOrion().clientUrl());
+    final Enclave aliceEnclave = enclaveFactory.createVertxEnclave(alice.getOrion().clientUrl());
     final ReceiveResponse aliceRR =
         aliceEnclave.receive(
             new ReceiveRequest(
                 BytesValues.asBase64String(BytesValue.fromHexString(transactionKey)),
                 alice.getEnclaveKey()));
 
-    final Enclave bobEnclave = new Enclave(bob.getOrion().clientUrl());
+    final Enclave bobEnclave = enclaveFactory.createVertxEnclave(bob.getOrion().clientUrl());
     final ReceiveResponse bobRR =
         bobEnclave.receive(
             new ReceiveRequest(

@@ -21,7 +21,6 @@ import org.hyperledger.besu.enclave.types.ReceiveRequest;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.privacy.PrivateTransactionGroupResult;
@@ -36,21 +35,18 @@ import org.hyperledger.besu.util.bytes.BytesValues;
 
 import org.apache.logging.log4j.Logger;
 
-public class PrivGetPrivateTransaction implements JsonRpcMethod {
+public class PrivGetPrivateTransaction extends PrivacyApiMethod {
 
   private static final Logger LOG = getLogger();
 
   private final BlockchainQueries blockchain;
   private final Enclave enclave;
-  private final PrivacyParameters privacyParameters;
 
   public PrivGetPrivateTransaction(
-      final BlockchainQueries blockchain,
-      final Enclave enclave,
-      final PrivacyParameters privacyParameters) {
+      final BlockchainQueries blockchain, final PrivacyParameters privacyParameters) {
+    super(privacyParameters);
     this.blockchain = blockchain;
-    this.enclave = enclave;
-    this.privacyParameters = privacyParameters;
+    this.enclave = privacyParameters.getEnclave();
   }
 
   @Override
@@ -59,7 +55,7 @@ public class PrivGetPrivateTransaction implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
+  public JsonRpcResponse doResponse(final JsonRpcRequestContext requestContext) {
     LOG.trace("Executing {}", RpcMethod.PRIV_GET_PRIVATE_TRANSACTION.getMethodName());
 
     final Hash hash = requestContext.getRequiredParameter(0, Hash.class);

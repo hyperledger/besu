@@ -25,6 +25,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.contract.ContractTr
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.eth.EthTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.net.NetTransactions;
 
+import io.vertx.core.Vertx;
 import org.junit.After;
 import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
@@ -42,6 +43,7 @@ public class PrivacyAcceptanceTestBase {
   protected final ContractTransactions contractTransactions;
   protected final NetConditions net;
   protected final EthTransactions ethTransactions;
+  private final Vertx vertx = Vertx.vertx();
 
   public PrivacyAcceptanceTestBase() {
     ethTransactions = new EthTransactions();
@@ -49,7 +51,7 @@ public class PrivacyAcceptanceTestBase {
     privacyTransactions = new PrivacyTransactions();
     privateContractVerifier = new PrivateContractVerifier();
     privateTransactionVerifier = new PrivateTransactionVerifier(privacyTransactions);
-    privacyBesu = new PrivacyNodeFactory();
+    privacyBesu = new PrivacyNodeFactory(vertx);
     privateContractTransactions = new PrivateContractTransactions();
     privacyCluster = new PrivacyCluster(net);
     privacyAccountResolver = new PrivacyAccountResolver();
@@ -59,5 +61,6 @@ public class PrivacyAcceptanceTestBase {
   @After
   public void tearDownAcceptanceTestBase() {
     privacyCluster.close();
+    vertx.close();
   }
 }
