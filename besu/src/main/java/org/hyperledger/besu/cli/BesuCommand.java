@@ -65,6 +65,7 @@ import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.controller.KeyPairUtil;
+import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
@@ -739,6 +740,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private BesuConfiguration pluginCommonConfiguration;
   private final Supplier<ObservableMetricsSystem> metricsSystem =
       Suppliers.memoize(() -> PrometheusMetricsSystem.init(metricsConfiguration()));
+  private Vertx vertx;
 
   public BesuCommand(
       final Logger logger,
@@ -804,6 +806,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     try {
       prepareLogging();
       logger.info("Starting Besu version: {}", BesuInfo.nodeName(identityString));
+
+      // Need to create vertx after cmdline has been parsed, such that metricSystem is configurable
+      vertx = createVertx(createVertxOptions(metricsSystem.get()));
+
       validateOptions().configure().controller().startPlugins().startSynchronization();
     } catch (final Exception e) {
       throw new ParameterException(this.commandLine, e.getMessage(), e);
@@ -1377,9 +1383,21 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       privacyParametersBuilder.setPrivateKeyPath(privacyMarkerTransactionSigningKeyPath);
       privacyParametersBuilder.setStorageProvider(
           privacyKeyStorageProvider(keyValueStorageName + "-privacy"));
+      privacyParametersBuilder.setEnclaveFactory(new EnclaveFactory(vertx));
+    } else {
+      if (anyPrivacyApiEnabled()) {
+        logger.warn("Privacy is disabled. Cannot use EEA/PRIV API methods when not using Privacy.");
+      }
     }
 
     return privacyParametersBuilder.build();
+  }
+
+  private boolean anyPrivacyApiEnabled() {
+    return rpcHttpApis.contains(RpcApis.EEA)
+        || rpcWsApis.contains(RpcApis.EEA)
+        || rpcHttpApis.contains(RpcApis.PRIV)
+        || rpcWsApis.contains(RpcApis.PRIV);
   }
 
   private PrivacyKeyValueStorageProvider privacyKeyStorageProvider(final String name) {
@@ -1453,7 +1471,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     final ObservableMetricsSystem metricsSystem = this.metricsSystem.get();
     final Runner runner =
         runnerBuilder
-            .vertx(Vertx.vertx(createVertxOptions(metricsSystem)))
+            .vertx(vertx)
             .besuController(controller)
             .p2pEnabled(p2pEnabled)
             .natMethod(natMethod)
@@ -1481,6 +1499,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     addShutdownHook(runner);
     runner.start();
     runner.awaitStop();
+  }
+
+  protected Vertx createVertx(final VertxOptions vertxOptions) {
+    return Vertx.vertx(vertxOptions);
   }
 
   private VertxOptions createVertxOptions(final MetricsSystem metricsSystem) {

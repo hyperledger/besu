@@ -16,11 +16,11 @@ package org.hyperledger.besu.plugin.services;
 
 import org.hyperledger.besu.plugin.Unstable;
 import org.hyperledger.besu.plugin.data.Address;
+import org.hyperledger.besu.plugin.data.Hash;
 import org.hyperledger.besu.plugin.data.LogWithMetadata;
 import org.hyperledger.besu.plugin.data.PropagatedBlockContext;
 import org.hyperledger.besu.plugin.data.SyncStatus;
 import org.hyperledger.besu.plugin.data.Transaction;
-import org.hyperledger.besu.plugin.data.UnformattedData;
 
 import java.util.List;
 import java.util.Optional;
@@ -114,8 +114,7 @@ public interface BesuEvents {
    * @param logListener The listener that will accept the log.
    * @return The id of the listener to be referred to used to remove the listener.
    */
-  long addLogListener(
-      List<Address> addresses, List<List<UnformattedData>> topics, LogListener logListener);
+  long addLogListener(List<Address> addresses, List<List<Hash>> topics, LogListener logListener);
 
   /**
    * Remove the log listener with the associated id.

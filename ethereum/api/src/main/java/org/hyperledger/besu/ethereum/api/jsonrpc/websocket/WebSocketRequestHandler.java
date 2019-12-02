@@ -46,20 +46,20 @@ public class WebSocketRequestHandler {
     this.methods = methods;
   }
 
-  public void handle(final String id, final Buffer buffer) {
-    handle(Optional.empty(), id, buffer, Optional.empty());
+  public void handle(final String id, final String payload) {
+    handle(Optional.empty(), id, payload, Optional.empty());
   }
 
   public void handle(
       final Optional<AuthenticationService> authenticationService,
       final String id,
-      final Buffer buffer,
+      final String payload,
       final Optional<User> user) {
     vertx.executeBlocking(
         future -> {
           final WebSocketRpcRequest request;
           try {
-            request = buffer.toJsonObject().mapTo(WebSocketRpcRequest.class);
+            request = Json.decodeValue(payload, WebSocketRpcRequest.class);
           } catch (final IllegalArgumentException | DecodeException e) {
             LOG.debug("Error mapping json to WebSocketRpcRequest", e);
             future.complete(new JsonRpcErrorResponse(null, JsonRpcError.INVALID_REQUEST));
@@ -88,6 +88,7 @@ public class WebSocketRequestHandler {
             future.complete(new JsonRpcErrorResponse(request.getId(), JsonRpcError.INTERNAL_ERROR));
           }
         },
+        false,
         result -> {
           if (result.succeeded()) {
             replyToClient(id, Json.encodeToBuffer(result.result()));

@@ -14,30 +14,30 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 
-public class PrivGetPrivacyPrecompileAddress extends PrivacyApiMethod {
+public abstract class PrivacyApiMethod implements JsonRpcMethod {
 
-  private final Integer privacyAddress;
+  protected final PrivacyParameters privacyParameters;
 
-  public PrivGetPrivacyPrecompileAddress(final PrivacyParameters privacyParameters) {
-    super(privacyParameters);
-    privacyAddress = privacyParameters.getPrivacyAddress();
+  protected PrivacyApiMethod(final PrivacyParameters privacyParameters) {
+    this.privacyParameters = privacyParameters;
   }
 
   @Override
-  public String getName() {
-    return RpcMethod.PRIV_GET_PRIVACY_PRECOMPILE_ADDRESS.getMethodName();
+  public final JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
+    if (privacyParameters.isEnabled()) {
+      return doResponse(requestContext);
+    } else {
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), JsonRpcError.PRIVACY_NOT_ENABLED);
+    }
   }
 
-  @Override
-  public JsonRpcResponse doResponse(final JsonRpcRequestContext requestContext) {
-    return new JsonRpcSuccessResponse(
-        requestContext.getRequest().getId(), Address.privacyPrecompiled(privacyAddress).toString());
-  }
+  public abstract JsonRpcResponse doResponse(final JsonRpcRequestContext request);
 }

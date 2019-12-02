@@ -26,7 +26,6 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import java.util.HashMap;
 
 import io.vertx.core.Vertx;
-import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.Json;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
@@ -76,8 +75,7 @@ public class EthUnsubscribeIntegrationTest {
             })
         .completionHandler(
             v ->
-                webSocketRequestHandler.handle(
-                    CONNECTION_ID, Buffer.buffer(Json.encode(unsubscribeRequestBody))));
+                webSocketRequestHandler.handle(CONNECTION_ID, Json.encode(unsubscribeRequestBody)));
 
     async.awaitSuccess(ASYNC_TIMEOUT);
   }
@@ -109,8 +107,7 @@ public class EthUnsubscribeIntegrationTest {
             })
         .completionHandler(
             v ->
-                webSocketRequestHandler.handle(
-                    CONNECTION_ID, Buffer.buffer(Json.encode(unsubscribeRequestBody))));
+                webSocketRequestHandler.handle(CONNECTION_ID, Json.encode(unsubscribeRequestBody)));
 
     async.awaitSuccess(ASYNC_TIMEOUT);
   }

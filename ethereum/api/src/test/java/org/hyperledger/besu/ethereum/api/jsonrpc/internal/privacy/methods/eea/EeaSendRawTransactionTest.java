@@ -21,6 +21,7 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.enclave.EnclaveException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
@@ -28,6 +29,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -37,7 +39,6 @@ import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionHandler;
 import org.hyperledger.besu.util.bytes.BytesValue;
 
-import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Optional;
 
@@ -114,9 +115,12 @@ public class EeaSendRawTransactionTest {
 
   @Mock private PrivateTransactionHandler privateTxHandler;
 
+  @Mock private PrivacyParameters privacyParameters;
+
   @Before
   public void before() {
-    method = new EeaSendRawTransaction(privateTxHandler, transactionPool);
+    when(privacyParameters.isEnabled()).thenReturn(true);
+    method = new EeaSendRawTransaction(privacyParameters, privateTxHandler, transactionPool);
   }
 
   @Test
@@ -283,9 +287,9 @@ public class EeaSendRawTransactionTest {
   }
 
   @Test
-  public void invalidTransactionIsSentToTransactionPool() throws Exception {
+  public void invalidTransactionIsSentToTransactionPool() {
     when(privateTxHandler.sendToOrion(any(PrivateTransaction.class)))
-        .thenThrow(new IOException("enclave failed to execute"));
+        .thenThrow(new EnclaveException("enclave failed to execute"));
 
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
@@ -382,5 +386,17 @@ public class EeaSendRawTransactionTest {
   @Test
   public void getMethodReturnsExpectedName() {
     assertThat(method.getName()).matches("eea_sendRawTransaction");
+  }
+
+  @Test
+  public void returnPrivacyDisabledErrorWhenPrivacyIsDisabled() {
+    when(privacyParameters.isEnabled()).thenReturn(false);
+
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest("1", "eea_sendRawTransaction", new Object[] {}));
+    final JsonRpcErrorResponse response = (JsonRpcErrorResponse) method.response(request);
+
+    assertThat(response.getError()).isEqualTo(JsonRpcError.PRIVACY_NOT_ENABLED);
   }
 }
