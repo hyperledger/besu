@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.privacy.PrivateNonceProvider;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionHandler;
+import org.hyperledger.besu.ethereum.privacy.privatetransaction.GroupCreationTransactionFactory;
 
 import java.util.Map;
 
@@ -47,7 +48,8 @@ public class EeaJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
   @Override
   protected Map<String, JsonRpcMethod> create(
       final PrivateTransactionHandler privateTransactionHandler,
-      final PrivateNonceProvider privateNonceProvider) {
+      final PrivateNonceProvider privateNonceProvider,
+      final GroupCreationTransactionFactory groupCreationTransactionFactory) {
     return mapOf(
         new EeaSendRawTransaction(
             getPrivacyParameters(), privateTransactionHandler, getTransactionPool()),

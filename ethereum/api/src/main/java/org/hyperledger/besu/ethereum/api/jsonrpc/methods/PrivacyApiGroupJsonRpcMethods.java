@@ -29,6 +29,9 @@ import org.hyperledger.besu.ethereum.privacy.PrivateTransactionHandler;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.FixedKeySigningPrivateMarkerTransactionFactory;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.PrivateMarkerTransactionFactory;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.RandomSigningPrivateMarkerTransactionFactory;
+import org.hyperledger.besu.ethereum.privacy.privatetransaction.FixedKeySigningGroupCreationTransactionFactory;
+import org.hyperledger.besu.ethereum.privacy.privatetransaction.GroupCreationTransactionFactory;
+import org.hyperledger.besu.ethereum.privacy.privatetransaction.RandomSigningGroupCreationTransactionFactory;
 
 import java.util.Map;
 
@@ -72,6 +75,10 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
         createPrivateMarkerTransactionFactory(
             privacyParameters, blockchainQueries, transactionPool.getPendingTransactions());
 
+    final GroupCreationTransactionFactory groupCreationTransactionFactory =
+        createGroupCreationTransactionFactory(
+            privacyParameters, blockchainQueries, transactionPool.getPendingTransactions());
+
     final PrivateStateRootResolver privateStateRootResolver =
         new PrivateStateRootResolver(privacyParameters.getPrivateStateStorage());
 
@@ -93,12 +100,14 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
         new ChainHeadPrivateNonceProvider(
             blockchainQueries.getBlockchain(),
             privateStateRootResolver,
-            privacyParameters.getPrivateWorldStateArchive()));
+            privacyParameters.getPrivateWorldStateArchive()),
+            groupCreationTransactionFactory);
   }
 
   protected abstract Map<String, JsonRpcMethod> create(
       final PrivateTransactionHandler privateTransactionHandler,
-      final PrivateNonceProvider privateNonceProvider);
+      final PrivateNonceProvider privateNonceProvider,
+      final GroupCreationTransactionFactory groupCreationTransactionFactory);
 
   private PrivateMarkerTransactionFactory createPrivateMarkerTransactionFactory(
       final PrivacyParameters privacyParameters,
@@ -115,5 +124,22 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
           privacyParameters.getSigningKeyPair().get());
     }
     return new RandomSigningPrivateMarkerTransactionFactory(privateContractAddress);
+  }
+
+  private GroupCreationTransactionFactory createGroupCreationTransactionFactory(
+      final PrivacyParameters privacyParameters,
+      final BlockchainQueries blockchainQueries,
+      final PendingTransactions pendingTransactions) {
+
+    final Address privateContractAddress =
+        Address.privacyPrecompiled(privacyParameters.getPrivacyAddress());
+
+    if (privacyParameters.getSigningKeyPair().isPresent()) {
+      return new FixedKeySigningGroupCreationTransactionFactory(
+          privateContractAddress,
+          new LatestNonceProvider(blockchainQueries, pendingTransactions),
+          privacyParameters.getSigningKeyPair().get());
+    }
+    return new RandomSigningGroupCreationTransactionFactory(privateContractAddress);
   }
 }

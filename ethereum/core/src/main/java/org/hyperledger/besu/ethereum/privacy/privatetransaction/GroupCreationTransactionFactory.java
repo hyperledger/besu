@@ -14,25 +14,25 @@
  */
 package org.hyperledger.besu.ethereum.privacy.privatetransaction;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
+import org.hyperledger.besu.ethereum.privacy.Restriction;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
-import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.List;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
+import java.util.Optional;
 
 public abstract class GroupCreationTransactionFactory {
 
-  private final static BytesValue DEFAULT_MANAGEMENT_CONTRACT_CODE = BytesValue.fromHexString("");
+  private static final BytesValue DEFAULT_MANAGEMENT_CONTRACT_CODE = BytesValue.fromHexString("");
   private final BytesValue manageManagementContractBinary;
 
   public GroupCreationTransactionFactory() {
-    this (DEFAULT_MANAGEMENT_CONTRACT_CODE);
+    this(DEFAULT_MANAGEMENT_CONTRACT_CODE);
   }
 
   public GroupCreationTransactionFactory(final BytesValue manageManagementContractBinary) {
@@ -43,15 +43,15 @@ public abstract class GroupCreationTransactionFactory {
       final BytesValue privacyGroupId,
       final BytesValue privateFrom,
       final List<BytesValue> participants,
-      final String name,
-      final String description);
+      final Optional<String> name,
+      final Optional<String> description);
 
   protected PrivateTransaction create(
       final BytesValue privateFrom,
       final BytesValue privacyGroupId,
       final List<BytesValue> participants,
-      final String name,
-      final String description,
+      final Optional<String> name,
+      final Optional<String> description,
       final long nonce,
       final KeyPair signingKey) {
 
@@ -65,20 +65,22 @@ public abstract class GroupCreationTransactionFactory {
     bytesValueRLPOutput.writeBytesValue(privacyGroupId);
     bytesValueRLPOutput.writeBytesValue(privateFrom);
     bytesValueRLPOutput.writeRLP(bytesValueRLPOutput1.encoded());
-    bytesValueRLPOutput.writeBytesValue(BytesValue.wrap(name.getBytes(UTF_8)));
-    bytesValueRLPOutput.writeBytesValue(BytesValue.wrap(description.getBytes(UTF_8)));
+    name.ifPresent(n -> bytesValueRLPOutput.writeBytesValue(BytesValue.wrap(n.getBytes(UTF_8))));
+    description.ifPresent(
+        d -> bytesValueRLPOutput.writeBytesValue(BytesValue.wrap(d.getBytes(UTF_8))));
     bytesValueRLPOutput.endList();
     final BytesValue rlpEncodedParameters = bytesValueRLPOutput.encoded();
     final BytesValue payload = manageManagementContractBinary.concat(rlpEncodedParameters);
 
     return PrivateTransaction.builder()
         .nonce(nonce)
-        .gasPrice(Wei.ZERO)
-        .gasLimit(0)
+        .gasPrice(Wei.of(1000))
+        .gasLimit(3000000)
         .value(Wei.ZERO)
         .payload(payload)
         .privateFrom(privateFrom)
-        .privacyGroupId(privacyGroupId)
+        .privateFor(participants)
+        .restriction(Restriction.RESTRICTED)
         .signAndBuild(signingKey);
   }
 }

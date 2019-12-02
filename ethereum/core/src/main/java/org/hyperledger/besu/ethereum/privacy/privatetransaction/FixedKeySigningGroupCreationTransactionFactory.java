@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.util.NonceProvider;
 import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.List;
+import java.util.Optional;
 
 public class FixedKeySigningGroupCreationTransactionFactory
     extends GroupCreationTransactionFactory {
@@ -45,8 +46,8 @@ public class FixedKeySigningGroupCreationTransactionFactory
       final BytesValue privacyGroupId,
       final BytesValue privateFrom,
       final List<BytesValue> participants,
-      final String name,
-      final String description) {
+      final Optional<String> name,
+      final Optional<String> description) {
     return create(
         privateFrom,
         privacyGroupId,

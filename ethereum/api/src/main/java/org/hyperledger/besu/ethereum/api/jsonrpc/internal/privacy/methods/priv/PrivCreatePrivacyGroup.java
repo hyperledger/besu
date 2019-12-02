@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
+import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcEnclaveErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -23,6 +24,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.parameters.Cre
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -38,6 +40,7 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.Logger;
@@ -93,19 +96,27 @@ public class PrivCreatePrivacyGroup extends PrivacyApiMethod {
             Arrays.stream(parameter.getAddresses())
                 .map(BytesValues::fromBase64)
                 .collect(Collectors.toList()),
-            parameter.getName(),
-            parameter.getDescription());
-    privateTransactionHandler.sendToOrion(privateTransaction);
+            Optional.ofNullable(parameter.getName()),
+            Optional.ofNullable(parameter.getDescription()));
+
+    final String transactionEnclaveKey;
+    try {
+      transactionEnclaveKey = privateTransactionHandler.sendToOrion(privateTransaction);
+    } catch (final Exception e) {
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(),
+          JsonRpcEnclaveErrorConverter.convertEnclaveInvalidReason(e.getMessage()));
+    }
+
     final Transaction privacyMarkerTransaction =
         privateTransactionHandler.createPrivacyMarkerTransaction(
-            privacyParameters.getEnclavePublicKey(), privateTransaction);
+            transactionEnclaveKey, privateTransaction);
     return transactionPool
         .addLocalTransaction(privacyMarkerTransaction)
         .either(
             () ->
                 // TODO: return privacy group creation receipt which has PMT hash and PGID
-                new JsonRpcSuccessResponse(
-                        requestContext.getRequest().getId(), privacyMarkerTransaction.getHash().toString()),
+                new JsonRpcSuccessResponse(requestContext.getRequest().getId(), BytesValues.asBase64String(pgId)),
             errorReason ->
                 new JsonRpcErrorResponse(
                         requestContext.getRequest().getId(),
@@ -125,6 +136,6 @@ public class PrivCreatePrivacyGroup extends PrivacyApiMethod {
         .sorted(Comparator.comparing(Arrays::hashCode))
         .forEach(e -> bytesValueRLPOutput.writeBytesValue(BytesValue.wrap(e)));
     bytesValueRLPOutput.endList();
-    return bytesValueRLPOutput.encoded();
+    return Hash.hash(bytesValueRLPOutput.encoded());
   }
 }
