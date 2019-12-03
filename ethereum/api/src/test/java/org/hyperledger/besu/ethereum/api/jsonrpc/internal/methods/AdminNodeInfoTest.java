@@ -151,7 +151,7 @@ public class AdminNodeInfoTest {
             Optional.of(
                 new NatPortMapping(NatServiceType.RLPX, NetworkProtocol.TCP, "", "", 8081, 8081)));
 
-    final JsonRpcRequest request = adminNodeInfo();
+    final JsonRpcRequestContext request = adminNodeInfo();
 
     final Map<String, Object> expected = new HashMap<>();
     expected.put(
