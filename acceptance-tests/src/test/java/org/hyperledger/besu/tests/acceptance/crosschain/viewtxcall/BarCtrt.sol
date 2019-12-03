@@ -13,9 +13,10 @@
 pragma solidity >=0.4.0 <0.6.0;
 import "./FooInt.sol";
 import "../common/Crosschain.sol";
+import "./BarInt.sol";
 
-contract BarCtrt is Crosschain {
-    uint256 calleeId;
+contract BarCtrt is Crosschain, BarInt {
+    uint256 fooChainId;
     FooInt public fooCtrt;
     uint256 public flag;
 
@@ -23,20 +24,36 @@ contract BarCtrt is Crosschain {
         flag = 0;
     }
 
-    function setProperties(uint256 _calleeId, address _fooCtrtAaddr) public {
-        calleeId = _calleeId;
+    function setProperties(uint256 _fooChainId, address _fooCtrtAaddr) public {
+        fooChainId = _fooChainId;
         fooCtrt = FooInt(_fooCtrtAaddr);
     }
 
     function bar() external {
-        flag = crosschainViewUint256(calleeId, address(fooCtrt), abi.encodeWithSelector(fooCtrt.foo.selector) );
+        flag = crosschainViewUint256(fooChainId, address(fooCtrt), abi.encodeWithSelector(fooCtrt.foo.selector) );
     }
 
     function barUpdateState() external {
-        crosschainTransaction(calleeId, address(fooCtrt), abi.encodeWithSelector(fooCtrt.updateState.selector) );
+        crosschainTransaction(fooChainId, address(fooCtrt), abi.encodeWithSelector(fooCtrt.updateState.selector) );
     }
 
     function pureBar() external {
-        flag = crosschainViewUint256(calleeId, address(fooCtrt), abi.encodeWithSelector(fooCtrt.pureFoo.selector) );
+        flag = crosschainViewUint256(fooChainId, address(fooCtrt), abi.encodeWithSelector(fooCtrt.pureFoo.selector) );
+    }
+
+    function viewfn() external view returns (uint256) {
+        return 1;
+    }
+
+    function purefn() external pure returns (uint256) {
+        return 2;
+    }
+
+    function barvv() external {
+        flag = crosschainViewUint256(fooChainId, address(fooCtrt), abi.encodeWithSelector(fooCtrt.foovv.selector) );
+    }
+
+    function barvp() external {
+        flag = crosschainViewUint256(fooChainId, address(fooCtrt), abi.encodeWithSelector(fooCtrt.foovp.selector) );
     }
 }

@@ -12,12 +12,21 @@
  */
 pragma solidity >=0.4.0 <0.6.0;
 import "./FooInt.sol";
+import "./BarInt.sol";
+import "../common/Crosschain.sol";
 
-contract FooCtrt is FooInt{
+contract FooCtrt is Crosschain, FooInt {
     uint256 public fooFlag;
+    uint256 barChainId;
+    BarInt barCtrt;
 
     constructor() public {
         fooFlag = 0;
+    }
+
+    function setProperties(uint256 _barChainId, BarInt _barCtrt) public {
+        barChainId = _barChainId;
+        barCtrt = _barCtrt;
     }
 
     function foo() external view returns (uint256) {
@@ -30,5 +39,13 @@ contract FooCtrt is FooInt{
 
     function pureFoo() external pure returns (uint256) {
         return 2;
+    }
+
+    function foovv() external view returns (uint256) {
+        return 2 + crosschainViewUint256(barChainId, address(barCtrt), abi.encodeWithSelector(barCtrt.viewfn.selector));
+    }
+
+    function foovp() external view returns (uint256) {
+        return 2 + crosschainViewUint256(barChainId, address(barCtrt), abi.encodeWithSelector(barCtrt.purefn.selector));
     }
 }

@@ -10,13 +10,14 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-pragma solidity >=0.4.23;
 
-interface FooInt {
-    function foo() view external returns (uint256);
-    function updateState() external;
-    function pureFoo() pure external returns (uint256);
-    function foovv() external view returns (uint256);
-    function foovp() external view returns (uint256);
-    function foopp() external pure returns (uint256);
+pragma solidity >=0.4.0 <0.6.0;
+
+contract BarInt {
+
+    function bar() external;
+    function barUpdateState() external;
+    function pureBar() external;
+    function viewfn() external view returns (uint256);
+    function purefn() external pure returns (uint256);
 }
