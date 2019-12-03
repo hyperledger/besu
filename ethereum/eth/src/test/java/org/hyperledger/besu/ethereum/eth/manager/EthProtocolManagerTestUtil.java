@@ -62,7 +62,8 @@ public class EthProtocolManagerTestUtil {
         ethScheduler,
         EthProtocolConfiguration.defaultConfig(),
         TestClock.fixed(),
-        new NoOpMetricsSystem());
+        new NoOpMetricsSystem(),
+            ForkIdManager.buildCollection(blockchain.getBlockHashByNumber(0L).get()));
   }
 
   public static EthProtocolManager create(
