@@ -12,23 +12,23 @@
  */
 pragma solidity >=0.4.0 <0.6.0;
 import "./FooInt.sol";
-import "../common/Crosschain.sol";
 
-contract BarCtrt is Crosschain {
-    uint256 calleeId;
-    FooInt public fooCtrt;
-    uint256 public flag;
+contract FooCtrt is FooInt{
+    uint256 public fooFlag;
 
     constructor() public {
-        flag = 0;
+        fooFlag = 0;
     }
 
-    function setProperties(uint256 _calleeId, address _fooCtrtAaddr) public {
-        calleeId = _calleeId;
-        fooCtrt = FooInt(_fooCtrtAaddr);
+    function foo() external view returns (uint256) {
+        return 1;
     }
 
-    function bar() external {
-        flag = crosschainViewUint256(calleeId, address(fooCtrt), abi.encodeWithSelector(fooCtrt.foo.selector) );
+    function updateState() external {
+        fooFlag = 1;
+    }
+
+    function pureFoo() external pure returns (uint256) {
+        return 2;
     }
 }

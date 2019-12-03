@@ -10,11 +10,12 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package org.hyperledger.besu.tests.acceptance.crosschain.viewcall.generated;
+package org.hyperledger.besu.tests.acceptance.crosschain.viewtxcall.generated;
 
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.Collections;
 
 import org.web3j.abi.TypeReference;
 import org.web3j.abi.datatypes.Function;
@@ -23,6 +24,7 @@ import org.web3j.abi.datatypes.generated.Uint256;
 import org.web3j.protocol.besu.Besu;
 import org.web3j.protocol.core.RemoteCall;
 import org.web3j.protocol.core.RemoteFunctionCall;
+import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.tx.CrosschainContext;
 import org.web3j.tx.CrosschainContract;
 import org.web3j.tx.CrosschainTransactionManager;
@@ -44,6 +46,10 @@ public class FooInt extends CrosschainContract {
   private static final String BINARY = "";
 
   public static final String FUNC_FOO = "foo";
+
+  public static final String FUNC_PUREFOO = "pureFoo";
+
+  public static final String FUNC_UPDATESTATE = "updateState";
 
   @Deprecated
   protected FooInt(
@@ -80,6 +86,48 @@ public class FooInt extends CrosschainContract {
             Arrays.<Type>asList(),
             Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() {}));
     return createSignedSubordinateView(function, crosschainContext);
+  }
+
+  public RemoteFunctionCall<BigInteger> pureFoo() {
+    final Function function =
+        new Function(
+            FUNC_PUREFOO,
+            Arrays.<Type>asList(),
+            Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() {}));
+    return executeRemoteCallSingleValueReturn(function, BigInteger.class);
+  }
+
+  public byte[] pureFoo_AsSignedCrosschainSubordinateView(final CrosschainContext crosschainContext)
+      throws IOException {
+    final Function function =
+        new Function(
+            FUNC_PUREFOO,
+            Arrays.<Type>asList(),
+            Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() {}));
+    return createSignedSubordinateView(function, crosschainContext);
+  }
+
+  public RemoteFunctionCall<TransactionReceipt> updateState() {
+    final Function function =
+        new Function(
+            FUNC_UPDATESTATE, Arrays.<Type>asList(), Collections.<TypeReference<?>>emptyList());
+    return executeRemoteCallTransaction(function);
+  }
+
+  public byte[] updateState_AsSignedCrosschainSubordinateTransaction(
+      final CrosschainContext crosschainContext) throws IOException {
+    final Function function =
+        new Function(
+            FUNC_UPDATESTATE, Arrays.<Type>asList(), Collections.<TypeReference<?>>emptyList());
+    return createSignedSubordinateTransaction(function, crosschainContext);
+  }
+
+  public RemoteFunctionCall<TransactionReceipt> updateState_AsCrosschainTransaction(
+      final CrosschainContext crosschainContext) {
+    final Function function =
+        new Function(
+            FUNC_UPDATESTATE, Arrays.<Type>asList(), Collections.<TypeReference<?>>emptyList());
+    return executeRemoteCallCrosschainTransaction(function, crosschainContext);
   }
 
   @Deprecated

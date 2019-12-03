@@ -10,12 +10,10 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-pragma solidity >=0.4.0 <0.6.0;
-import "./FooInt.sol";
+pragma solidity >=0.4.23;
 
-contract FooCtrt is FooInt{
-
-    function foo() external view returns (uint256) {
-        return 1;
-    }
+interface FooInt {
+    function foo() view external returns (uint256);
+    function updateState() external;
+    function pureFoo() pure external returns (uint256);
 }
