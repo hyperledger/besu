@@ -47,6 +47,10 @@ public class FooInt extends CrosschainContract {
 
   public static final String FUNC_FOO = "foo";
 
+  public static final String FUNC_FOOVP = "foovp";
+
+  public static final String FUNC_FOOVV = "foovv";
+
   public static final String FUNC_PUREFOO = "pureFoo";
 
   public static final String FUNC_UPDATESTATE = "updateState";
@@ -83,6 +87,44 @@ public class FooInt extends CrosschainContract {
     final Function function =
         new Function(
             FUNC_FOO,
+            Arrays.<Type>asList(),
+            Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() {}));
+    return createSignedSubordinateView(function, crosschainContext);
+  }
+
+  public RemoteFunctionCall<BigInteger> foovp() {
+    final Function function =
+        new Function(
+            FUNC_FOOVP,
+            Arrays.<Type>asList(),
+            Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() {}));
+    return executeRemoteCallSingleValueReturn(function, BigInteger.class);
+  }
+
+  public byte[] foovp_AsSignedCrosschainSubordinateView(final CrosschainContext crosschainContext)
+      throws IOException {
+    final Function function =
+        new Function(
+            FUNC_FOOVP,
+            Arrays.<Type>asList(),
+            Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() {}));
+    return createSignedSubordinateView(function, crosschainContext);
+  }
+
+  public RemoteFunctionCall<BigInteger> foovv() {
+    final Function function =
+        new Function(
+            FUNC_FOOVV,
+            Arrays.<Type>asList(),
+            Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() {}));
+    return executeRemoteCallSingleValueReturn(function, BigInteger.class);
+  }
+
+  public byte[] foovv_AsSignedCrosschainSubordinateView(final CrosschainContext crosschainContext)
+      throws IOException {
+    final Function function =
+        new Function(
+            FUNC_FOOVV,
             Arrays.<Type>asList(),
             Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() {}));
     return createSignedSubordinateView(function, crosschainContext);

@@ -16,7 +16,9 @@ $WEB3J solidity generate -a=build/SimpleIsLockable.abi -b=build/SimpleIsLockable
 solc viewtxcall/FooCtrt.sol --allow-paths . --bin --abi --overwrite --optimize -o build
 solc viewtxcall/FooInt.sol --allow-paths . --bin --abi --overwrite --optimize -o build
 solc viewtxcall/BarCtrt.sol --allow-paths . --bin --abi --overwrite --optimize -o build
+solc viewtxcall/BarInt.sol --allow-paths . --bin --abi --overwrite --optimize -o build
 $WEB3J solidity generate -cc -a=build/FooCtrt.abi -b=build/FooCtrt.bin -o=../../../../../../ -p=org.hyperledger.besu.tests.acceptance.crosschain.viewtxcall.generated
 $WEB3J solidity generate -cc -a=build/BarCtrt.abi -b=build/BarCtrt.bin -o=../../../../../../ -p=org.hyperledger.besu.tests.acceptance.crosschain.viewtxcall.generated
 $WEB3J solidity generate -cc -a=build/FooInt.abi -b=build/FooInt.bin -o=../../../../../../ -p=org.hyperledger.besu.tests.acceptance.crosschain.viewtxcall.generated
+$WEB3J solidity generate -cc -a=build/BarInt.abi -b=build/BarInt.bin -o=../../../../../../ -p=org.hyperledger.besu.tests.acceptance.crosschain.viewtxcall.generated
 
