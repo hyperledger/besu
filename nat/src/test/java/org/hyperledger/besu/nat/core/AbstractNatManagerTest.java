@@ -16,7 +16,6 @@
 package org.hyperledger.besu.nat.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -74,13 +73,6 @@ public class AbstractNatManagerTest {
     verify(natManager).doStart();
     verify(natManager, times(2)).stop();
     verify(natManager).doStop();
-  }
-
-  @Test
-  public void assertThatRequireManagerStartedThrowExceptionIfNotStarted() {
-    assertThatThrownBy(() -> buildNatManager(NatMethod.UPNP).requireManagerStarted())
-        .isInstanceOf(IllegalStateException.class)
-        .hasMessageContaining("NAT manager must be started.");
   }
 
   @Test

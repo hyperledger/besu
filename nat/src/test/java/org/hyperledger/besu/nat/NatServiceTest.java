@@ -37,12 +37,11 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class NatServiceTest {
 
-  @SuppressWarnings("OptionalGetWithoutIsPresent")
   @Test
   public void assertThatGetNatManagerReturnValidManager() {
     final NatService natService = new NatService(Optional.of(new UpnpNatManager()));
     assertThat(natService.getNatMethod()).isEqualTo(NatMethod.UPNP);
-    assertThat(natService.getNatManager().get()).isInstanceOf(UpnpNatManager.class);
+    assertThat(natService.getNatManager()).containsInstanceOf(UpnpNatManager.class);
   }
 
   @Test
@@ -61,7 +60,6 @@ public class NatServiceTest {
     assertThat(upnpNatService.isNatEnvironment()).isTrue();
   }
 
-  @SuppressWarnings("OptionalGetWithoutIsPresent")
   @Test
   public void assertThatGetPortMappingWorksProperlyWithUpNp() {
     final String externalIp = "127.0.0.3";
@@ -82,7 +80,7 @@ public class NatServiceTest {
     verify(natManager)
         .getPortMapping(natPortMapping.getNatServiceType(), natPortMapping.getProtocol());
 
-    Assertions.assertThat(portMapping.get()).isEqualTo(natPortMapping);
+    Assertions.assertThat(portMapping).contains(natPortMapping);
   }
 
   @Test
@@ -96,7 +94,6 @@ public class NatServiceTest {
     Assertions.assertThat(portMapping).isNotPresent();
   }
 
-  @SuppressWarnings("OptionalGetWithoutIsPresent")
   @Test
   public void assertQueryExternalIpWorksProperlyWithUpNp() {
     final String externalIp = "127.0.0.3";
@@ -111,7 +108,7 @@ public class NatServiceTest {
 
     verify(natManager).queryExternalIPAddress();
 
-    Assertions.assertThat(resultIp.get()).isEqualTo(externalIp);
+    Assertions.assertThat(resultIp).containsSame(externalIp);
   }
 
   @Test
@@ -124,7 +121,6 @@ public class NatServiceTest {
     Assertions.assertThat(resultIp).isNotPresent();
   }
 
-  @SuppressWarnings("OptionalGetWithoutIsPresent")
   @Test
   public void assertThatQueryLocalIPAddressWorksProperlyWithUpNp() {
     final String externalIp = "127.0.0.3";
@@ -139,7 +135,7 @@ public class NatServiceTest {
 
     verify(natManager).queryLocalIPAddress();
 
-    Assertions.assertThat(resultIp.get()).isEqualTo(externalIp);
+    Assertions.assertThat(resultIp).containsSame(externalIp);
   }
 
   @Test

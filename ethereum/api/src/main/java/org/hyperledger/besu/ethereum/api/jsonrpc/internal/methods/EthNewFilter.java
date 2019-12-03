@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -36,14 +36,14 @@ public class EthNewFilter implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest request) {
-    final FilterParameter filter = request.getRequiredParameter(0, FilterParameter.class);
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
+    final FilterParameter filter = requestContext.getRequiredParameter(0, FilterParameter.class);
     final LogsQuery query =
         new LogsQuery.Builder().addresses(filter.getAddresses()).topics(filter.getTopics()).build();
 
     final String logFilterId =
         filterManager.installLogFilter(filter.getFromBlock(), filter.getToBlock(), query);
 
-    return new JsonRpcSuccessResponse(request.getId(), logFilterId);
+    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), logFilterId);
   }
 }

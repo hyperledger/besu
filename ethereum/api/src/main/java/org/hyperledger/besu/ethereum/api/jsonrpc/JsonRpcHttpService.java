@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationSe
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationUtils;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestId;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -473,37 +474,40 @@ public class JsonRpcHttpService {
   }
 
   private JsonRpcResponse process(final JsonObject requestJson, final Optional<User> user) {
-    final JsonRpcRequest request;
+    final JsonRpcRequest requestBody;
     Object id = null;
     try {
       id = new JsonRpcRequestId(requestJson.getValue("id")).getValue();
-      request = requestJson.mapTo(JsonRpcRequest.class);
+      requestBody = requestJson.mapTo(JsonRpcRequest.class);
     } catch (final IllegalArgumentException exception) {
       return errorResponse(id, JsonRpcError.INVALID_REQUEST);
     }
     // Handle notifications
-    if (request.isNotification()) {
+    if (requestBody.isNotification()) {
       // Notifications aren't handled so create empty result for now.
       return NO_RESPONSE;
     }
 
-    final Optional<JsonRpcError> unavailableMethod = validateMethodAvailability(request);
+    final Optional<JsonRpcError> unavailableMethod = validateMethodAvailability(requestBody);
     if (unavailableMethod.isPresent()) {
       return errorResponse(id, unavailableMethod.get());
     }
 
-    final JsonRpcMethod method = rpcMethods.get(request.getMethod());
+    final JsonRpcMethod method = rpcMethods.get(requestBody.getMethod());
 
     if (AuthenticationUtils.isPermitted(authenticationService, user, method)) {
       // Generate response
       try (final OperationTimer.TimingContext ignored =
-          requestTimer.labels(request.getMethod()).startTimer()) {
-        return method.response(request);
+          requestTimer.labels(requestBody.getMethod()).startTimer()) {
+        if (user.isPresent()) {
+          return method.response(new JsonRpcRequestContext(requestBody, user.get()));
+        }
+        return method.response(new JsonRpcRequestContext(requestBody));
       } catch (final InvalidJsonRpcParameters e) {
         LOG.debug("Invalid Params", e);
         return errorResponse(id, JsonRpcError.INVALID_PARAMS);
       } catch (final RuntimeException e) {
-        LOG.error("Error processing JSON-RPC request", e);
+        LOG.error("Error processing JSON-RPC requestBody", e);
         return errorResponse(id, JsonRpcError.INTERNAL_ERROR);
       }
     } else {

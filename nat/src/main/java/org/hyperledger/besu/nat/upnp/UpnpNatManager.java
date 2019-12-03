@@ -15,6 +15,7 @@
 package org.hyperledger.besu.nat.upnp;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkState;
 
 import org.hyperledger.besu.nat.NatMethod;
 import org.hyperledger.besu.nat.core.AbstractNatManager;
@@ -30,7 +31,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -160,10 +160,7 @@ public class UpnpNatManager extends AbstractNatManager implements NatManager {
    */
   @VisibleForTesting
   synchronized CompletableFuture<RemoteService> getWANIPConnectionService() {
-    if (!isStarted()) {
-      throw new IllegalStateException(
-          "Cannot call getWANIPConnectionService() when in stopped state");
-    }
+    checkState(isStarted(), "Cannot call getWANIPConnectionService() when in stopped state");
     return getService(SERVICE_TYPE_WAN_IP_CONNECTION);
   }
 
@@ -197,16 +194,8 @@ public class UpnpNatManager extends AbstractNatManager implements NatManager {
    */
   @Override
   public CompletableFuture<List<NatPortMapping>> getPortMappings() {
-    if (!isStarted()) {
-      throw new IllegalStateException("Cannot call getPortMappings() when in stopped state");
-    }
-    final CompletableFuture<List<NatPortMapping>> future = new CompletableFuture<>();
-    Executors.newCachedThreadPool()
-        .submit(
-            () -> {
-              future.complete(forwardedPorts);
-            });
-    return future;
+    checkState(isStarted(), "Cannot call getPortMappings() when in stopped state");
+    return CompletableFuture.completedFuture(forwardedPorts);
   }
 
   /**
@@ -287,9 +276,7 @@ public class UpnpNatManager extends AbstractNatManager implements NatManager {
    */
   public void requestPortForward(
       final int port, final NetworkProtocol protocol, final NatServiceType serviceType) {
-    if (!isStarted()) {
-      throw new IllegalStateException("Cannot call queryExternalIPAddress() when in stopped state");
-    }
+    checkState(isStarted(), "Cannot call requestPortForward() when in stopped state");
     checkArgument(port != 0, "Cannot map to internal port zero.");
     this.requestPortForward(
         new PortMapping(

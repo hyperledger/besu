@@ -164,7 +164,7 @@ public class ProtocolScheduleBuilder<C> {
                   OptionalLong.of(classicBlockNumber),
                   ClassicProtocolSpecs.classicRecoveryInitDefinition(
                       config.getContractSizeLimit(), config.getEvmStackSize()));
-              protocolSchedule.putMilestone(classicBlockNumber + 10, originalProtocolSpce);
+              protocolSchedule.putMilestone(classicBlockNumber + 1, originalProtocolSpce);
             });
 
     addProtocolSpec(
@@ -191,6 +191,14 @@ public class ProtocolScheduleBuilder<C> {
         protocolSchedule,
         config.getAtlantisBlockNumber(),
         ClassicProtocolSpecs.atlantisDefinition(
+            chainId,
+            config.getContractSizeLimit(),
+            config.getEvmStackSize(),
+            isRevertReasonEnabled));
+    addProtocolSpec(
+        protocolSchedule,
+        config.getAghartaBlockNumber(),
+        ClassicProtocolSpecs.aghartaDefinition(
             chainId,
             config.getContractSizeLimit(),
             config.getEvmStackSize(),

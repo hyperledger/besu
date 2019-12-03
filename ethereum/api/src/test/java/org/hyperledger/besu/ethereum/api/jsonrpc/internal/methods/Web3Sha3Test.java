@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -35,12 +36,14 @@ public class Web3Sha3Test {
 
   @Test
   public void shouldReturnCorrectResult() {
-    final JsonRpcRequest request =
-        new JsonRpcRequest("2", "web3_sha3", new Object[] {"0x68656c6c6f20776f726c64"});
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest("2", "web3_sha3", new Object[] {"0x68656c6c6f20776f726c64"}));
 
     final JsonRpcResponse expected =
         new JsonRpcSuccessResponse(
-            request.getId(), "0x47173285a8d7341e5e972fc677286384f802f8ef42a5ec5f03bbfa254cb01fad");
+            request.getRequest().getId(),
+            "0x47173285a8d7341e5e972fc677286384f802f8ef42a5ec5f03bbfa254cb01fad");
     final JsonRpcResponse actual = method.response(request);
 
     assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
@@ -48,11 +51,13 @@ public class Web3Sha3Test {
 
   @Test
   public void shouldReturnEmptyStringResult() {
-    final JsonRpcRequest request = new JsonRpcRequest("2", "web3_sha3", new Object[] {""});
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(new JsonRpcRequest("2", "web3_sha3", new Object[] {""}));
 
     final JsonRpcResponse expected =
         new JsonRpcSuccessResponse(
-            request.getId(), "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470");
+            request.getRequest().getId(),
+            "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470");
     final JsonRpcResponse actual = method.response(request);
 
     assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
@@ -60,11 +65,12 @@ public class Web3Sha3Test {
 
   @Test
   public void shouldReturnErrorOnOddLengthParam() {
-    final JsonRpcRequest request =
-        new JsonRpcRequest("2", "web3_sha3", new Object[] {"0x68656c6c6f20776f726c6"});
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest("2", "web3_sha3", new Object[] {"0x68656c6c6f20776f726c6"}));
 
     final JsonRpcResponse expected =
-        new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
+        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
     final JsonRpcResponse actual = method.response(request);
 
     assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
@@ -72,11 +78,12 @@ public class Web3Sha3Test {
 
   @Test
   public void shouldReturnErrorOnNonHexParam() {
-    final JsonRpcRequest request =
-        new JsonRpcRequest("2", "web3_sha3", new Object[] {"0x68656c6c6fThisIsNotHex"});
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest("2", "web3_sha3", new Object[] {"0x68656c6c6fThisIsNotHex"}));
 
     final JsonRpcResponse expected =
-        new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
+        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
     final JsonRpcResponse actual = method.response(request);
 
     assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
@@ -84,11 +91,12 @@ public class Web3Sha3Test {
 
   @Test
   public void shouldReturnErrorOnNoPrefixParam() {
-    final JsonRpcRequest request =
-        new JsonRpcRequest("2", "web3_sha3", new Object[] {"68656c6c6f20776f726c64"});
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest("2", "web3_sha3", new Object[] {"68656c6c6f20776f726c64"}));
 
     final JsonRpcResponse expected =
-        new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
+        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
     final JsonRpcResponse actual = method.response(request);
 
     assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
@@ -96,11 +104,12 @@ public class Web3Sha3Test {
 
   @Test
   public void shouldReturnErrorOnNoPrefixNonHexParam() {
-    final JsonRpcRequest request =
-        new JsonRpcRequest("2", "web3_sha3", new Object[] {"68656c6c6fThisIsNotHex"});
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest("2", "web3_sha3", new Object[] {"68656c6c6fThisIsNotHex"}));
 
     final JsonRpcResponse expected =
-        new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
+        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
     final JsonRpcResponse actual = method.response(request);
 
     assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
@@ -108,12 +117,13 @@ public class Web3Sha3Test {
 
   @Test
   public void shouldReturnErrorOnExtraParam() {
-    final JsonRpcRequest request =
-        new JsonRpcRequest(
-            "2", "web3_sha3", new Object[] {"0x68656c6c6f20776f726c64", "{encode:'hex'}"});
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest(
+                "2", "web3_sha3", new Object[] {"0x68656c6c6f20776f726c64", "{encode:'hex'}"}));
 
     final JsonRpcResponse expected =
-        new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
+        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
     final JsonRpcResponse actual = method.response(request);
 
     assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
@@ -121,10 +131,11 @@ public class Web3Sha3Test {
 
   @Test
   public void shouldReturnErrorOnNoParam() {
-    final JsonRpcRequest request = new JsonRpcRequest("2", "web3_sha3", new Object[] {});
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(new JsonRpcRequest("2", "web3_sha3", new Object[] {}));
 
     final JsonRpcResponse expected =
-        new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
+        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
     final JsonRpcResponse actual = method.response(request);
 
     assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);

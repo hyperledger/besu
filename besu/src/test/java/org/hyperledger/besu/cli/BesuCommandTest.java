@@ -22,6 +22,7 @@ import static org.hyperledger.besu.cli.config.NetworkName.DEV;
 import static org.hyperledger.besu.cli.config.NetworkName.GOERLI;
 import static org.hyperledger.besu.cli.config.NetworkName.KOTTI;
 import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
+import static org.hyperledger.besu.cli.config.NetworkName.MORDOR;
 import static org.hyperledger.besu.cli.config.NetworkName.RINKEBY;
 import static org.hyperledger.besu.cli.config.NetworkName.ROPSTEN;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ETH;
@@ -2513,6 +2514,22 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void mordorValuesAreUsed() throws Exception {
+    parseCommand("--network", "mordor");
+
+    final ArgumentCaptor<EthNetworkConfig> networkArg =
+        ArgumentCaptor.forClass(EthNetworkConfig.class);
+
+    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
+    verify(mockControllerBuilder).build();
+
+    assertThat(networkArg.getValue()).isEqualTo(EthNetworkConfig.getNetworkConfig(MORDOR));
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
   public void rinkebyValuesCanBeOverridden() throws Exception {
     networkValuesCanBeOverridden("rinkeby");
   }
@@ -2540,6 +2557,11 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void kottiValuesCanBeOverridden() throws Exception {
     networkValuesCanBeOverridden("kotti");
+  }
+
+  @Test
+  public void mordorValuesCanBeOverridden() throws Exception {
+    networkValuesCanBeOverridden("mordor");
   }
 
   private void networkValuesCanBeOverridden(final String network) throws Exception {
@@ -3067,5 +3089,53 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString())
         .contains(
             "Unable to authenticate JSON-RPC WebSocket endpoint without a supplied credentials file or authentication public key file");
+  }
+
+  @Test
+  public void privHttpApisWithPrivacyDisabledLogsWarning() {
+    parseCommand("--privacy-enabled=false", "--rpc-http-api", "PRIV", "--rpc-http-enabled");
+
+    verify(mockRunnerBuilder).build();
+    verify(mockLogger)
+        .warn("Privacy is disabled. Cannot use EEA/PRIV API methods when not using Privacy.");
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void privWsApisWithPrivacyDisabledLogsWarning() {
+    parseCommand("--privacy-enabled=false", "--rpc-ws-api", "PRIV", "--rpc-ws-enabled");
+
+    verify(mockRunnerBuilder).build();
+    verify(mockLogger)
+        .warn("Privacy is disabled. Cannot use EEA/PRIV API methods when not using Privacy.");
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void eeaHttpApisWithPrivacyDisabledLogsWarning() {
+    parseCommand("--privacy-enabled=false", "--rpc-http-api", "EEA", "--rpc-http-enabled");
+
+    verify(mockRunnerBuilder).build();
+    verify(mockLogger)
+        .warn("Privacy is disabled. Cannot use EEA/PRIV API methods when not using Privacy.");
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void eeaWsApisWithPrivacyDisabledLogsWarning() {
+    parseCommand("--privacy-enabled=false", "--rpc-ws-api", "EEA", "--rpc-ws-enabled");
+
+    verify(mockRunnerBuilder).build();
+    verify(mockLogger)
+        .warn("Privacy is disabled. Cannot use EEA/PRIV API methods when not using Privacy.");
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
   }
 }

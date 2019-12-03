@@ -21,6 +21,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -98,7 +99,7 @@ public class AdminNodeInfoTest {
   public void shouldReturnCorrectResult() {
     when(p2pNetwork.isP2pEnabled()).thenReturn(true);
     when(p2pNetwork.getLocalEnode()).thenReturn(Optional.of(defaultPeer.getEnodeURL()));
-    final JsonRpcRequest request = adminNodeInfo();
+    final JsonRpcRequestContext request = adminNodeInfo();
 
     final Map<String, Object> expected = new HashMap<>();
     expected.put(
@@ -196,7 +197,7 @@ public class AdminNodeInfoTest {
 
     when(p2pNetwork.isP2pEnabled()).thenReturn(true);
     when(p2pNetwork.getLocalEnode()).thenReturn(Optional.of(localEnode));
-    final JsonRpcRequest request = adminNodeInfo();
+    final JsonRpcRequestContext request = adminNodeInfo();
 
     final Map<String, Object> expected = new HashMap<>();
     expected.put(
@@ -242,7 +243,7 @@ public class AdminNodeInfoTest {
 
     when(p2pNetwork.isP2pEnabled()).thenReturn(true);
     when(p2pNetwork.getLocalEnode()).thenReturn(Optional.of(localEnode));
-    final JsonRpcRequest request = adminNodeInfo();
+    final JsonRpcRequestContext request = adminNodeInfo();
 
     final Map<String, Object> expected = new HashMap<>();
     expected.put(
@@ -288,7 +289,7 @@ public class AdminNodeInfoTest {
 
     when(p2pNetwork.isP2pEnabled()).thenReturn(true);
     when(p2pNetwork.getLocalEnode()).thenReturn(Optional.of(localEnode));
-    final JsonRpcRequest request = adminNodeInfo();
+    final JsonRpcRequestContext request = adminNodeInfo();
 
     final Map<String, Object> expected = new HashMap<>();
     expected.put(
@@ -326,10 +327,10 @@ public class AdminNodeInfoTest {
   @Test
   public void returnsErrorWhenP2PDisabled() {
     when(p2pNetwork.isP2pEnabled()).thenReturn(false);
-    final JsonRpcRequest request = adminNodeInfo();
+    final JsonRpcRequestContext request = adminNodeInfo();
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getId(), JsonRpcError.P2P_DISABLED);
+        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.P2P_DISABLED);
 
     final JsonRpcResponse response = method.response(request);
     assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);
@@ -340,17 +341,18 @@ public class AdminNodeInfoTest {
   public void returnsErrorWhenP2PNotReady() {
     when(p2pNetwork.isP2pEnabled()).thenReturn(true);
     when(p2pNetwork.getLocalEnode()).thenReturn(Optional.empty());
-    final JsonRpcRequest request = adminNodeInfo();
+    final JsonRpcRequestContext request = adminNodeInfo();
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getId(), JsonRpcError.P2P_NETWORK_NOT_RUNNING);
+        new JsonRpcErrorResponse(
+            request.getRequest().getId(), JsonRpcError.P2P_NETWORK_NOT_RUNNING);
 
     final JsonRpcResponse response = method.response(request);
     assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);
     assertThat(response).isEqualToComparingFieldByField(expectedResponse);
   }
 
-  private JsonRpcRequest adminNodeInfo() {
-    return new JsonRpcRequest("2.0", "admin_nodeInfo", new Object[] {});
+  private JsonRpcRequestContext adminNodeInfo() {
+    return new JsonRpcRequestContext(new JsonRpcRequest("2.0", "admin_nodeInfo", new Object[] {}));
   }
 }

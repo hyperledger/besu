@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -40,14 +40,15 @@ public class EthGetFilterLogs implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest request) {
-    final String filterId = request.getRequiredParameter(0, String.class);
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
+    final String filterId = requestContext.getRequiredParameter(0, String.class);
 
     final List<LogWithMetadata> logs = filterManager.logs(filterId);
     if (logs != null) {
-      return new JsonRpcSuccessResponse(request.getId(), new LogsResult(logs));
+      return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), new LogsResult(logs));
     }
 
-    return new JsonRpcErrorResponse(request.getId(), JsonRpcError.LOGS_FILTER_NOT_FOUND);
+    return new JsonRpcErrorResponse(
+        requestContext.getRequest().getId(), JsonRpcError.LOGS_FILTER_NOT_FOUND);
   }
 }

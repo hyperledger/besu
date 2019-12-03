@@ -16,23 +16,24 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcEnclaveErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.AbstractSendTransaction;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacySendTransaction;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionHandler;
 import org.hyperledger.besu.util.bytes.BytesValues;
 
-public class PrivDistributeRawTransaction extends AbstractSendTransaction implements JsonRpcMethod {
+public class PrivDistributeRawTransaction extends PrivacySendTransaction {
 
   public PrivDistributeRawTransaction(
+      final PrivacyParameters privacyParameters,
       final PrivateTransactionHandler privateTransactionHandler,
       final TransactionPool transactionPool) {
-    super(privateTransactionHandler, transactionPool);
+    super(privacyParameters, privateTransactionHandler, transactionPool);
   }
 
   @Override
@@ -41,10 +42,10 @@ public class PrivDistributeRawTransaction extends AbstractSendTransaction implem
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest request) {
+  public JsonRpcResponse doResponse(final JsonRpcRequestContext requestContext) {
     PrivateTransaction privateTransaction;
     try {
-      privateTransaction = validateAndDecodeRequest(request);
+      privateTransaction = validateAndDecodeRequest(requestContext);
     } catch (ErrorResponseException e) {
       return e.getResponse();
     }
@@ -54,7 +55,7 @@ public class PrivDistributeRawTransaction extends AbstractSendTransaction implem
       enclaveKey = privateTransactionHandler.sendToOrion(privateTransaction);
     } catch (final Exception e) {
       return new JsonRpcErrorResponse(
-          request.getId(),
+          requestContext.getRequest().getId(),
           JsonRpcEnclaveErrorConverter.convertEnclaveInvalidReason(e.getMessage()));
     }
 
@@ -63,16 +64,17 @@ public class PrivDistributeRawTransaction extends AbstractSendTransaction implem
       privacyGroupId = privateTransactionHandler.getPrivacyGroup(enclaveKey, privateTransaction);
     } catch (final Exception e) {
       return new JsonRpcErrorResponse(
-          request.getId(),
+          requestContext.getRequest().getId(),
           JsonRpcEnclaveErrorConverter.convertEnclaveInvalidReason(e.getMessage()));
     }
 
     return validateAndExecute(
-        request,
+        requestContext,
         privateTransaction,
         privacyGroupId,
         () ->
             new JsonRpcSuccessResponse(
-                request.getId(), BytesValues.fromBase64(enclaveKey).toString()));
+                requestContext.getRequest().getId(),
+                BytesValues.fromBase64(enclaveKey).toString()));
   }
 }

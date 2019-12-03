@@ -25,9 +25,9 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.plugin.data.Address;
 import org.hyperledger.besu.plugin.data.BlockHeader;
+import org.hyperledger.besu.plugin.data.Hash;
 import org.hyperledger.besu.plugin.data.PropagatedBlockContext;
 import org.hyperledger.besu.plugin.data.Quantity;
-import org.hyperledger.besu.plugin.data.UnformattedData;
 import org.hyperledger.besu.plugin.services.BesuEvents;
 
 import java.util.List;
@@ -97,9 +97,7 @@ public class BesuEventsImpl implements BesuEvents {
 
   @Override
   public long addLogListener(
-      final List<Address> addresses,
-      final List<List<UnformattedData>> topics,
-      final LogListener logListener) {
+      final List<Address> addresses, final List<List<Hash>> topics, final LogListener logListener) {
     final List<org.hyperledger.besu.ethereum.core.Address> besuAddresses =
         addresses.stream()
             .map(org.hyperledger.besu.ethereum.core.Address::fromPlugin)

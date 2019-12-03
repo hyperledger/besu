@@ -21,12 +21,15 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.enclave.EnclaveException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -36,7 +39,6 @@ import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionHandler;
 import org.hyperledger.besu.util.bytes.BytesValue;
 
-import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Optional;
 
@@ -113,18 +115,22 @@ public class EeaSendRawTransactionTest {
 
   @Mock private PrivateTransactionHandler privateTxHandler;
 
+  @Mock private PrivacyParameters privacyParameters;
+
   @Before
   public void before() {
-    method = new EeaSendRawTransaction(privateTxHandler, transactionPool);
+    when(privacyParameters.isEnabled()).thenReturn(true);
+    method = new EeaSendRawTransaction(privacyParameters, privateTxHandler, transactionPool);
   }
 
   @Test
   public void requestIsMissingParameter() {
-    final JsonRpcRequest request =
-        new JsonRpcRequest("2.0", "eea_sendRawTransaction", new String[] {});
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest("2.0", "eea_sendRawTransaction", new String[] {}));
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
+        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
 
     final JsonRpcResponse actualResponse = method.response(request);
 
@@ -133,10 +139,11 @@ public class EeaSendRawTransactionTest {
 
   @Test
   public void requestHasNullObjectParameter() {
-    final JsonRpcRequest request = new JsonRpcRequest("2.0", "eea_sendRawTransaction", null);
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(new JsonRpcRequest("2.0", "eea_sendRawTransaction", null));
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
+        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
 
     final JsonRpcResponse actualResponse = method.response(request);
 
@@ -145,11 +152,12 @@ public class EeaSendRawTransactionTest {
 
   @Test
   public void requestHasNullArrayParameter() {
-    final JsonRpcRequest request =
-        new JsonRpcRequest("2.0", "eea_sendRawTransaction", new String[] {null});
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest("2.0", "eea_sendRawTransaction", new String[] {null}));
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
+        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
 
     final JsonRpcResponse actualResponse = method.response(request);
 
@@ -160,11 +168,12 @@ public class EeaSendRawTransactionTest {
   public void invalidTransactionRlpDecoding() {
     final String rawTransaction = "0x00";
 
-    final JsonRpcRequest request =
-        new JsonRpcRequest("2.0", "eea_sendRawTransaction", new String[] {rawTransaction});
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest("2.0", "eea_sendRawTransaction", new String[] {rawTransaction}));
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getId(), JsonRpcError.DECODE_ERROR);
+        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.DECODE_ERROR);
 
     final JsonRpcResponse actualResponse = method.response(request);
 
@@ -173,12 +182,13 @@ public class EeaSendRawTransactionTest {
 
   @Test
   public void valueNonZeroTransaction() {
-    final JsonRpcRequest request =
-        new JsonRpcRequest(
-            "2.0", "eea_sendRawTransaction", new String[] {VALUE_NON_ZERO_TRANSACTION_RLP});
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest(
+                "2.0", "eea_sendRawTransaction", new String[] {VALUE_NON_ZERO_TRANSACTION_RLP}));
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getId(), JsonRpcError.VALUE_NOT_ZERO);
+        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.VALUE_NOT_ZERO);
 
     final JsonRpcResponse actualResponse = method.response(request);
 
@@ -198,13 +208,15 @@ public class EeaSendRawTransactionTest {
         .thenReturn(PUBLIC_TRANSACTION);
     when(transactionPool.addLocalTransaction(any(Transaction.class)))
         .thenReturn(ValidationResult.valid());
-    final JsonRpcRequest request =
-        new JsonRpcRequest(
-            "2.0", "eea_sendRawTransaction", new String[] {VALID_PRIVATE_TRANSACTION_RLP});
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest(
+                "2.0", "eea_sendRawTransaction", new String[] {VALID_PRIVATE_TRANSACTION_RLP}));
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(
-            request.getId(), "0x221e930a2c18d91fca4d509eaa3512f3e01fef266f660e32473de67474b36c15");
+            request.getRequest().getId(),
+            "0x221e930a2c18d91fca4d509eaa3512f3e01fef266f660e32473de67474b36c15");
 
     final JsonRpcResponse actualResponse = method.response(request);
 
@@ -232,15 +244,17 @@ public class EeaSendRawTransactionTest {
     when(transactionPool.addLocalTransaction(any(Transaction.class)))
         .thenReturn(ValidationResult.valid());
 
-    final JsonRpcRequest request =
-        new JsonRpcRequest(
-            "2.0",
-            "eea_sendRawTransaction",
-            new String[] {VALID_PRIVATE_TRANSACTION_RLP_PRIVACY_GROUP});
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest(
+                "2.0",
+                "eea_sendRawTransaction",
+                new String[] {VALID_PRIVATE_TRANSACTION_RLP_PRIVACY_GROUP}));
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(
-            request.getId(), "0x221e930a2c18d91fca4d509eaa3512f3e01fef266f660e32473de67474b36c15");
+            request.getRequest().getId(),
+            "0x221e930a2c18d91fca4d509eaa3512f3e01fef266f660e32473de67474b36c15");
 
     final JsonRpcResponse actualResponse = method.response(request);
 
@@ -256,14 +270,15 @@ public class EeaSendRawTransactionTest {
 
   @Test
   public void transactionPrivacyGroupNoPrivateFromReturnsError() throws Exception {
-    final JsonRpcRequest request =
-        new JsonRpcRequest(
-            "2.0",
-            "eea_sendRawTransaction",
-            new String[] {PRIVATE_TRANSACTION_RLP_PRIVACY_GROUP_NO_PRIVATE_FROM});
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest(
+                "2.0",
+                "eea_sendRawTransaction",
+                new String[] {PRIVATE_TRANSACTION_RLP_PRIVACY_GROUP_NO_PRIVATE_FROM}));
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getId(), JsonRpcError.DECODE_ERROR);
+        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.DECODE_ERROR);
 
     final JsonRpcResponse actualResponse = method.response(request);
 
@@ -272,16 +287,17 @@ public class EeaSendRawTransactionTest {
   }
 
   @Test
-  public void invalidTransactionIsSentToTransactionPool() throws Exception {
+  public void invalidTransactionIsSentToTransactionPool() {
     when(privateTxHandler.sendToOrion(any(PrivateTransaction.class)))
-        .thenThrow(new IOException("enclave failed to execute"));
+        .thenThrow(new EnclaveException("enclave failed to execute"));
 
-    final JsonRpcRequest request =
-        new JsonRpcRequest(
-            "2.0", "eea_sendRawTransaction", new String[] {VALID_PRIVATE_TRANSACTION_RLP});
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest(
+                "2.0", "eea_sendRawTransaction", new String[] {VALID_PRIVATE_TRANSACTION_RLP}));
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getId(), JsonRpcError.ENCLAVE_ERROR);
+        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.ENCLAVE_ERROR);
 
     final JsonRpcResponse actualResponse = method.response(request);
 
@@ -347,12 +363,13 @@ public class EeaSendRawTransactionTest {
         .thenReturn(PUBLIC_TRANSACTION);
     when(transactionPool.addLocalTransaction(any(Transaction.class)))
         .thenReturn(ValidationResult.invalid(transactionInvalidReason));
-    final JsonRpcRequest request =
-        new JsonRpcRequest(
-            "2.0", "eea_sendRawTransaction", new String[] {VALID_PRIVATE_TRANSACTION_RLP});
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest(
+                "2.0", "eea_sendRawTransaction", new String[] {VALID_PRIVATE_TRANSACTION_RLP}));
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getId(), expectedError);
+        new JsonRpcErrorResponse(request.getRequest().getId(), expectedError);
 
     final JsonRpcResponse actualResponse = method.response(request);
 
@@ -369,5 +386,17 @@ public class EeaSendRawTransactionTest {
   @Test
   public void getMethodReturnsExpectedName() {
     assertThat(method.getName()).matches("eea_sendRawTransaction");
+  }
+
+  @Test
+  public void returnPrivacyDisabledErrorWhenPrivacyIsDisabled() {
+    when(privacyParameters.isEnabled()).thenReturn(false);
+
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest("1", "eea_sendRawTransaction", new Object[] {}));
+    final JsonRpcErrorResponse response = (JsonRpcErrorResponse) method.response(request);
+
+    assertThat(response.getError()).isEqualTo(JsonRpcError.PRIVACY_NOT_ENABLED);
   }
 }
