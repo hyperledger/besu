@@ -24,9 +24,9 @@ contract FooCtrt is Crosschain, FooInt {
         fooFlag = 0;
     }
 
-    function setProperties(uint256 _barChainId, BarInt _barCtrt) public {
+    function setProperties(uint256 _barChainId, address _barCtrtAddress) public {
         barChainId = _barChainId;
-        barCtrt = _barCtrt;
+        barCtrt = BarInt(_barCtrtAddress);
     }
 
     function foo() external view returns (uint256) {

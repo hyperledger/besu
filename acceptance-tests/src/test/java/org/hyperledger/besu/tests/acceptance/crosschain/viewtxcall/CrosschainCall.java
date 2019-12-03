@@ -17,10 +17,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.tests.acceptance.crosschain.common.CrosschainAcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.crosschain.viewtxcall.generated.BarCtrt;
 import org.hyperledger.besu.tests.acceptance.crosschain.viewtxcall.generated.FooCtrt;
+import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -68,8 +68,11 @@ public class CrosschainCall extends CrosschainAcceptanceTestBase {
             contractTransactions.createLockableSmartContract(
                 FooCtrt.class, this.transactionManagerBlockchain2));
 
-    // Calling a BooCtrt.setProperties, a regular intrachain function call
+    // Calling BooCtrt.setProperties, a regular intrachain function call
     barCtrt.setProperties(nodeOnBlockchain2.getChainId(), fooCtrt.getContractAddress()).send();
+    // Calling FooCtrt.setProperties, a regular intrachain function call
+    fooCtrt.setProperties(nodeOnBlockchain1.getChainId(), barCtrt.getContractAddress()).send();
+    LOG.info("Flag value = {}", barCtrt.flag().send().longValue());
   }
 
   @After
@@ -81,14 +84,15 @@ public class CrosschainCall extends CrosschainAcceptanceTestBase {
 
   private void waitForUnlock(final String ctrtAddress, final BesuNode node) throws Exception {
     CrossIsLockedResponse isLockedObj =
-            node.getJsonRpc()
-                    .crossIsLocked(ctrtAddress, DefaultBlockParameter.valueOf("latest"))
-                    .send();
+        node.getJsonRpc()
+            .crossIsLocked(ctrtAddress, DefaultBlockParameter.valueOf("latest"))
+            .send();
     while (isLockedObj.isLocked()) {
       Thread.sleep(100);
-      isLockedObj = node.getJsonRpc()
-                      .crossIsLocked(ctrtAddress, DefaultBlockParameter.valueOf("latest"))
-                      .send();
+      isLockedObj =
+          node.getJsonRpc()
+              .crossIsLocked(ctrtAddress, DefaultBlockParameter.valueOf("latest"))
+              .send();
     }
   }
 
@@ -103,13 +107,15 @@ public class CrosschainCall extends CrosschainAcceptanceTestBase {
     byte[][] subordTxAndViews = new byte[][] {subordTrans};
     CrosschainContext origTxCtx = ctxGenerator.createCrosschainContext(subordTxAndViews);
 
+    LOG.info("Flag value = {}", barCtrt.flag().send().longValue());
     TransactionReceipt txReceipt = barCtrt.bar_AsCrosschainTransaction(origTxCtx).send();
     if (!txReceipt.isStatusOK()) {
       LOG.info("txReceipt details " + txReceipt.toString());
       throw new Error(txReceipt.getStatus());
     }
 
-    waitForUnlock(barCtrt.getContractAddress(), this.nodeOnBlockchain1);
+    waitForUnlock(barCtrt.getContractAddress(), nodeOnBlockchain1);
+    LOG.info("Flag value After = {}", barCtrt.flag().send().longValue());
     assertThat(barCtrt.flag().send().longValue()).isEqualTo(1);
   }
 
@@ -151,23 +157,7 @@ public class CrosschainCall extends CrosschainAcceptanceTestBase {
       throw new Error(txReceipt.getStatus());
     }
 
-<<<<<<< Updated upstream
-    CrossIsLockedResponse isLockedObj =
-        this.nodeOnBlockchain1
-            .getJsonRpc()
-            .crossIsLocked(barCtrt.getContractAddress(), DefaultBlockParameter.valueOf("latest"))
-            .send();
-    while (isLockedObj.isLocked()) {
-      Thread.sleep(100);
-      isLockedObj =
-          this.nodeOnBlockchain1
-              .getJsonRpc()
-              .crossIsLocked(barCtrt.getContractAddress(), DefaultBlockParameter.valueOf("latest"))
-              .send();
-    }
-=======
     waitForUnlock(barCtrt.getContractAddress(), this.nodeOnBlockchain1);
->>>>>>> Stashed changes
     assertThat(barCtrt.flag().send().longValue()).isEqualTo(2);
   }
 }

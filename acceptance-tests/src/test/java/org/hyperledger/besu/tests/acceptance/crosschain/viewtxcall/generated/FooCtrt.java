@@ -43,15 +43,21 @@ import org.web3j.tx.gas.ContractGasProvider;
  */
 @SuppressWarnings("rawtypes")
 public class FooCtrt extends CrosschainContract {
-<<<<<<< Updated upstream
-  private static final String BINARY =
-      "608060405234801561001057600080fd5b506000805560c3806100236000396000f3fe6080604052348015600f57600080fd5b506004361060465760003560e01c806308c30fc014604b5780631d8557d7146063578063c298557814606b578063c8ba4142146071575b600080fd5b60516077565b60408051918252519081900360200190f35b6069607c565b005b60516083565b60516088565b600290565b6001600055565b600190565b6000548156fea265627a7a72315820f4ae639764b810e605ebabaa07d59cc3b989641b4da7cda7a4e593611257aef964736f6c634300050c0032";
+  private static final String BINARY = "";
 
   public static final String FUNC_FOO = "foo";
 
   public static final String FUNC_FOOFLAG = "fooFlag";
 
+  public static final String FUNC_FOOPP = "foopp";
+
+  public static final String FUNC_FOOVP = "foovp";
+
+  public static final String FUNC_FOOVV = "foovv";
+
   public static final String FUNC_PUREFOO = "pureFoo";
+
+  public static final String FUNC_SETPROPERTIES = "setProperties";
 
   public static final String FUNC_UPDATESTATE = "updateState";
 
@@ -111,6 +117,63 @@ public class FooCtrt extends CrosschainContract {
     return createSignedSubordinateView(function, crosschainContext);
   }
 
+  public RemoteFunctionCall<BigInteger> foopp() {
+    final Function function =
+        new Function(
+            FUNC_FOOPP,
+            Arrays.<Type>asList(),
+            Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() {}));
+    return executeRemoteCallSingleValueReturn(function, BigInteger.class);
+  }
+
+  public byte[] foopp_AsSignedCrosschainSubordinateView(final CrosschainContext crosschainContext)
+      throws IOException {
+    final Function function =
+        new Function(
+            FUNC_FOOPP,
+            Arrays.<Type>asList(),
+            Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() {}));
+    return createSignedSubordinateView(function, crosschainContext);
+  }
+
+  public RemoteFunctionCall<BigInteger> foovp() {
+    final Function function =
+        new Function(
+            FUNC_FOOVP,
+            Arrays.<Type>asList(),
+            Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() {}));
+    return executeRemoteCallSingleValueReturn(function, BigInteger.class);
+  }
+
+  public byte[] foovp_AsSignedCrosschainSubordinateView(final CrosschainContext crosschainContext)
+      throws IOException {
+    final Function function =
+        new Function(
+            FUNC_FOOVP,
+            Arrays.<Type>asList(),
+            Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() {}));
+    return createSignedSubordinateView(function, crosschainContext);
+  }
+
+  public RemoteFunctionCall<BigInteger> foovv() {
+    final Function function =
+        new Function(
+            FUNC_FOOVV,
+            Arrays.<Type>asList(),
+            Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() {}));
+    return executeRemoteCallSingleValueReturn(function, BigInteger.class);
+  }
+
+  public byte[] foovv_AsSignedCrosschainSubordinateView(final CrosschainContext crosschainContext)
+      throws IOException {
+    final Function function =
+        new Function(
+            FUNC_FOOVV,
+            Arrays.<Type>asList(),
+            Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() {}));
+    return createSignedSubordinateView(function, crosschainContext);
+  }
+
   public RemoteFunctionCall<BigInteger> pureFoo() {
     final Function function =
         new Function(
@@ -128,6 +191,43 @@ public class FooCtrt extends CrosschainContract {
             Arrays.<Type>asList(),
             Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() {}));
     return createSignedSubordinateView(function, crosschainContext);
+  }
+
+  public RemoteFunctionCall<TransactionReceipt> setProperties(
+      BigInteger _barChainId, String _barCtrtAddress) {
+    final Function function =
+        new Function(
+            FUNC_SETPROPERTIES,
+            Arrays.<Type>asList(
+                new org.web3j.abi.datatypes.generated.Uint256(_barChainId),
+                new org.web3j.abi.datatypes.Address(160, _barCtrtAddress)),
+            Collections.<TypeReference<?>>emptyList());
+    return executeRemoteCallTransaction(function);
+  }
+
+  public byte[] setProperties_AsSignedCrosschainSubordinateTransaction(
+      BigInteger _barChainId, String _barCtrtAddress, final CrosschainContext crosschainContext)
+      throws IOException {
+    final Function function =
+        new Function(
+            FUNC_SETPROPERTIES,
+            Arrays.<Type>asList(
+                new org.web3j.abi.datatypes.generated.Uint256(_barChainId),
+                new org.web3j.abi.datatypes.Address(160, _barCtrtAddress)),
+            Collections.<TypeReference<?>>emptyList());
+    return createSignedSubordinateTransaction(function, crosschainContext);
+  }
+
+  public RemoteFunctionCall<TransactionReceipt> setProperties_AsCrosschainTransaction(
+      BigInteger _barChainId, String _barCtrtAddress, final CrosschainContext crosschainContext) {
+    final Function function =
+        new Function(
+            FUNC_SETPROPERTIES,
+            Arrays.<Type>asList(
+                new org.web3j.abi.datatypes.generated.Uint256(_barChainId),
+                new org.web3j.abi.datatypes.Address(160, _barCtrtAddress)),
+            Collections.<TypeReference<?>>emptyList());
+    return executeRemoteCallCrosschainTransaction(function, crosschainContext);
   }
 
   public RemoteFunctionCall<TransactionReceipt> updateState() {
@@ -222,196 +322,4 @@ public class FooCtrt extends CrosschainContract {
     return deployLockableContractRemoteCall(
         FooCtrt.class, besu, transactionManager, gasPrice, gasLimit, BINARY, "", crosschainContext);
   }
-=======
-    private static final String BINARY = "";
-
-    public static final String FUNC_FOO = "foo";
-
-    public static final String FUNC_FOOFLAG = "fooFlag";
-
-    public static final String FUNC_FOOPP = "foopp";
-
-    public static final String FUNC_FOOVP = "foovp";
-
-    public static final String FUNC_FOOVV = "foovv";
-
-    public static final String FUNC_PUREFOO = "pureFoo";
-
-    public static final String FUNC_SETPROPERTIES = "setProperties";
-
-    public static final String FUNC_UPDATESTATE = "updateState";
-
-    @Deprecated
-    protected FooCtrt(String contractAddress, Besu besu, CrosschainTransactionManager crosschainTransactionManager, BigInteger gasPrice, BigInteger gasLimit) {
-        super(BINARY, contractAddress, besu, crosschainTransactionManager, gasPrice, gasLimit);
-    }
-
-    protected FooCtrt(String contractAddress, Besu besu, CrosschainTransactionManager crosschainTransactionManager, ContractGasProvider contractGasProvider) {
-        super(BINARY, contractAddress, besu, crosschainTransactionManager, contractGasProvider);
-    }
-
-    public RemoteFunctionCall<BigInteger> foo() {
-        final Function function = new Function(FUNC_FOO, 
-                Arrays.<Type>asList(), 
-                Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() {}));
-        return executeRemoteCallSingleValueReturn(function, BigInteger.class);
-    }
-
-    public byte[] foo_AsSignedCrosschainSubordinateView(final CrosschainContext crosschainContext) throws IOException {
-        final Function function = new Function(FUNC_FOO, 
-                Arrays.<Type>asList(), 
-                Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() {}));
-        return createSignedSubordinateView(function, crosschainContext);
-    }
-
-    public RemoteFunctionCall<BigInteger> fooFlag() {
-        final Function function = new Function(FUNC_FOOFLAG, 
-                Arrays.<Type>asList(), 
-                Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() {}));
-        return executeRemoteCallSingleValueReturn(function, BigInteger.class);
-    }
-
-    public byte[] fooFlag_AsSignedCrosschainSubordinateView(final CrosschainContext crosschainContext) throws IOException {
-        final Function function = new Function(FUNC_FOOFLAG, 
-                Arrays.<Type>asList(), 
-                Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() {}));
-        return createSignedSubordinateView(function, crosschainContext);
-    }
-
-    public RemoteFunctionCall<BigInteger> foopp() {
-        final Function function = new Function(FUNC_FOOPP, 
-                Arrays.<Type>asList(), 
-                Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() {}));
-        return executeRemoteCallSingleValueReturn(function, BigInteger.class);
-    }
-
-    public byte[] foopp_AsSignedCrosschainSubordinateView(final CrosschainContext crosschainContext) throws IOException {
-        final Function function = new Function(FUNC_FOOPP, 
-                Arrays.<Type>asList(), 
-                Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() {}));
-        return createSignedSubordinateView(function, crosschainContext);
-    }
-
-    public RemoteFunctionCall<BigInteger> foovp() {
-        final Function function = new Function(FUNC_FOOVP, 
-                Arrays.<Type>asList(), 
-                Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() {}));
-        return executeRemoteCallSingleValueReturn(function, BigInteger.class);
-    }
-
-    public byte[] foovp_AsSignedCrosschainSubordinateView(final CrosschainContext crosschainContext) throws IOException {
-        final Function function = new Function(FUNC_FOOVP, 
-                Arrays.<Type>asList(), 
-                Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() {}));
-        return createSignedSubordinateView(function, crosschainContext);
-    }
-
-    public RemoteFunctionCall<BigInteger> foovv() {
-        final Function function = new Function(FUNC_FOOVV, 
-                Arrays.<Type>asList(), 
-                Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() {}));
-        return executeRemoteCallSingleValueReturn(function, BigInteger.class);
-    }
-
-    public byte[] foovv_AsSignedCrosschainSubordinateView(final CrosschainContext crosschainContext) throws IOException {
-        final Function function = new Function(FUNC_FOOVV, 
-                Arrays.<Type>asList(), 
-                Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() {}));
-        return createSignedSubordinateView(function, crosschainContext);
-    }
-
-    public RemoteFunctionCall<BigInteger> pureFoo() {
-        final Function function = new Function(FUNC_PUREFOO, 
-                Arrays.<Type>asList(), 
-                Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() {}));
-        return executeRemoteCallSingleValueReturn(function, BigInteger.class);
-    }
-
-    public byte[] pureFoo_AsSignedCrosschainSubordinateView(final CrosschainContext crosschainContext) throws IOException {
-        final Function function = new Function(FUNC_PUREFOO, 
-                Arrays.<Type>asList(), 
-                Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() {}));
-        return createSignedSubordinateView(function, crosschainContext);
-    }
-
-    public RemoteFunctionCall<TransactionReceipt> setProperties(BigInteger _barChainId, String _barCtrt) {
-        final Function function = new Function(
-                FUNC_SETPROPERTIES, 
-                Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Uint256(_barChainId), 
-                new org.web3j.abi.datatypes.Address(160, _barCtrt)), 
-                Collections.<TypeReference<?>>emptyList());
-        return executeRemoteCallTransaction(function);
-    }
-
-    public byte[] setProperties_AsSignedCrosschainSubordinateTransaction(BigInteger _barChainId, String _barCtrt, final CrosschainContext crosschainContext) throws IOException {
-        final Function function = new Function(
-                FUNC_SETPROPERTIES, 
-                Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Uint256(_barChainId), 
-                new org.web3j.abi.datatypes.Address(160, _barCtrt)), 
-                Collections.<TypeReference<?>>emptyList());
-        return createSignedSubordinateTransaction(function, crosschainContext);
-    }
-
-    public RemoteFunctionCall<TransactionReceipt> setProperties_AsCrosschainTransaction(BigInteger _barChainId, String _barCtrt, final CrosschainContext crosschainContext) {
-        final Function function = new Function(
-                FUNC_SETPROPERTIES, 
-                Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Uint256(_barChainId), 
-                new org.web3j.abi.datatypes.Address(160, _barCtrt)), 
-                Collections.<TypeReference<?>>emptyList());
-        return executeRemoteCallCrosschainTransaction(function, crosschainContext);
-    }
-
-    public RemoteFunctionCall<TransactionReceipt> updateState() {
-        final Function function = new Function(
-                FUNC_UPDATESTATE, 
-                Arrays.<Type>asList(), 
-                Collections.<TypeReference<?>>emptyList());
-        return executeRemoteCallTransaction(function);
-    }
-
-    public byte[] updateState_AsSignedCrosschainSubordinateTransaction(final CrosschainContext crosschainContext) throws IOException {
-        final Function function = new Function(
-                FUNC_UPDATESTATE, 
-                Arrays.<Type>asList(), 
-                Collections.<TypeReference<?>>emptyList());
-        return createSignedSubordinateTransaction(function, crosschainContext);
-    }
-
-    public RemoteFunctionCall<TransactionReceipt> updateState_AsCrosschainTransaction(final CrosschainContext crosschainContext) {
-        final Function function = new Function(
-                FUNC_UPDATESTATE, 
-                Arrays.<Type>asList(), 
-                Collections.<TypeReference<?>>emptyList());
-        return executeRemoteCallCrosschainTransaction(function, crosschainContext);
-    }
-
-    @Deprecated
-    public static FooCtrt load(String contractAddress, Besu besu, CrosschainTransactionManager crosschainTransactionManager, BigInteger gasPrice, BigInteger gasLimit) {
-        return new FooCtrt(contractAddress, besu, crosschainTransactionManager, gasPrice, gasLimit);
-    }
-
-    public static FooCtrt load(String contractAddress, Besu besu, CrosschainTransactionManager crosschainTransactionManager, ContractGasProvider contractGasProvider) {
-        return new FooCtrt(contractAddress, besu, crosschainTransactionManager, contractGasProvider);
-    }
-
-    public static RemoteCall<FooCtrt> deployLockable(Besu besu, CrosschainTransactionManager transactionManager, ContractGasProvider contractGasProvider) {
-        CrosschainContext crosschainContext = null;
-        return deployLockableContractRemoteCall(FooCtrt.class, besu, transactionManager, contractGasProvider, BINARY, "", crosschainContext);
-    }
-
-    @Deprecated
-    public static RemoteCall<FooCtrt> deployLockable(Besu besu, CrosschainTransactionManager transactionManager, BigInteger gasPrice, BigInteger gasLimit) {
-        CrosschainContext crosschainContext = null;
-        return deployLockableContractRemoteCall(FooCtrt.class, besu, transactionManager, gasPrice, gasLimit, BINARY, "", crosschainContext);
-    }
-
-    public static RemoteCall<FooCtrt> deployLockable(Besu besu, CrosschainTransactionManager transactionManager, ContractGasProvider contractGasProvider, final CrosschainContext crosschainContext) {
-        return deployLockableContractRemoteCall(FooCtrt.class, besu, transactionManager, contractGasProvider, BINARY, "", crosschainContext);
-    }
-
-    @Deprecated
-    public static RemoteCall<FooCtrt> deployLockable(Besu besu, CrosschainTransactionManager transactionManager, BigInteger gasPrice, BigInteger gasLimit, final CrosschainContext crosschainContext) {
-        return deployLockableContractRemoteCall(FooCtrt.class, besu, transactionManager, gasPrice, gasLimit, BINARY, "", crosschainContext);
-    }
->>>>>>> Stashed changes
 }
