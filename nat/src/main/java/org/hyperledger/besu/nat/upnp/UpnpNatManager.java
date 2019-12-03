@@ -17,6 +17,13 @@ package org.hyperledger.besu.nat.upnp;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 
+import org.hyperledger.besu.nat.NatMethod;
+import org.hyperledger.besu.nat.core.AbstractNatManager;
+import org.hyperledger.besu.nat.core.NatManager;
+import org.hyperledger.besu.nat.core.domain.NatPortMapping;
+import org.hyperledger.besu.nat.core.domain.NatServiceType;
+import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -49,12 +56,11 @@ import org.jupnp.support.model.PortMapping;
  * Manages underlying UPnP library "jupnp" and provides abstractions for asynchronously interacting
  * with the NAT environment through UPnP.
  */
-public class UpnpNatManager {
+public class UpnpNatManager extends AbstractNatManager implements NatManager {
   protected static final Logger LOG = LogManager.getLogger();
 
   static final String SERVICE_TYPE_WAN_IP_CONNECTION = "WANIPConnection";
 
-  private boolean started = false;
   private final UpnpService upnpService;
   private final RegistryListener registryListener;
 
@@ -62,14 +68,8 @@ public class UpnpNatManager {
   private final CompletableFuture<String> externalIpQueryFuture = new CompletableFuture<>();
 
   private final Map<String, CompletableFuture<RemoteService>> recognizedServices = new HashMap<>();
-  private final List<PortMapping> forwardedPorts = new ArrayList<>();
+  private final List<NatPortMapping> forwardedPorts = new ArrayList<>();
   private Optional<String> discoveredOnLocalAddress = Optional.empty();
-
-  /** Mirrored enum from PortMapping.Protocol to avoid bleeding jupnp types into calling code */
-  public enum Protocol {
-    UDP,
-    TCP
-  }
 
   /** Empty constructor. Creates in instance of UpnpServiceImpl. */
   public UpnpNatManager() {
@@ -90,6 +90,7 @@ public class UpnpNatManager {
    * @param service is the desired instance of UpnpService.
    */
   UpnpNatManager(final UpnpService service) {
+    super(NatMethod.UPNP);
     upnpService = service;
 
     // prime our recognizedServices map so we can use its key-set later
@@ -111,19 +112,12 @@ public class UpnpNatManager {
    *
    * @throws IllegalStateException if already started.
    */
-  public synchronized void start() {
-    if (started) {
-      LOG.warn("Attempt to start an already-started {}", getClass().getSimpleName());
-      return;
-    }
-
+  @Override
+  public synchronized void doStart() {
     LOG.info("Starting UPnP Service");
     upnpService.startup();
     upnpService.getRegistry().addListener(registryListener);
-
     initiateExternalIpQuery();
-
-    started = true;
   }
 
   /**
@@ -131,12 +125,8 @@ public class UpnpNatManager {
    *
    * @throws IllegalStateException if stopped.
    */
-  public synchronized void stop() {
-    if (!started) {
-      LOG.warn("Attempt to stop an already-stopped {}", getClass().getSimpleName());
-      return;
-    }
-
+  @Override
+  public synchronized void doStop() {
     CompletableFuture<Void> portForwardReleaseFuture = releaseAllPortForwards();
     try {
       LOG.info("Allowing 3 seconds to release all port forwards...");
@@ -151,8 +141,6 @@ public class UpnpNatManager {
 
     upnpService.getRegistry().removeListener(registryListener);
     upnpService.shutdown();
-
-    started = false;
   }
 
   /**
@@ -172,10 +160,7 @@ public class UpnpNatManager {
    */
   @VisibleForTesting
   synchronized CompletableFuture<RemoteService> getWANIPConnectionService() {
-    if (!started) {
-      throw new IllegalStateException(
-          "Cannot call getWANIPConnectionService() when in stopped state");
-    }
+    checkState(isStarted(), "Cannot call getWANIPConnectionService() when in stopped state");
     return getService(SERVICE_TYPE_WAN_IP_CONNECTION);
   }
 
@@ -197,11 +182,20 @@ public class UpnpNatManager {
    *
    * @return A CompletableFuture that can be used to query the result (or error).
    */
-  public synchronized CompletableFuture<String> queryExternalIPAddress() {
-    if (!started) {
-      throw new IllegalStateException("Cannot call queryExternalIPAddress() when in stopped state");
-    }
+  @Override
+  public CompletableFuture<String> retrieveExternalIPAddress() {
     return externalIpQueryFuture.thenApply(x -> x);
+  }
+
+  /**
+   * Returns all known port mappings.
+   *
+   * @return The known port mappings wrapped in a {@link java.util.concurrent.Future}.
+   */
+  @Override
+  public CompletableFuture<List<NatPortMapping>> getPortMappings() {
+    checkState(isStarted(), "Cannot call getPortMappings() when in stopped state");
+    return CompletableFuture.completedFuture(forwardedPorts);
   }
 
   /**
@@ -277,12 +271,13 @@ public class UpnpNatManager {
    * <p>In addition, port is used for both internal and external port values.
    *
    * @param port is the port to be used for both internal and external port values
-   * @param protocol is either UDP or TCP
-   * @param description is a free-form description, often displayed in router UIs
+   * @param protocol is either UDP or TCP {@link NetworkProtocol}
+   * @param serviceType {@link NatServiceType}, often displayed in router UIs
    */
   public void requestPortForward(
-      final int port, final Protocol protocol, final String description) {
-
+      final int port, final NetworkProtocol protocol, final NatServiceType serviceType) {
+    checkState(isStarted(), "Cannot call requestPortForward() when in stopped state");
+    checkArgument(port != 0, "Cannot map to internal port zero.");
     this.requestPortForward(
         new PortMapping(
             true,
@@ -292,7 +287,7 @@ public class UpnpNatManager {
             new UnsignedIntegerTwoBytes(port),
             null,
             toJupnpProtocol(protocol),
-            description));
+            serviceType.getValue()));
   }
 
   /**
@@ -302,9 +297,6 @@ public class UpnpNatManager {
    * @return A CompletableFuture that can be used to query the result (or error).
    */
   private CompletableFuture<Void> requestPortForward(final PortMapping portMapping) {
-    checkArgument(
-        portMapping.getInternalPort().getValue() != 0, "Cannot map to internal port zero.");
-    checkState(started, "Cannot call requestPortForward() when in stopped state");
 
     CompletableFuture<Void> upnpQueryFuture = new CompletableFuture<>();
 
@@ -337,7 +329,17 @@ public class UpnpNatManager {
                       portMapping.getExternalPort());
 
                   synchronized (forwardedPorts) {
-                    forwardedPorts.add(portMapping);
+                    final NatServiceType natServiceType =
+                        NatServiceType.fromString(portMapping.getDescription());
+                    final NatPortMapping natPortMapping =
+                        new NatPortMapping(
+                            natServiceType,
+                            NetworkProtocol.valueOf(portMapping.getProtocol().name()),
+                            portMapping.getInternalClient(),
+                            portMapping.getRemoteHost(),
+                            portMapping.getExternalPort().getValue().intValue(),
+                            portMapping.getInternalPort().getValue().intValue());
+                    forwardedPorts.add(natPortMapping);
                   }
 
                   upnpQueryFuture.complete(null);
@@ -384,10 +386,6 @@ public class UpnpNatManager {
    * @return A CompletableFuture that will complete when all port forward requests have been made
    */
   private CompletableFuture<Void> releaseAllPortForwards() {
-    if (!started) {
-      throw new IllegalStateException("Cannot call releaseAllPortForwards() when in stopped state");
-    }
-
     // if we haven't observed the WANIPConnection service yet, we should have no port forwards to
     // release
     CompletableFuture<RemoteService> wanIPConnectionServiceFuture =
@@ -402,9 +400,9 @@ public class UpnpNatManager {
 
     boolean done = false;
     while (!done) {
-      PortMapping portMapping = null;
+      NatPortMapping portMapping;
       synchronized (forwardedPorts) {
-        if (forwardedPorts.size() == 0) {
+        if (forwardedPorts.isEmpty()) {
           done = true;
           continue;
         }
@@ -422,7 +420,7 @@ public class UpnpNatManager {
       CompletableFuture<Void> future = new CompletableFuture<>();
 
       PortMappingDelete callback =
-          new PortMappingDelete(service, portMapping) {
+          new PortMappingDelete(service, toJupnpPortMapping(portMapping)) {
             /**
              * Because the underlying jupnp library omits generics info in this method signature, we
              * must too when we override it.
@@ -496,7 +494,7 @@ public class UpnpNatManager {
     }
   }
 
-  private PortMapping.Protocol toJupnpProtocol(final Protocol protocol) {
+  private PortMapping.Protocol toJupnpProtocol(final NetworkProtocol protocol) {
     switch (protocol) {
       case UDP:
         return PortMapping.Protocol.UDP;
@@ -504,5 +502,17 @@ public class UpnpNatManager {
         return PortMapping.Protocol.TCP;
     }
     return null;
+  }
+
+  private PortMapping toJupnpPortMapping(final NatPortMapping natPortMapping) {
+    return new PortMapping(
+        true,
+        new UnsignedIntegerFourBytes(0),
+        null,
+        new UnsignedIntegerTwoBytes(natPortMapping.getExternalPort()),
+        new UnsignedIntegerTwoBytes(natPortMapping.getInternalPort()),
+        null,
+        toJupnpProtocol(natPortMapping.getProtocol()),
+        natPortMapping.getNatServiceType().getValue());
   }
 }
