@@ -32,16 +32,9 @@ import org.web3j.tx.CrosschainContext;
 import org.web3j.tx.CrosschainContextGenerator;
 
 /*
- * Makes a simple crosschain view call and a transaction call.
- *
- * Two contracts - BarCtrt and FooCtrt are deployed on blockchains 1 and 2 respectively. FooCtrt has a simple view
- * function called foo() that does nothing but returns 1. BarCtrt has a function called bar() and a flag that is set
- * to 0 while deploying (thanks to the constructor). bar() updates the flag with the return value of foo(). The test
- * doCCViewCall checks if the flag is set to 1 after the crosschain view call.
- *
- * FooCtrt also has a updateState function that updates the state (fooFlag) to 1, and BarCtrt has a barUpdateState
- * function call, that calls the FooCtrt's updateState function. The doCCTxCall tests this
- * (BarCtrt.barUpdateState) crosschain transaction by checking if the fooFlag is set to 1 after the transaction.
+ * Two contracts - BarCtrt and FooCtrt are deployed on blockchains 1 and 2 respectively. Many tests are created
+ * to check crosschain transactions happening between views, pure functions and transactions. Nesting the calls
+ * are also checked.
  */
 
 public class CrosschainCall extends CrosschainAcceptanceTestBase {
@@ -99,6 +92,11 @@ public class CrosschainCall extends CrosschainAcceptanceTestBase {
     }
   }
 
+  /*
+   * FooCtrt has a simple view function called foo() that does nothing but returns 1. BarCtrt has a function called
+   * bar() and a flag that is set to 0 while deploying (thanks to the constructor). bar() updates the flag with the
+   * return value of foo(). The test doCCViewCall checks if the flag is set to 1 after the crosschain view call.
+   */
   @Test
   public void doCCViewCall() throws Exception {
     CrosschainContextGenerator ctxGenerator =
@@ -122,6 +120,11 @@ public class CrosschainCall extends CrosschainAcceptanceTestBase {
     assertThat(barCtrt.flag().send().longValue()).isEqualTo(1);
   }
 
+  /*
+   * FooCtrt also has a updateState function that updates the state (fooFlag) to 1, and BarCtrt has a barUpdateState
+   * function call, that calls the FooCtrt's updateState function. The doCCTxCall tests this
+   * (BarCtrt.barUpdateState) crosschain transaction by checking if the fooFlag is set to 1 after the transaction.
+   */
   @Test
   public void doCCTxCall() throws Exception {
     CrosschainContextGenerator ctxGenerator =
@@ -143,6 +146,9 @@ public class CrosschainCall extends CrosschainAcceptanceTestBase {
     assertThat(fooCtrt.fooFlag().send().longValue()).isEqualTo(1);
   }
 
+  /*
+   * Similar to doCCViewCall(), however a pure function is used in place of a view function.
+   */
   @Test
   public void doCCPureCall() throws Exception {
     CrosschainContextGenerator ctxGenerator =
@@ -164,6 +170,9 @@ public class CrosschainCall extends CrosschainAcceptanceTestBase {
     assertThat(barCtrt.flag().send().longValue()).isEqualTo(2);
   }
 
+  /*
+   * Checks the nested crosschain view calls.
+   */
   @Test
   public void doCCViewViewCall() throws Exception {
     CrosschainContextGenerator ctxGenerator =
@@ -196,6 +205,9 @@ public class CrosschainCall extends CrosschainAcceptanceTestBase {
     assertThat(barCtrt.vvflag().send().longValue()).isEqualTo(1);
   }
 
+  /*
+   * Checks the nested crosschain view to pure calls.
+   */
   @Test
   public void doCCViewPureCall() throws Exception {
     CrosschainContextGenerator ctxGenerator =
