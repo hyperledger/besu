@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager;
 
+import static java.util.Collections.emptyList;
+
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -44,7 +46,7 @@ public class ForkIdManager {
     if (forks != null) {
       forkAndHashList = collectForksAndHashes(forks, currentHead);
     } else {
-      forkAndHashList = new ArrayList<>();
+      forkAndHashList = emptyList();
     }
   };
 
@@ -147,24 +149,12 @@ public class ForkIdManager {
   }
 
   private boolean isHashKnown(final BytesValue forkHash) {
-    for (ForkId j : forkAndHashList) {
-      if (forkHash.equals(j.getHash())) {
-        return true;
-      }
-    }
-    return false;
+    return forkAndHashList.stream().map(ForkId::getHash).anyMatch(hash -> hash.equals(forkHash));
   }
 
   private boolean isForkKnown(final Long nextFork) {
-    if (highestKnownFork < nextFork) {
-      return true;
-    }
-    for (ForkId j : forkAndHashList) {
-      if (nextFork.equals(j.getNext())) {
-        return true;
-      }
-    }
-    return false;
+    return highestKnownFork < nextFork
+        || forkAndHashList.stream().map(ForkId::getNext).anyMatch(fork -> fork.equals(nextFork));
   }
 
   private boolean isRemoteAwareOfPresent(final BytesValue forkHash, final Long nextFork) {
@@ -185,7 +175,7 @@ public class ForkIdManager {
   // TODO: should sort these when first gathering the list of forks to ensure order
   private List<ForkId> collectForksAndHashes(final List<Long> forks, final Long currentHead) {
     boolean first = true;
-    ArrayList<ForkId> forkList = new ArrayList<>();
+    List<ForkId> forkList = new ArrayList<>();
     Iterator<Long> iterator = forks.iterator();
     while (iterator.hasNext()) {
       Long forkBlockNumber = iterator.next();

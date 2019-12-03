@@ -15,7 +15,6 @@
 package org.hyperledger.besu.config;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toUnmodifiableList;
 import static org.hyperledger.besu.config.JsonUtil.normalizeKeys;
 
