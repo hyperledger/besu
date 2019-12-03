@@ -297,7 +297,7 @@ public class GenesisConfigFileTest {
     final GenesisConfigFile config = GenesisConfigFile.mainnet();
 
     assertThat(config.getForks())
-        .containsSequence(1150000L, 1920000L, 2463000L, 2675000L, 4370000L, 7280000L);
+        .containsExactly(1150000L, 1920000L, 2463000L, 2675000L, 4370000L, 7280000L);
     assertThat(config.getConfigOptions().getChainId()).hasValue(MAINNET_CHAIN_ID);
   }
 
