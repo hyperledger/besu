@@ -47,8 +47,6 @@ public class FooInt extends CrosschainContract {
 
   public static final String FUNC_FOO = "foo";
 
-  public static final String FUNC_FOOPP = "foopp";
-
   public static final String FUNC_FOOVP = "foovp";
 
   public static final String FUNC_FOOVV = "foovv";
@@ -89,25 +87,6 @@ public class FooInt extends CrosschainContract {
     final Function function =
         new Function(
             FUNC_FOO,
-            Arrays.<Type>asList(),
-            Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() {}));
-    return createSignedSubordinateView(function, crosschainContext);
-  }
-
-  public RemoteFunctionCall<BigInteger> foopp() {
-    final Function function =
-        new Function(
-            FUNC_FOOPP,
-            Arrays.<Type>asList(),
-            Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() {}));
-    return executeRemoteCallSingleValueReturn(function, BigInteger.class);
-  }
-
-  public byte[] foopp_AsSignedCrosschainSubordinateView(final CrosschainContext crosschainContext)
-      throws IOException {
-    final Function function =
-        new Function(
-            FUNC_FOOPP,
             Arrays.<Type>asList(),
             Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() {}));
     return createSignedSubordinateView(function, crosschainContext);

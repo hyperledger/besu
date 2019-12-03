@@ -19,9 +19,13 @@ contract BarCtrt is Crosschain, BarInt {
     uint256 fooChainId;
     FooInt public fooCtrt;
     uint256 public flag;
+    uint256 public vvflag;
+    uint256 public vpflag;
 
     constructor() public {
         flag = 0;
+        vvflag = 0;
+        vpflag = 0;
     }
 
     function setProperties(uint256 _fooChainId, address _fooCtrtAaddr) public {
@@ -46,14 +50,14 @@ contract BarCtrt is Crosschain, BarInt {
     }
 
     function purefn() external pure returns (uint256) {
-        return 2;
+        return 1;
     }
 
     function barvv() external {
-        flag = crosschainViewUint256(fooChainId, address(fooCtrt), abi.encodeWithSelector(fooCtrt.foovv.selector) );
+        vvflag = crosschainViewUint256(fooChainId, address(fooCtrt), abi.encodeWithSelector(fooCtrt.foovv.selector) );
     }
 
     function barvp() external {
-        flag = crosschainViewUint256(fooChainId, address(fooCtrt), abi.encodeWithSelector(fooCtrt.foovp.selector) );
+        vpflag = crosschainViewUint256(fooChainId, address(fooCtrt), abi.encodeWithSelector(fooCtrt.foovp.selector) );
     }
 }

@@ -49,6 +49,10 @@ public class BarInt extends CrosschainContract {
 
   public static final String FUNC_BARUPDATESTATE = "barUpdateState";
 
+  public static final String FUNC_BARVP = "barvp";
+
+  public static final String FUNC_BARVV = "barvv";
+
   public static final String FUNC_PUREBAR = "pureBar";
 
   public static final String FUNC_PUREFN = "purefn";
@@ -113,6 +117,46 @@ public class BarInt extends CrosschainContract {
     final Function function =
         new Function(
             FUNC_BARUPDATESTATE, Arrays.<Type>asList(), Collections.<TypeReference<?>>emptyList());
+    return executeRemoteCallCrosschainTransaction(function, crosschainContext);
+  }
+
+  public RemoteFunctionCall<TransactionReceipt> barvp() {
+    final Function function =
+        new Function(FUNC_BARVP, Arrays.<Type>asList(), Collections.<TypeReference<?>>emptyList());
+    return executeRemoteCallTransaction(function);
+  }
+
+  public byte[] barvp_AsSignedCrosschainSubordinateTransaction(
+      final CrosschainContext crosschainContext) throws IOException {
+    final Function function =
+        new Function(FUNC_BARVP, Arrays.<Type>asList(), Collections.<TypeReference<?>>emptyList());
+    return createSignedSubordinateTransaction(function, crosschainContext);
+  }
+
+  public RemoteFunctionCall<TransactionReceipt> barvp_AsCrosschainTransaction(
+      final CrosschainContext crosschainContext) {
+    final Function function =
+        new Function(FUNC_BARVP, Arrays.<Type>asList(), Collections.<TypeReference<?>>emptyList());
+    return executeRemoteCallCrosschainTransaction(function, crosschainContext);
+  }
+
+  public RemoteFunctionCall<TransactionReceipt> barvv() {
+    final Function function =
+        new Function(FUNC_BARVV, Arrays.<Type>asList(), Collections.<TypeReference<?>>emptyList());
+    return executeRemoteCallTransaction(function);
+  }
+
+  public byte[] barvv_AsSignedCrosschainSubordinateTransaction(
+      final CrosschainContext crosschainContext) throws IOException {
+    final Function function =
+        new Function(FUNC_BARVV, Arrays.<Type>asList(), Collections.<TypeReference<?>>emptyList());
+    return createSignedSubordinateTransaction(function, crosschainContext);
+  }
+
+  public RemoteFunctionCall<TransactionReceipt> barvv_AsCrosschainTransaction(
+      final CrosschainContext crosschainContext) {
+    final Function function =
+        new Function(FUNC_BARVV, Arrays.<Type>asList(), Collections.<TypeReference<?>>emptyList());
     return executeRemoteCallCrosschainTransaction(function, crosschainContext);
   }
 

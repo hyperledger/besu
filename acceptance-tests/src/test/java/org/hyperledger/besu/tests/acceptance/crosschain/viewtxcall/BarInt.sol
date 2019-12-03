@@ -19,5 +19,7 @@ contract BarInt {
     function barUpdateState() external;
     function pureBar() external;
     function viewfn() external view returns (uint256);
+    function barvv() external;
     function purefn() external pure returns (uint256);
+    function barvp() external;
 }

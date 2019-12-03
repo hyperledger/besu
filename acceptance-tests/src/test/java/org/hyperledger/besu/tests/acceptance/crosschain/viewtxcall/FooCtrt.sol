@@ -42,10 +42,10 @@ contract FooCtrt is Crosschain, FooInt {
     }
 
     function foovv() external view returns (uint256) {
-        return 2 + crosschainViewUint256(barChainId, address(barCtrt), abi.encodeWithSelector(barCtrt.viewfn.selector));
+        return crosschainViewUint256(barChainId, address(barCtrt), abi.encodeWithSelector(barCtrt.viewfn.selector));
     }
 
     function foovp() external view returns (uint256) {
-        return 2 + crosschainViewUint256(barChainId, address(barCtrt), abi.encodeWithSelector(barCtrt.purefn.selector));
+        return crosschainViewUint256(barChainId, address(barCtrt), abi.encodeWithSelector(barCtrt.purefn.selector));
     }
 }

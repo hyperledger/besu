@@ -21,6 +21,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -57,6 +58,8 @@ public class CrosschainCall extends CrosschainAcceptanceTestBase {
 
     // Making nodeOnBlockChain1 a multichain node
     addMultichainNode(nodeOnBlockchain1, nodeOnBlockchain2);
+    // Making nodeOnBlockchain2 a multichain node
+    addMultichainNode(nodeOnBlockchain2, nodeOnBlockchain1);
 
     // Deploying BarCtrt on BlockChain1 and FooCtrt on BlockChain2
     barCtrt =
@@ -72,7 +75,6 @@ public class CrosschainCall extends CrosschainAcceptanceTestBase {
     barCtrt.setProperties(nodeOnBlockchain2.getChainId(), fooCtrt.getContractAddress()).send();
     // Calling FooCtrt.setProperties, a regular intrachain function call
     fooCtrt.setProperties(nodeOnBlockchain1.getChainId(), barCtrt.getContractAddress()).send();
-    LOG.info("Flag value = {}", barCtrt.flag().send().longValue());
   }
 
   @After
@@ -82,7 +84,8 @@ public class CrosschainCall extends CrosschainAcceptanceTestBase {
     this.clusterBc2.close();
   }
 
-  private void waitForUnlock(final String ctrtAddress, final BesuNode node) throws Exception {
+  private void waitForUnlock(final String ctrtAddress, @NotNull final BesuNode node)
+      throws Exception {
     CrossIsLockedResponse isLockedObj =
         node.getJsonRpc()
             .crossIsLocked(ctrtAddress, DefaultBlockParameter.valueOf("latest"))
@@ -107,7 +110,7 @@ public class CrosschainCall extends CrosschainAcceptanceTestBase {
     byte[][] subordTxAndViews = new byte[][] {subordTrans};
     CrosschainContext origTxCtx = ctxGenerator.createCrosschainContext(subordTxAndViews);
 
-    LOG.info("Flag value = {}", barCtrt.flag().send().longValue());
+    // LOG.info("Flag value = {}", barCtrt.flag().send().longValue());
     TransactionReceipt txReceipt = barCtrt.bar_AsCrosschainTransaction(origTxCtx).send();
     if (!txReceipt.isStatusOK()) {
       LOG.info("txReceipt details " + txReceipt.toString());
@@ -159,5 +162,69 @@ public class CrosschainCall extends CrosschainAcceptanceTestBase {
 
     waitForUnlock(barCtrt.getContractAddress(), this.nodeOnBlockchain1);
     assertThat(barCtrt.flag().send().longValue()).isEqualTo(2);
+  }
+
+  @Test
+  public void doCCViewViewCall() throws Exception {
+    CrosschainContextGenerator ctxGenerator =
+        new CrosschainContextGenerator(nodeOnBlockchain1.getChainId());
+
+    LOG.info("Constructing Nested Crosschain Transaction");
+    // BarCtrt.viewfn() is called by FooCtrt.foovv()
+    CrosschainContext subordTxCtx =
+        ctxGenerator.createCrosschainContext(
+            nodeOnBlockchain2.getChainId(), fooCtrt.getContractAddress());
+    byte[] subordView1 = barCtrt.viewfn_AsSignedCrosschainSubordinateView(subordTxCtx);
+
+    // FooCtrt.foovv() is called by BarCtrt.barvv()
+    byte[][] subordViewForFooVv = new byte[][] {subordView1};
+    subordTxCtx =
+        ctxGenerator.createCrosschainContext(
+            nodeOnBlockchain1.getChainId(), barCtrt.getContractAddress(), subordViewForFooVv);
+    byte[] subordView2 = fooCtrt.foovv_AsSignedCrosschainSubordinateView(subordTxCtx);
+
+    byte[][] subordViews = new byte[][] {subordView2};
+    CrosschainContext origTxCtx = ctxGenerator.createCrosschainContext(subordViews);
+
+    TransactionReceipt txReceipt = barCtrt.barvv_AsCrosschainTransaction(origTxCtx).send();
+    if (!txReceipt.isStatusOK()) {
+      LOG.info("txReceipt details " + txReceipt.toString());
+      throw new Error(txReceipt.getStatus());
+    }
+
+    waitForUnlock(barCtrt.getContractAddress(), nodeOnBlockchain1);
+    assertThat(barCtrt.vvflag().send().longValue()).isEqualTo(1);
+  }
+
+  @Test
+  public void doCCViewPureCall() throws Exception {
+    CrosschainContextGenerator ctxGenerator =
+        new CrosschainContextGenerator(nodeOnBlockchain1.getChainId());
+
+    LOG.info("Constructing Nested Crosschain Transaction");
+    // BarCtrt.purefn() is called by FooCtrt.foovp()
+    CrosschainContext subordTxCtx =
+        ctxGenerator.createCrosschainContext(
+            nodeOnBlockchain2.getChainId(), fooCtrt.getContractAddress());
+    byte[] subordView1 = barCtrt.purefn_AsSignedCrosschainSubordinateView(subordTxCtx);
+
+    // FooCtrt.foovp() is called by BarCtrt.barvp()
+    byte[][] subordViewForFooVp = new byte[][] {subordView1};
+    subordTxCtx =
+        ctxGenerator.createCrosschainContext(
+            nodeOnBlockchain1.getChainId(), barCtrt.getContractAddress(), subordViewForFooVp);
+    byte[] subordView2 = fooCtrt.foovp_AsSignedCrosschainSubordinateView(subordTxCtx);
+
+    byte[][] subordViews = new byte[][] {subordView2};
+    CrosschainContext origTxCtx = ctxGenerator.createCrosschainContext(subordViews);
+
+    TransactionReceipt txReceipt = barCtrt.barvp_AsCrosschainTransaction(origTxCtx).send();
+    if (!txReceipt.isStatusOK()) {
+      LOG.info("txReceipt details " + txReceipt.toString());
+      throw new Error(txReceipt.getStatus());
+    }
+
+    waitForUnlock(barCtrt.getContractAddress(), nodeOnBlockchain1);
+    assertThat(barCtrt.vpflag().send().longValue()).isEqualTo(1);
   }
 }
