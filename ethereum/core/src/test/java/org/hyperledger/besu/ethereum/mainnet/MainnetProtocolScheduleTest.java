@@ -43,9 +43,11 @@ public class MainnetProtocolScheduleTest {
     Assertions.assertThat(sched.getByBlockNumber(7_280_000L).getName())
         .isEqualTo("ConstantinopleFix");
     Assertions.assertThat(sched.getByBlockNumber(9_069_000L).getName()).isEqualTo("Istanbul");
-    Assertions.assertThat(sched.getByBlockNumber(9_200_000L).getName()).isEqualTo("MuirGlacier");
-    Assertions.assertThat(sched.getByBlockNumber(Long.MAX_VALUE).getName())
-        .isEqualTo("MuirGlacier");
+    Assertions.assertThat(sched.getByBlockNumber(Long.MAX_VALUE).getName()).isEqualTo("Istanbul");
+    // TODO (2019-12-12) add activation blocks
+    // Assertions.assertThat(sched.getByBlockNumber(9_200_000L).getName()).isEqualTo("MuirGlacier");
+    // Assertions.assertThat(sched.getByBlockNumber(Long.MAX_VALUE).getName())
+    //    .isEqualTo("MuirGlacier");
   }
 
   @Test
@@ -103,9 +105,11 @@ public class MainnetProtocolScheduleTest {
     Assertions.assertThat(sched.getByBlockNumber(4_939_394L).getName())
         .isEqualTo("ConstantinopleFix");
     Assertions.assertThat(sched.getByBlockNumber(6_485_846L).getName()).isEqualTo("Istanbul");
-    Assertions.assertThat(sched.getByBlockNumber(7_117_117L).getName()).isEqualTo("MuirGlacier");
-    Assertions.assertThat(sched.getByBlockNumber(Long.MAX_VALUE).getName())
-        .isEqualTo("MuirGlacier");
+    Assertions.assertThat(sched.getByBlockNumber(Long.MAX_VALUE).getName()).isEqualTo("Istanbul");
+    // TODO (2019-12-12) add activation blocks
+    // Assertions.assertThat(sched.getByBlockNumber(7_117_117L).getName()).isEqualTo("MuirGlacier");
+    // Assertions.assertThat(sched.getByBlockNumber(Long.MAX_VALUE).getName())
+    //     .isEqualTo("MuirGlacier");
   }
 
   @Test
