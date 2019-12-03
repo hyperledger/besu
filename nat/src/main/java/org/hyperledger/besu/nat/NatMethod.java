@@ -16,6 +16,7 @@ package org.hyperledger.besu.nat;
 
 public enum NatMethod {
   UPNP,
+  MANUAL,
   NONE;
 
   public static NatMethod fromString(final String str) {

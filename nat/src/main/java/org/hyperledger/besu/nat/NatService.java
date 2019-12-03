@@ -20,7 +20,6 @@ import org.hyperledger.besu.nat.core.NatManager;
 import org.hyperledger.besu.nat.core.domain.NatPortMapping;
 import org.hyperledger.besu.nat.core.domain.NatServiceType;
 import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
-import org.hyperledger.besu.nat.upnp.UpnpNatManager;
 
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -170,27 +169,16 @@ public class NatService {
   }
 
   public static class Builder {
-    private NatMethod natMethod = NatMethod.NONE;
+    private Optional<NatManager> natManager = Optional.empty();
 
-    public Builder natMethod(final NatMethod natMethod) {
-      checkNotNull(natMethod);
-      this.natMethod = natMethod;
+    public Builder natManager(final Optional<NatManager> natManager) {
+      checkNotNull(natManager);
+      this.natManager = natManager;
       return this;
     }
 
     public NatService build() {
-      return new NatService(buildNatManager(natMethod));
-    }
-
-    /** Initialize the current NatManager. */
-    private Optional<NatManager> buildNatManager(final NatMethod givenNatMethod) {
-      switch (givenNatMethod) {
-        case UPNP:
-          return Optional.of(new UpnpNatManager());
-        case NONE:
-        default:
-          return Optional.empty();
-      }
+      return new NatService(natManager);
     }
   }
 }

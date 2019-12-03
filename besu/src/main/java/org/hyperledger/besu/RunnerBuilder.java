@@ -88,6 +88,9 @@ import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsService;
 import org.hyperledger.besu.nat.NatMethod;
 import org.hyperledger.besu.nat.NatService;
+import org.hyperledger.besu.nat.core.NatManager;
+import org.hyperledger.besu.nat.manual.ManualNatManager;
+import org.hyperledger.besu.nat.upnp.UpnpNatManager;
 import org.hyperledger.besu.util.NetworkUtility;
 import org.hyperledger.besu.util.bytes.BytesValue;
 
@@ -326,7 +329,7 @@ public class RunnerBuilder {
             .orElse(bannedNodes);
 
     final Optional<NatService> natService =
-        Optional.of(NatService.builder().natMethod(natMethod).build());
+        Optional.of(NatService.builder().natManager(buildNatManager(natMethod)).build());
 
     NetworkBuilder inactiveNetwork = (caps) -> new NoopP2PNetwork();
     NetworkBuilder activeNetwork =
@@ -552,6 +555,18 @@ public class RunnerBuilder {
       return accountPermissioningController;
     } else {
       return Optional.empty();
+    }
+  }
+
+  private Optional<NatManager> buildNatManager(final NatMethod natMethod) {
+    switch (natMethod) {
+      case UPNP:
+        return Optional.of(new UpnpNatManager());
+      case MANUAL:
+        return Optional.of(new ManualNatManager(p2pAdvertisedHost, p2pListenPort));
+      case NONE:
+      default:
+        return Optional.empty();
     }
   }
 
