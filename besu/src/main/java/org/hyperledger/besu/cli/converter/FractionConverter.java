@@ -25,7 +25,7 @@ public class FractionConverter implements CommandLine.ITypeConverter<Float> {
   public Float convert(final String value) throws FractionConversionException {
     try {
       return Fraction.fromString(value).getValue();
-    } catch (NullPointerException | IllegalArgumentException e) {
+    } catch (final NullPointerException | IllegalArgumentException e) {
       throw new FractionConversionException(value);
     }
   }
