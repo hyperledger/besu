@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.util.bytes.BytesValue;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -54,7 +53,8 @@ public class ForkIdManagerTest {
     List<Long> list = Arrays.asList(forksMainnet);
     ForkIdManager forkIdManager =
         ForkIdManager.buildCollection(Hash.fromHexString(mainnetGenHash), list);
-    Iterator<ForkIdManager.ForkId> entries = new ArrayList<>(forkIdManager.getForkAndHashList()).iterator();
+    Iterator<ForkIdManager.ForkId> entries =
+        new ArrayList<>(forkIdManager.getForkAndHashList()).iterator();
     for (ForkIdManager.ForkId id : checkIds) {
       if (!entries.hasNext()) {
         break;
@@ -77,7 +77,8 @@ public class ForkIdManagerTest {
     };
     List<Long> list = Arrays.asList(forks);
     ForkIdManager forkIdManager = ForkIdManager.buildCollection(Hash.fromHexString(genHash), list);
-    Iterator<ForkIdManager.ForkId> entries = new ArrayList<>(forkIdManager.getForkAndHashList()).iterator();
+    Iterator<ForkIdManager.ForkId> entries =
+        new ArrayList<>(forkIdManager.getForkAndHashList()).iterator();
     for (ForkIdManager.ForkId id : checkIds) {
       if (!entries.hasNext()) {
         break;
@@ -102,7 +103,8 @@ public class ForkIdManagerTest {
     };
     List<Long> list = Arrays.asList(forks);
     ForkIdManager forkIdManager = ForkIdManager.buildCollection(Hash.fromHexString(genHash), list);
-    Iterator<ForkIdManager.ForkId> entries = new ArrayList<>(forkIdManager.getForkAndHashList()).iterator();
+    Iterator<ForkIdManager.ForkId> entries =
+        new ArrayList<>(forkIdManager.getForkAndHashList()).iterator();
     for (ForkIdManager.ForkId id : checkIds) {
       if (!entries.hasNext()) {
         break;

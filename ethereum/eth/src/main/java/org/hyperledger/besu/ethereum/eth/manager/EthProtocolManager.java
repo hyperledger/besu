@@ -44,7 +44,6 @@ import java.time.Clock;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -96,13 +95,10 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
 
     this.forkIdManager = ForkIdManager.buildCollection(genesisHash);
     //    if(forks != null){
-//      forkIdManager = ForkIdManager.buildCollection(genesisHash, forks, blockchain);
-//    } else {
-//      forkIdManager = ForkIdManager.buildCollection(genesisHash);
-//    }
-
-
-
+    //      forkIdManager = ForkIdManager.buildCollection(genesisHash, forks, blockchain);
+    //    } else {
+    //      forkIdManager = ForkIdManager.buildCollection(genesisHash);
+    //    }
 
     ethPeers = new EthPeers(getSupportedProtocol(), clock, metricsSystem);
     ethMessages = new EthMessages();
@@ -140,7 +136,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         EthProtocolConfiguration.defaultConfig(),
         clock,
         metricsSystem,
-            ForkIdManager.buildCollection(blockchain.getBlockHashByNumber(0L).get()));
+        ForkIdManager.buildCollection(blockchain.getBlockHashByNumber(0L).get()));
   }
 
   public EthProtocolManager(
@@ -165,73 +161,76 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         ethereumWireProtocolConfiguration,
         clock,
         metricsSystem,
-            ForkIdManager.buildCollection(blockchain.getBlockHashByNumber(0L).get()));
+        ForkIdManager.buildCollection(blockchain.getBlockHashByNumber(0L).get()));
   }
 
   public EthProtocolManager(
-          final Blockchain blockchain,
-          final WorldStateArchive worldStateArchive,
-          final BigInteger networkId,
-          final List<PeerValidator> peerValidators,
-          final boolean fastSyncEnabled,
-          final int syncWorkers,
-          final int txWorkers,
-          final int computationWorkers,
-          final Clock clock,
-          final MetricsSystem metricsSystem,
-          final EthProtocolConfiguration ethereumWireProtocolConfiguration,
-          final List<Long> forks) {
+      final Blockchain blockchain,
+      final WorldStateArchive worldStateArchive,
+      final BigInteger networkId,
+      final List<PeerValidator> peerValidators,
+      final boolean fastSyncEnabled,
+      final int syncWorkers,
+      final int txWorkers,
+      final int computationWorkers,
+      final Clock clock,
+      final MetricsSystem metricsSystem,
+      final EthProtocolConfiguration ethereumWireProtocolConfiguration,
+      final List<Long> forks) {
     this(
-            blockchain,
-            worldStateArchive,
-            networkId,
-            peerValidators,
-            fastSyncEnabled,
-            new EthScheduler(syncWorkers, txWorkers, computationWorkers, metricsSystem),
-            ethereumWireProtocolConfiguration,
-            clock,
-            metricsSystem,
-            ForkIdManager.buildCollection(blockchain.getBlockHashByNumber(0L).get(), forks, blockchain));
+        blockchain,
+        worldStateArchive,
+        networkId,
+        peerValidators,
+        fastSyncEnabled,
+        new EthScheduler(syncWorkers, txWorkers, computationWorkers, metricsSystem),
+        ethereumWireProtocolConfiguration,
+        clock,
+        metricsSystem,
+        ForkIdManager.buildCollection(
+            blockchain.getBlockHashByNumber(0L).get(), forks, blockchain));
   }
 
-//  public EthProtocolManager(
-//      final Blockchain blockchain,
-//      final WorldStateArchive worldStateArchive,
-//      final BigInteger networkId,
-//      final List<PeerValidator> peerValidators,
-//      final boolean fastSyncEnabled,
-//      final int syncWorkers,
-//      final int txWorkers,
-//      final int computationWorkers,
-//      final Clock clock,
-//      final MetricsSystem metricsSystem,
-//      final EthProtocolConfiguration ethereumWireProtocolConfiguration,
-//      final List<Long> forks) {
-//    this.networkId = networkId;
-//    this.peerValidators = peerValidators;
-//    this.scheduler = new EthScheduler(syncWorkers, txWorkers, computationWorkers, metricsSystem);
-//    this.blockchain = blockchain;
-//    this.fastSyncEnabled = fastSyncEnabled;
-//
-//    this.shutdown = new CountDownLatch(1);
-//    genesisHash = blockchain.getBlockHashByNumber(0L).get();
-//
-//    forkIdManager = ForkIdManager.buildCollection(genesisHash, forks, blockchain);
-//
-//    ethPeers = new EthPeers(getSupportedProtocol(), clock, metricsSystem);
-//    ethMessages = new EthMessages();
-//    ethContext = new EthContext(ethPeers, ethMessages, scheduler);
-//
-//    this.blockBroadcaster = new BlockBroadcaster(ethContext);
-//
-//    // Run validators
-//    for (final PeerValidator peerValidator : this.peerValidators) {
-//      PeerValidatorRunner.runValidator(ethContext, peerValidator);
-//    }
-//
-//    // Set up request handlers
-//    new EthServer(blockchain, worldStateArchive, ethMessages, ethereumWireProtocolConfiguration);
-//  }
+  //  public EthProtocolManager(
+  //      final Blockchain blockchain,
+  //      final WorldStateArchive worldStateArchive,
+  //      final BigInteger networkId,
+  //      final List<PeerValidator> peerValidators,
+  //      final boolean fastSyncEnabled,
+  //      final int syncWorkers,
+  //      final int txWorkers,
+  //      final int computationWorkers,
+  //      final Clock clock,
+  //      final MetricsSystem metricsSystem,
+  //      final EthProtocolConfiguration ethereumWireProtocolConfiguration,
+  //      final List<Long> forks) {
+  //    this.networkId = networkId;
+  //    this.peerValidators = peerValidators;
+  //    this.scheduler = new EthScheduler(syncWorkers, txWorkers, computationWorkers,
+  // metricsSystem);
+  //    this.blockchain = blockchain;
+  //    this.fastSyncEnabled = fastSyncEnabled;
+  //
+  //    this.shutdown = new CountDownLatch(1);
+  //    genesisHash = blockchain.getBlockHashByNumber(0L).get();
+  //
+  //    forkIdManager = ForkIdManager.buildCollection(genesisHash, forks, blockchain);
+  //
+  //    ethPeers = new EthPeers(getSupportedProtocol(), clock, metricsSystem);
+  //    ethMessages = new EthMessages();
+  //    ethContext = new EthContext(ethPeers, ethMessages, scheduler);
+  //
+  //    this.blockBroadcaster = new BlockBroadcaster(ethContext);
+  //
+  //    // Run validators
+  //    for (final PeerValidator peerValidator : this.peerValidators) {
+  //      PeerValidatorRunner.runValidator(ethContext, peerValidator);
+  //    }
+  //
+  //    // Set up request handlers
+  //    new EthServer(blockchain, worldStateArchive, ethMessages,
+  // ethereumWireProtocolConfiguration);
+  //  }
 
   public EthContext ethContext() {
     return ethContext;
