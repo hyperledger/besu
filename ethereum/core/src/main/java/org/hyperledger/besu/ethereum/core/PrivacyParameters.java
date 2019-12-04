@@ -30,6 +30,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
+import java.util.Base64;
 import java.util.Optional;
 
 import com.google.common.io.Files;
@@ -209,6 +210,13 @@ public class PrivacyParameters {
     public Builder setEnclavePublicKeyUsingFile(final File publicKeyFile) throws IOException {
       this.enclavePublicKeyFile = publicKeyFile;
       this.enclavePublicKey = Files.asCharSource(publicKeyFile, UTF_8).read();
+      // check that the length of the Sting is 44, which base 64 decodes to 32 Byte
+      if (publicKeyFile.length() != 44) {
+        throw new IllegalArgumentException(
+            "Contents of enclave public key file needs to be 44 characters long to decode to a valid 32 byte public key.");
+      }
+      // base 64 decode to see whether the value is a valid base64 String
+      Base64.getDecoder().decode(this.enclavePublicKey);
       return this;
     }
   }
