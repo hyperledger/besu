@@ -179,9 +179,7 @@ public class ForkIdManager {
     Iterator<Long> iterator = forks.iterator();
     while (iterator.hasNext()) {
       Long forkBlockNumber = iterator.next();
-      if (highestKnownFork < forkBlockNumber) {
-        highestKnownFork = forkBlockNumber;
-      }
+      highestKnownFork = Math.max(highestKnownFork, forkBlockNumber);
       if (first) {
         // first fork
         first = false;
