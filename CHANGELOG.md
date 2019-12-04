@@ -21,6 +21,9 @@ For compatibility with Ethereum Istanbul upgrade, use v1.3.4 or later.
 - Documentation updates include: 
   * [Configuring mining using the Stratum protocol](https://besu.hyperledger.org/en/latest/HowTo/Configure/Configure-Mining/)
   * [ETC network command line options](https://besu.hyperledger.org/en/latest/Reference/CLI/CLI-Syntax/#network)
+- Hard Fork Support:
+   * MuirGlacier for Ethereum Mainnet and Ropsten Testnet
+   * Agharta for Kotti and Mordor Testnets
 
 ### Bug Fixes 
 
