@@ -44,7 +44,7 @@ public class ForkIdManager {
     this.genesisHash = genesisHash;
     this.currentHead = currentHead;
     if (forks != null) {
-      forkAndHashList = collectForksAndHashes(forks, currentHead);
+      forkAndHashList = createForkIds(forks, currentHead);
     } else {
       forkAndHashList = emptyList();
     }
@@ -173,7 +173,7 @@ public class ForkIdManager {
   }
 
   // TODO: should sort these when first gathering the list of forks to ensure order
-  private List<ForkId> collectForksAndHashes(final List<Long> forks, final Long currentHead) {
+  private List<ForkId> createForkIds(final List<Long> forks, final Long currentHead) {
     boolean first = true;
     List<ForkId> forkList = new ArrayList<>();
     Iterator<Long> iterator = forks.iterator();
