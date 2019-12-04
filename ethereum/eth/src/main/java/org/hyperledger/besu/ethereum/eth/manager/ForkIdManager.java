@@ -23,7 +23,6 @@ import org.hyperledger.besu.util.bytes.Bytes32;
 import org.hyperledger.besu.util.bytes.BytesValue;
 import org.hyperledger.besu.util.bytes.BytesValues;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -37,7 +36,7 @@ public class ForkIdManager {
   private Long forkNext;
   private Long highestKnownFork = 0L;
   private ForkId lastKnownEntry = null;
-  private ArrayDeque<ForkId> forkAndHashList;
+  private List<ForkId> forkAndHashList;
 
   public ForkIdManager(final Hash genesisHash, final List<Long> forks, final Long currentHead) {
     this.genesisHash = genesisHash;
@@ -45,7 +44,7 @@ public class ForkIdManager {
     if (forks != null) {
       forkAndHashList = collectForksAndHashes(forks, currentHead);
     } else {
-      forkAndHashList = new ArrayDeque<>();
+      forkAndHashList = new ArrayList<>();
     }
   };
 
@@ -80,7 +79,7 @@ public class ForkIdManager {
     return new ForkId(hash, next);
   }
 
-  public ArrayDeque<ForkId> getForkAndHashList() {
+  public List<ForkId> getForkAndHashList() {
     return this.forkAndHashList;
   }
 
@@ -184,9 +183,9 @@ public class ForkIdManager {
   }
 
   // TODO: should sort these when first gathering the list of forks to ensure order
-  private ArrayDeque<ForkId> collectForksAndHashes(final List<Long> forks, final Long currentHead) {
+  private List<ForkId> collectForksAndHashes(final List<Long> forks, final Long currentHead) {
     boolean first = true;
-    ArrayDeque<ForkId> forkList = new ArrayDeque<>();
+    ArrayList<ForkId> forkList = new ArrayList<>();
     Iterator<Long> iterator = forks.iterator();
     while (iterator.hasNext()) {
       Long forkBlockNumber = iterator.next();
@@ -348,8 +347,8 @@ public class ForkIdManager {
     public boolean equals(final Object obj) {
       if (obj instanceof ForkId) {
         ForkId other = (ForkId) obj;
-        Long thisNext = BytesValues.extractLong(next);
-        return other.getHash().equals(this.hash) && thisNext.equals(other.getNext());
+        long thisNext = BytesValues.extractLong(next);
+        return other.getHash().equals(this.hash) && thisNext == other.getNext();
       }
       return false;
     }

@@ -22,7 +22,9 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 
 import org.junit.Test;
@@ -52,13 +54,12 @@ public class ForkIdManagerTest {
     List<Long> list = Arrays.asList(forksMainnet);
     ForkIdManager forkIdManager =
         ForkIdManager.buildCollection(Hash.fromHexString(mainnetGenHash), list);
-    ArrayDeque<ForkIdManager.ForkId> entries = forkIdManager.getForkAndHashList();
+    Iterator<ForkIdManager.ForkId> entries = new ArrayList<>(forkIdManager.getForkAndHashList()).iterator();
     for (ForkIdManager.ForkId id : checkIds) {
-      ForkIdManager.ForkId testVal = entries.poll();
-      if (testVal == null) {
+      if (!entries.hasNext()) {
         break;
       }
-      assertThat(testVal.equals(id)).isTrue();
+      assertThat(entries.next().equals(id)).isTrue();
     }
   }
 
@@ -76,14 +77,12 @@ public class ForkIdManagerTest {
     };
     List<Long> list = Arrays.asList(forks);
     ForkIdManager forkIdManager = ForkIdManager.buildCollection(Hash.fromHexString(genHash), list);
-    ArrayDeque<ForkIdManager.ForkId> entries = forkIdManager.getForkAndHashList();
-
+    Iterator<ForkIdManager.ForkId> entries = new ArrayList<>(forkIdManager.getForkAndHashList()).iterator();
     for (ForkIdManager.ForkId id : checkIds) {
-      ForkIdManager.ForkId testVal = entries.poll();
-      if (testVal == null) {
+      if (!entries.hasNext()) {
         break;
       }
-      assertThat(testVal.equals(id)).isTrue();
+      assertThat(entries.next().equals(id)).isTrue();
     }
   }
 
@@ -103,14 +102,12 @@ public class ForkIdManagerTest {
     };
     List<Long> list = Arrays.asList(forks);
     ForkIdManager forkIdManager = ForkIdManager.buildCollection(Hash.fromHexString(genHash), list);
-    ArrayDeque<ForkIdManager.ForkId> entries = forkIdManager.getForkAndHashList();
-
+    Iterator<ForkIdManager.ForkId> entries = new ArrayList<>(forkIdManager.getForkAndHashList()).iterator();
     for (ForkIdManager.ForkId id : checkIds) {
-      ForkIdManager.ForkId testVal = entries.poll();
-      if (testVal == null) {
+      if (!entries.hasNext()) {
         break;
       }
-      assertThat(testVal.equals(id)).isTrue();
+      assertThat(entries.next().equals(id)).isTrue();
     }
   }
 
