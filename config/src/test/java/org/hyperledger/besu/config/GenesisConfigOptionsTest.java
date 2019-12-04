@@ -134,6 +134,12 @@ public class GenesisConfigOptionsTest {
   }
 
   @Test
+  public void shouldGetMuirGlacierBlockNumber() {
+    final GenesisConfigOptions config = fromConfigOptions(singletonMap("muirGlacierBlock", 1000));
+    assertThat(config.getMuirGlacierBlockNumber()).hasValue(1000);
+  }
+
+  @Test
   public void shouldNotReturnEmptyOptionalWhenBlockNumberNotSpecified() {
     final GenesisConfigOptions config = fromConfigOptions(emptyMap());
     assertThat(config.getHomesteadBlockNumber()).isEmpty();
@@ -144,6 +150,7 @@ public class GenesisConfigOptionsTest {
     assertThat(config.getConstantinopleBlockNumber()).isEmpty();
     assertThat(config.getConstantinopleFixBlockNumber()).isEmpty();
     assertThat(config.getIstanbulBlockNumber()).isEmpty();
+    assertThat(config.getMuirGlacierBlockNumber()).isEmpty();
   }
 
   @Test
