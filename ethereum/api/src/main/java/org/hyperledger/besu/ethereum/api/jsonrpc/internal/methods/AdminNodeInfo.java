@@ -90,11 +90,11 @@ public class AdminNodeInfo implements JsonRpcMethod {
     final int listeningPort = getListeningPort(enode);
     final int discoveryPort = getDiscoveryPort(enode);
 
-    response.put("enode", getNodeAsString(enode, ip, listeningPort, discoveryPort).toString());
+    response.put("enode", getNodeAsString(enode, ip, listeningPort, discoveryPort));
     response.put("ip", ip);
 
     if (enode.isListening()) {
-      response.put("listenAddr", ip + ":" + listeningPort);
+      response.put("listenAddr", String.format("%s:%d", ip, listeningPort));
     }
     response.put("id", nodeId.toUnprefixedString());
     response.put("name", clientVersion);
@@ -127,15 +127,15 @@ public class AdminNodeInfo implements JsonRpcMethod {
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), response);
   }
 
-  private URI getNodeAsString(
+  private String getNodeAsString(
       final EnodeURL enodeURL, final String ip, final int listeningPort, final int discoveryPort) {
     final String uri =
         String.format(
             "enode://%s@%s:%d", enodeURL.getNodeId().toUnprefixedString(), ip, listeningPort);
     if (listeningPort != discoveryPort) {
-      return URI.create(uri + String.format("?discport=%d", discoveryPort));
+      return URI.create(uri + String.format("?discport=%d", discoveryPort)).toString();
     } else {
-      return URI.create(uri);
+      return URI.create(uri).toString();
     }
   }
 
