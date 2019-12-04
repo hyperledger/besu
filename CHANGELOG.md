@@ -16,7 +16,8 @@ For compatibility with Ethereum Istanbul upgrade, use v1.3.4 or later.
 
 - Performance improvements: 
   * Multithread Websockets to increase throughput [\#231](https://github.com/hyperledger/besu/pull/231) 
-  * NewBlockHeaders performance improvement [\#230](https://github.com/hyperledger/besu/pull/230) 
+  * NewBlockHeaders performance improvement [\#230](https://github.com/hyperledger/besu/pull/230)
+- EIP2384 - Ice Age Adustment around Istanbul [\#211](https://github.com/hyperledger/besu/pull/211)
 - Documentation updates include: 
   * [Configuring mining using the Stratum protocol](https://besu.hyperledger.org/en/latest/HowTo/Configure/Configure-Mining/)
   * [ETC network command line options](https://besu.hyperledger.org/en/latest/Reference/CLI/CLI-Syntax/#network)
