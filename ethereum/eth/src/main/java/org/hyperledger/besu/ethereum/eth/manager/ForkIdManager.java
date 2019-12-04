@@ -227,8 +227,8 @@ public class ForkIdManager {
   }
 
   public static class ForkId {
-    BytesValue hash;
-    BytesValue next;
+    final BytesValue hash;
+    final BytesValue next;
     BytesValue forkIdRLP;
 
     ForkId(final BytesValue hash, final BytesValue next) {
@@ -238,10 +238,8 @@ public class ForkIdManager {
     }
 
     ForkId(final String hash, final String next) {
-      this.hash = BytesValue.fromHexString((hash.length() % 2 == 0 ? "" : "0") + hash);
-      if (this.hash.size() < 4) {
-        this.hash = padToEightBytes(this.hash);
-      }
+      this.hash =
+          padToEightBytes(BytesValue.fromHexString((hash.length() % 2 == 0 ? "" : "0") + hash));
       if (next.equals("") || next.equals("0x")) {
         this.next = BytesValue.EMPTY;
       } else if (next.startsWith("0x")) {
