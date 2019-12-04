@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
-import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.ethereum.api.jsonrpc.LatestNonceProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -74,13 +73,11 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
         new PrivateTransactionHandler(
             privacyParameters, protocolSchedule.getChainId(), markerTransactionFactory);
 
-    final Enclave enclave = new Enclave(privacyParameters.getEnclaveUri());
-
-    return create(privateTransactionHandler, enclave);
+    return create(privateTransactionHandler);
   }
 
   protected abstract Map<String, JsonRpcMethod> create(
-      final PrivateTransactionHandler privateTransactionHandler, final Enclave enclave);
+      final PrivateTransactionHandler privateTransactionHandler);
 
   private PrivateMarkerTransactionFactory createPrivateMarkerTransactionFactory(
       final PrivacyParameters privacyParameters,
