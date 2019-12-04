@@ -101,7 +101,11 @@ public class EthSignerAcceptanceTest extends PrivacyAcceptanceTestBase {
   @Test
   public void privateSmartContractMustDeployWithPrivacyGroup() throws IOException {
     final String privacyGroupId =
-        minerNode.execute(privacyTransactions.createPrivacyGroup(null, null, minerNode));
+        minerNode
+            .execute(privacyTransactions.createPrivacyGroup(null, null, minerNode))
+            .getCreatePrivacyGroupResponse()
+            .getPrivacyGroupId()
+            .toString();
 
     minerNode.verify(
         privateTransactionVerifier.validPrivacyGroupCreated(
@@ -133,7 +137,11 @@ public class EthSignerAcceptanceTest extends PrivacyAcceptanceTestBase {
   @Test
   public void privateSmartContractMustDeployWithPrivacyGroupNoNonce() throws IOException {
     final String privacyGroupId =
-        minerNode.execute(privacyTransactions.createPrivacyGroup(null, null, minerNode));
+        minerNode
+            .execute(privacyTransactions.createPrivacyGroup(null, null, minerNode))
+            .getCreatePrivacyGroupResponse()
+            .getPrivacyGroupId()
+            .toString();
 
     minerNode.verify(
         privateTransactionVerifier.validPrivacyGroupCreated(

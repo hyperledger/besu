@@ -39,7 +39,7 @@ public class PrivGetTransactionReceiptTransaction
   public PrivateTransactionReceipt execute(final NodeRequests node) {
     final Besu besu = node.privacy().getBesuClient();
     final PollingPrivateTransactionReceiptProcessor receiptProcessor =
-        new PollingPrivateTransactionReceiptProcessor(besu, 15000, 3);
+        new PollingPrivateTransactionReceiptProcessor(besu, 1000, 15);
     try {
       final PrivateTransactionReceipt result =
           receiptProcessor.waitForTransactionReceipt(transactionHash);

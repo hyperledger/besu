@@ -28,6 +28,7 @@ import java.util.Objects;
 import java.util.Set;
 
 public class PrivacyGroupHeadBlockMap implements Map<Bytes32, Hash> {
+  // map of privacy group id -> current head block hash for that group
   private final HashMap<Bytes32, Hash> map;
 
   public static final PrivacyGroupHeadBlockMap EMPTY =

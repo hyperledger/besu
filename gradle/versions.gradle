@@ -94,7 +94,7 @@ dependencyManagement {
     dependency 'org.web3j:abi:4.5.8'
     dependency 'org.web3j:core:4.5.8'
     dependency 'org.web3j:crypto:4.5.8'
-    dependency 'org.web3j:besu:4.5.8'
+    dependency 'org.web3j:besu:4.6.0-SNAPSHOT'
 
     dependency 'org.xerial.snappy:snappy-java:1.1.7.3'
 

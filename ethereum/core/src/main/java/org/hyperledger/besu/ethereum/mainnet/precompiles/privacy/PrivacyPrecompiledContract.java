@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet.precompiles.privacy;
 
 import static org.hyperledger.besu.crypto.Hash.keccak256;
 import static org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver.EMPTY_ROOT_HASH;
+import static org.hyperledger.besu.ethereum.util.PrivacyUtil.generateLegacyGroup;
 
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.types.ReceiveRequest;
@@ -130,8 +131,11 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
 
     final Blockchain currentBlockchain = messageFrame.getBlockchain();
 
-    // FIXME: will need to get the group id somewhere else maybe I think
-    final BytesValue privacyGroupId = BytesValues.fromBase64(receiveResponse.getPrivacyGroupId());
+    final BytesValue privacyGroupId =
+        privateTransaction.getPrivacyGroupId().isPresent()
+            ? privateTransaction.getPrivacyGroupId().get()
+            : generateLegacyGroup(
+                privateTransaction.getPrivateFrom(), privateTransaction.getPrivateFor().get());
 
     LOG.trace(
         "Processing private transaction {} in privacy group {}",

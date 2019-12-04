@@ -26,6 +26,8 @@ import org.hyperledger.besu.ethereum.privacy.ChainHeadPrivateNonceProvider;
 import org.hyperledger.besu.ethereum.privacy.PrivateNonceProvider;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionHandler;
+import org.hyperledger.besu.ethereum.privacy.PrivateTransactionSimulator;
+import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.FixedKeySigningPrivateMarkerTransactionFactory;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.PrivateMarkerTransactionFactory;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.RandomSigningPrivateMarkerTransactionFactory;
@@ -90,10 +92,16 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
 
     final PrivateTransactionHandler privateTransactionHandler =
         new PrivateTransactionHandler(
-            privacyParameters,
-            protocolSchedule.getChainId(),
+            privacyParameters.getEnclave(),
+            new PrivateTransactionValidator(protocolSchedule.getChainId()),
             markerTransactionFactory,
-            privateNonceProvider);
+            privateNonceProvider,
+            new PrivateTransactionSimulator(
+                blockchainQueries.getBlockchain(),
+                blockchainQueries.getWorldStateArchive(),
+                privacyParameters.getPrivateWorldStateArchive(),
+                privateStateRootResolver,
+                protocolSchedule));
 
     return create(
         privateTransactionHandler,

@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
+import static org.hyperledger.besu.ethereum.util.PrivacyUtil.getPrivacyGroup;
 
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveException;
@@ -96,7 +97,7 @@ public class PrivGetTransactionReceipt extends PrivacyApiMethod {
           new BytesValueRLPInput(BytesValues.fromBase64(receiveResponse.getPayload()), false);
 
       privateTransaction = PrivateTransaction.readFrom(bytesValueRLPInput);
-      privacyGroupId = receiveResponse.getPrivacyGroupId();
+      privacyGroupId = getPrivacyGroup(privateTransaction);
     } catch (final EnclaveException e) {
       if (JsonRpcEnclaveErrorConverter.convertEnclaveInvalidReason(e.getMessage())
           == JsonRpcError.ENCLAVE_PAYLOAD_NOT_FOUND) {

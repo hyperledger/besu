@@ -80,6 +80,7 @@ public abstract class GroupCreationTransactionFactory {
         .payload(payload)
         .privateFrom(privateFrom)
         .privateFor(participants)
+        .privacyGroupId(privacyGroupId)
         .restriction(Restriction.RESTRICTED)
         .signAndBuild(signingKey);
   }

@@ -19,6 +19,8 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
+import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 
@@ -33,6 +35,10 @@ public class ProtocolSpec<C> {
   private final TransactionValidator transactionValidator;
 
   private final TransactionProcessor transactionProcessor;
+
+  private final PrivateTransactionValidator privateTransactionValidator;
+
+  private final PrivateTransactionProcessor privateTransactionProcessor;
 
   private final BlockHeaderValidator<C> blockHeaderValidator;
 
@@ -67,6 +73,8 @@ public class ProtocolSpec<C> {
    * @param evm the EVM supporting the appropriate operations for this specification
    * @param transactionValidator the transaction validator to use
    * @param transactionProcessor the transaction processor to use
+   * @param privateTransactionValidator the private transaction validator to use
+   * @param privateTransactionProcessor the private transaction processor to use
    * @param blockHeaderValidator the block header validator to use
    * @param ommerHeaderValidator the rules used to validate an ommer
    * @param blockBodyValidator the block body validator to use
@@ -87,6 +95,8 @@ public class ProtocolSpec<C> {
       final EVM evm,
       final TransactionValidator transactionValidator,
       final TransactionProcessor transactionProcessor,
+      final PrivateTransactionValidator privateTransactionValidator,
+      final PrivateTransactionProcessor privateTransactionProcessor,
       final BlockHeaderValidator<C> blockHeaderValidator,
       final BlockHeaderValidator<C> ommerHeaderValidator,
       final BlockBodyValidator<C> blockBodyValidator,
@@ -105,6 +115,8 @@ public class ProtocolSpec<C> {
     this.evm = evm;
     this.transactionValidator = transactionValidator;
     this.transactionProcessor = transactionProcessor;
+    this.privateTransactionValidator = privateTransactionValidator;
+    this.privateTransactionProcessor = privateTransactionProcessor;
     this.blockHeaderValidator = blockHeaderValidator;
     this.ommerHeaderValidator = ommerHeaderValidator;
     this.blockBodyValidator = blockBodyValidator;
@@ -146,6 +158,24 @@ public class ProtocolSpec<C> {
    */
   public TransactionProcessor getTransactionProcessor() {
     return transactionProcessor;
+  }
+
+  /**
+   * Returns the transaction processor used in this specification.
+   *
+   * @return the transaction processor
+   */
+  public PrivateTransactionProcessor getPrivateTransactionProcessor() {
+    return privateTransactionProcessor;
+  }
+
+  /**
+   * Returns the transaction processor used in this specification.
+   *
+   * @return the transaction processor
+   */
+  public PrivateTransactionValidator getPrivateTransactionValidator() {
+    return privateTransactionValidator;
   }
 
   /**
