@@ -52,7 +52,7 @@ public class AltBn128PointWrapper implements BlsPoint {
 
   // Return true if this point is the point at infinity.
   @Override
-  public boolean isAtInfity() {
+  public boolean isAtInfinity() {
     return this.point.isInfinity();
   }
 

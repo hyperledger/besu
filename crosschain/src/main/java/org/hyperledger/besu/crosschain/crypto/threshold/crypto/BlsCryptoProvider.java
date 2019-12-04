@@ -18,7 +18,8 @@ import java.math.BigInteger;
 
 public interface BlsCryptoProvider {
   enum CryptoProviderTypes {
-    LOCAL_ALT_BN_128
+    LOCAL_ALT_BN_128,
+    LOCAL_BLS12_381
   }
 
   enum DigestAlgorithm {
@@ -30,6 +31,9 @@ public interface BlsCryptoProvider {
     switch (type) {
       case LOCAL_ALT_BN_128:
         return new AltBn128CryptoProvider(digestAlgorithm);
+      case LOCAL_BLS12_381:
+        return new org.hyperledger.besu.crosschain.crypto.threshold.crypto.bls12381
+            .Bls12381CryptoProvider(digestAlgorithm);
       default:
         throw new Error("Unknown BlsCryptoProvider type: " + type);
     }

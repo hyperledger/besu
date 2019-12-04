@@ -33,7 +33,7 @@ public interface BlsPoint {
   BlsPoint scalarMul(final BigInteger scalar);
 
   // Return true if this point is the point at infinity.
-  boolean isAtInfity();
+  boolean isAtInfinity();
 
   // Negation is needed so the point can be verified on blockchain.
   BlsPoint negate();

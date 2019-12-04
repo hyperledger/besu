@@ -109,7 +109,7 @@ public class AltBn128CryptoProvider extends CryptoProviderBase implements BlsCry
       p = createPointE1(x); // map to point
 
       // if map is valid, we are done
-      if (!p.isAtInfity()) {
+      if (!p.isAtInfinity()) {
         break;
       }
 
@@ -184,7 +184,7 @@ public class AltBn128CryptoProvider extends CryptoProviderBase implements BlsCry
       p = createPointE2(x); // map to point
 
       // if map is valid, we are done
-      if (!p.isAtInfity()) {
+      if (!p.isAtInfinity()) {
         break;
       }
 
