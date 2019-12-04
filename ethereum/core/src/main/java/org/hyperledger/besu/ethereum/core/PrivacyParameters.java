@@ -210,14 +210,17 @@ public class PrivacyParameters {
     public Builder setEnclavePublicKeyUsingFile(final File publicKeyFile) throws IOException {
       this.enclavePublicKeyFile = publicKeyFile;
       this.enclavePublicKey = Files.asCharSource(publicKeyFile, UTF_8).read();
-      // check that the length of the Sting is 44, which base 64 decodes to 32 Byte
+      validatePublicKey(publicKeyFile);
+      return this;
+    }
+
+    private void validatePublicKey(final File publicKeyFile) {
       if (publicKeyFile.length() != 44) {
         throw new IllegalArgumentException(
             "Contents of enclave public key file needs to be 44 characters long to decode to a valid 32 byte public key.");
       }
-      // base 64 decode to see whether the value is a valid base64 String
+      // throws exception if invalid base 64
       Base64.getDecoder().decode(this.enclavePublicKey);
-      return this;
     }
   }
 }
