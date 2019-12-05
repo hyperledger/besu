@@ -33,6 +33,10 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeer;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.nat.NatService;
+import org.hyperledger.besu.nat.core.domain.NatPortMapping;
+import org.hyperledger.besu.nat.core.domain.NatServiceType;
+import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
 import org.hyperledger.besu.util.bytes.BytesValue;
 import org.hyperledger.besu.util.uint.UInt256;
 
@@ -55,6 +59,7 @@ public class AdminNodeInfoTest {
   @Mock private P2PNetwork p2pNetwork;
   @Mock private Blockchain blockchain;
   @Mock private BlockchainQueries blockchainQueries;
+  @Mock private NatService natService;
 
   private AdminNodeInfo method;
 
@@ -78,6 +83,7 @@ public class AdminNodeInfoTest {
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
     when(blockchainQueries.getBlockHashByNumber(anyLong())).thenReturn(Optional.of(Hash.EMPTY));
     when(blockchain.getChainHead()).thenReturn(testChainHead);
+    when(natService.isNatEnvironment()).thenReturn(false);
 
     method =
         new AdminNodeInfo(
@@ -85,7 +91,8 @@ public class AdminNodeInfoTest {
             BigInteger.valueOf(2018),
             genesisConfigOptions,
             p2pNetwork,
-            blockchainQueries);
+            blockchainQueries,
+            Optional.of(natService));
   }
 
   @Test
@@ -105,6 +112,58 @@ public class AdminNodeInfoTest {
     expected.put("listenAddr", "1.2.3.4:30303");
     expected.put("name", "testnet/1.0/this/that");
     expected.put("ports", ImmutableMap.of("discovery", 7890, "listener", 30303));
+    expected.put(
+        "protocols",
+        ImmutableMap.of(
+            "eth",
+            ImmutableMap.of(
+                "config",
+                genesisConfigOptions.asMap(),
+                "difficulty",
+                1L,
+                "genesis",
+                Hash.EMPTY.toString(),
+                "head",
+                Hash.EMPTY.toString(),
+                "network",
+                BigInteger.valueOf(2018))));
+
+    final JsonRpcResponse response = method.response(request);
+    assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);
+    final JsonRpcSuccessResponse actual = (JsonRpcSuccessResponse) response;
+    assertThat(actual.getResult()).isEqualTo(expected);
+  }
+
+  @Test
+  public void shouldReturnCorrectResultWhenIsNatEnvironment() {
+    when(p2pNetwork.isP2pEnabled()).thenReturn(true);
+    when(p2pNetwork.getLocalEnode()).thenReturn(Optional.of(defaultPeer.getEnodeURL()));
+
+    when(natService.isNatEnvironment()).thenReturn(true);
+    when(natService.queryExternalIPAddress()).thenReturn(Optional.of("3.4.5.6"));
+    when(natService.getPortMapping(NatServiceType.DISCOVERY, NetworkProtocol.UDP))
+        .thenReturn(
+            Optional.of(
+                new NatPortMapping(
+                    NatServiceType.DISCOVERY, NetworkProtocol.UDP, "", "", 8080, 8080)));
+    when(natService.getPortMapping(NatServiceType.RLPX, NetworkProtocol.TCP))
+        .thenReturn(
+            Optional.of(
+                new NatPortMapping(NatServiceType.RLPX, NetworkProtocol.TCP, "", "", 8081, 8081)));
+
+    final JsonRpcRequestContext request = adminNodeInfo();
+
+    final Map<String, Object> expected = new HashMap<>();
+    expected.put(
+        "enode",
+        "enode://0f1b319e32017c3fcb221841f0f978701b4e9513fe6a567a2db43d43381a9c7e3dfe7cae13cbc2f56943400bacaf9082576ab087cd51983b17d729ae796f6807@3.4.5.6:8081?discport=8080");
+    expected.put(
+        "id",
+        "0f1b319e32017c3fcb221841f0f978701b4e9513fe6a567a2db43d43381a9c7e3dfe7cae13cbc2f56943400bacaf9082576ab087cd51983b17d729ae796f6807");
+    expected.put("ip", "3.4.5.6");
+    expected.put("listenAddr", "3.4.5.6:8081");
+    expected.put("name", "testnet/1.0/this/that");
+    expected.put("ports", ImmutableMap.of("discovery", 8080, "listener", 8081));
     expected.put(
         "protocols",
         ImmutableMap.of(
