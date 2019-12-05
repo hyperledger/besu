@@ -52,4 +52,5 @@ public class ExpectValidPrivateContractDeployedReceipt implements PrivateContrac
     // Address for the account that signed (and paid) for the contract deployment transaction
     assertThat(transactionReceipt.getFrom()).isEqualTo(senderAddress);
   }
+
 }

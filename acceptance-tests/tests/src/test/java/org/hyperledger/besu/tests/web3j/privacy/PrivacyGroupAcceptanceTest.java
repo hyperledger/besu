@@ -124,4 +124,6 @@ public class PrivacyGroupAcceptanceTest extends PrivacyAcceptanceTestBase {
 
     bob.verify(privateTransactionVerifier.validPrivacyGroupCreated(expected));
   }
+
+
 }
