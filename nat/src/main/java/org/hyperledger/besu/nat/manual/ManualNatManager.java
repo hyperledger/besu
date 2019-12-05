@@ -1,17 +1,17 @@
 package org.hyperledger.besu.nat.manual;
 
-import static java.util.Arrays.stream;
-
 import org.hyperledger.besu.nat.NatMethod;
 import org.hyperledger.besu.nat.core.AbstractNatManager;
 import org.hyperledger.besu.nat.core.domain.NatPortMapping;
 import org.hyperledger.besu.nat.core.domain.NatServiceType;
 import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * This class describes the behaviour of the Manual NAT manager. Manual Nat manager add the ability
@@ -32,27 +32,30 @@ public class ManualNatManager extends AbstractNatManager {
   }
 
   private List<NatPortMapping> buildForwardedPorts() {
-    final List<NatPortMapping> natPortMappings = new ArrayList<>();
     try {
       final String internalHost = queryLocalIPAddress().get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
-      stream(NatServiceType.values())
-          .forEach(
-              natServiceType ->
-                  stream(NetworkProtocol.values())
-                      .forEach(
-                          networkProtocol ->
-                              natPortMappings.add(
-                                  new NatPortMapping(
-                                      natServiceType,
-                                      networkProtocol,
-                                      internalHost,
-                                      remoteHost,
-                                      port,
-                                      port))));
+      return Stream.of(
+              new NatPortMapping(
+                  NatServiceType.DISCOVERY,
+                  NetworkProtocol.UDP,
+                  internalHost,
+                  remoteHost,
+                  port,
+                  port),
+              new NatPortMapping(
+                  NatServiceType.RLPX, NetworkProtocol.TCP, internalHost, remoteHost, port, port),
+              new NatPortMapping(
+                  NatServiceType.JSON_RPC,
+                  NetworkProtocol.TCP,
+                  internalHost,
+                  remoteHost,
+                  port,
+                  port))
+          .collect(Collectors.toList());
     } catch (Exception e) {
       LOG.info("Failed to create forwarded port list");
     }
-    return natPortMappings;
+    return Collections.emptyList();
   }
 
   @Override
