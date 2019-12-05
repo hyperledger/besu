@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.privacy;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.types.SendRequest;
 import org.hyperledger.besu.enclave.types.SendRequestLegacy;
@@ -30,11 +32,11 @@ import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.util.bytes.BytesValue;
 import org.hyperledger.besu.util.bytes.BytesValues;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import com.google.common.collect.Lists;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -106,30 +108,53 @@ public class PrivateTransactionHandler {
   }
 
   private List<String> resolvePrivateFor(final PrivateTransaction privateTransaction) {
-    final List<String> privateFor;
-    if (privateTransaction.getPrivateFor().isPresent()) {
-      // if this is a legacy private transaction get the privateFor list from the transaction
-      privateFor =
-          privateTransaction.getPrivateFor().get().stream()
-              .map(BytesValues::asBase64String)
-              .collect(Collectors.toList());
+    boolean isLegacyTransaction = privateTransaction.getPrivateFor().isPresent();
+    if (isLegacyTransaction) {
+      return privateTransaction.getPrivateFor().get().stream()
+          .map(BytesValues::asBase64String)
+          .collect(Collectors.toList());
+    } else if (isAddParticipantsMethodCall(privateTransaction.getPayload())) {
+      final List<String> newAndExistingParticipants = getParticipantsFromParameter(privateTransaction.getPayload());
+      newAndExistingParticipants.addAll(getExistingParticipants(privateTransaction));
+      return newAndExistingParticipants;
     } else {
-      // get the privateFor list from the management contract
-      final Optional<PrivateTransactionSimulatorResult> privateTransactionSimulatorResultOptional =
-          privateTransactionSimulator.process(
-              buildGetParticipantsCallParams(), privateTransaction.getPrivacyGroupId().get());
-      if (privateTransactionSimulatorResultOptional.isPresent()
-          && privateTransactionSimulatorResultOptional.get().isSuccessful()) {
-        privateFor =
-            RLP.input(privateTransactionSimulatorResultOptional.get().getOutput())
-                .readList(input -> BytesValues.asBase64String(input.readBytesValue()));
-      } else {
-        // if the management contract does not exist this will prompt Orion to resolve the
-        // privateFor
-        privateFor = Lists.newArrayList();
-      }
+      return getExistingParticipants(privateTransaction);
     }
-    return privateFor;
+  }
+
+  private List<String> getExistingParticipants(final PrivateTransaction privateTransaction) {
+    // get the privateFor list from the management contract
+    final Optional<PrivateTransactionSimulatorResult> privateTransactionSimulatorResultOptional =
+        privateTransactionSimulator.process(
+            buildGetParticipantsCallParams(), privateTransaction.getPrivacyGroupId().get());
+
+    if (privateTransactionSimulatorResultOptional.isPresent()
+        && privateTransactionSimulatorResultOptional.get().isSuccessful()) {
+      return RLP.input(privateTransactionSimulatorResultOptional.get().getOutput())
+          .readList(input -> BytesValues.asBase64String(input.readBytesValue()));
+    } else {
+      // if the management contract does not exist this will prompt Orion to resolve the
+      // privateFor
+      return Collections.emptyList();
+    }
+  }
+
+  private List<String> getParticipantsFromParameter(final BytesValue input) {
+    int methodSignature = 8;
+    int enclaveKey = 32;
+    BytesValue participants =
+        BytesValue.wrap(
+            input
+                .toUnprefixedString()
+                .substring(0, methodSignature)
+                .substring(0, enclaveKey)
+                .getBytes(UTF_8));
+
+    return RLP.input(participants).readList(i -> BytesValues.asBase64String(i.readBytesValue()));
+  }
+
+  private boolean isAddParticipantsMethodCall(final BytesValue input) {
+    return input.toUnprefixedString().startsWith("f744b089");
   }
 
   private CallParameter buildGetParticipantsCallParams() {
