@@ -3138,4 +3138,35 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
   }
+
+  @Test
+  public void privEnclaveKeyFileDoesNotExist() {
+    parseCommand("--privacy-enabled=true", "--privacy-public-key-file", "/non/existent/file");
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).startsWith("Problem with privacy-public-key-file");
+    assertThat(commandErrorOutput.toString()).contains("No such file");
+  }
+
+  @Test
+  public void privEnclaveKeyFileInvalidContentTooShort() throws IOException {
+    final Path file = createTempFile("privacy.key", "lkjashdfiluhwelrk");
+    parseCommand("--privacy-enabled=true", "--privacy-public-key-file", file.toString());
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString())
+        .startsWith("Contents of privacy-public-key-file invalid");
+    assertThat(commandErrorOutput.toString()).contains("needs to be 44 characters long");
+  }
+
+  @Test
+  public void privEnclaveKeyFileInvalidContentNotValidBase64() throws IOException {
+    final Path file = createTempFile("privacy.key", "l*jashdfillk9ashdfillkjashdfillkjashdfilrtg=");
+    parseCommand("--privacy-enabled=true", "--privacy-public-key-file", file.toString());
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString())
+        .startsWith("Contents of privacy-public-key-file invalid");
+    assertThat(commandErrorOutput.toString()).contains("Illegal base64 character");
+  }
 }
