@@ -1374,7 +1374,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       privacyParametersBuilder.setEnabled(true);
       privacyParametersBuilder.setEnclaveUrl(privacyUrl);
       if (privacyPublicKeyFile() != null) {
-        privacyParametersBuilder.setEnclavePublicKeyUsingFile(privacyPublicKeyFile());
+        try {
+          privacyParametersBuilder.setEnclavePublicKeyUsingFile(privacyPublicKeyFile());
+        } catch (final IOException e) {
+          throw new ParameterException(
+              commandLine, "Problem with privacy-public-key-file: " + e.getMessage(), e);
+        } catch (final IllegalArgumentException e) {
+          throw new ParameterException(
+              commandLine, "Contents of privacy-public-key-file invalid: " + e.getMessage(), e);
+        }
       } else {
         throw new ParameterException(
             commandLine, "Please specify Enclave public key file path to enable privacy");
