@@ -1,9 +1,35 @@
 # Changelog
 
+## Changelog Changes 
+
+The Hyperledger Besu Wiki includes a [proposal to change what's included in this changelog](https://wiki.hyperledger.org/display/BESU/Changes+to+Changelog).  
+The changelog from 1.3.6 is moving towards the proposed changelog approach.  If you've got feedback or 
+specific items you'd like to see included in the changelog, add your comments to the proposal. 
+
 ## Istanbul Compatibility
 
 For compatibility with Ethereum Istanbul upgrade, use v1.3.4 or later. 
 
+### 1.3.6 
+
+### Additions and Improvements 
+
+- Performance improvements: 
+  * Multithread Websockets to increase throughput [\#231](https://github.com/hyperledger/besu/pull/231) 
+  * NewBlockHeaders performance improvement [\#230](https://github.com/hyperledger/besu/pull/230)
+- EIP2384 - Ice Age Adustment around Istanbul [\#211](https://github.com/hyperledger/besu/pull/211)
+- Documentation updates include: 
+  * [Configuring mining using the Stratum protocol](https://besu.hyperledger.org/en/latest/HowTo/Configure/Configure-Mining/)
+  * [ETC network command line options](https://besu.hyperledger.org/en/latest/Reference/CLI/CLI-Syntax/#network)
+- Hard Fork Support:
+   * MuirGlacier for Ethereum Mainnet and Ropsten Testnet
+   * Agharta for Kotti and Mordor Testnets
+
+### Bug Fixes 
+
+- [\#210](https://github.com/hyperledger/besu/pull/210) fixes WebSocket frames handling 
+  User impact: PING/PONG frames handling in Websocket services was not implemented 
+ 
 ### 1.3.5
 
 ### Additions and Improvements
