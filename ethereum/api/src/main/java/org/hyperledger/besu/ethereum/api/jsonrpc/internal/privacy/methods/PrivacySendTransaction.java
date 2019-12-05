@@ -15,11 +15,13 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcRequestException;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivacyApiMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
+import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionHandler;
@@ -31,25 +33,27 @@ import org.hyperledger.besu.util.bytes.BytesValue;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class AbstractSendTransaction {
+public abstract class PrivacySendTransaction extends PrivacyApiMethod {
 
   private static final Logger LOG = LogManager.getLogger();
 
   protected final PrivateTransactionHandler privateTransactionHandler;
   protected final TransactionPool transactionPool;
 
-  public AbstractSendTransaction(
+  public PrivacySendTransaction(
+      final PrivacyParameters privacyParameters,
       final PrivateTransactionHandler privateTransactionHandler,
       final TransactionPool transactionPool) {
+    super(privacyParameters);
     this.privateTransactionHandler = privateTransactionHandler;
     this.transactionPool = transactionPool;
   }
 
-  protected PrivateTransaction validateAndDecodeRequest(final JsonRpcRequest request)
+  protected PrivateTransaction validateAndDecodeRequest(final JsonRpcRequestContext request)
       throws ErrorResponseException {
-    if (request.getParamLength() != 1) {
+    if (request.getRequest().getParamLength() != 1) {
       throw new ErrorResponseException(
-          new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS));
+          new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS));
     }
     final String rawPrivateTransaction = request.getRequiredParameter(0, String.class);
     final PrivateTransaction privateTransaction;
@@ -57,22 +61,22 @@ public class AbstractSendTransaction {
       privateTransaction = decodeRawTransaction(rawPrivateTransaction);
     } catch (final InvalidJsonRpcRequestException e) {
       throw new ErrorResponseException(
-          new JsonRpcErrorResponse(request.getId(), JsonRpcError.DECODE_ERROR));
+          new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.DECODE_ERROR));
     }
     if (!privateTransaction.getValue().isZero()) {
       throw new ErrorResponseException(
-          new JsonRpcErrorResponse(request.getId(), JsonRpcError.VALUE_NOT_ZERO));
+          new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.VALUE_NOT_ZERO));
     }
     if (!privateTransaction.getRestriction().equals(Restriction.RESTRICTED)) {
       throw new ErrorResponseException(
           new JsonRpcErrorResponse(
-              request.getId(), JsonRpcError.UNIMPLEMENTED_PRIVATE_TRANSACTION_TYPE));
+              request.getRequest().getId(), JsonRpcError.UNIMPLEMENTED_PRIVATE_TRANSACTION_TYPE));
     }
     return privateTransaction;
   }
 
   protected JsonRpcResponse validateAndExecute(
-      final JsonRpcRequest request,
+      final JsonRpcRequestContext request,
       final PrivateTransaction privateTransaction,
       final String privacyGroupId,
       final AfterTransactionValid afterValid) {
@@ -82,7 +86,7 @@ public class AbstractSendTransaction {
             afterValid::getResponse,
             (errorReason) ->
                 new JsonRpcErrorResponse(
-                    request.getId(),
+                    request.getRequest().getId(),
                     JsonRpcErrorConverter.convertTransactionInvalidReason(errorReason)));
   }
 

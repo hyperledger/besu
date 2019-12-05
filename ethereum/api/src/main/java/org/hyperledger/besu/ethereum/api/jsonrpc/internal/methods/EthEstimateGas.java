@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -47,12 +47,13 @@ public class EthEstimateGas implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest request) {
-    final JsonCallParameter callParams = request.getRequiredParameter(0, JsonCallParameter.class);
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
+    final JsonCallParameter callParams =
+        requestContext.getRequiredParameter(0, JsonCallParameter.class);
 
     final BlockHeader blockHeader = blockHeader();
     if (blockHeader == null) {
-      return errorResponse(request);
+      return errorResponse(requestContext);
     }
 
     final JsonCallParameter modifiedCallParams =
@@ -60,8 +61,8 @@ public class EthEstimateGas implements JsonRpcMethod {
 
     return transactionSimulator
         .process(modifiedCallParams, blockHeader.getNumber())
-        .map(gasEstimateResponse(request))
-        .orElse(errorResponse(request));
+        .map(gasEstimateResponse(requestContext))
+        .orElse(errorResponse(requestContext));
   }
 
   private BlockHeader blockHeader() {
@@ -81,12 +82,13 @@ public class EthEstimateGas implements JsonRpcMethod {
   }
 
   private Function<TransactionSimulatorResult, JsonRpcResponse> gasEstimateResponse(
-      final JsonRpcRequest request) {
+      final JsonRpcRequestContext request) {
     return result ->
-        new JsonRpcSuccessResponse(request.getId(), Quantity.create(result.getGasEstimate()));
+        new JsonRpcSuccessResponse(
+            request.getRequest().getId(), Quantity.create(result.getGasEstimate()));
   }
 
-  private JsonRpcErrorResponse errorResponse(final JsonRpcRequest request) {
-    return new JsonRpcErrorResponse(request.getId(), JsonRpcError.INTERNAL_ERROR);
+  private JsonRpcErrorResponse errorResponse(final JsonRpcRequestContext request) {
+    return new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INTERNAL_ERROR);
   }
 }

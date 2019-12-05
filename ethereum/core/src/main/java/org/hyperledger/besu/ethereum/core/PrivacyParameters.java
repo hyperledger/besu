@@ -18,8 +18,10 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.enclave.Enclave;
+import org.hyperledger.besu.enclave.EnclaveFactory;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivacyStorageProvider;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
-import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
@@ -38,24 +40,16 @@ public class PrivacyParameters {
   public static final PrivacyParameters DEFAULT = new PrivacyParameters();
 
   private Integer privacyAddress = Address.PRIVACY;
-  private Integer privacyAddressV2 = Address.PRIVACY_V2;
   private boolean enabled;
   private URI enclaveUri;
   private String enclavePublicKey;
   private File enclavePublicKeyFile;
   private Optional<SECP256K1.KeyPair> signingKeyPair = Optional.empty();
+  private Enclave enclave;
 
+  private PrivacyStorageProvider privateStorageProvider;
   private WorldStateArchive privateWorldStateArchive;
-  private StorageProvider privateStorageProvider;
   private PrivateStateStorage privateStateStorage;
-
-  public Integer getPrivacyAddressV2() {
-    return privacyAddressV2;
-  }
-
-  public void setPrivacyAddressV2(final Integer privacyAddressV2) {
-    this.privacyAddressV2 = privacyAddressV2;
-  }
 
   public Integer getPrivacyAddress() {
     return privacyAddress;
@@ -113,11 +107,11 @@ public class PrivacyParameters {
     this.privateWorldStateArchive = privateWorldStateArchive;
   }
 
-  public StorageProvider getPrivateStorageProvider() {
+  public PrivacyStorageProvider getPrivateStorageProvider() {
     return privateStorageProvider;
   }
 
-  public void setPrivateStorageProvider(final StorageProvider privateStorageProvider) {
+  public void setPrivateStorageProvider(final PrivacyStorageProvider privateStorageProvider) {
     this.privateStorageProvider = privateStorageProvider;
   }
 
@@ -127,6 +121,14 @@ public class PrivacyParameters {
 
   public void setPrivateStateStorage(final PrivateStateStorage privateStateStorage) {
     this.privateStateStorage = privateStateStorage;
+  }
+
+  public Enclave getEnclave() {
+    return enclave;
+  }
+
+  public void setEnclave(final Enclave enclave) {
+    this.enclave = enclave;
   }
 
   @Override
@@ -142,16 +144,11 @@ public class PrivacyParameters {
     private File enclavePublicKeyFile;
     private String enclavePublicKey;
     private Path privateKeyPath;
-    private StorageProvider storageProvider;
-    private Integer privacyAddressV2;
+    private PrivacyStorageProvider storageProvider;
+    private EnclaveFactory enclaveFactory;
 
     public Builder setPrivacyAddress(final Integer privacyAddress) {
       this.privacyAddress = privacyAddress;
-      return this;
-    }
-
-    public Builder setPrivacyAddressV2(final Integer privacyAddressV2) {
-      this.privacyAddressV2 = privacyAddressV2;
       return this;
     }
 
@@ -165,13 +162,18 @@ public class PrivacyParameters {
       return this;
     }
 
-    public Builder setStorageProvider(final StorageProvider privateStorageProvider) {
+    public Builder setStorageProvider(final PrivacyStorageProvider privateStorageProvider) {
       this.storageProvider = privateStorageProvider;
       return this;
     }
 
     public Builder setPrivateKeyPath(final Path privateKeyPath) {
       this.privateKeyPath = privateKeyPath;
+      return this;
+    }
+
+    public Builder setEnclaveFactory(final EnclaveFactory enclaveFactory) {
+      this.enclaveFactory = enclaveFactory;
       return this;
     }
 
@@ -192,6 +194,7 @@ public class PrivacyParameters {
         config.setEnclavePublicKeyFile(enclavePublicKeyFile);
         config.setPrivateStorageProvider(storageProvider);
         config.setPrivateStateStorage(privateStateStorage);
+        config.setEnclave(enclaveFactory.createVertxEnclave(enclaveUrl));
 
         if (privateKeyPath != null) {
           config.setSigningKeyPair(KeyPair.load(privateKeyPath.toFile()));
@@ -200,7 +203,6 @@ public class PrivacyParameters {
       config.setEnabled(enabled);
       config.setEnclaveUri(enclaveUrl);
       config.setPrivacyAddress(privacyAddress);
-      config.setPrivacyAddressV2(privacyAddressV2);
       return config;
     }
 

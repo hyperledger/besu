@@ -1,13 +1,8 @@
 {
   "config": {
     "chainId": 63,
-    "homesteadBlock": 0,
-    "classicForkBlock": 0,
-    "ecip1015Block": 0,
-    "diehardBlock": 0,
-    "gothamBlock": 0,
-    "ecip1041Block": 0,
     "atlantisBlock": 0,
+    "aghartaBlock": 301243,
     "ethash": {}
   },
   "nonce": "0x0000000000000000",

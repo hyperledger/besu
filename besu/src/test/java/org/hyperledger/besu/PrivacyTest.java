@@ -20,6 +20,7 @@ import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.GasLimitCalculator;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
@@ -29,11 +30,12 @@ import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.PrecompiledContract;
-import org.hyperledger.besu.ethereum.storage.StorageProvider;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivacyStorageProvider;
+import org.hyperledger.besu.ethereum.privacy.storage.keyvalue.PrivacyKeyValueStorageProviderBuilder;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
-import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBKeyValuePrivacyStorageFactory;
+import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBKeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBFactoryConfiguration;
 import org.hyperledger.besu.services.BesuConfigurationImpl;
@@ -41,9 +43,13 @@ import org.hyperledger.besu.testutil.TestClock;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.Arrays;
 
+import io.vertx.core.Vertx;
+import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -54,19 +60,27 @@ public class PrivacyTest {
   private static final long CACHE_CAPACITY = 8388608;
   private static final int MAX_BACKGROUND_COMPACTIONS = 4;
   private static final int BACKGROUND_THREAD_COUNT = 4;
+  private final Vertx vertx = Vertx.vertx();
 
   private static final Integer ADDRESS = 9;
   @Rule public final TemporaryFolder folder = new TemporaryFolder();
 
+  @After
+  public void cleanUp() {
+    vertx.close();
+  }
+
   @Test
-  public void privacyPrecompiled() throws IOException {
+  public void privacyPrecompiled() throws IOException, URISyntaxException {
     final Path dataDir = folder.newFolder().toPath();
     final Path dbDir = dataDir.resolve("database");
     final PrivacyParameters privacyParameters =
         new PrivacyParameters.Builder()
             .setPrivacyAddress(ADDRESS)
             .setEnabled(true)
+            .setEnclaveUrl(new URI("http://127.0.0.1:8000"))
             .setStorageProvider(createKeyValueStorageProvider(dataDir, dbDir))
+            .setEnclaveFactory(new EnclaveFactory(vertx))
             .build();
     final BesuController<?> besuController =
         new BesuController.Builder()
@@ -96,18 +110,20 @@ public class PrivacyTest {
     assertThat(precompiledContract.getName()).isEqualTo("Privacy");
   }
 
-  private StorageProvider createKeyValueStorageProvider(final Path dataDir, final Path dbDir) {
-    return new KeyValueStorageProviderBuilder()
+  private PrivacyStorageProvider createKeyValueStorageProvider(
+      final Path dataDir, final Path dbDir) {
+    return new PrivacyKeyValueStorageProviderBuilder()
         .withStorageFactory(
             new RocksDBKeyValuePrivacyStorageFactory(
-                () ->
-                    new RocksDBFactoryConfiguration(
-                        MAX_OPEN_FILES,
-                        MAX_BACKGROUND_COMPACTIONS,
-                        BACKGROUND_THREAD_COUNT,
-                        CACHE_CAPACITY),
-                Arrays.asList(KeyValueSegmentIdentifier.values()),
-                RocksDBMetricsFactory.PRIVATE_ROCKS_DB_METRICS))
+                new RocksDBKeyValueStorageFactory(
+                    () ->
+                        new RocksDBFactoryConfiguration(
+                            MAX_OPEN_FILES,
+                            MAX_BACKGROUND_COMPACTIONS,
+                            BACKGROUND_THREAD_COUNT,
+                            CACHE_CAPACITY),
+                    Arrays.asList(KeyValueSegmentIdentifier.values()),
+                    RocksDBMetricsFactory.PRIVATE_ROCKS_DB_METRICS)))
         .withCommonConfiguration(new BesuConfigurationImpl(dataDir, dbDir))
         .withMetricsSystem(new NoOpMetricsSystem())
         .build();

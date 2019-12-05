@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 
 import org.junit.Before;
@@ -46,17 +47,18 @@ public class MinerSetEtherbaseTest {
 
   @Test
   public void shouldDelegateToMinerSetCoinbase() {
-    final JsonRpcRequest request =
-        new JsonRpcRequest(null, "miner_setEtherbase", new Object[] {"0x0"});
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest(null, "miner_setEtherbase", new Object[] {"0x0"}));
 
-    final ArgumentCaptor<JsonRpcRequest> requestCaptor =
-        ArgumentCaptor.forClass(JsonRpcRequest.class);
+    final ArgumentCaptor<JsonRpcRequestContext> requestCaptor =
+        ArgumentCaptor.forClass(JsonRpcRequestContext.class);
     when(minerSetCoinbase.response(requestCaptor.capture()))
         .thenReturn(new JsonRpcSuccessResponse(null, true));
 
     method.response(request);
 
-    final JsonRpcRequest delegatedRequest = requestCaptor.getValue();
+    final JsonRpcRequestContext delegatedRequest = requestCaptor.getValue();
     assertThat(delegatedRequest).isEqualToComparingFieldByField(request);
   }
 }

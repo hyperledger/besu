@@ -19,6 +19,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -42,8 +43,9 @@ public class EthGetTransactionCountTest {
   public void shouldUsePendingTransactionsWhenToldTo() {
     when(pendingTransactions.getNextNonceForSender(Address.fromHexString(pendingTransactionString)))
         .thenReturn(OptionalLong.of(12));
-    final JsonRpcRequest request =
-        new JsonRpcRequest("1", "eth_getTransactionCount", pendingParams);
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest("1", "eth_getTransactionCount", pendingParams));
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) ethGetTransactionCount.response(request);
     assertThat(response.getResult()).isEqualTo("0xc");
@@ -55,8 +57,9 @@ public class EthGetTransactionCountTest {
     when(pendingTransactions.getNextNonceForSender(address)).thenReturn(OptionalLong.empty());
     when(blockchain.headBlockNumber()).thenReturn(1L);
     when(blockchain.getTransactionCount(address, 1L)).thenReturn(7L);
-    final JsonRpcRequest request =
-        new JsonRpcRequest("1", "eth_getTransactionCount", pendingParams);
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest("1", "eth_getTransactionCount", pendingParams));
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) ethGetTransactionCount.response(request);
     assertThat(response.getResult()).isEqualTo("0x7");

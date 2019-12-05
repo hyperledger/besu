@@ -91,10 +91,10 @@ dependencyManagement {
 
     dependency 'org.springframework.security:spring-security-crypto:5.2.0.RELEASE'
 
-    dependency 'org.web3j:abi:4.5.1'
-    dependency 'org.web3j:core:4.5.1'
-    dependency 'org.web3j:crypto:4.5.1'
-    dependency 'org.web3j:pantheon:4.5.1'
+    dependency 'org.web3j:abi:4.5.8'
+    dependency 'org.web3j:core:4.5.8'
+    dependency 'org.web3j:crypto:4.5.8'
+    dependency 'org.web3j:besu:4.5.8'
 
     dependency 'org.xerial.snappy:snappy-java:1.1.7.3'
 

@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -48,9 +49,11 @@ public class AdminChangeLogLevelTest {
 
   @Test
   public void shouldReturnCorrectResponseWhenRequestHasLogLevel() {
-    final JsonRpcRequest request =
-        new JsonRpcRequest("2.0", "admin_changeLogLevel", new Object[] {Level.DEBUG});
-    final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(request.getId());
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest("2.0", "admin_changeLogLevel", new Object[] {Level.DEBUG}));
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcSuccessResponse(request.getRequest().getId());
 
     final Level levelBeforeJsonRpcRequest = LogManager.getLogger().getLevel();
     final JsonRpcSuccessResponse actualResponse =
@@ -64,10 +67,12 @@ public class AdminChangeLogLevelTest {
 
   @Test
   public void shouldReturnCorrectResponseWhenRequestHasLogLevelAndFilters() {
-    final JsonRpcRequest request =
-        new JsonRpcRequest(
-            "2.0", "admin_changeLogLevel", new Object[] {Level.DEBUG, new String[] {"com"}});
-    final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(request.getId());
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest(
+                "2.0", "admin_changeLogLevel", new Object[] {Level.DEBUG, new String[] {"com"}}));
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcSuccessResponse(request.getRequest().getId());
 
     final Level levelOfAllProjectBeforeJsonRpcRequest = LogManager.getLogger().getLevel();
     final Level levelWithSpecificPackageBeforeJsonRpcRequest =
@@ -87,9 +92,11 @@ public class AdminChangeLogLevelTest {
 
   @Test
   public void requestHasValidStringLogLevelParameter() {
-    final JsonRpcRequest request =
-        new JsonRpcRequest("2.0", "admin_changeLogLevel", new String[] {"DEBUG"});
-    final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(request.getId());
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest("2.0", "admin_changeLogLevel", new String[] {"DEBUG"}));
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcSuccessResponse(request.getRequest().getId());
 
     final Level levelBeforeJsonRpcRequest = LogManager.getLogger().getLevel();
     final JsonRpcSuccessResponse actualResponse =
@@ -103,10 +110,11 @@ public class AdminChangeLogLevelTest {
 
   @Test
   public void requestHasNullArrayParameter() {
-    final JsonRpcRequest request =
-        new JsonRpcRequest("2.0", "admin_changeLogLevel", new Object[] {null});
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest("2.0", "admin_changeLogLevel", new Object[] {null}));
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
+        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
 
     final JsonRpcResponse actualResponse = adminChangeLogLevel.response(request);
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
@@ -114,10 +122,11 @@ public class AdminChangeLogLevelTest {
 
   @Test
   public void requestHasInvalidStringLogLevelParameter() {
-    final JsonRpcRequest request =
-        new JsonRpcRequest("2.0", "admin_changeLogLevel", new String[] {"INVALID"});
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest("2.0", "admin_changeLogLevel", new String[] {"INVALID"}));
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
+        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
 
     final JsonRpcResponse actualResponse = adminChangeLogLevel.response(request);
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
@@ -125,10 +134,11 @@ public class AdminChangeLogLevelTest {
 
   @Test
   public void requestHasInvalidLogFilterParameter() {
-    final JsonRpcRequest request =
-        new JsonRpcRequest("2.0", "admin_changeLogLevel", new Object[] {"DEBUG", "INVALID"});
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest("2.0", "admin_changeLogLevel", new Object[] {"DEBUG", "INVALID"}));
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
+        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
 
     final JsonRpcResponse actualResponse = adminChangeLogLevel.response(request);
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);

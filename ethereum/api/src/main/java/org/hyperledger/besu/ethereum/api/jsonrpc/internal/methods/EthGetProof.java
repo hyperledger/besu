@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -42,26 +42,27 @@ public class EthGetProof extends AbstractBlockParameterMethod {
     this.blockchain = blockchain;
   }
 
-  private Address getAddress(final JsonRpcRequest request) {
+  private Address getAddress(final JsonRpcRequestContext request) {
     return request.getRequiredParameter(0, Address.class);
   }
 
-  private List<UInt256> getStorageKeys(final JsonRpcRequest request) {
+  private List<UInt256> getStorageKeys(final JsonRpcRequestContext request) {
     return Arrays.stream(request.getRequiredParameter(1, String[].class))
         .map(UInt256::fromHexString)
         .collect(Collectors.toList());
   }
 
   @Override
-  protected BlockParameter blockParameter(final JsonRpcRequest request) {
+  protected BlockParameter blockParameter(final JsonRpcRequestContext request) {
     return request.getRequiredParameter(2, BlockParameter.class);
   }
 
   @Override
-  protected Object resultByBlockNumber(final JsonRpcRequest request, final long blockNumber) {
+  protected Object resultByBlockNumber(
+      final JsonRpcRequestContext requestContext, final long blockNumber) {
 
-    final Address address = getAddress(request);
-    final List<UInt256> storageKeys = getStorageKeys(request);
+    final Address address = getAddress(requestContext);
+    final List<UInt256> storageKeys = getStorageKeys(requestContext);
 
     final Optional<MutableWorldState> worldState = blockchain.getWorldState(blockNumber);
 
@@ -75,16 +76,20 @@ public class EthGetProof extends AbstractBlockParameterMethod {
               proof ->
                   (JsonRpcResponse)
                       new JsonRpcSuccessResponse(
-                          request.getId(), GetProofResult.buildGetProofResult(address, proof)))
-          .orElse(new JsonRpcErrorResponse(request.getId(), JsonRpcError.NO_ACCOUNT_FOUND));
+                          requestContext.getRequest().getId(),
+                          GetProofResult.buildGetProofResult(address, proof)))
+          .orElse(
+              new JsonRpcErrorResponse(
+                  requestContext.getRequest().getId(), JsonRpcError.NO_ACCOUNT_FOUND));
     }
 
-    return new JsonRpcErrorResponse(request.getId(), JsonRpcError.WORLD_STATE_UNAVAILABLE);
+    return new JsonRpcErrorResponse(
+        requestContext.getRequest().getId(), JsonRpcError.WORLD_STATE_UNAVAILABLE);
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest request) {
-    return (JsonRpcResponse) findResultByParamType(request);
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
+    return (JsonRpcResponse) findResultByParamType(requestContext);
   }
 
   @Override

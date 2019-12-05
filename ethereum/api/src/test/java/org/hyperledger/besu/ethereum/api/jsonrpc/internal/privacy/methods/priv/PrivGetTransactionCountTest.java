@@ -20,15 +20,24 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionHandler;
 import org.hyperledger.besu.util.bytes.BytesValue;
 import org.hyperledger.besu.util.bytes.BytesValues;
 
+import org.junit.Before;
 import org.junit.Test;
 
 public class PrivGetTransactionCountTest {
+
+  private final PrivacyParameters privacyParameters = mock(PrivacyParameters.class);
+  private final PrivateTransactionHandler privateTransactionHandler =
+      mock(PrivateTransactionHandler.class);
 
   private final String privacyGroupId =
       BytesValues.asBase64String(BytesValue.wrap("0x123".getBytes(UTF_8)));
@@ -37,21 +46,39 @@ public class PrivGetTransactionCountTest {
       Address.fromHexString("0x627306090abab3a6e1400e9345bc60c78a8bef57");
   private final long NONCE = 5;
 
+  @Before
+  public void before() {
+    when(privacyParameters.isEnabled()).thenReturn(true);
+    when(privateTransactionHandler.getSenderNonce(senderAddress, privacyGroupId)).thenReturn(NONCE);
+  }
+
   @Test
   public void verifyTransactionCount() {
-    final PrivateTransactionHandler privateTransactionHandler =
-        mock(PrivateTransactionHandler.class);
-    when(privateTransactionHandler.getSenderNonce(senderAddress, privacyGroupId)).thenReturn(NONCE);
-
     final PrivGetTransactionCount privGetTransactionCount =
-        new PrivGetTransactionCount(privateTransactionHandler);
+        new PrivGetTransactionCount(privacyParameters, privateTransactionHandler);
 
     final Object[] params = new Object[] {senderAddress, privacyGroupId};
-    final JsonRpcRequest request = new JsonRpcRequest("1", "priv_getTransactionCount", params);
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(new JsonRpcRequest("1", "priv_getTransactionCount", params));
 
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) privGetTransactionCount.response(request);
 
     assertThat(response.getResult()).isEqualTo(String.format("0x%X", NONCE));
+  }
+
+  @Test
+  public void returnPrivacyDisabledErrorWhenPrivacyIsDisabled() {
+    when(privacyParameters.isEnabled()).thenReturn(false);
+    final PrivGetTransactionCount privGetTransactionCount =
+        new PrivGetTransactionCount(privacyParameters, privateTransactionHandler);
+
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest("1", "priv_getTransactionCount", new Object[] {}));
+    final JsonRpcErrorResponse response =
+        (JsonRpcErrorResponse) privGetTransactionCount.response(request);
+
+    assertThat(response.getError()).isEqualTo(JsonRpcError.PRIVACY_NOT_ENABLED);
   }
 }

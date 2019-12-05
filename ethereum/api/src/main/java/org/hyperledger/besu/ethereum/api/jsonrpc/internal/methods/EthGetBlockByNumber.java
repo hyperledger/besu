@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
@@ -50,12 +50,13 @@ public class EthGetBlockByNumber extends AbstractBlockParameterMethod {
   }
 
   @Override
-  protected BlockParameter blockParameter(final JsonRpcRequest request) {
+  protected BlockParameter blockParameter(final JsonRpcRequestContext request) {
     return request.getRequiredParameter(0, BlockParameter.class);
   }
 
   @Override
-  protected Object resultByBlockNumber(final JsonRpcRequest request, final long blockNumber) {
+  protected Object resultByBlockNumber(
+      final JsonRpcRequestContext request, final long blockNumber) {
     if (isCompleteTransactions(request)) {
       return transactionComplete(blockNumber);
     }
@@ -77,7 +78,7 @@ public class EthGetBlockByNumber extends AbstractBlockParameterMethod {
         .orElse(null);
   }
 
-  private boolean isCompleteTransactions(final JsonRpcRequest request) {
+  private boolean isCompleteTransactions(final JsonRpcRequestContext request) {
     return request.getRequiredParameter(1, Boolean.class);
   }
 }

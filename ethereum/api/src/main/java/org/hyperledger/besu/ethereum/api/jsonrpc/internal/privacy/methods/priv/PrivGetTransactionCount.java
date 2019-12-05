@@ -15,21 +15,24 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionHandler;
 
-public class PrivGetTransactionCount implements JsonRpcMethod {
+public class PrivGetTransactionCount extends PrivacyApiMethod {
 
   private final PrivateTransactionHandler privateTransactionHandler;
 
-  public PrivGetTransactionCount(final PrivateTransactionHandler privateTransactionHandler) {
+  public PrivGetTransactionCount(
+      final PrivacyParameters privacyParameters,
+      final PrivateTransactionHandler privateTransactionHandler) {
+    super(privacyParameters);
     this.privateTransactionHandler = privateTransactionHandler;
   }
 
@@ -39,15 +42,16 @@ public class PrivGetTransactionCount implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest request) {
-    if (request.getParamLength() != 2) {
-      return new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
+  public JsonRpcResponse doResponse(final JsonRpcRequestContext requestContext) {
+    if (requestContext.getRequest().getParamLength() != 2) {
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
     }
 
-    final Address address = request.getRequiredParameter(0, Address.class);
-    final String privacyGroupId = request.getRequiredParameter(1, String.class);
+    final Address address = requestContext.getRequiredParameter(0, Address.class);
+    final String privacyGroupId = requestContext.getRequiredParameter(1, String.class);
 
     final long nonce = privateTransactionHandler.getSenderNonce(address, privacyGroupId);
-    return new JsonRpcSuccessResponse(request.getId(), Quantity.create(nonce));
+    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), Quantity.create(nonce));
   }
 }
