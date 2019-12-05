@@ -22,13 +22,21 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 public class ReceiveResponse {
 
   private final byte[] payload;
+  private final String privacyGroupId;
 
   @JsonCreator
-  public ReceiveResponse(@JsonProperty(value = "payload") final byte[] payload) {
+  public ReceiveResponse(
+      @JsonProperty(value = "privacyGroupId") final String privacyGroupId,
+      @JsonProperty(value = "payload") final byte[] payload) {
     this.payload = payload;
+    this.privacyGroupId = privacyGroupId;
   }
 
   public byte[] getPayload() {
     return payload;
+  }
+
+  public String getPrivacyGroupId() {
+    return privacyGroupId;
   }
 }
