@@ -26,8 +26,8 @@ public class ReceiveResponse {
 
   @JsonCreator
   public ReceiveResponse(
-      @JsonProperty(value = "privacyGroupId") final String privacyGroupId,
-      @JsonProperty(value = "payload") final byte[] payload) {
+      @JsonProperty(value = "payload") final byte[] payload,
+      @JsonProperty(value = "privacyGroupId") final String privacyGroupId) {
     this.payload = payload;
     this.privacyGroupId = privacyGroupId;
   }

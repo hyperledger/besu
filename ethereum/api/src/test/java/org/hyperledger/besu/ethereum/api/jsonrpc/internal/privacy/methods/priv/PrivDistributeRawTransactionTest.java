@@ -51,7 +51,6 @@ public class PrivDistributeRawTransactionTest {
           + "ffb33a0b8c8a72657374726963746564";
 
   final String MOCK_ORION_KEY = "93Ky7lXwFkMc7+ckoFgUMku5bpr9tz4zhmWmk9RlNng=";
-  private final String MOCK_PRIVACY_GROUP = "";
 
   @Mock private TransactionPool transactionPool;
 
@@ -70,8 +69,6 @@ public class PrivDistributeRawTransactionTest {
   @Test
   public void validTransactionHashReturnedAfterDistribute() throws Exception {
     when(privateTxHandler.sendToOrion(any(PrivateTransaction.class))).thenReturn(MOCK_ORION_KEY);
-    when(privateTxHandler.getPrivacyGroup(any(String.class), any(PrivateTransaction.class)))
-        .thenReturn(MOCK_PRIVACY_GROUP);
     when(privateTxHandler.validatePrivateTransaction(
             any(PrivateTransaction.class), any(String.class)))
         .thenReturn(ValidationResult.valid());
@@ -91,7 +88,6 @@ public class PrivDistributeRawTransactionTest {
 
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
     verify(privateTxHandler).sendToOrion(any(PrivateTransaction.class));
-    verify(privateTxHandler).getPrivacyGroup(any(String.class), any(PrivateTransaction.class));
     verify(privateTxHandler)
         .validatePrivateTransaction(any(PrivateTransaction.class), any(String.class));
   }

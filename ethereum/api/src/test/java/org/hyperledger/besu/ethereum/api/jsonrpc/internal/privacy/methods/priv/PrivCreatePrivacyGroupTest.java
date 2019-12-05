@@ -96,7 +96,7 @@ public class PrivCreatePrivacyGroupTest {
     final PrivCreatePrivacyGroup privCreatePrivacyGroup =
         new PrivCreatePrivacyGroup(
             privacyParameters,
-            new RandomSigningGroupCreationTransactionFactory(Address.DEFAULT_PRIVACY),
+            new RandomSigningGroupCreationTransactionFactory(),
             privateTransactionHandler,
             transactionPool);
 
@@ -120,7 +120,7 @@ public class PrivCreatePrivacyGroupTest {
     final PrivCreatePrivacyGroup privCreatePrivacyGroup =
         new PrivCreatePrivacyGroup(
             privacyParameters,
-            new RandomSigningGroupCreationTransactionFactory(Address.DEFAULT_PRIVACY),
+            new RandomSigningGroupCreationTransactionFactory(),
             privateTransactionHandler,
             transactionPool);
 
@@ -152,7 +152,7 @@ public class PrivCreatePrivacyGroupTest {
     final PrivCreatePrivacyGroup privCreatePrivacyGroup =
         new PrivCreatePrivacyGroup(
             privacyParameters,
-            new RandomSigningGroupCreationTransactionFactory(Address.DEFAULT_PRIVACY),
+            new RandomSigningGroupCreationTransactionFactory(),
             privateTransactionHandler,
             transactionPool);
 
@@ -184,7 +184,7 @@ public class PrivCreatePrivacyGroupTest {
     final PrivCreatePrivacyGroup privCreatePrivacyGroup =
         new PrivCreatePrivacyGroup(
             privacyParameters,
-            new RandomSigningGroupCreationTransactionFactory(Address.DEFAULT_PRIVACY),
+            new RandomSigningGroupCreationTransactionFactory(),
             privateTransactionHandler,
             transactionPool);
 
@@ -212,7 +212,7 @@ public class PrivCreatePrivacyGroupTest {
     final PrivCreatePrivacyGroup privCreatePrivacyGroup =
         new PrivCreatePrivacyGroup(
             privacyParameters,
-            new RandomSigningGroupCreationTransactionFactory(Address.DEFAULT_PRIVACY),
+            new RandomSigningGroupCreationTransactionFactory(),
             privateTransactionHandler,
             transactionPool);
 
@@ -244,7 +244,7 @@ public class PrivCreatePrivacyGroupTest {
     final PrivCreatePrivacyGroup privCreatePrivacyGroup =
         new PrivCreatePrivacyGroup(
             privacyParameters,
-            new RandomSigningGroupCreationTransactionFactory(Address.DEFAULT_PRIVACY),
+            new RandomSigningGroupCreationTransactionFactory(),
             privateTransactionHandler,
             transactionPool);
 
@@ -270,7 +270,7 @@ public class PrivCreatePrivacyGroupTest {
     final PrivCreatePrivacyGroup privCreatePrivacyGroup =
         new PrivCreatePrivacyGroup(
             privacyParameters,
-            new RandomSigningGroupCreationTransactionFactory(Address.DEFAULT_PRIVACY),
+            new RandomSigningGroupCreationTransactionFactory(),
             failingTransactionHandler,
             transactionPool);
 
@@ -301,7 +301,7 @@ public class PrivCreatePrivacyGroupTest {
     final PrivCreatePrivacyGroup privCreatePrivacyGroup =
         new PrivCreatePrivacyGroup(
             privacyParameters,
-            new RandomSigningGroupCreationTransactionFactory(Address.DEFAULT_PRIVACY),
+            new RandomSigningGroupCreationTransactionFactory(),
             failingTransactionHandler,
             transactionPool);
 

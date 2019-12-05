@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.google.common.collect.Lists;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -92,6 +93,19 @@ public class PrivateTransactionHandler {
     final BytesValueRLPOutput bvrlp = new BytesValueRLPOutput();
     privateTransaction.writeTo(bvrlp);
     final String payload = BytesValues.asBase64String(bvrlp.encoded());
+
+    final List<String> privateFor = resolvePrivateFor(privateTransaction);
+
+    // FIXME: orion should accept empty privateFor
+    if (privateFor.isEmpty()) {
+      privateFor.add(BytesValues.asBase64String(privateTransaction.getPrivateFrom()));
+    }
+
+    return new SendRequestLegacy(
+        payload, BytesValues.asBase64String(privateTransaction.getPrivateFrom()), privateFor);
+  }
+
+  private List<String> resolvePrivateFor(final PrivateTransaction privateTransaction) {
     final List<String> privateFor;
     if (privateTransaction.getPrivateFor().isPresent()) {
       // if this is a legacy private transaction get the privateFor list from the transaction
@@ -101,20 +115,21 @@ public class PrivateTransactionHandler {
               .collect(Collectors.toList());
     } else {
       // get the privateFor list from the management contract
-      final Optional<PrivateTransactionSimulatorResult> process =
+      final Optional<PrivateTransactionSimulatorResult> privateTransactionSimulatorResultOptional =
           privateTransactionSimulator.process(
               buildGetParticipantsCallParams(), privateTransaction.getPrivacyGroupId().get());
-      privateFor =
-          RLP.input(process.get().getOutput())
-              .readList(input -> BytesValues.asBase64String(input.readBytesValue()));
+      if (privateTransactionSimulatorResultOptional.isPresent()
+          && privateTransactionSimulatorResultOptional.get().isSuccessful()) {
+        privateFor =
+            RLP.input(privateTransactionSimulatorResultOptional.get().getOutput())
+                .readList(input -> BytesValues.asBase64String(input.readBytesValue()));
+      } else {
+        // if the management contract does not exist this will prompt Orion to resolve the
+        // privateFor
+        privateFor = Lists.newArrayList();
+      }
     }
-    // FIXME: orion should accept empty privateFor
-    if (privateFor.isEmpty()) {
-      privateFor.add(BytesValues.asBase64String(privateTransaction.getPrivateFrom()));
-    }
-
-    return new SendRequestLegacy(
-        payload, BytesValues.asBase64String(privateTransaction.getPrivateFrom()), privateFor);
+    return privateFor;
   }
 
   private CallParameter buildGetParticipantsCallParams() {

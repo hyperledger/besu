@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason.INCORRECT_PRIVATE_NONCE;
 import static org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason.PRIVATE_NONCE_TOO_LOW;
+import static org.hyperledger.besu.ethereum.util.PrivacyUtil.getPrivacyGroup;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -38,7 +39,6 @@ import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.FixedKeySigningPrivateMarkerTransactionFactory;
 import org.hyperledger.besu.util.bytes.BytesValue;
 import org.hyperledger.besu.util.bytes.BytesValues;
-import org.hyperledger.orion.testutil.OrionKeyUtils;
 
 import java.math.BigInteger;
 
@@ -102,22 +102,25 @@ public class PrivateTransactionHandlerTest {
 
     privateTransactionValidator = mockPrivateTransactionValidator();
 
+    final PrivateTransactionSimulator privateTransactionSimulator =
+        mock(PrivateTransactionSimulator.class);
+
     privateTransactionHandler =
         new PrivateTransactionHandler(
             mockEnclave(),
-            OrionKeyUtils.loadKey("orion_key_0.pub"),
             privateTransactionValidator,
             new FixedKeySigningPrivateMarkerTransactionFactory(
                 Address.DEFAULT_PRIVACY, (address) -> 0, KEY_PAIR),
-            privateNonceProvider);
+            privateNonceProvider,
+            privateTransactionSimulator);
     brokenPrivateTransactionHandler =
         new PrivateTransactionHandler(
             brokenMockEnclave(),
-            OrionKeyUtils.loadKey("orion_key_0.pub"),
             privateTransactionValidator,
             new FixedKeySigningPrivateMarkerTransactionFactory(
                 Address.DEFAULT_PRIVACY, (address) -> 0, KEY_PAIR),
-            privateNonceProvider);
+            privateNonceProvider,
+            privateTransactionSimulator);
   }
 
   @Test
@@ -127,8 +130,7 @@ public class PrivateTransactionHandlerTest {
 
     final String enclaveKey = privateTransactionHandler.sendToOrion(transaction);
 
-    final String privacyGroupId =
-        privateTransactionHandler.getPrivacyGroup(enclaveKey, transaction);
+    final String privacyGroupId = getPrivacyGroup(transaction);
 
     final ValidationResult<TransactionInvalidReason> validationResult =
         privateTransactionHandler.validatePrivateTransaction(transaction, privacyGroupId);
@@ -179,9 +181,7 @@ public class PrivateTransactionHandlerTest {
         .thenReturn(ValidationResult.invalid(PRIVATE_NONCE_TOO_LOW));
 
     final PrivateTransaction transaction = buildLegacyPrivateTransaction(0);
-    final String enclaveKey = privateTransactionHandler.sendToOrion(transaction);
-    final String privacyGroupId =
-        privateTransactionHandler.getPrivacyGroup(enclaveKey, transaction);
+    final String privacyGroupId = getPrivacyGroup(transaction);
     final ValidationResult<TransactionInvalidReason> validationResult =
         privateTransactionHandler.validatePrivateTransaction(transaction, privacyGroupId);
     assertThat(validationResult).isEqualTo(ValidationResult.invalid(PRIVATE_NONCE_TOO_LOW));
@@ -194,9 +194,7 @@ public class PrivateTransactionHandlerTest {
 
     final PrivateTransaction transaction = buildLegacyPrivateTransaction(2);
 
-    final String enclaveKey = privateTransactionHandler.sendToOrion(transaction);
-    final String privacyGroupId =
-        privateTransactionHandler.getPrivacyGroup(enclaveKey, transaction);
+    final String privacyGroupId = getPrivacyGroup(transaction);
     final ValidationResult<TransactionInvalidReason> validationResult =
         privateTransactionHandler.validatePrivateTransaction(transaction, privacyGroupId);
     assertThat(validationResult).isEqualTo(ValidationResult.invalid(INCORRECT_PRIVATE_NONCE));
