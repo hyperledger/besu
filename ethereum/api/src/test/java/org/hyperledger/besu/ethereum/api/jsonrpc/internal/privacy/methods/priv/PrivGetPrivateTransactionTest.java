@@ -26,6 +26,8 @@ import org.hyperledger.besu.enclave.types.ReceiveRequest;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.privacy.PrivateTransactionGroupResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.privacy.PrivateTransactionLegacyResult;
@@ -48,6 +50,7 @@ import java.util.Base64;
 import java.util.Optional;
 
 import com.google.common.collect.Lists;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -101,6 +104,12 @@ public class PrivGetPrivateTransactionTest {
 
   private final Transaction justTransaction = mock(Transaction.class);
 
+  @Before
+  public void before() {
+    when(privacyParameters.getEnclave()).thenReturn(enclave);
+    when(privacyParameters.isEnabled()).thenReturn(true);
+  }
+
   @Test
   public void returnsPrivateTransactionLegacy() throws Exception {
     when(blockchain.transactionByHash(any(Hash.class)))
@@ -118,7 +127,7 @@ public class PrivGetPrivateTransactionTest {
         new PrivateTransactionLegacyResult(privateTransaction);
 
     final PrivGetPrivateTransaction privGetPrivateTransaction =
-        new PrivGetPrivateTransaction(blockchain, enclave, privacyParameters);
+        new PrivGetPrivateTransaction(blockchain, privacyParameters);
     final Object[] params = new Object[] {enclaveKey};
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(new JsonRpcRequest("1", "priv_getPrivateTransaction", params));
@@ -152,7 +161,7 @@ public class PrivGetPrivateTransactionTest {
         new PrivateTransactionGroupResult(privateTransaction);
 
     final PrivGetPrivateTransaction privGetPrivateTransaction =
-        new PrivGetPrivateTransaction(blockchain, enclave, privacyParameters);
+        new PrivGetPrivateTransaction(blockchain, privacyParameters);
 
     final Object[] params = new Object[] {enclaveKey};
     final JsonRpcRequestContext request =
@@ -170,5 +179,20 @@ public class PrivGetPrivateTransactionTest {
     final PrivateTransactionResult result = (PrivateTransactionResult) response.getResult();
 
     assertThat(result).isEqualToComparingFieldByField(privateTransactionGroupResult);
+  }
+
+  @Test
+  public void returnPrivacyDisabledErrorWhenPrivacyIsDisabled() {
+    when(privacyParameters.isEnabled()).thenReturn(false);
+    final PrivGetPrivateTransaction privGetPrivateTransaction =
+        new PrivGetPrivateTransaction(blockchain, privacyParameters);
+
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest("1", "priv_getPrivacyTransaction", new Object[] {}));
+    final JsonRpcErrorResponse response =
+        (JsonRpcErrorResponse) privGetPrivateTransaction.response(request);
+
+    assertThat(response.getError()).isEqualTo(JsonRpcError.PRIVACY_NOT_ENABLED);
   }
 }

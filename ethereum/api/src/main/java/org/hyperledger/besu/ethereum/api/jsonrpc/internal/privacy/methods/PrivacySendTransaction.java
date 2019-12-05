@@ -17,9 +17,11 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcRequestException;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivacyApiMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
+import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionHandler;
@@ -31,16 +33,18 @@ import org.hyperledger.besu.util.bytes.BytesValue;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class AbstractSendTransaction {
+public abstract class PrivacySendTransaction extends PrivacyApiMethod {
 
   private static final Logger LOG = LogManager.getLogger();
 
   protected final PrivateTransactionHandler privateTransactionHandler;
   protected final TransactionPool transactionPool;
 
-  public AbstractSendTransaction(
+  public PrivacySendTransaction(
+      final PrivacyParameters privacyParameters,
       final PrivateTransactionHandler privateTransactionHandler,
       final TransactionPool transactionPool) {
+    super(privacyParameters);
     this.privateTransactionHandler = privateTransactionHandler;
     this.transactionPool = transactionPool;
   }
