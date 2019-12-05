@@ -116,10 +116,10 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
     final WorldUpdater publicWorldState = messageFrame.getWorldState();
     final BytesValue privacyGroupId = BytesValues.fromBase64(receiveResponse.getPrivacyGroupId());
 
-  LOG.trace(
-          "Processing private transaction {} in privacy group {}",
-          privateTransaction.getHash(),
-          privacyGroupId);
+    LOG.trace(
+        "Processing private transaction {} in privacy group {}",
+        privateTransaction.getHash(),
+        privacyGroupId);
 
     final PrivacyGroupHeadBlockMap privacyGroupHeadBlockMap =
         privateStateStorage.getPrivacyGroupHeadBlockMap(currentBlockHash).orElseThrow();
