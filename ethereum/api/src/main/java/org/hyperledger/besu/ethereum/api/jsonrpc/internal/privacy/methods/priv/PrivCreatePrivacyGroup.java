@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
-import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcEnclaveErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
@@ -34,14 +33,12 @@ public class PrivCreatePrivacyGroup extends PrivacyApiMethod {
 
   private static final Logger LOG = getLogger();
   private PrivateTransactionHandler privateTransactionHandler;
-  private final Enclave enclave;
 
   public PrivCreatePrivacyGroup(
       final PrivacyParameters privacyParameters,
       final PrivateTransactionHandler privateTransactionHandler) {
     super(privacyParameters);
     this.privateTransactionHandler = privateTransactionHandler;
-    this.enclave = privacyParameters.getEnclave();
   }
 
   @Override
