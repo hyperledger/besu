@@ -151,6 +151,14 @@ public class ProtocolScheduleBuilder<C> {
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
             isRevertReasonEnabled));
+    addProtocolSpec(
+        protocolSchedule,
+        config.getMuirGlacierBlockNumber(),
+        MainnetProtocolSpecs.muirGlacierDefinition(
+            chainId,
+            config.getContractSizeLimit(),
+            config.getEvmStackSize(),
+            isRevertReasonEnabled));
 
     // specs for classic network
     config
@@ -260,6 +268,8 @@ public class ProtocolScheduleBuilder<C> {
         validateForkOrder(
             "ConstantinopleFix", config.getConstantinopleFixBlockNumber(), lastForkBlock);
     lastForkBlock = validateForkOrder("Istanbul", config.getIstanbulBlockNumber(), lastForkBlock);
+    lastForkBlock =
+        validateForkOrder("MuirGlacier", config.getMuirGlacierBlockNumber(), lastForkBlock);
     assert (lastForkBlock >= 0);
   }
 
