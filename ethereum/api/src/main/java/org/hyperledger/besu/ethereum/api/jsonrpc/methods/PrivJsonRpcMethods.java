@@ -52,14 +52,16 @@ public class PrivJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
   protected Map<String, JsonRpcMethod> create(
       final PrivateTransactionHandler privateTransactionHandler) {
     return mapOf(
-        new PrivGetTransactionReceipt(getBlockchainQueries(), getPrivacyParameters()),
-        new PrivCreatePrivacyGroup(getPrivacyParameters()),
-        new PrivDeletePrivacyGroup(getPrivacyParameters()),
-        new PrivFindPrivacyGroup(getPrivacyParameters()),
+        new PrivGetTransactionReceipt(
+            getBlockchainQueries(), getPrivacyParameters(), privateTransactionHandler),
+        new PrivCreatePrivacyGroup(getPrivacyParameters(), privateTransactionHandler),
+        new PrivDeletePrivacyGroup(getPrivacyParameters(), privateTransactionHandler),
+        new PrivFindPrivacyGroup(getPrivacyParameters(), privateTransactionHandler),
         new PrivGetPrivacyPrecompileAddress(getPrivacyParameters()),
         new PrivGetTransactionCount(getPrivacyParameters(), privateTransactionHandler),
-        new PrivGetPrivateTransaction(getBlockchainQueries(), getPrivacyParameters()),
+        new PrivGetPrivateTransaction(
+            getBlockchainQueries(), getPrivacyParameters(), privateTransactionHandler),
         new PrivDistributeRawTransaction(
-            getPrivacyParameters(), privateTransactionHandler, getTransactionPool()));
+            getPrivacyParameters(), getTransactionPool(), privateTransactionHandler));
   }
 }

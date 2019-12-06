@@ -67,6 +67,7 @@ public class PrivateTransactionHandlerTest {
   private PrivateTransactionHandler privateTransactionHandler;
   private PrivateTransactionHandler brokenPrivateTransactionHandler;
   private PrivateTransactionValidator privateTransactionValidator;
+  private StubEnclave stubEnclave = new StubEnclave();
 
   private static final Transaction PUBLIC_TRANSACTION =
       Transaction.builder()
@@ -80,22 +81,13 @@ public class PrivateTransactionHandlerTest {
           .chainId(BigInteger.valueOf(2018))
           .signAndBuild(KEY_PAIR);
 
-  Enclave mockEnclave() {
-    Enclave mockEnclave = mock(Enclave.class);
-    SendResponse response = new SendResponse(TRANSACTION_KEY);
-    ReceiveResponse receiveResponse = new ReceiveResponse(new byte[0], "mock");
-    when(mockEnclave.send(any(SendRequest.class))).thenReturn(response);
-    when(mockEnclave.receive(any(ReceiveRequest.class))).thenReturn(receiveResponse);
-    return mockEnclave;
-  }
-
-  Enclave brokenMockEnclave() {
+  private Enclave brokenMockEnclave() {
     Enclave mockEnclave = mock(Enclave.class);
     when(mockEnclave.send(any(SendRequest.class))).thenThrow(EnclaveException.class);
     return mockEnclave;
   }
 
-  PrivateTransactionValidator mockPrivateTransactionValidator() {
+  private PrivateTransactionValidator mockPrivateTransactionValidator() {
     PrivateTransactionValidator validator = mock(PrivateTransactionValidator.class);
     when(validator.validate(any(), any())).thenReturn(ValidationResult.valid());
     return validator;
@@ -118,7 +110,7 @@ public class PrivateTransactionHandlerTest {
 
     privateTransactionHandler =
         new PrivateTransactionHandler(
-            mockEnclave(),
+            stubEnclave,
             OrionKeyUtils.loadKey("orion_key_0.pub"),
             privateStateStorage,
             worldStateArchive,
@@ -137,11 +129,11 @@ public class PrivateTransactionHandlerTest {
   }
 
   @Test
-  public void validLegacyTransactionThroughHandler() throws Exception {
+  public void validLegacyTransactionThroughHandler() {
 
     final PrivateTransaction transaction = buildLegacyPrivateTransaction(1);
 
-    final String enclaveKey = privateTransactionHandler.sendToOrion(transaction);
+    final String enclaveKey = privateTransactionHandler.sendTransaction(transaction);
 
     final String privacyGroupId =
         privateTransactionHandler.getPrivacyGroup(enclaveKey, transaction);
@@ -161,11 +153,11 @@ public class PrivateTransactionHandlerTest {
   }
 
   @Test
-  public void validBesuTransactionThroughHandler() throws Exception {
+  public void validBesuTransactionThroughHandler() {
 
     final PrivateTransaction transaction = buildBesuPrivateTransaction(1);
 
-    final String enclaveKey = privateTransactionHandler.sendToOrion(transaction);
+    final String enclaveKey = privateTransactionHandler.sendTransaction(transaction);
 
     final ValidationResult<TransactionInvalidReason> validationResult =
         privateTransactionHandler.validatePrivateTransaction(
@@ -186,16 +178,16 @@ public class PrivateTransactionHandlerTest {
   public void enclaveIsDownWhileHandling() {
     assertThatExceptionOfType(EnclaveException.class)
         .isThrownBy(
-            () -> brokenPrivateTransactionHandler.sendToOrion(buildLegacyPrivateTransaction()));
+            () -> brokenPrivateTransactionHandler.sendTransaction(buildLegacyPrivateTransaction()));
   }
 
   @Test
-  public void nonceTooLowError() throws Exception {
+  public void nonceTooLowError() {
     when(privateTransactionValidator.validate(any(), any()))
         .thenReturn(ValidationResult.invalid(PRIVATE_NONCE_TOO_LOW));
 
     final PrivateTransaction transaction = buildLegacyPrivateTransaction(0);
-    final String enclaveKey = privateTransactionHandler.sendToOrion(transaction);
+    final String enclaveKey = privateTransactionHandler.sendTransaction(transaction);
     final String privacyGroupId =
         privateTransactionHandler.getPrivacyGroup(enclaveKey, transaction);
     final ValidationResult<TransactionInvalidReason> validationResult =
@@ -204,13 +196,13 @@ public class PrivateTransactionHandlerTest {
   }
 
   @Test
-  public void incorrectNonceError() throws Exception {
+  public void incorrectNonceError() {
     when(privateTransactionValidator.validate(any(), any()))
         .thenReturn(ValidationResult.invalid(INCORRECT_PRIVATE_NONCE));
 
     final PrivateTransaction transaction = buildLegacyPrivateTransaction(2);
 
-    final String enclaveKey = privateTransactionHandler.sendToOrion(transaction);
+    final String enclaveKey = privateTransactionHandler.sendTransaction(transaction);
     final String privacyGroupId =
         privateTransactionHandler.getPrivacyGroup(enclaveKey, transaction);
     final ValidationResult<TransactionInvalidReason> validationResult =
@@ -251,5 +243,29 @@ public class PrivateTransactionHandlerTest {
         .sender(Address.fromHexString("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"))
         .chainId(BigInteger.valueOf(2018))
         .restriction(Restriction.RESTRICTED);
+  }
+
+  private static class StubEnclave extends Enclave {
+
+    private SendRequest sendRequest;
+
+    public StubEnclave() {
+      super(null);
+    }
+
+    @Override
+    public SendResponse send(final SendRequest sendRequest) {
+      this.sendRequest = sendRequest;
+      return new SendResponse(TRANSACTION_KEY);
+    }
+
+    @Override
+    public ReceiveResponse receive(final ReceiveRequest receiveRequest) {
+      return new ReceiveResponse(new byte[0], "mock");
+    }
+
+    public SendRequest getSendRequest() {
+      return sendRequest;
+    }
   }
 }

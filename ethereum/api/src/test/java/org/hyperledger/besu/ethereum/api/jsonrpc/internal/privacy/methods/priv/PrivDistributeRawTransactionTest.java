@@ -50,28 +50,23 @@ public class PrivDistributeRawTransactionTest {
           + "200e885ff29e973e2576b6600181d1b0a2b5294e30d9be4a1981"
           + "ffb33a0b8c8a72657374726963746564";
 
-  final String MOCK_ORION_KEY = "93Ky7lXwFkMc7+ckoFgUMku5bpr9tz4zhmWmk9RlNng=";
-  private final String MOCK_PRIVACY_GROUP = "";
-
   @Mock private TransactionPool transactionPool;
-
   @Mock private PrivDistributeRawTransaction method;
-
   @Mock private PrivateTransactionHandler privateTxHandler;
-
   @Mock private PrivacyParameters privacyParameters;
 
   @Before
   public void before() {
     when(privacyParameters.isEnabled()).thenReturn(true);
-    method = new PrivDistributeRawTransaction(privacyParameters, privateTxHandler, transactionPool);
+    method = new PrivDistributeRawTransaction(privacyParameters, transactionPool, privateTxHandler);
   }
 
   @Test
-  public void validTransactionHashReturnedAfterDistribute() throws Exception {
-    when(privateTxHandler.sendToOrion(any(PrivateTransaction.class))).thenReturn(MOCK_ORION_KEY);
+  public void validTransactionHashReturnedAfterDistribute() {
+    final String orionKey = "93Ky7lXwFkMc7+ckoFgUMku5bpr9tz4zhmWmk9RlNng=";
+    when(privateTxHandler.sendTransaction(any(PrivateTransaction.class))).thenReturn(orionKey);
     when(privateTxHandler.getPrivacyGroup(any(String.class), any(PrivateTransaction.class)))
-        .thenReturn(MOCK_PRIVACY_GROUP);
+        .thenReturn("");
     when(privateTxHandler.validatePrivateTransaction(
             any(PrivateTransaction.class), any(String.class)))
         .thenReturn(ValidationResult.valid());
@@ -85,12 +80,12 @@ public class PrivDistributeRawTransactionTest {
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(
-            request.getRequest().getId(), BytesValues.fromBase64(MOCK_ORION_KEY).toString());
+            request.getRequest().getId(), BytesValues.fromBase64(orionKey).toString());
 
     final JsonRpcResponse actualResponse = method.response(request);
 
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
-    verify(privateTxHandler).sendToOrion(any(PrivateTransaction.class));
+    verify(privateTxHandler).sendTransaction(any(PrivateTransaction.class));
     verify(privateTxHandler).getPrivacyGroup(any(String.class), any(PrivateTransaction.class));
     verify(privateTxHandler)
         .validatePrivateTransaction(any(PrivateTransaction.class), any(String.class));

@@ -16,25 +16,26 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
-import org.hyperledger.besu.enclave.Enclave;
-import org.hyperledger.besu.enclave.types.DeletePrivacyGroupRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.privacy.PrivateTransactionHandler;
 
 import org.apache.logging.log4j.Logger;
 
 public class PrivDeletePrivacyGroup extends PrivacyApiMethod {
 
   private static final Logger LOG = getLogger();
-  private final Enclave enclave;
+  private PrivateTransactionHandler privateTransactionHandler;
 
-  public PrivDeletePrivacyGroup(final PrivacyParameters privacyParameters) {
+  public PrivDeletePrivacyGroup(
+      final PrivacyParameters privacyParameters,
+      final PrivateTransactionHandler privateTransactionHandler) {
     super(privacyParameters);
-    this.enclave = privacyParameters.getEnclave();
+    this.privateTransactionHandler = privateTransactionHandler;
   }
 
   @Override
@@ -53,11 +54,9 @@ public class PrivDeletePrivacyGroup extends PrivacyApiMethod {
         privacyGroupId,
         privacyParameters.getEnclavePublicKey());
 
-    DeletePrivacyGroupRequest deletePrivacyGroupRequest =
-        new DeletePrivacyGroupRequest(privacyGroupId, privacyParameters.getEnclavePublicKey());
     String response;
     try {
-      response = enclave.deletePrivacyGroup(deletePrivacyGroupRequest);
+      response = privateTransactionHandler.deletePrivacyGroup(privacyGroupId);
     } catch (Exception e) {
       LOG.error("Failed to fetch transaction from Enclave with error " + e.getMessage());
       LOG.error(e);

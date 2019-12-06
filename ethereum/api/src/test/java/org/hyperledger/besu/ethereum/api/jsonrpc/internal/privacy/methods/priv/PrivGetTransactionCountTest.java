@@ -49,7 +49,7 @@ public class PrivGetTransactionCountTest {
   @Before
   public void before() {
     when(privacyParameters.isEnabled()).thenReturn(true);
-    when(privateTransactionHandler.getSenderNonce(senderAddress, privacyGroupId)).thenReturn(NONCE);
+    when(privateTransactionHandler.determineNonce(senderAddress, privacyGroupId)).thenReturn(NONCE);
   }
 
   @Test

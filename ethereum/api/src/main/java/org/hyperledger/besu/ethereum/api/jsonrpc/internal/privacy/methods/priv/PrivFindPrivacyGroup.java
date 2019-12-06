@@ -16,8 +16,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
-import org.hyperledger.besu.enclave.Enclave;
-import org.hyperledger.besu.enclave.types.FindPrivacyGroupRequest;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -25,6 +23,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.privacy.PrivateTransactionHandler;
 
 import java.util.Arrays;
 
@@ -33,11 +32,13 @@ import org.apache.logging.log4j.Logger;
 public class PrivFindPrivacyGroup extends PrivacyApiMethod {
 
   private static final Logger LOG = getLogger();
-  private final Enclave enclave;
+  private PrivateTransactionHandler privateTransactionHandler;
 
-  public PrivFindPrivacyGroup(final PrivacyParameters privacyParameters) {
+  public PrivFindPrivacyGroup(
+      final PrivacyParameters privacyParameters,
+      final PrivateTransactionHandler privateTransactionHandler) {
     super(privacyParameters);
-    this.enclave = privacyParameters.getEnclave();
+    this.privateTransactionHandler = privateTransactionHandler;
   }
 
   @Override
@@ -53,10 +54,9 @@ public class PrivFindPrivacyGroup extends PrivacyApiMethod {
 
     LOG.trace("Finding a privacy group with members {}", Arrays.toString(addresses));
 
-    FindPrivacyGroupRequest findPrivacyGroupRequest = new FindPrivacyGroupRequest(addresses);
     PrivacyGroup[] response;
     try {
-      response = enclave.findPrivacyGroup(findPrivacyGroupRequest);
+      response = privateTransactionHandler.findPrivacyGroup(addresses);
     } catch (Exception e) {
       LOG.error("Failed to fetch group from Enclave with error " + e.getMessage());
       LOG.error(e);

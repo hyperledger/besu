@@ -31,8 +31,8 @@ public class PrivDistributeRawTransaction extends PrivacySendTransaction {
 
   public PrivDistributeRawTransaction(
       final PrivacyParameters privacyParameters,
-      final PrivateTransactionHandler privateTransactionHandler,
-      final TransactionPool transactionPool) {
+      final TransactionPool transactionPool,
+      final PrivateTransactionHandler privateTransactionHandler) {
     super(privacyParameters, privateTransactionHandler, transactionPool);
   }
 
@@ -52,7 +52,7 @@ public class PrivDistributeRawTransaction extends PrivacySendTransaction {
 
     final String enclaveKey;
     try {
-      enclaveKey = privateTransactionHandler.sendToOrion(privateTransaction);
+      enclaveKey = privateTransactionHandler.sendTransaction(privateTransaction);
     } catch (final Exception e) {
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(),

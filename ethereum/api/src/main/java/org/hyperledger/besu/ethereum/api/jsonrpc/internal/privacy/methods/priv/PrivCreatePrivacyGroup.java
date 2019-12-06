@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 import static org.apache.logging.log4j.LogManager.getLogger;
 
 import org.hyperledger.besu.enclave.Enclave;
-import org.hyperledger.besu.enclave.types.CreatePrivacyGroupRequest;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcEnclaveErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
@@ -27,16 +26,21 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.privacy.PrivateTransactionHandler;
 
 import org.apache.logging.log4j.Logger;
 
 public class PrivCreatePrivacyGroup extends PrivacyApiMethod {
 
   private static final Logger LOG = getLogger();
+  private PrivateTransactionHandler privateTransactionHandler;
   private final Enclave enclave;
 
-  public PrivCreatePrivacyGroup(final PrivacyParameters privacyParameters) {
+  public PrivCreatePrivacyGroup(
+      final PrivacyParameters privacyParameters,
+      final PrivateTransactionHandler privateTransactionHandler) {
     super(privacyParameters);
+    this.privateTransactionHandler = privateTransactionHandler;
     this.enclave = privacyParameters.getEnclave();
   }
 
@@ -57,15 +61,11 @@ public class PrivCreatePrivacyGroup extends PrivacyApiMethod {
         parameter.getName(),
         parameter.getDescription());
 
-    final CreatePrivacyGroupRequest createPrivacyGroupRequest =
-        new CreatePrivacyGroupRequest(
-            parameter.getAddresses(),
-            privacyParameters.getEnclavePublicKey(),
-            parameter.getName(),
-            parameter.getDescription());
     final PrivacyGroup response;
     try {
-      response = enclave.createPrivacyGroup(createPrivacyGroupRequest);
+      response =
+          privateTransactionHandler.createPrivacyGroup(
+              parameter.getAddresses(), parameter.getName(), parameter.getDescription());
     } catch (Exception e) {
       LOG.error("Failed to create privacy group", e);
       return new JsonRpcErrorResponse(

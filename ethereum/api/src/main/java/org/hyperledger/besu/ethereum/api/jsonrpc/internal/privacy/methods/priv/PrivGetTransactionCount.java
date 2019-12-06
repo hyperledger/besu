@@ -51,7 +51,7 @@ public class PrivGetTransactionCount extends PrivacyApiMethod {
     final Address address = requestContext.getRequiredParameter(0, Address.class);
     final String privacyGroupId = requestContext.getRequiredParameter(1, String.class);
 
-    final long nonce = privateTransactionHandler.getSenderNonce(address, privacyGroupId);
+    final long nonce = privateTransactionHandler.determineNonce(address, privacyGroupId);
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), Quantity.create(nonce));
   }
 }

@@ -15,6 +15,11 @@
 package org.hyperledger.besu.ethereum.privacy;
 
 import org.hyperledger.besu.enclave.Enclave;
+import org.hyperledger.besu.enclave.types.CreatePrivacyGroupRequest;
+import org.hyperledger.besu.enclave.types.DeletePrivacyGroupRequest;
+import org.hyperledger.besu.enclave.types.FindPrivacyGroupRequest;
+import org.hyperledger.besu.enclave.types.PrivacyGroup;
+import org.hyperledger.besu.enclave.types.PrivacyGroup.Type;
 import org.hyperledger.besu.enclave.types.ReceiveRequest;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.enclave.types.SendRequest;
@@ -38,8 +43,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.google.common.collect.Lists;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bouncycastle.util.Arrays;
 
 public class PrivateTransactionHandler {
 
@@ -80,7 +87,7 @@ public class PrivateTransactionHandler {
     this.privateMarkerTransactionFactory = privateMarkerTransactionFactory;
   }
 
-  public String sendToOrion(final PrivateTransaction privateTransaction) {
+  public String sendTransaction(final PrivateTransaction privateTransaction) {
     final SendRequest sendRequest = createSendRequest(privateTransaction);
     final SendResponse sendResponse;
 
@@ -92,6 +99,24 @@ public class PrivateTransactionHandler {
       LOG.error("Failed to store private transaction in enclave", e);
       throw e;
     }
+  }
+
+  public ReceiveResponse retrieveTransaction(final String enclaveKey) {
+    final ReceiveRequest receiveRequest = new ReceiveRequest(enclaveKey);
+    return enclave.receive(receiveRequest);
+  }
+
+  public PrivacyGroup createPrivacyGroup(
+      final String[] addresses, final String name, final String description) {
+    final CreatePrivacyGroupRequest createPrivacyGroupRequest =
+        new CreatePrivacyGroupRequest(addresses, enclavePublicKey, name, description);
+    return enclave.createPrivacyGroup(createPrivacyGroupRequest);
+  }
+
+  public String deletePrivacyGroup(final String privacyGroupId) {
+    DeletePrivacyGroupRequest deletePrivacyGroupRequest =
+        new DeletePrivacyGroupRequest(privacyGroupId, enclavePublicKey);
+    return enclave.deletePrivacyGroup(deletePrivacyGroupRequest);
   }
 
   public String getPrivacyGroup(final String key, final PrivateTransaction privateTransaction) {
@@ -121,7 +146,63 @@ public class PrivateTransactionHandler {
   public ValidationResult<TransactionValidator.TransactionInvalidReason> validatePrivateTransaction(
       final PrivateTransaction privateTransaction, final String privacyGroupId) {
     return privateTransactionValidator.validate(
-        privateTransaction, getSenderNonce(privateTransaction.getSender(), privacyGroupId));
+        privateTransaction, determineNonce(privateTransaction.getSender(), privacyGroupId));
+  }
+
+  public PrivacyGroup[] findPrivacyGroup(final String[] addresses) {
+    return enclave.findPrivacyGroup(new FindPrivacyGroupRequest(addresses));
+  }
+
+  public long determineNonce(
+      final String privateFrom, final String[] privateFor, final Address address) {
+    final String[] groupMembers = Arrays.append(privateFor, privateFrom);
+
+    final FindPrivacyGroupRequest request = new FindPrivacyGroupRequest(groupMembers);
+    final List<PrivacyGroup> matchingGroups = Lists.newArrayList(enclave.findPrivacyGroup(request));
+
+    final List<PrivacyGroup> legacyGroups =
+        matchingGroups.stream()
+            .filter(group -> group.getType() == Type.LEGACY)
+            .collect(Collectors.toList());
+
+    if (legacyGroups.size() == 0) {
+      // the legacy group does not exist yet
+      return 0;
+    }
+
+    if (legacyGroups.size() != 1) {
+      throw new RuntimeException(
+          String.format(
+              "Found invalid number of privacy groups (%d), expected 1.", legacyGroups.size()));
+    }
+
+    final String privacyGroupId = legacyGroups.get(0).getPrivacyGroupId();
+
+    return determineNonce(address, privacyGroupId);
+  }
+
+  public long determineNonce(final Address sender, final String privacyGroupId) {
+    return privateStateStorage
+        .getLatestStateRoot(BytesValues.fromBase64(privacyGroupId))
+        .map(
+            lastRootHash ->
+                privateWorldStateArchive
+                    .getMutable(lastRootHash)
+                    .map(
+                        worldState -> {
+                          final Account maybePrivateSender = worldState.get(sender);
+
+                          if (maybePrivateSender != null) {
+                            return maybePrivateSender.getNonce();
+                          }
+                          // account has not interacted in this private state
+                          return Account.DEFAULT_NONCE;
+                        })
+                    // private state does not exist
+                    .orElse(Account.DEFAULT_NONCE))
+        .orElse(
+            // private state does not exist
+            Account.DEFAULT_NONCE);
   }
 
   private SendRequest createSendRequest(final PrivateTransaction privateTransaction) {
@@ -148,29 +229,5 @@ public class PrivateTransactionHandler {
       return new SendRequestLegacy(
           payload, BytesValues.asBase64String(privateTransaction.getPrivateFrom()), privateFor);
     }
-  }
-
-  public long getSenderNonce(final Address sender, final String privacyGroupId) {
-    return privateStateStorage
-        .getLatestStateRoot(BytesValues.fromBase64(privacyGroupId))
-        .map(
-            lastRootHash ->
-                privateWorldStateArchive
-                    .getMutable(lastRootHash)
-                    .map(
-                        worldState -> {
-                          final Account maybePrivateSender = worldState.get(sender);
-
-                          if (maybePrivateSender != null) {
-                            return maybePrivateSender.getNonce();
-                          }
-                          // account has not interacted in this private state
-                          return Account.DEFAULT_NONCE;
-                        })
-                    // private state does not exist
-                    .orElse(Account.DEFAULT_NONCE))
-        .orElse(
-            // private state does not exist
-            Account.DEFAULT_NONCE);
   }
 }

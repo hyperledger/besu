@@ -17,12 +17,12 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.privacy.PrivateTransactionHandler;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -33,14 +33,14 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class PrivDeletePrivacyGroupTest {
 
-  @Mock private Enclave enclave;
   @Mock private PrivacyParameters privacyParameters;
+  @Mock private PrivateTransactionHandler privateTransactionHandler;
   private PrivDeletePrivacyGroup privDeletePrivacyGroup;
 
   @Before
   public void before() {
-    when(privacyParameters.getEnclave()).thenReturn(enclave);
-    privDeletePrivacyGroup = new PrivDeletePrivacyGroup(privacyParameters);
+    privDeletePrivacyGroup =
+        new PrivDeletePrivacyGroup(privacyParameters, privateTransactionHandler);
   }
 
   @Test
