@@ -55,6 +55,12 @@ public class FooInt extends CrosschainContract {
 
   public static final String FUNC_UPDATESTATE = "updateState";
 
+  public static final String FUNC_UPDATESTATEFROMPURE = "updateStateFromPure";
+
+  public static final String FUNC_UPDATESTATEFROMTXVIEW = "updateStateFromTxView";
+
+  public static final String FUNC_UPDATESTATEFROMVIEW = "updateStateFromView";
+
   @Deprecated
   protected FooInt(
       String contractAddress,
@@ -169,6 +175,93 @@ public class FooInt extends CrosschainContract {
     final Function function =
         new Function(
             FUNC_UPDATESTATE, Arrays.<Type>asList(), Collections.<TypeReference<?>>emptyList());
+    return executeRemoteCallCrosschainTransaction(function, crosschainContext);
+  }
+
+  public RemoteFunctionCall<TransactionReceipt> updateStateFromPure() {
+    final Function function =
+        new Function(
+            FUNC_UPDATESTATEFROMPURE,
+            Arrays.<Type>asList(),
+            Collections.<TypeReference<?>>emptyList());
+    return executeRemoteCallTransaction(function);
+  }
+
+  public byte[] updateStateFromPure_AsSignedCrosschainSubordinateTransaction(
+      final CrosschainContext crosschainContext) throws IOException {
+    final Function function =
+        new Function(
+            FUNC_UPDATESTATEFROMPURE,
+            Arrays.<Type>asList(),
+            Collections.<TypeReference<?>>emptyList());
+    return createSignedSubordinateTransaction(function, crosschainContext);
+  }
+
+  public RemoteFunctionCall<TransactionReceipt> updateStateFromPure_AsCrosschainTransaction(
+      final CrosschainContext crosschainContext) {
+    final Function function =
+        new Function(
+            FUNC_UPDATESTATEFROMPURE,
+            Arrays.<Type>asList(),
+            Collections.<TypeReference<?>>emptyList());
+    return executeRemoteCallCrosschainTransaction(function, crosschainContext);
+  }
+
+  public RemoteFunctionCall<TransactionReceipt> updateStateFromTxView() {
+    final Function function =
+        new Function(
+            FUNC_UPDATESTATEFROMTXVIEW,
+            Arrays.<Type>asList(),
+            Collections.<TypeReference<?>>emptyList());
+    return executeRemoteCallTransaction(function);
+  }
+
+  public byte[] updateStateFromTxView_AsSignedCrosschainSubordinateTransaction(
+      final CrosschainContext crosschainContext) throws IOException {
+    final Function function =
+        new Function(
+            FUNC_UPDATESTATEFROMTXVIEW,
+            Arrays.<Type>asList(),
+            Collections.<TypeReference<?>>emptyList());
+    return createSignedSubordinateTransaction(function, crosschainContext);
+  }
+
+  public RemoteFunctionCall<TransactionReceipt> updateStateFromTxView_AsCrosschainTransaction(
+      final CrosschainContext crosschainContext) {
+    final Function function =
+        new Function(
+            FUNC_UPDATESTATEFROMTXVIEW,
+            Arrays.<Type>asList(),
+            Collections.<TypeReference<?>>emptyList());
+    return executeRemoteCallCrosschainTransaction(function, crosschainContext);
+  }
+
+  public RemoteFunctionCall<TransactionReceipt> updateStateFromView() {
+    final Function function =
+        new Function(
+            FUNC_UPDATESTATEFROMVIEW,
+            Arrays.<Type>asList(),
+            Collections.<TypeReference<?>>emptyList());
+    return executeRemoteCallTransaction(function);
+  }
+
+  public byte[] updateStateFromView_AsSignedCrosschainSubordinateTransaction(
+      final CrosschainContext crosschainContext) throws IOException {
+    final Function function =
+        new Function(
+            FUNC_UPDATESTATEFROMVIEW,
+            Arrays.<Type>asList(),
+            Collections.<TypeReference<?>>emptyList());
+    return createSignedSubordinateTransaction(function, crosschainContext);
+  }
+
+  public RemoteFunctionCall<TransactionReceipt> updateStateFromView_AsCrosschainTransaction(
+      final CrosschainContext crosschainContext) {
+    final Function function =
+        new Function(
+            FUNC_UPDATESTATEFROMVIEW,
+            Arrays.<Type>asList(),
+            Collections.<TypeReference<?>>emptyList());
     return executeRemoteCallCrosschainTransaction(function, crosschainContext);
   }
 

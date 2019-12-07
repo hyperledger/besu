@@ -49,6 +49,12 @@ public class BarInt extends CrosschainContract {
 
   public static final String FUNC_BARUPDATESTATE = "barUpdateState";
 
+  public static final String FUNC_BARTP = "bartp";
+
+  public static final String FUNC_BARTTV = "barttv";
+
+  public static final String FUNC_BARTV = "bartv";
+
   public static final String FUNC_BARVP = "barvp";
 
   public static final String FUNC_BARVV = "barvv";
@@ -117,6 +123,66 @@ public class BarInt extends CrosschainContract {
     final Function function =
         new Function(
             FUNC_BARUPDATESTATE, Arrays.<Type>asList(), Collections.<TypeReference<?>>emptyList());
+    return executeRemoteCallCrosschainTransaction(function, crosschainContext);
+  }
+
+  public RemoteFunctionCall<TransactionReceipt> bartp() {
+    final Function function =
+        new Function(FUNC_BARTP, Arrays.<Type>asList(), Collections.<TypeReference<?>>emptyList());
+    return executeRemoteCallTransaction(function);
+  }
+
+  public byte[] bartp_AsSignedCrosschainSubordinateTransaction(
+      final CrosschainContext crosschainContext) throws IOException {
+    final Function function =
+        new Function(FUNC_BARTP, Arrays.<Type>asList(), Collections.<TypeReference<?>>emptyList());
+    return createSignedSubordinateTransaction(function, crosschainContext);
+  }
+
+  public RemoteFunctionCall<TransactionReceipt> bartp_AsCrosschainTransaction(
+      final CrosschainContext crosschainContext) {
+    final Function function =
+        new Function(FUNC_BARTP, Arrays.<Type>asList(), Collections.<TypeReference<?>>emptyList());
+    return executeRemoteCallCrosschainTransaction(function, crosschainContext);
+  }
+
+  public RemoteFunctionCall<TransactionReceipt> barttv() {
+    final Function function =
+        new Function(FUNC_BARTTV, Arrays.<Type>asList(), Collections.<TypeReference<?>>emptyList());
+    return executeRemoteCallTransaction(function);
+  }
+
+  public byte[] barttv_AsSignedCrosschainSubordinateTransaction(
+      final CrosschainContext crosschainContext) throws IOException {
+    final Function function =
+        new Function(FUNC_BARTTV, Arrays.<Type>asList(), Collections.<TypeReference<?>>emptyList());
+    return createSignedSubordinateTransaction(function, crosschainContext);
+  }
+
+  public RemoteFunctionCall<TransactionReceipt> barttv_AsCrosschainTransaction(
+      final CrosschainContext crosschainContext) {
+    final Function function =
+        new Function(FUNC_BARTTV, Arrays.<Type>asList(), Collections.<TypeReference<?>>emptyList());
+    return executeRemoteCallCrosschainTransaction(function, crosschainContext);
+  }
+
+  public RemoteFunctionCall<TransactionReceipt> bartv() {
+    final Function function =
+        new Function(FUNC_BARTV, Arrays.<Type>asList(), Collections.<TypeReference<?>>emptyList());
+    return executeRemoteCallTransaction(function);
+  }
+
+  public byte[] bartv_AsSignedCrosschainSubordinateTransaction(
+      final CrosschainContext crosschainContext) throws IOException {
+    final Function function =
+        new Function(FUNC_BARTV, Arrays.<Type>asList(), Collections.<TypeReference<?>>emptyList());
+    return createSignedSubordinateTransaction(function, crosschainContext);
+  }
+
+  public RemoteFunctionCall<TransactionReceipt> bartv_AsCrosschainTransaction(
+      final CrosschainContext crosschainContext) {
+    final Function function =
+        new Function(FUNC_BARTV, Arrays.<Type>asList(), Collections.<TypeReference<?>>emptyList());
     return executeRemoteCallCrosschainTransaction(function, crosschainContext);
   }
 

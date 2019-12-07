@@ -94,4 +94,11 @@ public class GenesisConfigurationFactory {
     return updateGenesisExtraData(
         validators, template, IbftExtraData::createGenesisExtraDataString);
   }
+
+  public Optional<String> createCrosschainBlockchain3GenesisConfig(
+      final Collection<? extends RunnableNode> validators) {
+    final String template = readGenesisFile("/crosschain/crosschain_blockchain_03.json");
+    return updateGenesisExtraData(
+        validators, template, IbftExtraData::createGenesisExtraDataString);
+  }
 }

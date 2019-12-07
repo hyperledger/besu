@@ -10,15 +10,18 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-pragma solidity >=0.4.23;
 
-interface FooInt {
-    function foo() external view returns (uint256);
-    function updateState() external;
-    function pureFoo() pure external returns (uint256);
-    function foovv() external view returns (uint256);
-    function foovp() external view returns (uint256);
-    function updateStateFromPure() external;
-    function updateStateFromView() external;
-    function updateStateFromTxView() external;
+pragma solidity >=0.4.0 <0.6.0;
+import "./Bar2Int.sol";
+
+contract Bar2Ctrt is Bar2Int {
+    uint256 public ttvflag;
+
+    constructor() public {
+        ttvflag = 0;
+    }
+
+    function updateState() external {
+        ttvflag = 1;
+    }
 }

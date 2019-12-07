@@ -313,6 +313,18 @@ public class BesuNodeFactory {
             .build());
   }
 
+  public BesuNode createCrosschainBlockchain3Ibft2Node(final String name) throws IOException {
+    return create(
+        new BesuNodeConfigurationBuilder()
+            .name(name)
+            .miningEnabledWithZeroMinTxGasPrice()
+            .jsonRpcConfiguration(node.createJsonRpcWithCrosschainEnabledConfig())
+            .webSocketConfiguration(node.createWebSocketEnabledConfig())
+            .devMode(false)
+            .genesisConfigProvider(genesis::createCrosschainBlockchain3GenesisConfig)
+            .build());
+  }
+
   public BesuNode createNodeWithStaticNodes(final String name, final List<Node> staticNodes)
       throws IOException {
 

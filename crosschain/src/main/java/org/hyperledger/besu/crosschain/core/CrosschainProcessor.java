@@ -158,7 +158,7 @@ public class CrosschainProcessor {
   Optional<ValidationResult<TransactionValidator.TransactionInvalidReason>> trialExecution(
       final CrosschainTransaction subordinateTransaction) {
     // Add to thread local storage.
-    CrosschainThreadLocalDataHolder.setCrosschainTransaciton(subordinateTransaction);
+    CrosschainThreadLocalDataHolder.setCrosschainTransaction(subordinateTransaction);
     // Rewind to the first subordinate transaction or view for each execution.
     subordinateTransaction.resetSubordinateTransactionsAndViewsList();
 

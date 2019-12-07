@@ -20,7 +20,7 @@ import java.util.TreeMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-/** Managers the relationship between nodes in this multichain node. */
+/** Manages the relationship between nodes in this multichain node. */
 public class MultichainManager {
   private static final Logger LOG = LogManager.getLogger();
 

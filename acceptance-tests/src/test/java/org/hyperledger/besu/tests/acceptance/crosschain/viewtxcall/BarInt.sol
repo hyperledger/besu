@@ -14,7 +14,6 @@
 pragma solidity >=0.4.0 <0.6.0;
 
 contract BarInt {
-
     function bar() external;
     function barUpdateState() external;
     function pureBar() external;
@@ -22,4 +21,7 @@ contract BarInt {
     function barvv() external;
     function purefn() external pure returns (uint256);
     function barvp() external;
+    function bartv() external;
+    function bartp() external;
+    function barttv() external;
 }

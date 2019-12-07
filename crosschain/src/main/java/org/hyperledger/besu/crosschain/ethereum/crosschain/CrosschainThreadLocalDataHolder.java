@@ -23,7 +23,7 @@ public class CrosschainThreadLocalDataHolder {
   private static final ThreadLocal<CrosschainTransaction> data =
       new ThreadLocal<CrosschainTransaction>();
 
-  public static void setCrosschainTransaciton(final CrosschainTransaction tx) {
+  public static void setCrosschainTransaction(final CrosschainTransaction tx) {
     data.set(tx);
   }
 

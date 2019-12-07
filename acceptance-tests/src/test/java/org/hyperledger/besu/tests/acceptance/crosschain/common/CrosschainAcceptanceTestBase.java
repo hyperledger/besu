@@ -36,8 +36,8 @@ public abstract class CrosschainAcceptanceTestBase extends AcceptanceTestBase {
   protected Cluster clusterBc1;
   protected BesuNode nodeOnBlockchain1;
   protected CrosschainTransactionManager transactionManagerBlockchain1;
-  private long BLOCKCHAIN1_SLEEP_DURATION = 2000;
-  private int BLOCKCHAIN1_RETRY_ATTEMPTS = 3;
+  protected long BLOCKCHAIN1_SLEEP_DURATION = 2000;
+  protected int BLOCKCHAIN1_RETRY_ATTEMPTS = 3;
 
   protected Cluster clusterBc2;
   protected BesuNode nodeOnBlockchain2;

@@ -221,7 +221,7 @@ public class CrosschainTransactionProcessor extends MainnetTransactionProcessor 
     // the precompile can access it.
     if (transaction instanceof CrosschainTransaction) {
       // Add to thread local storage.
-      CrosschainThreadLocalDataHolder.setCrosschainTransaciton((CrosschainTransaction) transaction);
+      CrosschainThreadLocalDataHolder.setCrosschainTransaction((CrosschainTransaction) transaction);
       // Rewind to the first subordinate transaction or view for each execution.
       ((CrosschainTransaction) transaction).resetSubordinateTransactionsAndViewsList();
     }

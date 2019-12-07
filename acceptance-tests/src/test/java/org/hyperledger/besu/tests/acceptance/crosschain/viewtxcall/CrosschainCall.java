@@ -15,21 +15,27 @@ package org.hyperledger.besu.tests.acceptance.crosschain.viewtxcall;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.tests.acceptance.crosschain.common.CrosschainAcceptanceTestBase;
+import org.hyperledger.besu.tests.acceptance.crosschain.viewtxcall.generated.Bar2Ctrt;
 import org.hyperledger.besu.tests.acceptance.crosschain.viewtxcall.generated.BarCtrt;
 import org.hyperledger.besu.tests.acceptance.crosschain.viewtxcall.generated.FooCtrt;
+import org.hyperledger.besu.tests.acceptance.dsl.account.Accounts;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
+import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.Cluster;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
+import org.web3j.crypto.Credentials;
+import org.web3j.protocol.besu.JsonRpc2_0Besu;
 import org.web3j.protocol.besu.response.crosschain.CrossIsLockedResponse;
 import org.web3j.protocol.core.DefaultBlockParameter;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.tx.CrosschainContext;
 import org.web3j.tx.CrosschainContextGenerator;
+import org.web3j.tx.CrosschainTransactionManager;
 
 /*
  * Two contracts - BarCtrt and FooCtrt are deployed on blockchains 1 and 2 respectively. Many tests are created
@@ -38,9 +44,14 @@ import org.web3j.tx.CrosschainContextGenerator;
  */
 
 public class CrosschainCall extends CrosschainAcceptanceTestBase {
-  private final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LogManager.getLogger();
   private BarCtrt barCtrt;
   private FooCtrt fooCtrt;
+  private Bar2Ctrt bar2Ctrt;
+
+  private Cluster clusterBc3;
+  private BesuNode nodeOnBlockchain3;
+  private CrosschainTransactionManager transactionManagerBlockchain3;
 
   @Before
   public void setUp() throws Exception {
@@ -49,12 +60,7 @@ public class CrosschainCall extends CrosschainAcceptanceTestBase {
     setUpBlockchain1();
     setUpBlockchain2();
 
-    // Making nodeOnBlockChain1 a multichain node
-    addMultichainNode(nodeOnBlockchain1, nodeOnBlockchain2);
-    // Making nodeOnBlockchain2 a multichain node
-    addMultichainNode(nodeOnBlockchain2, nodeOnBlockchain1);
-
-    // Deploying BarCtrt on BlockChain1 and FooCtrt on BlockChain2
+    // Deploying BarCtrt on BlockChain1, and FooCtrt on BlockChain2
     barCtrt =
         nodeOnBlockchain1.execute(
             contractTransactions.createLockableSmartContract(
@@ -64,10 +70,15 @@ public class CrosschainCall extends CrosschainAcceptanceTestBase {
             contractTransactions.createLockableSmartContract(
                 FooCtrt.class, this.transactionManagerBlockchain2));
 
+    // Making nodeOnBlockChain1 a multichain node
+    addMultichainNode(nodeOnBlockchain1, nodeOnBlockchain2);
+
     // Calling BooCtrt.setProperties, a regular intrachain function call
     barCtrt.setProperties(nodeOnBlockchain2.getChainId(), fooCtrt.getContractAddress()).send();
-    // Calling FooCtrt.setProperties, a regular intrachain function call
-    fooCtrt.setProperties(nodeOnBlockchain1.getChainId(), barCtrt.getContractAddress()).send();
+    // Calling FooCtrt.setPropertiesForBar, a regular intrachain function call
+    fooCtrt
+        .setPropertiesForBar(nodeOnBlockchain1.getChainId(), barCtrt.getContractAddress())
+        .send();
   }
 
   @After
@@ -77,8 +88,7 @@ public class CrosschainCall extends CrosschainAcceptanceTestBase {
     this.clusterBc2.close();
   }
 
-  private void waitForUnlock(final String ctrtAddress, @NotNull final BesuNode node)
-      throws Exception {
+  private void waitForUnlock(final String ctrtAddress, final BesuNode node) throws Exception {
     CrossIsLockedResponse isLockedObj =
         node.getJsonRpc()
             .crossIsLocked(ctrtAddress, DefaultBlockParameter.valueOf("latest"))
@@ -90,6 +100,28 @@ public class CrosschainCall extends CrosschainAcceptanceTestBase {
               .crossIsLocked(ctrtAddress, DefaultBlockParameter.valueOf("latest"))
               .send();
     }
+  }
+
+  private void setUpBlockchain3() throws Exception {
+    this.nodeOnBlockchain3 = besu.createCrosschainBlockchain3Ibft2Node("bc3-node");
+    this.clusterBc3 = new Cluster(this.net);
+    this.clusterBc3.start(this.nodeOnBlockchain3);
+
+    JsonRpc2_0Besu blockchain3Web3j = this.nodeOnBlockchain3.getJsonRpc();
+    final Credentials BENEFACTOR_ONE = Credentials.create(Accounts.GENESIS_ACCOUNT_ONE_PRIVATE_KEY);
+    JsonRpc2_0Besu coordinationWeb3j = this.nodeOnCoordinationBlockchain.getJsonRpc();
+
+    this.transactionManagerBlockchain3 =
+        new CrosschainTransactionManager(
+            blockchain3Web3j,
+            BENEFACTOR_ONE,
+            this.nodeOnBlockchain3.getChainId(),
+            BLOCKCHAIN1_RETRY_ATTEMPTS,
+            BLOCKCHAIN1_SLEEP_DURATION,
+            coordinationWeb3j,
+            this.nodeOnCoordinationBlockchain.getChainId(),
+            this.coordContract.getContractAddress(),
+            CROSSCHAIN_TRANSACTION_TIMEOUT);
   }
 
   /*
@@ -175,6 +207,9 @@ public class CrosschainCall extends CrosschainAcceptanceTestBase {
    */
   @Test
   public void doCCViewViewCall() throws Exception {
+    // Making nodeOnBlockChain2 a 2-chain node
+    addMultichainNode(nodeOnBlockchain2, nodeOnBlockchain1);
+
     CrosschainContextGenerator ctxGenerator =
         new CrosschainContextGenerator(nodeOnBlockchain1.getChainId());
 
@@ -210,6 +245,9 @@ public class CrosschainCall extends CrosschainAcceptanceTestBase {
    */
   @Test
   public void doCCViewPureCall() throws Exception {
+    // Making nodeOnBlockChain2 a 2-chain node
+    addMultichainNode(nodeOnBlockchain2, nodeOnBlockchain1);
+
     CrosschainContextGenerator ctxGenerator =
         new CrosschainContextGenerator(nodeOnBlockchain1.getChainId());
 
@@ -238,5 +276,209 @@ public class CrosschainCall extends CrosschainAcceptanceTestBase {
 
     waitForUnlock(barCtrt.getContractAddress(), nodeOnBlockchain1);
     assertThat(barCtrt.vpflag().send().longValue()).isEqualTo(1);
+  }
+
+  /*
+   * Checks the nested crosschain transaction to view calls.
+   */
+  @Test
+  public void doCCTxViewCall() throws Exception {
+    // Making nodeOnBlockChain2 a 2-chain node
+    addMultichainNode(nodeOnBlockchain2, nodeOnBlockchain1);
+
+    CrosschainContextGenerator ctxGenerator =
+        new CrosschainContextGenerator(nodeOnBlockchain1.getChainId());
+
+    LOG.info("Constructing Nested Crosschain Transaction");
+    // BarCtrt.viewfn() is called by FooCtrt.footv()
+    CrosschainContext subordTxCtx =
+        ctxGenerator.createCrosschainContext(
+            nodeOnBlockchain2.getChainId(), fooCtrt.getContractAddress());
+    byte[] subordView1 = barCtrt.viewfn_AsSignedCrosschainSubordinateView(subordTxCtx);
+
+    // FooCtrt.updateStateFromView() is called by BarCtrt.bartv()
+    byte[][] subordViewForFooTv = new byte[][] {subordView1};
+    subordTxCtx =
+        ctxGenerator.createCrosschainContext(
+            nodeOnBlockchain1.getChainId(), barCtrt.getContractAddress(), subordViewForFooTv);
+    byte[] subordView2 =
+        fooCtrt.updateStateFromView_AsSignedCrosschainSubordinateTransaction(subordTxCtx);
+
+    byte[][] subordViews = new byte[][] {subordView2};
+    CrosschainContext origTxCtx = ctxGenerator.createCrosschainContext(subordViews);
+
+    TransactionReceipt txReceipt = barCtrt.bartv_AsCrosschainTransaction(origTxCtx).send();
+    if (!txReceipt.isStatusOK()) {
+      LOG.info("txReceipt details " + txReceipt.toString());
+      throw new Error(txReceipt.getStatus());
+    }
+
+    waitForUnlock(fooCtrt.getContractAddress(), nodeOnBlockchain2);
+    assertThat(fooCtrt.tvFlag().send().longValue()).isEqualTo(1);
+  }
+
+  /*
+   * Checks the nested crosschain transaction to pure calls.
+   */
+  @Test
+  public void doCCTxPureCall() throws Exception {
+    // Making nodeOnBlockChain2 a 2-chain node
+    addMultichainNode(nodeOnBlockchain2, nodeOnBlockchain1);
+
+    CrosschainContextGenerator ctxGenerator =
+        new CrosschainContextGenerator(nodeOnBlockchain1.getChainId());
+
+    LOG.info("Constructing Nested Crosschain Transaction");
+    // BarCtrt.purefn() is called by FooCtrt.footp()
+    CrosschainContext subordTxCtx =
+        ctxGenerator.createCrosschainContext(
+            nodeOnBlockchain2.getChainId(), fooCtrt.getContractAddress());
+    byte[] subordView1 = barCtrt.purefn_AsSignedCrosschainSubordinateView(subordTxCtx);
+
+    // FooCtrt.updateStateFromView() is called by BarCtrt.bartv()
+    byte[][] subordViewForFooTp = new byte[][] {subordView1};
+    subordTxCtx =
+        ctxGenerator.createCrosschainContext(
+            nodeOnBlockchain1.getChainId(), barCtrt.getContractAddress(), subordViewForFooTp);
+    byte[] subordView2 =
+        fooCtrt.updateStateFromPure_AsSignedCrosschainSubordinateTransaction(subordTxCtx);
+
+    byte[][] subordViews = new byte[][] {subordView2};
+    CrosschainContext origTxCtx = ctxGenerator.createCrosschainContext(subordViews);
+
+    TransactionReceipt txReceipt = barCtrt.bartp_AsCrosschainTransaction(origTxCtx).send();
+    if (!txReceipt.isStatusOK()) {
+      LOG.info("txReceipt details " + txReceipt.toString());
+      throw new Error(txReceipt.getStatus());
+    }
+
+    waitForUnlock(fooCtrt.getContractAddress(), nodeOnBlockchain2);
+    assertThat(fooCtrt.tpFlag().send().longValue()).isEqualTo(1);
+  }
+
+  /*
+   * Checks the nested crosschain transaction to transaction and view calls. This case is similar to the
+   * nested transactions example used in SDLT 2019 presentation of 'Application Level Authentication for
+   * Ethereum Private Blockchain Atomic Crosschain transactions'
+   */
+  @Test
+  public void doCCTxTxViewCall() throws Exception {
+    setUpBlockchain3();
+
+    // Deploying Bar2Ctrt on blockchain3
+    bar2Ctrt =
+        nodeOnBlockchain3.execute(
+            contractTransactions.createLockableSmartContract(
+                Bar2Ctrt.class, this.transactionManagerBlockchain3));
+
+    // Calling FooCtrt.setPropertiesForBar2, a regular intrachain function call
+    fooCtrt
+        .setPropertiesForBar2(nodeOnBlockchain3.getChainId(), bar2Ctrt.getContractAddress())
+        .send();
+
+    // Making nodeOnBlockChain1 a 3-chain node
+    addMultichainNode(nodeOnBlockchain1, nodeOnBlockchain3);
+
+    // Making nodeOnBlockchain2 a 3-chain node
+    addMultichainNode(nodeOnBlockchain2, nodeOnBlockchain3);
+    addMultichainNode(nodeOnBlockchain2, nodeOnBlockchain1);
+
+    CrosschainContextGenerator ctxGen =
+        new CrosschainContextGenerator(nodeOnBlockchain1.getChainId());
+
+    // BarCtrt.viewfn() is called by FooCtrt.updateStateFromTxView()
+    CrosschainContext ctx1 =
+        ctxGen.createCrosschainContext(
+            nodeOnBlockchain2.getChainId(), fooCtrt.getContractAddress());
+    byte[] subView1 = barCtrt.viewfn_AsSignedCrosschainSubordinateView(ctx1);
+    byte[] subTx1 = bar2Ctrt.updateState_AsSignedCrosschainSubordinateTransaction(ctx1);
+
+    // FooCtrt.updateStateFromTxView() is called by BarCtrt.barttv()
+    byte[][] subTxViews1 = new byte[][] {subView1, subTx1};
+    CrosschainContext ctx2 =
+        ctxGen.createCrosschainContext(
+            nodeOnBlockchain1.getChainId(), barCtrt.getContractAddress(), subTxViews1);
+    byte[] subTxViews2 =
+        fooCtrt.updateStateFromTxView_AsSignedCrosschainSubordinateTransaction(ctx2);
+
+    byte[][] subordTxs = new byte[][] {subTxViews2};
+    CrosschainContext origTxCtx = ctxGen.createCrosschainContext(subordTxs);
+
+    TransactionReceipt txReceipt = barCtrt.barttv_AsCrosschainTransaction(origTxCtx).send();
+    if (!txReceipt.isStatusOK()) {
+      LOG.info("txReceipt details " + txReceipt.toString());
+      throw new Error(txReceipt.getStatus());
+    }
+
+    // Check for the correctness of the innermost view
+    waitForUnlock(fooCtrt.getContractAddress(), nodeOnBlockchain2);
+    assertThat(fooCtrt.ttvFlag().send().longValue()).isEqualTo(1);
+
+    // Check for the update of the innermost transaction
+    waitForUnlock(bar2Ctrt.getContractAddress(), nodeOnBlockchain3);
+    assertThat(bar2Ctrt.ttvflag().send().longValue()).isEqualTo(1);
+
+    this.clusterBc3.close();
+  }
+
+  /*
+   * Check that the transaction on a locked contract should fail.
+   */
+  @Ignore
+  public void doCCTxTxViewCallOn2Chains() throws Exception {
+    // Deploying Bar2Ctrt on blockchain1
+    bar2Ctrt =
+        nodeOnBlockchain1.execute(
+            contractTransactions.createLockableSmartContract(
+                Bar2Ctrt.class, this.transactionManagerBlockchain1));
+
+    // Calling FooCtrt.setPropertiesForBar2, a regular intrachain function call
+    fooCtrt
+        .setPropertiesForBar2(nodeOnBlockchain1.getChainId(), bar2Ctrt.getContractAddress())
+        .send();
+
+    // Making nodeOnBlockChain1 a 3-chain node
+    addMultichainNode(nodeOnBlockchain1, nodeOnBlockchain3);
+
+    // Making nodeOnBlockchain2 a 3-chain node
+    addMultichainNode(nodeOnBlockchain2, nodeOnBlockchain3);
+    addMultichainNode(nodeOnBlockchain2, nodeOnBlockchain1);
+
+    CrosschainContextGenerator ctxGen =
+        new CrosschainContextGenerator(nodeOnBlockchain1.getChainId());
+
+    // BarCtrt.viewfn() is called by FooCtrt.updateStateFromTxView()
+    CrosschainContext ctx1 =
+        ctxGen.createCrosschainContext(
+            nodeOnBlockchain2.getChainId(), fooCtrt.getContractAddress());
+    byte[] subView1 = barCtrt.viewfn_AsSignedCrosschainSubordinateView(ctx1);
+    byte[] subTx1 = bar2Ctrt.updateState_AsSignedCrosschainSubordinateTransaction(ctx1);
+
+    // FooCtrt.updateStateFromTxView() is called by BarCtrt.barttv()
+    byte[][] subTxViews1 = new byte[][] {subView1, subTx1};
+    CrosschainContext ctx2 =
+        ctxGen.createCrosschainContext(
+            nodeOnBlockchain1.getChainId(), barCtrt.getContractAddress(), subTxViews1);
+    byte[] subTxViews2 =
+        fooCtrt.updateStateFromTxView_AsSignedCrosschainSubordinateTransaction(ctx2);
+
+    byte[][] subordTxs = new byte[][] {subTxViews2};
+    CrosschainContext origTxCtx = ctxGen.createCrosschainContext(subordTxs);
+
+    TransactionReceipt txReceipt = barCtrt.barttv_AsCrosschainTransaction(origTxCtx).send();
+    if (!txReceipt.isStatusOK()) {
+      LOG.info("txReceipt details " + txReceipt.toString());
+      throw new Error(txReceipt.getStatus());
+    }
+
+    // Check for the correctness of the innermost view
+    waitForUnlock(fooCtrt.getContractAddress(), nodeOnBlockchain2);
+    assertThat(fooCtrt.ttvFlag().send().longValue()).isEqualTo(1);
+
+    // Check for the update of the innermost transaction
+    waitForUnlock(bar2Ctrt.getContractAddress(), nodeOnBlockchain3);
+    assertThat(bar2Ctrt.ttvflag().send().longValue()).isEqualTo(1);
+
+    this.clusterBc3.close();
   }
 }
