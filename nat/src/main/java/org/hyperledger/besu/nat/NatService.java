@@ -23,6 +23,7 @@ import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
 
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -47,6 +48,19 @@ public class NatService {
    */
   public boolean isNatEnvironment() {
     return currentNatMethod != NatMethod.NONE;
+  }
+
+  /**
+   * If nat environment is present, performs the given action, otherwise does nothing.
+   *
+   * @param natMethod specific on which only this action must be performed
+   * @param action the action to be performed, if a nat environment is present
+   */
+  public void ifNatEnvironment(
+      final NatMethod natMethod, final Consumer<? super NatManager> action) {
+    if (isNatEnvironment()) {
+      currentNatManager.filter(s -> natMethod.equals(s.getNatMethod())).ifPresent(action);
+    }
   }
 
   /**

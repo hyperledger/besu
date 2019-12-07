@@ -36,10 +36,10 @@ import org.hyperledger.besu.ethereum.retesteth.methods.TestModifyTimestamp;
 import org.hyperledger.besu.ethereum.retesteth.methods.TestRewindToBlock;
 import org.hyperledger.besu.ethereum.retesteth.methods.TestSetChainParams;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.nat.NatService;
 
 import java.util.Arrays;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import io.vertx.core.Vertx;
@@ -59,6 +59,8 @@ public class RetestethService {
     retestethContext = new RetestethContext();
 
     final BlockResultFactory blockResult = new BlockResultFactory();
+    final NatService natService = NatService.builder().build();
+
     final Map<String, JsonRpcMethod> jsonRpcMethods =
         mapOf(
             new Web3ClientVersion(clientVersion),
@@ -87,7 +89,7 @@ public class RetestethService {
             retestethConfiguration.getDataPath(),
             jsonRpcConfiguration,
             new NoOpMetricsSystem(),
-            Optional.empty(),
+            natService,
             jsonRpcMethods,
             new HealthService(new LivenessCheck()),
             HealthService.ALWAYS_HEALTHY);

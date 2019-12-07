@@ -43,7 +43,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.nat.NatMethod;
 import org.hyperledger.besu.nat.NatService;
-import org.hyperledger.besu.nat.core.NatManager;
 import org.hyperledger.besu.nat.core.domain.NatServiceType;
 import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
 import org.hyperledger.besu.nat.upnp.UpnpNatManager;
@@ -128,7 +127,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
   private final PeerPermissions peerPermissions;
   private final MaintainedPeers maintainedPeers;
 
-  private Optional<NatService> natService;
+  private NatService natService;
 
   private OptionalLong peerBondedObserverId = OptionalLong.empty();
 
@@ -161,7 +160,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
       final SECP256K1.KeyPair keyPair,
       final NetworkingConfiguration config,
       final PeerPermissions peerPermissions,
-      final Optional<NatService> natService,
+      final NatService natService,
       final MaintainedPeers maintainedPeers,
       final PeerReputationManager reputationManager) {
 
@@ -204,11 +203,14 @@ public class DefaultP2PNetwork implements P2PNetwork {
                     : configuredDiscoveryPort)
             .join();
 
-    natService.ifPresent(
-        service -> {
-          if (service.isNatEnvironment()) {
-            this.configureNatEnvironment(service, listeningPort, discoveryPort);
-          }
+    natService.ifNatEnvironment(
+        NatMethod.UPNP,
+        natManager -> {
+          UpnpNatManager upnpNatManager = (UpnpNatManager) natManager;
+          upnpNatManager.requestPortForward(
+              discoveryPort, NetworkProtocol.UDP, NatServiceType.DISCOVERY);
+          upnpNatManager.requestPortForward(
+              listeningPort, NetworkProtocol.TCP, NatServiceType.RLPX);
         });
 
     setLocalNode(address, listeningPort, discoveryPort);
@@ -366,8 +368,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
     }
 
     // override advertised host if we detect an external IP address via NAT manager
-    final String advertisedAddress =
-        natService.flatMap(NatService::queryExternalIPAddress).orElse(address);
+    final String advertisedAddress = natService.queryExternalIPAddress().orElse(address);
 
     final EnodeURL localEnode =
         EnodeURL.builder()
@@ -379,27 +380,6 @@ public class DefaultP2PNetwork implements P2PNetwork {
 
     LOG.info("Enode URL {}", localEnode.toString());
     localNode.setEnode(localEnode);
-  }
-
-  private void configureNatEnvironment(
-      final NatService natService, final int listeningPort, final int discoveryPort) {
-
-    try {
-      final NatManager natManager = natService.getNatManager().orElseThrow();
-      final NatMethod natMethod = natService.getNatMethod();
-
-      // if we're in a UPNP NAT environment, request port forwards for every port we
-      // intend to bind to
-      if (natMethod.equals(NatMethod.UPNP)) {
-        UpnpNatManager upnpNatManager = (UpnpNatManager) natManager;
-        upnpNatManager.requestPortForward(
-            discoveryPort, NetworkProtocol.UDP, NatServiceType.DISCOVERY);
-        upnpNatManager.requestPortForward(listeningPort, NetworkProtocol.TCP, NatServiceType.RLPX);
-      }
-
-    } catch (final Exception e) {
-      LOG.error("Error configuring NAT environment", e);
-    }
   }
 
   public static class Builder {
@@ -415,7 +395,8 @@ public class DefaultP2PNetwork implements P2PNetwork {
     private MaintainedPeers maintainedPeers = new MaintainedPeers();
     private PeerPermissions peerPermissions = PeerPermissions.noop();
 
-    private Optional<NatService> natService = Optional.empty();
+    private NatService natService = NatService.builder().build();
+
     private MetricsSystem metricsSystem;
 
     public P2PNetwork build() {
@@ -530,12 +511,6 @@ public class DefaultP2PNetwork implements P2PNetwork {
     }
 
     public Builder natService(final NatService natService) {
-      checkNotNull(natService);
-      this.natService = Optional.ofNullable(natService);
-      return this;
-    }
-
-    public Builder natService(final Optional<NatService> natService) {
       checkNotNull(natService);
       this.natService = natService;
       return this;

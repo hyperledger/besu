@@ -37,6 +37,7 @@ import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioni
 import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningController;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
+import org.hyperledger.besu.nat.NatService;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -77,6 +78,8 @@ public class JsonRpcHttpServiceHostWhitelistTest {
   private static final Collection<RpcApi> JSON_RPC_APIS =
       Arrays.asList(RpcApis.ETH, RpcApis.NET, RpcApis.WEB3);
   private final JsonRpcConfiguration jsonRpcConfig = createJsonRpcConfig();
+  private final NatService natService = NatService.builder().build();
+
   private final List<String> hostsWhitelist = Arrays.asList("ally", "friend");
 
   @Before
@@ -113,7 +116,7 @@ public class JsonRpcHttpServiceHostWhitelistTest {
                     mock(JsonRpcConfiguration.class),
                     mock(WebSocketConfiguration.class),
                     mock(MetricsConfiguration.class),
-                    Optional.empty()));
+                    natService));
     service = createJsonRpcHttpService();
     service.start().join();
 
@@ -127,7 +130,7 @@ public class JsonRpcHttpServiceHostWhitelistTest {
         folder.newFolder().toPath(),
         jsonRpcConfig,
         new NoOpMetricsSystem(),
-        Optional.empty(),
+        natService,
         rpcMethods,
         HealthService.ALWAYS_HEALTHY,
         HealthService.ALWAYS_HEALTHY);

@@ -64,6 +64,7 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.StrictStubs.class)
@@ -72,7 +73,6 @@ public final class DefaultP2PNetworkTest {
   final MaintainedPeers maintainedPeers = new MaintainedPeers();
   @Mock PeerDiscoveryAgent discoveryAgent;
   @Mock RlpxAgent rlpxAgent;
-  @Mock NatService natService;
 
   private final ArgumentCaptor<PeerBondedObserver> discoverySubscriberCaptor =
       ArgumentCaptor.forClass(PeerBondedObserver.class);
@@ -220,14 +220,13 @@ public final class DefaultP2PNetworkTest {
     config.getRlpx().setBindPort(30303);
     config.getDiscovery().setBindPort(30301);
 
-    UpnpNatManager upnpNatManager = mock(UpnpNatManager.class);
+    final UpnpNatManager upnpNatManager = mock(UpnpNatManager.class);
+    when(upnpNatManager.getNatMethod()).thenReturn(NatMethod.UPNP);
+    when(upnpNatManager.queryExternalIPAddress())
+        .thenReturn(CompletableFuture.completedFuture(externalIp));
 
-    when(natService.getNatManager()).thenReturn(Optional.of(upnpNatManager));
-
-    when(natService.isNatEnvironment()).thenReturn(true);
-    when(natService.getNatMethod()).thenReturn(NatMethod.UPNP);
-
-    when(natService.queryExternalIPAddress()).thenReturn(Optional.of(externalIp));
+    final NatService natService =
+        Mockito.spy(NatService.builder().natManager(Optional.of(upnpNatManager)).build());
     final P2PNetwork network = builder().natService(natService).build();
 
     network.start();

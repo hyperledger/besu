@@ -44,6 +44,7 @@ import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
+import org.hyperledger.besu.nat.NatService;
 import org.hyperledger.besu.testutil.BlockTestUtil.ChainResources;
 
 import java.math.BigInteger;
@@ -138,6 +139,8 @@ public abstract class AbstractJsonRpcHttpServiceTest {
     supportedCapabilities.add(EthProtocol.ETH62);
     supportedCapabilities.add(EthProtocol.ETH63);
 
+    final NatService natService = NatService.builder().build();
+
     return new JsonRpcMethodsFactory()
         .methods(
             CLIENT_VERSION,
@@ -159,7 +162,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
             config,
             mock(WebSocketConfiguration.class),
             mock(MetricsConfiguration.class),
-            Optional.empty());
+            natService);
   }
 
   protected void startService() throws Exception {
@@ -170,6 +173,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
 
     final JsonRpcConfiguration config = JsonRpcConfiguration.createDefault();
     final Map<String, JsonRpcMethod> methods = getRpcMethods(config, blockchainSetupUtil);
+    final NatService natService = NatService.builder().build();
 
     config.setPort(0);
     service =
@@ -178,7 +182,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
             folder.newFolder().toPath(),
             config,
             new NoOpMetricsSystem(),
-            Optional.empty(),
+            natService,
             methods,
             HealthService.ALWAYS_HEALTHY,
             HealthService.ALWAYS_HEALTHY);

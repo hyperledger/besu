@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.p2p.discovery.internal.PingPacketData;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
+import org.hyperledger.besu.nat.NatService;
 import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Arrays;
@@ -247,12 +248,13 @@ public class PeerDiscoveryTestHelper {
     public MockPeerDiscoveryAgent build() {
       final int port = bindPort.orElseGet(nextAvailablePort::incrementAndGet);
       final DiscoveryConfiguration config = new DiscoveryConfiguration();
+      final NatService natService = NatService.builder().build();
       config.setBootnodes(bootnodes);
       config.setAdvertisedHost(advertisedHost);
       config.setBindPort(port);
       config.setActive(active);
 
-      return new MockPeerDiscoveryAgent(keyPair, config, peerPermissions, agents);
+      return new MockPeerDiscoveryAgent(keyPair, config, peerPermissions, agents, natService);
     }
   }
 }
