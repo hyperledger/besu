@@ -100,7 +100,8 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
     }
 
     final BytesValueRLPInput bytesValueRLPInput =
-        new BytesValueRLPInput(Bytes.wrap(Base64.getDecoder().decode(receiveResponse.getPayload())), false);
+        new BytesValueRLPInput(
+            Bytes.wrap(Base64.getDecoder().decode(receiveResponse.getPayload())), false);
     final PrivateTransaction privateTransaction = PrivateTransaction.readFrom(bytesValueRLPInput);
     final WorldUpdater publicWorldState = messageFrame.getWorldState();
     final Bytes privacyGroupId = Bytes.fromBase64String(receiveResponse.getPrivacyGroupId());
