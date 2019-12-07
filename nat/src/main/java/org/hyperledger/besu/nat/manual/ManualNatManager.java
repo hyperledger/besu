@@ -6,12 +6,11 @@ import org.hyperledger.besu.nat.core.domain.NatPortMapping;
 import org.hyperledger.besu.nat.core.domain.NatServiceType;
 import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * This class describes the behaviour of the Manual NAT manager. Manual Nat manager add the ability
@@ -20,38 +19,44 @@ import java.util.stream.Stream;
  */
 public class ManualNatManager extends AbstractNatManager {
 
-  private final String remoteHost;
-  private final int port;
+  private final String advertisedHost;
+  private final int p2pPort;
+  private final int rpcHttpPort;
   private final List<NatPortMapping> forwardedPorts;
 
-  public ManualNatManager(final String remoteHost, final int port) {
+  public ManualNatManager(final String advertisedHost, final int p2pPort, final int rpcHttpPort) {
     super(NatMethod.MANUAL);
-    this.remoteHost = remoteHost;
-    this.port = port;
+    this.advertisedHost = advertisedHost;
+    this.p2pPort = p2pPort;
+    this.rpcHttpPort = rpcHttpPort;
     forwardedPorts = buildForwardedPorts();
   }
 
   private List<NatPortMapping> buildForwardedPorts() {
     try {
       final String internalHost = queryLocalIPAddress().get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
-      return Stream.of(
-              new NatPortMapping(
-                  NatServiceType.DISCOVERY,
-                  NetworkProtocol.UDP,
-                  internalHost,
-                  remoteHost,
-                  port,
-                  port),
-              new NatPortMapping(
-                  NatServiceType.RLPX, NetworkProtocol.TCP, internalHost, remoteHost, port, port),
-              new NatPortMapping(
-                  NatServiceType.JSON_RPC,
-                  NetworkProtocol.TCP,
-                  internalHost,
-                  remoteHost,
-                  port,
-                  port))
-          .collect(Collectors.toList());
+      return Arrays.asList(
+          new NatPortMapping(
+              NatServiceType.DISCOVERY,
+              NetworkProtocol.UDP,
+              internalHost,
+              advertisedHost,
+              p2pPort,
+              p2pPort),
+          new NatPortMapping(
+              NatServiceType.RLPX,
+              NetworkProtocol.TCP,
+              internalHost,
+              advertisedHost,
+              p2pPort,
+              p2pPort),
+          new NatPortMapping(
+              NatServiceType.JSON_RPC,
+              NetworkProtocol.TCP,
+              internalHost,
+              advertisedHost,
+              rpcHttpPort,
+              rpcHttpPort));
     } catch (Exception e) {
       LOG.info("Failed to create forwarded port list");
     }
@@ -70,7 +75,7 @@ public class ManualNatManager extends AbstractNatManager {
 
   @Override
   protected CompletableFuture<String> retrieveExternalIPAddress() {
-    return CompletableFuture.completedFuture(remoteHost);
+    return CompletableFuture.completedFuture(advertisedHost);
   }
 
   @Override

@@ -563,7 +563,8 @@ public class RunnerBuilder {
       case UPNP:
         return Optional.of(new UpnpNatManager());
       case MANUAL:
-        return Optional.of(new ManualNatManager(p2pAdvertisedHost, p2pListenPort));
+        return Optional.of(
+            new ManualNatManager(p2pAdvertisedHost, p2pListenPort, jsonRpcConfiguration.getPort()));
       case NONE:
       default:
         return Optional.empty();
