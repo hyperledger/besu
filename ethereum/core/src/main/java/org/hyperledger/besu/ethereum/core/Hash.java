@@ -83,9 +83,4 @@ public class Hash extends DelegatingBytes32 implements org.hyperledger.besu.plug
   public String getHexString() {
     return toHexString();
   }
-
-  @Override
-  public int size() {
-    return super.size();
-  }
 }

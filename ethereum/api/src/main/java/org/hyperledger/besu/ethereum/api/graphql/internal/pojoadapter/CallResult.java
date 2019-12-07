@@ -16,8 +16,7 @@ package org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter;
 
 import org.apache.tuweni.bytes.Bytes;
 
-@SuppressWarnings("unused")
-// reflected by GraphQL
+@SuppressWarnings("unused") // reflected by GraphQL
 class CallResult {
   private final Long status;
   private final Long gasUsed;
