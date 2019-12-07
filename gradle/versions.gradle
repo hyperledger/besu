@@ -55,12 +55,12 @@ dependencyManagement {
 
     dependency 'junit:junit:4.12'
 
-    dependency 'org.apache.tuweni:tuweni-bytes:0.10.0-SNAPSHOT'
-    dependency 'org.apache.tuweni:tuweni-io:0.10.0-SNAPSHOT'
-    dependency 'org.apache.tuweni:tuweni-config:0.10.0-SNAPSHOT'
-    dependency 'org.apache.tuweni:tuweni-crypto:0.10.0-SNAPSHOT'
-    dependency 'org.apache.tuweni:tuweni-toml:0.10.0-SNAPSHOT'
-    dependency 'org.apache.tuweni:tuweni-units:0.10.0-SNAPSHOT'
+    dependency 'org.apache.tuweni:tuweni-bytes:0.10.0'
+    dependency 'org.apache.tuweni:tuweni-io:0.10.0'
+    dependency 'org.apache.tuweni:tuweni-config:0.10.0'
+    dependency 'org.apache.tuweni:tuweni-crypto:0.10.0'
+    dependency 'org.apache.tuweni:tuweni-toml:0.10.0'
+    dependency 'org.apache.tuweni:tuweni-units:0.10.0'
 
     dependency 'net.consensys:orion:1.5.0-SNAPSHOT'
 
