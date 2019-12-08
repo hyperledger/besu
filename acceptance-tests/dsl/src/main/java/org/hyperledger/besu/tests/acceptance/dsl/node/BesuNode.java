@@ -81,7 +81,6 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   private final Path homeDirectory;
   private final KeyPair keyPair;
   private final Properties portsProperties = new Properties();
-  private final Properties networksProperties = new Properties();
   private final Boolean p2pEnabled;
   private final NetworkingConfiguration networkingConfiguration;
   private final boolean revertReasonEnabled;
@@ -438,16 +437,6 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
       LOG.info("Ports for node {}: {}", name, portsProperties);
     } catch (final IOException e) {
       throw new RuntimeException("Error reading Besu ports file", e);
-    }
-  }
-
-  private void loadNetworksFile() {
-    try (final FileInputStream fis =
-        new FileInputStream(new File(homeDirectory.toFile(), "besu.networks"))) {
-      networksProperties.load(fis);
-      LOG.info("IP Addresses for node {}: {}", name, networksProperties);
-    } catch (final IOException e) {
-      throw new RuntimeException("Error reading Besu networks file", e);
     }
   }
 
