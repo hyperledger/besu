@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import org.junit.Test;
@@ -33,7 +34,8 @@ public class ForkIdManagerTest {
 
   @Test
   public void checkItFunctionsWithPresentBehavior() {
-    ForkIdManager forkIdManager = new ForkIdManager(Hash.fromHexString(mainnetGenHash), null, null);
+    ForkIdManager forkIdManager =
+        new ForkIdManager(Hash.fromHexString(mainnetGenHash), Collections.emptyList(), null);
     assertThat(forkIdManager.peerCheck(Hash.fromHexString(mainnetGenHash))).isFalse();
   }
 

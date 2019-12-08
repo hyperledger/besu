@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.util.bytes.Bytes32;
 import org.hyperledger.besu.util.bytes.BytesValue;
 import org.hyperledger.besu.util.bytes.BytesValues;
+import org.openjdk.jmh.annotations.Fork;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -33,7 +34,6 @@ import java.util.zip.CRC32;
 public class ForkIdManager {
 
   private Hash genesisHash;
-  private CRC32 crc = new CRC32();
   private Long currentHead;
   private Long forkNext;
   private Long highestKnownFork = 0L;
@@ -43,32 +43,20 @@ public class ForkIdManager {
   public ForkIdManager(final Hash genesisHash, final List<Long> forks, final Long currentHead) {
     this.genesisHash = genesisHash;
     this.currentHead = currentHead;
-    if (forks != null) {
-      forkAndHashList = createForkIds(forks, currentHead);
-    } else {
-      forkAndHashList = emptyList();
-    }
+    this.forkAndHashList = createForkIds(forks);
   };
 
   static ForkIdManager buildCollection(
       final Hash genesisHash, final List<Long> forks, final Blockchain blockchain) {
-    if (forks == null) {
-      return new ForkIdManager(genesisHash, null, blockchain.getChainHeadBlockNumber());
-    } else {
-      return new ForkIdManager(genesisHash, forks, blockchain.getChainHeadBlockNumber());
-    }
+    return new ForkIdManager(genesisHash, forks, blockchain.getChainHeadBlockNumber());
   };
 
   public static ForkIdManager buildCollection(final Hash genesisHash, final List<Long> forks) {
-    if (forks == null) {
-      return new ForkIdManager(genesisHash, null, Long.MAX_VALUE);
-    } else {
-      return new ForkIdManager(genesisHash, forks, Long.MAX_VALUE);
-    }
+    return new ForkIdManager(genesisHash, forks, Long.MAX_VALUE);
   };
 
   static ForkIdManager buildCollection(final Hash genesisHash) {
-    return new ForkIdManager(genesisHash, null, Long.MAX_VALUE);
+    return new ForkIdManager(genesisHash, emptyList(), Long.MAX_VALUE);
   };
 
   // Non-generated entry (for tests)
@@ -173,56 +161,36 @@ public class ForkIdManager {
   }
 
   // TODO: should sort these when first gathering the list of forks to ensure order
-  private List<ForkId> createForkIds(final List<Long> forks, final Long currentHead) {
-    boolean first = true;
-    List<ForkId> forkList = new ArrayList<>();
-    Iterator<Long> iterator = forks.iterator();
-    while (iterator.hasNext()) {
-      Long forkBlockNumber = iterator.next();
-      highestKnownFork = Math.max(highestKnownFork, forkBlockNumber);
-      if (first) {
-        // first fork
-        first = false;
-        forkList.add(
-            new ForkId(updateCrc(this.genesisHash.getHexString()), forkBlockNumber)); // Genesis
-        updateCrc(forkBlockNumber);
-
-      } else if (!iterator.hasNext()) {
-        // most recent fork
-        forkList.add(new ForkId(getCurrentCrcHash(), forkBlockNumber));
-        updateCrc(forkBlockNumber);
-        // next fork or no future fork known
-        if (currentHead > forkBlockNumber) {
-          lastKnownEntry = new ForkId(getCurrentCrcHash(), 0L);
-          forkList.add(lastKnownEntry);
-          this.forkNext = 0L;
-        } else {
-          lastKnownEntry = new ForkId(getCurrentCrcHash(), forkBlockNumber);
-          forkList.add(lastKnownEntry);
-          this.forkNext = forkBlockNumber;
-        }
-
-      } else {
-        forkList.add(new ForkId(getCurrentCrcHash(), forkBlockNumber));
-        updateCrc(forkBlockNumber);
-      }
+  private List<ForkId> createForkIds(final List<Long> forks) {
+    final CRC32 crc = new CRC32();
+    crc.update(this.genesisHash.getByteArray());
+    final List<BytesValue> forkHashes = new ArrayList<>(List.of(getCurrentCrcHash(crc)));
+    for (final Long fork : forks) {
+      updateCrc(crc, fork);
+      forkHashes.add(getCurrentCrcHash(crc));
     }
-    return forkList;
+    final List<ForkId> forkIds = new ArrayList<>();
+    // This loop is for all the fork hashes that have an associated "next fork"
+    for (int i = 0; i < forks.size(); i++) {
+      forkIds.add(new ForkId(forkHashes.get(i), forks.get(i)));
+    }
+    if (!forks.isEmpty()) {
+      this.forkNext = forkIds.get(forkIds.size() - 1).getNext();
+      forkIds.add(
+          new ForkId(
+              forkHashes.get(forkHashes.size() - 1),
+              currentHead > forkNext ? 0 : forkNext // Use 0 if there are no known next forks
+              ));
+    }
+    return forkIds;
   }
 
-  private void updateCrc(final Long block) {
+  private void updateCrc(final CRC32 crc, final Long block) {
     byte[] byteRepresentationFork = longToBigEndian(block);
     crc.update(byteRepresentationFork, 0, byteRepresentationFork.length);
   }
 
-  private BytesValue updateCrc(final String hash) {
-    BytesValue bv = BytesValue.fromHexString(hash);
-    byte[] byteRepresentation = bv.extractArray();
-    crc.update(byteRepresentation, 0, byteRepresentation.length);
-    return getCurrentCrcHash();
-  }
-
-  private BytesValue getCurrentCrcHash() {
+  private BytesValue getCurrentCrcHash(final CRC32 crc) {
     return BytesValues.ofUnsignedInt(crc.getValue());
   }
 
