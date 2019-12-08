@@ -29,7 +29,7 @@ public class ManualNatManager extends AbstractNatManager {
     this.advertisedHost = advertisedHost;
     this.p2pPort = p2pPort;
     this.rpcHttpPort = rpcHttpPort;
-    forwardedPorts = buildForwardedPorts();
+    this.forwardedPorts = buildForwardedPorts();
   }
 
   private List<NatPortMapping> buildForwardedPorts() {
@@ -58,7 +58,7 @@ public class ManualNatManager extends AbstractNatManager {
               rpcHttpPort,
               rpcHttpPort));
     } catch (Exception e) {
-      LOG.info("Failed to create forwarded port list");
+      LOG.warn("Failed to create forwarded port list", e);
     }
     return Collections.emptyList();
   }
