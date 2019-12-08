@@ -91,7 +91,7 @@ public class JsonRpcHttpServiceRpcApisTest {
   @Mock protected static BlockchainQueries blockchainQueries;
 
   private final JsonRpcTestHelper testHelper = new JsonRpcTestHelper();
-  private final NatService natService = NatService.builder().build();
+  private final NatService natService = new NatService(Optional.empty());
 
   @Before
   public void before() {

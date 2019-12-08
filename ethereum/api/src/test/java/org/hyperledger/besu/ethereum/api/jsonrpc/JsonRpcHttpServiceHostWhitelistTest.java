@@ -78,7 +78,7 @@ public class JsonRpcHttpServiceHostWhitelistTest {
   private static final Collection<RpcApi> JSON_RPC_APIS =
       Arrays.asList(RpcApis.ETH, RpcApis.NET, RpcApis.WEB3);
   private final JsonRpcConfiguration jsonRpcConfig = createJsonRpcConfig();
-  private final NatService natService = NatService.builder().build();
+  private final NatService natService = new NatService(Optional.empty());
 
   private final List<String> hostsWhitelist = Arrays.asList("ally", "friend");
 
