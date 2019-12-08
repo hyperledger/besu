@@ -54,4 +54,19 @@ public interface BesuNodeRunner {
               }
             });
   }
+
+  default void waitForFile(final Path dataDir, final String fileName) {
+    final File file = new File(dataDir.toFile(), fileName);
+    Awaitility.waitAtMost(30, TimeUnit.SECONDS)
+        .until(
+            () -> {
+              if (file.exists()) {
+                try (final Stream<String> s = Files.lines(file.toPath())) {
+                  return s.count() > 0;
+                }
+              } else {
+                return false;
+              }
+            });
+  }
 }
