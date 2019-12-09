@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.eth.manager;
 
 import static java.util.Collections.emptyList;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -25,12 +24,12 @@ import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.util.bytes.Bytes32;
 import org.hyperledger.besu.util.bytes.BytesValue;
 import org.hyperledger.besu.util.bytes.BytesValues;
-import org.openjdk.jmh.annotations.Fork;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.zip.CRC32;
+
+import com.google.common.annotations.VisibleForTesting;
 
 public class ForkIdManager {
 
