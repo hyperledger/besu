@@ -20,6 +20,8 @@ import static org.hyperledger.besu.ethereum.mainnet.TransactionValidator.Transac
 import static org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason.PRIVATE_NONCE_TOO_LOW;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.SECP256K1;
@@ -79,6 +81,12 @@ public class PrivateTransactionHandlerTest {
   private PrivateTransactionHandler brokenPrivateTransactionHandler;
   private PrivateTransactionValidator privateTransactionValidator;
   private Enclave enclave;
+  private Account account;
+  private String enclavePublicKey;
+  private PrivateStateStorage privateStateStorage;
+  private WorldStateArchive worldStateArchive;
+  private MutableWorldState mutableWorldState;
+  private final Hash hash = mock(Hash.class);
 
   private static final Transaction PUBLIC_TRANSACTION =
       Transaction.builder()
@@ -91,7 +99,6 @@ public class PrivateTransactionHandlerTest {
           .sender(Address.fromHexString("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"))
           .chainId(BigInteger.valueOf(2018))
           .signAndBuild(KEY_PAIR);
-  private String enclavePublicKey;
 
   private Enclave mockEnclave() {
     Enclave mockEnclave = mock(Enclave.class);
@@ -116,14 +123,13 @@ public class PrivateTransactionHandlerTest {
 
   @Before
   public void setUp() throws Exception {
-    PrivateStateStorage privateStateStorage = mock(PrivateStateStorage.class);
-    Hash mockHash = mock(Hash.class);
+    privateStateStorage = mock(PrivateStateStorage.class);
     when(privateStateStorage.getLatestStateRoot(any(BytesValue.class)))
-        .thenReturn(Optional.of(mockHash));
-    WorldStateArchive worldStateArchive = mock(WorldStateArchive.class);
-    Account account = mock(Account.class);
+        .thenReturn(Optional.of(hash));
+    worldStateArchive = mock(WorldStateArchive.class);
+    account = mock(Account.class);
     when(account.getNonce()).thenReturn(1L);
-    MutableWorldState mutableWorldState = mock(MutableWorldState.class);
+    mutableWorldState = mock(MutableWorldState.class);
     when(worldStateArchive.getMutable(any(Hash.class))).thenReturn(Optional.of(mutableWorldState));
     when(mutableWorldState.get(any(Address.class))).thenReturn(account);
 
@@ -205,7 +211,7 @@ public class PrivateTransactionHandlerTest {
   }
 
   @Test
-  public void nonceTooLowError() {
+  public void validateTransactionWithTooLowNonceReturnsError() {
     when(privateTransactionValidator.validate(any(), any()))
         .thenReturn(ValidationResult.invalid(PRIVATE_NONCE_TOO_LOW));
 
@@ -219,7 +225,7 @@ public class PrivateTransactionHandlerTest {
   }
 
   @Test
-  public void incorrectNonceError() {
+  public void validateTransactionWithIncorrectNonceReturnsError() {
     when(privateTransactionValidator.validate(any(), any()))
         .thenReturn(ValidationResult.invalid(INCORRECT_PRIVATE_NONCE));
 
@@ -311,6 +317,124 @@ public class PrivateTransactionHandlerTest {
     assertThat(privacyGroups).hasSize(1);
     assertThat(privacyGroups[0]).isEqualToComparingFieldByField(privacyGroup);
     assertThat(findRequestCaptor.getValue().addresses()).isEqualTo(PRIVACY_GROUP_ADDRESSES);
+  }
+
+  @Test
+  public void determinesNonceForEeaRequest() {
+    final Address address = Address.fromHexString("55");
+    final long reportedNonce = 8L;
+    final PrivacyGroup[] returnedGroups =
+        new PrivacyGroup[] {
+          new PrivacyGroup("Group1", Type.LEGACY, "Group1_Name", "Group1_Desc", new String[0]),
+        };
+
+    final ArgumentCaptor<FindPrivacyGroupRequest> groupMembersCaptor =
+        ArgumentCaptor.forClass(FindPrivacyGroupRequest.class);
+
+    when(enclave.findPrivacyGroup(groupMembersCaptor.capture())).thenReturn(returnedGroups);
+    when(account.getNonce()).thenReturn(8L);
+
+    final long nonce =
+        privateTransactionHandler.determineNonce(
+            "privateFrom", new String[] {"first", "second"}, address);
+
+    assertThat(nonce).isEqualTo(reportedNonce);
+    assertThat(groupMembersCaptor.getValue().addresses())
+        .containsAll(Lists.newArrayList("privateFrom", "first", "second"));
+  }
+
+  @Test
+  public void determineNonceForEeaRequestWithNoMatchingGroupReturnsZero() {
+    final long reportedNonce = 0L;
+    final Address address = Address.fromHexString("55");
+    final PrivacyGroup[] returnedGroups = new PrivacyGroup[0];
+
+    final ArgumentCaptor<FindPrivacyGroupRequest> groupMembersCaptor =
+        ArgumentCaptor.forClass(FindPrivacyGroupRequest.class);
+
+    when(enclave.findPrivacyGroup(groupMembersCaptor.capture())).thenReturn(returnedGroups);
+
+    final long nonce =
+        privateTransactionHandler.determineNonce(
+            "privateFrom", new String[] {"first", "second"}, address);
+
+    assertThat(nonce).isEqualTo(reportedNonce);
+    assertThat(groupMembersCaptor.getValue().addresses())
+        .containsAll(Lists.newArrayList("privateFrom", "first", "second"));
+  }
+
+  @Test
+  public void determineNonceForEeaRequestWithMoreThanOneMatchingGroupThrowsException() {
+    final Address address = Address.fromHexString("55");
+    final PrivacyGroup[] returnedGroups =
+        new PrivacyGroup[] {
+          new PrivacyGroup("Group1", Type.LEGACY, "Group1_Name", "Group1_Desc", new String[0]),
+          new PrivacyGroup("Group2", Type.LEGACY, "Group2_Name", "Group2_Desc", new String[0]),
+        };
+
+    when(enclave.findPrivacyGroup(any())).thenReturn(returnedGroups);
+
+    assertThatExceptionOfType(RuntimeException.class)
+        .isThrownBy(
+            () ->
+                privateTransactionHandler.determineNonce(
+                    "privateFrom", new String[] {"first", "second"}, address));
+  }
+
+  @Test
+  public void determineNonceForPrivacyGroupRequestWhenAccountExists() {
+    final Address address = Address.fromHexString("55");
+
+    when(account.getNonce()).thenReturn(4L);
+
+    final long nonce = privateTransactionHandler.determineNonce(address, "Group1");
+
+    assertThat(nonce).isEqualTo(4L);
+    verify(privateStateStorage).getLatestStateRoot(BytesValues.fromBase64("Group1"));
+    verify(worldStateArchive).getMutable(hash);
+    verify(mutableWorldState).get(address);
+  }
+
+  @Test
+  public void determineNonceForPrivacyGroupRequestWhenPrivateStateDoesNotExist() {
+    final Address address = Address.fromHexString("55");
+
+    when(privateStateStorage.getLatestStateRoot(BytesValues.fromBase64("Group1")))
+        .thenReturn(Optional.empty());
+
+    final long nonce = privateTransactionHandler.determineNonce(address, "Group1");
+
+    assertThat(nonce).isEqualTo(Account.DEFAULT_NONCE);
+    verifyNoInteractions(worldStateArchive, mutableWorldState, account);
+  }
+
+  @Test
+  public void determineNonceForPrivacyGroupRequestWhenWorldStateDoesNotExist() {
+    final Address address = Address.fromHexString("55");
+
+    when(privateStateStorage.getLatestStateRoot(BytesValues.fromBase64("Group1")))
+        .thenReturn(Optional.of(hash));
+    when(worldStateArchive.getMutable(hash)).thenReturn(Optional.empty());
+
+    final long nonce = privateTransactionHandler.determineNonce(address, "Group1");
+
+    assertThat(nonce).isEqualTo(Account.DEFAULT_NONCE);
+    verifyNoInteractions(mutableWorldState, account);
+  }
+
+  @Test
+  public void determineNonceForPrivacyGroupRequestWhenAccountDoesNotExist() {
+    final Address address = Address.fromHexString("55");
+
+    when(privateStateStorage.getLatestStateRoot(BytesValues.fromBase64("Group1")))
+        .thenReturn(Optional.of(hash));
+    when(worldStateArchive.getMutable(hash)).thenReturn(Optional.of(mutableWorldState));
+    when(mutableWorldState.get(address)).thenReturn(null);
+
+    final long nonce = privateTransactionHandler.determineNonce(address, "Group1");
+
+    assertThat(nonce).isEqualTo(Account.DEFAULT_NONCE);
+    verifyNoInteractions(account);
   }
 
   private static PrivateTransaction buildLegacyPrivateTransaction() {
