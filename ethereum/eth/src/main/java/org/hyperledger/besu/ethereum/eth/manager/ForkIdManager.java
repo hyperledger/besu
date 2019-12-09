@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.manager;
 
 import static java.util.Collections.emptyList;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -51,6 +52,7 @@ public class ForkIdManager {
     return new ForkIdManager(genesisHash, forks, blockchain.getChainHeadBlockNumber());
   };
 
+  @VisibleForTesting
   public static ForkIdManager buildCollection(final Hash genesisHash, final List<Long> forks) {
     return new ForkIdManager(genesisHash, forks, Long.MAX_VALUE);
   };
