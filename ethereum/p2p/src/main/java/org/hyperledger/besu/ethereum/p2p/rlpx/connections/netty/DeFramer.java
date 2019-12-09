@@ -210,7 +210,9 @@ final class DeFramer extends ByteToMessageDecoder {
         throwable instanceof DecoderException && throwable.getCause() != null
             ? throwable.getCause()
             : throwable;
-    if (cause instanceof FramingException || cause instanceof RLPException) {
+    if (cause instanceof FramingException
+        || cause instanceof RLPException
+        || cause instanceof IllegalArgumentException) {
       LOG.debug("Invalid incoming message", throwable);
       if (connectFuture.isDone() && !connectFuture.isCompletedExceptionally()) {
         connectFuture.get().disconnect(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL);

@@ -6,11 +6,30 @@
 
   <Appenders>
     <Console name="Console" target="SYSTEM_OUT">
-      <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSSZZZ} | %t | %-5level | %c{1} | %msg%n" />    </Console>
+      <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSSZZZ} | %t | %-5level | %c{1} | %msg%n" />
+    </Console>
+    <RollingFile name="BlockedThreadsAppender"
+                 fileName="logs/blockedThreads.log"
+                 filePattern="logs/blockedThreads-%i.log">
+      <ThresholdFilter level="DEBUG"
+                       onMatch="ACCEPT"
+                       onMismatch="DENY" />
+      <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSSZZZ} | %t | %-5level | %c{1} | %msg%n" />
+      <Policies>
+        <SizeBasedTriggeringPolicy size="1 MB" />
+      </Policies>
+      <DefaultRolloverStrategy max="5" />
+    </RollingFile>
   </Appenders>
+
   <Loggers>
     <Root level="${sys:root.log.level}">
       <AppenderRef ref="Console" />
     </Root>
+    <logger name="io.vertx.core.impl.BlockedThreadChecker"
+            level="WARN"
+            additivity="false">
+      <AppenderRef ref="BlockedThreadsAppender" />
+    </logger>
   </Loggers>
 </Configuration>
