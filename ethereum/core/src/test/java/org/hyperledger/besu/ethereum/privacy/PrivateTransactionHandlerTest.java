@@ -26,6 +26,11 @@ import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveException;
+import org.hyperledger.besu.enclave.types.CreatePrivacyGroupRequest;
+import org.hyperledger.besu.enclave.types.DeletePrivacyGroupRequest;
+import org.hyperledger.besu.enclave.types.FindPrivacyGroupRequest;
+import org.hyperledger.besu.enclave.types.PrivacyGroup;
+import org.hyperledger.besu.enclave.types.PrivacyGroup.Type;
 import org.hyperledger.besu.enclave.types.ReceiveRequest;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.enclave.types.SendRequest;
@@ -52,6 +57,7 @@ import com.google.common.collect.Lists;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -63,11 +69,16 @@ public class PrivateTransactionHandlerTest {
           SECP256K1.PrivateKey.create(
               new BigInteger(
                   "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63", 16)));
+  private static final byte[] PAYLOAD = new byte[0];
+  private static final String PRIVACY_GROUP_ID = "pg_id";
+  private static final String[] PRIVACY_GROUP_ADDRESSES = new String[] {"8f2a", "fb23"};
+  private static final String PRIVACY_GROUP_NAME = "pg_name";
+  private static final String PRIVACY_GROUP_DESCRIPTION = "pg_desc";
 
   private PrivateTransactionHandler privateTransactionHandler;
   private PrivateTransactionHandler brokenPrivateTransactionHandler;
   private PrivateTransactionValidator privateTransactionValidator;
-  private StubEnclave stubEnclave = new StubEnclave();
+  private Enclave enclave;
 
   private static final Transaction PUBLIC_TRANSACTION =
       Transaction.builder()
@@ -80,6 +91,16 @@ public class PrivateTransactionHandlerTest {
           .sender(Address.fromHexString("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"))
           .chainId(BigInteger.valueOf(2018))
           .signAndBuild(KEY_PAIR);
+  private String enclavePublicKey;
+
+  private Enclave mockEnclave() {
+    Enclave mockEnclave = mock(Enclave.class);
+    SendResponse response = new SendResponse(TRANSACTION_KEY);
+    ReceiveResponse receiveResponse = new ReceiveResponse(new byte[0], "mock");
+    when(mockEnclave.send(any(SendRequest.class))).thenReturn(response);
+    when(mockEnclave.receive(any(ReceiveRequest.class))).thenReturn(receiveResponse);
+    return mockEnclave;
+  }
 
   private Enclave brokenMockEnclave() {
     Enclave mockEnclave = mock(Enclave.class);
@@ -106,12 +127,14 @@ public class PrivateTransactionHandlerTest {
     when(worldStateArchive.getMutable(any(Hash.class))).thenReturn(Optional.of(mutableWorldState));
     when(mutableWorldState.get(any(Address.class))).thenReturn(account);
 
+    enclavePublicKey = OrionKeyUtils.loadKey("orion_key_0.pub");
     privateTransactionValidator = mockPrivateTransactionValidator();
+    enclave = mockEnclave();
 
     privateTransactionHandler =
         new PrivateTransactionHandler(
-            stubEnclave,
-            OrionKeyUtils.loadKey("orion_key_0.pub"),
+            enclave,
+            enclavePublicKey,
             privateStateStorage,
             worldStateArchive,
             privateTransactionValidator,
@@ -120,7 +143,7 @@ public class PrivateTransactionHandlerTest {
     brokenPrivateTransactionHandler =
         new PrivateTransactionHandler(
             brokenMockEnclave(),
-            OrionKeyUtils.loadKey("orion_key_0.pub"),
+            enclavePublicKey,
             privateStateStorage,
             worldStateArchive,
             privateTransactionValidator,
@@ -129,7 +152,7 @@ public class PrivateTransactionHandlerTest {
   }
 
   @Test
-  public void validLegacyTransactionThroughHandler() {
+  public void sendsValidLegacyTransaction() {
 
     final PrivateTransaction transaction = buildLegacyPrivateTransaction(1);
 
@@ -153,7 +176,7 @@ public class PrivateTransactionHandlerTest {
   }
 
   @Test
-  public void validBesuTransactionThroughHandler() {
+  public void sendValidBesuTransaction() {
 
     final PrivateTransaction transaction = buildBesuPrivateTransaction(1);
 
@@ -175,7 +198,7 @@ public class PrivateTransactionHandlerTest {
   }
 
   @Test
-  public void enclaveIsDownWhileHandling() {
+  public void sendTransactionWhenEnclaveFailsThrowsEnclaveError() {
     assertThatExceptionOfType(EnclaveException.class)
         .isThrownBy(
             () -> brokenPrivateTransactionHandler.sendTransaction(buildLegacyPrivateTransaction()));
@@ -208,6 +231,86 @@ public class PrivateTransactionHandlerTest {
     final ValidationResult<TransactionInvalidReason> validationResult =
         privateTransactionHandler.validatePrivateTransaction(transaction, privacyGroupId);
     assertThat(validationResult).isEqualTo(ValidationResult.invalid(INCORRECT_PRIVATE_NONCE));
+  }
+
+  @Test
+  public void retrievesTransaction() {
+    final ArgumentCaptor<ReceiveRequest> receiveRequestCaptor =
+        ArgumentCaptor.forClass(ReceiveRequest.class);
+    when(enclave.receive(receiveRequestCaptor.capture()))
+        .thenReturn(new ReceiveResponse(PAYLOAD, PRIVACY_GROUP_ID));
+
+    final ReceiveResponse receiveResponse =
+        privateTransactionHandler.retrieveTransaction(TRANSACTION_KEY);
+
+    assertThat(receiveResponse.getPayload()).isEqualTo(PAYLOAD);
+    assertThat(receiveResponse.getPrivacyGroupId()).isEqualTo(PRIVACY_GROUP_ID);
+    assertThat(receiveRequestCaptor.getValue().getKey()).isEqualTo(TRANSACTION_KEY);
+    assertThat(receiveRequestCaptor.getValue().getTo()).isEqualTo(enclavePublicKey);
+  }
+
+  @Test
+  public void createsPrivacyGroup() {
+    final ArgumentCaptor<CreatePrivacyGroupRequest> createPrivacyGroupRequestArgumentCaptor =
+        ArgumentCaptor.forClass(CreatePrivacyGroupRequest.class);
+    final PrivacyGroup enclavePrivacyGroupResponse =
+        new PrivacyGroup(
+            PRIVACY_GROUP_ID,
+            Type.PANTHEON,
+            PRIVACY_GROUP_NAME,
+            PRIVACY_GROUP_DESCRIPTION,
+            PRIVACY_GROUP_ADDRESSES);
+    when(enclave.createPrivacyGroup(createPrivacyGroupRequestArgumentCaptor.capture()))
+        .thenReturn(enclavePrivacyGroupResponse);
+
+    final PrivacyGroup privacyGroup =
+        privateTransactionHandler.createPrivacyGroup(
+            PRIVACY_GROUP_ADDRESSES, PRIVACY_GROUP_NAME, PRIVACY_GROUP_DESCRIPTION);
+
+    assertThat(privacyGroup).isEqualToComparingFieldByField(enclavePrivacyGroupResponse);
+    final CreatePrivacyGroupRequest privacyGroupRequest =
+        createPrivacyGroupRequestArgumentCaptor.getValue();
+    assertThat(privacyGroupRequest.name()).isEqualTo(PRIVACY_GROUP_NAME);
+    assertThat(privacyGroupRequest.description()).isEqualTo(PRIVACY_GROUP_DESCRIPTION);
+    assertThat(privacyGroupRequest.from()).isEqualTo(enclavePublicKey);
+    assertThat(privacyGroupRequest.addresses()).isEqualTo(PRIVACY_GROUP_ADDRESSES);
+  }
+
+  @Test
+  public void deletesPrivacyGroup() {
+    final ArgumentCaptor<DeletePrivacyGroupRequest> deleteRequestCaptor =
+        ArgumentCaptor.forClass(DeletePrivacyGroupRequest.class);
+
+    when(enclave.deletePrivacyGroup(deleteRequestCaptor.capture())).thenReturn(PRIVACY_GROUP_ID);
+
+    final String deletedPrivacyGroupId =
+        privateTransactionHandler.deletePrivacyGroup(PRIVACY_GROUP_ID);
+
+    assertThat(deletedPrivacyGroupId).isEqualTo(PRIVACY_GROUP_ID);
+    assertThat(deleteRequestCaptor.getValue().from()).isEqualTo(enclavePublicKey);
+    assertThat(deleteRequestCaptor.getValue().privacyGroupId()).isEqualTo(PRIVACY_GROUP_ID);
+  }
+
+  @Test
+  public void findsPrivacyGroup() {
+    final ArgumentCaptor<FindPrivacyGroupRequest> findRequestCaptor =
+        ArgumentCaptor.forClass(FindPrivacyGroupRequest.class);
+
+    final PrivacyGroup privacyGroup =
+        new PrivacyGroup(
+            PRIVACY_GROUP_ID,
+            Type.PANTHEON,
+            PRIVACY_GROUP_NAME,
+            PRIVACY_GROUP_DESCRIPTION,
+            PRIVACY_GROUP_ADDRESSES);
+    when(enclave.findPrivacyGroup(findRequestCaptor.capture()))
+        .thenReturn(new PrivacyGroup[] {privacyGroup});
+
+    final PrivacyGroup[] privacyGroups =
+        privateTransactionHandler.findPrivacyGroup(PRIVACY_GROUP_ADDRESSES);
+    assertThat(privacyGroups).hasSize(1);
+    assertThat(privacyGroups[0]).isEqualToComparingFieldByField(privacyGroup);
+    assertThat(findRequestCaptor.getValue().addresses()).isEqualTo(PRIVACY_GROUP_ADDRESSES);
   }
 
   private static PrivateTransaction buildLegacyPrivateTransaction() {
@@ -243,29 +346,5 @@ public class PrivateTransactionHandlerTest {
         .sender(Address.fromHexString("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"))
         .chainId(BigInteger.valueOf(2018))
         .restriction(Restriction.RESTRICTED);
-  }
-
-  private static class StubEnclave extends Enclave {
-
-    private SendRequest sendRequest;
-
-    public StubEnclave() {
-      super(null);
-    }
-
-    @Override
-    public SendResponse send(final SendRequest sendRequest) {
-      this.sendRequest = sendRequest;
-      return new SendResponse(TRANSACTION_KEY);
-    }
-
-    @Override
-    public ReceiveResponse receive(final ReceiveRequest receiveRequest) {
-      return new ReceiveResponse(new byte[0], "mock");
-    }
-
-    public SendRequest getSendRequest() {
-      return sendRequest;
-    }
   }
 }

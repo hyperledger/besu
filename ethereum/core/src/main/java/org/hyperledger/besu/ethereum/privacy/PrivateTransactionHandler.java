@@ -102,7 +102,7 @@ public class PrivateTransactionHandler {
   }
 
   public ReceiveResponse retrieveTransaction(final String enclaveKey) {
-    final ReceiveRequest receiveRequest = new ReceiveRequest(enclaveKey);
+    final ReceiveRequest receiveRequest = new ReceiveRequest(enclaveKey, enclavePublicKey);
     return enclave.receive(receiveRequest);
   }
 
@@ -117,6 +117,10 @@ public class PrivateTransactionHandler {
     DeletePrivacyGroupRequest deletePrivacyGroupRequest =
         new DeletePrivacyGroupRequest(privacyGroupId, enclavePublicKey);
     return enclave.deletePrivacyGroup(deletePrivacyGroupRequest);
+  }
+
+  public PrivacyGroup[] findPrivacyGroup(final String[] addresses) {
+    return enclave.findPrivacyGroup(new FindPrivacyGroupRequest(addresses));
   }
 
   public String getPrivacyGroup(final String key, final PrivateTransaction privateTransaction) {
@@ -147,10 +151,6 @@ public class PrivateTransactionHandler {
       final PrivateTransaction privateTransaction, final String privacyGroupId) {
     return privateTransactionValidator.validate(
         privateTransaction, determineNonce(privateTransaction.getSender(), privacyGroupId));
-  }
-
-  public PrivacyGroup[] findPrivacyGroup(final String[] addresses) {
-    return enclave.findPrivacyGroup(new FindPrivacyGroupRequest(addresses));
   }
 
   public long determineNonce(
