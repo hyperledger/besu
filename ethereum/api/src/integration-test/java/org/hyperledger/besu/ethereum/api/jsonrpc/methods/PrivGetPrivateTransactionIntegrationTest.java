@@ -39,6 +39,7 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
+import org.hyperledger.besu.ethereum.privacy.PrivateTransactionHandler;
 import org.hyperledger.besu.ethereum.privacy.Restriction;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.util.bytes.BytesValue;
@@ -63,10 +64,12 @@ import org.junit.rules.TemporaryFolder;
 public class PrivGetPrivateTransactionIntegrationTest {
 
   @ClassRule public static final TemporaryFolder folder = new TemporaryFolder();
+  private static final String ENCLAVE_PUBLIC_KEY = "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
 
   private static Enclave enclave;
 
   private static OrionTestHarness testHarness;
+  private static PrivateTransactionHandler privateTransactionHandler;
 
   private final TransactionWithMetadata returnedTransaction = mock(TransactionWithMetadata.class);
 
@@ -86,6 +89,9 @@ public class PrivGetPrivateTransactionIntegrationTest {
     testHarness.start();
     final EnclaveFactory factory = new EnclaveFactory(vertx);
     enclave = factory.createVertxEnclave(testHarness.clientUrl());
+
+    privateTransactionHandler =
+        new PrivateTransactionHandler(enclave, ENCLAVE_PUBLIC_KEY, null, null, null, null);
   }
 
   @AfterClass
@@ -123,8 +129,7 @@ public class PrivGetPrivateTransactionIntegrationTest {
                       + "daa4f6b2f003d1b0180029"))
           .sender(sender)
           .chainId(BigInteger.valueOf(2018))
-          .privateFrom(
-              BytesValue.wrap("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=".getBytes(UTF_8)))
+          .privateFrom(BytesValue.wrap(ENCLAVE_PUBLIC_KEY.getBytes(UTF_8)))
           .privateFor(
               Lists.newArrayList(
                   BytesValue.wrap("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=".getBytes(UTF_8))))
@@ -145,7 +150,7 @@ public class PrivGetPrivateTransactionIntegrationTest {
   public void returnsStoredPrivateTransaction() {
 
     final PrivGetPrivateTransaction privGetPrivateTransaction =
-        new PrivGetPrivateTransaction(blockchain, privacyParameters);
+        new PrivGetPrivateTransaction(blockchain, privacyParameters, privateTransactionHandler);
 
     when(blockchain.transactionByHash(any(Hash.class)))
         .thenReturn(Optional.of(returnedTransaction));
@@ -157,7 +162,7 @@ public class PrivGetPrivateTransactionIntegrationTest {
     final SendRequest sendRequest =
         new SendRequestLegacy(
             Base64.getEncoder().encodeToString(bvrlp.encoded().extractArray()),
-            "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=",
+            ENCLAVE_PUBLIC_KEY,
             Lists.newArrayList("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo="));
     final SendResponse sendResponse = enclave.send(sendRequest);
 
