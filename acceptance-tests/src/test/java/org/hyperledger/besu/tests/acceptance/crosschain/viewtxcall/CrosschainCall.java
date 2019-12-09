@@ -422,7 +422,11 @@ public class CrosschainCall extends CrosschainAcceptanceTestBase {
   }
 
   /*
-   * Check that the transaction on a locked contract should fail.
+   * Same as the above test, but the Bar2Ctrt is deployed on chain 1.
+   * Currently this test does not work, because of the nonce issue. First, chain1 creates a crosschain transaction.
+   * The leaf level subordinate transaction is also issued from chain1 later. Because there is only one sender
+   * account per chain, we will have the transaction nonce the same for the both of the above transactions, which
+   * is a problem. We need to fix this later. TODO
    */
   @Ignore
   public void doCCTxTxViewCallOn2Chains() throws Exception {
@@ -437,11 +441,6 @@ public class CrosschainCall extends CrosschainAcceptanceTestBase {
         .setPropertiesForBar2(nodeOnBlockchain1.getChainId(), bar2Ctrt.getContractAddress())
         .send();
 
-    // Making nodeOnBlockChain1 a 3-chain node
-    addMultichainNode(nodeOnBlockchain1, nodeOnBlockchain3);
-
-    // Making nodeOnBlockchain2 a 3-chain node
-    addMultichainNode(nodeOnBlockchain2, nodeOnBlockchain3);
     addMultichainNode(nodeOnBlockchain2, nodeOnBlockchain1);
 
     CrosschainContextGenerator ctxGen =
@@ -478,7 +477,5 @@ public class CrosschainCall extends CrosschainAcceptanceTestBase {
     // Check for the update of the innermost transaction
     waitForUnlock(bar2Ctrt.getContractAddress(), nodeOnBlockchain3);
     assertThat(bar2Ctrt.ttvflag().send().longValue()).isEqualTo(1);
-
-    this.clusterBc3.close();
   }
 }
