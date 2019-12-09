@@ -56,7 +56,8 @@ public class PrivGetCode extends PrivacyApiMethod {
   public JsonRpcResponse doResponse(final JsonRpcRequestContext requestContext) {
     LOG.trace("Executing {}", RpcMethod.PRIV_GET_CODE.getMethodName());
 
-    final Address address = Address.fromHexString(requestContext.getRequiredParameter(0, String.class));
+    final Address address =
+        Address.fromHexString(requestContext.getRequiredParameter(0, String.class));
     final String privacyGroupId = requestContext.getRequiredParameter(1, String.class);
 
     final Hash latestStateRoot =

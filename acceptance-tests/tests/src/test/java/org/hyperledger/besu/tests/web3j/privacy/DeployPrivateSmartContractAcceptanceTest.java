@@ -20,8 +20,6 @@ import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.web3j.protocol.core.DefaultBlockParameterName;
-import org.web3j.protocol.core.methods.response.EthGetCode;
 
 public class DeployPrivateSmartContractAcceptanceTest extends PrivacyAcceptanceTestBase {
 
@@ -53,7 +51,6 @@ public class DeployPrivateSmartContractAcceptanceTest extends PrivacyAcceptanceT
         .validPrivateContractDeployed(contractAddress, minerNode.getAddress().toString())
         .verify(eventEmitter);
 
-    privateContractVerifier.validContractCodeProvided(contractAddress, minerNode.getAddress().toString()).verify(eventEmitter);
+    privateContractVerifier.validContractCodeProvided().verify(eventEmitter);
   }
-
 }
