@@ -27,6 +27,7 @@ import org.hyperledger.besu.util.bytes.BytesValues;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.zip.CRC32;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -43,7 +44,11 @@ public class ForkIdManager {
   public ForkIdManager(final Hash genesisHash, final List<Long> forks, final Long currentHead) {
     this.genesisHash = genesisHash;
     this.currentHead = currentHead;
-    this.forkAndHashList = createForkIds(forks);
+    this.forkAndHashList =
+        createForkIds(
+            // If there are two forks at the same block height, we only want to add it once to the
+            // crc checksum
+            forks.stream().distinct().collect(Collectors.toUnmodifiableList()));
   };
 
   static ForkIdManager buildCollection(
@@ -161,7 +166,6 @@ public class ForkIdManager {
     return false;
   }
 
-  // TODO: should sort these when first gathering the list of forks to ensure order
   private List<ForkId> createForkIds(final List<Long> forks) {
     final CRC32 crc = new CRC32();
     crc.update(this.genesisHash.getByteArray());

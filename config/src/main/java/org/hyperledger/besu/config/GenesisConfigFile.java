@@ -138,11 +138,12 @@ public class GenesisConfigFile {
         .flatMap(
             node ->
                 Streams.stream(node.fieldNames())
-                    .filter(name -> !name.toLowerCase().equals("chainid"))
+                    .map(String::toLowerCase)
+                    .filter(name -> !name.equals("chainid"))
                     .filter(name -> node.get(name).canConvertToLong())
                     .filter(name -> name.contains("block"))
                     .map(name -> node.get(name).asLong()))
-        .distinct()
+        .sorted()
         .collect(toUnmodifiableList());
   }
 
