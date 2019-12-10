@@ -16,6 +16,7 @@ package org.hyperledger.besu;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Objects.isNull;
+import static org.hyperledger.besu.controller.BesuController.CACHE_PATH;
 
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.controller.BesuController;
@@ -435,7 +436,8 @@ public class RunnerBuilder {
               protocolSchedule,
               transactionPool,
               miningCoordinator,
-              synchronizer);
+              synchronizer,
+              dataDir.resolve(CACHE_PATH));
       final GraphQL graphQL;
       try {
         graphQL = GraphQLProvider.buildGraphQL(fetchers);
@@ -574,7 +576,10 @@ public class RunnerBuilder {
       final Vertx vertx, final ProtocolContext<?> context, final TransactionPool transactionPool) {
     final FilterManager filterManager =
         new FilterManager(
-            new BlockchainQueries(context.getBlockchain(), context.getWorldStateArchive()),
+            new BlockchainQueries(
+                context.getBlockchain(),
+                context.getWorldStateArchive(),
+                dataDir.resolve(CACHE_PATH)),
             transactionPool,
             new FilterIdGenerator(),
             new FilterRepository());
@@ -622,7 +627,8 @@ public class RunnerBuilder {
                 privacyParameters,
                 jsonRpcConfiguration,
                 webSocketConfiguration,
-                metricsConfiguration);
+                metricsConfiguration,
+                dataDir.resolve(CACHE_PATH));
     methods.putAll(besuController.getAdditionalJsonRpcMethods(jsonRpcApis));
     return methods;
   }
@@ -660,7 +666,8 @@ public class RunnerBuilder {
       final SubscriptionManager subscriptionManager) {
     final NewBlockHeadersSubscriptionService newBlockHeadersSubscriptionService =
         new NewBlockHeadersSubscriptionService(
-            subscriptionManager, new BlockchainQueries(blockchain, worldStateArchive));
+            subscriptionManager,
+            new BlockchainQueries(blockchain, worldStateArchive, dataDir.resolve(CACHE_PATH)));
 
     blockchain.observeBlockAdded(newBlockHeadersSubscriptionService);
   }
