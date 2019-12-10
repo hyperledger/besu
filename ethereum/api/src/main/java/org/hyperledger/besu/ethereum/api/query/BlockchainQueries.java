@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
+import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
@@ -34,6 +35,11 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.util.bytes.BytesValue;
 import org.hyperledger.besu.util.uint.UInt256;
 
+import java.io.EOFException;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -44,14 +50,29 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 
+import com.google.common.annotations.VisibleForTesting;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public class BlockchainQueries {
+  private static final Logger LOG = LogManager.getLogger();
+  @VisibleForTesting static final long BLOCKS_PER_BLOOM_CACHE = 100_000;
 
   private final WorldStateArchive worldStateArchive;
   private final Blockchain blockchain;
+  private final Optional<Path> cachePath;
 
   public BlockchainQueries(final Blockchain blockchain, final WorldStateArchive worldStateArchive) {
+    this(blockchain, worldStateArchive, Optional.empty());
+  }
+
+  public BlockchainQueries(
+      final Blockchain blockchain,
+      final WorldStateArchive worldStateArchive,
+      final Optional<Path> cachePath) {
     this.blockchain = blockchain;
     this.worldStateArchive = worldStateArchive;
+    this.cachePath = cachePath;
   }
 
   public Blockchain getBlockchain() {
@@ -486,6 +507,39 @@ public class BlockchainQueries {
    */
   public List<LogWithMetadata> matchingLogs(
       final long fromBlockNumber, final long toBlockNumber, final LogsQuery query) {
+    final List<LogWithMetadata> result = new ArrayList<>();
+    final long startSegment = fromBlockNumber / BLOCKS_PER_BLOOM_CACHE;
+    final long endSegment = toBlockNumber / BLOCKS_PER_BLOOM_CACHE;
+    long currentStep = fromBlockNumber;
+    for (long segment = startSegment; segment <= endSegment; segment++) {
+      final long thisSegment = segment;
+      final long thisStep = currentStep;
+      final long nextStep = (segment + 1) * BLOCKS_PER_BLOOM_CACHE;
+      result.addAll(
+          cachePath
+              .map(path -> path.resolve("logBloom-" + thisSegment + ".index"))
+              .filter(Files::isRegularFile)
+              .map(
+                  cacheFile ->
+                      matchingLogsCached(
+                          thisSegment * BLOCKS_PER_BLOOM_CACHE,
+                          thisStep % BLOCKS_PER_BLOOM_CACHE,
+                          Math.min(toBlockNumber, nextStep - 1) % BLOCKS_PER_BLOOM_CACHE,
+                          query,
+                          cacheFile))
+              .orElseGet(
+                  () ->
+                      matchingLogsUncached(
+                          thisStep,
+                          Math.min(toBlockNumber, Math.min(toBlockNumber, nextStep - 1)),
+                          query)));
+      currentStep = nextStep;
+    }
+    return result;
+  }
+
+  private List<LogWithMetadata> matchingLogsUncached(
+      final long fromBlockNumber, final long toBlockNumber, final LogsQuery query) {
     // rangeClosed handles the inverted from/to situations automatically with zero results.
     return LongStream.rangeClosed(fromBlockNumber, toBlockNumber)
         .mapToObj(blockchain::getBlockHeader)
@@ -497,6 +551,37 @@ public class BlockchainQueries {
         .filter(header -> query.couldMatch(header.getLogsBloom()))
         .flatMap(header -> matchingLogs(header.getHash(), query).stream())
         .collect(Collectors.toList());
+  }
+
+  private List<LogWithMetadata> matchingLogsCached(
+      final long segmentStart,
+      final long offset,
+      final long endOffset,
+      final LogsQuery query,
+      final Path cacheFile) {
+    final List<LogWithMetadata> results = new ArrayList<>();
+    try (final RandomAccessFile raf = new RandomAccessFile(cacheFile.toFile(), "r")) {
+      raf.seek(offset * 256);
+      final byte[] bloomBuff = new byte[256];
+      final BytesValue bytesValue = BytesValue.wrap(bloomBuff);
+      for (long pos = offset; pos <= endOffset; pos++) {
+        try {
+          raf.readFully(bloomBuff);
+        } catch (final EOFException eofe) {
+          break;
+        }
+        final LogsBloomFilter logsBloom = new LogsBloomFilter(bytesValue);
+        if (query.couldMatch(logsBloom)) {
+          results.addAll(
+              matchingLogs(
+                  blockchain.getBlockHashByNumber(segmentStart + pos).orElseThrow(), query));
+        }
+      }
+    } catch (final IOException e) {
+      e.printStackTrace(System.out);
+      LOG.error("Error reading cached log blooms", e);
+    }
+    return results;
   }
 
   public List<LogWithMetadata> matchingLogs(final Hash blockHash, final LogsQuery query) {

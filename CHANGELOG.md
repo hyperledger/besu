@@ -6,6 +6,10 @@ The Hyperledger Besu Wiki includes a [proposal to change what's included in this
 The changelog from 1.3.6 is moving towards the proposed changelog approach.  If you've got feedback or 
 specific items you'd like to see included in the changelog, add your comments to the proposal. 
 
+## Muir Glacier Compatibility
+
+For compatibility with Ethereum Muir Glacier upgrade, use v1.3.6 or later.
+
 ## Istanbul Compatibility
 
 For compatibility with Ethereum Istanbul upgrade, use v1.3.4 or later. 
