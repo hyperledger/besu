@@ -104,7 +104,7 @@ public class GenerateLogBloomCache implements Runnable {
     try {
       FileOutputStream fos = null;
       for (long blockNum = start; blockNum < stopBlock; blockNum++) {
-        if (blockNum % BLOCKS_PER_FILE == 0) {
+        if (blockNum % BLOCKS_PER_FILE == 0 || fos == null) {
           LOG.info("Indexing block {}", blockNum);
           if (fos != null) {
             fos.close();
