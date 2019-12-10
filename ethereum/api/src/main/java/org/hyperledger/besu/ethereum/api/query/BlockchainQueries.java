@@ -38,6 +38,7 @@ import org.hyperledger.besu.util.uint.UInt256;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -517,6 +518,7 @@ public class BlockchainQueries {
       result.addAll(
           cachePath
               .map(path -> path.resolve("logBloom-" + thisSegment + ".index"))
+              .filter(Files::isRegularFile)
               .map(
                   cacheFile ->
                       matchingLogsCached(

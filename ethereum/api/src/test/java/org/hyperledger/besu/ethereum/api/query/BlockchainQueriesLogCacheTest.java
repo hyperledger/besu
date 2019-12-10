@@ -126,7 +126,7 @@ public class BlockchainQueriesLogCacheTest {
   @Test
   public void cachedCachedSeamTest() {
     final BlockchainQueries query =
-        new BlockchainQueries(blockchain, worldStateArchive, cacheDir.getRoot().toPath());
+        new BlockchainQueries(blockchain, worldStateArchive, Optional.of(cacheDir.getRoot().toPath()));
 
     for (long i = BLOCKS_PER_BLOOM_CACHE - 3; i <= BLOCKS_PER_BLOOM_CACHE; i++) {
       query.matchingLogs(i, i + 2, logsQuery);
@@ -151,7 +151,7 @@ public class BlockchainQueriesLogCacheTest {
   @Test
   public void cachedUncachedSeamTest() {
     final BlockchainQueries query =
-        new BlockchainQueries(blockchain, worldStateArchive, cacheDir.getRoot().toPath());
+        new BlockchainQueries(blockchain, worldStateArchive, Optional.of(cacheDir.getRoot().toPath()));
 
     for (long i = (2 * BLOCKS_PER_BLOOM_CACHE) - 3; i <= 2 * BLOCKS_PER_BLOOM_CACHE; i++) {
       query.matchingLogs(i, i + 2, logsQuery);
@@ -181,7 +181,7 @@ public class BlockchainQueriesLogCacheTest {
   @Test
   public void uncachedUncachedSeamTest() {
     final BlockchainQueries query =
-        new BlockchainQueries(blockchain, worldStateArchive, cacheDir.getRoot().toPath());
+        new BlockchainQueries(blockchain, worldStateArchive, Optional.of(cacheDir.getRoot().toPath()));
 
     for (long i = (3 * BLOCKS_PER_BLOOM_CACHE) - 3; i <= 3 * BLOCKS_PER_BLOOM_CACHE; i++) {
       query.matchingLogs(i, i + 2, logsQuery);
