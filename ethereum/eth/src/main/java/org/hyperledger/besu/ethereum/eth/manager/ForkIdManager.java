@@ -257,29 +257,12 @@ public class ForkIdManager {
       out.endList();
     }
 
-    // Non-RLP entry (for tests)
-    public BytesValue createNotAsListForkIdRLP() {
-      BytesValueRLPOutput outPlain = new BytesValueRLPOutput();
-      outPlain.startList();
-      outPlain.writeBytesValue(hash);
-      outPlain.writeBytesValue(next);
-      outPlain.endList();
-      return outPlain.encoded();
-    }
-
     public static ForkId readFrom(final RLPInput in) {
       in.enterList();
       final BytesValue hash = in.readBytesValue();
       final long next = in.readLong();
       in.leaveList();
       return new ForkId(hash, next);
-    }
-
-    public List<byte[]> asByteList() {
-      ArrayList<byte[]> forRLP = new ArrayList<byte[]>();
-      forRLP.add(hash.getByteArray());
-      forRLP.add(next.getByteArray());
-      return forRLP;
     }
 
     public List<ForkId> asList() {
