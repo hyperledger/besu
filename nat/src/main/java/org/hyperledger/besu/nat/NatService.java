@@ -14,13 +14,10 @@
  */
 package org.hyperledger.besu.nat;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import org.hyperledger.besu.nat.core.NatManager;
 import org.hyperledger.besu.nat.core.domain.NatPortMapping;
 import org.hyperledger.besu.nat.core.domain.NatServiceType;
 import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
-import org.hyperledger.besu.nat.upnp.UpnpNatManager;
 
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -76,6 +73,8 @@ public class NatService {
       } catch (Exception e) {
         LOG.warn("Caught exception while trying to start the manager or service", e);
       }
+    } else {
+      LOG.info("No NAT environment detected so no service could be started");
     }
   }
 
@@ -87,6 +86,8 @@ public class NatService {
       } catch (Exception e) {
         LOG.warn("Caught exception while trying to stop the manager or service", e);
       }
+    } else {
+      LOG.info("No NAT environment detected so no service could be stopped");
     }
   }
 
@@ -163,34 +164,5 @@ public class NatService {
    */
   private NatMethod retrieveNatMethod(final Optional<NatManager> natManager) {
     return natManager.map(NatManager::getNatMethod).orElse(NatMethod.NONE);
-  }
-
-  public static Builder builder() {
-    return new Builder();
-  }
-
-  public static class Builder {
-    private NatMethod natMethod = NatMethod.NONE;
-
-    public Builder natMethod(final NatMethod natMethod) {
-      checkNotNull(natMethod);
-      this.natMethod = natMethod;
-      return this;
-    }
-
-    public NatService build() {
-      return new NatService(buildNatManager(natMethod));
-    }
-
-    /** Initialize the current NatManager. */
-    private Optional<NatManager> buildNatManager(final NatMethod givenNatMethod) {
-      switch (givenNatMethod) {
-        case UPNP:
-          return Optional.of(new UpnpNatManager());
-        case NONE:
-        default:
-          return Optional.empty();
-      }
-    }
   }
 }

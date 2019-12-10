@@ -19,7 +19,6 @@ import static com.google.common.base.Preconditions.checkState;
 
 import org.hyperledger.besu.nat.NatMethod;
 import org.hyperledger.besu.nat.core.AbstractNatManager;
-import org.hyperledger.besu.nat.core.NatManager;
 import org.hyperledger.besu.nat.core.domain.NatPortMapping;
 import org.hyperledger.besu.nat.core.domain.NatServiceType;
 import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
@@ -56,7 +55,7 @@ import org.jupnp.support.model.PortMapping;
  * Manages underlying UPnP library "jupnp" and provides abstractions for asynchronously interacting
  * with the NAT environment through UPnP.
  */
-public class UpnpNatManager extends AbstractNatManager implements NatManager {
+public class UpnpNatManager extends AbstractNatManager {
   protected static final Logger LOG = LogManager.getLogger();
 
   static final String SERVICE_TYPE_WAN_IP_CONNECTION = "WANIPConnection";
