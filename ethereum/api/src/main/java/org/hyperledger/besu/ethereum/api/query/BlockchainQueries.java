@@ -38,7 +38,6 @@ import org.hyperledger.besu.util.uint.UInt256;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -60,16 +59,16 @@ public class BlockchainQueries {
 
   private final WorldStateArchive worldStateArchive;
   private final Blockchain blockchain;
-  private final Path cachePath;
+  private final Optional<Path> cachePath;
 
   public BlockchainQueries(final Blockchain blockchain, final WorldStateArchive worldStateArchive) {
-    this(blockchain, worldStateArchive, null);
+    this(blockchain, worldStateArchive, Optional.empty());
   }
 
   public BlockchainQueries(
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
-      final Path cachePath) {
+      final Optional<Path> cachePath) {
     this.blockchain = blockchain;
     this.worldStateArchive = worldStateArchive;
     this.cachePath = cachePath;
@@ -512,23 +511,26 @@ public class BlockchainQueries {
     final long endSegment = toBlockNumber / BLOCKS_PER_BLOOM_CACHE;
     long currentStep = fromBlockNumber;
     for (long segment = startSegment; segment <= endSegment; segment++) {
-      final Path cacheFile = maybeGetCacheFile("logBloom-" + segment + ".index");
-      long nextStep = (segment + 1) * BLOCKS_PER_BLOOM_CACHE;
-      if (cacheFile == null) {
-        result.addAll(
-            matchingLogsUncached(
-                currentStep,
-                Math.min(toBlockNumber, Math.min(toBlockNumber, nextStep - 1)),
-                query));
-      } else {
-        result.addAll(
-            matchingLogsCached(
-                segment * BLOCKS_PER_BLOOM_CACHE,
-                currentStep % BLOCKS_PER_BLOOM_CACHE,
-                Math.min(toBlockNumber, nextStep - 1) % BLOCKS_PER_BLOOM_CACHE,
-                query,
-                cacheFile));
-      }
+      final long thisSegment = segment;
+      final long thisStep = currentStep;
+      final long nextStep = (segment + 1) * BLOCKS_PER_BLOOM_CACHE;
+      result.addAll(
+          cachePath
+              .map(path -> path.resolve("logBloom-" + thisSegment + ".index"))
+              .map(
+                  cacheFile ->
+                      matchingLogsCached(
+                          thisSegment * BLOCKS_PER_BLOOM_CACHE,
+                          thisStep % BLOCKS_PER_BLOOM_CACHE,
+                          Math.min(toBlockNumber, nextStep - 1) % BLOCKS_PER_BLOOM_CACHE,
+                          query,
+                          cacheFile))
+              .orElseGet(
+                  () ->
+                      matchingLogsUncached(
+                          thisStep,
+                          Math.min(toBlockNumber, Math.min(toBlockNumber, nextStep - 1)),
+                          query)));
       currentStep = nextStep;
     }
     return result;
@@ -578,15 +580,6 @@ public class BlockchainQueries {
       LOG.error("Error reading cached log blooms", e);
     }
     return results;
-  }
-
-  private Path maybeGetCacheFile(final String cacheFileName) {
-    if (cachePath == null) {
-      return null;
-    } else {
-      final Path result = cachePath.resolve(cacheFileName);
-      return Files.isRegularFile(result) ? result : null;
-    }
   }
 
   public List<LogWithMetadata> matchingLogs(final Hash blockHash, final LogsQuery query) {

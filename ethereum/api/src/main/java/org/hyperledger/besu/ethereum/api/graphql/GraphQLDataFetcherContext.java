@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.nio.file.Path;
+import java.util.Optional;
 
 public class GraphQLDataFetcherContext {
 
@@ -40,7 +41,7 @@ public class GraphQLDataFetcherContext {
       final MiningCoordinator miningCoordinator,
       final Synchronizer synchronizer,
       final Path cachePath) {
-    this.blockchain = new BlockchainQueries(blockchain, worldStateArchive, cachePath);
+    this.blockchain = new BlockchainQueries(blockchain, worldStateArchive, Optional.of(cachePath));
     this.protocolSchedule = protocolSchedule;
     this.miningCoordinator = miningCoordinator;
     this.synchronizer = synchronizer;

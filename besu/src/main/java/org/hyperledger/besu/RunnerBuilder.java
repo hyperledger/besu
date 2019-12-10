@@ -579,7 +579,7 @@ public class RunnerBuilder {
             new BlockchainQueries(
                 context.getBlockchain(),
                 context.getWorldStateArchive(),
-                dataDir.resolve(CACHE_PATH)),
+                Optional.of(dataDir.resolve(CACHE_PATH))),
             transactionPool,
             new FilterIdGenerator(),
             new FilterRepository());
@@ -667,7 +667,8 @@ public class RunnerBuilder {
     final NewBlockHeadersSubscriptionService newBlockHeadersSubscriptionService =
         new NewBlockHeadersSubscriptionService(
             subscriptionManager,
-            new BlockchainQueries(blockchain, worldStateArchive, dataDir.resolve(CACHE_PATH)));
+            new BlockchainQueries(
+                blockchain, worldStateArchive, Optional.of(dataDir.resolve(CACHE_PATH))));
 
     blockchain.observeBlockAdded(newBlockHeadersSubscriptionService);
   }
