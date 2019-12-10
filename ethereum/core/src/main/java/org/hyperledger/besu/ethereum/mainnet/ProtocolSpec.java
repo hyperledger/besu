@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 
@@ -60,6 +61,8 @@ public class ProtocolSpec<C> {
 
   private final boolean skipZeroBlockRewards;
 
+  private final PrivateTransactionProcessor privateTransactionProcessor;
+
   /**
    * Creates a new protocol specification instance.
    *
@@ -67,6 +70,7 @@ public class ProtocolSpec<C> {
    * @param evm the EVM supporting the appropriate operations for this specification
    * @param transactionValidator the transaction validator to use
    * @param transactionProcessor the transaction processor to use
+   * @param privateTransactionProcessor the private transaction processor to use
    * @param blockHeaderValidator the block header validator to use
    * @param ommerHeaderValidator the rules used to validate an ommer
    * @param blockBodyValidator the block body validator to use
@@ -87,6 +91,7 @@ public class ProtocolSpec<C> {
       final EVM evm,
       final TransactionValidator transactionValidator,
       final TransactionProcessor transactionProcessor,
+      final PrivateTransactionProcessor privateTransactionProcessor,
       final BlockHeaderValidator<C> blockHeaderValidator,
       final BlockHeaderValidator<C> ommerHeaderValidator,
       final BlockBodyValidator<C> blockBodyValidator,
@@ -105,6 +110,7 @@ public class ProtocolSpec<C> {
     this.evm = evm;
     this.transactionValidator = transactionValidator;
     this.transactionProcessor = transactionProcessor;
+    this.privateTransactionProcessor = privateTransactionProcessor;
     this.blockHeaderValidator = blockHeaderValidator;
     this.ommerHeaderValidator = ommerHeaderValidator;
     this.blockBodyValidator = blockBodyValidator;
@@ -264,6 +270,10 @@ public class ProtocolSpec<C> {
 
   public PrecompileContractRegistry getPrecompileContractRegistry() {
     return precompileContractRegistry;
+  }
+
+  public PrivateTransactionProcessor getPrivateTransactionProcessor() {
+    return privateTransactionProcessor;
   }
 
   /**

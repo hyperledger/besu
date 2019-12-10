@@ -58,6 +58,7 @@ public class NoRewardProtocolScheduleWrapper<C> implements ProtocolSchedule<C> {
         original.getEvm(),
         original.getTransactionValidator(),
         original.getTransactionProcessor(),
+        original.getPrivateTransactionProcessor(),
         original.getBlockHeaderValidator(),
         original.getOmmerHeaderValidator(),
         original.getBlockBodyValidator(),

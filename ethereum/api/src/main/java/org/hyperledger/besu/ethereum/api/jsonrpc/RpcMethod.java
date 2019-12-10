@@ -35,6 +35,7 @@ public enum RpcMethod {
   DEBUG_TRACE_BLOCK_BY_HASH("debug_traceBlockByHash"),
   DEBUG_TRACE_BLOCK_BY_NUMBER("debug_traceBlockByNumber"),
   DEBUG_TRACE_TRANSACTION("debug_traceTransaction"),
+  PRIV_CALL("priv_call"),
   PRIV_GET_PRIVATE_TRANSACTION("priv_getPrivateTransaction"),
   PRIV_GET_TRANSACTION_COUNT("priv_getTransactionCount"),
   PRIV_GET_PRIVACY_PRECOMPILE_ADDRESS("priv_getPrivacyPrecompileAddress"),
