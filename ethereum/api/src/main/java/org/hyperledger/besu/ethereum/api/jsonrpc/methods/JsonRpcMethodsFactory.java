@@ -68,9 +68,9 @@ public class JsonRpcMethodsFactory {
       final JsonRpcConfiguration jsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
       final MetricsConfiguration metricsConfiguration,
-      final Path cachePath) {
+      final Optional<Path> cachePath) {
     final BlockchainQueries blockchainQueries =
-        new BlockchainQueries(blockchain, worldStateArchive, Optional.of(cachePath));
+        new BlockchainQueries(blockchain, worldStateArchive, cachePath);
     return methods(
         clientVersion,
         networkId,

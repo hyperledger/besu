@@ -168,7 +168,7 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
             transactionPoolMock,
             miningCoordinatorMock,
             synchronizerMock,
-            null);
+            Optional.empty());
 
     final GraphQLDataFetchers dataFetchers = new GraphQLDataFetchers(supportedCapabilities);
     final GraphQL graphQL = GraphQLProvider.buildGraphQL(dataFetchers);

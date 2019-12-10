@@ -40,8 +40,8 @@ public class GraphQLDataFetcherContext {
       final TransactionPool transactionPool,
       final MiningCoordinator miningCoordinator,
       final Synchronizer synchronizer,
-      final Path cachePath) {
-    this.blockchain = new BlockchainQueries(blockchain, worldStateArchive, Optional.of(cachePath));
+      final Optional<Path> cachePath) {
+    this.blockchain = new BlockchainQueries(blockchain, worldStateArchive, cachePath);
     this.protocolSchedule = protocolSchedule;
     this.miningCoordinator = miningCoordinator;
     this.synchronizer = synchronizer;

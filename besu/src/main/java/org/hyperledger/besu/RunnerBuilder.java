@@ -437,7 +437,7 @@ public class RunnerBuilder {
               transactionPool,
               miningCoordinator,
               synchronizer,
-              dataDir.resolve(CACHE_PATH));
+              Optional.of(dataDir.resolve(CACHE_PATH)));
       final GraphQL graphQL;
       try {
         graphQL = GraphQLProvider.buildGraphQL(fetchers);
@@ -628,7 +628,7 @@ public class RunnerBuilder {
                 jsonRpcConfiguration,
                 webSocketConfiguration,
                 metricsConfiguration,
-                dataDir.resolve(CACHE_PATH));
+                Optional.of(dataDir.resolve(CACHE_PATH)));
     methods.putAll(besuController.getAdditionalJsonRpcMethods(jsonRpcApis));
     return methods;
   }
