@@ -83,7 +83,6 @@ public class AdminNodeInfoTest {
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
     when(blockchainQueries.getBlockHashByNumber(anyLong())).thenReturn(Optional.of(Hash.EMPTY));
     when(blockchain.getChainHead()).thenReturn(testChainHead);
-    when(natService.isNatEnvironment()).thenReturn(false);
 
     method =
         new AdminNodeInfo(
@@ -92,7 +91,7 @@ public class AdminNodeInfoTest {
             genesisConfigOptions,
             p2pNetwork,
             blockchainQueries,
-            Optional.of(natService));
+            natService);
   }
 
   @Test
@@ -139,7 +138,6 @@ public class AdminNodeInfoTest {
     when(p2pNetwork.isP2pEnabled()).thenReturn(true);
     when(p2pNetwork.getLocalEnode()).thenReturn(Optional.of(defaultPeer.getEnodeURL()));
 
-    when(natService.isNatEnvironment()).thenReturn(true);
     when(natService.queryExternalIPAddress()).thenReturn(Optional.of("3.4.5.6"));
     when(natService.getPortMapping(NatServiceType.DISCOVERY, NetworkProtocol.UDP))
         .thenReturn(

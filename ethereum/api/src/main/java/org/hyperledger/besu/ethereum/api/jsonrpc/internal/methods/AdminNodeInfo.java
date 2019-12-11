@@ -46,7 +46,7 @@ public class AdminNodeInfo implements JsonRpcMethod {
   private final GenesisConfigOptions genesisConfigOptions;
   private final P2PNetwork peerNetwork;
   private final BlockchainQueries blockchainQueries;
-  private final Optional<NatService> natService;
+  private final NatService natService;
 
   public AdminNodeInfo(
       final String clientVersion,
@@ -54,7 +54,7 @@ public class AdminNodeInfo implements JsonRpcMethod {
       final GenesisConfigOptions genesisConfigOptions,
       final P2PNetwork peerNetwork,
       final BlockchainQueries blockchainQueries,
-      final Optional<NatService> natService) {
+      final NatService natService) {
     this.peerNetwork = peerNetwork;
     this.clientVersion = clientVersion;
     this.genesisConfigOptions = genesisConfigOptions;
@@ -140,25 +140,20 @@ public class AdminNodeInfo implements JsonRpcMethod {
   }
 
   private String getIp(final EnodeURL enode) {
-    return natService
-        .filter(NatService::isNatEnvironment)
-        .flatMap(NatService::queryExternalIPAddress)
-        .orElseGet(enode::getIpAsString);
+    return natService.queryExternalIPAddress().orElseGet(enode::getIpAsString);
   }
 
   private int getDiscoveryPort(final EnodeURL enode) {
     return natService
-        .filter(NatService::isNatEnvironment)
-        .flatMap(s -> s.getPortMapping(NatServiceType.DISCOVERY, NetworkProtocol.UDP))
+        .getPortMapping(NatServiceType.DISCOVERY, NetworkProtocol.UDP)
         .map(NatPortMapping::getExternalPort)
         .orElseGet(enode::getDiscoveryPortOrZero);
   }
 
   private int getListeningPort(final EnodeURL enode) {
     return natService
-        .filter(NatService::isNatEnvironment)
-        .flatMap(s -> s.getPortMapping(NatServiceType.RLPX, NetworkProtocol.TCP))
+        .getPortMapping(NatServiceType.RLPX, NetworkProtocol.TCP)
         .map(NatPortMapping::getExternalPort)
-        .orElse(enode.getListeningPortOrZero());
+        .orElseGet(enode::getListeningPortOrZero);
   }
 }

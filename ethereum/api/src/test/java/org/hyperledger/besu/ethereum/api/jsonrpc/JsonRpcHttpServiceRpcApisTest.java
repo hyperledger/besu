@@ -91,6 +91,7 @@ public class JsonRpcHttpServiceRpcApisTest {
   @Mock protected static BlockchainQueries blockchainQueries;
 
   private final JsonRpcTestHelper testHelper = new JsonRpcTestHelper();
+  private final NatService natService = new NatService(Optional.empty());
 
   @Before
   public void before() {
@@ -208,14 +209,14 @@ public class JsonRpcHttpServiceRpcApisTest {
                     mock(JsonRpcConfiguration.class),
                     mock(WebSocketConfiguration.class),
                     mock(MetricsConfiguration.class),
-                    Optional.empty()));
+                    natService));
     final JsonRpcHttpService jsonRpcHttpService =
         new JsonRpcHttpService(
             vertx,
             folder.newFolder().toPath(),
             config,
             new NoOpMetricsSystem(),
-            Optional.empty(),
+            natService,
             rpcMethods,
             HealthService.ALWAYS_HEALTHY,
             HealthService.ALWAYS_HEALTHY);
@@ -269,7 +270,7 @@ public class JsonRpcHttpServiceRpcApisTest {
       final WebSocketConfiguration webSocketConfiguration,
       final P2PNetwork p2pNetwork,
       final MetricsConfiguration metricsConfiguration,
-      final Optional<NatService> natService)
+      final NatService natService)
       throws Exception {
     final Set<Capability> supportedCapabilities = new HashSet<>();
     supportedCapabilities.add(EthProtocol.ETH62);
@@ -307,7 +308,7 @@ public class JsonRpcHttpServiceRpcApisTest {
             folder.newFolder().toPath(),
             jsonRpcConfiguration,
             new NoOpMetricsSystem(),
-            Optional.empty(),
+            natService,
             rpcMethods,
             HealthService.ALWAYS_HEALTHY,
             HealthService.ALWAYS_HEALTHY);
@@ -408,11 +409,7 @@ public class JsonRpcHttpServiceRpcApisTest {
     }
 
     return createJsonRpcHttpService(
-        jsonRpcConfiguration,
-        webSocketConfiguration,
-        p2pNetwork,
-        metricsConfiguration,
-        Optional.of(natService));
+        jsonRpcConfiguration, webSocketConfiguration, p2pNetwork, metricsConfiguration, natService);
   }
 
   @Test
@@ -424,7 +421,7 @@ public class JsonRpcHttpServiceRpcApisTest {
             WebSocketConfiguration.createDefault(),
             mock(P2PNetwork.class),
             MetricsConfiguration.builder().build(),
-            Optional.empty());
+            natService);
     final RequestBody body = createNetServicesRequestBody();
 
     try (final Response resp = client.newCall(buildRequest(body)).execute()) {

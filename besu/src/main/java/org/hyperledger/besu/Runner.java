@@ -49,7 +49,7 @@ public class Runner implements AutoCloseable {
   private final CountDownLatch shutdown = new CountDownLatch(1);
 
   private final NetworkRunner networkRunner;
-  private final Optional<NatService> natService;
+  private final NatService natService;
   private final Optional<JsonRpcHttpService> jsonRpc;
   private final Optional<GraphQLHttpService> graphQLHttp;
   private final Optional<WebSocketService> websocketRpc;
@@ -62,7 +62,7 @@ public class Runner implements AutoCloseable {
   Runner(
       final Vertx vertx,
       final NetworkRunner networkRunner,
-      final Optional<NatService> natService,
+      final NatService natService,
       final Optional<JsonRpcHttpService> jsonRpc,
       final Optional<GraphQLHttpService> graphQLHttp,
       final Optional<WebSocketService> websocketRpc,
@@ -85,7 +85,7 @@ public class Runner implements AutoCloseable {
   public void start() {
     try {
       LOG.info("Starting Ethereum main loop ... ");
-      natService.ifPresent(NatService::start);
+      natService.start();
       networkRunner.start();
       if (networkRunner.getNetwork().isP2pEnabled()) {
         besuController.getSynchronizer().start();
@@ -125,7 +125,7 @@ public class Runner implements AutoCloseable {
     networkRunner.stop();
     waitForServiceToStop("Network", networkRunner::awaitStop);
 
-    natService.ifPresent(NatService::stop);
+    natService.stop();
     besuController.close();
     vertx.close((res) -> vertxShutdownLatch.countDown());
     waitForServiceToStop("Vertx", vertxShutdownLatch::await);

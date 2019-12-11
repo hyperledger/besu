@@ -29,7 +29,6 @@ import org.hyperledger.besu.nat.NatService;
 
 import java.math.BigInteger;
 import java.util.Map;
-import java.util.Optional;
 
 public class AdminJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
@@ -38,7 +37,7 @@ public class AdminJsonRpcMethods extends ApiGroupJsonRpcMethods {
   private final GenesisConfigOptions genesisConfigOptions;
   private final P2PNetwork p2pNetwork;
   private final BlockchainQueries blockchainQueries;
-  private final Optional<NatService> natService;
+  private final NatService natService;
 
   public AdminJsonRpcMethods(
       final String clientVersion,
@@ -46,7 +45,7 @@ public class AdminJsonRpcMethods extends ApiGroupJsonRpcMethods {
       final GenesisConfigOptions genesisConfigOptions,
       final P2PNetwork p2pNetwork,
       final BlockchainQueries blockchainQueries,
-      final Optional<NatService> natService) {
+      final NatService natService) {
     this.clientVersion = clientVersion;
     this.networkId = networkId;
     this.genesisConfigOptions = genesisConfigOptions;

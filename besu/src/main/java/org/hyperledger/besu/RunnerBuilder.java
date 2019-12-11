@@ -328,7 +328,7 @@ public class RunnerBuilder {
             .map(nodePerms -> PeerPermissions.combine(nodePerms, bannedNodes))
             .orElse(bannedNodes);
 
-    final Optional<NatService> natService = Optional.of(new NatService(buildNatManager(natMethod)));
+    final NatService natService = new NatService(buildNatManager(natMethod));
 
     NetworkBuilder inactiveNetwork = (caps) -> new NoopP2PNetwork();
     NetworkBuilder activeNetwork =
@@ -608,7 +608,7 @@ public class RunnerBuilder {
       final JsonRpcConfiguration jsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
       final MetricsConfiguration metricsConfiguration,
-      final Optional<NatService> natService) {
+      final NatService natService) {
     final Map<String, JsonRpcMethod> methods =
         new JsonRpcMethodsFactory()
             .methods(
