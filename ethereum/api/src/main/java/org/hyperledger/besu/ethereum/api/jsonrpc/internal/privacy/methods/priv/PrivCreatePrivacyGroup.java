@@ -15,8 +15,8 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
-import static org.hyperledger.besu.ethereum.util.PrivacyUtil.generateLegacyGroup;
 
+import org.hyperledger.besu.crypto.SecureRandomProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcEnclaveErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
@@ -34,8 +34,8 @@ import org.hyperledger.besu.ethereum.privacy.privatetransaction.GroupCreationTra
 import org.hyperledger.besu.util.bytes.BytesValue;
 import org.hyperledger.besu.util.bytes.BytesValues;
 
+import java.security.SecureRandom;
 import java.util.Arrays;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.Logger;
@@ -43,9 +43,10 @@ import org.apache.logging.log4j.Logger;
 public class PrivCreatePrivacyGroup extends PrivacyApiMethod {
 
   private static final Logger LOG = getLogger();
-  private PrivateTransactionHandler privateTransactionHandler;
-  private GroupCreationTransactionFactory groupCreationTransactionFactory;
-  private TransactionPool transactionPool;
+  private final PrivateTransactionHandler privateTransactionHandler;
+  private final GroupCreationTransactionFactory groupCreationTransactionFactory;
+  private final TransactionPool transactionPool;
+  private final SecureRandom secureRandom;
 
   public PrivCreatePrivacyGroup(
       final PrivacyParameters privacyParameters,
@@ -56,6 +57,7 @@ public class PrivCreatePrivacyGroup extends PrivacyApiMethod {
     this.groupCreationTransactionFactory = groupCreationTransactionFactory;
     this.privateTransactionHandler = privateTransactionHandler;
     this.transactionPool = transactionPool;
+    this.secureRandom = SecureRandomProvider.createSecureRandom();
   }
 
   @Override
@@ -75,24 +77,17 @@ public class PrivCreatePrivacyGroup extends PrivacyApiMethod {
         parameter.getName(),
         parameter.getDescription());
 
-    // FIXME: enclave.generatePrivacyGroupId() ? or createPrivacyGroupId(keccak256(rlp(participants
-    // + creatorNonce??))
-    final BytesValue pgId =
-        generateLegacyGroup(
+    final byte[] bytes = new byte[32];
+    secureRandom.nextBytes(bytes);
+    final BytesValue privacyGroupId = BytesValue.wrap(bytes);
+
+    final PrivateTransaction privateTransaction =
+        groupCreationTransactionFactory.create(
+            privacyGroupId,
             BytesValues.fromBase64(privacyParameters.getEnclavePublicKey()),
             Arrays.stream(parameter.getAddresses())
                 .map(BytesValues::fromBase64)
                 .collect(Collectors.toList()));
-
-    final PrivateTransaction privateTransaction =
-        groupCreationTransactionFactory.create(
-            pgId,
-            BytesValues.fromBase64(privacyParameters.getEnclavePublicKey()),
-            Arrays.stream(parameter.getAddresses())
-                .map(BytesValues::fromBase64)
-                .collect(Collectors.toList()),
-            Optional.ofNullable(parameter.getName()),
-            Optional.ofNullable(parameter.getDescription()));
 
     final String transactionEnclaveKey;
     try {
@@ -116,7 +111,7 @@ public class PrivCreatePrivacyGroup extends PrivacyApiMethod {
                 new JsonRpcSuccessResponse(
                     requestContext.getRequest().getId(),
                     new PrivCreatePrivacyGroupResponse(
-                        BytesValues.asBase64String(pgId),
+                        BytesValues.asBase64String(privacyGroupId),
                         privacyMarkerTransaction.getHash().getHexString())),
             errorReason ->
                 new JsonRpcErrorResponse(

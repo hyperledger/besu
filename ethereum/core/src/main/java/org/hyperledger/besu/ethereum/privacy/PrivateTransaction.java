@@ -122,37 +122,28 @@ public class PrivateTransaction {
     final SECP256K1.Signature signature = SECP256K1.Signature.create(r, s, recId);
 
     final BytesValue privateFrom = input.readBytesValue();
-
     final Object privateForOrPrivacyGroupId = resolvePrivateForOrPrivacyGroupId(input.readAsRlp());
-    final RLPInput privacyGroupIdOrRestriction = input.readAsRlp();
-    final List<BytesValue> privateFor;
-    final BytesValue privacyGroupId;
-    final Restriction restriction;
-    if (input.isEndOfCurrentList()) {
-      if (privateForOrPrivacyGroupId instanceof List) {
-        privateFor = (List<BytesValue>) privateForOrPrivacyGroupId;
-        privacyGroupId = null;
-      } else {
-        privateFor = null;
-        privacyGroupId = (BytesValue) privateForOrPrivacyGroupId;
-      }
-      restriction = convertToEnum(privacyGroupIdOrRestriction.readBytesValue());
-    } else {
-      privateFor = (List<BytesValue>) privateForOrPrivacyGroupId;
-      privacyGroupId = privacyGroupIdOrRestriction.readBytesValue();
-      restriction = convertToEnum(input.readBytesValue());
-    }
+    final Restriction restriction = convertToEnum(input.readBytesValue());
+
     input.leaveList();
 
     chainId.ifPresent(builder::chainId);
 
-    return builder
-        .signature(signature)
-        .privateFrom(privateFrom)
-        .privateFor(privateFor)
-        .privacyGroupId(privacyGroupId)
-        .restriction(restriction)
-        .build();
+    if (privateForOrPrivacyGroupId instanceof List) {
+      return builder
+          .signature(signature)
+          .privateFrom(privateFrom)
+          .privateFor((List<BytesValue>) privateForOrPrivacyGroupId)
+          .restriction(restriction)
+          .build();
+    } else {
+      return builder
+          .signature(signature)
+          .privateFrom(privateFrom)
+          .privacyGroupId((BytesValue) privateForOrPrivacyGroupId)
+          .restriction(restriction)
+          .build();
+    }
   }
 
   private static Object resolvePrivateForOrPrivacyGroupId(final RLPInput item) {
@@ -657,12 +648,10 @@ public class PrivateTransaction {
     }
 
     public PrivateTransaction build() {
-      // FIXME: potentially remove this!
-      //      if (privacyGroupId.isPresent() && privateFor.isPresent()) {
-      //        throw new IllegalArgumentException(
-      //            "Private transaction should contain either privacyGroup or privateFor, but not
-      // both");
-      //      }
+      if (privacyGroupId.isPresent() && privateFor.isPresent()) {
+        throw new IllegalArgumentException(
+            "Private transaction should contain either privacyGroup or privateFor, but not both");
+      }
       return new PrivateTransaction(
           nonce,
           gasPrice,

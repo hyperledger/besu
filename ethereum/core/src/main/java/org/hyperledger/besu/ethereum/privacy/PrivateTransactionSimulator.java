@@ -63,12 +63,12 @@ public class PrivateTransactionSimulator {
   }
 
   public Optional<PrivateTransactionSimulatorResult> process(
-      final CallParameter callParameter, final BytesValue privacyGroupId) {
+          final PrivacyCallParameter callParameter, final BytesValue privacyGroupId) {
     return process(callParameter, privacyGroupId, blockchain.getChainHeadHeader());
   }
 
   public Optional<PrivateTransactionSimulatorResult> process(
-      final CallParameter callParameter,
+      final PrivacyCallParameter callParameter,
       final BytesValue privacyGroupId,
       final BlockHeader header) {
     if (header == null) {
@@ -106,6 +106,8 @@ public class PrivateTransactionSimulator {
             .sender(senderAddress)
             .value(value)
             .payload(payload)
+            .privateFrom(callParameter.getPrivateFrom())
+            .restriction(Restriction.RESTRICTED)
             .signature(FAKE_SIGNATURE)
             .build();
 

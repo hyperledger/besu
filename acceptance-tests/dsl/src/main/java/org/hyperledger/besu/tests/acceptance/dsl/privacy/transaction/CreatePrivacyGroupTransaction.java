@@ -23,6 +23,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.web3j.abi.FunctionEncoder;
+import org.web3j.abi.datatypes.Type;
 import org.web3j.protocol.besu.Besu;
 import org.web3j.protocol.besu.response.privacy.PrivCreatePrivacyGroup;
 import org.web3j.utils.Base64String;
@@ -44,6 +46,10 @@ public class CreatePrivacyGroupTransaction implements Transaction<PrivCreatePriv
 
   @Override
   public PrivCreatePrivacyGroup execute(final NodeRequests node) {
+//    FunctionEncoder.encodeConstructor(Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Bytes32(enclaveKey),
+//            new org.web3j.abi.datatypes.DynamicArray<org.web3j.abi.datatypes.generated.Bytes32>(
+//                    org.web3j.abi.datatypes.generated.Bytes32.class,
+//                    org.web3j.abi.Utils.typeMap(members, org.web3j.abi.datatypes.generated.Bytes32.class))));
     final Besu besu = node.privacy().getBesuClient();
     try {
       return besu.privCreatePrivacyGroup(addresses, name, description).send();

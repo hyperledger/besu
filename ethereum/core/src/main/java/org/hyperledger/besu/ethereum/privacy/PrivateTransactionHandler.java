@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.privacy;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.types.SendRequest;
 import org.hyperledger.besu.enclave.types.SendRequestLegacy;
@@ -28,6 +26,7 @@ import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.PrivateMarkerTransactionFactory;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
+import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.util.bytes.BytesValue;
 import org.hyperledger.besu.util.bytes.BytesValues;
@@ -43,7 +42,7 @@ import org.apache.logging.log4j.Logger;
 public class PrivateTransactionHandler {
 
   private static final Logger LOG = LogManager.getLogger();
-  private static final BytesValue GET_PARTICIPANTS_CALL_PAYLOAD = BytesValue.fromHexString("");
+  private static final BytesValue GET_PARTICIPANTS_CALL_PAYLOAD = BytesValue.fromHexString("0x0b0235be");
 
   private final Enclave enclave;
   private final PrivateTransactionValidator privateTransactionValidator;
@@ -113,8 +112,9 @@ public class PrivateTransactionHandler {
       return privateTransaction.getPrivateFor().get().stream()
           .map(BytesValues::asBase64String)
           .collect(Collectors.toList());
-    } else if (isAddParticipantsMethodCall(privateTransaction.getPayload())) {
-      final List<String> newAndExistingParticipants = getParticipantsFromParameter(privateTransaction.getPayload());
+    } else if (isGroupCreationTransaction(privateTransaction.getPayload())) {
+      final List<String> newAndExistingParticipants =
+          getParticipantsFromParameter(privateTransaction.getPayload());
       newAndExistingParticipants.addAll(getExistingParticipants(privateTransaction));
       return newAndExistingParticipants;
     } else {
@@ -126,44 +126,47 @@ public class PrivateTransactionHandler {
     // get the privateFor list from the management contract
     final Optional<PrivateTransactionSimulatorResult> privateTransactionSimulatorResultOptional =
         privateTransactionSimulator.process(
-            buildGetParticipantsCallParams(), privateTransaction.getPrivacyGroupId().get());
+            buildGetParticipantsCallParams(privateTransaction.getPrivateFrom()), privateTransaction.getPrivacyGroupId().get());
 
     if (privateTransactionSimulatorResultOptional.isPresent()
         && privateTransactionSimulatorResultOptional.get().isSuccessful()) {
-      return RLP.input(privateTransactionSimulatorResultOptional.get().getOutput())
-          .readList(input -> BytesValues.asBase64String(input.readBytesValue()));
+      final RLPInput rlpInput = RLP.input(privateTransactionSimulatorResultOptional.get().getOutput());
+      if (rlpInput.nextIsList()) {
+        return rlpInput
+                .readList(input -> BytesValues.asBase64String(input.readBytesValue()));
+      } else {
+        return Collections.emptyList();
+      }
+
     } else {
-      // if the management contract does not exist this will prompt Orion to resolve the
-      // privateFor
+      // if the management contract does not exist this will prompt
+      // Orion to resolve the privateFor
       return Collections.emptyList();
     }
   }
 
   private List<String> getParticipantsFromParameter(final BytesValue input) {
-    int methodSignature = 8;
-    int enclaveKey = 32;
-    BytesValue participants =
-        BytesValue.wrap(
-            input
-                .toUnprefixedString()
-                .substring(0, methodSignature)
-                .substring(0, enclaveKey)
-                .getBytes(UTF_8));
-
-    return RLP.input(participants).readList(i -> BytesValues.asBase64String(i.readBytesValue()));
+    final BytesValue parameters = BytesValue.fromHexString(input.getHexString().substring(input.getHexString().indexOf("0032") + 4));
+    final RLPInput rlpParameters = RLP.input(parameters);
+    rlpParameters.enterList();
+    // the first parameter is the requestors enclave key
+    rlpParameters.skipNext();
+    // the second parameter is the list of participants
+    return rlpParameters.readList(i -> BytesValues.asBase64String(i.readBytesValue()));
   }
 
-  private boolean isAddParticipantsMethodCall(final BytesValue input) {
-    return input.toUnprefixedString().startsWith("f744b089");
+  private boolean isGroupCreationTransaction(final BytesValue input) {
+    return input.toUnprefixedString().contains("f744b089");
   }
 
-  private CallParameter buildGetParticipantsCallParams() {
-    return new CallParameter(
+  private PrivacyCallParameter buildGetParticipantsCallParams(final BytesValue enclavePublicKey) {
+    return new PrivacyCallParameter(
         Address.ZERO,
         Address.PRIVACY_PROXY,
         3000000,
         Wei.of(1000),
         Wei.ZERO,
-        GET_PARTICIPANTS_CALL_PAYLOAD);
+        GET_PARTICIPANTS_CALL_PAYLOAD.concat(enclavePublicKey),
+        enclavePublicKey);
   }
 }

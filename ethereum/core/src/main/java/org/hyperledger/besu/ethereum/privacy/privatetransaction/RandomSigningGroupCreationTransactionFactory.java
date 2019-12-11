@@ -19,7 +19,6 @@ import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.List;
-import java.util.Optional;
 
 public class RandomSigningGroupCreationTransactionFactory extends GroupCreationTransactionFactory {
 
@@ -27,10 +26,8 @@ public class RandomSigningGroupCreationTransactionFactory extends GroupCreationT
   public PrivateTransaction create(
       final BytesValue privacyGroupId,
       final BytesValue privateFrom,
-      final List<BytesValue> participants,
-      final Optional<String> name,
-      final Optional<String> description) {
+      final List<BytesValue> participants) {
     final KeyPair signingKey = KeyPair.generate();
-    return create(privateFrom, privacyGroupId, participants, name, description, 0, signingKey);
+    return create(privateFrom, privacyGroupId, participants, 0, signingKey);
   }
 }
