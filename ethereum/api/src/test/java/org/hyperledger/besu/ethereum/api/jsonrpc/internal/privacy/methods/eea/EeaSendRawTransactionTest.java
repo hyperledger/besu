@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
+import org.hyperledger.besu.ethereum.privacy.PrivacyTransactionResponse;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.util.bytes.BytesValue;
 
@@ -198,9 +199,7 @@ public class EeaSendRawTransactionTest {
   @Test
   public void validTransactionIsSentToTransactionPool() {
     when(privateTxHandler.sendTransaction(any(PrivateTransaction.class)))
-        .thenReturn(MOCK_ORION_KEY);
-    when(privateTxHandler.getPrivacyGroup(any(String.class), any(PrivateTransaction.class)))
-        .thenReturn(MOCK_PRIVACY_GROUP);
+        .thenReturn(new PrivacyTransactionResponse(MOCK_ORION_KEY, MOCK_PRIVACY_GROUP));
     when(privateTxHandler.validatePrivateTransaction(
             any(PrivateTransaction.class), any(String.class)))
         .thenReturn(ValidationResult.valid());
@@ -223,7 +222,6 @@ public class EeaSendRawTransactionTest {
 
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
     verify(privateTxHandler).sendTransaction(any(PrivateTransaction.class));
-    verify(privateTxHandler).getPrivacyGroup(any(String.class), any(PrivateTransaction.class));
     verify(privateTxHandler)
         .validatePrivateTransaction(any(PrivateTransaction.class), any(String.class));
     verify(privateTxHandler)
@@ -234,9 +232,7 @@ public class EeaSendRawTransactionTest {
   @Test
   public void validTransactionPrivacyGroupIsSentToTransactionPool() {
     when(privateTxHandler.sendTransaction(any(PrivateTransaction.class)))
-        .thenReturn(MOCK_ORION_KEY);
-    when(privateTxHandler.getPrivacyGroup(any(String.class), any(PrivateTransaction.class)))
-        .thenReturn(MOCK_PRIVACY_GROUP);
+        .thenReturn(new PrivacyTransactionResponse(MOCK_ORION_KEY, MOCK_PRIVACY_GROUP));
     when(privateTxHandler.validatePrivateTransaction(
             any(PrivateTransaction.class), any(String.class)))
         .thenReturn(ValidationResult.valid());
@@ -262,7 +258,6 @@ public class EeaSendRawTransactionTest {
 
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
     verify(privateTxHandler).sendTransaction(any(PrivateTransaction.class));
-    verify(privateTxHandler).getPrivacyGroup(any(String.class), any(PrivateTransaction.class));
     verify(privateTxHandler)
         .validatePrivateTransaction(any(PrivateTransaction.class), any(String.class));
     verify(privateTxHandler)
@@ -355,9 +350,7 @@ public class EeaSendRawTransactionTest {
       throws Exception {
 
     when(privateTxHandler.sendTransaction(any(PrivateTransaction.class)))
-        .thenReturn(MOCK_ORION_KEY);
-    when(privateTxHandler.getPrivacyGroup(any(String.class), any(PrivateTransaction.class)))
-        .thenReturn(MOCK_PRIVACY_GROUP);
+        .thenReturn(new PrivacyTransactionResponse(MOCK_ORION_KEY, MOCK_PRIVACY_GROUP));
     when(privateTxHandler.validatePrivateTransaction(
             any(PrivateTransaction.class), any(String.class)))
         .thenReturn(ValidationResult.valid());
@@ -378,7 +371,6 @@ public class EeaSendRawTransactionTest {
 
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
     verify(privateTxHandler).sendTransaction(any(PrivateTransaction.class));
-    verify(privateTxHandler).getPrivacyGroup(any(String.class), any(PrivateTransaction.class));
     verify(privateTxHandler)
         .validatePrivateTransaction(any(PrivateTransaction.class), any(String.class));
     verify(privateTxHandler)

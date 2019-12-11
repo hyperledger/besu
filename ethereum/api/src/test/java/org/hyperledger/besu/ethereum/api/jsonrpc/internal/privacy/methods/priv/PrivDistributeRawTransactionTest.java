@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
+import org.hyperledger.besu.ethereum.privacy.PrivacyTransactionResponse;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.util.bytes.BytesValues;
 
@@ -64,9 +65,8 @@ public class PrivDistributeRawTransactionTest {
   @Test
   public void validTransactionHashReturnedAfterDistribute() {
     final String orionKey = "93Ky7lXwFkMc7+ckoFgUMku5bpr9tz4zhmWmk9RlNng=";
-    when(privateTxHandler.sendTransaction(any(PrivateTransaction.class))).thenReturn(orionKey);
-    when(privateTxHandler.getPrivacyGroup(any(String.class), any(PrivateTransaction.class)))
-        .thenReturn("");
+    when(privateTxHandler.sendTransaction(any(PrivateTransaction.class)))
+        .thenReturn(new PrivacyTransactionResponse(orionKey, ""));
     when(privateTxHandler.validatePrivateTransaction(
             any(PrivateTransaction.class), any(String.class)))
         .thenReturn(ValidationResult.valid());
@@ -86,7 +86,6 @@ public class PrivDistributeRawTransactionTest {
 
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
     verify(privateTxHandler).sendTransaction(any(PrivateTransaction.class));
-    verify(privateTxHandler).getPrivacyGroup(any(String.class), any(PrivateTransaction.class));
     verify(privateTxHandler)
         .validatePrivateTransaction(any(PrivateTransaction.class), any(String.class));
   }
