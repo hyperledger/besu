@@ -26,8 +26,8 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
-import org.hyperledger.besu.ethereum.privacy.PrivacySendResponse;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
+import org.hyperledger.besu.ethereum.privacy.SendTransactionResponse;
 
 public class EeaSendRawTransaction extends PrivacySendTransaction {
 
@@ -52,9 +52,9 @@ public class EeaSendRawTransaction extends PrivacySendTransaction {
       return e.getResponse();
     }
 
-    final PrivacySendResponse privacySendResponse;
+    final SendTransactionResponse sendTransactionResponse;
     try {
-      privacySendResponse = privacyController.sendTransaction(privateTransaction);
+      sendTransactionResponse = privacyController.sendTransaction(privateTransaction);
     } catch (final Exception e) {
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(),
@@ -64,11 +64,11 @@ public class EeaSendRawTransaction extends PrivacySendTransaction {
     return validateAndExecute(
         requestContext,
         privateTransaction,
-        privacySendResponse.getPrivacyGroup(),
+        sendTransactionResponse.getPrivacyGroup(),
         () -> {
           final Transaction privacyMarkerTransaction =
               privacyController.createPrivacyMarkerTransaction(
-                  privacySendResponse.getEnclaveKey(), privateTransaction);
+                  sendTransactionResponse.getEnclaveKey(), privateTransaction);
           return transactionPool
               .addLocalTransaction(privacyMarkerTransaction)
               .either(

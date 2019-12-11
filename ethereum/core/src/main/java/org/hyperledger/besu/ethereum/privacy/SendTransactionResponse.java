@@ -14,11 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.privacy;
 
-public class PrivacySendResponse {
+public class SendTransactionResponse {
   private final String enclaveKey;
   private final String privacyGroup;
 
-  public PrivacySendResponse(final String enclaveKey, final String privacyGroup) {
+  public SendTransactionResponse(final String enclaveKey, final String privacyGroup) {
     this.enclaveKey = enclaveKey;
     this.privacyGroup = privacyGroup;
   }

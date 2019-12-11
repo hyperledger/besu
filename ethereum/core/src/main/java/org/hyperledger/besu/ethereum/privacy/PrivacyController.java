@@ -87,7 +87,7 @@ public class PrivacyController {
     this.privateMarkerTransactionFactory = privateMarkerTransactionFactory;
   }
 
-  public PrivacySendResponse sendTransaction(final PrivateTransaction privateTransaction) {
+  public SendTransactionResponse sendTransaction(final PrivateTransaction privateTransaction) {
     final SendRequest sendRequest = createSendRequest(privateTransaction);
     final SendResponse sendResponse;
 
@@ -96,7 +96,7 @@ public class PrivacyController {
       sendResponse = enclave.send(sendRequest);
       final String enclaveKey = sendResponse.getKey();
       final String privacyGroup = getPrivacyGroup(enclaveKey, privateTransaction);
-      return new PrivacySendResponse(enclaveKey, privacyGroup);
+      return new SendTransactionResponse(enclaveKey, privacyGroup);
     } catch (Exception e) {
       LOG.error("Failed to store private transaction in enclave", e);
       throw e;
