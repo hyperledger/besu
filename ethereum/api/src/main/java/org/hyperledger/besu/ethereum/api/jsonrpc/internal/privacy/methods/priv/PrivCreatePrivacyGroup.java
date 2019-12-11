@@ -25,20 +25,19 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransactionHandler;
+import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 import org.apache.logging.log4j.Logger;
 
 public class PrivCreatePrivacyGroup extends PrivacyApiMethod {
 
   private static final Logger LOG = getLogger();
-  private PrivateTransactionHandler privateTransactionHandler;
+  private PrivacyController privacyController;
 
   public PrivCreatePrivacyGroup(
-      final PrivacyParameters privacyParameters,
-      final PrivateTransactionHandler privateTransactionHandler) {
+      final PrivacyParameters privacyParameters, final PrivacyController privacyController) {
     super(privacyParameters);
-    this.privateTransactionHandler = privateTransactionHandler;
+    this.privacyController = privacyController;
   }
 
   @Override
@@ -61,7 +60,7 @@ public class PrivCreatePrivacyGroup extends PrivacyApiMethod {
     final PrivacyGroup response;
     try {
       response =
-          privateTransactionHandler.createPrivacyGroup(
+          privacyController.createPrivacyGroup(
               parameter.getAddresses(), parameter.getName(), parameter.getDescription());
     } catch (Exception e) {
       LOG.error("Failed to create privacy group", e);

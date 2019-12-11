@@ -22,20 +22,19 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransactionHandler;
+import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 import org.apache.logging.log4j.Logger;
 
 public class PrivDeletePrivacyGroup extends PrivacyApiMethod {
 
   private static final Logger LOG = getLogger();
-  private PrivateTransactionHandler privateTransactionHandler;
+  private PrivacyController privacyController;
 
   public PrivDeletePrivacyGroup(
-      final PrivacyParameters privacyParameters,
-      final PrivateTransactionHandler privateTransactionHandler) {
+      final PrivacyParameters privacyParameters, final PrivacyController privacyController) {
     super(privacyParameters);
-    this.privateTransactionHandler = privateTransactionHandler;
+    this.privacyController = privacyController;
   }
 
   @Override
@@ -56,7 +55,7 @@ public class PrivDeletePrivacyGroup extends PrivacyApiMethod {
 
     String response;
     try {
-      response = privateTransactionHandler.deletePrivacyGroup(privacyGroupId);
+      response = privacyController.deletePrivacyGroup(privacyGroupId);
     } catch (Exception e) {
       LOG.error("Failed to fetch transaction from Enclave with error " + e.getMessage());
       LOG.error(e);

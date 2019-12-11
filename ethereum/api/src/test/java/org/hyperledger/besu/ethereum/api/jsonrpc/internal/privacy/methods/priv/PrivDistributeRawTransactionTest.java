@@ -28,8 +28,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransactionHandler;
 import org.hyperledger.besu.util.bytes.BytesValues;
 
 import org.junit.Before;
@@ -52,7 +52,7 @@ public class PrivDistributeRawTransactionTest {
 
   @Mock private TransactionPool transactionPool;
   @Mock private PrivDistributeRawTransaction method;
-  @Mock private PrivateTransactionHandler privateTxHandler;
+  @Mock private PrivacyController privateTxHandler;
   @Mock private PrivacyParameters privacyParameters;
 
   @Before

@@ -27,8 +27,8 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransactionHandler;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.util.bytes.BytesValues;
 
@@ -39,15 +39,15 @@ public class PrivGetPrivateTransaction extends PrivacyApiMethod {
   private static final Logger LOG = getLogger();
 
   private final BlockchainQueries blockchain;
-  private final PrivateTransactionHandler privateTransactionHandler;
+  private final PrivacyController privacyController;
 
   public PrivGetPrivateTransaction(
       final BlockchainQueries blockchain,
       final PrivacyParameters privacyParameters,
-      final PrivateTransactionHandler privateTransactionHandler) {
+      final PrivacyController privacyController) {
     super(privacyParameters);
     this.blockchain = blockchain;
-    this.privateTransactionHandler = privateTransactionHandler;
+    this.privacyController = privacyController;
   }
 
   @Override
@@ -69,7 +69,7 @@ public class PrivGetPrivateTransaction extends PrivacyApiMethod {
     try {
       LOG.trace("Fetching transaction information from Enclave");
       ReceiveResponse receiveResponse =
-          privateTransactionHandler.retrieveTransaction(
+          privacyController.retrieveTransaction(
               BytesValues.asBase64String(resultTransaction.getTransaction().getPayload()));
       LOG.trace("Received transaction information from Enclave");
 

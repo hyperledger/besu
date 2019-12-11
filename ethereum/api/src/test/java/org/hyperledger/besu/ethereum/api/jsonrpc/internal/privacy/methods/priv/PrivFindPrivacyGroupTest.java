@@ -22,7 +22,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransactionHandler;
+import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -34,12 +34,12 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class PrivFindPrivacyGroupTest {
 
   @Mock private PrivacyParameters privacyParameters;
-  @Mock private PrivateTransactionHandler privateTransactionHandler;
+  @Mock private PrivacyController privacyController;
   private PrivFindPrivacyGroup privFindPrivacyGroup;
 
   @Before
   public void before() {
-    privFindPrivacyGroup = new PrivFindPrivacyGroup(privacyParameters, privateTransactionHandler);
+    privFindPrivacyGroup = new PrivFindPrivacyGroup(privacyParameters, privacyController);
   }
 
   @Test

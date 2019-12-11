@@ -63,7 +63,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class PrivateTransactionHandlerTest {
+public class PrivacyControllerTest {
 
   private static final String TRANSACTION_KEY = "93Ky7lXwFkMc7+ckoFgUMku5bpr9tz4zhmWmk9RlNng=";
   private static final KeyPair KEY_PAIR =
@@ -77,8 +77,8 @@ public class PrivateTransactionHandlerTest {
   private static final String PRIVACY_GROUP_NAME = "pg_name";
   private static final String PRIVACY_GROUP_DESCRIPTION = "pg_desc";
 
-  private PrivateTransactionHandler privateTransactionHandler;
-  private PrivateTransactionHandler brokenPrivateTransactionHandler;
+  private PrivacyController privacyController;
+  private PrivacyController brokenPrivacyController;
   private PrivateTransactionValidator privateTransactionValidator;
   private Enclave enclave;
   private Account account;
@@ -137,8 +137,8 @@ public class PrivateTransactionHandlerTest {
     privateTransactionValidator = mockPrivateTransactionValidator();
     enclave = mockEnclave();
 
-    privateTransactionHandler =
-        new PrivateTransactionHandler(
+    privacyController =
+        new PrivacyController(
             enclave,
             enclavePublicKey,
             privateStateStorage,
@@ -146,8 +146,8 @@ public class PrivateTransactionHandlerTest {
             privateTransactionValidator,
             new FixedKeySigningPrivateMarkerTransactionFactory(
                 Address.DEFAULT_PRIVACY, (address) -> 0, KEY_PAIR));
-    brokenPrivateTransactionHandler =
-        new PrivateTransactionHandler(
+    brokenPrivacyController =
+        new PrivacyController(
             brokenMockEnclave(),
             enclavePublicKey,
             privateStateStorage,
@@ -162,16 +162,15 @@ public class PrivateTransactionHandlerTest {
 
     final PrivateTransaction transaction = buildLegacyPrivateTransaction(1);
 
-    final String enclaveKey = privateTransactionHandler.sendTransaction(transaction);
+    final String enclaveKey = privacyController.sendTransaction(transaction);
 
-    final String privacyGroupId =
-        privateTransactionHandler.getPrivacyGroup(enclaveKey, transaction);
+    final String privacyGroupId = privacyController.getPrivacyGroup(enclaveKey, transaction);
 
     final ValidationResult<TransactionInvalidReason> validationResult =
-        privateTransactionHandler.validatePrivateTransaction(transaction, privacyGroupId);
+        privacyController.validatePrivateTransaction(transaction, privacyGroupId);
 
     final Transaction markerTransaction =
-        privateTransactionHandler.createPrivacyMarkerTransaction(enclaveKey, transaction);
+        privacyController.createPrivacyMarkerTransaction(enclaveKey, transaction);
 
     assertThat(validationResult).isEqualTo(ValidationResult.valid());
     assertThat(markerTransaction.contractAddress()).isEqualTo(PUBLIC_TRANSACTION.contractAddress());
@@ -186,14 +185,14 @@ public class PrivateTransactionHandlerTest {
 
     final PrivateTransaction transaction = buildBesuPrivateTransaction(1);
 
-    final String enclaveKey = privateTransactionHandler.sendTransaction(transaction);
+    final String enclaveKey = privacyController.sendTransaction(transaction);
 
     final ValidationResult<TransactionInvalidReason> validationResult =
-        privateTransactionHandler.validatePrivateTransaction(
+        privacyController.validatePrivateTransaction(
             transaction, transaction.getPrivacyGroupId().get().toString());
 
     final Transaction markerTransaction =
-        privateTransactionHandler.createPrivacyMarkerTransaction(enclaveKey, transaction);
+        privacyController.createPrivacyMarkerTransaction(enclaveKey, transaction);
 
     assertThat(validationResult).isEqualTo(ValidationResult.valid());
     assertThat(markerTransaction.contractAddress()).isEqualTo(PUBLIC_TRANSACTION.contractAddress());
@@ -206,8 +205,7 @@ public class PrivateTransactionHandlerTest {
   @Test
   public void sendTransactionWhenEnclaveFailsThrowsEnclaveError() {
     assertThatExceptionOfType(EnclaveException.class)
-        .isThrownBy(
-            () -> brokenPrivateTransactionHandler.sendTransaction(buildLegacyPrivateTransaction()));
+        .isThrownBy(() -> brokenPrivacyController.sendTransaction(buildLegacyPrivateTransaction()));
   }
 
   @Test
@@ -216,11 +214,10 @@ public class PrivateTransactionHandlerTest {
         .thenReturn(ValidationResult.invalid(PRIVATE_NONCE_TOO_LOW));
 
     final PrivateTransaction transaction = buildLegacyPrivateTransaction(0);
-    final String enclaveKey = privateTransactionHandler.sendTransaction(transaction);
-    final String privacyGroupId =
-        privateTransactionHandler.getPrivacyGroup(enclaveKey, transaction);
+    final String enclaveKey = privacyController.sendTransaction(transaction);
+    final String privacyGroupId = privacyController.getPrivacyGroup(enclaveKey, transaction);
     final ValidationResult<TransactionInvalidReason> validationResult =
-        privateTransactionHandler.validatePrivateTransaction(transaction, privacyGroupId);
+        privacyController.validatePrivateTransaction(transaction, privacyGroupId);
     assertThat(validationResult).isEqualTo(ValidationResult.invalid(PRIVATE_NONCE_TOO_LOW));
   }
 
@@ -231,11 +228,10 @@ public class PrivateTransactionHandlerTest {
 
     final PrivateTransaction transaction = buildLegacyPrivateTransaction(2);
 
-    final String enclaveKey = privateTransactionHandler.sendTransaction(transaction);
-    final String privacyGroupId =
-        privateTransactionHandler.getPrivacyGroup(enclaveKey, transaction);
+    final String enclaveKey = privacyController.sendTransaction(transaction);
+    final String privacyGroupId = privacyController.getPrivacyGroup(enclaveKey, transaction);
     final ValidationResult<TransactionInvalidReason> validationResult =
-        privateTransactionHandler.validatePrivateTransaction(transaction, privacyGroupId);
+        privacyController.validatePrivateTransaction(transaction, privacyGroupId);
     assertThat(validationResult).isEqualTo(ValidationResult.invalid(INCORRECT_PRIVATE_NONCE));
   }
 
@@ -246,8 +242,7 @@ public class PrivateTransactionHandlerTest {
     when(enclave.receive(receiveRequestCaptor.capture()))
         .thenReturn(new ReceiveResponse(PAYLOAD, PRIVACY_GROUP_ID));
 
-    final ReceiveResponse receiveResponse =
-        privateTransactionHandler.retrieveTransaction(TRANSACTION_KEY);
+    final ReceiveResponse receiveResponse = privacyController.retrieveTransaction(TRANSACTION_KEY);
 
     assertThat(receiveResponse.getPayload()).isEqualTo(PAYLOAD);
     assertThat(receiveResponse.getPrivacyGroupId()).isEqualTo(PRIVACY_GROUP_ID);
@@ -270,7 +265,7 @@ public class PrivateTransactionHandlerTest {
         .thenReturn(enclavePrivacyGroupResponse);
 
     final PrivacyGroup privacyGroup =
-        privateTransactionHandler.createPrivacyGroup(
+        privacyController.createPrivacyGroup(
             PRIVACY_GROUP_ADDRESSES, PRIVACY_GROUP_NAME, PRIVACY_GROUP_DESCRIPTION);
 
     assertThat(privacyGroup).isEqualToComparingFieldByField(enclavePrivacyGroupResponse);
@@ -289,8 +284,7 @@ public class PrivateTransactionHandlerTest {
 
     when(enclave.deletePrivacyGroup(deleteRequestCaptor.capture())).thenReturn(PRIVACY_GROUP_ID);
 
-    final String deletedPrivacyGroupId =
-        privateTransactionHandler.deletePrivacyGroup(PRIVACY_GROUP_ID);
+    final String deletedPrivacyGroupId = privacyController.deletePrivacyGroup(PRIVACY_GROUP_ID);
 
     assertThat(deletedPrivacyGroupId).isEqualTo(PRIVACY_GROUP_ID);
     assertThat(deleteRequestCaptor.getValue().from()).isEqualTo(enclavePublicKey);
@@ -313,7 +307,7 @@ public class PrivateTransactionHandlerTest {
         .thenReturn(new PrivacyGroup[] {privacyGroup});
 
     final PrivacyGroup[] privacyGroups =
-        privateTransactionHandler.findPrivacyGroup(PRIVACY_GROUP_ADDRESSES);
+        privacyController.findPrivacyGroup(PRIVACY_GROUP_ADDRESSES);
     assertThat(privacyGroups).hasSize(1);
     assertThat(privacyGroups[0]).isEqualToComparingFieldByField(privacyGroup);
     assertThat(findRequestCaptor.getValue().addresses()).isEqualTo(PRIVACY_GROUP_ADDRESSES);
@@ -335,8 +329,7 @@ public class PrivateTransactionHandlerTest {
     when(account.getNonce()).thenReturn(8L);
 
     final long nonce =
-        privateTransactionHandler.determineNonce(
-            "privateFrom", new String[] {"first", "second"}, address);
+        privacyController.determineNonce("privateFrom", new String[] {"first", "second"}, address);
 
     assertThat(nonce).isEqualTo(reportedNonce);
     assertThat(groupMembersCaptor.getValue().addresses())
@@ -355,8 +348,7 @@ public class PrivateTransactionHandlerTest {
     when(enclave.findPrivacyGroup(groupMembersCaptor.capture())).thenReturn(returnedGroups);
 
     final long nonce =
-        privateTransactionHandler.determineNonce(
-            "privateFrom", new String[] {"first", "second"}, address);
+        privacyController.determineNonce("privateFrom", new String[] {"first", "second"}, address);
 
     assertThat(nonce).isEqualTo(reportedNonce);
     assertThat(groupMembersCaptor.getValue().addresses())
@@ -377,7 +369,7 @@ public class PrivateTransactionHandlerTest {
     assertThatExceptionOfType(RuntimeException.class)
         .isThrownBy(
             () ->
-                privateTransactionHandler.determineNonce(
+                privacyController.determineNonce(
                     "privateFrom", new String[] {"first", "second"}, address));
   }
 
@@ -387,7 +379,7 @@ public class PrivateTransactionHandlerTest {
 
     when(account.getNonce()).thenReturn(4L);
 
-    final long nonce = privateTransactionHandler.determineNonce(address, "Group1");
+    final long nonce = privacyController.determineNonce(address, "Group1");
 
     assertThat(nonce).isEqualTo(4L);
     verify(privateStateStorage).getLatestStateRoot(BytesValues.fromBase64("Group1"));
@@ -402,7 +394,7 @@ public class PrivateTransactionHandlerTest {
     when(privateStateStorage.getLatestStateRoot(BytesValues.fromBase64("Group1")))
         .thenReturn(Optional.empty());
 
-    final long nonce = privateTransactionHandler.determineNonce(address, "Group1");
+    final long nonce = privacyController.determineNonce(address, "Group1");
 
     assertThat(nonce).isEqualTo(Account.DEFAULT_NONCE);
     verifyNoInteractions(worldStateArchive, mutableWorldState, account);
@@ -416,7 +408,7 @@ public class PrivateTransactionHandlerTest {
         .thenReturn(Optional.of(hash));
     when(worldStateArchive.getMutable(hash)).thenReturn(Optional.empty());
 
-    final long nonce = privateTransactionHandler.determineNonce(address, "Group1");
+    final long nonce = privacyController.determineNonce(address, "Group1");
 
     assertThat(nonce).isEqualTo(Account.DEFAULT_NONCE);
     verifyNoInteractions(mutableWorldState, account);
@@ -431,7 +423,7 @@ public class PrivateTransactionHandlerTest {
     when(worldStateArchive.getMutable(hash)).thenReturn(Optional.of(mutableWorldState));
     when(mutableWorldState.get(address)).thenReturn(null);
 
-    final long nonce = privateTransactionHandler.determineNonce(address, "Group1");
+    final long nonce = privacyController.determineNonce(address, "Group1");
 
     assertThat(nonce).isEqualTo(Account.DEFAULT_NONCE);
     verifyNoInteractions(account);

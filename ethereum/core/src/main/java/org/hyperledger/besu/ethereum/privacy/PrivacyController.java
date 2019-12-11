@@ -48,7 +48,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bouncycastle.util.Arrays;
 
-public class PrivateTransactionHandler {
+public class PrivacyController {
 
   private static final Logger LOG = LogManager.getLogger();
 
@@ -59,7 +59,7 @@ public class PrivateTransactionHandler {
   private final PrivateTransactionValidator privateTransactionValidator;
   private final PrivateMarkerTransactionFactory privateMarkerTransactionFactory;
 
-  public PrivateTransactionHandler(
+  public PrivacyController(
       final PrivacyParameters privacyParameters,
       final Optional<BigInteger> chainId,
       final PrivateMarkerTransactionFactory privateMarkerTransactionFactory) {
@@ -72,7 +72,7 @@ public class PrivateTransactionHandler {
         privateMarkerTransactionFactory);
   }
 
-  public PrivateTransactionHandler(
+  public PrivacyController(
       final Enclave enclave,
       final String enclavePublicKey,
       final PrivateStateStorage privateStateStorage,

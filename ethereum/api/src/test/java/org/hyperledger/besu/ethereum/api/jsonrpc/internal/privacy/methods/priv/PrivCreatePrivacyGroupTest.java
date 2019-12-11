@@ -32,7 +32,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransactionHandler;
+import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -46,8 +46,7 @@ public class PrivCreatePrivacyGroupTest {
 
   private final Enclave enclave = mock(Enclave.class);
   private final PrivacyParameters privacyParameters = mock(PrivacyParameters.class);
-  private final PrivateTransactionHandler privateTransactionHandler =
-      mock(PrivateTransactionHandler.class);
+  private final PrivacyController privacyController = mock(PrivacyController.class);
 
   @Before
   public void setUp() {
@@ -60,12 +59,12 @@ public class PrivCreatePrivacyGroupTest {
     final String expected = "a wonderful group";
     final PrivacyGroup privacyGroup =
         new PrivacyGroup(expected, PrivacyGroup.Type.PANTHEON, NAME, DESCRIPTION, ADDRESSES);
-    when(privateTransactionHandler.createPrivacyGroup(ADDRESSES, NAME, DESCRIPTION))
+    when(privacyController.createPrivacyGroup(ADDRESSES, NAME, DESCRIPTION))
         .thenReturn(privacyGroup);
     when(privacyParameters.getEnclavePublicKey()).thenReturn(FROM);
 
     final PrivCreatePrivacyGroup privCreatePrivacyGroup =
-        new PrivCreatePrivacyGroup(privacyParameters, privateTransactionHandler);
+        new PrivCreatePrivacyGroup(privacyParameters, privacyController);
 
     final CreatePrivacyGroupParameter param =
         new CreatePrivacyGroupParameter(ADDRESSES, NAME, DESCRIPTION);
@@ -88,12 +87,11 @@ public class PrivCreatePrivacyGroupTest {
     final String expected = "a wonderful group";
     final PrivacyGroup privacyGroup =
         new PrivacyGroup(expected, PrivacyGroup.Type.PANTHEON, NAME, DESCRIPTION, ADDRESSES);
-    when(privateTransactionHandler.createPrivacyGroup(ADDRESSES, NAME, null))
-        .thenReturn(privacyGroup);
+    when(privacyController.createPrivacyGroup(ADDRESSES, NAME, null)).thenReturn(privacyGroup);
     when(privacyParameters.getEnclavePublicKey()).thenReturn(FROM);
 
     final PrivCreatePrivacyGroup privCreatePrivacyGroup =
-        new PrivCreatePrivacyGroup(privacyParameters, privateTransactionHandler);
+        new PrivCreatePrivacyGroup(privacyParameters, privacyController);
 
     final Object[] params =
         new Object[] {
@@ -124,12 +122,12 @@ public class PrivCreatePrivacyGroupTest {
     final String expected = "a wonderful group";
     final PrivacyGroup privacyGroup =
         new PrivacyGroup(expected, PrivacyGroup.Type.PANTHEON, NAME, DESCRIPTION, ADDRESSES);
-    when(privateTransactionHandler.createPrivacyGroup(ADDRESSES, null, DESCRIPTION))
+    when(privacyController.createPrivacyGroup(ADDRESSES, null, DESCRIPTION))
         .thenReturn(privacyGroup);
     when(privacyParameters.getEnclavePublicKey()).thenReturn(FROM);
 
     final PrivCreatePrivacyGroup privCreatePrivacyGroup =
-        new PrivCreatePrivacyGroup(privacyParameters, privateTransactionHandler);
+        new PrivCreatePrivacyGroup(privacyParameters, privacyController);
 
     final Object[] params =
         new Object[] {
@@ -160,12 +158,11 @@ public class PrivCreatePrivacyGroupTest {
     final String expected = "a wonderful group";
     final PrivacyGroup privacyGroup =
         new PrivacyGroup(expected, PrivacyGroup.Type.PANTHEON, NAME, DESCRIPTION, ADDRESSES);
-    when(privateTransactionHandler.createPrivacyGroup(ADDRESSES, null, null))
-        .thenReturn(privacyGroup);
+    when(privacyController.createPrivacyGroup(ADDRESSES, null, null)).thenReturn(privacyGroup);
     when(privacyParameters.getEnclavePublicKey()).thenReturn(FROM);
 
     final PrivCreatePrivacyGroup privCreatePrivacyGroup =
-        new PrivCreatePrivacyGroup(privacyParameters, privateTransactionHandler);
+        new PrivCreatePrivacyGroup(privacyParameters, privacyController);
 
     final Object[] params =
         new Object[] {
@@ -197,7 +194,7 @@ public class PrivCreatePrivacyGroupTest {
     when(privacyParameters.getEnclavePublicKey()).thenReturn(FROM);
 
     final PrivCreatePrivacyGroup privCreatePrivacyGroup =
-        new PrivCreatePrivacyGroup(privacyParameters, privateTransactionHandler);
+        new PrivCreatePrivacyGroup(privacyParameters, privacyController);
 
     final Object[] params =
         new Object[] {
@@ -226,7 +223,7 @@ public class PrivCreatePrivacyGroupTest {
   public void returnsCorrectExceptionMissingParam() {
 
     final PrivCreatePrivacyGroup privCreatePrivacyGroup =
-        new PrivCreatePrivacyGroup(privacyParameters, privateTransactionHandler);
+        new PrivCreatePrivacyGroup(privacyParameters, privacyController);
 
     final Object[] params = new Object[] {};
 
@@ -242,10 +239,10 @@ public class PrivCreatePrivacyGroupTest {
 
   @Test
   public void returnsCorrectErrorEnclaveError() {
-    when(privateTransactionHandler.createPrivacyGroup(ADDRESSES, NAME, DESCRIPTION))
+    when(privacyController.createPrivacyGroup(ADDRESSES, NAME, DESCRIPTION))
         .thenThrow(new EnclaveException(""));
     final PrivCreatePrivacyGroup privCreatePrivacyGroup =
-        new PrivCreatePrivacyGroup(privacyParameters, privateTransactionHandler);
+        new PrivCreatePrivacyGroup(privacyParameters, privacyController);
 
     final CreatePrivacyGroupParameter param =
         new CreatePrivacyGroupParameter(ADDRESSES, NAME, DESCRIPTION);
@@ -267,7 +264,7 @@ public class PrivCreatePrivacyGroupTest {
   public void returnPrivacyDisabledErrorWhenPrivacyIsDisabled() {
     when(privacyParameters.isEnabled()).thenReturn(false);
     final PrivCreatePrivacyGroup privCreatePrivacyGroup =
-        new PrivCreatePrivacyGroup(privacyParameters, privateTransactionHandler);
+        new PrivCreatePrivacyGroup(privacyParameters, privacyController);
 
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(

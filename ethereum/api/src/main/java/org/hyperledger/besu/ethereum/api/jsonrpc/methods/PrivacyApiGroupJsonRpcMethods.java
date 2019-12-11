@@ -22,7 +22,7 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransactionHandler;
+import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.FixedKeySigningPrivateMarkerTransactionFactory;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.PrivateMarkerTransactionFactory;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.RandomSigningPrivateMarkerTransactionFactory;
@@ -69,15 +69,14 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
         createPrivateMarkerTransactionFactory(
             privacyParameters, blockchainQueries, transactionPool.getPendingTransactions());
 
-    final PrivateTransactionHandler privateTransactionHandler =
-        new PrivateTransactionHandler(
+    final PrivacyController privacyController =
+        new PrivacyController(
             privacyParameters, protocolSchedule.getChainId(), markerTransactionFactory);
 
-    return create(privateTransactionHandler);
+    return create(privacyController);
   }
 
-  protected abstract Map<String, JsonRpcMethod> create(
-      final PrivateTransactionHandler privateTransactionHandler);
+  protected abstract Map<String, JsonRpcMethod> create(final PrivacyController privacyController);
 
   private PrivateMarkerTransactionFactory createPrivateMarkerTransactionFactory(
       final PrivacyParameters privacyParameters,

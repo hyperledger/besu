@@ -23,8 +23,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransactionHandler;
 import org.hyperledger.besu.ethereum.privacy.Restriction;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
@@ -37,15 +37,15 @@ public abstract class PrivacySendTransaction extends PrivacyApiMethod {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  protected final PrivateTransactionHandler privateTransactionHandler;
+  protected final PrivacyController privacyController;
   protected final TransactionPool transactionPool;
 
   public PrivacySendTransaction(
       final PrivacyParameters privacyParameters,
-      final PrivateTransactionHandler privateTransactionHandler,
+      final PrivacyController privacyController,
       final TransactionPool transactionPool) {
     super(privacyParameters);
-    this.privateTransactionHandler = privateTransactionHandler;
+    this.privacyController = privacyController;
     this.transactionPool = transactionPool;
   }
 
@@ -80,7 +80,7 @@ public abstract class PrivacySendTransaction extends PrivacyApiMethod {
       final PrivateTransaction privateTransaction,
       final String privacyGroupId,
       final AfterTransactionValid afterValid) {
-    return privateTransactionHandler
+    return privacyController
         .validatePrivateTransaction(privateTransaction, privacyGroupId)
         .either(
             afterValid::getResponse,

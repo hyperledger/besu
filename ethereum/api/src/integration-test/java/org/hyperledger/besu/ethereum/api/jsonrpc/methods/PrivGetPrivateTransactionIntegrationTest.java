@@ -38,8 +38,8 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransactionHandler;
 import org.hyperledger.besu.ethereum.privacy.Restriction;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.util.bytes.BytesValue;
@@ -69,7 +69,7 @@ public class PrivGetPrivateTransactionIntegrationTest {
   private static Enclave enclave;
 
   private static OrionTestHarness testHarness;
-  private static PrivateTransactionHandler privateTransactionHandler;
+  private static PrivacyController privacyController;
 
   private final TransactionWithMetadata returnedTransaction = mock(TransactionWithMetadata.class);
 
@@ -90,8 +90,7 @@ public class PrivGetPrivateTransactionIntegrationTest {
     final EnclaveFactory factory = new EnclaveFactory(vertx);
     enclave = factory.createVertxEnclave(testHarness.clientUrl());
 
-    privateTransactionHandler =
-        new PrivateTransactionHandler(enclave, ENCLAVE_PUBLIC_KEY, null, null, null, null);
+    privacyController = new PrivacyController(enclave, ENCLAVE_PUBLIC_KEY, null, null, null, null);
   }
 
   @AfterClass
@@ -150,7 +149,7 @@ public class PrivGetPrivateTransactionIntegrationTest {
   public void returnsStoredPrivateTransaction() {
 
     final PrivGetPrivateTransaction privGetPrivateTransaction =
-        new PrivGetPrivateTransaction(blockchain, privacyParameters, privateTransactionHandler);
+        new PrivGetPrivateTransaction(blockchain, privacyParameters, privacyController);
 
     when(blockchain.transactionByHash(any(Hash.class)))
         .thenReturn(Optional.of(returnedTransaction));

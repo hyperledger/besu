@@ -35,8 +35,8 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransactionHandler;
 import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.math.BigInteger;
@@ -113,7 +113,7 @@ public class EeaSendRawTransactionTest {
 
   @Mock private EeaSendRawTransaction method;
 
-  @Mock private PrivateTransactionHandler privateTxHandler;
+  @Mock private PrivacyController privateTxHandler;
 
   @Mock private PrivacyParameters privacyParameters;
 

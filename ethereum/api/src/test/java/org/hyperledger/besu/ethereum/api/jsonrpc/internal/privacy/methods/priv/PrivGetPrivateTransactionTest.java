@@ -39,8 +39,8 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransactionHandler;
 import org.hyperledger.besu.ethereum.privacy.Restriction;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.util.bytes.BytesValue;
@@ -100,8 +100,7 @@ public class PrivGetPrivateTransactionTest {
   private final BlockchainQueries blockchain = mock(BlockchainQueries.class);
   private final TransactionWithMetadata returnedTransaction = mock(TransactionWithMetadata.class);
   private final Transaction justTransaction = mock(Transaction.class);
-  private final PrivateTransactionHandler privateTransactionHandler =
-      mock(PrivateTransactionHandler.class);
+  private final PrivacyController privacyController = mock(PrivacyController.class);
 
   @Before
   public void before() {
@@ -126,14 +125,14 @@ public class PrivGetPrivateTransactionTest {
         new PrivateTransactionLegacyResult(privateTransaction);
 
     final PrivGetPrivateTransaction privGetPrivateTransaction =
-        new PrivGetPrivateTransaction(blockchain, privacyParameters, privateTransactionHandler);
+        new PrivGetPrivateTransaction(blockchain, privacyParameters, privacyController);
     final Object[] params = new Object[] {enclaveKey};
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(new JsonRpcRequest("1", "priv_getPrivateTransaction", params));
 
     final BytesValueRLPOutput bvrlp = new BytesValueRLPOutput();
     privateTransaction.writeTo(bvrlp);
-    when(privateTransactionHandler.retrieveTransaction(anyString()))
+    when(privacyController.retrieveTransaction(anyString()))
         .thenReturn(
             new ReceiveResponse(
                 Base64.getEncoder().encodeToString(bvrlp.encoded().extractArray()).getBytes(UTF_8),
@@ -160,7 +159,7 @@ public class PrivGetPrivateTransactionTest {
         new PrivateTransactionGroupResult(privateTransaction);
 
     final PrivGetPrivateTransaction privGetPrivateTransaction =
-        new PrivGetPrivateTransaction(blockchain, privacyParameters, privateTransactionHandler);
+        new PrivGetPrivateTransaction(blockchain, privacyParameters, privacyController);
 
     final Object[] params = new Object[] {enclaveKey};
     final JsonRpcRequestContext request =
@@ -168,7 +167,7 @@ public class PrivGetPrivateTransactionTest {
 
     final BytesValueRLPOutput bvrlp = new BytesValueRLPOutput();
     privateTransaction.writeTo(bvrlp);
-    when(privateTransactionHandler.retrieveTransaction(anyString()))
+    when(privacyController.retrieveTransaction(anyString()))
         .thenReturn(
             new ReceiveResponse(
                 Base64.getEncoder().encodeToString(bvrlp.encoded().extractArray()).getBytes(UTF_8),
@@ -185,7 +184,7 @@ public class PrivGetPrivateTransactionTest {
   public void returnPrivacyDisabledErrorWhenPrivacyIsDisabled() {
     when(privacyParameters.isEnabled()).thenReturn(false);
     final PrivGetPrivateTransaction privGetPrivateTransaction =
-        new PrivGetPrivateTransaction(blockchain, privacyParameters, privateTransactionHandler);
+        new PrivGetPrivateTransaction(blockchain, privacyParameters, privacyController);
 
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(

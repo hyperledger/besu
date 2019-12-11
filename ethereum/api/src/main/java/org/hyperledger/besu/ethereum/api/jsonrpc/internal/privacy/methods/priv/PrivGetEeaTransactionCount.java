@@ -25,7 +25,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransactionHandler;
+import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 import org.apache.logging.log4j.Logger;
 
@@ -33,13 +33,12 @@ public class PrivGetEeaTransactionCount extends PrivacyApiMethod {
 
   private static final Logger LOG = getLogger();
 
-  private PrivateTransactionHandler privateTransactionHandler;
+  private PrivacyController privacyController;
 
   public PrivGetEeaTransactionCount(
-      final PrivacyParameters privacyParameters,
-      final PrivateTransactionHandler privateTransactionHandler) {
+      final PrivacyParameters privacyParameters, final PrivacyController privacyController) {
     super(privacyParameters);
-    this.privateTransactionHandler = privateTransactionHandler;
+    this.privacyController = privacyController;
   }
 
   @Override
@@ -59,7 +58,7 @@ public class PrivGetEeaTransactionCount extends PrivacyApiMethod {
     final String[] privateFor = requestContext.getRequiredParameter(2, String[].class);
 
     try {
-      final long nonce = privateTransactionHandler.determineNonce(privateFrom, privateFor, address);
+      final long nonce = privacyController.determineNonce(privateFrom, privateFor, address);
       return new JsonRpcSuccessResponse(
           requestContext.getRequest().getId(), Quantity.create(nonce));
     } catch (final Exception e) {

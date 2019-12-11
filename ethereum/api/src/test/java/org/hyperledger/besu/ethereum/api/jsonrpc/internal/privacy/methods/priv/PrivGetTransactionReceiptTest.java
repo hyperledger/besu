@@ -44,8 +44,8 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransactionHandler;
 import org.hyperledger.besu.ethereum.privacy.Restriction;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -144,14 +144,12 @@ public class PrivGetTransactionReceiptTest {
   private final Enclave enclave = mock(Enclave.class);
   private final PrivacyParameters privacyParameters = mock(PrivacyParameters.class);
   private final PrivateStateStorage privateStateStorage = mock(PrivateStateStorage.class);
-  private final PrivateTransactionHandler failingPrivateTransactionHandler =
-      mock(PrivateTransactionHandler.class);
-  private final PrivateTransactionHandler privateTransactionHandler =
-      mock(PrivateTransactionHandler.class);
+  private final PrivacyController failingPrivacyController = mock(PrivacyController.class);
+  private final PrivacyController privacyController = mock(PrivacyController.class);
 
   @Before
   public void setUp() {
-    when(privateTransactionHandler.retrieveTransaction(anyString()))
+    when(privacyController.retrieveTransaction(anyString()))
         .thenReturn(
             new ReceiveResponse(
                 Base64.getEncoder().encode(RLP.encode(privateTransaction::writeTo).extractArray()),
@@ -181,8 +179,7 @@ public class PrivGetTransactionReceiptTest {
     when(privacyParameters.getEnclave()).thenReturn(enclave);
 
     final PrivGetTransactionReceipt privGetTransactionReceipt =
-        new PrivGetTransactionReceipt(
-            blockchainQueries, privacyParameters, privateTransactionHandler);
+        new PrivGetTransactionReceipt(blockchainQueries, privacyParameters, privacyController);
     final Object[] params = new Object[] {transaction.getHash()};
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(new JsonRpcRequest("1", "priv_getTransactionReceipt", params));
@@ -197,12 +194,12 @@ public class PrivGetTransactionReceiptTest {
 
   @Test
   public void enclavePayloadNotFoundResultsInSuccessButNullResponse() {
-    when(failingPrivateTransactionHandler.retrieveTransaction(anyString()))
+    when(failingPrivacyController.retrieveTransaction(anyString()))
         .thenThrow(new EnclaveException("EnclavePayloadNotFound"));
 
     final PrivGetTransactionReceipt privGetTransactionReceipt =
         new PrivGetTransactionReceipt(
-            blockchainQueries, privacyParameters, failingPrivateTransactionHandler);
+            blockchainQueries, privacyParameters, failingPrivacyController);
     final Object[] params = new Object[] {transaction.getHash()};
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(new JsonRpcRequest("1", "priv_getTransactionReceipt", params));
@@ -221,8 +218,7 @@ public class PrivGetTransactionReceiptTest {
     when(privacyParameters.getEnclave()).thenReturn(enclave);
 
     final PrivGetTransactionReceipt privGetTransactionReceipt =
-        new PrivGetTransactionReceipt(
-            blockchainQueries, privacyParameters, privateTransactionHandler);
+        new PrivGetTransactionReceipt(blockchainQueries, privacyParameters, privacyController);
     final Object[] params = new Object[] {transaction.getHash()};
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(new JsonRpcRequest("1", "priv_getTransactionReceipt", params));
@@ -237,11 +233,11 @@ public class PrivGetTransactionReceiptTest {
 
   @Test
   public void enclaveConnectionIssueThrowsRuntimeException() {
-    when(failingPrivateTransactionHandler.retrieveTransaction(anyString()))
+    when(failingPrivacyController.retrieveTransaction(anyString()))
         .thenThrow(EnclaveException.class);
     final PrivGetTransactionReceipt privGetTransactionReceipt =
         new PrivGetTransactionReceipt(
-            blockchainQueries, privacyParameters, failingPrivateTransactionHandler);
+            blockchainQueries, privacyParameters, failingPrivacyController);
     final Object[] params = new Object[] {transaction.getHash()};
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(new JsonRpcRequest("1", "priv_getTransactionReceipt", params));
@@ -256,8 +252,7 @@ public class PrivGetTransactionReceiptTest {
         .thenReturn(Optional.of(BytesValue.fromHexString("0x01")));
 
     final PrivGetTransactionReceipt privGetTransactionReceipt =
-        new PrivGetTransactionReceipt(
-            blockchainQueries, privacyParameters, privateTransactionHandler);
+        new PrivGetTransactionReceipt(blockchainQueries, privacyParameters, privacyController);
     final Object[] params = new Object[] {transaction.getHash()};
     final JsonRpcRequest request = new JsonRpcRequest("1", "priv_getTransactionReceipt", params);
 
@@ -276,8 +271,7 @@ public class PrivGetTransactionReceiptTest {
     when(privacyParameters.isEnabled()).thenReturn(false);
 
     final PrivGetTransactionReceipt privGetTransactionReceipt =
-        new PrivGetTransactionReceipt(
-            blockchainQueries, privacyParameters, privateTransactionHandler);
+        new PrivGetTransactionReceipt(blockchainQueries, privacyParameters, privacyController);
 
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(

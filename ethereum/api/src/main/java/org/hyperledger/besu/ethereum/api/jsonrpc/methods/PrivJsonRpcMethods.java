@@ -29,7 +29,7 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransactionHandler;
+import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 import java.util.Map;
 
@@ -49,19 +49,18 @@ public class PrivJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
   }
 
   @Override
-  protected Map<String, JsonRpcMethod> create(
-      final PrivateTransactionHandler privateTransactionHandler) {
+  protected Map<String, JsonRpcMethod> create(final PrivacyController privacyController) {
     return mapOf(
         new PrivGetTransactionReceipt(
-            getBlockchainQueries(), getPrivacyParameters(), privateTransactionHandler),
-        new PrivCreatePrivacyGroup(getPrivacyParameters(), privateTransactionHandler),
-        new PrivDeletePrivacyGroup(getPrivacyParameters(), privateTransactionHandler),
-        new PrivFindPrivacyGroup(getPrivacyParameters(), privateTransactionHandler),
+            getBlockchainQueries(), getPrivacyParameters(), privacyController),
+        new PrivCreatePrivacyGroup(getPrivacyParameters(), privacyController),
+        new PrivDeletePrivacyGroup(getPrivacyParameters(), privacyController),
+        new PrivFindPrivacyGroup(getPrivacyParameters(), privacyController),
         new PrivGetPrivacyPrecompileAddress(getPrivacyParameters()),
-        new PrivGetTransactionCount(getPrivacyParameters(), privateTransactionHandler),
+        new PrivGetTransactionCount(getPrivacyParameters(), privacyController),
         new PrivGetPrivateTransaction(
-            getBlockchainQueries(), getPrivacyParameters(), privateTransactionHandler),
+            getBlockchainQueries(), getPrivacyParameters(), privacyController),
         new PrivDistributeRawTransaction(
-            getPrivacyParameters(), getTransactionPool(), privateTransactionHandler));
+            getPrivacyParameters(), getTransactionPool(), privacyController));
   }
 }
