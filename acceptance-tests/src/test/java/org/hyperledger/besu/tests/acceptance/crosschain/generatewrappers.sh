@@ -19,10 +19,15 @@ solc viewtxcall/BarCtrt.sol --allow-paths . --bin --abi --overwrite --optimize -
 solc viewtxcall/BarInt.sol --allow-paths . --bin --abi --overwrite --optimize -o build
 solc viewtxcall/Bar2Ctrt.sol --allow-paths . --bin --abi --overwrite --optimize -o build
 solc viewtxcall/Bar2Int.sol --allow-paths . --bin --abi --overwrite --optimize -o build
+solc viewtxcall/NonLockableCtrt.sol --allow-paths . --bin --abi --overwrite --optimize -o build
+solc viewtxcall/LockableCtrt.sol --allow-paths . --bin --abi --overwrite --optimize -o build
+solc viewtxcall/NonLockableCtrtInt.sol --allow-paths . --bin --abi --overwrite --optimize -o build
 $WEB3J solidity generate -cc -a=build/FooCtrt.abi -b=build/FooCtrt.bin -o=../../../../../../ -p=org.hyperledger.besu.tests.acceptance.crosschain.viewtxcall.generated
 $WEB3J solidity generate -cc -a=build/BarCtrt.abi -b=build/BarCtrt.bin -o=../../../../../../ -p=org.hyperledger.besu.tests.acceptance.crosschain.viewtxcall.generated
 $WEB3J solidity generate -cc -a=build/FooInt.abi -b=build/FooInt.bin -o=../../../../../../ -p=org.hyperledger.besu.tests.acceptance.crosschain.viewtxcall.generated
 $WEB3J solidity generate -cc -a=build/BarInt.abi -b=build/BarInt.bin -o=../../../../../../ -p=org.hyperledger.besu.tests.acceptance.crosschain.viewtxcall.generated
 $WEB3J solidity generate -cc -a=build/Bar2Ctrt.abi -b=build/Bar2Ctrt.bin -o=../../../../../../ -p=org.hyperledger.besu.tests.acceptance.crosschain.viewtxcall.generated
 $WEB3J solidity generate -cc -a=build/Bar2Int.abi -b=build/Bar2Int.bin -o=../../../../../../ -p=org.hyperledger.besu.tests.acceptance.crosschain.viewtxcall.generated
-
+$WEB3J solidity generate -a=build/NonLockableCtrt.abi -b=build/NonLockableCtrt.bin -o=../../../../../../ -p=org.hyperledger.besu.tests.acceptance.crosschain.viewtxcall.generated
+$WEB3J solidity generate -a=build/NonLockableCtrtInt.abi -b=build/NonLockableCtrtInt.bin -o=../../../../../../ -p=org.hyperledger.besu.tests.acceptance.crosschain.viewtxcall.generated
+$WEB3J solidity generate -cc -a=build/LockableCtrt.abi -b=build/LockableCtrt.bin -o=../../../../../../ -p=org.hyperledger.besu.tests.acceptance.crosschain.viewtxcall.generated

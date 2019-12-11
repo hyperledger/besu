@@ -14,25 +14,37 @@ pragma solidity >=0.4.0 <0.6.0;
 import "./FooInt.sol";
 import "../common/Crosschain.sol";
 import "./BarInt.sol";
+import "./NonLockableCtrtInt.sol";
 
 contract BarCtrt is Crosschain, BarInt {
-    uint256 fooChainId;
+    uint256 public fooChainId;
+    uint256 public nonLockableCtrtChainId;
+
     FooInt public fooCtrt;
+    NonLockableCtrtInt public nonLockableCtrt;
+
     uint256 public flag;
     uint256 public vvflag;
     uint256 public vpflag;
     uint256 public ttvflag;
+    uint256 public nonLockableViewFlag;
 
     constructor() public {
         flag = 0;
         vvflag = 0;
         vpflag = 0;
         ttvflag = 0;
+        nonLockableViewFlag = 0;
     }
 
     function setProperties(uint256 _fooChainId, address _fooCtrtAaddr) public {
         fooChainId = _fooChainId;
         fooCtrt = FooInt(_fooCtrtAaddr);
+    }
+
+    function setPropertiesForNonLockableCtrt(uint256 _nonLockableCtrtChainId, address _nonLockableCtrtAddr) public {
+        nonLockableCtrtChainId = _nonLockableCtrtChainId;
+        nonLockableCtrt = NonLockableCtrtInt(_nonLockableCtrtAddr);
     }
 
     function bar() external {
@@ -73,5 +85,13 @@ contract BarCtrt is Crosschain, BarInt {
 
     function barttv() external {
         crosschainTransaction(fooChainId, address(fooCtrt), abi.encodeWithSelector(fooCtrt.updateStateFromTxView.selector));
+    }
+
+    function callNonLockableCtrtView() external {
+        nonLockableViewFlag = crosschainViewUint256(nonLockableCtrtChainId, address(nonLockableCtrt), abi.encodeWithSelector(nonLockableCtrt.viewfn.selector));
+    }
+
+    function callNonLockableCtrtTx() external {
+        crosschainTransaction(nonLockableCtrtChainId, address(nonLockableCtrt), abi.encodeWithSelector(nonLockableCtrt.updateState.selector));
     }
 }

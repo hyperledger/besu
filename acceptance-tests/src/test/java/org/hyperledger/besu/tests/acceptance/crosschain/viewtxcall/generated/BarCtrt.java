@@ -45,7 +45,7 @@ import org.web3j.tx.gas.ContractGasProvider;
 @SuppressWarnings("rawtypes")
 public class BarCtrt extends CrosschainContract {
   private static final String BINARY =
-      "608060405234801561001057600080fd5b506000600281905560038190556004819055600555610649806100346000396000f3fe608060405234801561001057600080fd5b50600436106101005760003560e01c80639de16f7411610097578063e132f82f11610066578063e132f82f146101b1578063e9f63923146101b9578063fc344e99146101c1578063febb0f7e146101c957610100565b80639de16f7414610199578063b15b10da1461010f578063b36484af146101a1578063be7003d5146101a957610100565b806380b1a7f3116100d357806380b1a7f31461015d57806384a13fba14610165578063890eba6814610189578063966aaf801461019157610100565b80632e93504614610105578063484f579b1461010f57806360d1042814610129578063641b76f714610155575b600080fd5b61010d6101d1565b005b610117610216565b60408051918252519081900360200190f35b61010d6004803603604081101561013f57600080fd5b50803590602001356001600160a01b031661021b565b610117610242565b61010d610248565b61016d61028b565b604080516001600160a01b039092168252519081900360200190f35b61011761029a565b61010d6102a0565b61010d6102e8565b61010d61032f565b61010d610372565b6101176103ba565b6101176103c0565b61010d6103c6565b61010d610409565b6000546001546040805160048152602481019091526020810180516001600160e01b03166328efb58160e21b17905261021492916001600160a01b03169061044c565b565b600190565b600091909155600180546001600160a01b0319166001600160a01b03909216919091179055565b60045481565b6000546001546040805160048152602481019091526020810180516001600160e01b0316632da6632b60e11b17905261021492916001600160a01b03169061044c565b6001546001600160a01b031681565b60025481565b6000546001546040805160048152602481019091526020810180516001600160e01b0316636880d21b60e01b1790526102e392916001600160a01b03169061051a565b600355565b6000546001546040805160048152602481019091526020810180516001600160e01b031662230c3f60e61b17905261032a92916001600160a01b03169061051a565b600255565b6000546001546040805160048152602481019091526020810180516001600160e01b0316634543882160e01b17905261021492916001600160a01b03169061044c565b6000546001546040805160048152602481019091526020810180516001600160e01b0316637c5ab21360e01b1790526103b592916001600160a01b03169061051a565b600455565b60035481565b60055481565b6000546001546040805160048152602481019091526020810180516001600160e01b0316631d8557d760e01b17905261021492916001600160a01b03169061044c565b6000546001546040805160048152602481019091526020810180516001600160e01b03166318530aaf60e31b17905261032a92916001600160a01b03169061051a565b606083838360405160200180848152602001836001600160a01b03166001600160a01b0316815260200180602001828103825283818151815260200191508051906020019080838360005b838110156104af578181015183820152602001610497565b50505050905090810190601f1680156104dc5780820380516001836020036101000a031916815260200191505b50945050505050604051602081830303815290604052905060006004825101905060008082846000600a600019f161051357600080fd5b5050505050565b6000606084848460405160200180848152602001836001600160a01b03166001600160a01b0316815260200180602001828103825283818151815260200191508051906020019080838360005b8381101561057f578181015183820152602001610567565b50505050905090810190601f1680156105ac5780820380516001836020036101000a031916815260200191505b5094505050505060405160208183030381529060405290506000600482510190506105d56105f6565b602080828486600b600019fa6105ea57600080fd5b50519695505050505050565b6040518060200160405280600190602082028038833950919291505056fea265627a7a72315820be50d90e5c7d52bcb3d12986e2468bfae2e807ee5899bed0478c3a5448c9d1d164736f6c634300050c0032";
+      "608060405234801561001057600080fd5b50600060048190556005819055600681905560078190556008556107c5806100396000396000f3fe608060405234801561001057600080fd5b506004361061014d5760003560e01c8063966aaf80116100c3578063d2b1ad5c1161007c578063d2b1ad5c1461024a578063db9785b514610252578063e132f82f1461025a578063e9f6392314610262578063fc344e991461026a578063febb0f7e146102725761014d565b8063966aaf80146102225780639de16f741461022a578063b15b10da146101aa578063b36484af14610232578063be7003d51461023a578063c50cee14146102425761014d565b806356ed192b1161011557806356ed192b146101b257806360d10428146101ba578063641b76f7146101e657806380b1a7f3146101ee57806384a13fba146101f6578063890eba681461021a5761014d565b80631c431cab14610152578063276728b91461016c5780632e9350461461019a57806336447de7146101a2578063484f579b146101aa575b600080fd5b61015a61027a565b60408051918252519081900360200190f35b6101986004803603604081101561018257600080fd5b50803590602001356001600160a01b0316610280565b005b6101986102a7565b61015a6102ec565b61015a6102f2565b6101986102f7565b610198600480360360408110156101d057600080fd5b50803590602001356001600160a01b031661033a565b61015a610361565b610198610367565b6101fe6103aa565b604080516001600160a01b039092168252519081900360200190f35b61015a6103b9565b6101986103bf565b610198610407565b61019861044e565b610198610491565b6101986104d9565b6101fe610521565b61015a610530565b61015a610536565b61015a61053c565b610198610542565b610198610585565b60085481565b600191909155600380546001600160a01b0319166001600160a01b03909216919091179055565b6000546002546040805160048152602481019091526020810180516001600160e01b03166328efb58160e21b1790526102ea92916001600160a01b0316906105c8565b565b60005481565b600190565b6001546003546040805160048152602481019091526020810180516001600160e01b0316631d8557d760e01b1790526102ea92916001600160a01b0316906105c8565b600091909155600280546001600160a01b0319166001600160a01b03909216919091179055565b60065481565b6000546002546040805160048152602481019091526020810180516001600160e01b0316632da6632b60e11b1790526102ea92916001600160a01b0316906105c8565b6002546001600160a01b031681565b60045481565b6000546002546040805160048152602481019091526020810180516001600160e01b0316636880d21b60e01b17905261040292916001600160a01b031690610696565b600555565b6000546002546040805160048152602481019091526020810180516001600160e01b031662230c3f60e61b17905261044992916001600160a01b031690610696565b600455565b6000546002546040805160048152602481019091526020810180516001600160e01b0316634543882160e01b1790526102ea92916001600160a01b0316906105c8565b6000546002546040805160048152602481019091526020810180516001600160e01b0316637c5ab21360e01b1790526104d492916001600160a01b031690610696565b600655565b6001546003546040805160048152602481019091526020810180516001600160e01b031663484f579b60e01b17905261051c92916001600160a01b031690610696565b600855565b6003546001600160a01b031681565b60015481565b60055481565b60075481565b6000546002546040805160048152602481019091526020810180516001600160e01b0316631d8557d760e01b1790526102ea92916001600160a01b0316906105c8565b6000546002546040805160048152602481019091526020810180516001600160e01b03166318530aaf60e31b17905261044992916001600160a01b031690610696565b606083838360405160200180848152602001836001600160a01b03166001600160a01b0316815260200180602001828103825283818151815260200191508051906020019080838360005b8381101561062b578181015183820152602001610613565b50505050905090810190601f1680156106585780820380516001836020036101000a031916815260200191505b50945050505050604051602081830303815290604052905060006004825101905060008082846000600a600019f161068f57600080fd5b5050505050565b6000606084848460405160200180848152602001836001600160a01b03166001600160a01b0316815260200180602001828103825283818151815260200191508051906020019080838360005b838110156106fb5781810151838201526020016106e3565b50505050905090810190601f1680156107285780820380516001836020036101000a031916815260200191505b509450505050506040516020818303038152906040529050600060048251019050610751610772565b602080828486600b600019fa61076657600080fd5b50519695505050505050565b6040518060200160405280600190602082028038833950919291505056fea265627a7a723158205d30eac46e2a58b227bc66de86b41c0bc5f6991db5bd9d6a702d3edc0866748e64736f6c634300050c0032";
 
   public static final String FUNC_BAR = "bar";
 
@@ -61,15 +61,30 @@ public class BarCtrt extends CrosschainContract {
 
   public static final String FUNC_BARVV = "barvv";
 
+  public static final String FUNC_CALLNONLOCKABLECTRTTX = "callNonLockableCtrtTx";
+
+  public static final String FUNC_CALLNONLOCKABLECTRTVIEW = "callNonLockableCtrtView";
+
   public static final String FUNC_FLAG = "flag";
 
+  public static final String FUNC_FOOCHAINID = "fooChainId";
+
   public static final String FUNC_FOOCTRT = "fooCtrt";
+
+  public static final String FUNC_NONLOCKABLECTRT = "nonLockableCtrt";
+
+  public static final String FUNC_NONLOCKABLECTRTCHAINID = "nonLockableCtrtChainId";
+
+  public static final String FUNC_NONLOCKABLEVIEWFLAG = "nonLockableViewFlag";
 
   public static final String FUNC_PUREBAR = "pureBar";
 
   public static final String FUNC_PUREFN = "purefn";
 
   public static final String FUNC_SETPROPERTIES = "setProperties";
+
+  public static final String FUNC_SETPROPERTIESFORNONLOCKABLECTRT =
+      "setPropertiesForNonLockableCtrt";
 
   public static final String FUNC_TTVFLAG = "ttvflag";
 
@@ -240,6 +255,64 @@ public class BarCtrt extends CrosschainContract {
     return executeRemoteCallCrosschainTransaction(function, crosschainContext);
   }
 
+  public RemoteFunctionCall<TransactionReceipt> callNonLockableCtrtTx() {
+    final Function function =
+        new Function(
+            FUNC_CALLNONLOCKABLECTRTTX,
+            Arrays.<Type>asList(),
+            Collections.<TypeReference<?>>emptyList());
+    return executeRemoteCallTransaction(function);
+  }
+
+  public byte[] callNonLockableCtrtTx_AsSignedCrosschainSubordinateTransaction(
+      final CrosschainContext crosschainContext) throws IOException {
+    final Function function =
+        new Function(
+            FUNC_CALLNONLOCKABLECTRTTX,
+            Arrays.<Type>asList(),
+            Collections.<TypeReference<?>>emptyList());
+    return createSignedSubordinateTransaction(function, crosschainContext);
+  }
+
+  public RemoteFunctionCall<TransactionReceipt> callNonLockableCtrtTx_AsCrosschainTransaction(
+      final CrosschainContext crosschainContext) {
+    final Function function =
+        new Function(
+            FUNC_CALLNONLOCKABLECTRTTX,
+            Arrays.<Type>asList(),
+            Collections.<TypeReference<?>>emptyList());
+    return executeRemoteCallCrosschainTransaction(function, crosschainContext);
+  }
+
+  public RemoteFunctionCall<TransactionReceipt> callNonLockableCtrtView() {
+    final Function function =
+        new Function(
+            FUNC_CALLNONLOCKABLECTRTVIEW,
+            Arrays.<Type>asList(),
+            Collections.<TypeReference<?>>emptyList());
+    return executeRemoteCallTransaction(function);
+  }
+
+  public byte[] callNonLockableCtrtView_AsSignedCrosschainSubordinateTransaction(
+      final CrosschainContext crosschainContext) throws IOException {
+    final Function function =
+        new Function(
+            FUNC_CALLNONLOCKABLECTRTVIEW,
+            Arrays.<Type>asList(),
+            Collections.<TypeReference<?>>emptyList());
+    return createSignedSubordinateTransaction(function, crosschainContext);
+  }
+
+  public RemoteFunctionCall<TransactionReceipt> callNonLockableCtrtView_AsCrosschainTransaction(
+      final CrosschainContext crosschainContext) {
+    final Function function =
+        new Function(
+            FUNC_CALLNONLOCKABLECTRTVIEW,
+            Arrays.<Type>asList(),
+            Collections.<TypeReference<?>>emptyList());
+    return executeRemoteCallCrosschainTransaction(function, crosschainContext);
+  }
+
   public RemoteFunctionCall<BigInteger> flag() {
     final Function function =
         new Function(
@@ -254,6 +327,25 @@ public class BarCtrt extends CrosschainContract {
     final Function function =
         new Function(
             FUNC_FLAG,
+            Arrays.<Type>asList(),
+            Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() {}));
+    return createSignedSubordinateView(function, crosschainContext);
+  }
+
+  public RemoteFunctionCall<BigInteger> fooChainId() {
+    final Function function =
+        new Function(
+            FUNC_FOOCHAINID,
+            Arrays.<Type>asList(),
+            Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() {}));
+    return executeRemoteCallSingleValueReturn(function, BigInteger.class);
+  }
+
+  public byte[] fooChainId_AsSignedCrosschainSubordinateView(
+      final CrosschainContext crosschainContext) throws IOException {
+    final Function function =
+        new Function(
+            FUNC_FOOCHAINID,
             Arrays.<Type>asList(),
             Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() {}));
     return createSignedSubordinateView(function, crosschainContext);
@@ -275,6 +367,63 @@ public class BarCtrt extends CrosschainContract {
             FUNC_FOOCTRT,
             Arrays.<Type>asList(),
             Arrays.<TypeReference<?>>asList(new TypeReference<Address>() {}));
+    return createSignedSubordinateView(function, crosschainContext);
+  }
+
+  public RemoteFunctionCall<String> nonLockableCtrt() {
+    final Function function =
+        new Function(
+            FUNC_NONLOCKABLECTRT,
+            Arrays.<Type>asList(),
+            Arrays.<TypeReference<?>>asList(new TypeReference<Address>() {}));
+    return executeRemoteCallSingleValueReturn(function, String.class);
+  }
+
+  public byte[] nonLockableCtrt_AsSignedCrosschainSubordinateView(
+      final CrosschainContext crosschainContext) throws IOException {
+    final Function function =
+        new Function(
+            FUNC_NONLOCKABLECTRT,
+            Arrays.<Type>asList(),
+            Arrays.<TypeReference<?>>asList(new TypeReference<Address>() {}));
+    return createSignedSubordinateView(function, crosschainContext);
+  }
+
+  public RemoteFunctionCall<BigInteger> nonLockableCtrtChainId() {
+    final Function function =
+        new Function(
+            FUNC_NONLOCKABLECTRTCHAINID,
+            Arrays.<Type>asList(),
+            Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() {}));
+    return executeRemoteCallSingleValueReturn(function, BigInteger.class);
+  }
+
+  public byte[] nonLockableCtrtChainId_AsSignedCrosschainSubordinateView(
+      final CrosschainContext crosschainContext) throws IOException {
+    final Function function =
+        new Function(
+            FUNC_NONLOCKABLECTRTCHAINID,
+            Arrays.<Type>asList(),
+            Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() {}));
+    return createSignedSubordinateView(function, crosschainContext);
+  }
+
+  public RemoteFunctionCall<BigInteger> nonLockableViewFlag() {
+    final Function function =
+        new Function(
+            FUNC_NONLOCKABLEVIEWFLAG,
+            Arrays.<Type>asList(),
+            Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() {}));
+    return executeRemoteCallSingleValueReturn(function, BigInteger.class);
+  }
+
+  public byte[] nonLockableViewFlag_AsSignedCrosschainSubordinateView(
+      final CrosschainContext crosschainContext) throws IOException {
+    final Function function =
+        new Function(
+            FUNC_NONLOCKABLEVIEWFLAG,
+            Arrays.<Type>asList(),
+            Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() {}));
     return createSignedSubordinateView(function, crosschainContext);
   }
 
@@ -353,6 +502,48 @@ public class BarCtrt extends CrosschainContract {
             Arrays.<Type>asList(
                 new org.web3j.abi.datatypes.generated.Uint256(_fooChainId),
                 new org.web3j.abi.datatypes.Address(160, _fooCtrtAaddr)),
+            Collections.<TypeReference<?>>emptyList());
+    return executeRemoteCallCrosschainTransaction(function, crosschainContext);
+  }
+
+  public RemoteFunctionCall<TransactionReceipt> setPropertiesForNonLockableCtrt(
+      BigInteger _nonLockableCtrtChainId, String _nonLockableCtrtAddr) {
+    final Function function =
+        new Function(
+            FUNC_SETPROPERTIESFORNONLOCKABLECTRT,
+            Arrays.<Type>asList(
+                new org.web3j.abi.datatypes.generated.Uint256(_nonLockableCtrtChainId),
+                new org.web3j.abi.datatypes.Address(160, _nonLockableCtrtAddr)),
+            Collections.<TypeReference<?>>emptyList());
+    return executeRemoteCallTransaction(function);
+  }
+
+  public byte[] setPropertiesForNonLockableCtrt_AsSignedCrosschainSubordinateTransaction(
+      BigInteger _nonLockableCtrtChainId,
+      String _nonLockableCtrtAddr,
+      final CrosschainContext crosschainContext)
+      throws IOException {
+    final Function function =
+        new Function(
+            FUNC_SETPROPERTIESFORNONLOCKABLECTRT,
+            Arrays.<Type>asList(
+                new org.web3j.abi.datatypes.generated.Uint256(_nonLockableCtrtChainId),
+                new org.web3j.abi.datatypes.Address(160, _nonLockableCtrtAddr)),
+            Collections.<TypeReference<?>>emptyList());
+    return createSignedSubordinateTransaction(function, crosschainContext);
+  }
+
+  public RemoteFunctionCall<TransactionReceipt>
+      setPropertiesForNonLockableCtrt_AsCrosschainTransaction(
+          BigInteger _nonLockableCtrtChainId,
+          String _nonLockableCtrtAddr,
+          final CrosschainContext crosschainContext) {
+    final Function function =
+        new Function(
+            FUNC_SETPROPERTIESFORNONLOCKABLECTRT,
+            Arrays.<Type>asList(
+                new org.web3j.abi.datatypes.generated.Uint256(_nonLockableCtrtChainId),
+                new org.web3j.abi.datatypes.Address(160, _nonLockableCtrtAddr)),
             Collections.<TypeReference<?>>emptyList());
     return executeRemoteCallCrosschainTransaction(function, crosschainContext);
   }

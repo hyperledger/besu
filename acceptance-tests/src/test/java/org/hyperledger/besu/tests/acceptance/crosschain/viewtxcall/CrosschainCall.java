@@ -18,9 +18,14 @@ import org.hyperledger.besu.tests.acceptance.crosschain.common.CrosschainAccepta
 import org.hyperledger.besu.tests.acceptance.crosschain.viewtxcall.generated.Bar2Ctrt;
 import org.hyperledger.besu.tests.acceptance.crosschain.viewtxcall.generated.BarCtrt;
 import org.hyperledger.besu.tests.acceptance.crosschain.viewtxcall.generated.FooCtrt;
+import org.hyperledger.besu.tests.acceptance.crosschain.viewtxcall.generated.LockableCtrt;
+import org.hyperledger.besu.tests.acceptance.crosschain.viewtxcall.generated.NonLockableCtrt;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Accounts;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.Cluster;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.crosschain.CrossIsLockableTransaction;
+
+import java.math.BigInteger;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -33,9 +38,13 @@ import org.web3j.protocol.besu.JsonRpc2_0Besu;
 import org.web3j.protocol.besu.response.crosschain.CrossIsLockedResponse;
 import org.web3j.protocol.core.DefaultBlockParameter;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
+import org.web3j.protocol.exceptions.ClientConnectionException;
 import org.web3j.tx.CrosschainContext;
 import org.web3j.tx.CrosschainContextGenerator;
 import org.web3j.tx.CrosschainTransactionManager;
+import org.web3j.tx.gas.ContractGasProvider;
+import org.web3j.tx.gas.DefaultGasProvider;
+import org.web3j.tx.gas.StaticGasProvider;
 
 /*
  * Two contracts - BarCtrt and FooCtrt are deployed on blockchains 1 and 2 respectively. Many tests are created
@@ -422,11 +431,11 @@ public class CrosschainCall extends CrosschainAcceptanceTestBase {
   }
 
   /*
-   * Same as the above test, but the Bar2Ctrt is deployed on chain 1.
+   * TODO Same as the above test, but the Bar2Ctrt is deployed on chain 1.
    * Currently this test does not work, because of the nonce issue. First, chain1 creates a crosschain transaction.
    * The leaf level subordinate transaction is also issued from chain1 later. Because there is only one sender
    * account per chain, we will have the transaction nonce the same for the both of the above transactions, which
-   * is a problem. We need to fix this later. TODO
+   * is a problem. We need to fix this later.
    */
   @Ignore
   public void doCCTxTxViewCallOn2Chains() throws Exception {
@@ -477,5 +486,121 @@ public class CrosschainCall extends CrosschainAcceptanceTestBase {
     // Check for the update of the innermost transaction
     waitForUnlock(bar2Ctrt.getContractAddress(), nodeOnBlockchain3);
     assertThat(bar2Ctrt.ttvflag().send().longValue()).isEqualTo(1);
+  }
+
+  /*
+   * Crosschain view on a non-lockable contract should fail
+   */
+  @Test
+  public void doCCViewOnNonLockableCtrt() throws Exception {
+    // Deploying NonLockableCtrt on blockchain2. Note that we are not using
+    // createLockableSmartContract. It means
+    // that we are deploying the contract in a non-lockable way.
+    NonLockableCtrt nonLockableCtrt =
+        nodeOnBlockchain2.execute(contractTransactions.createSmartContract(NonLockableCtrt.class));
+    CrossIsLockableTransaction isLockableObj =
+        crossTransactions.getIsLockable(nonLockableCtrt.getContractAddress());
+    boolean isLockable = nodeOnBlockchain1.execute(isLockableObj);
+    assertThat(isLockable).isFalse();
+
+    // Nonlockable contracts do not expose signing transactions/views methods. Hence, using a
+    // lockable contract's static method 'load' to reload the already deployed contract. Note
+    // that the 'lockableCtrt' is in fact 'nonLockableCtrt' because it is loading from
+    // nonLockableCtrt's address
+    ContractGasProvider freeGasProvider =
+        new StaticGasProvider(BigInteger.ZERO, DefaultGasProvider.GAS_LIMIT);
+    LockableCtrt lockableCtrt =
+        LockableCtrt.load(
+            nonLockableCtrt.getContractAddress(),
+            nodeOnBlockchain2.getJsonRpc(),
+            this.transactionManagerBlockchain2,
+            freeGasProvider);
+
+    // Calling FooCtrt.setPropertiesForNonLockableCtrt, a regular intrachain function call
+    barCtrt
+        .setPropertiesForNonLockableCtrt(
+            nodeOnBlockchain2.getChainId(), nonLockableCtrt.getContractAddress())
+        .send();
+
+    CrosschainContextGenerator ctxGen =
+        new CrosschainContextGenerator(nodeOnBlockchain1.getChainId());
+
+    // NonLockableCtrt.viewfn() is called by BarCtrt.callNonLockableCtrtView()
+    CrosschainContext ctx1 =
+        ctxGen.createCrosschainContext(
+            nodeOnBlockchain1.getChainId(), barCtrt.getContractAddress());
+    byte[] subView1 = lockableCtrt.viewfn_AsSignedCrosschainSubordinateView(ctx1);
+    byte[][] subTxView1 = new byte[][] {subView1};
+
+    CrosschainContext origTxCtx = ctxGen.createCrosschainContext(subTxView1);
+
+    try {
+      TransactionReceipt txReceipt =
+          barCtrt.callNonLockableCtrtView_AsCrosschainTransaction(origTxCtx).send();
+      if (!txReceipt.isStatusOK()) {
+        LOG.info("txReceipt details " + txReceipt.toString());
+        throw new Error(txReceipt.getStatus());
+      }
+    } catch (Exception e) {
+      assertThat(e).isInstanceOf(ClientConnectionException.class);
+    }
+  }
+
+  /*
+   * Crosschain transaction on a non-lockable contract should fail
+   */
+  @Test
+  public void doCCTxOnNonLockableCtrt() throws Exception {
+    // Deploying NonLockableCtrt on blockchain2. Note that we are not using
+    // createLockableSmartContract. It means
+    // that we are deploying the contract in a non-lockable way.
+    NonLockableCtrt nonLockableCtrt =
+        nodeOnBlockchain2.execute(contractTransactions.createSmartContract(NonLockableCtrt.class));
+    CrossIsLockableTransaction isLockableObj =
+        crossTransactions.getIsLockable(nonLockableCtrt.getContractAddress());
+    boolean isLockable = nodeOnBlockchain1.execute(isLockableObj);
+    assertThat(isLockable).isFalse();
+
+    // Nonlockable contracts do not expose signing transactions/views methods. Hence, using a
+    // lockable contract's static method 'load' to reload the already deployed contract. Note
+    // that the 'lockableCtrt' is in fact 'nonLockableCtrt' because it is loading from
+    // nonLockableCtrt's address
+    ContractGasProvider freeGasProvider =
+        new StaticGasProvider(BigInteger.ZERO, DefaultGasProvider.GAS_LIMIT);
+    LockableCtrt lockableCtrt =
+        LockableCtrt.load(
+            nonLockableCtrt.getContractAddress(),
+            nodeOnBlockchain2.getJsonRpc(),
+            this.transactionManagerBlockchain2,
+            freeGasProvider);
+
+    // Calling FooCtrt.setPropertiesForNonLockableCtrt, a regular intrachain function call
+    barCtrt
+        .setPropertiesForNonLockableCtrt(
+            nodeOnBlockchain2.getChainId(), nonLockableCtrt.getContractAddress())
+        .send();
+
+    CrosschainContextGenerator ctxGen =
+        new CrosschainContextGenerator(nodeOnBlockchain1.getChainId());
+
+    // NonLockableCtrt.updateState() is called by BarCtrt.callNonLockableCtrtView()
+    CrosschainContext ctx1 =
+        ctxGen.createCrosschainContext(
+            nodeOnBlockchain1.getChainId(), barCtrt.getContractAddress());
+    byte[] subTx1 = lockableCtrt.updateState_AsSignedCrosschainSubordinateTransaction(ctx1);
+    byte[][] subTxView1 = new byte[][] {subTx1};
+
+    CrosschainContext origTxCtx = ctxGen.createCrosschainContext(subTxView1);
+
+    try {
+      TransactionReceipt txReceipt =
+          barCtrt.callNonLockableCtrtTx_AsCrosschainTransaction(origTxCtx).send();
+      if (!txReceipt.isStatusOK()) {
+        LOG.info("txReceipt details " + txReceipt.toString());
+        throw new Error(txReceipt.getStatus());
+      }
+    } catch (Exception e) {
+      assertThat(e).isInstanceOf(ClientConnectionException.class);
+    }
   }
 }
