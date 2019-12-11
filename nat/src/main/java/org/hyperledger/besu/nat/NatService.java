@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.nat;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import org.hyperledger.besu.nat.core.NatManager;
 import org.hyperledger.besu.nat.core.domain.NatPortMapping;
 import org.hyperledger.besu.nat.core.domain.NatServiceType;
@@ -89,6 +87,8 @@ public class NatService {
       } catch (Exception e) {
         LOG.warn("Caught exception while trying to start the manager or service", e);
       }
+    } else {
+      LOG.info("No NAT environment detected so no service could be started");
     }
   }
 
@@ -100,6 +100,8 @@ public class NatService {
       } catch (Exception e) {
         LOG.warn("Caught exception while trying to stop the manager or service", e);
       }
+    } else {
+      LOG.info("No NAT environment detected so no service could be stopped");
     }
   }
 
@@ -176,23 +178,5 @@ public class NatService {
    */
   private NatMethod retrieveNatMethod(final Optional<NatManager> natManager) {
     return natManager.map(NatManager::getNatMethod).orElse(NatMethod.NONE);
-  }
-
-  public static Builder builder() {
-    return new Builder();
-  }
-
-  public static class Builder {
-    private Optional<NatManager> natManager = Optional.empty();
-
-    public Builder natManager(final Optional<NatManager> natManager) {
-      checkNotNull(natManager);
-      this.natManager = natManager;
-      return this;
-    }
-
-    public NatService build() {
-      return new NatService(natManager);
-    }
   }
 }

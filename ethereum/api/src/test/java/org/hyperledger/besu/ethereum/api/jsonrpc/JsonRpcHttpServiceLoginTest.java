@@ -104,7 +104,7 @@ public class JsonRpcHttpServiceLoginTest {
   protected static JWTAuth jwtAuth;
   protected static String authPermissionsConfigFilePath = "JsonRpcHttpService/auth.toml";
   protected final JsonRpcTestHelper testHelper = new JsonRpcTestHelper();
-  protected static final NatService natService = NatService.builder().build();
+  protected static final NatService natService = new NatService(Optional.empty());
 
   @BeforeClass
   public static void initServerAndClient() throws Exception {

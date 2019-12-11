@@ -40,6 +40,7 @@ import org.hyperledger.besu.nat.NatService;
 
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import io.vertx.core.Vertx;
@@ -59,7 +60,7 @@ public class RetestethService {
     retestethContext = new RetestethContext();
 
     final BlockResultFactory blockResult = new BlockResultFactory();
-    final NatService natService = NatService.builder().build();
+    final NatService natService = new NatService(Optional.empty());
 
     final Map<String, JsonRpcMethod> jsonRpcMethods =
         mapOf(

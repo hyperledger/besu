@@ -225,8 +225,7 @@ public final class DefaultP2PNetworkTest {
     when(upnpNatManager.queryExternalIPAddress())
         .thenReturn(CompletableFuture.completedFuture(externalIp));
 
-    final NatService natService =
-        Mockito.spy(NatService.builder().natManager(Optional.of(upnpNatManager)).build());
+    final NatService natService = Mockito.spy(new NatService(Optional.of(upnpNatManager)));
     final P2PNetwork network = builder().natService(natService).build();
 
     network.start();

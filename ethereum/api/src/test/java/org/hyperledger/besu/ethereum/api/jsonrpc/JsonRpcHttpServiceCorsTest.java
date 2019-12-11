@@ -21,6 +21,7 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.nat.NatService;
 
 import java.util.HashMap;
+import java.util.Optional;
 
 import com.google.common.collect.Lists;
 import io.vertx.core.Vertx;
@@ -189,7 +190,7 @@ public class JsonRpcHttpServiceCorsTest {
     if (corsAllowedDomains != null) {
       config.setCorsAllowedDomains(Lists.newArrayList(corsAllowedDomains));
     }
-    final NatService natService = NatService.builder().build();
+    final NatService natService = new NatService(Optional.empty());
 
     final JsonRpcHttpService jsonRpcHttpService =
         new JsonRpcHttpService(

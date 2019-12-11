@@ -395,7 +395,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
     private MaintainedPeers maintainedPeers = new MaintainedPeers();
     private PeerPermissions peerPermissions = PeerPermissions.noop();
 
-    private NatService natService = NatService.builder().build();
+    private NatService natService = new NatService(Optional.empty());
 
     private MetricsSystem metricsSystem;
 

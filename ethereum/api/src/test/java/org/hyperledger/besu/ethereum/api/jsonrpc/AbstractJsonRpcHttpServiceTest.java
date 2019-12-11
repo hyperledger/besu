@@ -139,7 +139,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
     supportedCapabilities.add(EthProtocol.ETH62);
     supportedCapabilities.add(EthProtocol.ETH63);
 
-    final NatService natService = NatService.builder().build();
+    final NatService natService = new NatService(Optional.empty());
 
     return new JsonRpcMethodsFactory()
         .methods(
@@ -173,7 +173,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
 
     final JsonRpcConfiguration config = JsonRpcConfiguration.createDefault();
     final Map<String, JsonRpcMethod> methods = getRpcMethods(config, blockchainSetupUtil);
-    final NatService natService = NatService.builder().build();
+    final NatService natService = new NatService(Optional.empty());
 
     config.setPort(0);
     service =
