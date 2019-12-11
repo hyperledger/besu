@@ -87,14 +87,16 @@ public class PrivacyController {
     this.privateMarkerTransactionFactory = privateMarkerTransactionFactory;
   }
 
-  public String sendTransaction(final PrivateTransaction privateTransaction) {
+  public PrivacyTransactionResponse sendTransaction(final PrivateTransaction privateTransaction) {
     final SendRequest sendRequest = createSendRequest(privateTransaction);
     final SendResponse sendResponse;
 
     try {
       LOG.trace("Storing private transaction in enclave");
       sendResponse = enclave.send(sendRequest);
-      return sendResponse.getKey();
+      final String enclaveKey = sendResponse.getKey();
+      final String privacyGroup = getPrivacyGroup(enclaveKey, privateTransaction);
+      return new PrivacyTransactionResponse(enclaveKey, privacyGroup);
     } catch (Exception e) {
       LOG.error("Failed to store private transaction in enclave", e);
       throw e;
@@ -121,25 +123,6 @@ public class PrivacyController {
 
   public PrivacyGroup[] findPrivacyGroup(final String[] addresses) {
     return enclave.findPrivacyGroup(new FindPrivacyGroupRequest(addresses));
-  }
-
-  public String getPrivacyGroup(final String key, final PrivateTransaction privateTransaction) {
-    if (privateTransaction.getPrivacyGroupId().isPresent()) {
-      return BytesValues.asBase64String(privateTransaction.getPrivacyGroupId().get());
-    }
-    final ReceiveRequest receiveRequest =
-        new ReceiveRequest(key, BytesValues.asBase64String(privateTransaction.getPrivateFrom()));
-    LOG.debug(
-        "Getting privacy group for {}",
-        BytesValues.asBase64String(privateTransaction.getPrivateFrom()));
-    final ReceiveResponse receiveResponse;
-    try {
-      receiveResponse = enclave.receive(receiveRequest);
-      return receiveResponse.getPrivacyGroupId();
-    } catch (final RuntimeException e) {
-      LOG.error("Failed to retrieve private transaction in enclave", e);
-      throw e;
-    }
   }
 
   public Transaction createPrivacyMarkerTransaction(
@@ -228,6 +211,25 @@ public class PrivacyController {
 
       return new SendRequestLegacy(
           payload, BytesValues.asBase64String(privateTransaction.getPrivateFrom()), privateFor);
+    }
+  }
+
+  private String getPrivacyGroup(final String key, final PrivateTransaction privateTransaction) {
+    if (privateTransaction.getPrivacyGroupId().isPresent()) {
+      return BytesValues.asBase64String(privateTransaction.getPrivacyGroupId().get());
+    }
+    final ReceiveRequest receiveRequest =
+        new ReceiveRequest(key, BytesValues.asBase64String(privateTransaction.getPrivateFrom()));
+    LOG.debug(
+        "Getting privacy group for {}",
+        BytesValues.asBase64String(privateTransaction.getPrivateFrom()));
+    final ReceiveResponse receiveResponse;
+    try {
+      receiveResponse = enclave.receive(receiveRequest);
+      return receiveResponse.getPrivacyGroupId();
+    } catch (final RuntimeException e) {
+      LOG.error("Failed to retrieve private transaction in enclave", e);
+      throw e;
     }
   }
 }

@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
+import org.hyperledger.besu.ethereum.privacy.PrivacyTransactionResponse;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.util.bytes.BytesValues;
 
@@ -50,18 +51,9 @@ public class PrivDistributeRawTransaction extends PrivacySendTransaction {
       return e.getResponse();
     }
 
-    final String enclaveKey;
+    final PrivacyTransactionResponse privacyTransactionResponse;
     try {
-      enclaveKey = privacyController.sendTransaction(privateTransaction);
-    } catch (final Exception e) {
-      return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(),
-          JsonRpcEnclaveErrorConverter.convertEnclaveInvalidReason(e.getMessage()));
-    }
-
-    final String privacyGroupId;
-    try {
-      privacyGroupId = privacyController.getPrivacyGroup(enclaveKey, privateTransaction);
+      privacyTransactionResponse = privacyController.sendTransaction(privateTransaction);
     } catch (final Exception e) {
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(),
@@ -71,10 +63,10 @@ public class PrivDistributeRawTransaction extends PrivacySendTransaction {
     return validateAndExecute(
         requestContext,
         privateTransaction,
-        privacyGroupId,
+        privacyTransactionResponse.getPrivacyGroup(),
         () ->
             new JsonRpcSuccessResponse(
                 requestContext.getRequest().getId(),
-                BytesValues.fromBase64(enclaveKey).toString()));
+                BytesValues.fromBase64(privacyTransactionResponse.getEnclaveKey()).toString()));
   }
 }

@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
+import org.hyperledger.besu.ethereum.privacy.PrivacyTransactionResponse;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 
 public class EeaSendRawTransaction extends PrivacySendTransaction {
@@ -51,18 +52,9 @@ public class EeaSendRawTransaction extends PrivacySendTransaction {
       return e.getResponse();
     }
 
-    final String enclaveKey;
+    final PrivacyTransactionResponse privacyTransactionResponse;
     try {
-      enclaveKey = privacyController.sendTransaction(privateTransaction);
-    } catch (final Exception e) {
-      return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(),
-          JsonRpcEnclaveErrorConverter.convertEnclaveInvalidReason(e.getMessage()));
-    }
-
-    final String privacyGroupId;
-    try {
-      privacyGroupId = privacyController.getPrivacyGroup(enclaveKey, privateTransaction);
+      privacyTransactionResponse = privacyController.sendTransaction(privateTransaction);
     } catch (final Exception e) {
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(),
@@ -72,10 +64,11 @@ public class EeaSendRawTransaction extends PrivacySendTransaction {
     return validateAndExecute(
         requestContext,
         privateTransaction,
-        privacyGroupId,
+        privacyTransactionResponse.getPrivacyGroup(),
         () -> {
           final Transaction privacyMarkerTransaction =
-              privacyController.createPrivacyMarkerTransaction(enclaveKey, privateTransaction);
+              privacyController.createPrivacyMarkerTransaction(
+                  privacyTransactionResponse.getEnclaveKey(), privateTransaction);
           return transactionPool
               .addLocalTransaction(privacyMarkerTransaction)
               .either(
