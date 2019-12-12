@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason.INCORRECT_PRIVATE_NONCE;
 import static org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason.PRIVATE_NONCE_TOO_LOW;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -28,14 +29,9 @@ import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveException;
-import org.hyperledger.besu.enclave.types.CreatePrivacyGroupRequest;
-import org.hyperledger.besu.enclave.types.DeletePrivacyGroupRequest;
-import org.hyperledger.besu.enclave.types.FindPrivacyGroupRequest;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.enclave.types.PrivacyGroup.Type;
-import org.hyperledger.besu.enclave.types.ReceiveRequest;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
-import org.hyperledger.besu.enclave.types.SendRequest;
 import org.hyperledger.besu.enclave.types.SendResponse;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -59,7 +55,6 @@ import com.google.common.collect.Lists;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -104,14 +99,15 @@ public class PrivacyControllerTest {
     Enclave mockEnclave = mock(Enclave.class);
     SendResponse response = new SendResponse(TRANSACTION_KEY);
     ReceiveResponse receiveResponse = new ReceiveResponse(new byte[0], "mock");
-    when(mockEnclave.send(any(SendRequest.class))).thenReturn(response);
-    when(mockEnclave.receive(any(ReceiveRequest.class))).thenReturn(receiveResponse);
+    when(mockEnclave.sendBesu(any(), any(), any())).thenReturn(response);
+    when(mockEnclave.sendLegacy(any(), any(), any())).thenReturn(response);
+    when(mockEnclave.receive(any(), any())).thenReturn(receiveResponse);
     return mockEnclave;
   }
 
   private Enclave brokenMockEnclave() {
     Enclave mockEnclave = mock(Enclave.class);
-    when(mockEnclave.send(any(SendRequest.class))).thenThrow(EnclaveException.class);
+    when(mockEnclave.sendLegacy(any(), any(), any())).thenThrow(EnclaveException.class);
     return mockEnclave;
   }
 
@@ -242,23 +238,18 @@ public class PrivacyControllerTest {
 
   @Test
   public void retrievesTransaction() {
-    final ArgumentCaptor<ReceiveRequest> receiveRequestCaptor =
-        ArgumentCaptor.forClass(ReceiveRequest.class);
-    when(enclave.receive(receiveRequestCaptor.capture()))
+    when(enclave.receive(anyString(), anyString()))
         .thenReturn(new ReceiveResponse(PAYLOAD, PRIVACY_GROUP_ID));
 
     final ReceiveResponse receiveResponse = privacyController.retrieveTransaction(TRANSACTION_KEY);
 
     assertThat(receiveResponse.getPayload()).isEqualTo(PAYLOAD);
     assertThat(receiveResponse.getPrivacyGroupId()).isEqualTo(PRIVACY_GROUP_ID);
-    assertThat(receiveRequestCaptor.getValue().getKey()).isEqualTo(TRANSACTION_KEY);
-    assertThat(receiveRequestCaptor.getValue().getTo()).isEqualTo(enclavePublicKey);
+    verify(enclave).receive(TRANSACTION_KEY, enclavePublicKey);
   }
 
   @Test
   public void createsPrivacyGroup() {
-    final ArgumentCaptor<CreatePrivacyGroupRequest> createPrivacyGroupRequestArgumentCaptor =
-        ArgumentCaptor.forClass(CreatePrivacyGroupRequest.class);
     final PrivacyGroup enclavePrivacyGroupResponse =
         new PrivacyGroup(
             PRIVACY_GROUP_ID,
@@ -266,7 +257,7 @@ public class PrivacyControllerTest {
             PRIVACY_GROUP_NAME,
             PRIVACY_GROUP_DESCRIPTION,
             PRIVACY_GROUP_ADDRESSES);
-    when(enclave.createPrivacyGroup(createPrivacyGroupRequestArgumentCaptor.capture()))
+    when(enclave.createPrivacyGroup(any(), any(), any(), any()))
         .thenReturn(enclavePrivacyGroupResponse);
 
     final PrivacyGroup privacyGroup =
@@ -274,33 +265,26 @@ public class PrivacyControllerTest {
             PRIVACY_GROUP_ADDRESSES, PRIVACY_GROUP_NAME, PRIVACY_GROUP_DESCRIPTION);
 
     assertThat(privacyGroup).isEqualToComparingFieldByField(enclavePrivacyGroupResponse);
-    final CreatePrivacyGroupRequest privacyGroupRequest =
-        createPrivacyGroupRequestArgumentCaptor.getValue();
-    assertThat(privacyGroupRequest.name()).isEqualTo(PRIVACY_GROUP_NAME);
-    assertThat(privacyGroupRequest.description()).isEqualTo(PRIVACY_GROUP_DESCRIPTION);
-    assertThat(privacyGroupRequest.from()).isEqualTo(enclavePublicKey);
-    assertThat(privacyGroupRequest.addresses()).isEqualTo(PRIVACY_GROUP_ADDRESSES);
+    verify(enclave)
+        .createPrivacyGroup(
+            PRIVACY_GROUP_ADDRESSES,
+            enclavePublicKey,
+            PRIVACY_GROUP_NAME,
+            PRIVACY_GROUP_DESCRIPTION);
   }
 
   @Test
   public void deletesPrivacyGroup() {
-    final ArgumentCaptor<DeletePrivacyGroupRequest> deleteRequestCaptor =
-        ArgumentCaptor.forClass(DeletePrivacyGroupRequest.class);
-
-    when(enclave.deletePrivacyGroup(deleteRequestCaptor.capture())).thenReturn(PRIVACY_GROUP_ID);
+    when(enclave.deletePrivacyGroup(anyString(), anyString())).thenReturn(PRIVACY_GROUP_ID);
 
     final String deletedPrivacyGroupId = privacyController.deletePrivacyGroup(PRIVACY_GROUP_ID);
 
     assertThat(deletedPrivacyGroupId).isEqualTo(PRIVACY_GROUP_ID);
-    assertThat(deleteRequestCaptor.getValue().from()).isEqualTo(enclavePublicKey);
-    assertThat(deleteRequestCaptor.getValue().privacyGroupId()).isEqualTo(PRIVACY_GROUP_ID);
+    verify(enclave).deletePrivacyGroup(PRIVACY_GROUP_ID, enclavePublicKey);
   }
 
   @Test
   public void findsPrivacyGroup() {
-    final ArgumentCaptor<FindPrivacyGroupRequest> findRequestCaptor =
-        ArgumentCaptor.forClass(FindPrivacyGroupRequest.class);
-
     final PrivacyGroup privacyGroup =
         new PrivacyGroup(
             PRIVACY_GROUP_ID,
@@ -308,14 +292,13 @@ public class PrivacyControllerTest {
             PRIVACY_GROUP_NAME,
             PRIVACY_GROUP_DESCRIPTION,
             PRIVACY_GROUP_ADDRESSES);
-    when(enclave.findPrivacyGroup(findRequestCaptor.capture()))
-        .thenReturn(new PrivacyGroup[] {privacyGroup});
+    when(enclave.findPrivacyGroup(any())).thenReturn(new PrivacyGroup[] {privacyGroup});
 
     final PrivacyGroup[] privacyGroups =
         privacyController.findPrivacyGroup(PRIVACY_GROUP_ADDRESSES);
     assertThat(privacyGroups).hasSize(1);
     assertThat(privacyGroups[0]).isEqualToComparingFieldByField(privacyGroup);
-    assertThat(findRequestCaptor.getValue().addresses()).isEqualTo(PRIVACY_GROUP_ADDRESSES);
+    verify(enclave).findPrivacyGroup(PRIVACY_GROUP_ADDRESSES);
   }
 
   @Test
@@ -327,18 +310,14 @@ public class PrivacyControllerTest {
           new PrivacyGroup("Group1", Type.LEGACY, "Group1_Name", "Group1_Desc", new String[0]),
         };
 
-    final ArgumentCaptor<FindPrivacyGroupRequest> groupMembersCaptor =
-        ArgumentCaptor.forClass(FindPrivacyGroupRequest.class);
-
-    when(enclave.findPrivacyGroup(groupMembersCaptor.capture())).thenReturn(returnedGroups);
+    when(enclave.findPrivacyGroup(any())).thenReturn(returnedGroups);
     when(account.getNonce()).thenReturn(8L);
 
     final long nonce =
         privacyController.determineNonce("privateFrom", new String[] {"first", "second"}, address);
 
     assertThat(nonce).isEqualTo(reportedNonce);
-    assertThat(groupMembersCaptor.getValue().addresses())
-        .containsAll(Lists.newArrayList("privateFrom", "first", "second"));
+    verify(enclave).findPrivacyGroup(new String[] {"first", "second", "privateFrom"});
   }
 
   @Test
@@ -347,17 +326,13 @@ public class PrivacyControllerTest {
     final Address address = Address.fromHexString("55");
     final PrivacyGroup[] returnedGroups = new PrivacyGroup[0];
 
-    final ArgumentCaptor<FindPrivacyGroupRequest> groupMembersCaptor =
-        ArgumentCaptor.forClass(FindPrivacyGroupRequest.class);
-
-    when(enclave.findPrivacyGroup(groupMembersCaptor.capture())).thenReturn(returnedGroups);
+    when(enclave.findPrivacyGroup(any())).thenReturn(returnedGroups);
 
     final long nonce =
         privacyController.determineNonce("privateFrom", new String[] {"first", "second"}, address);
 
     assertThat(nonce).isEqualTo(reportedNonce);
-    assertThat(groupMembersCaptor.getValue().addresses())
-        .containsAll(Lists.newArrayList("privateFrom", "first", "second"));
+    verify(enclave).findPrivacyGroup(new String[] {"first", "second", "privateFrom"});
   }
 
   @Test

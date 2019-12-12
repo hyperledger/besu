@@ -15,16 +15,9 @@
 package org.hyperledger.besu.ethereum.privacy;
 
 import org.hyperledger.besu.enclave.Enclave;
-import org.hyperledger.besu.enclave.types.CreatePrivacyGroupRequest;
-import org.hyperledger.besu.enclave.types.DeletePrivacyGroupRequest;
-import org.hyperledger.besu.enclave.types.FindPrivacyGroupRequest;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.enclave.types.PrivacyGroup.Type;
-import org.hyperledger.besu.enclave.types.ReceiveRequest;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
-import org.hyperledger.besu.enclave.types.SendRequest;
-import org.hyperledger.besu.enclave.types.SendRequestBesu;
-import org.hyperledger.besu.enclave.types.SendRequestLegacy;
 import org.hyperledger.besu.enclave.types.SendResponse;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -89,10 +82,9 @@ public class PrivacyController {
   }
 
   public SendTransactionResponse sendTransaction(final PrivateTransaction privateTransaction) {
-    final SendRequest sendRequest = createSendRequest(privateTransaction);
     try {
       LOG.trace("Storing private transaction in enclave");
-      final SendResponse sendResponse = enclave.send(sendRequest);
+      final SendResponse sendResponse = sendRequest(privateTransaction);
       final String enclaveKey = sendResponse.getKey();
       if (privateTransaction.getPrivacyGroupId().isPresent()) {
         final String privacyGroupId =
@@ -110,25 +102,20 @@ public class PrivacyController {
   }
 
   public ReceiveResponse retrieveTransaction(final String enclaveKey) {
-    final ReceiveRequest receiveRequest = new ReceiveRequest(enclaveKey, enclavePublicKey);
-    return enclave.receive(receiveRequest);
+    return enclave.receive(enclaveKey, enclavePublicKey);
   }
 
   public PrivacyGroup createPrivacyGroup(
       final String[] addresses, final String name, final String description) {
-    final CreatePrivacyGroupRequest createPrivacyGroupRequest =
-        new CreatePrivacyGroupRequest(addresses, enclavePublicKey, name, description);
-    return enclave.createPrivacyGroup(createPrivacyGroupRequest);
+    return enclave.createPrivacyGroup(addresses, enclavePublicKey, name, description);
   }
 
   public String deletePrivacyGroup(final String privacyGroupId) {
-    DeletePrivacyGroupRequest deletePrivacyGroupRequest =
-        new DeletePrivacyGroupRequest(privacyGroupId, enclavePublicKey);
-    return enclave.deletePrivacyGroup(deletePrivacyGroupRequest);
+    return enclave.deletePrivacyGroup(privacyGroupId, enclavePublicKey);
   }
 
   public PrivacyGroup[] findPrivacyGroup(final String[] addresses) {
-    return enclave.findPrivacyGroup(new FindPrivacyGroupRequest(addresses));
+    return enclave.findPrivacyGroup(addresses);
   }
 
   public Transaction createPrivacyMarkerTransaction(
@@ -146,8 +133,8 @@ public class PrivacyController {
       final String privateFrom, final String[] privateFor, final Address address) {
     final String[] groupMembers = Arrays.append(privateFor, privateFrom);
 
-    final FindPrivacyGroupRequest request = new FindPrivacyGroupRequest(groupMembers);
-    final List<PrivacyGroup> matchingGroups = Lists.newArrayList(enclave.findPrivacyGroup(request));
+    final List<PrivacyGroup> matchingGroups =
+        Lists.newArrayList(enclave.findPrivacyGroup(groupMembers));
 
     final List<PrivacyGroup> legacyGroups =
         matchingGroups.stream()
@@ -192,13 +179,13 @@ public class PrivacyController {
             Account.DEFAULT_NONCE);
   }
 
-  private SendRequest createSendRequest(final PrivateTransaction privateTransaction) {
+  private SendResponse sendRequest(final PrivateTransaction privateTransaction) {
     final BytesValueRLPOutput bvrlp = new BytesValueRLPOutput();
     privateTransaction.writeTo(bvrlp);
     final String payload = BytesValues.asBase64String(bvrlp.encoded());
 
     if (privateTransaction.getPrivacyGroupId().isPresent()) {
-      return new SendRequestBesu(
+      return enclave.sendBesu(
           payload,
           enclavePublicKey,
           BytesValues.asBase64String(privateTransaction.getPrivacyGroupId().get()));
@@ -211,19 +198,15 @@ public class PrivacyController {
       if (privateFor.isEmpty()) {
         privateFor.add(BytesValues.asBase64String(privateTransaction.getPrivateFrom()));
       }
-
-      return new SendRequestLegacy(
+      return enclave.sendLegacy(
           payload, BytesValues.asBase64String(privateTransaction.getPrivateFrom()), privateFor);
     }
   }
 
   private String getPrivacyGroupId(final String key, final String privateFrom) {
-    final ReceiveRequest receiveRequest = new ReceiveRequest(key, privateFrom);
     LOG.debug("Getting privacy group for {}", privateFrom);
-    final ReceiveResponse receiveResponse;
     try {
-      receiveResponse = enclave.receive(receiveRequest);
-      return receiveResponse.getPrivacyGroupId();
+      return enclave.receive(key, privateFrom).getPrivacyGroupId();
     } catch (final RuntimeException e) {
       LOG.error("Failed to retrieve private transaction in enclave", e);
       throw e;

@@ -22,11 +22,13 @@ import org.hyperledger.besu.enclave.types.FindPrivacyGroupRequest;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.enclave.types.ReceiveRequest;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
-import org.hyperledger.besu.enclave.types.SendRequest;
+import org.hyperledger.besu.enclave.types.SendRequestBesu;
+import org.hyperledger.besu.enclave.types.SendRequestLegacy;
 import org.hyperledger.besu.enclave.types.SendResponse;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -54,42 +56,72 @@ public class Enclave {
     }
   }
 
-  public SendResponse send(final SendRequest content) {
+  public SendResponse sendLegacy(
+      final String payload, final String privateFrom, final List<String> privateFor) {
+    final SendRequestLegacy sendRequestLegacy =
+        new SendRequestLegacy(payload, privateFrom, privateFor);
     return post(
         JSON,
-        content,
+        sendRequestLegacy,
         "/send",
         (statusCode, body) -> handleJsonResponse(statusCode, body, SendResponse.class));
   }
 
-  public ReceiveResponse receive(final ReceiveRequest content) {
+  public SendResponse sendBesu(
+      final String payload, final String privateFrom, final String privacyGroupId) {
+    final SendRequestBesu sendRequestBesu =
+        new SendRequestBesu(payload, privateFrom, privacyGroupId);
+    return post(
+        JSON,
+        sendRequestBesu,
+        "/send",
+        (statusCode, body) -> handleJsonResponse(statusCode, body, SendResponse.class));
+  }
+
+  public ReceiveResponse receive(final String enclaveKey) {
+    final ReceiveRequest receiveRequest = new ReceiveRequest(enclaveKey);
     return post(
         ORION,
-        content,
+        receiveRequest,
         "/receive",
         (statusCode, body) -> handleJsonResponse(statusCode, body, ReceiveResponse.class));
   }
 
-  public PrivacyGroup createPrivacyGroup(final CreatePrivacyGroupRequest content) {
+  public ReceiveResponse receive(final String enclaveKey, final String to) {
+    final ReceiveRequest receiveRequest = new ReceiveRequest(enclaveKey, to);
+    return post(
+        ORION,
+        receiveRequest,
+        "/receive",
+        (statusCode, body) -> handleJsonResponse(statusCode, body, ReceiveResponse.class));
+  }
+
+  public PrivacyGroup createPrivacyGroup(
+      final String[] addresses, final String from, final String name, final String description) {
+    final CreatePrivacyGroupRequest createPrivacyGroupRequest =
+        new CreatePrivacyGroupRequest(addresses, from, name, description);
     return post(
         JSON,
-        content,
+        createPrivacyGroupRequest,
         "/createPrivacyGroup",
         (statusCode, body) -> handleJsonResponse(statusCode, body, PrivacyGroup.class));
   }
 
-  public String deletePrivacyGroup(final DeletePrivacyGroupRequest content) {
+  public String deletePrivacyGroup(final String privacyGroupId, final String from) {
+    DeletePrivacyGroupRequest deletePrivacyGroupRequest =
+        new DeletePrivacyGroupRequest(privacyGroupId, from);
     return post(
         JSON,
-        content,
+        deletePrivacyGroupRequest,
         "/deletePrivacyGroup",
         (statusCode, body) -> handleJsonResponse(statusCode, body, String.class));
   }
 
-  public PrivacyGroup[] findPrivacyGroup(final FindPrivacyGroupRequest content) {
+  public PrivacyGroup[] findPrivacyGroup(final String[] addresses) {
+    final FindPrivacyGroupRequest findPrivacyGroupRequest = new FindPrivacyGroupRequest(addresses);
     return post(
         JSON,
-        content,
+        findPrivacyGroupRequest,
         "/findPrivacyGroup",
         (statusCode, body) -> handleJsonResponse(statusCode, body, PrivacyGroup[].class));
   }
