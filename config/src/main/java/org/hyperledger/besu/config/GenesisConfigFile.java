@@ -15,7 +15,7 @@
 package org.hyperledger.besu.config;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toUnmodifiableList;
 import static org.hyperledger.besu.config.JsonUtil.normalizeKeys;
 
 import java.io.IOException;
@@ -138,12 +138,13 @@ public class GenesisConfigFile {
         .flatMap(
             node ->
                 Streams.stream(node.fieldNames())
-                    .filter(name -> !name.toLowerCase().equals("chainid"))
+                    .map(String::toLowerCase)
+                    .filter(name -> !name.equals("chainid"))
                     .filter(name -> node.get(name).canConvertToLong())
                     .filter(name -> name.contains("block"))
                     .map(name -> node.get(name).asLong()))
-        .distinct()
-        .collect(toList());
+        .sorted()
+        .collect(toUnmodifiableList());
   }
 
   private String getRequiredString(final String key) {

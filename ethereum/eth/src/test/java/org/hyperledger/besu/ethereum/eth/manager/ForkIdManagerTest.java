@@ -21,9 +21,8 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.util.bytes.BytesValue;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
+import java.util.Collections;
 import java.util.List;
 
 import org.junit.Test;
@@ -35,7 +34,8 @@ public class ForkIdManagerTest {
 
   @Test
   public void checkItFunctionsWithPresentBehavior() {
-    ForkIdManager forkIdManager = new ForkIdManager(Hash.fromHexString(mainnetGenHash), null, null);
+    ForkIdManager forkIdManager =
+        new ForkIdManager(Hash.fromHexString(mainnetGenHash), Collections.emptyList(), null);
     assertThat(forkIdManager.peerCheck(Hash.fromHexString(mainnetGenHash))).isFalse();
   }
 
@@ -53,14 +53,8 @@ public class ForkIdManagerTest {
     List<Long> list = Arrays.asList(forksMainnet);
     ForkIdManager forkIdManager =
         ForkIdManager.buildCollection(Hash.fromHexString(mainnetGenHash), list);
-    Iterator<ForkIdManager.ForkId> entries =
-        new ArrayList<>(forkIdManager.getForkAndHashList()).iterator();
-    for (ForkIdManager.ForkId id : checkIds) {
-      if (!entries.hasNext()) {
-        break;
-      }
-      assertThat(entries.next().equals(id)).isTrue();
-    }
+    List<ForkIdManager.ForkId> entries = forkIdManager.getForkAndHashList();
+    assertThat(entries).containsExactly(checkIds);
   }
 
   @Test
@@ -77,14 +71,9 @@ public class ForkIdManagerTest {
     };
     List<Long> list = Arrays.asList(forks);
     ForkIdManager forkIdManager = ForkIdManager.buildCollection(Hash.fromHexString(genHash), list);
-    Iterator<ForkIdManager.ForkId> entries =
-        new ArrayList<>(forkIdManager.getForkAndHashList()).iterator();
-    for (ForkIdManager.ForkId id : checkIds) {
-      if (!entries.hasNext()) {
-        break;
-      }
-      assertThat(entries.next().equals(id)).isTrue();
-    }
+    List<ForkIdManager.ForkId> entries = forkIdManager.getForkAndHashList();
+
+    assertThat(entries).containsExactly(checkIds);
   }
 
   @Test
@@ -103,14 +92,9 @@ public class ForkIdManagerTest {
     };
     List<Long> list = Arrays.asList(forks);
     ForkIdManager forkIdManager = ForkIdManager.buildCollection(Hash.fromHexString(genHash), list);
-    Iterator<ForkIdManager.ForkId> entries =
-        new ArrayList<>(forkIdManager.getForkAndHashList()).iterator();
-    for (ForkIdManager.ForkId id : checkIds) {
-      if (!entries.hasNext()) {
-        break;
-      }
-      assertThat(entries.next().equals(id)).isTrue();
-    }
+    List<ForkIdManager.ForkId> entries = forkIdManager.getForkAndHashList();
+
+    assertThat(entries).containsExactly(checkIds);
   }
 
   @Test

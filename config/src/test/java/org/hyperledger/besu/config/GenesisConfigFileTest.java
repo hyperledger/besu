@@ -16,8 +16,11 @@ package org.hyperledger.besu.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.hyperledger.besu.config.GenesisConfigFile.fromConfig;
 
+import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
@@ -25,6 +28,9 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.io.Resources;
 import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
 import org.junit.Test;
 
@@ -32,7 +38,7 @@ public class GenesisConfigFileTest {
 
   private static final BigInteger MAINNET_CHAIN_ID = BigInteger.ONE;
   private static final BigInteger DEVELOPMENT_CHAIN_ID = BigInteger.valueOf(2018);
-  private static final GenesisConfigFile EMPTY_CONFIG = GenesisConfigFile.fromConfig("{}");
+  private static final GenesisConfigFile EMPTY_CONFIG = fromConfig("{}");
 
   @Test
   public void shouldLoadMainnetConfigFile() {
@@ -143,7 +149,7 @@ public class GenesisConfigFileTest {
   @Test
   public void shouldGetAllocations() {
     final GenesisConfigFile config =
-        GenesisConfigFile.fromConfig(
+        fromConfig(
             "{"
                 + "  \"alloc\": {"
                 + "    \"fe3b557e8fb62b89f4916b721be55ceb828dbd73\": {"
@@ -193,14 +199,14 @@ public class GenesisConfigFileTest {
 
   @Test
   public void shouldGetEmptyAllocationsWhenAllocNotPresent() {
-    final GenesisConfigFile config = GenesisConfigFile.fromConfig("{}");
+    final GenesisConfigFile config = fromConfig("{}");
     assertThat(config.streamAllocations()).isEmpty();
   }
 
   @Test
   public void shouldGetLargeChainId() {
     final GenesisConfigFile config =
-        GenesisConfigFile.fromConfig(
+        fromConfig(
             "{\"config\": { \"chainId\": 31415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679821480865132823066470938446095 }}");
     assertThat(config.getConfigOptions().getChainId())
         .contains(
@@ -212,7 +218,7 @@ public class GenesisConfigFileTest {
   public void mustNotAcceptComments() {
     assertThatThrownBy(
             () ->
-                GenesisConfigFile.fromConfig(
+                fromConfig(
                     "{\"config\": { \"chainId\": 2017 }\n/* C comment }*/\n//C++ comment }\n}"))
         .hasCauseInstanceOf(JsonParseException.class)
         .hasMessageContaining("Unexpected character ('/'");
@@ -228,7 +234,7 @@ public class GenesisConfigFileTest {
     override.put("chainId", bigBlockString);
     override.put("contractSizeLimit", bigBlockString);
 
-    assertThat(config.getForks().size()).isPositive();
+    assertThat(config.getForks()).isNotEmpty();
     assertThat(config.getConfigOptions(override).getIstanbulBlockNumber()).hasValue(bigBlock);
     assertThat(config.getConfigOptions(override).getChainId())
         .hasValue(BigInteger.valueOf(bigBlock));
@@ -243,7 +249,7 @@ public class GenesisConfigFileTest {
     override.put("chainId", null);
     override.put("contractSizeLimit", null);
 
-    assertThat(config.getForks().size()).isPositive();
+    assertThat(config.getForks()).isNotEmpty();
     assertThat(config.getConfigOptions(override).getIstanbulBlockNumber()).isNotPresent();
     assertThat(config.getConfigOptions(override).getChainId()).isNotPresent();
     assertThat(config.getConfigOptions(override).getContractSizeLimit()).isNotPresent();
@@ -293,16 +299,28 @@ public class GenesisConfigFileTest {
   }
 
   @Test
-  public void shouldLoadMainnetForks() {
-    final GenesisConfigFile config = GenesisConfigFile.mainnet();
+  public void shouldLoadForksInSortedOrder() throws IOException {
+    final ObjectNode configNode =
+        new ObjectMapper()
+            .createObjectNode()
+            .set(
+                "config",
+                JsonUtil.objectNodeFromString(
+                    Resources.toString(
+                        Resources.getResource(
+                            // If you inspect this config, you should see that fork block 2 is
+                            // declared before 1
+                            "valid_config_with_custom_forks.json"),
+                        StandardCharsets.UTF_8)));
 
-    assertThat(config.getForks())
-        .containsSequence(1150000L, 1920000L, 2463000L, 2675000L, 4370000L, 7280000L);
-    assertThat(config.getConfigOptions().getChainId()).hasValue(MAINNET_CHAIN_ID);
+    final GenesisConfigFile config = fromConfig(configNode);
+
+    assertThat(config.getForks()).containsExactly(1L, 2L, 3L, 3L, 1035301L);
+    assertThat(config.getConfigOptions().getChainId()).hasValue(BigInteger.valueOf(4));
   }
 
   private GenesisConfigFile configWithProperty(final String key, final String value) {
-    return GenesisConfigFile.fromConfig("{\"" + key + "\":\"" + value + "\"}");
+    return fromConfig("{\"" + key + "\":\"" + value + "\"}");
   }
 
   private void assertInvalidConfiguration(final ThrowingCallable getter) {

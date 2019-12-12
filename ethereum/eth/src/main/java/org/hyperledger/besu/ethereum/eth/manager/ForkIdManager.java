@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager;
 
+import static java.util.Collections.emptyList;
+
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -24,14 +26,15 @@ import org.hyperledger.besu.util.bytes.BytesValue;
 import org.hyperledger.besu.util.bytes.BytesValues;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.zip.CRC32;
+
+import com.google.common.annotations.VisibleForTesting;
 
 public class ForkIdManager {
 
   private Hash genesisHash;
-  private CRC32 crc = new CRC32();
   private Long currentHead;
   private Long forkNext;
   private Long highestKnownFork = 0L;
@@ -41,32 +44,25 @@ public class ForkIdManager {
   public ForkIdManager(final Hash genesisHash, final List<Long> forks, final Long currentHead) {
     this.genesisHash = genesisHash;
     this.currentHead = currentHead;
-    if (forks != null) {
-      forkAndHashList = collectForksAndHashes(forks, currentHead);
-    } else {
-      forkAndHashList = new ArrayList<>();
-    }
+    this.forkAndHashList =
+        createForkIds(
+            // If there are two forks at the same block height, we only want to add it once to the
+            // crc checksum
+            forks.stream().distinct().collect(Collectors.toUnmodifiableList()));
   };
 
   static ForkIdManager buildCollection(
       final Hash genesisHash, final List<Long> forks, final Blockchain blockchain) {
-    if (forks == null) {
-      return new ForkIdManager(genesisHash, null, blockchain.getChainHeadBlockNumber());
-    } else {
-      return new ForkIdManager(genesisHash, forks, blockchain.getChainHeadBlockNumber());
-    }
+    return new ForkIdManager(genesisHash, forks, blockchain.getChainHeadBlockNumber());
   };
 
+  @VisibleForTesting
   public static ForkIdManager buildCollection(final Hash genesisHash, final List<Long> forks) {
-    if (forks == null) {
-      return new ForkIdManager(genesisHash, null, Long.MAX_VALUE);
-    } else {
-      return new ForkIdManager(genesisHash, forks, Long.MAX_VALUE);
-    }
+    return new ForkIdManager(genesisHash, forks, Long.MAX_VALUE);
   };
 
   static ForkIdManager buildCollection(final Hash genesisHash) {
-    return new ForkIdManager(genesisHash, null, Long.MAX_VALUE);
+    return new ForkIdManager(genesisHash, emptyList(), Long.MAX_VALUE);
   };
 
   // Non-generated entry (for tests)
@@ -147,24 +143,12 @@ public class ForkIdManager {
   }
 
   private boolean isHashKnown(final BytesValue forkHash) {
-    for (ForkId j : forkAndHashList) {
-      if (forkHash.equals(j.getHash())) {
-        return true;
-      }
-    }
-    return false;
+    return forkAndHashList.stream().map(ForkId::getHash).anyMatch(hash -> hash.equals(forkHash));
   }
 
   private boolean isForkKnown(final Long nextFork) {
-    if (highestKnownFork < nextFork) {
-      return true;
-    }
-    for (ForkId j : forkAndHashList) {
-      if (nextFork.equals(j.getNext())) {
-        return true;
-      }
-    }
-    return false;
+    return highestKnownFork < nextFork
+        || forkAndHashList.stream().map(ForkId::getNext).anyMatch(fork -> fork.equals(nextFork));
   }
 
   private boolean isRemoteAwareOfPresent(final BytesValue forkHash, final Long nextFork) {
@@ -182,65 +166,42 @@ public class ForkIdManager {
     return false;
   }
 
-  // TODO: should sort these when first gathering the list of forks to ensure order
-  private List<ForkId> collectForksAndHashes(final List<Long> forks, final Long currentHead) {
-    boolean first = true;
-    ArrayList<ForkId> forkList = new ArrayList<>();
-    Iterator<Long> iterator = forks.iterator();
-    while (iterator.hasNext()) {
-      Long forkBlockNumber = iterator.next();
-      if (highestKnownFork < forkBlockNumber) {
-        highestKnownFork = forkBlockNumber;
-      }
-      if (first) {
-        // first fork
-        first = false;
-        forkList.add(
-            new ForkId(updateCrc(this.genesisHash.getHexString()), forkBlockNumber)); // Genesis
-        updateCrc(forkBlockNumber);
-
-      } else if (!iterator.hasNext()) {
-        // most recent fork
-        forkList.add(new ForkId(getCurrentCrcHash(), forkBlockNumber));
-        updateCrc(forkBlockNumber);
-        // next fork or no future fork known
-        if (currentHead > forkBlockNumber) {
-          lastKnownEntry = new ForkId(getCurrentCrcHash(), 0L);
-          forkList.add(lastKnownEntry);
-          this.forkNext = 0L;
-        } else {
-          lastKnownEntry = new ForkId(getCurrentCrcHash(), forkBlockNumber);
-          forkList.add(lastKnownEntry);
-          this.forkNext = forkBlockNumber;
-        }
-
-      } else {
-        forkList.add(new ForkId(getCurrentCrcHash(), forkBlockNumber));
-        updateCrc(forkBlockNumber);
-      }
+  private List<ForkId> createForkIds(final List<Long> forks) {
+    final CRC32 crc = new CRC32();
+    crc.update(this.genesisHash.getByteArray());
+    final List<BytesValue> forkHashes = new ArrayList<>(List.of(getCurrentCrcHash(crc)));
+    for (final Long fork : forks) {
+      updateCrc(crc, fork);
+      forkHashes.add(getCurrentCrcHash(crc));
     }
-    return forkList;
+    final List<ForkId> forkIds = new ArrayList<>();
+    // This loop is for all the fork hashes that have an associated "next fork"
+    for (int i = 0; i < forks.size(); i++) {
+      forkIds.add(new ForkId(forkHashes.get(i), forks.get(i)));
+    }
+    if (!forks.isEmpty()) {
+      this.forkNext = forkIds.get(forkIds.size() - 1).getNext();
+      forkIds.add(
+          new ForkId(
+              forkHashes.get(forkHashes.size() - 1),
+              currentHead > forkNext ? 0 : forkNext // Use 0 if there are no known next forks
+              ));
+    }
+    return forkIds;
   }
 
-  private void updateCrc(final Long block) {
+  private void updateCrc(final CRC32 crc, final Long block) {
     byte[] byteRepresentationFork = longToBigEndian(block);
     crc.update(byteRepresentationFork, 0, byteRepresentationFork.length);
   }
 
-  private BytesValue updateCrc(final String hash) {
-    BytesValue bv = BytesValue.fromHexString(hash);
-    byte[] byteRepresentation = bv.extractArray();
-    crc.update(byteRepresentation, 0, byteRepresentation.length);
-    return getCurrentCrcHash();
-  }
-
-  private BytesValue getCurrentCrcHash() {
+  private BytesValue getCurrentCrcHash(final CRC32 crc) {
     return BytesValues.ofUnsignedInt(crc.getValue());
   }
 
   public static class ForkId {
-    BytesValue hash;
-    BytesValue next;
+    final BytesValue hash;
+    final BytesValue next;
     BytesValue forkIdRLP;
 
     ForkId(final BytesValue hash, final BytesValue next) {
@@ -250,10 +211,8 @@ public class ForkIdManager {
     }
 
     ForkId(final String hash, final String next) {
-      this.hash = BytesValue.fromHexString((hash.length() % 2 == 0 ? "" : "0") + hash);
-      if (this.hash.size() < 4) {
-        this.hash = padToEightBytes(this.hash);
-      }
+      this.hash =
+          padToEightBytes(BytesValue.fromHexString((hash.length() % 2 == 0 ? "" : "0") + hash));
       if (next.equals("") || next.equals("0x")) {
         this.next = BytesValue.EMPTY;
       } else if (next.startsWith("0x")) {
@@ -298,29 +257,12 @@ public class ForkIdManager {
       out.endList();
     }
 
-    // Non-RLP entry (for tests)
-    public BytesValue createNotAsListForkIdRLP() {
-      BytesValueRLPOutput outPlain = new BytesValueRLPOutput();
-      outPlain.startList();
-      outPlain.writeBytesValue(hash);
-      outPlain.writeBytesValue(next);
-      outPlain.endList();
-      return outPlain.encoded();
-    }
-
     public static ForkId readFrom(final RLPInput in) {
       in.enterList();
       final BytesValue hash = in.readBytesValue();
       final long next = in.readLong();
       in.leaveList();
       return new ForkId(hash, next);
-    }
-
-    public List<byte[]> asByteList() {
-      ArrayList<byte[]> forRLP = new ArrayList<byte[]>();
-      forRLP.add(hash.getByteArray());
-      forRLP.add(next.getByteArray());
-      return forRLP;
     }
 
     public List<ForkId> asList() {
