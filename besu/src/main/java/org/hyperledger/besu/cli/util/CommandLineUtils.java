@@ -48,7 +48,7 @@ public class CommandLineUtils {
       final boolean isMainOptionCondition,
       final List<String> dependentOptionsNames) {
     if (isMainOptionCondition) {
-      String affectedOptions =
+      final String affectedOptions =
           commandLine.getCommandSpec().options().stream()
               .filter(
                   option ->

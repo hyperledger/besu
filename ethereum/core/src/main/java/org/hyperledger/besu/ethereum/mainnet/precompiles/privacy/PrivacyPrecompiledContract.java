@@ -94,20 +94,22 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
     try {
       receiveResponse = enclave.receive(receiveRequest);
     } catch (final Exception e) {
-      LOG.error("Enclave probably does not have private transaction with key {}.", key, e);
+      LOG.debug("Enclave probably does not have private transaction payload with key {}", key, e);
       return BytesValue.EMPTY;
     }
 
     final BytesValueRLPInput bytesValueRLPInput =
         new BytesValueRLPInput(BytesValues.fromBase64(receiveResponse.getPayload()), false);
-
     final PrivateTransaction privateTransaction = PrivateTransaction.readFrom(bytesValueRLPInput);
-
     final WorldUpdater publicWorldState = messageFrame.getWorldState();
-
     final BytesValue privacyGroupId = BytesValues.fromBase64(receiveResponse.getPrivacyGroupId());
 
-    // get the last world state root hash - or create a new one
+    LOG.trace(
+        "Processing private transaction {} in privacy group {}",
+        privateTransaction.hash(),
+        privacyGroupId);
+
+    // get the last world state root hash or create a new one
     final Hash lastRootHash =
         privateStateStorage.getLatestStateRoot(privacyGroupId).orElse(EMPTY_ROOT_HASH);
 
@@ -129,7 +131,8 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
 
     if (result.isInvalid() || !result.isSuccessful()) {
       LOG.error(
-          "Failed to process the private transaction: {}",
+          "Failed to process private transaction {}: {}",
+          privateTransaction.hash(),
           result.getValidationResult().getErrorMessage());
       return BytesValue.EMPTY;
     }

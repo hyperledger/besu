@@ -90,10 +90,11 @@ task testJar (type: Jar) {
 }
 
 test {
+  exclude 'org/hyperledger/besu/ethereum/mainnet/DifficultyCalculatorTests.class'
+  exclude 'org/hyperledger/besu/ethereum/core/TransactionTest.class'
   exclude 'org/hyperledger/besu/ethereum/vm/**ReferenceTest.class'
   exclude 'org/hyperledger/besu/ethereum/vm/blockchain/**.class'
   exclude 'org/hyperledger/besu/ethereum/vm/generalstate/**.class'
-  exclude 'org/hyperledger/besu/ethereum/core/TransactionTest.class'
 }
 
 def generateTestFiles(FileTree jsonPath, File templateFile, String pathstrip, String destination, String namePrefix) {
@@ -185,10 +186,11 @@ task referenceTests(type: Test, dependsOn: [
   }
   scanForTestClasses = false
   enableAssertions = true
+  include 'org/hyperledger/besu/ethereum/core/TransactionTest.class'
+  include 'org/hyperledger/besu/ethereum/mainnet/DifficultyCalculatorTests.class'
   include 'org/hyperledger/besu/ethereum/vm/**ReferenceTest.class'
   include 'org/hyperledger/besu/ethereum/vm/blockchain/**.class'
   include 'org/hyperledger/besu/ethereum/vm/generalstate/**.class'
-  include 'org/hyperledger/besu/ethereum/core/TransactionTest.class'
 }
 
 artifacts {
