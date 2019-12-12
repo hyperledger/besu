@@ -151,9 +151,7 @@ public class PrivacyController {
     if (legacyGroups.size() == 0) {
       // the legacy group does not exist yet
       return 0;
-    }
-
-    if (legacyGroups.size() != 1) {
+    } else if (legacyGroups.size() != 1) {
       throw new RuntimeException(
           String.format(
               "Found invalid number of privacy groups (%d), expected 1.", legacyGroups.size()));

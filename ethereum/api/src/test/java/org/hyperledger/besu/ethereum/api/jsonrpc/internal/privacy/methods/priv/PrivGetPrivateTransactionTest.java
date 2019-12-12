@@ -26,8 +26,6 @@ import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.privacy.PrivateTransactionGroupResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.privacy.PrivateTransactionLegacyResult;
@@ -125,7 +123,7 @@ public class PrivGetPrivateTransactionTest {
         new PrivateTransactionLegacyResult(privateTransaction);
 
     final PrivGetPrivateTransaction privGetPrivateTransaction =
-        new PrivGetPrivateTransaction(blockchain, privacyParameters, privacyController);
+        new PrivGetPrivateTransaction(blockchain, privacyController);
     final Object[] params = new Object[] {enclaveKey};
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(new JsonRpcRequest("1", "priv_getPrivateTransaction", params));
@@ -159,7 +157,7 @@ public class PrivGetPrivateTransactionTest {
         new PrivateTransactionGroupResult(privateTransaction);
 
     final PrivGetPrivateTransaction privGetPrivateTransaction =
-        new PrivGetPrivateTransaction(blockchain, privacyParameters, privacyController);
+        new PrivGetPrivateTransaction(blockchain, privacyController);
 
     final Object[] params = new Object[] {enclaveKey};
     final JsonRpcRequestContext request =
@@ -178,20 +176,5 @@ public class PrivGetPrivateTransactionTest {
     final PrivateTransactionResult result = (PrivateTransactionResult) response.getResult();
 
     assertThat(result).isEqualToComparingFieldByField(privateTransactionGroupResult);
-  }
-
-  @Test
-  public void returnPrivacyDisabledErrorWhenPrivacyIsDisabled() {
-    when(privacyParameters.isEnabled()).thenReturn(false);
-    final PrivGetPrivateTransaction privGetPrivateTransaction =
-        new PrivGetPrivateTransaction(blockchain, privacyParameters, privacyController);
-
-    final JsonRpcRequestContext request =
-        new JsonRpcRequestContext(
-            new JsonRpcRequest("1", "priv_getPrivacyTransaction", new Object[] {}));
-    final JsonRpcErrorResponse response =
-        (JsonRpcErrorResponse) privGetPrivateTransaction.response(request);
-
-    assertThat(response.getError()).isEqualTo(JsonRpcError.PRIVACY_NOT_ENABLED);
   }
 }

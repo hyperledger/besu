@@ -16,22 +16,20 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
-public class PrivGetTransactionCount extends PrivacyApiMethod {
+public class PrivGetTransactionCount implements JsonRpcMethod {
 
   private final PrivacyController privacyController;
 
-  public PrivGetTransactionCount(
-      final PrivacyParameters privacyParameters, final PrivacyController privacyController) {
-    super(privacyParameters);
+  public PrivGetTransactionCount(final PrivacyController privacyController) {
     this.privacyController = privacyController;
   }
 
@@ -41,7 +39,7 @@ public class PrivGetTransactionCount extends PrivacyApiMethod {
   }
 
   @Override
-  public JsonRpcResponse doResponse(final JsonRpcRequestContext requestContext) {
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     if (requestContext.getRequest().getParamLength() != 2) {
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);

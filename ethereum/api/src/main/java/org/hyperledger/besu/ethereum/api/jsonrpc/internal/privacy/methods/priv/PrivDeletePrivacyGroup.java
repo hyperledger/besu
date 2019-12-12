@@ -18,6 +18,7 @@ import static org.apache.logging.log4j.LogManager.getLogger;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -26,14 +27,15 @@ import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 import org.apache.logging.log4j.Logger;
 
-public class PrivDeletePrivacyGroup extends PrivacyApiMethod {
+public class PrivDeletePrivacyGroup implements JsonRpcMethod {
 
   private static final Logger LOG = getLogger();
+  private PrivacyParameters privacyParameters;
   private PrivacyController privacyController;
 
   public PrivDeletePrivacyGroup(
       final PrivacyParameters privacyParameters, final PrivacyController privacyController) {
-    super(privacyParameters);
+    this.privacyParameters = privacyParameters;
     this.privacyController = privacyController;
   }
 
@@ -43,7 +45,7 @@ public class PrivDeletePrivacyGroup extends PrivacyApiMethod {
   }
 
   @Override
-  public JsonRpcResponse doResponse(final JsonRpcRequestContext requestContext) {
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     LOG.trace("Executing {}", RpcMethod.PRIV_DELETE_PRIVACY_GROUP.getMethodName());
 
     final String privacyGroupId = requestContext.getRequiredParameter(0, String.class);

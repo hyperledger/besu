@@ -21,6 +21,7 @@ import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcEnclaveErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -48,19 +49,20 @@ import java.util.Optional;
 
 import org.apache.logging.log4j.Logger;
 
-public class PrivGetTransactionReceipt extends PrivacyApiMethod {
+public class PrivGetTransactionReceipt implements JsonRpcMethod {
 
   private static final Logger LOG = getLogger();
 
   private final BlockchainQueries blockchain;
+  private PrivacyParameters privacyParameters;
   private PrivacyController privacyController;
 
   public PrivGetTransactionReceipt(
       final BlockchainQueries blockchain,
       final PrivacyParameters privacyParameters,
       final PrivacyController privacyController) {
-    super(privacyParameters);
     this.blockchain = blockchain;
+    this.privacyParameters = privacyParameters;
     this.privacyController = privacyController;
   }
 
@@ -70,7 +72,7 @@ public class PrivGetTransactionReceipt extends PrivacyApiMethod {
   }
 
   @Override
-  public JsonRpcResponse doResponse(final JsonRpcRequestContext requestContext) {
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     LOG.trace("Executing {}", RpcMethod.PRIV_GET_TRANSACTION_RECEIPT.getMethodName());
     final Hash transactionHash = requestContext.getRequiredParameter(0, Hash.class);
     final Optional<TransactionLocation> maybeLocation =
@@ -92,7 +94,7 @@ public class PrivGetTransactionReceipt extends PrivacyApiMethod {
       final ReceiveResponse receiveResponse =
           privacyController.retrieveTransaction(
               BytesValues.asBase64String(transaction.getPayload()));
-      LOG.trace("Received transaction information from Enclave");
+      LOG.trace("Received transaction information");
 
       final BytesValueRLPInput bytesValueRLPInput =
           new BytesValueRLPInput(BytesValues.fromBase64(receiveResponse.getPayload()), false);

@@ -64,7 +64,7 @@ public class PrivCreatePrivacyGroupTest {
     when(privacyParameters.getEnclavePublicKey()).thenReturn(FROM);
 
     final PrivCreatePrivacyGroup privCreatePrivacyGroup =
-        new PrivCreatePrivacyGroup(privacyParameters, privacyController);
+        new PrivCreatePrivacyGroup(privacyController);
 
     final CreatePrivacyGroupParameter param =
         new CreatePrivacyGroupParameter(ADDRESSES, NAME, DESCRIPTION);
@@ -91,7 +91,7 @@ public class PrivCreatePrivacyGroupTest {
     when(privacyParameters.getEnclavePublicKey()).thenReturn(FROM);
 
     final PrivCreatePrivacyGroup privCreatePrivacyGroup =
-        new PrivCreatePrivacyGroup(privacyParameters, privacyController);
+        new PrivCreatePrivacyGroup(privacyController);
 
     final Object[] params =
         new Object[] {
@@ -127,7 +127,7 @@ public class PrivCreatePrivacyGroupTest {
     when(privacyParameters.getEnclavePublicKey()).thenReturn(FROM);
 
     final PrivCreatePrivacyGroup privCreatePrivacyGroup =
-        new PrivCreatePrivacyGroup(privacyParameters, privacyController);
+        new PrivCreatePrivacyGroup(privacyController);
 
     final Object[] params =
         new Object[] {
@@ -162,7 +162,7 @@ public class PrivCreatePrivacyGroupTest {
     when(privacyParameters.getEnclavePublicKey()).thenReturn(FROM);
 
     final PrivCreatePrivacyGroup privCreatePrivacyGroup =
-        new PrivCreatePrivacyGroup(privacyParameters, privacyController);
+        new PrivCreatePrivacyGroup(privacyController);
 
     final Object[] params =
         new Object[] {
@@ -194,7 +194,7 @@ public class PrivCreatePrivacyGroupTest {
     when(privacyParameters.getEnclavePublicKey()).thenReturn(FROM);
 
     final PrivCreatePrivacyGroup privCreatePrivacyGroup =
-        new PrivCreatePrivacyGroup(privacyParameters, privacyController);
+        new PrivCreatePrivacyGroup(privacyController);
 
     final Object[] params =
         new Object[] {
@@ -223,7 +223,7 @@ public class PrivCreatePrivacyGroupTest {
   public void returnsCorrectExceptionMissingParam() {
 
     final PrivCreatePrivacyGroup privCreatePrivacyGroup =
-        new PrivCreatePrivacyGroup(privacyParameters, privacyController);
+        new PrivCreatePrivacyGroup(privacyController);
 
     final Object[] params = new Object[] {};
 
@@ -242,7 +242,7 @@ public class PrivCreatePrivacyGroupTest {
     when(privacyController.createPrivacyGroup(ADDRESSES, NAME, DESCRIPTION))
         .thenThrow(new EnclaveException(""));
     final PrivCreatePrivacyGroup privCreatePrivacyGroup =
-        new PrivCreatePrivacyGroup(privacyParameters, privacyController);
+        new PrivCreatePrivacyGroup(privacyController);
 
     final CreatePrivacyGroupParameter param =
         new CreatePrivacyGroupParameter(ADDRESSES, NAME, DESCRIPTION);
@@ -258,20 +258,5 @@ public class PrivCreatePrivacyGroupTest {
     final JsonRpcError result = response.getError();
 
     assertThat(result).isEqualTo(JsonRpcError.ENCLAVE_ERROR);
-  }
-
-  @Test
-  public void returnPrivacyDisabledErrorWhenPrivacyIsDisabled() {
-    when(privacyParameters.isEnabled()).thenReturn(false);
-    final PrivCreatePrivacyGroup privCreatePrivacyGroup =
-        new PrivCreatePrivacyGroup(privacyParameters, privacyController);
-
-    final JsonRpcRequestContext request =
-        new JsonRpcRequestContext(
-            new JsonRpcRequest("1", "priv_createPrivacyGroup", new Object[] {}));
-    final JsonRpcErrorResponse response =
-        (JsonRpcErrorResponse) privCreatePrivacyGroup.response(request);
-
-    assertThat(response.getError()).isEqualTo(JsonRpcError.PRIVACY_NOT_ENABLED);
   }
 }

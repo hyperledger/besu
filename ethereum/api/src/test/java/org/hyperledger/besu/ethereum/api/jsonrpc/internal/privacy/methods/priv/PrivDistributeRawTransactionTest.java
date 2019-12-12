@@ -21,8 +21,6 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
@@ -58,8 +56,7 @@ public class PrivDistributeRawTransactionTest {
 
   @Before
   public void before() {
-    when(privacyParameters.isEnabled()).thenReturn(true);
-    method = new PrivDistributeRawTransaction(privacyParameters, transactionPool, privateTxHandler);
+    method = new PrivDistributeRawTransaction(transactionPool, privateTxHandler);
   }
 
   @Test
@@ -88,17 +85,5 @@ public class PrivDistributeRawTransactionTest {
     verify(privateTxHandler).sendTransaction(any(PrivateTransaction.class));
     verify(privateTxHandler)
         .validatePrivateTransaction(any(PrivateTransaction.class), any(String.class));
-  }
-
-  @Test
-  public void returnPrivacyDisabledErrorWhenPrivacyIsDisabled() {
-    when(privacyParameters.isEnabled()).thenReturn(false);
-
-    final JsonRpcRequestContext request =
-        new JsonRpcRequestContext(
-            new JsonRpcRequest("1", "priv_distributeRawTransaction", new Object[] {}));
-    final JsonRpcErrorResponse response = (JsonRpcErrorResponse) method.response(request);
-
-    assertThat(response.getError()).isEqualTo(JsonRpcError.PRIVACY_NOT_ENABLED);
   }
 }

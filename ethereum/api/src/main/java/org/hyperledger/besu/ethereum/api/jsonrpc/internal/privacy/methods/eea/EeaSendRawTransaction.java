@@ -18,24 +18,29 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcEnclaveErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacySendTransaction;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacySendTransaction.ErrorResponseException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.SendTransactionResponse;
 
-public class EeaSendRawTransaction extends PrivacySendTransaction {
+public class EeaSendRawTransaction implements JsonRpcMethod {
+
+  private final PrivacySendTransaction privacySendTransaction;
+  private TransactionPool transactionPool;
+  private PrivacyController privacyController;
 
   public EeaSendRawTransaction(
-      final PrivacyParameters privacyParameters,
-      final TransactionPool transactionPool,
-      final PrivacyController privacyController) {
-    super(privacyParameters, privacyController, transactionPool);
+      final TransactionPool transactionPool, final PrivacyController privacyController) {
+    this.transactionPool = transactionPool;
+    this.privacyController = privacyController;
+    this.privacySendTransaction = new PrivacySendTransaction(privacyController, transactionPool);
   }
 
   @Override
@@ -44,11 +49,11 @@ public class EeaSendRawTransaction extends PrivacySendTransaction {
   }
 
   @Override
-  public JsonRpcResponse doResponse(final JsonRpcRequestContext requestContext) {
-    PrivateTransaction privateTransaction;
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
+    final PrivateTransaction privateTransaction;
     try {
-      privateTransaction = validateAndDecodeRequest(requestContext);
-    } catch (ErrorResponseException e) {
+      privateTransaction = privacySendTransaction.validateAndDecodeRequest(requestContext);
+    } catch (final ErrorResponseException e) {
       return e.getResponse();
     }
 
@@ -61,7 +66,7 @@ public class EeaSendRawTransaction extends PrivacySendTransaction {
           JsonRpcEnclaveErrorConverter.convertEnclaveInvalidReason(e.getMessage()));
     }
 
-    return validateAndExecute(
+    return privacySendTransaction.validateAndExecute(
         requestContext,
         privateTransaction,
         sendTransactionResponse.getPrivacyGroup(),

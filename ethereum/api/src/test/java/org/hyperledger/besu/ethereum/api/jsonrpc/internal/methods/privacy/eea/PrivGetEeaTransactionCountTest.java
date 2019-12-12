@@ -54,8 +54,7 @@ public class PrivGetEeaTransactionCountTest {
   @Test
   public void validRequestProducesExpectedNonce() {
     final long reportedNonce = 8L;
-    final PrivGetEeaTransactionCount method =
-        new PrivGetEeaTransactionCount(privacyParameters, privacyController);
+    final PrivGetEeaTransactionCount method = new PrivGetEeaTransactionCount(privacyController);
 
     when(privacyController.determineNonce(privateFrom, privateFor, address))
         .thenReturn(reportedNonce);
@@ -70,8 +69,7 @@ public class PrivGetEeaTransactionCountTest {
 
   @Test
   public void nonceProviderThrowsRuntimeExceptionProducesErrorResponse() {
-    final PrivGetEeaTransactionCount method =
-        new PrivGetEeaTransactionCount(privacyParameters, privacyController);
+    final PrivGetEeaTransactionCount method = new PrivGetEeaTransactionCount(privacyController);
 
     when(privacyController.determineNonce(privateFrom, privateFor, address))
         .thenThrow(RuntimeException.class);
@@ -86,8 +84,7 @@ public class PrivGetEeaTransactionCountTest {
 
   @Test
   public void nonceProviderThrowsAnExceptionProducesErrorResponse() {
-    final PrivGetEeaTransactionCount method =
-        new PrivGetEeaTransactionCount(privacyParameters, privacyController);
+    final PrivGetEeaTransactionCount method = new PrivGetEeaTransactionCount(privacyController);
 
     when(privacyController.determineNonce(privateFrom, privateFor, address))
         .thenThrow(RuntimeException.class);
@@ -103,8 +100,7 @@ public class PrivGetEeaTransactionCountTest {
   @Test
   public void returnPrivacyDisabledErrorWhenPrivacyIsDisabled() {
     when(privacyParameters.isEnabled()).thenReturn(false);
-    final PrivGetEeaTransactionCount method =
-        new PrivGetEeaTransactionCount(privacyParameters, privacyController);
+    final PrivGetEeaTransactionCount method = new PrivGetEeaTransactionCount(privacyController);
 
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(

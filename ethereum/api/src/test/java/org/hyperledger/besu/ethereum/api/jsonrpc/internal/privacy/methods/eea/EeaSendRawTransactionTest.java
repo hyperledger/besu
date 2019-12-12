@@ -120,8 +120,7 @@ public class EeaSendRawTransactionTest {
 
   @Before
   public void before() {
-    when(privacyParameters.isEnabled()).thenReturn(true);
-    method = new EeaSendRawTransaction(privacyParameters, transactionPool, privateTxHandler);
+    method = new EeaSendRawTransaction(transactionPool, privateTxHandler);
   }
 
   @Test
@@ -381,17 +380,5 @@ public class EeaSendRawTransactionTest {
   @Test
   public void getMethodReturnsExpectedName() {
     assertThat(method.getName()).matches("eea_sendRawTransaction");
-  }
-
-  @Test
-  public void returnPrivacyDisabledErrorWhenPrivacyIsDisabled() {
-    when(privacyParameters.isEnabled()).thenReturn(false);
-
-    final JsonRpcRequestContext request =
-        new JsonRpcRequestContext(
-            new JsonRpcRequest("1", "eea_sendRawTransaction", new Object[] {}));
-    final JsonRpcErrorResponse response = (JsonRpcErrorResponse) method.response(request);
-
-    assertThat(response.getError()).isEqualTo(JsonRpcError.PRIVACY_NOT_ENABLED);
   }
 }

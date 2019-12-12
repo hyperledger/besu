@@ -17,11 +17,9 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcRequestException;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivacyApiMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
@@ -33,7 +31,7 @@ import org.hyperledger.besu.util.bytes.BytesValue;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public abstract class PrivacySendTransaction extends PrivacyApiMethod {
+public class PrivacySendTransaction {
 
   private static final Logger LOG = LogManager.getLogger();
 
@@ -41,15 +39,12 @@ public abstract class PrivacySendTransaction extends PrivacyApiMethod {
   protected final TransactionPool transactionPool;
 
   public PrivacySendTransaction(
-      final PrivacyParameters privacyParameters,
-      final PrivacyController privacyController,
-      final TransactionPool transactionPool) {
-    super(privacyParameters);
+      final PrivacyController privacyController, final TransactionPool transactionPool) {
     this.privacyController = privacyController;
     this.transactionPool = transactionPool;
   }
 
-  protected PrivateTransaction validateAndDecodeRequest(final JsonRpcRequestContext request)
+  public PrivateTransaction validateAndDecodeRequest(final JsonRpcRequestContext request)
       throws ErrorResponseException {
     if (request.getRequest().getParamLength() != 1) {
       throw new ErrorResponseException(
@@ -75,7 +70,7 @@ public abstract class PrivacySendTransaction extends PrivacyApiMethod {
     return privateTransaction;
   }
 
-  protected JsonRpcResponse validateAndExecute(
+  public JsonRpcResponse validateAndExecute(
       final JsonRpcRequestContext request,
       final PrivateTransaction privateTransaction,
       final String privacyGroupId,
@@ -100,7 +95,7 @@ public abstract class PrivacySendTransaction extends PrivacyApiMethod {
     }
   }
 
-  protected static class ErrorResponseException extends Exception {
+  public static class ErrorResponseException extends Exception {
     private final JsonRpcResponse response;
 
     private ErrorResponseException(final JsonRpcResponse response) {
@@ -113,7 +108,7 @@ public abstract class PrivacySendTransaction extends PrivacyApiMethod {
     }
   }
 
-  protected interface AfterTransactionValid {
+  public interface AfterTransactionValid {
     JsonRpcResponse getResponse();
   }
 }
