@@ -46,6 +46,7 @@ public class BesuController<C> implements java.io.Closeable {
   private static final Logger LOG = LogManager.getLogger();
 
   public static final String DATABASE_PATH = "database";
+  public static final String CACHE_PATH = "caches";
   private final ProtocolSchedule<C> protocolSchedule;
   private final ProtocolContext<C> protocolContext;
   private final EthProtocolManager ethProtocolManager;

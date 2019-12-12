@@ -37,6 +37,7 @@ import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 
 import java.math.BigInteger;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -66,9 +67,10 @@ public class JsonRpcMethodsFactory {
       final PrivacyParameters privacyParameters,
       final JsonRpcConfiguration jsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
-      final MetricsConfiguration metricsConfiguration) {
+      final MetricsConfiguration metricsConfiguration,
+      final Optional<Path> cachePath) {
     final BlockchainQueries blockchainQueries =
-        new BlockchainQueries(blockchain, worldStateArchive);
+        new BlockchainQueries(blockchain, worldStateArchive, cachePath);
     return methods(
         clientVersion,
         networkId,
