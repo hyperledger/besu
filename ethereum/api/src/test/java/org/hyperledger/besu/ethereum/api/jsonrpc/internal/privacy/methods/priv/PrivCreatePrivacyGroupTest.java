@@ -22,7 +22,6 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveException;
-import org.hyperledger.besu.enclave.types.CreatePrivacyGroupRequest;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -190,7 +189,7 @@ public class PrivCreatePrivacyGroupTest {
     final String expected = "a wonderful group";
     final PrivacyGroup privacyGroup =
         new PrivacyGroup(expected, PrivacyGroup.Type.PANTHEON, NAME, DESCRIPTION, ADDRESSES);
-    when(enclave.createPrivacyGroup(any(CreatePrivacyGroupRequest.class))).thenReturn(privacyGroup);
+    when(enclave.createPrivacyGroup(any(), any(), any(), any())).thenReturn(privacyGroup);
     when(privacyParameters.getEnclavePublicKey()).thenReturn(FROM);
 
     final PrivCreatePrivacyGroup privCreatePrivacyGroup =
