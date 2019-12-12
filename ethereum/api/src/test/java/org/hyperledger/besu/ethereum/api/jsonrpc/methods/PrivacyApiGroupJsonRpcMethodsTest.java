@@ -45,7 +45,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class PrivacyApiGroupJsonRpcMethodsTest {
   @Mock private JsonRpcMethod rpcMethod;
   @Mock private BlockchainQueries blockchainQueries;
-  @Mock private ProtocolSchedule protocolSchedule;
+  @Mock private ProtocolSchedule<?> protocolSchedule;
   @Mock private TransactionPool transactionPool;
   @Mock private PrivacyParameters privacyParameters;
 
