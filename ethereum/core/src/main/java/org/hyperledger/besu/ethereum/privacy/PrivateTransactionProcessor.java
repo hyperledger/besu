@@ -75,6 +75,7 @@ public class PrivateTransactionProcessor {
     private final BytesValue output;
 
     private final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult;
+
     private final Optional<BytesValue> revertReason;
 
     public static Result invalid(

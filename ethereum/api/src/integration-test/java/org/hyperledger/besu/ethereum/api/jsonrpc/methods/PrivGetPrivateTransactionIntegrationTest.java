@@ -72,7 +72,7 @@ public class PrivGetPrivateTransactionIntegrationTest {
 
   private final Transaction justTransaction = mock(Transaction.class);
 
-  private static Vertx vertx = Vertx.vertx();
+  private static final Vertx vertx = Vertx.vertx();
 
   @BeforeClass
   public static void setUpOnce() throws Exception {

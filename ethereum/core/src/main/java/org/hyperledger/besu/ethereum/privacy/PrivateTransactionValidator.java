@@ -38,8 +38,8 @@ public class PrivateTransactionValidator {
 
     LOG.debug("Validating private transaction {} signature ", transaction.hash());
 
-    ValidationResult<TransactionValidator.TransactionInvalidReason> signatureValidationResult =
-        validateTransactionSignature(transaction);
+    final ValidationResult<TransactionValidator.TransactionInvalidReason>
+        signatureValidationResult = validateTransactionSignature(transaction);
     if (!signatureValidationResult.isValid()) {
       return signatureValidationResult;
     }
