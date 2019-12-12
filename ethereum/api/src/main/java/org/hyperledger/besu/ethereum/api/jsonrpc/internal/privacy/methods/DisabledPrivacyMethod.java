@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
@@ -30,8 +29,8 @@ public class DisabledPrivacyMethod implements JsonRpcMethod {
     return methodName;
   }
 
-  public DisabledPrivacyMethod(final RpcMethod rpcMethod) {
-    this.methodName = rpcMethod.getMethodName();
+  public DisabledPrivacyMethod(final String methodName) {
+    this.methodName = methodName;
   }
 
   @Override

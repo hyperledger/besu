@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.LatestNonceProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.DisabledPrivacyMethod;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
@@ -28,6 +29,8 @@ import org.hyperledger.besu.ethereum.privacy.markertransaction.PrivateMarkerTran
 import org.hyperledger.besu.ethereum.privacy.markertransaction.RandomSigningPrivateMarkerTransactionFactory;
 
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
@@ -73,7 +76,12 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
         new PrivacyController(
             privacyParameters, protocolSchedule.getChainId(), markerTransactionFactory);
 
-    return create(privacyController);
+    return create(privacyController).entrySet().stream()
+        .collect(
+            Collectors.toMap(
+                Entry::getKey,
+                rpcMethod ->
+                    createPrivacyMethod(privacyParameters.isEnabled(), rpcMethod.getValue())));
   }
 
   protected abstract Map<String, JsonRpcMethod> create(final PrivacyController privacyController);
@@ -93,5 +101,9 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
           privacyParameters.getSigningKeyPair().get());
     }
     return new RandomSigningPrivateMarkerTransactionFactory(privateContractAddress);
+  }
+
+  private JsonRpcMethod createPrivacyMethod(final Boolean enabled, final JsonRpcMethod rpcMethod) {
+    return enabled ? rpcMethod : new DisabledPrivacyMethod(rpcMethod.getName());
   }
 }

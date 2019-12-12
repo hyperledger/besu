@@ -16,9 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.DisabledPrivacyMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivCreatePrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivDeletePrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivDistributeRawTransaction;
@@ -52,27 +50,15 @@ public class PrivJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
 
   @Override
   protected Map<String, JsonRpcMethod> create(final PrivacyController privacyController) {
-    if (getPrivacyParameters().isEnabled()) {
-      return mapOf(
-          new PrivGetTransactionReceipt(
-              getBlockchainQueries(), getPrivacyParameters(), privacyController),
-          new PrivCreatePrivacyGroup(privacyController),
-          new PrivDeletePrivacyGroup(getPrivacyParameters(), privacyController),
-          new PrivFindPrivacyGroup(privacyController),
-          new PrivGetPrivacyPrecompileAddress(getPrivacyParameters()),
-          new PrivGetTransactionCount(privacyController),
-          new PrivGetPrivateTransaction(getBlockchainQueries(), privacyController),
-          new PrivDistributeRawTransaction(getTransactionPool(), privacyController));
-    } else {
-      return mapOf(
-          new DisabledPrivacyMethod(RpcMethod.PRIV_GET_TRANSACTION_RECEIPT),
-          new DisabledPrivacyMethod(RpcMethod.PRIV_CREATE_PRIVACY_GROUP),
-          new DisabledPrivacyMethod(RpcMethod.PRIV_DELETE_PRIVACY_GROUP),
-          new DisabledPrivacyMethod(RpcMethod.PRIV_FIND_PRIVACY_GROUP),
-          new DisabledPrivacyMethod(RpcMethod.PRIV_GET_PRIVACY_PRECOMPILE_ADDRESS),
-          new DisabledPrivacyMethod(RpcMethod.PRIV_GET_EEA_TRANSACTION_COUNT),
-          new DisabledPrivacyMethod(RpcMethod.PRIV_GET_PRIVATE_TRANSACTION),
-          new DisabledPrivacyMethod(RpcMethod.PRIV_DISTRIBUTE_RAW_TRANSACTION));
-    }
+    return mapOf(
+        new PrivGetTransactionReceipt(
+            getBlockchainQueries(), getPrivacyParameters(), privacyController),
+        new PrivCreatePrivacyGroup(privacyController),
+        new PrivDeletePrivacyGroup(getPrivacyParameters(), privacyController),
+        new PrivFindPrivacyGroup(privacyController),
+        new PrivGetPrivacyPrecompileAddress(getPrivacyParameters()),
+        new PrivGetTransactionCount(privacyController),
+        new PrivGetPrivateTransaction(getBlockchainQueries(), privacyController),
+        new PrivDistributeRawTransaction(getTransactionPool(), privacyController));
   }
 }
