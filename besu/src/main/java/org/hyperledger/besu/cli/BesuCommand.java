@@ -1374,7 +1374,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       privacyParametersBuilder.setEnabled(true);
       privacyParametersBuilder.setEnclaveUrl(privacyUrl);
       if (privacyPublicKeyFile() != null) {
-        privacyParametersBuilder.setEnclavePublicKeyUsingFile(privacyPublicKeyFile());
+        try {
+          privacyParametersBuilder.setEnclavePublicKeyUsingFile(privacyPublicKeyFile());
+        } catch (final IOException e) {
+          throw new ParameterException(
+              commandLine, "Problem with privacy-public-key-file: " + e.getMessage(), e);
+        } catch (final IllegalArgumentException e) {
+          throw new ParameterException(
+              commandLine, "Contents of privacy-public-key-file invalid: " + e.getMessage(), e);
+        }
       } else {
         throw new ParameterException(
             commandLine, "Please specify Enclave public key file path to enable privacy");
@@ -1384,9 +1392,20 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       privacyParametersBuilder.setStorageProvider(
           privacyKeyStorageProvider(keyValueStorageName + "-privacy"));
       privacyParametersBuilder.setEnclaveFactory(new EnclaveFactory(vertx));
+    } else {
+      if (anyPrivacyApiEnabled()) {
+        logger.warn("Privacy is disabled. Cannot use EEA/PRIV API methods when not using Privacy.");
+      }
     }
 
     return privacyParametersBuilder.build();
+  }
+
+  private boolean anyPrivacyApiEnabled() {
+    return rpcHttpApis.contains(RpcApis.EEA)
+        || rpcWsApis.contains(RpcApis.EEA)
+        || rpcHttpApis.contains(RpcApis.PRIV)
+        || rpcWsApis.contains(RpcApis.PRIV);
   }
 
   private PrivacyKeyValueStorageProvider privacyKeyStorageProvider(final String name) {

@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -34,6 +35,7 @@ import org.junit.Test;
 public class PrivGetEeaTransactionCountTest {
 
   private final PrivateEeaNonceProvider nonceProvider = mock(PrivateEeaNonceProvider.class);
+  private final PrivacyParameters privacyParameters = mock(PrivacyParameters.class);
   private JsonRpcRequestContext request;
 
   private final String privateFrom = "thePrivateFromKey";
@@ -42,6 +44,7 @@ public class PrivGetEeaTransactionCountTest {
 
   @Before
   public void setup() {
+    when(privacyParameters.isEnabled()).thenReturn(true);
     final Object[] jsonBody = new Object[] {address.toString(), privateFrom, privateFor};
     request =
         new JsonRpcRequestContext(
@@ -51,7 +54,8 @@ public class PrivGetEeaTransactionCountTest {
   @Test
   public void validRequestProducesExpectedNonce() {
     final long reportedNonce = 8L;
-    final PrivGetEeaTransactionCount method = new PrivGetEeaTransactionCount(nonceProvider);
+    final PrivGetEeaTransactionCount method =
+        new PrivGetEeaTransactionCount(privacyParameters, nonceProvider);
 
     when(nonceProvider.determineNonce(privateFrom, privateFor, address)).thenReturn(reportedNonce);
 
@@ -65,7 +69,8 @@ public class PrivGetEeaTransactionCountTest {
 
   @Test
   public void nonceProviderThrowsRuntimeExceptionProducesErrorResponse() {
-    final PrivGetEeaTransactionCount method = new PrivGetEeaTransactionCount(nonceProvider);
+    final PrivGetEeaTransactionCount method =
+        new PrivGetEeaTransactionCount(privacyParameters, nonceProvider);
 
     when(nonceProvider.determineNonce(privateFrom, privateFor, address))
         .thenThrow(RuntimeException.class);
@@ -80,7 +85,8 @@ public class PrivGetEeaTransactionCountTest {
 
   @Test
   public void nonceProviderThrowsAnExceptionProducesErrorResponse() {
-    final PrivGetEeaTransactionCount method = new PrivGetEeaTransactionCount(nonceProvider);
+    final PrivGetEeaTransactionCount method =
+        new PrivGetEeaTransactionCount(privacyParameters, nonceProvider);
 
     when(nonceProvider.determineNonce(privateFrom, privateFor, address))
         .thenThrow(RuntimeException.class);
@@ -91,5 +97,19 @@ public class PrivGetEeaTransactionCountTest {
     final JsonRpcErrorResponse errorResponse = (JsonRpcErrorResponse) response;
     assertThat(errorResponse.getError())
         .isEqualTo(JsonRpcError.GET_PRIVATE_TRANSACTION_NONCE_ERROR);
+  }
+
+  @Test
+  public void returnPrivacyDisabledErrorWhenPrivacyIsDisabled() {
+    when(privacyParameters.isEnabled()).thenReturn(false);
+    final PrivGetEeaTransactionCount method =
+        new PrivGetEeaTransactionCount(privacyParameters, nonceProvider);
+
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest("1", "priv_getEeaTransactionCount", new Object[] {}));
+    final JsonRpcErrorResponse response = (JsonRpcErrorResponse) method.response(request);
+
+    assertThat(response.getError()).isEqualTo(JsonRpcError.PRIVACY_NOT_ENABLED);
   }
 }

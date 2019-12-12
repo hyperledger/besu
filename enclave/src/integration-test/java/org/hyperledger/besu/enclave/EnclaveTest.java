@@ -50,7 +50,8 @@ public class EnclaveTest {
   private static final String PAYLOAD = "a wonderful transaction";
   private static final String MOCK_KEY = "iOCzoGo5kwtZU0J41Z9xnGXHN6ZNukIa9MspvHtu3Jk=";
   private static Enclave enclave;
-  private EnclaveFactory factory;
+  private Vertx vertx = Vertx.vertx();
+  private EnclaveFactory factory = new EnclaveFactory(vertx);
 
   private static OrionTestHarness testHarness;
 
@@ -65,14 +66,13 @@ public class EnclaveTest {
 
     testHarness.start();
 
-    factory = new EnclaveFactory(Vertx.vertx());
-
     enclave = factory.createVertxEnclave(testHarness.clientUrl());
   }
 
   @After
   public void tearDown() {
     testHarness.close();
+    vertx.close();
   }
 
   @Test

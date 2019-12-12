@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -114,9 +115,12 @@ public class EeaSendRawTransactionTest {
 
   @Mock private PrivateTransactionHandler privateTxHandler;
 
+  @Mock private PrivacyParameters privacyParameters;
+
   @Before
   public void before() {
-    method = new EeaSendRawTransaction(privateTxHandler, transactionPool);
+    when(privacyParameters.isEnabled()).thenReturn(true);
+    method = new EeaSendRawTransaction(privacyParameters, privateTxHandler, transactionPool);
   }
 
   @Test
@@ -382,5 +386,17 @@ public class EeaSendRawTransactionTest {
   @Test
   public void getMethodReturnsExpectedName() {
     assertThat(method.getName()).matches("eea_sendRawTransaction");
+  }
+
+  @Test
+  public void returnPrivacyDisabledErrorWhenPrivacyIsDisabled() {
+    when(privacyParameters.isEnabled()).thenReturn(false);
+
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest("1", "eea_sendRawTransaction", new Object[] {}));
+    final JsonRpcErrorResponse response = (JsonRpcErrorResponse) method.response(request);
+
+    assertThat(response.getError()).isEqualTo(JsonRpcError.PRIVACY_NOT_ENABLED);
   }
 }

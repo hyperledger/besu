@@ -18,23 +18,25 @@ import static org.apache.logging.log4j.LogManager.getLogger;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 
 import org.apache.logging.log4j.Logger;
 
-public class PrivGetEeaTransactionCount implements JsonRpcMethod {
+public class PrivGetEeaTransactionCount extends PrivacyApiMethod {
 
   private static final Logger LOG = getLogger();
 
   private final PrivateEeaNonceProvider nonceProvider;
 
-  public PrivGetEeaTransactionCount(final PrivateEeaNonceProvider nonceProvider) {
+  public PrivGetEeaTransactionCount(
+      final PrivacyParameters privacyParameters, final PrivateEeaNonceProvider nonceProvider) {
+    super(privacyParameters);
     this.nonceProvider = nonceProvider;
   }
 
@@ -44,7 +46,7 @@ public class PrivGetEeaTransactionCount implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
+  public JsonRpcResponse doResponse(final JsonRpcRequestContext requestContext) {
     if (requestContext.getRequest().getParamLength() != 3) {
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
