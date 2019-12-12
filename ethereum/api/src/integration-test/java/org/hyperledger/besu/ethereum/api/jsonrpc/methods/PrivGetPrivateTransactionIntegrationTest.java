@@ -23,8 +23,6 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveFactory;
-import org.hyperledger.besu.enclave.types.SendRequest;
-import org.hyperledger.besu.enclave.types.SendRequestLegacy;
 import org.hyperledger.besu.enclave.types.SendResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -49,6 +47,7 @@ import org.hyperledger.orion.testutil.OrionTestHarness;
 import org.hyperledger.orion.testutil.OrionTestHarnessFactory;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Optional;
 
@@ -158,12 +157,9 @@ public class PrivGetPrivateTransactionIntegrationTest {
     final BytesValueRLPOutput bvrlp = new BytesValueRLPOutput();
     privateTransaction.writeTo(bvrlp);
 
-    final SendRequest sendRequest =
-        new SendRequestLegacy(
-            Base64.getEncoder().encodeToString(bvrlp.encoded().extractArray()),
-            ENCLAVE_PUBLIC_KEY,
-            Lists.newArrayList("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo="));
-    final SendResponse sendResponse = enclave.send(sendRequest);
+    final String payload = Base64.getEncoder().encodeToString(bvrlp.encoded().extractArray());
+    final ArrayList<String> to = Lists.newArrayList("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=");
+    final SendResponse sendResponse = enclave.sendLegacy(payload, ENCLAVE_PUBLIC_KEY, to);
 
     final BytesValue hexKey = BytesValues.fromBase64(sendResponse.getKey());
     when(justTransaction.getPayload()).thenReturn(hexKey);
