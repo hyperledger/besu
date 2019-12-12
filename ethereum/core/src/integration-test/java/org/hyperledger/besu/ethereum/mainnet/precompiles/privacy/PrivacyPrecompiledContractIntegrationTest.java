@@ -24,8 +24,6 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveFactory;
-import org.hyperledger.besu.enclave.types.SendRequest;
-import org.hyperledger.besu.enclave.types.SendRequestLegacy;
 import org.hyperledger.besu.enclave.types.SendResponse;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -86,7 +84,6 @@ public class PrivacyPrecompiledContractIntegrationTest {
   private static OrionTestHarness testHarness;
   private static WorldStateArchive worldStateArchive;
   private static PrivateStateStorage privateStateStorage;
-  private static PrivateStateStorage.Updater storageUpdater;
   private static Vertx vertx = Vertx.vertx();
 
   private PrivateTransactionProcessor mockPrivateTxProcessor() {
@@ -132,7 +129,7 @@ public class PrivacyPrecompiledContractIntegrationTest {
     when(worldStateArchive.getMutable(any())).thenReturn(Optional.of(mutableWorldState));
 
     privateStateStorage = mock(PrivateStateStorage.class);
-    storageUpdater = mock(PrivateStateStorage.Updater.class);
+    final PrivateStateStorage.Updater storageUpdater = mock(PrivateStateStorage.Updater.class);
     when(storageUpdater.putLatestStateRoot(nullable(Bytes32.class), any()))
         .thenReturn(storageUpdater);
     when(storageUpdater.putTransactionLogs(nullable(Bytes32.class), any()))
@@ -149,7 +146,7 @@ public class PrivacyPrecompiledContractIntegrationTest {
   }
 
   @Test
-  public void testUpCheck() throws InterruptedException {
+  public void testUpCheck() {
     assertThat(enclave.upCheck()).isTrue();
   }
 
@@ -192,7 +189,6 @@ public class PrivacyPrecompiledContractIntegrationTest {
     publicKeys.add("noPrivateKenoPrivateKenoPrivateKenoPrivateK");
 
     final String s = new String(VALID_PRIVATE_TRANSACTION_RLP_BASE64, UTF_8);
-    final SendRequest sc = new SendRequestLegacy(s, publicKeys.get(0), publicKeys);
 
     final Throwable thrown =
         catchThrowable(() -> enclave.sendLegacy(s, publicKeys.get(0), publicKeys));
