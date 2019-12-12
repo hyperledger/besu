@@ -22,13 +22,8 @@ import org.web3j.tx.Contract;
 
 public class ExpectValidContractCode implements PrivateContractCondition {
   @Override
-  public void verify(final Contract contract) {
+  public void verify(final Contract contract) throws IOException {
     assertThat(contract).isNotNull();
-    boolean valid = false;
-    try {
-      valid = contract.isValid();
-    } catch (IOException ignored) {
-    }
-    assertThat(valid).isEqualTo(true);
+    assertThat(contract.isValid()).isEqualTo(true);
   }
 }

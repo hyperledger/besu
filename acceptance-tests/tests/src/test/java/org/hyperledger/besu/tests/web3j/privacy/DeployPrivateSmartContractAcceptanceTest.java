@@ -18,6 +18,8 @@ import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyAcceptanceTestBa
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
 
+import java.io.IOException;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -36,7 +38,7 @@ public class DeployPrivateSmartContractAcceptanceTest extends PrivacyAcceptanceT
   }
 
   @Test
-  public void deployingMustGiveValidReceiptAndContractCode() {
+  public void deployingMustGiveValidReceiptAndContractCode() throws IOException {
     final String contractAddress = "0x89ce396d0f9f937ddfa71113e29b2081c4869555";
 
     final EventEmitter eventEmitter =

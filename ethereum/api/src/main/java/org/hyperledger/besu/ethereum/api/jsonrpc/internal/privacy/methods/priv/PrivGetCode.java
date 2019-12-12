@@ -18,10 +18,10 @@ import static org.apache.logging.log4j.LogManager.getLogger;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.core.AccountState;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
@@ -58,19 +58,29 @@ public class PrivGetCode extends PrivacyApiMethod {
 
     final Address address =
         Address.fromHexString(requestContext.getRequiredParameter(0, String.class));
-    final String privacyGroupId = requestContext.getRequiredParameter(1, String.class);
+
+    final BlockParameter blockParameter =
+        requestContext.getRequiredParameter(1, BlockParameter.class);
+
+    final String privacyGroupId = requestContext.getRequiredParameter(2, String.class);
 
     final Hash latestStateRoot =
         privateStateRootResolver.resolveLastStateRoot(
             BytesValues.fromBase64(privacyGroupId),
-            blockchain.getBlockchain().getChainHeadBlock().getHash());
+            blockParameter.isNumeric() && blockParameter.getNumber().isPresent()
+                ? blockchain
+                    .getBlockchain()
+                    .getBlockByNumber(blockParameter.getNumber().getAsLong())
+                    .get()
+                    .getHash()
+                : blockchain.getBlockchain().getChainHeadBlock().getHash());
 
     return privacyParameters
         .getPrivateWorldStateArchive()
         .get(latestStateRoot)
         .flatMap(
-            privateWorldState ->
-                Optional.ofNullable(privateWorldState.get(address)).map(AccountState::getCode))
+            pws ->
+                Optional.ofNullable(pws.get(address)).map(account -> account.getCode().toString()))
         .map(c -> new JsonRpcSuccessResponse(requestContext.getRequest().getId(), c))
         .orElse(new JsonRpcSuccessResponse(requestContext.getRequest().getId(), null));
   }
