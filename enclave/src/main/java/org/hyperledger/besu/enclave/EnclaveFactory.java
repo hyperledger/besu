@@ -22,6 +22,7 @@ import io.vertx.core.http.HttpClientOptions;
 public class EnclaveFactory {
 
   private final Vertx vertx;
+  private static final long CONNECT_TIMEOUT = 1000;
 
   public EnclaveFactory(final Vertx vertx) {
     this.vertx = vertx;
@@ -35,6 +36,7 @@ public class EnclaveFactory {
     final HttpClientOptions clientOptions = new HttpClientOptions();
     clientOptions.setDefaultHost(enclaveUri.getHost());
     clientOptions.setDefaultPort(enclaveUri.getPort());
+    clientOptions.setConnectTimeout(CONNECT_TIMEOUT);
 
     final RequestTransmitter vertxTransmitter =
         new VertxRequestTransmitter(vertx.createHttpClient(clientOptions));

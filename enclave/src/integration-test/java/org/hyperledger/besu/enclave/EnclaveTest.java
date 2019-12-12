@@ -18,6 +18,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 
+import oracle.ucp.common.Clock;
 import org.hyperledger.besu.enclave.types.CreatePrivacyGroupRequest;
 import org.hyperledger.besu.enclave.types.DeletePrivacyGroupRequest;
 import org.hyperledger.besu.enclave.types.FindPrivacyGroupRequest;
@@ -185,7 +186,7 @@ public class EnclaveTest {
   }
 
   @Test
-  public void upcheckReturnsFalseIfNoResposneReceived() throws URISyntaxException {
+  public void upcheckReturnsFalseIfNoResponseReceived() throws URISyntaxException {
     assertThat(factory.createVertxEnclave(new URI("http://8.8.8.8:65535")).upCheck()).isFalse();
   }
 }
