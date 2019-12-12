@@ -69,7 +69,7 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
     return privacySendTransaction.validateAndExecute(
         requestContext,
         privateTransaction,
-        sendTransactionResponse.getPrivacyGroup(),
+        sendTransactionResponse.getPrivacyGroupId(),
         () -> {
           final Transaction privacyMarkerTransaction =
               privacyController.createPrivacyMarkerTransaction(

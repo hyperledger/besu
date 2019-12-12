@@ -66,7 +66,7 @@ public class PrivDistributeRawTransaction implements JsonRpcMethod {
     return privacySendTransaction.validateAndExecute(
         requestContext,
         privateTransaction,
-        sendTransactionResponse.getPrivacyGroup(),
+        sendTransactionResponse.getPrivacyGroupId(),
         () ->
             new JsonRpcSuccessResponse(
                 requestContext.getRequest().getId(),

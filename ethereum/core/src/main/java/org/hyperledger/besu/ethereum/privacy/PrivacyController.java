@@ -90,14 +90,19 @@ public class PrivacyController {
 
   public SendTransactionResponse sendTransaction(final PrivateTransaction privateTransaction) {
     final SendRequest sendRequest = createSendRequest(privateTransaction);
-    final SendResponse sendResponse;
-
     try {
       LOG.trace("Storing private transaction in enclave");
-      sendResponse = enclave.send(sendRequest);
+      final SendResponse sendResponse = enclave.send(sendRequest);
       final String enclaveKey = sendResponse.getKey();
-      final String privacyGroup = getPrivacyGroup(enclaveKey, privateTransaction);
-      return new SendTransactionResponse(enclaveKey, privacyGroup);
+      if (privateTransaction.getPrivacyGroupId().isPresent()) {
+        final String privacyGroupId =
+            BytesValues.asBase64String(privateTransaction.getPrivacyGroupId().get());
+        return new SendTransactionResponse(enclaveKey, privacyGroupId);
+      } else {
+        final String privateFrom = BytesValues.asBase64String(privateTransaction.getPrivateFrom());
+        final String privacyGroupId = getPrivacyGroupId(enclaveKey, privateFrom);
+        return new SendTransactionResponse(enclaveKey, privacyGroupId);
+      }
     } catch (Exception e) {
       LOG.error("Failed to store private transaction in enclave", e);
       throw e;
@@ -203,7 +208,6 @@ public class PrivacyController {
               .map(BytesValues::asBase64String)
               .collect(Collectors.toList());
 
-      // FIXME: orion should accept empty privateFor
       if (privateFor.isEmpty()) {
         privateFor.add(BytesValues.asBase64String(privateTransaction.getPrivateFrom()));
       }
@@ -213,15 +217,9 @@ public class PrivacyController {
     }
   }
 
-  private String getPrivacyGroup(final String key, final PrivateTransaction privateTransaction) {
-    if (privateTransaction.getPrivacyGroupId().isPresent()) {
-      return BytesValues.asBase64String(privateTransaction.getPrivacyGroupId().get());
-    }
-    final ReceiveRequest receiveRequest =
-        new ReceiveRequest(key, BytesValues.asBase64String(privateTransaction.getPrivateFrom()));
-    LOG.debug(
-        "Getting privacy group for {}",
-        BytesValues.asBase64String(privateTransaction.getPrivateFrom()));
+  private String getPrivacyGroupId(final String key, final String privateFrom) {
+    final ReceiveRequest receiveRequest = new ReceiveRequest(key, privateFrom);
+    LOG.debug("Getting privacy group for {}", privateFrom);
     final ReceiveResponse receiveResponse;
     try {
       receiveResponse = enclave.receive(receiveRequest);

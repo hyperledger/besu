@@ -167,7 +167,7 @@ public class PrivacyControllerTest {
 
     final ValidationResult<TransactionInvalidReason> validationResult =
         privacyController.validatePrivateTransaction(
-            transaction, sendTransactionResponse.getPrivacyGroup());
+            transaction, sendTransactionResponse.getPrivacyGroupId());
 
     final Transaction markerTransaction =
         privacyController.createPrivacyMarkerTransaction(
@@ -221,7 +221,7 @@ public class PrivacyControllerTest {
         privacyController.sendTransaction(transaction);
     final ValidationResult<TransactionInvalidReason> validationResult =
         privacyController.validatePrivateTransaction(
-            transaction, sendTransactionResponse.getPrivacyGroup());
+            transaction, sendTransactionResponse.getPrivacyGroupId());
     assertThat(validationResult).isEqualTo(ValidationResult.invalid(PRIVATE_NONCE_TOO_LOW));
   }
 
@@ -236,7 +236,7 @@ public class PrivacyControllerTest {
         privacyController.sendTransaction(transaction);
     final ValidationResult<TransactionInvalidReason> validationResult =
         privacyController.validatePrivateTransaction(
-            transaction, sendTransactionResponse.getPrivacyGroup());
+            transaction, sendTransactionResponse.getPrivacyGroupId());
     assertThat(validationResult).isEqualTo(ValidationResult.invalid(INCORRECT_PRIVATE_NONCE));
   }
 
