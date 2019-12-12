@@ -22,7 +22,7 @@ import io.vertx.core.http.HttpClientOptions;
 public class EnclaveFactory {
 
   private final Vertx vertx;
-  private static final long CONNECT_TIMEOUT = 1000;
+  private static final int CONNECT_TIMEOUT = 1000;
 
   public EnclaveFactory(final Vertx vertx) {
     this.vertx = vertx;
