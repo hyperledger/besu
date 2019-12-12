@@ -55,8 +55,7 @@ public class PrivFindPrivacyGroup implements JsonRpcMethod {
     try {
       response = privacyController.findPrivacyGroup(addresses);
     } catch (Exception e) {
-      LOG.error("Failed to fetch group from Enclave with error " + e.getMessage());
-      LOG.error(e);
+      LOG.error("Failed to fetch privacy group", e);
       return new JsonRpcSuccessResponse(
           requestContext.getRequest().getId(), JsonRpcError.FIND_PRIVACY_GROUP_ERROR);
     }

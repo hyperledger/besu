@@ -59,8 +59,7 @@ public class PrivDeletePrivacyGroup implements JsonRpcMethod {
     try {
       response = privacyController.deletePrivacyGroup(privacyGroupId);
     } catch (Exception e) {
-      LOG.error("Failed to fetch transaction from Enclave with error " + e.getMessage());
-      LOG.error(e);
+      LOG.error("Failed to fetch transaction", e);
       return new JsonRpcSuccessResponse(
           requestContext.getRequest().getId(), JsonRpcError.DELETE_PRIVACY_GROUP_ERROR);
     }

@@ -84,7 +84,7 @@ public class PrivGetPrivateTransaction implements JsonRpcMethod {
             new PrivateTransactionLegacyResult(privateTransaction));
       }
     } catch (Exception e) {
-      LOG.error("Failed to fetch private transaction with error " + e.getMessage());
+      LOG.error("Failed to fetch private transaction", e);
       return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), null);
     }
   }

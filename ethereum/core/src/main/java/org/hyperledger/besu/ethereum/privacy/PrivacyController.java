@@ -43,6 +43,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -151,11 +152,11 @@ public class PrivacyController {
     if (legacyGroups.size() == 0) {
       // the legacy group does not exist yet
       return 0;
-    } else if (legacyGroups.size() != 1) {
-      throw new RuntimeException(
-          String.format(
-              "Found invalid number of privacy groups (%d), expected 1.", legacyGroups.size()));
     }
+    Preconditions.checkArgument(
+        legacyGroups.size() == 1,
+        String.format(
+            "Found invalid number of privacy groups (%d), expected 1.", legacyGroups.size()));
 
     final String privacyGroupId = legacyGroups.get(0).getPrivacyGroupId();
 
