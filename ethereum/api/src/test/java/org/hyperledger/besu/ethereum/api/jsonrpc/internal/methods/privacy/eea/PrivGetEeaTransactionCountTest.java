@@ -96,17 +96,4 @@ public class PrivGetEeaTransactionCountTest {
     assertThat(errorResponse.getError())
         .isEqualTo(JsonRpcError.GET_PRIVATE_TRANSACTION_NONCE_ERROR);
   }
-
-  @Test
-  public void returnPrivacyDisabledErrorWhenPrivacyIsDisabled() {
-    when(privacyParameters.isEnabled()).thenReturn(false);
-    final PrivGetEeaTransactionCount method = new PrivGetEeaTransactionCount(privacyController);
-
-    final JsonRpcRequestContext request =
-        new JsonRpcRequestContext(
-            new JsonRpcRequest("1", "priv_getEeaTransactionCount", new Object[] {}));
-    final JsonRpcErrorResponse response = (JsonRpcErrorResponse) method.response(request);
-
-    assertThat(response.getError()).isEqualTo(JsonRpcError.PRIVACY_NOT_ENABLED);
-  }
 }
