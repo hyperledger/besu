@@ -71,15 +71,13 @@ public class VertxRequestTransmitter implements RequestTransmitter {
         request.end();
       }
       return result.get();
-    } catch (final ExecutionException e) {
-      if (e.getCause() instanceof EnclaveException) {
-        throw (EnclaveException) e.getCause();
+    } catch (final ExecutionException | InterruptedException e) {
+      if (e.getCause() instanceof EnclaveClientException) {
+        throw (EnclaveClientException) e.getCause();
+      } else if (e.getCause() instanceof EnclaveServerException) {
+        throw (EnclaveServerException) e.getCause();
       }
-      throw new EnclaveException("Failure during reception", e);
-    } catch (final InterruptedException e) {
-      throw new EnclaveException("Task interrupted while waiting for Enclave response.", e);
-    } catch (final Exception e) {
-      throw new EnclaveException("Other error", e);
+      throw new EnclaveIOException("Enclave Communication Failed", e);
     }
   }
 

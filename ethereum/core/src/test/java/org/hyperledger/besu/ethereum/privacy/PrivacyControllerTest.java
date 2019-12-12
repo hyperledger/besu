@@ -32,7 +32,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.enclave.Enclave;
-import org.hyperledger.besu.enclave.EnclaveException;
+import org.hyperledger.besu.enclave.EnclaveServerException;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.enclave.types.PrivacyGroup.Type;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
@@ -111,7 +111,8 @@ public class PrivacyControllerTest {
 
   private Enclave brokenMockEnclave() {
     Enclave mockEnclave = mock(Enclave.class);
-    when(mockEnclave.send(anyString(), anyString(), anyList())).thenThrow(EnclaveException.class);
+    when(mockEnclave.send(anyString(), anyString(), anyList()))
+        .thenThrow(EnclaveServerException.class);
     return mockEnclave;
   }
 
@@ -207,7 +208,7 @@ public class PrivacyControllerTest {
 
   @Test
   public void sendTransactionWhenEnclaveFailsThrowsEnclaveError() {
-    assertThatExceptionOfType(EnclaveException.class)
+    assertThatExceptionOfType(EnclaveServerException.class)
         .isThrownBy(() -> brokenPrivacyController.sendTransaction(buildLegacyPrivateTransaction()));
   }
 

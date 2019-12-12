@@ -31,9 +31,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class Enclave {
@@ -145,7 +143,7 @@ public class Enclave {
     try {
       bodyText = objectMapper.writeValueAsString(content);
     } catch (final JsonProcessingException e) {
-      throw new EnclaveException("Unable to serialise object to json representation.");
+      throw new EnclaveClientException(400, "Unable to serialise request.");
     }
 
     return requestTransmitter.post(mediaType, bodyText, endpoint, responseBodyHandler);
@@ -153,26 +151,42 @@ public class Enclave {
 
   private <T> T handleJsonResponse(
       final int statusCode, final byte[] body, final Class<T> responseType) {
-    try {
-      if (statusCode == 200) {
-        return objectMapper.readValue(body, responseType);
-      } else {
-        final ErrorResponse errorResponse = objectMapper.readValue(body, ErrorResponse.class);
-        throw new EnclaveException(errorResponse.getError());
-      }
-    } catch (final JsonParseException | JsonMappingException e) {
-      throw new EnclaveException("Failed to deserialise received json", e);
-    } catch (final IOException e) {
-      throw new EnclaveException("Decoding Json stream failed", e);
+
+    if (isSuccess(statusCode)) {
+      return parseResponse(statusCode, body, responseType);
+    } else if (clientError(statusCode)) {
+      final ErrorResponse errorResponse = parseResponse(statusCode, body, ErrorResponse.class);
+      throw new EnclaveClientException(statusCode, errorResponse.getError());
+    } else {
+      final ErrorResponse errorResponse = parseResponse(statusCode, body, ErrorResponse.class);
+      throw new EnclaveServerException(statusCode, errorResponse.getError());
     }
+  }
+
+  private <T> T parseResponse(
+      final int statusCode, final byte[] body, final Class<T> responseType) {
+    try {
+      return objectMapper.readValue(body, responseType);
+    } catch (IOException e) {
+      final String utf8EncodedBody = new String(body, StandardCharsets.UTF_8);
+      throw new EnclaveClientException(statusCode, utf8EncodedBody);
+    }
+  }
+
+  private boolean clientError(final int statusCode) {
+    return statusCode >= 400 && statusCode < 500;
+  }
+
+  private boolean isSuccess(final int statusCode) {
+    return statusCode == 200;
   }
 
   private String handleRawResponse(final int statusCode, final byte[] body) {
     final String bodyText = new String(body, StandardCharsets.UTF_8);
-    if (statusCode == 200) {
+    if (isSuccess(statusCode)) {
       return bodyText;
     }
-    throw new EnclaveException(
-        String.format("Request failed with %d; body={%s}", statusCode, bodyText));
+    throw new EnclaveClientException(
+        statusCode, String.format("Request failed with %d; body={%s}", statusCode, bodyText));
   }
 }

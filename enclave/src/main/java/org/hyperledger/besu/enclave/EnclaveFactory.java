@@ -30,7 +30,7 @@ public class EnclaveFactory {
 
   public Enclave createVertxEnclave(final URI enclaveUri) {
     if (enclaveUri.getPort() == -1) {
-      throw new EnclaveException("Illegal URI - no port specified");
+      throw new EnclaveIOException("Illegal URI - no port specified");
     }
 
     final HttpClientOptions clientOptions = new HttpClientOptions();
