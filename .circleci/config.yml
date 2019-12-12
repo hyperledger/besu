@@ -19,7 +19,7 @@ executors:
 
 notify:
   webhooks:
-    - url: https://webhook.site/5941b0fd-5107-4814-9cb9-b57fcdabd46c
+    - url: https://edjojob-rc-test.herokuapp.com/hubot/circleci
 
 commands:
   prepare:
