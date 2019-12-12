@@ -531,7 +531,8 @@ tasks.register("dockerDistUntar") {
 task distDocker(type: Exec) {
   dependsOn dockerDistUntar
   def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
-  def image = project.hasProperty('release.releaseVersion') ? "hyperledger/besu:" + project.property('release.releaseVersion') : "hyperledger/besu:${project.version}"
+  def imageName = "hyperledger/besu"
+  def image = "${imageName}:${dockerBuildVersion}"
   def dockerBuildDir = "build/docker-besu/"
   workingDir "${dockerBuildDir}"
 
@@ -562,9 +563,10 @@ task testDocker(type: Exec) {
 
 task dockerUpload(type: Exec) {
   dependsOn distDocker
+  def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
   def imageName = "hyperledger/besu"
   def azureImageName = "hyperledger.azurecr.io/besu"
-  def image = project.hasProperty('release.releaseVersion') ? "${imageName}:" + project.property('release.releaseVersion') : "${imageName}:${project.version}"
+  def image = "${imageName}:${dockerBuildVersion}"
   def cmd = "docker push '${image}'"
   def additionalTags = []
 
@@ -572,9 +574,9 @@ task dockerUpload(type: Exec) {
     additionalTags.add('develop')
   }
 
-  if (! version ==~ /.*-SNAPSHOT/) {
+  if (!(dockerBuildVersion ==~ /.*-SNAPSHOT/)) {
     additionalTags.add('latest')
-    additionalTags.add(version.split(/\./)[0..1].join('.'))
+    additionalTags.add(dockerBuildVersion.split(/\./)[0..1].join('.'))
   }
 
   additionalTags.each { tag ->
