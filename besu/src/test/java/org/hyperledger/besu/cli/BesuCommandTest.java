@@ -2718,9 +2718,6 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--privacy-public-key-file",
         configFile.getPath());
 
-    final ArgumentCaptor<PrivacyParameters> privacyParametersArgumentCaptor =
-        ArgumentCaptor.forClass(PrivacyParameters.class);
-
     assertThat(commandErrorOutput.toString())
         .startsWith(
             "Privacy multi-tenancy requires either http authentication to be enabled or WebSocket authentication to be enabled");
