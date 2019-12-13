@@ -163,6 +163,32 @@ public class EnclaveTest {
   }
 
   @Test
+  public void testCreateDeleteRetrievePrivacyGroup() {
+    List<String> publicKeys = testHarness.getPublicKeys();
+    String name = "name";
+    String description = "desc";
+    final String[] addresses = publicKeys.toArray(new String[0]);
+
+    PrivacyGroup privacyGroupResponse =
+        enclave.createPrivacyGroup(addresses, publicKeys.get(0), name, description);
+
+    assertThat(privacyGroupResponse.getPrivacyGroupId()).isNotNull();
+    assertThat(privacyGroupResponse.getName()).isEqualTo(name);
+    assertThat(privacyGroupResponse.getDescription()).isEqualTo(description);
+    assertThat(privacyGroupResponse.getType()).isEqualTo(PrivacyGroup.Type.PANTHEON);
+
+    PrivacyGroup retrievePrivacyGroup =
+        enclave.retrievePrivacyGroup(privacyGroupResponse.getPrivacyGroupId());
+
+    assertThat(retrievePrivacyGroup).isEqualToComparingFieldByField(privacyGroupResponse);
+
+    String response =
+        enclave.deletePrivacyGroup(privacyGroupResponse.getPrivacyGroupId(), publicKeys.get(0));
+
+    assertThat(privacyGroupResponse.getPrivacyGroupId()).isEqualTo(response);
+  }
+
+  @Test
   public void upcheckReturnsFalseIfNoResposneReceived() throws URISyntaxException {
     assertThat(factory.createVertxEnclave(new URI("http://8.8.8.8:65535")).upCheck()).isFalse();
   }

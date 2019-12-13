@@ -22,6 +22,7 @@ import org.hyperledger.besu.enclave.types.FindPrivacyGroupRequest;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.enclave.types.ReceiveRequest;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
+import org.hyperledger.besu.enclave.types.RetrievePrivacyGroupRequest;
 import org.hyperledger.besu.enclave.types.SendRequestBesu;
 import org.hyperledger.besu.enclave.types.SendRequestLegacy;
 import org.hyperledger.besu.enclave.types.SendResponse;
@@ -124,6 +125,16 @@ public class Enclave {
         request,
         "/findPrivacyGroup",
         (statusCode, body) -> handleJsonResponse(statusCode, body, PrivacyGroup[].class));
+  }
+
+  public PrivacyGroup retrievePrivacyGroup(final String privacyGroupId) {
+    final RetrievePrivacyGroupRequest retrievePrivacyGroupRequest =
+        new RetrievePrivacyGroupRequest(privacyGroupId);
+    return post(
+        JSON,
+        retrievePrivacyGroupRequest,
+        "/retrievePrivacyGroup",
+        (statusCode, body) -> handleJsonResponse(statusCode, body, PrivacyGroup.class));
   }
 
   private <T> T post(
