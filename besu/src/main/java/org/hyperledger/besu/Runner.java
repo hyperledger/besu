@@ -102,6 +102,7 @@ public class Runner implements AutoCloseable {
       metrics.ifPresent(service -> waitForServiceToStart("metrics", service.start()));
       LOG.info("Ethereum main loop is up.");
       writeBesuPortsToFile();
+      writeBesuNetworksToFile();
     } catch (final Exception ex) {
       LOG.error("Startup failed", ex);
       throw new IllegalStateException(ex);
@@ -229,6 +230,34 @@ public class Runner implements AutoCloseable {
     } catch (final Exception e) {
       LOG.warn("Error writing ports file", e);
     }
+
+    // create besu.ports file
+    createBesuFile(
+        properties, "ports", "This file contains the ports used by the running instance of Besu");
+  }
+
+  private void writeBesuNetworksToFile() {
+    final Properties properties = new Properties();
+    if (networkRunner.getNetwork().isP2pEnabled()) {
+      networkRunner
+          .getNetwork()
+          .getLocalEnode()
+          .ifPresent(
+              enode -> {
+                final String globalIp =
+                    natService.queryExternalIPAddress().orElseGet(enode::getIpAsString);
+                properties.setProperty("global-ip", globalIp);
+
+                final String localIp =
+                    natService.queryLocalIPAddress().orElseGet(enode::getIpAsString);
+                properties.setProperty("local-ip", localIp);
+              });
+    }
+    // create besu.networks file
+    createBesuFile(
+        properties,
+        "networks",
+        "This file contains the IP Addresses (global and local) used by the running instance of Besu");
   }
 
   public Optional<Integer> getJsonRpcPort() {
@@ -259,5 +288,19 @@ public class Runner implements AutoCloseable {
   @FunctionalInterface
   private interface SynchronousShutdown {
     void await() throws InterruptedException;
+  }
+
+  private void createBesuFile(
+      final Properties properties, final String fileName, final String fileHeader) {
+    final File file = new File(dataDir.toFile(), String.format("besu.%s", fileName));
+    file.deleteOnExit();
+
+    try (final FileOutputStream fileOutputStream = new FileOutputStream(file)) {
+      properties.store(
+          fileOutputStream,
+          String.format("%s. This file will be deleted after the node is shutdown.", fileHeader));
+    } catch (final Exception e) {
+      LOG.warn(String.format("Error writing %s file", fileName), e);
+    }
   }
 }
