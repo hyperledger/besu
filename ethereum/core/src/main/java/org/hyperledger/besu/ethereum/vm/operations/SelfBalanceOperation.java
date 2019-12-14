@@ -36,7 +36,7 @@ public class SelfBalanceOperation extends AbstractOperation {
 
   @Override
   public void execute(final MessageFrame frame) {
-    final Address accountAddress = frame.getContractAddress();
+    final Address accountAddress = frame.getRecipientAddress();
     final Account account = frame.getWorldState().get(accountAddress);
     frame.pushStackItem(account == null ? Bytes32.ZERO : account.getBalance().toBytes());
   }
