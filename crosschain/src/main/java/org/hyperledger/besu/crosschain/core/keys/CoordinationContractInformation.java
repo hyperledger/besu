@@ -18,15 +18,15 @@ import java.math.BigInteger;
 
 public class CoordinationContractInformation {
   public BigInteger coordinationBlockchainId;
-  public Address coodinationContract;
+  public String coodinationContract;
   public String ipAddressAndPort;
 
   CoordinationContractInformation(
       final BigInteger coordinationBlockchainId,
       final Address coodinationContract,
       final String ipAddressAndPort) {
-    this.coodinationContract = coodinationContract;
     this.coordinationBlockchainId = coordinationBlockchainId;
+    this.coodinationContract = coodinationContract.getHexString();
     this.ipAddressAndPort = ipAddressAndPort;
   }
 }

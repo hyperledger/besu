@@ -59,7 +59,7 @@ public class CrossAddCoordinationContract implements JsonRpcMethod {
 
     // TODO check that ipAddressAndPort is valid
 
-    LOG.trace(
+    LOG.info(
         "JSON RPC {}: Blockchain Id: {}, Address: {}, IPAddress: {}",
         getName(),
         blockchainId,

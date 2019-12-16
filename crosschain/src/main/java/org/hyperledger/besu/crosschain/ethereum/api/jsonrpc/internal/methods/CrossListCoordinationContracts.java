@@ -53,7 +53,7 @@ public class CrossListCoordinationContracts implements JsonRpcMethod {
 
     Collection<CoordinationContractInformation> info =
         this.crosschainController.listCoordinationContracts();
-    LOG.trace("JSON RPC {}: Size: {}", getName(), info.size());
+    LOG.info("JSON RPC {}: Size: {}", getName(), info.size());
     return new JsonRpcSuccessResponse(request.getId(), info);
   }
 }

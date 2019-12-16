@@ -30,6 +30,7 @@ import org.apache.logging.log4j.Logger;
 public class CrossStartThresholdKeyGeneration implements JsonRpcMethod {
 
   private static final Logger LOG = LogManager.getLogger();
+  private static final int EXPECTED_NUM_PARAMS = 2;
 
   private final CrosschainController crosschainController;
   private final JsonRpcParameter parameters;
@@ -47,19 +48,26 @@ public class CrossStartThresholdKeyGeneration implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequest request) {
-    if (request.getParamLength() != 2) {
+    if (request.getParamLength() != EXPECTED_NUM_PARAMS) {
+      LOG.error(
+          "JSON RPC {}: Expected {} parameters. Called with {} parameters",
+          getName(),
+          EXPECTED_NUM_PARAMS,
+          request.getParamLength());
       return new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
     }
     Object[] params = request.getParams();
     final int threshold = parameters.required(params, 0, Integer.TYPE);
-    final int algorithmInt = parameters.required(params, 1, Integer.TYPE);
+    final String algorithmStr = parameters.required(params, 1, String.class);
+
     BlsThresholdCryptoSystem algorithm;
     try {
-      algorithm = BlsThresholdCryptoSystem.create(algorithmInt);
+      algorithm = BlsThresholdCryptoSystem.valueOf(algorithmStr);
     } catch (RuntimeException ex) {
+      LOG.error("JSON RPC {}: Invalid BLS Threshold Crypto Scheme: {}", getName(), algorithmStr);
       return new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
     }
-    LOG.trace("JSON RPC {}: Threshold: {}, Algorithm: {}", getName(), threshold, algorithm);
+    LOG.info("JSON RPC {}: Threshold: {}, Algorithm: {}", getName(), threshold, algorithm);
 
     long keyVersion = this.crosschainController.startThresholdKeyGeneration(threshold, algorithm);
     LOG.trace(
