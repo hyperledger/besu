@@ -23,11 +23,14 @@ import java.math.BigInteger;
 
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.besu.JsonRpc2_0Besu;
+import org.web3j.protocol.besu.response.crosschain.CrossIsLockedResponse;
+import org.web3j.protocol.core.DefaultBlockParameter;
 import org.web3j.tx.CrosschainTransactionManager;
 
 public abstract class CrosschainAcceptanceTestBase extends AcceptanceTestBase {
   public static final int VOTING_TIME_OUT = 2;
   public static final long CROSSCHAIN_TRANSACTION_TIMEOUT = 10;
+  protected Credentials BENEFACTOR_ONE;
 
   protected Cluster clusterCoordinationBlockchain;
   protected BesuNode nodeOnCoordinationBlockchain;
@@ -42,6 +45,10 @@ public abstract class CrosschainAcceptanceTestBase extends AcceptanceTestBase {
   protected Cluster clusterBc2;
   protected BesuNode nodeOnBlockchain2;
   protected CrosschainTransactionManager transactionManagerBlockchain2;
+
+  protected Cluster clusterBc3;
+  protected BesuNode nodeOnBlockchain3;
+  protected CrosschainTransactionManager transactionManagerBlockchain3;
 
   public void setUpCoordiantionChain() throws Exception {
     nodeOnCoordinationBlockchain =
@@ -66,7 +73,7 @@ public abstract class CrosschainAcceptanceTestBase extends AcceptanceTestBase {
     this.clusterBc1.start(nodeOnBlockchain1);
 
     JsonRpc2_0Besu blockchain1Web3j = this.nodeOnBlockchain1.getJsonRpc();
-    final Credentials BENEFACTOR_ONE = Credentials.create(Accounts.GENESIS_ACCOUNT_ONE_PRIVATE_KEY);
+    BENEFACTOR_ONE = Credentials.create(Accounts.GENESIS_ACCOUNT_ONE_PRIVATE_KEY);
     JsonRpc2_0Besu coordinationWeb3j = this.nodeOnCoordinationBlockchain.getJsonRpc();
 
     this.transactionManagerBlockchain1 =
@@ -104,6 +111,28 @@ public abstract class CrosschainAcceptanceTestBase extends AcceptanceTestBase {
             CROSSCHAIN_TRANSACTION_TIMEOUT);
   }
 
+  public void setUpBlockchain3() throws Exception {
+    this.nodeOnBlockchain3 = besu.createCrosschainBlockchain3Ibft2Node("bc3-node");
+    this.clusterBc3 = new Cluster(this.net);
+    this.clusterBc3.start(this.nodeOnBlockchain3);
+
+    JsonRpc2_0Besu blockchain3Web3j = this.nodeOnBlockchain3.getJsonRpc();
+    final Credentials BENEFACTOR_ONE = Credentials.create(Accounts.GENESIS_ACCOUNT_ONE_PRIVATE_KEY);
+    JsonRpc2_0Besu coordinationWeb3j = this.nodeOnCoordinationBlockchain.getJsonRpc();
+
+    this.transactionManagerBlockchain3 =
+        new CrosschainTransactionManager(
+            blockchain3Web3j,
+            BENEFACTOR_ONE,
+            this.nodeOnBlockchain3.getChainId(),
+            BLOCKCHAIN1_RETRY_ATTEMPTS,
+            BLOCKCHAIN1_SLEEP_DURATION,
+            coordinationWeb3j,
+            this.nodeOnCoordinationBlockchain.getChainId(),
+            this.coordContract.getContractAddress(),
+            CROSSCHAIN_TRANSACTION_TIMEOUT);
+  }
+
   public void addMultichainNode(final BesuNode node, final BesuNode nodeToAdd) {
     String ipAddress = nodeToAdd.jsonRpcListenHost1();
     int port = nodeToAdd.getJsonRpcSocketPort1().intValue();
@@ -111,5 +140,19 @@ public abstract class CrosschainAcceptanceTestBase extends AcceptanceTestBase {
     BigInteger chainId = nodeToAdd.getChainId();
 
     node.execute(crossTransactions.getAddMultichainNode(chainId, ipAddressAndPort));
+  }
+
+  protected void waitForUnlock(final String ctrtAddress, final BesuNode node) throws Exception {
+    CrossIsLockedResponse isLockedObj =
+        node.getJsonRpc()
+            .crossIsLocked(ctrtAddress, DefaultBlockParameter.valueOf("latest"))
+            .send();
+    while (isLockedObj.isLocked()) {
+      Thread.sleep(100);
+      isLockedObj =
+          node.getJsonRpc()
+              .crossIsLocked(ctrtAddress, DefaultBlockParameter.valueOf("latest"))
+              .send();
+    }
   }
 }

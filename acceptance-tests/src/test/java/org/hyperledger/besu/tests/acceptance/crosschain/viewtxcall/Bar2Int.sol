@@ -13,6 +13,6 @@
 
 pragma solidity >=0.4.0 <0.6.0;
 
-contract Bar2Int {
+interface Bar2Int {
     function updateState() external;
 }
