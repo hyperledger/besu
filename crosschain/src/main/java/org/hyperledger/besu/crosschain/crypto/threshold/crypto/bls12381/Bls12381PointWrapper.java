@@ -10,69 +10,70 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package org.hyperledger.besu.crosschain.crypto.threshold.crypto.altbn128;
+package org.hyperledger.besu.crosschain.crypto.threshold.crypto.bls12381;
 
 import org.hyperledger.besu.crosschain.crypto.threshold.crypto.BlsCryptoProvider;
 import org.hyperledger.besu.crosschain.crypto.threshold.crypto.BlsPoint;
-import org.hyperledger.besu.crypto.altbn128.AltBn128Point;
-import org.hyperledger.besu.crypto.altbn128.Fq;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.math.BigInteger;
 
-// TODO getting a class cast exception if BlsPublicKey is not added here -???
-public class AltBn128PointWrapper implements BlsPoint {
+import org.apache.milagro.amcl.BLS381.BIG;
+import org.apache.milagro.amcl.BLS381.ECP;
 
-  AltBn128Point point;
+public class Bls12381PointWrapper implements BlsPoint {
 
-  AltBn128PointWrapper(final AltBn128Point point) {
+  ECP point;
+
+  Bls12381PointWrapper(final org.apache.milagro.amcl.BLS381.ECP point) {
     this.point = point;
   }
 
   @Override
   public BlsCryptoProvider.CryptoProviderTypes getType() {
-    return BlsCryptoProvider.CryptoProviderTypes.LOCAL_ALT_BN_128;
+    return BlsCryptoProvider.CryptoProviderTypes.LOCAL_BLS12_381;
   }
 
   // Add a point to this point.
   @Override
-  public BlsPoint add(final BlsPoint obj) {
-    if (!(obj instanceof AltBn128PointWrapper)) {
-      throw new RuntimeException("incorrect point addition with Bn128 point");
-    }
-    AltBn128Point p = this.point.add(((AltBn128PointWrapper) obj).point);
-    return new AltBn128PointWrapper(p);
+  public Bls12381PointWrapper add(final BlsPoint obj) {
+    this.point.add(((Bls12381PointWrapper) obj).point);
+    return new Bls12381PointWrapper(this.point);
   }
 
   // Multiple this point by a scalar.
   @Override
-  public BlsPoint scalarMul(final BigInteger scalar) {
-    return new AltBn128PointWrapper(this.point.multiply(scalar));
+  public Bls12381PointWrapper scalarMul(final BigInteger scalar) {
+    org.apache.milagro.amcl.BLS381.BIG scBig = Bls12381Util.BIGFromBigInteger(scalar);
+    return new Bls12381PointWrapper(this.point.mul(scBig));
   }
 
   // Return true if this point is the point at infinity.
   @Override
   public boolean isAtInfinity() {
-    return this.point.isInfinity();
+    return this.point.is_infinity();
   }
 
   @Override
   public BlsPoint negate() {
-    return new AltBn128PointWrapper(this.point.negate());
+    ECP p;
+    p = new ECP();
+    this.point.copy(p);
+    p.neg();
+    return new Bls12381PointWrapper(p);
   }
 
-  private static final int WORD_LEN = 32;
-  public static final int STORED_LEN = WORD_LEN + WORD_LEN;
+  private static final int WORD_LEN = BIG.MODBYTES;
+  public static final int STORED_LEN = 2 * WORD_LEN;
 
   @Override
   public byte[] store() {
-    Fq x = this.point.getX();
-    BytesValue xBytesV = x.toBytesValue();
-    byte[] xBytes = xBytesV.extractArray();
+    BIG x = this.point.getX();
+    byte xBytes[] = new byte[BIG.MODBYTES];
+    x.tobytearray(xBytes, 0);
 
-    Fq y = this.point.getY();
-    BytesValue yBytesV = y.toBytesValue();
-    byte[] yBytes = yBytesV.extractArray();
+    BIG y = this.point.getY();
+    byte yBytes[] = new byte[BIG.MODBYTES];
+    y.tobytearray(yBytes, 0);
 
     byte[] output = new byte[STORED_LEN];
 
@@ -89,10 +90,10 @@ public class AltBn128PointWrapper implements BlsPoint {
     return output;
   }
 
-  public static AltBn128PointWrapper load(final byte[] data) {
+  public static Bls12381PointWrapper load(final byte[] data) throws Exception {
     if (data.length != STORED_LEN) {
       throw new Error(
-          "Bn128 Point data incorrect length. Should be " + STORED_LEN + ", is " + data.length);
+          "BLS12-381 Point data incorrect length. Should be " + STORED_LEN + ", is " + data.length);
     }
 
     byte[] xBytes = new byte[WORD_LEN];
@@ -101,11 +102,11 @@ public class AltBn128PointWrapper implements BlsPoint {
     byte[] yBytes = new byte[WORD_LEN];
     System.arraycopy(data, WORD_LEN, yBytes, 0, WORD_LEN);
 
-    Fq x = Fq.create(new BigInteger(xBytes));
-    Fq y = Fq.create(new BigInteger(yBytes));
-    AltBn128Point point = new AltBn128Point(x, y);
+    BIG x = Bls12381Util.BIGFromBigInteger(new BigInteger(xBytes));
+    BIG y = Bls12381Util.BIGFromBigInteger(new BigInteger(yBytes));
+    ECP point = new ECP(x, y);
 
-    return new AltBn128PointWrapper(point);
+    return new Bls12381PointWrapper(point);
   }
 
   @Override
@@ -113,11 +114,13 @@ public class AltBn128PointWrapper implements BlsPoint {
     if (this == obj) {
       return true;
     }
-    if (!(obj instanceof AltBn128PointWrapper)) {
+    if (!(obj
+        instanceof
+        org.hyperledger.besu.crosschain.crypto.threshold.crypto.bls12381.Bls12381PointWrapper)) {
       return false;
     }
 
-    return this.point.equals(((AltBn128PointWrapper) obj).point);
+    return this.point.equals(((Bls12381PointWrapper) obj).point);
   }
 
   @Override

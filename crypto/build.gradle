@@ -33,7 +33,10 @@ dependencies {
 
   implementation 'com.google.guava:guava'
   implementation 'org.apache.logging.log4j:log4j-api'
-
+  
+   // https://mvnrepository.com/artifact/org.miracl.milagro.amcl/milagro-crypto-java
+  compile group: 'org.miracl.milagro.amcl', name: 'milagro-crypto-java', version: '0.4.0'
+  
   runtime 'org.apache.logging.log4j:log4j-core'
 
   testImplementation 'org.assertj:assertj-core'

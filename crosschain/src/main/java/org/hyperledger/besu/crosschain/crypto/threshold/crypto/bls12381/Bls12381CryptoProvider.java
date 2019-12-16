@@ -10,71 +10,81 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package org.hyperledger.besu.crosschain.crypto.threshold.crypto.altbn128;
+package org.hyperledger.besu.crosschain.crypto.threshold.crypto.bls12381;
 
 import org.hyperledger.besu.crosschain.crypto.threshold.crypto.BlsCryptoProvider;
 import org.hyperledger.besu.crosschain.crypto.threshold.crypto.BlsPoint;
 import org.hyperledger.besu.crosschain.crypto.threshold.crypto.CryptoProviderBase;
 import org.hyperledger.besu.crypto.Hash;
-import org.hyperledger.besu.crypto.altbn128.AltBn128Fq12Pairer;
-import org.hyperledger.besu.crypto.altbn128.AltBn128Fq2Point;
-import org.hyperledger.besu.crypto.altbn128.AltBn128Point;
-import org.hyperledger.besu.crypto.altbn128.Fq12;
 import org.hyperledger.besu.util.bytes.Bytes32;
 import org.hyperledger.besu.util.bytes.BytesValue;
 import org.hyperledger.besu.util.bytes.BytesValues;
 
 import java.math.BigInteger;
 
-public class AltBn128CryptoProvider extends CryptoProviderBase implements BlsCryptoProvider {
-  private static final String SECURITY_DOMAIN = "BN128";
+import org.apache.milagro.amcl.BLS381.BIG;
+import org.apache.milagro.amcl.BLS381.DBIG;
+import org.apache.milagro.amcl.BLS381.ECP;
+import org.apache.milagro.amcl.BLS381.ECP2;
+import org.apache.milagro.amcl.BLS381.FP12;
+import org.apache.milagro.amcl.BLS381.PAIR;
+import org.apache.milagro.amcl.BLS381.ROM;
+
+public class Bls12381CryptoProvider extends CryptoProviderBase implements BlsCryptoProvider {
+  private static final String SECURITY_DOMAIN = "BLS12";
 
   public BlsCryptoProvider.DigestAlgorithm digestAlgorithm;
 
-  public AltBn128CryptoProvider(final BlsCryptoProvider.DigestAlgorithm alg) {
+  public Bls12381CryptoProvider(final BlsCryptoProvider.DigestAlgorithm alg) {
     this.digestAlgorithm = alg;
   }
 
   @Override
   public BigInteger modPrime(final BigInteger val) {
-    return val.mod(AltBn128Fq12Pairer.CURVE_ORDER);
+    BIG q = new BIG(ROM.Modulus);
+    DBIG dval = Bls12381Util.DBIGFromBigInteger(val);
+    BIG modval = dval.mod(q);
+    BigInteger biRet = Bls12381Util.BigIntegerFromBIG(modval);
+    return (biRet);
   }
 
   @Override
   public BigInteger getPrimeModulus() {
-    return AltBn128Fq12Pairer.CURVE_ORDER;
+    BIG q = new BIG(ROM.Modulus);
+    BigInteger biRet = Bls12381Util.BigIntegerFromBIG(q);
+    return (biRet);
   }
 
   @Override
   public BlsPoint createPointE1(final BigInteger scalar) {
-    AltBn128Point basedPoint = AltBn128Point.g1();
-    return new AltBn128PointWrapper(basedPoint.multiply(scalar));
+    org.apache.milagro.amcl.BLS381.ECP basedPoint = org.apache.milagro.amcl.BLS381.ECP.generator();
+    BIG scBIG = Bls12381Util.BIGFromBigInteger(scalar);
+    return new Bls12381PointWrapper(basedPoint.mul(scBIG));
   }
 
   @Override
   public BlsPoint getBasePointE1() {
-    AltBn128Point basedPoint = AltBn128Point.g1();
-    return new AltBn128PointWrapper(basedPoint);
+    org.apache.milagro.amcl.BLS381.ECP basedPoint = ECP.generator();
+    return new Bls12381PointWrapper(basedPoint);
   }
 
-  // TODO there is a lot of code duplicaiton between hashToCurveE1 and E2
   @Override
   public BlsPoint hashToCurveE1(final byte[] data) {
     BytesValue dataBV1 = BytesValue.wrap(createSecuerityDomainPrefix(SECURITY_DOMAIN));
     BytesValue dataBV2 = BytesValue.wrap(data);
     BytesValue dataBV = BytesValues.concatenate(dataBV1, dataBV2);
-    BlsPoint P = null;
+    BlsPoint p = null;
 
     switch (this.digestAlgorithm) {
       case KECCAK256:
         Bytes32 digestedData = Hash.keccak256(dataBV);
-        P = mapToCurveE1(digestedData.extractArray());
+        p = mapToCurveE1(digestedData.extractArray());
         break;
       default:
         throw new Error("not implemented yet!" + this.digestAlgorithm);
     }
 
-    return P;
+    return p;
   }
 
   private static final BigInteger MAX_LOOP_COUNT = BigInteger.TEN;
@@ -125,14 +135,15 @@ public class AltBn128CryptoProvider extends CryptoProviderBase implements BlsCry
 
   @Override
   public BlsPoint createPointE2(final BigInteger scalar) {
-    AltBn128Fq2Point basedPoint = AltBn128Fq2Point.g2();
-    return new AltBn128Fq2PointWrapper(basedPoint.multiply(scalar));
+    ECP2 basedPoint = ECP2.generator();
+    BIG bigScalar = Bls12381Util.BIGFromBigInteger(scalar);
+    return new Bls12381Fq2PointWrapper(basedPoint.mul(bigScalar));
   }
 
   @Override
   public BlsPoint getBasePointE2() {
-    AltBn128Fq2Point basedPoint = AltBn128Fq2Point.g2();
-    return new AltBn128Fq2PointWrapper(basedPoint);
+    ECP2 basedPoint = ECP2.generator();
+    return new Bls12381Fq2PointWrapper(basedPoint);
   }
 
   @Override
@@ -140,18 +151,18 @@ public class AltBn128CryptoProvider extends CryptoProviderBase implements BlsCry
     BytesValue dataBV1 = BytesValue.wrap(createSecuerityDomainPrefix(SECURITY_DOMAIN));
     BytesValue dataBV2 = BytesValue.wrap(data);
     BytesValue dataBV = BytesValues.concatenate(dataBV1, dataBV2);
-    BlsPoint P = null;
+    BlsPoint p = null;
 
     switch (this.digestAlgorithm) {
       case KECCAK256:
         Bytes32 digestedData = Hash.keccak256(dataBV);
-        P = mapToCurveE2(digestedData.extractArray());
+        p = mapToCurveE2(digestedData.extractArray());
         break;
       default:
         throw new Error("not implemented yet!" + this.digestAlgorithm);
     }
 
-    return P;
+    return p;
   }
 
   // TODO Review this https://tools.ietf.org/html/draft-irtf-cfrg-hash-to-curve-04
@@ -224,47 +235,27 @@ public class AltBn128CryptoProvider extends CryptoProviderBase implements BlsCry
     BlsPoint hashOfData = hashToCurveE1(data);
     BlsPoint basePointE2 = getBasePointE2();
 
-    Fq12 pair1 =
-        AltBn128Fq12Pairer.pair(
-            ((AltBn128PointWrapper) hashOfData).point, ((AltBn128Fq2PointWrapper) publicKey).point);
-    // System.out.println("Pair 1: " + pair1);
-    Fq12 pair2 =
-        AltBn128Fq12Pairer.pair(
-            ((AltBn128PointWrapper) signature).point,
-            ((AltBn128Fq2PointWrapper) basePointE2).point);
-    // System.out.println("Pair 2: " + pair2);
+    ECP2 pk = ((Bls12381Fq2PointWrapper) publicKey).point;
+    ECP hm = ((Bls12381PointWrapper) hashOfData).point;
 
-    Fq12 exponent = Fq12.one();
-    exponent = exponent.multiply(pair1);
-    Fq12 result1 = AltBn128Fq12Pairer.finalize(exponent);
-    // System.out.println("Result1: " + result1);
+    ECP2 g = ((Bls12381Fq2PointWrapper) basePointE2).point;
+    ECP d = ((Bls12381PointWrapper) signature).point;
+    d.neg();
 
-    exponent = Fq12.one();
-    exponent = exponent.multiply(pair2);
-    Fq12 result2 = AltBn128Fq12Pairer.finalize(exponent);
-    // System.out.println("Result2: " + result2);
+    FP12 res1 = PAIR.ate2(g, d, pk, hm);
+    FP12 v = PAIR.fexp(res1);
 
-    return result1.equals(result2);
+    boolean result = v.isunity();
+    return result;
   }
 
-  // Taken from here:
-  // https://github.com/PegaSysEng/pantheon/blob/master/ethereum/core/src/main/java/tech/pegasys/pantheon/ethereum/mainnet/precompiles/AltBN128PairingPrecompiledContract.java
-  public boolean pair(final AltBn128Point p1, final AltBn128Fq2Point p2) {
-    if (!p1.isOnCurve()) {
-      // TODO should an exception be thrown?
-      return false;
-    }
-
-    if (!p2.isOnCurve() /*|| !p2.isInGroup() */) {
-      // TODO should an exception be thrown?
-      return false;
-    }
+  public boolean pair(final ECP p1, final ECP2 p2) {
 
     // TODO this is written as if in a loop, as in the code from the Pantheon precompile
-    Fq12 exponent = Fq12.one();
-    exponent = exponent.multiply(AltBn128Fq12Pairer.pair(p1, p2));
 
-    if (AltBn128Fq12Pairer.finalize(exponent).equals(Fq12.one())) {
+    FP12 pairResult = PAIR.ate(p2, p1);
+
+    if (pairResult.isunity()) {
       return true;
     }
     return false;
