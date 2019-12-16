@@ -3,7 +3,9 @@
 ## Critical Fix in 1.3.7 
 
 1.3.7 includes a critical fix for Ethereum MainNet users and the Muir Glacier upgrade. We recommend users of Ethereum public networks 
-(MainNet, Ropsten, Rinkeby, and Goerli) upgrade immediately. This upgrade is also strongly recommended for users of private networks. 
+(MainNet, Ropsten, Rinkeby, and Goerli) upgrade immediately. This upgrade is also strongly recommended for users of private networks.
+
+For more details, see [Hyperledger Besu Wiki](https://wiki.hyperledger.org/display/BESU/Mainnet+Consensus+Bug+Identified+and+Resolved+in+Hyperledger+Besu). 
 
 ## Muir Glacier Compatibility
 
