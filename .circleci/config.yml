@@ -30,8 +30,8 @@ commands:
       - restore_cache:
           name: Restore cached gradle dependencies
           keys:
-            - deps-{{ checksum "build.gradle" }}-{{ .Branch }}-{{ .Revision }}
-            - deps-{{ checksum "build.gradle" }}
+            - deps-{{ checksum "gradle/versions.gradle" }}-{{ .Branch }}-{{ .Revision }}
+            - deps-{{ checksum "gradle/versions.gradle" }}
             - deps-
 
   capture_test_results:
@@ -67,7 +67,7 @@ jobs:
             ./gradlew --no-daemon --parallel clean spotlessCheck compileJava compileTestJava assemble
       - save_cache:
           name: Caching gradle dependencies
-          key: deps-{{ checksum "build.gradle" }}-{{ .Branch }}-{{ .Revision }}
+          key: deps-{{ checksum "gradle/versions.gradle" }}-{{ .Branch }}-{{ .Revision }}
           paths:
             - .gradle
             - ~/.gradle
