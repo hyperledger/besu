@@ -48,6 +48,7 @@ import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -206,7 +207,8 @@ public class JsonRpcHttpServiceRpcApisTest {
                     mock(PrivacyParameters.class),
                     mock(JsonRpcConfiguration.class),
                     mock(WebSocketConfiguration.class),
-                    mock(MetricsConfiguration.class)));
+                    mock(MetricsConfiguration.class),
+                    new HashMap<>()));
     final JsonRpcHttpService jsonRpcHttpService =
         new JsonRpcHttpService(
             vertx,
@@ -296,7 +298,8 @@ public class JsonRpcHttpServiceRpcApisTest {
                     mock(PrivacyParameters.class),
                     jsonRpcConfiguration,
                     webSocketConfiguration,
-                    metricsConfiguration));
+                    metricsConfiguration,
+                    new HashMap<>()));
     final JsonRpcHttpService jsonRpcHttpService =
         new JsonRpcHttpService(
             vertx,
