@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.query;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static org.hyperledger.besu.ethereum.api.query.TransactionLogsIndexer.BLOCKS_PER_BLOOM_CACHE;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -51,17 +52,16 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class BlockchainQueries {
   private static final Logger LOG = LogManager.getLogger();
-  @VisibleForTesting static final long BLOCKS_PER_BLOOM_CACHE = 100_000;
 
   private final WorldStateArchive worldStateArchive;
   private final Blockchain blockchain;
   private final Optional<Path> cachePath;
+  private final Optional<TransactionLogsIndexer> transactionLogsIndexer;
 
   public BlockchainQueries(final Blockchain blockchain, final WorldStateArchive worldStateArchive) {
     this(blockchain, worldStateArchive, Optional.empty());
@@ -78,6 +78,7 @@ public class BlockchainQueries {
     this.blockchain = blockchain;
     this.worldStateArchive = worldStateArchive;
     this.cachePath = cachePath;
+    this.transactionLogsIndexer = cachePath.map(path -> new TransactionLogsIndexer(blockchain, path));
   }
 
   public Blockchain getBlockchain() {
@@ -86,6 +87,10 @@ public class BlockchainQueries {
 
   public WorldStateArchive getWorldStateArchive() {
     return worldStateArchive;
+  }
+
+  public Optional<TransactionLogsIndexer> getTransactionLogsIndexer() {
+    return transactionLogsIndexer;
   }
 
   /**

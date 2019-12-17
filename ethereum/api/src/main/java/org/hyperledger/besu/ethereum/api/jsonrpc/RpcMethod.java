@@ -23,6 +23,7 @@ public enum RpcMethod {
   ADMIN_PEERS("admin_peers"),
   ADMIN_REMOVE_PEER("admin_removePeer"),
   ADMIN_CHANGE_LOG_LEVEL("admin_changeLogLevel"),
+  ADMIN_INDEX_TRANSACTION_LOGS("admin_indexTransactionLogs"),
   CLIQUE_DISCARD("clique_discard"),
   CLIQUE_GET_SIGNERS("clique_getSigners"),
   CLIQUE_GET_SIGNERS_AT_HASH("clique_getSignersAtHash"),
