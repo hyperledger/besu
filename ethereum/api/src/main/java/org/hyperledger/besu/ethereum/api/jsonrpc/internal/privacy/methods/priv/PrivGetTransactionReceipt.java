@@ -98,11 +98,7 @@ public class PrivGetTransactionReceipt extends PrivacyApiMethod {
       privateTransaction = PrivateTransaction.readFrom(bytesValueRLPInput);
       privacyGroupId = receiveResponse.getPrivacyGroupId();
     } catch (final EnclaveException e) {
-      if (JsonRpcEnclaveErrorConverter.convertEnclaveInvalidReason(e.getMessage())
-          == JsonRpcError.ENCLAVE_PAYLOAD_NOT_FOUND) {
-        return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), null);
-      }
-      throw e;
+      return handleEnclaveException(requestContext, e);
     }
 
     final String contractAddress =
@@ -179,5 +175,25 @@ public class PrivGetTransactionReceipt extends PrivacyApiMethod {
     final ReceiveResponse enclaveResponse = enclave.receive(enclaveRequest);
     LOG.trace("Received transaction information from Enclave");
     return enclaveResponse;
+  }
+
+  private JsonRpcResponse handleEnclaveException(
+      final JsonRpcRequestContext requestContext, final EnclaveException e) {
+    final JsonRpcError jsonRpcError =
+        JsonRpcEnclaveErrorConverter.convertEnclaveInvalidReason(e.getMessage());
+    switch (jsonRpcError) {
+      case ENCLAVE_PAYLOAD_NOT_FOUND:
+        {
+          return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), null);
+        }
+      case ENCLAVE_KEYS_CANNOT_DECRYPT_PAYLOAD:
+        {
+          LOG.warn(
+              "Unable to decrypt payload with configured privacy node key. Check if your 'privacy-public-key-file' property matches your Orion node public key.");
+        }
+        // fall through
+      default:
+        throw e;
+    }
   }
 }
