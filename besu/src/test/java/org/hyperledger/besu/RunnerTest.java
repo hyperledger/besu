@@ -55,6 +55,7 @@ import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBKeyValueStora
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBFactoryConfiguration;
 import org.hyperledger.besu.services.BesuConfigurationImpl;
+import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.testutil.TestClock;
 import org.hyperledger.besu.util.uint.UInt256;
 
@@ -197,6 +198,7 @@ public final class RunnerTest {
             .webSocketConfiguration(aheadWebSocketConfiguration)
             .metricsConfiguration(aheadMetricsConfiguration)
             .dataDir(dbAhead)
+            .besuPluginContext(new BesuPluginContextImpl())
             .build();
     try {
 
