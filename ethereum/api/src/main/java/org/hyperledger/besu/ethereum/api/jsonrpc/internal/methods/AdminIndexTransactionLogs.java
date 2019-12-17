@@ -25,12 +25,7 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 
 import java.util.Optional;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 public class AdminIndexTransactionLogs implements JsonRpcMethod {
-
-  private static final Logger LOG = LogManager.getLogger();
 
   private final BlockchainQueries blockchainQueries;
 

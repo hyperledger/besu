@@ -78,7 +78,8 @@ public class BlockchainQueries {
     this.blockchain = blockchain;
     this.worldStateArchive = worldStateArchive;
     this.cachePath = cachePath;
-    this.transactionLogsIndexer = cachePath.map(path -> new TransactionLogsIndexer(blockchain, path));
+    this.transactionLogsIndexer =
+        cachePath.map(path -> new TransactionLogsIndexer(blockchain, path));
   }
 
   public Blockchain getBlockchain() {

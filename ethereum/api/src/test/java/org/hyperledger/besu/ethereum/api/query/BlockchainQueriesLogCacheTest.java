@@ -16,7 +16,7 @@
 
 package org.hyperledger.besu.ethereum.api.query;
 
-import static org.hyperledger.besu.ethereum.api.query.BlockchainQueries.BLOCKS_PER_BLOOM_CACHE;
+import static org.hyperledger.besu.ethereum.api.query.TransactionLogsIndexer.BLOCKS_PER_BLOOM_CACHE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.times;
