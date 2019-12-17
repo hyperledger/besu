@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.plugin;
 
+import java.util.Optional;
+
 /**
  * Base interface for Besu plugins.
  *
@@ -22,6 +24,16 @@ package org.hyperledger.besu.plugin;
  * register plugins.
  */
 public interface BesuPlugin {
+
+  /**
+   * Returns the name of the plugin. This name is used to trigger specific actions on individual
+   * plugins.
+   *
+   * @return an {@link Optional} wrapping the unique name of the plugin.
+   */
+  default Optional<String> getName() {
+    return Optional.of(this.getClass().getName());
+  }
 
   /**
    * Called when the plugin is first registered with Besu. Plugins are registered very early in the
@@ -52,4 +64,13 @@ public interface BesuPlugin {
    * started.
    */
   void stop();
+
+  /**
+   * Called when the plugin is being reloaded. This method will be called trough a dedicated JSON
+   * RPC endpoint. If not overridden this method does nothing for convenience. The plugin should
+   * only implement this method if it supports dynamic reloading.
+   *
+   * <p>The plugin should reload its configuration dynamically or do nothing if not applicable.
+   */
+  default void reloadConfiguration() {}
 }

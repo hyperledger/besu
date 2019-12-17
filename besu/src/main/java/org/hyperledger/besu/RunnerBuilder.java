@@ -89,6 +89,8 @@ import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsService;
 import org.hyperledger.besu.nat.NatMethod;
 import org.hyperledger.besu.nat.upnp.UpnpNatManager;
+import org.hyperledger.besu.plugin.BesuPlugin;
+import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.util.NetworkUtility;
 import org.hyperledger.besu.util.bytes.BytesValue;
 
@@ -135,6 +137,7 @@ public class RunnerBuilder {
   private Optional<PermissioningConfiguration> permissioningConfiguration = Optional.empty();
   private Collection<EnodeURL> staticNodes = Collections.emptyList();
   private Optional<String> identityString = Optional.empty();
+  private BesuPluginContextImpl besuPluginContext;
 
   public RunnerBuilder vertx(final Vertx vertx) {
     this.vertx = vertx;
@@ -253,6 +256,11 @@ public class RunnerBuilder {
 
   public RunnerBuilder identityString(final Optional<String> identityString) {
     this.identityString = identityString;
+    return this;
+  }
+
+  public RunnerBuilder besuPluginContext(final BesuPluginContextImpl besuPluginContext) {
+    this.besuPluginContext = besuPluginContext;
     return this;
   }
 
@@ -412,7 +420,8 @@ public class RunnerBuilder {
               privacyParameters,
               jsonRpcConfiguration,
               webSocketConfiguration,
-              metricsConfiguration);
+              metricsConfiguration,
+              besuPluginContext.getNamedPlugins());
       jsonRpcHttpService =
           Optional.of(
               new JsonRpcHttpService(
@@ -471,7 +480,8 @@ public class RunnerBuilder {
               privacyParameters,
               jsonRpcConfiguration,
               webSocketConfiguration,
-              metricsConfiguration);
+              metricsConfiguration,
+              besuPluginContext.getNamedPlugins());
 
       final SubscriptionManager subscriptionManager =
           createSubscriptionManager(vertx, transactionPool);
@@ -604,7 +614,8 @@ public class RunnerBuilder {
       final PrivacyParameters privacyParameters,
       final JsonRpcConfiguration jsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
-      final MetricsConfiguration metricsConfiguration) {
+      final MetricsConfiguration metricsConfiguration,
+      final Map<String, BesuPlugin> namedPlugins) {
     final Map<String, JsonRpcMethod> methods =
         new JsonRpcMethodsFactory()
             .methods(
@@ -628,7 +639,8 @@ public class RunnerBuilder {
                 jsonRpcConfiguration,
                 webSocketConfiguration,
                 metricsConfiguration,
-                Optional.of(dataDir.resolve(CACHE_PATH)));
+                Optional.of(dataDir.resolve(CACHE_PATH)),
+                namedPlugins);
     methods.putAll(besuController.getAdditionalJsonRpcMethods(jsonRpcApis));
     return methods;
   }
