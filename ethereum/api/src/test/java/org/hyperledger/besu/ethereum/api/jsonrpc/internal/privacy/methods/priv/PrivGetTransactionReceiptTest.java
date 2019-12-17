@@ -267,10 +267,11 @@ public class PrivGetTransactionReceiptTest {
   public void enclaveKeysCannotDecryptPayloadThrowsRuntimeException() {
     final String keysCannotDecryptPayloadMsg = "EnclaveKeysCannotDecryptPayload";
     when(privacyParameters.getEnclave()).thenReturn(enclave);
-    when(enclave.receive(any())).thenThrow(new EnclaveException(keysCannotDecryptPayloadMsg));
+    when(privacyController.retrieveTransaction(any()))
+        .thenThrow(new EnclaveException(keysCannotDecryptPayloadMsg));
 
     final PrivGetTransactionReceipt privGetTransactionReceipt =
-        new PrivGetTransactionReceipt(blockchainQueries, privacyParameters);
+        new PrivGetTransactionReceipt(blockchainQueries, privacyParameters, privacyController);
     final Object[] params = new Object[] {transaction.getHash()};
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(new JsonRpcRequest("1", "priv_getTransactionReceipt", params));
