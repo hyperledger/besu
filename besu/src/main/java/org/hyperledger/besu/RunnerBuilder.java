@@ -635,7 +635,7 @@ public class RunnerBuilder {
                 jsonRpcConfiguration,
                 webSocketConfiguration,
                 metricsConfiguration,
-                    namedPlugins);
+                namedPlugins);
     methods.putAll(besuController.getAdditionalJsonRpcMethods(jsonRpcApis));
     return methods;
   }
