@@ -21,7 +21,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.AdminAddPeer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.AdminChangeLogLevel;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.AdminNodeInfo;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.AdminPeers;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.AdminReloadPlugin;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.AdminReloadPluginConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.AdminRemovePeer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -69,6 +69,6 @@ public class AdminJsonRpcMethods extends ApiGroupJsonRpcMethods {
             clientVersion, networkId, genesisConfigOptions, p2pNetwork, blockchainQueries),
         new AdminPeers(p2pNetwork),
         new AdminChangeLogLevel(),
-        new AdminReloadPlugin(namedPlugins));
+        new AdminReloadPluginConfiguration(namedPlugins));
   }
 }

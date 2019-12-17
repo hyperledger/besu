@@ -29,18 +29,18 @@ import java.util.Optional;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class AdminReloadPlugin implements JsonRpcMethod {
+public class AdminReloadPluginConfiguration implements JsonRpcMethod {
 
   private static final Logger LOG = LogManager.getLogger();
   private final Map<String, BesuPlugin> namedPlugins;
 
-  public AdminReloadPlugin(final Map<String, BesuPlugin> namedPlugins) {
+  public AdminReloadPluginConfiguration(final Map<String, BesuPlugin> namedPlugins) {
     this.namedPlugins = namedPlugins;
   }
 
   @Override
   public String getName() {
-    return RpcMethod.ADMIN_RELOAD_PLUGIN.getMethodName();
+    return RpcMethod.ADMIN_RELOAD_PLUGIN_CONFIG.getMethodName();
   }
 
   @Override
@@ -48,10 +48,10 @@ public class AdminReloadPlugin implements JsonRpcMethod {
     try {
       final Optional<String> maybePluginName = requestContext.getOptionalParameter(0, String.class);
       if (maybePluginName.isPresent() && namedPlugins.containsKey(maybePluginName.get())) {
-        reloadPlugin(maybePluginName.get(), namedPlugins.get(maybePluginName.get()));
+        reloadPluginConfig(maybePluginName.get(), namedPlugins.get(maybePluginName.get()));
       } else {
-        LOG.info("Attempting to reload all plugins.");
-        namedPlugins.forEach(this::reloadPlugin);
+        LOG.info("Attempting to reload all plugins configurations.");
+        namedPlugins.forEach(this::reloadPluginConfig);
       }
       return new JsonRpcSuccessResponse(requestContext.getRequest().getId());
     } catch (InvalidJsonRpcParameters invalidJsonRpcParameters) {
@@ -60,8 +60,8 @@ public class AdminReloadPlugin implements JsonRpcMethod {
     }
   }
 
-  private void reloadPlugin(final String name, final BesuPlugin plugin) {
-    LOG.info("Reloading plugin: {}.", name);
+  private void reloadPluginConfig(final String name, final BesuPlugin plugin) {
+    LOG.info("Reloading plugin configuration: {}.", name);
     plugin.reloadConfiguration();
   }
 }
