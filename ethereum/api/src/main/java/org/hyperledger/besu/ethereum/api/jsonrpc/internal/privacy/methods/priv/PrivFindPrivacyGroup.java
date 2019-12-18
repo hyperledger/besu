@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
@@ -53,10 +54,10 @@ public class PrivFindPrivacyGroup implements JsonRpcMethod {
 
     PrivacyGroup[] response;
     try {
-      response = privacyController.findPrivacyGroup(addresses);
+      response = privacyController.findPrivacyGroup(Arrays.asList(addresses));
     } catch (Exception e) {
       LOG.error("Failed to fetch privacy group", e);
-      return new JsonRpcSuccessResponse(
+      return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(), JsonRpcError.FIND_PRIVACY_GROUP_ERROR);
     }
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), response);

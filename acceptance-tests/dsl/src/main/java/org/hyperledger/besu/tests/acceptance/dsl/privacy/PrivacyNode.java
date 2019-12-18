@@ -117,7 +117,7 @@ public class PrivacyNode implements AutoCloseable {
         .until(
             () -> {
               try {
-                enclaveClient.sendLegacy(payload, orion.getDefaultPublicKey(), to);
+                enclaveClient.send(payload, orion.getDefaultPublicKey(), to);
                 return true;
               } catch (final EnclaveException e) {
                 LOG.info("Waiting for enclave connectivity");

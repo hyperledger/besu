@@ -88,7 +88,7 @@ public class EnclaveTest {
     final List<String> publicKeys = testHarness.getPublicKeys();
 
     final SendResponse sr =
-        enclave.sendLegacy(PAYLOAD, publicKeys.get(0), Lists.newArrayList(publicKeys.get(0)));
+        enclave.send(PAYLOAD, publicKeys.get(0), Lists.newArrayList(publicKeys.get(0)));
 
     final ReceiveResponse rr = enclave.receive(sr.getKey(), publicKeys.get(0));
     assertThat(rr).isNotNull();
@@ -106,7 +106,7 @@ public class EnclaveTest {
         enclave.createPrivacyGroup(addresses, publicKeys.get(0), "", "");
 
     final SendResponse sr =
-        enclave.sendBesu(PAYLOAD, publicKeys.get(0), privacyGroupResponse.getPrivacyGroupId());
+        enclave.send(PAYLOAD, publicKeys.get(0), privacyGroupResponse.getPrivacyGroupId());
 
     final ReceiveResponse rr = enclave.receive(sr.getKey(), publicKeys.get(0));
     assertThat(rr).isNotNull();

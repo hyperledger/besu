@@ -33,6 +33,9 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
+import java.util.List;
+
+import org.assertj.core.util.Lists;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -41,7 +44,7 @@ public class PrivCreatePrivacyGroupTest {
   private static final String FROM = "first participant";
   private static final String NAME = "testName";
   private static final String DESCRIPTION = "testDesc";
-  private static final String[] ADDRESSES = new String[] {FROM, "second participant"};
+  private static final List<String> ADDRESSES = Lists.newArrayList(FROM, "second participant");
 
   private final Enclave enclave = mock(Enclave.class);
   private final PrivacyParameters privacyParameters = mock(PrivacyParameters.class);
@@ -95,7 +98,7 @@ public class PrivCreatePrivacyGroupTest {
     final Object[] params =
         new Object[] {
           new Object() {
-            public String[] getAddresses() {
+            public List<String> getAddresses() {
               return ADDRESSES;
             }
 
@@ -131,7 +134,7 @@ public class PrivCreatePrivacyGroupTest {
     final Object[] params =
         new Object[] {
           new Object() {
-            public String[] getAddresses() {
+            public List<String> getAddresses() {
               return ADDRESSES;
             }
 
@@ -166,7 +169,7 @@ public class PrivCreatePrivacyGroupTest {
     final Object[] params =
         new Object[] {
           new Object() {
-            public String[] getAddresses() {
+            public List<String> getAddresses() {
               return ADDRESSES;
             }
           }

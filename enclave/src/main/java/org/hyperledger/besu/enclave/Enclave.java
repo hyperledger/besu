@@ -56,72 +56,72 @@ public class Enclave {
     }
   }
 
-  public SendResponse sendLegacy(
+  public SendResponse send(
       final String payload, final String privateFrom, final List<String> privateFor) {
-    final SendRequestLegacy sendRequestLegacy =
-        new SendRequestLegacy(payload, privateFrom, privateFor);
+    final SendRequestLegacy request = new SendRequestLegacy(payload, privateFrom, privateFor);
     return post(
         JSON,
-        sendRequestLegacy,
+        request,
         "/send",
         (statusCode, body) -> handleJsonResponse(statusCode, body, SendResponse.class));
   }
 
-  public SendResponse sendBesu(
+  public SendResponse send(
       final String payload, final String privateFrom, final String privacyGroupId) {
-    final SendRequestBesu sendRequestBesu =
-        new SendRequestBesu(payload, privateFrom, privacyGroupId);
+    final SendRequestBesu request = new SendRequestBesu(payload, privateFrom, privacyGroupId);
     return post(
         JSON,
-        sendRequestBesu,
+        request,
         "/send",
         (statusCode, body) -> handleJsonResponse(statusCode, body, SendResponse.class));
   }
 
   public ReceiveResponse receive(final String enclaveKey) {
-    final ReceiveRequest receiveRequest = new ReceiveRequest(enclaveKey);
+    final ReceiveRequest request = new ReceiveRequest(enclaveKey);
     return post(
         ORION,
-        receiveRequest,
+        request,
         "/receive",
         (statusCode, body) -> handleJsonResponse(statusCode, body, ReceiveResponse.class));
   }
 
   public ReceiveResponse receive(final String enclaveKey, final String to) {
-    final ReceiveRequest receiveRequest = new ReceiveRequest(enclaveKey, to);
+    final ReceiveRequest request = new ReceiveRequest(enclaveKey, to);
     return post(
         ORION,
-        receiveRequest,
+        request,
         "/receive",
         (statusCode, body) -> handleJsonResponse(statusCode, body, ReceiveResponse.class));
   }
 
   public PrivacyGroup createPrivacyGroup(
-      final String[] addresses, final String from, final String name, final String description) {
-    final CreatePrivacyGroupRequest createPrivacyGroupRequest =
+      final List<String> addresses,
+      final String from,
+      final String name,
+      final String description) {
+    final CreatePrivacyGroupRequest request =
         new CreatePrivacyGroupRequest(addresses, from, name, description);
     return post(
         JSON,
-        createPrivacyGroupRequest,
+        request,
         "/createPrivacyGroup",
         (statusCode, body) -> handleJsonResponse(statusCode, body, PrivacyGroup.class));
   }
 
   public String deletePrivacyGroup(final String privacyGroupId, final String from) {
-    DeletePrivacyGroupRequest deletePrivacyGroupRequest =
-        new DeletePrivacyGroupRequest(privacyGroupId, from);
+    final DeletePrivacyGroupRequest request = new DeletePrivacyGroupRequest(privacyGroupId, from);
     return post(
         JSON,
-        deletePrivacyGroupRequest,
+        request,
         "/deletePrivacyGroup",
         (statusCode, body) -> handleJsonResponse(statusCode, body, String.class));
   }
 
-  public PrivacyGroup[] findPrivacyGroup(final String[] addresses) {
-    final FindPrivacyGroupRequest findPrivacyGroupRequest = new FindPrivacyGroupRequest(addresses);
+  public PrivacyGroup[] findPrivacyGroup(final List<String> addresses) {
+    final FindPrivacyGroupRequest request = new FindPrivacyGroupRequest(addresses);
     return post(
         JSON,
-        findPrivacyGroupRequest,
+        request,
         "/findPrivacyGroup",
         (statusCode, body) -> handleJsonResponse(statusCode, body, PrivacyGroup[].class));
   }

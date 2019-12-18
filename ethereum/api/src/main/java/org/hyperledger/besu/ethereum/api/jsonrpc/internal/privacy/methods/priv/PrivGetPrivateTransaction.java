@@ -65,7 +65,7 @@ public class PrivGetPrivateTransaction implements JsonRpcMethod {
     }
     try {
       LOG.trace("Fetching transaction information");
-      ReceiveResponse receiveResponse =
+      final ReceiveResponse receiveResponse =
           privacyController.retrieveTransaction(
               BytesValues.asBase64String(resultTransaction.getTransaction().getPayload()));
       LOG.trace("Received transaction information");
@@ -83,7 +83,7 @@ public class PrivGetPrivateTransaction implements JsonRpcMethod {
             requestContext.getRequest().getId(),
             new PrivateTransactionLegacyResult(privateTransaction));
       }
-    } catch (Exception e) {
+    } catch (final Exception e) {
       LOG.error("Failed to fetch private transaction", e);
       return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), null);
     }

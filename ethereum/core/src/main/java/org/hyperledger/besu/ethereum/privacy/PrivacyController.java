@@ -40,7 +40,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bouncycastle.util.Arrays;
 
 public class PrivacyController {
 
@@ -106,7 +105,7 @@ public class PrivacyController {
   }
 
   public PrivacyGroup createPrivacyGroup(
-      final String[] addresses, final String name, final String description) {
+      final List<String> addresses, final String name, final String description) {
     return enclave.createPrivacyGroup(addresses, enclavePublicKey, name, description);
   }
 
@@ -114,7 +113,7 @@ public class PrivacyController {
     return enclave.deletePrivacyGroup(privacyGroupId, enclavePublicKey);
   }
 
-  public PrivacyGroup[] findPrivacyGroup(final String[] addresses) {
+  public PrivacyGroup[] findPrivacyGroup(final List<String> addresses) {
     return enclave.findPrivacyGroup(addresses);
   }
 
@@ -131,7 +130,7 @@ public class PrivacyController {
 
   public long determineNonce(
       final String privateFrom, final String[] privateFor, final Address address) {
-    final String[] groupMembers = Arrays.append(privateFor, privateFrom);
+    final List<String> groupMembers = Lists.asList(privateFrom, privateFor);
 
     final List<PrivacyGroup> matchingGroups =
         Lists.newArrayList(enclave.findPrivacyGroup(groupMembers));
@@ -185,7 +184,7 @@ public class PrivacyController {
     final String payload = BytesValues.asBase64String(bvrlp.encoded());
 
     if (privateTransaction.getPrivacyGroupId().isPresent()) {
-      return enclave.sendBesu(
+      return enclave.send(
           payload,
           enclavePublicKey,
           BytesValues.asBase64String(privateTransaction.getPrivacyGroupId().get()));
@@ -198,7 +197,7 @@ public class PrivacyController {
       if (privateFor.isEmpty()) {
         privateFor.add(BytesValues.asBase64String(privateTransaction.getPrivateFrom()));
       }
-      return enclave.sendLegacy(
+      return enclave.send(
           payload, BytesValues.asBase64String(privateTransaction.getPrivateFrom()), privateFor);
     }
   }

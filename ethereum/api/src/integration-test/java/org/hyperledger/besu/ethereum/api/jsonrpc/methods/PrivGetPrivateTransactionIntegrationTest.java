@@ -159,7 +159,7 @@ public class PrivGetPrivateTransactionIntegrationTest {
 
     final String payload = Base64.getEncoder().encodeToString(bvrlp.encoded().extractArray());
     final ArrayList<String> to = Lists.newArrayList("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=");
-    final SendResponse sendResponse = enclave.sendLegacy(payload, ENCLAVE_PUBLIC_KEY, to);
+    final SendResponse sendResponse = enclave.send(payload, ENCLAVE_PUBLIC_KEY, to);
 
     final BytesValue hexKey = BytesValues.fromBase64(sendResponse.getKey());
     when(justTransaction.getPayload()).thenReturn(hexKey);

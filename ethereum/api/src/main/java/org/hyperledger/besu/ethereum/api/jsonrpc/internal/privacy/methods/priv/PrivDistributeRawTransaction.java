@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.Privac
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.SendTransactionResponse;
@@ -34,10 +33,9 @@ public class PrivDistributeRawTransaction implements JsonRpcMethod {
   private final PrivacyController privacyController;
   private final PrivacySendTransaction privacySendTransaction;
 
-  public PrivDistributeRawTransaction(
-      final TransactionPool transactionPool, final PrivacyController privacyController) {
+  public PrivDistributeRawTransaction(final PrivacyController privacyController) {
     this.privacyController = privacyController;
-    this.privacySendTransaction = new PrivacySendTransaction(privacyController, transactionPool);
+    this.privacySendTransaction = new PrivacySendTransaction(privacyController);
   }
 
   @Override
@@ -47,7 +45,7 @@ public class PrivDistributeRawTransaction implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    PrivateTransaction privateTransaction;
+    final PrivateTransaction privateTransaction;
     try {
       privateTransaction = privacySendTransaction.validateAndDecodeRequest(requestContext);
     } catch (ErrorResponseException e) {

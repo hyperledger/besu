@@ -14,12 +14,16 @@
  */
 package org.hyperledger.besu.ethereum.privacy;
 
+import static com.google.common.collect.Lists.newArrayList;
+import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason.INCORRECT_PRIVATE_NONCE;
 import static org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason.PRIVATE_NONCE_TOO_LOW;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -49,9 +53,9 @@ import org.hyperledger.besu.util.bytes.BytesValues;
 import org.hyperledger.orion.testutil.OrionKeyUtils;
 
 import java.math.BigInteger;
+import java.util.List;
 import java.util.Optional;
 
-import com.google.common.collect.Lists;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -68,7 +72,7 @@ public class PrivacyControllerTest {
                   "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63", 16)));
   private static final byte[] PAYLOAD = new byte[0];
   private static final String PRIVACY_GROUP_ID = "pg_id";
-  private static final String[] PRIVACY_GROUP_ADDRESSES = new String[] {"8f2a", "fb23"};
+  private static final List<String> PRIVACY_GROUP_ADDRESSES = newArrayList("8f2a", "fb23");
   private static final String PRIVACY_GROUP_NAME = "pg_name";
   private static final String PRIVACY_GROUP_DESCRIPTION = "pg_desc";
 
@@ -99,15 +103,15 @@ public class PrivacyControllerTest {
     Enclave mockEnclave = mock(Enclave.class);
     SendResponse response = new SendResponse(TRANSACTION_KEY);
     ReceiveResponse receiveResponse = new ReceiveResponse(new byte[0], "mock");
-    when(mockEnclave.sendBesu(any(), any(), any())).thenReturn(response);
-    when(mockEnclave.sendLegacy(any(), any(), any())).thenReturn(response);
+    when(mockEnclave.send(anyString(), anyString(), anyList())).thenReturn(response);
+    when(mockEnclave.send(anyString(), anyString(), anyString())).thenReturn(response);
     when(mockEnclave.receive(any(), any())).thenReturn(receiveResponse);
     return mockEnclave;
   }
 
   private Enclave brokenMockEnclave() {
     Enclave mockEnclave = mock(Enclave.class);
-    when(mockEnclave.sendLegacy(any(), any(), any())).thenThrow(EnclaveException.class);
+    when(mockEnclave.send(anyString(), anyString(), anyList())).thenThrow(EnclaveException.class);
     return mockEnclave;
   }
 
@@ -307,7 +311,7 @@ public class PrivacyControllerTest {
     final long reportedNonce = 8L;
     final PrivacyGroup[] returnedGroups =
         new PrivacyGroup[] {
-          new PrivacyGroup("Group1", Type.LEGACY, "Group1_Name", "Group1_Desc", new String[0]),
+          new PrivacyGroup("Group1", Type.LEGACY, "Group1_Name", "Group1_Desc", emptyList()),
         };
 
     when(enclave.findPrivacyGroup(any())).thenReturn(returnedGroups);
@@ -317,7 +321,9 @@ public class PrivacyControllerTest {
         privacyController.determineNonce("privateFrom", new String[] {"first", "second"}, address);
 
     assertThat(nonce).isEqualTo(reportedNonce);
-    verify(enclave).findPrivacyGroup(new String[] {"first", "second", "privateFrom"});
+    verify(enclave)
+        .findPrivacyGroup(
+            argThat((m) -> m.containsAll(newArrayList("first", "second", "privateFrom"))));
   }
 
   @Test
@@ -332,7 +338,9 @@ public class PrivacyControllerTest {
         privacyController.determineNonce("privateFrom", new String[] {"first", "second"}, address);
 
     assertThat(nonce).isEqualTo(reportedNonce);
-    verify(enclave).findPrivacyGroup(new String[] {"first", "second", "privateFrom"});
+    verify(enclave)
+        .findPrivacyGroup(
+            argThat((m) -> m.containsAll(newArrayList("first", "second", "privateFrom"))));
   }
 
   @Test
@@ -340,8 +348,8 @@ public class PrivacyControllerTest {
     final Address address = Address.fromHexString("55");
     final PrivacyGroup[] returnedGroups =
         new PrivacyGroup[] {
-          new PrivacyGroup("Group1", Type.LEGACY, "Group1_Name", "Group1_Desc", new String[0]),
-          new PrivacyGroup("Group2", Type.LEGACY, "Group2_Name", "Group2_Desc", new String[0]),
+          new PrivacyGroup("Group1", Type.LEGACY, "Group1_Name", "Group1_Desc", emptyList()),
+          new PrivacyGroup("Group2", Type.LEGACY, "Group2_Name", "Group2_Desc", emptyList()),
         };
 
     when(enclave.findPrivacyGroup(any())).thenReturn(returnedGroups);
@@ -417,7 +425,7 @@ public class PrivacyControllerTest {
     return buildPrivateTransaction(nonce)
         .privateFrom(BytesValues.fromBase64("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo="))
         .privateFor(
-            Lists.newArrayList(
+            newArrayList(
                 BytesValues.fromBase64("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo="),
                 BytesValues.fromBase64("Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=")))
         .signAndBuild(KEY_PAIR);

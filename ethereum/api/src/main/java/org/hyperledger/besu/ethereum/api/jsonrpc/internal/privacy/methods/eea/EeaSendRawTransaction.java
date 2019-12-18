@@ -40,7 +40,7 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
       final TransactionPool transactionPool, final PrivacyController privacyController) {
     this.transactionPool = transactionPool;
     this.privacyController = privacyController;
-    this.privacySendTransaction = new PrivacySendTransaction(privacyController, transactionPool);
+    this.privacySendTransaction = new PrivacySendTransaction(privacyController);
   }
 
   @Override

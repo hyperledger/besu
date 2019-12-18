@@ -20,7 +20,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 
-public class DisabledPrivacyMethod implements JsonRpcMethod {
+public class DisabledPrivacyRpcMethod implements JsonRpcMethod {
 
   private final String methodName;
 
@@ -29,7 +29,7 @@ public class DisabledPrivacyMethod implements JsonRpcMethod {
     return methodName;
   }
 
-  public DisabledPrivacyMethod(final String methodName) {
+  public DisabledPrivacyRpcMethod(final String methodName) {
     this.methodName = methodName;
   }
 

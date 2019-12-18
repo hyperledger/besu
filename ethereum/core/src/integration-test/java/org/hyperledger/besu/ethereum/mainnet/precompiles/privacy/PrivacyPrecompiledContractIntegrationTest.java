@@ -156,7 +156,7 @@ public class PrivacyPrecompiledContractIntegrationTest {
 
     final String s = new String(VALID_PRIVATE_TRANSACTION_RLP_BASE64, UTF_8);
     final SendResponse sr =
-        enclave.sendLegacy(s, publicKeys.get(0), Lists.newArrayList(publicKeys.get(0)));
+        enclave.send(s, publicKeys.get(0), Lists.newArrayList(publicKeys.get(0)));
 
     final PrivacyPrecompiledContract privacyPrecompiledContract =
         new PrivacyPrecompiledContract(
@@ -177,8 +177,7 @@ public class PrivacyPrecompiledContractIntegrationTest {
 
     final String s = new String(VALID_PRIVATE_TRANSACTION_RLP_BASE64, UTF_8);
 
-    final Throwable thrown =
-        catchThrowable(() -> enclave.sendLegacy(s, publicKeys.get(0), publicKeys));
+    final Throwable thrown = catchThrowable(() -> enclave.send(s, publicKeys.get(0), publicKeys));
 
     assertThat(thrown).hasMessageContaining("EnclaveDecodePublicKey");
   }
@@ -190,8 +189,7 @@ public class PrivacyPrecompiledContractIntegrationTest {
 
     final String s = new String(VALID_PRIVATE_TRANSACTION_RLP_BASE64, UTF_8);
 
-    final Throwable thrown =
-        catchThrowable(() -> enclave.sendLegacy(s, publicKeys.get(0), publicKeys));
+    final Throwable thrown = catchThrowable(() -> enclave.send(s, publicKeys.get(0), publicKeys));
 
     assertThat(thrown).hasMessageContaining("NodeMissingPeerUrl");
   }

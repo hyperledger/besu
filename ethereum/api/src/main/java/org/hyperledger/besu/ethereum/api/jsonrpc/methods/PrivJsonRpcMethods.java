@@ -54,11 +54,11 @@ public class PrivJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
         new PrivGetTransactionReceipt(
             getBlockchainQueries(), getPrivacyParameters(), privacyController),
         new PrivCreatePrivacyGroup(privacyController),
-        new PrivDeletePrivacyGroup(getPrivacyParameters(), privacyController),
+        new PrivDeletePrivacyGroup(privacyController),
         new PrivFindPrivacyGroup(privacyController),
         new PrivGetPrivacyPrecompileAddress(getPrivacyParameters()),
         new PrivGetTransactionCount(privacyController),
         new PrivGetPrivateTransaction(getBlockchainQueries(), privacyController),
-        new PrivDistributeRawTransaction(getTransactionPool(), privacyController));
+        new PrivDistributeRawTransaction(privacyController));
   }
 }

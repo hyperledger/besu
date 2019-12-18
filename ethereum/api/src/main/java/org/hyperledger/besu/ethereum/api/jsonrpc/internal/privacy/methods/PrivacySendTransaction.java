@@ -20,13 +20,14 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
-import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.Restriction;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.util.bytes.BytesValue;
+
+import java.util.function.Supplier;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -36,12 +37,9 @@ public class PrivacySendTransaction {
   private static final Logger LOG = LogManager.getLogger();
 
   protected final PrivacyController privacyController;
-  protected final TransactionPool transactionPool;
 
-  public PrivacySendTransaction(
-      final PrivacyController privacyController, final TransactionPool transactionPool) {
+  public PrivacySendTransaction(final PrivacyController privacyController) {
     this.privacyController = privacyController;
-    this.transactionPool = transactionPool;
   }
 
   public PrivateTransaction validateAndDecodeRequest(final JsonRpcRequestContext request)
@@ -74,11 +72,11 @@ public class PrivacySendTransaction {
       final JsonRpcRequestContext request,
       final PrivateTransaction privateTransaction,
       final String privacyGroupId,
-      final AfterTransactionValid afterValid) {
+      final Supplier<JsonRpcResponse> successfulJsonRpcResponse) {
     return privacyController
         .validatePrivateTransaction(privateTransaction, privacyGroupId)
         .either(
-            afterValid::getResponse,
+            successfulJsonRpcResponse,
             (errorReason) ->
                 new JsonRpcErrorResponse(
                     request.getRequest().getId(),
@@ -106,9 +104,5 @@ public class PrivacySendTransaction {
     public JsonRpcResponse getResponse() {
       return response;
     }
-  }
-
-  public interface AfterTransactionValid {
-    JsonRpcResponse getResponse();
   }
 }
