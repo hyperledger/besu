@@ -1,18 +1,33 @@
 # Changelog
 
-## Changelog Changes 
+## Critical Fix in 1.3.7 
 
-The Hyperledger Besu Wiki includes a [proposal to change what's included in this changelog](https://wiki.hyperledger.org/display/BESU/Changes+to+Changelog).  
-The changelog from 1.3.6 is moving towards the proposed changelog approach.  If you've got feedback or 
-specific items you'd like to see included in the changelog, add your comments to the proposal. 
+1.3.7 includes a critical fix for Ethereum MainNet users and the Muir Glacier upgrade. We recommend users of Ethereum public networks 
+(MainNet, Ropsten, Rinkeby, and Goerli) upgrade immediately. This upgrade is also strongly recommended for users of private networks.
+
+For more details, see [Hyperledger Besu Wiki](https://wiki.hyperledger.org/display/BESU/Mainnet+Consensus+Bug+Identified+and+Resolved+in+Hyperledger+Besu). 
 
 ## Muir Glacier Compatibility
 
-For compatibility with Ethereum Muir Glacier upgrade, use v1.3.6 or later.
+For compatibility with Ethereum Muir Glacier upgrade, use v1.3.7 or later.
 
-## Istanbul Compatibility
+## ETC Agharta Compatibility
 
-For compatibility with Ethereum Istanbul upgrade, use v1.3.4 or later. 
+For compatibility with ETC Agharta upgrade, use 1.3.7 or later.
+
+### 1.3.7
+
+### Additions and Improvements
+
+- Hard Fork Support: Configures the Agharta activation block for the ETC MainNet configuration [\#251](https://github.com/hyperledger/besu/pull/251) (thanks to [soc1c](https://github.com/soc1c))
+
+### Bug Fixes 
+
+- Resolves a Mainnet consensus issue [\#254](https://github.com/hyperledger/besu/pull/254) 
+
+### New Maintainer
+
+[Edward Mack](https://github.com/hyperledger/besu/commits?author=edwardmack) added as a [new maintainer](https://github.com/hyperledger/besu/pull/219). 
 
 ### 1.3.6 
 
