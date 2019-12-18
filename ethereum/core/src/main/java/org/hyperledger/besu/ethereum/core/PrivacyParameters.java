@@ -51,6 +51,7 @@ public class PrivacyParameters {
   private PrivacyStorageProvider privateStorageProvider;
   private WorldStateArchive privateWorldStateArchive;
   private PrivateStateStorage privateStateStorage;
+  private boolean multiTenancyEnabled;
 
   public Integer getPrivacyAddress() {
     return privacyAddress;
@@ -132,9 +133,25 @@ public class PrivacyParameters {
     this.enclave = enclave;
   }
 
+  private void setMultiTenancyEnabled(final boolean multiTenancyEnabled) {
+    this.multiTenancyEnabled = multiTenancyEnabled;
+  }
+
+  public boolean isMultiTenancyEnabled() {
+    return multiTenancyEnabled;
+  }
+
   @Override
   public String toString() {
-    return "PrivacyParameters{" + "enabled=" + enabled + ", enclaveUri='" + enclaveUri + '\'' + '}';
+    return "PrivacyParameters{"
+        + "enabled="
+        + enabled
+        + ", multiTenancyEnabled = "
+        + multiTenancyEnabled
+        + ", enclaveUri='"
+        + enclaveUri
+        + '\''
+        + '}';
   }
 
   public static class Builder {
@@ -147,6 +164,7 @@ public class PrivacyParameters {
     private Path privateKeyPath;
     private PrivacyStorageProvider storageProvider;
     private EnclaveFactory enclaveFactory;
+    private boolean multiTenancyEnabled;
 
     public Builder setPrivacyAddress(final Integer privacyAddress) {
       this.privacyAddress = privacyAddress;
@@ -178,6 +196,11 @@ public class PrivacyParameters {
       return this;
     }
 
+    public Builder setMultiTenancyEnabled(final boolean multiTenancyEnabled) {
+      this.multiTenancyEnabled = multiTenancyEnabled;
+      return this;
+    }
+
     public PrivacyParameters build() throws IOException {
       final PrivacyParameters config = new PrivacyParameters();
       if (enabled) {
@@ -204,6 +227,7 @@ public class PrivacyParameters {
       config.setEnabled(enabled);
       config.setEnclaveUri(enclaveUrl);
       config.setPrivacyAddress(privacyAddress);
+      config.setMultiTenancyEnabled(multiTenancyEnabled);
       return config;
     }
 
