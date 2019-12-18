@@ -35,6 +35,7 @@ import org.web3j.crypto.CipherException;
 import org.web3j.crypto.WalletUtils;
 import tech.pegasys.ethsigner.core.EthSigner;
 import tech.pegasys.ethsigner.core.signing.ConfigurationChainId;
+import tech.pegasys.ethsigner.core.signing.SingleTransactionSignerProvider;
 import tech.pegasys.ethsigner.signer.filebased.CredentialTransactionSigner;
 
 public class EthSignerTestHarnessFactory {
@@ -51,10 +52,10 @@ public class EthSignerTestHarnessFactory {
     final EthSignerConfig config =
         new EthSignerConfig(
             Level.DEBUG,
-            InetAddress.getByName(HOST),
+            HOST,
             besuPort,
             Duration.ofSeconds(10),
-            InetAddress.getByName(HOST),
+            HOST,
             0,
             new ConfigurationChainId(chainId),
             tempDir);
@@ -62,8 +63,8 @@ public class EthSignerTestHarnessFactory {
     final EthSigner ethSigner =
         new EthSigner(
             config,
-            new CredentialTransactionSigner(
-                WalletUtils.loadCredentials("", keyFilePath.toAbsolutePath().toFile())));
+            new SingleTransactionSignerProvider(new CredentialTransactionSigner(
+                WalletUtils.loadCredentials("", keyFilePath.toAbsolutePath().toFile()))));
     ethSigner.run();
 
     waitForPortFile(tempDir);

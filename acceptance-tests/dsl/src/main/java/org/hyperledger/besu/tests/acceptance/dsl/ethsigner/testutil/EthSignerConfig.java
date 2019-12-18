@@ -14,30 +14,28 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.ethsigner.testutil;
 
-import java.net.InetAddress;
 import java.nio.file.Path;
 import java.time.Duration;
-
 import org.apache.logging.log4j.Level;
 import tech.pegasys.ethsigner.core.Config;
 import tech.pegasys.ethsigner.core.signing.ChainIdProvider;
 
 public class EthSignerConfig implements Config {
   private final Level logLevel;
-  private final InetAddress downstreamHttpHost;
+  private final String downstreamHttpHost;
   private final Integer downStreamHttpPort;
   private Duration downstreamHttpRequestTimeout;
-  private final InetAddress httpListenHost;
+  private final String httpListenHost;
   private final Integer httpListenPort;
   private final ChainIdProvider chainId;
   private final Path dataDirectory;
 
   public EthSignerConfig(
       final Level logLevel,
-      final InetAddress downstreamHttpHost,
+      final String downstreamHttpHost,
       final Integer downStreamHttpPort,
       final Duration downstreamHttpRequestTimeout,
-      final InetAddress httpListenHost,
+      final String httpListenHost,
       final Integer httpListenPort,
       final ChainIdProvider chainId,
       final Path dataDirectory) {
@@ -58,7 +56,7 @@ public class EthSignerConfig implements Config {
   }
 
   @Override
-  public InetAddress getDownstreamHttpHost() {
+  public String getDownstreamHttpHost() {
     return downstreamHttpHost;
   }
 
@@ -73,7 +71,7 @@ public class EthSignerConfig implements Config {
   }
 
   @Override
-  public InetAddress getHttpListenHost() {
+  public String getHttpListenHost() {
     return httpListenHost;
   }
 
