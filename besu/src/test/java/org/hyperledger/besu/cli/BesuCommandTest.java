@@ -2706,9 +2706,6 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void privacyMultiTenancyWithoutAuthenticationFails() {
-    when(storageService.getByName("rocksdb-privacy"))
-        .thenReturn(Optional.of(rocksDBSPrivacyStorageFactory));
-
     final URL configFile = this.getClass().getResource("/orion_publickey.pub");
     parseCommand(
         "--privacy-enabled",
