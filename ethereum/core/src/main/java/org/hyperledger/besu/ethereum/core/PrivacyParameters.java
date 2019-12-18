@@ -143,7 +143,15 @@ public class PrivacyParameters {
 
   @Override
   public String toString() {
-    return "PrivacyParameters{" + "enabled=" + enabled + ", enclaveUri='" + enclaveUri + '\'' + '}';
+    return "PrivacyParameters{"
+        + "enabled="
+        + enabled
+        + ", multiTenancyEnabled = "
+        + multiTenancyEnabled
+        + ", enclaveUri='"
+        + enclaveUri
+        + '\''
+        + '}';
   }
 
   public static class Builder {

@@ -113,6 +113,8 @@ public class BesuCommandTest extends CommandTestAbstract {
           .put("config", (new JsonObject()).put("chainId", GENESIS_CONFIG_TEST_CHAINID));
   private static final JsonObject GENESIS_INVALID_DATA =
       (new JsonObject()).put("config", new JsonObject());
+  private static final String ENCLAVE_PUBLIC_KEY_PATH =
+      BesuCommand.class.getResource("/orion_publickey.pub").getPath();
 
   private final String[] validENodeStrings = {
     "enode://" + VALID_NODE_ID + "@192.168.0.1:4567",
@@ -2685,7 +2687,6 @@ public class BesuCommandTest extends CommandTestAbstract {
     when(storageService.getByName("rocksdb-privacy"))
         .thenReturn(Optional.of(rocksDBSPrivacyStorageFactory));
 
-    final URL configFile = this.getClass().getResource("/orion_publickey.pub");
     parseCommand(
         "--privacy-enabled",
         "--rpc-http-authentication-enabled",
@@ -2693,7 +2694,7 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--rpc-http-authentication-jwt-public-key-file",
         "/non/existent/file",
         "--privacy-public-key-file",
-        configFile.getPath());
+        ENCLAVE_PUBLIC_KEY_PATH);
 
     final ArgumentCaptor<PrivacyParameters> privacyParametersArgumentCaptor =
         ArgumentCaptor.forClass(PrivacyParameters.class);
@@ -2706,14 +2707,13 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void privacyMultiTenancyWithoutAuthenticationFails() {
-    final URL configFile = this.getClass().getResource("/orion_publickey.pub");
     parseCommand(
         "--privacy-enabled",
         "--privacy-multi-tenancy-enabled",
         "--rpc-http-authentication-jwt-public-key-file",
         "/non/existent/file",
         "--privacy-public-key-file",
-        configFile.getPath());
+        ENCLAVE_PUBLIC_KEY_PATH);
 
     assertThat(commandErrorOutput.toString())
         .startsWith(
