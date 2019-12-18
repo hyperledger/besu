@@ -235,7 +235,7 @@ public class JsonRpcHttpService {
                   natManager
                       .get()
                       .requestPortForward(
-                          config.getPort(), UpnpNatManager.Protocol.TCP, "partheon-json-rpc");
+                          config.getPort(), UpnpNatManager.Protocol.TCP, "besu-json-rpc");
                 }
                 return;
               }
