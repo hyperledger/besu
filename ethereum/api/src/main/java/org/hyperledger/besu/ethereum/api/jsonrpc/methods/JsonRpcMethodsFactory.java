@@ -105,7 +105,8 @@ public class JsonRpcMethodsFactory {
               new Web3JsonRpcMethods(clientVersion),
               // TRACE Methods (Disabled while under development)
               // new TraceJsonRpcMethods(blockchainQueries,protocolSchedule)
-              new TxPoolJsonRpcMethods(transactionPool));
+              new TxPoolJsonRpcMethods(transactionPool),
+              new PluginsJsonRpcMethods(namedPlugins));
 
       for (final JsonRpcMethods apiGroup : availableApiGroups) {
         enabled.putAll(apiGroup.create(rpcApis));

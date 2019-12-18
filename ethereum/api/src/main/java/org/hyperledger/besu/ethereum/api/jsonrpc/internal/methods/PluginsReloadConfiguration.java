@@ -25,22 +25,23 @@ import org.hyperledger.besu.plugin.BesuPlugin;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class AdminReloadPluginConfiguration implements JsonRpcMethod {
+public class PluginsReloadConfiguration implements JsonRpcMethod {
 
   private static final Logger LOG = LogManager.getLogger();
   private final Map<String, BesuPlugin> namedPlugins;
 
-  public AdminReloadPluginConfiguration(final Map<String, BesuPlugin> namedPlugins) {
+  public PluginsReloadConfiguration(final Map<String, BesuPlugin> namedPlugins) {
     this.namedPlugins = namedPlugins;
   }
 
   @Override
   public String getName() {
-    return RpcMethod.ADMIN_RELOAD_PLUGIN_CONFIG.getMethodName();
+    return RpcMethod.PLUGINS_RELOAD_CONFIG.getMethodName();
   }
 
   @Override
@@ -62,6 +63,7 @@ public class AdminReloadPluginConfiguration implements JsonRpcMethod {
 
   private void reloadPluginConfig(final String name, final BesuPlugin plugin) {
     LOG.info("Reloading plugin configuration: {}.", name);
-    plugin.reloadConfiguration();
+    final CompletableFuture<Void> future = plugin.reloadConfiguration();
+    future.thenAcceptAsync(aVoid -> LOG.info("Plugin {} has been reloaded.", name));
   }
 }
