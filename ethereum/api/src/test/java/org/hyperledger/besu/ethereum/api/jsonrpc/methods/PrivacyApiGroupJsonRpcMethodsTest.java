@@ -72,7 +72,6 @@ public class PrivacyApiGroupJsonRpcMethodsTest {
     assertThat(errorResponse.getError()).isEqualTo(PRIVACY_NOT_ENABLED);
   }
 
-  @NotNull
   private PrivacyApiGroupJsonRpcMethods createPrivacyApiGroupJsonRpcMethods() {
     return new PrivacyApiGroupJsonRpcMethods(
         blockchainQueries, protocolSchedule, transactionPool, privacyParameters) {

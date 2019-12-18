@@ -179,9 +179,9 @@ public class PrivacyController {
   }
 
   private SendResponse sendRequest(final PrivateTransaction privateTransaction) {
-    final BytesValueRLPOutput bvrlp = new BytesValueRLPOutput();
-    privateTransaction.writeTo(bvrlp);
-    final String payload = BytesValues.asBase64String(bvrlp.encoded());
+    final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
+    privateTransaction.writeTo(rlpOutput);
+    final String payload = BytesValues.asBase64String(rlpOutput.encoded());
 
     if (privateTransaction.getPrivacyGroupId().isPresent()) {
       return enclave.send(

@@ -262,7 +262,7 @@ public class EeaSendRawTransactionTest {
   }
 
   @Test
-  public void transactionPrivacyGroupNoPrivateFromReturnsError() {
+  public void invalidTransactionWithoutPrivateFromFieldFailsWithDecodeError() {
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
             new JsonRpcRequest(

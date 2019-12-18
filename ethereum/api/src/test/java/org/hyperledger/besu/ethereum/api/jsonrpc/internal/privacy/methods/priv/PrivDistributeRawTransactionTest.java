@@ -57,9 +57,9 @@ public class PrivDistributeRawTransactionTest {
 
   @Test
   public void validTransactionHashReturnedAfterDistribute() {
-    final String orionKey = "93Ky7lXwFkMc7+ckoFgUMku5bpr9tz4zhmWmk9RlNng=";
+    final String enclavePublicKey = "93Ky7lXwFkMc7+ckoFgUMku5bpr9tz4zhmWmk9RlNng=";
     when(privacyController.sendTransaction(any(PrivateTransaction.class)))
-        .thenReturn(new SendTransactionResponse(orionKey, ""));
+        .thenReturn(new SendTransactionResponse(enclavePublicKey, ""));
     when(privacyController.validatePrivateTransaction(
             any(PrivateTransaction.class), any(String.class)))
         .thenReturn(ValidationResult.valid());
@@ -73,7 +73,7 @@ public class PrivDistributeRawTransactionTest {
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(
-            request.getRequest().getId(), BytesValues.fromBase64(orionKey).toString());
+            request.getRequest().getId(), BytesValues.fromBase64(enclavePublicKey).toString());
 
     final JsonRpcResponse actualResponse = method.response(request);
 
