@@ -63,6 +63,8 @@ public interface BesuPlugin {
    * only implement this method if it supports dynamic reloading.
    *
    * <p>The plugin should reload its configuration dynamically or do nothing if not applicable.
+   *
+   * @return a {@link CompletableFuture}
    */
   default CompletableFuture<Void> reloadConfiguration() {
     return CompletableFuture.completedFuture(null);
