@@ -19,7 +19,6 @@ import static org.apache.tuweni.io.file.Files.copyResource;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.net.InetAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -63,8 +62,9 @@ public class EthSignerTestHarnessFactory {
     final EthSigner ethSigner =
         new EthSigner(
             config,
-            new SingleTransactionSignerProvider(new CredentialTransactionSigner(
-                WalletUtils.loadCredentials("", keyFilePath.toAbsolutePath().toFile()))));
+            new SingleTransactionSignerProvider(
+                new CredentialTransactionSigner(
+                    WalletUtils.loadCredentials("", keyFilePath.toAbsolutePath().toFile()))));
     ethSigner.run();
 
     waitForPortFile(tempDir);

@@ -28,9 +28,6 @@ public class EthSignerTestHarness {
 
   public URI getHttpListeningUrl() {
     return URI.create(
-        "http://"
-            + config.getHttpListenHost()
-            + ":"
-            + portsProperties.getProperty("http-jsonrpc"));
+        "http://" + config.getHttpListenHost() + ":" + portsProperties.getProperty("http-jsonrpc"));
   }
 }
