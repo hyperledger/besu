@@ -16,21 +16,19 @@
 
 package org.hyperledger.besu.cli.subcommands.operator;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static org.hyperledger.besu.cli.DefaultCommandValues.MANDATORY_LONG_FORMAT_HELP;
+import static org.hyperledger.besu.ethereum.api.query.TransactionLogsIndexer.BLOCKS_PER_BLOOM_CACHE;
 
 import org.hyperledger.besu.controller.BesuController;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.plugin.data.BlockHeader;
+import org.hyperledger.besu.ethereum.api.query.TransactionLogsIndexer;
+import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.nio.file.Path;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParentCommand;
@@ -40,17 +38,13 @@ import picocli.CommandLine.ParentCommand;
     description = "Generate cached values of block log bloom filters.",
     mixinStandardHelpOptions = true)
 public class GenerateLogBloomCache implements Runnable {
-  private static final Logger LOG = LogManager.getLogger();
-
-  public static final int BLOCKS_PER_FILE = 100_000;
-  public static final String CACHE_DIRECTORY_NAME = "caches";
 
   @Option(
       names = "--start-block",
       paramLabel = MANDATORY_LONG_FORMAT_HELP,
       description =
           "The block to start generating indexes.  Must be an increment of "
-              + BLOCKS_PER_FILE
+              + BLOCKS_PER_BLOOM_CACHE
               + " (default: ${DEFAULT-VALUE})",
       arity = "1..1")
   private final Long startBlock = 0L;
@@ -58,72 +52,42 @@ public class GenerateLogBloomCache implements Runnable {
   @Option(
       names = "--end-block",
       paramLabel = MANDATORY_LONG_FORMAT_HELP,
-      description =
-          "The block to start generating indexes (exclusive). (default: last block divisible by "
-              + BLOCKS_PER_FILE
-              + ")",
+      description = "The block to stop generating indexes (default is last block of the chain).",
       arity = "1..1")
-  private final Long endBlock = -1L;
+  private final Long endBlock = Long.MAX_VALUE;
 
   @ParentCommand private OperatorSubCommand parentCommand;
 
+  @SuppressWarnings("ResultOfMethodCallIgnored")
   @Override
   public void run() {
     checkPreconditions();
-    generateLogBloomCache();
+    final Path cacheDir = parentCommand.parentCommand.dataDir().resolve(BesuController.CACHE_PATH);
+    cacheDir.toFile().mkdirs();
+    final MutableBlockchain blockchain =
+        createBesuController().getProtocolContext().getBlockchain();
+    final EthScheduler scheduler = new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem());
+    try {
+      final long finalBlock = Math.min(blockchain.getChainHeadBlockNumber(), endBlock);
+      final TransactionLogsIndexer indexer =
+          new TransactionLogsIndexer(blockchain, cacheDir, scheduler);
+      indexer.generateLogBloomCache(startBlock, finalBlock);
+    } finally {
+      scheduler.stop();
+      try {
+        scheduler.awaitStop();
+      } catch (final InterruptedException e) {
+        // ignore
+      }
+    }
   }
 
   private void checkPreconditions() {
     checkNotNull(parentCommand.parentCommand.dataDir());
     checkState(
-        startBlock % BLOCKS_PER_FILE == 0,
+        startBlock % BLOCKS_PER_BLOOM_CACHE == 0,
         "Start block must be an even increment of %s",
-        BLOCKS_PER_FILE);
-  }
-
-  @SuppressWarnings("ResultOfMethodCallIgnored")
-  private void generateLogBloomCache() {
-    final Path cacheDir = parentCommand.parentCommand.dataDir().resolve(CACHE_DIRECTORY_NAME);
-    cacheDir.toFile().mkdirs();
-    generateLogBloomCache(
-        startBlock,
-        endBlock,
-        cacheDir,
-        createBesuController().getProtocolContext().getBlockchain());
-  }
-
-  public static void generateLogBloomCache(
-      final long start, final long stop, final Path cacheDir, final Blockchain blockchain) {
-    final long stopBlock =
-        stop < 0
-            ? (blockchain.getChainHeadBlockNumber() / BLOCKS_PER_FILE) * BLOCKS_PER_FILE
-            : stop;
-    LOG.debug("Start block: {} Stop block: {} Path: {}", start, stopBlock, cacheDir);
-    checkArgument(start % BLOCKS_PER_FILE == 0, "Start block must be at the beginning of a file");
-    checkArgument(stopBlock % BLOCKS_PER_FILE == 0, "End block must be at the beginning of a file");
-    try {
-      FileOutputStream fos = null;
-      for (long blockNum = start; blockNum < stopBlock; blockNum++) {
-        if (blockNum % BLOCKS_PER_FILE == 0 || fos == null) {
-          LOG.info("Indexing block {}", blockNum);
-          if (fos != null) {
-            fos.close();
-          }
-          fos = new FileOutputStream(createCacheFile(blockNum, cacheDir));
-        }
-        final BlockHeader header = blockchain.getBlockHeader(blockNum).orElseThrow();
-        final byte[] logs = header.getLogsBloom().getByteArray();
-        checkNotNull(logs);
-        checkState(logs.length == 256, "BloomBits are not the correct length");
-        fos.write(logs);
-      }
-    } catch (final Exception e) {
-      LOG.error("Unhandled indexing exception", e);
-    }
-  }
-
-  private static File createCacheFile(final long blockNumber, final Path cacheDir) {
-    return cacheDir.resolve("logBloom-" + (blockNumber / BLOCKS_PER_FILE) + ".index").toFile();
+        BLOCKS_PER_BLOOM_CACHE);
   }
 
   private BesuController<?> createBesuController() {
