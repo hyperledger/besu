@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
@@ -280,7 +281,7 @@ public class EeaSendRawTransactionTest {
   }
 
   @Test
-  public void invalidTransactionIsSentToTransactionPool() {
+  public void invalidTransactionIsNotSentToTransactionPool() {
     when(privateController.sendTransaction(any(PrivateTransaction.class)))
         .thenThrow(new EnclaveException("enclave failed to execute"));
 
@@ -295,22 +296,23 @@ public class EeaSendRawTransactionTest {
     final JsonRpcResponse actualResponse = method.response(request);
 
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+    verifyNoInteractions(transactionPool);
   }
 
   @Test
-  public void transactionWithNonceBelowAccountNonceIsRejected() throws Exception {
+  public void transactionWithNonceBelowAccountNonceIsRejected() {
     verifyErrorForInvalidTransaction(
         TransactionInvalidReason.NONCE_TOO_LOW, JsonRpcError.NONCE_TOO_LOW);
   }
 
   @Test
-  public void transactionWithNonceAboveAccountNonceIsRejected() throws Exception {
+  public void transactionWithNonceAboveAccountNonceIsRejected() {
     verifyErrorForInvalidTransaction(
         TransactionInvalidReason.INCORRECT_NONCE, JsonRpcError.INCORRECT_NONCE);
   }
 
   @Test
-  public void transactionWithInvalidSignatureIsRejected() throws Exception {
+  public void transactionWithInvalidSignatureIsRejected() {
     verifyErrorForInvalidTransaction(
         TransactionInvalidReason.INVALID_SIGNATURE, JsonRpcError.INVALID_TRANSACTION_SIGNATURE);
   }
