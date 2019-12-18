@@ -24,6 +24,8 @@ import static org.hyperledger.besu.ethereum.api.query.TransactionLogsIndexer.BLO
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.ethereum.api.query.TransactionLogsIndexer;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.nio.file.Path;
 
@@ -64,9 +66,20 @@ public class GenerateLogBloomCache implements Runnable {
     cacheDir.toFile().mkdirs();
     final MutableBlockchain blockchain =
         createBesuController().getProtocolContext().getBlockchain();
-    final long finalBlock = Math.min(blockchain.getChainHeadBlockNumber(), endBlock);
-    final TransactionLogsIndexer indexer = new TransactionLogsIndexer(blockchain, cacheDir);
-    indexer.generateLogBloomCache(startBlock, finalBlock);
+    final EthScheduler scheduler = new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem());
+    try {
+      final long finalBlock = Math.min(blockchain.getChainHeadBlockNumber(), endBlock);
+      final TransactionLogsIndexer indexer =
+          new TransactionLogsIndexer(blockchain, cacheDir, scheduler);
+      indexer.generateLogBloomCache(startBlock, finalBlock);
+    } finally {
+      scheduler.stop();
+      try {
+        scheduler.awaitStop();
+      } catch (final InterruptedException e) {
+        // ignore
+      }
+    }
   }
 
   private void checkPreconditions() {

@@ -24,7 +24,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockBody;
@@ -32,6 +31,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.util.bytes.BytesValue;
@@ -63,6 +63,7 @@ public class BlockchainQueriesLogCacheTest {
 
   @Mock MutableBlockchain blockchain;
   @Mock WorldStateArchive worldStateArchive;
+  @Mock EthScheduler scheduler;
   private BlockchainQueries blockchainQueries;
 
   @BeforeClass
@@ -119,8 +120,10 @@ public class BlockchainQueriesLogCacheTest {
     when(blockchain.getBlockBody(any())).thenReturn(Optional.of(fakeBody));
     blockchainQueries =
         new BlockchainQueries(
-            new ProtocolContext<Void>(blockchain, worldStateArchive, null),
-            Optional.of(cacheDir.getRoot().toPath()));
+            blockchain,
+            worldStateArchive,
+            Optional.of(cacheDir.getRoot().toPath()),
+            Optional.of(scheduler));
   }
 
   /**

@@ -22,6 +22,7 @@ import static com.google.common.base.Preconditions.checkState;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -30,8 +31,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Optional;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -48,15 +47,17 @@ public class TransactionLogsIndexer {
   public static final String PENDING = "pending";
 
   private final Lock submissionLock = new ReentrantLock();
-  private final ExecutorService executor = Executors.newSingleThreadExecutor();
+  private final EthScheduler scheduler;
   private final Blockchain blockchain;
   private final Path cacheDir;
 
   private IndexingStatus indexingStatus = new IndexingStatus();
 
-  public TransactionLogsIndexer(final Blockchain blockchain, final Path cacheDir) {
+  public TransactionLogsIndexer(
+      final Blockchain blockchain, final Path cacheDir, final EthScheduler scheduler) {
     this.blockchain = blockchain;
     this.cacheDir = cacheDir;
+    this.scheduler = scheduler;
   }
 
   private static File calculateCacheFileName(final String name, final Path cacheDir) {
@@ -67,7 +68,9 @@ public class TransactionLogsIndexer {
     return calculateCacheFileName(Long.toString(blockNumber / BLOCKS_PER_BLOOM_CACHE), cacheDir);
   }
 
-  public void generateLogBloomCache(final long start, final long stop) {
+  public IndexingStatus generateLogBloomCache(final long start, final long stop) {
+    checkArgument(
+        start % BLOCKS_PER_BLOOM_CACHE == 0, "Start block must be at the beginning of a file");
     try {
       indexingStatus.indexing = true;
       LOG.info(
@@ -75,8 +78,11 @@ public class TransactionLogsIndexer {
           start,
           stop,
           cacheDir);
-      checkArgument(
-          start % BLOCKS_PER_BLOOM_CACHE == 0, "Start block must be at the beginning of a file");
+      if (!Files.isDirectory(cacheDir) && !cacheDir.toFile().mkdirs()) {
+        LOG.error("Cache directory '{}' does not exist and could not be made.", cacheDir);
+        return indexingStatus;
+      }
+
       final File pendingFile = calculateCacheFileName(PENDING, cacheDir);
       for (long blockNum = start; blockNum < stop; blockNum += BLOCKS_PER_BLOOM_CACHE) {
         LOG.info("Indexing segment at {}", blockNum);
@@ -100,6 +106,7 @@ public class TransactionLogsIndexer {
       indexingStatus.indexing = false;
       LOG.info("Indexing request complete");
     }
+    return indexingStatus;
   }
 
   private long fillCacheFile(
@@ -129,7 +136,7 @@ public class TransactionLogsIndexer {
             requestAccepted = true;
             indexingStatus.startBlock = fromBlock;
             indexingStatus.endBlock = toBlock;
-            executor.submit(
+            scheduler.scheduleComputationTask(
                 () ->
                     generateLogBloomCache(
                         fromBlock - (fromBlock % BLOCKS_PER_BLOOM_CACHE), toBlock));
@@ -151,8 +158,6 @@ public class TransactionLogsIndexer {
     volatile long currentBlock;
     volatile boolean indexing;
     boolean requestAccepted;
-
-    private IndexingStatus() {}
 
     @JsonGetter
     public String getStartBlock() {

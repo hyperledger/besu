@@ -25,17 +25,17 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 
 import java.util.Optional;
 
-public class AdminIndexTransactionLogs implements JsonRpcMethod {
+public class AdminGenerateLogBloomCache implements JsonRpcMethod {
 
   private final BlockchainQueries blockchainQueries;
 
-  public AdminIndexTransactionLogs(final BlockchainQueries blockchainQueries) {
+  public AdminGenerateLogBloomCache(final BlockchainQueries blockchainQueries) {
     this.blockchainQueries = blockchainQueries;
   }
 
   @Override
   public String getName() {
-    return RpcMethod.ADMIN_INDEX_TRANSACTION_LOGS.getMethodName();
+    return RpcMethod.ADMIN_GENERATE_LOG_BLOOM_CACHE.getMethodName();
   }
 
   @Override
