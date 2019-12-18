@@ -239,5 +239,4 @@ public class PrivacyParameters {
       Base64.getDecoder().decode(this.enclavePublicKey);
     }
   }
-
 }
