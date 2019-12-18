@@ -659,7 +659,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   @Option(
       names = {"--privacy-multi-tenancy-enabled"},
-      description = "Enable private transactions (default: ${DEFAULT-VALUE})",
+      description = "Enable multi-tenant private transactions (default: ${DEFAULT-VALUE})",
       hidden = true)
   private final Boolean isPrivacyMultiTenancyEnabled = false;
 
