@@ -19,7 +19,7 @@ executors:
 
 notify:
   webhooks:
-    - url: https://edjojob-rc-test.herokuapp.com/hubot/circleci
+    - url: https://hyperledger-rocket-chat-hubot.herokuapp.com/hubot/circleci
 
 commands:
   prepare:
