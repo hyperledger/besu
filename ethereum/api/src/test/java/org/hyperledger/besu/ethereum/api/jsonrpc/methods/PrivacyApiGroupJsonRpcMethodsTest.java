@@ -34,7 +34,6 @@ import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 import java.util.Map;
 
-import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
