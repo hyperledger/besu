@@ -281,4 +281,21 @@ public class PrivGetTransactionReceiptTest {
 
     assertThat(response.getError()).isEqualTo(JsonRpcError.PRIVACY_NOT_ENABLED);
   }
+
+  @Test
+  public void enclaveKeysCannotDecryptPayloadThrowsRuntimeException() {
+    final String keysCannotDecryptPayloadMsg = "EnclaveKeysCannotDecryptPayload";
+    when(privacyParameters.getEnclave()).thenReturn(enclave);
+    when(enclave.receive(any())).thenThrow(new EnclaveException(keysCannotDecryptPayloadMsg));
+
+    final PrivGetTransactionReceipt privGetTransactionReceipt =
+        new PrivGetTransactionReceipt(blockchainQueries, privacyParameters);
+    final Object[] params = new Object[] {transaction.getHash()};
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(new JsonRpcRequest("1", "priv_getTransactionReceipt", params));
+
+    final Throwable t = catchThrowable(() -> privGetTransactionReceipt.response(request));
+    assertThat(t).isInstanceOf(EnclaveException.class);
+    assertThat(t.getMessage()).isEqualTo(keysCannotDecryptPayloadMsg);
+  }
 }
