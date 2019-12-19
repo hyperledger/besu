@@ -163,11 +163,13 @@ public class PrivacyControllerTest {
     final PrivateTransaction transaction = buildLegacyPrivateTransaction(1);
 
     final SendTransactionResponse sendTransactionResponse =
-        privacyController.sendTransaction(transaction);
+        privacyController.sendTransaction(transaction, enclavePublicKey(requestContext.getUser()));
 
     final ValidationResult<TransactionInvalidReason> validationResult =
         privacyController.validatePrivateTransaction(
-            transaction, sendTransactionResponse.getPrivacyGroupId());
+            transaction,
+            sendTransactionResponse.getPrivacyGroupId(),
+            enclavePublicKey(request.getUser()));
 
     final Transaction markerTransaction =
         privacyController.createPrivacyMarkerTransaction(
@@ -187,11 +189,13 @@ public class PrivacyControllerTest {
     final PrivateTransaction transaction = buildBesuPrivateTransaction(1);
 
     final SendTransactionResponse sendTransactionResponse =
-        privacyController.sendTransaction(transaction);
+        privacyController.sendTransaction(transaction, enclavePublicKey(requestContext.getUser()));
 
     final ValidationResult<TransactionInvalidReason> validationResult =
         privacyController.validatePrivateTransaction(
-            transaction, transaction.getPrivacyGroupId().get().toString());
+            transaction,
+            transaction.getPrivacyGroupId().get().toString(),
+            enclavePublicKey(request.getUser()));
 
     final Transaction markerTransaction =
         privacyController.createPrivacyMarkerTransaction(
@@ -208,7 +212,10 @@ public class PrivacyControllerTest {
   @Test
   public void sendTransactionWhenEnclaveFailsThrowsEnclaveError() {
     assertThatExceptionOfType(EnclaveException.class)
-        .isThrownBy(() -> brokenPrivacyController.sendTransaction(buildLegacyPrivateTransaction()));
+        .isThrownBy(
+            () ->
+                brokenPrivacyController.sendTransaction(
+                    buildLegacyPrivateTransaction(), enclavePublicKey(requestContext.getUser())));
   }
 
   @Test
@@ -218,10 +225,12 @@ public class PrivacyControllerTest {
 
     final PrivateTransaction transaction = buildLegacyPrivateTransaction(0);
     final SendTransactionResponse sendTransactionResponse =
-        privacyController.sendTransaction(transaction);
+        privacyController.sendTransaction(transaction, enclavePublicKey(requestContext.getUser()));
     final ValidationResult<TransactionInvalidReason> validationResult =
         privacyController.validatePrivateTransaction(
-            transaction, sendTransactionResponse.getPrivacyGroupId());
+            transaction,
+            sendTransactionResponse.getPrivacyGroupId(),
+            enclavePublicKey(request.getUser()));
     assertThat(validationResult).isEqualTo(ValidationResult.invalid(PRIVATE_NONCE_TOO_LOW));
   }
 
@@ -233,10 +242,12 @@ public class PrivacyControllerTest {
     final PrivateTransaction transaction = buildLegacyPrivateTransaction(2);
 
     final SendTransactionResponse sendTransactionResponse =
-        privacyController.sendTransaction(transaction);
+        privacyController.sendTransaction(transaction, enclavePublicKey(requestContext.getUser()));
     final ValidationResult<TransactionInvalidReason> validationResult =
         privacyController.validatePrivateTransaction(
-            transaction, sendTransactionResponse.getPrivacyGroupId());
+            transaction,
+            sendTransactionResponse.getPrivacyGroupId(),
+            enclavePublicKey(request.getUser()));
     assertThat(validationResult).isEqualTo(ValidationResult.invalid(INCORRECT_PRIVATE_NONCE));
   }
 
@@ -245,7 +256,9 @@ public class PrivacyControllerTest {
     when(enclave.receive(anyString(), anyString()))
         .thenReturn(new ReceiveResponse(PAYLOAD, PRIVACY_GROUP_ID));
 
-    final ReceiveResponse receiveResponse = privacyController.retrieveTransaction(TRANSACTION_KEY);
+    final ReceiveResponse receiveResponse =
+        privacyController.retrieveTransaction(
+            TRANSACTION_KEY, enclavePublicKey(requestContext.getUser()));
 
     assertThat(receiveResponse.getPayload()).isEqualTo(PAYLOAD);
     assertThat(receiveResponse.getPrivacyGroupId()).isEqualTo(PRIVACY_GROUP_ID);
@@ -266,7 +279,10 @@ public class PrivacyControllerTest {
 
     final PrivacyGroup privacyGroup =
         privacyController.createPrivacyGroup(
-            PRIVACY_GROUP_ADDRESSES, PRIVACY_GROUP_NAME, PRIVACY_GROUP_DESCRIPTION);
+            PRIVACY_GROUP_ADDRESSES,
+            PRIVACY_GROUP_NAME,
+            PRIVACY_GROUP_DESCRIPTION,
+            enclavePublicKey(requestContext.getUser()));
 
     assertThat(privacyGroup).isEqualToComparingFieldByField(enclavePrivacyGroupResponse);
     verify(enclave)
@@ -281,7 +297,9 @@ public class PrivacyControllerTest {
   public void deletesPrivacyGroup() {
     when(enclave.deletePrivacyGroup(anyString(), anyString())).thenReturn(PRIVACY_GROUP_ID);
 
-    final String deletedPrivacyGroupId = privacyController.deletePrivacyGroup(PRIVACY_GROUP_ID);
+    final String deletedPrivacyGroupId =
+        privacyController.deletePrivacyGroup(
+            PRIVACY_GROUP_ID, enclavePublicKey(requestContext.getUser()));
 
     assertThat(deletedPrivacyGroupId).isEqualTo(PRIVACY_GROUP_ID);
     verify(enclave).deletePrivacyGroup(PRIVACY_GROUP_ID, enclavePublicKey);
@@ -299,7 +317,8 @@ public class PrivacyControllerTest {
     when(enclave.findPrivacyGroup(any())).thenReturn(new PrivacyGroup[] {privacyGroup});
 
     final PrivacyGroup[] privacyGroups =
-        privacyController.findPrivacyGroup(PRIVACY_GROUP_ADDRESSES);
+        privacyController.findPrivacyGroup(
+            PRIVACY_GROUP_ADDRESSES, enclavePublicKey(requestContext.getUser()));
     assertThat(privacyGroups).hasSize(1);
     assertThat(privacyGroups[0]).isEqualToComparingFieldByField(privacyGroup);
     verify(enclave).findPrivacyGroup(PRIVACY_GROUP_ADDRESSES);
@@ -318,7 +337,11 @@ public class PrivacyControllerTest {
     when(account.getNonce()).thenReturn(8L);
 
     final long nonce =
-        privacyController.determineNonce("privateFrom", new String[] {"first", "second"}, address);
+        privacyController.determineNonce(
+            "privateFrom",
+            new String[] {"first", "second"},
+            address,
+            enclavePublicKey(requestContext.getUser()));
 
     assertThat(nonce).isEqualTo(reportedNonce);
     verify(enclave)
@@ -335,7 +358,11 @@ public class PrivacyControllerTest {
     when(enclave.findPrivacyGroup(any())).thenReturn(returnedGroups);
 
     final long nonce =
-        privacyController.determineNonce("privateFrom", new String[] {"first", "second"}, address);
+        privacyController.determineNonce(
+            "privateFrom",
+            new String[] {"first", "second"},
+            address,
+            enclavePublicKey(requestContext.getUser()));
 
     assertThat(nonce).isEqualTo(reportedNonce);
     verify(enclave)
@@ -358,7 +385,10 @@ public class PrivacyControllerTest {
         .isThrownBy(
             () ->
                 privacyController.determineNonce(
-                    "privateFrom", new String[] {"first", "second"}, address));
+                    "privateFrom",
+                    new String[] {"first", "second"},
+                    address,
+                    enclavePublicKey(requestContext.getUser())));
   }
 
   @Test
@@ -367,7 +397,9 @@ public class PrivacyControllerTest {
 
     when(account.getNonce()).thenReturn(4L);
 
-    final long nonce = privacyController.determineNonce(address, "Group1");
+    final long nonce =
+        privacyController.determineNonce(
+            address, "Group1", enclavePublicKey(requestContext.getUser()));
 
     assertThat(nonce).isEqualTo(4L);
     verify(privateStateStorage).getLatestStateRoot(BytesValues.fromBase64("Group1"));
@@ -382,7 +414,9 @@ public class PrivacyControllerTest {
     when(privateStateStorage.getLatestStateRoot(BytesValues.fromBase64("Group1")))
         .thenReturn(Optional.empty());
 
-    final long nonce = privacyController.determineNonce(address, "Group1");
+    final long nonce =
+        privacyController.determineNonce(
+            address, "Group1", enclavePublicKey(requestContext.getUser()));
 
     assertThat(nonce).isEqualTo(Account.DEFAULT_NONCE);
     verifyNoInteractions(worldStateArchive, mutableWorldState, account);
@@ -396,7 +430,9 @@ public class PrivacyControllerTest {
         .thenReturn(Optional.of(hash));
     when(worldStateArchive.getMutable(hash)).thenReturn(Optional.empty());
 
-    final long nonce = privacyController.determineNonce(address, "Group1");
+    final long nonce =
+        privacyController.determineNonce(
+            address, "Group1", enclavePublicKey(requestContext.getUser()));
 
     assertThat(nonce).isEqualTo(Account.DEFAULT_NONCE);
     verifyNoInteractions(mutableWorldState, account);
@@ -411,7 +447,9 @@ public class PrivacyControllerTest {
     when(worldStateArchive.getMutable(hash)).thenReturn(Optional.of(mutableWorldState));
     when(mutableWorldState.get(address)).thenReturn(null);
 
-    final long nonce = privacyController.determineNonce(address, "Group1");
+    final long nonce =
+        privacyController.determineNonce(
+            address, "Group1", enclavePublicKey(requestContext.getUser()));
 
     assertThat(nonce).isEqualTo(Account.DEFAULT_NONCE);
     verifyNoInteractions(account);

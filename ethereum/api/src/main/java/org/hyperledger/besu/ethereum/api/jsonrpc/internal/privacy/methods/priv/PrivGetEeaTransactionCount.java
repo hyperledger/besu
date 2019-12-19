@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.MultiTenancyUserUtil.enclavePublicKey;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -56,7 +57,9 @@ public class PrivGetEeaTransactionCount implements JsonRpcMethod {
     final String[] privateFor = requestContext.getRequiredParameter(2, String[].class);
 
     try {
-      final long nonce = privacyController.determineNonce(privateFrom, privateFor, address);
+      final long nonce =
+          privacyController.determineNonce(
+              privateFrom, privateFor, address, enclavePublicKey(requestContext.getUser()));
       return new JsonRpcSuccessResponse(
           requestContext.getRequest().getId(), Quantity.create(nonce));
     } catch (final Exception e) {

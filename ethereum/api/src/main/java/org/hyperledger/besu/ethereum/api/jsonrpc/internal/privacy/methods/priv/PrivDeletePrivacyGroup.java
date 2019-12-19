@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.MultiTenancyUserUtil.enclavePublicKey;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -48,7 +49,9 @@ public class PrivDeletePrivacyGroup implements JsonRpcMethod {
 
     final String response;
     try {
-      response = privacyController.deletePrivacyGroup(privacyGroupId);
+      response =
+          privacyController.deletePrivacyGroup(
+              privacyGroupId, enclavePublicKey(requestContext.getUser()));
     } catch (Exception e) {
       LOG.error("Failed to fetch transaction", e);
       return new JsonRpcSuccessResponse(

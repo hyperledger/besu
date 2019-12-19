@@ -147,7 +147,8 @@ public class PrivGetTransactionReceiptTest {
 
   @Before
   public void setUp() {
-    when(privacyController.retrieveTransaction(anyString()))
+    when(privacyController.retrieveTransaction(
+            anyString(), enclavePublicKey(requestContext.getUser())))
         .thenReturn(
             new ReceiveResponse(
                 Base64.getEncoder().encode(RLP.encode(privateTransaction::writeTo).extractArray()),
@@ -192,7 +193,8 @@ public class PrivGetTransactionReceiptTest {
 
   @Test
   public void enclavePayloadNotFoundResultsInSuccessButNullResponse() {
-    when(failingPrivacyController.retrieveTransaction(anyString()))
+    when(failingPrivacyController.retrieveTransaction(
+            anyString(), enclavePublicKey(requestContext.getUser())))
         .thenThrow(new EnclaveException("EnclavePayloadNotFound"));
 
     final PrivGetTransactionReceipt privGetTransactionReceipt =
@@ -231,7 +233,8 @@ public class PrivGetTransactionReceiptTest {
 
   @Test
   public void enclaveConnectionIssueThrowsRuntimeException() {
-    when(failingPrivacyController.retrieveTransaction(anyString()))
+    when(failingPrivacyController.retrieveTransaction(
+            anyString(), enclavePublicKey(requestContext.getUser())))
         .thenThrow(EnclaveException.class);
     final PrivGetTransactionReceipt privGetTransactionReceipt =
         new PrivGetTransactionReceipt(
@@ -267,7 +270,7 @@ public class PrivGetTransactionReceiptTest {
   public void enclaveKeysCannotDecryptPayloadThrowsRuntimeException() {
     final String keysCannotDecryptPayloadMsg = "EnclaveKeysCannotDecryptPayload";
     when(privacyParameters.getEnclave()).thenReturn(enclave);
-    when(privacyController.retrieveTransaction(any()))
+    when(privacyController.retrieveTransaction(any(), enclavePublicKey(requestContext.getUser())))
         .thenThrow(new EnclaveException(keysCannotDecryptPayloadMsg));
 
     final PrivGetTransactionReceipt privGetTransactionReceipt =

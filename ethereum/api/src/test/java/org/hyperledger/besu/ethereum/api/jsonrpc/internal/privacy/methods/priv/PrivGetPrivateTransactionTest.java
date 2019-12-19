@@ -130,7 +130,8 @@ public class PrivGetPrivateTransactionTest {
 
     final BytesValueRLPOutput bvrlp = new BytesValueRLPOutput();
     privateTransaction.writeTo(bvrlp);
-    when(privacyController.retrieveTransaction(anyString()))
+    when(privacyController.retrieveTransaction(
+            anyString(), enclavePublicKey(requestContext.getUser())))
         .thenReturn(
             new ReceiveResponse(
                 Base64.getEncoder().encodeToString(bvrlp.encoded().extractArray()).getBytes(UTF_8),
@@ -165,7 +166,8 @@ public class PrivGetPrivateTransactionTest {
 
     final BytesValueRLPOutput bvrlp = new BytesValueRLPOutput();
     privateTransaction.writeTo(bvrlp);
-    when(privacyController.retrieveTransaction(anyString()))
+    when(privacyController.retrieveTransaction(
+            anyString(), enclavePublicKey(requestContext.getUser())))
         .thenReturn(
             new ReceiveResponse(
                 Base64.getEncoder().encodeToString(bvrlp.encoded().extractArray()).getBytes(UTF_8),

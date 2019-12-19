@@ -195,10 +195,11 @@ public class EeaSendRawTransactionTest {
 
   @Test
   public void validTransactionIsSentToTransactionPool() {
-    when(privacyController.sendTransaction(any(PrivateTransaction.class)))
+    when(privacyController.sendTransaction(
+            any(PrivateTransaction.class), enclavePublicKey(requestContext.getUser())))
         .thenReturn(new SendTransactionResponse(MOCK_ORION_KEY, MOCK_PRIVACY_GROUP));
     when(privacyController.validatePrivateTransaction(
-            any(PrivateTransaction.class), any(String.class)))
+            any(PrivateTransaction.class), any(String.class), enclavePublicKey(request.getUser())))
         .thenReturn(ValidationResult.valid());
     when(privacyController.createPrivacyMarkerTransaction(
             any(String.class), any(PrivateTransaction.class)))
@@ -218,9 +219,11 @@ public class EeaSendRawTransactionTest {
     final JsonRpcResponse actualResponse = method.response(request);
 
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
-    verify(privacyController).sendTransaction(any(PrivateTransaction.class));
     verify(privacyController)
-        .validatePrivateTransaction(any(PrivateTransaction.class), any(String.class));
+        .sendTransaction(any(PrivateTransaction.class), enclavePublicKey(requestContext.getUser()));
+    verify(privacyController)
+        .validatePrivateTransaction(
+            any(PrivateTransaction.class), any(String.class), enclavePublicKey(request.getUser()));
     verify(privacyController)
         .createPrivacyMarkerTransaction(any(String.class), any(PrivateTransaction.class));
     verify(transactionPool).addLocalTransaction(any(Transaction.class));
@@ -228,10 +231,11 @@ public class EeaSendRawTransactionTest {
 
   @Test
   public void validTransactionPrivacyGroupIsSentToTransactionPool() {
-    when(privacyController.sendTransaction(any(PrivateTransaction.class)))
+    when(privacyController.sendTransaction(
+            any(PrivateTransaction.class), enclavePublicKey(requestContext.getUser())))
         .thenReturn(new SendTransactionResponse(MOCK_ORION_KEY, MOCK_PRIVACY_GROUP));
     when(privacyController.validatePrivateTransaction(
-            any(PrivateTransaction.class), any(String.class)))
+            any(PrivateTransaction.class), any(String.class), enclavePublicKey(request.getUser())))
         .thenReturn(ValidationResult.valid());
     when(privacyController.createPrivacyMarkerTransaction(
             any(String.class), any(PrivateTransaction.class)))
@@ -254,9 +258,11 @@ public class EeaSendRawTransactionTest {
     final JsonRpcResponse actualResponse = method.response(request);
 
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
-    verify(privacyController).sendTransaction(any(PrivateTransaction.class));
     verify(privacyController)
-        .validatePrivateTransaction(any(PrivateTransaction.class), any(String.class));
+        .sendTransaction(any(PrivateTransaction.class), enclavePublicKey(requestContext.getUser()));
+    verify(privacyController)
+        .validatePrivateTransaction(
+            any(PrivateTransaction.class), any(String.class), enclavePublicKey(request.getUser()));
     verify(privacyController)
         .createPrivacyMarkerTransaction(any(String.class), any(PrivateTransaction.class));
     verify(transactionPool).addLocalTransaction(any(Transaction.class));
@@ -282,7 +288,8 @@ public class EeaSendRawTransactionTest {
 
   @Test
   public void invalidTransactionIsNotSentToTransactionPool() {
-    when(privacyController.sendTransaction(any(PrivateTransaction.class)))
+    when(privacyController.sendTransaction(
+            any(PrivateTransaction.class), enclavePublicKey(requestContext.getUser())))
         .thenThrow(new EnclaveException("enclave failed to execute"));
 
     final JsonRpcRequestContext request =
@@ -346,10 +353,11 @@ public class EeaSendRawTransactionTest {
   private void verifyErrorForInvalidTransaction(
       final TransactionInvalidReason transactionInvalidReason, final JsonRpcError expectedError) {
 
-    when(privacyController.sendTransaction(any(PrivateTransaction.class)))
+    when(privacyController.sendTransaction(
+            any(PrivateTransaction.class), enclavePublicKey(requestContext.getUser())))
         .thenReturn(new SendTransactionResponse(MOCK_ORION_KEY, MOCK_PRIVACY_GROUP));
     when(privacyController.validatePrivateTransaction(
-            any(PrivateTransaction.class), any(String.class)))
+            any(PrivateTransaction.class), any(String.class), enclavePublicKey(request.getUser())))
         .thenReturn(ValidationResult.valid());
     when(privacyController.createPrivacyMarkerTransaction(
             any(String.class), any(PrivateTransaction.class)))
@@ -367,9 +375,11 @@ public class EeaSendRawTransactionTest {
     final JsonRpcResponse actualResponse = method.response(request);
 
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
-    verify(privacyController).sendTransaction(any(PrivateTransaction.class));
     verify(privacyController)
-        .validatePrivateTransaction(any(PrivateTransaction.class), any(String.class));
+        .sendTransaction(any(PrivateTransaction.class), enclavePublicKey(requestContext.getUser()));
+    verify(privacyController)
+        .validatePrivateTransaction(
+            any(PrivateTransaction.class), any(String.class), enclavePublicKey(request.getUser()));
     verify(privacyController)
         .createPrivacyMarkerTransaction(any(String.class), any(PrivateTransaction.class));
     verify(transactionPool).addLocalTransaction(any(Transaction.class));

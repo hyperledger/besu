@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.MultiTenancyUserUtil.enclavePublicKey;
 
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
@@ -67,7 +68,8 @@ public class PrivGetPrivateTransaction implements JsonRpcMethod {
       LOG.trace("Fetching transaction information");
       final ReceiveResponse receiveResponse =
           privacyController.retrieveTransaction(
-              BytesValues.asBase64String(resultTransaction.getTransaction().getPayload()));
+              BytesValues.asBase64String(resultTransaction.getTransaction().getPayload()),
+              enclavePublicKey(requestContext.getUser()));
       LOG.trace("Received transaction information");
 
       final BytesValueRLPInput bytesValueRLPInput =

@@ -61,7 +61,8 @@ public class PrivCreatePrivacyGroupTest {
     final String expected = "a wonderful group";
     final PrivacyGroup privacyGroup =
         new PrivacyGroup(expected, PrivacyGroup.Type.PANTHEON, NAME, DESCRIPTION, ADDRESSES);
-    when(privacyController.createPrivacyGroup(ADDRESSES, NAME, DESCRIPTION))
+    when(privacyController.createPrivacyGroup(
+            ADDRESSES, NAME, DESCRIPTION, enclavePublicKey(requestContext.getUser())))
         .thenReturn(privacyGroup);
     when(privacyParameters.getEnclavePublicKey()).thenReturn(FROM);
 
@@ -89,7 +90,9 @@ public class PrivCreatePrivacyGroupTest {
     final String expected = "a wonderful group";
     final PrivacyGroup privacyGroup =
         new PrivacyGroup(expected, PrivacyGroup.Type.PANTHEON, NAME, DESCRIPTION, ADDRESSES);
-    when(privacyController.createPrivacyGroup(ADDRESSES, NAME, null)).thenReturn(privacyGroup);
+    when(privacyController.createPrivacyGroup(
+            ADDRESSES, NAME, null, enclavePublicKey(requestContext.getUser())))
+        .thenReturn(privacyGroup);
     when(privacyParameters.getEnclavePublicKey()).thenReturn(FROM);
 
     final PrivCreatePrivacyGroup privCreatePrivacyGroup =
@@ -124,7 +127,8 @@ public class PrivCreatePrivacyGroupTest {
     final String expected = "a wonderful group";
     final PrivacyGroup privacyGroup =
         new PrivacyGroup(expected, PrivacyGroup.Type.PANTHEON, NAME, DESCRIPTION, ADDRESSES);
-    when(privacyController.createPrivacyGroup(ADDRESSES, null, DESCRIPTION))
+    when(privacyController.createPrivacyGroup(
+            ADDRESSES, null, DESCRIPTION, enclavePublicKey(requestContext.getUser())))
         .thenReturn(privacyGroup);
     when(privacyParameters.getEnclavePublicKey()).thenReturn(FROM);
 
@@ -160,7 +164,9 @@ public class PrivCreatePrivacyGroupTest {
     final String expected = "a wonderful group";
     final PrivacyGroup privacyGroup =
         new PrivacyGroup(expected, PrivacyGroup.Type.PANTHEON, NAME, DESCRIPTION, ADDRESSES);
-    when(privacyController.createPrivacyGroup(ADDRESSES, null, null)).thenReturn(privacyGroup);
+    when(privacyController.createPrivacyGroup(
+            ADDRESSES, null, null, enclavePublicKey(requestContext.getUser())))
+        .thenReturn(privacyGroup);
     when(privacyParameters.getEnclavePublicKey()).thenReturn(FROM);
 
     final PrivCreatePrivacyGroup privCreatePrivacyGroup =
@@ -241,7 +247,8 @@ public class PrivCreatePrivacyGroupTest {
 
   @Test
   public void returnsCorrectErrorEnclaveError() {
-    when(privacyController.createPrivacyGroup(ADDRESSES, NAME, DESCRIPTION))
+    when(privacyController.createPrivacyGroup(
+            ADDRESSES, NAME, DESCRIPTION, enclavePublicKey(requestContext.getUser())))
         .thenThrow(new EnclaveException(""));
     final PrivCreatePrivacyGroup privCreatePrivacyGroup =
         new PrivCreatePrivacyGroup(privacyController);

@@ -46,7 +46,9 @@ public class PrivGetTransactionCountTest {
   @Before
   public void before() {
     when(privacyParameters.isEnabled()).thenReturn(true);
-    when(privacyController.determineNonce(senderAddress, privacyGroupId)).thenReturn(NONCE);
+    when(privacyController.determineNonce(
+            senderAddress, privacyGroupId, enclavePublicKey(requestContext.getUser())))
+        .thenReturn(NONCE);
   }
 
   @Test

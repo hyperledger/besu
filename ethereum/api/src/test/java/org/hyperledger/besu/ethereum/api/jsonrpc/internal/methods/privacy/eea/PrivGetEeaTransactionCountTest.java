@@ -56,7 +56,8 @@ public class PrivGetEeaTransactionCountTest {
     final long reportedNonce = 8L;
     final PrivGetEeaTransactionCount method = new PrivGetEeaTransactionCount(privacyController);
 
-    when(privacyController.determineNonce(privateFrom, privateFor, address))
+    when(privacyController.determineNonce(
+            privateFrom, privateFor, address, enclavePublicKey(requestContext.getUser())))
         .thenReturn(reportedNonce);
 
     final JsonRpcResponse response = method.response(request);
@@ -71,7 +72,8 @@ public class PrivGetEeaTransactionCountTest {
   public void nonceProviderThrowsRuntimeExceptionProducesErrorResponse() {
     final PrivGetEeaTransactionCount method = new PrivGetEeaTransactionCount(privacyController);
 
-    when(privacyController.determineNonce(privateFrom, privateFor, address))
+    when(privacyController.determineNonce(
+            privateFrom, privateFor, address, enclavePublicKey(requestContext.getUser())))
         .thenThrow(RuntimeException.class);
 
     final JsonRpcResponse response = method.response(request);
@@ -86,7 +88,8 @@ public class PrivGetEeaTransactionCountTest {
   public void nonceProviderThrowsAnExceptionProducesErrorResponse() {
     final PrivGetEeaTransactionCount method = new PrivGetEeaTransactionCount(privacyController);
 
-    when(privacyController.determineNonce(privateFrom, privateFor, address))
+    when(privacyController.determineNonce(
+            privateFrom, privateFor, address, enclavePublicKey(requestContext.getUser())))
         .thenThrow(RuntimeException.class);
 
     final JsonRpcResponse response = method.response(request);

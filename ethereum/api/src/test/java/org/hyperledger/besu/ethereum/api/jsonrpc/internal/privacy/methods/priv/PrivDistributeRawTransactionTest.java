@@ -58,10 +58,11 @@ public class PrivDistributeRawTransactionTest {
   @Test
   public void validTransactionHashReturnedAfterDistribute() {
     final String enclavePublicKey = "93Ky7lXwFkMc7+ckoFgUMku5bpr9tz4zhmWmk9RlNng=";
-    when(privacyController.sendTransaction(any(PrivateTransaction.class)))
+    when(privacyController.sendTransaction(
+            any(PrivateTransaction.class), enclavePublicKey(requestContext.getUser())))
         .thenReturn(new SendTransactionResponse(enclavePublicKey, ""));
     when(privacyController.validatePrivateTransaction(
-            any(PrivateTransaction.class), any(String.class)))
+            any(PrivateTransaction.class), any(String.class), enclavePublicKey(request.getUser())))
         .thenReturn(ValidationResult.valid());
 
     final JsonRpcRequestContext request =
@@ -78,8 +79,10 @@ public class PrivDistributeRawTransactionTest {
     final JsonRpcResponse actualResponse = method.response(request);
 
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
-    verify(privacyController).sendTransaction(any(PrivateTransaction.class));
     verify(privacyController)
-        .validatePrivateTransaction(any(PrivateTransaction.class), any(String.class));
+        .sendTransaction(any(PrivateTransaction.class), enclavePublicKey(requestContext.getUser()));
+    verify(privacyController)
+        .validatePrivateTransaction(
+            any(PrivateTransaction.class), any(String.class), enclavePublicKey(request.getUser()));
   }
 }

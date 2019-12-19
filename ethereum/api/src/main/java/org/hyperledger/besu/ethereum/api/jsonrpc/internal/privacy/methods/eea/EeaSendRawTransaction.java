@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea;
 
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.MultiTenancyUserUtil.enclavePublicKey;
+
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcEnclaveErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
@@ -59,7 +61,9 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
 
     final SendTransactionResponse sendTransactionResponse;
     try {
-      sendTransactionResponse = privacyController.sendTransaction(privateTransaction);
+      sendTransactionResponse =
+          privacyController.sendTransaction(
+              privateTransaction, enclavePublicKey(requestContext.getUser()));
     } catch (final Exception e) {
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(),
