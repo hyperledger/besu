@@ -15,6 +15,7 @@
 package org.hyperledger.besu.enclave.types;
 
 import java.io.Serializable;
+import java.util.List;
 
 public class PrivacyGroup implements Serializable {
 
@@ -22,7 +23,7 @@ public class PrivacyGroup implements Serializable {
   private String name;
   private String description;
   private Type type;
-  private String[] members;
+  private List<String> members;
 
   public String getPrivacyGroupId() {
     return privacyGroupId;
@@ -56,11 +57,11 @@ public class PrivacyGroup implements Serializable {
     this.type = type;
   }
 
-  public String[] getMembers() {
+  public List<String> getMembers() {
     return members;
   }
 
-  public void setMembers(final String[] members) {
+  public void setMembers(final List<String> members) {
     this.members = members;
   }
 
@@ -71,7 +72,7 @@ public class PrivacyGroup implements Serializable {
       final Type type,
       final String name,
       final String description,
-      final String[] members) {
+      final List<String> members) {
     this.privacyGroupId = privacyGroupId;
     this.type = type;
     this.name = name;
