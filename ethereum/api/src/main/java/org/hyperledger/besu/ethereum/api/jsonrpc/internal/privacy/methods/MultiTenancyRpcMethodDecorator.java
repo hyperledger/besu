@@ -45,10 +45,10 @@ public class MultiTenancyRpcMethodDecorator implements JsonRpcMethod {
     final Optional<User> user = requestContext.getUser();
     final Object id = requestContext.getRequest().getId();
     if (user.isEmpty()) {
-      LOG.error("Request does not contain a JWT");
+      LOG.error("Request does not contain an authorization token");
       return new JsonRpcUnauthorizedResponse(id, JsonRpcError.UNAUTHORIZED);
     } else if (MultiTenancyUserUtil.enclavePublicKey(user).isEmpty()) {
-      LOG.error("JWT token does not contain a enclave public key claim");
+      LOG.error("Request token does not contain an enclave public key");
       return new JsonRpcUnauthorizedResponse(id, JsonRpcError.UNAUTHORIZED);
     } else {
       return rpcMethod.response(requestContext);
