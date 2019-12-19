@@ -51,7 +51,6 @@ public class TraceJsonRpcMethods extends ApiGroupJsonRpcMethods {
                     protocolSchedule,
                     blockchainQueries.getBlockchain(),
                     blockchainQueries.getWorldStateArchive())),
-            blockchainQueries,
-            protocolSchedule));
+            blockchainQueries));
   }
 }
