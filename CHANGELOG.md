@@ -4,7 +4,7 @@
 
 ### Additions and Improvements 
 
-- `admin_generateLogBloomCache` JSON-RPC API to generate logs index that improves performance for log queries [\#262](https://github.com/hyperledger/besu/pull/262)
+- `admin_generateLogBloomCache` JSON-RPC API to generate a cache of the block bloombits that improves performance for log queries [\#262](https://github.com/hyperledger/besu/pull/262)
 
 ## Critical Fix in 1.3.7 
 
@@ -26,7 +26,7 @@ For compatibility with ETC Agharta upgrade, use 1.3.7 or later.
 ### Additions and Improvements
 
 - Hard Fork Support: Configures the Agharta activation block for the ETC MainNet configuration [\#251](https://github.com/hyperledger/besu/pull/251) (thanks to [soc1c](https://github.com/soc1c))
-- `operator generate-log-bloom-cache` command line option to generate logs index that improves performance for log queries  [\#245](https://github.com/hyperledger/besu/pull/245)
+- `operator generate-log-bloom-cache` command line option to generate a cache of the block bloombits that improves performance for log queries  [\#245](https://github.com/hyperledger/besu/pull/245)
 
 ### Bug Fixes 
 
