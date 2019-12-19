@@ -18,7 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveFactory;
-import org.hyperledger.besu.enclave.types.ReceiveRequest;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyAcceptanceTestBase;
@@ -161,16 +160,14 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
     final Enclave aliceEnclave = enclaveFactory.createVertxEnclave(alice.getOrion().clientUrl());
     final ReceiveResponse aliceRR =
         aliceEnclave.receive(
-            new ReceiveRequest(
-                BytesValues.asBase64String(BytesValue.fromHexString(transactionKey)),
-                alice.getEnclaveKey()));
+            BytesValues.asBase64String(BytesValue.fromHexString(transactionKey)),
+            alice.getEnclaveKey());
 
     final Enclave bobEnclave = enclaveFactory.createVertxEnclave(bob.getOrion().clientUrl());
     final ReceiveResponse bobRR =
         bobEnclave.receive(
-            new ReceiveRequest(
-                BytesValues.asBase64String(BytesValue.fromHexString(transactionKey)),
-                bob.getEnclaveKey()));
+            BytesValues.asBase64String(BytesValue.fromHexString(transactionKey)),
+            bob.getEnclaveKey());
 
     assertThat(bobRR).isEqualToComparingFieldByField(aliceRR);
 

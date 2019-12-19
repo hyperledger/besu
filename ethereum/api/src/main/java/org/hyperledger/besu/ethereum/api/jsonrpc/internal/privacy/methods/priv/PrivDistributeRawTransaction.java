@@ -17,23 +17,25 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcEnclaveErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacySendTransaction;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacySendTransaction.ErrorResponseException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransactionHandler;
+import org.hyperledger.besu.ethereum.privacy.SendTransactionResponse;
 import org.hyperledger.besu.util.bytes.BytesValues;
 
-public class PrivDistributeRawTransaction extends PrivacySendTransaction {
+public class PrivDistributeRawTransaction implements JsonRpcMethod {
 
-  public PrivDistributeRawTransaction(
-      final PrivacyParameters privacyParameters,
-      final PrivateTransactionHandler privateTransactionHandler,
-      final TransactionPool transactionPool) {
-    super(privacyParameters, privateTransactionHandler, transactionPool);
+  private final PrivacyController privacyController;
+  private final PrivacySendTransaction privacySendTransaction;
+
+  public PrivDistributeRawTransaction(final PrivacyController privacyController) {
+    this.privacyController = privacyController;
+    this.privacySendTransaction = new PrivacySendTransaction(privacyController);
   }
 
   @Override
@@ -42,39 +44,30 @@ public class PrivDistributeRawTransaction extends PrivacySendTransaction {
   }
 
   @Override
-  public JsonRpcResponse doResponse(final JsonRpcRequestContext requestContext) {
-    PrivateTransaction privateTransaction;
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
+    final PrivateTransaction privateTransaction;
     try {
-      privateTransaction = validateAndDecodeRequest(requestContext);
+      privateTransaction = privacySendTransaction.validateAndDecodeRequest(requestContext);
     } catch (ErrorResponseException e) {
       return e.getResponse();
     }
 
-    final String enclaveKey;
+    final SendTransactionResponse sendTransactionResponse;
     try {
-      enclaveKey = privateTransactionHandler.sendToOrion(privateTransaction);
+      sendTransactionResponse = privacyController.sendTransaction(privateTransaction);
     } catch (final Exception e) {
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(),
           JsonRpcEnclaveErrorConverter.convertEnclaveInvalidReason(e.getMessage()));
     }
 
-    final String privacyGroupId;
-    try {
-      privacyGroupId = privateTransactionHandler.getPrivacyGroup(enclaveKey, privateTransaction);
-    } catch (final Exception e) {
-      return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(),
-          JsonRpcEnclaveErrorConverter.convertEnclaveInvalidReason(e.getMessage()));
-    }
-
-    return validateAndExecute(
+    return privacySendTransaction.validateAndExecute(
         requestContext,
         privateTransaction,
-        privacyGroupId,
+        sendTransactionResponse.getPrivacyGroupId(),
         () ->
             new JsonRpcSuccessResponse(
                 requestContext.getRequest().getId(),
-                BytesValues.fromBase64(enclaveKey).toString()));
+                BytesValues.fromBase64(sendTransactionResponse.getEnclaveKey()).toString()));
   }
 }

@@ -34,7 +34,9 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldState;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.ArrayList;
@@ -49,10 +51,12 @@ import org.junit.Test;
 
 public class BlockchainQueriesTest {
   private BlockDataGenerator gen;
+  private EthScheduler scheduler;
 
   @Before
   public void setup() {
     gen = new BlockDataGenerator();
+    scheduler = new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem());
   }
 
   @Test
@@ -548,7 +552,7 @@ public class BlockchainQueriesTest {
         .subList(1, blockData.size())
         .forEach(b -> blockchain.appendBlock(b.block, b.receipts));
 
-    return new BlockchainWithData(blockchain, blockData, worldStateArchive);
+    return new BlockchainWithData(blockchain, blockData, worldStateArchive, scheduler);
   }
 
   private static class BlockchainWithData {
@@ -556,15 +560,18 @@ public class BlockchainQueriesTest {
     final List<BlockData> blockData;
     final WorldStateArchive worldStateArchive;
     final BlockchainQueries blockchainQueries;
+    final EthScheduler scheduler;
 
     private BlockchainWithData(
         final MutableBlockchain blockchain,
         final List<BlockData> blockData,
-        final WorldStateArchive worldStateArchive) {
+        final WorldStateArchive worldStateArchive,
+        final EthScheduler scheduler) {
       this.blockchain = blockchain;
       this.blockData = blockData;
       this.worldStateArchive = worldStateArchive;
-      this.blockchainQueries = new BlockchainQueries(blockchain, worldStateArchive);
+      this.scheduler = scheduler;
+      this.blockchainQueries = new BlockchainQueries(blockchain, worldStateArchive, scheduler);
     }
   }
 

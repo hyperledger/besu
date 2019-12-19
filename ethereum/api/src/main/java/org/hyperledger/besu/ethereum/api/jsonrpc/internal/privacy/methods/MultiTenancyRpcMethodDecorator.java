@@ -12,48 +12,46 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
+package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.privacy.PrivacyController;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcUnauthorizedResponse;
 
+import java.util.Optional;
+
+import io.vertx.ext.auth.User;
 import org.apache.logging.log4j.Logger;
 
-public class PrivDeletePrivacyGroup implements JsonRpcMethod {
-
+public class MultiTenancyRpcMethodDecorator implements JsonRpcMethod {
   private static final Logger LOG = getLogger();
-  private PrivacyController privacyController;
+  private JsonRpcMethod rpcMethod;
 
-  public PrivDeletePrivacyGroup(final PrivacyController privacyController) {
-    this.privacyController = privacyController;
+  public MultiTenancyRpcMethodDecorator(final JsonRpcMethod rpcMethod) {
+    this.rpcMethod = rpcMethod;
   }
 
   @Override
   public String getName() {
-    return RpcMethod.PRIV_DELETE_PRIVACY_GROUP.getMethodName();
+    return rpcMethod.getName();
   }
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    LOG.trace("Executing {}", RpcMethod.PRIV_DELETE_PRIVACY_GROUP.getMethodName());
-
-    final String privacyGroupId = requestContext.getRequiredParameter(0, String.class);
-
-    final String response;
-    try {
-      response = privacyController.deletePrivacyGroup(privacyGroupId);
-    } catch (Exception e) {
-      LOG.error("Failed to fetch transaction", e);
-      return new JsonRpcSuccessResponse(
-          requestContext.getRequest().getId(), JsonRpcError.DELETE_PRIVACY_GROUP_ERROR);
+    final Optional<User> user = requestContext.getUser();
+    final Object id = requestContext.getRequest().getId();
+    if (user.isEmpty()) {
+      LOG.error("Request does not contain an authorization token");
+      return new JsonRpcUnauthorizedResponse(id, JsonRpcError.UNAUTHORIZED);
+    } else if (MultiTenancyUserUtil.enclavePublicKey(user).isEmpty()) {
+      LOG.error("Request token does not contain an enclave public key");
+      return new JsonRpcUnauthorizedResponse(id, JsonRpcError.UNAUTHORIZED);
+    } else {
+      return rpcMethod.response(requestContext);
     }
-    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), response);
   }
 }

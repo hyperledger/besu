@@ -18,26 +18,25 @@ import static org.apache.logging.log4j.LogManager.getLogger;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 import org.apache.logging.log4j.Logger;
 
-public class PrivGetEeaTransactionCount extends PrivacyApiMethod {
+public class PrivGetEeaTransactionCount implements JsonRpcMethod {
 
   private static final Logger LOG = getLogger();
 
-  private final PrivateEeaNonceProvider nonceProvider;
+  private PrivacyController privacyController;
 
-  public PrivGetEeaTransactionCount(
-      final PrivacyParameters privacyParameters, final PrivateEeaNonceProvider nonceProvider) {
-    super(privacyParameters);
-    this.nonceProvider = nonceProvider;
+  public PrivGetEeaTransactionCount(final PrivacyController privacyController) {
+    this.privacyController = privacyController;
   }
 
   @Override
@@ -46,7 +45,7 @@ public class PrivGetEeaTransactionCount extends PrivacyApiMethod {
   }
 
   @Override
-  public JsonRpcResponse doResponse(final JsonRpcRequestContext requestContext) {
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     if (requestContext.getRequest().getParamLength() != 3) {
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
@@ -57,7 +56,7 @@ public class PrivGetEeaTransactionCount extends PrivacyApiMethod {
     final String[] privateFor = requestContext.getRequiredParameter(2, String[].class);
 
     try {
-      final long nonce = nonceProvider.determineNonce(privateFrom, privateFor, address);
+      final long nonce = privacyController.determineNonce(privateFrom, privateFor, address);
       return new JsonRpcSuccessResponse(
           requestContext.getRequest().getId(), Quantity.create(nonce));
     } catch (final Exception e) {
