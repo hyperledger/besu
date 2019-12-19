@@ -7,26 +7,25 @@
  */
 package org.hyperledger.besu.ethereum.api.tls;
 
-import java.util.List;
+import java.util.Optional;
 
 public class TlsConfiguration {
-  private Boolean tlsEnabled = false;
+  private final TlsStoreConfiguration keyStore;
 
-  // server certificate/key configuration
-  private TlsStoreConfiguration serverKeyStore;
+  // trust store to verify identify of clients
+  private final Optional<TlsStoreConfiguration> trustStore;
 
-  // optional - trust store for server to verify identify of clients
-  private TlsStoreConfiguration clientTrustKeyStore;
+  public TlsConfiguration(
+      final TlsStoreConfiguration keyStore, final Optional<TlsStoreConfiguration> trustStore) {
+    this.keyStore = keyStore;
+    this.trustStore = trustStore;
+  }
 
-  // optional
-  private List<String> cipherSuite;
+  public TlsStoreConfiguration getKeyStore() {
+    return keyStore;
+  }
 
-  // optional - TLS protocols to remove from enabled list
-  private List<String> removeEnabledTlsProtocol;
-
-  // optional - default TLS versions already enabled in VertX - SSLv2Hello, TLSv1, TLSv1.1 and
-  // TLSv1.2
-  private List<String> addEnabledTlsProtocol;
-
-  private boolean useOpenSSLEngine = false; // Use OpenSSL engine instead of JDK implementation
+  public Optional<TlsStoreConfiguration> getTrustStore() {
+    return trustStore;
+  }
 }

@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc;
 
+import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,6 +23,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import com.google.common.base.MoreObjects;
 
@@ -37,6 +40,7 @@ public class JsonRpcConfiguration {
   private boolean authenticationEnabled = false;
   private String authenticationCredentialsFile;
   private File authenticationPublicKeyFile;
+  private Optional<TlsConfiguration> tlsConfiguration = Optional.empty();
 
   public static JsonRpcConfiguration createDefault() {
     final JsonRpcConfiguration config = new JsonRpcConfiguration();
@@ -126,6 +130,14 @@ public class JsonRpcConfiguration {
 
   public void setAuthenticationPublicKeyFile(final File authenticationPublicKeyFile) {
     this.authenticationPublicKeyFile = authenticationPublicKeyFile;
+  }
+
+  public Optional<TlsConfiguration> getTlsConfiguration() {
+    return tlsConfiguration;
+  }
+
+  public void setTlsConfiguration(final TlsConfiguration tlsConfiguration) {
+    this.tlsConfiguration = Optional.of(tlsConfiguration);
   }
 
   @Override
