@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.8 
+
+### Additions and Improvements 
+
+- `admin_generateLogBloomCache` JSON-RPC API to generate logs index that improves performance for log queries [\#262](https://github.com/hyperledger/besu/pull/262)
+
 ## Critical Fix in 1.3.7 
 
 1.3.7 includes a critical fix for Ethereum MainNet users and the Muir Glacier upgrade. We recommend users of Ethereum public networks 
@@ -20,6 +26,7 @@ For compatibility with ETC Agharta upgrade, use 1.3.7 or later.
 ### Additions and Improvements
 
 - Hard Fork Support: Configures the Agharta activation block for the ETC MainNet configuration [\#251](https://github.com/hyperledger/besu/pull/251) (thanks to [soc1c](https://github.com/soc1c))
+- `operator generate-log-bloom-cache` command line option to generate logs index that improves performance for log queries  [\#245](https://github.com/hyperledger/besu/pull/245)
 
 ### Bug Fixes 
 
