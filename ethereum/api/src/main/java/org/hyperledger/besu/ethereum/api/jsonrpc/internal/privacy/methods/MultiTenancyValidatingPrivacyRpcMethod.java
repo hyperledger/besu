@@ -45,7 +45,7 @@ public class MultiTenancyValidatingPrivacyRpcMethod implements JsonRpcMethod {
     final Object id = requestContext.getRequest().getId();
     if (user.isEmpty()) {
       return new JsonRpcErrorResponse(id, PRIVACY_MULTI_TENANCY_NO_TOKEN);
-    } else if (MultiTenancyUtil.enclavePublicKey(user).isEmpty()) {
+    } else if (MultiTenancyUserUtil.enclavePublicKey(user).isEmpty()) {
       return new JsonRpcErrorResponse(id, PRIVACY_MULTI_TENANCY_NO_ENCLAVE_PUBLIC_KEY);
     } else {
       return rpcMethod.response(requestContext);

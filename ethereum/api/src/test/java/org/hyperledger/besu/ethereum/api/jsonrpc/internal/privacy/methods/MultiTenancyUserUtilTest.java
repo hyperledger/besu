@@ -8,11 +8,11 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.jwt.impl.JWTUser;
 import org.junit.Test;
 
-public class MultiTenancyUtilTest {
+public class MultiTenancyUserUtilTest {
 
   @Test
   public void noEnclavePublicKeyWhenNoUserProvided() {
-    assertThat(MultiTenancyUtil.enclavePublicKey(Optional.empty())).isEmpty();
+    assertThat(MultiTenancyUserUtil.enclavePublicKey(Optional.empty())).isEmpty();
   }
 
   @Test
@@ -20,7 +20,7 @@ public class MultiTenancyUtilTest {
     final JsonObject token = new JsonObject();
     final JWTUser user = new JWTUser(token, "");
 
-    assertThat(MultiTenancyUtil.enclavePublicKey(Optional.of(user)).isEmpty());
+    assertThat(MultiTenancyUserUtil.enclavePublicKey(Optional.of(user)).isEmpty());
   }
 
   @Test
@@ -29,6 +29,6 @@ public class MultiTenancyUtilTest {
     principle.put("privacyPublicKey", "ABC123");
     final JWTUser user = new JWTUser(principle, "");
 
-    assertThat(MultiTenancyUtil.enclavePublicKey(Optional.of(user))).contains("ABC123");
+    assertThat(MultiTenancyUserUtil.enclavePublicKey(Optional.of(user))).contains("ABC123");
   }
 }

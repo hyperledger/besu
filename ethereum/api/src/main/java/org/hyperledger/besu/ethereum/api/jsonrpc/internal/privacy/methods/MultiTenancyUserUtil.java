@@ -18,7 +18,7 @@ import java.util.Optional;
 
 import io.vertx.ext.auth.User;
 
-public class MultiTenancyUtil {
+public class MultiTenancyUserUtil {
   private static final String PRIVACY_PUBLIC_KEY = "privacyPublicKey";
 
   public static Optional<String> enclavePublicKey(final Optional<User> user) {
