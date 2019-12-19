@@ -29,6 +29,8 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
+import java.util.Optional;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -56,8 +58,7 @@ public class PrivGetEeaTransactionCountTest {
     final long reportedNonce = 8L;
     final PrivGetEeaTransactionCount method = new PrivGetEeaTransactionCount(privacyController);
 
-    when(privacyController.determineNonce(
-            privateFrom, privateFor, address, enclavePublicKey(requestContext.getUser())))
+    when(privacyController.determineNonce(privateFrom, privateFor, address, Optional.empty()))
         .thenReturn(reportedNonce);
 
     final JsonRpcResponse response = method.response(request);
@@ -72,8 +73,7 @@ public class PrivGetEeaTransactionCountTest {
   public void nonceProviderThrowsRuntimeExceptionProducesErrorResponse() {
     final PrivGetEeaTransactionCount method = new PrivGetEeaTransactionCount(privacyController);
 
-    when(privacyController.determineNonce(
-            privateFrom, privateFor, address, enclavePublicKey(requestContext.getUser())))
+    when(privacyController.determineNonce(privateFrom, privateFor, address, Optional.empty()))
         .thenThrow(RuntimeException.class);
 
     final JsonRpcResponse response = method.response(request);
@@ -88,8 +88,7 @@ public class PrivGetEeaTransactionCountTest {
   public void nonceProviderThrowsAnExceptionProducesErrorResponse() {
     final PrivGetEeaTransactionCount method = new PrivGetEeaTransactionCount(privacyController);
 
-    when(privacyController.determineNonce(
-            privateFrom, privateFor, address, enclavePublicKey(requestContext.getUser())))
+    when(privacyController.determineNonce(privateFrom, privateFor, address, Optional.empty()))
         .thenThrow(RuntimeException.class);
 
     final JsonRpcResponse response = method.response(request);

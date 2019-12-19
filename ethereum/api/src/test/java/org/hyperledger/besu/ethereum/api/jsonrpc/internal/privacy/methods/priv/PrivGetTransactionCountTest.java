@@ -28,6 +28,8 @@ import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.util.bytes.BytesValue;
 import org.hyperledger.besu.util.bytes.BytesValues;
 
+import java.util.Optional;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -46,8 +48,7 @@ public class PrivGetTransactionCountTest {
   @Before
   public void before() {
     when(privacyParameters.isEnabled()).thenReturn(true);
-    when(privacyController.determineNonce(
-            senderAddress, privacyGroupId, enclavePublicKey(requestContext.getUser())))
+    when(privacyController.determineNonce(senderAddress, privacyGroupId, Optional.empty()))
         .thenReturn(NONCE);
   }
 

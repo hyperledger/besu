@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.assertj.core.util.Lists;
 import org.junit.Before;
@@ -61,8 +62,7 @@ public class PrivCreatePrivacyGroupTest {
     final String expected = "a wonderful group";
     final PrivacyGroup privacyGroup =
         new PrivacyGroup(expected, PrivacyGroup.Type.PANTHEON, NAME, DESCRIPTION, ADDRESSES);
-    when(privacyController.createPrivacyGroup(
-            ADDRESSES, NAME, DESCRIPTION, enclavePublicKey(requestContext.getUser())))
+    when(privacyController.createPrivacyGroup(ADDRESSES, NAME, DESCRIPTION, Optional.empty()))
         .thenReturn(privacyGroup);
     when(privacyParameters.getEnclavePublicKey()).thenReturn(FROM);
 
@@ -90,8 +90,7 @@ public class PrivCreatePrivacyGroupTest {
     final String expected = "a wonderful group";
     final PrivacyGroup privacyGroup =
         new PrivacyGroup(expected, PrivacyGroup.Type.PANTHEON, NAME, DESCRIPTION, ADDRESSES);
-    when(privacyController.createPrivacyGroup(
-            ADDRESSES, NAME, null, enclavePublicKey(requestContext.getUser())))
+    when(privacyController.createPrivacyGroup(ADDRESSES, NAME, null, Optional.empty()))
         .thenReturn(privacyGroup);
     when(privacyParameters.getEnclavePublicKey()).thenReturn(FROM);
 
@@ -127,8 +126,7 @@ public class PrivCreatePrivacyGroupTest {
     final String expected = "a wonderful group";
     final PrivacyGroup privacyGroup =
         new PrivacyGroup(expected, PrivacyGroup.Type.PANTHEON, NAME, DESCRIPTION, ADDRESSES);
-    when(privacyController.createPrivacyGroup(
-            ADDRESSES, null, DESCRIPTION, enclavePublicKey(requestContext.getUser())))
+    when(privacyController.createPrivacyGroup(ADDRESSES, null, DESCRIPTION, Optional.empty()))
         .thenReturn(privacyGroup);
     when(privacyParameters.getEnclavePublicKey()).thenReturn(FROM);
 
@@ -164,8 +162,7 @@ public class PrivCreatePrivacyGroupTest {
     final String expected = "a wonderful group";
     final PrivacyGroup privacyGroup =
         new PrivacyGroup(expected, PrivacyGroup.Type.PANTHEON, NAME, DESCRIPTION, ADDRESSES);
-    when(privacyController.createPrivacyGroup(
-            ADDRESSES, null, null, enclavePublicKey(requestContext.getUser())))
+    when(privacyController.createPrivacyGroup(ADDRESSES, null, null, Optional.empty()))
         .thenReturn(privacyGroup);
     when(privacyParameters.getEnclavePublicKey()).thenReturn(FROM);
 
@@ -247,8 +244,7 @@ public class PrivCreatePrivacyGroupTest {
 
   @Test
   public void returnsCorrectErrorEnclaveError() {
-    when(privacyController.createPrivacyGroup(
-            ADDRESSES, NAME, DESCRIPTION, enclavePublicKey(requestContext.getUser())))
+    when(privacyController.createPrivacyGroup(ADDRESSES, NAME, DESCRIPTION, Optional.empty()))
         .thenThrow(new EnclaveException(""));
     final PrivCreatePrivacyGroup privCreatePrivacyGroup =
         new PrivCreatePrivacyGroup(privacyController);
