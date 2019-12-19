@@ -134,11 +134,11 @@ public class EnclaveTest {
 
   @Test
   public void testCreateFindDeleteFindPrivacyGroup() {
-    List<String> publicKeys = testHarness.getPublicKeys();
-    String name = "name";
-    String description = "desc";
+    final List<String> publicKeys = testHarness.getPublicKeys();
+    final String name = "name";
+    final String description = "desc";
 
-    PrivacyGroup privacyGroupResponse =
+    final PrivacyGroup privacyGroupResponse =
         enclave.createPrivacyGroup(publicKeys, publicKeys.get(0), name, description);
 
     assertThat(privacyGroupResponse.getPrivacyGroupId()).isNotNull();
@@ -164,11 +164,11 @@ public class EnclaveTest {
 
   @Test
   public void testCreateDeleteRetrievePrivacyGroup() {
-    List<String> publicKeys = testHarness.getPublicKeys();
-    String name = "name";
-    String description = "desc";
+    final List<String> publicKeys = testHarness.getPublicKeys();
+    final String name = "name";
+    final String description = "desc";
 
-    PrivacyGroup privacyGroupResponse =
+    final PrivacyGroup privacyGroupResponse =
         enclave.createPrivacyGroup(publicKeys, publicKeys.get(0), name, description);
 
     assertThat(privacyGroupResponse.getPrivacyGroupId()).isNotNull();
@@ -176,7 +176,7 @@ public class EnclaveTest {
     assertThat(privacyGroupResponse.getDescription()).isEqualTo(description);
     assertThat(privacyGroupResponse.getType()).isEqualTo(PrivacyGroup.Type.PANTHEON);
 
-    PrivacyGroup retrievePrivacyGroup =
+    final PrivacyGroup retrievePrivacyGroup =
         enclave.retrievePrivacyGroup(privacyGroupResponse.getPrivacyGroupId());
 
     assertThat(retrievePrivacyGroup).isEqualToComparingFieldByField(privacyGroupResponse);
