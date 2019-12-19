@@ -18,6 +18,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
+import static org.apache.logging.log4j.Level.DEBUG;
 import static org.hyperledger.besu.cli.DefaultCommandValues.getDefaultBesuDataPath;
 import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
@@ -961,6 +962,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (logLevel != null) {
       System.out.println("Setting logging level to " + logLevel.name());
       Configurator.setAllLevels("", logLevel);
+      // if we are less than DEBUG and an exception pattern is not defined
+      // set the exception pattern to print out full stack traces
+      if (logLevel.isLessSpecificThan(DEBUG)
+          && System.getProperty("besu.log4j.exceptionPattern") == null) {
+        System.setProperty("besu.log4j.exceptionPattern", "%ex{full}");
+        ((org.apache.logging.log4j.core.LoggerContext) LogManager.getContext(false)).reconfigure();
+      }
     }
   }
 
