@@ -128,11 +128,11 @@ public class Enclave {
   }
 
   public PrivacyGroup retrievePrivacyGroup(final String privacyGroupId) {
-    final RetrievePrivacyGroupRequest retrievePrivacyGroupRequest =
+    final RetrievePrivacyGroupRequest request =
         new RetrievePrivacyGroupRequest(privacyGroupId);
     return post(
         JSON,
-        retrievePrivacyGroupRequest,
+        request,
         "/retrievePrivacyGroup",
         (statusCode, body) -> handleJsonResponse(statusCode, body, PrivacyGroup.class));
   }
