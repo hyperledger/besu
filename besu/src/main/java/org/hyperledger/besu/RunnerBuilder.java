@@ -366,7 +366,11 @@ public class RunnerBuilder {
     final MiningCoordinator miningCoordinator = besuController.getMiningCoordinator();
 
     final BlockchainQueries blockchainQueries =
-        new BlockchainQueries(context, Optional.of(dataDir.resolve(CACHE_PATH)));
+        new BlockchainQueries(
+            context.getBlockchain(),
+            context.getWorldStateArchive(),
+            Optional.of(dataDir.resolve(CACHE_PATH)),
+            Optional.of(besuController.getProtocolManager().ethContext().getScheduler()));
 
     final PrivacyParameters privacyParameters = besuController.getPrivacyParameters();
     final FilterManager filterManager =

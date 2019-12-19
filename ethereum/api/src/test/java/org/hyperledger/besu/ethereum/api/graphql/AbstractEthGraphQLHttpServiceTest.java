@@ -151,7 +151,8 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
     final MutableBlockchain blockchain =
         InMemoryStorageProvider.createInMemoryBlockchain(GENESIS_BLOCK);
     context = new ProtocolContext<>(blockchain, stateArchive, null);
-    final BlockchainQueries blockchainQueries = new BlockchainQueries(context, Optional.empty());
+    final BlockchainQueries blockchainQueries =
+        new BlockchainQueries(context.getBlockchain(), context.getWorldStateArchive());
 
     final Set<Capability> supportedCapabilities = new HashSet<>();
     supportedCapabilities.add(EthProtocol.ETH62);

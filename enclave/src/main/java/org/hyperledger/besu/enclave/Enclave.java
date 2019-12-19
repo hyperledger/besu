@@ -22,11 +22,14 @@ import org.hyperledger.besu.enclave.types.FindPrivacyGroupRequest;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.enclave.types.ReceiveRequest;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
-import org.hyperledger.besu.enclave.types.SendRequest;
+import org.hyperledger.besu.enclave.types.RetrievePrivacyGroupRequest;
+import org.hyperledger.besu.enclave.types.SendRequestBesu;
+import org.hyperledger.besu.enclave.types.SendRequestLegacy;
 import org.hyperledger.besu.enclave.types.SendResponse;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -54,44 +57,83 @@ public class Enclave {
     }
   }
 
-  public SendResponse send(final SendRequest content) {
+  public SendResponse send(
+      final String payload, final String privateFrom, final List<String> privateFor) {
+    final SendRequestLegacy request = new SendRequestLegacy(payload, privateFrom, privateFor);
     return post(
         JSON,
-        content,
+        request,
         "/send",
         (statusCode, body) -> handleJsonResponse(statusCode, body, SendResponse.class));
   }
 
-  public ReceiveResponse receive(final ReceiveRequest content) {
+  public SendResponse send(
+      final String payload, final String privateFrom, final String privacyGroupId) {
+    final SendRequestBesu request = new SendRequestBesu(payload, privateFrom, privacyGroupId);
+    return post(
+        JSON,
+        request,
+        "/send",
+        (statusCode, body) -> handleJsonResponse(statusCode, body, SendResponse.class));
+  }
+
+  public ReceiveResponse receive(final String enclaveKey) {
+    final ReceiveRequest request = new ReceiveRequest(enclaveKey);
     return post(
         ORION,
-        content,
+        request,
         "/receive",
         (statusCode, body) -> handleJsonResponse(statusCode, body, ReceiveResponse.class));
   }
 
-  public PrivacyGroup createPrivacyGroup(final CreatePrivacyGroupRequest content) {
+  public ReceiveResponse receive(final String enclaveKey, final String to) {
+    final ReceiveRequest request = new ReceiveRequest(enclaveKey, to);
+    return post(
+        ORION,
+        request,
+        "/receive",
+        (statusCode, body) -> handleJsonResponse(statusCode, body, ReceiveResponse.class));
+  }
+
+  public PrivacyGroup createPrivacyGroup(
+      final List<String> addresses,
+      final String from,
+      final String name,
+      final String description) {
+    final CreatePrivacyGroupRequest request =
+        new CreatePrivacyGroupRequest(addresses, from, name, description);
     return post(
         JSON,
-        content,
+        request,
         "/createPrivacyGroup",
         (statusCode, body) -> handleJsonResponse(statusCode, body, PrivacyGroup.class));
   }
 
-  public String deletePrivacyGroup(final DeletePrivacyGroupRequest content) {
+  public String deletePrivacyGroup(final String privacyGroupId, final String from) {
+    final DeletePrivacyGroupRequest request = new DeletePrivacyGroupRequest(privacyGroupId, from);
     return post(
         JSON,
-        content,
+        request,
         "/deletePrivacyGroup",
         (statusCode, body) -> handleJsonResponse(statusCode, body, String.class));
   }
 
-  public PrivacyGroup[] findPrivacyGroup(final FindPrivacyGroupRequest content) {
+  public PrivacyGroup[] findPrivacyGroup(final List<String> addresses) {
+    final FindPrivacyGroupRequest request = new FindPrivacyGroupRequest(addresses);
     return post(
         JSON,
-        content,
+        request,
         "/findPrivacyGroup",
         (statusCode, body) -> handleJsonResponse(statusCode, body, PrivacyGroup[].class));
+  }
+
+  public PrivacyGroup retrievePrivacyGroup(final String privacyGroupId) {
+    final RetrievePrivacyGroupRequest request = new RetrievePrivacyGroupRequest(privacyGroupId);
+    return post(
+        JSON,
+        request,
+        "/retrievePrivacyGroup",
+        (statusCode, body) -> handleJsonResponse(statusCode, body, PrivacyGroup.class));
   }
 
   private <T> T post(

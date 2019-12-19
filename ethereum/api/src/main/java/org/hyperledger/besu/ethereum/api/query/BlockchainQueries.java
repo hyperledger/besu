@@ -15,8 +15,8 @@
 package org.hyperledger.besu.ethereum.api.query;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static org.hyperledger.besu.ethereum.api.query.TransactionLogsIndexer.BLOCKS_PER_BLOOM_CACHE;
 
-import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.TransactionLocation;
 import org.hyperledger.besu.ethereum.core.Account;
@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldState;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.util.bytes.BytesValue;
 import org.hyperledger.besu.util.uint.UInt256;
@@ -51,33 +52,40 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class BlockchainQueries {
   private static final Logger LOG = LogManager.getLogger();
-  @VisibleForTesting static final long BLOCKS_PER_BLOOM_CACHE = 100_000;
 
   private final WorldStateArchive worldStateArchive;
   private final Blockchain blockchain;
   private final Optional<Path> cachePath;
+  private final Optional<TransactionLogsIndexer> transactionLogsIndexer;
 
   public BlockchainQueries(final Blockchain blockchain, final WorldStateArchive worldStateArchive) {
-    this(blockchain, worldStateArchive, Optional.empty());
+    this(blockchain, worldStateArchive, Optional.empty(), Optional.empty());
   }
 
-  public BlockchainQueries(final ProtocolContext<?> context, final Optional<Path> cachePath) {
-    this(context.getBlockchain(), context.getWorldStateArchive(), cachePath);
-  }
-
-  private BlockchainQueries(
+  public BlockchainQueries(
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
-      final Optional<Path> cachePath) {
+      final EthScheduler scheduler) {
+    this(blockchain, worldStateArchive, Optional.empty(), Optional.ofNullable(scheduler));
+  }
+
+  public BlockchainQueries(
+      final Blockchain blockchain,
+      final WorldStateArchive worldStateArchive,
+      final Optional<Path> cachePath,
+      final Optional<EthScheduler> scheduler) {
     this.blockchain = blockchain;
     this.worldStateArchive = worldStateArchive;
     this.cachePath = cachePath;
+    this.transactionLogsIndexer =
+        (cachePath.isPresent() && scheduler.isPresent())
+            ? Optional.of(new TransactionLogsIndexer(blockchain, cachePath.get(), scheduler.get()))
+            : Optional.empty();
   }
 
   public Blockchain getBlockchain() {
@@ -86,6 +94,10 @@ public class BlockchainQueries {
 
   public WorldStateArchive getWorldStateArchive() {
     return worldStateArchive;
+  }
+
+  public Optional<TransactionLogsIndexer> getTransactionLogsIndexer() {
+    return transactionLogsIndexer;
   }
 
   /**
