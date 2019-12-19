@@ -15,6 +15,8 @@
 
 package org.hyperledger.besu.ethereum.api.tls;
 
+import java.util.Objects;
+
 /** Points to PKCS#12 format keystore which contains key/certificate */
 public class TlsStoreConfiguration {
   private final String storePath;
@@ -31,5 +33,19 @@ public class TlsStoreConfiguration {
 
   public String getStorePassword() {
     return storePassword;
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    final TlsStoreConfiguration that = (TlsStoreConfiguration) o;
+    return storePath.equals(that.storePath) &&
+            storePassword.equals(that.storePassword);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(storePath, storePassword);
   }
 }

@@ -15,6 +15,7 @@
 
 package org.hyperledger.besu.ethereum.api.tls;
 
+import java.util.Objects;
 import java.util.Optional;
 
 public class TlsConfiguration {
@@ -35,5 +36,19 @@ public class TlsConfiguration {
 
   public Optional<TlsStoreConfiguration> getTrustStore() {
     return trustStore;
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    final TlsConfiguration that = (TlsConfiguration) o;
+    return keyStore.equals(that.keyStore) &&
+            trustStore.equals(that.trustStore);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(keyStore, trustStore);
   }
 }
