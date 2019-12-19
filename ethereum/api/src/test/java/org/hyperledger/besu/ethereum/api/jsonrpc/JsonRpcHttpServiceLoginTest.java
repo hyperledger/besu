@@ -14,7 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.util.Lists.list;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
@@ -28,6 +31,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.NetVersion;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Web3ClientVersion;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Web3Sha3;
+import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
@@ -41,16 +45,14 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.math.BigInteger;
 import java.nio.file.Paths;
-import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -59,19 +61,13 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import com.google.common.base.Splitter;
 import io.vertx.core.Vertx;
-import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.Json;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.auth.KeyStoreOptions;
-import io.vertx.ext.auth.PubSecKeyOptions;
-import io.vertx.ext.auth.SecretOptions;
 import io.vertx.ext.auth.User;
 import io.vertx.ext.auth.jwt.JWTAuth;
-import io.vertx.ext.auth.jwt.JWTAuthOptions;
-import io.vertx.ext.auth.jwt.impl.JWTAuthProviderImpl;
-import io.vertx.ext.jwt.JWK;
-import io.vertx.ext.jwt.JWT;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -271,63 +267,6 @@ public class JsonRpcHttpServiceLoginTest {
     }
   }
 
-  private JWT makeJwt(final JWTAuthOptions config)
-      throws KeyStoreException, CertificateException, NoSuchAlgorithmException, IOException {
-    final KeyStoreOptions keyStoreOptions = config.getKeyStore();
-    if (keyStoreOptions != null) {
-      final KeyStore ks = KeyStore.getInstance(keyStoreOptions.getType());
-
-      // synchronize on the class to avoid the case where multiple file accesses will overlap
-      synchronized (JWTAuthProviderImpl.class) {
-        final Buffer keystore = vertx.fileSystem().readFileBlocking(keyStoreOptions.getPath());
-
-        try (final InputStream in = new ByteArrayInputStream(keystore.getBytes())) {
-          ks.load(in, keyStoreOptions.getPassword().toCharArray());
-        }
-      }
-
-      return new JWT(ks, keyStoreOptions.getPassword().toCharArray());
-    } else {
-      // no key file attempt to load pem keys
-      final JWT jwt = new JWT();
-
-      final List<PubSecKeyOptions> keys = config.getPubSecKeys();
-
-      if (keys != null) {
-        for (final PubSecKeyOptions pubSecKey : config.getPubSecKeys()) {
-          if (pubSecKey.isSymmetric()) {
-            jwt.addJWK(new JWK(pubSecKey.getAlgorithm(), pubSecKey.getPublicKey()));
-          } else {
-            jwt.addJWK(
-                new JWK(
-                    pubSecKey.getAlgorithm(),
-                    pubSecKey.isCertificate(),
-                    pubSecKey.getPublicKey(),
-                    pubSecKey.getSecretKey()));
-          }
-        }
-      }
-
-      // TODO: remove once the deprecation ends!
-      final List<SecretOptions> secrets = config.getSecrets();
-
-      if (secrets != null) {
-        for (final SecretOptions secret : secrets) {
-          jwt.addSecret(secret.getType(), secret.getSecret());
-        }
-      }
-
-      final List<JsonObject> jwks = config.getJwks();
-
-      if (jwks != null) {
-        for (final JsonObject jwk : jwks) {
-          jwt.addJWK(new JWK(jwk));
-        }
-      }
-      return jwt;
-    }
-  }
-
   @Test
   public void loginDoesntPopulateJWTPayloadWithPassword()
       throws IOException, KeyStoreException, CertificateException, NoSuchAlgorithmException {
@@ -347,12 +286,45 @@ public class JsonRpcHttpServiceLoginTest {
       final JsonObject respBody = new JsonObject(bodyString);
       final String token = respBody.getString("token");
       assertThat(token).isNotNull();
-      final JWT jwt = makeJwt(service.authenticationService.get().jwtAuthOptions);
 
-      final JsonObject jwtPayload = jwt.decode(token);
+      final JsonObject jwtPayload = decodeJwtPayload(token);
       final String jwtPayloadString = jwtPayload.encode();
       assertThat(jwtPayloadString.contains("password")).isFalse();
       assertThat(jwtPayloadString.contains("pegasys")).isFalse();
+    }
+  }
+
+  @Test
+  public void loginPopulatesJWTPayloadWithRequiredValues()
+      throws IOException, KeyStoreException, CertificateException, NoSuchAlgorithmException {
+    final RequestBody body =
+        RequestBody.create(JSON, "{\"username\":\"user\",\"password\":\"pegasys\"}");
+    final Request request = new Request.Builder().post(body).url(baseUrl + "/login").build();
+    try (final Response resp = client.newCall(request).execute()) {
+      assertThat(resp.code()).isEqualTo(200);
+      assertThat(resp.message()).isEqualTo("OK");
+      assertThat(resp.body().contentType()).isNotNull();
+      assertThat(resp.body().contentType().type()).isEqualTo("application");
+      assertThat(resp.body().contentType().subtype()).isEqualTo("json");
+      final String bodyString = resp.body().string();
+      assertThat(bodyString).isNotNull();
+      assertThat(bodyString).isNotBlank();
+
+      final JsonObject respBody = new JsonObject(bodyString);
+      final String token = respBody.getString("token");
+      assertThat(token).isNotNull();
+
+      final JsonObject jwtPayload = decodeJwtPayload(token);
+      assertThat(jwtPayload.getString("username")).isEqualTo("user");
+      assertThat(jwtPayload.getJsonArray("permissions"))
+          .isEqualTo(
+              new JsonArray(list("fakePermission", "eth:blockNumber", "eth:subscribe", "web3:*")));
+      assertThat(jwtPayload.getString("privacyPublicKey"))
+          .isEqualTo("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=");
+      assertThat(jwtPayload.containsKey("iat")).isTrue();
+      assertThat(jwtPayload.containsKey("exp")).isTrue();
+      final long tokenExpiry = jwtPayload.getLong("exp") - jwtPayload.getLong("iat");
+      assertThat(tokenExpiry).isEqualTo(MINUTES.toSeconds(5));
     }
   }
 
@@ -532,5 +504,11 @@ public class JsonRpcHttpServiceLoginTest {
     final Request.Builder request = new Request.Builder().post(body).url(baseUrl);
     token.ifPresent(t -> request.addHeader("Authorization", "Bearer " + t));
     return request.build();
+  }
+
+  private JsonObject decodeJwtPayload(final String token) {
+    final List<String> tokenParts = Splitter.on('.').splitToList(token);
+    final String payload = tokenParts.get(1);
+    return new JsonObject(new String(Base64.getUrlDecoder().decode(payload), UTF_8));
   }
 }

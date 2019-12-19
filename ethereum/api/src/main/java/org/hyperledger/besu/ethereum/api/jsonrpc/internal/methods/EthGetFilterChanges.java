@@ -15,9 +15,8 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -32,11 +31,9 @@ import java.util.stream.Collectors;
 public class EthGetFilterChanges implements JsonRpcMethod {
 
   private final FilterManager filterManager;
-  private final JsonRpcParameter parameters;
 
-  public EthGetFilterChanges(final FilterManager filterManager, final JsonRpcParameter parameters) {
+  public EthGetFilterChanges(final FilterManager filterManager) {
     this.filterManager = filterManager;
-    this.parameters = parameters;
   }
 
   @Override
@@ -45,29 +42,30 @@ public class EthGetFilterChanges implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest request) {
-    final String filterId = parameters.required(request.getParams(), 0, String.class);
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
+    final String filterId = requestContext.getRequiredParameter(0, String.class);
 
     final List<Hash> blockHashes = filterManager.blockChanges(filterId);
     if (blockHashes != null) {
       return new JsonRpcSuccessResponse(
-          request.getId(),
+          requestContext.getRequest().getId(),
           blockHashes.stream().map(h -> h.toString()).collect(Collectors.toList()));
     }
 
     final List<Hash> transactionHashes = filterManager.pendingTransactionChanges(filterId);
     if (transactionHashes != null) {
       return new JsonRpcSuccessResponse(
-          request.getId(),
+          requestContext.getRequest().getId(),
           transactionHashes.stream().map(h -> h.toString()).collect(Collectors.toList()));
     }
 
     final List<LogWithMetadata> logs = filterManager.logsChanges(filterId);
     if (logs != null) {
-      return new JsonRpcSuccessResponse(request.getId(), new LogsResult(logs));
+      return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), new LogsResult(logs));
     }
 
     // Filter was not found.
-    return new JsonRpcErrorResponse(request.getId(), JsonRpcError.FILTER_NOT_FOUND);
+    return new JsonRpcErrorResponse(
+        requestContext.getRequest().getId(), JsonRpcError.FILTER_NOT_FOUND);
   }
 }

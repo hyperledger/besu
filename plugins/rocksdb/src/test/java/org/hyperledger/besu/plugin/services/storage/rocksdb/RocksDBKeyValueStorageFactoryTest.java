@@ -60,7 +60,8 @@ public class RocksDBKeyValueStorageFactoryTest {
     when(commonConfiguration.getDataPath()).thenReturn(tempDataDir);
 
     final RocksDBKeyValueStorageFactory storageFactory =
-        new RocksDBKeyValueStorageFactory(() -> rocksDbConfiguration, segments);
+        new RocksDBKeyValueStorageFactory(
+            () -> rocksDbConfiguration, segments, RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS);
 
     // Side effect is creation of the Metadata version file
     storageFactory.create(segment, commonConfiguration, metricsSystem);
@@ -83,7 +84,8 @@ public class RocksDBKeyValueStorageFactoryTest {
     when(commonConfiguration.getDataPath()).thenReturn(tempDataDir);
 
     final RocksDBKeyValueStorageFactory storageFactory =
-        new RocksDBKeyValueStorageFactory(() -> rocksDbConfiguration, segments);
+        new RocksDBKeyValueStorageFactory(
+            () -> rocksDbConfiguration, segments, RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS);
 
     storageFactory.create(segment, commonConfiguration, metricsSystem);
 
@@ -100,7 +102,8 @@ public class RocksDBKeyValueStorageFactoryTest {
     when(commonConfiguration.getDataPath()).thenReturn(tempDataDir);
 
     final RocksDBKeyValueStorageFactory storageFactory =
-        new RocksDBKeyValueStorageFactory(() -> rocksDbConfiguration, segments);
+        new RocksDBKeyValueStorageFactory(
+            () -> rocksDbConfiguration, segments, RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS);
 
     storageFactory.create(segment, commonConfiguration, metricsSystem);
 
@@ -119,13 +122,15 @@ public class RocksDBKeyValueStorageFactoryTest {
     when(commonConfiguration.getDataPath()).thenReturn(tempDataDir);
 
     final RocksDBKeyValueStorageFactory storageFactory =
-        new RocksDBKeyValueStorageFactory(() -> rocksDbConfiguration, segments, 1);
+        new RocksDBKeyValueStorageFactory(
+            () -> rocksDbConfiguration, segments, 1, RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS);
 
     storageFactory.create(segment, commonConfiguration, metricsSystem);
     storageFactory.close();
 
     final RocksDBKeyValueStorageFactory rolledbackStorageFactory =
-        new RocksDBKeyValueStorageFactory(() -> rocksDbConfiguration, segments, 0);
+        new RocksDBKeyValueStorageFactory(
+            () -> rocksDbConfiguration, segments, 0, RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS);
     rolledbackStorageFactory.create(segment, commonConfiguration, metricsSystem);
   }
 
@@ -141,7 +146,10 @@ public class RocksDBKeyValueStorageFactoryTest {
     new DatabaseMetadata(-1).writeToDirectory(tempDatabaseDir);
     assertThatThrownBy(
             () ->
-                new RocksDBKeyValueStorageFactory(() -> rocksDbConfiguration, segments)
+                new RocksDBKeyValueStorageFactory(
+                        () -> rocksDbConfiguration,
+                        segments,
+                        RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS)
                     .create(segment, commonConfiguration, metricsSystem))
         .isInstanceOf(StorageException.class);
   }
@@ -156,7 +164,8 @@ public class RocksDBKeyValueStorageFactoryTest {
     when(commonConfiguration.getDataPath()).thenReturn(tempDataDir);
 
     final RocksDBKeyValueStorageFactory storageFactory =
-        new RocksDBKeyValueStorageFactory(() -> rocksDbConfiguration, segments);
+        new RocksDBKeyValueStorageFactory(
+            () -> rocksDbConfiguration, segments, RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS);
     storageFactory.create(segment, commonConfiguration, metricsSystem);
     assertThatCode(storageFactory::isSegmentIsolationSupported).doesNotThrowAnyException();
   }
@@ -177,7 +186,10 @@ public class RocksDBKeyValueStorageFactoryTest {
 
     assertThatThrownBy(
             () ->
-                new RocksDBKeyValueStorageFactory(() -> rocksDbConfiguration, segments)
+                new RocksDBKeyValueStorageFactory(
+                        () -> rocksDbConfiguration,
+                        segments,
+                        RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS)
                     .create(segment, commonConfiguration, metricsSystem))
         .isInstanceOf(IllegalStateException.class);
 
@@ -187,7 +199,10 @@ public class RocksDBKeyValueStorageFactoryTest {
 
     assertThatThrownBy(
             () ->
-                new RocksDBKeyValueStorageFactory(() -> rocksDbConfiguration, segments)
+                new RocksDBKeyValueStorageFactory(
+                        () -> rocksDbConfiguration,
+                        segments,
+                        RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS)
                     .create(segment, commonConfiguration, metricsSystem))
         .isInstanceOf(IllegalStateException.class);
   }

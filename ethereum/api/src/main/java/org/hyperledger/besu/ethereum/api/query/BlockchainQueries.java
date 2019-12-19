@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.query;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static org.hyperledger.besu.ethereum.api.query.TransactionLogsIndexer.BLOCKS_PER_BLOOM_CACHE;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.TransactionLocation;
@@ -25,15 +26,22 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
+import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldState;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.util.bytes.BytesValue;
 import org.hyperledger.besu.util.uint.UInt256;
 
+import java.io.EOFException;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -44,14 +52,40 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public class BlockchainQueries {
+  private static final Logger LOG = LogManager.getLogger();
 
   private final WorldStateArchive worldStateArchive;
   private final Blockchain blockchain;
+  private final Optional<Path> cachePath;
+  private final Optional<TransactionLogsIndexer> transactionLogsIndexer;
 
   public BlockchainQueries(final Blockchain blockchain, final WorldStateArchive worldStateArchive) {
+    this(blockchain, worldStateArchive, Optional.empty(), Optional.empty());
+  }
+
+  public BlockchainQueries(
+      final Blockchain blockchain,
+      final WorldStateArchive worldStateArchive,
+      final EthScheduler scheduler) {
+    this(blockchain, worldStateArchive, Optional.empty(), Optional.ofNullable(scheduler));
+  }
+
+  public BlockchainQueries(
+      final Blockchain blockchain,
+      final WorldStateArchive worldStateArchive,
+      final Optional<Path> cachePath,
+      final Optional<EthScheduler> scheduler) {
     this.blockchain = blockchain;
     this.worldStateArchive = worldStateArchive;
+    this.cachePath = cachePath;
+    this.transactionLogsIndexer =
+        (cachePath.isPresent() && scheduler.isPresent())
+            ? Optional.of(new TransactionLogsIndexer(blockchain, cachePath.get(), scheduler.get()))
+            : Optional.empty();
   }
 
   public Blockchain getBlockchain() {
@@ -60,6 +94,10 @@ public class BlockchainQueries {
 
   public WorldStateArchive getWorldStateArchive() {
     return worldStateArchive;
+  }
+
+  public Optional<TransactionLogsIndexer> getTransactionLogsIndexer() {
+    return transactionLogsIndexer;
   }
 
   /**
@@ -124,7 +162,7 @@ public class BlockchainQueries {
    * @return The number of transactions contained in the referenced block.
    */
   public Optional<Integer> getTransactionCount(final long blockNumber) {
-    if (!withinValidRange(blockNumber)) {
+    if (outsideBlockchainRange(blockNumber)) {
       return Optional.empty();
     }
     return Optional.of(
@@ -368,13 +406,15 @@ public class BlockchainQueries {
   public Optional<TransactionWithMetadata> transactionByHash(final Hash transactionHash) {
     final Optional<TransactionLocation> maybeLocation =
         blockchain.getTransactionLocation(transactionHash);
-    if (!maybeLocation.isPresent()) {
+    if (maybeLocation.isEmpty()) {
       return Optional.empty();
     }
     final TransactionLocation loc = maybeLocation.get();
     final Hash blockHash = loc.getBlockHash();
-    final BlockHeader header = blockchain.getBlockHeader(blockHash).get();
-    final Transaction transaction = blockchain.getTransactionByHash(transactionHash).get();
+    // getTransactionLocation should not return if the TX or block doesn't exist, so throwing
+    // on a missing optional is appropriate.
+    final BlockHeader header = blockchain.getBlockHeader(blockHash).orElseThrow();
+    final Transaction transaction = blockchain.getTransactionByHash(transactionHash).orElseThrow();
     return Optional.of(
         new TransactionWithMetadata(
             transaction, header.getNumber(), blockHash, loc.getTransactionIndex()));
@@ -392,8 +432,7 @@ public class BlockchainQueries {
     checkArgument(txIndex >= 0);
     return blockchain
         .getBlockHeader(blockNumber)
-        .map(header -> Optional.ofNullable(transactionByHeaderAndIndex(header, txIndex)))
-        .orElse(Optional.empty());
+        .map(header -> transactionByHeaderAndIndex(header, txIndex));
   }
 
   /**
@@ -408,8 +447,7 @@ public class BlockchainQueries {
     checkArgument(txIndex >= 0);
     return blockchain
         .getBlockHeader(blockHeaderHash)
-        .map(header -> Optional.ofNullable(transactionByHeaderAndIndex(header, txIndex)))
-        .orElse(Optional.empty());
+        .map(header -> transactionByHeaderAndIndex(header, txIndex));
   }
 
   /**
@@ -423,7 +461,8 @@ public class BlockchainQueries {
   private TransactionWithMetadata transactionByHeaderAndIndex(
       final BlockHeader header, final int txIndex) {
     final Hash blockHeaderHash = header.getHash();
-    final BlockBody blockBody = blockchain.getBlockBody(blockHeaderHash).get();
+    // headers should not exist w/o bodies, so not being present is exceptional
+    final BlockBody blockBody = blockchain.getBlockBody(blockHeaderHash).orElseThrow();
     final List<Transaction> txs = blockBody.getTransactions();
     if (txIndex >= txs.size()) {
       return null;
@@ -442,16 +481,19 @@ public class BlockchainQueries {
       final Hash transactionHash) {
     final Optional<TransactionLocation> maybeLocation =
         blockchain.getTransactionLocation(transactionHash);
-    if (!maybeLocation.isPresent()) {
+    if (maybeLocation.isEmpty()) {
       return Optional.empty();
     }
+    // getTransactionLocation should not return if the TX or block doesn't exist, so throwing
+    // on a missing optional is appropriate.
     final TransactionLocation location = maybeLocation.get();
-    final BlockBody blockBody = blockchain.getBlockBody(location.getBlockHash()).get();
+    final BlockBody blockBody = blockchain.getBlockBody(location.getBlockHash()).orElseThrow();
     final Transaction transaction = blockBody.getTransactions().get(location.getTransactionIndex());
 
     final Hash blockhash = location.getBlockHash();
-    final BlockHeader header = blockchain.getBlockHeader(blockhash).get();
-    final List<TransactionReceipt> transactionReceipts = blockchain.getTxReceipts(blockhash).get();
+    final BlockHeader header = blockchain.getBlockHeader(blockhash).orElseThrow();
+    final List<TransactionReceipt> transactionReceipts =
+        blockchain.getTxReceipts(blockhash).orElseThrow();
     final TransactionReceipt transactionReceipt =
         transactionReceipts.get(location.getTransactionIndex());
 
@@ -486,6 +528,39 @@ public class BlockchainQueries {
    */
   public List<LogWithMetadata> matchingLogs(
       final long fromBlockNumber, final long toBlockNumber, final LogsQuery query) {
+    final List<LogWithMetadata> result = new ArrayList<>();
+    final long startSegment = fromBlockNumber / BLOCKS_PER_BLOOM_CACHE;
+    final long endSegment = toBlockNumber / BLOCKS_PER_BLOOM_CACHE;
+    long currentStep = fromBlockNumber;
+    for (long segment = startSegment; segment <= endSegment; segment++) {
+      final long thisSegment = segment;
+      final long thisStep = currentStep;
+      final long nextStep = (segment + 1) * BLOCKS_PER_BLOOM_CACHE;
+      result.addAll(
+          cachePath
+              .map(path -> path.resolve("logBloom-" + thisSegment + ".index"))
+              .filter(Files::isRegularFile)
+              .map(
+                  cacheFile ->
+                      matchingLogsCached(
+                          thisSegment * BLOCKS_PER_BLOOM_CACHE,
+                          thisStep % BLOCKS_PER_BLOOM_CACHE,
+                          Math.min(toBlockNumber, nextStep - 1) % BLOCKS_PER_BLOOM_CACHE,
+                          query,
+                          cacheFile))
+              .orElseGet(
+                  () ->
+                      matchingLogsUncached(
+                          thisStep,
+                          Math.min(toBlockNumber, Math.min(toBlockNumber, nextStep - 1)),
+                          query)));
+      currentStep = nextStep;
+    }
+    return result;
+  }
+
+  private List<LogWithMetadata> matchingLogsUncached(
+      final long fromBlockNumber, final long toBlockNumber, final LogsQuery query) {
     // rangeClosed handles the inverted from/to situations automatically with zero results.
     return LongStream.rangeClosed(fromBlockNumber, toBlockNumber)
         .mapToObj(blockchain::getBlockHeader)
@@ -499,14 +574,46 @@ public class BlockchainQueries {
         .collect(Collectors.toList());
   }
 
+  private List<LogWithMetadata> matchingLogsCached(
+      final long segmentStart,
+      final long offset,
+      final long endOffset,
+      final LogsQuery query,
+      final Path cacheFile) {
+    final List<LogWithMetadata> results = new ArrayList<>();
+    try (final RandomAccessFile raf = new RandomAccessFile(cacheFile.toFile(), "r")) {
+      raf.seek(offset * 256);
+      final byte[] bloomBuff = new byte[256];
+      final BytesValue bytesValue = BytesValue.wrap(bloomBuff);
+      for (long pos = offset; pos <= endOffset; pos++) {
+        try {
+          raf.readFully(bloomBuff);
+        } catch (final EOFException e) {
+          break;
+        }
+        final LogsBloomFilter logsBloom = new LogsBloomFilter(bytesValue);
+        if (query.couldMatch(logsBloom)) {
+          results.addAll(
+              matchingLogs(
+                  blockchain.getBlockHashByNumber(segmentStart + pos).orElseThrow(), query));
+        }
+      }
+    } catch (final IOException e) {
+      e.printStackTrace(System.out);
+      LOG.error("Error reading cached log blooms", e);
+    }
+    return results;
+  }
+
   public List<LogWithMetadata> matchingLogs(final Hash blockHash, final LogsQuery query) {
     final Optional<BlockHeader> blockHeader = blockchain.getBlockHeader(blockHash);
     if (blockHeader.isEmpty()) {
       return Collections.emptyList();
     }
-    final List<TransactionReceipt> receipts = blockchain.getTxReceipts(blockHash).get();
+    // receipts and transactions should exist if the header exists, so throwing is ok.
+    final List<TransactionReceipt> receipts = blockchain.getTxReceipts(blockHash).orElseThrow();
     final List<Transaction> transactions =
-        blockchain.getBlockBody(blockHash).get().getTransactions();
+        blockchain.getBlockBody(blockHash).orElseThrow().getTransactions();
     final long number = blockHeader.get().getNumber();
     final boolean removed = !blockchain.blockIsOnCanonicalChain(blockHash);
     return IntStream.range(0, receipts.size())
@@ -532,7 +639,7 @@ public class BlockchainQueries {
 
   private <T> Optional<T> fromWorldState(
       final long blockNumber, final Function<WorldState, T> getter) {
-    if (!withinValidRange(blockNumber)) {
+    if (outsideBlockchainRange(blockNumber)) {
       return Optional.empty();
     }
     return getWorldState(blockNumber).map(getter);
@@ -559,7 +666,7 @@ public class BlockchainQueries {
     return result;
   }
 
-  private boolean withinValidRange(final long blockNumber) {
-    return blockNumber <= headBlockNumber() && blockNumber >= BlockHeader.GENESIS_BLOCK_NUMBER;
+  private boolean outsideBlockchainRange(final long blockNumber) {
+    return blockNumber > headBlockNumber() || blockNumber < BlockHeader.GENESIS_BLOCK_NUMBER;
   }
 }

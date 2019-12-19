@@ -17,8 +17,6 @@ package org.hyperledger.besu.ethereum.storage.keyvalue;
 import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
@@ -31,8 +29,6 @@ public class KeyValueStorageProvider implements StorageProvider {
   private final KeyValueStorage blockchainStorage;
   private final KeyValueStorage worldStateStorage;
   private final KeyValueStorage worldStatePreimageStorage;
-  private final KeyValueStorage privateTransactionStorage;
-  private final KeyValueStorage privateStateStorage;
   private final KeyValueStorage pruningStorage;
   private final boolean isWorldStateIterable;
 
@@ -40,15 +36,11 @@ public class KeyValueStorageProvider implements StorageProvider {
       final KeyValueStorage blockchainStorage,
       final KeyValueStorage worldStateStorage,
       final KeyValueStorage worldStatePreimageStorage,
-      final KeyValueStorage privateTransactionStorage,
-      final KeyValueStorage privateStateStorage,
       final KeyValueStorage pruningStorage,
       final boolean isWorldStateIterable) {
     this.blockchainStorage = blockchainStorage;
     this.worldStateStorage = worldStateStorage;
     this.worldStatePreimageStorage = worldStatePreimageStorage;
-    this.privateTransactionStorage = privateTransactionStorage;
-    this.privateStateStorage = privateStateStorage;
     this.pruningStorage = pruningStorage;
     this.isWorldStateIterable = isWorldStateIterable;
   }
@@ -70,11 +62,6 @@ public class KeyValueStorageProvider implements StorageProvider {
   }
 
   @Override
-  public PrivateStateStorage createPrivateStateStorage() {
-    return new PrivateStateKeyValueStorage(privateStateStorage);
-  }
-
-  @Override
   public KeyValueStorage createPruningStorage() {
     return pruningStorage;
   }
@@ -88,8 +75,6 @@ public class KeyValueStorageProvider implements StorageProvider {
   public void close() throws IOException {
     blockchainStorage.close();
     worldStateStorage.close();
-    privateTransactionStorage.close();
-    privateStateStorage.close();
     pruningStorage.close();
   }
 }

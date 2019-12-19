@@ -21,8 +21,8 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResult;
@@ -61,7 +61,7 @@ public class EthGetUncleByBlockNumberAndIndexTest {
 
   @Before
   public void before() {
-    this.method = new EthGetUncleByBlockNumberAndIndex(blockchainQueries, new JsonRpcParameter());
+    this.method = new EthGetUncleByBlockNumberAndIndex(blockchainQueries);
   }
 
   @Test
@@ -71,7 +71,7 @@ public class EthGetUncleByBlockNumberAndIndexTest {
 
   @Test
   public void shouldReturnErrorWhenMissingBlockNumberParam() {
-    final JsonRpcRequest request = getUncleByBlockNumberAndIndex(new Object[] {});
+    final JsonRpcRequestContext request = getUncleByBlockNumberAndIndex(new Object[] {});
 
     final Throwable thrown = catchThrowable(() -> method.response(request));
 
@@ -82,7 +82,7 @@ public class EthGetUncleByBlockNumberAndIndexTest {
 
   @Test
   public void shouldReturnErrorWhenMissingIndexParam() {
-    final JsonRpcRequest request = getUncleByBlockNumberAndIndex(new Object[] {"0x1"});
+    final JsonRpcRequestContext request = getUncleByBlockNumberAndIndex(new Object[] {"0x1"});
 
     final Throwable thrown = catchThrowable(() -> method.response(request));
 
@@ -93,7 +93,8 @@ public class EthGetUncleByBlockNumberAndIndexTest {
 
   @Test
   public void shouldReturnNullResultWhenBlockDoesNotHaveOmmer() {
-    final JsonRpcRequest request = getUncleByBlockNumberAndIndex(new Object[] {"0x1", "0x0"});
+    final JsonRpcRequestContext request =
+        getUncleByBlockNumberAndIndex(new Object[] {"0x1", "0x0"});
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, null);
 
     when(blockchainQueries.getOmmer(eq(1L), eq(0))).thenReturn(Optional.empty());
@@ -105,7 +106,8 @@ public class EthGetUncleByBlockNumberAndIndexTest {
 
   @Test
   public void shouldReturnExpectedBlockResult() {
-    final JsonRpcRequest request = getUncleByBlockNumberAndIndex(new Object[] {"0x1", "0x0"});
+    final JsonRpcRequestContext request =
+        getUncleByBlockNumberAndIndex(new Object[] {"0x1", "0x0"});
     final BlockHeader header = blockHeaderTestFixture.buildHeader();
     final BlockResult expectedBlockResult = blockResult(header);
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, expectedBlockResult);
@@ -128,8 +130,9 @@ public class EthGetUncleByBlockNumberAndIndexTest {
         block.calculateSize());
   }
 
-  private JsonRpcRequest getUncleByBlockNumberAndIndex(final Object[] params) {
-    return new JsonRpcRequest("2.0", "eth_getUncleByBlockNumberAndIndex", params);
+  private JsonRpcRequestContext getUncleByBlockNumberAndIndex(final Object[] params) {
+    return new JsonRpcRequestContext(
+        new JsonRpcRequest("2.0", "eth_getUncleByBlockNumberAndIndex", params));
   }
 
   public BlockWithMetadata<TransactionWithMetadata, Hash> blockWithMetadata(

@@ -23,7 +23,6 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveException;
-import org.hyperledger.besu.enclave.types.ReceiveRequest;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -54,7 +53,6 @@ public class PrivacyPrecompiledContractTest {
   @Rule public final TemporaryFolder temp = new TemporaryFolder();
 
   private final String actual = "Test String";
-  private final String publicKey = "public key";
   private final BytesValue key = BytesValue.wrap(actual.getBytes(UTF_8));
   private PrivacyPrecompiledContract privacyPrecompiledContract;
   private PrivacyPrecompiledContract brokenPrivateTransactionHandler;
@@ -80,7 +78,7 @@ public class PrivacyPrecompiledContractTest {
   private Enclave mockEnclave() {
     final Enclave mockEnclave = mock(Enclave.class);
     final ReceiveResponse response = new ReceiveResponse(VALID_PRIVATE_TRANSACTION_RLP_BASE64, "");
-    when(mockEnclave.receive(any(ReceiveRequest.class))).thenReturn(response);
+    when(mockEnclave.receive(any())).thenReturn(response);
     return mockEnclave;
   }
 
@@ -108,7 +106,7 @@ public class PrivacyPrecompiledContractTest {
 
   private Enclave brokenMockEnclave() {
     final Enclave mockEnclave = mock(Enclave.class);
-    when(mockEnclave.receive(any(ReceiveRequest.class))).thenThrow(EnclaveException.class);
+    when(mockEnclave.receive(any())).thenThrow(EnclaveException.class);
     return mockEnclave;
   }
 
@@ -134,7 +132,6 @@ public class PrivacyPrecompiledContractTest {
     privacyPrecompiledContract =
         new PrivacyPrecompiledContract(
             new SpuriousDragonGasCalculator(),
-            publicKey,
             mockEnclave(),
             worldStateArchive,
             privateStateStorage);
@@ -142,7 +139,6 @@ public class PrivacyPrecompiledContractTest {
     brokenPrivateTransactionHandler =
         new PrivacyPrecompiledContract(
             new SpuriousDragonGasCalculator(),
-            publicKey,
             brokenMockEnclave(),
             worldStateArchive,
             privateStateStorage);

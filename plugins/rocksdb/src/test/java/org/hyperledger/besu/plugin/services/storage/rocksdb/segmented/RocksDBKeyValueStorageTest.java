@@ -30,6 +30,7 @@ import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBConfiguration;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBConfigurationBuilder;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.unsegmented.RocksDBKeyValueStorage;
@@ -55,7 +56,8 @@ public class RocksDBKeyValueStorageTest extends AbstractKeyValueStorageTest {
 
   @Override
   protected KeyValueStorage createStore() throws Exception {
-    return new RocksDBKeyValueStorage(config(), new NoOpMetricsSystem());
+    return new RocksDBKeyValueStorage(
+        config(), new NoOpMetricsSystem(), RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS);
   }
 
   @Test
@@ -79,7 +81,9 @@ public class RocksDBKeyValueStorageTest extends AbstractKeyValueStorageTest {
     final ArgumentCaptor<String> longGaugesHelpArgs = ArgumentCaptor.forClass(String.class);
 
     // Actual call
-    final KeyValueStorage keyValueStorage = new RocksDBKeyValueStorage(config(), metricsSystemMock);
+    final KeyValueStorage keyValueStorage =
+        new RocksDBKeyValueStorage(
+            config(), metricsSystemMock, RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS);
 
     // Assertions
     assertThat(keyValueStorage).isNotNull();

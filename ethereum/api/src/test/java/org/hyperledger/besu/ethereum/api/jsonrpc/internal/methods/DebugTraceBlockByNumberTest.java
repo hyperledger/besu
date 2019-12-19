@@ -23,7 +23,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
@@ -45,11 +45,10 @@ import org.junit.Test;
 
 public class DebugTraceBlockByNumberTest {
 
-  private final JsonRpcParameter parameters = new JsonRpcParameter();
   private final BlockchainQueries blockchain = mock(BlockchainQueries.class);
   private final BlockTracer blockTracer = mock(BlockTracer.class);
   private final DebugTraceBlockByNumber debugTraceBlockByNumber =
-      new DebugTraceBlockByNumber(parameters, blockTracer, blockchain);
+      new DebugTraceBlockByNumber(blockTracer, blockchain);
 
   private final Hash blockHash =
       Hash.fromHexString("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
@@ -63,7 +62,8 @@ public class DebugTraceBlockByNumberTest {
   public void shouldReturnCorrectResponse() {
     final long blockNumber = 1L;
     final Object[] params = new Object[] {Long.toHexString(blockNumber)};
-    final JsonRpcRequest request = new JsonRpcRequest("2.0", "debug_traceBlockByNumber", params);
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(new JsonRpcRequest("2.0", "debug_traceBlockByNumber", params));
 
     final TraceFrame traceFrame =
         new TraceFrame(

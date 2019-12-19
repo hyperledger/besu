@@ -15,9 +15,8 @@
 package org.hyperledger.besu.ethereum.retesteth.methods;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -37,11 +36,9 @@ public class TestImportRawBlock implements JsonRpcMethod {
   private static final String METHOD_NAME = "test_importRawBlock";
 
   private final RetestethContext context;
-  private final JsonRpcParameter parameters;
 
-  public TestImportRawBlock(final RetestethContext context, final JsonRpcParameter parameters) {
+  public TestImportRawBlock(final RetestethContext context) {
     this.context = context;
-    this.parameters = parameters;
   }
 
   @Override
@@ -50,8 +47,8 @@ public class TestImportRawBlock implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest request) {
-    final String input = parameters.required(request.getParams(), 0, String.class);
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
+    final String input = requestContext.getRequiredParameter(0, String.class);
     final ProtocolSpec<Void> protocolSpec = context.getProtocolSpec(context.getBlockHeight());
     final ProtocolContext<Void> protocolContext = this.context.getProtocolContext();
 
@@ -62,7 +59,7 @@ public class TestImportRawBlock implements JsonRpcMethod {
               RLP.input(BytesValue.fromHexString(input)), protocolSpec.getBlockHeaderFunctions());
     } catch (final RLPException | IllegalArgumentException e) {
       LOG.debug("Failed to parse block RLP", e);
-      return new JsonRpcSuccessResponse(request.getId(), "0x");
+      return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), "0x");
     }
 
     final BlockImporter<Void> blockImporter = protocolSpec.getBlockImporter();
@@ -71,10 +68,11 @@ public class TestImportRawBlock implements JsonRpcMethod {
         block,
         context.getHeaderValidationMode(),
         context.getHeaderValidationMode())) {
-      return new JsonRpcSuccessResponse(request.getId(), block.getHash().toString());
+      return new JsonRpcSuccessResponse(
+          requestContext.getRequest().getId(), block.getHash().toString());
     } else {
       LOG.debug("Failed to import block.");
-      return new JsonRpcSuccessResponse(request.getId(), "0x");
+      return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), "0x");
     }
   }
 }

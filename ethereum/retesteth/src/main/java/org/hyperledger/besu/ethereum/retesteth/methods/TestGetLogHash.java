@@ -14,9 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.retesteth.methods;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.TransactionReceiptWithMetadata;
@@ -29,11 +28,9 @@ import java.util.Optional;
 
 public class TestGetLogHash implements JsonRpcMethod {
   private final RetestethContext context;
-  private final JsonRpcParameter parameters;
 
-  public TestGetLogHash(final RetestethContext context, final JsonRpcParameter parameters) {
+  public TestGetLogHash(final RetestethContext context) {
     this.context = context;
-    this.parameters = parameters;
   }
 
   @Override
@@ -42,13 +39,13 @@ public class TestGetLogHash implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest request) {
-    final Hash txHash = parameters.required(request.getParams(), 0, Hash.class);
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
+    final Hash txHash = requestContext.getRequiredParameter(0, Hash.class);
 
     final Optional<TransactionReceiptWithMetadata> receipt =
         context.getBlockchainQueries().transactionReceiptByTransactionHash(txHash);
     return new JsonRpcSuccessResponse(
-        request.getId(),
+        requestContext.getRequest().getId(),
         receipt.map(this::calculateLogHash).orElse(Hash.EMPTY_LIST_HASH).toString());
   }
 

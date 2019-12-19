@@ -2,3 +2,5 @@
 	path = ethereum/referencetests/src/test/resources
 	url = https://github.com/ethereum/tests.git
 	ignore = all
+	branch = 48142b4ee7a42d081c6eda7b2a57d9b2c958bc81
+	shallow = true

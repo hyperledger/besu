@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.retesteth.methods;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.retesteth.RetestethContext;
@@ -48,9 +49,10 @@ public class TestSetChainParamsTest {
             Charsets.UTF_8);
     final JsonObject chainParamsJson = new JsonObject(chainParamsJsonString);
 
-    final JsonRpcRequest request =
-        new JsonRpcRequest(
-            "2.0", TestSetChainParams.METHOD_NAME, new Object[] {chainParamsJson.getMap()});
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest(
+                "2.0", TestSetChainParams.METHOD_NAME, new Object[] {chainParamsJson.getMap()}));
 
     assertThat(test_setChainParams.response(request))
         .isEqualTo(new JsonRpcSuccessResponse(null, true));

@@ -37,6 +37,7 @@ import org.hyperledger.besu.testutil.MockExecutorService;
 
 import java.util.List;
 import java.util.concurrent.ExecutorService;
+import java.util.function.Supplier;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -52,11 +53,12 @@ public class PrunerTest {
 
   @Mock private MarkSweepPruner markSweepPruner;
   private final ExecutorService mockExecutorService = new MockExecutorService();
+  private final Supplier<ExecutorService> mockExecutorServiceSupplier = () -> mockExecutorService;
 
   private final Block genesisBlock = gen.genesisBlock();
 
   @Test
-  public void shouldMarkCorrectBlockAndSweep() throws InterruptedException {
+  public void shouldMarkCorrectBlockAndSweep() {
     final BlockchainStorage blockchainStorage =
         new KeyValueStoragePrefixedKeyBlockchainStorage(
             new InMemoryKeyValueStorage(), new MainnetBlockHeaderFunctions());
@@ -65,7 +67,10 @@ public class PrunerTest {
 
     final Pruner pruner =
         new Pruner(
-            markSweepPruner, blockchain, mockExecutorService, new PruningConfiguration(0, 1));
+            markSweepPruner,
+            blockchain,
+            new PrunerConfiguration(0, 1),
+            mockExecutorServiceSupplier);
     pruner.start();
 
     final Block block1 = appendBlockWithParent(blockchain, genesisBlock);
@@ -78,8 +83,7 @@ public class PrunerTest {
   }
 
   @Test
-  public void shouldOnlySweepAfterBlockConfirmationPeriodAndRetentionPeriodEnds()
-      throws InterruptedException {
+  public void shouldOnlySweepAfterBlockConfirmationPeriodAndRetentionPeriodEnds() {
     final BlockchainStorage blockchainStorage =
         new KeyValueStoragePrefixedKeyBlockchainStorage(
             new InMemoryKeyValueStorage(), new MainnetBlockHeaderFunctions());
@@ -88,7 +92,10 @@ public class PrunerTest {
 
     final Pruner pruner =
         new Pruner(
-            markSweepPruner, blockchain, mockExecutorService, new PruningConfiguration(1, 2));
+            markSweepPruner,
+            blockchain,
+            new PrunerConfiguration(1, 2),
+            mockExecutorServiceSupplier);
     pruner.start();
 
     final Hash markBlockStateRootHash =
@@ -106,8 +113,7 @@ public class PrunerTest {
   }
 
   @Test
-  public void abortsPruningWhenFullyMarkedBlockNoLongerOnCanonicalChain()
-      throws InterruptedException {
+  public void abortsPruningWhenFullyMarkedBlockNoLongerOnCanonicalChain() {
     final BlockchainStorage blockchainStorage =
         new KeyValueStoragePrefixedKeyBlockchainStorage(
             new InMemoryKeyValueStorage(), new MainnetBlockHeaderFunctions());
@@ -117,7 +123,10 @@ public class PrunerTest {
     // start pruner so it can start handling block added events
     final Pruner pruner =
         new Pruner(
-            markSweepPruner, blockchain, mockExecutorService, new PruningConfiguration(0, 1));
+            markSweepPruner,
+            blockchain,
+            new PrunerConfiguration(0, 1),
+            mockExecutorServiceSupplier);
     pruner.start();
 
     /*
@@ -156,24 +165,24 @@ public class PrunerTest {
                 new Pruner(
                     markSweepPruner,
                     mockchain,
-                    mockExecutorService,
-                    new PruningConfiguration(-1, -2)))
+                    new PrunerConfiguration(-1, -2),
+                    mockExecutorServiceSupplier))
         .isInstanceOf(IllegalArgumentException.class);
     assertThatThrownBy(
             () ->
                 new Pruner(
                     markSweepPruner,
                     mockchain,
-                    mockExecutorService,
-                    new PruningConfiguration(10, 8)))
+                    new PrunerConfiguration(10, 8),
+                    mockExecutorServiceSupplier))
         .isInstanceOf(IllegalArgumentException.class);
     assertThatThrownBy(
             () ->
                 new Pruner(
                     markSweepPruner,
                     mockchain,
-                    mockExecutorService,
-                    new PruningConfiguration(10, 10)))
+                    new PrunerConfiguration(10, 10),
+                    mockExecutorServiceSupplier))
         .isInstanceOf(IllegalArgumentException.class);
   }
 
@@ -187,7 +196,10 @@ public class PrunerTest {
 
     final Pruner pruner =
         new Pruner(
-            markSweepPruner, blockchain, mockExecutorService, new PruningConfiguration(0, 1));
+            markSweepPruner,
+            blockchain,
+            new PrunerConfiguration(0, 1),
+            mockExecutorServiceSupplier);
     pruner.start();
     pruner.stop();
     verify(markSweepPruner).cleanup();

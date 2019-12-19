@@ -14,9 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameterOrBlockHash;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugAccountRangeAtResult;
@@ -39,17 +38,13 @@ import com.google.common.base.Suppliers;
 
 public class DebugAccountRange implements JsonRpcMethod {
 
-  private final JsonRpcParameter parameters;
   private final Supplier<BlockchainQueries> blockchainQueries;
 
-  public DebugAccountRange(
-      final JsonRpcParameter parameters, final BlockchainQueries blockchainQueries) {
-    this(parameters, Suppliers.ofInstance(blockchainQueries));
+  public DebugAccountRange(final BlockchainQueries blockchainQueries) {
+    this(Suppliers.ofInstance(blockchainQueries));
   }
 
-  public DebugAccountRange(
-      final JsonRpcParameter parameters, final Supplier<BlockchainQueries> blockchainQueries) {
-    this.parameters = parameters;
+  public DebugAccountRange(final Supplier<BlockchainQueries> blockchainQueries) {
     this.blockchainQueries = blockchainQueries;
   }
 
@@ -61,22 +56,21 @@ public class DebugAccountRange implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest request) {
-    final Object[] params = request.getParams();
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     final BlockParameterOrBlockHash blockParameterOrBlockHash =
-        parameters.required(params, 0, BlockParameterOrBlockHash.class);
-    final String addressHash = parameters.required(params, 2, String.class);
-    final int maxResults = parameters.required(params, 3, Integer.TYPE);
+        requestContext.getRequiredParameter(0, BlockParameterOrBlockHash.class);
+    final String addressHash = requestContext.getRequiredParameter(2, String.class);
+    final int maxResults = requestContext.getRequiredParameter(3, Integer.TYPE);
 
     final Optional<Hash> blockHashOptional = hashFromParameter(blockParameterOrBlockHash);
     if (blockHashOptional.isEmpty()) {
-      return emptyResponse(request);
+      return emptyResponse(requestContext);
     }
     final Hash blockHash = blockHashOptional.get();
     final Optional<BlockHeader> blockHeaderOptional =
         blockchainQueries.get().blockByHash(blockHash).map(BlockWithMetadata::getHeader);
     if (blockHeaderOptional.isEmpty()) {
-      return emptyResponse(request);
+      return emptyResponse(requestContext);
     }
 
     // TODO deal with mid-block locations
@@ -85,7 +79,7 @@ public class DebugAccountRange implements JsonRpcMethod {
         blockchainQueries.get().getWorldState(blockHeaderOptional.get().getNumber());
 
     if (state.isEmpty()) {
-      return emptyResponse(request);
+      return emptyResponse(requestContext);
     } else {
       final List<StreamableAccount> accounts =
           state
@@ -99,7 +93,7 @@ public class DebugAccountRange implements JsonRpcMethod {
       }
 
       return new JsonRpcSuccessResponse(
-          request.getId(),
+          requestContext.getRequest().getId(),
           new DebugAccountRangeAtResult(
               accounts.stream()
                   .collect(
@@ -125,8 +119,9 @@ public class DebugAccountRange implements JsonRpcMethod {
     }
   }
 
-  private JsonRpcSuccessResponse emptyResponse(final JsonRpcRequest request) {
+  private JsonRpcSuccessResponse emptyResponse(final JsonRpcRequestContext requestContext) {
     return new JsonRpcSuccessResponse(
-        request.getId(), new DebugAccountRangeAtResult(Collections.emptyNavigableMap(), null));
+        requestContext.getRequest().getId(),
+        new DebugAccountRangeAtResult(Collections.emptyNavigableMap(), null));
   }
 }

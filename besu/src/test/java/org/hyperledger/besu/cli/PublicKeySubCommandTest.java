@@ -42,7 +42,7 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
           + System.lineSeparator()
           + "                    standard output."
           + System.lineSeparator()
-          + "  export-address  This command outputs the node's public key address. Default"
+          + "  export-address  This command outputs the node's account address. Default"
           + System.lineSeparator()
           + "                    output is standard output."
           + System.lineSeparator();
@@ -62,7 +62,7 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
   private static final String EXPECTED_PUBLIC_KEY_EXPORT_ADDRESS_USAGE =
       "Usage: besu public-key export-address [-hV] [--to=<FILE>]"
           + System.lineSeparator()
-          + "This command outputs the node's public key address. Default output is standard"
+          + "This command outputs the node's account address. Default output is standard"
           + System.lineSeparator()
           + "output."
           + System.lineSeparator()
@@ -79,7 +79,7 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
 
   // public-key sub-command
   @Test
-  public void publicKeySubCommandExistAnbHaveSubCommands() {
+  public void publicKeySubCommandExistsAndHasSubCommands() {
     CommandSpec spec = parseCommand().getSpec();
     assertThat(spec.subcommands()).containsKeys(PUBLIC_KEY_SUBCOMMAND_NAME);
     assertThat(spec.subcommands().get(PUBLIC_KEY_SUBCOMMAND_NAME).getSubcommands())

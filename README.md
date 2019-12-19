@@ -1,5 +1,5 @@
 # Besu Ethereum Client
- [![Build Status](https://jenkins.pegasys.tech/job/Besu/job/master/badge/icon)](https://jenkins.pegasys.tech/job/Besu/job/master/)
+ [![CircleCI](https://circleci.com/gh/hyperledger/besu/tree/master.svg?style=svg)](https://circleci.com/gh/hyperledger/besu/tree/master)
  [![Total alerts](https://img.shields.io/lgtm/alerts/g/hyperledger/besu.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/hyperledger/besu/alerts/)
  [![Language grade: Java](https://img.shields.io/lgtm/grade/java/g/hyperledger/besu.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/hyperledger/besu/context:java)
  [![Documentation Status](https://readthedocs.org/projects/hyperledger-besu/badge/?version=latest)](https://besu.hyperledger.org/en/latest/?badge=latest)
@@ -16,7 +16,7 @@ Besu is an Apache 2.0 licensed, MainNet compatible, Ethereum client written in J
 Besu issues are tracked in [Jira](https://pegasys1.atlassian.net/secure/Dashboard.jspa?selectPageId=10117) not GitHub. 
 See our [contribution guidelines](CONTRIBUTING.md) for more detail on searching and creating issues. 
 
-If you've commented on existing issue and have been waiting for a reply, feel free to ping us on [RocketChat].  
+If you've commented on an existing issue and have been waiting for a reply, feel free to ping us on [RocketChat].  
 
 ## Besu Users
 

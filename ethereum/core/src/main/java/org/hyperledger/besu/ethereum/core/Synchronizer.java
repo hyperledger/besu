@@ -29,6 +29,8 @@ public interface Synchronizer {
 
   void stop();
 
+  void awaitStop() throws InterruptedException;
+
   /**
    * @return the status, based on SyncingResult When actively synchronizing blocks, alternatively
    *     empty

@@ -60,12 +60,12 @@ open a new issue and include a link to the original issue in the body of your ne
 #### Before Submitting A Bug Report
 * **Confirm the problem** is reproducible in the latest version of the software
 * **Check [Besu documentation]**. You might be able to find the cause of the problem and fix things yourself. 
-* **Perform a [cursory search of project issues](https://pegasys1.atlassian.net/browse/PAN-2502?jql=project%20%3D%20PAN)** 
+* **Perform a [cursory search of project issues](https://jira.hyperledger.org/projects/BESU/issues/BESU-122?filter=allopenissues)**
 to see if the problem has already been reported. If it has **and the issue is still open**, add a comment 
 to the existing issue instead of opening a new one.
 
 #### How Do I Submit A (Good) Bug Report?
-Bugs are tracked as [Jira issues](https://pegasys1.atlassian.net/secure/Dashboard.jspa?selectPageId=10000).  
+Bugs are tracked as [Jira issues](https://jira.hyperledger.org/browse/BESU-122?jql=project%20%3D%20BESU%20AND%20resolution%20%3D%20Unresolved%20ORDER%20BY%20priority%20DESC%2C%20updated%20DESC).  
 
 Explain the problem and include additional details to help maintainers reproduce the problem:
 
@@ -125,7 +125,7 @@ to the existing issue instead of opening a new one.
 
 #### How Do I Submit A (Good) Enhancement Suggestion?
 
-Enhancement suggestions are tracked as [Jira issues](https://pegasys1.atlassian.net/secure/Dashboard.jspa?selectPageId=10000).
+Enhancement suggestions are tracked as [Jira issues](https://jira.hyperledger.org/browse/BESU-122?jql=project%20%3D%20BESU%20AND%20resolution%20%3D%20Unresolved%20ORDER%20BY%20priority%20DESC%2C%20updated%20DESC).
 Provide the following information:
 
 * **Use a clear and descriptive title** for the issue to identify the suggestion.
@@ -141,7 +141,7 @@ Provide the following information:
 * **Specify the name and version of the OS you're using.**
 
 ## Your First Contribution
-Start by looking through the 'good first issue' and 'help wanted' labeled issues on the [Jira dashboard](https://pegasys1.atlassian.net/secure/Dashboard.jspa?selectPageId=10000):
+Start by looking through the 'good first issue' and 'help wanted' labeled issues on the [Jira dashboard](https://jira.hyperledger.org/projects/BESU/issues/BESU-122?filter=allopenissues):
 * [Good First Issue][search-label-good-first-issue] - issues which should only require a few lines of code or documentation, 
 and a test or two.
 * [Help wanted issues][search-label-help-wanted] - issues which are a bit more involved than `good first issue` issues.
@@ -170,7 +170,7 @@ another part of the software. Running the `./gradlew clean check test` command l
 to be confident that your changes will pass CI tests once pushed as a Pull Request.
 1. **Push your changes** to your remote fork (usually labeled as `origin`).
 1. **Create a pull-request** (PR) on the Besu repository. If the PR addresses an existing Jira issue, 
-include the issue number in the PR title in square brackets (for example, `[PAN-2374]`). 
+include the issue number in the PR title in square brackets (for example, `[BESU-2374]`). 
 1. **Add labels** to identify the type of your PR. _For example, if your PR is not ready to validate,
 add the "work-in-progress" label. If it fixes a bug, add the "bug" label._
 1. If the PR address an existing Jira issue, comment in the Jira issue with the PR number. 
@@ -206,15 +206,35 @@ Please follow these steps to have your contribution considered by the approvers:
 
 1. Ensure all commits have a Sign-off for DCO, as described in [DCO.md].
 2. Follow all instructions in [PULL-REQUEST-TEMPLATE.md](.github/pull_request_template.md).
-3. Include appropriate test coverage. Testing is 100% automated. There is no such thing as a manual test.
+3. Include appropriate test coverage. Testing is 100% automated. All submissions must be testable in an automated fashion.
 4. Follow the [Style Guides](#style-guides).
 5. After you submit your pull request, verify that all [status checks](https://help.github.com/articles/about-status-checks/) 
 are passing.
-<details><summary>What if the status checks are failing?</summary>If a status check is failing, 
-and you believe that the failure is unrelated to your change, please leave a comment on the pull request 
-explaining why you believe the failure is unrelated. A maintainer will re-run the status check for you. 
-If we conclude that the failure was a false positive, then we will open an issue to track that problem 
-with our status check suite.</details>
+
+#### What Makes A Good Pull Request? 
+
+The following guidelines, based on Hyperledger Fabic's [contribution guidelines](https://hyperledger-fabric.readthedocs.io/en/latest/CONTRIBUTING.html#what-makes-a-good-pull-request) will help ensure that your pull request gets promptly reviewed. 
+
+##### One Pull Request, One Change
+* This limits the surface area of the change, and makes it easier to identify root causes when issues arise.
+
+##### Link to JIRA
+* When submitting your PR, include the JIRA ticket's link in the description and number in the title (i.e. `[BESU-99] My Awesome PR`), this helps provide more context on your work and auto-update the JIRA ticket to include a link to your PR.
+
+##### Minimize LOCs per PR 
+* PRs get near exponentially longer to review as the number of lines of code increase. Ideally, try and keep your changes to under 300 LOC. If that is not possible, try and break up your PR into smaller ones for reviewers to review sequentially. 
+* One way to do this if, for some reason, the change has to all go in the codebase at once, is to have a PR open on the Besu repository linking to smaller PRs on your Besu fork.
+
+##### Write Meaningful Commit Messages
+* As mentioned above, your commit title should include the JIRA ticket number (i.e. `[BESU-99]`) while the description should link to the jira ticket. Please include a comprehensive description of the changes in your commit description.
+
+##### Be Responsive 
+* Don't let a PR sit idle with unaddressed comments until it gets to a point where you need to rebase the whole thing. If you are pausing your work on an issue, please indicate it in the PR comments.
+
+##### What if the status checks are failing? 
+* If a status check is failing,  and you believe that the failure is unrelated to your change, please leave a comment on the pull request  explaining why you believe the failure is unrelated. A maintainer will re-run the status check for you. 
+* If we conclude that the failure was a false positive, then we will open an issue to track that problem 
+with our status check suite.
 
 ## Code Review
 While the prerequisites above must be satisfied prior to having your pull request reviewed, the reviewer(s) 

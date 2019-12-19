@@ -20,8 +20,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -61,7 +61,7 @@ public class EthEstimateGasTest {
     when(blockHeader.getGasLimit()).thenReturn(Long.MAX_VALUE);
     when(blockHeader.getNumber()).thenReturn(1L);
 
-    method = new EthEstimateGas(blockchainQueries, transactionSimulator, new JsonRpcParameter());
+    method = new EthEstimateGas(blockchainQueries, transactionSimulator);
   }
 
   @Test
@@ -71,7 +71,7 @@ public class EthEstimateGasTest {
 
   @Test
   public void shouldReturnErrorWhenTransientTransactionProcessorReturnsEmpty() {
-    final JsonRpcRequest request = ethEstimateGasRequest(callParameter());
+    final JsonRpcRequestContext request = ethEstimateGasRequest(callParameter());
     when(transactionSimulator.process(eq(modifiedCallParameter()), eq(1L)))
         .thenReturn(Optional.empty());
 
@@ -84,7 +84,7 @@ public class EthEstimateGasTest {
 
   @Test
   public void shouldReturnGasEstimateWhenTransientTransactionProcessorReturnsResult() {
-    final JsonRpcRequest request = ethEstimateGasRequest(callParameter());
+    final JsonRpcRequestContext request = ethEstimateGasRequest(callParameter());
     mockTransientProcessorResultGasEstimate(1L);
 
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, Quantity.create(1L));
@@ -108,7 +108,8 @@ public class EthEstimateGasTest {
     return new JsonCallParameter("0x0", "0x0", Quantity.create(Long.MAX_VALUE), "0x0", "0x0", "");
   }
 
-  private JsonRpcRequest ethEstimateGasRequest(final CallParameter callParameter) {
-    return new JsonRpcRequest("2.0", "eth_estimateGas", new Object[] {callParameter});
+  private JsonRpcRequestContext ethEstimateGasRequest(final CallParameter callParameter) {
+    return new JsonRpcRequestContext(
+        new JsonRpcRequest("2.0", "eth_estimateGas", new Object[] {callParameter}));
   }
 }

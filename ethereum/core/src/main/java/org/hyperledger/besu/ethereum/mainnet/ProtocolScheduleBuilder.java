@@ -151,6 +151,66 @@ public class ProtocolScheduleBuilder<C> {
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
             isRevertReasonEnabled));
+    addProtocolSpec(
+        protocolSchedule,
+        config.getMuirGlacierBlockNumber(),
+        MainnetProtocolSpecs.muirGlacierDefinition(
+            chainId,
+            config.getContractSizeLimit(),
+            config.getEvmStackSize(),
+            isRevertReasonEnabled));
+
+    // specs for classic network
+    config
+        .getClassicForkBlock()
+        .ifPresent(
+            classicBlockNumber -> {
+              final ProtocolSpec<C> originalProtocolSpce =
+                  protocolSchedule.getByBlockNumber(classicBlockNumber);
+              addProtocolSpec(
+                  protocolSchedule,
+                  OptionalLong.of(classicBlockNumber),
+                  ClassicProtocolSpecs.classicRecoveryInitDefinition(
+                      config.getContractSizeLimit(), config.getEvmStackSize()));
+              protocolSchedule.putMilestone(classicBlockNumber + 1, originalProtocolSpce);
+            });
+
+    addProtocolSpec(
+        protocolSchedule,
+        config.getEcip1015BlockNumber(),
+        ClassicProtocolSpecs.tangerineWhistleDefinition(
+            chainId, config.getContractSizeLimit(), config.getEvmStackSize()));
+    addProtocolSpec(
+        protocolSchedule,
+        config.getDieHardBlockNumber(),
+        ClassicProtocolSpecs.dieHardDefinition(
+            chainId, config.getContractSizeLimit(), config.getEvmStackSize()));
+    addProtocolSpec(
+        protocolSchedule,
+        config.getGothamBlockNumber(),
+        ClassicProtocolSpecs.gothamDefinition(
+            chainId, config.getContractSizeLimit(), config.getEvmStackSize()));
+    addProtocolSpec(
+        protocolSchedule,
+        config.getDefuseDifficultyBombBlockNumber(),
+        ClassicProtocolSpecs.defuseDifficultyBombDefinition(
+            chainId, config.getContractSizeLimit(), config.getEvmStackSize()));
+    addProtocolSpec(
+        protocolSchedule,
+        config.getAtlantisBlockNumber(),
+        ClassicProtocolSpecs.atlantisDefinition(
+            chainId,
+            config.getContractSizeLimit(),
+            config.getEvmStackSize(),
+            isRevertReasonEnabled));
+    addProtocolSpec(
+        protocolSchedule,
+        config.getAghartaBlockNumber(),
+        ClassicProtocolSpecs.aghartaDefinition(
+            chainId,
+            config.getContractSizeLimit(),
+            config.getEvmStackSize(),
+            isRevertReasonEnabled));
 
     LOG.info("Protocol schedule created with milestones: {}", protocolSchedule.listMilestones());
     return protocolSchedule;
@@ -185,6 +245,14 @@ public class ProtocolScheduleBuilder<C> {
   }
 
   private void validateForkOrdering() {
+    if (config.getDaoForkBlock().isEmpty()) {
+      validateClassicForkOrdering();
+    } else {
+      validateEthereumForkOrdering();
+    }
+  }
+
+  private void validateEthereumForkOrdering() {
     long lastForkBlock = 0;
     lastForkBlock = validateForkOrder("Homestead", config.getHomesteadBlockNumber(), lastForkBlock);
     lastForkBlock = validateForkOrder("DaoFork", config.getDaoForkBlock(), lastForkBlock);
@@ -200,6 +268,23 @@ public class ProtocolScheduleBuilder<C> {
         validateForkOrder(
             "ConstantinopleFix", config.getConstantinopleFixBlockNumber(), lastForkBlock);
     lastForkBlock = validateForkOrder("Istanbul", config.getIstanbulBlockNumber(), lastForkBlock);
+    lastForkBlock =
+        validateForkOrder("MuirGlacier", config.getMuirGlacierBlockNumber(), lastForkBlock);
+    assert (lastForkBlock >= 0);
+  }
+
+  private void validateClassicForkOrdering() {
+    long lastForkBlock = 0;
+    lastForkBlock = validateForkOrder("Homestead", config.getHomesteadBlockNumber(), lastForkBlock);
+    lastForkBlock =
+        validateForkOrder(
+            "ClassicTangerineWhistle", config.getEcip1015BlockNumber(), lastForkBlock);
+    lastForkBlock = validateForkOrder("DieHard", config.getDieHardBlockNumber(), lastForkBlock);
+    lastForkBlock = validateForkOrder("Gotham", config.getGothamBlockNumber(), lastForkBlock);
+    lastForkBlock =
+        validateForkOrder(
+            "DefuseDifficultyBomb", config.getDefuseDifficultyBombBlockNumber(), lastForkBlock);
+    lastForkBlock = validateForkOrder("Atlantis", config.getAtlantisBlockNumber(), lastForkBlock);
     assert (lastForkBlock >= 0);
   }
 }

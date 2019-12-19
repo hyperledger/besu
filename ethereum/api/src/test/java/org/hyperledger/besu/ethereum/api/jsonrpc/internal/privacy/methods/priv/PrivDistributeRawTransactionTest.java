@@ -16,18 +16,17 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransactionHandler;
+import org.hyperledger.besu.ethereum.privacy.SendTransactionResponse;
 import org.hyperledger.besu.util.bytes.BytesValues;
 
 import org.junit.Before;
@@ -48,49 +47,39 @@ public class PrivDistributeRawTransactionTest {
           + "200e885ff29e973e2576b6600181d1b0a2b5294e30d9be4a1981"
           + "ffb33a0b8c8a72657374726963746564";
 
-  final String MOCK_ORION_KEY = "93Ky7lXwFkMc7+ckoFgUMku5bpr9tz4zhmWmk9RlNng=";
-  private final String MOCK_PRIVACY_GROUP = "";
-
-  @Mock private TransactionPool transactionPool;
-
-  @Mock private JsonRpcParameter parameter;
-
   @Mock private PrivDistributeRawTransaction method;
-
-  @Mock private PrivateTransactionHandler privateTxHandler;
+  @Mock private PrivacyController privacyController;
 
   @Before
   public void before() {
-    method = new PrivDistributeRawTransaction(privateTxHandler, transactionPool, parameter);
+    method = new PrivDistributeRawTransaction(privacyController);
   }
 
   @Test
-  public void validTransactionHashReturnedAfterDistribute() throws Exception {
-    when(parameter.required(any(Object[].class), anyInt(), any()))
-        .thenReturn(VALID_PRIVATE_TRANSACTION_RLP_PRIVACY_GROUP);
-    when(privateTxHandler.sendToOrion(any(PrivateTransaction.class))).thenReturn(MOCK_ORION_KEY);
-    when(privateTxHandler.getPrivacyGroup(any(String.class), any(PrivateTransaction.class)))
-        .thenReturn(MOCK_PRIVACY_GROUP);
-    when(privateTxHandler.validatePrivateTransaction(
+  public void validTransactionHashReturnedAfterDistribute() {
+    final String enclavePublicKey = "93Ky7lXwFkMc7+ckoFgUMku5bpr9tz4zhmWmk9RlNng=";
+    when(privacyController.sendTransaction(any(PrivateTransaction.class)))
+        .thenReturn(new SendTransactionResponse(enclavePublicKey, ""));
+    when(privacyController.validatePrivateTransaction(
             any(PrivateTransaction.class), any(String.class)))
         .thenReturn(ValidationResult.valid());
 
-    final JsonRpcRequest request =
-        new JsonRpcRequest(
-            "2.0",
-            "priv_distributeRawTransaction",
-            new String[] {VALID_PRIVATE_TRANSACTION_RLP_PRIVACY_GROUP});
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest(
+                "2.0",
+                "priv_distributeRawTransaction",
+                new String[] {VALID_PRIVATE_TRANSACTION_RLP_PRIVACY_GROUP}));
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(
-            request.getId(), BytesValues.fromBase64(MOCK_ORION_KEY).toString());
+            request.getRequest().getId(), BytesValues.fromBase64(enclavePublicKey).toString());
 
     final JsonRpcResponse actualResponse = method.response(request);
 
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
-    verify(privateTxHandler).sendToOrion(any(PrivateTransaction.class));
-    verify(privateTxHandler).getPrivacyGroup(any(String.class), any(PrivateTransaction.class));
-    verify(privateTxHandler)
+    verify(privacyController).sendTransaction(any(PrivateTransaction.class));
+    verify(privacyController)
         .validatePrivateTransaction(any(PrivateTransaction.class), any(String.class));
   }
 }

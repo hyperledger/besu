@@ -15,9 +15,8 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -29,11 +28,9 @@ import org.hyperledger.besu.ethereum.api.query.LogsQuery;
 public class EthGetLogs implements JsonRpcMethod {
 
   private final BlockchainQueries blockchain;
-  private final JsonRpcParameter parameters;
 
-  public EthGetLogs(final BlockchainQueries blockchain, final JsonRpcParameter parameters) {
+  public EthGetLogs(final BlockchainQueries blockchain) {
     this.blockchain = blockchain;
-    this.parameters = parameters;
   }
 
   @Override
@@ -42,28 +39,26 @@ public class EthGetLogs implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest request) {
-    final FilterParameter filter =
-        parameters.required(request.getParams(), 0, FilterParameter.class);
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
+    final FilterParameter filter = requestContext.getRequiredParameter(0, FilterParameter.class);
     final LogsQuery query =
-        new LogsQuery.Builder()
-            .addresses(filter.getAddresses())
-            .topics(filter.getTopics().getTopics())
-            .build();
+        new LogsQuery.Builder().addresses(filter.getAddresses()).topics(filter.getTopics()).build();
 
     if (isValid(filter)) {
-      return new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
     }
     if (filter.getBlockhash() != null) {
       return new JsonRpcSuccessResponse(
-          request.getId(), new LogsResult(blockchain.matchingLogs(filter.getBlockhash(), query)));
+          requestContext.getRequest().getId(),
+          new LogsResult(blockchain.matchingLogs(filter.getBlockhash(), query)));
     }
 
     final long fromBlockNumber = filter.getFromBlock().getNumber().orElse(0);
     final long toBlockNumber = filter.getToBlock().getNumber().orElse(blockchain.headBlockNumber());
 
     return new JsonRpcSuccessResponse(
-        request.getId(),
+        requestContext.getRequest().getId(),
         new LogsResult(blockchain.matchingLogs(fromBlockNumber, toBlockNumber, query)));
   }
 

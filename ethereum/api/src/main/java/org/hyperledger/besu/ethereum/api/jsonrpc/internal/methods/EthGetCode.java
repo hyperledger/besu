@@ -15,9 +15,8 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.util.bytes.BytesValue;
@@ -28,13 +27,12 @@ import com.google.common.base.Suppliers;
 
 public class EthGetCode extends AbstractBlockParameterMethod {
 
-  public EthGetCode(final BlockchainQueries blockchainQueries, final JsonRpcParameter parameters) {
-    super(Suppliers.ofInstance(blockchainQueries), parameters);
+  public EthGetCode(final BlockchainQueries blockchainQueries) {
+    super(Suppliers.ofInstance(blockchainQueries));
   }
 
-  public EthGetCode(
-      final Supplier<BlockchainQueries> blockchainQueries, final JsonRpcParameter parameters) {
-    super(blockchainQueries, parameters);
+  public EthGetCode(final Supplier<BlockchainQueries> blockchainQueries) {
+    super(blockchainQueries);
   }
 
   @Override
@@ -43,13 +41,14 @@ public class EthGetCode extends AbstractBlockParameterMethod {
   }
 
   @Override
-  protected BlockParameter blockParameter(final JsonRpcRequest request) {
-    return getParameters().required(request.getParams(), 1, BlockParameter.class);
+  protected BlockParameter blockParameter(final JsonRpcRequestContext request) {
+    return request.getRequiredParameter(1, BlockParameter.class);
   }
 
   @Override
-  protected String resultByBlockNumber(final JsonRpcRequest request, final long blockNumber) {
-    final Address address = getParameters().required(request.getParams(), 0, Address.class);
+  protected String resultByBlockNumber(
+      final JsonRpcRequestContext request, final long blockNumber) {
+    final Address address = request.getRequiredParameter(0, Address.class);
     return getBlockchainQueries()
         .getCode(address, blockNumber)
         .map(BytesValue::toString)

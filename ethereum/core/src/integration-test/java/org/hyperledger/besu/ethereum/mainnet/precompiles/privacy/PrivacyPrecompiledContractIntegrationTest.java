@@ -23,8 +23,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.enclave.Enclave;
-import org.hyperledger.besu.enclave.types.SendRequest;
-import org.hyperledger.besu.enclave.types.SendRequestLegacy;
+import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.enclave.types.SendResponse;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -46,12 +45,12 @@ import org.hyperledger.orion.testutil.OrionKeyConfiguration;
 import org.hyperledger.orion.testutil.OrionTestHarness;
 import org.hyperledger.orion.testutil.OrionTestHarnessFactory;
 
-import java.io.IOException;
 import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 
 import com.google.common.collect.Lists;
+import io.vertx.core.Vertx;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -85,7 +84,7 @@ public class PrivacyPrecompiledContractIntegrationTest {
   private static OrionTestHarness testHarness;
   private static WorldStateArchive worldStateArchive;
   private static PrivateStateStorage privateStateStorage;
-  private static PrivateStateStorage.Updater storageUpdater;
+  private static Vertx vertx = Vertx.vertx();
 
   private PrivateTransactionProcessor mockPrivateTxProcessor() {
     final PrivateTransactionProcessor mockPrivateTransactionProcessor =
@@ -119,7 +118,8 @@ public class PrivacyPrecompiledContractIntegrationTest {
 
     testHarness.start();
 
-    enclave = new Enclave(testHarness.clientUrl());
+    final EnclaveFactory factory = new EnclaveFactory(vertx);
+    enclave = factory.createVertxEnclave(testHarness.clientUrl());
     messageFrame = mock(MessageFrame.class);
 
     worldStateArchive = mock(WorldStateArchive.class);
@@ -129,7 +129,7 @@ public class PrivacyPrecompiledContractIntegrationTest {
     when(worldStateArchive.getMutable(any())).thenReturn(Optional.of(mutableWorldState));
 
     privateStateStorage = mock(PrivateStateStorage.class);
-    storageUpdater = mock(PrivateStateStorage.Updater.class);
+    final PrivateStateStorage.Updater storageUpdater = mock(PrivateStateStorage.Updater.class);
     when(storageUpdater.putLatestStateRoot(nullable(Bytes32.class), any()))
         .thenReturn(storageUpdater);
     when(storageUpdater.putTransactionLogs(nullable(Bytes32.class), any()))
@@ -142,10 +142,11 @@ public class PrivacyPrecompiledContractIntegrationTest {
   @AfterClass
   public static void tearDownOnce() {
     testHarness.getOrion().stop();
+    vertx.close();
   }
 
   @Test
-  public void testUpCheck() throws IOException {
+  public void testUpCheck() {
     assertThat(enclave.upCheck()).isTrue();
   }
 
@@ -154,17 +155,12 @@ public class PrivacyPrecompiledContractIntegrationTest {
     final List<String> publicKeys = testHarness.getPublicKeys();
 
     final String s = new String(VALID_PRIVATE_TRANSACTION_RLP_BASE64, UTF_8);
-    final SendRequest sc =
-        new SendRequestLegacy(s, publicKeys.get(0), Lists.newArrayList(publicKeys.get(0)));
-    final SendResponse sr = enclave.send(sc);
+    final SendResponse sr =
+        enclave.send(s, publicKeys.get(0), Lists.newArrayList(publicKeys.get(0)));
 
     final PrivacyPrecompiledContract privacyPrecompiledContract =
         new PrivacyPrecompiledContract(
-            new SpuriousDragonGasCalculator(),
-            publicKeys.get(0),
-            enclave,
-            worldStateArchive,
-            privateStateStorage);
+            new SpuriousDragonGasCalculator(), enclave, worldStateArchive, privateStateStorage);
 
     privacyPrecompiledContract.setPrivateTransactionProcessor(mockPrivateTxProcessor());
 
@@ -180,9 +176,8 @@ public class PrivacyPrecompiledContractIntegrationTest {
     publicKeys.add("noPrivateKey");
 
     final String s = new String(VALID_PRIVATE_TRANSACTION_RLP_BASE64, UTF_8);
-    final SendRequest sc = new SendRequestLegacy(s, publicKeys.get(0), publicKeys);
 
-    final Throwable thrown = catchThrowable(() -> enclave.send(sc));
+    final Throwable thrown = catchThrowable(() -> enclave.send(s, publicKeys.get(0), publicKeys));
 
     assertThat(thrown).hasMessageContaining("EnclaveDecodePublicKey");
   }
@@ -193,9 +188,8 @@ public class PrivacyPrecompiledContractIntegrationTest {
     publicKeys.add("noPrivateKenoPrivateKenoPrivateKenoPrivateK");
 
     final String s = new String(VALID_PRIVATE_TRANSACTION_RLP_BASE64, UTF_8);
-    final SendRequest sc = new SendRequestLegacy(s, publicKeys.get(0), publicKeys);
 
-    final Throwable thrown = catchThrowable(() -> enclave.send(sc));
+    final Throwable thrown = catchThrowable(() -> enclave.send(s, publicKeys.get(0), publicKeys));
 
     assertThat(thrown).hasMessageContaining("NodeMissingPeerUrl");
   }

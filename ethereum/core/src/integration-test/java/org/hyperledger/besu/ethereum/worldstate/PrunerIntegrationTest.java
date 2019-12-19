@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.worldstate.Pruner.PruningPhase;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import org.hyperledger.besu.testutil.MockExecutorService;
@@ -63,42 +64,41 @@ public class PrunerIntegrationTest {
   private final MutableBlockchain blockchain = createInMemoryBlockchain(genesisBlock);
 
   @Test
-  public void pruner_smallState_manyOpsPerTx() throws InterruptedException {
+  public void pruner_smallState_manyOpsPerTx() {
     testPruner(3, 1, 1, 4, 1000);
   }
 
   @Test
-  public void pruner_largeState_fewOpsPerTx() throws InterruptedException {
+  public void pruner_largeState_fewOpsPerTx() {
     testPruner(2, 5, 5, 6, 5);
   }
 
   @Test
-  public void pruner_emptyBlocks() throws InterruptedException {
+  public void pruner_emptyBlocks() {
     testPruner(5, 0, 2, 5, 10);
   }
 
   @Test
-  public void pruner_markChainhead() throws InterruptedException {
+  public void pruner_markChainhead() {
     testPruner(4, 2, 1, 10, 20);
   }
 
   @Test
-  public void pruner_lowRelativeBlockConfirmations() throws InterruptedException {
+  public void pruner_lowRelativeBlockConfirmations() {
     testPruner(3, 2, 1, 4, 20);
   }
 
   @Test
-  public void pruner_highRelativeBlockConfirmations() throws InterruptedException {
+  public void pruner_highRelativeBlockConfirmations() {
     testPruner(3, 2, 9, 10, 20);
   }
 
   private void testPruner(
       final int numCycles,
       final int accountsPerBlock,
-      final long blockConfirmations,
+      final int blockConfirmations,
       final int numBlocksToKeep,
-      final int opsPerTransaction)
-      throws InterruptedException {
+      final int opsPerTransaction) {
 
     final var markSweepPruner =
         new MarkSweepPruner(
@@ -107,8 +107,8 @@ public class PrunerIntegrationTest {
         new Pruner(
             markSweepPruner,
             blockchain,
-            new MockExecutorService(),
-            new PruningConfiguration(blockConfirmations, numBlocksToKeep));
+            new PrunerConfiguration(blockConfirmations, numBlocksToKeep),
+            MockExecutorService::new);
 
     pruner.start();
 
@@ -119,13 +119,9 @@ public class PrunerIntegrationTest {
       var fullyMarkedBlockNum = cycle * numBlockInCycle + 1;
 
       // This should cause a full mark and sweep cycle
-      assertThat(pruner.getState()).isEqualByComparingTo(Pruner.State.IDLE);
+      assertThat(pruner.getPruningPhase()).isEqualByComparingTo(PruningPhase.IDLE);
       generateBlockchainData(numBlockInCycle, accountsPerBlock);
-      assertThat(pruner.getState()).isEqualByComparingTo(Pruner.State.IDLE);
-
-      // Restarting the Pruner shouldn't matter since we're idle
-      pruner.stop();
-      pruner.start();
+      assertThat(pruner.getPruningPhase()).isEqualByComparingTo(PruningPhase.IDLE);
 
       // Collect the nodes we expect to keep
       final Set<BytesValue> expectedNodes = new HashSet<>();

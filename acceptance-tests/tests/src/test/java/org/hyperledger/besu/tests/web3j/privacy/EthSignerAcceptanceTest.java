@@ -28,8 +28,8 @@ import java.util.Collections;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.web3j.protocol.pantheon.response.privacy.PrivacyGroup;
-import org.web3j.protocol.pantheon.response.privacy.PrivateTransactionReceipt;
+import org.web3j.protocol.besu.response.privacy.PrivacyGroup;
+import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
 import org.web3j.utils.Base64String;
 
 public class EthSignerAcceptanceTest extends PrivacyAcceptanceTestBase {
@@ -107,8 +107,8 @@ public class EthSignerAcceptanceTest extends PrivacyAcceptanceTestBase {
             new PrivacyGroup(
                 privacyGroupId,
                 PrivacyGroup.Type.PANTHEON,
-                "Default Name",
-                "Default Description",
+                "",
+                "",
                 Base64String.wrapList(minerNode.getEnclaveKey()))));
 
     final String transactionHash =

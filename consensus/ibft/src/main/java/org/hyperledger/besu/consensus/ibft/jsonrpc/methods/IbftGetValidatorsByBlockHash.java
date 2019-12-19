@@ -16,9 +16,8 @@ package org.hyperledger.besu.consensus.ibft.jsonrpc.methods;
 
 import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -36,15 +35,11 @@ public class IbftGetValidatorsByBlockHash implements JsonRpcMethod {
 
   private final Blockchain blockchain;
   private final BlockInterface blockInterface;
-  private final JsonRpcParameter parameters;
 
   public IbftGetValidatorsByBlockHash(
-      final Blockchain blockchain,
-      final BlockInterface blockInterface,
-      final JsonRpcParameter parameters) {
+      final Blockchain blockchain, final BlockInterface blockInterface) {
     this.blockchain = blockchain;
     this.blockInterface = blockInterface;
-    this.parameters = parameters;
   }
 
   @Override
@@ -53,12 +48,13 @@ public class IbftGetValidatorsByBlockHash implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest request) {
-    return new JsonRpcSuccessResponse(request.getId(), blockResult(request));
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
+    return new JsonRpcSuccessResponse(
+        requestContext.getRequest().getId(), blockResult(requestContext));
   }
 
-  private Object blockResult(final JsonRpcRequest request) {
-    final Hash hash = parameters.required(request.getParams(), 0, Hash.class);
+  private Object blockResult(final JsonRpcRequestContext request) {
+    final Hash hash = request.getRequiredParameter(0, Hash.class);
     LOG.trace("Received RPC rpcName={} blockHash={}", getName(), hash);
     final Optional<BlockHeader> blockHeader = blockchain.getBlockHeader(hash);
     return blockHeader

@@ -17,7 +17,7 @@ package org.hyperledger.besu.tests.web3j.privacy;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.enclave.Enclave;
-import org.hyperledger.besu.enclave.types.ReceiveRequest;
+import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyAcceptanceTestBase;
@@ -27,16 +27,19 @@ import org.hyperledger.besu.util.bytes.BytesValue;
 import org.hyperledger.besu.util.bytes.BytesValues;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Collections;
 
+import io.vertx.core.Vertx;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.web3j.crypto.Credentials;
 import org.web3j.crypto.RawTransaction;
 import org.web3j.crypto.TransactionEncoder;
+import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
 import org.web3j.protocol.eea.crypto.PrivateTransactionEncoder;
 import org.web3j.protocol.eea.crypto.RawPrivateTransaction;
-import org.web3j.protocol.pantheon.response.privacy.PrivateTransactionReceipt;
 import org.web3j.utils.Base64String;
 import org.web3j.utils.Numeric;
 import org.web3j.utils.Restriction;
@@ -51,6 +54,8 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
   private PrivacyNode alice;
   private PrivacyNode bob;
   private PrivacyNode charlie;
+  private final Vertx vertx = Vertx.vertx();
+  private final EnclaveFactory enclaveFactory = new EnclaveFactory(vertx);
 
   @Before
   public void setUp() throws Exception {
@@ -62,6 +67,11 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
     charlie =
         privacyBesu.createPrivateTransactionEnabledNode("node3", privacyAccountResolver.resolve(2));
     privacyCluster.start(alice, bob, charlie);
+  }
+
+  @After
+  public void cleanUp() {
+    vertx.close();
   }
 
   @Test
@@ -147,19 +157,17 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
     final String transactionKey =
         alice.execute(privacyTransactions.privDistributeTransaction(signedPrivateTransaction));
 
-    final Enclave aliceEnclave = new Enclave(alice.getOrion().clientUrl());
+    final Enclave aliceEnclave = enclaveFactory.createVertxEnclave(alice.getOrion().clientUrl());
     final ReceiveResponse aliceRR =
         aliceEnclave.receive(
-            new ReceiveRequest(
-                BytesValues.asBase64String(BytesValue.fromHexString(transactionKey)),
-                alice.getEnclaveKey()));
+            BytesValues.asBase64String(BytesValue.fromHexString(transactionKey)),
+            alice.getEnclaveKey());
 
-    final Enclave bobEnclave = new Enclave(bob.getOrion().clientUrl());
+    final Enclave bobEnclave = enclaveFactory.createVertxEnclave(bob.getOrion().clientUrl());
     final ReceiveResponse bobRR =
         bobEnclave.receive(
-            new ReceiveRequest(
-                BytesValues.asBase64String(BytesValue.fromHexString(transactionKey)),
-                bob.getEnclaveKey()));
+            BytesValues.asBase64String(BytesValue.fromHexString(transactionKey)),
+            bob.getEnclaveKey());
 
     assertThat(bobRR).isEqualToComparingFieldByField(aliceRR);
 
@@ -184,7 +192,15 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
             "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
             null,
             eventEmmitterDeployed,
-            Collections.emptyList());
+            Collections.emptyList(),
+            "0x023955c49d6265c579561940287449242704d5fd239ff07ea36a3fc7aface61c",
+            "0x82e521ee16ff13104c5f81e8354ecaaafd5450b710b07f620204032bfe76041a",
+            "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=",
+            new ArrayList<>(
+                Collections.singletonList("Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=")),
+            null,
+            "0x1",
+            null);
 
     alice.verify(
         privateTransactionVerifier.validPrivateTransactionReceipt(

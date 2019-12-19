@@ -38,6 +38,8 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
   private static final BytesValue LOGS_KEY_SUFFIX = BytesValue.of("LOGS".getBytes(UTF_8));
   private static final BytesValue OUTPUT_KEY_SUFFIX = BytesValue.of("OUTPUT".getBytes(UTF_8));
   private static final BytesValue METADATA_KEY_SUFFIX = BytesValue.of("METADATA".getBytes(UTF_8));
+  private static final BytesValue STATUS_KEY_SUFFIX = BytesValue.of("STATUS".getBytes(UTF_8));
+  private static final BytesValue REVERT_KEY_SUFFIX = BytesValue.of("REVERT".getBytes(UTF_8));
 
   private final KeyValueStorage keyValueStorage;
 
@@ -68,6 +70,16 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
   @Override
   public Optional<BytesValue> getTransactionOutput(final Bytes32 transactionHash) {
     return get(transactionHash, OUTPUT_KEY_SUFFIX);
+  }
+
+  @Override
+  public Optional<BytesValue> getStatus(final Bytes32 transactionHash) {
+    return get(transactionHash, STATUS_KEY_SUFFIX);
+  }
+
+  @Override
+  public Optional<BytesValue> getRevertReason(final Bytes32 transactionHash) {
+    return get(transactionHash, REVERT_KEY_SUFFIX);
   }
 
   @Override
@@ -127,6 +139,20 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
     @Override
     public Updater putTransactionResult(final Bytes32 transactionHash, final BytesValue events) {
       set(transactionHash, OUTPUT_KEY_SUFFIX, events);
+      return this;
+    }
+
+    @Override
+    public PrivateStateStorage.Updater putTransactionStatus(
+        final Bytes32 transactionHash, final BytesValue status) {
+      set(transactionHash, STATUS_KEY_SUFFIX, status);
+      return this;
+    }
+
+    @Override
+    public PrivateStateStorage.Updater putTransactionRevertReason(
+        final Bytes32 transactionHash, final BytesValue revertReason) {
+      set(transactionHash, REVERT_KEY_SUFFIX, revertReason);
       return this;
     }
 

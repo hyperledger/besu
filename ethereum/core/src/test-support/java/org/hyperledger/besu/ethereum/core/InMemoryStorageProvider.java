@@ -20,8 +20,6 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
@@ -75,11 +73,6 @@ public class InMemoryStorageProvider implements StorageProvider {
   @Override
   public WorldStatePreimageStorage createWorldStatePreimageStorage() {
     return new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage());
-  }
-
-  @Override
-  public PrivateStateStorage createPrivateStateStorage() {
-    return new PrivateStateKeyValueStorage(new InMemoryKeyValueStorage());
   }
 
   @Override

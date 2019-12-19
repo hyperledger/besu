@@ -15,8 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TransactionTraceParams;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
@@ -42,17 +41,14 @@ import org.apache.logging.log4j.Logger;
 public class DebugTraceBlock implements JsonRpcMethod {
 
   private static final Logger LOG = LogManager.getLogger();
-  private final JsonRpcParameter parameters;
   private final BlockTracer blockTracer;
   private final BlockHeaderFunctions blockHeaderFunctions;
   private final BlockchainQueries blockchain;
 
   public DebugTraceBlock(
-      final JsonRpcParameter parameters,
       final BlockTracer blockTracer,
       final BlockHeaderFunctions blockHeaderFunctions,
       final BlockchainQueries blockchain) {
-    this.parameters = parameters;
     this.blockTracer = blockTracer;
     this.blockHeaderFunctions = blockHeaderFunctions;
     this.blockchain = blockchain;
@@ -64,18 +60,19 @@ public class DebugTraceBlock implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest request) {
-    final String input = parameters.required(request.getParams(), 0, String.class);
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
+    final String input = requestContext.getRequiredParameter(0, String.class);
     final Block block;
     try {
       block = Block.readFrom(RLP.input(BytesValue.fromHexString(input)), this.blockHeaderFunctions);
     } catch (final RLPException e) {
       LOG.debug("Failed to parse block RLP", e);
-      return new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
     }
     final TraceOptions traceOptions =
-        parameters
-            .optional(request.getParams(), 1, TransactionTraceParams.class)
+        requestContext
+            .getOptionalParameter(1, TransactionTraceParams.class)
             .map(TransactionTraceParams::traceOptions)
             .orElse(TraceOptions.DEFAULT);
 
@@ -86,9 +83,10 @@ public class DebugTraceBlock implements JsonRpcMethod {
               .map(BlockTrace::getTransactionTraces)
               .map(DebugTraceTransactionResult::of)
               .orElse(null);
-      return new JsonRpcSuccessResponse(request.getId(), results);
+      return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), results);
     } else {
-      return new JsonRpcErrorResponse(request.getId(), JsonRpcError.PARENT_BLOCK_NOT_FOUND);
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), JsonRpcError.PARENT_BLOCK_NOT_FOUND);
     }
   }
 }

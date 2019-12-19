@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -35,6 +36,7 @@ public class JsonRpcConfiguration {
   private List<String> hostsWhitelist = Arrays.asList("localhost", "127.0.0.1");
   private boolean authenticationEnabled = false;
   private String authenticationCredentialsFile;
+  private File authenticationPublicKeyFile;
 
   public static JsonRpcConfiguration createDefault() {
     final JsonRpcConfiguration config = new JsonRpcConfiguration();
@@ -102,42 +104,6 @@ public class JsonRpcConfiguration {
     this.hostsWhitelist = hostsWhitelist;
   }
 
-  @Override
-  public String toString() {
-    return MoreObjects.toStringHelper(this)
-        .add("enabled", enabled)
-        .add("port", port)
-        .add("host", host)
-        .add("corsAllowedDomains", corsAllowedDomains)
-        .add("hostsWhitelist", hostsWhitelist)
-        .add("rpcApis", rpcApis)
-        .add("authenticationEnabled", authenticationEnabled)
-        .add("authenticationCredentialsFile", authenticationCredentialsFile)
-        .toString();
-  }
-
-  @Override
-  public boolean equals(final Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    final JsonRpcConfiguration that = (JsonRpcConfiguration) o;
-    return enabled == that.enabled
-        && port == that.port
-        && Objects.equals(host, that.host)
-        && Objects.equals(corsAllowedDomains, that.corsAllowedDomains)
-        && Objects.equals(hostsWhitelist, that.hostsWhitelist)
-        && Objects.equals(rpcApis, that.rpcApis);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(enabled, port, host, corsAllowedDomains, hostsWhitelist, rpcApis);
-  }
-
   public boolean isAuthenticationEnabled() {
     return authenticationEnabled;
   }
@@ -152,5 +118,62 @@ public class JsonRpcConfiguration {
 
   public String getAuthenticationCredentialsFile() {
     return authenticationCredentialsFile;
+  }
+
+  public File getAuthenticationPublicKeyFile() {
+    return authenticationPublicKeyFile;
+  }
+
+  public void setAuthenticationPublicKeyFile(final File authenticationPublicKeyFile) {
+    this.authenticationPublicKeyFile = authenticationPublicKeyFile;
+  }
+
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this)
+        .add("enabled", enabled)
+        .add("port", port)
+        .add("host", host)
+        .add("corsAllowedDomains", corsAllowedDomains)
+        .add("hostsWhitelist", hostsWhitelist)
+        .add("rpcApis", rpcApis)
+        .add("authenticationEnabled", authenticationEnabled)
+        .add("authenticationCredentialsFile", authenticationCredentialsFile)
+        .add("authenticationPublicKeyFile", authenticationPublicKeyFile)
+        .toString();
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    final JsonRpcConfiguration that = (JsonRpcConfiguration) o;
+    return enabled == that.enabled
+        && port == that.port
+        && authenticationEnabled == that.authenticationEnabled
+        && Objects.equals(host, that.host)
+        && Objects.equals(corsAllowedDomains, that.corsAllowedDomains)
+        && Objects.equals(rpcApis, that.rpcApis)
+        && Objects.equals(hostsWhitelist, that.hostsWhitelist)
+        && Objects.equals(authenticationCredentialsFile, that.authenticationCredentialsFile)
+        && Objects.equals(authenticationPublicKeyFile, that.authenticationPublicKeyFile);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(
+        enabled,
+        port,
+        host,
+        corsAllowedDomains,
+        rpcApis,
+        hostsWhitelist,
+        authenticationEnabled,
+        authenticationCredentialsFile,
+        authenticationPublicKeyFile);
   }
 }

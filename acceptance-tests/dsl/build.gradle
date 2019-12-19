@@ -37,7 +37,7 @@ dependencies {
   implementation 'org.awaitility:awaitility'
   implementation 'org.java-websocket:Java-WebSocket'
   implementation 'org.web3j:abi'
-  implementation 'org.web3j:pantheon'
+  implementation 'org.web3j:besu'
   implementation 'org.web3j:crypto'
   implementation 'tech.pegasys.ethsigner.internal:core'
   implementation 'tech.pegasys.ethsigner.internal:file-based'

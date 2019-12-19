@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.retesteth;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcHttpService;
-import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.LivenessCheck;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugAccountRange;
@@ -29,7 +28,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetTransact
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthSendRawTransaction;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Web3ClientVersion;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.retesteth.methods.TestGetLogHash;
 import org.hyperledger.besu.ethereum.retesteth.methods.TestImportRawBlock;
@@ -39,9 +37,10 @@ import org.hyperledger.besu.ethereum.retesteth.methods.TestRewindToBlock;
 import org.hyperledger.besu.ethereum.retesteth.methods.TestSetChainParams;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
-import java.util.HashMap;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import io.vertx.core.Vertx;
 
@@ -59,35 +58,28 @@ public class RetestethService {
     vertx = Vertx.vertx();
     retestethContext = new RetestethContext();
 
-    final JsonRpcParameter parameters = new JsonRpcParameter();
     final BlockResultFactory blockResult = new BlockResultFactory();
-    final Map<String, JsonRpcMethod> jsonRpcMethods = new HashMap<>();
-    JsonRpcMethodsFactory.addMethods(
-        jsonRpcMethods,
-        new Web3ClientVersion(clientVersion),
-        new TestSetChainParams(retestethContext),
-        new TestImportRawBlock(retestethContext, parameters),
-        new EthBlockNumber(retestethContext::getBlockchainQueries, true),
-        new EthGetBlockByNumber(
-            retestethContext::getBlockchainQueries, blockResult, parameters, true),
-        new DebugAccountRange(parameters, retestethContext::getBlockchainQueries),
-        new EthGetBalance(retestethContext::getBlockchainQueries, parameters),
-        new EthGetCode(retestethContext::getBlockchainQueries, parameters),
-        new EthGetTransactionCount(
-            retestethContext::getBlockchainQueries,
-            retestethContext::getPendingTransactions,
-            parameters,
-            true),
-        new DebugStorageRangeAt(
-            parameters,
-            retestethContext::getBlockchainQueries,
-            retestethContext::getBlockReplay,
-            true),
-        new TestModifyTimestamp(retestethContext, parameters),
-        new EthSendRawTransaction(retestethContext::getTransactionPool, parameters, true),
-        new TestMineBlocks(retestethContext, parameters),
-        new TestGetLogHash(retestethContext, parameters),
-        new TestRewindToBlock(retestethContext, parameters));
+    final Map<String, JsonRpcMethod> jsonRpcMethods =
+        mapOf(
+            new Web3ClientVersion(clientVersion),
+            new TestSetChainParams(retestethContext),
+            new TestImportRawBlock(retestethContext),
+            new EthBlockNumber(retestethContext::getBlockchainQueries, true),
+            new EthGetBlockByNumber(retestethContext::getBlockchainQueries, blockResult, true),
+            new DebugAccountRange(retestethContext::getBlockchainQueries),
+            new EthGetBalance(retestethContext::getBlockchainQueries),
+            new EthGetCode(retestethContext::getBlockchainQueries),
+            new EthGetTransactionCount(
+                retestethContext::getBlockchainQueries,
+                retestethContext::getPendingTransactions,
+                true),
+            new DebugStorageRangeAt(
+                retestethContext::getBlockchainQueries, retestethContext::getBlockReplay, true),
+            new TestModifyTimestamp(retestethContext),
+            new EthSendRawTransaction(retestethContext::getTransactionPool, true),
+            new TestMineBlocks(retestethContext),
+            new TestGetLogHash(retestethContext),
+            new TestRewindToBlock(retestethContext));
 
     jsonRpcHttpService =
         new JsonRpcHttpService(
@@ -111,5 +103,10 @@ public class RetestethService {
 
   public void stop() {
     jsonRpcHttpService.stop();
+  }
+
+  private static Map<String, JsonRpcMethod> mapOf(final JsonRpcMethod... rpcMethods) {
+    return Arrays.stream(rpcMethods)
+        .collect(Collectors.toMap(JsonRpcMethod::getName, rpcMethod -> rpcMethod));
   }
 }

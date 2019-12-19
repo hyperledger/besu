@@ -22,7 +22,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
@@ -50,12 +50,10 @@ import org.mockito.Mockito;
 
 public class DebugTraceBlockTest {
 
-  private final JsonRpcParameter parameters = new JsonRpcParameter();
   private final BlockTracer blockTracer = mock(BlockTracer.class);
   private final BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
   private final DebugTraceBlock debugTraceBlock =
-      new DebugTraceBlock(
-          parameters, blockTracer, new MainnetBlockHeaderFunctions(), blockchainQueries);
+      new DebugTraceBlock(blockTracer, new MainnetBlockHeaderFunctions(), blockchainQueries);
 
   @Test
   public void nameShouldBeDebugTraceBlock() {
@@ -77,7 +75,8 @@ public class DebugTraceBlockTest {
                     .setParentHash(parentBlock.getHash()));
 
     final Object[] params = new Object[] {block.toRlp().toString()};
-    final JsonRpcRequest request = new JsonRpcRequest("2.0", "debug_traceBlock", params);
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(new JsonRpcRequest("2.0", "debug_traceBlock", params));
 
     final TraceFrame traceFrame =
         new TraceFrame(
@@ -139,7 +138,8 @@ public class DebugTraceBlockTest {
                     .setBlockHeaderFunctions(new MainnetBlockHeaderFunctions()));
 
     final Object[] params = new Object[] {block.toRlp().toString()};
-    final JsonRpcRequest request = new JsonRpcRequest("2.0", "debug_traceBlock", params);
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(new JsonRpcRequest("2.0", "debug_traceBlock", params));
 
     when(blockchainQueries.blockByHash(any())).thenReturn(Optional.empty());
 

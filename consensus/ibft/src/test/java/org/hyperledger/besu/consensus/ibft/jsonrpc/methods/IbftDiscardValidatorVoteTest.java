@@ -20,8 +20,8 @@ import static org.mockito.Mockito.verify;
 
 import org.hyperledger.besu.consensus.common.VoteProposer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -33,7 +33,6 @@ import org.junit.rules.ExpectedException;
 
 public class IbftDiscardValidatorVoteTest {
   private final VoteProposer voteProposer = mock(VoteProposer.class);
-  private final JsonRpcParameter jsonRpcParameter = new JsonRpcParameter();
   private final String IBFT_METHOD = "ibft_discardValidatorVote";
   private final String JSON_RPC_VERSION = "2.0";
   private IbftDiscardValidatorVote method;
@@ -42,7 +41,7 @@ public class IbftDiscardValidatorVoteTest {
 
   @Before
   public void setup() {
-    method = new IbftDiscardValidatorVote(voteProposer, jsonRpcParameter);
+    method = new IbftDiscardValidatorVote(voteProposer);
   }
 
   @Test
@@ -52,7 +51,7 @@ public class IbftDiscardValidatorVoteTest {
 
   @Test
   public void exceptionWhenNoParamsSupplied() {
-    final JsonRpcRequest request = requestWithParams();
+    final JsonRpcRequestContext request = requestWithParams();
 
     expectedException.expect(InvalidJsonRpcParameters.class);
     expectedException.expectMessage("Missing required json rpc parameter at index 0");
@@ -62,7 +61,7 @@ public class IbftDiscardValidatorVoteTest {
 
   @Test
   public void exceptionWhenInvalidAddressParameterSupplied() {
-    final JsonRpcRequest request = requestWithParams("InvalidAddress");
+    final JsonRpcRequestContext request = requestWithParams("InvalidAddress");
 
     expectedException.expect(InvalidJsonRpcParameters.class);
     expectedException.expectMessage("Invalid json rpc parameter at index 0");
@@ -73,9 +72,10 @@ public class IbftDiscardValidatorVoteTest {
   @Test
   public void discardValidator() {
     final Address parameterAddress = Address.fromHexString("1");
-    final JsonRpcRequest request = requestWithParams(parameterAddress);
+    final JsonRpcRequestContext request = requestWithParams(parameterAddress);
 
-    final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(request.getId(), true);
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcSuccessResponse(request.getRequest().getId(), true);
 
     final JsonRpcResponse response = method.response(request);
 
@@ -84,7 +84,7 @@ public class IbftDiscardValidatorVoteTest {
     verify(voteProposer).discard(parameterAddress);
   }
 
-  private JsonRpcRequest requestWithParams(final Object... params) {
-    return new JsonRpcRequest(JSON_RPC_VERSION, IBFT_METHOD, params);
+  private JsonRpcRequestContext requestWithParams(final Object... params) {
+    return new JsonRpcRequestContext(new JsonRpcRequest(JSON_RPC_VERSION, IBFT_METHOD, params));
   }
 }

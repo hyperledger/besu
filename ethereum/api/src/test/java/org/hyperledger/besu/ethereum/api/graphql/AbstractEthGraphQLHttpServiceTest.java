@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.graphql;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -88,10 +89,6 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
   final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
   protected static final MediaType GRAPHQL = MediaType.parse("application/graphql; charset=utf-8");
 
-  private MutableBlockchain blockchain;
-
-  private WorldStateArchive stateArchive;
-
   private ProtocolContext<Void> context;
 
   @BeforeClass
@@ -147,11 +144,15 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
                     true,
                     Instant.ofEpochSecond(Integer.MAX_VALUE))));
 
-    stateArchive = InMemoryStorageProvider.createInMemoryWorldStateArchive();
+    final WorldStateArchive stateArchive =
+        InMemoryStorageProvider.createInMemoryWorldStateArchive();
     GENESIS_CONFIG.writeStateTo(stateArchive.getMutable());
 
-    blockchain = InMemoryStorageProvider.createInMemoryBlockchain(GENESIS_BLOCK);
+    final MutableBlockchain blockchain =
+        InMemoryStorageProvider.createInMemoryBlockchain(GENESIS_BLOCK);
     context = new ProtocolContext<>(blockchain, stateArchive, null);
+    final BlockchainQueries blockchainQueries =
+        new BlockchainQueries(context.getBlockchain(), context.getWorldStateArchive());
 
     final Set<Capability> supportedCapabilities = new HashSet<>();
     supportedCapabilities.add(EthProtocol.ETH62);
@@ -162,8 +163,7 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
     config.setPort(0);
     final GraphQLDataFetcherContext dataFetcherContext =
         new GraphQLDataFetcherContext(
-            blockchain,
-            stateArchive,
+            blockchainQueries,
             PROTOCOL_SCHEDULE,
             transactionPoolMock,
             miningCoordinatorMock,

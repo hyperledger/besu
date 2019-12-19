@@ -19,15 +19,16 @@ import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
 import org.hyperledger.besu.controller.KeyPairUtil;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveException;
-import org.hyperledger.besu.enclave.types.SendRequest;
-import org.hyperledger.besu.enclave.types.SendRequestLegacy;
+import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.storage.StorageProvider;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivacyStorageProvider;
+import org.hyperledger.besu.ethereum.privacy.storage.keyvalue.PrivacyKeyValueStorageProviderBuilder;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
-import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBKeyValuePrivacyStorageFactory;
+import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBKeyValueStorageFactory;
+import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBFactoryConfiguration;
 import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
@@ -50,6 +51,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import io.vertx.core.Vertx;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.awaitility.Awaitility;
@@ -64,10 +66,13 @@ public class PrivacyNode implements AutoCloseable {
 
   private final OrionTestHarness orion;
   private final BesuNode besu;
+  private final Vertx vertx;
 
-  public PrivacyNode(final PrivacyNodeConfiguration privacyConfiguration) throws IOException {
+  public PrivacyNode(final PrivacyNodeConfiguration privacyConfiguration, final Vertx vertx)
+      throws IOException {
     final Path orionDir = Files.createTempDirectory("acctest-orion");
     this.orion = OrionTestHarnessFactory.create(orionDir, privacyConfiguration.getOrionKeyConfig());
+    this.vertx = vertx;
 
     final BesuNodeConfiguration besuConfig = privacyConfiguration.getBesuConfig();
 
@@ -100,20 +105,19 @@ public class PrivacyNode implements AutoCloseable {
             orion.nodeUrl(),
             Arrays.toString(otherNodes.stream().map(node -> node.besu.getName()).toArray()),
             Arrays.toString(otherNodes.stream().map(node -> node.orion.nodeUrl()).toArray())));
-    Enclave enclaveClient = new Enclave(orion.clientUrl());
-    SendRequest sendRequest1 =
-        new SendRequestLegacy(
-            "SGVsbG8sIFdvcmxkIQ==",
-            orion.getDefaultPublicKey(),
-            otherNodes.stream()
-                .map(node -> node.orion.getDefaultPublicKey())
-                .collect(Collectors.toList()));
+    final EnclaveFactory factory = new EnclaveFactory(vertx);
+    final Enclave enclaveClient = factory.createVertxEnclave(orion.clientUrl());
+    final String payload = "SGVsbG8sIFdvcmxkIQ==";
+    final List<String> to =
+        otherNodes.stream()
+            .map(node -> node.orion.getDefaultPublicKey())
+            .collect(Collectors.toList());
 
     Awaitility.await()
         .until(
             () -> {
               try {
-                enclaveClient.send(sendRequest1);
+                enclaveClient.send(payload, orion.getDefaultPublicKey(), to);
                 return true;
               } catch (final EnclaveException e) {
                 LOG.info("Waiting for enclave connectivity");
@@ -157,6 +161,7 @@ public class PrivacyNode implements AutoCloseable {
               .setEnclavePublicKeyUsingFile(orion.getConfig().publicKeys().get(0).toFile())
               .setStorageProvider(createKeyValueStorageProvider(dataDir, dbDir))
               .setPrivateKeyPath(KeyPairUtil.getDefaultKeyFile(besu.homeDirectory()).toPath())
+              .setEnclaveFactory(new EnclaveFactory(vertx))
               .build();
     } catch (IOException e) {
       throw new RuntimeException();
@@ -209,18 +214,20 @@ public class PrivacyNode implements AutoCloseable {
     return besu.getConfiguration();
   }
 
-  private StorageProvider createKeyValueStorageProvider(
+  private PrivacyStorageProvider createKeyValueStorageProvider(
       final Path dataLocation, final Path dbLocation) {
-    return new KeyValueStorageProviderBuilder()
+    return new PrivacyKeyValueStorageProviderBuilder()
         .withStorageFactory(
             new RocksDBKeyValuePrivacyStorageFactory(
-                () ->
-                    new RocksDBFactoryConfiguration(
-                        MAX_OPEN_FILES,
-                        MAX_BACKGROUND_COMPACTIONS,
-                        BACKGROUND_THREAD_COUNT,
-                        CACHE_CAPACITY),
-                Arrays.asList(KeyValueSegmentIdentifier.values())))
+                new RocksDBKeyValueStorageFactory(
+                    () ->
+                        new RocksDBFactoryConfiguration(
+                            MAX_OPEN_FILES,
+                            MAX_BACKGROUND_COMPACTIONS,
+                            BACKGROUND_THREAD_COUNT,
+                            CACHE_CAPACITY),
+                    Arrays.asList(KeyValueSegmentIdentifier.values()),
+                    RocksDBMetricsFactory.PRIVATE_ROCKS_DB_METRICS)))
         .withCommonConfiguration(new BesuConfigurationImpl(dataLocation, dbLocation))
         .withMetricsSystem(new NoOpMetricsSystem())
         .build();

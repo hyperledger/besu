@@ -62,6 +62,7 @@ dependencies {
 
   testSupportImplementation project(path: ':config', configuration: 'testSupportArtifacts')
   testSupportImplementation project(':testutil')
+  testSupportImplementation project(':ethereum:eth')
 
   testSupportImplementation 'junit:junit'
   testSupportImplementation 'org.assertj:assertj-core'
@@ -90,10 +91,11 @@ task testJar (type: Jar) {
 }
 
 test {
+  exclude 'org/hyperledger/besu/ethereum/mainnet/DifficultyCalculatorTests.class'
+  exclude 'org/hyperledger/besu/ethereum/core/TransactionTest.class'
   exclude 'org/hyperledger/besu/ethereum/vm/**ReferenceTest.class'
   exclude 'org/hyperledger/besu/ethereum/vm/blockchain/**.class'
   exclude 'org/hyperledger/besu/ethereum/vm/generalstate/**.class'
-  exclude 'org/hyperledger/besu/ethereum/core/TransactionTest.class'
 }
 
 def generateTestFiles(FileTree jsonPath, File templateFile, String pathstrip, String destination, String namePrefix) {
@@ -108,7 +110,9 @@ def generateTestFiles(FileTree jsonPath, File templateFile, String pathstrip, St
       if (!testJsonFile.getName().toString().startsWith(".")) {
         String parentDirectory = testJsonFile.getParentFile().getName()
         String testFile = testJsonFile.getName()
-        if(testJsonFile.getParentFile().getParentFile().getName() != pathstrip) {
+        if(testJsonFile.getParentFile().getName() == pathstrip) {
+          paths << pathstrip + "/" + testFile
+        } else if(testJsonFile.getParentFile().getParentFile().getName() != pathstrip) {
           paths << pathstrip + "/" + testJsonFile.getParentFile().getParentFile().getName() + "/" + parentDirectory + "/" + testFile
         } else {
           paths << pathstrip + "/" + parentDirectory + "/" + testFile
@@ -183,10 +187,11 @@ task referenceTests(type: Test, dependsOn: [
   }
   scanForTestClasses = false
   enableAssertions = true
+  include 'org/hyperledger/besu/ethereum/core/TransactionTest.class'
+  include 'org/hyperledger/besu/ethereum/mainnet/DifficultyCalculatorTests.class'
   include 'org/hyperledger/besu/ethereum/vm/**ReferenceTest.class'
   include 'org/hyperledger/besu/ethereum/vm/blockchain/**.class'
   include 'org/hyperledger/besu/ethereum/vm/generalstate/**.class'
-  include 'org/hyperledger/besu/ethereum/core/TransactionTest.class'
 }
 
 artifacts {

@@ -24,9 +24,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
@@ -55,7 +55,7 @@ public class EthCallTest {
 
   @Before
   public void setUp() {
-    method = new EthCall(blockchainQueries, transactionSimulator, new JsonRpcParameter());
+    method = new EthCall(blockchainQueries, transactionSimulator);
   }
 
   @Test
@@ -66,7 +66,7 @@ public class EthCallTest {
   @Test
   public void shouldThrowInvalidJsonRpcParametersExceptionWhenMissingToField() {
     final CallParameter callParameter = new JsonCallParameter("0x0", null, "0x0", "0x0", "0x0", "");
-    final JsonRpcRequest request = ethCallRequest(callParameter, "latest");
+    final JsonRpcRequestContext request = ethCallRequest(callParameter, "latest");
 
     final Throwable thrown = catchThrowable(() -> method.response(request));
 
@@ -78,7 +78,7 @@ public class EthCallTest {
 
   @Test
   public void shouldReturnNullWhenProcessorReturnsEmpty() {
-    final JsonRpcRequest request = ethCallRequest(callParameter(), "latest");
+    final JsonRpcRequestContext request = ethCallRequest(callParameter(), "latest");
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, null);
 
     when(transactionSimulator.process(any(), anyLong())).thenReturn(Optional.empty());
@@ -92,7 +92,7 @@ public class EthCallTest {
   @Test
   public void shouldAcceptRequestWhenMissingOptionalFields() {
     final CallParameter callParameter = new JsonCallParameter(null, "0x0", null, null, null, null);
-    final JsonRpcRequest request = ethCallRequest(callParameter, "latest");
+    final JsonRpcRequestContext request = ethCallRequest(callParameter, "latest");
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(null, BytesValue.of().toString());
 
@@ -106,7 +106,7 @@ public class EthCallTest {
 
   @Test
   public void shouldReturnExecutionResultWhenExecutionIsSuccessful() {
-    final JsonRpcRequest request = ethCallRequest(callParameter(), "latest");
+    final JsonRpcRequestContext request = ethCallRequest(callParameter(), "latest");
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(null, BytesValue.of(1).toString());
     mockTransactionProcessorSuccessResult(BytesValue.of(1));
@@ -119,7 +119,7 @@ public class EthCallTest {
 
   @Test
   public void shouldUseCorrectBlockNumberWhenLatest() {
-    final JsonRpcRequest request = ethCallRequest(callParameter(), "latest");
+    final JsonRpcRequestContext request = ethCallRequest(callParameter(), "latest");
     when(blockchainQueries.headBlockNumber()).thenReturn(11L);
     when(transactionSimulator.process(any(), anyLong())).thenReturn(Optional.empty());
 
@@ -130,7 +130,7 @@ public class EthCallTest {
 
   @Test
   public void shouldUseCorrectBlockNumberWhenEarliest() {
-    final JsonRpcRequest request = ethCallRequest(callParameter(), "earliest");
+    final JsonRpcRequestContext request = ethCallRequest(callParameter(), "earliest");
     when(transactionSimulator.process(any(), anyLong())).thenReturn(Optional.empty());
     method.response(request);
 
@@ -139,7 +139,7 @@ public class EthCallTest {
 
   @Test
   public void shouldUseCorrectBlockNumberWhenSpecified() {
-    final JsonRpcRequest request = ethCallRequest(callParameter(), Quantity.create(13L));
+    final JsonRpcRequestContext request = ethCallRequest(callParameter(), Quantity.create(13L));
     when(transactionSimulator.process(any(), anyLong())).thenReturn(Optional.empty());
 
     method.response(request);
@@ -151,9 +151,10 @@ public class EthCallTest {
     return new JsonCallParameter("0x0", "0x0", "0x0", "0x0", "0x0", "");
   }
 
-  private JsonRpcRequest ethCallRequest(
+  private JsonRpcRequestContext ethCallRequest(
       final CallParameter callParameter, final String blockNumberInHex) {
-    return new JsonRpcRequest("2.0", "eth_call", new Object[] {callParameter, blockNumberInHex});
+    return new JsonRpcRequestContext(
+        new JsonRpcRequest("2.0", "eth_call", new Object[] {callParameter, blockNumberInHex}));
   }
 
   private void mockTransactionProcessorSuccessResult(final BytesValue output) {

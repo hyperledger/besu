@@ -32,6 +32,14 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private OptionalLong constantinopleBlockNumber = OptionalLong.empty();
   private OptionalLong constantinopleFixBlockNumber = OptionalLong.empty();
   private OptionalLong istanbulBlockNumber = OptionalLong.empty();
+  private OptionalLong muirGlacierBlockNumber = OptionalLong.empty();
+  private final OptionalLong classicForkBlock = OptionalLong.empty();
+  private final OptionalLong ecip1015BlockNumber = OptionalLong.empty();
+  private final OptionalLong diehardBlockNumber = OptionalLong.empty();
+  private final OptionalLong gothamBlockNumber = OptionalLong.empty();
+  private final OptionalLong defuseDifficultyBombBlockNumber = OptionalLong.empty();
+  private final OptionalLong atlantisBlockNumber = OptionalLong.empty();
+  private final OptionalLong aghartaBlockNumber = OptionalLong.empty();
   private Optional<BigInteger> chainId = Optional.empty();
   private OptionalInt contractSizeLimit = OptionalInt.empty();
   private OptionalInt stackSizeLimit = OptionalInt.empty();
@@ -122,6 +130,46 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public OptionalLong getMuirGlacierBlockNumber() {
+    return muirGlacierBlockNumber;
+  }
+
+  @Override
+  public OptionalLong getClassicForkBlock() {
+    return classicForkBlock;
+  }
+
+  @Override
+  public OptionalLong getEcip1015BlockNumber() {
+    return ecip1015BlockNumber;
+  }
+
+  @Override
+  public OptionalLong getDieHardBlockNumber() {
+    return diehardBlockNumber;
+  }
+
+  @Override
+  public OptionalLong getGothamBlockNumber() {
+    return gothamBlockNumber;
+  }
+
+  @Override
+  public OptionalLong getDefuseDifficultyBombBlockNumber() {
+    return defuseDifficultyBombBlockNumber;
+  }
+
+  @Override
+  public OptionalLong getAtlantisBlockNumber() {
+    return atlantisBlockNumber;
+  }
+
+  @Override
+  public OptionalLong getAghartaBlockNumber() {
+    return aghartaBlockNumber;
+  }
+
+  @Override
   public OptionalInt getContractSizeLimit() {
     return contractSizeLimit;
   }
@@ -158,6 +206,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
     getConstantinopleBlockNumber().ifPresent(l -> builder.put("constantinopleBlock", l));
     getConstantinopleFixBlockNumber().ifPresent(l -> builder.put("constantinopleFixBlock", l));
     getIstanbulBlockNumber().ifPresent(l -> builder.put("istanbulBlock", l));
+    getMuirGlacierBlockNumber().ifPresent(l -> builder.put("muirGlacierBlock", l));
     getContractSizeLimit().ifPresent(l -> builder.put("contractSizeLimit", l));
     getEvmStackSize().ifPresent(l -> builder.put("evmStackSize", l));
     if (isClique()) {
@@ -173,6 +222,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
       builder.put("ibft2", getIbft2ConfigOptions().asMap());
     }
     return builder.build();
+  }
+
+  @Override
+  public TransitionsConfigOptions getTransitions() {
+    return TransitionsConfigOptions.DEFAULT;
   }
 
   public StubGenesisConfigOptions homesteadBlock(final long blockNumber) {
@@ -212,6 +266,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
 
   public StubGenesisConfigOptions istanbulBlock(final long blockNumber) {
     istanbulBlockNumber = OptionalLong.of(blockNumber);
+    return this;
+  }
+
+  public StubGenesisConfigOptions muirGlacierBlock(final long blockNumber) {
+    muirGlacierBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
 

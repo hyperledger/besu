@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.enclave;
 
+import org.hyperledger.besu.enclave.RequestTransmitter.ResponseBodyHandler;
 import org.hyperledger.besu.enclave.types.CreatePrivacyGroupRequest;
 import org.hyperledger.besu.enclave.types.DeletePrivacyGroupRequest;
 import org.hyperledger.besu.enclave.types.ErrorResponse;
@@ -21,106 +22,157 @@ import org.hyperledger.besu.enclave.types.FindPrivacyGroupRequest;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.enclave.types.ReceiveRequest;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
-import org.hyperledger.besu.enclave.types.SendRequest;
+import org.hyperledger.besu.enclave.types.RetrievePrivacyGroupRequest;
+import org.hyperledger.besu.enclave.types.SendRequestBesu;
+import org.hyperledger.besu.enclave.types.SendRequestLegacy;
 import org.hyperledger.besu.enclave.types.SendResponse;
 
 import java.io.IOException;
-import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class Enclave {
-  private static final Logger LOG = LogManager.getLogger();
+
   private static final ObjectMapper objectMapper = new ObjectMapper();
-  private static final MediaType JSON = MediaType.parse("application/json");
-  private static final MediaType ORION = MediaType.get("application/vnd.orion.v1+json");
+  private static final String ORION = "application/vnd.orion.v1+json";
+  private static final String JSON = "application/json";
 
-  private final URI enclaveUri;
-  private final OkHttpClient client;
+  private final RequestTransmitter requestTransmitter;
 
-  public Enclave(final URI enclaveUri) {
-    this.enclaveUri = enclaveUri;
-    this.client = new OkHttpClient();
+  public Enclave(final RequestTransmitter requestTransmitter) {
+    this.requestTransmitter = requestTransmitter;
   }
 
-  public boolean upCheck() throws IOException {
-    final String url = enclaveUri.resolve("/upcheck").toString();
-    final Request request = new Request.Builder().url(url).get().build();
-
-    try (Response response = client.newCall(request).execute()) {
-      return response.isSuccessful();
-    } catch (IOException e) {
-      LOG.error("Enclave failed to execute upcheck");
-      throw new IOException("Failed to perform upcheck", e);
+  public boolean upCheck() {
+    try {
+      final String upcheckResponse = requestTransmitter.get("/upcheck", this::handleRawResponse);
+      return upcheckResponse.equals("I'm up!");
+    } catch (final Exception e) {
+      return false;
     }
   }
 
-  public SendResponse send(final SendRequest content) {
-    return executePost(buildPostRequest(JSON, content, "/send"), SendResponse.class);
+  public SendResponse send(
+      final String payload, final String privateFrom, final List<String> privateFor) {
+    final SendRequestLegacy request = new SendRequestLegacy(payload, privateFrom, privateFor);
+    return post(
+        JSON,
+        request,
+        "/send",
+        (statusCode, body) -> handleJsonResponse(statusCode, body, SendResponse.class));
   }
 
-  public ReceiveResponse receive(final ReceiveRequest content) {
-    return executePost(buildPostRequest(ORION, content, "/receive"), ReceiveResponse.class);
+  public SendResponse send(
+      final String payload, final String privateFrom, final String privacyGroupId) {
+    final SendRequestBesu request = new SendRequestBesu(payload, privateFrom, privacyGroupId);
+    return post(
+        JSON,
+        request,
+        "/send",
+        (statusCode, body) -> handleJsonResponse(statusCode, body, SendResponse.class));
   }
 
-  public PrivacyGroup createPrivacyGroup(final CreatePrivacyGroupRequest content) {
-    return executePost(buildPostRequest(JSON, content, "/createPrivacyGroup"), PrivacyGroup.class);
+  public ReceiveResponse receive(final String enclaveKey) {
+    final ReceiveRequest request = new ReceiveRequest(enclaveKey);
+    return post(
+        ORION,
+        request,
+        "/receive",
+        (statusCode, body) -> handleJsonResponse(statusCode, body, ReceiveResponse.class));
   }
 
-  public String deletePrivacyGroup(final DeletePrivacyGroupRequest content) {
-    return executePost(buildPostRequest(JSON, content, "/deletePrivacyGroup"), String.class);
+  public ReceiveResponse receive(final String enclaveKey, final String to) {
+    final ReceiveRequest request = new ReceiveRequest(enclaveKey, to);
+    return post(
+        ORION,
+        request,
+        "/receive",
+        (statusCode, body) -> handleJsonResponse(statusCode, body, ReceiveResponse.class));
   }
 
-  public PrivacyGroup[] findPrivacyGroup(final FindPrivacyGroupRequest content) {
-    Request request = buildPostRequest(JSON, content, "/findPrivacyGroup");
-    return executePost(request, PrivacyGroup[].class);
+  public PrivacyGroup createPrivacyGroup(
+      final List<String> addresses,
+      final String from,
+      final String name,
+      final String description) {
+    final CreatePrivacyGroupRequest request =
+        new CreatePrivacyGroupRequest(addresses, from, name, description);
+    return post(
+        JSON,
+        request,
+        "/createPrivacyGroup",
+        (statusCode, body) -> handleJsonResponse(statusCode, body, PrivacyGroup.class));
   }
 
-  private Request buildPostRequest(
-      final MediaType mediaType, final Object content, final String endpoint) {
-    final RequestBody body;
+  public String deletePrivacyGroup(final String privacyGroupId, final String from) {
+    final DeletePrivacyGroupRequest request = new DeletePrivacyGroupRequest(privacyGroupId, from);
+    return post(
+        JSON,
+        request,
+        "/deletePrivacyGroup",
+        (statusCode, body) -> handleJsonResponse(statusCode, body, String.class));
+  }
+
+  public PrivacyGroup[] findPrivacyGroup(final List<String> addresses) {
+    final FindPrivacyGroupRequest request = new FindPrivacyGroupRequest(addresses);
+    return post(
+        JSON,
+        request,
+        "/findPrivacyGroup",
+        (statusCode, body) -> handleJsonResponse(statusCode, body, PrivacyGroup[].class));
+  }
+
+  public PrivacyGroup retrievePrivacyGroup(final String privacyGroupId) {
+    final RetrievePrivacyGroupRequest request = new RetrievePrivacyGroupRequest(privacyGroupId);
+    return post(
+        JSON,
+        request,
+        "/retrievePrivacyGroup",
+        (statusCode, body) -> handleJsonResponse(statusCode, body, PrivacyGroup.class));
+  }
+
+  private <T> T post(
+      final String mediaType,
+      final Object content,
+      final String endpoint,
+      final ResponseBodyHandler<T> responseBodyHandler) {
+    final String bodyText;
     try {
-      body = RequestBody.create(mediaType, objectMapper.writeValueAsString(content));
+      bodyText = objectMapper.writeValueAsString(content);
     } catch (final JsonProcessingException e) {
-      throw new EnclaveException("Failed to serialise request to json body.");
+      throw new EnclaveException("Unable to serialise object to json representation.");
     }
-    final String url = enclaveUri.resolve(endpoint).toString();
-    return new Request.Builder().url(url).post(body).build();
+
+    return requestTransmitter.post(mediaType, bodyText, endpoint, responseBodyHandler);
   }
 
-  private <T> T executePost(final Request request, final Class<T> responseType) {
-
-    final Response response;
-    final String responseBody;
+  private <T> T handleJsonResponse(
+      final int statusCode, final byte[] body, final Class<T> responseType) {
     try {
-      response = client.newCall(request).execute();
-      responseBody = response.body().string();
-    } catch (final IOException e) {
-      throw new RuntimeException("Failed to contact Enclave", e);
-    }
-
-    try {
-      if (response.isSuccessful()) {
-        return objectMapper.readValue(responseBody, responseType);
+      if (statusCode == 200) {
+        return objectMapper.readValue(body, responseType);
       } else {
-        final ErrorResponse errorResponse =
-            objectMapper.readValue(responseBody, ErrorResponse.class);
+        final ErrorResponse errorResponse = objectMapper.readValue(body, ErrorResponse.class);
         throw new EnclaveException(errorResponse.getError());
       }
     } catch (final JsonParseException | JsonMappingException e) {
       throw new EnclaveException("Failed to deserialise received json", e);
     } catch (final IOException e) {
-      throw new EnclaveException("Decoding json stream failed.", e);
+      throw new EnclaveException("Decoding Json stream failed", e);
     }
+  }
+
+  private String handleRawResponse(final int statusCode, final byte[] body) {
+    final String bodyText = new String(body, StandardCharsets.UTF_8);
+    if (statusCode == 200) {
+      return bodyText;
+    }
+    throw new EnclaveException(
+        String.format("Request failed with %d; body={%s}", statusCode, bodyText));
   }
 }

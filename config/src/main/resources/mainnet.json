@@ -11,8 +11,9 @@
     "byzantiumBlock": 4370000,
     "constantinopleBlock": 7280000,
     "constantinopleFixBlock": 7280000,
+    "istanbulBlock": 9069000,
+    "muirGlacierBlock": 9200000,
     "ethash": {
-
     }
   },
   "nonce": "0x42",
@@ -26702,8 +26703,5 @@
     "fff7ac99c8e4feb60c9750054bdc14ce1857f181": {
       "balance": "0x3635c9adc5dea00000"
     }
-  },
-  "number": "0x0",
-  "gasUsed": "0x0",
-  "parentHash": "0x0000000000000000000000000000000000000000000000000000000000000000"
+  }
 }

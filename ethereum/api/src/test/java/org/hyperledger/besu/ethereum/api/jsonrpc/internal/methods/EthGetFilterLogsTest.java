@@ -21,9 +21,9 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -54,7 +54,7 @@ public class EthGetFilterLogsTest {
 
   @Before
   public void setUp() {
-    method = new EthGetFilterLogs(filterManager, new JsonRpcParameter());
+    method = new EthGetFilterLogs(filterManager);
   }
 
   @Test
@@ -64,7 +64,8 @@ public class EthGetFilterLogsTest {
 
   @Test
   public void shouldReturnErrorWhenMissingParams() {
-    final JsonRpcRequest request = new JsonRpcRequest("2.0", "eth_getFilterLogs", new Object[] {});
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(new JsonRpcRequest("2.0", "eth_getFilterLogs", new Object[] {}));
 
     final Throwable thrown = catchThrowable(() -> method.response(request));
     assertThat(thrown)
@@ -76,7 +77,7 @@ public class EthGetFilterLogsTest {
 
   @Test
   public void shouldReturnErrorWhenMissingFilterId() {
-    final JsonRpcRequest request = requestWithFilterId();
+    final JsonRpcRequestContext request = requestWithFilterId();
 
     final Throwable thrown = catchThrowable(() -> method.response(request));
     assertThat(thrown)
@@ -88,7 +89,7 @@ public class EthGetFilterLogsTest {
 
   @Test
   public void shouldReturnFilterNotFoundWhenFilterManagerReturnsNull() {
-    final JsonRpcRequest request = requestWithFilterId("NOT FOUND");
+    final JsonRpcRequestContext request = requestWithFilterId("NOT FOUND");
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(null, JsonRpcError.LOGS_FILTER_NOT_FOUND);
     when(filterManager.logs(eq("NOT FOUND"))).thenReturn(null);
@@ -100,7 +101,7 @@ public class EthGetFilterLogsTest {
 
   @Test
   public void shouldReturnEmptyListWhenFilterManagerReturnsEmpty() {
-    final JsonRpcRequest request = requestWithFilterId("0x1");
+    final JsonRpcRequestContext request = requestWithFilterId("0x1");
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(null, new LogsResult(new ArrayList<>()));
     when(filterManager.logs(eq("0x1"))).thenReturn(new ArrayList<>());
@@ -112,7 +113,7 @@ public class EthGetFilterLogsTest {
 
   @Test
   public void shouldReturnExpectedLogsWhenFilterManagerReturnsLogs() {
-    final JsonRpcRequest request = requestWithFilterId("0x1");
+    final JsonRpcRequestContext request = requestWithFilterId("0x1");
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(null, new LogsResult(logs()));
     when(filterManager.logs(eq("0x1"))).thenReturn(logs());
@@ -122,8 +123,8 @@ public class EthGetFilterLogsTest {
     assertThat(response).isEqualToComparingFieldByFieldRecursively(expectedResponse);
   }
 
-  private JsonRpcRequest requestWithFilterId(final Object... filterId) {
-    return new JsonRpcRequest("2.0", "eth_getFilterLogs", filterId);
+  private JsonRpcRequestContext requestWithFilterId(final Object... filterId) {
+    return new JsonRpcRequestContext(new JsonRpcRequest("2.0", "eth_getFilterLogs", filterId));
   }
 
   private List<LogWithMetadata> logs() {

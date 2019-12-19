@@ -23,8 +23,8 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.SignerMetricResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -49,7 +49,6 @@ public class IbftGetSignerMetricsTest {
     Address.fromHexString("0x1"), Address.fromHexString("0x2"), Address.fromHexString("0x3"),
   };
 
-  private final JsonRpcParameter jsonRpcParameter = new JsonRpcParameter();
   private final String IBFT_METHOD = "ibft_getSignerMetrics";
   private final String JSON_RPC_VERSION = "2.0";
   private IbftGetSignerMetrics method;
@@ -63,7 +62,7 @@ public class IbftGetSignerMetricsTest {
   public void setup() {
     blockchainQueries = mock(BlockchainQueries.class);
     blockInterface = mock(BlockInterface.class);
-    method = new IbftGetSignerMetrics(blockInterface, blockchainQueries, jsonRpcParameter);
+    method = new IbftGetSignerMetrics(blockInterface, blockchainQueries);
   }
 
   @Test
@@ -73,7 +72,7 @@ public class IbftGetSignerMetricsTest {
 
   @Test
   public void exceptionWhenInvalidStartBlockSupplied() {
-    final JsonRpcRequest request = requestWithParams("INVALID");
+    final JsonRpcRequestContext request = requestWithParams("INVALID");
 
     expectedException.expect(InvalidJsonRpcParameters.class);
     expectedException.expectMessage("Invalid json rpc parameter at index 0");
@@ -83,7 +82,7 @@ public class IbftGetSignerMetricsTest {
 
   @Test
   public void exceptionWhenInvalidEndBlockSupplied() {
-    final JsonRpcRequest request = requestWithParams("1", "INVALID");
+    final JsonRpcRequestContext request = requestWithParams("1", "INVALID");
 
     expectedException.expect(InvalidJsonRpcParameters.class);
     expectedException.expectMessage("Invalid json rpc parameter at index 1");
@@ -105,7 +104,7 @@ public class IbftGetSignerMetricsTest {
     LongStream.range(startBlock, endBlock)
         .forEach(value -> signerMetricResultList.add(generateBlock(value)));
 
-    final JsonRpcRequest request = requestWithParams();
+    final JsonRpcRequestContext request = requestWithParams();
 
     final JsonRpcSuccessResponse response = (JsonRpcSuccessResponse) method.response(request);
 
@@ -138,7 +137,7 @@ public class IbftGetSignerMetricsTest {
     signerMetricResultFirstKeyPairs.setLastProposedBlockNumber(startBlock + 3);
     signerMetricResultFirstKeyPairs.incrementeNbBlock();
 
-    final JsonRpcRequest request = requestWithParams();
+    final JsonRpcRequestContext request = requestWithParams();
 
     final JsonRpcSuccessResponse response = (JsonRpcSuccessResponse) method.response(request);
 
@@ -159,7 +158,7 @@ public class IbftGetSignerMetricsTest {
     LongStream.range(startBlock, headBlock)
         .forEach(value -> signerMetricResultList.add(generateBlock(value)));
 
-    final JsonRpcRequest request = requestWithParams();
+    final JsonRpcRequestContext request = requestWithParams();
 
     final JsonRpcSuccessResponse response = (JsonRpcSuccessResponse) method.response(request);
 
@@ -184,7 +183,7 @@ public class IbftGetSignerMetricsTest {
     LongStream.range(startBlock, endBlock)
         .forEach(value -> signerMetricResultList.add(generateBlock(value)));
 
-    final JsonRpcRequest request = requestWithParams(String.valueOf(startBlock), "latest");
+    final JsonRpcRequestContext request = requestWithParams(String.valueOf(startBlock), "latest");
 
     final JsonRpcSuccessResponse response = (JsonRpcSuccessResponse) method.response(request);
 
@@ -206,7 +205,7 @@ public class IbftGetSignerMetricsTest {
     LongStream.range(startBlock, endBlock)
         .forEach(value -> signerMetricResultList.add(generateBlock(value)));
 
-    final JsonRpcRequest request = requestWithParams(String.valueOf(startBlock), "pending");
+    final JsonRpcRequestContext request = requestWithParams(String.valueOf(startBlock), "pending");
 
     final JsonRpcSuccessResponse response = (JsonRpcSuccessResponse) method.response(request);
 
@@ -226,7 +225,7 @@ public class IbftGetSignerMetricsTest {
     LongStream.range(startBlock, endBlock)
         .forEach(value -> signerMetricResultList.add(generateBlock(value)));
 
-    final JsonRpcRequest request = requestWithParams("earliest", String.valueOf(endBlock));
+    final JsonRpcRequestContext request = requestWithParams("earliest", String.valueOf(endBlock));
 
     final JsonRpcSuccessResponse response = (JsonRpcSuccessResponse) method.response(request);
 
@@ -234,8 +233,8 @@ public class IbftGetSignerMetricsTest {
         .containsExactlyInAnyOrderElementsOf(signerMetricResultList);
   }
 
-  private JsonRpcRequest requestWithParams(final Object... params) {
-    return new JsonRpcRequest(JSON_RPC_VERSION, IBFT_METHOD, params);
+  private JsonRpcRequestContext requestWithParams(final Object... params) {
+    return new JsonRpcRequestContext(new JsonRpcRequest(JSON_RPC_VERSION, IBFT_METHOD, params));
   }
 
   private SignerMetricResult generateBlock(final long number) {

@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -58,7 +59,7 @@ public class EthGetWorkTest {
 
   @Test
   public void shouldReturnCorrectResultOnGenesisDAG() {
-    final JsonRpcRequest request = requestWithParams();
+    final JsonRpcRequestContext request = requestWithParams();
     final EthHashSolverInputs values =
         new EthHashSolverInputs(
             UInt256.fromHexString(hexValue), BaseEncoding.base16().lowerCase().decode(hexValue), 0);
@@ -68,7 +69,7 @@ public class EthGetWorkTest {
       "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
     };
     final JsonRpcResponse expectedResponse =
-        new JsonRpcSuccessResponse(request.getId(), expectedValue);
+        new JsonRpcSuccessResponse(request.getRequest().getId(), expectedValue);
     when(miningCoordinator.getWorkDefinition()).thenReturn(Optional.of(values));
 
     final JsonRpcResponse actualResponse = method.response(request);
@@ -77,7 +78,7 @@ public class EthGetWorkTest {
 
   @Test
   public void shouldReturnCorrectResultOnHighBlockSeed() {
-    final JsonRpcRequest request = requestWithParams();
+    final JsonRpcRequestContext request = requestWithParams();
     final EthHashSolverInputs values =
         new EthHashSolverInputs(
             UInt256.fromHexString(hexValue),
@@ -89,7 +90,7 @@ public class EthGetWorkTest {
       "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
     };
     final JsonRpcResponse expectedResponse =
-        new JsonRpcSuccessResponse(request.getId(), expectedValue);
+        new JsonRpcSuccessResponse(request.getRequest().getId(), expectedValue);
     when(miningCoordinator.getWorkDefinition()).thenReturn(Optional.of(values));
     final JsonRpcResponse actualResponse = method.response(request);
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
@@ -97,16 +98,16 @@ public class EthGetWorkTest {
 
   @Test
   public void shouldReturnErrorOnNoneMiningNode() {
-    final JsonRpcRequest request = requestWithParams();
+    final JsonRpcRequestContext request = requestWithParams();
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getId(), JsonRpcError.NO_MINING_WORK_FOUND);
+        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.NO_MINING_WORK_FOUND);
     when(miningCoordinator.getWorkDefinition()).thenReturn(Optional.empty());
 
     final JsonRpcResponse actualResponse = method.response(request);
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
   }
 
-  private JsonRpcRequest requestWithParams(final Object... params) {
-    return new JsonRpcRequest("2.0", ETH_METHOD, params);
+  private JsonRpcRequestContext requestWithParams(final Object... params) {
+    return new JsonRpcRequestContext(new JsonRpcRequest("2.0", ETH_METHOD, params));
   }
 }

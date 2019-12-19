@@ -56,7 +56,7 @@ public class TransactionData {
   }
 
   public Transaction getSignedTransaction(final NonceProvider nonceProvider) {
-    KeyPair keyPair = KeyPair.create(privateKey);
+    final KeyPair keyPair = KeyPair.create(privateKey);
 
     final Address fromAddress = Address.extract(keyPair.getPublicKey());
     final long nonce = nonceProvider.get(fromAddress);

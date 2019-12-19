@@ -22,11 +22,10 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.enclave.Enclave;
-import org.hyperledger.besu.enclave.types.SendRequest;
-import org.hyperledger.besu.enclave.types.SendRequestLegacy;
+import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.enclave.types.SendResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivGetPrivateTransaction;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.privacy.PrivateTransactionLegacyResult;
@@ -37,6 +36,7 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.Restriction;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -47,11 +47,14 @@ import org.hyperledger.orion.testutil.OrionTestHarness;
 import org.hyperledger.orion.testutil.OrionTestHarnessFactory;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Optional;
 
 import com.google.common.collect.Lists;
+import io.vertx.core.Vertx;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -60,14 +63,18 @@ import org.junit.rules.TemporaryFolder;
 public class PrivGetPrivateTransactionIntegrationTest {
 
   @ClassRule public static final TemporaryFolder folder = new TemporaryFolder();
+  private static final String ENCLAVE_PUBLIC_KEY = "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
 
   private static Enclave enclave;
 
   private static OrionTestHarness testHarness;
+  private static PrivacyController privacyController;
 
   private final TransactionWithMetadata returnedTransaction = mock(TransactionWithMetadata.class);
 
   private final Transaction justTransaction = mock(Transaction.class);
+
+  private static Vertx vertx = Vertx.vertx();
 
   @BeforeClass
   public static void setUpOnce() throws Exception {
@@ -79,13 +86,16 @@ public class PrivGetPrivateTransactionIntegrationTest {
             new OrionKeyConfiguration("orion_key_0.pub", "orion_key_0.key"));
 
     testHarness.start();
+    final EnclaveFactory factory = new EnclaveFactory(vertx);
+    enclave = factory.createVertxEnclave(testHarness.clientUrl());
 
-    enclave = new Enclave(testHarness.clientUrl());
+    privacyController = new PrivacyController(enclave, ENCLAVE_PUBLIC_KEY, null, null, null, null);
   }
 
   @AfterClass
   public static void tearDownOnce() {
     testHarness.close();
+    vertx.close();
   }
 
   private final Address sender =
@@ -117,25 +127,28 @@ public class PrivGetPrivateTransactionIntegrationTest {
                       + "daa4f6b2f003d1b0180029"))
           .sender(sender)
           .chainId(BigInteger.valueOf(2018))
-          .privateFrom(
-              BytesValue.wrap("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=".getBytes(UTF_8)))
+          .privateFrom(BytesValue.wrap(ENCLAVE_PUBLIC_KEY.getBytes(UTF_8)))
           .privateFor(
               Lists.newArrayList(
                   BytesValue.wrap("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=".getBytes(UTF_8))))
           .restriction(Restriction.RESTRICTED)
           .signAndBuild(KEY_PAIR);
 
-  private final JsonRpcParameter parameters = new JsonRpcParameter();
-
   private final PrivacyParameters privacyParameters = mock(PrivacyParameters.class);
 
   private final BlockchainQueries blockchain = mock(BlockchainQueries.class);
+
+  @Before
+  public void before() {
+    when(privacyParameters.isEnabled()).thenReturn(true);
+    when(privacyParameters.getEnclave()).thenReturn(enclave);
+  }
 
   @Test
   public void returnsStoredPrivateTransaction() {
 
     final PrivGetPrivateTransaction privGetPrivateTransaction =
-        new PrivGetPrivateTransaction(blockchain, enclave, parameters, privacyParameters);
+        new PrivGetPrivateTransaction(blockchain, privacyController);
 
     when(blockchain.transactionByHash(any(Hash.class)))
         .thenReturn(Optional.of(returnedTransaction));
@@ -144,19 +157,17 @@ public class PrivGetPrivateTransactionIntegrationTest {
     final BytesValueRLPOutput bvrlp = new BytesValueRLPOutput();
     privateTransaction.writeTo(bvrlp);
 
-    final SendRequest sendRequest =
-        new SendRequestLegacy(
-            Base64.getEncoder().encodeToString(bvrlp.encoded().extractArray()),
-            "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=",
-            Lists.newArrayList("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo="));
-    final SendResponse sendResponse = enclave.send(sendRequest);
+    final String payload = Base64.getEncoder().encodeToString(bvrlp.encoded().extractArray());
+    final ArrayList<String> to = Lists.newArrayList("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=");
+    final SendResponse sendResponse = enclave.send(payload, ENCLAVE_PUBLIC_KEY, to);
 
     final BytesValue hexKey = BytesValues.fromBase64(sendResponse.getKey());
     when(justTransaction.getPayload()).thenReturn(hexKey);
 
     final Object[] params = new Object[] {Hash.ZERO};
 
-    final JsonRpcRequest request = new JsonRpcRequest("1", "priv_getPrivateTransaction", params);
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(new JsonRpcRequest("1", "priv_getPrivateTransaction", params));
 
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) privGetPrivateTransaction.response(request);

@@ -15,19 +15,18 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceTypeParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.queries.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.TraceFormatter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.TraceWriter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTraceGenerator;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.vm.VmTraceGenerator;
+import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
@@ -52,10 +51,8 @@ public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
   private final BlockTracer blockTracer;
 
   public TraceReplayBlockTransactions(
-      final JsonRpcParameter parameters,
-      final BlockTracer blockTracer,
-      final BlockchainQueries queries) {
-    super(queries, parameters);
+      final BlockTracer blockTracer, final BlockchainQueries queries) {
+    super(queries);
     this.blockTracer = blockTracer;
   }
 
@@ -65,14 +62,15 @@ public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
   }
 
   @Override
-  protected BlockParameter blockParameter(final JsonRpcRequest request) {
-    return getParameters().required(request.getParams(), 0, BlockParameter.class);
+  protected BlockParameter blockParameter(final JsonRpcRequestContext request) {
+    return request.getRequiredParameter(0, BlockParameter.class);
   }
 
   @Override
-  protected Object resultByBlockNumber(final JsonRpcRequest request, final long blockNumber) {
+  protected Object resultByBlockNumber(
+      final JsonRpcRequestContext request, final long blockNumber) {
     final TraceTypeParameter traceTypeParameter =
-        getParameters().required(request.getParams(), 1, TraceTypeParameter.class);
+        request.getRequiredParameter(1, TraceTypeParameter.class);
 
     // TODO : method returns an error if any option other than “trace” is supplied.
     // remove when others options are implemented

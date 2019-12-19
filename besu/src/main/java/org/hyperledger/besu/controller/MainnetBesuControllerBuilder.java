@@ -29,15 +29,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 public class MainnetBesuControllerBuilder extends BesuControllerBuilder<Void> {
-  private static final Logger LOG = LogManager.getLogger();
 
   @Override
   protected MiningCoordinator createMiningCoordinator(
@@ -47,11 +39,9 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder<Void> {
       final MiningParameters miningParameters,
       final SyncState syncState,
       final EthProtocolManager ethProtocolManager) {
-    final ExecutorService minerThreadPool = Executors.newCachedThreadPool();
     final EthHashMinerExecutor executor =
         new EthHashMinerExecutor(
             protocolContext,
-            minerThreadPool,
             protocolSchedule,
             transactionPool.getPendingTransactions(),
             miningParameters,
@@ -64,19 +54,11 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder<Void> {
     final EthHashMiningCoordinator miningCoordinator =
         new EthHashMiningCoordinator(protocolContext.getBlockchain(), executor, syncState);
     miningCoordinator.addMinedBlockObserver(ethProtocolManager);
+    miningCoordinator.setStratumMiningEnabled(miningParameters.isStratumMiningEnabled());
     if (miningParameters.isMiningEnabled()) {
       miningCoordinator.enable();
     }
-    addShutdownAction(
-        () -> {
-          miningCoordinator.disable();
-          minerThreadPool.shutdownNow();
-          try {
-            minerThreadPool.awaitTermination(5, TimeUnit.SECONDS);
-          } catch (final InterruptedException e) {
-            LOG.error("Failed to shutdown miner executor");
-          }
-        });
+
     return miningCoordinator;
   }
 
@@ -84,6 +66,11 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder<Void> {
   protected Void createConsensusContext(
       final Blockchain blockchain, final WorldStateArchive worldStateArchive) {
     return null;
+  }
+
+  @Override
+  protected PluginServiceFactory createAdditionalPluginServices(final Blockchain blockchain) {
+    return new NoopPluginServiceFactory();
   }
 
   @Override

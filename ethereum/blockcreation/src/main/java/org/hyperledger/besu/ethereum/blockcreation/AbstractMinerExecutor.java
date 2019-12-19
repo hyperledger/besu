@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.blockcreation;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.EthHashObserver;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -27,13 +28,22 @@ import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public abstract class AbstractMinerExecutor<
     C, M extends BlockMiner<C, ? extends AbstractBlockCreator<C>>> {
 
+  private static final Logger LOG = LogManager.getLogger();
+
+  private final ExecutorService executorService = Executors.newCachedThreadPool();
   protected final ProtocolContext<C> protocolContext;
-  protected final ExecutorService executorService;
   protected final ProtocolSchedule<C> protocolSchedule;
   protected final PendingTransactions pendingTransactions;
   protected final AbstractBlockScheduler blockScheduler;
@@ -42,16 +52,16 @@ public abstract class AbstractMinerExecutor<
   protected volatile BytesValue extraData;
   protected volatile Wei minTransactionGasPrice;
 
+  private final AtomicBoolean stopped = new AtomicBoolean(false);
+
   public AbstractMinerExecutor(
       final ProtocolContext<C> protocolContext,
-      final ExecutorService executorService,
       final ProtocolSchedule<C> protocolSchedule,
       final PendingTransactions pendingTransactions,
       final MiningParameters miningParams,
       final AbstractBlockScheduler blockScheduler,
       final Function<Long, Long> gasLimitCalculator) {
     this.protocolContext = protocolContext;
-    this.executorService = executorService;
     this.protocolSchedule = protocolSchedule;
     this.pendingTransactions = pendingTransactions;
     this.extraData = miningParams.getExtraData();
@@ -60,10 +70,36 @@ public abstract class AbstractMinerExecutor<
     this.gasLimitCalculator = gasLimitCalculator;
   }
 
-  public abstract M startAsyncMining(
-      final Subscribers<MinedBlockObserver> observers, final BlockHeader parentHeader);
+  public Optional<M> startAsyncMining(
+      final Subscribers<MinedBlockObserver> observers,
+      final Subscribers<EthHashObserver> ethHashObservers,
+      final BlockHeader parentHeader) {
+    try {
+      final M currentRunningMiner = createMiner(observers, ethHashObservers, parentHeader);
+      executorService.execute(currentRunningMiner);
+      return Optional.of(currentRunningMiner);
+    } catch (RejectedExecutionException e) {
+      LOG.warn("Unable to start mining.", e);
+      return Optional.empty();
+    }
+  }
 
-  public abstract M createMiner(final BlockHeader parentHeader);
+  public void shutDown() {
+    if (stopped.compareAndSet(false, true)) {
+      executorService.shutdownNow();
+    }
+  }
+
+  public void awaitShutdown() throws InterruptedException {
+    if (!executorService.awaitTermination(30, TimeUnit.SECONDS)) {
+      LOG.error("Failed to shutdown {}.", this.getClass().getSimpleName());
+    }
+  }
+
+  public abstract M createMiner(
+      final Subscribers<MinedBlockObserver> subscribers,
+      final Subscribers<EthHashObserver> ethHashObservers,
+      final BlockHeader parentHeader);
 
   public void setExtraData(final BytesValue extraData) {
     this.extraData = extraData.copy();

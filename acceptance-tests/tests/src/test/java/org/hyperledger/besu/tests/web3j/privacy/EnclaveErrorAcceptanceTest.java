@@ -28,7 +28,7 @@ import java.util.Base64;
 import org.apache.tuweni.crypto.sodium.Box;
 import org.junit.Before;
 import org.junit.Test;
-import org.web3j.protocol.pantheon.response.privacy.PrivateTransactionReceipt;
+import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
 
 public class EnclaveErrorAcceptanceTest extends PrivacyAcceptanceTestBase {
 
@@ -152,7 +152,7 @@ public class EnclaveErrorAcceptanceTest extends PrivacyAcceptanceTestBase {
                         alice.getEnclaveKey(),
                         bob.getEnclaveKey())));
 
-    assertThat(throwable).hasMessageContaining("NodePushingToPeer");
+    assertThat(throwable).hasMessageContaining("NodePropagatingToAllPeers");
   }
 
   @Test

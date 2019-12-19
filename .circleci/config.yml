@@ -1,0 +1,238 @@
+---
+version: 2.1
+executors:
+  besu_executor_med: # 2cpu, 4G ram
+    docker:
+      - image: circleci/openjdk:11.0.4-jdk-stretch
+    resource_class: medium
+    working_directory: ~/project
+    environment:
+      GRADLE_OPTS: -Xmx2048m -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=2
+
+  besu_executor_xl: # 8cpu, 16G ram
+    docker:
+      - image: circleci/openjdk:11.0.4-jdk-stretch
+    resource_class: xlarge
+    working_directory: ~/project
+    environment:
+      GRADLE_OPTS: -Xmx4096m -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=4
+
+notify:
+  webhooks:
+    - url: https://hyperledger-rocket-chat-hubot.herokuapp.com/hubot/circleci
+
+commands:
+  prepare:
+    description: "Prepare"
+    steps:
+      - checkout
+      - run:
+          name: Install Packages - LibSodium
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y libsodium18 libsodium-dev apt-transport-https
+      - restore_cache:
+          name: Restore cached gradle dependencies
+          keys:
+            - deps-{{ checksum "gradle/versions.gradle" }}-{{ .Branch }}-{{ .Revision }}
+            - deps-{{ checksum "gradle/versions.gradle" }}
+            - deps-
+
+  capture_test_results:
+    description: "Capture test results"
+    steps:
+      - run:
+          name: Gather test results
+          when: always
+          command: |
+            FILES=`find . -name test-results`
+            for FILE in $FILES
+            do
+              MODULE=`echo "$FILE" | sed -e 's@./\(.*\)/build/test-results@\1@'`
+              TARGET="build/test-results/$MODULE"
+              mkdir -p "$TARGET"
+              cp -rf ${FILE}/*/* "$TARGET"
+            done
+      - store_test_results:
+          path: build/test-results
+
+jobs:
+  assemble:
+    executor: besu_executor_xl
+    steps:
+      - prepare
+      - run:
+          name: DCO check
+          command: |
+            ./scripts/dco_check.sh
+      - run:
+          name: Assemble
+          command: |
+            ./gradlew --no-daemon --parallel clean spotlessCheck compileJava compileTestJava assemble
+      - save_cache:
+          name: Caching gradle dependencies
+          key: deps-{{ checksum "gradle/versions.gradle" }}-{{ .Branch }}-{{ .Revision }}
+          paths:
+            - .gradle
+            - ~/.gradle
+      - persist_to_workspace:
+          root: ~/project
+          paths:
+            - ./
+      - store_artifacts:
+          name: Distribution artifacts
+          path:  build/distributions
+          destination: distributions
+          when: always
+
+  unitTests:
+    executor: besu_executor_xl
+    steps:
+      - prepare
+      - attach_workspace:
+          at: ~/project
+      - run:
+          name: Build
+          no_output_timeout: 20m
+          command: |
+            ./gradlew --no-daemon --parallel build
+      - capture_test_results
+
+  integrationTests:
+    executor: besu_executor_xl
+    steps:
+      - prepare
+      - attach_workspace:
+          at: ~/project
+      - run:
+          name: IntegrationTests
+          command: |
+            ./gradlew --no-daemon --parallel integrationTest
+      - run:
+          name: Javadoc
+          command: |
+            ./gradlew --no-daemon --parallel javadoc
+      - run:
+          name: CompileJmh
+          command: |
+            ./gradlew --no-daemon --parallel compileJmh
+      - capture_test_results
+
+  referenceTests:
+    executor: besu_executor_xl
+    steps:
+      - prepare
+      - attach_workspace:
+          at: ~/project
+      - run:
+          name: ReferenceTests
+          no_output_timeout: 20m
+          command: |
+            git submodule update --init --recursive
+            ./gradlew --no-daemon --parallel referenceTest
+      - capture_test_results
+
+  acceptanceTests:
+    executor: besu_executor_xl
+    steps:
+      - prepare
+      - attach_workspace:
+          at: ~/project
+      - run:
+          name: AcceptanceTests
+          no_output_timeout: 40m
+          command: |
+            ./gradlew --no-daemon --parallel acceptanceTest
+      - capture_test_results
+
+  buildDocker:
+    executor: besu_executor_med
+    steps:
+      - prepare
+      - attach_workspace:
+          at: ~/project
+      - setup_remote_docker
+      - run:
+          name: hadoLint
+          command: |
+            docker run --rm -i hadolint/hadolint < docker/Dockerfile
+      - run:
+          name: build image
+          command: |
+            ./gradlew --no-daemon distDocker
+      - run:
+          name: test image
+          command: |
+            mkdir -p docker/reports
+            ./gradlew --no-daemon testDocker
+
+  publish:
+    executor: besu_executor_med
+    steps:
+      - prepare
+      - attach_workspace:
+          at: ~/project
+      - run:
+          name: Publish
+          command: |
+            ./gradlew --no-daemon --parallel bintrayUpload
+
+  publishDocker:
+    executor: besu_executor_med
+    steps:
+      - prepare
+      - attach_workspace:
+          at: ~/project
+      - setup_remote_docker
+      - run:
+          name: Publish Docker
+          command: |
+            docker login --username "${DOCKER_USER}" --password "${DOCKER_PASSWORD}"
+            docker login "${ACR_REPO}" --username "${ACR_DOCKER_USER}" --password "${ACR_DOCKER_PASSWORD}"
+            ./gradlew --no-daemon --parallel "-Pbranch=${CIRCLE_BRANCH}" dockerUpload
+
+workflows:
+  version: 2
+  default:
+    jobs:
+      - assemble
+      - unitTests:
+          requires:
+            - assemble
+      - referenceTests:
+          requires:
+            - assemble
+      - integrationTests:
+          requires:
+            - assemble
+      - acceptanceTests:
+          requires:
+            - assemble
+      - buildDocker:
+          requires:
+            - unitTests
+      - publish:
+          filters:
+            branches:
+              only:
+                - master
+                - /^release-.*/
+          requires:
+            - integrationTests
+            - unitTests
+            - acceptanceTests
+            - referenceTests
+            - buildDocker
+      - publishDocker:
+          filters:
+            branches:
+              only:
+                - master
+                - /^release-.*/
+          requires:
+            - integrationTests
+            - unitTests
+            - acceptanceTests
+            - referenceTests
+            - buildDocker
+

@@ -16,8 +16,10 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.miner;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -50,7 +52,8 @@ public class MinerStartTest {
 
   @Test
   public void shouldReturnTrueWhenMiningStartsSuccessfully() {
-    final JsonRpcRequest request = minerStart();
+    when(miningCoordinator.enable()).thenReturn(true);
+    final JsonRpcRequestContext request = minerStart();
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, true);
 
     final JsonRpcResponse actualResponse = method.response(request);
@@ -59,8 +62,19 @@ public class MinerStartTest {
   }
 
   @Test
+  public void shouldReturnFalseWhenMiningDoesNotStart() {
+    when(miningCoordinator.enable()).thenReturn(false);
+    final JsonRpcRequestContext request = minerStart();
+    final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, false);
+
+    final JsonRpcResponse actualResponse = method.response(request);
+
+    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+  }
+
+  @Test
   public void shouldReturnCoinbaseNotSetErrorWhenCoinbaseHasNotBeenSet() {
-    final JsonRpcRequest request = minerStart();
+    final JsonRpcRequestContext request = minerStart();
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(null, JsonRpcError.COINBASE_NOT_SET);
 
@@ -71,7 +85,7 @@ public class MinerStartTest {
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
   }
 
-  private JsonRpcRequest minerStart() {
-    return new JsonRpcRequest("2.0", "miner_start", null);
+  private JsonRpcRequestContext minerStart() {
+    return new JsonRpcRequestContext(new JsonRpcRequest("2.0", "miner_start", null));
   }
 }

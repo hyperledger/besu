@@ -24,11 +24,11 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterIdGenerator;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterRepository;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetFilterChanges;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -89,7 +89,6 @@ public class EthGetFilterChangesIntegrationTest {
   private static final int MAX_TRANSACTIONS = 5;
   private static final KeyPair keyPair = KeyPair.generate();
   private final Transaction transaction = createTransaction(1);
-  private final JsonRpcParameter parameters = new JsonRpcParameter();
   private FilterManager filterManager;
   private EthGetFilterChanges method;
   private final SyncState syncState = mock(SyncState.class);
@@ -121,12 +120,12 @@ public class EthGetFilterChangesIntegrationTest {
     filterManager =
         new FilterManager(
             blockchainQueries, transactionPool, new FilterIdGenerator(), new FilterRepository());
-    method = new EthGetFilterChanges(filterManager, parameters);
+    method = new EthGetFilterChanges(filterManager);
   }
 
   @Test
   public void shouldReturnErrorResponseIfFilterNotFound() {
-    final JsonRpcRequest request = requestWithParams("0");
+    final JsonRpcRequestContext request = requestWithParams("0");
 
     final JsonRpcResponse expected = new JsonRpcErrorResponse(null, JsonRpcError.FILTER_NOT_FOUND);
     final JsonRpcResponse actual = method.response(request);
@@ -140,7 +139,7 @@ public class EthGetFilterChangesIntegrationTest {
 
     assertThatFilterExists(filterId);
 
-    final JsonRpcRequest request = requestWithParams(String.valueOf(filterId));
+    final JsonRpcRequestContext request = requestWithParams(String.valueOf(filterId));
     final JsonRpcSuccessResponse expected = new JsonRpcSuccessResponse(null, Lists.emptyList());
     final JsonRpcResponse actual = method.response(request);
 
@@ -157,7 +156,7 @@ public class EthGetFilterChangesIntegrationTest {
 
     assertThatFilterExists(filterId);
 
-    final JsonRpcRequest request = requestWithParams(String.valueOf(filterId));
+    final JsonRpcRequestContext request = requestWithParams(String.valueOf(filterId));
 
     // We haven't added any transactions, so the list of pending transactions should be empty.
     final JsonRpcSuccessResponse expected = new JsonRpcSuccessResponse(null, Lists.emptyList());
@@ -175,7 +174,7 @@ public class EthGetFilterChangesIntegrationTest {
 
     assertThatFilterExists(filterId);
 
-    final JsonRpcRequest request = requestWithParams(String.valueOf(filterId));
+    final JsonRpcRequestContext request = requestWithParams(String.valueOf(filterId));
 
     // We haven't added any blocks, so the list of new blocks should be empty.
     JsonRpcSuccessResponse expected = new JsonRpcSuccessResponse(null, Lists.emptyList());
@@ -205,7 +204,7 @@ public class EthGetFilterChangesIntegrationTest {
 
     assertThatFilterExists(filterId);
 
-    final JsonRpcRequest request = requestWithParams(String.valueOf(filterId));
+    final JsonRpcRequestContext request = requestWithParams(String.valueOf(filterId));
 
     // We haven't added any transactions, so the list of pending transactions should be empty.
     JsonRpcSuccessResponse expected = new JsonRpcSuccessResponse(null, Lists.emptyList());
@@ -298,7 +297,7 @@ public class EthGetFilterChangesIntegrationTest {
         .signAndBuild(keyPair);
   }
 
-  private JsonRpcRequest requestWithParams(final Object... params) {
-    return new JsonRpcRequest(JSON_RPC_VERSION, ETH_METHOD, params);
+  private JsonRpcRequestContext requestWithParams(final Object... params) {
+    return new JsonRpcRequestContext(new JsonRpcRequest(JSON_RPC_VERSION, ETH_METHOD, params));
   }
 }

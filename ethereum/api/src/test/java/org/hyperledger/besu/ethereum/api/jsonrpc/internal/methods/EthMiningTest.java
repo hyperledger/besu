@@ -20,6 +20,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
@@ -49,30 +50,32 @@ public class EthMiningTest {
   }
 
   @Test
-  public void shouldReturnTrueWhenMiningCoordinatorExistsAndRunning() {
-    final JsonRpcRequest request = requestWithParams();
-    final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(request.getId(), true);
-    when(miningCoordinator.isRunning()).thenReturn(true);
+  public void shouldReturnTrueWhenMining() {
+    final JsonRpcRequestContext request = requestWithParams();
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcSuccessResponse(request.getRequest().getId(), true);
+    when(miningCoordinator.isMining()).thenReturn(true);
 
     final JsonRpcResponse actualResponse = method.response(request);
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
-    verify(miningCoordinator).isRunning();
+    verify(miningCoordinator).isMining();
     verifyNoMoreInteractions(miningCoordinator);
   }
 
   @Test
-  public void shouldReturnFalseWhenMiningCoordinatorExistsAndDisabled() {
-    final JsonRpcRequest request = requestWithParams();
-    final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(request.getId(), false);
-    when(miningCoordinator.isRunning()).thenReturn(false);
+  public void shouldReturnFalseWhenNotMining() {
+    final JsonRpcRequestContext request = requestWithParams();
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcSuccessResponse(request.getRequest().getId(), false);
+    when(miningCoordinator.isMining()).thenReturn(false);
 
     final JsonRpcResponse actualResponse = method.response(request);
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
-    verify(miningCoordinator).isRunning();
+    verify(miningCoordinator).isMining();
     verifyNoMoreInteractions(miningCoordinator);
   }
 
-  private JsonRpcRequest requestWithParams(final Object... params) {
-    return new JsonRpcRequest(JSON_RPC_VERSION, ETH_METHOD, params);
+  private JsonRpcRequestContext requestWithParams(final Object... params) {
+    return new JsonRpcRequestContext(new JsonRpcRequest(JSON_RPC_VERSION, ETH_METHOD, params));
   }
 }

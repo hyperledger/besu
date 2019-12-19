@@ -23,9 +23,9 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -55,7 +55,7 @@ public class EthGetFilterChangesTest {
 
   @Before
   public void setUp() {
-    method = new EthGetFilterChanges(filterManager, new JsonRpcParameter());
+    method = new EthGetFilterChanges(filterManager);
   }
 
   @Test
@@ -65,7 +65,7 @@ public class EthGetFilterChangesTest {
 
   @Test
   public void shouldThrowExceptionWhenNoParamsSupplied() {
-    final JsonRpcRequest request = requestWithParams();
+    final JsonRpcRequestContext request = requestWithParams();
 
     final Throwable thrown = catchThrowable(() -> method.response(request));
     assertThat(thrown)
@@ -78,7 +78,7 @@ public class EthGetFilterChangesTest {
 
   @Test
   public void shouldThrowExceptionWhenInvalidParamsSupplied() {
-    final JsonRpcRequest request = requestWithParams();
+    final JsonRpcRequestContext request = requestWithParams();
 
     final Throwable thrown = catchThrowable(() -> method.response(request));
     assertThat(thrown)
@@ -90,7 +90,7 @@ public class EthGetFilterChangesTest {
 
   @Test
   public void shouldReturnErrorResponseWhenFilterManagerDoesNotFindAnyFilters() {
-    final JsonRpcRequest request = requestWithParams("0x1");
+    final JsonRpcRequestContext request = requestWithParams("0x1");
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(null, JsonRpcError.FILTER_NOT_FOUND);
 
@@ -108,7 +108,7 @@ public class EthGetFilterChangesTest {
 
   @Test
   public void shouldReturnHashesWhenFilterManagerFindsBlockFilterWithHashes() {
-    final JsonRpcRequest request = requestWithParams("0x1");
+    final JsonRpcRequestContext request = requestWithParams("0x1");
     when(filterManager.blockChanges("0x1")).thenReturn(Lists.newArrayList(Hash.ZERO));
 
     final List<String> expectedHashes =
@@ -122,7 +122,7 @@ public class EthGetFilterChangesTest {
 
   @Test
   public void shouldReturnEmptyHashesWhenFilterManagerFindsBlockFilterWithNoChanges() {
-    final JsonRpcRequest request = requestWithParams("0x1");
+    final JsonRpcRequestContext request = requestWithParams("0x1");
     when(filterManager.blockChanges("0x1")).thenReturn(Lists.newArrayList());
 
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, Lists.newArrayList());
@@ -134,7 +134,7 @@ public class EthGetFilterChangesTest {
 
   @Test
   public void shouldReturnHashesWhenFilterManagerFindsPendingTransactionFilterWithHashes() {
-    final JsonRpcRequest request = requestWithParams("0x1");
+    final JsonRpcRequestContext request = requestWithParams("0x1");
     when(filterManager.blockChanges(anyString())).thenReturn(null);
     when(filterManager.pendingTransactionChanges("0x1")).thenReturn(Lists.newArrayList(Hash.ZERO));
 
@@ -149,7 +149,7 @@ public class EthGetFilterChangesTest {
 
   @Test
   public void shouldReturnEmptyHashesWhenFilterManagerFindsPendingTransactionFilterWithNoChanges() {
-    final JsonRpcRequest request = requestWithParams("0x1");
+    final JsonRpcRequestContext request = requestWithParams("0x1");
     when(filterManager.blockChanges(anyString())).thenReturn(null);
     when(filterManager.pendingTransactionChanges("0x1")).thenReturn(Lists.newArrayList());
 
@@ -162,7 +162,7 @@ public class EthGetFilterChangesTest {
 
   @Test
   public void shouldReturnLogsWhenFilterManagerFindsLogFilterWithLogs() {
-    final JsonRpcRequest request = requestWithParams("0x1");
+    final JsonRpcRequestContext request = requestWithParams("0x1");
     when(filterManager.blockChanges(anyString())).thenReturn(null);
     when(filterManager.pendingTransactionChanges(anyString())).thenReturn(null);
     when(filterManager.logsChanges("0x1")).thenReturn(Lists.newArrayList(logWithMetadata()));
@@ -177,7 +177,7 @@ public class EthGetFilterChangesTest {
 
   @Test
   public void shouldReturnEmptyLogsWhenFilterManagerFindsLogFilterWithNoChanges() {
-    final JsonRpcRequest request = requestWithParams("0x1");
+    final JsonRpcRequestContext request = requestWithParams("0x1");
     when(filterManager.blockChanges(anyString())).thenReturn(null);
     when(filterManager.pendingTransactionChanges(anyString())).thenReturn(null);
     when(filterManager.logsChanges("0x1")).thenReturn(Lists.newArrayList());
@@ -190,8 +190,8 @@ public class EthGetFilterChangesTest {
     assertThat(response).isEqualToComparingFieldByFieldRecursively(expectedResponse);
   }
 
-  private JsonRpcRequest requestWithParams(final Object... params) {
-    return new JsonRpcRequest("2.0", "eth_getFilterChanges", params);
+  private JsonRpcRequestContext requestWithParams(final Object... params) {
+    return new JsonRpcRequestContext(new JsonRpcRequest("2.0", "eth_getFilterChanges", params));
   }
 
   private LogWithMetadata logWithMetadata() {

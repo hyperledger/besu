@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcHttpService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketService;
 import org.hyperledger.besu.ethereum.p2p.network.NetworkRunner;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.ethereum.stratum.StratumServer;
 import org.hyperledger.besu.metrics.prometheus.MetricsService;
 import org.hyperledger.besu.nat.upnp.UpnpNatManager;
 
@@ -29,6 +30,7 @@ import java.nio.file.Path;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -43,6 +45,8 @@ public class Runner implements AutoCloseable {
   private static final Logger LOG = LogManager.getLogger();
 
   private final Vertx vertx;
+  private final CountDownLatch vertxShutdownLatch = new CountDownLatch(1);
+  private final CountDownLatch shutdown = new CountDownLatch(1);
 
   private final NetworkRunner networkRunner;
   private final Optional<UpnpNatManager> natManager;
@@ -53,6 +57,7 @@ public class Runner implements AutoCloseable {
 
   private final BesuController<?> besuController;
   private final Path dataDir;
+  private final Optional<StratumServer> stratumServer;
 
   Runner(
       final Vertx vertx,
@@ -61,6 +66,7 @@ public class Runner implements AutoCloseable {
       final Optional<JsonRpcHttpService> jsonRpc,
       final Optional<GraphQLHttpService> graphQLHttp,
       final Optional<WebSocketService> websocketRpc,
+      final Optional<StratumServer> stratumServer,
       final Optional<MetricsService> metrics,
       final BesuController<?> besuController,
       final Path dataDir) {
@@ -73,18 +79,19 @@ public class Runner implements AutoCloseable {
     this.metrics = metrics;
     this.besuController = besuController;
     this.dataDir = dataDir;
+    this.stratumServer = stratumServer;
   }
 
   public void start() {
     try {
       LOG.info("Starting Ethereum main loop ... ");
-      if (natManager.isPresent()) {
-        natManager.get().start();
-      }
+      natManager.ifPresent(UpnpNatManager::start);
       networkRunner.start();
       if (networkRunner.getNetwork().isP2pEnabled()) {
         besuController.getSynchronizer().start();
       }
+      besuController.getMiningCoordinator().start();
+      stratumServer.ifPresent(server -> waitForServiceToStart("stratum", server.start()));
       vertx.setPeriodic(
           TimeUnit.MINUTES.toMillis(1),
           time ->
@@ -101,9 +108,33 @@ public class Runner implements AutoCloseable {
     }
   }
 
+  public void stop() {
+    jsonRpc.ifPresent(service -> waitForServiceToStop("jsonRpc", service.stop()));
+    graphQLHttp.ifPresent(service -> waitForServiceToStop("graphQLHttp", service.stop()));
+    websocketRpc.ifPresent(service -> waitForServiceToStop("websocketRpc", service.stop()));
+    metrics.ifPresent(service -> waitForServiceToStop("metrics", service.stop()));
+
+    besuController.getMiningCoordinator().stop();
+    waitForServiceToStop("Mining Coordinator", besuController.getMiningCoordinator()::awaitStop);
+    stratumServer.ifPresent(server -> waitForServiceToStop("Stratum", server::stop));
+    if (networkRunner.getNetwork().isP2pEnabled()) {
+      besuController.getSynchronizer().stop();
+      waitForServiceToStop("Synchronizer", besuController.getSynchronizer()::awaitStop);
+    }
+
+    networkRunner.stop();
+    waitForServiceToStop("Network", networkRunner::awaitStop);
+
+    natManager.ifPresent(UpnpNatManager::stop);
+    besuController.close();
+    vertx.close((res) -> vertxShutdownLatch.countDown());
+    waitForServiceToStop("Vertx", vertxShutdownLatch::await);
+    shutdown.countDown();
+  }
+
   public void awaitStop() {
     try {
-      networkRunner.awaitStop();
+      shutdown.await();
     } catch (final InterruptedException e) {
       LOG.debug("Interrupted, exiting", e);
       Thread.currentThread().interrupt();
@@ -111,30 +142,9 @@ public class Runner implements AutoCloseable {
   }
 
   @Override
-  public void close() throws Exception {
-    try {
-      if (networkRunner.getNetwork().isP2pEnabled()) {
-        besuController.getSynchronizer().stop();
-      }
-
-      networkRunner.stop();
-      networkRunner.awaitStop();
-
-      jsonRpc.ifPresent(service -> waitForServiceToStop("jsonRpc", service.stop()));
-      graphQLHttp.ifPresent(service -> waitForServiceToStop("graphQLHttp", service.stop()));
-      websocketRpc.ifPresent(service -> waitForServiceToStop("websocketRpc", service.stop()));
-      metrics.ifPresent(service -> waitForServiceToStop("metrics", service.stop()));
-
-      if (natManager.isPresent()) {
-        natManager.get().stop();
-      }
-    } finally {
-      try {
-        vertx.close();
-      } finally {
-        besuController.close();
-      }
-    }
+  public void close() {
+    stop();
+    awaitStop();
   }
 
   private void waitForServiceToStop(
@@ -148,6 +158,15 @@ public class Runner implements AutoCloseable {
       LOG.error("Service " + serviceName + " failed to shutdown", e);
     } catch (final TimeoutException e) {
       LOG.error("Service {} did not shut down cleanly", serviceName);
+    }
+  }
+
+  private void waitForServiceToStop(final String serviceName, final SynchronousShutdown shutdown) {
+    try {
+      shutdown.await();
+    } catch (final InterruptedException e) {
+      LOG.debug("Interrupted while waiting for service " + serviceName + " to stop", e);
+      Thread.currentThread().interrupt();
     }
   }
 
@@ -235,5 +254,10 @@ public class Runner implements AutoCloseable {
   @VisibleForTesting
   Optional<EnodeURL> getLocalEnode() {
     return networkRunner.getNetwork().getLocalEnode();
+  }
+
+  @FunctionalInterface
+  private interface SynchronousShutdown {
+    void await() throws InterruptedException;
   }
 }
