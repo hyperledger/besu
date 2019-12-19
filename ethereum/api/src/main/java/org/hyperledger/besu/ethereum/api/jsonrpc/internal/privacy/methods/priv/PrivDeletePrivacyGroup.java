@@ -16,25 +16,23 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
-import org.hyperledger.besu.enclave.Enclave;
-import org.hyperledger.besu.enclave.types.DeletePrivacyGroupRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 import org.apache.logging.log4j.Logger;
 
-public class PrivDeletePrivacyGroup extends PrivacyApiMethod {
+public class PrivDeletePrivacyGroup implements JsonRpcMethod {
 
   private static final Logger LOG = getLogger();
-  private final Enclave enclave;
+  private PrivacyController privacyController;
 
-  public PrivDeletePrivacyGroup(final PrivacyParameters privacyParameters) {
-    super(privacyParameters);
-    this.enclave = privacyParameters.getEnclave();
+  public PrivDeletePrivacyGroup(final PrivacyController privacyController) {
+    this.privacyController = privacyController;
   }
 
   @Override
@@ -43,24 +41,16 @@ public class PrivDeletePrivacyGroup extends PrivacyApiMethod {
   }
 
   @Override
-  public JsonRpcResponse doResponse(final JsonRpcRequestContext requestContext) {
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     LOG.trace("Executing {}", RpcMethod.PRIV_DELETE_PRIVACY_GROUP.getMethodName());
 
     final String privacyGroupId = requestContext.getRequiredParameter(0, String.class);
 
-    LOG.trace(
-        "Deleting a privacy group with privacyGroupId {} and from {}",
-        privacyGroupId,
-        privacyParameters.getEnclavePublicKey());
-
-    DeletePrivacyGroupRequest deletePrivacyGroupRequest =
-        new DeletePrivacyGroupRequest(privacyGroupId, privacyParameters.getEnclavePublicKey());
-    String response;
+    final String response;
     try {
-      response = enclave.deletePrivacyGroup(deletePrivacyGroupRequest);
+      response = privacyController.deletePrivacyGroup(privacyGroupId);
     } catch (Exception e) {
-      LOG.error("Failed to fetch transaction from Enclave with error " + e.getMessage());
-      LOG.error(e);
+      LOG.error("Failed to fetch transaction", e);
       return new JsonRpcSuccessResponse(
           requestContext.getRequest().getId(), JsonRpcError.DELETE_PRIVACY_GROUP_ERROR);
     }

@@ -20,8 +20,6 @@ import org.hyperledger.besu.controller.KeyPairUtil;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveException;
 import org.hyperledger.besu.enclave.EnclaveFactory;
-import org.hyperledger.besu.enclave.types.SendRequest;
-import org.hyperledger.besu.enclave.types.SendRequestLegacy;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyStorageProvider;
@@ -109,19 +107,17 @@ public class PrivacyNode implements AutoCloseable {
             Arrays.toString(otherNodes.stream().map(node -> node.orion.nodeUrl()).toArray())));
     final EnclaveFactory factory = new EnclaveFactory(vertx);
     final Enclave enclaveClient = factory.createVertxEnclave(orion.clientUrl());
-    final SendRequest sendRequest =
-        new SendRequestLegacy(
-            "SGVsbG8sIFdvcmxkIQ==",
-            orion.getDefaultPublicKey(),
-            otherNodes.stream()
-                .map(node -> node.orion.getDefaultPublicKey())
-                .collect(Collectors.toList()));
+    final String payload = "SGVsbG8sIFdvcmxkIQ==";
+    final List<String> to =
+        otherNodes.stream()
+            .map(node -> node.orion.getDefaultPublicKey())
+            .collect(Collectors.toList());
 
     Awaitility.await()
         .until(
             () -> {
               try {
-                enclaveClient.send(sendRequest);
+                enclaveClient.send(payload, orion.getDefaultPublicKey(), to);
                 return true;
               } catch (final EnclaveException e) {
                 LOG.info("Waiting for enclave connectivity");

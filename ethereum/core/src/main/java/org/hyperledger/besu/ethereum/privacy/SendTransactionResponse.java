@@ -12,24 +12,22 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.enclave.types;
+package org.hyperledger.besu.ethereum.privacy;
 
-import java.util.List;
+public class SendTransactionResponse {
+  private final String enclaveKey;
+  private final String privacyGroupId;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
-public class FindPrivacyGroupRequest {
-
-  private final List<String> addresses;
-
-  @JsonCreator
-  public FindPrivacyGroupRequest(@JsonProperty("addresses") final List<String> addresses) {
-    this.addresses = addresses;
+  public SendTransactionResponse(final String enclaveKey, final String privacyGroupId) {
+    this.enclaveKey = enclaveKey;
+    this.privacyGroupId = privacyGroupId;
   }
 
-  @JsonProperty("addresses")
-  public List<String> addresses() {
-    return addresses;
+  public String getEnclaveKey() {
+    return enclaveKey;
+  }
+
+  public String getPrivacyGroupId() {
+    return privacyGroupId;
   }
 }
