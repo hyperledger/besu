@@ -16,28 +16,25 @@ package org.hyperledger.besu.ethereum.api.graphql;
 
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 public class GraphQLDataFetcherContext {
 
-  private final BlockchainQueries blockchain;
+  private final BlockchainQueries blockchainQueries;
   private final MiningCoordinator miningCoordinator;
   private final Synchronizer synchronizer;
   private final ProtocolSchedule<?> protocolSchedule;
   private final TransactionPool transactionPool;
 
   public GraphQLDataFetcherContext(
-      final Blockchain blockchain,
-      final WorldStateArchive worldStateArchive,
+      final BlockchainQueries blockchainQueries,
       final ProtocolSchedule<?> protocolSchedule,
       final TransactionPool transactionPool,
       final MiningCoordinator miningCoordinator,
       final Synchronizer synchronizer) {
-    this.blockchain = new BlockchainQueries(blockchain, worldStateArchive);
+    this.blockchainQueries = blockchainQueries;
     this.protocolSchedule = protocolSchedule;
     this.miningCoordinator = miningCoordinator;
     this.synchronizer = synchronizer;
@@ -49,7 +46,7 @@ public class GraphQLDataFetcherContext {
   }
 
   public BlockchainQueries getBlockchainQueries() {
-    return blockchain;
+    return blockchainQueries;
   }
 
   public MiningCoordinator getMiningCoordinator() {
