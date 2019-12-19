@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 import org.hyperledger.besu.ethereum.api.jsonrpc.LatestNonceProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.DisabledPrivacyRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.MultiTenancyValidatingPrivacyRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.MultiTenancyRpcMethodDecorator;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
@@ -105,7 +105,7 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
   private JsonRpcMethod createPrivacyMethod(
       final PrivacyParameters privacyParameters, final JsonRpcMethod rpcMethod) {
     if (privacyParameters.isEnabled() && privacyParameters.isMultiTenancyEnabled()) {
-      return new MultiTenancyValidatingPrivacyRpcMethod(rpcMethod);
+      return new MultiTenancyRpcMethodDecorator(rpcMethod);
     } else if (!privacyParameters.isEnabled()) {
       return new DisabledPrivacyRpcMethod(rpcMethod.getName());
     } else {

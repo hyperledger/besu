@@ -115,10 +115,6 @@ public enum JsonRpcError {
   DECODE_ERROR(-50100, "Unable to decode the private signed raw transaction"),
   GET_PRIVATE_TRANSACTION_NONCE_ERROR(-50100, "Unable to determine nonce for account in group."),
 
-  // Privacy multi-tenancy errors
-  PRIVACY_MULTI_TENANCY_NO_TOKEN(-50100, "No token provided"),
-  PRIVACY_MULTI_TENANCY_NO_ENCLAVE_PUBLIC_KEY(-50100, "No privacy enclave public key"),
-
   CANT_CONNECT_TO_LOCAL_PEER(-32100, "Cannot add local node as peer."),
 
   // Invalid input errors

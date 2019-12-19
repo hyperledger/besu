@@ -14,23 +14,24 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods;
 
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.PRIVACY_MULTI_TENANCY_NO_ENCLAVE_PUBLIC_KEY;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.PRIVACY_MULTI_TENANCY_NO_TOKEN;
+import static org.apache.logging.log4j.LogManager.getLogger;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcUnauthorizedResponse;
 
 import java.util.Optional;
 
 import io.vertx.ext.auth.User;
+import org.apache.logging.log4j.Logger;
 
-public class MultiTenancyValidatingPrivacyRpcMethod implements JsonRpcMethod {
-
+public class MultiTenancyRpcMethodDecorator implements JsonRpcMethod {
+  private static final Logger LOG = getLogger();
   private JsonRpcMethod rpcMethod;
 
-  public MultiTenancyValidatingPrivacyRpcMethod(final JsonRpcMethod rpcMethod) {
+  public MultiTenancyRpcMethodDecorator(final JsonRpcMethod rpcMethod) {
     this.rpcMethod = rpcMethod;
   }
 
@@ -44,9 +45,11 @@ public class MultiTenancyValidatingPrivacyRpcMethod implements JsonRpcMethod {
     final Optional<User> user = requestContext.getUser();
     final Object id = requestContext.getRequest().getId();
     if (user.isEmpty()) {
-      return new JsonRpcErrorResponse(id, PRIVACY_MULTI_TENANCY_NO_TOKEN);
+      LOG.error("Request does not contain a JWT");
+      return new JsonRpcUnauthorizedResponse(id, JsonRpcError.UNAUTHORIZED);
     } else if (MultiTenancyUserUtil.enclavePublicKey(user).isEmpty()) {
-      return new JsonRpcErrorResponse(id, PRIVACY_MULTI_TENANCY_NO_ENCLAVE_PUBLIC_KEY);
+      LOG.error("JWT token does not contain a enclave public key claim");
+      return new JsonRpcUnauthorizedResponse(id, JsonRpcError.UNAUTHORIZED);
     } else {
       return rpcMethod.response(requestContext);
     }

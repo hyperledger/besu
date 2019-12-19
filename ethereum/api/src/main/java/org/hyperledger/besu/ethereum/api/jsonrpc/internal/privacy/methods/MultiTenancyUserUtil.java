@@ -19,9 +19,9 @@ import java.util.Optional;
 import io.vertx.ext.auth.User;
 
 public class MultiTenancyUserUtil {
-  private static final String PRIVACY_PUBLIC_KEY = "privacyPublicKey";
+  private static final String ENCLAVE_PRIVACY_PUBLIC_KEY_CLAIM = "privacyPublicKey";
 
   public static Optional<String> enclavePublicKey(final Optional<User> user) {
-    return user.map(u -> u.principal().getString(PRIVACY_PUBLIC_KEY));
+    return user.map(u -> u.principal().getString(ENCLAVE_PRIVACY_PUBLIC_KEY_CLAIM));
   }
 }

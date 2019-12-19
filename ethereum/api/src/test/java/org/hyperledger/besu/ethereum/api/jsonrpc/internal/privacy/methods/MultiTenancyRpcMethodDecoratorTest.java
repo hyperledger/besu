@@ -34,7 +34,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class MultiTenancyValidatingPrivacyRpcMethodTest {
+public class MultiTenancyRpcMethodDecoratorTest {
 
   @Mock private JsonRpcMethod jsonRpcMethod;
   private final JsonRpcRequest rpcRequest = new JsonRpcRequest("1", "test", new String[] {"a"});
@@ -50,8 +50,8 @@ public class MultiTenancyValidatingPrivacyRpcMethodTest {
         .thenReturn(new JsonRpcSuccessResponse("1", "b"));
     when(jsonRpcMethod.getName()).thenReturn("delegate");
 
-    final MultiTenancyValidatingPrivacyRpcMethod tokenRpcDecorator =
-        new MultiTenancyValidatingPrivacyRpcMethod(jsonRpcMethod);
+    final MultiTenancyRpcMethodDecorator tokenRpcDecorator =
+        new MultiTenancyRpcMethodDecorator(jsonRpcMethod);
 
     assertThat(tokenRpcDecorator.getName()).isEqualTo("delegate");
 
@@ -64,8 +64,8 @@ public class MultiTenancyValidatingPrivacyRpcMethodTest {
   @Test
   public void failsWhenHasNoToken() {
     final JsonRpcRequestContext rpcRequestContext = new JsonRpcRequestContext(rpcRequest);
-    final MultiTenancyValidatingPrivacyRpcMethod tokenRpcDecorator =
-        new MultiTenancyValidatingPrivacyRpcMethod(jsonRpcMethod);
+    final MultiTenancyRpcMethodDecorator tokenRpcDecorator =
+        new MultiTenancyRpcMethodDecorator(jsonRpcMethod);
     when(jsonRpcMethod.getName()).thenReturn("delegate");
 
     assertThat(tokenRpcDecorator.getName()).isEqualTo("delegate");
@@ -80,8 +80,8 @@ public class MultiTenancyValidatingPrivacyRpcMethodTest {
   public void failsWhenTokenDoesNotHavePrivacyPublicKey() {
     final JWTUser user = new JWTUser(new JsonObject(), "");
     final JsonRpcRequestContext rpcRequestContext = new JsonRpcRequestContext(rpcRequest, user);
-    final MultiTenancyValidatingPrivacyRpcMethod tokenRpcDecorator =
-        new MultiTenancyValidatingPrivacyRpcMethod(jsonRpcMethod);
+    final MultiTenancyRpcMethodDecorator tokenRpcDecorator =
+        new MultiTenancyRpcMethodDecorator(jsonRpcMethod);
     when(jsonRpcMethod.getName()).thenReturn("delegate");
 
     assertThat(tokenRpcDecorator.getName()).isEqualTo("delegate");
