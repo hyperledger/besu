@@ -43,8 +43,7 @@ public class TlsConfiguration {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     final TlsConfiguration that = (TlsConfiguration) o;
-    return keyStore.equals(that.keyStore) &&
-            trustStore.equals(that.trustStore);
+    return keyStore.equals(that.keyStore) && trustStore.equals(that.trustStore);
   }
 
   @Override

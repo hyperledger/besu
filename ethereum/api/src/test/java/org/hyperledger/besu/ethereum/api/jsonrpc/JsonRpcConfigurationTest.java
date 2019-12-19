@@ -16,10 +16,10 @@ package org.hyperledger.besu.ethereum.api.jsonrpc;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.Optional;
+
 import com.google.common.collect.Lists;
 import org.junit.Test;
-
-import java.util.Optional;
 
 public class JsonRpcConfigurationTest {
 

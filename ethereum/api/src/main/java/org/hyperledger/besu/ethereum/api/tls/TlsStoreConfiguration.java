@@ -40,8 +40,7 @@ public class TlsStoreConfiguration {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     final TlsStoreConfiguration that = (TlsStoreConfiguration) o;
-    return storePath.equals(that.storePath) &&
-            storePassword.equals(that.storePassword);
+    return storePath.equals(that.storePath) && storePassword.equals(that.storePassword);
   }
 
   @Override
