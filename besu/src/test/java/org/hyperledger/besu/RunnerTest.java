@@ -56,7 +56,6 @@ import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactor
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBFactoryConfiguration;
 import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.testutil.TestClock;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -81,6 +80,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.awaitility.Awaitility;
 import org.junit.Rule;
 import org.junit.Test;
@@ -290,7 +290,7 @@ public final class RunnerTest {
                   final int currentBlock =
                       UInt256.fromHexString(
                               new JsonObject(resp.body().string()).getString("result"))
-                          .toInt();
+                          .intValue();
                   if (currentBlock < blockCount) {
                     // if not yet at blockCount, we should get a sync result from eth_syncing
                     final int syncResultCurrentBlock =
@@ -298,7 +298,7 @@ public final class RunnerTest {
                                 new JsonObject(syncingResp.body().string())
                                     .getJsonObject("result")
                                     .getString("currentBlock"))
-                            .toInt();
+                            .intValue();
                     assertThat(syncResultCurrentBlock).isLessThan(blockCount);
                   }
                   assertThat(currentBlock).isEqualTo(blockCount);

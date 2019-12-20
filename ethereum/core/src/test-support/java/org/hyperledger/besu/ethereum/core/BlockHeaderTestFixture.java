@@ -15,8 +15,9 @@
 package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class BlockHeaderTestFixture {
 
@@ -35,7 +36,7 @@ public class BlockHeaderTestFixture {
   private long gasLimit = 0;
   private long gasUsed = 0;
   private long timestamp = 0;
-  private BytesValue extraData = BytesValue.EMPTY;
+  private Bytes extraData = Bytes.EMPTY;
 
   private Hash mixHash = Hash.EMPTY;
   private long nonce = 0;
@@ -123,7 +124,7 @@ public class BlockHeaderTestFixture {
     return this;
   }
 
-  public BlockHeaderTestFixture extraData(final BytesValue extraData) {
+  public BlockHeaderTestFixture extraData(final Bytes extraData) {
     this.extraData = extraData;
     return this;
   }

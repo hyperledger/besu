@@ -38,7 +38,6 @@ import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -51,6 +50,7 @@ import java.util.List;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.io.Resources;
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -127,7 +127,7 @@ public abstract class JsonBlockImporterTest {
       // Check block 1
       Block block = blocks.get(0);
       if (isEthash) {
-        assertThat(block.getHeader().getExtraData()).isEqualTo(BytesValue.EMPTY);
+        assertThat(block.getHeader().internalGetExtraData()).isEqualTo(Bytes.EMPTY);
         assertThat(block.getHeader().getCoinbase()).isEqualTo(Address.ZERO);
       }
       assertThat(block.getBody().getTransactions().size()).isEqualTo(2);
@@ -155,7 +155,8 @@ public abstract class JsonBlockImporterTest {
       // Check block 2
       block = blocks.get(1);
       if (isEthash) {
-        assertThat(block.getHeader().getExtraData()).isEqualTo(BytesValue.fromHexString("0x1234"));
+        assertThat(block.getHeader().internalGetExtraData())
+            .isEqualTo(Bytes.fromHexString("0x1234"));
         assertThat(block.getHeader().getCoinbase()).isEqualTo(Address.fromHexString("0x02"));
       }
       assertThat(block.getBody().getTransactions().size()).isEqualTo(1);
@@ -173,7 +174,8 @@ public abstract class JsonBlockImporterTest {
       // Check block 3
       block = blocks.get(2);
       if (isEthash) {
-        assertThat(block.getHeader().getExtraData()).isEqualTo(BytesValue.fromHexString("0x3456"));
+        assertThat(block.getHeader().internalGetExtraData())
+            .isEqualTo(Bytes.fromHexString("0x3456"));
         assertThat(block.getHeader().getCoinbase())
             .isEqualTo(Address.fromHexString("f17f52151EbEF6C7334FAD080c5704D77216b732"));
       }
@@ -182,7 +184,7 @@ public abstract class JsonBlockImporterTest {
       // Check block 4
       block = blocks.get(3);
       if (isEthash) {
-        assertThat(block.getHeader().getExtraData()).isEqualTo(BytesValue.EMPTY);
+        assertThat(block.getHeader().internalGetExtraData()).isEqualTo(Bytes.EMPTY);
         assertThat(block.getHeader().getCoinbase()).isEqualTo(Address.ZERO);
       }
       assertThat(block.getBody().getTransactions().size()).isEqualTo(1);
@@ -218,7 +220,7 @@ public abstract class JsonBlockImporterTest {
       // Check block 1
       Block block = blocks.get(0);
       if (isEthash) {
-        assertThat(block.getHeader().getExtraData()).isEqualTo(BytesValue.EMPTY);
+        assertThat(block.getHeader().internalGetExtraData()).isEqualTo(Bytes.EMPTY);
         assertThat(block.getHeader().getCoinbase()).isEqualTo(Address.ZERO);
       }
       assertThat(block.getBody().getTransactions().size()).isEqualTo(2);
@@ -246,7 +248,8 @@ public abstract class JsonBlockImporterTest {
       // Check block 2
       block = blocks.get(1);
       if (isEthash) {
-        assertThat(block.getHeader().getExtraData()).isEqualTo(BytesValue.fromHexString("0x1234"));
+        assertThat(block.getHeader().internalGetExtraData())
+            .isEqualTo(Bytes.fromHexString("0x1234"));
         assertThat(block.getHeader().getCoinbase()).isEqualTo(Address.fromHexString("0x02"));
       }
       assertThat(block.getBody().getTransactions().size()).isEqualTo(1);
@@ -264,7 +267,8 @@ public abstract class JsonBlockImporterTest {
       // Check block 3
       block = blocks.get(2);
       if (isEthash) {
-        assertThat(block.getHeader().getExtraData()).isEqualTo(BytesValue.fromHexString("0x3456"));
+        assertThat(block.getHeader().internalGetExtraData())
+            .isEqualTo(Bytes.fromHexString("0x3456"));
         assertThat(block.getHeader().getCoinbase())
             .isEqualTo(Address.fromHexString("f17f52151EbEF6C7334FAD080c5704D77216b732"));
       }
@@ -273,7 +277,7 @@ public abstract class JsonBlockImporterTest {
       // Check block 4
       block = blocks.get(3);
       if (isEthash) {
-        assertThat(block.getHeader().getExtraData()).isEqualTo(BytesValue.EMPTY);
+        assertThat(block.getHeader().internalGetExtraData()).isEqualTo(Bytes.EMPTY);
         assertThat(block.getHeader().getCoinbase()).isEqualTo(Address.ZERO);
       }
       assertThat(block.getBody().getTransactions().size()).isEqualTo(1);
@@ -323,7 +327,7 @@ public abstract class JsonBlockImporterTest {
       // Check block 1
       assertThat(newBlock.getHeader().getParentHash()).isEqualTo(parentBlock.getHash());
       if (isEthash) {
-        assertThat(newBlock.getHeader().getExtraData()).isEqualTo(BytesValue.EMPTY);
+        assertThat(newBlock.getHeader().internalGetExtraData()).isEqualTo(Bytes.EMPTY);
         assertThat(newBlock.getHeader().getCoinbase()).isEqualTo(Address.ZERO);
       }
       assertThat(newBlock.getBody().getTransactions().size()).isEqualTo(1);
@@ -375,7 +379,8 @@ public abstract class JsonBlockImporterTest {
         importer.importChain(jsonData);
         final Blockchain blockchain = controller.getProtocolContext().getBlockchain();
         final Block block = getBlockAt(blockchain, 1);
-        assertThat(block.getHeader().getExtraData()).isEqualTo(BytesValue.fromHexString("0x0123"));
+        assertThat(block.getHeader().internalGetExtraData())
+            .isEqualTo(Bytes.fromHexString("0x0123"));
         assertThat(block.getHeader().getCoinbase())
             .isEqualTo(Address.fromHexString("627306090abaB3A6e1400e9345bC60c78a8BEf57"));
       } else {

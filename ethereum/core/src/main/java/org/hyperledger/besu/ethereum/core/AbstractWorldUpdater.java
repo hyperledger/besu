@@ -16,10 +16,6 @@ package org.hyperledger.besu.ethereum.core;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -30,6 +26,10 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import javax.annotation.Nullable;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 /**
  * An abstract implementation of a {@link WorldUpdater} that buffers update over the {@link
@@ -168,7 +168,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
     private Wei balance;
     private int version;
 
-    @Nullable private BytesValue updatedCode; // Null if the underlying code has not been updated.
+    @Nullable private Bytes updatedCode; // Null if the underlying code has not been updated.
     @Nullable private Hash updatedCodeHash;
 
     // Only contains updated storage entries, but may contains entry with a value of 0 to signify
@@ -185,7 +185,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
       this.balance = Wei.ZERO;
       this.version = Account.DEFAULT_VERSION;
 
-      this.updatedCode = BytesValue.EMPTY;
+      this.updatedCode = Bytes.EMPTY;
       this.updatedStorage = new TreeMap<>();
     }
 
@@ -263,7 +263,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
     }
 
     @Override
-    public BytesValue getCode() {
+    public Bytes getCode() {
       // Note that we set code for new account, so it's only null if account isn't.
       return updatedCode == null ? account.getCode() : updatedCode;
     }
@@ -290,7 +290,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
     }
 
     @Override
-    public void setCode(final BytesValue code) {
+    public void setCode(final Bytes code) {
       this.updatedCode = code;
     }
 

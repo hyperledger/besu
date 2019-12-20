@@ -35,6 +35,7 @@ dependencies {
   implementation project(':crypto')
   implementation project(':util')
 
+  implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'com.fasterxml.jackson.core:jackson-databind'
   implementation 'com.google.guava:guava'
 

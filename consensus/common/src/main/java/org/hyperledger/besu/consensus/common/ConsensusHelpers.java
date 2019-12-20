@@ -14,14 +14,13 @@
  */
 package org.hyperledger.besu.consensus.common;
 
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.BytesValues;
+import org.apache.tuweni.bytes.Bytes;
 
 public class ConsensusHelpers {
 
-  public static BytesValue zeroLeftPad(final BytesValue input, final int requiredLength) {
+  public static Bytes zeroLeftPad(final Bytes input, final int requiredLength) {
     final int paddingByteCount = Math.max(0, requiredLength - input.size());
-    return BytesValues.concatenate(BytesValue.wrap(new byte[paddingByteCount]), input)
+    return Bytes.concatenate(Bytes.wrap(new byte[paddingByteCount]), input)
         .slice(0, requiredLength);
   }
 }

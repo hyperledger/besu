@@ -14,10 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
-
 import java.util.Map;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 
 /** A mutable world state account. */
 public interface MutableAccount extends Account {
@@ -48,7 +48,7 @@ public interface MutableAccount extends Account {
    */
   default Wei incrementBalance(final Wei value) {
     final Wei current = getBalance();
-    setBalance(current.plus(value));
+    setBalance(current.add(value));
     return current;
   }
 
@@ -66,7 +66,7 @@ public interface MutableAccount extends Account {
       throw new IllegalStateException(
           String.format("Cannot remove %s wei from account, balance is only %s", value, current));
     }
-    setBalance(current.minus(value));
+    setBalance(current.subtract(value));
     return current;
   }
 
@@ -82,7 +82,7 @@ public interface MutableAccount extends Account {
    *
    * @param code the code to set for the account.
    */
-  void setCode(BytesValue code);
+  void setCode(Bytes code);
 
   /**
    * Sets the version for the account.

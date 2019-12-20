@@ -16,10 +16,10 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import org.apache.tuweni.bytes.Bytes;
 
 @JsonPropertyOrder({
   "blockHash",
@@ -64,7 +64,7 @@ public class TransactionCompleteResult implements TransactionResult {
     this.hash = transaction.getHash().toString();
     this.input = transaction.getPayload().toString();
     this.nonce = Quantity.create(transaction.getNonce());
-    this.to = transaction.getTo().map(BytesValue::toString).orElse(null);
+    this.to = transaction.getTo().map(Bytes::toHexString).orElse(null);
     this.transactionIndex = Quantity.create(tx.getTransactionIndex().get());
     this.value = Quantity.create(transaction.getValue());
     this.v = Quantity.create(transaction.getV());

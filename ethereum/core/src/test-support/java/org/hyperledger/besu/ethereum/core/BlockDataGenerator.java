@@ -21,9 +21,6 @@ import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.crypto.SecureRandomProvider;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.math.BigInteger;
 import java.security.InvalidAlgorithmParameterException;
@@ -46,6 +43,9 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPrivateKey;
 import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPublicKey;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
@@ -289,7 +289,7 @@ public class BlockDataGenerator {
     return new BlockBody(options.getTransactions(defaultTxs), ommers);
   }
 
-  public Transaction transaction(final BytesValue payload) {
+  public Transaction transaction(final Bytes payload) {
     return Transaction.builder()
         .nonce(positiveLong())
         .gasPrice(Wei.wrap(bytes32()))
@@ -346,7 +346,7 @@ public class BlockDataGenerator {
         hash(), cumulativeGasUsed, Arrays.asList(log(), log()), Optional.empty());
   }
 
-  public TransactionReceipt receipt(final BytesValue revertReason) {
+  public TransactionReceipt receipt(final Bytes revertReason) {
     return new TransactionReceipt(
         hash(), positiveLong(), Arrays.asList(log(), log()), Optional.of(revertReason));
   }
@@ -386,31 +386,31 @@ public class BlockDataGenerator {
   public Log log(final int topicCount) {
     final List<LogTopic> topics =
         Stream.generate(this::logTopic).limit(topicCount).collect(Collectors.toList());
-    return new Log(address(), bytesValue(5, 15), topics);
+    return new Log(address(), new UnformattedDataWrapper(bytesValue(5, 15)), topics);
   }
 
   private LogTopic logTopic() {
-    return LogTopic.create(bytesValue(LogTopic.SIZE));
+    return LogTopic.wrap(bytesValue(Bytes32.SIZE));
   }
 
   private Bytes32 bytes32() {
     return Bytes32.wrap(bytes(Bytes32.SIZE));
   }
 
-  public BytesValue bytesValue(final int size) {
-    return BytesValue.wrap(bytes(size));
+  public Bytes bytesValue(final int size) {
+    return Bytes.wrap(bytes(size));
   }
 
-  public BytesValue bytesValue() {
+  public Bytes bytesValue() {
     return bytesValue(1, 20);
   }
 
-  public BytesValue bytesValue(final int minSize, final int maxSize) {
+  public Bytes bytesValue(final int minSize, final int maxSize) {
     checkArgument(minSize >= 0);
     checkArgument(maxSize >= 0);
     checkArgument(maxSize > minSize);
     final int size = random.nextInt(maxSize - minSize) + minSize;
-    return BytesValue.wrap(bytes(size));
+    return Bytes.wrap(bytes(size));
   }
 
   /**
@@ -421,11 +421,11 @@ public class BlockDataGenerator {
    */
   private UInt256 uint256(final int maxByteSize) {
     assert maxByteSize <= 32;
-    return Bytes32.wrap(bytes(32, 32 - maxByteSize)).asUInt256();
+    return UInt256.fromBytes(Bytes32.wrap(bytes(32, 32 - maxByteSize)));
   }
 
   private UInt256 uint256() {
-    return bytes32().asUInt256();
+    return UInt256.fromBytes(bytes32());
   }
 
   private long positiveLong() {
@@ -442,7 +442,7 @@ public class BlockDataGenerator {
   }
 
   public LogsBloomFilter logsBloom() {
-    return new LogsBloomFilter(BytesValue.of(bytes(LogsBloomFilter.BYTE_SIZE)));
+    return new LogsBloomFilter(Bytes.of(bytes(LogsBloomFilter.BYTE_SIZE)));
   }
 
   private byte[] bytes(final int size) {
@@ -488,7 +488,7 @@ public class BlockDataGenerator {
     private Optional<Hash> stateRoot = Optional.empty();
     private Optional<UInt256> difficulty = Optional.empty();
     private List<Transaction> transactions = new ArrayList<>();
-    private Optional<BytesValue> extraData = Optional.empty();
+    private Optional<Bytes> extraData = Optional.empty();
     private Optional<BlockHeaderFunctions> blockHeaderFunctions = Optional.empty();
 
     public static BlockOptions create() {
@@ -515,7 +515,7 @@ public class BlockDataGenerator {
       return difficulty.orElse(defaultValue);
     }
 
-    public BytesValue getExtraData(final Bytes32 defaultValue) {
+    public Bytes getExtraData(final Bytes32 defaultValue) {
       return extraData.orElse(defaultValue);
     }
 
@@ -552,7 +552,7 @@ public class BlockDataGenerator {
       return this;
     }
 
-    public BlockOptions setExtraData(final BytesValue extraData) {
+    public BlockOptions setExtraData(final Bytes extraData) {
       this.extraData = Optional.of(extraData);
       return this;
     }

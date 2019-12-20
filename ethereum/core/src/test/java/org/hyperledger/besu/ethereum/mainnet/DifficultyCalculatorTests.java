@@ -25,8 +25,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -36,6 +34,8 @@ import java.util.List;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.io.Resources;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -135,7 +135,7 @@ public class DifficultyCalculatorTests {
               .receiptsRoot(Hash.EMPTY)
               .logsBloom(new LogsBloomFilter())
               .gasUsed(0)
-              .extraData(BytesValue.of())
+              .extraData(Bytes.of())
               .mixHash(Hash.EMPTY)
               .nonce(0)
               .blockHeaderFunctions(blockHeaderFunctions)
@@ -149,7 +149,7 @@ public class DifficultyCalculatorTests {
           UInt256.fromHexString(value.get("currentDifficulty").asText());
       final var spec = protocolSchedule.getByBlockNumber(currentBlockNumber);
       final var calculator = spec.getDifficultyCalculator();
-      assertThat(UInt256.of(calculator.nextDifficulty(currentTime, testHeader, null)))
+      assertThat(UInt256.valueOf(calculator.nextDifficulty(currentTime, testHeader, null)))
           .describedAs("File %s Test %s", testFile, entry.getKey())
           .isEqualTo(currentDifficulty);
     }

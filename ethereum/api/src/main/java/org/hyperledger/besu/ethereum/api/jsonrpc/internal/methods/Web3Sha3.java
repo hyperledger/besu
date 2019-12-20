@@ -21,7 +21,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.util.bytes.BytesValue;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class Web3Sha3 implements JsonRpcMethod {
 
@@ -48,7 +49,7 @@ public class Web3Sha3 implements JsonRpcMethod {
     }
 
     try {
-      final BytesValue byteData = BytesValue.fromHexString(data);
+      final Bytes byteData = Bytes.fromHexString(data);
       return new JsonRpcSuccessResponse(
           requestContext.getRequest().getId(), Hash.keccak256(byteData).toString());
     } catch (final IllegalArgumentException err) {

@@ -20,7 +20,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParame
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.UInt256Parameter;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.util.uint.UInt256;
+
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class EthGetStorageAt extends AbstractBlockParameterMethod {
 

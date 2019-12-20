@@ -24,13 +24,13 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.util.uint.UInt256;
 
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Test;
 
 public class ChainStateTest {
 
-  private static final UInt256 INITIAL_TOTAL_DIFFICULTY = UInt256.of(256);
+  private static final UInt256 INITIAL_TOTAL_DIFFICULTY = UInt256.valueOf(256);
   private final ChainState chainState = new ChainState();
 
   @Test
@@ -184,7 +184,7 @@ public class ChainStateTest {
     assertThat(chainState.getBestBlock().getNumber()).isEqualTo(0L);
 
     final long betterBlockNumber = blockNumber + 2;
-    final UInt256 betterTd = INITIAL_TOTAL_DIFFICULTY.plus(100L);
+    final UInt256 betterTd = INITIAL_TOTAL_DIFFICULTY.add(100L);
     final BlockHeader betterBlock =
         new BlockHeaderTestFixture().number(betterBlockNumber).buildHeader();
     chainState.updateForAnnouncedBlock(betterBlock, betterTd);
@@ -205,7 +205,7 @@ public class ChainStateTest {
     assertThat(chainState.getBestBlock().getNumber()).isEqualTo(0L);
 
     final long otherBlockNumber = blockNumber + 2;
-    final UInt256 otherTd = INITIAL_TOTAL_DIFFICULTY.minus(100L);
+    final UInt256 otherTd = INITIAL_TOTAL_DIFFICULTY.subtract(100L);
     final BlockHeader otherBlock =
         new BlockHeaderTestFixture().number(otherBlockNumber).buildHeader();
     chainState.updateForAnnouncedBlock(otherBlock, otherTd);
@@ -228,7 +228,7 @@ public class ChainStateTest {
     chainState.updateForAnnouncedBlock(bestBlockHeader, INITIAL_TOTAL_DIFFICULTY);
 
     final long otherBlockNumber = blockNumber - 2;
-    final UInt256 otherTd = INITIAL_TOTAL_DIFFICULTY.minus(100L);
+    final UInt256 otherTd = INITIAL_TOTAL_DIFFICULTY.subtract(100L);
     final BlockHeader otherBlock =
         new BlockHeaderTestFixture().number(otherBlockNumber).buildHeader();
     chainState.updateForAnnouncedBlock(otherBlock, otherTd);
@@ -311,8 +311,8 @@ public class ChainStateTest {
   @Test
   public void chainIsBetterThan_chainStateIsLighterAndShorter() {
     final ChainState chainState = new ChainState();
-    updateChainState(chainState, UInt256.of(50), 50);
-    final ChainHead chainHead = new ChainHead(Hash.ZERO, UInt256.of(100), 100);
+    updateChainState(chainState, UInt256.valueOf(50), 50);
+    final ChainHead chainHead = new ChainHead(Hash.ZERO, UInt256.valueOf(100), 100);
 
     assertThat(chainState.chainIsBetterThan(chainHead)).isFalse();
   }
@@ -320,8 +320,8 @@ public class ChainStateTest {
   @Test
   public void chainIsBetterThan_chainStateIsHeavierAndShorter() {
     final ChainState chainState = new ChainState();
-    updateChainState(chainState, UInt256.of(100), 50);
-    final ChainHead chainHead = new ChainHead(Hash.ZERO, UInt256.of(50), 100);
+    updateChainState(chainState, UInt256.valueOf(100), 50);
+    final ChainHead chainHead = new ChainHead(Hash.ZERO, UInt256.valueOf(50), 100);
 
     assertThat(chainState.chainIsBetterThan(chainHead)).isTrue();
   }
@@ -329,8 +329,8 @@ public class ChainStateTest {
   @Test
   public void chainIsBetterThan_chainStateIsLighterAndTaller() {
     final ChainState chainState = new ChainState();
-    updateChainState(chainState, UInt256.of(50), 100);
-    final ChainHead chainHead = new ChainHead(Hash.ZERO, UInt256.of(100), 50);
+    updateChainState(chainState, UInt256.valueOf(50), 100);
+    final ChainHead chainHead = new ChainHead(Hash.ZERO, UInt256.valueOf(100), 50);
 
     assertThat(chainState.chainIsBetterThan(chainHead)).isTrue();
   }
@@ -338,8 +338,8 @@ public class ChainStateTest {
   @Test
   public void chainIsBetterThan_chainStateIsHeavierAndTaller() {
     final ChainState chainState = new ChainState();
-    updateChainState(chainState, UInt256.of(100), 100);
-    final ChainHead chainHead = new ChainHead(Hash.ZERO, UInt256.of(50), 50);
+    updateChainState(chainState, UInt256.valueOf(100), 100);
+    final ChainHead chainHead = new ChainHead(Hash.ZERO, UInt256.valueOf(50), 50);
 
     assertThat(chainState.chainIsBetterThan(chainHead)).isTrue();
   }

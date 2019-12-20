@@ -29,7 +29,6 @@ import org.hyperledger.besu.ethereum.privacy.markertransaction.PrivateMarkerTran
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.util.bytes.BytesValues;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -40,6 +39,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 public class PrivacyController {
 
@@ -86,11 +86,10 @@ public class PrivacyController {
       final SendResponse sendResponse = sendRequest(privateTransaction);
       final String enclaveKey = sendResponse.getKey();
       if (privateTransaction.getPrivacyGroupId().isPresent()) {
-        final String privacyGroupId =
-            BytesValues.asBase64String(privateTransaction.getPrivacyGroupId().get());
+        final String privacyGroupId = privateTransaction.getPrivacyGroupId().get().toBase64String();
         return new SendTransactionResponse(enclaveKey, privacyGroupId);
       } else {
-        final String privateFrom = BytesValues.asBase64String(privateTransaction.getPrivateFrom());
+        final String privateFrom = privateTransaction.getPrivateFrom().toBase64String();
         final String privacyGroupId = getPrivacyGroupId(enclaveKey, privateFrom);
         return new SendTransactionResponse(enclaveKey, privacyGroupId);
       }
@@ -156,7 +155,7 @@ public class PrivacyController {
 
   public long determineNonce(final Address sender, final String privacyGroupId) {
     return privateStateStorage
-        .getLatestStateRoot(BytesValues.fromBase64(privacyGroupId))
+        .getLatestStateRoot(Bytes.fromBase64String(privacyGroupId))
         .map(
             lastRootHash ->
                 privateWorldStateArchive
@@ -181,24 +180,22 @@ public class PrivacyController {
   private SendResponse sendRequest(final PrivateTransaction privateTransaction) {
     final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
     privateTransaction.writeTo(rlpOutput);
-    final String payload = BytesValues.asBase64String(rlpOutput.encoded());
+    final String payload = rlpOutput.encoded().toBase64String();
 
     if (privateTransaction.getPrivacyGroupId().isPresent()) {
       return enclave.send(
-          payload,
-          enclavePublicKey,
-          BytesValues.asBase64String(privateTransaction.getPrivacyGroupId().get()));
+          payload, enclavePublicKey, privateTransaction.getPrivacyGroupId().get().toBase64String());
     } else {
       final List<String> privateFor =
           privateTransaction.getPrivateFor().get().stream()
-              .map(BytesValues::asBase64String)
+              .map(Bytes::toBase64String)
               .collect(Collectors.toList());
 
       if (privateFor.isEmpty()) {
-        privateFor.add(BytesValues.asBase64String(privateTransaction.getPrivateFrom()));
+        privateFor.add(privateTransaction.getPrivateFrom().toBase64String());
       }
       return enclave.send(
-          payload, BytesValues.asBase64String(privateTransaction.getPrivateFrom()), privateFor);
+          payload, privateTransaction.getPrivateFrom().toBase64String(), privateFor);
     }
   }
 

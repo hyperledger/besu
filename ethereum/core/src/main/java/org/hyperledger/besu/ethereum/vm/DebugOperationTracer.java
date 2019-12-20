@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.vm;
 
-import static org.hyperledger.besu.util.uint.UInt256.U_32;
-
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.ModificationNotAllowedException;
@@ -23,8 +21,6 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.vm.ehalt.ExceptionalHaltException;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -32,6 +28,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
+
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class DebugOperationTracer implements OperationTracer {
 
@@ -101,9 +100,10 @@ public class DebugOperationTracer implements OperationTracer {
     if (!options.isMemoryEnabled()) {
       return Optional.empty();
     }
-    final Bytes32[] memoryContents = new Bytes32[frame.memoryWordSize().toInt()];
+    final Bytes32[] memoryContents = new Bytes32[frame.memoryWordSize().intValue()];
     for (int i = 0; i < memoryContents.length; i++) {
-      memoryContents[i] = Bytes32.wrap(frame.readMemory(UInt256.of(i).times(U_32), U_32), 0);
+      memoryContents[i] =
+          Bytes32.wrap(frame.readMemory(UInt256.valueOf(i).multiply(32), UInt256.valueOf(32)), 0);
     }
     return Optional.of(memoryContents);
   }

@@ -24,24 +24,23 @@ import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.mainnet.AbstractPrecompiledContract;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.tuweni.bytes.Bytes;
+
 public class AltBN128PairingPrecompiledContract extends AbstractPrecompiledContract {
 
   private static final int FIELD_LENGTH = 32;
   private static final int PARAMETER_LENGTH = 192;
 
-  static final BytesValue FALSE =
-      BytesValue.fromHexString(
-          "0x0000000000000000000000000000000000000000000000000000000000000000");
-  static final BytesValue TRUE =
-      BytesValue.fromHexString(
-          "0x0000000000000000000000000000000000000000000000000000000000000001");
+  static final Bytes FALSE =
+      Bytes.fromHexString("0x0000000000000000000000000000000000000000000000000000000000000000");
+  static final Bytes TRUE =
+      Bytes.fromHexString("0x0000000000000000000000000000000000000000000000000000000000000001");
 
   private final Gas pairingGasCost;
   private final Gas baseGasCost;
@@ -62,13 +61,13 @@ public class AltBN128PairingPrecompiledContract extends AbstractPrecompiledContr
   }
 
   @Override
-  public Gas gasRequirement(final BytesValue input) {
+  public Gas gasRequirement(final Bytes input) {
     final int parameters = input.size() / PARAMETER_LENGTH;
     return pairingGasCost.times(parameters).plus(baseGasCost);
   }
 
   @Override
-  public BytesValue compute(final BytesValue input, final MessageFrame messageFrame) {
+  public Bytes compute(final Bytes input, final MessageFrame messageFrame) {
     if (input.isEmpty()) {
       return TRUE;
     }
@@ -114,11 +113,11 @@ public class AltBN128PairingPrecompiledContract extends AbstractPrecompiledContr
   }
 
   private static BigInteger extractParameter(
-      final BytesValue input, final int offset, final int length) {
+      final Bytes input, final int offset, final int length) {
     if (offset > input.size() || length == 0) {
       return BigInteger.ZERO;
     }
-    final byte[] raw = Arrays.copyOfRange(input.extractArray(), offset, offset + length);
+    final byte[] raw = Arrays.copyOfRange(input.toArray(), offset, offset + length);
     return new BigInteger(1, raw);
   }
 }

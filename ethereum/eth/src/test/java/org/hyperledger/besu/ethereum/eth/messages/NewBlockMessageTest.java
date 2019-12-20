@@ -23,9 +23,9 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Test;
 
 public class NewBlockMessageTest {
@@ -33,7 +33,7 @@ public class NewBlockMessageTest {
 
   @Test
   public void roundTripNewBlockMessage() {
-    final UInt256 totalDifficulty = UInt256.of(98765);
+    final UInt256 totalDifficulty = UInt256.valueOf(98765);
     final BlockDataGenerator blockGenerator = new BlockDataGenerator();
     final Block blockForInsertion = blockGenerator.block();
 
@@ -46,7 +46,7 @@ public class NewBlockMessageTest {
 
   @Test
   public void rawMessageUpCastsToANewBlockMessage() {
-    final UInt256 totalDifficulty = UInt256.of(12345);
+    final UInt256 totalDifficulty = UInt256.valueOf(12345);
     final BlockDataGenerator blockGenerator = new BlockDataGenerator();
     final Block blockForInsertion = blockGenerator.block();
 
@@ -68,7 +68,7 @@ public class NewBlockMessageTest {
 
   @Test
   public void readFromMessageWithWrongCodeThrows() {
-    final RawMessage rawMsg = new RawMessage(EthPV62.BLOCK_HEADERS, BytesValue.of(0));
+    final RawMessage rawMsg = new RawMessage(EthPV62.BLOCK_HEADERS, Bytes.of(0));
 
     assertThatExceptionOfType(IllegalArgumentException.class)
         .isThrownBy(() -> NewBlockMessage.readFrom(rawMsg));

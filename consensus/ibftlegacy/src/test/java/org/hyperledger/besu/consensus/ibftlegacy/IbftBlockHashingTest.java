@@ -21,12 +21,12 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
@@ -122,7 +122,7 @@ public class IbftBlockHashingTest {
     builder.gasLimit(4704588);
     builder.gasUsed(0);
     builder.timestamp(1530674616);
-    builder.extraData(BytesValue.fromHexString(extraDataHexString));
+    builder.extraData(Bytes.fromHexString(extraDataHexString));
     builder.mixHash(
         Hash.fromHexString("0x63746963616c2062797a616e74696e65206661756c7420746f6c6572616e6365"));
     builder.nonce(0);

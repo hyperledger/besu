@@ -17,9 +17,9 @@ package org.hyperledger.besu.ethereum.vm.operations;
 import org.hyperledger.besu.ethereum.mainnet.ConstantinopleFixGasCalculator;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.uint.UInt256;
 
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.Param;
 import org.openjdk.jmh.annotations.Scope;
@@ -55,7 +55,7 @@ public class BlockHashOperationBenchmark {
 
   @Benchmark
   public Bytes32 executeOperation() {
-    frame.pushStackItem(UInt256.of(blockNumber).getBytes());
+    frame.pushStackItem(UInt256.valueOf(blockNumber).toBytes());
     operation.execute(frame);
     return frame.popStackItem();
   }
@@ -67,7 +67,7 @@ public class BlockHashOperationBenchmark {
             .createMessageFrameBuilder()
             .blockHashLookup(new BlockHashLookup(frame.getBlockHeader(), frame.getBlockchain()))
             .build();
-    cleanFrame.pushStackItem(UInt256.of(blockNumber).getBytes());
+    cleanFrame.pushStackItem(UInt256.valueOf(blockNumber).toBytes());
     operation.execute(cleanFrame);
     return cleanFrame.popStackItem();
   }

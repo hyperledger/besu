@@ -20,15 +20,16 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import org.apache.tuweni.bytes.Bytes;
+
 public class IbftBlockHashing {
 
-  private static final BytesValue COMMIT_MSG_CODE = BytesValue.wrap(new byte[] {2});
+  private static final Bytes COMMIT_MSG_CODE = Bytes.wrap(new byte[] {2});
 
   /**
    * Constructs a hash of the block header, suitable for use when creating the proposer seal. The
@@ -41,7 +42,7 @@ public class IbftBlockHashing {
    */
   public static Hash calculateDataHashForProposerSeal(
       final BlockHeader header, final IbftExtraData ibftExtraData) {
-    final BytesValue headerRlp =
+    final Bytes headerRlp =
         serializeHeader(header, () -> encodeExtraDataWithoutCommittedSeals(ibftExtraData, null));
 
     // Proposer hash is the hash of the hash
@@ -61,7 +62,7 @@ public class IbftBlockHashing {
       final BlockHeader header, final IbftExtraData ibftExtraData) {
     // The data signed by a committer is an array of [Hash, COMMIT_MSG_CODE]
     final Hash dataHash = Hash.hash(serializeHeaderWithoutCommittedSeals(header, ibftExtraData));
-    final BytesValue seal = BytesValue.wrap(dataHash, COMMIT_MSG_CODE);
+    final Bytes seal = Bytes.wrap(dataHash, COMMIT_MSG_CODE);
     return Hash.hash(seal);
   }
 
@@ -77,7 +78,7 @@ public class IbftBlockHashing {
     return Hash.hash(serializeHeaderWithoutCommittedSeals(header, ibftExtraData));
   }
 
-  private static BytesValue serializeHeaderWithoutCommittedSeals(
+  private static Bytes serializeHeaderWithoutCommittedSeals(
       final BlockHeader header, final IbftExtraData ibftExtraData) {
     return serializeHeader(
         header,
@@ -114,15 +115,15 @@ public class IbftBlockHashing {
         .collect(Collectors.toList());
   }
 
-  private static BytesValue encodeExtraDataWithoutCommittedSeals(
+  private static Bytes encodeExtraDataWithoutCommittedSeals(
       final IbftExtraData ibftExtraData, final Signature proposerSeal) {
     final BytesValueRLPOutput extraDataEncoding = new BytesValueRLPOutput();
     extraDataEncoding.startList();
     extraDataEncoding.writeList(
-        ibftExtraData.getValidators(), (validator, rlp) -> rlp.writeBytesValue(validator));
+        ibftExtraData.getValidators(), (validator, rlp) -> rlp.writeBytes(validator));
 
     if (proposerSeal != null) {
-      extraDataEncoding.writeBytesValue(proposerSeal.encodedBytes());
+      extraDataEncoding.writeBytes(proposerSeal.encodedBytes());
     } else {
       extraDataEncoding.writeNull();
     }
@@ -133,33 +134,33 @@ public class IbftBlockHashing {
 
     extraDataEncoding.endList();
 
-    return BytesValue.wrap(ibftExtraData.getVanityData(), extraDataEncoding.encoded());
+    return Bytes.wrap(ibftExtraData.getVanityData(), extraDataEncoding.encoded());
   }
 
-  private static BytesValue serializeHeader(
-      final BlockHeader header, final Supplier<BytesValue> extraDataSerializer) {
+  private static Bytes serializeHeader(
+      final BlockHeader header, final Supplier<Bytes> extraDataSerializer) {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.startList();
 
-    out.writeBytesValue(header.getParentHash());
-    out.writeBytesValue(header.getOmmersHash());
-    out.writeBytesValue(header.getCoinbase());
-    out.writeBytesValue(header.getStateRoot());
-    out.writeBytesValue(header.getTransactionsRoot());
-    out.writeBytesValue(header.getReceiptsRoot());
-    out.writeBytesValue(header.getLogsBloom().getBytes());
-    out.writeUInt256Scalar(header.getDifficulty());
+    out.writeBytes(header.getParentHash());
+    out.writeBytes(header.getOmmersHash());
+    out.writeBytes(header.getCoinbase());
+    out.writeBytes(header.getStateRoot());
+    out.writeBytes(header.getTransactionsRoot());
+    out.writeBytes(header.getReceiptsRoot());
+    out.writeBytes(header.getLogsBloom().getBytes());
+    out.writeBytes(header.internalGetDifficulty().toMinimalBytes());
     out.writeLongScalar(header.getNumber());
     out.writeLongScalar(header.getGasLimit());
     out.writeLongScalar(header.getGasUsed());
     out.writeLongScalar(header.getTimestamp());
     // Cannot decode an IbftExtraData on block 0 due to missing/illegal signatures
     if (header.getNumber() == 0) {
-      out.writeBytesValue(header.getExtraData());
+      out.writeBytes(header.internalGetExtraData());
     } else {
-      out.writeBytesValue(extraDataSerializer.get());
+      out.writeBytes(extraDataSerializer.get());
     }
-    out.writeBytesValue(header.getMixHash());
+    out.writeBytes(header.getMixHash());
     out.writeLong(header.getNonce());
     out.endList();
     return out.encoded();

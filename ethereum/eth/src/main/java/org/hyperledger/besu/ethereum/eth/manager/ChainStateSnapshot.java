@@ -15,7 +15,7 @@
 
 package org.hyperledger.besu.ethereum.eth.manager;
 
-import org.hyperledger.besu.util.uint.UInt256;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class ChainStateSnapshot implements ChainHeadEstimate {
   private final UInt256 totalDifficulty;

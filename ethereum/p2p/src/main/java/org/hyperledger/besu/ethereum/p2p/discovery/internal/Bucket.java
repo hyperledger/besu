@@ -20,11 +20,12 @@ import static java.util.Collections.unmodifiableList;
 
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+
+import org.apache.tuweni.bytes.Bytes;
 
 /**
  * As peers are discovered on the network, they are added to one of the k-buckets described by this
@@ -61,7 +62,7 @@ public class Bucket {
    * @return An empty optional if the peer was not a member of this bucket, or a filled optional if
    *     it was.
    */
-  synchronized Optional<DiscoveryPeer> getAndTouch(final BytesValue id) {
+  synchronized Optional<DiscoveryPeer> getAndTouch(final Bytes id) {
     for (int i = 0; i <= tailIndex; i++) {
       final DiscoveryPeer p = kBucket[i];
       if (id.equals(p.getId())) {

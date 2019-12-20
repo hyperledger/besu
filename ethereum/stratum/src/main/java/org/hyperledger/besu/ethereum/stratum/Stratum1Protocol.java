@@ -22,8 +22,6 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.mainnet.DirectAcyclicGraphSeed;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolution;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.BytesValues;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -38,6 +36,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import io.vertx.core.json.JsonObject;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 /**
  * Implementation of the stratum+tcp protocol.
@@ -52,7 +51,7 @@ public class Stratum1Protocol implements StratumProtocol {
   private static String createSubscriptionID() {
     byte[] subscriptionBytes = new byte[16];
     new Random().nextBytes(subscriptionBytes);
-    return BytesValue.wrap(subscriptionBytes).toUnprefixedString();
+    return Bytes.wrap(subscriptionBytes).toShortHexString();
   }
 
   private final String extranonce;
@@ -66,8 +65,8 @@ public class Stratum1Protocol implements StratumProtocol {
     this(
         extranonce,
         () -> {
-          BytesValue timeValue = BytesValues.toMinimalBytes(Instant.now().toEpochMilli());
-          return timeValue.slice(timeValue.size() - 4, 4).toUnprefixedString();
+          Bytes timeValue = Bytes.minimalBytes(Instant.now().toEpochMilli());
+          return timeValue.slice(timeValue.size() - 4, 4).toShortHexString();
         },
         Stratum1Protocol::createSubscriptionID);
   }
@@ -127,9 +126,9 @@ public class Stratum1Protocol implements StratumProtocol {
     Object[] params =
         new Object[] {
           jobIdSupplier.get(),
-          BytesValue.wrap(currentInput.getPrePowHash()).getHexString(),
-          BytesValue.wrap(dagSeed).getHexString(),
-          currentInput.getTarget().toHexString(),
+          Bytes.wrap(currentInput.getPrePowHash()).toHexString(),
+          Bytes.wrap(dagSeed).toHexString(),
+          currentInput.getTarget().toBytes().toHexString(),
           true
         };
     JsonRpcRequest req = new JsonRpcRequest("2.0", "mining.notify", params);
@@ -166,10 +165,9 @@ public class Stratum1Protocol implements StratumProtocol {
     boolean result = false;
     final EthHashSolution solution =
         new EthHashSolution(
-            BytesValue.fromHexString(message.getRequiredParameter(2, String.class)).getLong(0),
+            Bytes.fromHexString(message.getRequiredParameter(2, String.class)).getLong(0),
             Hash.fromHexString(message.getRequiredParameter(4, String.class)),
-            BytesValue.fromHexString(message.getRequiredParameter(3, String.class))
-                .getArrayUnsafe());
+            Bytes.fromHexString(message.getRequiredParameter(3, String.class)).toArrayUnsafe());
     if (Arrays.equals(currentInput.getPrePowHash(), solution.getPowHash())) {
       result = submitCallback.apply(solution);
     }

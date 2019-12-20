@@ -24,15 +24,15 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ValidationTestUtils;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collection;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -90,11 +90,11 @@ public class ProofOfWorkValidationRuleTest {
     final byte[] hashBuffer = new byte[64];
     final Hash headerHash = validationRule.hashHeader(preHeader);
     ProofOfWorkValidationRule.HASHER.hash(
-        hashBuffer, preHeader.getNonce(), preHeader.getNumber(), headerHash.extractArray());
+        hashBuffer, preHeader.getNonce(), preHeader.getNumber(), headerHash.getByteArray());
 
     final BlockHeader header =
         headerBuilder
-            .mixHash(Hash.wrap(Bytes32.leftPad(BytesValue.wrap(hashBuffer).slice(0, Bytes32.SIZE))))
+            .mixHash(Hash.wrap(Bytes32.leftPad(Bytes.wrap(hashBuffer).slice(0, Bytes32.SIZE))))
             .buildBlockHeader();
 
     assertThat(validationRule.validate(header, parentHeader)).isTrue();
@@ -102,7 +102,7 @@ public class ProofOfWorkValidationRuleTest {
 
   @Test
   public void failsWithVeryLargeDifficulty() {
-    final UInt256 largeDifficulty = UInt256.of(BigInteger.valueOf(2).pow(255));
+    final UInt256 largeDifficulty = UInt256.valueOf(BigInteger.valueOf(2).pow(255));
     final BlockHeader header =
         BlockHeaderBuilder.fromHeader(blockHeader)
             .difficulty(largeDifficulty)
@@ -113,7 +113,8 @@ public class ProofOfWorkValidationRuleTest {
 
   @Test
   public void failsWithMisMatchedMixHash() {
-    final Hash updateMixHash = Hash.wrap(blockHeader.getMixHash().asUInt256().minus(1L).getBytes());
+    final Hash updateMixHash =
+        Hash.wrap(UInt256.fromBytes(blockHeader.getMixHash()).subtract(1L).toBytes());
     final BlockHeader header =
         BlockHeaderBuilder.fromHeader(blockHeader)
             .mixHash(updateMixHash)

@@ -18,9 +18,10 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Objects;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class TransactionSimulatorResult {
 
@@ -41,7 +42,7 @@ public class TransactionSimulatorResult {
     return transaction.getGasLimit() - result.getGasRemaining();
   }
 
-  public BytesValue getOutput() {
+  public Bytes getOutput() {
     return result.getOutput();
   }
 

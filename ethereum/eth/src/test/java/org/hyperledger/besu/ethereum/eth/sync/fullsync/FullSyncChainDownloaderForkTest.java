@@ -32,8 +32,8 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.util.uint.UInt256;
 
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -97,7 +97,7 @@ public class FullSyncChainDownloaderForkTest {
     final RespondingEthPeer.Responder responder =
         RespondingEthPeer.blockchainResponder(otherBlockchain);
     final RespondingEthPeer peer =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, localTd.plus(100), 100);
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, localTd.add(100), 100);
 
     final ChainDownloader downloader = downloader();
     downloader.start();

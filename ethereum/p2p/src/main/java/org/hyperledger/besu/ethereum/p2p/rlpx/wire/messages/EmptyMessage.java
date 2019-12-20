@@ -15,7 +15,8 @@
 package org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages;
 
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
-import org.hyperledger.besu.util.bytes.BytesValue;
+
+import org.apache.tuweni.bytes.Bytes;
 
 /** A message without a body. */
 abstract class EmptyMessage implements MessageData {
@@ -26,7 +27,7 @@ abstract class EmptyMessage implements MessageData {
   }
 
   @Override
-  public BytesValue getData() {
-    return BytesValue.EMPTY;
+  public Bytes getData() {
+    return Bytes.EMPTY;
   }
 }

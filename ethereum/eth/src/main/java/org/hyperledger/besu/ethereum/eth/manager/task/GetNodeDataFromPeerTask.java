@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.eth.messages.EthPV63;
 import org.hyperledger.besu.ethereum.eth.messages.NodeDataMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -36,8 +35,9 @@ import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
-public class GetNodeDataFromPeerTask extends AbstractPeerRequestTask<Map<Hash, BytesValue>> {
+public class GetNodeDataFromPeerTask extends AbstractPeerRequestTask<Map<Hash, Bytes>> {
 
   private static final Logger LOG = LogManager.getLogger();
 
@@ -73,7 +73,7 @@ public class GetNodeDataFromPeerTask extends AbstractPeerRequestTask<Map<Hash, B
   }
 
   @Override
-  protected Optional<Map<Hash, BytesValue>> processResponse(
+  protected Optional<Map<Hash, Bytes>> processResponse(
       final boolean streamClosed, final MessageData message, final EthPeer peer) {
     if (streamClosed) {
       // We don't record this as a useless response because it's impossible to know if a peer has
@@ -81,7 +81,7 @@ public class GetNodeDataFromPeerTask extends AbstractPeerRequestTask<Map<Hash, B
       return Optional.of(emptyMap());
     }
     final NodeDataMessage nodeDataMessage = NodeDataMessage.readFrom(message);
-    final List<BytesValue> nodeData = nodeDataMessage.nodeData();
+    final List<Bytes> nodeData = nodeDataMessage.nodeData();
     if (nodeData.size() > hashes.size()) {
       // Can't be the response to our request
       return Optional.empty();
@@ -89,9 +89,9 @@ public class GetNodeDataFromPeerTask extends AbstractPeerRequestTask<Map<Hash, B
     return mapNodeDataByHash(nodeData);
   }
 
-  private Optional<Map<Hash, BytesValue>> mapNodeDataByHash(final List<BytesValue> nodeData) {
-    final Map<Hash, BytesValue> nodeDataByHash = new HashMap<>();
-    for (final BytesValue data : nodeData) {
+  private Optional<Map<Hash, Bytes>> mapNodeDataByHash(final List<Bytes> nodeData) {
+    final Map<Hash, Bytes> nodeDataByHash = new HashMap<>();
+    for (final Bytes data : nodeData) {
       final Hash hash = Hash.hash(data);
       if (!hashes.contains(hash)) {
         return Optional.empty();

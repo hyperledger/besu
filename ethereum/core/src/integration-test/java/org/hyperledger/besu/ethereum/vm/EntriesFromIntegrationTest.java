@@ -23,13 +23,13 @@ import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.Map;
 import java.util.Random;
 import java.util.TreeMap;
 
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Test;
 
 public class EntriesFromIntegrationTest {
@@ -48,7 +48,10 @@ public class EntriesFromIntegrationTest {
     // Create some storage entries in the committed, underlying account.
     for (int i = 0; i <= nodeCount; i++) {
       addExpectedValue(
-          account, expectedValues, UInt256.of(Math.abs(random.nextLong())), UInt256.of(i * 10 + 1));
+          account,
+          expectedValues,
+          UInt256.valueOf(Math.abs(random.nextLong())),
+          UInt256.valueOf(i * 10 + 1));
     }
     updater.commit();
 
@@ -56,7 +59,10 @@ public class EntriesFromIntegrationTest {
     account = worldState.updater().getOrCreate(Address.fromHexString("0x56")).getMutable();
     for (int i = 0; i <= nodeCount; i++) {
       addExpectedValue(
-          account, expectedValues, UInt256.of(Math.abs(random.nextLong())), UInt256.of(i * 10 + 1));
+          account,
+          expectedValues,
+          UInt256.valueOf(Math.abs(random.nextLong())),
+          UInt256.valueOf(i * 10 + 1));
     }
 
     final Map<Bytes32, AccountStorageEntry> values =
@@ -70,6 +76,6 @@ public class EntriesFromIntegrationTest {
       final UInt256 key,
       final UInt256 value) {
     account.setStorageValue(key, value);
-    expectedValues.put(Hash.hash(key.getBytes()), AccountStorageEntry.forKeyAndValue(key, value));
+    expectedValues.put(Hash.hash(key.toBytes()), AccountStorageEntry.forKeyAndValue(key, value));
   }
 }

@@ -37,8 +37,9 @@ import org.hyperledger.besu.ethereum.vm.operations.MStoreOperation;
 import org.hyperledger.besu.ethereum.vm.operations.SLoadOperation;
 import org.hyperledger.besu.ethereum.vm.operations.SelfDestructOperation;
 import org.hyperledger.besu.ethereum.vm.operations.Sha3Operation;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 
 /**
  * Provides various gas cost lookups and calculations used during block processing.
@@ -81,7 +82,7 @@ public interface GasCalculator {
    * @param input The input to the ID precompiled contract
    * @return the gas cost to execute the ID precompiled contract
    */
-  Gas idPrecompiledContractGasCost(BytesValue input);
+  Gas idPrecompiledContractGasCost(Bytes input);
 
   /**
    * Returns the gas cost to execute the {@link ECRECPrecompiledContract}.
@@ -96,7 +97,7 @@ public interface GasCalculator {
    * @param input The input to the SHA256 precompiled contract
    * @return the gas cost to execute the SHA256 precompiled contract
    */
-  Gas sha256PrecompiledContractGasCost(BytesValue input);
+  Gas sha256PrecompiledContractGasCost(Bytes input);
 
   /**
    * Returns the gas cost to execute the {@link RIPEMD160PrecompiledContract}.
@@ -104,7 +105,7 @@ public interface GasCalculator {
    * @param input The input to the RIPEMD160 precompiled contract
    * @return the gas cost to execute the RIPEMD160 precompiled contract
    */
-  Gas ripemd160PrecompiledContractGasCost(BytesValue input);
+  Gas ripemd160PrecompiledContractGasCost(Bytes input);
 
   // Gas Tier Lookups
 
