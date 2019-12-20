@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
-import static org.hyperledger.besu.util.bytes.BytesValues.asBase64String;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.nullable;
@@ -71,7 +70,7 @@ public class PrivGetTransactionReceiptTest {
   @Rule public final TemporaryFolder temp = new TemporaryFolder();
 
   private static final String ENCLAVE_PUBLIC_KEY = "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
-  private static final BytesValue ENCLAVE_KEY = BytesValue.wrap("EnclaveKey".getBytes(UTF_8));
+  private static final Bytes ENCLAVE_KEY = Bytes.wrap("EnclaveKey".getBytes(UTF_8));
   private static final Address SENDER =
       Address.fromHexString("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73");
 
@@ -192,7 +191,7 @@ public class PrivGetTransactionReceiptTest {
 
     assertThat(result).isEqualToComparingFieldByField(expectedResult);
     verify(privacyController)
-        .retrieveTransaction(asBase64String(ENCLAVE_KEY), Optional.of(ENCLAVE_PUBLIC_KEY));
+        .retrieveTransaction(ENCLAVE_KEY.toBase64String(), Optional.of(ENCLAVE_PUBLIC_KEY));
   }
 
   @Test

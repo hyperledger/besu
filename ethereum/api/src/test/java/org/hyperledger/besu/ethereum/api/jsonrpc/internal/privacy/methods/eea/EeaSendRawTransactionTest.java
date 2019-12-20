@@ -43,6 +43,9 @@ import org.hyperledger.besu.ethereum.privacy.SendTransactionResponse;
 import java.math.BigInteger;
 import java.util.Optional;
 
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.auth.User;
+import io.vertx.ext.auth.jwt.impl.JWTUser;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.Test;
@@ -212,7 +215,7 @@ public class EeaSendRawTransactionTest {
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
             new JsonRpcRequest(
-                "2.0", "eea_sendRawTransaction", new String[] {VALID_PRIVATE_TRANSACTION_RLP})),
+                "2.0", "eea_sendRawTransaction", new String[] {VALID_PRIVATE_TRANSACTION_RLP}),
             user);
 
     final JsonRpcResponse expectedResponse =

@@ -198,7 +198,9 @@ public class PrivacyController {
 
     if (privateTransaction.getPrivacyGroupId().isPresent()) {
       return enclave.send(
-          payload, defaultEnclavePublicKey, privateTransaction.getPrivacyGroupId().get().toBase64String());
+          payload,
+          defaultEnclavePublicKey,
+          privateTransaction.getPrivacyGroupId().get().toBase64String());
     } else {
       final List<String> privateFor =
           privateTransaction.getPrivateFor().get().stream()

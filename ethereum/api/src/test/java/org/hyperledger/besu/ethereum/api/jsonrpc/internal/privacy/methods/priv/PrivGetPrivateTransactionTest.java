@@ -48,6 +48,9 @@ import java.util.Base64;
 import java.util.Optional;
 
 import com.google.common.collect.Lists;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.auth.User;
+import io.vertx.ext.auth.jwt.impl.JWTUser;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.Rule;
@@ -67,9 +70,9 @@ public class PrivGetPrivateTransactionTest {
                   "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63", 16)));
   private static final String ENCLAVE_PUBLIC_KEY = "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
   private static final String TRANSACTION_HASH =
-      BytesValues.fromBase64("5bpr9tz4zhmWmk9RlNng93Ky7lXwFkMc7+ckoFgUMku=").toString();
-  private static final BytesValue ENCLAVE_KEY =
-      BytesValues.fromBase64("93Ky7lXwFkMc7+ckoFgUMku5bpr9tz4zhmWmk9RlNng=");
+      Bytes.fromBase64String("5bpr9tz4zhmWmk9RlNng93Ky7lXwFkMc7+ckoFgUMku=").toString();
+  private static final Bytes ENCLAVE_KEY =
+      Bytes.fromBase64String("93Ky7lXwFkMc7+ckoFgUMku5bpr9tz4zhmWmk9RlNng=");
 
   private final PrivateTransaction.Builder privateTransactionBuilder =
       PrivateTransaction.builder()
@@ -118,8 +121,7 @@ public class PrivGetPrivateTransactionTest {
     when(blockchain.transactionByHash(any(Hash.class)))
         .thenReturn(Optional.of(returnedTransaction));
     when(returnedTransaction.getTransaction()).thenReturn(justTransaction);
-    when(justTransaction.getPayload()).thenReturn(ENCLAVE_KEY);
-    when(justTransaction.getPayloadBytes()).thenReturn(Bytes.fromBase64String(""));
+    when(justTransaction.getPayloadBytes()).thenReturn(ENCLAVE_KEY);
 
     final PrivateTransaction privateTransaction =
         privateTransactionBuilder
@@ -149,8 +151,7 @@ public class PrivGetPrivateTransactionTest {
 
     assertThat(result).isEqualToComparingFieldByField(privateTransactionLegacyResult);
     verify(privacyController)
-        .retrieveTransaction(
-            BytesValues.asBase64String(ENCLAVE_KEY), Optional.of(ENCLAVE_PUBLIC_KEY));
+        .retrieveTransaction(ENCLAVE_KEY.toBase64String(), Optional.of(ENCLAVE_PUBLIC_KEY));
   }
 
   @Test
