@@ -54,6 +54,7 @@ dependencies {
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.mockito:mockito-core'
   testImplementation 'org.apache.tuweni:tuweni-bytes'
+  testImplementation 'org.apache.tuweni:tuweni-io'
   testImplementation 'org.apache.tuweni:tuweni-units'
 
   integrationTestImplementation project(path: ':config', configuration: 'testSupportArtifacts')
@@ -66,6 +67,7 @@ dependencies {
 
   testSupportImplementation project(path: ':config', configuration: 'testSupportArtifacts')
   testSupportImplementation project(':testutil')
+  testSupportImplementation project(':ethereum:eth')
 
   testSupportImplementation 'junit:junit'
   testSupportImplementation 'org.assertj:assertj-core'

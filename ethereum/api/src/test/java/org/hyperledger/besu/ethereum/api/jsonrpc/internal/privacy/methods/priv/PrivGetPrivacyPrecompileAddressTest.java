@@ -20,15 +20,10 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponseType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 
-import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
 public class PrivGetPrivacyPrecompileAddressTest {
@@ -53,24 +48,5 @@ public class PrivGetPrivacyPrecompileAddressTest {
         (JsonRpcSuccessResponse) privGetPrivacyPrecompileAddress.response(request);
 
     assertThat(response.getResult()).isEqualTo(privacyAddress);
-  }
-
-  @Test
-  public void verifyErrorPrivacyDisabled() {
-    when(privacyParameters.getPrivacyAddress()).thenReturn(rawPrivacyAddress);
-    when(privacyParameters.isEnabled()).thenReturn(false);
-
-    final PrivGetPrivacyPrecompileAddress privGetPrivacyPrecompileAddress =
-        new PrivGetPrivacyPrecompileAddress(privacyParameters);
-
-    final JsonRpcRequestContext request =
-        new JsonRpcRequestContext(
-            new JsonRpcRequest("1", "priv_getPrivacyPrecompileAddress", new Object[0]));
-
-    final JsonRpcResponse response = privGetPrivacyPrecompileAddress.response(request);
-
-    assertThat(response.getType()).isEqualByComparingTo(JsonRpcResponseType.ERROR);
-    Assertions.assertThat(((JsonRpcErrorResponse) response).getError())
-        .isEqualByComparingTo(JsonRpcError.PRIVACY_NOT_ENABLED);
   }
 }

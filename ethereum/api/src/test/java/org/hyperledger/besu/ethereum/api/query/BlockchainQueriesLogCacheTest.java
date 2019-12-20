@@ -16,7 +16,7 @@
 
 package org.hyperledger.besu.ethereum.api.query;
 
-import static org.hyperledger.besu.ethereum.api.query.BlockchainQueries.BLOCKS_PER_BLOOM_CACHE;
+import static org.hyperledger.besu.ethereum.api.query.TransactionLogsIndexer.BLOCKS_PER_BLOOM_CACHE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.times;
@@ -24,7 +24,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.UnformattedDataWrapper;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
@@ -61,8 +62,10 @@ public class BlockchainQueriesLogCacheTest {
   private Hash testHash;
   private static LogsBloomFilter testLogsBloomFilter;
 
-  @Mock Blockchain blockchain;
+  @Mock MutableBlockchain blockchain;
   @Mock WorldStateArchive worldStateArchive;
+  @Mock EthScheduler scheduler;
+  private BlockchainQueries blockchainQueries;
 
   @BeforeClass
   public static void setupClass() throws IOException {
@@ -117,6 +120,12 @@ public class BlockchainQueriesLogCacheTest {
     when(blockchain.getBlockHeader(anyLong())).thenReturn(Optional.of(fakeHeader));
     when(blockchain.getTxReceipts(any())).thenReturn(Optional.of(Collections.emptyList()));
     when(blockchain.getBlockBody(any())).thenReturn(Optional.of(fakeBody));
+    blockchainQueries =
+        new BlockchainQueries(
+            blockchain,
+            worldStateArchive,
+            Optional.of(cacheDir.getRoot().toPath()),
+            Optional.of(scheduler));
   }
 
   /**
@@ -127,12 +136,8 @@ public class BlockchainQueriesLogCacheTest {
    */
   @Test
   public void cachedCachedSeamTest() {
-    final BlockchainQueries query =
-        new BlockchainQueries(
-            blockchain, worldStateArchive, Optional.of(cacheDir.getRoot().toPath()));
-
     for (long i = BLOCKS_PER_BLOOM_CACHE - 3; i <= BLOCKS_PER_BLOOM_CACHE; i++) {
-      query.matchingLogs(i, i + 2, logsQuery);
+      blockchainQueries.matchingLogs(i, i + 2, logsQuery);
     }
 
     // 4 ranges of 3 hits a piece = 12 calls - 97-99, 98-00, 99-01, 00-02
@@ -153,12 +158,8 @@ public class BlockchainQueriesLogCacheTest {
    */
   @Test
   public void cachedUncachedSeamTest() {
-    final BlockchainQueries query =
-        new BlockchainQueries(
-            blockchain, worldStateArchive, Optional.of(cacheDir.getRoot().toPath()));
-
     for (long i = (2 * BLOCKS_PER_BLOOM_CACHE) - 3; i <= 2 * BLOCKS_PER_BLOOM_CACHE; i++) {
-      query.matchingLogs(i, i + 2, logsQuery);
+      blockchainQueries.matchingLogs(i, i + 2, logsQuery);
     }
 
     // 6 sets of calls on cache side of seam: 97-99, 98-99, 99, {}
@@ -184,12 +185,8 @@ public class BlockchainQueriesLogCacheTest {
    */
   @Test
   public void uncachedUncachedSeamTest() {
-    final BlockchainQueries query =
-        new BlockchainQueries(
-            blockchain, worldStateArchive, Optional.of(cacheDir.getRoot().toPath()));
-
     for (long i = (3 * BLOCKS_PER_BLOOM_CACHE) - 3; i <= 3 * BLOCKS_PER_BLOOM_CACHE; i++) {
-      query.matchingLogs(i, i + 2, logsQuery);
+      blockchainQueries.matchingLogs(i, i + 2, logsQuery);
     }
 
     // 4 ranges of 3 hits a piece = 12 calls - 97-99, 98-00, 99-01, 00-02

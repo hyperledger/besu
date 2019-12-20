@@ -12,24 +12,16 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.enclave.types;
+package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods;
 
-import java.util.List;
+import java.util.Optional;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import io.vertx.ext.auth.User;
 
-public class FindPrivacyGroupRequest {
+public class MultiTenancyUserUtil {
+  private static final String ENCLAVE_PRIVACY_PUBLIC_KEY_CLAIM = "privacyPublicKey";
 
-  private final List<String> addresses;
-
-  @JsonCreator
-  public FindPrivacyGroupRequest(@JsonProperty("addresses") final List<String> addresses) {
-    this.addresses = addresses;
-  }
-
-  @JsonProperty("addresses")
-  public List<String> addresses() {
-    return addresses;
+  public static Optional<String> enclavePublicKey(final Optional<User> user) {
+    return user.map(u -> u.principal().getString(ENCLAVE_PRIVACY_PUBLIC_KEY_CLAIM));
   }
 }
