@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
@@ -43,6 +44,9 @@ import org.hyperledger.besu.util.bytes.BytesValue;
 import java.math.BigInteger;
 import java.util.Optional;
 
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.auth.User;
+import io.vertx.ext.auth.jwt.impl.JWTUser;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -106,9 +110,12 @@ public class EeaSendRawTransactionTest {
           BytesValue.fromHexString("0x"),
           Address.wrap(BytesValue.fromHexString("0x8411b12666f68ef74cace3615c9d5a377729d03f")),
           Optional.empty());
+  private static final String ENCLAVE_PUBLIC_KEY = "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
 
-  final String MOCK_ORION_KEY = "";
-  final String MOCK_PRIVACY_GROUP = "";
+  private final String MOCK_ORION_KEY = "";
+  private final String MOCK_PRIVACY_GROUP = "";
+  private final User user =
+      new JWTUser(new JsonObject().put("privacyPublicKey", ENCLAVE_PUBLIC_KEY), "");
 
   @Mock private TransactionPool transactionPool;
 
@@ -208,7 +215,8 @@ public class EeaSendRawTransactionTest {
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
             new JsonRpcRequest(
-                "2.0", "eea_sendRawTransaction", new String[] {VALID_PRIVATE_TRANSACTION_RLP}));
+                "2.0", "eea_sendRawTransaction", new String[] {VALID_PRIVATE_TRANSACTION_RLP}),
+            user);
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(
@@ -218,9 +226,11 @@ public class EeaSendRawTransactionTest {
     final JsonRpcResponse actualResponse = method.response(request);
 
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
-    verify(privacyController).sendTransaction(any(PrivateTransaction.class), any());
     verify(privacyController)
-        .validatePrivateTransaction(any(PrivateTransaction.class), any(String.class), any());
+        .sendTransaction(any(PrivateTransaction.class), eq(Optional.of(ENCLAVE_PUBLIC_KEY)));
+    verify(privacyController)
+        .validatePrivateTransaction(
+            any(PrivateTransaction.class), any(String.class), eq(Optional.of(ENCLAVE_PUBLIC_KEY)));
     verify(privacyController)
         .createPrivacyMarkerTransaction(any(String.class), any(PrivateTransaction.class));
     verify(transactionPool).addLocalTransaction(any(Transaction.class));

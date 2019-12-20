@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -29,6 +30,11 @@ import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.SendTransactionResponse;
 import org.hyperledger.besu.util.bytes.BytesValues;
 
+import java.util.Optional;
+
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.auth.User;
+import io.vertx.ext.auth.jwt.impl.JWTUser;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -46,6 +52,10 @@ public class PrivDistributeRawTransactionTest {
           + "e60551d7a19cf30603db5bfc23e5ac43a56f57f25f75486aa00f"
           + "200e885ff29e973e2576b6600181d1b0a2b5294e30d9be4a1981"
           + "ffb33a0b8c8a72657374726963746564";
+  private static final String ENCLAVE_PUBLIC_KEY = "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
+
+  private final User user =
+      new JWTUser(new JsonObject().put("privacyPublicKey", ENCLAVE_PUBLIC_KEY), "");
 
   @Mock private PrivDistributeRawTransaction method;
   @Mock private PrivacyController privacyController;
@@ -69,7 +79,8 @@ public class PrivDistributeRawTransactionTest {
             new JsonRpcRequest(
                 "2.0",
                 "priv_distributeRawTransaction",
-                new String[] {VALID_PRIVATE_TRANSACTION_RLP_PRIVACY_GROUP}));
+                new String[] {VALID_PRIVATE_TRANSACTION_RLP_PRIVACY_GROUP}),
+            user);
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(
@@ -78,8 +89,10 @@ public class PrivDistributeRawTransactionTest {
     final JsonRpcResponse actualResponse = method.response(request);
 
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
-    verify(privacyController).sendTransaction(any(PrivateTransaction.class), any());
     verify(privacyController)
-        .validatePrivateTransaction(any(PrivateTransaction.class), any(String.class), any());
+        .sendTransaction(any(PrivateTransaction.class), eq(Optional.of(ENCLAVE_PUBLIC_KEY)));
+    verify(privacyController)
+        .validatePrivateTransaction(
+            any(PrivateTransaction.class), any(String.class), eq(Optional.of(ENCLAVE_PUBLIC_KEY)));
   }
 }

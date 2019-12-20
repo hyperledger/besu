@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowableOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.enclave.Enclave;
@@ -36,6 +37,9 @@ import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import java.util.List;
 import java.util.Optional;
 
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.auth.User;
+import io.vertx.ext.auth.jwt.impl.JWTUser;
 import org.assertj.core.util.Lists;
 import org.junit.Before;
 import org.junit.Test;
@@ -46,10 +50,13 @@ public class PrivCreatePrivacyGroupTest {
   private static final String NAME = "testName";
   private static final String DESCRIPTION = "testDesc";
   private static final List<String> ADDRESSES = Lists.newArrayList(FROM, "second participant");
+  private static final String ENCLAVE_PUBLIC_KEY = "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
 
   private final Enclave enclave = mock(Enclave.class);
   private final PrivacyParameters privacyParameters = mock(PrivacyParameters.class);
   private final PrivacyController privacyController = mock(PrivacyController.class);
+  private final User user =
+      new JWTUser(new JsonObject().put("privacyPublicKey", ENCLAVE_PUBLIC_KEY), "");
 
   @Before
   public void setUp() {
@@ -62,7 +69,8 @@ public class PrivCreatePrivacyGroupTest {
     final String expected = "a wonderful group";
     final PrivacyGroup privacyGroup =
         new PrivacyGroup(expected, PrivacyGroup.Type.PANTHEON, NAME, DESCRIPTION, ADDRESSES);
-    when(privacyController.createPrivacyGroup(ADDRESSES, NAME, DESCRIPTION, Optional.empty()))
+    when(privacyController.createPrivacyGroup(
+            ADDRESSES, NAME, DESCRIPTION, Optional.of(ENCLAVE_PUBLIC_KEY)))
         .thenReturn(privacyGroup);
     when(privacyParameters.getEnclavePublicKey()).thenReturn(FROM);
 
@@ -75,7 +83,7 @@ public class PrivCreatePrivacyGroupTest {
     final Object[] params = new Object[] {param};
 
     final JsonRpcRequestContext request =
-        new JsonRpcRequestContext(new JsonRpcRequest("1", "priv_createPrivacyGroup", params));
+        new JsonRpcRequestContext(new JsonRpcRequest("1", "priv_createPrivacyGroup", params), user);
 
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) privCreatePrivacyGroup.response(request);
@@ -83,6 +91,8 @@ public class PrivCreatePrivacyGroupTest {
     final String result = (String) response.getResult();
 
     assertThat(result).isEqualTo(expected);
+    verify(privacyController)
+        .createPrivacyGroup(ADDRESSES, NAME, DESCRIPTION, Optional.of(ENCLAVE_PUBLIC_KEY));
   }
 
   @Test
