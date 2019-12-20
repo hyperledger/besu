@@ -42,7 +42,7 @@ import org.junit.Test;
 public class PrivFindPrivacyGroupTest {
   private static final String ENCLAVE_PUBLIC_KEY = "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
   private static final List<String> ADDRESSES =
-      Lists.newArrayList(
+      List.of(
           "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
           "0x627306090abab3a6e1400e9345bc60c78a8bef57");
 
