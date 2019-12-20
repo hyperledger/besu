@@ -17,6 +17,9 @@ package org.hyperledger.besu.ethereum.mainnet.precompiles.privacy;
 import static org.hyperledger.besu.crypto.Hash.keccak256;
 
 import org.hyperledger.besu.enclave.Enclave;
+import org.hyperledger.besu.enclave.EnclaveClientException;
+import org.hyperledger.besu.enclave.EnclaveIOException;
+import org.hyperledger.besu.enclave.EnclaveServerException;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Hash;
@@ -87,12 +90,19 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
   @Override
   public BytesValue compute(final BytesValue input, final MessageFrame messageFrame) {
     final String key = BytesValues.asBase64String(input);
+
     final ReceiveResponse receiveResponse;
     try {
       receiveResponse = enclave.receive(key);
-    } catch (final Exception e) {
-      LOG.debug("Enclave probably does not have private transaction payload with key {}", key, e);
+    } catch (final EnclaveClientException e) {
+      LOG.debug("Can not fetch private transaction payload with key {}", key, e);
       return BytesValue.EMPTY;
+    } catch (final EnclaveServerException e) {
+      LOG.error("Enclave is responding but errored perhaps it has a misconfiguration?", e);
+      throw e;
+    } catch (final EnclaveIOException e) {
+      LOG.error("Can not communicate with enclave is it up?", e);
+      throw e;
     }
 
     final BytesValueRLPInput bytesValueRLPInput =

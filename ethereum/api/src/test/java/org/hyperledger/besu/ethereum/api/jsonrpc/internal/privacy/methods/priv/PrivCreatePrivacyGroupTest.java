@@ -22,7 +22,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.enclave.Enclave;
-import org.hyperledger.besu.enclave.EnclaveException;
+import org.hyperledger.besu.enclave.EnclaveServerException;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -255,7 +255,7 @@ public class PrivCreatePrivacyGroupTest {
   @Test
   public void returnsCorrectErrorEnclaveError() {
     when(privacyController.createPrivacyGroup(ADDRESSES, NAME, DESCRIPTION, Optional.empty()))
-        .thenThrow(new EnclaveException(""));
+        .thenThrow(new EnclaveServerException(500, ""));
     final PrivCreatePrivacyGroup privCreatePrivacyGroup =
         new PrivCreatePrivacyGroup(privacyController);
 
