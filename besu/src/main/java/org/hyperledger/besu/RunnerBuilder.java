@@ -124,7 +124,7 @@ public class RunnerBuilder {
   private String p2pAdvertisedHost;
   private String p2pListenInterface = NetworkUtility.INADDR_ANY;
   private int p2pListenPort;
-  private NatMethod natMethod = NatMethod.NONE;
+  private NatMethod natMethod = NatMethod.AUTO;
   private int maxPeers;
   private boolean limitRemoteWireConnectionsEnabled = false;
   private float fractionRemoteConnectionsAllowed;
@@ -563,8 +563,8 @@ public class RunnerBuilder {
 
     final NatMethod detectedNatMethod =
         Optional.of(natMethod)
-            .filter(not(isEqual(NatMethod.NONE)))
-            .orElseGet(NatService::autoDetectNatMethod);
+            .filter(not(isEqual(NatMethod.AUTO)))
+            .orElse(NatService.autoDetectNatMethod());
     switch (detectedNatMethod) {
       case UPNP:
         return Optional.of(new UpnpNatManager());
