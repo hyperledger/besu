@@ -15,11 +15,11 @@
 package org.hyperledger.besu.ethereum.rlp;
 
 import org.hyperledger.besu.ethereum.rlp.util.RLPTestUtil;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.Level;
 import org.openjdk.jmh.annotations.Param;
@@ -35,11 +35,10 @@ public class RLPBench {
     for (int i = 0; i < size; i++) {
       bytes[i] = (byte) ((100 + i) * i);
     }
-    return generateAndRecurse(BytesValue.wrap(bytes), depth, width);
+    return generateAndRecurse(Bytes.wrap(bytes), depth, width);
   }
 
-  private static Object generateAndRecurse(
-      final BytesValue value, final int depth, final int width) {
+  private static Object generateAndRecurse(final Bytes value, final int depth, final int width) {
     if (depth == 0) {
       return value;
     }
@@ -61,7 +60,7 @@ public class RLPBench {
   public int size;
 
   volatile Object toEncode;
-  volatile BytesValue toDecode;
+  volatile Bytes toDecode;
 
   @Setup(Level.Trial)
   public void prepare() {
@@ -70,7 +69,7 @@ public class RLPBench {
   }
 
   @Benchmark
-  public BytesValue getBenchmarkEncoding() {
+  public Bytes getBenchmarkEncoding() {
     return RLPTestUtil.encode(toEncode);
   }
 

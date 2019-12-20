@@ -22,6 +22,7 @@ import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.ChainHead;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.DeterministicEthScheduler.TimeoutPolicy;
@@ -33,7 +34,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.math.BigInteger;
 import java.util.Collections;
@@ -156,7 +156,7 @@ public class EthProtocolManagerTestUtil {
   }
 
   public static RespondingEthPeer createPeer(
-      final EthProtocolManager ethProtocolManager, final UInt256 td) {
+      final EthProtocolManager ethProtocolManager, final Difficulty td) {
     return RespondingEthPeer.builder()
         .ethProtocolManager(ethProtocolManager)
         .totalDifficulty(td)
@@ -164,7 +164,9 @@ public class EthProtocolManagerTestUtil {
   }
 
   public static RespondingEthPeer createPeer(
-      final EthProtocolManager ethProtocolManager, final UInt256 td, final long estimatedHeight) {
+      final EthProtocolManager ethProtocolManager,
+      final Difficulty td,
+      final long estimatedHeight) {
     return RespondingEthPeer.builder()
         .ethProtocolManager(ethProtocolManager)
         .totalDifficulty(td)
@@ -174,7 +176,7 @@ public class EthProtocolManagerTestUtil {
 
   public static RespondingEthPeer createPeer(
       final EthProtocolManager ethProtocolManager,
-      final UInt256 td,
+      final Difficulty td,
       final OptionalLong estimatedHeight) {
     return RespondingEthPeer.builder()
         .ethProtocolManager(ethProtocolManager)
@@ -185,7 +187,7 @@ public class EthProtocolManagerTestUtil {
 
   public static RespondingEthPeer createPeer(
       final EthProtocolManager ethProtocolManager,
-      final UInt256 td,
+      final Difficulty td,
       final OptionalLong estimatedHeight,
       final PeerValidator... validators) {
     return RespondingEthPeer.builder()

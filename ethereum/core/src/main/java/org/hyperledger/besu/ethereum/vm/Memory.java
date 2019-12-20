@@ -14,20 +14,17 @@
  */
 package org.hyperledger.besu.ethereum.vm;
 
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.BytesValues;
-import org.hyperledger.besu.util.bytes.MutableBytes32;
-import org.hyperledger.besu.util.bytes.MutableBytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
-import org.hyperledger.besu.util.uint.UInt256Value;
-import org.hyperledger.besu.util.uint.UInt256s;
-
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Objects;
 
 import com.google.common.base.Joiner;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.bytes.MutableBytes;
+import org.apache.tuweni.bytes.MutableBytes32;
+import org.apache.tuweni.units.bigints.UInt256;
+import org.apache.tuweni.units.bigints.UInt256s;
 
 /**
  * A EVM memory implementation.
@@ -81,7 +78,7 @@ public class Memory {
 
   private Memory(final ArrayList<MutableBytes32> data) {
     this.data = data;
-    this.activeWords = UInt256.of(data.size());
+    this.activeWords = UInt256.valueOf(data.size());
   }
 
   private static RuntimeException overflow(final long v) {
@@ -115,8 +112,8 @@ public class Memory {
     try {
       // While we can theoretically support up to 32 * Integer.MAX_VALUE due to storing words, and
       // so an index in memory need to be a long internally, we simply cannot load/store more than
-      // Integer.MAX_VALUE bytes at a time (BytesValue has an int size).
-      return l.toInt();
+      // Integer.MAX_VALUE bytes at a time (Bytes has an int size).
+      return l.intValue();
     } catch (final IllegalStateException e) {
       throw overflow(l.toString());
     }
@@ -144,32 +141,30 @@ public class Memory {
    * @param numBytes The minimum number of bytes in memory.
    * @return The number of active words that accommodate at least the number of specified bytes.
    */
-  public UInt256 calculateNewActiveWords(
-      final UInt256Value<?> location, final UInt256Value<?> numBytes) {
+  public UInt256 calculateNewActiveWords(final UInt256 location, final UInt256 numBytes) {
     if (numBytes.isZero()) {
       return activeWords;
     }
 
     if (location.fitsInt() && numBytes.fitsInt()) {
       // Fast common path (note that we work on int but use long arithmetic to avoid issues)
-      final long byteSize = (long) location.toInt() + (long) numBytes.toInt();
+      final long byteSize = (long) location.intValue() + (long) numBytes.intValue();
       int wordSize = (int) (byteSize / Bytes32.SIZE);
       if (byteSize % Bytes32.SIZE != 0) wordSize += 1;
-      return wordSize > data.size() ? UInt256.of(wordSize) : activeWords;
+      return wordSize > data.size() ? UInt256.valueOf(wordSize) : activeWords;
     } else {
       // Slow, rare path
 
       // Note that this is one place where, while the result will fit UInt256, we should compute
       // without modulo for extreme cases.
       final BigInteger byteSize =
-          BytesValues.asUnsignedBigInteger(location.getBytes())
-              .add(BytesValues.asUnsignedBigInteger(numBytes.getBytes()));
+          location.toBytes().toUnsignedBigInteger().add(numBytes.toBytes().toUnsignedBigInteger());
       final BigInteger[] result = byteSize.divideAndRemainder(BigInteger.valueOf(Bytes32.SIZE));
       BigInteger wordSize = result[0];
       if (!result[1].equals(BigInteger.ZERO)) {
         wordSize = wordSize.add(BigInteger.ONE);
       }
-      return UInt256s.max(activeWords, UInt256.of(wordSize));
+      return UInt256s.max(activeWords, UInt256.valueOf(wordSize));
     }
   }
 
@@ -203,7 +198,7 @@ public class Memory {
     for (int i = 0; i < toAdd; i++) {
       data.add(MutableBytes32.create());
     }
-    this.activeWords = UInt256.of(data.size());
+    this.activeWords = UInt256.valueOf(data.size());
   }
 
   /**
@@ -253,14 +248,14 @@ public class Memory {
    * @return A fresh copy of the bytes from memory starting at {@code location} and extending {@code
    *     numBytes}.
    */
-  public BytesValue getBytes(final UInt256 location, final UInt256 numBytes) {
+  public Bytes getBytes(final UInt256 location, final UInt256 numBytes) {
     // Note: if length == 0, we don't require any memory expansion, whatever location is. So
     // we we must call asByteIndex(location) after this check so as it doesn't throw if the location
     // is too big but the length is 0 (which is somewhat nonsensical, but is exercise by some
     // tests).
     final int length = asByteLength(numBytes);
     if (length == 0) {
-      return BytesValue.EMPTY;
+      return Bytes.EMPTY;
     }
 
     final long start = asByteIndex(location);
@@ -277,7 +272,7 @@ public class Memory {
 
     if (startWord == endWord) {
       // Bytes within a word, fast-path.
-      final MutableBytesValue bytes = data.get(startWord);
+      final MutableBytes bytes = data.get(startWord);
       return idxInStart == 0 && length == Bytes32.SIZE
           ? bytes.copy()
           : bytes.slice(idxInStart, length).copy();
@@ -287,7 +282,7 @@ public class Memory {
     final int bytesInStartWord = Bytes32.SIZE - idxInStart;
     final int bytesInEndWord = idxInEnd + 1;
 
-    final MutableBytesValue result = MutableBytesValue.create(length);
+    final MutableBytes result = MutableBytes.create(length);
     int resultIdx = 0;
     data.get(startWord).slice(idxInStart).copyTo(result, resultIdx);
     resultIdx += bytesInStartWord;
@@ -321,16 +316,16 @@ public class Memory {
       final UInt256 memOffset,
       final UInt256 sourceOffset,
       final UInt256 numBytes,
-      final BytesValue bytes) {
-    final int offset = sourceOffset.fitsInt() ? sourceOffset.toInt() : Integer.MAX_VALUE;
-    final int length = numBytes.fitsInt() ? numBytes.toInt() : Integer.MAX_VALUE;
+      final Bytes bytes) {
+    final int offset = sourceOffset.fitsInt() ? sourceOffset.intValue() : Integer.MAX_VALUE;
+    final int length = numBytes.fitsInt() ? numBytes.intValue() : Integer.MAX_VALUE;
 
     if (offset >= bytes.size()) {
       clearBytes(memOffset, numBytes);
       return;
     }
 
-    final BytesValue toCopy = bytes.slice(offset, Math.min(length, bytes.size() - offset));
+    final Bytes toCopy = bytes.slice(offset, Math.min(length, bytes.size() - offset));
     setBytes(memOffset, numBytes, toCopy);
   }
 
@@ -351,8 +346,7 @@ public class Memory {
    *     {@code value} being smaller).
    * @param taintedValue the bytes to copy to memory from {@code location}.
    */
-  public void setBytes(
-      final UInt256 location, final UInt256 numBytes, final BytesValue taintedValue) {
+  public void setBytes(final UInt256 location, final UInt256 numBytes, final Bytes taintedValue) {
     if (numBytes.isZero()) {
       return;
     }
@@ -368,12 +362,12 @@ public class Memory {
       clearBytes(location, numBytes);
       return;
     }
-    final BytesValue value;
+    final Bytes value;
     if (taintedValue.size() > length) {
       value = taintedValue.slice(0, length);
     } else if (taintedValue.size() < length) {
       value = taintedValue;
-      clearBytes(location.plus(taintedValue.size()), numBytes.minus(taintedValue.size()));
+      clearBytes(location.add(taintedValue.size()), numBytes.subtract(taintedValue.size()));
     } else {
       value = taintedValue;
     }
@@ -442,7 +436,7 @@ public class Memory {
 
     if (startWord == endWord) {
       // Bytes within a word, fast-path.
-      MutableBytesValue bytes = data.get(startWord);
+      MutableBytes bytes = data.get(startWord);
       if (idxInStart != 0 || numBytes != Bytes32.SIZE) {
         bytes = bytes.mutableSlice(idxInStart, numBytes);
       }

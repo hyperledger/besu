@@ -1,4 +1,5 @@
 /*
+ *
  * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
@@ -11,23 +12,29 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
+ *
  */
-package org.hyperledger.besu.util.bytes;
+package org.hyperledger.besu.ethereum.core;
 
-import org.hyperledger.besu.plugin.data.BinaryData;
+import org.hyperledger.besu.plugin.data.UnformattedData;
 
-/** Base interface for a value whose content is stored as bytes. */
-public interface BytesBacked extends BinaryData {
-  /** @return The underlying backing bytes of the value. */
-  BytesValue getBytes();
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.DelegatingBytes;
 
-  @Override
-  default byte[] getByteArray() {
-    return getBytes().getByteArray();
+/** Wrapper for a Bytes value to be exposed as UnformattedData. */
+public class UnformattedDataImpl extends DelegatingBytes implements UnformattedData {
+
+  public UnformattedDataImpl(final Bytes value) {
+    super(value);
   }
 
   @Override
-  default String getHexString() {
-    return getBytes().getHexString();
+  public byte[] getByteArray() {
+    return toArray();
+  }
+
+  @Override
+  public String getHexString() {
+    return toHexString();
   }
 }

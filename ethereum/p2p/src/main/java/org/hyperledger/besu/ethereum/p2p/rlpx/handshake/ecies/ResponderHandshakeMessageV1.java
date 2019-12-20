@@ -17,9 +17,10 @@ package org.hyperledger.besu.ethereum.p2p.rlpx.handshake.ecies;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import org.hyperledger.besu.crypto.SECP256K1;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.MutableBytesValue;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.bytes.MutableBytes;
 
 /**
  * The responder's handshake message.
@@ -64,10 +65,10 @@ public final class ResponderHandshakeMessageV1 implements ResponderHandshakeMess
     return new ResponderHandshakeMessageV1(ephPublicKey, nonce, token);
   }
 
-  public static ResponderHandshakeMessageV1 decode(final BytesValue bytes) {
+  public static ResponderHandshakeMessageV1 decode(final Bytes bytes) {
     checkArgument(bytes.size() == MESSAGE_LENGTH);
 
-    final BytesValue pubk = bytes.slice(0, ECIESHandshaker.PUBKEY_LENGTH);
+    final Bytes pubk = bytes.slice(0, ECIESHandshaker.PUBKEY_LENGTH);
     final SECP256K1.PublicKey ephPubKey = SECP256K1.PublicKey.create(pubk);
     final Bytes32 nonce =
         Bytes32.wrap(bytes.slice(ECIESHandshaker.PUBKEY_LENGTH, ECIESHandshaker.NONCE_LENGTH), 0);
@@ -77,11 +78,11 @@ public final class ResponderHandshakeMessageV1 implements ResponderHandshakeMess
   }
 
   @Override
-  public BytesValue encode() {
-    final MutableBytesValue bytes = MutableBytesValue.create(MESSAGE_LENGTH);
+  public Bytes encode() {
+    final MutableBytes bytes = MutableBytes.create(MESSAGE_LENGTH);
     ephPublicKey.getEncodedBytes().copyTo(bytes, 0);
     nonce.copyTo(bytes, ECIESHandshaker.PUBKEY_LENGTH);
-    BytesValue.of((byte) (token ? 0x01 : 0x00))
+    Bytes.of((byte) (token ? 0x01 : 0x00))
         .copyTo(bytes, ECIESHandshaker.PUBKEY_LENGTH + ECIESHandshaker.NONCE_LENGTH);
     return bytes;
   }

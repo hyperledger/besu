@@ -14,12 +14,15 @@
  */
 package org.hyperledger.besu.enclave;
 
-public class EnclaveException extends IllegalArgumentException {
-  public EnclaveException(final String message) {
+public class EnclaveServerException extends RuntimeException {
+  private int statusCode;
+
+  public EnclaveServerException(final int statusCode, final String message) {
     super(message);
+    this.statusCode = statusCode;
   }
 
-  public EnclaveException(final String message, final Throwable cause) {
-    super(message, cause);
+  public int getStatusCode() {
+    return statusCode;
   }
 }

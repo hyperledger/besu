@@ -12,23 +12,14 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.util.bytes;
+package org.hyperledger.besu.enclave;
 
-/** Base abstract implementation for {@link Bytes32Backed} implementations. */
-public class AbstractBytes32Backed implements Bytes32Backed {
-  protected final Bytes32 bytes;
-
-  protected AbstractBytes32Backed(final Bytes32 bytes) {
-    this.bytes = bytes;
+public class EnclaveIOException extends RuntimeException {
+  public EnclaveIOException(final String message, final Throwable cause) {
+    super(message, cause);
   }
 
-  @Override
-  public Bytes32 getBytes() {
-    return bytes;
-  }
-
-  @Override
-  public int size() {
-    return bytes.size();
+  public EnclaveIOException(final String message) {
+    super(message);
   }
 }

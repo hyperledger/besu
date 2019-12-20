@@ -14,15 +14,15 @@
  */
 package org.hyperledger.besu.ethereum.trie;
 
-import org.hyperledger.besu.util.bytes.BytesValue;
+import org.apache.tuweni.bytes.Bytes;
 
 interface PathNodeVisitor<V> {
 
-  Node<V> visit(ExtensionNode<V> extensionNode, BytesValue path);
+  Node<V> visit(ExtensionNode<V> extensionNode, Bytes path);
 
-  Node<V> visit(BranchNode<V> branchNode, BytesValue path);
+  Node<V> visit(BranchNode<V> branchNode, Bytes path);
 
-  Node<V> visit(LeafNode<V> leafNode, BytesValue path);
+  Node<V> visit(LeafNode<V> leafNode, Bytes path);
 
-  Node<V> visit(NullNode<V> nullNode, BytesValue path);
+  Node<V> visit(NullNode<V> nullNode, Bytes path);
 }

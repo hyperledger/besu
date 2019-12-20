@@ -27,13 +27,14 @@ import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class IbftBlockCreatorFactory {
 
@@ -43,7 +44,7 @@ public class IbftBlockCreatorFactory {
   protected final ProtocolSchedule<IbftContext> protocolSchedule;
   private final Address localAddress;
 
-  private volatile BytesValue vanityData;
+  private volatile Bytes vanityData;
   private volatile Wei minTransactionGasPrice;
 
   public IbftBlockCreatorFactory(
@@ -74,19 +75,19 @@ public class IbftBlockCreatorFactory {
         parentHeader);
   }
 
-  public void setExtraData(final BytesValue extraData) {
+  public void setExtraData(final Bytes extraData) {
     this.vanityData = extraData.copy();
   }
 
   public void setMinTransactionGasPrice(final Wei minTransactionGasPrice) {
-    this.minTransactionGasPrice = minTransactionGasPrice.copy();
+    this.minTransactionGasPrice = minTransactionGasPrice;
   }
 
   public Wei getMinTransactionGasPrice() {
     return minTransactionGasPrice;
   }
 
-  public BytesValue createExtraData(final int round, final BlockHeader parentHeader) {
+  public Bytes createExtraData(final int round, final BlockHeader parentHeader) {
     final VoteTally voteTally =
         protocolContext
             .getConsensusState()

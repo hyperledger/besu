@@ -20,10 +20,11 @@ import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage.Updater;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Optional;
 import java.util.stream.Stream;
+
+import org.apache.tuweni.bytes.Bytes;
 
 class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
 
@@ -37,7 +38,7 @@ class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
   }
 
   @Override
-  public Optional<BytesValue> getExistingData(final WorldStateStorage worldStateStorage) {
+  public Optional<Bytes> getExistingData(final WorldStateStorage worldStateStorage) {
     return worldStateStorage.getAccountStateTrieNode(getHash());
   }
 
@@ -47,7 +48,7 @@ class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
   }
 
   @Override
-  protected Stream<NodeDataRequest> getRequestsFromTrieNodeValue(final BytesValue value) {
+  protected Stream<NodeDataRequest> getRequestsFromTrieNodeValue(final Bytes value) {
     final Stream.Builder<NodeDataRequest> builder = Stream.builder();
     final StateTrieAccountValue accountValue = StateTrieAccountValue.readFrom(RLP.input(value));
     // Add code, if appropriate

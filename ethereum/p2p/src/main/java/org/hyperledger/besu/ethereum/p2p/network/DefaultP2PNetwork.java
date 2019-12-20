@@ -43,7 +43,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.nat.upnp.UpnpNatManager;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.time.Duration;
 import java.util.Arrays;
@@ -65,6 +64,7 @@ import com.google.common.annotations.VisibleForTesting;
 import io.vertx.core.Vertx;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 /**
  * The peer network service (defunct PeerNetworkingService) is the entrypoint to the peer-to-peer
@@ -117,7 +117,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
 
   private final NetworkingConfiguration config;
 
-  private final BytesValue nodeId;
+  private final Bytes nodeId;
   private final MutableLocalNode localNode;
 
   private final PeerPermissions peerPermissions;

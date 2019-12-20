@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.util.uint.UInt256;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 
 import java.util.List;
 
@@ -73,7 +73,7 @@ public class BlockResult implements JsonRpcResult {
       final BlockHeader header,
       final List<TransactionResult> transactions,
       final List<JsonNode> ommers,
-      final UInt256 totalDifficulty,
+      final Difficulty totalDifficulty,
       final int size) {
     this(header, transactions, ommers, totalDifficulty, size, false);
   }
@@ -82,7 +82,7 @@ public class BlockResult implements JsonRpcResult {
       final BlockHeader header,
       final List<TransactionResult> transactions,
       final List<JsonNode> ommers,
-      final UInt256 totalDifficulty,
+      final Difficulty totalDifficulty,
       final int size,
       final boolean includeCoinbase) {
     this.number = Quantity.create(header.getNumber());
@@ -90,7 +90,7 @@ public class BlockResult implements JsonRpcResult {
     this.parentHash = header.getParentHash().toString();
     this.nonce = Quantity.longToPaddedHex(header.getNonce(), 8);
     this.sha3Uncles = header.getOmmersHash().toString();
-    this.logsBloom = header.getLogsBloom().getBytes().toString();
+    this.logsBloom = header.getLogsBloom().toString();
     this.transactionsRoot = header.getTransactionsRoot().toString();
     this.stateRoot = header.getStateRoot().toString();
     this.receiptsRoot = header.getReceiptsRoot().toString();

@@ -14,11 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
-
 import java.util.NavigableMap;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class DefaultEvmAccount implements EvmAccount {
   private MutableAccount mutableAccount;
@@ -68,7 +68,7 @@ public class DefaultEvmAccount implements EvmAccount {
   }
 
   @Override
-  public BytesValue getCode() {
+  public Bytes getCode() {
     return mutableAccount.getCode();
   }
 

@@ -18,12 +18,12 @@ import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.mainnet.AbstractPrecompiledContract;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.BytesValues;
-import org.hyperledger.besu.util.bytes.MutableBytesValue;
 
 import java.math.BigInteger;
 import java.util.Arrays;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.MutableBytes;
 
 // The big integer modular exponentiation precompiled contract defined in EIP-198.
 public class BigIntegerModularExponentiationPrecompiledContract
@@ -54,7 +54,7 @@ public class BigIntegerModularExponentiationPrecompiledContract
   }
 
   @Override
-  public Gas gasRequirement(final BytesValue input) {
+  public Gas gasRequirement(final Bytes input) {
     // Typically gas calculations are delegated to a GasCalculator instance,
     // but the complexity and coupling wih other parts of the precompile seem
     // like reasonable reasons to do the math here instead.
@@ -82,7 +82,7 @@ public class BigIntegerModularExponentiationPrecompiledContract
   }
 
   @Override
-  public BytesValue compute(final BytesValue input, final MessageFrame messageFrame) {
+  public Bytes compute(final Bytes input, final MessageFrame messageFrame) {
     final BigInteger baseLength = baseLength(input);
     final BigInteger exponentLength = exponentLength(input);
     final BigInteger modulusLength = modulusLength(input);
@@ -92,16 +92,15 @@ public class BigIntegerModularExponentiationPrecompiledContract
     final BigInteger exp = extractParameter(input, exponentOffset, exponentLength.intValue());
     final BigInteger mod = extractParameter(input, modulusOffset, modulusLength.intValue());
 
-    final BytesValue modExp;
+    final Bytes modExp;
     // Result must be the length of the modulus.
-    final MutableBytesValue result = MutableBytesValue.create(modulusLength.intValue());
+    final MutableBytes result = MutableBytes.create(modulusLength.intValue());
     if (mod.compareTo(BigInteger.ZERO) == 0) {
-      modExp = MutableBytesValue.EMPTY;
+      modExp = MutableBytes.EMPTY;
     } else {
       // BigInteger zero-pads positive values whose most significant bit is a 1 if
       // the padding was not there.
-      modExp =
-          BytesValues.trimLeadingZeros(MutableBytesValue.wrap(base.modPow(exp, mod).toByteArray()));
+      modExp = Bytes.wrap(base.modPow(exp, mod).toByteArray()).trimLeadingZeros();
     }
 
     modExp.copyTo(result, result.size() - modExp.size());
@@ -135,29 +134,29 @@ public class BigIntegerModularExponentiationPrecompiledContract
     }
   }
 
-  private static final BigInteger baseLength(final BytesValue input) {
+  private static final BigInteger baseLength(final Bytes input) {
     return extractParameter(input, BASE_LENGTH_OFFSET, PARAMETER_LENGTH);
   }
 
-  private static final BigInteger exponentLength(final BytesValue input) {
+  private static final BigInteger exponentLength(final Bytes input) {
     return extractParameter(input, EXPONENT_LENGTH_OFFSET, PARAMETER_LENGTH);
   }
 
-  private static final BigInteger modulusLength(final BytesValue input) {
+  private static final BigInteger modulusLength(final Bytes input) {
     return extractParameter(input, MODULUS_LENGTH_OFFSET, PARAMETER_LENGTH);
   }
 
   private static BigInteger extractParameter(
-      final BytesValue input, final int offset, final int length) {
+      final Bytes input, final int offset, final int length) {
     if (offset > input.size() || length == 0) {
       return BigInteger.ZERO;
     }
-    final byte[] raw = Arrays.copyOfRange(input.extractArray(), offset, offset + length);
+    final byte[] raw = Arrays.copyOfRange(input.toArray(), offset, offset + length);
     return new BigInteger(1, raw);
   }
 
   private static BigInteger extractParameter(
-      final BytesValue input, final BigInteger offset, final int length) {
+      final Bytes input, final BigInteger offset, final int length) {
     if (BigInteger.valueOf(input.size()).compareTo(offset) <= 0) {
       return BigInteger.ZERO;
     }

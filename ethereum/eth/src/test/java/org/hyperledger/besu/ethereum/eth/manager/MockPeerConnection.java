@@ -22,12 +22,13 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.PeerInfo;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.Set;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class MockPeerConnection implements PeerConnection {
 
@@ -35,7 +36,7 @@ public class MockPeerConnection implements PeerConnection {
   private final PeerSendHandler onSend;
   private final Set<Capability> caps;
   private volatile boolean disconnected = false;
-  private final BytesValue nodeId;
+  private final Bytes nodeId;
   private final Peer peer;
   private final PeerInfo peerInfo;
   private Optional<DisconnectReason> disconnectReason = Optional.empty();

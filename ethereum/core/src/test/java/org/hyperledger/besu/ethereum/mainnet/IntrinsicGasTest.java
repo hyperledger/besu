@@ -18,11 +18,11 @@ import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Arrays;
 import java.util.Collection;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -109,7 +109,7 @@ public class IntrinsicGasTest {
 
   @Test
   public void validateGasCost() {
-    Transaction t = Transaction.readFrom(RLP.input(BytesValue.fromHexString(txRlp)));
+    Transaction t = Transaction.readFrom(RLP.input(Bytes.fromHexString(txRlp)));
     Assertions.assertThat(gasCalculator.transactionIntrinsicGasCost(t)).isEqualTo(expectedGas);
   }
 }

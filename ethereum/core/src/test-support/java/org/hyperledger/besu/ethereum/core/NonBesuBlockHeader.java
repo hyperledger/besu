@@ -19,14 +19,13 @@ import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.data.Hash;
 import org.hyperledger.besu.plugin.data.Quantity;
 import org.hyperledger.besu.plugin.data.UnformattedData;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 public class NonBesuBlockHeader implements BlockHeader {
 
   final Hash blockHash;
-  final BytesValue extraData;
+  final UnformattedData extraData;
 
-  public NonBesuBlockHeader(final Hash blockHash, final BytesValue extraData) {
+  public NonBesuBlockHeader(final Hash blockHash, final UnformattedData extraData) {
     this.blockHash = blockHash;
     this.extraData = extraData;
   }

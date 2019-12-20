@@ -32,7 +32,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.WireMessageCodes;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -40,6 +39,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -49,7 +49,7 @@ public class AbstractPeerConnectionTest {
   private final CapabilityMultiplexer multiplexer = mock(CapabilityMultiplexer.class);
   private final PeerConnectionEvents connectionEvents =
       new PeerConnectionEvents(new NoOpMetricsSystem());
-  private final PeerInfo peerInfo = new PeerInfo(5, "foo", emptyList(), 0, BytesValue.of(1));
+  private final PeerInfo peerInfo = new PeerInfo(5, "foo", emptyList(), 0, Bytes.of(1));
 
   private TestPeerConnection connection;
 

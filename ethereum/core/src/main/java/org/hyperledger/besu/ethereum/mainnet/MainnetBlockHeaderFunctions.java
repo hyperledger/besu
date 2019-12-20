@@ -19,7 +19,8 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.ParsedExtraData;
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.util.bytes.BytesValue;
+
+import org.apache.tuweni.bytes.Bytes;
 
 /** Implements the block hashing algorithm for MainNet as per the yellow paper. */
 public class MainnetBlockHeaderFunctions implements BlockHeaderFunctions {
@@ -30,7 +31,7 @@ public class MainnetBlockHeaderFunctions implements BlockHeaderFunctions {
   }
 
   public static Hash createHash(final BlockHeader header) {
-    final BytesValue rlp = RLP.encode(header::writeTo);
+    final Bytes rlp = RLP.encode(header::writeTo);
     return Hash.hash(rlp);
   }
 

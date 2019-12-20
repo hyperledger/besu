@@ -22,49 +22,49 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.BaseUInt256Value;
 import org.apache.tuweni.units.bigints.UInt256;
 
-/** A particular quantity of Wei, the Ethereum currency. */
-public final class Wei extends BaseUInt256Value<Wei> implements Quantity {
+/** A particular quantity of difficulty, the block difficulty to create new blocks. */
+public final class Difficulty extends BaseUInt256Value<Difficulty> implements Quantity {
 
-  public static final Wei ZERO = of(0);
+  public static final Difficulty ZERO = of(0);
 
-  protected Wei(final UInt256 value) {
-    super(value, Wei::new);
+  public static final Difficulty ONE = of(1);
+
+  public static final Difficulty MAX_VALUE = wrap(Bytes32.ZERO.not());
+
+  protected Difficulty(final UInt256 value) {
+    super(value, Difficulty::new);
   }
 
-  private Wei(final long v) {
+  private Difficulty(final long v) {
     this(UInt256.valueOf(v));
   }
 
-  private Wei(final BigInteger v) {
+  private Difficulty(final BigInteger v) {
     this(UInt256.valueOf(v));
   }
 
-  private Wei(final String hexString) {
+  private Difficulty(final String hexString) {
     this(UInt256.fromHexString(hexString));
   }
 
-  public static Wei of(final long value) {
-    return new Wei(value);
+  public static Difficulty of(final long value) {
+    return new Difficulty(value);
   }
 
-  public static Wei of(final BigInteger value) {
-    return new Wei(value);
+  public static Difficulty of(final BigInteger value) {
+    return new Difficulty(value);
   }
 
-  public static Wei of(final UInt256 value) {
-    return new Wei(value);
+  public static Difficulty of(final UInt256 value) {
+    return new Difficulty(value);
   }
 
-  public static Wei wrap(final Bytes32 value) {
-    return new Wei(UInt256.fromBytes(value));
+  public static Difficulty wrap(final Bytes32 value) {
+    return new Difficulty(UInt256.fromBytes(value));
   }
 
-  public static Wei fromHexString(final String str) {
-    return new Wei(str);
-  }
-
-  public static Wei fromEth(final long eth) {
-    return Wei.of(BigInteger.valueOf(eth).multiply(BigInteger.TEN.pow(18)));
+  public static Difficulty fromHexString(final String str) {
+    return new Difficulty(str);
   }
 
   @Override
@@ -88,7 +88,7 @@ public final class Wei extends BaseUInt256Value<Wei> implements Quantity {
   }
 
   @Override
-  public Wei copy() {
+  public Difficulty copy() {
     return super.copy();
   }
 }
