@@ -60,6 +60,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Util;
@@ -85,7 +86,6 @@ import java.util.stream.Collectors;
 
 import com.google.common.collect.Iterables;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 
 public class TestContextBuilder {
 
@@ -240,7 +240,7 @@ public class TestContextBuilder {
             Bytes.wrap(new byte[32]), Collections.emptyList(), Optional.empty(), 0, validators);
     headerTestFixture.extraData(extraData.encode());
     headerTestFixture.mixHash(IbftHelpers.EXPECTED_MIX_HASH);
-    headerTestFixture.difficulty(UInt256.ONE);
+    headerTestFixture.difficulty(Difficulty.ONE);
     headerTestFixture.ommersHash(Hash.EMPTY_LIST_HASH);
     headerTestFixture.nonce(0);
     headerTestFixture.timestamp(0);

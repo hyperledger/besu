@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.api.query.LogsQuery;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogTopic;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
@@ -118,8 +119,8 @@ public class BlockAdapterBase extends AdapterBase {
     return Optional.of(header.getMixHash());
   }
 
-  public Optional<UInt256> getDifficulty() {
-    return Optional.of(header.internalGetDifficulty());
+  public Optional<Difficulty> getDifficulty() {
+    return Optional.of(header.getDifficulty());
   }
 
   public Optional<Bytes32> getOmmerHash() {

@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 
 import java.util.List;
 
@@ -23,7 +24,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.JsonNode;
-import org.apache.tuweni.units.bigints.UInt256;
 
 @JsonPropertyOrder({
   "number",
@@ -73,7 +73,7 @@ public class BlockResult implements JsonRpcResult {
       final BlockHeader header,
       final List<TransactionResult> transactions,
       final List<JsonNode> ommers,
-      final UInt256 totalDifficulty,
+      final Difficulty totalDifficulty,
       final int size) {
     this(header, transactions, ommers, totalDifficulty, size, false);
   }
@@ -82,7 +82,7 @@ public class BlockResult implements JsonRpcResult {
       final BlockHeader header,
       final List<TransactionResult> transactions,
       final List<JsonNode> ommers,
-      final UInt256 totalDifficulty,
+      final Difficulty totalDifficulty,
       final int size,
       final boolean includeCoinbase) {
     this.number = Quantity.create(header.getNumber());
@@ -95,7 +95,7 @@ public class BlockResult implements JsonRpcResult {
     this.stateRoot = header.getStateRoot().toString();
     this.receiptsRoot = header.getReceiptsRoot().toString();
     this.miner = header.getCoinbase().toString();
-    this.difficulty = Quantity.create(header.internalGetDifficulty());
+    this.difficulty = Quantity.create(header.getDifficulty());
     this.totalDifficulty = Quantity.create(totalDifficulty);
     this.extraData = header.getExtraData().toString();
     this.size = Quantity.create(size);

@@ -19,6 +19,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
@@ -48,7 +49,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.tuweni.units.bigints.UInt256;
 
 public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   private static final Logger LOG = LogManager.getLogger();
@@ -305,7 +305,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   @Override
   public void blockMined(final Block block) {
     // This assumes the block has already been included in the chain
-    final UInt256 totalDifficulty =
+    final Difficulty totalDifficulty =
         blockchain
             .getTotalDifficultyByHash(block.getHash())
             .orElseThrow(

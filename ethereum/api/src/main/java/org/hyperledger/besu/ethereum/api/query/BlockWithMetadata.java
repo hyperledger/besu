@@ -15,17 +15,16 @@
 package org.hyperledger.besu.ethereum.api.query;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 
 import java.util.List;
-
-import org.apache.tuweni.units.bigints.UInt256;
 
 public class BlockWithMetadata<T, O> {
 
   private final BlockHeader header;
   private final List<T> transactions;
   private final List<O> ommers;
-  private final UInt256 totalDifficulty;
+  private final Difficulty totalDifficulty;
   private final int size;
 
   /**
@@ -39,7 +38,7 @@ public class BlockWithMetadata<T, O> {
       final BlockHeader header,
       final List<T> transactions,
       final List<O> ommers,
-      final UInt256 totalDifficulty,
+      final Difficulty totalDifficulty,
       final int size) {
     this.header = header;
     this.transactions = transactions;
@@ -60,7 +59,7 @@ public class BlockWithMetadata<T, O> {
     return transactions;
   }
 
-  public UInt256 getTotalDifficulty() {
+  public Difficulty getTotalDifficulty() {
     return totalDifficulty;
   }
 

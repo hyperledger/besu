@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
 import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
@@ -41,7 +42,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 
 @JsonIgnoreProperties({"_info", "postState", "postStateHash"})
 public class BlockchainReferenceTestCaseSpec {
@@ -163,7 +163,7 @@ public class BlockchainReferenceTestCaseSpec {
           Hash.fromHexString(transactionsTrie), // transactionsRoot
           Hash.fromHexString(receiptTrie), // receiptTrie
           LogsBloomFilter.fromHexString(bloom), // bloom
-          UInt256.fromHexString(difficulty), // difficulty
+          Difficulty.fromHexString(difficulty), // difficulty
           Long.decode(number), // number
           Long.decode(gasLimit), // gasLimit
           Long.decode(gasUsed), // gasUsed

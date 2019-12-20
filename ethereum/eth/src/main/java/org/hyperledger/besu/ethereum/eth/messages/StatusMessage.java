@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.messages;
 
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractMessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
@@ -26,7 +27,6 @@ import java.math.BigInteger;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.units.bigints.UInt256;
 
 public final class StatusMessage extends AbstractMessageData {
 
@@ -39,7 +39,7 @@ public final class StatusMessage extends AbstractMessageData {
   public static StatusMessage create(
       final int protocolVersion,
       final BigInteger networkId,
-      final UInt256 totalDifficulty,
+      final Difficulty totalDifficulty,
       final Hash bestHash,
       final Hash genesisHash) {
     final EthStatus status =
@@ -78,7 +78,7 @@ public final class StatusMessage extends AbstractMessageData {
   }
 
   /** @return The total difficulty of the head of the associated node's local blockchain. */
-  public UInt256 totalDifficulty() {
+  public Difficulty totalDifficulty() {
     return status().totalDifficulty;
   }
 
@@ -105,14 +105,14 @@ public final class StatusMessage extends AbstractMessageData {
   private static class EthStatus {
     private final int protocolVersion;
     private final BigInteger networkId;
-    private final UInt256 totalDifficulty;
+    private final Difficulty totalDifficulty;
     private final Hash bestHash;
     private final Hash genesisHash;
 
     EthStatus(
         final int protocolVersion,
         final BigInteger networkId,
-        final UInt256 totalDifficulty,
+        final Difficulty totalDifficulty,
         final Hash bestHash,
         final Hash genesisHash) {
       this.protocolVersion = protocolVersion;
@@ -139,7 +139,7 @@ public final class StatusMessage extends AbstractMessageData {
 
       final int protocolVersion = in.readIntScalar();
       final BigInteger networkId = in.readBigIntegerScalar();
-      final UInt256 totalDifficulty = in.readUInt256Scalar();
+      final Difficulty totalDifficulty = Difficulty.of(in.readUInt256Scalar());
       final Hash bestHash = Hash.wrap(in.readBytes32());
       final Hash genesisHash = Hash.wrap(in.readBytes32());
 

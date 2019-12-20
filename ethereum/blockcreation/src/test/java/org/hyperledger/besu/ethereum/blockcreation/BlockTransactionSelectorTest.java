@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
 import org.hyperledger.besu.ethereum.core.LogSeries;
@@ -59,7 +60,6 @@ import java.util.function.Supplier;
 
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
@@ -83,7 +83,7 @@ public class BlockTransactionSelectorTest {
     return BlockHeaderBuilder.create()
         .parentHash(Hash.EMPTY)
         .coinbase(Address.fromHexString(String.format("%020x", 1)))
-        .difficulty(UInt256.ONE)
+        .difficulty(Difficulty.ONE)
         .number(1)
         .gasLimit(gasLimit)
         .timestamp(Instant.now().toEpochMilli())

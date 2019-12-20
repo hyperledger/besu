@@ -113,7 +113,7 @@ public class DebugTraceBlockTest {
                     parentBlock.getHeader(),
                     Collections.emptyList(),
                     Collections.emptyList(),
-                    parentBlock.getHeader().internalGetDifficulty(),
+                    parentBlock.getHeader().getDifficulty(),
                     parentBlock.calculateSize())));
 
     final JsonRpcSuccessResponse response =

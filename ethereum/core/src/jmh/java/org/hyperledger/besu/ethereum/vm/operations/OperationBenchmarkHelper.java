@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
 import org.hyperledger.besu.ethereum.core.MessageFrameTestFixture;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
@@ -35,7 +36,6 @@ import java.nio.file.Path;
 
 import com.google.common.io.MoreFiles;
 import com.google.common.io.RecursiveDeleteOption;
-import org.apache.tuweni.units.bigints.UInt256;
 
 public class OperationBenchmarkHelper {
 
@@ -70,7 +70,7 @@ public class OperationBenchmarkHelper {
               new BlockHeaderTestFixture()
                   .parentHash(blockchain.getChainHeadHash())
                   .number(i)
-                  .difficulty(UInt256.ONE)
+                  .difficulty(Difficulty.ONE)
                   .buildHeader(),
               new BlockBody(emptyList(), emptyList())),
           emptyList());
@@ -82,7 +82,7 @@ public class OperationBenchmarkHelper {
                 new BlockHeaderTestFixture()
                     .parentHash(blockchain.getChainHeadHash())
                     .number(blockchain.getChainHeadBlockNumber() + 1)
-                    .difficulty(UInt256.ONE)
+                    .difficulty(Difficulty.ONE)
                     .buildHeader())
             .build();
     return new OperationBenchmarkHelper(storageDirectory, keyValueStorage, messageFrame);

@@ -85,7 +85,7 @@ public class EthHashBlockCreator extends AbstractBlockCreator<Void> {
 
   private EthHashSolverInputs generateNonceSolverInputs(
       final SealableBlockHeader sealableBlockHeader) {
-    final BigInteger difficulty = sealableBlockHeader.internalGetDifficulty().toBigInteger();
+    final BigInteger difficulty = sealableBlockHeader.getDifficulty().toBigInteger();
     final UInt256 target =
         difficulty.equals(BigInteger.ONE)
             ? UInt256.MAX_VALUE

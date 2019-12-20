@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 
 import java.util.ArrayList;
@@ -25,7 +26,6 @@ import java.util.List;
 import java.util.Optional;
 
 import graphql.schema.DataFetchingEnvironment;
-import org.apache.tuweni.units.bigints.UInt256;
 
 @SuppressWarnings("unused") // reflected by GraphQL
 public class NormalBlockAdapter extends BlockAdapterBase {
@@ -42,7 +42,7 @@ public class NormalBlockAdapter extends BlockAdapterBase {
     return Optional.of(blockWithMetaData.getTransactions().size());
   }
 
-  public Optional<UInt256> getTotalDifficulty() {
+  public Optional<Difficulty> getTotalDifficulty() {
     return Optional.of(blockWithMetaData.getTotalDifficulty());
   }
 

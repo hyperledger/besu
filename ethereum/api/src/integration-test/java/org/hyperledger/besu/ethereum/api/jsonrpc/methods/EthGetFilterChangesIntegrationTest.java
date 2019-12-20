@@ -40,6 +40,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
@@ -61,7 +62,6 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 import org.assertj.core.util.Lists;
 import org.junit.Before;
 import org.junit.Test;
@@ -256,7 +256,7 @@ public class EthGetFilterChangesIntegrationTest {
   }
 
   private Block appendBlock(final Transaction... transactionsToAdd) {
-    return appendBlock(UInt256.ONE, getHeaderForCurrentChainHead(), transactionsToAdd);
+    return appendBlock(Difficulty.ONE, getHeaderForCurrentChainHead(), transactionsToAdd);
   }
 
   private BlockHeader getHeaderForCurrentChainHead() {
@@ -264,7 +264,7 @@ public class EthGetFilterChangesIntegrationTest {
   }
 
   private Block appendBlock(
-      final UInt256 difficulty,
+      final Difficulty difficulty,
       final BlockHeader parentBlock,
       final Transaction... transactionsToAdd) {
     final List<Transaction> transactionList = asList(transactionsToAdd);

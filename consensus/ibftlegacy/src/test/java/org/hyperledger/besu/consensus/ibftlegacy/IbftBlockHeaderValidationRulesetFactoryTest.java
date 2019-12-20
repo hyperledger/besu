@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
@@ -40,7 +41,6 @@ import java.util.Collection;
 import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Test;
 
 public class IbftBlockHeaderValidationRulesetFactoryTest {
@@ -120,7 +120,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
         Hash.fromHexString("0x63746963616c2062797a616e74696e65206661756c7420746f6c6572616e6365"));
     builder.ommersHash(Hash.EMPTY_LIST_HASH);
     builder.nonce(IbftLegacyBlockInterface.DROP_NONCE);
-    builder.difficulty(UInt256.ONE);
+    builder.difficulty(Difficulty.ONE);
 
     // Construct an extraData block
     final IbftExtraData initialIbftExtraData =

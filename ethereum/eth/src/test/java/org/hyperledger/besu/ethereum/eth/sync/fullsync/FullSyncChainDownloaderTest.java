@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
@@ -49,7 +50,6 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
-import org.apache.tuweni.units.bigints.UInt256;
 import org.awaitility.Awaitility;
 import org.junit.After;
 import org.junit.Before;
@@ -221,7 +221,8 @@ public class FullSyncChainDownloaderTest {
     localBlockchainSetup.importFirstBlocks(3);
     gen = new BlockDataGenerator();
     final Block chainHead = localBlockchain.getChainHeadBlock();
-    final Block forkBlock = gen.block(gen.nextBlockOptions(chainHead).setDifficulty(UInt256.ZERO));
+    final Block forkBlock =
+        gen.block(gen.nextBlockOptions(chainHead).setDifficulty(Difficulty.ZERO));
     localBlockchain.appendBlock(forkBlock, gen.receipts(forkBlock));
 
     // Sanity check
@@ -251,7 +252,7 @@ public class FullSyncChainDownloaderTest {
 
   @Test
   public void choosesBestPeerAsSyncTarget_byTd() {
-    final UInt256 localTd = localBlockchain.getChainHead().getTotalDifficulty();
+    final Difficulty localTd = localBlockchain.getChainHead().getTotalDifficulty();
 
     final RespondingEthPeer.Responder responder =
         RespondingEthPeer.blockchainResponder(otherBlockchain);
@@ -273,7 +274,7 @@ public class FullSyncChainDownloaderTest {
 
   @Test
   public void choosesBestPeerAsSyncTarget_byTdAndHeight() {
-    final UInt256 localTd = localBlockchain.getChainHead().getTotalDifficulty();
+    final Difficulty localTd = localBlockchain.getChainHead().getTotalDifficulty();
 
     final RespondingEthPeer.Responder responder =
         RespondingEthPeer.blockchainResponder(otherBlockchain);

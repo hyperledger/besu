@@ -40,6 +40,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.DefaultSyncStatus;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
@@ -1722,7 +1723,7 @@ public class JsonRpcHttpServiceTest {
 
   private void verifyBlockResult(
       final Block block,
-      final UInt256 td,
+      final Difficulty td,
       final JsonObject result,
       final boolean shouldTransactionsBeHashed) {
     assertBlockResultMatchesBlock(result, block);
@@ -1730,7 +1731,7 @@ public class JsonRpcHttpServiceTest {
     if (td == null) {
       assertThat(result.getJsonObject("totalDifficulty")).isNull();
     } else {
-      assertThat(UInt256.fromHexString(result.getString("totalDifficulty"))).isEqualTo(td);
+      assertThat(Difficulty.fromHexString(result.getString("totalDifficulty"))).isEqualTo(td);
     }
 
     // Check ommers
@@ -1812,8 +1813,8 @@ public class JsonRpcHttpServiceTest {
     assertThat(Hash.fromHexString(result.getString("receiptsRoot")))
         .isEqualTo(header.getReceiptsRoot());
     assertThat(Address.fromHexString(result.getString("miner"))).isEqualTo(header.getCoinbase());
-    assertThat(UInt256.fromHexString(result.getString("difficulty")))
-        .isEqualTo(header.internalGetDifficulty());
+    assertThat(Difficulty.fromHexString(result.getString("difficulty")))
+        .isEqualTo(header.getDifficulty());
     assertThat(Bytes.fromHexStringLenient(result.getString("extraData")))
         .isEqualTo(header.internalGetExtraData());
     assertThat(hexStringToInt(result.getString("size"))).isEqualTo(block.calculateSize());
@@ -1877,7 +1878,7 @@ public class JsonRpcHttpServiceTest {
   }
 
   public BlockWithMetadata<TransactionWithMetadata, Hash> blockWithMetadata(final Block block) {
-    final UInt256 td = block.getHeader().internalGetDifficulty().add(10L);
+    final Difficulty td = block.getHeader().getDifficulty().add(10L);
     final int size = block.calculateSize();
 
     final List<Transaction> txs = block.getBody().getTransactions();
@@ -1893,7 +1894,7 @@ public class JsonRpcHttpServiceTest {
   }
 
   public BlockWithMetadata<Hash, Hash> blockWithMetadataAndTxHashes(final Block block) {
-    final UInt256 td = block.getHeader().internalGetDifficulty().add(10L);
+    final Difficulty td = block.getHeader().getDifficulty().add(10L);
     final int size = block.calculateSize();
 
     final List<Hash> txs =

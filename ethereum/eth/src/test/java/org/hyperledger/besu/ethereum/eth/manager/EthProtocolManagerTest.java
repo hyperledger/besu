@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
@@ -82,7 +83,6 @@ import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 import org.awaitility.Awaitility;
 import org.awaitility.core.ConditionTimeoutException;
 import org.junit.BeforeClass;
@@ -968,7 +968,7 @@ public final class EthProtocolManagerTest {
             blockchain.getBlockHeader(chainHeadHash).get(),
             blockchain.getBlockBody(chainHeadHash).get());
 
-    final UInt256 expectedTotalDifficulty = blockchain.getChainHead().getTotalDifficulty();
+    final Difficulty expectedTotalDifficulty = blockchain.getChainHead().getTotalDifficulty();
 
     reset(onSend);
 

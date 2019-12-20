@@ -22,7 +22,6 @@ import java.time.Instant;
 import java.util.OptionalLong;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 
 /** A utility class for building block headers. */
 public class BlockHeaderBuilder {
@@ -41,7 +40,7 @@ public class BlockHeaderBuilder {
 
   private LogsBloomFilter logsBloom;
 
-  private UInt256 difficulty;
+  private Difficulty difficulty;
 
   private long number = -1L;
 
@@ -74,7 +73,7 @@ public class BlockHeaderBuilder {
         .transactionsRoot(header.getTransactionsRoot())
         .receiptsRoot(header.getReceiptsRoot())
         .logsBloom(header.getLogsBloom())
-        .difficulty(header.internalGetDifficulty())
+        .difficulty(header.getDifficulty())
         .number(header.getNumber())
         .gasLimit(header.getGasLimit())
         .gasUsed(header.getGasUsed())
@@ -185,7 +184,7 @@ public class BlockHeaderBuilder {
     checkNotNull(processableBlockHeader);
     parentHash(processableBlockHeader.getParentHash());
     coinbase(processableBlockHeader.getCoinbase());
-    difficulty(processableBlockHeader.internalGetDifficulty());
+    difficulty(processableBlockHeader.getDifficulty());
     number(processableBlockHeader.getNumber());
     gasLimit(processableBlockHeader.getGasLimit());
     timestamp(processableBlockHeader.getTimestamp());
@@ -201,7 +200,7 @@ public class BlockHeaderBuilder {
     transactionsRoot(sealableBlockHeader.getTransactionsRoot());
     receiptsRoot(sealableBlockHeader.getReceiptsRoot());
     logsBloom(sealableBlockHeader.getLogsBloom());
-    difficulty(sealableBlockHeader.internalGetDifficulty());
+    difficulty(sealableBlockHeader.getDifficulty());
     number(sealableBlockHeader.getNumber());
     gasLimit(sealableBlockHeader.getGasLimit());
     gasUsed(sealableBlockHeader.getGasUsed());
@@ -252,7 +251,7 @@ public class BlockHeaderBuilder {
     return this;
   }
 
-  public BlockHeaderBuilder difficulty(final UInt256 difficulty) {
+  public BlockHeaderBuilder difficulty(final Difficulty difficulty) {
     checkNotNull(difficulty);
     this.difficulty = difficulty;
     return this;
