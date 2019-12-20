@@ -68,7 +68,7 @@ public class PrivGetPrivateTransaction implements JsonRpcMethod {
       LOG.trace("Fetching transaction information");
       final ReceiveResponse receiveResponse =
           privacyController.retrieveTransaction(
-              resultTransaction.getTransaction().getPayloadBytes().toBase64String());
+              resultTransaction.getTransaction().getPayload().toBase64String());
       LOG.trace("Received transaction information");
 
       final BytesValueRLPInput input =

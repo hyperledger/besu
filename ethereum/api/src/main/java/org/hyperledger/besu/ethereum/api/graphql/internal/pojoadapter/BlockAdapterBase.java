@@ -96,7 +96,7 @@ public class BlockAdapterBase extends AdapterBase {
   }
 
   public Optional<Bytes> getExtraData() {
-    return Optional.of(header.internalGetExtraData());
+    return Optional.of(header.getExtraData());
   }
 
   public Optional<Long> getGasLimit() {

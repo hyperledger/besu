@@ -60,7 +60,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
 
   private final SECP256K1.Signature signature;
 
-  private final Bytes payload;
+  private final UnformattedDataImpl payload;
 
   private final Optional<BigInteger> chainId;
 
@@ -147,7 +147,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     this.to = to;
     this.value = value;
     this.signature = signature;
-    this.payload = payload;
+    this.payload = new UnformattedDataImpl(payload);
     this.sender = sender;
     this.chainId = chainId;
   }
@@ -220,11 +220,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
    * @return the transaction payload
    */
   @Override
-  public UnformattedData getPayload() {
-    return new UnformattedDataWrapper(payload);
-  }
-
-  public Bytes getPayloadBytes() {
+  public UnformattedDataImpl getPayload() {
     return payload;
   }
 
@@ -235,9 +231,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
    */
   @Override
   public Optional<UnformattedData> getInit() {
-    return getTo().isPresent()
-        ? Optional.empty()
-        : Optional.of(new UnformattedDataWrapper(payload));
+    return getTo().isPresent() ? Optional.empty() : Optional.of(payload);
   }
 
   /**
@@ -247,9 +241,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
    */
   @Override
   public Optional<UnformattedData> getData() {
-    return getTo().isPresent()
-        ? Optional.of(new UnformattedDataWrapper(payload))
-        : Optional.empty();
+    return getTo().isPresent() ? Optional.of(payload) : Optional.empty();
   }
 
   /**
@@ -306,7 +298,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     out.writeLongScalar(getGasLimit());
     out.writeBytes(getTo().isPresent() ? getTo().get() : Bytes.EMPTY);
     out.writeUInt256Scalar(getValue());
-    out.writeBytes(getPayloadBytes());
+    out.writeBytes(getPayload());
     writeSignature(out);
 
     out.endList();

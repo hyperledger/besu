@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.vm;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.LogTopic;
-import org.hyperledger.besu.ethereum.core.UnformattedDataWrapper;
 
 import java.util.Arrays;
 import java.util.stream.Collectors;
@@ -42,7 +41,7 @@ public class LogMock extends Log {
       @JsonProperty("topics") final String[] topics) {
     super(
         Address.fromHexString(address),
-        new UnformattedDataWrapper(Bytes.fromHexString(data)),
+        Bytes.fromHexString(data),
         Arrays.stream(topics).map(LogTopic::fromHexString).collect(Collectors.toList()));
   }
 }

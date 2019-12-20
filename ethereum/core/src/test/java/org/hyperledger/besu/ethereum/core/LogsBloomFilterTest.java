@@ -33,7 +33,7 @@ public class LogsBloomFilterTest {
         LogTopic.fromHexString(
             "0x0000000000000000000000000000000000000000000000000000000000000000"));
 
-    final Log log = new Log(address, new UnformattedDataWrapper(data), topics);
+    final Log log = new Log(address, data, topics);
     final LogsBloomFilter bloom = LogsBloomFilter.empty();
     bloom.insertLog(log);
 

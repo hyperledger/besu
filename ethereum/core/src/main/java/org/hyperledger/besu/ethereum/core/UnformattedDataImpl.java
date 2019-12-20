@@ -18,49 +18,23 @@ package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.plugin.data.UnformattedData;
 
-import java.util.Objects;
-
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.DelegatingBytes;
 
 /** Wrapper for a Bytes value to be exposed as UnformattedData. */
-public class UnformattedDataWrapper implements UnformattedData {
+public class UnformattedDataImpl extends DelegatingBytes implements UnformattedData {
 
-  private final Bytes value;
-
-  public UnformattedDataWrapper(final Bytes value) {
-    this.value = value;
+  public UnformattedDataImpl(final Bytes value) {
+    super(value);
   }
 
   @Override
   public byte[] getByteArray() {
-    return value.toArray();
+    return toArray();
   }
 
   @Override
   public String getHexString() {
-    return value.toHexString();
-  }
-
-  @Override
-  public int size() {
-    return value.size();
-  }
-
-  @Override
-  public String toString() {
-    return getHexString();
-  }
-
-  @Override
-  public boolean equals(final Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    UnformattedDataWrapper that = (UnformattedDataWrapper) o;
-    return Objects.equals(value, that.value);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(value);
+    return toHexString();
   }
 }

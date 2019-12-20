@@ -78,7 +78,7 @@ public class BlockHeaderBuilder {
         .gasLimit(header.getGasLimit())
         .gasUsed(header.getGasUsed())
         .timestamp(header.getTimestamp())
-        .extraData(header.internalGetExtraData())
+        .extraData(header.getExtraData())
         .mixHash(header.getMixHash())
         .nonce(header.getNonce());
   }
@@ -205,7 +205,7 @@ public class BlockHeaderBuilder {
     gasLimit(sealableBlockHeader.getGasLimit());
     gasUsed(sealableBlockHeader.getGasUsed());
     timestamp(sealableBlockHeader.getTimestamp());
-    extraData(sealableBlockHeader.internalGetExtraData());
+    extraData(sealableBlockHeader.getExtraData());
     return this;
   }
 

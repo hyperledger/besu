@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.UnformattedDataImpl;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
@@ -110,7 +111,8 @@ public class PrivGetPrivateTransactionTest {
     when(blockchain.transactionByHash(any(Hash.class)))
         .thenReturn(Optional.of(returnedTransaction));
     when(returnedTransaction.getTransaction()).thenReturn(justTransaction);
-    when(justTransaction.getPayloadBytes()).thenReturn(Bytes.fromBase64String(""));
+    when(justTransaction.getPayload())
+        .thenReturn(new UnformattedDataImpl(Bytes.fromBase64String("")));
 
     final PrivateTransaction privateTransaction =
         privateTransactionBuilder
@@ -145,7 +147,8 @@ public class PrivGetPrivateTransactionTest {
     when(blockchain.transactionByHash(any(Hash.class)))
         .thenReturn(Optional.of(returnedTransaction));
     when(returnedTransaction.getTransaction()).thenReturn(justTransaction);
-    when(justTransaction.getPayloadBytes()).thenReturn(Bytes.fromBase64String(""));
+    when(justTransaction.getPayload())
+        .thenReturn(new UnformattedDataImpl(Bytes.fromBase64String("")));
 
     final PrivateTransaction privateTransaction =
         privateTransactionBuilder

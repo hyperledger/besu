@@ -23,8 +23,6 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.LogTopic;
 import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
-import org.hyperledger.besu.ethereum.core.UnformattedDataWrapper;
-import org.hyperledger.besu.plugin.data.UnformattedData;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,8 +33,7 @@ import org.junit.Test;
 
 public class LogsQueryTest {
 
-  private static final UnformattedData data =
-      new UnformattedDataWrapper(Bytes.fromHexString("0x0102"));
+  private static final Bytes data = Bytes.fromHexString("0x0102");
 
   @Test
   public void wildcardQueryAddressTopicReturnTrue() {

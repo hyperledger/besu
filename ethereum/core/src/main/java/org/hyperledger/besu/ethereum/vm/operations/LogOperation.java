@@ -18,7 +18,6 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.LogTopic;
-import org.hyperledger.besu.ethereum.core.UnformattedDataWrapper;
 import org.hyperledger.besu.ethereum.vm.AbstractOperation;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
@@ -63,7 +62,7 @@ public class LogOperation extends AbstractOperation {
       builder.add(LogTopic.create(frame.popStackItem()));
     }
 
-    frame.addLog(new Log(address, new UnformattedDataWrapper(data), builder.build()));
+    frame.addLog(new Log(address, data, builder.build()));
   }
 
   @Override

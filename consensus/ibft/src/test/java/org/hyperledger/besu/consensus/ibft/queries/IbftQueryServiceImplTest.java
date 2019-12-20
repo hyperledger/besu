@@ -117,7 +117,7 @@ public class IbftQueryServiceImplTest {
   @Test
   public void getRoundNumberThrowsIfBlockIsNotOnTheChain() {
     final NonBesuBlockHeader header =
-        new NonBesuBlockHeader(blockHeader.getHash(), blockHeader.internalGetExtraData());
+        new NonBesuBlockHeader(blockHeader.getHash(), blockHeader.getExtraData());
     when(blockchain.getBlockHeader(blockHeader.getHash())).thenReturn(Optional.empty());
 
     final IbftQueryService service =
@@ -142,7 +142,7 @@ public class IbftQueryServiceImplTest {
   @Test
   public void getSignersThrowsIfBlockIsNotOnTheChain() {
     final NonBesuBlockHeader header =
-        new NonBesuBlockHeader(blockHeader.getHash(), blockHeader.internalGetExtraData());
+        new NonBesuBlockHeader(blockHeader.getHash(), blockHeader.getExtraData());
     when(blockchain.getBlockHeader(blockHeader.getHash())).thenReturn(Optional.empty());
 
     final IbftQueryService service =
