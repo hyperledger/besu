@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.core;
 import org.hyperledger.besu.plugin.data.UnformattedData;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 
 /** A block header capable of being sealed. */
 public class SealableBlockHeader extends ProcessableBlockHeader {
@@ -43,7 +42,7 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
       final Hash transactionsRoot,
       final Hash receiptsRoot,
       final LogsBloomFilter logsBloom,
-      final UInt256 difficulty,
+      final Difficulty difficulty,
       final long number,
       final long gasLimit,
       final long gasUsed,

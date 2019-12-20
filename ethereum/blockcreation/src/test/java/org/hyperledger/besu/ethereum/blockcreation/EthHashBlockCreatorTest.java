@@ -20,6 +20,7 @@ import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
@@ -44,7 +45,6 @@ import java.util.function.Function;
 
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Test;
 
 public class EthHashBlockCreatorTest {
@@ -198,7 +198,7 @@ public class EthHashBlockCreatorTest {
         BlockHeaderBuilder.create()
             .parentHash(Hash.ZERO)
             .coinbase(BLOCK_1_COINBASE)
-            .difficulty(UInt256.ONE)
+            .difficulty(Difficulty.ONE)
             .number(1)
             .gasLimit(1)
             .timestamp(1)
@@ -258,7 +258,7 @@ public class EthHashBlockCreatorTest {
         BlockHeaderBuilder.create()
             .parentHash(Hash.ZERO)
             .coinbase(BLOCK_1_COINBASE)
-            .difficulty(UInt256.ONE)
+            .difficulty(Difficulty.ONE)
             .number(1)
             .gasLimit(1)
             .timestamp(1)

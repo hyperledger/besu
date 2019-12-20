@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
@@ -45,7 +46,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -130,7 +130,7 @@ public class DetermineCommonAncestorTaskParameterizedTest {
 
       final BlockDataGenerator.BlockOptions remoteOptions =
           new BlockDataGenerator.BlockOptions()
-              .setDifficulty(UInt256.ONE) // differentiator
+              .setDifficulty(Difficulty.ONE) // differentiator
               .setBlockNumber(i)
               .setParentHash(remoteBlockchain.getBlockHashByNumber(i - 1).get());
       final Block remoteBlock = blockDataGenerator.block(remoteOptions);

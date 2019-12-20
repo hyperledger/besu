@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
@@ -40,7 +41,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -215,11 +215,11 @@ public class PivotBlockRetrieverTest {
         RespondingEthPeer.blockchainResponder(blockchain, protocolContext.getWorldStateArchive());
 
     final RespondingEthPeer peerA =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, UInt256.valueOf(1000), 1000);
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, Difficulty.of(1000), 1000);
     final RespondingEthPeer peerB =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, UInt256.valueOf(500), 500);
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, Difficulty.of(500), 500);
     final RespondingEthPeer peerC =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, UInt256.valueOf(1000), 1000);
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, Difficulty.of(1000), 1000);
 
     final CompletableFuture<FastSyncState> future = pivotBlockRetriever.downloadPivotBlockHeader();
 
@@ -243,11 +243,11 @@ public class PivotBlockRetrieverTest {
     final Responder emptyResponder = RespondingEthPeer.emptyResponder();
 
     final RespondingEthPeer peerA =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, UInt256.valueOf(1000), 1000);
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, Difficulty.of(1000), 1000);
     final RespondingEthPeer peerB =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, UInt256.valueOf(1000), 1000);
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, Difficulty.of(1000), 1000);
     final RespondingEthPeer peerC =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, UInt256.valueOf(500), 500);
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, Difficulty.of(500), 500);
 
     final CompletableFuture<FastSyncState> future = pivotBlockRetriever.downloadPivotBlockHeader();
     peerA.respond(responder);

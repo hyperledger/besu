@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator.BlockOptions;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.core.Synchronizer.InSyncListener;
@@ -50,7 +51,6 @@ import org.hyperledger.besu.plugin.services.BesuEvents.SyncStatusListener;
 import java.util.List;
 import java.util.Optional;
 
-import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -61,13 +61,13 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class SyncStateTest {
 
-  private static final UInt256 standardDifficultyPerBlock = UInt256.ONE;
+  private static final Difficulty standardDifficultyPerBlock = Difficulty.ONE;
   private static final long OUR_CHAIN_HEAD_NUMBER = 20;
-  private static final UInt256 OUR_CHAIN_DIFFICULTY =
+  private static final Difficulty OUR_CHAIN_DIFFICULTY =
       standardDifficultyPerBlock.multiply(OUR_CHAIN_HEAD_NUMBER);
   private static final long TARGET_CHAIN_DELTA = 20;
   private static final long TARGET_CHAIN_HEIGHT = OUR_CHAIN_HEAD_NUMBER + TARGET_CHAIN_DELTA;
-  private static final UInt256 TARGET_DIFFICULTY =
+  private static final Difficulty TARGET_DIFFICULTY =
       standardDifficultyPerBlock.multiply(TARGET_CHAIN_HEIGHT);
 
   private final InSyncListener inSyncListener = mock(InSyncListener.class);
@@ -76,7 +76,7 @@ public class SyncStateTest {
 
   private final BlockDataGenerator gen = new BlockDataGenerator(1);
   private final Block genesisBlock =
-      gen.genesisBlock(new BlockOptions().setDifficulty(UInt256.ZERO));
+      gen.genesisBlock(new BlockOptions().setDifficulty(Difficulty.ZERO));
   private final MutableBlockchain blockchain =
       InMemoryStorageProvider.createInMemoryBlockchain(genesisBlock);
 
@@ -95,7 +95,7 @@ public class SyncStateTest {
             blockchain, InMemoryStorageProvider.createInMemoryWorldStateArchive());
     ethPeers = spy(ethProtocolManager.ethContext().getEthPeers());
     syncTargetPeer = createPeer(TARGET_DIFFICULTY, TARGET_CHAIN_HEIGHT);
-    otherPeer = createPeer(UInt256.ZERO, 0);
+    otherPeer = createPeer(Difficulty.ZERO, 0);
 
     advanceLocalChain(OUR_CHAIN_HEAD_NUMBER);
 
@@ -561,7 +561,7 @@ public class SyncStateTest {
     assertThat(clearedEvent).isEmpty();
   }
 
-  private RespondingEthPeer createPeer(final UInt256 totalDifficulty, final long blockHeight) {
+  private RespondingEthPeer createPeer(final Difficulty totalDifficulty, final long blockHeight) {
     return EthProtocolManagerTestUtil.createPeer(ethProtocolManager, totalDifficulty, blockHeight);
   }
 
@@ -614,14 +614,14 @@ public class SyncStateTest {
    * @param totalDifficulty The total difficulty
    */
   private void updateChainState(
-      final EthPeer peer, final long blockHeight, final UInt256 totalDifficulty) {
+      final EthPeer peer, final long blockHeight, final Difficulty totalDifficulty) {
     // Chain state is updated based on the parent of the announced block
     // So, increment block number by 1 and set block difficulty to zero
     // in order to update to the values we want
     final BlockHeader header =
         new BlockHeaderTestFixture()
             .number(blockHeight + 1L)
-            .difficulty(UInt256.ZERO)
+            .difficulty(Difficulty.ZERO)
             .buildHeader();
     peer.chainState().updateForAnnouncedBlock(header, totalDifficulty);
 

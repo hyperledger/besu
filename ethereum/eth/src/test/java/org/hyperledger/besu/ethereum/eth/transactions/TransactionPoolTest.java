@@ -43,6 +43,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
@@ -69,7 +70,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -185,8 +185,8 @@ public class TransactionPoolTest {
   public void shouldNotRemovePendingTransactionsWhenABlockAddedToAFork() {
     transactions.addRemoteTransaction(transaction1);
     final BlockHeader commonParent = getHeaderForCurrentChainHead();
-    final Block canonicalHead = appendBlock(UInt256.valueOf(1000), commonParent);
-    appendBlock(UInt256.ONE, commonParent, transaction1);
+    final Block canonicalHead = appendBlock(Difficulty.of(1000), commonParent);
+    appendBlock(Difficulty.ONE, commonParent, transaction1);
 
     verifyChainHeadIs(canonicalHead);
 
@@ -198,13 +198,12 @@ public class TransactionPoolTest {
     transactions.addRemoteTransaction(transaction1);
     transactions.addRemoteTransaction(transaction2);
     final BlockHeader commonParent = getHeaderForCurrentChainHead();
-    final Block originalChainHead = appendBlock(UInt256.valueOf(1000), commonParent);
+    final Block originalChainHead = appendBlock(Difficulty.of(1000), commonParent);
 
-    final Block forkBlock1 = appendBlock(UInt256.ONE, commonParent, transaction1);
+    final Block forkBlock1 = appendBlock(Difficulty.ONE, commonParent, transaction1);
     verifyChainHeadIs(originalChainHead);
 
-    final Block forkBlock2 =
-        appendBlock(UInt256.valueOf(2000), forkBlock1.getHeader(), transaction2);
+    final Block forkBlock2 = appendBlock(Difficulty.of(2000), forkBlock1.getHeader(), transaction2);
     verifyChainHeadIs(forkBlock2);
 
     assertTransactionNotPending(transaction1);
@@ -218,16 +217,17 @@ public class TransactionPoolTest {
     transactions.addRemoteTransaction(transaction1);
     transactions.addRemoteTransaction(transaction2);
     final BlockHeader commonParent = getHeaderForCurrentChainHead();
-    final Block originalFork1 = appendBlock(UInt256.valueOf(1000), commonParent, transaction1);
-    final Block originalFork2 = appendBlock(UInt256.ONE, originalFork1.getHeader(), transaction2);
+    final Block originalFork1 = appendBlock(Difficulty.of(1000), commonParent, transaction1);
+    final Block originalFork2 =
+        appendBlock(Difficulty.ONE, originalFork1.getHeader(), transaction2);
     assertTransactionNotPending(transaction1);
     assertTransactionNotPending(transaction2);
 
-    final Block reorgFork1 = appendBlock(UInt256.ONE, commonParent);
+    final Block reorgFork1 = appendBlock(Difficulty.ONE, commonParent);
     verifyChainHeadIs(originalFork2);
 
     transactions.subscribePendingTransactions(listener);
-    final Block reorgFork2 = appendBlock(UInt256.valueOf(2000), reorgFork1.getHeader());
+    final Block reorgFork2 = appendBlock(Difficulty.of(2000), reorgFork1.getHeader());
     verifyChainHeadIs(reorgFork2);
 
     assertTransactionPending(transaction1);
@@ -244,15 +244,16 @@ public class TransactionPoolTest {
     transactions.addRemoteTransaction(transaction1);
     transactions.addRemoteTransaction(transaction2);
     final BlockHeader commonParent = getHeaderForCurrentChainHead();
-    final Block originalFork1 = appendBlock(UInt256.valueOf(1000), commonParent, transaction1);
-    final Block originalFork2 = appendBlock(UInt256.ONE, originalFork1.getHeader(), transaction2);
+    final Block originalFork1 = appendBlock(Difficulty.of(1000), commonParent, transaction1);
+    final Block originalFork2 =
+        appendBlock(Difficulty.ONE, originalFork1.getHeader(), transaction2);
     assertTransactionNotPending(transaction1);
     assertTransactionNotPending(transaction2);
 
-    final Block reorgFork1 = appendBlock(UInt256.ONE, commonParent, transaction1);
+    final Block reorgFork1 = appendBlock(Difficulty.ONE, commonParent, transaction1);
     verifyChainHeadIs(originalFork2);
 
-    final Block reorgFork2 = appendBlock(UInt256.valueOf(2000), reorgFork1.getHeader());
+    final Block reorgFork2 = appendBlock(Difficulty.of(2000), reorgFork1.getHeader());
     verifyChainHeadIs(reorgFork2);
 
     assertTransactionNotPending(transaction1);
@@ -619,7 +620,7 @@ public class TransactionPoolTest {
   }
 
   private void appendBlock(final Transaction... transactionsToAdd) {
-    appendBlock(UInt256.ONE, getHeaderForCurrentChainHead(), transactionsToAdd);
+    appendBlock(Difficulty.ONE, getHeaderForCurrentChainHead(), transactionsToAdd);
   }
 
   private BlockHeader getHeaderForCurrentChainHead() {
@@ -627,7 +628,7 @@ public class TransactionPoolTest {
   }
 
   private Block appendBlock(
-      final UInt256 difficulty,
+      final Difficulty difficulty,
       final BlockHeader parentBlock,
       final Transaction... transactionsToAdd) {
     final List<Transaction> transactionList = asList(transactionsToAdd);

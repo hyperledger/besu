@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.manager;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV63;
@@ -44,7 +45,6 @@ import java.util.function.Consumer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 
 public class EthPeer {
   private static final Logger LOG = LogManager.getLogger();
@@ -283,7 +283,7 @@ public class EthPeer {
     maybeExecuteStatusesExchangedCallback();
   }
 
-  public void registerStatusReceived(final Hash hash, final UInt256 td) {
+  public void registerStatusReceived(final Hash hash, final Difficulty td) {
     chainHeadState.statusReceived(hash, td);
     statusHasBeenReceivedFromPeer.set(true);
     maybeExecuteStatusesExchangedCallback();

@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -73,7 +74,7 @@ public class ProofOfWorkValidationRuleTest {
   public void failsBlockWithZeroValuedDifficulty() {
     final BlockHeader header =
         BlockHeaderBuilder.fromHeader(blockHeader)
-            .difficulty(UInt256.ZERO)
+            .difficulty(Difficulty.ZERO)
             .blockHeaderFunctions(mainnetBlockHashFunction())
             .buildBlockHeader();
     assertThat(validationRule.validate(header, parentHeader)).isFalse();
@@ -83,7 +84,7 @@ public class ProofOfWorkValidationRuleTest {
   public void passesBlockWithOneValuedDifficulty() {
     final BlockHeaderBuilder headerBuilder =
         BlockHeaderBuilder.fromHeader(blockHeader)
-            .difficulty(UInt256.ONE)
+            .difficulty(Difficulty.ONE)
             .blockHeaderFunctions(mainnetBlockHashFunction())
             .timestamp(1);
     final BlockHeader preHeader = headerBuilder.buildBlockHeader();
@@ -102,7 +103,7 @@ public class ProofOfWorkValidationRuleTest {
 
   @Test
   public void failsWithVeryLargeDifficulty() {
-    final UInt256 largeDifficulty = UInt256.valueOf(BigInteger.valueOf(2).pow(255));
+    final Difficulty largeDifficulty = Difficulty.of(BigInteger.valueOf(2).pow(255));
     final BlockHeader header =
         BlockHeaderBuilder.fromHeader(blockHeader)
             .difficulty(largeDifficulty)

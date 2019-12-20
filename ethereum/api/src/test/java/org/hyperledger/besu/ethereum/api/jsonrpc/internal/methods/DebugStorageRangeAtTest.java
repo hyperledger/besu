@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.AccountStorageEntry;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -93,7 +94,7 @@ public class DebugStorageRangeAtTest {
             blockHeader,
             Collections.singletonList(transactionWithMetadata),
             Collections.emptyList(),
-            UInt256.ONE,
+            Difficulty.ONE,
             1);
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(

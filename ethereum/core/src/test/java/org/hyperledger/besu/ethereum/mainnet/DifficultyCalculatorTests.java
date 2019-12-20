@@ -23,6 +23,7 @@ import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 
@@ -140,7 +141,7 @@ public class DifficultyCalculatorTests {
               .nonce(0)
               .blockHeaderFunctions(blockHeaderFunctions)
               .timestamp(extractLong(value, "parentTimestamp"))
-              .difficulty(UInt256.fromHexString(value.get("parentDifficulty").asText()))
+              .difficulty(Difficulty.fromHexString(value.get("parentDifficulty").asText()))
               .ommersHash(Hash.fromHexString(value.get("parentUncles").asText()))
               .number(currentBlockNumber)
               .buildBlockHeader();

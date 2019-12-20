@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 
@@ -45,7 +46,6 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 import com.google.common.collect.Lists;
-import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -126,11 +126,7 @@ public class NewBlockHeadersSubscriptionServiceTest {
     final List<TransactionWithMetadata> txHashList = transactionsWithMetadata();
     final BlockWithMetadata<TransactionWithMetadata, Hash> testBlockWithMetadata =
         new BlockWithMetadata<>(
-            blockHeader,
-            txHashList,
-            Collections.emptyList(),
-            blockHeader.internalGetDifficulty(),
-            0);
+            blockHeader, txHashList, Collections.emptyList(), blockHeader.getDifficulty(), 0);
     final BlockResult expectedNewBlock =
         blockResultFactory.transactionComplete(testBlockWithMetadata);
     when(blockchainQueries.blockByHash(testBlockWithMetadata.getHeader().getHash()))
@@ -178,7 +174,7 @@ public class NewBlockHeadersSubscriptionServiceTest {
 
   private BlockResult expectedBlockWithTransactions(final List<Hash> objects) {
     final BlockWithMetadata<Hash, Hash> testBlockWithMetadata =
-        new BlockWithMetadata<>(blockHeader, objects, Collections.emptyList(), UInt256.ONE, 1);
+        new BlockWithMetadata<>(blockHeader, objects, Collections.emptyList(), Difficulty.ONE, 1);
     final BlockResult expectedNewBlock = blockResultFactory.transactionHash(testBlockWithMetadata);
 
     when(blockchainQueries.blockByHashWithTxHashes(testBlockWithMetadata.getHeader().getHash()))

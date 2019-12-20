@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
@@ -42,7 +43,6 @@ import java.util.concurrent.Semaphore;
 
 import com.google.common.base.MoreObjects;
 import org.apache.logging.log4j.Logger;
-import org.apache.tuweni.units.bigints.UInt256;
 
 /** Tool for importing rlp-encoded block data from files. */
 public class RlpBlockImporter {
@@ -204,11 +204,11 @@ public class RlpBlockImporter {
 
   public static final class ImportResult {
 
-    public final UInt256 td;
+    public final Difficulty td;
 
     final int count;
 
-    ImportResult(final UInt256 td, final int count) {
+    ImportResult(final Difficulty td, final int count) {
       this.td = td;
       this.count = count;
     }

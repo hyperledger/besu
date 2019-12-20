@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.chain.TransactionLocation;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
@@ -33,7 +34,6 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 
 /**
  * A blockchain mock for the Ethereum reference tests.
@@ -128,7 +128,7 @@ public class TestBlockchain implements Blockchain {
   }
 
   @Override
-  public Optional<UInt256> getTotalDifficultyByHash(final Hash blockHeaderHash) {
+  public Optional<Difficulty> getTotalDifficultyByHash(final Hash blockHeaderHash) {
     // Deterministic, but just not implemented.
     throw new UnsupportedOperationException();
   }

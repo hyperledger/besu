@@ -24,6 +24,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.NoAvailablePeersException;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.PeerDisconnectedException;
@@ -36,7 +37,6 @@ import java.util.OptionalLong;
 import java.util.concurrent.CancellationException;
 import java.util.function.Consumer;
 
-import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -59,10 +59,10 @@ public class EthPeersTest {
   public void comparesPeersWithHeightAndTd() {
     // Set peerA with better height, lower td
     final EthPeer peerA =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, UInt256.valueOf(50), 20)
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, Difficulty.of(50), 20)
             .getEthPeer();
     final EthPeer peerB =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, UInt256.valueOf(100), 10)
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, Difficulty.of(100), 10)
             .getEthPeer();
 
     assertThat(EthPeers.CHAIN_HEIGHT.compare(peerA, peerB)).isGreaterThan(0);
@@ -82,11 +82,11 @@ public class EthPeersTest {
   public void comparesPeersWithTdAndNoHeight() {
     final EthPeer peerA =
         EthProtocolManagerTestUtil.createPeer(
-                ethProtocolManager, UInt256.valueOf(100), OptionalLong.empty())
+                ethProtocolManager, Difficulty.of(100), OptionalLong.empty())
             .getEthPeer();
     final EthPeer peerB =
         EthProtocolManagerTestUtil.createPeer(
-                ethProtocolManager, UInt256.valueOf(50), OptionalLong.empty())
+                ethProtocolManager, Difficulty.of(50), OptionalLong.empty())
             .getEthPeer();
 
     // Sanity check

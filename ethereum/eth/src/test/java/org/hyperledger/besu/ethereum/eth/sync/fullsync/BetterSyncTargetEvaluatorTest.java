@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.eth.manager.ChainState;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
@@ -152,7 +153,7 @@ public class BetterSyncTargetEvaluatorTest {
     final EthPeer peer = mock(EthPeer.class);
     final ChainState chainState = new ChainState();
     chainState.updateHeightEstimate(chainHeight);
-    chainState.statusReceived(Hash.EMPTY, UInt256.valueOf(totalDifficulty));
+    chainState.statusReceived(Hash.EMPTY, Difficulty.of(totalDifficulty));
     when(peer.chainState()).thenReturn(chainState);
     return peer;
   }

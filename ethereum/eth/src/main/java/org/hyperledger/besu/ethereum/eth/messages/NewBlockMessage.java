@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.messages;
 
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractMessageData;
@@ -43,7 +44,7 @@ public class NewBlockMessage extends AbstractMessageData {
     return MESSAGE_CODE;
   }
 
-  public static NewBlockMessage create(final Block block, final UInt256 totalDifficulty) {
+  public static NewBlockMessage create(final Block block, final Difficulty totalDifficulty) {
     final NewBlockMessageData msgData = new NewBlockMessageData(block, totalDifficulty);
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     msgData.writeTo(out);
@@ -66,7 +67,7 @@ public class NewBlockMessage extends AbstractMessageData {
     return messageFields(protocolSchedule).block();
   }
 
-  public <C> UInt256 totalDifficulty(final ProtocolSchedule<C> protocolSchedule) {
+  public <C> Difficulty totalDifficulty(final ProtocolSchedule<C> protocolSchedule) {
     return messageFields(protocolSchedule).totalDifficulty();
   }
 
@@ -81,9 +82,9 @@ public class NewBlockMessage extends AbstractMessageData {
   public static class NewBlockMessageData {
 
     private final Block block;
-    private final UInt256 totalDifficulty;
+    private final Difficulty totalDifficulty;
 
-    public NewBlockMessageData(final Block block, final UInt256 totalDifficulty) {
+    public NewBlockMessageData(final Block block, final Difficulty totalDifficulty) {
       this.block = block;
       this.totalDifficulty = totalDifficulty;
     }
@@ -92,7 +93,7 @@ public class NewBlockMessage extends AbstractMessageData {
       return block;
     }
 
-    public UInt256 totalDifficulty() {
+    public Difficulty totalDifficulty() {
       return totalDifficulty;
     }
 
@@ -110,7 +111,7 @@ public class NewBlockMessage extends AbstractMessageData {
       in.enterList();
       final Block block = Block.readFrom(in, blockHeaderFunctions);
       final UInt256 totaldifficulty = in.readUInt256Scalar();
-      return new NewBlockMessageData(block, totaldifficulty);
+      return new NewBlockMessageData(block, Difficulty.of(totaldifficulty));
     }
   }
 }

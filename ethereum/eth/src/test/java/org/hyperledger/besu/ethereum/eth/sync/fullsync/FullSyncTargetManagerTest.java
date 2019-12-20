@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
@@ -37,7 +38,6 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -88,7 +88,7 @@ public class FullSyncTargetManagerTest {
     when(localWorldState.isWorldStateAvailable(localBlockchain.getChainHeadHeader().getStateRoot()))
         .thenReturn(true);
     final RespondingEthPeer bestPeer =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, UInt256.MAX_VALUE, 1);
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, Difficulty.MAX_VALUE, 1);
 
     final CompletableFuture<SyncTarget> result = syncTargetManager.findSyncTarget(Optional.empty());
     bestPeer.respond(responder);
@@ -103,7 +103,7 @@ public class FullSyncTargetManagerTest {
     when(localWorldState.isWorldStateAvailable(localBlockchain.getChainHeadHeader().getStateRoot()))
         .thenReturn(true);
     final RespondingEthPeer bestPeer =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, UInt256.MAX_VALUE, 0);
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, Difficulty.MAX_VALUE, 0);
 
     final CompletableFuture<SyncTarget> result = syncTargetManager.findSyncTarget(Optional.empty());
     bestPeer.respond(responder);

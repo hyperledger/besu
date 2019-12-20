@@ -22,7 +22,6 @@ import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 
 /** A mined Ethereum block header. */
 public class BlockHeader extends SealableBlockHeader
@@ -48,7 +47,7 @@ public class BlockHeader extends SealableBlockHeader
       final Hash transactionsRoot,
       final Hash receiptsRoot,
       final LogsBloomFilter logsBloom,
-      final UInt256 difficulty,
+      final Difficulty difficulty,
       final long number,
       final long gasLimit,
       final long gasUsed,
@@ -159,7 +158,7 @@ public class BlockHeader extends SealableBlockHeader
             Hash.wrap(input.readBytes32()),
             Hash.wrap(input.readBytes32()),
             LogsBloomFilter.readFrom(input),
-            input.readUInt256Scalar(),
+            Difficulty.of(input.readUInt256Scalar()),
             input.readLongScalar(),
             input.readLongScalar(),
             input.readLongScalar(),
@@ -224,7 +223,7 @@ public class BlockHeader extends SealableBlockHeader
         Hash.fromHexString(pluginBlockHeader.getTransactionsRoot().getHexString()),
         Hash.fromHexString(pluginBlockHeader.getReceiptsRoot().getHexString()),
         LogsBloomFilter.fromHexString(pluginBlockHeader.getLogsBloom().getHexString()),
-        UInt256.fromHexString(pluginBlockHeader.getDifficulty().getHexString()),
+        Difficulty.fromHexString(pluginBlockHeader.getDifficulty().getHexString()),
         pluginBlockHeader.getNumber(),
         pluginBlockHeader.getGasLimit(),
         pluginBlockHeader.getGasUsed(),

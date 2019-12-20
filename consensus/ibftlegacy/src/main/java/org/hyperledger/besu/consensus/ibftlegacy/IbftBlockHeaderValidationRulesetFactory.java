@@ -71,7 +71,7 @@ public class IbftBlockHeaderValidationRulesetFactory {
                 "OmmersHash", BlockHeader::getOmmersHash, Hash.EMPTY_LIST_HASH))
         .addRule(
             new ConstantFieldValidationRule<>(
-                "Difficulty", BlockHeader::internalGetDifficulty, UInt256.ONE))
+                "Difficulty", BlockHeader::getDifficulty, UInt256.ONE))
         .addRule(new VoteValidationRule())
         .addRule(new IbftExtraDataValidationRule(validateCommitSeals))
         .build();

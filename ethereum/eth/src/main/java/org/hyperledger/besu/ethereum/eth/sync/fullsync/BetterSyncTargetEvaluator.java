@@ -14,14 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.fullsync;
 
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.manager.ChainState;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 
 import java.util.Optional;
-
-import org.apache.tuweni.units.bigints.UInt256;
 
 public class BetterSyncTargetEvaluator {
 
@@ -48,7 +47,7 @@ public class BetterSyncTargetEvaluator {
               // Require some threshold to be exceeded before switching targets to keep some
               // stability when multiple peers are in range of each other
               final ChainState bestPeerChainState = bestPeer.chainState();
-              final UInt256 tdDifference =
+              final Difficulty tdDifference =
                   bestPeerChainState
                       .getEstimatedTotalDifficulty()
                       .subtract(currentPeerChainState.getBestBlock().getTotalDifficulty());

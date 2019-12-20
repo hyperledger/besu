@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
@@ -55,7 +56,6 @@ import java.util.stream.Stream;
 
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 
 public class RespondingEthPeer {
   private static final BlockDataGenerator gen = new BlockDataGenerator();
@@ -108,7 +108,7 @@ public class RespondingEthPeer {
   private static RespondingEthPeer create(
       final EthProtocolManager ethProtocolManager,
       final Hash chainHeadHash,
-      final UInt256 totalDifficulty,
+      final Difficulty totalDifficulty,
       final OptionalLong estimatedHeight,
       final List<PeerValidator> peerValidators) {
     final EthPeers ethPeers = ethProtocolManager.ethContext().getEthPeers();
@@ -339,7 +339,7 @@ public class RespondingEthPeer {
   public static class Builder {
     private EthProtocolManager ethProtocolManager;
     private Hash chainHeadHash = gen.hash();
-    private UInt256 totalDifficulty = UInt256.valueOf(1000L);
+    private Difficulty totalDifficulty = Difficulty.of(1000L);
     private OptionalLong estimatedHeight = OptionalLong.of(1000L);
     private List<PeerValidator> peerValidators = new ArrayList<>();
 
@@ -362,7 +362,7 @@ public class RespondingEthPeer {
       return this;
     }
 
-    public Builder totalDifficulty(final UInt256 totalDifficulty) {
+    public Builder totalDifficulty(final Difficulty totalDifficulty) {
       checkNotNull(totalDifficulty);
       this.totalDifficulty = totalDifficulty;
       return this;

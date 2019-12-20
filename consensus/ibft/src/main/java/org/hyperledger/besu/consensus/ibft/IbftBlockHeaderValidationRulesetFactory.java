@@ -54,7 +54,7 @@ public class IbftBlockHeaderValidationRulesetFactory {
                 "OmmersHash", BlockHeader::getOmmersHash, Hash.EMPTY_LIST_HASH))
         .addRule(
             new ConstantFieldValidationRule<>(
-                "Difficulty", BlockHeader::internalGetDifficulty, UInt256.ONE))
+                "Difficulty", BlockHeader::getDifficulty, UInt256.ONE))
         .addRule(new ConstantFieldValidationRule<>("Nonce", BlockHeader::getNonce, 0L))
         .addRule(new IbftValidatorsValidationRule())
         .addRule(new IbftCoinbaseValidationRule())

@@ -172,7 +172,7 @@ public final class EthHash {
     out.writeBytes(header.getTransactionsRoot());
     out.writeBytes(header.getReceiptsRoot());
     out.writeBytes(header.getLogsBloom().getBytes());
-    out.writeUInt256Scalar(header.internalGetDifficulty());
+    out.writeUInt256Scalar(header.getDifficulty());
     out.writeLongScalar(header.getNumber());
     out.writeLongScalar(header.getGasLimit());
     out.writeLongScalar(header.getGasUsed());

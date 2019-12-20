@@ -333,7 +333,7 @@ public class BlockchainQueriesTest {
             .setParentHash(data.blockchain.getBlockHashByNumber(commonAncestor).get())
             .setBlockNumber(forkBlock)
             .setDifficulty(
-                data.blockchain.getBlockHeader(forkBlock).get().internalGetDifficulty().add(10L));
+                data.blockchain.getBlockHeader(forkBlock).get().getDifficulty().add(10L));
     final Block fork = gen.block(options);
     final List<TransactionReceipt> forkReceipts = gen.receipts(fork);
 
