@@ -156,7 +156,7 @@ public class IbftBlockHashing {
     out.writeLongScalar(header.getTimestamp());
     // Cannot decode an IbftExtraData on block 0 due to missing/illegal signatures
     if (header.getNumber() == 0) {
-      out.writeBytes(header.internalGetExtraData());
+      out.writeBytes(header.getExtraData());
     } else {
       out.writeBytes(extraDataSerializer.get());
     }

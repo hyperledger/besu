@@ -99,7 +99,7 @@ public class TransactionAdapter extends AdapterBase {
   }
 
   public Optional<Bytes> getInputData() {
-    return Optional.of(transactionWithMetadata.getTransaction().getPayloadBytes());
+    return Optional.of(transactionWithMetadata.getTransaction().getPayload());
   }
 
   public Optional<NormalBlockAdapter> getBlock(final DataFetchingEnvironment environment) {

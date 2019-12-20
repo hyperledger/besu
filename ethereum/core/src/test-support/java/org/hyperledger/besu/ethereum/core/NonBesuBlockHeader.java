@@ -20,14 +20,12 @@ import org.hyperledger.besu.plugin.data.Hash;
 import org.hyperledger.besu.plugin.data.Quantity;
 import org.hyperledger.besu.plugin.data.UnformattedData;
 
-import org.apache.tuweni.bytes.Bytes;
-
 public class NonBesuBlockHeader implements BlockHeader {
 
   final Hash blockHash;
-  final Bytes extraData;
+  final UnformattedData extraData;
 
-  public NonBesuBlockHeader(final Hash blockHash, final Bytes extraData) {
+  public NonBesuBlockHeader(final Hash blockHash, final UnformattedData extraData) {
     this.blockHash = blockHash;
     this.extraData = extraData;
   }
@@ -94,7 +92,7 @@ public class NonBesuBlockHeader implements BlockHeader {
 
   @Override
   public UnformattedData getExtraData() {
-    return new UnformattedDataWrapper(extraData);
+    return extraData;
   }
 
   @Override

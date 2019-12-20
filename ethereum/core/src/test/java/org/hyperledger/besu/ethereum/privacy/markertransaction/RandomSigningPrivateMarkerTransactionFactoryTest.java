@@ -60,7 +60,7 @@ public class RandomSigningPrivateMarkerTransactionFactoryTest {
     assertThat(transaction.getGasPrice()).isEqualTo(privTransaction.getGasPrice());
     assertThat(transaction.getValue()).isEqualTo(privTransaction.getValue());
     assertThat(transaction.getTo()).isEqualTo(Optional.of(precompiledAddress));
-    assertThat(transaction.getPayloadBytes())
+    assertThat(transaction.getPayload())
         .isEqualTo(Bytes.wrap(Base64.getDecoder().decode(enclaveKey)));
 
     final Transaction nextTransaction = factory.create("enclaveKey", privTransaction);

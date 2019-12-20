@@ -386,7 +386,7 @@ public class BlockDataGenerator {
   public Log log(final int topicCount) {
     final List<LogTopic> topics =
         Stream.generate(this::logTopic).limit(topicCount).collect(Collectors.toList());
-    return new Log(address(), new UnformattedDataWrapper(bytesValue(5, 15)), topics);
+    return new Log(address(), bytesValue(5, 15), topics);
   }
 
   private LogTopic logTopic() {
