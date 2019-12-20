@@ -15,10 +15,10 @@
 package org.hyperledger.besu.ethereum.p2p.rlpx.handshake.ecies;
 
 import org.hyperledger.besu.crypto.SECP256K1;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.concurrent.ThreadLocalRandom;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.junit.Test;
@@ -31,10 +31,9 @@ public final class EncryptedMessageTest {
     final SECP256K1.KeyPair keyPair = SECP256K1.KeyPair.generate();
     final byte[] message = new byte[288];
     ThreadLocalRandom.current().nextBytes(message);
-    final BytesValue initial = BytesValue.wrap(message);
-    final BytesValue encrypted = EncryptedMessage.encryptMsgEip8(initial, keyPair.getPublicKey());
-    final BytesValue decrypted =
-        EncryptedMessage.decryptMsgEIP8(encrypted, keyPair.getPrivateKey());
+    final Bytes initial = Bytes.wrap(message);
+    final Bytes encrypted = EncryptedMessage.encryptMsgEip8(initial, keyPair.getPublicKey());
+    final Bytes decrypted = EncryptedMessage.decryptMsgEIP8(encrypted, keyPair.getPrivateKey());
     Assertions.assertThat(decrypted.slice(0, 288)).isEqualTo(initial);
   }
 }

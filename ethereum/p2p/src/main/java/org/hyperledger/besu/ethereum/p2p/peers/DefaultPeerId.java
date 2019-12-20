@@ -15,21 +15,22 @@
 package org.hyperledger.besu.ethereum.p2p.peers;
 
 import org.hyperledger.besu.crypto.Hash;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Objects;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+
 public class DefaultPeerId implements PeerId {
-  protected final BytesValue id;
+  protected final Bytes id;
   private Bytes32 keccak256;
 
-  public DefaultPeerId(final BytesValue id) {
+  public DefaultPeerId(final Bytes id) {
     this.id = id;
   }
 
   @Override
-  public BytesValue getId() {
+  public Bytes getId() {
     return id;
   }
 

@@ -17,13 +17,13 @@ package org.hyperledger.besu.ethereum.api.graphql.scalar;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.api.graphql.internal.Scalars;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import graphql.language.StringValue;
 import graphql.schema.CoercingParseLiteralException;
 import graphql.schema.CoercingParseValueException;
 import graphql.schema.CoercingSerializeException;
 import graphql.schema.GraphQLScalarType;
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -38,7 +38,7 @@ public class BytesScalarTest {
   @Rule public ExpectedException thrown = ExpectedException.none();
 
   private final String str = "0x10";
-  private final BytesValue value = BytesValue.fromHexString(str);
+  private final Bytes value = Bytes.fromHexString(str);
   private final StringValue strValue = StringValue.newStringValue(str).build();
   private final StringValue invalidStrValue = StringValue.newStringValue("0xgh").build();
 
@@ -68,7 +68,7 @@ public class BytesScalarTest {
 
   @Test
   public void pareLiteralTest() {
-    final BytesValue result = (BytesValue) scalar.getCoercing().parseLiteral(strValue);
+    final Bytes result = (Bytes) scalar.getCoercing().parseLiteral(strValue);
     assertThat(result).isEqualTo(value);
   }
 

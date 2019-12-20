@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import org.hyperledger.besu.util.uint.UInt256;
-
 /** A block header capable of being processed. */
 public class ProcessableBlockHeader {
 
@@ -23,7 +21,7 @@ public class ProcessableBlockHeader {
 
   protected final Address coinbase;
 
-  protected final UInt256 difficulty;
+  protected final Difficulty difficulty;
 
   protected final long number;
 
@@ -35,7 +33,7 @@ public class ProcessableBlockHeader {
   protected ProcessableBlockHeader(
       final Hash parentHash,
       final Address coinbase,
-      final UInt256 difficulty,
+      final Difficulty difficulty,
       final long number,
       final long gasLimit,
       final long timestamp) {
@@ -70,7 +68,7 @@ public class ProcessableBlockHeader {
    *
    * @return the block difficulty
    */
-  public UInt256 getDifficulty() {
+  public Difficulty getDifficulty() {
     return difficulty;
   }
 

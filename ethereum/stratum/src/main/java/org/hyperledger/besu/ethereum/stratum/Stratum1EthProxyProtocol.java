@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.mainnet.DirectAcyclicGraphSeed;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolution;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -34,6 +33,7 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.google.common.io.BaseEncoding;
 import io.vertx.core.json.JsonObject;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 /**
  * Implementation of the stratum1+tcp protocol.
@@ -112,9 +112,9 @@ public class Stratum1EthProxyProtocol implements StratumProtocol {
     boolean result = false;
     final EthHashSolution solution =
         new EthHashSolution(
-            BytesValue.fromHexString(req.getRequiredParameter(0, String.class)).getLong(0),
+            Bytes.fromHexString(req.getRequiredParameter(0, String.class)).getLong(0),
             req.getRequiredParameter(2, Hash.class),
-            BytesValue.fromHexString(req.getRequiredParameter(1, String.class)).getArrayUnsafe());
+            Bytes.fromHexString(req.getRequiredParameter(1, String.class)).toArrayUnsafe());
     if (Arrays.equals(currentInput.getPrePowHash(), solution.getPowHash())) {
       result = submitCallback.apply(solution);
     }

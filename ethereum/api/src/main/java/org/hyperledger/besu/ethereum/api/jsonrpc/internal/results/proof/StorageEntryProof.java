@@ -15,13 +15,13 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.proof;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class StorageEntryProof {
 
@@ -29,10 +29,9 @@ public class StorageEntryProof {
 
   private final UInt256 value;
 
-  private final List<BytesValue> storageProof;
+  private final List<Bytes> storageProof;
 
-  public StorageEntryProof(
-      final UInt256 key, final UInt256 value, final List<BytesValue> storageProof) {
+  public StorageEntryProof(final UInt256 key, final UInt256 value, final List<Bytes> storageProof) {
     this.key = key;
     this.value = value;
     this.storageProof = storageProof;
@@ -40,7 +39,7 @@ public class StorageEntryProof {
 
   @JsonGetter(value = "key")
   public String getKey() {
-    return key.getBytes().toString();
+    return key.toString();
   }
 
   @JsonGetter(value = "value")
@@ -50,6 +49,6 @@ public class StorageEntryProof {
 
   @JsonGetter(value = "proof")
   public List<String> getStorageProof() {
-    return storageProof.stream().map(BytesValue::toString).collect(Collectors.toList());
+    return storageProof.stream().map(Bytes::toString).collect(Collectors.toList());
   }
 }

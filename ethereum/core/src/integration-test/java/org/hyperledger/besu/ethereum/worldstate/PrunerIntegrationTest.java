@@ -35,8 +35,6 @@ import org.hyperledger.besu.ethereum.worldstate.Pruner.PruningPhase;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import org.hyperledger.besu.testutil.MockExecutorService;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -47,13 +45,15 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Test;
 
 public class PrunerIntegrationTest {
 
   private final BlockDataGenerator gen = new BlockDataGenerator();
   private final NoOpMetricsSystem metricsSystem = new NoOpMetricsSystem();
-  private final Map<BytesValue, byte[]> hashValueStore = new HashMap<>();
+  private final Map<Bytes, byte[]> hashValueStore = new HashMap<>();
   private final InMemoryKeyValueStorage stateStorage = new TestInMemoryStorage(hashValueStore);
   private final WorldStateStorage worldStateStorage = new WorldStateKeyValueStorage(stateStorage);
   private final WorldStateArchive worldStateArchive =
@@ -124,7 +124,7 @@ public class PrunerIntegrationTest {
       assertThat(pruner.getPruningPhase()).isEqualByComparingTo(PruningPhase.IDLE);
 
       // Collect the nodes we expect to keep
-      final Set<BytesValue> expectedNodes = new HashSet<>();
+      final Set<Bytes> expectedNodes = new HashSet<>();
       for (int i = fullyMarkedBlockNum; i <= blockchain.getChainHeadBlockNumber(); i++) {
         final Hash stateRoot = blockchain.getBlockHeader(i).get().getStateRoot();
         collectWorldStateNodes(stateRoot, expectedNodes);
@@ -163,7 +163,7 @@ public class PrunerIntegrationTest {
       assertThat(hashValueStore.size()).isEqualTo(expectedNodes.size());
       assertThat(hashValueStore.values())
           .containsExactlyInAnyOrderElementsOf(
-              expectedNodes.stream().map(BytesValue::getArrayUnsafe).collect(Collectors.toSet()));
+              expectedNodes.stream().map(Bytes::toArrayUnsafe).collect(Collectors.toSet()));
     }
 
     pruner.stop();
@@ -189,10 +189,9 @@ public class PrunerIntegrationTest {
     }
   }
 
-  private Set<BytesValue> collectWorldStateNodes(
-      final Hash stateRootHash, final Set<BytesValue> collector) {
+  private Set<Bytes> collectWorldStateNodes(final Hash stateRootHash, final Set<Bytes> collector) {
     final List<Hash> storageRoots = new ArrayList<>();
-    final MerklePatriciaTrie<Bytes32, BytesValue> stateTrie = createStateTrie(stateRootHash);
+    final MerklePatriciaTrie<Bytes32, Bytes> stateTrie = createStateTrie(stateRootHash);
 
     // Collect storage roots and code
     stateTrie
@@ -202,8 +201,8 @@ public class PrunerIntegrationTest {
               final StateTrieAccountValue accountValue =
                   StateTrieAccountValue.readFrom(RLP.input(val));
               stateStorage
-                  .get(accountValue.getCodeHash().getArrayUnsafe())
-                  .ifPresent(v -> collector.add(BytesValue.wrap(v)));
+                  .get(accountValue.getCodeHash().getByteArray())
+                  .ifPresent(v -> collector.add(Bytes.wrap(v)));
               storageRoots.add(accountValue.getStorageRoot());
             });
 
@@ -211,7 +210,7 @@ public class PrunerIntegrationTest {
     collectTrieNodes(stateTrie, collector);
     // Collect storage nodes
     for (Hash storageRoot : storageRoots) {
-      final MerklePatriciaTrie<Bytes32, BytesValue> storageTrie = createStorageTrie(storageRoot);
+      final MerklePatriciaTrie<Bytes32, Bytes> storageTrie = createStorageTrie(storageRoot);
       collectTrieNodes(storageTrie, collector);
     }
 
@@ -219,7 +218,7 @@ public class PrunerIntegrationTest {
   }
 
   private void collectTrieNodes(
-      final MerklePatriciaTrie<Bytes32, BytesValue> trie, final Set<BytesValue> collector) {
+      final MerklePatriciaTrie<Bytes32, Bytes> trie, final Set<Bytes> collector) {
     final Bytes32 rootHash = trie.getRootHash();
     trie.visitAll(
         (node) -> {
@@ -229,7 +228,7 @@ public class PrunerIntegrationTest {
         });
   }
 
-  private MerklePatriciaTrie<Bytes32, BytesValue> createStateTrie(final Bytes32 rootHash) {
+  private MerklePatriciaTrie<Bytes32, Bytes> createStateTrie(final Bytes32 rootHash) {
     return new StoredMerklePatriciaTrie<>(
         worldStateStorage::getAccountStateTrieNode,
         rootHash,
@@ -237,7 +236,7 @@ public class PrunerIntegrationTest {
         Function.identity());
   }
 
-  private MerklePatriciaTrie<Bytes32, BytesValue> createStorageTrie(final Bytes32 rootHash) {
+  private MerklePatriciaTrie<Bytes32, Bytes> createStorageTrie(final Bytes32 rootHash) {
     return new StoredMerklePatriciaTrie<>(
         worldStateStorage::getAccountStorageTrieNode,
         rootHash,
@@ -248,7 +247,7 @@ public class PrunerIntegrationTest {
   // Proxy class so that we have access to the constructor that takes our own map
   private static class TestInMemoryStorage extends InMemoryKeyValueStorage {
 
-    public TestInMemoryStorage(final Map<BytesValue, byte[]> hashValueStore) {
+    public TestInMemoryStorage(final Map<Bytes, byte[]> hashValueStore) {
       super(hashValueStore);
     }
   }

@@ -27,10 +27,6 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.mainnet.AbstractMessageProcessor;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
-import org.hyperledger.besu.util.uint.UInt256Value;
 
 import java.util.Deque;
 import java.util.EnumSet;
@@ -40,6 +36,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 /**
  * A container object for all of the state associated with a message.
@@ -198,8 +198,8 @@ public class MessageFrame {
   private int pc;
   private final Memory memory;
   private final OperandStack stack;
-  private BytesValue output;
-  private BytesValue returnData;
+  private Bytes output;
+  private Bytes returnData;
   private final boolean isStatic;
 
   // Transaction substate fields.
@@ -214,7 +214,7 @@ public class MessageFrame {
   private final Address contract;
   private final int contractAccountVersion;
   private final Wei gasPrice;
-  private final BytesValue inputData;
+  private final Bytes inputData;
   private final Address sender;
   private final Wei value;
   private final Wei apparentValue;
@@ -224,7 +224,7 @@ public class MessageFrame {
   private final Deque<MessageFrame> messageFrameStack;
   private final Address miningBeneficiary;
   private final Boolean isPersistingState;
-  private Optional<BytesValue> revertReason;
+  private Optional<Bytes> revertReason;
 
   // Miscellaneous fields.
   private final EnumSet<ExceptionalHaltReason> exceptionalHaltReasons =
@@ -247,7 +247,7 @@ public class MessageFrame {
       final Address contract,
       final int contractAccountVersion,
       final Wei gasPrice,
-      final BytesValue inputData,
+      final Bytes inputData,
       final Address sender,
       final Wei value,
       final Wei apparentValue,
@@ -259,7 +259,7 @@ public class MessageFrame {
       final Address miningBeneficiary,
       final BlockHashLookup blockHashLookup,
       final Boolean isPersistingState,
-      final Optional<BytesValue> revertReason,
+      final Optional<Bytes> revertReason,
       final int maxStackSize) {
     this.type = type;
     this.blockchain = blockchain;
@@ -271,8 +271,8 @@ public class MessageFrame {
     this.pc = 0;
     this.memory = new Memory();
     this.stack = new PreAllocatedOperandStack(maxStackSize);
-    this.output = BytesValue.EMPTY;
-    this.returnData = BytesValue.EMPTY;
+    this.output = Bytes.EMPTY;
+    this.returnData = Bytes.EMPTY;
     this.logs = LogSeries.empty();
     this.gasRefund = Gas.ZERO;
     this.selfDestructs = new HashSet<>();
@@ -361,7 +361,7 @@ public class MessageFrame {
    *
    * @return the output data
    */
-  public BytesValue getOutputData() {
+  public Bytes getOutputData() {
     return output;
   }
 
@@ -370,13 +370,13 @@ public class MessageFrame {
    *
    * @param output The output data
    */
-  public void setOutputData(final BytesValue output) {
+  public void setOutputData(final Bytes output) {
     this.output = output;
   }
 
   /** Clears the output data buffer. */
   public void clearOutputData() {
-    setOutputData(BytesValue.EMPTY);
+    setOutputData(Bytes.EMPTY);
   }
 
   /**
@@ -384,7 +384,7 @@ public class MessageFrame {
    *
    * @return the return data
    */
-  public BytesValue getReturnData() {
+  public Bytes getReturnData() {
     return returnData;
   }
 
@@ -393,13 +393,13 @@ public class MessageFrame {
    *
    * @param returnData The return data
    */
-  public void setReturnData(final BytesValue returnData) {
+  public void setReturnData(final Bytes returnData) {
     this.returnData = returnData;
   }
 
   /** Clear the return data buffer. */
   public void clearReturnData() {
-    setReturnData(BytesValue.EMPTY);
+    setReturnData(Bytes.EMPTY);
   }
 
   /**
@@ -479,8 +479,7 @@ public class MessageFrame {
    * @param length The length of the memory access
    * @return the memory size for specified memory access
    */
-  public UInt256 calculateMemoryExpansion(
-      final UInt256Value<?> offset, final UInt256Value<?> length) {
+  public UInt256 calculateMemoryExpansion(final UInt256 offset, final UInt256 length) {
     return memory.calculateNewActiveWords(offset, length);
   }
 
@@ -517,11 +516,11 @@ public class MessageFrame {
    *
    * @return the revertReason string
    */
-  public Optional<BytesValue> getRevertReason() {
+  public Optional<Bytes> getRevertReason() {
     return revertReason;
   }
 
-  public void setRevertReason(final BytesValue revertReason) {
+  public void setRevertReason(final Bytes revertReason) {
     this.revertReason = Optional.ofNullable(revertReason);
   }
 
@@ -532,7 +531,7 @@ public class MessageFrame {
    * @param length The length of the bytes to read
    * @return The bytes in the specified range
    */
-  public BytesValue readMemory(final UInt256 offset, final UInt256 length) {
+  public Bytes readMemory(final UInt256 offset, final UInt256 length) {
     return memory.getBytes(offset, length);
   }
 
@@ -553,7 +552,7 @@ public class MessageFrame {
    * @param length The length of the bytes to write
    * @param value The value to write
    */
-  public void writeMemory(final UInt256 offset, final UInt256 length, final BytesValue value) {
+  public void writeMemory(final UInt256 offset, final UInt256 length, final Bytes value) {
     memory.setBytes(offset, length, value);
   }
 
@@ -566,10 +565,7 @@ public class MessageFrame {
    * @param value The value to write
    */
   public void writeMemory(
-      final UInt256 offset,
-      final UInt256 sourceOffset,
-      final UInt256 length,
-      final BytesValue value) {
+      final UInt256 offset, final UInt256 sourceOffset, final UInt256 length, final Bytes value) {
     memory.setBytes(offset, sourceOffset, length, value);
   }
 
@@ -738,7 +734,7 @@ public class MessageFrame {
    *
    * @return the current input data
    */
-  public BytesValue getInputData() {
+  public Bytes getInputData() {
     return inputData;
   }
 
@@ -891,7 +887,7 @@ public class MessageFrame {
     private Address contract;
     private int contractAccountVersion = -1;
     private Wei gasPrice;
-    private BytesValue inputData;
+    private Bytes inputData;
     private Address sender;
     private Wei value;
     private Wei apparentValue;
@@ -904,7 +900,7 @@ public class MessageFrame {
     private Address miningBeneficiary;
     private BlockHashLookup blockHashLookup;
     private Boolean isPersistingState = false;
-    private Optional<BytesValue> reason = Optional.empty();
+    private Optional<Bytes> reason = Optional.empty();
 
     public Builder type(final Type type) {
       this.type = type;
@@ -957,7 +953,7 @@ public class MessageFrame {
       return this;
     }
 
-    public Builder inputData(final BytesValue inputData) {
+    public Builder inputData(final Bytes inputData) {
       this.inputData = inputData;
       return this;
     }
@@ -1022,7 +1018,7 @@ public class MessageFrame {
       return this;
     }
 
-    public Builder reason(final BytesValue reason) {
+    public Builder reason(final Bytes reason) {
       this.reason = Optional.ofNullable(reason);
       return this;
     }

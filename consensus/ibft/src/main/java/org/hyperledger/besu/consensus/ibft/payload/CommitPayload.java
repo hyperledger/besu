@@ -43,7 +43,7 @@ public class CommitPayload implements Payload {
     rlpInput.enterList();
     final ConsensusRoundIdentifier roundIdentifier = ConsensusRoundIdentifier.readFrom(rlpInput);
     final Hash digest = Payload.readDigest(rlpInput);
-    final Signature commitSeal = rlpInput.readBytesValue(Signature::decode);
+    final Signature commitSeal = rlpInput.readBytes(Signature::decode);
     rlpInput.leaveList();
 
     return new CommitPayload(roundIdentifier, digest, commitSeal);
@@ -53,8 +53,8 @@ public class CommitPayload implements Payload {
   public void writeTo(final RLPOutput rlpOutput) {
     rlpOutput.startList();
     roundIdentifier.writeTo(rlpOutput);
-    rlpOutput.writeBytesValue(digest);
-    rlpOutput.writeBytesValue(commitSeal.encodedBytes());
+    rlpOutput.writeBytes(digest);
+    rlpOutput.writeBytes(commitSeal.encodedBytes());
     rlpOutput.endList();
   }
 

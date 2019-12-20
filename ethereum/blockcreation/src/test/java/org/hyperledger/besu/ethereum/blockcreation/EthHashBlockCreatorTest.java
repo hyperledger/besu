@@ -20,6 +20,7 @@ import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
@@ -36,8 +37,6 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
 import org.hyperledger.besu.util.Subscribers;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -45,6 +44,7 @@ import java.util.Collections;
 import java.util.function.Function;
 
 import com.google.common.collect.Lists;
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
 public class EthHashBlockCreatorTest {
@@ -56,8 +56,8 @@ public class EthHashBlockCreatorTest {
 
   private static final long BLOCK_1_NONCE = Long.parseLong("539bd4979fef1ec4", 16);
 
-  private static final BytesValue BLOCK_1_EXTRA_DATA =
-      BytesValue.fromHexString("0x476574682f76312e302e302f6c696e75782f676f312e342e32");
+  private static final Bytes BLOCK_1_EXTRA_DATA =
+      Bytes.fromHexString("0x476574682f76312e302e302f6c696e75782f676f312e342e32");
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
   @Test
@@ -198,7 +198,7 @@ public class EthHashBlockCreatorTest {
         BlockHeaderBuilder.create()
             .parentHash(Hash.ZERO)
             .coinbase(BLOCK_1_COINBASE)
-            .difficulty(UInt256.ONE)
+            .difficulty(Difficulty.ONE)
             .number(1)
             .gasLimit(1)
             .timestamp(1)
@@ -258,7 +258,7 @@ public class EthHashBlockCreatorTest {
         BlockHeaderBuilder.create()
             .parentHash(Hash.ZERO)
             .coinbase(BLOCK_1_COINBASE)
-            .difficulty(UInt256.ONE)
+            .difficulty(Difficulty.ONE)
             .number(1)
             .gasLimit(1)
             .timestamp(1)

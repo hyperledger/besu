@@ -21,8 +21,6 @@ import org.hyperledger.besu.crypto.SECP256K1.Signature;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.ParsedExtraData;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.BytesValues;
 
 import java.util.List;
 import java.util.Optional;
@@ -32,6 +30,7 @@ import com.google.common.base.Suppliers;
 import com.google.common.collect.Lists;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 /**
  * Represents the data structure stored in the extraData field of the BlockHeader used when
@@ -41,13 +40,13 @@ public class CliqueExtraData implements ParsedExtraData {
   private static final Logger LOG = LogManager.getLogger();
   public static final int EXTRA_VANITY_LENGTH = 32;
 
-  private final BytesValue vanityData;
+  private final Bytes vanityData;
   private final List<Address> validators;
   private final Optional<Signature> proposerSeal;
   private final Supplier<Address> proposerAddress;
 
   public CliqueExtraData(
-      final BytesValue vanityData,
+      final Bytes vanityData,
       final Signature proposerSeal,
       final List<Address> validators,
       final BlockHeader header) {
@@ -64,8 +63,8 @@ public class CliqueExtraData implements ParsedExtraData {
         Suppliers.memoize(() -> CliqueBlockHashing.recoverProposerAddress(header, this));
   }
 
-  public static BytesValue createWithoutProposerSeal(
-      final BytesValue vanityData, final List<Address> validators) {
+  public static Bytes createWithoutProposerSeal(
+      final Bytes vanityData, final List<Address> validators) {
     return CliqueExtraData.encodeUnsealed(vanityData, validators);
   }
 
@@ -81,19 +80,18 @@ public class CliqueExtraData implements ParsedExtraData {
   }
 
   static CliqueExtraData decodeRaw(final BlockHeader header) {
-    final BytesValue input = header.getExtraData();
+    final Bytes input = header.internalGetExtraData();
     if (input.size() < EXTRA_VANITY_LENGTH + Signature.BYTES_REQUIRED) {
       throw new IllegalArgumentException(
-          "Invalid BytesValue supplied - too short to produce a valid Clique Extra Data object.");
+          "Invalid Bytes supplied - too short to produce a valid Clique Extra Data object.");
     }
 
     final int validatorByteCount = input.size() - EXTRA_VANITY_LENGTH - Signature.BYTES_REQUIRED;
     if ((validatorByteCount % Address.SIZE) != 0) {
-      throw new IllegalArgumentException(
-          "BytesValue is of invalid size - i.e. contains unused bytes.");
+      throw new IllegalArgumentException("Bytes is of invalid size - i.e. contains unused bytes.");
     }
 
-    final BytesValue vanityData = input.slice(0, EXTRA_VANITY_LENGTH);
+    final Bytes vanityData = input.slice(0, EXTRA_VANITY_LENGTH);
     final List<Address> validators =
         extractValidators(input.slice(EXTRA_VANITY_LENGTH, validatorByteCount));
 
@@ -107,11 +105,11 @@ public class CliqueExtraData implements ParsedExtraData {
     return proposerAddress.get();
   }
 
-  private static Signature parseProposerSeal(final BytesValue proposerSealRaw) {
+  private static Signature parseProposerSeal(final Bytes proposerSealRaw) {
     return proposerSealRaw.isZero() ? null : Signature.decode(proposerSealRaw);
   }
 
-  private static List<Address> extractValidators(final BytesValue validatorsRaw) {
+  private static List<Address> extractValidators(final Bytes validatorsRaw) {
     final List<Address> result = Lists.newArrayList();
     final int countValidators = validatorsRaw.size() / Address.SIZE;
     for (int i = 0; i < countValidators; i++) {
@@ -121,29 +119,28 @@ public class CliqueExtraData implements ParsedExtraData {
     return result;
   }
 
-  public BytesValue encode() {
+  public Bytes encode() {
     return encode(vanityData, validators, proposerSeal);
   }
 
-  public static BytesValue encodeUnsealed(
-      final BytesValue vanityData, final List<Address> validators) {
+  public static Bytes encodeUnsealed(final Bytes vanityData, final List<Address> validators) {
     return encode(vanityData, validators, Optional.empty());
   }
 
-  private static BytesValue encode(
-      final BytesValue vanityData,
+  private static Bytes encode(
+      final Bytes vanityData,
       final List<Address> validators,
       final Optional<Signature> proposerSeal) {
-    final BytesValue validatorData = BytesValues.concatenate(validators.toArray(new Address[0]));
-    return BytesValues.concatenate(
+    final Bytes validatorData = Bytes.concatenate(validators.toArray(new Bytes[0]));
+    return Bytes.concatenate(
         vanityData,
         validatorData,
         proposerSeal
             .map(Signature::encodedBytes)
-            .orElse(BytesValue.wrap(new byte[Signature.BYTES_REQUIRED])));
+            .orElse(Bytes.wrap(new byte[Signature.BYTES_REQUIRED])));
   }
 
-  public BytesValue getVanityData() {
+  public Bytes getVanityData() {
     return vanityData;
   }
 
@@ -156,7 +153,7 @@ public class CliqueExtraData implements ParsedExtraData {
   }
 
   public static String createGenesisExtraDataString(final List<Address> validators) {
-    return CliqueExtraData.createWithoutProposerSeal(BytesValue.wrap(new byte[32]), validators)
+    return CliqueExtraData.createWithoutProposerSeal(Bytes.wrap(new byte[32]), validators)
         .toString();
   }
 }

@@ -21,9 +21,9 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -97,7 +97,7 @@ public class BlockchainUtilParameterizedTest {
 
       final BlockDataGenerator.BlockOptions remoteOptions =
           new BlockDataGenerator.BlockOptions()
-              .setDifficulty(UInt256.ONE) // differentiator
+              .setDifficulty(Difficulty.ONE) // differentiator
               .setBlockNumber(i)
               .setParentHash(remoteBlockchain.getBlockHashByNumber(i - 1).get());
       final Block remoteBlock = blockDataGenerator.block(remoteOptions);

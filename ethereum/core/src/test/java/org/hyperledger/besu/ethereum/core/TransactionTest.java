@@ -21,10 +21,10 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.vm.ReferenceTestProtocolSchedules;
 import org.hyperledger.besu.testutil.JsonTestParameters;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Collection;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -105,7 +105,7 @@ public class TransactionTest {
     final TransactionTestCaseSpec.Expectation expected = spec.expectation(milestone);
 
     try {
-      final BytesValue rlp = spec.getRlp();
+      final Bytes rlp = spec.getRlp();
 
       // Test transaction deserialization (will throw an exception if it fails).
       final Transaction transaction = Transaction.readFrom(RLP.input(rlp));
@@ -114,7 +114,7 @@ public class TransactionTest {
       }
 
       // Test rlp encoding
-      final BytesValue actualRlp = RLP.encode(transaction::writeTo);
+      final Bytes actualRlp = RLP.encode(transaction::writeTo);
       assertThat(expected.isSucceeds()).isTrue();
 
       assertThat(actualRlp).isEqualTo(rlp);

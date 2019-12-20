@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
@@ -42,7 +43,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -222,7 +222,7 @@ public class FullSyncChainDownloaderTest {
     gen = new BlockDataGenerator();
     final Block chainHead = localBlockchain.getChainHeadBlock();
     final Block forkBlock =
-        gen.block(gen.nextBlockOptions(chainHead).setDifficulty(UInt256.of(0L)));
+        gen.block(gen.nextBlockOptions(chainHead).setDifficulty(Difficulty.ZERO));
     localBlockchain.appendBlock(forkBlock, gen.receipts(forkBlock));
 
     // Sanity check
@@ -252,14 +252,14 @@ public class FullSyncChainDownloaderTest {
 
   @Test
   public void choosesBestPeerAsSyncTarget_byTd() {
-    final UInt256 localTd = localBlockchain.getChainHead().getTotalDifficulty();
+    final Difficulty localTd = localBlockchain.getChainHead().getTotalDifficulty();
 
     final RespondingEthPeer.Responder responder =
         RespondingEthPeer.blockchainResponder(otherBlockchain);
     final RespondingEthPeer peerA =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, localTd.plus(100));
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, localTd.add(100));
     final RespondingEthPeer peerB =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, localTd.plus(200));
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, localTd.add(200));
 
     final ChainDownloader downloader = downloader();
     downloader.start();
@@ -274,14 +274,14 @@ public class FullSyncChainDownloaderTest {
 
   @Test
   public void choosesBestPeerAsSyncTarget_byTdAndHeight() {
-    final UInt256 localTd = localBlockchain.getChainHead().getTotalDifficulty();
+    final Difficulty localTd = localBlockchain.getChainHead().getTotalDifficulty();
 
     final RespondingEthPeer.Responder responder =
         RespondingEthPeer.blockchainResponder(otherBlockchain);
     final RespondingEthPeer peerA =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, localTd.plus(100), 100);
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, localTd.add(100), 100);
     final RespondingEthPeer peerB =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, localTd.plus(200), 50);
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, localTd.add(200), 50);
 
     final ChainDownloader downloader = downloader();
     downloader.start();

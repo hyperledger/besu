@@ -26,8 +26,8 @@ import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissionsBlacklist;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.PeerInfo;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
 public class PeerReputationManagerTest {
@@ -99,7 +99,7 @@ public class PeerReputationManagerTest {
   }
 
   private PeerConnection generatePeerConnection() {
-    final BytesValue nodeId = Peer.randomId();
+    final Bytes nodeId = Peer.randomId();
     final PeerConnection conn = mock(PeerConnection.class);
     final PeerInfo peerInfo = mock(PeerInfo.class);
     final Peer peer = generatePeer();

@@ -26,10 +26,10 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.List;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.util.Lists;
 import org.junit.Before;
 
@@ -57,7 +57,7 @@ public class VoteTallyCacheTestBase {
     for (int i = 0; i < 3; i++) {
       validators.add(AddressHelpers.ofValue(i));
     }
-    headerBuilder.extraData(BytesValue.wrap(new byte[32]));
+    headerBuilder.extraData(Bytes.wrap(new byte[32]));
 
     genesisBlock = createEmptyBlock(0, Hash.ZERO);
 

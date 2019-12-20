@@ -18,8 +18,10 @@ import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
 
 import org.hyperledger.besu.controller.KeyPairUtil;
 import org.hyperledger.besu.enclave.Enclave;
-import org.hyperledger.besu.enclave.EnclaveException;
+import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.enclave.EnclaveFactory;
+import org.hyperledger.besu.enclave.EnclaveIOException;
+import org.hyperledger.besu.enclave.EnclaveServerException;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyStorageProvider;
@@ -119,8 +121,10 @@ public class PrivacyNode implements AutoCloseable {
               try {
                 enclaveClient.send(payload, orion.getDefaultPublicKey(), to);
                 return true;
-              } catch (final EnclaveException e) {
-                LOG.info("Waiting for enclave connectivity");
+              } catch (final EnclaveClientException
+                  | EnclaveIOException
+                  | EnclaveServerException e) {
+                LOG.warn("Waiting for enclave connectivity");
                 return false;
               }
             });

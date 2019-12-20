@@ -17,8 +17,8 @@ package org.hyperledger.besu.ethereum.core;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
 public class TransactionReceiptTest {
@@ -35,7 +35,7 @@ public class TransactionReceiptTest {
   @Test
   public void toFromRlpWithReason() {
     final BlockDataGenerator gen = new BlockDataGenerator();
-    final TransactionReceipt receipt = gen.receipt(BytesValue.fromHexString("0x1122334455667788"));
+    final TransactionReceipt receipt = gen.receipt(Bytes.fromHexString("0x1122334455667788"));
     final TransactionReceipt copy =
         TransactionReceipt.readFrom(RLP.input(RLP.encode(receipt::writeToWithRevertReason)));
     assertThat(copy).isEqualTo(receipt);

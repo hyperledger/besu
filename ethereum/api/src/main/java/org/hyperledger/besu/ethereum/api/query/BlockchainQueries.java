@@ -34,8 +34,6 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -54,6 +52,8 @@ import java.util.stream.LongStream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class BlockchainQueries {
   private static final Logger LOG = LogManager.getLogger();
@@ -151,8 +151,8 @@ public class BlockchainQueries {
    * @param blockNumber The height of the block to be checked.
    * @return The code associated with this address.
    */
-  public Optional<BytesValue> getCode(final Address address, final long blockNumber) {
-    return fromAccount(address, blockNumber, Account::getCode, BytesValue.EMPTY);
+  public Optional<Bytes> getCode(final Address address, final long blockNumber) {
+    return fromAccount(address, blockNumber, Account::getCode, Bytes.EMPTY);
   }
 
   /**
@@ -584,7 +584,7 @@ public class BlockchainQueries {
     try (final RandomAccessFile raf = new RandomAccessFile(cacheFile.toFile(), "r")) {
       raf.seek(offset * 256);
       final byte[] bloomBuff = new byte[256];
-      final BytesValue bytesValue = BytesValue.wrap(bloomBuff);
+      final Bytes bytesValue = Bytes.wrap(bloomBuff);
       for (long pos = offset; pos <= endOffset; pos++) {
         try {
           raf.readFully(bloomBuff);

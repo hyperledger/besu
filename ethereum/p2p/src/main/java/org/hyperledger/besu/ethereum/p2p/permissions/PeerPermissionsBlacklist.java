@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.p2p.permissions;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.util.LimitedSet;
 import org.hyperledger.besu.util.LimitedSet.Mode;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Collections;
 import java.util.Optional;
@@ -25,11 +24,12 @@ import java.util.OptionalInt;
 import java.util.Set;
 
 import io.vertx.core.impl.ConcurrentHashSet;
+import org.apache.tuweni.bytes.Bytes;
 
 public class PeerPermissionsBlacklist extends PeerPermissions {
   private static int DEFAULT_INITIAL_CAPACITY = 20;
 
-  private final Set<BytesValue> blacklist;
+  private final Set<Bytes> blacklist;
 
   private PeerPermissionsBlacklist(final int initialCapacity, final OptionalInt maxSize) {
     if (maxSize.isPresent()) {
@@ -69,13 +69,13 @@ public class PeerPermissionsBlacklist extends PeerPermissions {
     }
   }
 
-  public void add(final BytesValue peerId) {
+  public void add(final Bytes peerId) {
     if (blacklist.add(peerId)) {
       dispatchUpdate(true, Optional.empty());
     }
   }
 
-  public void remove(final BytesValue peerId) {
+  public void remove(final Bytes peerId) {
     if (blacklist.remove(peerId)) {
       dispatchUpdate(false, Optional.empty());
     }
