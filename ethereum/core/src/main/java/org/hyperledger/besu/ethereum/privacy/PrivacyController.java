@@ -113,7 +113,7 @@ public class PrivacyController {
     return enclave.deletePrivacyGroup(privacyGroupId, enclavePublicKey);
   }
 
-  public PrivacyGroup[] findPrivacyGroup(final List<String> addresses, String enclavePublicKey) {
+  public PrivacyGroup[] findPrivacyGroup(final List<String> addresses, final String enclavePublicKey) {
     return enclave.findPrivacyGroup(addresses);
   }
 
