@@ -60,10 +60,10 @@ public class CrosschainProcessor {
 
   Vertx vertx;
 
-  private MultichainManager multichainManager;
+  private LinkedNodeManager linkedNodeManager;
 
-  public CrosschainProcessor(final MultichainManager multichainManager) {
-    this.multichainManager = multichainManager;
+  public CrosschainProcessor(final LinkedNodeManager linkedNodeManager) {
+    this.linkedNodeManager = linkedNodeManager;
   }
 
   public void init(
@@ -122,7 +122,7 @@ public class CrosschainProcessor {
 
         //        int chainId = sidechainId.intValue();
         // Get the address from chain mapping.
-        String ipAddress = this.multichainManager.getIpAddressAndPort(sidechainId);
+        String ipAddress = this.linkedNodeManager.getIpAddressAndPort(sidechainId);
         String response = null;
         LOG.debug("Sending Crosschain Transaction or view to chain at " + ipAddress);
         try {

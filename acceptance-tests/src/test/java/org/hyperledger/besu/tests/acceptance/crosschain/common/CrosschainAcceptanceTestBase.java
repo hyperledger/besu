@@ -139,7 +139,7 @@ public abstract class CrosschainAcceptanceTestBase extends AcceptanceTestBase {
     String ipAddressAndPort = ipAddress + ":" + port;
     BigInteger chainId = nodeToAdd.getChainId();
 
-    node.execute(crossTransactions.getAddMultichainNode(chainId, ipAddressAndPort));
+    node.execute(crossTransactions.getAddLinkedNode(chainId, ipAddressAndPort));
   }
 
   protected void waitForUnlock(final String ctrtAddress, final BesuNode node) throws Exception {

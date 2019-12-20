@@ -10,10 +10,16 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package org.hyperledger.besu.crosschain.core.keys;
+package org.hyperledger.besu.crosschain.core;
 
-/** Exposes just the Blockchain Public Key and related information. */
-public interface BlsThresholdPublicKeyWithThreshold extends BlsThresholdPublicKey {
+import java.math.BigInteger;
 
-  int getThreshold();
+public class BlockchainNodeInformation {
+  public BigInteger blockchainId;
+  public String ipAddressAndPort;
+
+  BlockchainNodeInformation(final BigInteger blockchainId, final String ipAddressAndPort) {
+    this.blockchainId = blockchainId;
+    this.ipAddressAndPort = ipAddressAndPort;
+  }
 }

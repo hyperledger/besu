@@ -15,10 +15,10 @@ package org.hyperledger.besu.crosschain.p2p;
 import org.hyperledger.besu.crosschain.core.keys.generation.ThresholdKeyGenContractInterface;
 
 import java.math.BigInteger;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -28,7 +28,7 @@ public class SimulatedCrosschainDevP2P implements CrosschainDevP2PInterface {
   BigInteger realNodesAddress;
 
   private static final int DEFAULT_NUMBER_OF_SIMULATED_NODES = 0;
-  public Map<BigInteger, SimulatedOtherNode> otherNodes = new TreeMap<>();
+  public Map<BigInteger, SimulatedOtherNode> otherNodes;
 
   public SimulatedCrosschainDevP2P(final ThresholdKeyGenContractInterface keyGenContractInterface) {
     this(keyGenContractInterface, DEFAULT_NUMBER_OF_SIMULATED_NODES);
@@ -37,7 +37,7 @@ public class SimulatedCrosschainDevP2P implements CrosschainDevP2PInterface {
   public SimulatedCrosschainDevP2P(
       final ThresholdKeyGenContractInterface keyGenContractInterface,
       final int numberOfSimulatedNodes) {
-    otherNodes = new TreeMap<>();
+    otherNodes = new HashMap<>();
     for (int i = 0; i < numberOfSimulatedNodes; i++) {
       SimulatedOtherNode other =
           new SimulatedOtherNode(BigInteger.valueOf(i + 1), keyGenContractInterface, this);

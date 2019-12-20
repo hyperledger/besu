@@ -477,6 +477,8 @@ public class JsonRpcHttpService {
       return NO_RESPONSE;
     }
 
+    // TODO REMOVE
+    LOG.info("JSON-RPC request -> {}", request.getMethod());
     LOG.debug("JSON-RPC request -> {}", request.getMethod());
     // Find method handler
     final JsonRpcMethod method = rpcMethods.getMethod(request.getMethod());

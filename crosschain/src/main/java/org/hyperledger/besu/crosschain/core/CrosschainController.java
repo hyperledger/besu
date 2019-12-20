@@ -14,7 +14,6 @@ package org.hyperledger.besu.crosschain.core;
 
 import org.hyperledger.besu.crosschain.core.keys.BlsThresholdCryptoSystem;
 import org.hyperledger.besu.crosschain.core.keys.BlsThresholdPublicKey;
-import org.hyperledger.besu.crosschain.core.keys.CoordinationContractInformation;
 import org.hyperledger.besu.crosschain.core.keys.CrosschainKeyManager;
 import org.hyperledger.besu.crosschain.core.keys.KeyStatus;
 import org.hyperledger.besu.crosschain.core.keys.generation.KeyGenFailureToCompleteReason;
@@ -64,11 +63,11 @@ public class CrosschainController {
   CrosschainProcessor processor;
   CrosschainKeyManager crosschainKeyManager;
 
-  MultichainManager multichainManager;
+  LinkedNodeManager linkedNodeManager;
 
   public CrosschainController() {
-    this.multichainManager = new MultichainManager();
-    this.processor = new CrosschainProcessor(this.multichainManager);
+    this.linkedNodeManager = new LinkedNodeManager();
+    this.processor = new CrosschainProcessor(this.linkedNodeManager);
     this.crosschainKeyManager = CrosschainKeyManager.getCrosschainKeyManager();
   }
 
@@ -290,15 +289,6 @@ public class CrosschainController {
   }
 
   /**
-   * Called by the JSON RPC Call cross_getBlockchainPublicKey
-   *
-   * @return The current public key and meta-data.
-   */
-  public BlsThresholdPublicKey getBlockchainPublicKey() {
-    return this.crosschainKeyManager.getActivePublicKey();
-  }
-
-  /**
    * Called by the JSON RPC Call cross_getBlockchainPublicKeyByVersion
    *
    * @param keyVersion to fetch key for.
@@ -325,15 +315,15 @@ public class CrosschainController {
     return this.crosschainKeyManager.getAllCoordinationContracts();
   }
 
-  public void addMultichainNode(final BigInteger blockchainId, final String ipAddressAndPort) {
-    this.multichainManager.addNode(blockchainId, ipAddressAndPort);
+  public void addLinkedNode(final BigInteger blockchainId, final String ipAddressAndPort) {
+    this.linkedNodeManager.addNode(blockchainId, ipAddressAndPort);
   }
 
-  public void removeMultichainNode(final BigInteger blockchainId) {
-    this.multichainManager.removeNode(blockchainId);
+  public void removeLinkedNode(final BigInteger blockchainId) {
+    this.linkedNodeManager.removeNode(blockchainId);
   }
 
-  public Set<BigInteger> listMultichainNodes() {
-    return this.multichainManager.listAllNodes();
+  public Set<BlockchainNodeInformation> listLinkedNodes() {
+    return this.linkedNodeManager.listAllNodes();
   }
 }

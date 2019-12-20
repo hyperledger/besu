@@ -32,6 +32,8 @@ public interface BlsThresholdPublicKey {
 
   BytesValue getEncodedPublicKey();
 
+  int getThreshold();
+
   BlsThresholdPublicKey NONE =
       new BlsThresholdPublicKey() {
         @Override
@@ -57,6 +59,11 @@ public interface BlsThresholdPublicKey {
         @Override
         public BytesValue getEncodedPublicKey() {
           return BytesValue.EMPTY;
+        }
+
+        @Override
+        public int getThreshold() {
+          return 1;
         }
       };
 }

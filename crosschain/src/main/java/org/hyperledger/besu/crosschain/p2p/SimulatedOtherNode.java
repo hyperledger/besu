@@ -24,9 +24,9 @@ import org.hyperledger.besu.util.bytes.BytesValue;
 import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -45,7 +45,7 @@ public class SimulatedOtherNode {
   private BigInteger myNodeAddress;
   private List<BigInteger> nodesStillActiveInKeyGeneration;
 
-  private Map<BigInteger, BigInteger> receivedSecretShares = new TreeMap<>();
+  private Map<BigInteger, BigInteger> receivedSecretShares = new HashMap<>();
 
   ThresholdKeyGenContractInterface thresholdKeyGenContract;
   CrosschainDevP2PInterface p2p;
@@ -118,7 +118,7 @@ public class SimulatedOtherNode {
   public void requestGetOtherNodeCoefs(final long keyVersionNumber) {
     // Get all of the other node's coefficient public values.
     LOG.info("Get all of the other node's coefficient public values.");
-    otherNodeCoefficients = new TreeMap<BigInteger, BlsPoint[]>();
+    otherNodeCoefficients = new HashMap<BigInteger, BlsPoint[]>();
     for (BigInteger nodeAddress : nodesStillActiveInKeyGeneration) {
       if (!nodeAddress.equals(myNodeAddress)) {
         BlsPoint[] points = new BlsPoint[myCoeffsPublicValues.length];
@@ -154,7 +154,7 @@ public class SimulatedOtherNode {
 
     // Generate the secret share parts (the y values).
     BigInteger[] myPartSecretShares = thresholdScheme.generateShares(xValues, coeffs);
-    this.mySecretShares = new TreeMap<>();
+    this.mySecretShares = new HashMap<>();
     for (int i = 0; i < xValues.length; i++) {
       this.mySecretShares.put(xValues[i], myPartSecretShares[i]);
     }

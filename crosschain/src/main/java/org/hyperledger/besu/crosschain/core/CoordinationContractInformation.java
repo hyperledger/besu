@@ -10,7 +10,7 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package org.hyperledger.besu.crosschain.core.keys;
+package org.hyperledger.besu.crosschain.core;
 
 import org.hyperledger.besu.ethereum.core.Address;
 
@@ -21,7 +21,7 @@ public class CoordinationContractInformation {
   public String coodinationContract;
   public String ipAddressAndPort;
 
-  CoordinationContractInformation(
+  public CoordinationContractInformation(
       final BigInteger coordinationBlockchainId,
       final Address coodinationContract,
       final String ipAddressAndPort) {

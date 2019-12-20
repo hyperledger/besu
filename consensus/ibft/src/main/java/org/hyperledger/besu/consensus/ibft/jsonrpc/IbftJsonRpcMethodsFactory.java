@@ -25,7 +25,7 @@ import org.hyperledger.besu.consensus.ibft.jsonrpc.methods.IbftProposeValidatorV
 import org.hyperledger.besu.crosschain.core.CrosschainController;
 import org.hyperledger.besu.crosschain.ethereum.api.jsonrpc.internal.methods.CrossActivateKey;
 import org.hyperledger.besu.crosschain.ethereum.api.jsonrpc.internal.methods.CrossAddCoordinationContract;
-import org.hyperledger.besu.crosschain.ethereum.api.jsonrpc.internal.methods.CrossAddMultichainNode;
+import org.hyperledger.besu.crosschain.ethereum.api.jsonrpc.internal.methods.CrossAddLinkedNode;
 import org.hyperledger.besu.crosschain.ethereum.api.jsonrpc.internal.methods.CrossCheckUnlock;
 import org.hyperledger.besu.crosschain.ethereum.api.jsonrpc.internal.methods.CrossGetActiveKeyVersion;
 import org.hyperledger.besu.crosschain.ethereum.api.jsonrpc.internal.methods.CrossGetBlockchainPublicKey;
@@ -36,10 +36,10 @@ import org.hyperledger.besu.crosschain.ethereum.api.jsonrpc.internal.methods.Cro
 import org.hyperledger.besu.crosschain.ethereum.api.jsonrpc.internal.methods.CrossIsLockable;
 import org.hyperledger.besu.crosschain.ethereum.api.jsonrpc.internal.methods.CrossIsLocked;
 import org.hyperledger.besu.crosschain.ethereum.api.jsonrpc.internal.methods.CrossListCoordinationContracts;
-import org.hyperledger.besu.crosschain.ethereum.api.jsonrpc.internal.methods.CrossListMultichainNodes;
+import org.hyperledger.besu.crosschain.ethereum.api.jsonrpc.internal.methods.CrossListLinkedNodes;
 import org.hyperledger.besu.crosschain.ethereum.api.jsonrpc.internal.methods.CrossProcessSubordinateView;
 import org.hyperledger.besu.crosschain.ethereum.api.jsonrpc.internal.methods.CrossRemoveCoordinationContract;
-import org.hyperledger.besu.crosschain.ethereum.api.jsonrpc.internal.methods.CrossRemoveMultichainNode;
+import org.hyperledger.besu.crosschain.ethereum.api.jsonrpc.internal.methods.CrossRemoveLinkedNode;
 import org.hyperledger.besu.crosschain.ethereum.api.jsonrpc.internal.methods.CrossSendRawCrosschainTransaction;
 import org.hyperledger.besu.crosschain.ethereum.api.jsonrpc.internal.methods.CrossSetKeyGenerationContractAddress;
 import org.hyperledger.besu.crosschain.ethereum.api.jsonrpc.internal.methods.CrossStartThresholdKeyGeneration;
@@ -92,7 +92,7 @@ public class IbftJsonRpcMethodsFactory implements JsonRpcMethodFactory {
 
       addMethods(
           rpcMethods,
-          new CrossAddMultichainNode(crosschainController, jsonRpcParameter),
+          new CrossAddLinkedNode(crosschainController, jsonRpcParameter),
           new CrossAddCoordinationContract(crosschainController, jsonRpcParameter),
           new CrossActivateKey(crosschainController, jsonRpcParameter),
           new CrossCheckUnlock(crosschainController, jsonRpcParameter),
@@ -105,11 +105,11 @@ public class IbftJsonRpcMethodsFactory implements JsonRpcMethodFactory {
           new CrossIsLockable(blockchainQueries, jsonRpcParameter),
           new CrossIsLocked(blockchainQueries, jsonRpcParameter),
           new CrossListCoordinationContracts(crosschainController),
-          new CrossListMultichainNodes(crosschainController),
+          new CrossListLinkedNodes(crosschainController),
           new CrossProcessSubordinateView(
               blockchainQueries, crosschainController, jsonRpcParameter),
           new CrossRemoveCoordinationContract(crosschainController, jsonRpcParameter),
-          new CrossRemoveMultichainNode(crosschainController, jsonRpcParameter),
+          new CrossRemoveLinkedNode(crosschainController, jsonRpcParameter),
           new CrossSendRawCrosschainTransaction(crosschainController, jsonRpcParameter),
           new CrossSetKeyGenerationContractAddress(crosschainController, jsonRpcParameter),
           new CrossStartThresholdKeyGeneration(crosschainController, jsonRpcParameter));

@@ -12,6 +12,7 @@
  */
 package org.hyperledger.besu.crosschain.core.keys;
 
+import org.hyperledger.besu.crosschain.core.CoordinationContractInformation;
 import org.hyperledger.besu.crosschain.core.keys.generation.KeyGenFailureToCompleteReason;
 import org.hyperledger.besu.crosschain.core.keys.generation.SimulatedThresholdKeyGenContractWrapper;
 import org.hyperledger.besu.crosschain.core.keys.generation.ThresholdKeyGenContractInterface;
@@ -23,10 +24,10 @@ import org.hyperledger.besu.ethereum.core.Address;
 
 import java.math.BigInteger;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -55,12 +56,12 @@ public class CrosschainKeyManager {
   //  private BigInteger blockchainId;
   private SECP256K1.KeyPair nodeKeys;
 
-  Map<String, CoordinationContractInformation> coordinationContracts = new TreeMap<>();
+  Map<String, CoordinationContractInformation> coordinationContracts = new HashMap<>();
 
   private long NO_ACTIVE_VERSION = 0;
   long activeKeyVersion = NO_ACTIVE_VERSION;
 
-  public Map<Long, ThresholdKeyGeneration> activeKeyGenerations = new TreeMap<>();
+  public Map<Long, ThresholdKeyGeneration> activeKeyGenerations = new HashMap<>();
 
   Map<Long, BlsThresholdCredentials> credentials;
 
@@ -169,7 +170,7 @@ public class CrosschainKeyManager {
     if (keyGeneration != null) {
       return keyGeneration.getNodesNoLongerInKeyGeneration();
     }
-    return new TreeMap<>();
+    return new HashMap<>();
   }
 
   public KeyGenFailureToCompleteReason getKeyGenFailureReason(final long keyVersion) {
@@ -193,7 +194,7 @@ public class CrosschainKeyManager {
     if (keyGeneration != null) {
       return keyGeneration.getNodesStillActiveInKeyGeneration();
     }
-    return new TreeSet<>();
+    return new HashSet<>();
   }
 
   public void activateKey(final long keyVersion) {

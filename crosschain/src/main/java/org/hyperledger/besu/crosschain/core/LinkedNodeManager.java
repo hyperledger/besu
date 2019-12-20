@@ -13,18 +13,19 @@
 package org.hyperledger.besu.crosschain.core;
 
 import java.math.BigInteger;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /** Manages the relationship between nodes in this multichain node. */
-public class MultichainManager {
+public class LinkedNodeManager {
   private static final Logger LOG = LogManager.getLogger();
 
-  private Map<BigInteger, String> nodeMap = new TreeMap<>();
+  private Map<BigInteger, String> nodeMap = new HashMap<>();
 
   /**
    * Add a node. If the node already exists, update the IP Address and Port information.
@@ -50,8 +51,12 @@ public class MultichainManager {
    *
    * @return The set of all of the nodes.
    */
-  public Set<BigInteger> listAllNodes() {
-    return this.nodeMap.keySet();
+  public Set<BlockchainNodeInformation> listAllNodes() {
+    Set<BlockchainNodeInformation> result = new HashSet<>();
+    for (BigInteger id : this.nodeMap.keySet()) {
+      result.add(new BlockchainNodeInformation(id, this.nodeMap.get(id)));
+    }
+    return result;
   }
 
   /**

@@ -18,16 +18,16 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.NodeRequests;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
 
 import java.io.IOException;
-import java.math.BigInteger;
 import java.util.List;
 
-import org.web3j.protocol.besu.response.crosschain.ListNodesResponse;
+import org.web3j.protocol.besu.response.crosschain.BlockchainNodeInformation;
+import org.web3j.protocol.besu.response.crosschain.ListBlockchainNodesResponse;
 
-public class CrossListMultichainNodes implements Transaction<List<BigInteger>> {
+public class CrossListLinkedNodes implements Transaction<List<BlockchainNodeInformation>> {
   @Override
-  public List<BigInteger> execute(final NodeRequests node) {
+  public List<BlockchainNodeInformation> execute(final NodeRequests node) {
     try {
-      final ListNodesResponse result = node.eth().crossListMultichainNodes().send();
+      final ListBlockchainNodesResponse result = node.eth().crossListLinkedNodes().send();
       assertThat(result).isNotNull();
       assertThat(result.hasError()).isFalse();
       return result.getNodes();

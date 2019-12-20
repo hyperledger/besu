@@ -28,14 +28,14 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /** Sets the address of the key generation contract to use. */
-public class CrossRemoveMultichainNode implements JsonRpcMethod {
+public class CrossAddLinkedNode implements JsonRpcMethod {
 
   private static final Logger LOG = LogManager.getLogger();
 
   private final CrosschainController crosschainController;
   private final JsonRpcParameter parameters;
 
-  public CrossRemoveMultichainNode(
+  public CrossAddLinkedNode(
       final CrosschainController crosschainController, final JsonRpcParameter parameters) {
     this.crosschainController = crosschainController;
     this.parameters = parameters;
@@ -43,20 +43,27 @@ public class CrossRemoveMultichainNode implements JsonRpcMethod {
 
   @Override
   public String getName() {
-    return RpcMethod.CROSS_REMOVE_MULTICHAIN_NODE.getMethodName();
+    return RpcMethod.CROSS_ADD_LINKED_NODE.getMethodName();
   }
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequest request) {
-    if (request.getParamLength() != 1) {
+    if (request.getParamLength() != 2) {
       return new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
     }
     final BigInteger blockchainId =
         this.parameters.required(request.getParams(), 0, BigInteger.class);
+    final String ipAddressAndPort = this.parameters.required(request.getParams(), 1, String.class);
 
-    LOG.trace("JSON RPC {}: Blockchain Id: {}", getName(), blockchainId);
+    // TODO check that ipAddressAndPort is valid
 
-    this.crosschainController.removeMultichainNode(blockchainId);
+    LOG.trace(
+        "JSON RPC {}: Blockchain Id: {}, , IPAddress: {}",
+        getName(),
+        blockchainId,
+        ipAddressAndPort);
+
+    this.crosschainController.addLinkedNode(blockchainId, ipAddressAndPort);
     return new JsonRpcSuccessResponse(request.getId());
   }
 }

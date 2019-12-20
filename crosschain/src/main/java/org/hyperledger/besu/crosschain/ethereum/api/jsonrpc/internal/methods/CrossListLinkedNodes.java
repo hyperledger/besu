@@ -12,6 +12,7 @@
  */
 package org.hyperledger.besu.crosschain.ethereum.api.jsonrpc.internal.methods;
 
+import org.hyperledger.besu.crosschain.core.BlockchainNodeInformation;
 import org.hyperledger.besu.crosschain.core.CrosschainController;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
@@ -21,24 +22,23 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 
-import java.math.BigInteger;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /** Returns the list of nodes that make up this Multichain Node. */
-public class CrossListMultichainNodes implements JsonRpcMethod {
+public class CrossListLinkedNodes implements JsonRpcMethod {
   private static final Logger LOG = LogManager.getLogger();
   private final CrosschainController crosschainController;
 
-  public CrossListMultichainNodes(final CrosschainController crosschainController) {
+  public CrossListLinkedNodes(final CrosschainController crosschainController) {
     this.crosschainController = crosschainController;
   }
 
   @Override
   public String getName() {
-    return RpcMethod.CROSS_LIST_MULTICHAIN_NODES.getMethodName();
+    return RpcMethod.CROSS_LIST_LINKED_NODES.getMethodName();
   }
 
   @Override
@@ -47,7 +47,7 @@ public class CrossListMultichainNodes implements JsonRpcMethod {
       return new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
     }
 
-    Set<BigInteger> info = this.crosschainController.listMultichainNodes();
+    Set<BlockchainNodeInformation> info = this.crosschainController.listLinkedNodes();
     LOG.trace("JSON RPC {}: Size: {}", getName(), info.size());
     return new JsonRpcSuccessResponse(request.getId(), info);
   }

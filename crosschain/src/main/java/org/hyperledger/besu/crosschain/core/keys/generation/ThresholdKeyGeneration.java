@@ -30,11 +30,11 @@ import org.hyperledger.besu.util.bytes.BytesValue;
 import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -62,7 +62,7 @@ public class ThresholdKeyGeneration {
   private KeyGenFailureToCompleteReason failureReason =
       KeyGenFailureToCompleteReason.NO_FAILURE_THUS_FAR;
 
-  private Map<BigInteger, BigInteger> receivedSecretShares = new TreeMap<>();
+  private Map<BigInteger, BigInteger> receivedSecretShares = new HashMap<>();
 
   ThresholdKeyGenContractInterface thresholdKeyGenContract;
   CrosschainDevP2PInterface p2p;
@@ -117,7 +117,7 @@ public class ThresholdKeyGeneration {
     try {
       this.nodesStillActiveInKeyGeneration = new HashSet<>(this.p2p.getAllPeers());
       this.nodesStillActiveInKeyGeneration.add(this.myNodeAddress);
-      this.nodesNoLongerInKeyGeneration = new TreeMap<>();
+      this.nodesNoLongerInKeyGeneration = new HashMap<>();
 
       this.keyVersionNumber = this.thresholdKeyGenContract.getExpectedKeyGenerationVersion();
       this.keyGenerationStatus = KeyStatus.KEY_GEN_POST_XVALUE;
@@ -203,7 +203,7 @@ public class ThresholdKeyGeneration {
       // Thread.sleep(2000);
       // Get all of the other node's coefficient public values.
       LOG.info("Get all of the other node's coefficient public values.");
-      this.otherNodeCoefficients = new TreeMap<BigInteger, BlsPoint[]>();
+      this.otherNodeCoefficients = new HashMap<BigInteger, BlsPoint[]>();
       for (Iterator<BigInteger> iterator = this.nodesStillActiveInKeyGeneration.iterator();
           iterator.hasNext(); ) {
         BigInteger nodeAddress = iterator.next();
@@ -273,7 +273,7 @@ public class ThresholdKeyGeneration {
 
     // Generate the secret share parts (the y values).
     BigInteger[] myPartSecretShares = thresholdScheme.generateShares(xValues, coeffs);
-    this.mySecretShares = new TreeMap<>();
+    this.mySecretShares = new HashMap<>();
     for (int i = 0; i < xValues.length; i++) {
       this.mySecretShares.put(xValues[i], myPartSecretShares[i]);
     }

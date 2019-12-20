@@ -23,7 +23,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /** Holds the Blockchain Public Key and associated meta-data. */
-public class BlsThresholdPublicKeyImpl implements BlsThresholdPublicKeyWithThreshold {
+public class BlsThresholdPublicKeyImpl implements BlsThresholdPublicKey {
   protected static final Logger LOG = LogManager.getLogger();
 
   private long keyVersion;
@@ -84,7 +84,7 @@ public class BlsThresholdPublicKeyImpl implements BlsThresholdPublicKeyWithThres
         });
   }
 
-  public static BlsThresholdPublicKeyWithThreshold readFrom(final BytesValue input) {
+  public static BlsThresholdPublicKey readFrom(final BytesValue input) {
     RLPInput in = RLP.input(input);
     in.enterList();
     long keyVersion = in.readLongScalar();

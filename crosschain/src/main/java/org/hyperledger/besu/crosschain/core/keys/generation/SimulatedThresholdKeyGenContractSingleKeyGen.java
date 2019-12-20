@@ -19,8 +19,8 @@ import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.TreeMap;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -29,8 +29,8 @@ import org.apache.logging.log4j.Logger;
 class SimulatedThresholdKeyGenContractSingleKeyGen {
   protected static final Logger LOG = LogManager.getLogger();
   private ArrayList<BigInteger> nodeIdArray = new ArrayList<>();
-  private Map<BigInteger, BlsPoint[]> coefficientPublicValues = new TreeMap<>();
-  private Map<BigInteger, Bytes32[]> coefPublicPointCommitments = new TreeMap<>();
+  private Map<BigInteger, BlsPoint[]> coefficientPublicValues = new HashMap<>();
+  private Map<BigInteger, Bytes32[]> coefPublicPointCommitments = new HashMap<>();
   private int threshold;
 
   // TODO use this to change when values can be posted.

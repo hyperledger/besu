@@ -23,6 +23,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.web3j.protocol.besu.response.crosschain.BlockchainNodeInformation;
 
 @Ignore
 public class MultichainNodeManagementAcceptanceTest extends CrosschainAcceptanceTestBase {
@@ -47,11 +48,11 @@ public class MultichainNodeManagementAcceptanceTest extends CrosschainAcceptance
   public void addOneNode() {
     BigInteger bcA = BigInteger.TEN;
 
-    this.nodeOnBlockchain1.execute(crossTransactions.getAddMultichainNode(bcA, "127.0.0.1:8545"));
-    List<BigInteger> nodes =
-        this.nodeOnBlockchain1.execute(crossTransactions.getListMultichainNodes());
+    this.nodeOnBlockchain1.execute(crossTransactions.getAddLinkedNode(bcA, "127.0.0.1:8545"));
+    List<BlockchainNodeInformation> nodes =
+        this.nodeOnBlockchain1.execute(crossTransactions.getListLinkedNodes());
     assertThat(nodes.size()).isEqualTo(1);
-    assertThat(nodes.contains(bcA)).isTrue();
+    assertThat(nodes.get(0).blockchainId).isEqualTo(bcA);
   }
 
   @Test
@@ -59,13 +60,15 @@ public class MultichainNodeManagementAcceptanceTest extends CrosschainAcceptance
     BigInteger bcA = BigInteger.TEN;
     BigInteger bcB = BigInteger.ONE;
 
-    this.nodeOnBlockchain1.execute(crossTransactions.getAddMultichainNode(bcA, "127.0.0.1:8545"));
-    this.nodeOnBlockchain1.execute(crossTransactions.getAddMultichainNode(bcB, "127.0.0.1:8546"));
-    List<BigInteger> nodes =
-        this.nodeOnBlockchain1.execute(crossTransactions.getListMultichainNodes());
+    this.nodeOnBlockchain1.execute(crossTransactions.getAddLinkedNode(bcA, "127.0.0.1:8545"));
+    this.nodeOnBlockchain1.execute(crossTransactions.getAddLinkedNode(bcB, "127.0.0.1:8546"));
+    List<BlockchainNodeInformation> nodes =
+        this.nodeOnBlockchain1.execute(crossTransactions.getListLinkedNodes());
     assertThat(nodes.size()).isEqualTo(2);
-    assertThat(nodes.contains(bcA)).isTrue();
-    assertThat(nodes.contains(bcB)).isTrue();
+    assertThat(nodes.get(0).blockchainId.equals(bcA) || nodes.get(0).blockchainId.equals(bcB))
+        .isTrue();
+    assertThat(nodes.get(1).blockchainId.equals(bcA) || nodes.get(1).blockchainId.equals(bcB))
+        .isTrue();
   }
 
   @Test
@@ -73,26 +76,26 @@ public class MultichainNodeManagementAcceptanceTest extends CrosschainAcceptance
     BigInteger bcA = BigInteger.TEN;
     BigInteger bcB = BigInteger.ONE;
 
-    this.nodeOnBlockchain1.execute(crossTransactions.getAddMultichainNode(bcA, "127.0.0.1:8545"));
-    this.nodeOnBlockchain1.execute(crossTransactions.getAddMultichainNode(bcB, "127.0.0.1:8546"));
-    this.nodeOnBlockchain1.execute(crossTransactions.getRemoveMultichainNode(bcA));
-    List<BigInteger> nodes =
-        this.nodeOnBlockchain1.execute(crossTransactions.getListMultichainNodes());
+    this.nodeOnBlockchain1.execute(crossTransactions.getAddLinkedNode(bcA, "127.0.0.1:8545"));
+    this.nodeOnBlockchain1.execute(crossTransactions.getAddLinkedNode(bcB, "127.0.0.1:8546"));
+    this.nodeOnBlockchain1.execute(crossTransactions.getRemoveLinkedNode(bcA));
+    List<BlockchainNodeInformation> nodes =
+        this.nodeOnBlockchain1.execute(crossTransactions.getListLinkedNodes());
     assertThat(nodes.size()).isEqualTo(1);
-    assertThat(nodes.contains(bcB)).isTrue();
+    assertThat(nodes.get(0).blockchainId).isEqualTo(bcB);
   }
 
   @Test
   public void removeNonExistantNode() {
     BigInteger bcA = BigInteger.TEN;
     // This should not throw any error.
-    this.nodeOnBlockchain1.execute(crossTransactions.getRemoveMultichainNode(bcA));
+    this.nodeOnBlockchain1.execute(crossTransactions.getRemoveLinkedNode(bcA));
   }
 
   @Test
   public void listWhenEmpty() {
-    List<BigInteger> nodes =
-        this.nodeOnBlockchain1.execute(crossTransactions.getListMultichainNodes());
+    List<BlockchainNodeInformation> nodes =
+        this.nodeOnBlockchain1.execute(crossTransactions.getListLinkedNodes());
     assertThat(nodes.size()).isEqualTo(0);
   }
 

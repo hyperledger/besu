@@ -22,20 +22,17 @@ import java.math.BigInteger;
 
 import org.web3j.protocol.besu.response.crosschain.NoResponse;
 
-public class CrossAddMultichainNode implements Transaction<String> {
+public class CrossRemoveLinkedNode implements Transaction<String> {
   private final BigInteger blockchainId;
-  private final String ipPort;
 
-  CrossAddMultichainNode(final BigInteger blockchainId, final String ipAddressAndPort) {
-    this.ipPort = ipAddressAndPort;
+  CrossRemoveLinkedNode(final BigInteger blockchainId) {
     this.blockchainId = blockchainId;
   }
 
   @Override
   public String execute(final NodeRequests node) {
     try {
-      final NoResponse result =
-          node.eth().crossAddMultichainNode(this.blockchainId, this.ipPort).send();
+      final NoResponse result = node.eth().crossRemoveLinkedNode(this.blockchainId).send();
       assertThat(result).isNotNull();
       assertThat(result.hasError()).isFalse();
       return result.getResult();
