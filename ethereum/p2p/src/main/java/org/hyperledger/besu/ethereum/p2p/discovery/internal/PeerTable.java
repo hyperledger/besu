@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerTable.AddResult.AddOutcome;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Arrays;
 import java.util.List;
@@ -34,6 +33,7 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.stream.Stream;
 
 import com.google.common.hash.BloomFilter;
+import org.apache.tuweni.bytes.Bytes;
 
 /**
  * Implements a Kademlia routing table based on k-buckets with a keccak-256 XOR-based distance
@@ -45,11 +45,11 @@ public class PeerTable {
   private static final int BLOOM_FILTER_REGENERATION_THRESHOLD = 50; // evictions
 
   private final Bucket[] table;
-  private final BytesValue keccak256;
+  private final Bytes keccak256;
   private final int maxEntriesCnt;
 
-  private final Map<BytesValue, Integer> distanceCache;
-  private BloomFilter<BytesValue> idBloom;
+  private final Map<Bytes, Integer> distanceCache;
+  private BloomFilter<Bytes> idBloom;
   private int evictionCnt = 0;
 
   /**
@@ -58,7 +58,7 @@ public class PeerTable {
    * @param nodeId The ID of the node where this peer table is stored.
    * @param bucketSize The maximum length of each k-bucket.
    */
-  public PeerTable(final BytesValue nodeId, final int bucketSize) {
+  public PeerTable(final Bytes nodeId, final int bucketSize) {
     this.keccak256 = Hash.keccak256(nodeId);
     this.table =
         Stream.generate(() -> new Bucket(DEFAULT_BUCKET_SIZE))
@@ -72,7 +72,7 @@ public class PeerTable {
     buildBloomFilter();
   }
 
-  public PeerTable(final BytesValue nodeId) {
+  public PeerTable(final Bytes nodeId) {
     this(nodeId, DEFAULT_BUCKET_SIZE);
   }
 
@@ -103,12 +103,12 @@ public class PeerTable {
    *   <li>the operation failed because the peer already existed.
    * </ul>
    *
-   * @see AddOutcome
    * @param peer The peer to add.
    * @return An object indicating the outcome of the operation.
+   * @see AddOutcome
    */
   public AddResult tryAdd(final DiscoveryPeer peer) {
-    final BytesValue id = peer.getId();
+    final Bytes id = peer.getId();
     final int distance = distanceFrom(peer);
 
     // Safeguard against adding ourselves to the peer table.
@@ -146,7 +146,7 @@ public class PeerTable {
    * @return Whether the peer existed, and hence the eviction took place.
    */
   public EvictResult tryEvict(final PeerId peer) {
-    final BytesValue id = peer.getId();
+    final Bytes id = peer.getId();
     final int distance = distanceFrom(peer);
 
     if (distance == 0) {
@@ -175,8 +175,8 @@ public class PeerTable {
   }
 
   private void buildBloomFilter() {
-    final BloomFilter<BytesValue> bf =
-        BloomFilter.create((id, val) -> val.putBytes(id.extractArray()), maxEntriesCnt, 0.001);
+    final BloomFilter<Bytes> bf =
+        BloomFilter.create((id, val) -> val.putBytes(id.toArray()), maxEntriesCnt, 0.001);
     streamAllPeers().map(Peer::getId).forEach(bf::put);
     this.evictionCnt = 0;
     this.idBloom = bf;
@@ -190,8 +190,8 @@ public class PeerTable {
    * @param limit The amount of results to return.
    * @return The <code>limit</code> closest peers, at most.
    */
-  public List<DiscoveryPeer> nearestPeers(final BytesValue target, final int limit) {
-    final BytesValue keccak256 = Hash.keccak256(target);
+  public List<DiscoveryPeer> nearestPeers(final Bytes target, final int limit) {
+    final Bytes keccak256 = Hash.keccak256(target);
     return streamAllPeers()
         .filter(p -> p.getStatus() == PeerDiscoveryStatus.BONDED)
         .sorted(

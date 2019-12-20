@@ -27,6 +27,8 @@ dependencies {
   implementation project(':services:kvstore')
 
   implementation 'com.google.guava:guava'
+  implementation 'org.apache.tuweni:tuweni-bytes'
+  implementation 'org.apache.tuweni:tuweni-units'
   implementation 'io.vertx:vertx-core'
 
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')

@@ -94,7 +94,7 @@ public class EthHashMinerExecutor extends AbstractMinerExecutor<Void, EthHashBlo
     if (coinbase == null) {
       throw new IllegalArgumentException("Coinbase cannot be unset.");
     } else {
-      this.coinbase = Optional.of(coinbase.copy());
+      this.coinbase = Optional.of(Address.wrap(coinbase.copy()));
     }
   }
 

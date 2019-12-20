@@ -18,11 +18,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assume.assumeTrue;
 
 import org.hyperledger.besu.testutil.JsonTestParameters;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Collection;
 import java.util.function.Function;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -47,9 +47,9 @@ public class TrieRefTest {
 
   @Test
   public void rootHashAfterInsertionsAndRemovals() {
-    final SimpleMerklePatriciaTrie<BytesValue, BytesValue> trie =
+    final SimpleMerklePatriciaTrie<Bytes, Bytes> trie =
         new SimpleMerklePatriciaTrie<>(Function.identity());
-    for (final BytesValue[] pair : spec.getIn()) {
+    for (final Bytes[] pair : spec.getIn()) {
       if (pair[1] == null) {
         trie.remove(pair[0]);
       } else {

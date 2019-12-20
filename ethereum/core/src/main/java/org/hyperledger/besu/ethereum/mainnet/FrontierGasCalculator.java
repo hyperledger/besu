@@ -22,9 +22,10 @@ import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.Words;
 import org.hyperledger.besu.ethereum.vm.operations.ExpOperation;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class FrontierGasCalculator implements GasCalculator {
 
@@ -112,7 +113,7 @@ public class FrontierGasCalculator implements GasCalculator {
 
   @Override
   public Gas transactionIntrinsicGasCost(final Transaction transaction) {
-    final BytesValue payload = transaction.getPayload();
+    final Bytes payload = transaction.getPayloadBytes();
     int zeros = 0;
     for (int i = 0; i < payload.size(); i++) {
       if (payload.get(i) == 0) {
@@ -149,7 +150,7 @@ public class FrontierGasCalculator implements GasCalculator {
   }
 
   @Override
-  public Gas idPrecompiledContractGasCost(final BytesValue input) {
+  public Gas idPrecompiledContractGasCost(final Bytes input) {
     return ID_PRECOMPILED_WORD_GAS_COST
         .times(Words.numWords(input))
         .plus(ID_PRECOMPILED_BASE_GAS_COST);
@@ -161,14 +162,14 @@ public class FrontierGasCalculator implements GasCalculator {
   }
 
   @Override
-  public Gas sha256PrecompiledContractGasCost(final BytesValue input) {
+  public Gas sha256PrecompiledContractGasCost(final Bytes input) {
     return SHA256_PRECOMPILED_WORD_GAS_COST
         .times(Words.numWords(input))
         .plus(SHA256_PRECOMPILED_BASE_GAS_COST);
   }
 
   @Override
-  public Gas ripemd160PrecompiledContractGasCost(final BytesValue input) {
+  public Gas ripemd160PrecompiledContractGasCost(final Bytes input) {
     return RIPEMD160_PRECOMPILED_WORD_GAS_COST
         .times(Words.numWords(input))
         .plus(RIPEMD160_PRECOMPILED_BASE_GAS_COST);
@@ -281,8 +282,8 @@ public class FrontierGasCalculator implements GasCalculator {
 
   @Override
   public Gas createOperationGasCost(final MessageFrame frame) {
-    final UInt256 initCodeOffset = frame.getStackItem(1).asUInt256();
-    final UInt256 initCodeLength = frame.getStackItem(2).asUInt256();
+    final UInt256 initCodeOffset = UInt256.fromBytes(frame.getStackItem(1));
+    final UInt256 initCodeLength = UInt256.fromBytes(frame.getStackItem(2));
 
     final Gas memoryGasCost = memoryExpansionGasCost(frame, initCodeOffset, initCodeLength);
     return CREATE_OPERATION_GAS_COST.plus(memoryGasCost);
@@ -381,12 +382,12 @@ public class FrontierGasCalculator implements GasCalculator {
 
   @Override
   public Gas mLoadOperationGasCost(final MessageFrame frame, final UInt256 offset) {
-    return VERY_LOW_TIER_GAS_COST.plus(memoryExpansionGasCost(frame, offset, UInt256.U_32));
+    return VERY_LOW_TIER_GAS_COST.plus(memoryExpansionGasCost(frame, offset, UInt256.valueOf(32)));
   }
 
   @Override
   public Gas mStoreOperationGasCost(final MessageFrame frame, final UInt256 offset) {
-    return VERY_LOW_TIER_GAS_COST.plus(memoryExpansionGasCost(frame, offset, UInt256.U_32));
+    return VERY_LOW_TIER_GAS_COST.plus(memoryExpansionGasCost(frame, offset, UInt256.valueOf(32)));
   }
 
   @Override
@@ -444,7 +445,7 @@ public class FrontierGasCalculator implements GasCalculator {
       final Gas wordGasCost,
       final UInt256 offset,
       final UInt256 length) {
-    final UInt256 numWords = length.dividedCeilBy(Bytes32.SIZE);
+    final UInt256 numWords = length.divideCeil(Bytes32.SIZE);
 
     final Gas copyCost = wordGasCost.times(Gas.of(numWords)).plus(baseGasCost);
     final Gas memoryCost = memoryExpansionGasCost(frame, offset, length);

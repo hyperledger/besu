@@ -12,22 +12,17 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.util.bytes;
+package org.hyperledger.besu.enclave;
 
-import org.hyperledger.besu.plugin.data.BinaryData;
+public class EnclaveServerException extends RuntimeException {
+  private int statusCode;
 
-/** Base interface for a value whose content is stored as bytes. */
-public interface BytesBacked extends BinaryData {
-  /** @return The underlying backing bytes of the value. */
-  BytesValue getBytes();
-
-  @Override
-  default byte[] getByteArray() {
-    return getBytes().getByteArray();
+  public EnclaveServerException(final int statusCode, final String message) {
+    super(message);
+    this.statusCode = statusCode;
   }
 
-  @Override
-  default String getHexString() {
-    return getBytes().getHexString();
+  public int getStatusCode() {
+    return statusCode;
   }
 }

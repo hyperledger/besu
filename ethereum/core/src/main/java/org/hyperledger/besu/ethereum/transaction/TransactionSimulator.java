@@ -29,9 +29,10 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Optional;
+
+import org.apache.tuweni.bytes.Bytes;
 
 /*
  * Used to process transactions for eth_call and eth_estimateGas.
@@ -98,8 +99,7 @@ public class TransactionSimulator {
         callParams.getGasLimit() >= 0 ? callParams.getGasLimit() : header.getGasLimit();
     final Wei gasPrice = callParams.getGasPrice() != null ? callParams.getGasPrice() : Wei.ZERO;
     final Wei value = callParams.getValue() != null ? callParams.getValue() : Wei.ZERO;
-    final BytesValue payload =
-        callParams.getPayload() != null ? callParams.getPayload() : BytesValue.EMPTY;
+    final Bytes payload = callParams.getPayload() != null ? callParams.getPayload() : Bytes.EMPTY;
 
     final Transaction transaction =
         Transaction.builder()

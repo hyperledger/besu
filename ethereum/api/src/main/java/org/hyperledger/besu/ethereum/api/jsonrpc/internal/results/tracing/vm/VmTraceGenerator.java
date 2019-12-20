@@ -21,10 +21,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.Tracin
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.vm.Code;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.BytesValues;
-import org.hyperledger.besu.util.uint.UInt256;
+import org.hyperledger.besu.plugin.data.UnformattedData;
 
 import java.util.ArrayDeque;
 import java.util.Arrays;
@@ -37,6 +34,9 @@ import java.util.stream.Stream;
 
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class VmTraceGenerator {
 
@@ -71,7 +71,7 @@ public class VmTraceGenerator {
       transactionTrace
           .getTransaction()
           .getInit()
-          .map(BytesValue::getHexString)
+          .map(UnformattedData::getHexString)
           .ifPresent(rootVmTrace::setCode);
       transactionTrace.getTraceFrames().forEach(this::addFrame);
     }
@@ -126,7 +126,7 @@ public class VmTraceGenerator {
                     .getStack()
                     .filter(stack -> stack.length > 0)
                     .map(stack -> stack[stack.length - 1])
-                    .map(last -> Quantity.create(UInt256.fromHexString(last.getHexString())))
+                    .map(last -> Quantity.create(UInt256.fromHexString(last.toHexString())))
                     .ifPresent(report::singlePush);
               });
       op.setSub(newSubTrace);
@@ -174,8 +174,8 @@ public class VmTraceGenerator {
           .ifPresent(
               stack ->
                   IntStream.range(0, currentTraceFrame.getStackItemsProduced())
-                      .mapToObj(i -> BytesValues.trimLeadingZeros(stack[stack.length - i - 1]))
-                      .map(value -> Quantity.create(UInt256.fromHexString(value.getHexString())))
+                      .mapToObj(i -> Bytes.wrap(stack[stack.length - i - 1]).trimLeadingZeros())
+                      .map(value -> Quantity.create(UInt256.fromHexString(value.toHexString())))
                       .forEach(report::addPush));
     }
   }
@@ -200,7 +200,7 @@ public class VmTraceGenerator {
     currentTrace = parentTraces.getLast();
     // set smart contract code
     currentTrace.setCode(
-        currentTraceFrame.getMaybeCode().orElse(new Code()).getBytes().getHexString());
+        currentTraceFrame.getMaybeCode().orElse(new Code()).getBytes().toHexString());
   }
 
   /**

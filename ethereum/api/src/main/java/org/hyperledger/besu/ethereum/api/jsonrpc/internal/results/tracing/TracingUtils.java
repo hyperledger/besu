@@ -14,12 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing;
 
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class TracingUtils {
 
@@ -32,21 +32,21 @@ public class TracingUtils {
   }
 
   private static String dumpMemoryUnprefixed(final Bytes32[] memory) {
-    return Arrays.stream(memory).map(BytesValue::toUnprefixedString).collect(Collectors.joining());
+    return Arrays.stream(memory).map(Bytes::toUnprefixedHexString).collect(Collectors.joining());
   }
 
   public static String dumpMemoryAndTrimTrailingZeros(final Bytes32[] memory) {
     final String memoryString = dumpMemoryUnprefixed(memory);
-    final BytesValue value = BytesValue.fromHexString(memoryString);
-    return "0x".concat(trimTrailingZeros(value).toUnprefixedString());
+    final Bytes value = Bytes.fromHexString(memoryString);
+    return "0x".concat(trimTrailingZeros(value).toUnprefixedHexString());
   }
 
-  private static BytesValue trimTrailingZeros(final BytesValue value) {
+  private static Bytes trimTrailingZeros(final Bytes value) {
     final int toTrim = trailingZeros(value);
     return value.slice(0, value.size() - toTrim + 1);
   }
 
-  private static int trailingZeros(final BytesValue bytes) {
+  private static int trailingZeros(final Bytes bytes) {
     for (int i = bytes.size() - 1; i > 0; i--) {
       if (bytes.get(i) != 0) {
         return bytes.size() - i;

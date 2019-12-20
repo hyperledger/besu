@@ -18,9 +18,6 @@ import static org.hyperledger.besu.crypto.Hash.keccak256;
 
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.MutableBytesValue;
 
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
@@ -31,6 +28,10 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.bytes.MutableBytes;
+
 class BranchNode<V> implements Node<V> {
   public static final byte RADIX = CompactEncoding.LEAF_TERMINATOR;
 
@@ -40,8 +41,8 @@ class BranchNode<V> implements Node<V> {
   private final ArrayList<Node<V>> children;
   private final Optional<V> value;
   private final NodeFactory<V> nodeFactory;
-  private final Function<V, BytesValue> valueSerializer;
-  private WeakReference<BytesValue> rlp;
+  private final Function<V, Bytes> valueSerializer;
+  private WeakReference<Bytes> rlp;
   private SoftReference<Bytes32> hash;
   private boolean dirty = false;
 
@@ -49,7 +50,7 @@ class BranchNode<V> implements Node<V> {
       final ArrayList<Node<V>> children,
       final Optional<V> value,
       final NodeFactory<V> nodeFactory,
-      final Function<V, BytesValue> valueSerializer) {
+      final Function<V, Bytes> valueSerializer) {
     assert (children.size() == RADIX);
     this.children = children;
     this.value = value;
@@ -58,7 +59,7 @@ class BranchNode<V> implements Node<V> {
   }
 
   @Override
-  public Node<V> accept(final PathNodeVisitor<V> visitor, final BytesValue path) {
+  public Node<V> accept(final PathNodeVisitor<V> visitor, final Bytes path) {
     return visitor.visit(this, path);
   }
 
@@ -68,8 +69,8 @@ class BranchNode<V> implements Node<V> {
   }
 
   @Override
-  public BytesValue getPath() {
-    return BytesValue.EMPTY;
+  public Bytes getPath() {
+    return Bytes.EMPTY;
   }
 
   @Override
@@ -87,9 +88,9 @@ class BranchNode<V> implements Node<V> {
   }
 
   @Override
-  public BytesValue getRlp() {
+  public Bytes getRlp() {
     if (rlp != null) {
-      final BytesValue encoded = rlp.get();
+      final Bytes encoded = rlp.get();
       if (encoded != null) {
         return encoded;
       }
@@ -100,18 +101,18 @@ class BranchNode<V> implements Node<V> {
       out.writeRLPUnsafe(children.get(i).getRlpRef());
     }
     if (value.isPresent()) {
-      out.writeBytesValue(valueSerializer.apply(value.get()));
+      out.writeBytes(valueSerializer.apply(value.get()));
     } else {
       out.writeNull();
     }
     out.endList();
-    final BytesValue encoded = out.encoded();
+    final Bytes encoded = out.encoded();
     rlp = new WeakReference<>(encoded);
     return encoded;
   }
 
   @Override
-  public BytesValue getRlpRef() {
+  public Bytes getRlpRef() {
     if (isReferencedByHash()) {
       return RLP.encodeOne(getHash());
     } else {
@@ -133,7 +134,7 @@ class BranchNode<V> implements Node<V> {
   }
 
   @Override
-  public Node<V> replacePath(final BytesValue newPath) {
+  public Node<V> replacePath(final Bytes newPath) {
     return nodeFactory.createExtension(newPath, this);
   }
 
@@ -143,7 +144,7 @@ class BranchNode<V> implements Node<V> {
 
     if (updatedChild == NULL_NODE) {
       if (value.isPresent() && !hasChildren()) {
-        return nodeFactory.createLeaf(BytesValue.of(index), value.get());
+        return nodeFactory.createLeaf(Bytes.of(index), value.get());
       } else if (!value.isPresent()) {
         final Optional<Node<V>> flattened = maybeFlatten(newChildren);
         if (flattened.isPresent()) {
@@ -177,8 +178,8 @@ class BranchNode<V> implements Node<V> {
     if (onlyChildIndex >= 0) {
       // replace the path of the only child and return it
       final Node<V> onlyChild = children.get(onlyChildIndex);
-      final BytesValue onlyChildPath = onlyChild.getPath();
-      final MutableBytesValue completePath = MutableBytesValue.create(1 + onlyChildPath.size());
+      final Bytes onlyChildPath = onlyChild.getPath();
+      final MutableBytes completePath = MutableBytes.create(1 + onlyChildPath.size());
       completePath.set(0, (byte) onlyChildIndex);
       onlyChildPath.copyTo(completePath, 1);
       return Optional.of(onlyChild.replacePath(completePath));

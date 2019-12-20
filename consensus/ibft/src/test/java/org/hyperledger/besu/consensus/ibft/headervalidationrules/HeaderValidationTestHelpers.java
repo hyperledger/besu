@@ -21,10 +21,11 @@ import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.List;
 import java.util.Optional;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class HeaderValidationTestHelpers {
 
@@ -41,7 +42,7 @@ public class HeaderValidationTestHelpers {
     final IbftExtraData ibftExtraData =
         IbftExtraDataFixture.createExtraData(
             header,
-            BytesValue.wrap(new byte[IbftExtraData.EXTRA_VANITY_LENGTH]),
+            Bytes.wrap(new byte[IbftExtraData.EXTRA_VANITY_LENGTH]),
             Optional.of(Vote.authVote(Address.fromHexString("1"))),
             validators,
             committerKeyPairs,

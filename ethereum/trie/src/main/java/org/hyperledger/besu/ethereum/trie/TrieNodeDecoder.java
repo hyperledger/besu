@@ -16,9 +16,6 @@ package org.hyperledger.besu.ethereum.trie;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -29,9 +26,11 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 import com.google.common.collect.Streams;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class TrieNodeDecoder {
-  private static final StoredNodeFactory<BytesValue> emptyNodeFactory =
+  private static final StoredNodeFactory<Bytes> emptyNodeFactory =
       new StoredNodeFactory<>((h) -> Optional.empty(), Function.identity(), Function.identity());
 
   // Hide constructor for static utility class
@@ -43,7 +42,7 @@ public class TrieNodeDecoder {
    * @param rlp The rlp-encoded node
    * @return A {@code Node} representation of the rlp data
    */
-  public static Node<BytesValue> decode(final BytesValue rlp) {
+  public static Node<Bytes> decode(final Bytes rlp) {
     return emptyNodeFactory.decode(rlp);
   }
 
@@ -53,15 +52,15 @@ public class TrieNodeDecoder {
    * @param nodeRlp The bytes of the trie node to be decoded.
    * @return A list of nodes and node references embedded in the given rlp.
    */
-  public static List<Node<BytesValue>> decodeNodes(final BytesValue nodeRlp) {
-    Node<BytesValue> node = decode(nodeRlp);
-    List<Node<BytesValue>> nodes = new ArrayList<>();
+  public static List<Node<Bytes>> decodeNodes(final Bytes nodeRlp) {
+    Node<Bytes> node = decode(nodeRlp);
+    List<Node<Bytes>> nodes = new ArrayList<>();
     nodes.add(node);
 
-    final List<Node<BytesValue>> toProcess = new ArrayList<>();
+    final List<Node<Bytes>> toProcess = new ArrayList<>();
     toProcess.addAll(node.getChildren());
     while (!toProcess.isEmpty()) {
-      final Node<BytesValue> currentNode = toProcess.remove(0);
+      final Node<Bytes> currentNode = toProcess.remove(0);
       if (Objects.equals(NullNode.instance(), currentNode)) {
         // Skip null nodes
         continue;
@@ -87,7 +86,7 @@ public class TrieNodeDecoder {
    *     only.
    * @return A stream non-null nodes in the breadth-first traversal order.
    */
-  public static Stream<Node<BytesValue>> breadthFirstDecoder(
+  public static Stream<Node<Bytes>> breadthFirstDecoder(
       final NodeLoader nodeLoader, final Bytes32 rootHash, final int maxDepth) {
     checkArgument(maxDepth >= 0);
     return Streams.stream(new BreadthFirstIterator(nodeLoader, rootHash, maxDepth));
@@ -101,19 +100,19 @@ public class TrieNodeDecoder {
    * @param rootHash The hash of the root node
    * @return A stream non-null nodes in the breadth-first traversal order.
    */
-  public static Stream<Node<BytesValue>> breadthFirstDecoder(
+  public static Stream<Node<Bytes>> breadthFirstDecoder(
       final NodeLoader nodeLoader, final Bytes32 rootHash) {
     return breadthFirstDecoder(nodeLoader, rootHash, Integer.MAX_VALUE);
   }
 
-  private static class BreadthFirstIterator implements Iterator<Node<BytesValue>> {
+  private static class BreadthFirstIterator implements Iterator<Node<Bytes>> {
 
     private final int maxDepth;
-    private final StoredNodeFactory<BytesValue> nodeFactory;
+    private final StoredNodeFactory<Bytes> nodeFactory;
 
     private int currentDepth = 0;
-    private final List<Node<BytesValue>> currentNodes = new ArrayList<>();
-    private final List<Node<BytesValue>> nextNodes = new ArrayList<>();
+    private final List<Node<Bytes>> currentNodes = new ArrayList<>();
+    private final List<Node<Bytes>> nextNodes = new ArrayList<>();
 
     BreadthFirstIterator(final NodeLoader nodeLoader, final Bytes32 rootHash, final int maxDepth) {
       this.maxDepth = maxDepth;
@@ -134,24 +133,24 @@ public class TrieNodeDecoder {
     }
 
     @Override
-    public Node<BytesValue> next() {
+    public Node<Bytes> next() {
       if (!hasNext()) {
         throw new NoSuchElementException();
       }
 
-      final Node<BytesValue> nextNode = currentNodes.remove(0);
+      final Node<Bytes> nextNode = currentNodes.remove(0);
 
-      final List<Node<BytesValue>> children = new ArrayList<>();
+      final List<Node<Bytes>> children = new ArrayList<>();
       children.addAll(nextNode.getChildren());
       while (!children.isEmpty()) {
-        Node<BytesValue> child = children.remove(0);
+        Node<Bytes> child = children.remove(0);
         if (Objects.equals(child, NullNode.instance())) {
           // Ignore null nodes
           continue;
         }
         if (child.isReferencedByHash()) {
           // Retrieve hash-referenced child
-          final Optional<Node<BytesValue>> maybeChildNode = nodeFactory.retrieve(child.getHash());
+          final Optional<Node<Bytes>> maybeChildNode = nodeFactory.retrieve(child.getHash());
           if (!maybeChildNode.isPresent()) {
             continue;
           }

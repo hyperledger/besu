@@ -21,8 +21,8 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Proposal;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -31,7 +31,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class ProposalMessageTest {
   @Mock private Proposal proposalMessageData;
-  @Mock private BytesValue messageBytes;
+  @Mock private Bytes messageBytes;
   @Mock private MessageData messageData;
   @Mock private ProposalMessageData proposalMessage;
 

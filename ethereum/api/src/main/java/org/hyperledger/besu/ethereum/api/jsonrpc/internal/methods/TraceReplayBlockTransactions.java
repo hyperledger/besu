@@ -117,7 +117,7 @@ public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
         .ifPresent(
             transactionTrace -> {
               resultNode.put(
-                  "transactionHash", transactionTrace.getTransaction().getHash().getHexString());
+                  "transactionHash", transactionTrace.getTransaction().getHash().toHexString());
               resultNode.put("output", transactionTrace.getResult().getOutput().toString());
             });
 

@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -31,8 +32,6 @@ import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.util.InvalidConfigurationException;
 import org.hyperledger.besu.util.Subscribers;
-import org.hyperledger.besu.util.bytes.BytesValues;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -56,7 +55,7 @@ public class DefaultBlockchain implements MutableBlockchain {
   private final Subscribers<BlockAddedObserver> blockAddedObservers = Subscribers.create();
 
   private volatile BlockHeader chainHeader;
-  private volatile UInt256 totalDifficulty;
+  private volatile Difficulty totalDifficulty;
   private volatile int chainHeadTransactionCount;
   private volatile int chainHeadOmmerCount;
 
@@ -87,9 +86,7 @@ public class DefaultBlockchain implements MutableBlockchain {
         BesuMetricCategory.BLOCKCHAIN,
         "difficulty_total",
         "Total difficulty of the chainhead",
-        () ->
-            BytesValues.asUnsignedBigInteger(this.getChainHead().getTotalDifficulty().getBytes())
-                .longValue());
+        () -> this.getChainHead().getTotalDifficulty().toLong());
 
     metricsSystem.createLongGauge(
         BesuMetricCategory.BLOCKCHAIN,
@@ -197,7 +194,7 @@ public class DefaultBlockchain implements MutableBlockchain {
   }
 
   @Override
-  public Optional<UInt256> getTotalDifficultyByHash(final Hash blockHeaderHash) {
+  public Optional<Difficulty> getTotalDifficultyByHash(final Hash blockHeaderHash) {
     return blockchainStorage.getTotalDifficulty(blockHeaderHash);
   }
 
@@ -236,7 +233,7 @@ public class DefaultBlockchain implements MutableBlockchain {
     final Block block = blockWithReceipts.getBlock();
     final List<TransactionReceipt> receipts = blockWithReceipts.getReceipts();
     final Hash hash = block.getHash();
-    final UInt256 td = calculateTotalDifficulty(block);
+    final Difficulty td = calculateTotalDifficulty(block);
 
     final BlockchainStorage.Updater updater = blockchainStorage.updater();
 
@@ -257,23 +254,23 @@ public class DefaultBlockchain implements MutableBlockchain {
     return blockAddedEvent;
   }
 
-  private UInt256 calculateTotalDifficulty(final Block block) {
+  private Difficulty calculateTotalDifficulty(final Block block) {
     if (block.getHeader().getNumber() == BlockHeader.GENESIS_BLOCK_NUMBER) {
       return block.getHeader().getDifficulty();
     }
 
-    final UInt256 parentTotalDifficulty =
+    final Difficulty parentTotalDifficulty =
         blockchainStorage
             .getTotalDifficulty(block.getHeader().getParentHash())
             .orElseThrow(
                 () -> new IllegalStateException("Blockchain is missing total difficulty data."));
-    return block.getHeader().getDifficulty().plus(parentTotalDifficulty);
+    return block.getHeader().getDifficulty().add(parentTotalDifficulty);
   }
 
   private BlockAddedEvent updateCanonicalChainData(
       final BlockchainStorage.Updater updater,
       final BlockWithReceipts blockWithReceipts,
-      final UInt256 totalDifficulty) {
+      final Difficulty totalDifficulty) {
     final Block newBlock = blockWithReceipts.getBlock();
     final Hash chainHead = blockchainStorage.getChainHead().orElse(null);
     if (newBlock.getHeader().getNumber() != BlockHeader.GENESIS_BLOCK_NUMBER && chainHead == null) {
@@ -433,7 +430,7 @@ public class DefaultBlockchain implements MutableBlockchain {
     }
   }
 
-  void updateCacheForNewCanonicalHead(final Block block, final UInt256 uInt256) {
+  void updateCacheForNewCanonicalHead(final Block block, final Difficulty uInt256) {
     chainHeader = block.getHeader();
     totalDifficulty = uInt256;
     chainHeadTransactionCount = block.getBody().getTransactions().size();

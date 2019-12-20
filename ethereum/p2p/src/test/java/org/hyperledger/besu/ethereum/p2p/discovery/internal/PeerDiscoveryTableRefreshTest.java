@@ -28,7 +28,6 @@ import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryTestHelper;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.util.Subscribers;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -36,6 +35,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -100,7 +100,7 @@ public class PeerDiscoveryTableRefreshTest {
     assertThat(capturedFindNeighborsPackets.size()).isEqualTo(5);
 
     // Collect targets from find neighbors packets
-    final List<BytesValue> targets = new ArrayList<>();
+    final List<Bytes> targets = new ArrayList<>();
     for (final Packet captured : capturedFindNeighborsPackets) {
       final Optional<FindNeighborsPacketData> maybeData =
           captured.getPacketData(FindNeighborsPacketData.class);

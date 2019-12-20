@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat;
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.TracingUtils;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
@@ -67,7 +68,7 @@ public class Action {
     return new Builder();
   }
 
-  public static Builder createCallAction(
+  static Builder createCallAction(
       final Transaction transaction,
       final String lastContractAddress,
       final Address contractCallAddress,
@@ -79,10 +80,10 @@ public class Action {
         .input(TracingUtils.dumpMemory(traceFrame.getMemory()))
         .gas(gasRemaining.toHexString())
         .callType("call")
-        .value(transaction.getValue().toShortHexString());
+        .value(Quantity.create(transaction.getValue()));
   }
 
-  public static Builder createSelfDestructAction(
+  static Builder createSelfDestructAction(
       final String lastContractAddress, final Address contractCallAddress, final Wei balance) {
     return builder()
         .address(lastContractAddress)
@@ -163,7 +164,7 @@ public class Action {
       return new Builder()
           .from(trace.getTransaction().getSender().getHexString())
           .gas(trace.getTraceFrames().get(0).getGasRemaining().toHexString())
-          .value(trace.getTransaction().getValue().toShortHexString());
+          .value(Quantity.create(trace.getTransaction().getValue()));
     }
 
     public Builder callType(final String callType) {

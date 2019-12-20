@@ -27,9 +27,6 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.crypto.Hash;
 import org.hyperledger.besu.ethereum.trie.TrieIterator.LeafHandler;
 import org.hyperledger.besu.ethereum.trie.TrieIterator.State;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.nio.charset.StandardCharsets;
 import java.util.NavigableSet;
@@ -37,6 +34,9 @@ import java.util.Random;
 import java.util.TreeSet;
 import java.util.function.Function;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Test;
 import org.mockito.InOrder;
 
@@ -46,14 +46,14 @@ public class TrieIteratorTest {
       Bytes32.fromHexString("0x5555555555555555555555555555555555555555555555555555555555555555");
   private static final Bytes32 KEY_HASH2 =
       Bytes32.fromHexString("0x5555555555555555555555555555555555555555555555555555555555555556");
-  private static final BytesValue PATH1 = bytesToPath(KEY_HASH1);
-  private static final BytesValue PATH2 = bytesToPath(KEY_HASH2);
+  private static final Bytes PATH1 = bytesToPath(KEY_HASH1);
+  private static final Bytes PATH2 = bytesToPath(KEY_HASH2);
 
   @SuppressWarnings("unchecked")
   private final LeafHandler<String> leafHandler = mock(LeafHandler.class);
 
-  private final Function<String, BytesValue> valueSerializer =
-      value -> BytesValue.wrap(value.getBytes(StandardCharsets.UTF_8));
+  private final Function<String, Bytes> valueSerializer =
+      value -> Bytes.wrap(value.getBytes(StandardCharsets.UTF_8));
   private final DefaultNodeFactory<String> nodeFactory = new DefaultNodeFactory<>(valueSerializer);
   private final TrieIterator<String> iterator = new TrieIterator<>(leafHandler);
 
@@ -122,7 +122,8 @@ public class TrieIteratorTest {
     final int startNodeNumber = random.nextInt(Math.max(1, totalNodes - 1));
     final int stopNodeNumber = random.nextInt(Math.max(1, totalNodes - 1));
     for (int i = 0; i < totalNodes; i++) {
-      final Bytes32 keyHash = Hash.keccak256(UInt256.of(Math.abs(random.nextLong())).getBytes());
+      final Bytes32 keyHash =
+          Hash.keccak256(UInt256.valueOf(Math.abs(random.nextLong())).toBytes());
       root = root.accept(new PutVisitor<>(nodeFactory, "Value"), bytesToPath(keyHash));
       expectedKeyHashes.add(keyHash);
       if (i == startNodeNumber) {

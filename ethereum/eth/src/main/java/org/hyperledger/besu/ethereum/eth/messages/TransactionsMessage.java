@@ -20,10 +20,11 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Iterator;
 import java.util.function.Function;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class TransactionsMessage extends AbstractMessageData {
 
@@ -49,7 +50,7 @@ public class TransactionsMessage extends AbstractMessageData {
     return new TransactionsMessage(tmp.encoded());
   }
 
-  TransactionsMessage(final BytesValue data) {
+  TransactionsMessage(final Bytes data) {
     super(data);
   }
 

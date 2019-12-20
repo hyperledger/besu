@@ -15,13 +15,13 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.privacy;
 
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
-import org.hyperledger.besu.util.bytes.BytesValues;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import org.apache.tuweni.bytes.Bytes;
 
 @JsonPropertyOrder({
   "from",
@@ -49,9 +49,7 @@ public class PrivateTransactionLegacyResult extends PrivateTransactionResult {
   public PrivateTransactionLegacyResult(final PrivateTransaction tx) {
     super(tx);
     this.privateFor =
-        tx.getPrivateFor().get().stream()
-            .map(BytesValues::asBase64String)
-            .collect(Collectors.toList());
+        tx.getPrivateFor().get().stream().map(Bytes::toBase64String).collect(Collectors.toList());
   }
 
   @JsonGetter(value = "privateFor")

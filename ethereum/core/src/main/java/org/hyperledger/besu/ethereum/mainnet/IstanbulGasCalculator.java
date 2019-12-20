@@ -17,8 +17,9 @@ package org.hyperledger.besu.ethereum.mainnet;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class IstanbulGasCalculator extends ConstantinopleFixGasCalculator {
 
@@ -40,7 +41,7 @@ public class IstanbulGasCalculator extends ConstantinopleFixGasCalculator {
 
   @Override
   public Gas transactionIntrinsicGasCost(final Transaction transaction) {
-    final BytesValue payload = transaction.getPayload();
+    final Bytes payload = transaction.getPayloadBytes();
     int zeros = 0;
     for (int i = 0; i < payload.size(); i++) {
       if (payload.get(i) == 0) {

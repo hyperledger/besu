@@ -30,7 +30,6 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfigurati
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.testutil.BlockTestUtil;
 import org.hyperledger.besu.testutil.TestClock;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -39,6 +38,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
 import com.google.common.io.Resources;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -75,7 +75,7 @@ public final class RlpBlockImporterTest {
         rlpBlockImporter.importBlockchain(source, targetController);
     // Don't count the Genesis block
     assertThat(result.count).isEqualTo(999);
-    assertThat(result.td).isEqualTo(UInt256.of(21991996248790L));
+    assertThat(result.td).isEqualTo(UInt256.valueOf(21991996248790L));
   }
 
   @Test

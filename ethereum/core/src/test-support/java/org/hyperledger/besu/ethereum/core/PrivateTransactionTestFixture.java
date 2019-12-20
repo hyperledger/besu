@@ -17,14 +17,13 @@ package org.hyperledger.besu.ethereum.core;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.Restriction;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.BytesValues;
 
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
 
 import com.google.common.collect.Lists;
+import org.apache.tuweni.bytes.Bytes;
 
 public class PrivateTransactionTestFixture {
 
@@ -39,19 +38,19 @@ public class PrivateTransactionTestFixture {
 
   private Wei value = Wei.of(4);
 
-  private BytesValue payload = BytesValue.EMPTY;
+  private Bytes payload = Bytes.EMPTY;
 
   private Optional<BigInteger> chainId = Optional.of(BigInteger.valueOf(2018));
 
-  private BytesValue privateFrom =
-      BytesValues.fromBase64("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=");
+  private Bytes privateFrom =
+      Bytes.fromBase64String("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=");
 
-  private Optional<List<BytesValue>> privateFor =
+  private Optional<List<Bytes>> privateFor =
       Optional.of(
           Lists.newArrayList(
-              BytesValues.fromBase64("Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=")));
+              Bytes.fromBase64String("Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=")));
 
-  private Optional<BytesValue> privacyGroupId = Optional.empty();
+  private Optional<Bytes> privacyGroupId = Optional.empty();
 
   private Restriction restriction = Restriction.RESTRICTED;
 
@@ -114,7 +113,7 @@ public class PrivateTransactionTestFixture {
     return this;
   }
 
-  public PrivateTransactionTestFixture payload(final BytesValue payload) {
+  public PrivateTransactionTestFixture payload(final Bytes payload) {
     this.payload = payload;
     return this;
   }
@@ -124,17 +123,17 @@ public class PrivateTransactionTestFixture {
     return this;
   }
 
-  public PrivateTransactionTestFixture privateFrom(final BytesValue privateFrom) {
+  public PrivateTransactionTestFixture privateFrom(final Bytes privateFrom) {
     this.privateFrom = privateFrom;
     return this;
   }
 
-  public PrivateTransactionTestFixture privateFor(final List<BytesValue> privateFor) {
+  public PrivateTransactionTestFixture privateFor(final List<Bytes> privateFor) {
     this.privateFor = Optional.of(privateFor);
     return this;
   }
 
-  public PrivateTransactionTestFixture privacyGroupId(final BytesValue privacyGroupId) {
+  public PrivateTransactionTestFixture privacyGroupId(final Bytes privacyGroupId) {
     this.privacyGroupId = Optional.of(privacyGroupId);
     return this;
   }

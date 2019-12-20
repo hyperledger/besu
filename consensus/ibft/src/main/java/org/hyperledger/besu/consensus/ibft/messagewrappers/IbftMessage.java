@@ -21,9 +21,10 @@ import org.hyperledger.besu.consensus.ibft.payload.RoundSpecific;
 import org.hyperledger.besu.consensus.ibft.payload.SignedData;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.StringJoiner;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class IbftMessage<P extends Payload> implements Authored, RoundSpecific {
 
@@ -43,7 +44,7 @@ public class IbftMessage<P extends Payload> implements Authored, RoundSpecific {
     return payload.getPayload().getRoundIdentifier();
   }
 
-  public BytesValue encode() {
+  public Bytes encode() {
     final BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
     payload.writeTo(rlpOut);
     return rlpOut.encoded();

@@ -15,9 +15,9 @@
 package org.hyperledger.besu.ethereum.eth.manager;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.util.Subscribers;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import com.google.common.base.MoreObjects;
 
@@ -53,7 +53,7 @@ public class ChainState implements ChainHeadEstimate {
   }
 
   @Override
-  public UInt256 getEstimatedTotalDifficulty() {
+  public Difficulty getEstimatedTotalDifficulty() {
     return bestBlock.getTotalDifficulty();
   }
 
@@ -61,7 +61,7 @@ public class ChainState implements ChainHeadEstimate {
     return bestBlock;
   }
 
-  public void statusReceived(final Hash bestBlockHash, final UInt256 bestBlockTotalDifficulty) {
+  public void statusReceived(final Hash bestBlockHash, final Difficulty bestBlockTotalDifficulty) {
     synchronized (this) {
       bestBlock.totalDifficulty = bestBlockTotalDifficulty;
       bestBlock.hash = bestBlockHash;
@@ -87,10 +87,11 @@ public class ChainState implements ChainHeadEstimate {
   }
 
   public void updateForAnnouncedBlock(
-      final BlockHeader blockHeader, final UInt256 totalDifficulty) {
+      final BlockHeader blockHeader, final Difficulty totalDifficulty) {
     synchronized (this) {
       // Blocks are announced before they're imported so their chain head must be the parent
-      final UInt256 parentTotalDifficulty = totalDifficulty.minus(blockHeader.getDifficulty());
+      final Difficulty parentTotalDifficulty =
+          totalDifficulty.subtract(blockHeader.getDifficulty());
       final long parentBlockNumber = blockHeader.getNumber() - 1;
       if (parentTotalDifficulty.compareTo(bestBlock.totalDifficulty) >= 0) {
         bestBlock.totalDifficulty = parentTotalDifficulty;
@@ -123,7 +124,7 @@ public class ChainState implements ChainHeadEstimate {
   public static class BestBlock {
     volatile long number = 0L;
     volatile Hash hash = null;
-    volatile UInt256 totalDifficulty = UInt256.ZERO;
+    volatile Difficulty totalDifficulty = Difficulty.ZERO;
 
     public long getNumber() {
       return number;
@@ -133,7 +134,7 @@ public class ChainState implements ChainHeadEstimate {
       return hash;
     }
 
-    public UInt256 getTotalDifficulty() {
+    public Difficulty getTotalDifficulty() {
       return totalDifficulty;
     }
 

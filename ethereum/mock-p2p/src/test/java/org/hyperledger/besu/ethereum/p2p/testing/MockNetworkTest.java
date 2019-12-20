@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Arrays;
 import java.util.Optional;
@@ -32,6 +31,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Predicate;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
@@ -90,11 +90,10 @@ public final class MockNetworkTest {
       ThreadLocalRandom.current().nextBytes(data);
       final int code = 0x74;
       final PeerConnection connection = optionalConnection.get();
-      connection.send(cap, new RawMessage(code, BytesValue.wrap(data)));
+      connection.send(cap, new RawMessage(code, Bytes.wrap(data)));
       final Message receivedMessage = messageFuture.get();
       final MessageData receivedMessageData = receivedMessage.getData();
-      Assertions.assertThat(receivedMessageData.getData().compareTo(BytesValue.wrap(data)))
-          .isEqualTo(0);
+      Assertions.assertThat(receivedMessageData.getData()).isEqualTo(Bytes.wrap(data));
       Assertions.assertThat(receivedMessage.getConnection().getPeerInfo().getNodeId())
           .isEqualTo(two.getId());
       Assertions.assertThat(receivedMessageData.getSize()).isEqualTo(size);
@@ -118,7 +117,7 @@ public final class MockNetworkTest {
     }
   }
 
-  private static BytesValue randomId() {
+  private static Bytes randomId() {
     return Peer.randomId();
   }
 }

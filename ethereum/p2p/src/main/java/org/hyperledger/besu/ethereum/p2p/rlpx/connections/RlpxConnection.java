@@ -16,10 +16,11 @@ package org.hyperledger.besu.ethereum.p2p.rlpx.connections;
 
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public abstract class RlpxConnection {
 
@@ -44,7 +45,7 @@ public abstract class RlpxConnection {
 
   public abstract void disconnect(DisconnectReason reason);
 
-  public BytesValue getId() {
+  public Bytes getId() {
     return getPeer().getId();
   }
 

@@ -18,9 +18,9 @@ import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.vm.AbstractOperation;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.util.uint.Counter;
-import org.hyperledger.besu.util.uint.UInt256;
-import org.hyperledger.besu.util.uint.UInt256Value;
+
+import org.apache.tuweni.bytes.MutableBytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class ByteOperation extends AbstractOperation {
 
@@ -38,26 +38,26 @@ public class ByteOperation extends AbstractOperation {
       return UInt256.ZERO;
     }
 
-    final int index = offset.toInt();
+    final int index = offset.intValue();
     if (index >= 32) {
       return UInt256.ZERO;
     }
 
-    final byte b = seq.getBytes().get(index);
-    final Counter<UInt256> res = UInt256.newCounter();
-    res.getBytes().set(UInt256Value.SIZE - 1, b);
-    return res.get();
+    final byte b = seq.toBytes().get(index);
+    MutableBytes32 res = MutableBytes32.create();
+    res.set(31, b);
+    return UInt256.fromBytes(res);
   }
 
   @Override
   public void execute(final MessageFrame frame) {
 
-    final UInt256 value0 = frame.popStackItem().asUInt256();
-    final UInt256 value1 = frame.popStackItem().asUInt256();
+    final UInt256 value0 = UInt256.fromBytes(frame.popStackItem());
+    final UInt256 value1 = UInt256.fromBytes(frame.popStackItem());
 
     // Stack items are reversed for the BYTE operation.
     final UInt256 result = getByte(value1, value0);
 
-    frame.pushStackItem(result.getBytes());
+    frame.pushStackItem(result.toBytes());
   }
 }

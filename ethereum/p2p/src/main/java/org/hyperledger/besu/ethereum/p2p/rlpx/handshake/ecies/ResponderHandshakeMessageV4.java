@@ -18,8 +18,9 @@ import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class ResponderHandshakeMessageV4 implements ResponderHandshakeMessage {
 
@@ -32,11 +33,11 @@ public class ResponderHandshakeMessageV4 implements ResponderHandshakeMessage {
     return new ResponderHandshakeMessageV4(ephPublicKey, nonce);
   }
 
-  public static ResponderHandshakeMessageV4 decode(final BytesValue raw) {
+  public static ResponderHandshakeMessageV4 decode(final Bytes raw) {
     final RLPInput input = new BytesValueRLPInput(raw, true);
     input.enterList();
     return new ResponderHandshakeMessageV4(
-        SECP256K1.PublicKey.create(input.readBytesValue()), input.readBytes32());
+        SECP256K1.PublicKey.create(input.readBytes()), input.readBytes32());
   }
 
   private ResponderHandshakeMessageV4(final SECP256K1.PublicKey ephPublicKey, final Bytes32 nonce) {
@@ -55,11 +56,11 @@ public class ResponderHandshakeMessageV4 implements ResponderHandshakeMessage {
   }
 
   @Override
-  public BytesValue encode() {
+  public Bytes encode() {
     final BytesValueRLPOutput temp = new BytesValueRLPOutput();
     temp.startList();
-    temp.writeBytesValue(ephPublicKey.getEncodedBytes());
-    temp.writeBytesValue(nonce);
+    temp.writeBytes(ephPublicKey.getEncodedBytes());
+    temp.writeBytes(nonce);
     temp.writeIntScalar(InitiatorHandshakeMessageV4.VERSION);
     temp.endList();
     return temp.encoded();

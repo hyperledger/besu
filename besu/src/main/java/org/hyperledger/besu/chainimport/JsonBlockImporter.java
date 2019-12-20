@@ -27,7 +27,6 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -42,6 +41,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 /**
  * Tool for importing blocks with transactions from human-readable json.
@@ -127,7 +127,7 @@ public class JsonBlockImporter<C> {
       // For simplicity only set these for ethash.  Other consensus algorithms use these fields for
       // special purposes or ignore them
       miner.setCoinbase(blockData.getCoinbase().orElse(Address.ZERO));
-      miner.setExtraData(blockData.getExtraData().orElse(BytesValue.EMPTY));
+      miner.setExtraData(blockData.getExtraData().orElse(Bytes.EMPTY));
     } else if (blockData.getCoinbase().isPresent() || blockData.getExtraData().isPresent()) {
       // Fail if these fields are set for non-ethash chains
       final Stream.Builder<String> fields = Stream.builder();

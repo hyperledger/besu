@@ -14,11 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.p2p.rlpx.wire;
 
-import static org.hyperledger.besu.util.bytes.BytesValue.wrap;
+import static org.apache.tuweni.bytes.Bytes.wrap;
 
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-import org.hyperledger.besu.util.bytes.BytesValues;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
@@ -52,14 +51,14 @@ public class Capability {
 
   public void writeTo(final RLPOutput out) {
     out.startList();
-    out.writeBytesValue(wrap(getName().getBytes(StandardCharsets.US_ASCII)));
+    out.writeBytes(wrap(getName().getBytes(StandardCharsets.US_ASCII)));
     out.writeUnsignedByte(getVersion());
     out.endList();
   }
 
   public static Capability readFrom(final RLPInput in) {
     in.enterList();
-    final String name = in.readBytesValue(BytesValues::asString);
+    final String name = new String(in.readBytes().toArrayUnsafe(), StandardCharsets.UTF_8);
     final int version = in.readUnsignedByte();
     in.leaveList();
     return Capability.create(name, version);
