@@ -92,7 +92,7 @@ public class PrivGetTransactionReceipt implements JsonRpcMethod {
     final String privacyGroupId;
     try {
       final ReceiveResponse receiveResponse =
-          privacyController.retrieveTransaction(transaction.getPayloadBytes().toBase64String());
+          privacyController.retrieveTransaction(transaction.getPayload().toBase64String());
       LOG.trace("Received transaction information");
 
       final BytesValueRLPInput input =

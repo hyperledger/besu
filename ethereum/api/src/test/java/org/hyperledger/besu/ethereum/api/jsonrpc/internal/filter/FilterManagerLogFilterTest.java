@@ -35,7 +35,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
-import org.hyperledger.besu.ethereum.core.UnformattedDataWrapper;
+import org.hyperledger.besu.ethereum.core.UnformattedDataImpl;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 
 import java.util.List;
@@ -200,7 +200,7 @@ public class FilterManagerLogFilterTest {
         Hash.ZERO,
         0,
         Address.fromHexString("0x0"),
-        new UnformattedDataWrapper(Bytes.EMPTY),
+        new UnformattedDataImpl(Bytes.EMPTY),
         Lists.newArrayList(),
         false);
   }
