@@ -21,17 +21,18 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.math.BigInteger;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public final class StatusMessage extends AbstractMessageData {
 
   private EthStatus status;
 
-  public StatusMessage(final BytesValue data) {
+  public StatusMessage(final Bytes data) {
     super(data);
   }
 
@@ -127,8 +128,8 @@ public final class StatusMessage extends AbstractMessageData {
       out.writeIntScalar(protocolVersion);
       out.writeBigIntegerScalar(networkId);
       out.writeUInt256Scalar(totalDifficulty);
-      out.writeBytesValue(bestHash);
-      out.writeBytesValue(genesisHash);
+      out.writeBytes(bestHash);
+      out.writeBytes(genesisHash);
 
       out.endList();
     }

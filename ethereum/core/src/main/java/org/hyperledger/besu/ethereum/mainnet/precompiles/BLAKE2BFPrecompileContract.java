@@ -22,12 +22,12 @@ import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.mainnet.AbstractPrecompiledContract;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.math.BigInteger;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 // https://github.com/keep-network/go-ethereum/pull/4
 public class BLAKE2BFPrecompileContract extends AbstractPrecompiledContract {
@@ -39,7 +39,7 @@ public class BLAKE2BFPrecompileContract extends AbstractPrecompiledContract {
   }
 
   @Override
-  public Gas gasRequirement(final BytesValue input) {
+  public Gas gasRequirement(final Bytes input) {
     if (input.size() != MESSAGE_LENGTH_BYTES) {
       // Input is malformed, we can't read the number of rounds.
       // Precompile can't be executed so we set its price to 0.
@@ -50,13 +50,13 @@ public class BLAKE2BFPrecompileContract extends AbstractPrecompiledContract {
       return Gas.ZERO;
     }
 
-    final byte[] roundsBytes = copyOfRange(input.extractArray(), 0, 4);
+    final byte[] roundsBytes = copyOfRange(input.toArray(), 0, 4);
     final BigInteger rounds = new BigInteger(1, roundsBytes);
     return Gas.of(rounds);
   }
 
   @Override
-  public BytesValue compute(final BytesValue input, final MessageFrame messageFrame) {
+  public Bytes compute(final Bytes input, final MessageFrame messageFrame) {
     if (input.size() != MESSAGE_LENGTH_BYTES) {
       LOG.trace(
           "Incorrect input length.  Expected {} and got {}", MESSAGE_LENGTH_BYTES, input.size());

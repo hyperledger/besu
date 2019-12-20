@@ -28,7 +28,6 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBConfigurationBuilder;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.unsegmented.RocksDBKeyValueStorage;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -36,6 +35,7 @@ import java.nio.file.Path;
 
 import com.google.common.io.MoreFiles;
 import com.google.common.io.RecursiveDeleteOption;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class OperationBenchmarkHelper {
 

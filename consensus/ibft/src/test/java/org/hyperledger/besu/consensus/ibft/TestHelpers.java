@@ -29,12 +29,13 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator.BlockOptions;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class TestHelpers {
 
@@ -46,9 +47,9 @@ public class TestHelpers {
 
   public static Block createProposalBlock(
       final List<Address> validators, final ConsensusRoundIdentifier roundId) {
-    final BytesValue extraData =
+    final Bytes extraData =
         new IbftExtraData(
-                BytesValue.wrap(new byte[32]),
+                Bytes.wrap(new byte[32]),
                 Collections.emptyList(),
                 Optional.empty(),
                 roundId.getRoundNumber(),

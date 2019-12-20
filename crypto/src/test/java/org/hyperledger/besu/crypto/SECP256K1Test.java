@@ -15,12 +15,9 @@
 package org.hyperledger.besu.crypto;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.apache.tuweni.bytes.Bytes.fromHexString;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.crypto.Hash.keccak256;
-import static org.hyperledger.besu.util.bytes.BytesValue.fromHexString;
-
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.io.File;
 import java.math.BigInteger;
@@ -28,6 +25,8 @@ import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -73,17 +72,17 @@ public class SECP256K1Test {
 
   @Test(expected = NullPointerException.class)
   public void createPublicKey_NullEncoding() {
-    SECP256K1.PublicKey.create((BytesValue) null);
+    SECP256K1.PublicKey.create((Bytes) null);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void createPublicKey_EncodingTooShort() {
-    SECP256K1.PublicKey.create(BytesValue.wrap(new byte[63]));
+    SECP256K1.PublicKey.create(Bytes.wrap(new byte[63]));
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void createPublicKey_EncodingTooLong() {
-    SECP256K1.PublicKey.create(BytesValue.wrap(new byte[65]));
+    SECP256K1.PublicKey.create(Bytes.wrap(new byte[65]));
   }
 
   @Test
@@ -112,7 +111,7 @@ public class SECP256K1Test {
 
   @Test(expected = NullPointerException.class)
   public void createKeyPair_PublicKeyNull() {
-    new SECP256K1.KeyPair(null, SECP256K1.PublicKey.create(BytesValue.wrap(new byte[64])));
+    new SECP256K1.KeyPair(null, SECP256K1.PublicKey.create(Bytes.wrap(new byte[64])));
   }
 
   @Test(expected = NullPointerException.class)
@@ -198,8 +197,7 @@ public class SECP256K1Test {
             new BigInteger("c85ef7d79691fe79573b1a7064c19c1a9819ebdbd1faaab1a8ec92344438aaf4", 16));
     final SECP256K1.KeyPair keyPair = SECP256K1.KeyPair.create(privateKey);
 
-    final BytesValue data =
-        BytesValue.wrap("This is an example of a signed message.".getBytes(UTF_8));
+    final Bytes data = Bytes.wrap("This is an example of a signed message.".getBytes(UTF_8));
     final Bytes32 dataHash = keccak256(data);
     final SECP256K1.Signature signature = SECP256K1.sign(dataHash, keyPair);
 
@@ -215,8 +213,7 @@ public class SECP256K1Test {
             new BigInteger("c85ef7d79691fe79573b1a7064c19c1a9819ebdbd1faaab1a8ec92344438aaf4", 16));
     final SECP256K1.KeyPair keyPair = SECP256K1.KeyPair.create(privateKey);
 
-    final BytesValue data =
-        BytesValue.wrap("This is an example of a signed message.".getBytes(UTF_8));
+    final Bytes data = Bytes.wrap("This is an example of a signed message.".getBytes(UTF_8));
     final Bytes32 dataHash = keccak256(data);
     final SECP256K1.Signature expectedSignature =
         SECP256K1.Signature.create(
@@ -235,8 +232,7 @@ public class SECP256K1Test {
             new BigInteger("c85ef7d79691fe79573b1a7064c19c1a9819ebdbd1faaab1a8ec92344438aaf4", 16));
     final SECP256K1.KeyPair keyPair = SECP256K1.KeyPair.create(privateKey);
 
-    final BytesValue data =
-        BytesValue.wrap("This is an example of a signed message.".getBytes(UTF_8));
+    final Bytes data = Bytes.wrap("This is an example of a signed message.".getBytes(UTF_8));
     final Bytes32 dataHash = keccak256(data);
 
     final SECP256K1.Signature signature = SECP256K1.sign(dataHash, keyPair);
@@ -253,7 +249,7 @@ public class SECP256K1Test {
     final SECP256K1.PrivateKey privateKey = SECP256K1.PrivateKey.load(file);
     assertThat(privateKey.getEncodedBytes())
         .isEqualTo(
-            BytesValue.fromHexString(
+            Bytes.fromHexString(
                 "000000000000000000000000000000000000000000000000000000000000000A"));
   }
 

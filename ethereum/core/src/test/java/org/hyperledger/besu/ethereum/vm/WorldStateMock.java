@@ -22,14 +22,14 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 
 /** Represent a mock worldState for testing. */
 public class WorldStateMock extends DefaultMutableWorldState {
@@ -37,7 +37,7 @@ public class WorldStateMock extends DefaultMutableWorldState {
   public static class AccountMock {
     private final long nonce;
     private final Wei balance;
-    private final BytesValue code;
+    private final Bytes code;
     private final int version;
     private final Map<UInt256, UInt256> storage;
 
@@ -57,7 +57,7 @@ public class WorldStateMock extends DefaultMutableWorldState {
         @JsonProperty("version") final String version) {
       this.nonce = Long.decode(nonce);
       this.balance = Wei.fromHexString(balance);
-      this.code = BytesValue.fromHexString(code);
+      this.code = Bytes.fromHexString(code);
       this.storage = parseStorage(storage);
       if (version != null) {
         this.version = Integer.decode(version);
@@ -74,7 +74,7 @@ public class WorldStateMock extends DefaultMutableWorldState {
       return balance;
     }
 
-    public BytesValue getCode() {
+    public Bytes getCode() {
       return code;
     }
 

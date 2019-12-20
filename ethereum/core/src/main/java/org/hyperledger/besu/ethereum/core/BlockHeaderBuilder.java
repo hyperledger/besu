@@ -18,11 +18,11 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
-
 import java.time.Instant;
 import java.util.OptionalLong;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 
 /** A utility class for building block headers. */
 public class BlockHeaderBuilder {
@@ -51,7 +51,7 @@ public class BlockHeaderBuilder {
 
   private long timestamp = -1L;
 
-  private BytesValue extraData;
+  private Bytes extraData;
 
   private Hash mixHash;
 
@@ -74,12 +74,12 @@ public class BlockHeaderBuilder {
         .transactionsRoot(header.getTransactionsRoot())
         .receiptsRoot(header.getReceiptsRoot())
         .logsBloom(header.getLogsBloom())
-        .difficulty(header.getDifficulty())
+        .difficulty(header.internalGetDifficulty())
         .number(header.getNumber())
         .gasLimit(header.getGasLimit())
         .gasUsed(header.getGasUsed())
         .timestamp(header.getTimestamp())
-        .extraData(header.getExtraData())
+        .extraData(header.internalGetExtraData())
         .mixHash(header.getMixHash())
         .nonce(header.getNonce());
   }
@@ -185,7 +185,7 @@ public class BlockHeaderBuilder {
     checkNotNull(processableBlockHeader);
     parentHash(processableBlockHeader.getParentHash());
     coinbase(processableBlockHeader.getCoinbase());
-    difficulty(processableBlockHeader.getDifficulty());
+    difficulty(processableBlockHeader.internalGetDifficulty());
     number(processableBlockHeader.getNumber());
     gasLimit(processableBlockHeader.getGasLimit());
     timestamp(processableBlockHeader.getTimestamp());
@@ -201,12 +201,12 @@ public class BlockHeaderBuilder {
     transactionsRoot(sealableBlockHeader.getTransactionsRoot());
     receiptsRoot(sealableBlockHeader.getReceiptsRoot());
     logsBloom(sealableBlockHeader.getLogsBloom());
-    difficulty(sealableBlockHeader.getDifficulty());
+    difficulty(sealableBlockHeader.internalGetDifficulty());
     number(sealableBlockHeader.getNumber());
     gasLimit(sealableBlockHeader.getGasLimit());
     gasUsed(sealableBlockHeader.getGasUsed());
     timestamp(sealableBlockHeader.getTimestamp());
-    extraData(sealableBlockHeader.getExtraData());
+    extraData(sealableBlockHeader.internalGetExtraData());
     return this;
   }
 
@@ -282,7 +282,7 @@ public class BlockHeaderBuilder {
     return this;
   }
 
-  public BlockHeaderBuilder extraData(final BytesValue data) {
+  public BlockHeaderBuilder extraData(final Bytes data) {
     checkNotNull(data);
 
     this.extraData = data;

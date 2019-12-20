@@ -28,13 +28,13 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Test;
 
 public class IbftBlockHeaderValidationRulesetFactoryTest {
@@ -211,7 +211,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
         getPresetHeaderBuilder(1, proposerKeyPair, validators, null).buildHeader();
     final BlockHeader blockHeader =
         getPresetHeaderBuilder(2, proposerKeyPair, validators, parentHeader)
-            .difficulty(UInt256.of(5))
+            .difficulty(UInt256.valueOf(5))
             .buildHeader();
 
     final BlockHeaderValidator<IbftContext> validator =
@@ -314,7 +314,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
     final IbftExtraData ibftExtraData =
         IbftExtraDataFixture.createExtraData(
             builder.buildHeader(),
-            BytesValue.wrap(new byte[IbftExtraData.EXTRA_VANITY_LENGTH]),
+            Bytes.wrap(new byte[IbftExtraData.EXTRA_VANITY_LENGTH]),
             Optional.of(Vote.authVote(Address.fromHexString("1"))),
             validators,
             singletonList(proposerKeyPair),

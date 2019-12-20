@@ -17,11 +17,10 @@ package org.hyperledger.besu.cli.options;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import org.hyperledger.besu.util.uint.UInt256;
-
 import java.math.BigInteger;
 
 import com.google.common.collect.Range;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Test;
 
 public class OptionParserTest {
@@ -70,7 +69,7 @@ public class OptionParserTest {
 
   @Test
   public void format_uint256() {
-    final UInt256 input = UInt256.of(new BigInteger("123456789", 10));
+    final UInt256 input = UInt256.valueOf(new BigInteger("123456789", 10));
     final String expected = "123456789";
     assertThat(OptionParser.format(input)).isEqualTo(expected);
   }

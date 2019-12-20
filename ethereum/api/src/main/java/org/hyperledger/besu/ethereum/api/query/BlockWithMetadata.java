@@ -15,9 +15,10 @@
 package org.hyperledger.besu.ethereum.api.query;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.List;
+
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class BlockWithMetadata<T, O> {
 

@@ -26,7 +26,8 @@ import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.GasLimitRange
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.GasUsageValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.TimestampBoundedByFutureParameter;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.TimestampMoreRecentThanParent;
-import org.hyperledger.besu.util.uint.UInt256;
+
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class IbftBlockHeaderValidationRulesetFactory {
 
@@ -70,7 +71,7 @@ public class IbftBlockHeaderValidationRulesetFactory {
                 "OmmersHash", BlockHeader::getOmmersHash, Hash.EMPTY_LIST_HASH))
         .addRule(
             new ConstantFieldValidationRule<>(
-                "Difficulty", BlockHeader::getDifficulty, UInt256.ONE))
+                "Difficulty", BlockHeader::internalGetDifficulty, UInt256.ONE))
         .addRule(new VoteValidationRule())
         .addRule(new IbftExtraDataValidationRule(validateCommitSeals))
         .build();

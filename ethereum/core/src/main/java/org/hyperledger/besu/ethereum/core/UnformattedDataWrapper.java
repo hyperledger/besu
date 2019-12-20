@@ -1,4 +1,5 @@
 /*
+ *
  * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
@@ -11,47 +12,55 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
+ *
  */
-package org.hyperledger.besu.ethereum.p2p.peers;
+package org.hyperledger.besu.ethereum.core;
 
-import org.hyperledger.besu.crypto.Hash;
+import org.hyperledger.besu.plugin.data.UnformattedData;
 
 import java.util.Objects;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
-public class DefaultPeerId implements PeerId {
-  protected final Bytes id;
-  private Bytes32 keccak256;
+/** Wrapper for a Bytes value to be exposed as UnformattedData. */
+public class UnformattedDataWrapper implements UnformattedData {
 
-  public DefaultPeerId(final Bytes id) {
-    this.id = id;
+  private final Bytes value;
+
+  public UnformattedDataWrapper(final Bytes value) {
+    this.value = value;
   }
 
   @Override
-  public Bytes getId() {
-    return id;
+  public byte[] getByteArray() {
+    return value.toArray();
   }
 
   @Override
-  public Bytes32 keccak256() {
-    if (keccak256 == null) {
-      keccak256 = Hash.keccak256(getId());
-    }
-    return keccak256;
+  public String getHexString() {
+    return value.toHexString();
+  }
+
+  @Override
+  public int size() {
+    return value.size();
+  }
+
+  @Override
+  public String toString() {
+    return getHexString();
   }
 
   @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
-    if (o == null || o.getClass().isAssignableFrom(this.getClass())) return false;
-    final DefaultPeerId that = (DefaultPeerId) o;
-    return Objects.equals(id, that.id);
+    if (o == null || getClass() != o.getClass()) return false;
+    UnformattedDataWrapper that = (UnformattedDataWrapper) o;
+    return Objects.equals(value, that.value);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id);
+    return Objects.hash(value);
   }
 }

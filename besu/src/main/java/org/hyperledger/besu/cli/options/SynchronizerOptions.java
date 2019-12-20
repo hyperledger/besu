@@ -15,12 +15,12 @@
 package org.hyperledger.besu.cli.options;
 
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.Arrays;
 import java.util.List;
 
 import com.google.common.collect.Range;
+import org.apache.tuweni.units.bigints.UInt256;
 import picocli.CommandLine;
 
 public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration.Builder> {

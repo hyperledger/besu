@@ -34,8 +34,6 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.math.BigInteger;
 import java.util.Collections;
@@ -48,6 +46,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.google.common.base.MoreObjects;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public final class GenesisState {
 
@@ -163,7 +163,7 @@ public final class GenesisState {
     return genesis
         .getCoinbase()
         .map(str -> withNiceErrorMessage("coinbase", str, Address::fromHexString))
-        .orElseGet(() -> Address.wrap(BytesValue.wrap(new byte[Address.SIZE])));
+        .orElseGet(() -> Address.wrap(Bytes.wrap(new byte[Address.SIZE])));
   }
 
   private static <T> T withNiceErrorMessage(
@@ -185,8 +185,8 @@ public final class GenesisState {
     return withNiceErrorMessage("parentHash", genesis.getParentHash(), Hash::fromHexStringLenient);
   }
 
-  private static BytesValue parseExtraData(final GenesisConfigFile genesis) {
-    return withNiceErrorMessage("extraData", genesis.getExtraData(), BytesValue::fromHexString);
+  private static Bytes parseExtraData(final GenesisConfigFile genesis) {
+    return withNiceErrorMessage("extraData", genesis.getExtraData(), Bytes::fromHexString);
   }
 
   private static UInt256 parseDifficulty(final GenesisConfigFile genesis) {
@@ -227,7 +227,7 @@ public final class GenesisState {
     final Address address;
     final Wei balance;
     final Map<UInt256, UInt256> storage;
-    final BytesValue code;
+    final Bytes code;
     final int version;
 
     static GenesisAccount fromAllocation(final GenesisAllocation allocation) {
@@ -250,7 +250,7 @@ public final class GenesisState {
       this.nonce = withNiceErrorMessage("nonce", hexNonce, GenesisState::parseUnsignedLong);
       this.address = withNiceErrorMessage("address", hexAddress, Address::fromHexString);
       this.balance = withNiceErrorMessage("balance", balance, this::parseBalance);
-      this.code = hexCode != null ? BytesValue.fromHexString(hexCode) : null;
+      this.code = hexCode != null ? Bytes.fromHexString(hexCode) : null;
       this.version = version != null ? Integer.decode(version) : Account.DEFAULT_VERSION;
       this.storage = parseStorage(storage);
     }
@@ -258,7 +258,7 @@ public final class GenesisState {
     private Wei parseBalance(final String balance) {
       final BigInteger val;
       if (balance.startsWith("0x")) {
-        val = new BigInteger(1, BytesValue.fromHexStringLenient(balance).extractArray());
+        val = new BigInteger(1, Bytes.fromHexStringLenient(balance).toArrayUnsafe());
       } else {
         val = new BigInteger(balance);
       }

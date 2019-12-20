@@ -28,8 +28,6 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.Arrays;
 import java.util.List;
@@ -37,6 +35,8 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Test;
 
 public class IbftBlockHashingTest {
@@ -46,7 +46,7 @@ public class IbftBlockHashingTest {
       Arrays.asList(Address.fromHexString("1"), Address.fromHexString("2"));
   private static final Optional<Vote> VOTE = Optional.of(Vote.authVote(Address.fromHexString("3")));
   private static final int ROUND = 0x00FEDCBA;
-  private static final BytesValue VANITY_DATA = vanityBytes();
+  private static final Bytes VANITY_DATA = vanityBytes();
 
   private static final BlockHeader HEADER_TO_BE_HASHED = headerToBeHashed();
   private static final Hash EXPECTED_HEADER_HASH = expectedHeaderHash();
@@ -94,7 +94,7 @@ public class IbftBlockHashingTest {
 
   private static List<KeyPair> committersKeyPairs() {
     return IntStream.rangeClosed(1, 4)
-        .mapToObj(i -> KeyPair.create(PrivateKey.create(UInt256.of(i).getBytes())))
+        .mapToObj(i -> KeyPair.create(PrivateKey.create(UInt256.valueOf(i).toBytes())))
         .collect(Collectors.toList());
   }
 
@@ -132,12 +132,12 @@ public class IbftBlockHashingTest {
     return builder;
   }
 
-  private static BytesValue vanityBytes() {
+  private static Bytes vanityBytes() {
     final byte[] vanity_bytes = new byte[32];
     for (int i = 0; i < vanity_bytes.length; i++) {
       vanity_bytes[i] = (byte) i;
     }
-    return BytesValue.wrap(vanity_bytes);
+    return Bytes.wrap(vanity_bytes);
   }
 
   private static BlockHeader headerToBeHashed() {

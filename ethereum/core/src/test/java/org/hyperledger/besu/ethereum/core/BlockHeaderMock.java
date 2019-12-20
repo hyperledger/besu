@@ -16,12 +16,12 @@ package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.vm.TestBlockchain;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 
 /** A memory mock for testing. */
 @JsonIgnoreProperties("previousHash")
@@ -54,7 +54,7 @@ public class BlockHeaderMock extends BlockHeader {
         Long.decode(gasLimit),
         0L,
         Long.decode(timestamp),
-        BytesValue.EMPTY,
+        Bytes.EMPTY,
         Hash.ZERO,
         0L,
         new MainnetBlockHeaderFunctions());

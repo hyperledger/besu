@@ -165,21 +165,21 @@ public final class EthHash {
   public static byte[] hashHeader(final SealableBlockHeader header) {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.startList();
-    out.writeBytesValue(header.getParentHash());
-    out.writeBytesValue(header.getOmmersHash());
-    out.writeBytesValue(header.getCoinbase());
-    out.writeBytesValue(header.getStateRoot());
-    out.writeBytesValue(header.getTransactionsRoot());
-    out.writeBytesValue(header.getReceiptsRoot());
-    out.writeBytesValue(header.getLogsBloom().getBytes());
-    out.writeUInt256Scalar(header.getDifficulty());
+    out.writeBytes(header.getParentHash());
+    out.writeBytes(header.getOmmersHash());
+    out.writeBytes(header.getCoinbase());
+    out.writeBytes(header.getStateRoot());
+    out.writeBytes(header.getTransactionsRoot());
+    out.writeBytes(header.getReceiptsRoot());
+    out.writeBytes(header.getLogsBloom().getBytes());
+    out.writeUInt256Scalar(header.internalGetDifficulty());
     out.writeLongScalar(header.getNumber());
     out.writeLongScalar(header.getGasLimit());
     out.writeLongScalar(header.getGasUsed());
     out.writeLongScalar(header.getTimestamp());
-    out.writeBytesValue(header.getExtraData());
+    out.writeBytes(header.internalGetExtraData());
     out.endList();
-    return DirectAcyclicGraphSeed.KECCAK_256.get().digest(out.encoded().extractArray());
+    return DirectAcyclicGraphSeed.KECCAK_256.get().digest(out.encoded().toArray());
   }
 
   /**

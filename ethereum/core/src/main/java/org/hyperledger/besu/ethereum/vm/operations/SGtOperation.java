@@ -18,8 +18,11 @@ import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.vm.AbstractOperation;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.uint.Int256;
+
+import java.math.BigInteger;
+
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class SGtOperation extends AbstractOperation {
 
@@ -34,10 +37,13 @@ public class SGtOperation extends AbstractOperation {
 
   @Override
   public void execute(final MessageFrame frame) {
-    final Int256 value0 = frame.popStackItem().asInt256();
-    final Int256 value1 = frame.popStackItem().asInt256();
+    final Bytes32 value0 = frame.popStackItem();
+    final Bytes32 value1 = frame.popStackItem();
 
-    final Bytes32 result = value0.compareTo(value1) > 0 ? Bytes32.TRUE : Bytes32.FALSE;
+    BigInteger b0 = value0.toBigInteger();
+    BigInteger b1 = value1.toBigInteger();
+
+    final Bytes32 result = b0.compareTo(b1) > 0 ? UInt256.ONE.toBytes() : UInt256.ZERO.toBytes();
 
     frame.pushStackItem(result);
   }

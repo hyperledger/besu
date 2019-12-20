@@ -30,7 +30,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.util.RawBlockIterator;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -43,6 +42,7 @@ import java.util.concurrent.Semaphore;
 
 import com.google.common.base.MoreObjects;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.units.bigints.UInt256;
 
 /** Tool for importing rlp-encoded block data from files. */
 public class RlpBlockImporter {

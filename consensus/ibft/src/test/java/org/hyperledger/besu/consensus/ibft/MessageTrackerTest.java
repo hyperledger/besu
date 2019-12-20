@@ -17,8 +17,8 @@ package org.hyperledger.besu.consensus.ibft;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
 public class MessageTrackerTest {
@@ -26,11 +26,9 @@ public class MessageTrackerTest {
 
   @Test
   public void duplicateMessagesAreConsideredSeen() {
-    final MessageData arbitraryMessage_1 =
-        createAnonymousMessageData(BytesValue.wrap(new byte[4]), 1);
+    final MessageData arbitraryMessage_1 = createAnonymousMessageData(Bytes.wrap(new byte[4]), 1);
 
-    final MessageData arbitraryMessage_2 =
-        createAnonymousMessageData(BytesValue.wrap(new byte[4]), 1);
+    final MessageData arbitraryMessage_2 = createAnonymousMessageData(Bytes.wrap(new byte[4]), 1);
 
     assertThat(messageTracker.hasSeenMessage(arbitraryMessage_1)).isFalse();
     assertThat(messageTracker.hasSeenMessage(arbitraryMessage_2)).isFalse();
@@ -39,7 +37,7 @@ public class MessageTrackerTest {
     assertThat(messageTracker.hasSeenMessage(arbitraryMessage_2)).isTrue();
   }
 
-  private MessageData createAnonymousMessageData(final BytesValue content, final int code) {
+  private MessageData createAnonymousMessageData(final Bytes content, final int code) {
     return new MessageData() {
 
       @Override
@@ -53,7 +51,7 @@ public class MessageTrackerTest {
       }
 
       @Override
-      public BytesValue getData() {
+      public Bytes getData() {
         return content;
       }
     };

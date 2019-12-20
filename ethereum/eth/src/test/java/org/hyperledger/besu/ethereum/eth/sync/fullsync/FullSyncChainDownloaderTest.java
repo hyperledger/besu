@@ -42,7 +42,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,6 +49,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
+import org.apache.tuweni.units.bigints.UInt256;
 import org.awaitility.Awaitility;
 import org.junit.After;
 import org.junit.Before;
@@ -221,8 +221,7 @@ public class FullSyncChainDownloaderTest {
     localBlockchainSetup.importFirstBlocks(3);
     gen = new BlockDataGenerator();
     final Block chainHead = localBlockchain.getChainHeadBlock();
-    final Block forkBlock =
-        gen.block(gen.nextBlockOptions(chainHead).setDifficulty(UInt256.of(0L)));
+    final Block forkBlock = gen.block(gen.nextBlockOptions(chainHead).setDifficulty(UInt256.ZERO));
     localBlockchain.appendBlock(forkBlock, gen.receipts(forkBlock));
 
     // Sanity check
@@ -257,9 +256,9 @@ public class FullSyncChainDownloaderTest {
     final RespondingEthPeer.Responder responder =
         RespondingEthPeer.blockchainResponder(otherBlockchain);
     final RespondingEthPeer peerA =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, localTd.plus(100));
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, localTd.add(100));
     final RespondingEthPeer peerB =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, localTd.plus(200));
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, localTd.add(200));
 
     final ChainDownloader downloader = downloader();
     downloader.start();
@@ -279,9 +278,9 @@ public class FullSyncChainDownloaderTest {
     final RespondingEthPeer.Responder responder =
         RespondingEthPeer.blockchainResponder(otherBlockchain);
     final RespondingEthPeer peerA =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, localTd.plus(100), 100);
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, localTd.add(100), 100);
     final RespondingEthPeer peerB =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, localTd.plus(200), 50);
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, localTd.add(200), 50);
 
     final ChainDownloader downloader = downloader();
     downloader.start();

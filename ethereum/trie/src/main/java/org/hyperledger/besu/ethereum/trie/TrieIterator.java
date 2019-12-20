@@ -14,16 +14,16 @@
  */
 package org.hyperledger.besu.ethereum.trie;
 
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Iterator;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+
 public class TrieIterator<V> implements PathNodeVisitor<V> {
 
-  private final Deque<BytesValue> paths = new ArrayDeque<>();
+  private final Deque<Bytes> paths = new ArrayDeque<>();
   private final LeafHandler<V> leafHandler;
   private State state = State.SEARCHING;
 
@@ -32,10 +32,10 @@ public class TrieIterator<V> implements PathNodeVisitor<V> {
   }
 
   @Override
-  public Node<V> visit(final ExtensionNode<V> node, final BytesValue searchPath) {
-    BytesValue remainingPath = searchPath;
+  public Node<V> visit(final ExtensionNode<V> node, final Bytes searchPath) {
+    Bytes remainingPath = searchPath;
     if (state == State.SEARCHING) {
-      final BytesValue extensionPath = node.getPath();
+      final Bytes extensionPath = node.getPath();
       final int commonPathLength = extensionPath.commonPrefixLength(searchPath);
       remainingPath = searchPath.slice(commonPathLength);
     }
@@ -47,9 +47,9 @@ public class TrieIterator<V> implements PathNodeVisitor<V> {
   }
 
   @Override
-  public Node<V> visit(final BranchNode<V> node, final BytesValue searchPath) {
+  public Node<V> visit(final BranchNode<V> node, final Bytes searchPath) {
     byte iterateFrom = 0;
-    BytesValue remainingPath = searchPath;
+    Bytes remainingPath = searchPath;
     if (state == State.SEARCHING) {
       iterateFrom = searchPath.get(0);
       if (iterateFrom == CompactEncoding.LEAF_TERMINATOR) {
@@ -59,7 +59,7 @@ public class TrieIterator<V> implements PathNodeVisitor<V> {
     }
     paths.push(node.getPath());
     for (byte i = iterateFrom; i < BranchNode.RADIX && state.continueIterating(); i++) {
-      paths.push(BytesValue.of(i));
+      paths.push(Bytes.of(i));
       node.child(i).accept(this, remainingPath);
       paths.pop();
     }
@@ -68,7 +68,7 @@ public class TrieIterator<V> implements PathNodeVisitor<V> {
   }
 
   @Override
-  public Node<V> visit(final LeafNode<V> node, final BytesValue path) {
+  public Node<V> visit(final LeafNode<V> node, final Bytes path) {
     paths.push(node.getPath());
     state = State.CONTINUE;
     state = leafHandler.onLeaf(keyHash(), node);
@@ -77,16 +77,16 @@ public class TrieIterator<V> implements PathNodeVisitor<V> {
   }
 
   @Override
-  public Node<V> visit(final NullNode<V> node, final BytesValue path) {
+  public Node<V> visit(final NullNode<V> node, final Bytes path) {
     state = State.CONTINUE;
     return node;
   }
 
   private Bytes32 keyHash() {
-    final Iterator<BytesValue> iterator = paths.descendingIterator();
-    BytesValue fullPath = iterator.next();
+    final Iterator<Bytes> iterator = paths.descendingIterator();
+    Bytes fullPath = iterator.next();
     while (iterator.hasNext()) {
-      fullPath = BytesValue.wrap(fullPath, iterator.next());
+      fullPath = Bytes.wrap(fullPath, iterator.next());
     }
     return fullPath.isZero()
         ? Bytes32.ZERO

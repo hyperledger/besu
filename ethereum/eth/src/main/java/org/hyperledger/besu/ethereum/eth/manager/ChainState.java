@@ -17,9 +17,9 @@ package org.hyperledger.besu.ethereum.eth.manager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.util.Subscribers;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import com.google.common.base.MoreObjects;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class ChainState implements ChainHeadEstimate {
   // The best block by total difficulty that we know about
@@ -90,7 +90,8 @@ public class ChainState implements ChainHeadEstimate {
       final BlockHeader blockHeader, final UInt256 totalDifficulty) {
     synchronized (this) {
       // Blocks are announced before they're imported so their chain head must be the parent
-      final UInt256 parentTotalDifficulty = totalDifficulty.minus(blockHeader.getDifficulty());
+      final UInt256 parentTotalDifficulty =
+          totalDifficulty.subtract(blockHeader.internalGetDifficulty());
       final long parentBlockNumber = blockHeader.getNumber() - 1;
       if (parentTotalDifficulty.compareTo(bestBlock.totalDifficulty) >= 0) {
         bestBlock.totalDifficulty = parentTotalDifficulty;

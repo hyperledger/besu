@@ -22,10 +22,11 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolution;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.List;
 import java.util.Optional;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public interface MiningCoordinator {
 
@@ -53,7 +54,7 @@ public interface MiningCoordinator {
 
   Wei getMinTransactionGasPrice();
 
-  void setExtraData(BytesValue extraData);
+  void setExtraData(Bytes extraData);
 
   default void setCoinbase(final Address coinbase) {
     throw new UnsupportedOperationException(

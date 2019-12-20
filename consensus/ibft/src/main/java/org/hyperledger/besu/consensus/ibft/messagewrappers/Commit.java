@@ -19,7 +19,8 @@ import org.hyperledger.besu.consensus.ibft.payload.SignedData;
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.util.bytes.BytesValue;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class Commit extends IbftMessage<CommitPayload> {
 
@@ -35,7 +36,7 @@ public class Commit extends IbftMessage<CommitPayload> {
     return getPayload().getDigest();
   }
 
-  public static Commit decode(final BytesValue data) {
+  public static Commit decode(final Bytes data) {
     return new Commit(SignedData.readSignedCommitPayloadFrom(RLP.input(data)));
   }
 }

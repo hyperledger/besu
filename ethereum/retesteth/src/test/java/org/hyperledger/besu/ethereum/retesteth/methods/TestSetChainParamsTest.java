@@ -27,6 +27,7 @@ import java.io.IOException;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import io.vertx.core.json.JsonObject;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -64,8 +65,8 @@ public class TestSetChainParamsTest {
             "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
     assertThat(blockHeader.getCoinbase().toString())
         .isEqualTo("0x8888f1f195afa192cfee860698584c030f4c9db1");
-    assertThat(blockHeader.getDifficulty().toShortHexString()).isEqualTo("0x20000");
-    assertThat(blockHeader.getExtraData().toString()).isEqualTo("0x42");
+    assertThat(blockHeader.internalGetDifficulty()).isEqualTo(UInt256.fromHexString("0x20000"));
+    assertThat(blockHeader.getExtraData().getHexString()).isEqualTo("0x42");
     assertThat(blockHeader.getGasLimit()).isEqualTo(3141592);
     assertThat(blockHeader.getGasUsed()).isEqualTo(0);
     assertThat(blockHeader.getMixHash().toString())

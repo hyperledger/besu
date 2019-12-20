@@ -38,8 +38,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.DefaultMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -56,6 +54,8 @@ import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
 import com.google.common.collect.Lists;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class RespondingEthPeer {
   private static final BlockDataGenerator gen = new BlockDataGenerator();
@@ -305,8 +305,8 @@ public class RespondingEthPeer {
           break;
         case EthPV63.GET_NODE_DATA:
           final NodeDataMessage nodeDataMessage = NodeDataMessage.readFrom(originalResponse);
-          final List<BytesValue> originalNodeData = Lists.newArrayList(nodeDataMessage.nodeData());
-          final List<BytesValue> partialNodeData =
+          final List<Bytes> originalNodeData = Lists.newArrayList(nodeDataMessage.nodeData());
+          final List<Bytes> partialNodeData =
               originalNodeData.subList(0, (int) (originalNodeData.size() * portion));
           partialResponse = NodeDataMessage.create(partialNodeData);
           break;
@@ -339,7 +339,7 @@ public class RespondingEthPeer {
   public static class Builder {
     private EthProtocolManager ethProtocolManager;
     private Hash chainHeadHash = gen.hash();
-    private UInt256 totalDifficulty = UInt256.of(1000L);
+    private UInt256 totalDifficulty = UInt256.valueOf(1000L);
     private OptionalLong estimatedHeight = OptionalLong.of(1000L);
     private List<PeerValidator> peerValidators = new ArrayList<>();
 

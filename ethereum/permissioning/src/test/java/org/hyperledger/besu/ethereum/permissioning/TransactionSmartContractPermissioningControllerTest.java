@@ -37,12 +37,12 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.io.IOException;
 import java.math.BigInteger;
 
 import com.google.common.io.Resources;
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -100,7 +100,7 @@ public class TransactionSmartContractPermissioningControllerTest {
         .value(Wei.ZERO)
         .gasPrice(Wei.ZERO)
         .gasLimit(0)
-        .payload(BytesValue.fromHexString("0x1234"))
+        .payload(Bytes.fromHexString("0x1234"))
         .nonce(1)
         .signature(Signature.create(BigInteger.ONE, BigInteger.TEN, (byte) 1))
         .build();

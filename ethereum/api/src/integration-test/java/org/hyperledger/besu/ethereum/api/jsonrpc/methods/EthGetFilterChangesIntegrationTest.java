@@ -55,13 +55,13 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfigurati
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.assertj.core.util.Lists;
 import org.junit.Before;
 import org.junit.Test;
@@ -289,7 +289,7 @@ public class EthGetFilterChangesIntegrationTest {
         .gasLimit(100)
         .gasPrice(Wei.ZERO)
         .nonce(1)
-        .payload(BytesValue.EMPTY)
+        .payload(Bytes.EMPTY)
         .to(Address.ID)
         .value(Wei.of(transactionNumber))
         .sender(Address.ID)

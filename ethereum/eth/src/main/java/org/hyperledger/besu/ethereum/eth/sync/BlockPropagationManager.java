@@ -40,7 +40,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -57,6 +56,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Range;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class BlockPropagationManager<C> {
   private static final Logger LOG = LogManager.getLogger();
@@ -254,7 +254,7 @@ public class BlockPropagationManager<C> {
             .getBlockchain()
             .getTotalDifficultyByHash(parent.getHash())
             .get()
-            .plus(block.getHeader().getDifficulty());
+            .add(block.getHeader().internalGetDifficulty());
     blockBroadcaster.propagate(block, totalDifficulty);
   }
 

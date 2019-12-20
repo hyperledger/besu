@@ -19,22 +19,22 @@ import org.hyperledger.besu.crypto.SECP256K1.PrivateKey;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 @JsonIgnoreProperties("comment")
 public class TransactionData {
 
   private final long gasLimit;
   private final Wei gasPrice;
-  private final BytesValue data;
+  private final Bytes data;
   private final Wei value;
   private final Optional<Address> to;
   private final PrivateKey privateKey;
@@ -49,7 +49,7 @@ public class TransactionData {
       @JsonProperty("secretKey") final String secretKey) {
     this.gasLimit = UInt256.fromHexString(gasLimit).toLong();
     this.gasPrice = Wei.fromHexString(gasPrice);
-    this.data = data.map(BytesValue::fromHexString).orElse(BytesValue.EMPTY);
+    this.data = data.map(Bytes::fromHexString).orElse(Bytes.EMPTY);
     this.value = value.map(Wei::fromHexString).orElse(Wei.ZERO);
     this.to = to.map(Address::fromHexString);
     this.privateKey = PrivateKey.create(Bytes32.fromHexString(secretKey));

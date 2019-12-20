@@ -14,7 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import org.hyperledger.besu.util.uint.UInt256;
+import org.hyperledger.besu.plugin.data.Quantity;
+
+import org.apache.tuweni.units.bigints.UInt256;
 
 /** A block header capable of being processed. */
 public class ProcessableBlockHeader {
@@ -70,7 +72,11 @@ public class ProcessableBlockHeader {
    *
    * @return the block difficulty
    */
-  public UInt256 getDifficulty() {
+  public Quantity getDifficulty() {
+    return new QuantityWrapper(difficulty);
+  }
+
+  public UInt256 internalGetDifficulty() {
     return difficulty;
   }
 

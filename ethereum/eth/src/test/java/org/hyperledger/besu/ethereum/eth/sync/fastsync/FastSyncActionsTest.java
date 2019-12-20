@@ -36,7 +36,6 @@ import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,6 +43,7 @@ import java.util.OptionalLong;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -129,8 +129,8 @@ public class FastSyncActionsTest {
     syncConfig = syncConfigBuilder.build();
     fastSyncActions = createFastSyncActions(syncConfig);
 
-    EthProtocolManagerTestUtil.createPeer(ethProtocolManager, UInt256.of(1000), 5500);
-    EthProtocolManagerTestUtil.createPeer(ethProtocolManager, UInt256.of(2000), 4000);
+    EthProtocolManagerTestUtil.createPeer(ethProtocolManager, UInt256.valueOf(1000), 5500);
+    EthProtocolManagerTestUtil.createPeer(ethProtocolManager, UInt256.valueOf(2000), 4000);
 
     final CompletableFuture<FastSyncState> result =
         fastSyncActions.selectPivotBlock(FastSyncState.EMPTY_SYNC_STATE);
@@ -176,7 +176,7 @@ public class FastSyncActionsTest {
     // Create peers without chain height estimates
     List<RespondingEthPeer> peers = new ArrayList<>();
     for (int i = 0; i < minPeers; i++) {
-      final UInt256 td = UInt256.of(i);
+      final UInt256 td = UInt256.valueOf(i);
       final OptionalLong height = OptionalLong.empty();
       final RespondingEthPeer peer =
           EthProtocolManagerTestUtil.createPeer(ethProtocolManager, td, height);
@@ -222,7 +222,7 @@ public class FastSyncActionsTest {
     final OptionalLong height = OptionalLong.of(minPivotHeight + 10);
     List<RespondingEthPeer> peers = new ArrayList<>();
     for (int i = 0; i < minPeers; i++) {
-      final UInt256 td = UInt256.of(i);
+      final UInt256 td = UInt256.valueOf(i);
 
       final RespondingEthPeer peer =
           EthProtocolManagerTestUtil.createPeer(ethProtocolManager, td, height, validator);
@@ -285,7 +285,7 @@ public class FastSyncActionsTest {
     for (int i = 0; i < peerCount; i++) {
       // Best peer by td is the first peer, td decreases as i increases
       final boolean isBest = i == 0;
-      final UInt256 td = UInt256.of(peerCount - i);
+      final UInt256 td = UInt256.valueOf(peerCount - i);
 
       final OptionalLong height;
       if (isBest && bestMissingHeight) {
