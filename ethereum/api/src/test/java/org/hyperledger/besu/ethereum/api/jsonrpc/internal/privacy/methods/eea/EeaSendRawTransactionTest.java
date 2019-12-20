@@ -26,6 +26,7 @@ import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.enclave.EnclaveServerException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -116,6 +117,7 @@ public class EeaSendRawTransactionTest {
   private final String MOCK_PRIVACY_GROUP = "";
   private final User user =
       new JWTUser(new JsonObject().put("privacyPublicKey", ENCLAVE_PUBLIC_KEY), "");
+  private final EnclavePublicKeyProvider enclavePublicKeyProvider = (user) -> ENCLAVE_PUBLIC_KEY;
 
   @Mock private TransactionPool transactionPool;
 
@@ -125,7 +127,8 @@ public class EeaSendRawTransactionTest {
 
   @Before
   public void before() {
-    method = new EeaSendRawTransaction(transactionPool, privacyController);
+    method =
+        new EeaSendRawTransaction(transactionPool, privacyController, enclavePublicKeyProvider);
   }
 
   @Test
@@ -227,10 +230,10 @@ public class EeaSendRawTransactionTest {
 
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
     verify(privacyController)
-        .sendTransaction(any(PrivateTransaction.class), eq(Optional.of(ENCLAVE_PUBLIC_KEY)));
+        .sendTransaction(any(PrivateTransaction.class), eq(ENCLAVE_PUBLIC_KEY));
     verify(privacyController)
         .validatePrivateTransaction(
-            any(PrivateTransaction.class), any(String.class), eq(Optional.of(ENCLAVE_PUBLIC_KEY)));
+            any(PrivateTransaction.class), any(String.class), eq(ENCLAVE_PUBLIC_KEY));
     verify(privacyController)
         .createPrivacyMarkerTransaction(any(String.class), any(PrivateTransaction.class));
     verify(transactionPool).addLocalTransaction(any(Transaction.class));

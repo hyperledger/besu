@@ -15,11 +15,11 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.MultiTenancyUserUtil.enclavePublicKey;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -35,9 +35,13 @@ public class PrivGetEeaTransactionCount implements JsonRpcMethod {
   private static final Logger LOG = getLogger();
 
   private PrivacyController privacyController;
+  private EnclavePublicKeyProvider enclavePublicKeyProvider;
 
-  public PrivGetEeaTransactionCount(final PrivacyController privacyController) {
+  public PrivGetEeaTransactionCount(
+      final PrivacyController privacyController,
+      final EnclavePublicKeyProvider enclavePublicKeyProvider) {
     this.privacyController = privacyController;
+    this.enclavePublicKeyProvider = enclavePublicKeyProvider;
   }
 
   @Override
@@ -59,7 +63,10 @@ public class PrivGetEeaTransactionCount implements JsonRpcMethod {
     try {
       final long nonce =
           privacyController.determineNonce(
-              privateFrom, privateFor, address, enclavePublicKey(requestContext.getUser()));
+              privateFrom,
+              privateFor,
+              address,
+              enclavePublicKeyProvider.getEnclaveKey(requestContext.getUser()));
       return new JsonRpcSuccessResponse(
           requestContext.getRequest().getId(), Quantity.create(nonce));
     } catch (final Exception e) {

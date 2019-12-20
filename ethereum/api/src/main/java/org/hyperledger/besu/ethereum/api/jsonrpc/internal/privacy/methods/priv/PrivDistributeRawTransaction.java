@@ -14,12 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.MultiTenancyUserUtil.enclavePublicKey;
-
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcEnclaveErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacySendTransaction;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacySendTransaction.ErrorResponseException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -37,10 +36,15 @@ public class PrivDistributeRawTransaction implements JsonRpcMethod {
 
   private final PrivacyController privacyController;
   private final PrivacySendTransaction privacySendTransaction;
+  private EnclavePublicKeyProvider enclavePublicKeyProvider;
 
-  public PrivDistributeRawTransaction(final PrivacyController privacyController) {
+  public PrivDistributeRawTransaction(
+      final PrivacyController privacyController,
+      final EnclavePublicKeyProvider enclavePublicKeyProvider) {
     this.privacyController = privacyController;
-    this.privacySendTransaction = new PrivacySendTransaction(privacyController);
+    this.privacySendTransaction =
+        new PrivacySendTransaction(privacyController, enclavePublicKeyProvider);
+    this.enclavePublicKeyProvider = enclavePublicKeyProvider;
   }
 
   @Override
@@ -61,7 +65,7 @@ public class PrivDistributeRawTransaction implements JsonRpcMethod {
     try {
       sendTransactionResponse =
           privacyController.sendTransaction(
-              privateTransaction, enclavePublicKey(requestContext.getUser()));
+              privateTransaction, enclavePublicKeyProvider.getEnclaveKey(requestContext.getUser()));
     } catch (final Exception e) {
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(),

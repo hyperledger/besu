@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.logging.log4j.LogManager.getLogger;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.MultiTenancyUserUtil.enclavePublicKey;
 
 import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
@@ -24,6 +23,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcEnclaveErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -57,14 +57,17 @@ public class PrivGetTransactionReceipt implements JsonRpcMethod {
   private final BlockchainQueries blockchain;
   private PrivacyParameters privacyParameters;
   private PrivacyController privacyController;
+  private EnclavePublicKeyProvider enclavePublicKeyProvider;
 
   public PrivGetTransactionReceipt(
       final BlockchainQueries blockchain,
       final PrivacyParameters privacyParameters,
-      final PrivacyController privacyController) {
+      final PrivacyController privacyController,
+      final EnclavePublicKeyProvider enclavePublicKeyProvider) {
     this.blockchain = blockchain;
     this.privacyParameters = privacyParameters;
     this.privacyController = privacyController;
+    this.enclavePublicKeyProvider = enclavePublicKeyProvider;
   }
 
   @Override
@@ -95,7 +98,7 @@ public class PrivGetTransactionReceipt implements JsonRpcMethod {
       final ReceiveResponse receiveResponse =
           privacyController.retrieveTransaction(
               transaction.getPayloadBytes().toBase64String(),
-              enclavePublicKey(requestContext.getUser()));
+              enclavePublicKeyProvider.getEnclaveKey(requestContext.getUser()));
       LOG.trace("Received transaction information");
 
       final BytesValueRLPInput input =

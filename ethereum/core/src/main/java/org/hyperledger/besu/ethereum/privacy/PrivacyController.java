@@ -46,7 +46,6 @@ public class PrivacyController {
   private static final Logger LOG = LogManager.getLogger();
 
   private final Enclave enclave;
-  private final String defaultEnclavePublicKey;
   private final PrivateStateStorage privateStateStorage;
   private final WorldStateArchive privateWorldStateArchive;
   private final PrivateTransactionValidator privateTransactionValidator;
@@ -58,7 +57,6 @@ public class PrivacyController {
       final PrivateMarkerTransactionFactory privateMarkerTransactionFactory) {
     this(
         privacyParameters.getEnclave(),
-        privacyParameters.getEnclavePublicKey(),
         privacyParameters.getPrivateStateStorage(),
         privacyParameters.getPrivateWorldStateArchive(),
         new PrivateTransactionValidator(chainId),
@@ -67,13 +65,11 @@ public class PrivacyController {
 
   public PrivacyController(
       final Enclave enclave,
-      final String defaultEnclavePublicKey,
       final PrivateStateStorage privateStateStorage,
       final WorldStateArchive privateWorldStateArchive,
       final PrivateTransactionValidator privateTransactionValidator,
       final PrivateMarkerTransactionFactory privateMarkerTransactionFactory) {
     this.enclave = enclave;
-    this.defaultEnclavePublicKey = defaultEnclavePublicKey;
     this.privateStateStorage = privateStateStorage;
     this.privateWorldStateArchive = privateWorldStateArchive;
     this.privateTransactionValidator = privateTransactionValidator;
@@ -81,10 +77,10 @@ public class PrivacyController {
   }
 
   public SendTransactionResponse sendTransaction(
-      final PrivateTransaction privateTransaction, final Optional<String> enclavePublicKey) {
+      final PrivateTransaction privateTransaction, final String enclavePublicKey) {
     try {
       LOG.trace("Storing private transaction in enclave");
-      final SendResponse sendResponse = sendRequest(privateTransaction);
+      final SendResponse sendResponse = sendRequest(privateTransaction, enclavePublicKey);
       final String enclaveKey = sendResponse.getKey();
       if (privateTransaction.getPrivacyGroupId().isPresent()) {
         final String privacyGroupId = privateTransaction.getPrivacyGroupId().get().toBase64String();
@@ -101,25 +97,23 @@ public class PrivacyController {
   }
 
   public ReceiveResponse retrieveTransaction(
-      final String enclaveKey, final Optional<String> enclavePublicKey) {
-    return enclave.receive(enclaveKey, this.defaultEnclavePublicKey);
+      final String enclaveKey, final String enclavePublicKey) {
+    return enclave.receive(enclaveKey, enclavePublicKey);
   }
 
   public PrivacyGroup createPrivacyGroup(
       final List<String> addresses,
       final String name,
       final String description,
-      final Optional<String> enclavePublicKey) {
-    return enclave.createPrivacyGroup(addresses, defaultEnclavePublicKey, name, description);
+      final String enclavePublicKey) {
+    return enclave.createPrivacyGroup(addresses, enclavePublicKey, name, description);
   }
 
-  public String deletePrivacyGroup(
-      final String privacyGroupId, final Optional<String> enclavePublicKey) {
-    return enclave.deletePrivacyGroup(privacyGroupId, defaultEnclavePublicKey);
+  public String deletePrivacyGroup(final String privacyGroupId, final String enclavePublicKey) {
+    return enclave.deletePrivacyGroup(privacyGroupId, enclavePublicKey);
   }
 
-  public PrivacyGroup[] findPrivacyGroup(
-      final List<String> addresses, final Optional<String> enclavePublicKey) {
+  public PrivacyGroup[] findPrivacyGroup(final List<String> addresses, String enclavePublicKey) {
     return enclave.findPrivacyGroup(addresses);
   }
 
@@ -131,7 +125,7 @@ public class PrivacyController {
   public ValidationResult<TransactionValidator.TransactionInvalidReason> validatePrivateTransaction(
       final PrivateTransaction privateTransaction,
       final String privacyGroupId,
-      final Optional<String> enclavePublicKey) {
+      final String enclavePublicKey) {
     return privateTransactionValidator.validate(
         privateTransaction,
         determineNonce(privateTransaction.getSender(), privacyGroupId, enclavePublicKey));
@@ -141,7 +135,7 @@ public class PrivacyController {
       final String privateFrom,
       final String[] privateFor,
       final Address address,
-      final Optional<String> enclavePublicKey) {
+      final String enclavePublicKey) {
     final List<String> groupMembers = Lists.asList(privateFrom, privateFor);
 
     final List<PrivacyGroup> matchingGroups =
@@ -167,7 +161,7 @@ public class PrivacyController {
   }
 
   public long determineNonce(
-      final Address sender, final String privacyGroupId, final Optional<String> enclavePublicKey) {
+      final Address sender, final String privacyGroupId, final String enclavePublicKey) {
     return privateStateStorage
         .getLatestStateRoot(Bytes.fromBase64String(privacyGroupId))
         .map(
@@ -191,16 +185,15 @@ public class PrivacyController {
             Account.DEFAULT_NONCE);
   }
 
-  private SendResponse sendRequest(final PrivateTransaction privateTransaction) {
+  private SendResponse sendRequest(
+      final PrivateTransaction privateTransaction, final String enclavePublicKey) {
     final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
     privateTransaction.writeTo(rlpOutput);
     final String payload = rlpOutput.encoded().toBase64String();
 
     if (privateTransaction.getPrivacyGroupId().isPresent()) {
       return enclave.send(
-          payload,
-          defaultEnclavePublicKey,
-          privateTransaction.getPrivacyGroupId().get().toBase64String());
+          payload, enclavePublicKey, privateTransaction.getPrivacyGroupId().get().toBase64String());
     } else {
       final List<String> privateFor =
           privateTransaction.getPrivateFor().get().stream()

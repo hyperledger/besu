@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods;
 
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.MultiTenancyUserUtil.enclavePublicKey;
-
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcRequestException;
@@ -39,9 +37,13 @@ public class PrivacySendTransaction {
   private static final Logger LOG = LogManager.getLogger();
 
   protected final PrivacyController privacyController;
+  private EnclavePublicKeyProvider enclavePublicKeyProvider;
 
-  public PrivacySendTransaction(final PrivacyController privacyController) {
+  public PrivacySendTransaction(
+      final PrivacyController privacyController,
+      final EnclavePublicKeyProvider enclavePublicKeyProvider) {
     this.privacyController = privacyController;
+    this.enclavePublicKeyProvider = enclavePublicKeyProvider;
   }
 
   public PrivateTransaction validateAndDecodeRequest(final JsonRpcRequestContext request)
@@ -77,7 +79,9 @@ public class PrivacySendTransaction {
       final Supplier<JsonRpcResponse> successfulJsonRpcResponse) {
     return privacyController
         .validatePrivateTransaction(
-            privateTransaction, privacyGroupId, enclavePublicKey(request.getUser()))
+            privateTransaction,
+            privacyGroupId,
+            enclavePublicKeyProvider.getEnclaveKey(request.getUser()))
         .either(
             successfulJsonRpcResponse,
             (errorReason) ->

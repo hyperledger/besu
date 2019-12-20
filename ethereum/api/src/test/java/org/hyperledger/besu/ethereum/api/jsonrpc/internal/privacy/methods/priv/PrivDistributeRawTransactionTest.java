@@ -22,6 +22,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
@@ -30,7 +31,6 @@ import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.SendTransactionResponse;
 
 import java.util.Base64;
-import java.util.Optional;
 
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.User;
@@ -57,13 +57,14 @@ public class PrivDistributeRawTransactionTest {
 
   private final User user =
       new JWTUser(new JsonObject().put("privacyPublicKey", ENCLAVE_PUBLIC_KEY), "");
+  private final EnclavePublicKeyProvider enclavePublicKeyProvider = (user) -> ENCLAVE_PUBLIC_KEY;
 
   @Mock private PrivDistributeRawTransaction method;
   @Mock private PrivacyController privacyController;
 
   @Before
   public void before() {
-    method = new PrivDistributeRawTransaction(privacyController);
+    method = new PrivDistributeRawTransaction(privacyController, enclavePublicKeyProvider);
   }
 
   @Test
@@ -92,9 +93,9 @@ public class PrivDistributeRawTransactionTest {
 
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
     verify(privacyController)
-        .sendTransaction(any(PrivateTransaction.class), eq(Optional.of(ENCLAVE_PUBLIC_KEY)));
+        .sendTransaction(any(PrivateTransaction.class), eq(ENCLAVE_PUBLIC_KEY));
     verify(privacyController)
         .validatePrivateTransaction(
-            any(PrivateTransaction.class), any(String.class), eq(Optional.of(ENCLAVE_PUBLIC_KEY)));
+            any(PrivateTransaction.class), any(String.class), eq(ENCLAVE_PUBLIC_KEY));
   }
 }

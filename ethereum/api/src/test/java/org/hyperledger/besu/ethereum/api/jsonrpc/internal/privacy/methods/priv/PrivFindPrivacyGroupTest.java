@@ -23,6 +23,7 @@ import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -30,7 +31,6 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 import java.util.List;
-import java.util.Optional;
 
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.User;
@@ -51,6 +51,7 @@ public class PrivFindPrivacyGroupTest {
   private final PrivacyController privacyController = mock(PrivacyController.class);
   private final User user =
       new JWTUser(new JsonObject().put("privacyPublicKey", ENCLAVE_PUBLIC_KEY), "");
+  private final EnclavePublicKeyProvider enclavePublicKeyProvider = (user) -> ENCLAVE_PUBLIC_KEY;
 
   private JsonRpcRequestContext request;
   private PrivacyGroup privacyGroup;
@@ -71,28 +72,30 @@ public class PrivFindPrivacyGroupTest {
 
   @Test
   public void findsPrivacyGroupWithValidAddresses() {
-    when(privacyController.findPrivacyGroup(ADDRESSES, Optional.of(ENCLAVE_PUBLIC_KEY)))
+    when(privacyController.findPrivacyGroup(ADDRESSES, ENCLAVE_PUBLIC_KEY))
         .thenReturn(new PrivacyGroup[] {privacyGroup});
 
-    final PrivFindPrivacyGroup privFindPrivacyGroup = new PrivFindPrivacyGroup(privacyController);
+    final PrivFindPrivacyGroup privFindPrivacyGroup =
+        new PrivFindPrivacyGroup(privacyController, enclavePublicKeyProvider);
 
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) privFindPrivacyGroup.response(request);
     final PrivacyGroup[] result = (PrivacyGroup[]) response.getResult();
     assertThat(result).hasSize(1);
     assertThat(result[0]).isEqualToComparingFieldByField(privacyGroup);
-    verify(privacyController).findPrivacyGroup(ADDRESSES, Optional.of(ENCLAVE_PUBLIC_KEY));
+    verify(privacyController).findPrivacyGroup(ADDRESSES, ENCLAVE_PUBLIC_KEY);
   }
 
   @Test
   public void failsWithFindPrivacyGroupErrorIfEnclaveFails() {
-    when(privacyController.findPrivacyGroup(ADDRESSES, Optional.of(ENCLAVE_PUBLIC_KEY)))
+    when(privacyController.findPrivacyGroup(ADDRESSES, ENCLAVE_PUBLIC_KEY))
         .thenThrow(new IllegalStateException("some failure"));
-    final PrivFindPrivacyGroup privFindPrivacyGroup = new PrivFindPrivacyGroup(privacyController);
+    final PrivFindPrivacyGroup privFindPrivacyGroup =
+        new PrivFindPrivacyGroup(privacyController, enclavePublicKeyProvider);
 
     final JsonRpcErrorResponse response =
         (JsonRpcErrorResponse) privFindPrivacyGroup.response(request);
     assertThat(response.getError()).isEqualTo(JsonRpcError.FIND_PRIVACY_GROUP_ERROR);
-    verify(privacyController).findPrivacyGroup(ADDRESSES, Optional.of(ENCLAVE_PUBLIC_KEY));
+    verify(privacyController).findPrivacyGroup(ADDRESSES, ENCLAVE_PUBLIC_KEY);
   }
 }

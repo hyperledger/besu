@@ -26,6 +26,7 @@ import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.enclave.types.SendResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivGetPrivateTransaction;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.privacy.PrivateTransactionLegacyResult;
@@ -75,6 +76,8 @@ public class PrivGetPrivateTransactionIntegrationTest {
 
   private static Vertx vertx = Vertx.vertx();
 
+  private EnclavePublicKeyProvider enclavePublicKeyProvider = (user) -> ENCLAVE_PUBLIC_KEY;
+
   @BeforeClass
   public static void setUpOnce() throws Exception {
     folder.create();
@@ -88,7 +91,7 @@ public class PrivGetPrivateTransactionIntegrationTest {
     final EnclaveFactory factory = new EnclaveFactory(vertx);
     enclave = factory.createVertxEnclave(testHarness.clientUrl());
 
-    privacyController = new PrivacyController(enclave, ENCLAVE_PUBLIC_KEY, null, null, null, null);
+    privacyController = new PrivacyController(enclave, null, null, null, null);
   }
 
   @AfterClass
@@ -147,7 +150,7 @@ public class PrivGetPrivateTransactionIntegrationTest {
   public void returnsStoredPrivateTransaction() {
 
     final PrivGetPrivateTransaction privGetPrivateTransaction =
-        new PrivGetPrivateTransaction(blockchain, privacyController);
+        new PrivGetPrivateTransaction(blockchain, privacyController, enclavePublicKeyProvider);
 
     when(blockchain.transactionByHash(any(Hash.class)))
         .thenReturn(Optional.of(returnedTransaction));

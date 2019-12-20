@@ -15,11 +15,11 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.MultiTenancyUserUtil.enclavePublicKey;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -32,9 +32,13 @@ public class PrivDeletePrivacyGroup implements JsonRpcMethod {
 
   private static final Logger LOG = getLogger();
   private PrivacyController privacyController;
+  private EnclavePublicKeyProvider enclavePublicKeyProvider;
 
-  public PrivDeletePrivacyGroup(final PrivacyController privacyController) {
+  public PrivDeletePrivacyGroup(
+      final PrivacyController privacyController,
+      final EnclavePublicKeyProvider enclavePublicKeyProvider) {
     this.privacyController = privacyController;
+    this.enclavePublicKeyProvider = enclavePublicKeyProvider;
   }
 
   @Override
@@ -52,7 +56,7 @@ public class PrivDeletePrivacyGroup implements JsonRpcMethod {
     try {
       response =
           privacyController.deletePrivacyGroup(
-              privacyGroupId, enclavePublicKey(requestContext.getUser()));
+              privacyGroupId, enclavePublicKeyProvider.getEnclaveKey(requestContext.getUser()));
     } catch (Exception e) {
       LOG.error("Failed to fetch transaction", e);
       return new JsonRpcErrorResponse(

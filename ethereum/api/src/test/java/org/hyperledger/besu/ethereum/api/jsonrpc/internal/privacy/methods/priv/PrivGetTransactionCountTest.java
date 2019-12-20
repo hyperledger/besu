@@ -22,12 +22,11 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
-
-import java.util.Optional;
 
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.User;
@@ -48,19 +47,19 @@ public class PrivGetTransactionCountTest {
       Address.fromHexString("0x627306090abab3a6e1400e9345bc60c78a8bef57");
   private final long NONCE = 5;
   private User user = new JWTUser(new JsonObject().put("privacyPublicKey", ENCLAVE_PUBLIC_KEY), "");
+  private final EnclavePublicKeyProvider enclavePublicKeyProvider = (user) -> ENCLAVE_PUBLIC_KEY;
 
   @Before
   public void before() {
     when(privacyParameters.isEnabled()).thenReturn(true);
-    when(privacyController.determineNonce(
-            senderAddress, privacyGroupId, Optional.of(ENCLAVE_PUBLIC_KEY)))
+    when(privacyController.determineNonce(senderAddress, privacyGroupId, ENCLAVE_PUBLIC_KEY))
         .thenReturn(NONCE);
   }
 
   @Test
   public void verifyTransactionCount() {
     final PrivGetTransactionCount privGetTransactionCount =
-        new PrivGetTransactionCount(privacyController);
+        new PrivGetTransactionCount(privacyController, enclavePublicKeyProvider);
 
     final Object[] params = new Object[] {senderAddress, privacyGroupId};
     final JsonRpcRequestContext request =
@@ -71,7 +70,6 @@ public class PrivGetTransactionCountTest {
         (JsonRpcSuccessResponse) privGetTransactionCount.response(request);
 
     assertThat(response.getResult()).isEqualTo(String.format("0x%X", NONCE));
-    verify(privacyController)
-        .determineNonce(senderAddress, privacyGroupId, Optional.of(ENCLAVE_PUBLIC_KEY));
+    verify(privacyController).determineNonce(senderAddress, privacyGroupId, ENCLAVE_PUBLIC_KEY);
   }
 }
