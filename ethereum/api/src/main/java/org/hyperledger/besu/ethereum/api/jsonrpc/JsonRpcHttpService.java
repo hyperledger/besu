@@ -56,6 +56,7 @@ import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.core.http.ClientAuth;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
@@ -64,6 +65,7 @@ import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.net.PfxOptions;
 import io.vertx.ext.auth.User;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
@@ -165,12 +167,7 @@ public class JsonRpcHttpService {
     LOG.info("Starting JsonRPC service on {}:{}", config.getHost(), config.getPort());
 
     // Create the HTTP server and a router object.
-    httpServer =
-        vertx.createHttpServer(
-            new HttpServerOptions()
-                .setHost(config.getHost())
-                .setPort(config.getPort())
-                .setHandle100ContinueAutomatically(true));
+    httpServer = vertx.createHttpServer(getHttpServerOptions());
 
     // Handle json rpc requests
     final Router router = Router.router(vertx);
@@ -253,6 +250,39 @@ public class JsonRpcHttpService {
             });
 
     return resultFuture;
+  }
+
+  private HttpServerOptions getHttpServerOptions() {
+    final HttpServerOptions httpServerOptions =
+        new HttpServerOptions()
+            .setHost(config.getHost())
+            .setPort(config.getPort())
+            .setHandle100ContinueAutomatically(true);
+    config
+        .getTlsConfiguration()
+        .ifPresent(
+            tlsConfiguration -> {
+              httpServerOptions
+                  .setSsl(true)
+                  .setPfxKeyCertOptions(
+                      new PfxOptions()
+                          .setPath(tlsConfiguration.getKeyStore().getStorePath())
+                          .setPassword(tlsConfiguration.getKeyStore().getStorePassword()));
+
+              tlsConfiguration
+                  .getTrustStore()
+                  .ifPresent(
+                      trustStore -> {
+                        httpServerOptions
+                            .setClientAuth(ClientAuth.REQUIRED)
+                            .setPfxTrustOptions(
+                                new PfxOptions()
+                                    .setPath(trustStore.getStorePath())
+                                    .setPassword(trustStore.getStorePassword()));
+                      });
+            });
+
+    return httpServerOptions;
   }
 
   private Handler<RoutingContext> checkWhitelistHostHeader() {
