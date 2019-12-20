@@ -20,7 +20,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.enclave.Enclave;
-import org.hyperledger.besu.enclave.EnclaveException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
@@ -76,7 +75,7 @@ public class PrivDeletePrivacyGroupTest {
   @Test
   public void failsWithDeletePrivacyGroupErrorIfEnclaveFails() {
     when(privacyController.deletePrivacyGroup(PRIVACY_GROUP_ID, Optional.of(ENCLAVE_PUBLIC_KEY)))
-        .thenThrow(new EnclaveException(""));
+        .thenThrow(new IllegalStateException("some failure"));
 
     final PrivDeletePrivacyGroup privDeletePrivacyGroup =
         new PrivDeletePrivacyGroup(privacyController);
