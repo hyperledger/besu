@@ -209,7 +209,10 @@ public class PrivacyControllerTest {
   @Test
   public void sendTransactionWhenEnclaveFailsThrowsEnclaveError() {
     assertThatExceptionOfType(EnclaveServerException.class)
-        .isThrownBy(() -> brokenPrivacyController.sendTransaction(buildLegacyPrivateTransaction(), Optional.empty()));
+        .isThrownBy(
+            () ->
+                brokenPrivacyController.sendTransaction(
+                    buildLegacyPrivateTransaction(), Optional.empty()));
   }
 
   @Test
