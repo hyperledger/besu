@@ -22,7 +22,7 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.SECP256K1;
-import org.hyperledger.besu.enclave.EnclaveException;
+import org.hyperledger.besu.enclave.EnclaveServerException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
@@ -283,7 +283,7 @@ public class EeaSendRawTransactionTest {
   @Test
   public void invalidTransactionIsNotSentToTransactionPool() {
     when(privacyController.sendTransaction(any(PrivateTransaction.class)))
-        .thenThrow(new EnclaveException("enclave failed to execute"));
+        .thenThrow(new EnclaveServerException(500, "enclave failed to execute"));
 
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
