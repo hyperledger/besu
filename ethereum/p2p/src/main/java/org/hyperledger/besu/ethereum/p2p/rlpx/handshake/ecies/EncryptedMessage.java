@@ -16,12 +16,12 @@ package org.hyperledger.besu.ethereum.p2p.rlpx.handshake.ecies;
 
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.crypto.SecureRandomProvider;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.MutableBytesValue;
 
 import java.nio.ByteBuffer;
 import java.security.SecureRandom;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.MutableBytes;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 
 final class EncryptedMessage {
@@ -42,7 +42,7 @@ final class EncryptedMessage {
    * @return The plaintext.
    * @throws InvalidCipherTextException Thrown if decryption failed.
    */
-  public static BytesValue decryptMsg(final BytesValue msgBytes, final SECP256K1.PrivateKey ourKey)
+  public static Bytes decryptMsg(final Bytes msgBytes, final SECP256K1.PrivateKey ourKey)
       throws InvalidCipherTextException {
 
     // Extract the ephemeral public key, stripping off the first byte (0x04), which designates it's
@@ -50,10 +50,10 @@ final class EncryptedMessage {
     final SECP256K1.PublicKey ephPubKey = SECP256K1.PublicKey.create(msgBytes.slice(1, 64));
 
     // Strip off the IV to use.
-    final BytesValue iv = msgBytes.slice(65, IV_SIZE);
+    final Bytes iv = msgBytes.slice(65, IV_SIZE);
 
     // Extract the encrypted payload.
-    final BytesValue encrypted = msgBytes.slice(65 + IV_SIZE);
+    final Bytes encrypted = msgBytes.slice(65 + IV_SIZE);
 
     // Perform the decryption.
     final ECIESEncryptionEngine decryptor =
@@ -69,21 +69,20 @@ final class EncryptedMessage {
    * @return The plaintext.
    * @throws InvalidCipherTextException Thrown if decryption failed.
    */
-  public static BytesValue decryptMsgEIP8(
-      final BytesValue msgBytes, final SECP256K1.PrivateKey ourKey)
+  public static Bytes decryptMsgEIP8(final Bytes msgBytes, final SECP256K1.PrivateKey ourKey)
       throws InvalidCipherTextException {
     final SECP256K1.PublicKey ephPubKey = SECP256K1.PublicKey.create(msgBytes.slice(3, 64));
 
     // Strip off the IV to use.
-    final BytesValue iv = msgBytes.slice(3 + 64, IV_SIZE);
+    final Bytes iv = msgBytes.slice(3 + 64, IV_SIZE);
 
     // Extract the encrypted payload.
-    final BytesValue encrypted = msgBytes.slice(3 + 64 + IV_SIZE);
+    final Bytes encrypted = msgBytes.slice(3 + 64 + IV_SIZE);
 
     // Perform the decryption.
     final ECIESEncryptionEngine decryptor =
         ECIESEncryptionEngine.forDecryption(ourKey, ephPubKey, iv);
-    return decryptor.decrypt(encrypted, msgBytes.slice(0, 2).extractArray());
+    return decryptor.decrypt(encrypted, msgBytes.slice(0, 2).toArray());
   }
 
   /**
@@ -94,20 +93,20 @@ final class EncryptedMessage {
    * @return The ciphertext.
    * @throws InvalidCipherTextException Thrown if encryption failed.
    */
-  public static BytesValue encryptMsg(final BytesValue bytes, final SECP256K1.PublicKey remoteKey)
+  public static Bytes encryptMsg(final Bytes bytes, final SECP256K1.PublicKey remoteKey)
       throws InvalidCipherTextException {
     // TODO: check size.
     final ECIESEncryptionEngine engine = ECIESEncryptionEngine.forEncryption(remoteKey);
 
     // Do the encryption.
-    final BytesValue encrypted = engine.encrypt(bytes);
-    final BytesValue iv = engine.getIv();
+    final Bytes encrypted = engine.encrypt(bytes);
+    final Bytes iv = engine.getIv();
     final SECP256K1.PublicKey ephPubKey = engine.getEphPubKey();
 
     // Create the output message by concatenating the ephemeral public key (prefixed with
     // 0x04 to designate uncompressed), IV, and encrypted bytes.
-    final MutableBytesValue answer =
-        MutableBytesValue.create(1 + ECIESHandshaker.PUBKEY_LENGTH + IV_SIZE + encrypted.size());
+    final MutableBytes answer =
+        MutableBytes.create(1 + ECIESHandshaker.PUBKEY_LENGTH + IV_SIZE + encrypted.size());
 
     int offset = 0;
     // Set the first byte as 0x04 to specify it's an uncompressed key.
@@ -126,23 +125,22 @@ final class EncryptedMessage {
    * @return The ciphertext.
    * @throws InvalidCipherTextException Thrown if encryption failed.
    */
-  public static BytesValue encryptMsgEip8(
-      final BytesValue message, final SECP256K1.PublicKey remoteKey)
+  public static Bytes encryptMsgEip8(final Bytes message, final SECP256K1.PublicKey remoteKey)
       throws InvalidCipherTextException {
     final ECIESEncryptionEngine engine = ECIESEncryptionEngine.forEncryption(remoteKey);
 
     // Do the encryption.
-    final BytesValue bytes = addPadding(message);
+    final Bytes bytes = addPadding(message);
     final int size = bytes.size() + ECIESEncryptionEngine.ENCRYPTION_OVERHEAD;
     final byte[] sizePrefix = {(byte) (size >>> 8), (byte) size};
-    final BytesValue encrypted = engine.encrypt(bytes, sizePrefix);
-    final BytesValue iv = engine.getIv();
+    final Bytes encrypted = engine.encrypt(bytes, sizePrefix);
+    final Bytes iv = engine.getIv();
     final SECP256K1.PublicKey ephPubKey = engine.getEphPubKey();
 
     // Create the output message by concatenating the ephemeral public key (prefixed with
     // 0x04 to designate uncompressed), IV, and encrypted bytes.
-    final MutableBytesValue answer =
-        MutableBytesValue.create(3 + ECIESHandshaker.PUBKEY_LENGTH + IV_SIZE + encrypted.size());
+    final MutableBytes answer =
+        MutableBytes.create(3 + ECIESHandshaker.PUBKEY_LENGTH + IV_SIZE + encrypted.size());
 
     answer.set(0, sizePrefix[0]);
     answer.set(1, sizePrefix[1]);
@@ -155,12 +153,11 @@ final class EncryptedMessage {
     return answer;
   }
 
-  private static BytesValue addPadding(final BytesValue message) {
-    final byte[] raw = message.extractArray();
+  private static Bytes addPadding(final Bytes message) {
+    final byte[] raw = message.toArray();
     final int padding = 100 + RANDOM.nextInt(200);
     final byte[] paddingBytes = new byte[padding];
     RANDOM.nextBytes(paddingBytes);
-    return BytesValue.wrap(
-        ByteBuffer.allocate(raw.length + padding).put(raw).put(paddingBytes).array());
+    return Bytes.wrap(ByteBuffer.allocate(raw.length + padding).put(raw).put(paddingBytes).array());
   }
 }

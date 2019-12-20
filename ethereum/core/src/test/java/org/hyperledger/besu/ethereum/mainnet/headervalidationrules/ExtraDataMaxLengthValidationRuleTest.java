@@ -18,8 +18,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
 public class ExtraDataMaxLengthValidationRuleTest {
@@ -28,7 +28,7 @@ public class ExtraDataMaxLengthValidationRuleTest {
   public void sufficientlySmallExtraDataBlockValidateSuccessfully() {
     final ExtraDataMaxLengthValidationRule uut = new ExtraDataMaxLengthValidationRule(1);
     final BlockHeaderTestFixture builder = new BlockHeaderTestFixture();
-    builder.extraData(BytesValue.wrap(new byte[1]));
+    builder.extraData(Bytes.wrap(new byte[1]));
 
     final BlockHeader header = builder.buildHeader();
 
@@ -40,7 +40,7 @@ public class ExtraDataMaxLengthValidationRuleTest {
   public void tooLargeExtraDataCausesValidationFailure() {
     final ExtraDataMaxLengthValidationRule uut = new ExtraDataMaxLengthValidationRule(1);
     final BlockHeaderTestFixture builder = new BlockHeaderTestFixture();
-    builder.extraData(BytesValue.wrap(new byte[2]));
+    builder.extraData(Bytes.wrap(new byte[2]));
 
     final BlockHeader header = builder.buildHeader();
 

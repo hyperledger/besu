@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.p2p.discovery.internal;
 import static com.google.common.base.Preconditions.checkArgument;
 import static org.hyperledger.besu.crypto.Hash.keccak256;
 import static org.hyperledger.besu.util.Preconditions.checkGuard;
-import static org.hyperledger.besu.util.bytes.BytesValues.asUnsignedBigInteger;
 
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.crypto.SECP256K1.PublicKey;
@@ -26,15 +25,15 @@ import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryPacketDecodingEx
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.MutableBytesValue;
-import org.hyperledger.besu.util.uint.UInt256Bytes;
 
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Optional;
 
 import io.vertx.core.buffer.Buffer;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.MutableBytes;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class Packet {
 
@@ -45,7 +44,7 @@ public class Packet {
   private final PacketType type;
   private final PacketData data;
 
-  private final BytesValue hash;
+  private final Bytes hash;
   private final Signature signature;
   private final PublicKey publicKey;
 
@@ -53,25 +52,24 @@ public class Packet {
     this.type = type;
     this.data = data;
 
-    final BytesValue typeBytes = BytesValue.of(this.type.getValue());
-    final BytesValue dataBytes = RLP.encode(this.data::writeTo);
+    final Bytes typeBytes = Bytes.of(this.type.getValue());
+    final Bytes dataBytes = RLP.encode(this.data::writeTo);
 
-    this.signature = SECP256K1.sign(keccak256(BytesValue.wrap(typeBytes, dataBytes)), keyPair);
-    this.hash = keccak256(encodeSignature(signature).concat(typeBytes).concat(dataBytes));
+    this.signature = SECP256K1.sign(keccak256(Bytes.wrap(typeBytes, dataBytes)), keyPair);
+    this.hash = keccak256(Bytes.concatenate(encodeSignature(signature), typeBytes, dataBytes));
     this.publicKey = keyPair.getPublicKey();
   }
 
-  private Packet(
-      final PacketType packetType, final PacketData packetData, final BytesValue message) {
-    final BytesValue hash = message.slice(0, SIGNATURE_INDEX);
-    final BytesValue encodedSignature =
+  private Packet(final PacketType packetType, final PacketData packetData, final Bytes message) {
+    final Bytes hash = message.slice(0, SIGNATURE_INDEX);
+    final Bytes encodedSignature =
         message.slice(SIGNATURE_INDEX, PACKET_TYPE_INDEX - SIGNATURE_INDEX);
-    final BytesValue signedPayload =
+    final Bytes signedPayload =
         message.slice(PACKET_TYPE_INDEX, message.size() - PACKET_TYPE_INDEX);
 
     // Perform hash integrity check.
-    final BytesValue rest = message.slice(SIGNATURE_INDEX, message.size() - SIGNATURE_INDEX);
-    if (!Arrays.equals(keccak256(rest).extractArray(), hash.extractArray())) {
+    final Bytes rest = message.slice(SIGNATURE_INDEX, message.size() - SIGNATURE_INDEX);
+    if (!Arrays.equals(keccak256(rest).toArray(), hash.toArray())) {
       throw new PeerDiscoveryPacketDecodingException(
           "Integrity check failed: non-matching hashes.");
     }
@@ -117,11 +115,11 @@ public class Packet {
       throw new PeerDiscoveryPacketDecodingException("Malformed packet of type: " + packetType, e);
     }
 
-    return new Packet(packetType, packetData, BytesValue.wrapBuffer(message));
+    return new Packet(packetType, packetData, Bytes.wrapBuffer(message));
   }
 
   public Buffer encode() {
-    final BytesValue encodedSignature = encodeSignature(signature);
+    final Bytes encodedSignature = encodeSignature(signature);
     final BytesValueRLPOutput encodedData = new BytesValueRLPOutput();
     data.writeTo(encodedData);
 
@@ -144,7 +142,7 @@ public class Packet {
     // so we write the last byte we know we'll need to make it resize accordingly.
     final int start = buffer.length();
     buffer.setByte(start + size - 1, (byte) 0);
-    encoded.writeEncoded(MutableBytesValue.wrapBuffer(buffer, start, size));
+    encoded.writeEncoded(MutableBytes.wrapBuffer(buffer, start, size));
   }
 
   @SuppressWarnings("unchecked")
@@ -155,7 +153,7 @@ public class Packet {
     return Optional.of((T) data);
   }
 
-  public BytesValue getNodeId() {
+  public Bytes getNodeId() {
     return publicKey.getEncodedBytes();
   }
 
@@ -163,7 +161,7 @@ public class Packet {
     return type;
   }
 
-  public BytesValue getHash() {
+  public Bytes getHash() {
     return hash;
   }
 
@@ -183,20 +181,20 @@ public class Packet {
         + '}';
   }
 
-  private static BytesValue encodeSignature(final SECP256K1.Signature signature) {
-    final MutableBytesValue encoded = MutableBytesValue.create(65);
-    UInt256Bytes.of(signature.getR()).copyTo(encoded, 0);
-    UInt256Bytes.of(signature.getS()).copyTo(encoded, 32);
+  private static Bytes encodeSignature(final SECP256K1.Signature signature) {
+    final MutableBytes encoded = MutableBytes.create(65);
+    UInt256.valueOf(signature.getR()).toBytes().copyTo(encoded, 0);
+    UInt256.valueOf(signature.getS()).toBytes().copyTo(encoded, 32);
     final int v = signature.getRecId();
     encoded.set(64, (byte) v);
     return encoded;
   }
 
-  private static SECP256K1.Signature decodeSignature(final BytesValue encodedSignature) {
+  private static SECP256K1.Signature decodeSignature(final Bytes encodedSignature) {
     checkArgument(
         encodedSignature != null && encodedSignature.size() == 65, "encodedSignature is 65 bytes");
-    final BigInteger r = asUnsignedBigInteger(encodedSignature.slice(0, 32));
-    final BigInteger s = asUnsignedBigInteger(encodedSignature.slice(32, 32));
+    final BigInteger r = encodedSignature.slice(0, 32).toUnsignedBigInteger();
+    final BigInteger s = encodedSignature.slice(32, 32).toUnsignedBigInteger();
     final int recId = encodedSignature.get(64);
     return SECP256K1.Signature.create(r, s, (byte) recId);
   }

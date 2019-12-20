@@ -14,15 +14,15 @@
  */
 package org.hyperledger.besu.ethereum.p2p.rlpx.wire;
 
-import org.hyperledger.besu.util.bytes.BytesValue;
-
 import java.util.Objects;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public abstract class AbstractMessageData implements MessageData {
 
-  protected final BytesValue data;
+  protected final Bytes data;
 
-  protected AbstractMessageData(final BytesValue data) {
+  protected AbstractMessageData(final Bytes data) {
     this.data = data;
   }
 
@@ -32,7 +32,7 @@ public abstract class AbstractMessageData implements MessageData {
   }
 
   @Override
-  public BytesValue getData() {
+  public Bytes getData() {
     return data;
   }
 

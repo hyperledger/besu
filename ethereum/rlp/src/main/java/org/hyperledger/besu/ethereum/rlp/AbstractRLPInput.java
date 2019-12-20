@@ -16,17 +16,16 @@ package org.hyperledger.besu.ethereum.rlp;
 
 import static com.google.common.base.Preconditions.checkState;
 
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.MutableBytes32;
-import org.hyperledger.besu.util.uint.UInt256;
-import org.hyperledger.besu.util.uint.UInt256Value;
-
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.function.Function;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.bytes.MutableBytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 abstract class AbstractRLPInput implements RLPInput {
 
@@ -93,7 +92,7 @@ abstract class AbstractRLPInput implements RLPInput {
 
   protected abstract byte inputByte(long offset);
 
-  protected abstract BytesValue inputSlice(long offset, int length);
+  protected abstract Bytes inputSlice(long offset, int length);
 
   protected abstract Bytes32 inputSlice32(long offset);
 
@@ -276,7 +275,7 @@ abstract class AbstractRLPInput implements RLPInput {
     return inputByte(currentPayloadOffset + offsetInPayload);
   }
 
-  private BytesValue payloadSlice() {
+  private Bytes payloadSlice() {
     return inputSlice(currentPayloadOffset, currentPayloadSize);
   }
 
@@ -332,17 +331,7 @@ abstract class AbstractRLPInput implements RLPInput {
 
   @Override
   public UInt256 readUInt256Scalar() {
-    return readBytes32Scalar().asUInt256();
-  }
-
-  @Override
-  public <T extends UInt256Value<T>> T readUInt256Scalar(final Function<Bytes32, T> bytesWrapper) {
-    final Bytes32 bytes = readBytes32Scalar();
-    try {
-      return bytesWrapper.apply(bytes);
-    } catch (final Exception e) {
-      throw error(e, "Problem decoding UInt256 scalar");
-    }
+    return UInt256.fromBytes(readBytes32Scalar());
   }
 
   @Override
@@ -399,9 +388,9 @@ abstract class AbstractRLPInput implements RLPInput {
   }
 
   @Override
-  public BytesValue readBytesValue() {
+  public Bytes readBytes() {
     checkElt("arbitrary bytes value");
-    final BytesValue res = payloadSlice();
+    final Bytes res = payloadSlice();
     setTo(nextItem());
     return res;
   }
@@ -415,8 +404,8 @@ abstract class AbstractRLPInput implements RLPInput {
   }
 
   @Override
-  public <T> T readBytesValue(final Function<BytesValue, T> mapper) {
-    final BytesValue res = readBytesValue();
+  public <T> T readBytes(final Function<Bytes, T> mapper) {
+    final Bytes res = readBytes();
     try {
       return mapper.apply(res);
     } catch (final Exception e) {

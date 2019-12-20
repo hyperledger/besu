@@ -27,13 +27,12 @@ import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.BytesValues;
 
 import java.util.Optional;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 /**
  * Controller that can read from a smart contract that exposes the permissioning call
@@ -51,24 +50,22 @@ public class TransactionSmartContractPermissioningController
   private static final String FUNCTION_SIGNATURE =
       "transactionAllowed(address,address,uint256,uint256,uint256,bytes)";
   // hashed function signature for connection allowed call
-  private static final BytesValue FUNCTION_SIGNATURE_HASH = hashSignature(FUNCTION_SIGNATURE);
+  private static final Bytes FUNCTION_SIGNATURE_HASH = hashSignature(FUNCTION_SIGNATURE);
   private final Counter checkCounterPermitted;
   private final Counter checkCounter;
   private final Counter checkCounterUnpermitted;
 
   // The first 4 bytes of the hash of the full textual signature of the function is used in
   // contract calls to determine the function being called
-  private static BytesValue hashSignature(final String signature) {
-    return Hash.keccak256(BytesValue.of(signature.getBytes(UTF_8))).slice(0, 4);
+  private static Bytes hashSignature(final String signature) {
+    return Hash.keccak256(Bytes.of(signature.getBytes(UTF_8))).slice(0, 4);
   }
 
   // True from a contract is 1 filled to 32 bytes
-  private static final BytesValue TRUE_RESPONSE =
-      BytesValue.fromHexString(
-          "0x0000000000000000000000000000000000000000000000000000000000000001");
-  private static final BytesValue FALSE_RESPONSE =
-      BytesValue.fromHexString(
-          "0x0000000000000000000000000000000000000000000000000000000000000000");
+  private static final Bytes TRUE_RESPONSE =
+      Bytes.fromHexString("0x0000000000000000000000000000000000000000000000000000000000000001");
+  private static final Bytes FALSE_RESPONSE =
+      Bytes.fromHexString("0x0000000000000000000000000000000000000000000000000000000000000000");
 
   /**
    * Creates a permissioning controller attached to a blockchain
@@ -115,7 +112,7 @@ public class TransactionSmartContractPermissioningController
     LOG.trace("Account permissioning - Smart Contract : Checking transaction {}", transactionHash);
 
     this.checkCounter.inc();
-    final BytesValue payload = createPayload(transaction);
+    final Bytes payload = createPayload(transaction);
     final CallParameter callParams =
         new CallParameter(null, contractAddress, -1, null, null, payload);
 
@@ -165,17 +162,17 @@ public class TransactionSmartContractPermissioningController
 
   // Checks the returned bytes from the permissioning contract call to see if it's a value we
   // understand
-  public static Boolean checkTransactionResult(final BytesValue result) {
+  public static Boolean checkTransactionResult(final Bytes result) {
     // booleans are padded to 32 bytes
     if (result.size() != 32) {
       throw new IllegalArgumentException("Unexpected result size");
     }
 
     // 0 is false
-    if (result.compareTo(FALSE_RESPONSE) == 0) {
+    if (result.equals(FALSE_RESPONSE)) {
       return false;
       // 32 bytes of 1's is true
-    } else if (result.compareTo(TRUE_RESPONSE) == 0) {
+    } else if (result.equals(TRUE_RESPONSE)) {
       return true;
       // Anything else is wrong
     } else {
@@ -184,52 +181,51 @@ public class TransactionSmartContractPermissioningController
   }
 
   // Assemble the bytevalue payload to call the contract
-  public static BytesValue createPayload(final Transaction transaction) {
+  public static Bytes createPayload(final Transaction transaction) {
     return createPayload(FUNCTION_SIGNATURE_HASH, transaction);
   }
 
-  public static BytesValue createPayload(
-      final BytesValue signature, final Transaction transaction) {
-    return BytesValues.concatenate(signature, encodeTransaction(transaction));
+  public static Bytes createPayload(final Bytes signature, final Transaction transaction) {
+    return Bytes.concatenate(signature, encodeTransaction(transaction));
   }
 
-  private static BytesValue encodeTransaction(final Transaction transaction) {
-    return BytesValues.concatenate(
+  private static Bytes encodeTransaction(final Transaction transaction) {
+    return Bytes.concatenate(
         encodeAddress(transaction.getSender()),
         encodeAddress(transaction.getTo()),
-        transaction.getValue().getBytes(),
-        transaction.getGasPrice().getBytes(),
+        transaction.getValue().toBytes(),
+        transaction.getGasPrice().toBytes(),
         encodeLong(transaction.getGasLimit()),
-        encodeBytes(transaction.getPayload()));
+        encodeBytes(transaction.getPayloadBytes()));
   }
 
   // Case for empty address
-  private static BytesValue encodeAddress(final Optional<Address> address) {
-    return encodeAddress(address.orElse(Address.wrap(BytesValue.wrap(new byte[20]))));
+  private static Bytes encodeAddress(final Optional<Address> address) {
+    return encodeAddress(address.orElse(Address.wrap(Bytes.wrap(new byte[20]))));
   }
 
   // Address is the 20 bytes of value left padded by 12 bytes.
-  private static BytesValue encodeAddress(final Address address) {
-    return BytesValues.concatenate(BytesValue.wrap(new byte[12]), address);
+  private static Bytes encodeAddress(final Address address) {
+    return Bytes.concatenate(Bytes.wrap(new byte[12]), address);
   }
 
   // long to uint256, 8 bytes big endian, so left padded by 24 bytes
-  private static BytesValue encodeLong(final long l) {
+  private static Bytes encodeLong(final long l) {
     checkArgument(l >= 0, "Unsigned value must be positive");
     final byte[] longBytes = new byte[8];
     for (int i = 0; i < 8; i++) {
       longBytes[i] = (byte) ((l >> ((7 - i) * 8)) & 0xFF);
     }
-    return BytesValues.concatenate(BytesValue.wrap(new byte[24]), BytesValue.wrap(longBytes));
+    return Bytes.concatenate(Bytes.wrap(new byte[24]), Bytes.wrap(longBytes));
   }
 
   // A bytes array is a uint256 of its length, then the bytes that make up its value, then pad to
   // next 32 bytes interval
   // It needs to be preceded by the bytes offset of the first dynamic parameter (192 bytes)
-  private static BytesValue encodeBytes(final BytesValue value) {
-    final BytesValue dynamicParameterOffset = encodeLong(192);
-    final BytesValue length = encodeLong(value.size());
-    final BytesValue padding = BytesValue.wrap(new byte[(32 - (value.size() % 32))]);
-    return BytesValues.concatenate(dynamicParameterOffset, length, value, padding);
+  private static Bytes encodeBytes(final Bytes value) {
+    final Bytes dynamicParameterOffset = encodeLong(192);
+    final Bytes length = encodeLong(value.size());
+    final Bytes padding = Bytes.wrap(new byte[(32 - (value.size() % 32))]);
+    return Bytes.concatenate(dynamicParameterOffset, length, value, padding);
   }
 }

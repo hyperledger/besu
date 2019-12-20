@@ -16,13 +16,14 @@ package org.hyperledger.besu.consensus.ibft.messagedata;
 
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Commit;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
-import org.hyperledger.besu.util.bytes.BytesValue;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class CommitMessageData extends AbstractIbftMessageData {
 
   private static final int MESSAGE_CODE = IbftV2.COMMIT;
 
-  private CommitMessageData(final BytesValue data) {
+  private CommitMessageData(final Bytes data) {
     super(data);
   }
 

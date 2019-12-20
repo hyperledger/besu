@@ -39,6 +39,8 @@ dependencies {
   implementation(project(':services:kvstore'))
   implementation(project(':util'))
 
+  implementation 'org.apache.tuweni:tuweni-bytes'
+  implementation 'org.apache.tuweni:tuweni-units'
   implementation 'com.google.guava:guava'
   implementation 'io.vertx:vertx-core'
   implementation 'io.vertx:vertx-web'

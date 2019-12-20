@@ -24,11 +24,11 @@ import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.Test;
 
@@ -59,7 +59,7 @@ public final class GenesisStateTest {
     assertThat(header.getTransactionsRoot()).isEqualTo(Hash.EMPTY_TRIE_HASH);
     assertThat(header.getReceiptsRoot()).isEqualTo(Hash.EMPTY_TRIE_HASH);
     assertThat(header.getOmmersHash()).isEqualTo(Hash.EMPTY_LIST_HASH);
-    assertThat(header.getExtraData()).isEqualTo(BytesValue.EMPTY);
+    assertThat(header.internalGetExtraData()).isEqualTo(Bytes.EMPTY);
     assertThat(header.getParentHash()).isEqualTo(Hash.ZERO);
     final MutableWorldState worldState = InMemoryStorageProvider.createInMemoryWorldState();
     genesisState.writeStateTo(worldState);
@@ -68,9 +68,9 @@ public final class GenesisStateTest {
     final Account second =
         worldState.get(Address.fromHexString("0x0000000000000000000000000000000000000002"));
     assertThat(first).isNotNull();
-    assertThat(first.getBalance().toLong()).isEqualTo(111111111L);
+    assertThat(first.getBalance().toLong()).isEqualTo(111111111);
     assertThat(second).isNotNull();
-    assertThat(second.getBalance().toLong()).isEqualTo(222222222L);
+    assertThat(second.getBalance().toLong()).isEqualTo(222222222);
   }
 
   @Test
@@ -84,7 +84,7 @@ public final class GenesisStateTest {
     assertThat(header.getTransactionsRoot()).isEqualTo(Hash.EMPTY_TRIE_HASH);
     assertThat(header.getReceiptsRoot()).isEqualTo(Hash.EMPTY_TRIE_HASH);
     assertThat(header.getOmmersHash()).isEqualTo(Hash.EMPTY_LIST_HASH);
-    assertThat(header.getExtraData()).isEqualTo(BytesValue.EMPTY);
+    assertThat(header.internalGetExtraData()).isEqualTo(Bytes.EMPTY);
     assertThat(header.getParentHash()).isEqualTo(Hash.ZERO);
   }
 
@@ -101,7 +101,7 @@ public final class GenesisStateTest {
     genesisState.writeStateTo(worldState);
     final Account contract =
         worldState.get(Address.fromHexString("0x3850000000000000000000000000000000000000"));
-    assertThat(contract.getCode()).isEqualTo(BytesValue.fromHexString(EXPECTED_CODE));
+    assertThat(contract.getCode()).isEqualTo(Bytes.fromHexString(EXPECTED_CODE));
     assertThat(contract.getVersion()).isEqualTo(version);
     assertStorageValue(
         contract,
@@ -148,9 +148,9 @@ public final class GenesisStateTest {
             MainnetProtocolSchedule.create());
     final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
     genesisState.getBlock().writeTo(tmp);
-    assertThat(Hex.toHexString(genesisState.getBlock().getHeader().getHash().extractArray()))
+    assertThat(Hex.toHexString(genesisState.getBlock().getHeader().getHash().getByteArray()))
         .isEqualTo(OLYMPIC_HASH);
-    assertThat(Hex.toHexString(tmp.encoded().extractArray())).isEqualTo(OLYMPIC_RLP);
+    assertThat(Hex.toHexString(tmp.encoded().toArray())).isEqualTo(OLYMPIC_RLP);
   }
 
   private void assertStorageValue(final Account contract, final String key, final String value) {

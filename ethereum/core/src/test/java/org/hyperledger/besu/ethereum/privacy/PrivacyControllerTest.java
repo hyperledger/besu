@@ -32,7 +32,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.enclave.Enclave;
-import org.hyperledger.besu.enclave.EnclaveException;
+import org.hyperledger.besu.enclave.EnclaveServerException;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.enclave.types.PrivacyGroup.Type;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
@@ -48,14 +48,14 @@ import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.FixedKeySigningPrivateMarkerTransactionFactory;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.BytesValues;
 import org.hyperledger.orion.testutil.OrionKeyUtils;
 
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.io.Base64;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -94,7 +94,7 @@ public class PrivacyControllerTest {
           .gasLimit(3000000)
           .to(Address.fromHexString("0x627306090abab3a6e1400e9345bc60c78a8bef57"))
           .value(Wei.ZERO)
-          .payload(BytesValues.fromBase64(TRANSACTION_KEY))
+          .payload(Base64.decode(TRANSACTION_KEY))
           .sender(Address.fromHexString("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"))
           .chainId(BigInteger.valueOf(2018))
           .signAndBuild(KEY_PAIR);
@@ -111,7 +111,8 @@ public class PrivacyControllerTest {
 
   private Enclave brokenMockEnclave() {
     Enclave mockEnclave = mock(Enclave.class);
-    when(mockEnclave.send(anyString(), anyString(), anyList())).thenThrow(EnclaveException.class);
+    when(mockEnclave.send(anyString(), anyString(), anyList()))
+        .thenThrow(EnclaveServerException.class);
     return mockEnclave;
   }
 
@@ -124,8 +125,7 @@ public class PrivacyControllerTest {
   @Before
   public void setUp() throws Exception {
     privateStateStorage = mock(PrivateStateStorage.class);
-    when(privateStateStorage.getLatestStateRoot(any(BytesValue.class)))
-        .thenReturn(Optional.of(hash));
+    when(privateStateStorage.getLatestStateRoot(any(Bytes.class))).thenReturn(Optional.of(hash));
     worldStateArchive = mock(WorldStateArchive.class);
     account = mock(Account.class);
     when(account.getNonce()).thenReturn(1L);
@@ -207,7 +207,7 @@ public class PrivacyControllerTest {
 
   @Test
   public void sendTransactionWhenEnclaveFailsThrowsEnclaveError() {
-    assertThatExceptionOfType(EnclaveException.class)
+    assertThatExceptionOfType(EnclaveServerException.class)
         .isThrownBy(() -> brokenPrivacyController.sendTransaction(buildLegacyPrivateTransaction()));
   }
 
@@ -370,7 +370,7 @@ public class PrivacyControllerTest {
     final long nonce = privacyController.determineNonce(address, "Group1");
 
     assertThat(nonce).isEqualTo(4L);
-    verify(privateStateStorage).getLatestStateRoot(BytesValues.fromBase64("Group1"));
+    verify(privateStateStorage).getLatestStateRoot(Base64.decode("Group1"));
     verify(worldStateArchive).getMutable(hash);
     verify(mutableWorldState).get(address);
   }
@@ -379,7 +379,7 @@ public class PrivacyControllerTest {
   public void determineNonceForPrivacyGroupRequestWhenPrivateStateDoesNotExist() {
     final Address address = Address.fromHexString("55");
 
-    when(privateStateStorage.getLatestStateRoot(BytesValues.fromBase64("Group1")))
+    when(privateStateStorage.getLatestStateRoot(Base64.decode("Group1")))
         .thenReturn(Optional.empty());
 
     final long nonce = privacyController.determineNonce(address, "Group1");
@@ -392,7 +392,7 @@ public class PrivacyControllerTest {
   public void determineNonceForPrivacyGroupRequestWhenWorldStateDoesNotExist() {
     final Address address = Address.fromHexString("55");
 
-    when(privateStateStorage.getLatestStateRoot(BytesValues.fromBase64("Group1")))
+    when(privateStateStorage.getLatestStateRoot(Base64.decode("Group1")))
         .thenReturn(Optional.of(hash));
     when(worldStateArchive.getMutable(hash)).thenReturn(Optional.empty());
 
@@ -406,7 +406,7 @@ public class PrivacyControllerTest {
   public void determineNonceForPrivacyGroupRequestWhenAccountDoesNotExist() {
     final Address address = Address.fromHexString("55");
 
-    when(privateStateStorage.getLatestStateRoot(BytesValues.fromBase64("Group1")))
+    when(privateStateStorage.getLatestStateRoot(Base64.decode("Group1")))
         .thenReturn(Optional.of(hash));
     when(worldStateArchive.getMutable(hash)).thenReturn(Optional.of(mutableWorldState));
     when(mutableWorldState.get(address)).thenReturn(null);
@@ -423,19 +423,19 @@ public class PrivacyControllerTest {
 
   private static PrivateTransaction buildLegacyPrivateTransaction(final long nonce) {
     return buildPrivateTransaction(nonce)
-        .privateFrom(BytesValues.fromBase64("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo="))
+        .privateFrom(Base64.decode("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo="))
         .privateFor(
             newArrayList(
-                BytesValues.fromBase64("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo="),
-                BytesValues.fromBase64("Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=")))
+                Base64.decode("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo="),
+                Base64.decode("Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=")))
         .signAndBuild(KEY_PAIR);
   }
 
   private static PrivateTransaction buildBesuPrivateTransaction(final long nonce) {
 
     return buildPrivateTransaction(nonce)
-        .privateFrom(BytesValues.fromBase64("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo="))
-        .privacyGroupId(BytesValues.fromBase64("DyAOiF/ynpc+JXa2YAGB0bCitSlOMNm+ShmB/7M6C4w="))
+        .privateFrom(Base64.decode("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo="))
+        .privacyGroupId(Base64.decode("DyAOiF/ynpc+JXa2YAGB0bCitSlOMNm+ShmB/7M6C4w="))
         .signAndBuild(KEY_PAIR);
   }
 
@@ -446,7 +446,7 @@ public class PrivacyControllerTest {
         .gasLimit(3000000)
         .to(Address.fromHexString("0x627306090abab3a6e1400e9345bc60c78a8bef57"))
         .value(Wei.ZERO)
-        .payload(BytesValue.fromHexString("0x"))
+        .payload(Bytes.fromHexString("0x"))
         .sender(Address.fromHexString("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"))
         .chainId(BigInteger.valueOf(2018))
         .restriction(Restriction.RESTRICTED);

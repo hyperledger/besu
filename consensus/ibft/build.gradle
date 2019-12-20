@@ -39,6 +39,8 @@ dependencies {
   implementation project(':ethereum:p2p')
   implementation project(':services:kvstore')
 
+  implementation 'org.apache.tuweni:tuweni-bytes'
+  implementation 'org.apache.tuweni:tuweni-units'
   implementation 'io.vertx:vertx-core'
   implementation 'com.google.guava:guava'
 

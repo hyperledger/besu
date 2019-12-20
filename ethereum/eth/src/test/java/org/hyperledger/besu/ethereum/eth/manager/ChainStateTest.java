@@ -23,14 +23,14 @@ import org.hyperledger.besu.ethereum.chain.ChainHead;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import org.junit.Test;
 
 public class ChainStateTest {
 
-  private static final UInt256 INITIAL_TOTAL_DIFFICULTY = UInt256.of(256);
+  private static final Difficulty INITIAL_TOTAL_DIFFICULTY = Difficulty.of(256);
   private final ChainState chainState = new ChainState();
 
   @Test
@@ -184,7 +184,7 @@ public class ChainStateTest {
     assertThat(chainState.getBestBlock().getNumber()).isEqualTo(0L);
 
     final long betterBlockNumber = blockNumber + 2;
-    final UInt256 betterTd = INITIAL_TOTAL_DIFFICULTY.plus(100L);
+    final Difficulty betterTd = INITIAL_TOTAL_DIFFICULTY.add(100L);
     final BlockHeader betterBlock =
         new BlockHeaderTestFixture().number(betterBlockNumber).buildHeader();
     chainState.updateForAnnouncedBlock(betterBlock, betterTd);
@@ -205,7 +205,7 @@ public class ChainStateTest {
     assertThat(chainState.getBestBlock().getNumber()).isEqualTo(0L);
 
     final long otherBlockNumber = blockNumber + 2;
-    final UInt256 otherTd = INITIAL_TOTAL_DIFFICULTY.minus(100L);
+    final Difficulty otherTd = INITIAL_TOTAL_DIFFICULTY.subtract(100L);
     final BlockHeader otherBlock =
         new BlockHeaderTestFixture().number(otherBlockNumber).buildHeader();
     chainState.updateForAnnouncedBlock(otherBlock, otherTd);
@@ -228,7 +228,7 @@ public class ChainStateTest {
     chainState.updateForAnnouncedBlock(bestBlockHeader, INITIAL_TOTAL_DIFFICULTY);
 
     final long otherBlockNumber = blockNumber - 2;
-    final UInt256 otherTd = INITIAL_TOTAL_DIFFICULTY.minus(100L);
+    final Difficulty otherTd = INITIAL_TOTAL_DIFFICULTY.subtract(100L);
     final BlockHeader otherBlock =
         new BlockHeaderTestFixture().number(otherBlockNumber).buildHeader();
     chainState.updateForAnnouncedBlock(otherBlock, otherTd);
@@ -241,7 +241,7 @@ public class ChainStateTest {
 
   @Test
   public void shouldOnlyHaveHeightEstimateWhenHeightHasBeenSet() {
-    chainState.statusReceived(Hash.EMPTY_LIST_HASH, UInt256.ONE);
+    chainState.statusReceived(Hash.EMPTY_LIST_HASH, Difficulty.ONE);
     assertThat(chainState.hasEstimatedHeight()).isFalse();
 
     chainState.update(new BlockHeaderTestFixture().number(12).buildHeader());
@@ -311,8 +311,8 @@ public class ChainStateTest {
   @Test
   public void chainIsBetterThan_chainStateIsLighterAndShorter() {
     final ChainState chainState = new ChainState();
-    updateChainState(chainState, UInt256.of(50), 50);
-    final ChainHead chainHead = new ChainHead(Hash.ZERO, UInt256.of(100), 100);
+    updateChainState(chainState, Difficulty.of(50), 50);
+    final ChainHead chainHead = new ChainHead(Hash.ZERO, Difficulty.of(100), 100);
 
     assertThat(chainState.chainIsBetterThan(chainHead)).isFalse();
   }
@@ -320,8 +320,8 @@ public class ChainStateTest {
   @Test
   public void chainIsBetterThan_chainStateIsHeavierAndShorter() {
     final ChainState chainState = new ChainState();
-    updateChainState(chainState, UInt256.of(100), 50);
-    final ChainHead chainHead = new ChainHead(Hash.ZERO, UInt256.of(50), 100);
+    updateChainState(chainState, Difficulty.of(100), 50);
+    final ChainHead chainHead = new ChainHead(Hash.ZERO, Difficulty.of(50), 100);
 
     assertThat(chainState.chainIsBetterThan(chainHead)).isTrue();
   }
@@ -329,8 +329,8 @@ public class ChainStateTest {
   @Test
   public void chainIsBetterThan_chainStateIsLighterAndTaller() {
     final ChainState chainState = new ChainState();
-    updateChainState(chainState, UInt256.of(50), 100);
-    final ChainHead chainHead = new ChainHead(Hash.ZERO, UInt256.of(100), 50);
+    updateChainState(chainState, Difficulty.of(50), 100);
+    final ChainHead chainHead = new ChainHead(Hash.ZERO, Difficulty.of(100), 50);
 
     assertThat(chainState.chainIsBetterThan(chainHead)).isTrue();
   }
@@ -338,8 +338,8 @@ public class ChainStateTest {
   @Test
   public void chainIsBetterThan_chainStateIsHeavierAndTaller() {
     final ChainState chainState = new ChainState();
-    updateChainState(chainState, UInt256.of(100), 100);
-    final ChainHead chainHead = new ChainHead(Hash.ZERO, UInt256.of(50), 50);
+    updateChainState(chainState, Difficulty.of(100), 100);
+    final ChainHead chainHead = new ChainHead(Hash.ZERO, Difficulty.of(50), 50);
 
     assertThat(chainState.chainIsBetterThan(chainHead)).isTrue();
   }
@@ -353,14 +353,14 @@ public class ChainStateTest {
    * @param blockHeight The target estimated block height
    */
   private void updateChainState(
-      final ChainState chainState, final UInt256 totalDifficulty, final long blockHeight) {
+      final ChainState chainState, final Difficulty totalDifficulty, final long blockHeight) {
     // Chain state is updated based on the parent of the announced block
     // So, increment block number by 1 and set block difficulty to zero
     // in order to update to the values we want
     final BlockHeader header =
         new BlockHeaderTestFixture()
             .number(blockHeight + 1L)
-            .difficulty(UInt256.ZERO)
+            .difficulty(Difficulty.ZERO)
             .buildHeader();
     chainState.updateForAnnouncedBlock(header, totalDifficulty);
 

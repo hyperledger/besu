@@ -19,8 +19,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
 public class WireMessagesSedesTest {
@@ -47,12 +47,12 @@ public class WireMessagesSedesTest {
   }
 
   private static void assertSedesWorks(final byte[] data) {
-    final BytesValue input = BytesValue.wrap(data);
+    final Bytes input = Bytes.wrap(data);
     final PeerInfo peerInfo = PeerInfo.readFrom(RLP.input(input));
 
     assertThat(peerInfo.getClientId()).isNotBlank();
     assertThat(peerInfo.getCapabilities()).isNotEmpty();
-    assertThat(peerInfo.getNodeId().extractArray().length).isEqualTo(64);
+    assertThat(peerInfo.getNodeId().toArray().length).isEqualTo(64);
     assertThat(peerInfo.getPort()).isGreaterThanOrEqualTo(0);
     assertThat(peerInfo.getVersion()).isEqualTo(5);
 

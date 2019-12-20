@@ -17,11 +17,11 @@ package org.hyperledger.besu.ethereum.chain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.List;
 import java.util.Optional;
@@ -159,7 +159,7 @@ public interface Blockchain {
    * @param blockHeaderHash The hash of the block header being queried.
    * @return The total difficulty of the corresponding block.
    */
-  Optional<UInt256> getTotalDifficultyByHash(Hash blockHeaderHash);
+  Optional<Difficulty> getTotalDifficultyByHash(Hash blockHeaderHash);
 
   /**
    * Given a transaction hash, returns the location (block number and transaction index) of the

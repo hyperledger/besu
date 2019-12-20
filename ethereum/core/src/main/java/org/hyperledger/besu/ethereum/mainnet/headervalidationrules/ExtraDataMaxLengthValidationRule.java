@@ -16,10 +16,10 @@ package org.hyperledger.besu.ethereum.mainnet.headervalidationrules;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.DetachedBlockHeaderValidationRule;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 /**
  * Responsible for ensuring the extra data fields in the header contain the appropriate number of
@@ -36,10 +36,10 @@ public class ExtraDataMaxLengthValidationRule implements DetachedBlockHeaderVali
 
   @Override
   public boolean validate(final BlockHeader header, final BlockHeader parent) {
-    return validateExtraData(header.getExtraData());
+    return validateExtraData(header.internalGetExtraData());
   }
 
-  private boolean validateExtraData(final BytesValue extraData) {
+  private boolean validateExtraData(final Bytes extraData) {
     if (extraData.size() > maxExtraDataBytes) {
       LOG.trace(
           "Invalid block header: extra data field length {} is greater {}",

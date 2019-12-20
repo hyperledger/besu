@@ -12,22 +12,21 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.vm;
+package org.hyperledger.besu.enclave;
 
-import org.hyperledger.besu.ethereum.core.Address;
+public class EnclaveClientException extends IllegalArgumentException {
+  private int statusCode;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
+  public EnclaveClientException(final int statusCode, final String message) {
+    super(message);
+    this.statusCode = statusCode;
+  }
 
-/** A AccountAddress mock for testing. */
-public class AddressMock extends Address {
+  public EnclaveClientException(final String message, final Throwable cause) {
+    super(message, cause);
+  }
 
-  /**
-   * Public constructor.
-   *
-   * @param value The value the AccountAddress represents.
-   */
-  @JsonCreator
-  public AddressMock(final String value) {
-    super(Address.fromHexString(value));
+  public int getStatusCode() {
+    return statusCode;
   }
 }

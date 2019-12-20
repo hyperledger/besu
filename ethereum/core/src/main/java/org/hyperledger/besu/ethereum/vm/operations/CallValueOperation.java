@@ -34,6 +34,6 @@ public class CallValueOperation extends AbstractOperation {
   @Override
   public void execute(final MessageFrame frame) {
     final Wei value = frame.getApparentValue();
-    frame.pushStackItem(value.getBytes());
+    frame.pushStackItem(value.toBytes());
   }
 }

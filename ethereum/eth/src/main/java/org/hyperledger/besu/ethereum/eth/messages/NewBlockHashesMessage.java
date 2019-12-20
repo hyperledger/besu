@@ -19,12 +19,12 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractMessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Iterator;
 import java.util.Objects;
 
 import com.google.common.collect.Iterators;
+import org.apache.tuweni.bytes.Bytes;
 
 public final class NewBlockHashesMessage extends AbstractMessageData {
 
@@ -46,7 +46,7 @@ public final class NewBlockHashesMessage extends AbstractMessageData {
     tmp.startList();
     for (final NewBlockHashesMessage.NewBlockHash hash : hashes) {
       tmp.startList();
-      tmp.writeBytesValue(hash.hash());
+      tmp.writeBytes(hash.hash());
       tmp.writeLongScalar(hash.number());
       tmp.endList();
     }
@@ -54,7 +54,7 @@ public final class NewBlockHashesMessage extends AbstractMessageData {
     return new NewBlockHashesMessage(tmp.encoded());
   }
 
-  private NewBlockHashesMessage(final BytesValue data) {
+  private NewBlockHashesMessage(final Bytes data) {
     super(data);
   }
 

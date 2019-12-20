@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
 import org.hyperledger.besu.ethereum.core.MessageFrameTestFixture;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
@@ -28,7 +29,6 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBConfigurationBuilder;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.unsegmented.RocksDBKeyValueStorage;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -70,7 +70,7 @@ public class OperationBenchmarkHelper {
               new BlockHeaderTestFixture()
                   .parentHash(blockchain.getChainHeadHash())
                   .number(i)
-                  .difficulty(UInt256.ONE)
+                  .difficulty(Difficulty.ONE)
                   .buildHeader(),
               new BlockBody(emptyList(), emptyList())),
           emptyList());
@@ -82,7 +82,7 @@ public class OperationBenchmarkHelper {
                 new BlockHeaderTestFixture()
                     .parentHash(blockchain.getChainHeadHash())
                     .number(blockchain.getChainHeadBlockNumber() + 1)
-                    .difficulty(UInt256.ONE)
+                    .difficulty(Difficulty.ONE)
                     .buildHeader())
             .build();
     return new OperationBenchmarkHelper(storageDirectory, keyValueStorage, messageFrame);

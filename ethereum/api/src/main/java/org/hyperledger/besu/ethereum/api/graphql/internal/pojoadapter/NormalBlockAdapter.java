@@ -18,8 +18,8 @@ import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,7 +42,7 @@ public class NormalBlockAdapter extends BlockAdapterBase {
     return Optional.of(blockWithMetaData.getTransactions().size());
   }
 
-  public Optional<UInt256> getTotalDifficulty() {
+  public Optional<Difficulty> getTotalDifficulty() {
     return Optional.of(blockWithMetaData.getTotalDifficulty());
   }
 

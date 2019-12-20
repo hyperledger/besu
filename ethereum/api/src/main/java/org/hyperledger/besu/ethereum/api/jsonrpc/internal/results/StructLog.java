@@ -16,9 +16,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
-import org.hyperledger.besu.util.bytes.Bytes32s;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -27,6 +24,9 @@ import java.util.TreeMap;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 @JsonPropertyOrder({"pc", "op", "gas", "gasCost", "depth", "stack", "memory", "storage"})
 public class StructLog {
@@ -48,24 +48,25 @@ public class StructLog {
     memory =
         traceFrame
             .getMemory()
-            .map(a -> Arrays.stream(a).map(Bytes32s::unprefixedHexString).toArray(String[]::new))
+            .map(a -> Arrays.stream(a).map(Bytes32::toShortHexString).toArray(String[]::new))
             .orElse(null);
     op = traceFrame.getOpcode();
     pc = traceFrame.getPc();
     stack =
         traceFrame
             .getStack()
-            .map(a -> Arrays.stream(a).map(Bytes32s::unprefixedHexString).toArray(String[]::new))
+            .map(a -> Arrays.stream(a).map(Bytes32::toShortHexString).toArray(String[]::new))
             .orElse(null);
     storage = traceFrame.getStorage().map(StructLog::formatStorage).orElse(null);
-    reason = traceFrame.getRevertReason().map(BytesValue::toUnprefixedString).orElse(null);
+    reason = traceFrame.getRevertReason().map(Bytes::toShortHexString).orElse(null);
   }
 
   private static Map<String, String> formatStorage(final Map<UInt256, UInt256> storage) {
     final Map<String, String> formattedStorage = new TreeMap<>();
     storage.forEach(
         (key, value) ->
-            formattedStorage.put(key.toUnprefixedHexString(), value.toUnprefixedHexString()));
+            formattedStorage.put(
+                key.toBytes().toUnprefixedHexString(), value.toBytes().toUnprefixedHexString()));
     return formattedStorage;
   }
 

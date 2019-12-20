@@ -22,15 +22,15 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
 public class PreparePayloadTest {
 
   @Test
   public void roundTripRlp() {
-    final Hash digest = Hash.hash(BytesValue.of(1));
+    final Hash digest = Hash.hash(Bytes.of(1));
     final ConsensusRoundIdentifier expectedRoundIdentifier = new ConsensusRoundIdentifier(1, 1);
     final PreparePayload preparePayload = new PreparePayload(expectedRoundIdentifier, digest);
     final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();

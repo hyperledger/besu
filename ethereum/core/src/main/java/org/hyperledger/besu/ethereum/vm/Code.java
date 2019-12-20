@@ -15,18 +15,18 @@
 package org.hyperledger.besu.ethereum.vm;
 
 import org.hyperledger.besu.ethereum.vm.operations.JumpDestOperation;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.BitSet;
 
 import com.google.common.base.MoreObjects;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 
 /** Represents EVM code associated with an account. */
 public class Code {
 
   /** The bytes representing the code. */
-  private final BytesValue bytes;
+  private final Bytes bytes;
 
   /** Used to cache valid jump destinations. */
   private BitSet validJumpDestinations;
@@ -36,12 +36,12 @@ public class Code {
    *
    * @param bytes The byte representation of the code.
    */
-  public Code(final BytesValue bytes) {
+  public Code(final Bytes bytes) {
     this.bytes = bytes;
   }
 
   public Code() {
-    this(BytesValue.EMPTY);
+    this(Bytes.EMPTY);
   }
 
   /**
@@ -82,7 +82,7 @@ public class Code {
       final EVM evm, final MessageFrame frame, final UInt256 destination) {
     if (!destination.fitsInt()) return false;
 
-    final int jumpDestination = destination.toInt();
+    final int jumpDestination = destination.intValue();
     if (jumpDestination > getSize()) return false;
 
     if (validJumpDestinations == null) {
@@ -100,7 +100,7 @@ public class Code {
     return validJumpDestinations.get(jumpDestination);
   }
 
-  public BytesValue getBytes() {
+  public Bytes getBytes() {
     return bytes;
   }
 

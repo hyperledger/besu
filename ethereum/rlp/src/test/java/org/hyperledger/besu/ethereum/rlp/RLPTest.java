@@ -18,110 +18,110 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
 import org.hyperledger.besu.ethereum.rlp.util.RLPTestUtil;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Random;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
 public class RLPTest {
 
   @Test
   public void calculateSize_singleByteValue() {
-    int size = RLP.calculateSize(BytesValue.fromHexString("0x01"));
+    int size = RLP.calculateSize(Bytes.fromHexString("0x01"));
     assertThat(size).isEqualTo(1);
   }
 
   @Test
   public void calculateSize_minSingleByteValue() {
-    int size = RLP.calculateSize(BytesValue.fromHexString("0x00"));
+    int size = RLP.calculateSize(Bytes.fromHexString("0x00"));
     assertThat(size).isEqualTo(1);
   }
 
   @Test
   public void calculateSize_maxSingleByteValue() {
-    int size = RLP.calculateSize(BytesValue.fromHexString("0x7F"));
+    int size = RLP.calculateSize(Bytes.fromHexString("0x7F"));
     assertThat(size).isEqualTo(1);
   }
 
   @Test
   public void calculateSize_smallByteString() {
     // Prefix indicates a payload of size 5, with a 1 byte prefix
-    int size = RLP.calculateSize(BytesValue.fromHexString("0x85"));
+    int size = RLP.calculateSize(Bytes.fromHexString("0x85"));
     assertThat(size).isEqualTo(6);
   }
 
   @Test
   public void calculateSize_nullByteString() {
     // Prefix indicates a payload of size 0, with a 1 byte prefix
-    int size = RLP.calculateSize(BytesValue.fromHexString("0x80"));
+    int size = RLP.calculateSize(Bytes.fromHexString("0x80"));
     assertThat(size).isEqualTo(1);
   }
 
   @Test
   public void calculateSize_minNonNullSmallByteString() {
     // Prefix indicates a payload of size 1, with a 1 byte prefix
-    int size = RLP.calculateSize(BytesValue.fromHexString("0x81"));
+    int size = RLP.calculateSize(Bytes.fromHexString("0x81"));
     assertThat(size).isEqualTo(2);
   }
 
   @Test
   public void calculateSize_maxSmallByteString() {
     // Prefix indicates a payload of size 55, with a 1 byte prefix
-    int size = RLP.calculateSize(BytesValue.fromHexString("0xB7"));
+    int size = RLP.calculateSize(Bytes.fromHexString("0xB7"));
     assertThat(size).isEqualTo(56);
   }
 
   @Test
   public void calculateSize_longByteString() {
     // Prefix indicates a payload of 56 bytes, with a 2 byte prefix
-    int size = RLP.calculateSize(BytesValue.fromHexString("0xB838"));
+    int size = RLP.calculateSize(Bytes.fromHexString("0xB838"));
     assertThat(size).isEqualTo(58);
   }
 
   @Test
   public void calculateSize_longByteStringWithMultiByteSize() {
     // Prefix indicates a payload of 258 bytes, with a 3 byte prefix
-    int size = RLP.calculateSize(BytesValue.fromHexString("0xB90102"));
+    int size = RLP.calculateSize(Bytes.fromHexString("0xB90102"));
     assertThat(size).isEqualTo(261);
   }
 
   @Test
   public void calculateSize_shortList() {
     // Prefix indicates a payload of 5 bytes, with a 1 byte prefix
-    int size = RLP.calculateSize(BytesValue.fromHexString("0xC5"));
+    int size = RLP.calculateSize(Bytes.fromHexString("0xC5"));
     assertThat(size).isEqualTo(6);
   }
 
   @Test
   public void calculateSize_emptyList() {
-    int size = RLP.calculateSize(BytesValue.fromHexString("0xC0"));
+    int size = RLP.calculateSize(Bytes.fromHexString("0xC0"));
     assertThat(size).isEqualTo(1);
   }
 
   @Test
   public void calculateSize_minNonEmptyList() {
-    int size = RLP.calculateSize(BytesValue.fromHexString("0xC1"));
+    int size = RLP.calculateSize(Bytes.fromHexString("0xC1"));
     assertThat(size).isEqualTo(2);
   }
 
   @Test
   public void calculateSize_maxShortList() {
-    int size = RLP.calculateSize(BytesValue.fromHexString("0xF7"));
+    int size = RLP.calculateSize(Bytes.fromHexString("0xF7"));
     assertThat(size).isEqualTo(56);
   }
 
   @Test
   public void calculateSize_longList() {
     // Prefix indicates a payload of 56 bytes, with a 2 byte prefix
-    int size = RLP.calculateSize(BytesValue.fromHexString("0xF838"));
+    int size = RLP.calculateSize(Bytes.fromHexString("0xF838"));
     assertThat(size).isEqualTo(58);
   }
 
   @Test
   public void calculateSize_longListWithMultiByteSize() {
     // Prefix indicates a payload of 258 bytes, with a 3 byte prefix
-    int size = RLP.calculateSize(BytesValue.fromHexString("0xF90102"));
+    int size = RLP.calculateSize(Bytes.fromHexString("0xF90102"));
     assertThat(size).isEqualTo(261);
   }
 
@@ -168,7 +168,7 @@ public class RLPTest {
         .hasMessageContaining("RLP item exceeds max supported size of 2147483647: 2147483648");
   }
 
-  private static BytesValue h(final String hex) {
-    return BytesValue.fromHexString(hex);
+  private static Bytes h(final String hex) {
+    return Bytes.fromHexString(hex);
   }
 }

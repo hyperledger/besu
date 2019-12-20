@@ -22,14 +22,15 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.BytesValues;
-import org.hyperledger.besu.util.uint.UInt256;
+import org.hyperledger.besu.plugin.data.UnformattedData;
 
 import java.math.BigInteger;
 import java.util.Objects;
 import java.util.Optional;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 /** An operation submitted by an external actor to be applied to the system. */
 public class Transaction implements org.hyperledger.besu.plugin.data.Transaction {
@@ -59,7 +60,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
 
   private final SECP256K1.Signature signature;
 
-  private final BytesValue payload;
+  private final Bytes payload;
 
   private final Optional<BigInteger> chainId;
 
@@ -85,11 +86,11 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     final Builder builder =
         builder()
             .nonce(input.readLongScalar())
-            .gasPrice(input.readUInt256Scalar(Wei::wrap))
+            .gasPrice(Wei.of(input.readUInt256Scalar()))
             .gasLimit(input.readLongScalar())
-            .to(input.readBytesValue(v -> v.size() == 0 ? null : Address.wrap(v)))
-            .value(input.readUInt256Scalar(Wei::wrap))
-            .payload(input.readBytesValue());
+            .to(input.readBytes(v -> v.size() == 0 ? null : Address.wrap(v)))
+            .value(Wei.of(input.readUInt256Scalar()))
+            .payload(input.readBytes());
 
     final BigInteger v = input.readBigIntegerScalar();
     final byte recId;
@@ -103,8 +104,8 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
       throw new RuntimeException(
           String.format("An unsupported encoded `v` value of %s was found", v));
     }
-    final BigInteger r = BytesValues.asUnsignedBigInteger(input.readUInt256Scalar().getBytes());
-    final BigInteger s = BytesValues.asUnsignedBigInteger(input.readUInt256Scalar().getBytes());
+    final BigInteger r = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
+    final BigInteger s = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
     final SECP256K1.Signature signature = SECP256K1.Signature.create(r, s, recId);
 
     input.leaveList();
@@ -137,7 +138,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
       final Optional<Address> to,
       final Wei value,
       final SECP256K1.Signature signature,
-      final BytesValue payload,
+      final Bytes payload,
       final Address sender,
       final Optional<BigInteger> chainId) {
     this.nonce = nonce;
@@ -219,7 +220,11 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
    * @return the transaction payload
    */
   @Override
-  public BytesValue getPayload() {
+  public UnformattedData getPayload() {
+    return new UnformattedDataWrapper(payload);
+  }
+
+  public Bytes getPayloadBytes() {
     return payload;
   }
 
@@ -229,8 +234,10 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
    * @return if present the init code
    */
   @Override
-  public Optional<BytesValue> getInit() {
-    return getTo().isPresent() ? Optional.empty() : Optional.of(payload);
+  public Optional<UnformattedData> getInit() {
+    return getTo().isPresent()
+        ? Optional.empty()
+        : Optional.of(new UnformattedDataWrapper(payload));
   }
 
   /**
@@ -239,8 +246,10 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
    * @return if present the init code
    */
   @Override
-  public Optional<BytesValue> getData() {
-    return getTo().isPresent() ? Optional.of(payload) : Optional.empty();
+  public Optional<UnformattedData> getData() {
+    return getTo().isPresent()
+        ? Optional.of(new UnformattedDataWrapper(payload))
+        : Optional.empty();
   }
 
   /**
@@ -295,9 +304,9 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     out.writeLongScalar(getNonce());
     out.writeUInt256Scalar(getGasPrice());
     out.writeLongScalar(getGasLimit());
-    out.writeBytesValue(getTo().isPresent() ? getTo().get() : BytesValue.EMPTY);
+    out.writeBytes(getTo().isPresent() ? getTo().get() : Bytes.EMPTY);
     out.writeUInt256Scalar(getValue());
-    out.writeBytesValue(getPayload());
+    out.writeBytes(getPayloadBytes());
     writeSignature(out);
 
     out.endList();
@@ -339,7 +348,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
   @Override
   public Hash getHash() {
     if (hash == null) {
-      final BytesValue rlp = RLP.encode(this::writeTo);
+      final Bytes rlp = RLP.encode(this::writeTo);
       hash = Hash.hash(rlp);
     }
     return hash;
@@ -360,7 +369,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
    * @return the up-front cost for the gas the transaction can use.
    */
   public Wei getUpfrontGasCost() {
-    return Wei.of(getGasLimit()).times(getGasPrice());
+    return Wei.of(getGasLimit()).multiply(getGasPrice());
   }
 
   /**
@@ -373,7 +382,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
    * @return the up-front gas cost for the transaction
    */
   public Wei getUpfrontCost() {
-    return getUpfrontGasCost().plus(getValue());
+    return getUpfrontGasCost().add(getValue());
   }
 
   private static Bytes32 computeSenderRecoveryHash(
@@ -382,7 +391,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
       final long gasLimit,
       final Address to,
       final Wei value,
-      final BytesValue payload,
+      final Bytes payload,
       final Optional<BigInteger> chainId) {
     return keccak256(
         RLP.encode(
@@ -391,9 +400,9 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
               out.writeLongScalar(nonce);
               out.writeUInt256Scalar(gasPrice);
               out.writeLongScalar(gasLimit);
-              out.writeBytesValue(to == null ? BytesValue.EMPTY : to);
+              out.writeBytes(to == null ? Bytes.EMPTY : to);
               out.writeUInt256Scalar(value);
-              out.writeBytesValue(payload);
+              out.writeBytes(payload);
               if (chainId.isPresent()) {
                 out.writeBigIntegerScalar(chainId.get());
                 out.writeUInt256Scalar(UInt256.ZERO);
@@ -460,7 +469,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
 
     protected SECP256K1.Signature signature;
 
-    protected BytesValue payload;
+    protected Bytes payload;
 
     protected Address sender;
 
@@ -496,7 +505,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
       return this;
     }
 
-    public Builder payload(final BytesValue payload) {
+    public Builder payload(final Bytes payload) {
       this.payload = payload;
       return this;
     }

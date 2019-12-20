@@ -14,12 +14,12 @@
  */
 package org.hyperledger.besu.enclave;
 
-public class EnclaveException extends IllegalArgumentException {
-  public EnclaveException(final String message) {
-    super(message);
+public class EnclaveIOException extends RuntimeException {
+  public EnclaveIOException(final String message, final Throwable cause) {
+    super(message, cause);
   }
 
-  public EnclaveException(final String message, final Throwable cause) {
-    super(message, cause);
+  public EnclaveIOException(final String message) {
+    super(message);
   }
 }

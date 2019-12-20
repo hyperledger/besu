@@ -15,9 +15,10 @@
 package org.hyperledger.besu.ethereum.p2p.peers;
 
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Arrays;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class PeerTestHelper {
 
@@ -25,7 +26,7 @@ public class PeerTestHelper {
     return DefaultPeer.fromEnodeURL(enode());
   }
 
-  public static Peer createPeer(final BytesValue nodeId) {
+  public static Peer createPeer(final Bytes nodeId) {
     return DefaultPeer.fromEnodeURL(enodeBuilder().nodeId(nodeId).build());
   }
 

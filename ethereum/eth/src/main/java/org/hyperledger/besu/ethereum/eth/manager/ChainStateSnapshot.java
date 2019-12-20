@@ -15,19 +15,19 @@
 
 package org.hyperledger.besu.ethereum.eth.manager;
 
-import org.hyperledger.besu.util.uint.UInt256;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 
 public class ChainStateSnapshot implements ChainHeadEstimate {
-  private final UInt256 totalDifficulty;
+  private final Difficulty totalDifficulty;
   private final long chainHeight;
 
-  public ChainStateSnapshot(final UInt256 totalDifficulty, final long chainHeight) {
+  public ChainStateSnapshot(final Difficulty totalDifficulty, final long chainHeight) {
     this.totalDifficulty = totalDifficulty;
     this.chainHeight = chainHeight;
   }
 
   @Override
-  public UInt256 getEstimatedTotalDifficulty() {
+  public Difficulty getEstimatedTotalDifficulty() {
     return totalDifficulty;
   }
 
