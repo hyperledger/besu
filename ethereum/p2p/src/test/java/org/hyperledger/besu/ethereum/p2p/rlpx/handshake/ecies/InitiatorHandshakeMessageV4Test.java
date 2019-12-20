@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.p2p.rlpx.handshake.ecies;
 
+import org.hyperledger.besu.crypto.KeyPairUtil;
 import org.hyperledger.besu.crypto.SECP256K1;
 
 import java.io.File;
@@ -36,9 +37,9 @@ public final class InitiatorHandshakeMessageV4Test {
   static {
     try {
       EXAMPLE_KEYPAIR =
-          SECP256K1.KeyPair.load(
+          KeyPairUtil.load(
               new File(InitiatorHandshakeMessageV4.class.getResource("test.keypair").toURI()));
-    } catch (final IOException | URISyntaxException ex) {
+    } catch (final URISyntaxException ex) {
       throw new IllegalStateException(ex);
     }
     try {
