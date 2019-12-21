@@ -103,6 +103,7 @@ public class RetestethService {
 
   public void stop() {
     jsonRpcHttpService.stop();
+    vertx.close();
   }
 
   private static Map<String, JsonRpcMethod> mapOf(final JsonRpcMethod... rpcMethods) {
