@@ -38,6 +38,7 @@ import org.apache.logging.log4j.Logger;
 
 public class CrosschainTransaction extends Transaction {
   public enum CrosschainTransactionType {
+    NON_CROSSCHAIN_TRANSACTION(Constants.NON_CROSSCHAIN_TRANSACTION),
     ORIGINATING_TRANSACTION(Constants.ORIGINATING_TRANSACTION),
     SUBORDINATE_TRANSACTION(Constants.SUBORDINATE_TRANSACTION),
     SUBORDINATE_VIEW(Constants.SUBORDINATE_VIEW),
@@ -48,14 +49,15 @@ public class CrosschainTransaction extends Transaction {
     UNLOCK_IGNORE_SIGNALLING_TRANSACTION(Constants.UNLOCK_IGNORE_SIGNALLING_TRANSACTION);
 
     private static class Constants {
-      private static final int ORIGINATING_TRANSACTION = 0;
-      private static final int SUBORDINATE_TRANSACTION = 1;
-      private static final int SUBORDINATE_VIEW = 2;
-      private static final int ORIGINATING_LOCKABLE_CONTRACT_DEPLOY = 3;
-      private static final int SUBORDINATE_LOCKABLE_CONTRACT_DEPLOY = 4;
-      private static final int SINGLECHAIN_LOCKABLE_CONTRACT_DEPLOY = 5;
-      private static final int UNLOCK_COMMIT_SIGNALLING_TRANSACTION = 6;
-      private static final int UNLOCK_IGNORE_SIGNALLING_TRANSACTION = 7;
+      private static final int NON_CROSSCHAIN_TRANSACTION = 0;
+      private static final int ORIGINATING_TRANSACTION = 1;
+      private static final int SUBORDINATE_TRANSACTION = 2;
+      private static final int SUBORDINATE_VIEW = 3;
+      private static final int ORIGINATING_LOCKABLE_CONTRACT_DEPLOY = 4;
+      private static final int SUBORDINATE_LOCKABLE_CONTRACT_DEPLOY = 5;
+      private static final int SINGLECHAIN_LOCKABLE_CONTRACT_DEPLOY = 6;
+      private static final int UNLOCK_COMMIT_SIGNALLING_TRANSACTION = 7;
+      private static final int UNLOCK_IGNORE_SIGNALLING_TRANSACTION = 8;
     }
 
     public int value;
@@ -66,6 +68,8 @@ public class CrosschainTransaction extends Transaction {
 
     public static CrosschainTransactionType create(final int val) {
       switch (val) {
+        case Constants.NON_CROSSCHAIN_TRANSACTION:
+          return NON_CROSSCHAIN_TRANSACTION;
         case Constants.ORIGINATING_TRANSACTION:
           return ORIGINATING_TRANSACTION;
         case Constants.SUBORDINATE_TRANSACTION:

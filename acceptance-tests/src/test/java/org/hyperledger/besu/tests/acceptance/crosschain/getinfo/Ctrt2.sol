@@ -23,8 +23,8 @@ contract Ctrt2 is Crosschain, Ctrt2Int {
 
     uint256 public myChainId;
     uint256 public fromChainId;
-    uint32 public myTxType;
-    uint32 public consTxType;
+    uint256 public myTxType;
+    uint256 public consTxType;
     uint256 public coordChainId;
     uint256 public origChainId;
     uint256 public txId;

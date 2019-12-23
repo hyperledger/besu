@@ -224,6 +224,8 @@ public class CrosschainTransactionProcessor extends MainnetTransactionProcessor 
       CrosschainThreadLocalDataHolder.setCrosschainTransaction((CrosschainTransaction) transaction);
       // Rewind to the first subordinate transaction or view for each execution.
       ((CrosschainTransaction) transaction).resetSubordinateTransactionsAndViewsList();
+    } else {
+      CrosschainThreadLocalDataHolder.setTransaction(transaction);
     }
 
     messageFrameStack.addFirst(initialFrame);

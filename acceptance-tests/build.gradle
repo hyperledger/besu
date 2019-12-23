@@ -127,7 +127,7 @@ processTestResources.dependsOn(':besu:testJar')
 
 task acceptanceTest(type: Test) {
   dependsOn(rootProject.installDist)
-  systemProperty 'acctests.runBesuAsProcess', 'true'
+  systemProperty 'acctests.runBesuAsProcess', 'false'
   mustRunAfter rootProject.subprojects*.test
   description = 'Runs Besu acceptance tests.'
   group = 'verification'

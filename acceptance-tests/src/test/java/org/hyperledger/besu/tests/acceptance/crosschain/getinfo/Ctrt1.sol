@@ -24,9 +24,11 @@ contract Ctrt1 is Crosschain {
     uint256 public myTxId;
     uint256 public fromChainId;
     uint256 public origChainId;
-    uint32 public consTxType;
-    uint32 public myTxType;
+    uint256 public nonCrossChainId;
+    uint256 public consTxType;
+    uint256 public myTxType;
     uint256 public viewTxType;
+    uint256 public testTxType;
     address public coordCtrtAddr;
     address public fromAddr;
 
@@ -36,6 +38,8 @@ contract Ctrt1 is Crosschain {
 
     function setCtrt2ChainId(uint256 _ctrt2ChainId) public {
         ctrt2ChainId = _ctrt2ChainId;
+        testTxType = crosschainGetInfoTransactionType();
+        nonCrossChainId = crosschainGetInfoBlockchainId();
     }
 
     function setCtrt2(address _ctrt2Addr) public {

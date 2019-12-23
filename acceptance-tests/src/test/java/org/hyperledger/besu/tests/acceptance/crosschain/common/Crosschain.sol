@@ -97,32 +97,33 @@ contract Crosschain {
      * Determine the type of crosschain transaction being executed.
      *
      * The return value will be one of:
-     *  ORIGINATING_TRANSACTION = 0
-     *  SUBORDINATE_TRANSACTION = 1
-     *  SUBORDINATE_VIEW = 2
-     *  ORIGINATING_LOCKABLE_CONTRACT_DEPLOY = 3
-     *  SUBORDINATE_LOCKABLE_CONTRACT_DEPLOY = 4
-     *  SINGLECHAIN_LOCKABLE_CONTRACT_DEPLOY = 5
-     *  UNLOCK_COMMIT_SIGNALLING_TRANSACTION = 6
-     *  UNLOCK_IGNORE_SIGNALLING_TRANSACTION = 7
+     *  NON_CROSSCHAIN_TRANSACTION = 0
+     *  ORIGINATING_TRANSACTION = 1
+     *  SUBORDINATE_TRANSACTION = 2
+     *  SUBORDINATE_VIEW = 3
+     *  ORIGINATING_LOCKABLE_CONTRACT_DEPLOY = 4
+     *  SUBORDINATE_LOCKABLE_CONTRACT_DEPLOY = 5
+     *  SINGLECHAIN_LOCKABLE_CONTRACT_DEPLOY = 6
+     *  UNLOCK_COMMIT_SIGNALLING_TRANSACTION = 7
+     *  UNLOCK_IGNORE_SIGNALLING_TRANSACTION = 8
      *
      * @return the type of crosschain transaction.
      */
-    function crosschainGetInfoTransactionType() internal view returns (uint32) {
-        uint256 inputLength = LENGTH_OF_UINT32;
-        uint32[1] memory input;
+    function crosschainGetInfoTransactionType() internal view returns (uint256) {
+        uint256 inputLength = LENGTH_OF_UINT256;
+        uint256[1] memory input;
         input[0] = GET_INFO_CROSSCHAIN_TRANSACTION_TYPE;
 
-        uint32[1] memory result;
-        uint256 resultLength = LENGTH_OF_UINT32;
+        uint256[1] memory result;
+        uint256 resultLength = LENGTH_OF_UINT256;
 
         assembly {
         // Read: https://medium.com/@rbkhmrcr/precompiles-solidity-e5d29bd428c4
         // and
         // https://www.reddit.com/r/ethdev/comments/7p8b86/it_is_possible_to_call_a_precompiled_contracts/
         //  staticcall(gasLimit, to, inputOffset, inputSize, outputOffset, outputSize)
-        // GET_INFO_PRECOMPILE = 250. Inline assembler doesn't support constants.
-            if iszero(staticcall(not(0), 250, input, inputLength, result, resultLength)) {
+        // GET_INFO_PRECOMPILE = 120. Inline assembler doesn't support constants.
+            if iszero(staticcall(not(0), 120, input, inputLength, result, resultLength)) {
                 revert(0, 0)
             }
         }
@@ -232,7 +233,7 @@ contract Crosschain {
         input[0] = _requestedAddress;
 
         // The return type is an address. However, we need to specify that we want a whole
-        // Ethereum word copied or we will end up with 20 bytes of th eaddress being masked off.
+        // Ethereum word copied or we will end up with 20 bytes of the address being masked off.
         address[1] memory result;
         uint256 resultLength = LENGTH_OF_UINT256;
 

@@ -13,6 +13,7 @@
 package org.hyperledger.besu.crosschain.ethereum.crosschain;
 
 import org.hyperledger.besu.ethereum.core.CrosschainTransaction;
+import org.hyperledger.besu.ethereum.core.Transaction;
 
 /**
  * Holds the Crosschain Transaction context during the execution of a Crosschain Transaction. This
@@ -22,16 +23,29 @@ import org.hyperledger.besu.ethereum.core.CrosschainTransaction;
 public class CrosschainThreadLocalDataHolder {
   private static final ThreadLocal<CrosschainTransaction> data =
       new ThreadLocal<CrosschainTransaction>();
+  private static final ThreadLocal<Transaction> txData = new ThreadLocal<Transaction>();
 
   public static void setCrosschainTransaction(final CrosschainTransaction tx) {
     data.set(tx);
+  }
+
+  public static void setTransaction(final Transaction tx) {
+    txData.set(tx);
   }
 
   public static CrosschainTransaction getCrosschainTransaction() {
     return data.get();
   }
 
+  public static Transaction getTransaction() {
+    return txData.get();
+  }
+
   public static void removeCrosschainTransaction() {
     data.remove();
+  }
+
+  public static void removeTransaction() {
+    txData.remove();
   }
 }

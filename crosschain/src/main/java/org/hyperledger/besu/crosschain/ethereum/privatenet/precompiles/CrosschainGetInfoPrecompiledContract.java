@@ -16,6 +16,7 @@ import org.hyperledger.besu.crosschain.ethereum.crosschain.CrosschainThreadLocal
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.CrosschainTransaction;
 import org.hyperledger.besu.ethereum.core.Gas;
+import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.AbstractPrecompiledContract;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
@@ -61,6 +62,17 @@ public class CrosschainGetInfoPrecompiledContract extends AbstractPrecompiledCon
 
     CrosschainTransaction tx = CrosschainThreadLocalDataHolder.getCrosschainTransaction();
     if (tx == null) {
+      if (option == 0) {
+        return toBytes32(BigInteger.ZERO);
+      } else if (option == 1) {
+        Transaction nonXTx = CrosschainThreadLocalDataHolder.getTransaction();
+        if (nonXTx != null) {
+          Optional<BigInteger> chId = nonXTx.getChainId();
+          if (chId.isPresent()) {
+            return toBytes32(chId.get());
+          }
+        }
+      }
       LOG.error("CrosschainGetInfo called without a crosschain transaction context");
       // Indicate execution failed unexpectedly by returning null.
       return null;
@@ -84,6 +96,11 @@ public class CrosschainGetInfoPrecompiledContract extends AbstractPrecompiledCon
         return Bytes32.leftPad(tx.getCrosschainCoordinationContractAddress().orElse(Address.ZERO));
       case GET_INFO_ORIGINATING_BLOCKCHAIN_ID:
         maybeId = tx.getOriginatingSidechainId();
+        if (maybeId.isEmpty()
+            && tx.getType()
+                == CrosschainTransaction.CrosschainTransactionType.ORIGINATING_TRANSACTION) {
+          maybeId = tx.getChainId();
+        }
         id = maybeId.orElse(BigInteger.ZERO);
         return toBytes32(id);
       case GET_INFO_FROM_BLOCKCHAIN_ID:

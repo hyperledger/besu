@@ -22,11 +22,12 @@ import org.web3j.protocol.besu.Besu;
 import org.web3j.protocol.core.RemoteCall;
 import org.web3j.tx.Contract;
 import org.web3j.tx.CrosschainTransactionManager;
+import org.web3j.tx.gas.DefaultGasProvider;
 
 public class DeployLockableSmartContractTransaction<T extends Contract> implements Transaction<T> {
 
-  private static final BigInteger DEFAULT_GAS_PRICE = BigInteger.valueOf(0);
-  private static final BigInteger DEFAULT_GAS_LIMIT = BigInteger.valueOf(3000000);
+  private static final BigInteger DEFAULT_GAS_PRICE = BigInteger.ZERO;
+  private static final BigInteger DEFAULT_GAS_LIMIT = DefaultGasProvider.GAS_LIMIT;
   private static final Object METHOD_IS_STATIC = null;
   private final CrosschainTransactionManager transactionManager;
 

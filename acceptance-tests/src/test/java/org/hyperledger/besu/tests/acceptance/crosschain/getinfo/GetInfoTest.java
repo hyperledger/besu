@@ -14,6 +14,7 @@ package org.hyperledger.besu.tests.acceptance.crosschain.getinfo;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.ethereum.core.CrosschainTransaction;
 import org.hyperledger.besu.tests.acceptance.crosschain.common.CrosschainAcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.crosschain.getinfo.generated.Ctrt1;
 import org.hyperledger.besu.tests.acceptance.crosschain.getinfo.generated.Ctrt2;
@@ -76,6 +77,11 @@ public class GetInfoTest extends CrosschainAcceptanceTestBase {
   }
 
   @Test
+  /**
+   * TODO - To test GetInfoGetTransactionType precompile for the transaction types
+   * ORIGINATING_LOCKABLE_CONTRACT_DEPLOY, UNLOCK_COMMIT_SIGNALLING_TRANSACTION,
+   * UNLOCK_IGNORE_SIGNALLING_TRANSACTION
+   */
   public void getInfoTest() throws Exception {
     // Constructing the crosschain transaction
     CrosschainContextGenerator ctxGen =
@@ -110,28 +116,35 @@ public class GetInfoTest extends CrosschainAcceptanceTestBase {
 
     // TODO Tests related to TxType are not happening correctly. Need to fix.
     waitForUnlock(ctrt1.getContractAddress(), nodeOnBlockchain1);
+    assertThat(ctrt1.nonCrossChainId().send().longValue()).isEqualTo(chain1Id);
     assertThat(ctrt1.myChainId().send().longValue()).isEqualTo(chain1Id);
     assertThat(ctrt1.coordChainId().send().longValue()).isEqualTo(cbcId);
     assertThat(ctrt1.coordCtrtAddr().send()).isEqualTo(coordContract.getContractAddress());
-    // assertThat(ctrt1.fromChainId().send().longValue()).isEqualTo(chain1Id);
-    // assertThat(ctrt1.origChainId().send().longValue()).isEqualTo(chain1Id);
-    // assertThat(ctrt1.fromAddr().send()).isEqualTo(BENEFACTOR_ONE.getAddress());
-    // assertThat(ctrt1.viewTxType().send().longValue()).isEqualTo(2);
-    // assertThat(ctrt1.consTxType().send().intValue()).isEqualTo(5);
-    // assertThat(ctrt1.myTxType().send().longValue()).isEqualTo(0);
+    assertThat(ctrt1.origChainId().send().longValue()).isEqualTo(chain1Id);
+    assertThat(ctrt1.viewTxType().send().longValue())
+        .isEqualTo(CrosschainTransaction.CrosschainTransactionType.SUBORDINATE_VIEW.value);
+    assertThat(ctrt1.consTxType().send().intValue())
+        .isEqualTo(
+            CrosschainTransaction.CrosschainTransactionType.SINGLECHAIN_LOCKABLE_CONTRACT_DEPLOY
+                .value);
+    assertThat(ctrt1.myTxType().send().longValue())
+        .isEqualTo(CrosschainTransaction.CrosschainTransactionType.ORIGINATING_TRANSACTION.value);
 
     waitForUnlock(ctrt2.getContractAddress(), nodeOnBlockchain2);
     assertThat(ctrt2.myChainId().send().longValue()).isEqualTo(chain2Id);
     assertThat(ctrt2.coordChainId().send().longValue()).isEqualTo(cbcId);
     assertThat(ctrt2.fromChainId().send().longValue()).isEqualTo(chain1Id);
     assertThat(ctrt2.origChainId().send().longValue()).isEqualTo(chain1Id);
-    assertThat(ctrt2.myTxType().send().longValue()).isEqualTo(0);
     assertThat(ctrt2.coordCtrtAddr().send()).isEqualTo(coordContract.getContractAddress());
     assertThat(ctrt2.fromAddr().send()).isEqualTo(ctrt1.getContractAddress());
     assertThat(ctrt2.txId().send().longValue())
         .isEqualTo(ctx2.getCrosschainTransactionId().longValue());
-    // assertThat(ctrt2.consTxType().send().intValue()).isEqualTo(5);
-    // assertThat(ctrt2.myTxType().send().longValue()).isEqualTo(1);
+    assertThat(ctrt2.consTxType().send().intValue())
+        .isEqualTo(
+            CrosschainTransaction.CrosschainTransactionType.SINGLECHAIN_LOCKABLE_CONTRACT_DEPLOY
+                .value);
+    assertThat(ctrt2.myTxType().send().longValue())
+        .isEqualTo(CrosschainTransaction.CrosschainTransactionType.SUBORDINATE_TRANSACTION.value);
 
     waitForUnlock(ctrt3.getContractAddress(), nodeOnBlockchain3);
     assertThat(ctrt3.myChainId().send().longValue()).isEqualTo(chain3Id);
@@ -142,8 +155,12 @@ public class GetInfoTest extends CrosschainAcceptanceTestBase {
     assertThat(ctrt3.fromAddr().send()).isEqualTo(ctrt2.getContractAddress());
     assertThat(ctrt3.txId().send().longValue())
         .isEqualTo(ctx1.getCrosschainTransactionId().longValue());
-    // assertThat(ctrt3.consTxType().send().intValue()).isEqualTo(5);
-    // assertThat(ctrt3.myTxType().send().longValue()).isEqualTo(2);
+    assertThat(ctrt3.consTxType().send().intValue())
+        .isEqualTo(
+            CrosschainTransaction.CrosschainTransactionType.SINGLECHAIN_LOCKABLE_CONTRACT_DEPLOY
+                .value);
+    assertThat(ctrt3.myTxType().send().longValue())
+        .isEqualTo(CrosschainTransaction.CrosschainTransactionType.SUBORDINATE_TRANSACTION.value);
   }
 
   @After
