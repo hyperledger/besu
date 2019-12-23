@@ -65,8 +65,6 @@ import org.hyperledger.besu.services.tasks.CachingTaskCollection;
 import org.hyperledger.besu.services.tasks.InMemoryTaskQueue;
 import org.hyperledger.besu.testutil.MockExecutorService;
 import org.hyperledger.besu.testutil.TestClock;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -89,6 +87,8 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.After;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -301,7 +301,7 @@ public class WorldStateDownloaderTest {
         new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
 
     // Seed local storage with some contract values
-    final Map<Bytes32, BytesValue> knownCode = new HashMap<>();
+    final Map<Bytes32, Bytes> knownCode = new HashMap<>();
     accounts.subList(0, 5).forEach(a -> knownCode.put(a.getCodeHash(), a.getCode()));
     final Updater localStorageUpdater = localStorage.updater();
     knownCode.forEach(localStorageUpdater::putCode);
@@ -453,7 +453,7 @@ public class WorldStateDownloaderTest {
         new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
 
     // Seed local storage with some trie node values
-    final Map<Bytes32, BytesValue> allNodes =
+    final Map<Bytes32, Bytes> allNodes =
         collectTrieNodesToBeRequestedAfterRoot(remoteStorage, remoteWorldState.rootHash(), 5);
     final Set<Bytes32> knownNodes = new HashSet<>();
     final Set<Bytes32> unknownNodes = new HashSet<>();
@@ -545,7 +545,7 @@ public class WorldStateDownloaderTest {
                 .map(StateTrieAccountValue::readFrom)
                 .map(StateTrieAccountValue::getStorageRoot)
                 .collect(Collectors.toList());
-    final Map<Bytes32, BytesValue> allTrieNodes = new HashMap<>();
+    final Map<Bytes32, Bytes> allTrieNodes = new HashMap<>();
     final Set<Bytes32> knownNodes = new HashSet<>();
     final Set<Bytes32> unknownNodes = new HashSet<>();
     for (final Bytes32 storageRootHash : storageRootHashes) {
@@ -555,9 +555,9 @@ public class WorldStateDownloaderTest {
     assertThat(allTrieNodes.size()).isGreaterThan(0); // Sanity check
     final Updater localStorageUpdater = localStorage.updater();
     boolean storeNode = true;
-    for (final Entry<Bytes32, BytesValue> entry : allTrieNodes.entrySet()) {
+    for (final Entry<Bytes32, Bytes> entry : allTrieNodes.entrySet()) {
       final Bytes32 hash = entry.getKey();
-      final BytesValue data = entry.getValue();
+      final Bytes data = entry.getValue();
       if (storeNode) {
         localStorageUpdater.putAccountStorageTrieNode(hash, data);
         knownNodes.add(hash);
@@ -638,9 +638,7 @@ public class WorldStateDownloaderTest {
     // Start downloader (with a state root that's not available anywhere
     final CompletableFuture<?> result =
         downloader.run(
-            new BlockHeaderTestFixture()
-                .stateRoot(Hash.hash(BytesValue.of(1, 2, 3, 4)))
-                .buildHeader());
+            new BlockHeaderTestFixture().stateRoot(Hash.hash(Bytes.of(1, 2, 3, 4))).buildHeader());
     // A second run should return an error without impacting the first result
     final CompletableFuture<?> secondResult = downloader.run(header);
     assertThat(secondResult).isCompletedExceptionally();
@@ -747,9 +745,9 @@ public class WorldStateDownloaderTest {
    * @param maxNodes The maximum number of values to collect before returning
    * @return A list of hash-node pairs
    */
-  private Map<Bytes32, BytesValue> collectTrieNodesToBeRequestedAfterRoot(
+  private Map<Bytes32, Bytes> collectTrieNodesToBeRequestedAfterRoot(
       final WorldStateStorage storage, final Bytes32 rootHash, final int maxNodes) {
-    final Map<Bytes32, BytesValue> trieNodes = new HashMap<>();
+    final Map<Bytes32, Bytes> trieNodes = new HashMap<>();
 
     TrieNodeDecoder.breadthFirstDecoder(storage::getNodeData, rootHash)
         .filter(n -> !Objects.equals(n.getHash(), rootHash))
@@ -774,7 +772,7 @@ public class WorldStateDownloaderTest {
       final WorldStateStorage storage, final Bytes32 rootHash) {
     final List<Bytes32> hashesToRequest = new ArrayList<>();
 
-    BytesValue rootNodeRlp = storage.getNodeData(rootHash).get();
+    Bytes rootNodeRlp = storage.getNodeData(rootHash).get();
     TrieNodeDecoder.decodeNodes(rootNodeRlp).stream()
         .filter(n -> !Objects.equals(n.getHash(), rootHash))
         .filter(Node::isReferencedByHash)

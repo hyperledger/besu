@@ -20,7 +20,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import org.hyperledger.besu.cli.BesuCommand;
 import org.hyperledger.besu.cli.DefaultCommandValues;
 import org.hyperledger.besu.cli.subcommands.rlp.RLPSubCommand.EncodeSubCommand;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -33,6 +32,7 @@ import java.nio.file.Path;
 import java.util.Scanner;
 
 import com.fasterxml.jackson.databind.exc.MismatchedInputException;
+import org.apache.tuweni.bytes.Bytes;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.ExecutionException;
 import picocli.CommandLine.Model.CommandSpec;
@@ -150,7 +150,7 @@ public class RLPSubCommand implements Runnable {
 
     /**
      * Encodes the JSON input into an RLP data based on the {@link #type} then goes to {@link
-     * #writeOutput(BytesValue)} this data to file or stdout
+     * #writeOutput(Bytes)} this data to file or stdout
      *
      * @param jsonInput the JSON string data to encode
      */
@@ -180,7 +180,7 @@ public class RLPSubCommand implements Runnable {
      *
      * @param rlpEncodedOutput the RLP output to write to file or stdout
      */
-    private void writeOutput(final BytesValue rlpEncodedOutput) {
+    private void writeOutput(final Bytes rlpEncodedOutput) {
       if (rlpTargetFile != null) {
         final Path targetPath = rlpTargetFile.toPath();
 

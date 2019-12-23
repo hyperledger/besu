@@ -16,11 +16,11 @@
 package org.hyperledger.besu.ethereum.eth.manager;
 
 import org.hyperledger.besu.ethereum.chain.ChainHead;
-import org.hyperledger.besu.util.uint.UInt256;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 
 public interface ChainHeadEstimate {
 
-  UInt256 getEstimatedTotalDifficulty();
+  Difficulty getEstimatedTotalDifficulty();
 
   long getEstimatedHeight();
 

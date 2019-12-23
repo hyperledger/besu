@@ -54,7 +54,7 @@ public class OperatorSubCommandTest extends CommandTestAbstract {
   private static final String EXPECTED_OPERATOR_USAGE =
       "Usage: besu operator [-hV] [COMMAND]"
           + System.lineSeparator()
-          + "This command provides operator related actions."
+          + "Operator related actions such as generating configuration and caches."
           + System.lineSeparator()
           + "  -h, --help      Show this help message and exit."
           + System.lineSeparator()
@@ -62,9 +62,11 @@ public class OperatorSubCommandTest extends CommandTestAbstract {
           + System.lineSeparator()
           + "Commands:"
           + System.lineSeparator()
-          + "  generate-blockchain-config  This command generates node keypairs, genesis"
+          + "  generate-blockchain-config  Generates node keypairs and genesis file with RLP"
           + System.lineSeparator()
-          + "                                file (with RLP encoded IBFT 2.0 extra data).";
+          + "                                encoded IBFT 2.0 extra data."
+          + System.lineSeparator()
+          + "  generate-log-bloom-cache    Generate cached values of block log bloom filters.";
 
   private Path tmpOutputDirectoryPath;
 
@@ -259,7 +261,7 @@ public class OperatorSubCommandTest extends CommandTestAbstract {
     }
 
     String[] argsArray() {
-      String[] wrapper = new String[] {};
+      final String[] wrapper = new String[] {};
       return args.toArray(wrapper);
     }
   }

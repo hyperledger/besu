@@ -17,10 +17,10 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.pending
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.JsonRpcResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import org.apache.tuweni.bytes.Bytes;
 
 @JsonPropertyOrder({
   "from",
@@ -55,7 +55,7 @@ public class PendingTransactionDetailResult implements JsonRpcResult {
     this.hash = tx.getHash().toString();
     this.input = tx.getPayload().toString();
     this.nonce = Quantity.create(tx.getNonce());
-    this.to = tx.getTo().map(BytesValue::toString).orElse(null);
+    this.to = tx.getTo().map(Bytes::toHexString).orElse(null);
     this.value = Quantity.create(tx.getValue());
     this.v = Quantity.create(tx.getV());
     this.r = Quantity.create(tx.getR());

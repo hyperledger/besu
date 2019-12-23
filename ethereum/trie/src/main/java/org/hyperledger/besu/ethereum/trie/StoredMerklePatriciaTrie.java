@@ -17,9 +17,6 @@ package org.hyperledger.besu.ethereum.trie;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hyperledger.besu.ethereum.trie.CompactEncoding.bytesToPath;
 
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -27,12 +24,15 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+
 /**
  * A {@link MerklePatriciaTrie} that persists trie nodes to a {@link MerkleStorage} key/value store.
  *
  * @param <V> The type of values stored by this trie.
  */
-public class StoredMerklePatriciaTrie<K extends BytesValue, V> implements MerklePatriciaTrie<K, V> {
+public class StoredMerklePatriciaTrie<K extends Bytes, V> implements MerklePatriciaTrie<K, V> {
   private final GetVisitor<V> getVisitor = new GetVisitor<>();
   private final RemoveVisitor<V> removeVisitor = new RemoveVisitor<>();
   private final StoredNodeFactory<V> nodeFactory;
@@ -48,8 +48,8 @@ public class StoredMerklePatriciaTrie<K extends BytesValue, V> implements Merkle
    */
   public StoredMerklePatriciaTrie(
       final NodeLoader nodeLoader,
-      final Function<V, BytesValue> valueSerializer,
-      final Function<BytesValue, V> valueDeserializer) {
+      final Function<V, Bytes> valueSerializer,
+      final Function<Bytes, V> valueDeserializer) {
     this(nodeLoader, EMPTY_TRIE_NODE_HASH, valueSerializer, valueDeserializer);
   }
 
@@ -65,8 +65,8 @@ public class StoredMerklePatriciaTrie<K extends BytesValue, V> implements Merkle
   public StoredMerklePatriciaTrie(
       final NodeLoader nodeLoader,
       final Bytes32 rootHash,
-      final Function<V, BytesValue> valueSerializer,
-      final Function<BytesValue, V> valueDeserializer) {
+      final Function<V, Bytes> valueSerializer,
+      final Function<Bytes, V> valueDeserializer) {
     this.nodeFactory = new StoredNodeFactory<>(nodeLoader, valueSerializer, valueDeserializer);
     this.root =
         rootHash.equals(EMPTY_TRIE_NODE_HASH)
@@ -85,7 +85,7 @@ public class StoredMerklePatriciaTrie<K extends BytesValue, V> implements Merkle
     checkNotNull(key);
     final ProofVisitor<V> proofVisitor = new ProofVisitor<>(root);
     final Optional<V> value = root.accept(proofVisitor, bytesToPath(key)).getValue();
-    final List<BytesValue> proof =
+    final List<Bytes> proof =
         proofVisitor.getProof().stream().map(Node::getRlp).collect(Collectors.toList());
     return new Proof<>(value, proof);
   }

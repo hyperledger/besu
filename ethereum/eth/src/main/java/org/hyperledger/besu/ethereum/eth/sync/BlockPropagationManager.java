@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.chain.BlockAddedEvent.EventType;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessage;
@@ -40,7 +41,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -155,7 +155,7 @@ public class BlockPropagationManager<C> {
     final NewBlockMessage newBlockMessage = NewBlockMessage.readFrom(message.getData());
     try {
       final Block block = newBlockMessage.block(protocolSchedule);
-      final UInt256 totalDifficulty = newBlockMessage.totalDifficulty(protocolSchedule);
+      final Difficulty totalDifficulty = newBlockMessage.totalDifficulty(protocolSchedule);
 
       message.getPeer().chainState().updateForAnnouncedBlock(block.getHeader(), totalDifficulty);
 
@@ -249,12 +249,12 @@ public class BlockPropagationManager<C> {
   }
 
   private void broadcastBlock(final Block block, final BlockHeader parent) {
-    final UInt256 totalDifficulty =
+    final Difficulty totalDifficulty =
         protocolContext
             .getBlockchain()
             .getTotalDifficultyByHash(parent.getHash())
             .get()
-            .plus(block.getHeader().getDifficulty());
+            .add(block.getHeader().getDifficulty());
     blockBroadcaster.propagate(block, totalDifficulty);
   }
 

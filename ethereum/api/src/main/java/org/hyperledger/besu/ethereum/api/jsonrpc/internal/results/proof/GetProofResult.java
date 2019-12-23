@@ -19,18 +19,18 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.proof.WorldStateProof;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class GetProofResult {
 
-  private final List<BytesValue> accountProof;
+  private final List<Bytes> accountProof;
 
   private final Address address;
 
@@ -50,7 +50,7 @@ public class GetProofResult {
       final Bytes32 codeHash,
       final long nonce,
       final Bytes32 storageHash,
-      final List<BytesValue> accountProof,
+      final List<Bytes> accountProof,
       final List<StorageEntryProof> storageEntries) {
     this.address = address;
     this.balance = balance;
@@ -114,7 +114,7 @@ public class GetProofResult {
 
   @JsonGetter(value = "accountProof")
   public List<String> getAccountProof() {
-    return accountProof.stream().map(BytesValue::toString).collect(Collectors.toList());
+    return accountProof.stream().map(Bytes::toString).collect(Collectors.toList());
   }
 
   @JsonGetter(value = "storageProof")

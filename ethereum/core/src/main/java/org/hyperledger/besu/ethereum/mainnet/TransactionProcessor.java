@@ -22,9 +22,10 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Optional;
+
+import org.apache.tuweni.bytes.Bytes;
 
 /** Processes transactions. */
 public interface TransactionProcessor {
@@ -70,7 +71,7 @@ public interface TransactionProcessor {
      */
     long getGasRemaining();
 
-    BytesValue getOutput();
+    Bytes getOutput();
 
     /**
      * Returns whether or not the transaction was invalid.
@@ -102,7 +103,7 @@ public interface TransactionProcessor {
      *
      * @return the revert reason.
      */
-    Optional<BytesValue> getRevertReason();
+    Optional<Bytes> getRevertReason();
   }
 
   /**

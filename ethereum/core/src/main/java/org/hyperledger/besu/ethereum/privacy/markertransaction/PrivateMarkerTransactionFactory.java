@@ -18,7 +18,8 @@ import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
-import org.hyperledger.besu.util.bytes.BytesValues;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public abstract class PrivateMarkerTransactionFactory {
 
@@ -46,7 +47,7 @@ public abstract class PrivateMarkerTransactionFactory {
         .gasLimit(privateTransaction.getGasLimit())
         .to(getPrivacyPrecompileAddress())
         .value(privateTransaction.getValue())
-        .payload(BytesValues.fromBase64(transactionEnclaveKey))
+        .payload(Bytes.fromBase64String(transactionEnclaveKey))
         .signAndBuild(signingKey);
   }
 }

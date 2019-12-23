@@ -314,6 +314,16 @@ public abstract class MainnetProtocolSpecs {
         .name("Istanbul");
   }
 
+  static ProtocolSpecBuilder<Void> muirGlacierDefinition(
+      final Optional<BigInteger> chainId,
+      final OptionalInt contractSizeLimit,
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason) {
+    return istanbulDefinition(chainId, contractSizeLimit, configStackSizeLimit, enableRevertReason)
+        .difficultyCalculator(MainnetDifficultyCalculators.MUIR_GLACIER)
+        .name("MuirGlacier");
+  }
+
   private static TransactionReceipt frontierTransactionReceiptFactory(
       final TransactionProcessor.Result result, final WorldState worldState, final long gasUsed) {
     return new TransactionReceipt(

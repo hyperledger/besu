@@ -22,6 +22,7 @@ import io.vertx.core.http.HttpClientOptions;
 public class EnclaveFactory {
 
   private final Vertx vertx;
+  private static final int CONNECT_TIMEOUT = 1000;
 
   public EnclaveFactory(final Vertx vertx) {
     this.vertx = vertx;
@@ -29,12 +30,13 @@ public class EnclaveFactory {
 
   public Enclave createVertxEnclave(final URI enclaveUri) {
     if (enclaveUri.getPort() == -1) {
-      throw new EnclaveException("Illegal URI - no port specified");
+      throw new EnclaveIOException("Illegal URI - no port specified");
     }
 
     final HttpClientOptions clientOptions = new HttpClientOptions();
     clientOptions.setDefaultHost(enclaveUri.getHost());
     clientOptions.setDefaultPort(enclaveUri.getPort());
+    clientOptions.setConnectTimeout(CONNECT_TIMEOUT);
 
     final RequestTransmitter vertxTransmitter =
         new VertxRequestTransmitter(vertx.createHttpClient(clientOptions));

@@ -24,12 +24,12 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.DefaultMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -201,7 +201,7 @@ public class FutureMessageBufferTest {
   }
 
   private DefaultMessage createMessage(final int i) {
-    final MessageData messageData = new RawMessage(0, BytesValue.fromHexStringLenient("0x" + i));
+    final MessageData messageData = new RawMessage(0, Bytes.fromHexStringLenient("0x" + i));
     return new DefaultMessage(peerConnection, messageData);
   }
 }

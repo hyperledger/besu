@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.trie;
 
-import org.hyperledger.besu.util.bytes.BytesValue;
+import org.apache.tuweni.bytes.Bytes;
 
 class CommitVisitor<V> implements NodeVisitor<V> {
 
@@ -67,7 +67,7 @@ class CommitVisitor<V> implements NodeVisitor<V> {
   public void visit(final NullNode<V> nullNode) {}
 
   private void maybeStoreNode(final Node<V> node) {
-    final BytesValue nodeRLP = node.getRlp();
+    final Bytes nodeRLP = node.getRlp();
     if (nodeRLP.size() >= 32) {
       this.nodeUpdater.store(node.getHash(), nodeRLP);
     }

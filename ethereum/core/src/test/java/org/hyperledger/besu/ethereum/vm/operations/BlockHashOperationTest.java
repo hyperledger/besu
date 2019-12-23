@@ -27,11 +27,11 @@ import org.hyperledger.besu.ethereum.core.MessageFrameTestFixture;
 import org.hyperledger.besu.ethereum.mainnet.FrontierGasCalculator;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import com.google.common.base.Strings;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.After;
 import org.junit.Test;
 
@@ -82,7 +82,7 @@ public class BlockHashOperationTest {
 
   @Test
   public void shouldReturnBlockHashUsingLookupFromFrameWhenItIsWithinTheAllowedRange() {
-    final Hash blockHash = Hash.hash(BytesValue.fromHexString("0x1293487297"));
+    final Hash blockHash = Hash.hash(Bytes.fromHexString("0x1293487297"));
     when(blockHashLookup.getBlockHash(100)).thenReturn(blockHash);
     assertBlockHash(100, blockHash, 200);
     verify(blockHashLookup).getBlockHash(100);
@@ -90,7 +90,7 @@ public class BlockHashOperationTest {
 
   private void assertBlockHash(
       final long requestedBlock, final Bytes32 expectedOutput, final long currentBlockNumber) {
-    assertBlockHash(UInt256.of(requestedBlock).getBytes(), expectedOutput, currentBlockNumber);
+    assertBlockHash(UInt256.valueOf(requestedBlock).toBytes(), expectedOutput, currentBlockNumber);
   }
 
   private void assertBlockHash(

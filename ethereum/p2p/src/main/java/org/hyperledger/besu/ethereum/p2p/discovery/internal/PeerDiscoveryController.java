@@ -34,7 +34,6 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.util.Subscribers;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -56,6 +55,7 @@ import java.util.stream.Stream;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 /**
  * This component is the entrypoint for managing the lifecycle of peers.
@@ -111,8 +111,7 @@ public class PeerDiscoveryController {
   private final Collection<DiscoveryPeer> bootstrapNodes;
 
   /* A tracker for inflight interactions and the state machine of a peer. */
-  private final Map<BytesValue, PeerInteractionState> inflightInteractions =
-      new ConcurrentHashMap<>();
+  private final Map<Bytes, PeerInteractionState> inflightInteractions = new ConcurrentHashMap<>();
 
   private final AtomicBoolean started = new AtomicBoolean(false);
 
@@ -425,7 +424,7 @@ public class PeerDiscoveryController {
    * Currently the refresh process is NOT recursive.
    */
   private void refreshTable() {
-    final BytesValue target = Peer.randomId();
+    final Bytes target = Peer.randomId();
     final List<DiscoveryPeer> initialPeers = peerTable.nearestPeers(Peer.randomId(), 16);
     recursivePeerRefreshState.start(initialPeers, target);
     lastRefreshTime = System.currentTimeMillis();
@@ -449,7 +448,7 @@ public class PeerDiscoveryController {
               PacketType.PING,
               data,
               pingPacket -> {
-                final BytesValue pingHash = pingPacket.getHash();
+                final Bytes pingHash = pingPacket.getHash();
                 // Update the matching filter to only accept the PONG if it echoes the hash of our
                 // PING.
                 final Predicate<Packet> newFilter =
@@ -505,7 +504,7 @@ public class PeerDiscoveryController {
    * @param peer the peer to interrogate
    * @param target the target node ID to find
    */
-  private void findNodes(final DiscoveryPeer peer, final BytesValue target) {
+  private void findNodes(final DiscoveryPeer peer, final Bytes target) {
     final Consumer<PeerInteractionState> action =
         (interaction) -> {
           final FindNeighborsPacketData data = FindNeighborsPacketData.create(target);
@@ -534,7 +533,7 @@ public class PeerDiscoveryController {
   }
 
   private void respondToPing(
-      final PingPacketData packetData, final BytesValue pingHash, final DiscoveryPeer sender) {
+      final PingPacketData packetData, final Bytes pingHash, final DiscoveryPeer sender) {
     final PongPacketData data = PongPacketData.create(packetData.getFrom(), pingHash);
     sendPacket(sender, PacketType.PONG, data);
   }
@@ -579,7 +578,7 @@ public class PeerDiscoveryController {
      */
     private final Consumer<PeerInteractionState> action;
 
-    private final BytesValue peerId;
+    private final Bytes peerId;
     /** The expected type of the message that will transition the peer out of this state. */
     private final PacketType expectedType;
 
@@ -593,7 +592,7 @@ public class PeerDiscoveryController {
 
     PeerInteractionState(
         final Consumer<PeerInteractionState> action,
-        final BytesValue peerId,
+        final Bytes peerId,
         final PacketType expectedType,
         final Predicate<Packet> filter,
         final boolean retryable) {

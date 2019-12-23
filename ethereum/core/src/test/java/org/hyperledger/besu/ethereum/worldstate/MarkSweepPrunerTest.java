@@ -36,8 +36,6 @@ import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -48,6 +46,8 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Test;
 import org.mockito.InOrder;
 
@@ -55,7 +55,7 @@ public class MarkSweepPrunerTest {
 
   private final BlockDataGenerator gen = new BlockDataGenerator();
   private final NoOpMetricsSystem metricsSystem = new NoOpMetricsSystem();
-  private final Map<BytesValue, byte[]> hashValueStore = spy(new HashMap<>());
+  private final Map<Bytes, byte[]> hashValueStore = spy(new HashMap<>());
   private final InMemoryKeyValueStorage stateStorage = spy(new TestInMemoryStorage(hashValueStore));
   private final WorldStateStorage worldStateStorage = new WorldStateKeyValueStorage(stateStorage);
   private final WorldStateArchive worldStateArchive =
@@ -78,7 +78,7 @@ public class MarkSweepPrunerTest {
     final int markBlockNumber = 10;
     final BlockHeader markBlock = blockchain.getBlockHeader(markBlockNumber).get();
     // Collect the nodes we expect to keep
-    final Set<BytesValue> expectedNodes = collectWorldStateNodes(markBlock.getStateRoot());
+    final Set<Bytes> expectedNodes = collectWorldStateNodes(markBlock.getStateRoot());
     assertThat(hashValueStore.size()).isGreaterThan(expectedNodes.size()); // Sanity check
 
     // Mark and sweep
@@ -110,7 +110,7 @@ public class MarkSweepPrunerTest {
     assertThat(hashValueStore.size()).isEqualTo(expectedNodes.size());
     assertThat(hashValueStore.values())
         .containsExactlyInAnyOrderElementsOf(
-            expectedNodes.stream().map(BytesValue::getArrayUnsafe).collect(Collectors.toSet()));
+            expectedNodes.stream().map(Bytes::toArrayUnsafe).collect(Collectors.toSet()));
   }
 
   @Test
@@ -178,7 +178,7 @@ public class MarkSweepPrunerTest {
     }
     inOrder.verify(stateStorage).removeAllKeysUnless(any());
 
-    assertThat(stateStorage.containsKey(markedRoot.getArrayUnsafe())).isTrue();
+    assertThat(stateStorage.containsKey(markedRoot.getByteArray())).isTrue();
   }
 
   private void generateBlockchainData(final int numBlocks, final int numAccounts) {
@@ -201,16 +201,15 @@ public class MarkSweepPrunerTest {
     }
   }
 
-  private Set<BytesValue> collectWorldStateNodes(final Hash stateRootHash) {
-    final Set<BytesValue> nodeData = new HashSet<>();
+  private Set<Bytes> collectWorldStateNodes(final Hash stateRootHash) {
+    final Set<Bytes> nodeData = new HashSet<>();
     collectWorldStateNodes(stateRootHash, nodeData);
     return nodeData;
   }
 
-  private Set<BytesValue> collectWorldStateNodes(
-      final Hash stateRootHash, final Set<BytesValue> collector) {
+  private Set<Bytes> collectWorldStateNodes(final Hash stateRootHash, final Set<Bytes> collector) {
     final List<Hash> storageRoots = new ArrayList<>();
-    final MerklePatriciaTrie<Bytes32, BytesValue> stateTrie = createStateTrie(stateRootHash);
+    final MerklePatriciaTrie<Bytes32, Bytes> stateTrie = createStateTrie(stateRootHash);
 
     // Collect storage roots and code
     stateTrie
@@ -220,8 +219,8 @@ public class MarkSweepPrunerTest {
               final StateTrieAccountValue accountValue =
                   StateTrieAccountValue.readFrom(RLP.input(val));
               stateStorage
-                  .get(accountValue.getCodeHash().getArrayUnsafe())
-                  .ifPresent(v -> collector.add(BytesValue.wrap(v)));
+                  .get(accountValue.getCodeHash().getByteArray())
+                  .ifPresent(v -> collector.add(Bytes.wrap(v)));
               storageRoots.add(accountValue.getStorageRoot());
             });
 
@@ -229,7 +228,7 @@ public class MarkSweepPrunerTest {
     collectTrieNodes(stateTrie, collector);
     // Collect storage nodes
     for (Hash storageRoot : storageRoots) {
-      final MerklePatriciaTrie<Bytes32, BytesValue> storageTrie = createStorageTrie(storageRoot);
+      final MerklePatriciaTrie<Bytes32, Bytes> storageTrie = createStorageTrie(storageRoot);
       collectTrieNodes(storageTrie, collector);
     }
 
@@ -237,7 +236,7 @@ public class MarkSweepPrunerTest {
   }
 
   private void collectTrieNodes(
-      final MerklePatriciaTrie<Bytes32, BytesValue> trie, final Set<BytesValue> collector) {
+      final MerklePatriciaTrie<Bytes32, Bytes> trie, final Set<Bytes> collector) {
     final Bytes32 rootHash = trie.getRootHash();
     trie.visitAll(
         (node) -> {
@@ -247,7 +246,7 @@ public class MarkSweepPrunerTest {
         });
   }
 
-  private MerklePatriciaTrie<Bytes32, BytesValue> createStateTrie(final Bytes32 rootHash) {
+  private MerklePatriciaTrie<Bytes32, Bytes> createStateTrie(final Bytes32 rootHash) {
     return new StoredMerklePatriciaTrie<>(
         worldStateStorage::getAccountStateTrieNode,
         rootHash,
@@ -255,7 +254,7 @@ public class MarkSweepPrunerTest {
         Function.identity());
   }
 
-  private MerklePatriciaTrie<Bytes32, BytesValue> createStorageTrie(final Bytes32 rootHash) {
+  private MerklePatriciaTrie<Bytes32, Bytes> createStorageTrie(final Bytes32 rootHash) {
     return new StoredMerklePatriciaTrie<>(
         worldStateStorage::getAccountStorageTrieNode,
         rootHash,
@@ -266,7 +265,7 @@ public class MarkSweepPrunerTest {
   // Proxy class so that we have access to the constructor that takes our own map
   private static class TestInMemoryStorage extends InMemoryKeyValueStorage {
 
-    public TestInMemoryStorage(final Map<BytesValue, byte[]> hashValueStore) {
+    public TestInMemoryStorage(final Map<Bytes, byte[]> hashValueStore) {
       super(hashValueStore);
     }
   }

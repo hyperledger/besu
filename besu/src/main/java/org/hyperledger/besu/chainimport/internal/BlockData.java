@@ -20,9 +20,6 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.WorldState;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.HashMap;
 import java.util.List;
@@ -32,6 +29,9 @@ import java.util.stream.Stream;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 @JsonIgnoreProperties("comment")
 public class BlockData {
@@ -40,7 +40,7 @@ public class BlockData {
   private final Optional<Hash> parentHash;
   private final List<TransactionData> transactionData;
   private final Optional<Address> coinbase;
-  private final Optional<BytesValue> extraData;
+  private final Optional<Bytes> extraData;
 
   @JsonCreator
   public BlockData(
@@ -52,7 +52,7 @@ public class BlockData {
     this.number = number.map(UInt256::fromHexString).map(UInt256::toLong);
     this.parentHash = parentHash.map(Bytes32::fromHexString).map(Hash::wrap);
     this.coinbase = coinbase.map(Address::fromHexString);
-    this.extraData = extraData.map(BytesValue::fromHexStringLenient);
+    this.extraData = extraData.map(Bytes::fromHexStringLenient);
     this.transactionData = transactions;
   }
 
@@ -68,7 +68,7 @@ public class BlockData {
     return coinbase;
   }
 
-  public Optional<BytesValue> getExtraData() {
+  public Optional<Bytes> getExtraData() {
     return extraData;
   }
 

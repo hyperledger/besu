@@ -16,8 +16,6 @@ package org.hyperledger.besu.ethereum.p2p.rlpx.wire;
 
 import static java.util.Comparator.comparing;
 
-import org.hyperledger.besu.util.bytes.BytesValue;
-
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -30,6 +28,7 @@ import java.util.Set;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableRangeMap;
 import com.google.common.collect.Range;
+import org.apache.tuweni.bytes.Bytes;
 
 public class CapabilityMultiplexer {
 
@@ -106,7 +105,7 @@ public class CapabilityMultiplexer {
       }
 
       @Override
-      public BytesValue getData() {
+      public Bytes getData() {
         return originalMessage.getData();
       }
     };

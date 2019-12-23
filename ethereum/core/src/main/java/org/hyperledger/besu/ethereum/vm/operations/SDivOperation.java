@@ -18,7 +18,12 @@ import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.vm.AbstractOperation;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.util.uint.Int256;
+
+import java.math.BigInteger;
+import java.util.Arrays;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class SDivOperation extends AbstractOperation {
 
@@ -33,11 +38,21 @@ public class SDivOperation extends AbstractOperation {
 
   @Override
   public void execute(final MessageFrame frame) {
-    final Int256 value0 = frame.popStackItem().asInt256();
-    final Int256 value1 = frame.popStackItem().asInt256();
+    final Bytes32 value0 = frame.popStackItem();
+    final Bytes32 value1 = frame.popStackItem();
+    if (value1.isZero()) {
+      frame.pushStackItem(Bytes32.ZERO);
+    } else {
+      BigInteger result = value0.toBigInteger().divide(value1.toBigInteger());
+      Bytes resultBytes = Bytes.wrap(result.toByteArray());
+      if (resultBytes.size() > 32) {
+        resultBytes = resultBytes.slice(resultBytes.size() - 32, 32);
+      }
 
-    final Int256 result = value0.dividedBy(value1);
+      byte[] padding = new byte[32 - resultBytes.size()];
+      Arrays.fill(padding, result.signum() < 0 ? (byte) 0xFF : 0x00);
 
-    frame.pushStackItem(result.getBytes());
+      frame.pushStackItem(Bytes32.wrap(Bytes.concatenate(Bytes.wrap(padding), resultBytes)));
+    }
   }
 }

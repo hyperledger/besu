@@ -20,11 +20,12 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.PeerInfo;
-import org.hyperledger.besu.util.bytes.BytesValue;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class StubbedPeerConnection {
 
-  public static PeerConnection create(final BytesValue nodeId) {
+  public static PeerConnection create(final Bytes nodeId) {
     PeerConnection peerConnection = mock(PeerConnection.class);
     PeerInfo peerInfo = new PeerInfo(0, "IbftIntTestPeer", emptyList(), 0, nodeId);
     when(peerConnection.getPeerInfo()).thenReturn(peerInfo);

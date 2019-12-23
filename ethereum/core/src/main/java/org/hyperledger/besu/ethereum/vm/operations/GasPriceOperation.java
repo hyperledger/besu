@@ -34,6 +34,6 @@ public class GasPriceOperation extends AbstractOperation {
   @Override
   public void execute(final MessageFrame frame) {
     final Wei gasPrice = frame.getGasPrice();
-    frame.pushStackItem(gasPrice.getBytes());
+    frame.pushStackItem(gasPrice.toBytes());
   }
 }

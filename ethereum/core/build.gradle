@@ -37,6 +37,8 @@ dependencies {
   implementation project(':plugin-api')
   implementation project(':services:kvstore')
 
+  implementation 'org.apache.tuweni:tuweni-bytes'
+  implementation 'org.apache.tuweni:tuweni-units'
   implementation 'com.fasterxml.jackson.core:jackson-databind'
   implementation 'com.google.guava:guava'
   implementation 'io.vertx:vertx-core'
@@ -51,6 +53,9 @@ dependencies {
   testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.mockito:mockito-core'
+  testImplementation 'org.apache.tuweni:tuweni-bytes'
+  testImplementation 'org.apache.tuweni:tuweni-io'
+  testImplementation 'org.apache.tuweni:tuweni-units'
 
   integrationTestImplementation project(path: ':config', configuration: 'testSupportArtifacts')
 
@@ -62,6 +67,7 @@ dependencies {
 
   testSupportImplementation project(path: ':config', configuration: 'testSupportArtifacts')
   testSupportImplementation project(':testutil')
+  testSupportImplementation project(':ethereum:eth')
 
   testSupportImplementation 'junit:junit'
   testSupportImplementation 'org.assertj:assertj-core'
@@ -90,10 +96,11 @@ task testJar (type: Jar) {
 }
 
 test {
+  exclude 'org/hyperledger/besu/ethereum/mainnet/DifficultyCalculatorTests.class'
+  exclude 'org/hyperledger/besu/ethereum/core/TransactionTest.class'
   exclude 'org/hyperledger/besu/ethereum/vm/**ReferenceTest.class'
   exclude 'org/hyperledger/besu/ethereum/vm/blockchain/**.class'
   exclude 'org/hyperledger/besu/ethereum/vm/generalstate/**.class'
-  exclude 'org/hyperledger/besu/ethereum/core/TransactionTest.class'
 }
 
 def generateTestFiles(FileTree jsonPath, File templateFile, String pathstrip, String destination, String namePrefix) {
@@ -185,10 +192,11 @@ task referenceTests(type: Test, dependsOn: [
   }
   scanForTestClasses = false
   enableAssertions = true
+  include 'org/hyperledger/besu/ethereum/core/TransactionTest.class'
+  include 'org/hyperledger/besu/ethereum/mainnet/DifficultyCalculatorTests.class'
   include 'org/hyperledger/besu/ethereum/vm/**ReferenceTest.class'
   include 'org/hyperledger/besu/ethereum/vm/blockchain/**.class'
   include 'org/hyperledger/besu/ethereum/vm/generalstate/**.class'
-  include 'org/hyperledger/besu/ethereum/core/TransactionTest.class'
 }
 
 artifacts {
