@@ -157,6 +157,11 @@ public class ClassicProtocolSpecs {
       final boolean enableRevertReason) {
     return aghartaDefinition(
             chainId, configContractSizeLimit, configStackSizeLimit, enableRevertReason)
+        .gasCalculator(IstanbulGasCalculator::new)
+        .evmBuilder(
+            gasCalculator ->
+                MainnetEvmRegistries.istanbul(gasCalculator, chainId.orElse(BigInteger.ZERO)))
+        .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::istanbul)
         .name("Aztlan");
   }
 
