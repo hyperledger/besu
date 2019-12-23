@@ -44,10 +44,11 @@ import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.UnformattedDataWrapper;
+import org.hyperledger.besu.ethereum.core.UnformattedDataImpl;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 
@@ -83,7 +84,7 @@ public class JsonRpcResponseUtils {
     final Hash transactionsRoot = hash(values.get(TRANSACTION_ROOT));
     final Hash receiptsRoot = hash(values.get(RECEIPTS_ROOT));
     final LogsBloomFilter logsBloom = logsBloom(values.get(LOGS_BLOOM));
-    final UInt256 difficulty = unsignedInt256(values.get(DIFFICULTY));
+    final Difficulty difficulty = Difficulty.of(unsignedInt256(values.get(DIFFICULTY)));
     final Bytes extraData = bytes(values.get(EXTRA_DATA));
     final BlockHeaderFunctions blockHeaderFunctions = new MainnetBlockHeaderFunctions();
     final long number = unsignedLong(values.get(NUMBER));
@@ -91,7 +92,7 @@ public class JsonRpcResponseUtils {
     final long gasUsed = unsignedLong(values.get(GAS_USED));
     final long timestamp = unsignedLong(values.get(TIMESTAMP));
     final long nonce = unsignedLong(values.get(NONCE));
-    final UInt256 totalDifficulty = unsignedInt256(values.get(TOTAL_DIFFICULTY));
+    final Difficulty totalDifficulty = Difficulty.of(unsignedInt256(values.get(TOTAL_DIFFICULTY)));
     final int size = unsignedInt(values.get(SIZE));
 
     final List<JsonNode> ommers = new ArrayList<>();
@@ -164,7 +165,7 @@ public class JsonRpcResponseUtils {
     when(transaction.getHash()).thenReturn(hash(hash));
     when(transaction.getTo()).thenReturn(Optional.ofNullable(address(toAddress)));
     when(transaction.getSender()).thenReturn(address(fromAddress));
-    when(transaction.getPayload()).thenReturn(new UnformattedDataWrapper(bytes(input)));
+    when(transaction.getPayload()).thenReturn(new UnformattedDataImpl(bytes(input)));
     when(transaction.getValue()).thenReturn(wei(value));
     when(transaction.getGasLimit()).thenReturn(unsignedLong(gas));
 

@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
@@ -189,8 +190,8 @@ public final class GenesisState {
     return withNiceErrorMessage("extraData", genesis.getExtraData(), Bytes::fromHexString);
   }
 
-  private static UInt256 parseDifficulty(final GenesisConfigFile genesis) {
-    return withNiceErrorMessage("difficulty", genesis.getDifficulty(), UInt256::fromHexString);
+  private static Difficulty parseDifficulty(final GenesisConfigFile genesis) {
+    return withNiceErrorMessage("difficulty", genesis.getDifficulty(), Difficulty::fromHexString);
   }
 
   private static Hash parseMixHash(final GenesisConfigFile genesis) {

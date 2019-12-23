@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.eth.manager.ChainState;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
@@ -37,7 +38,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -155,7 +155,7 @@ public class TrailingPeerLimiterTest {
   private EthPeer addPeerWithEstimatedHeight(final long height) {
     final EthPeer peer = mock(EthPeer.class);
     final ChainState chainState = new ChainState();
-    chainState.statusReceived(Hash.EMPTY, UInt256.ONE);
+    chainState.statusReceived(Hash.EMPTY, Difficulty.ONE);
     chainState.update(Hash.EMPTY, height);
     when(peer.chainState()).thenReturn(chainState);
     peers.add(peer);

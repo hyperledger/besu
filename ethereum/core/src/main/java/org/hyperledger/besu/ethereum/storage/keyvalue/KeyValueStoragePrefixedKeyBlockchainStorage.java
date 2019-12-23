@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.chain.TransactionLocation;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -94,8 +95,8 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
   }
 
   @Override
-  public Optional<UInt256> getTotalDifficulty(final Hash blockHash) {
-    return get(TOTAL_DIFFICULTY_PREFIX, blockHash).map(b -> UInt256.fromBytes(Bytes32.wrap(b, 0)));
+  public Optional<Difficulty> getTotalDifficulty(final Hash blockHash) {
+    return get(TOTAL_DIFFICULTY_PREFIX, blockHash).map(b -> Difficulty.wrap(Bytes32.wrap(b, 0)));
   }
 
   @Override
@@ -157,7 +158,7 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
     }
 
     @Override
-    public void putTotalDifficulty(final Hash blockHash, final UInt256 totalDifficulty) {
+    public void putTotalDifficulty(final Hash blockHash, final Difficulty totalDifficulty) {
       set(TOTAL_DIFFICULTY_PREFIX, blockHash, totalDifficulty.toBytes());
     }
 

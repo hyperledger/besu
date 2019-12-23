@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
@@ -42,7 +43,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -126,7 +126,7 @@ public class EthGetUncleByBlockNumberAndIndexTest {
         header,
         Collections.emptyList(),
         Collections.emptyList(),
-        UInt256.ZERO,
+        Difficulty.ZERO,
         block.calculateSize());
   }
 
@@ -148,6 +148,6 @@ public class EthGetUncleByBlockNumberAndIndexTest {
     final List<Hash> ommers = new ArrayList<>();
     ommers.add(Hash.ZERO);
 
-    return new BlockWithMetadata<>(header, transactions, ommers, header.internalGetDifficulty(), 0);
+    return new BlockWithMetadata<>(header, transactions, ommers, header.getDifficulty(), 0);
   }
 }

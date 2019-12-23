@@ -133,6 +133,7 @@ jobs:
       - capture_test_results
 
   acceptanceTests:
+    parallelism: 2
     executor: besu_executor_xl
     steps:
       - prepare
@@ -142,7 +143,14 @@ jobs:
           name: AcceptanceTests
           no_output_timeout: 40m
           command: |
-            ./gradlew --no-daemon --parallel acceptanceTest
+            CLASSNAMES=$(circleci tests glob "acceptance-tests/tests/src/test/java/**/*.java" \
+              | sed 's@.*/src/test/java/@@' \
+              | sed 's@/@.@g' \
+              | sed 's/.\{5\}$//' \
+              | circleci tests split --split-by=timings --timings-type=classname)
+            # Format the arguments to "./gradlew test"
+            GRADLE_ARGS=$(echo $CLASSNAMES | awk '{for (i=1; i<=NF; i++) print "--tests",$i}')
+            ./gradlew --no-daemon --parallel acceptanceTest $GRADLE_ARGS
       - capture_test_results
 
   buildDocker:

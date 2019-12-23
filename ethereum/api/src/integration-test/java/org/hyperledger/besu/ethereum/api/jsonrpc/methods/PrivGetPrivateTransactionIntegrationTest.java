@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.UnformattedDataImpl;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
@@ -164,7 +165,7 @@ public class PrivGetPrivateTransactionIntegrationTest {
     final SendResponse sendResponse = enclave.send(payload, ENCLAVE_PUBLIC_KEY, to);
 
     final Bytes hexKey = Bytes.fromBase64String(sendResponse.getKey());
-    when(justTransaction.getPayloadBytes()).thenReturn(hexKey);
+    when(justTransaction.getPayload()).thenReturn(new UnformattedDataImpl(hexKey));
 
     final Object[] params = new Object[] {Hash.ZERO};
 

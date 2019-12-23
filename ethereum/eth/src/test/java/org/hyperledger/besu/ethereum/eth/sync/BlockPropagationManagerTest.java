@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator.BlockOptions;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
@@ -55,7 +56,6 @@ import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
-import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -496,7 +496,7 @@ public class BlockPropagationManagerTest {
 
     // Setup peer and messages
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
-    final NewBlockMessage oldAnnouncement = NewBlockMessage.create(oldBlock, UInt256.ZERO);
+    final NewBlockMessage oldAnnouncement = NewBlockMessage.create(oldBlock, Difficulty.ZERO);
 
     // Broadcast
     EthProtocolManagerTestUtil.broadcastMessage(ethProtocolManager, peer, oldAnnouncement);
@@ -532,7 +532,8 @@ public class BlockPropagationManagerTest {
 
     blockPropagationManager.start();
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
-    final NewBlockMessage blockAnnouncementMsg = NewBlockMessage.create(blockToPurge, UInt256.ZERO);
+    final NewBlockMessage blockAnnouncementMsg =
+        NewBlockMessage.create(blockToPurge, Difficulty.ZERO);
 
     // Broadcast
     EthProtocolManagerTestUtil.broadcastMessage(ethProtocolManager, peer, blockAnnouncementMsg);
@@ -566,9 +567,9 @@ public class BlockPropagationManagerTest {
 
     // Setup peer and messages
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
-    final UInt256 parentTotalDifficulty =
+    final Difficulty parentTotalDifficulty =
         fullBlockchain.getTotalDifficultyByHash(nextBlock.getHeader().getParentHash()).get();
-    final UInt256 totalDifficulty =
+    final Difficulty totalDifficulty =
         fullBlockchain.getTotalDifficultyByHash(nextBlock.getHash()).get();
     final NewBlockMessage nextAnnouncement = NewBlockMessage.create(nextBlock, totalDifficulty);
 
@@ -623,7 +624,8 @@ public class BlockPropagationManagerTest {
     // Setup peer and messages
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
 
-    final UInt256 totalDifficulty = fullBlockchain.getTotalDifficultyByHash(block.getHash()).get();
+    final Difficulty totalDifficulty =
+        fullBlockchain.getTotalDifficultyByHash(block.getHash()).get();
     final NewBlockMessage newBlockMessage = NewBlockMessage.create(block, totalDifficulty);
 
     // Broadcast message

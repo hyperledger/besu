@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.core;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 
 public class BlockHeaderTestFixture {
 
@@ -30,7 +29,7 @@ public class BlockHeaderTestFixture {
   private Hash receiptsRoot = Hash.EMPTY_TRIE_HASH;
 
   private LogsBloomFilter logsBloom = LogsBloomFilter.empty();
-  private UInt256 difficulty = UInt256.ZERO;
+  private Difficulty difficulty = Difficulty.ZERO;
   private long number = 0;
 
   private long gasLimit = 0;
@@ -99,7 +98,7 @@ public class BlockHeaderTestFixture {
     return this;
   }
 
-  public BlockHeaderTestFixture difficulty(final UInt256 difficulty) {
+  public BlockHeaderTestFixture difficulty(final Difficulty difficulty) {
     this.difficulty = difficulty;
     return this;
   }

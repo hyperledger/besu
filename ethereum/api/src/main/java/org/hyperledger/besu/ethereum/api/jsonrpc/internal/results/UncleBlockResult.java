@@ -17,10 +17,9 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 
 import java.util.Collections;
-
-import org.apache.tuweni.units.bigints.UInt256;
 
 public class UncleBlockResult {
 
@@ -34,6 +33,6 @@ public class UncleBlockResult {
     final BlockBody body = new BlockBody(Collections.emptyList(), Collections.emptyList());
     final int size = new Block(header, body).calculateSize();
     return new BlockResult(
-        header, Collections.emptyList(), Collections.emptyList(), UInt256.ZERO, size);
+        header, Collections.emptyList(), Collections.emptyList(), Difficulty.ZERO, size);
   }
 }

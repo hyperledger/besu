@@ -149,14 +149,14 @@ public class IbftBlockHashing {
     out.writeBytes(header.getTransactionsRoot());
     out.writeBytes(header.getReceiptsRoot());
     out.writeBytes(header.getLogsBloom().getBytes());
-    out.writeBytes(header.internalGetDifficulty().toMinimalBytes());
+    out.writeBytes(header.getDifficulty().toMinimalBytes());
     out.writeLongScalar(header.getNumber());
     out.writeLongScalar(header.getGasLimit());
     out.writeLongScalar(header.getGasUsed());
     out.writeLongScalar(header.getTimestamp());
     // Cannot decode an IbftExtraData on block 0 due to missing/illegal signatures
     if (header.getNumber() == 0) {
-      out.writeBytes(header.internalGetExtraData());
+      out.writeBytes(header.getExtraData());
     } else {
       out.writeBytes(extraDataSerializer.get());
     }

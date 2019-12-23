@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.chain.BlockAddedEvent.EventType;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessage;
@@ -56,7 +57,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Range;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.tuweni.units.bigints.UInt256;
 
 public class BlockPropagationManager<C> {
   private static final Logger LOG = LogManager.getLogger();
@@ -155,7 +155,7 @@ public class BlockPropagationManager<C> {
     final NewBlockMessage newBlockMessage = NewBlockMessage.readFrom(message.getData());
     try {
       final Block block = newBlockMessage.block(protocolSchedule);
-      final UInt256 totalDifficulty = newBlockMessage.totalDifficulty(protocolSchedule);
+      final Difficulty totalDifficulty = newBlockMessage.totalDifficulty(protocolSchedule);
 
       message.getPeer().chainState().updateForAnnouncedBlock(block.getHeader(), totalDifficulty);
 
@@ -249,12 +249,12 @@ public class BlockPropagationManager<C> {
   }
 
   private void broadcastBlock(final Block block, final BlockHeader parent) {
-    final UInt256 totalDifficulty =
+    final Difficulty totalDifficulty =
         protocolContext
             .getBlockchain()
             .getTotalDifficultyByHash(parent.getHash())
             .get()
-            .add(block.getHeader().internalGetDifficulty());
+            .add(block.getHeader().getDifficulty());
     blockBroadcaster.propagate(block, totalDifficulty);
   }
 

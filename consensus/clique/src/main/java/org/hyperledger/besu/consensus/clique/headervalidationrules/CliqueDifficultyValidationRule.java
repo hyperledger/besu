@@ -38,7 +38,7 @@ public class CliqueDifficultyValidationRule
         new CliqueDifficultyCalculator(actualBlockCreator);
     final BigInteger expectedDifficulty = diffCalculator.nextDifficulty(0, parent, protocolContext);
 
-    final BigInteger actualDifficulty = header.internalGetDifficulty().toBigInteger();
+    final BigInteger actualDifficulty = header.getDifficulty().toBigInteger();
 
     return expectedDifficulty.equals(actualDifficulty);
   }

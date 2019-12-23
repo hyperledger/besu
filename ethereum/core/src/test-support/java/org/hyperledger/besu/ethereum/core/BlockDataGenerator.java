@@ -260,7 +260,7 @@ public class BlockDataGenerator {
         .transactionsRoot(hash())
         .receiptsRoot(hash())
         .logsBloom(logsBloom())
-        .difficulty(options.getDifficulty(uint256(4)))
+        .difficulty(options.getDifficulty(Difficulty.of(uint256(4))))
         .number(number)
         .gasLimit(gasLimit)
         .gasUsed(gasUsed)
@@ -386,7 +386,7 @@ public class BlockDataGenerator {
   public Log log(final int topicCount) {
     final List<LogTopic> topics =
         Stream.generate(this::logTopic).limit(topicCount).collect(Collectors.toList());
-    return new Log(address(), new UnformattedDataWrapper(bytesValue(5, 15)), topics);
+    return new Log(address(), bytesValue(5, 15), topics);
   }
 
   private LogTopic logTopic() {
@@ -486,7 +486,7 @@ public class BlockDataGenerator {
     private OptionalLong blockNumber = OptionalLong.empty();
     private Optional<Hash> parentHash = Optional.empty();
     private Optional<Hash> stateRoot = Optional.empty();
-    private Optional<UInt256> difficulty = Optional.empty();
+    private Optional<Difficulty> difficulty = Optional.empty();
     private List<Transaction> transactions = new ArrayList<>();
     private Optional<Bytes> extraData = Optional.empty();
     private Optional<BlockHeaderFunctions> blockHeaderFunctions = Optional.empty();
@@ -511,7 +511,7 @@ public class BlockDataGenerator {
       return stateRoot.orElse(defaultValue);
     }
 
-    public UInt256 getDifficulty(final UInt256 defaultValue) {
+    public Difficulty getDifficulty(final Difficulty defaultValue) {
       return difficulty.orElse(defaultValue);
     }
 
@@ -547,7 +547,7 @@ public class BlockDataGenerator {
       return this;
     }
 
-    public BlockOptions setDifficulty(final UInt256 difficulty) {
+    public BlockOptions setDifficulty(final Difficulty difficulty) {
       this.difficulty = Optional.of(difficulty);
       return this;
     }

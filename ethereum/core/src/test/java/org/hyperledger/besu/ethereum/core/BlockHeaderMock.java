@@ -21,7 +21,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 
 /** A memory mock for testing. */
 @JsonIgnoreProperties("previousHash")
@@ -49,7 +48,7 @@ public class BlockHeaderMock extends BlockHeader {
         Hash.EMPTY, // transactionsRoot
         Hash.EMPTY, // receiptsRoot
         new LogsBloomFilter(),
-        UInt256.fromHexString(difficulty),
+        Difficulty.fromHexString(difficulty),
         Long.decode(number),
         Long.decode(gasLimit),
         0L,

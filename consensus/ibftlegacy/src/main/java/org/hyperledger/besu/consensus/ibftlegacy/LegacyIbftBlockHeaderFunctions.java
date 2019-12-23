@@ -27,6 +27,6 @@ public class LegacyIbftBlockHeaderFunctions implements BlockHeaderFunctions {
 
   @Override
   public IbftExtraData parseExtraData(final BlockHeader header) {
-    return IbftExtraData.decodeRaw(header.internalGetExtraData());
+    return IbftExtraData.decodeRaw(header.getExtraData());
   }
 }

@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.sync;
 
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.messages.NewBlockMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
@@ -22,7 +23,6 @@ import org.hyperledger.besu.util.Subscribers;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.tuweni.units.bigints.UInt256;
 
 public class BlockBroadcaster {
   private static final Logger LOG = LogManager.getLogger();
@@ -43,7 +43,7 @@ public class BlockBroadcaster {
     blockPropagatedSubscribers.unsubscribe(id);
   }
 
-  public void propagate(final Block block, final UInt256 totalDifficulty) {
+  public void propagate(final Block block, final Difficulty totalDifficulty) {
     blockPropagatedSubscribers.forEach(listener -> listener.accept(block, totalDifficulty));
     final NewBlockMessage newBlockMessage = NewBlockMessage.create(block, totalDifficulty);
     ethContext
@@ -63,6 +63,6 @@ public class BlockBroadcaster {
 
   @FunctionalInterface
   public interface BlockPropagatedSubscriber {
-    void accept(Block block, UInt256 totalDifficulty);
+    void accept(Block block, Difficulty totalDifficulty);
   }
 }

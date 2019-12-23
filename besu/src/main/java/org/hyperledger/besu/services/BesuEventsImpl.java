@@ -18,9 +18,9 @@ import static java.util.stream.Collectors.toUnmodifiableList;
 
 import org.hyperledger.besu.ethereum.api.query.LogsQuery;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.LogTopic;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
-import org.hyperledger.besu.ethereum.core.QuantityWrapper;
 import org.hyperledger.besu.ethereum.eth.sync.BlockBroadcaster;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -36,7 +36,6 @@ import java.util.List;
 import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 
 public class BesuEventsImpl implements BesuEvents {
   private Blockchain blockchain;
@@ -134,7 +133,7 @@ public class BesuEventsImpl implements BesuEvents {
 
   private static PropagatedBlockContext blockPropagatedContext(
       final Supplier<BlockHeader> blockHeaderSupplier,
-      final Supplier<UInt256> totalDifficultySupplier) {
+      final Supplier<Difficulty> totalDifficultySupplier) {
     return new PropagatedBlockContext() {
       @Override
       public BlockHeader getBlockHeader() {
@@ -143,7 +142,7 @@ public class BesuEventsImpl implements BesuEvents {
 
       @Override
       public Quantity getTotalDifficulty() {
-        return new QuantityWrapper(totalDifficultySupplier.get());
+        return totalDifficultySupplier.get();
       }
     };
   }
