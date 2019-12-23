@@ -150,6 +150,16 @@ public class ClassicProtocolSpecs {
         .name("Agharta");
   }
 
+  public static ProtocolSpecBuilder<Void> aztlanDefinition(
+      final Optional<BigInteger> chainId,
+      final OptionalInt configContractSizeLimit,
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason) {
+    return aghartaDefinition(
+            chainId, configContractSizeLimit, configStackSizeLimit, enableRevertReason)
+        .name("Aztlan");
+  }
+
   private static TransactionReceipt byzantiumTransactionReceiptFactory(
       final TransactionProcessor.Result result, final WorldState worldState, final long gasUsed) {
     return new TransactionReceipt(
