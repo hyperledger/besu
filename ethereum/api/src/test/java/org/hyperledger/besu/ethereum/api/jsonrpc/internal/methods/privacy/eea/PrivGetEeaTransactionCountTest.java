@@ -20,6 +20,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivGetEeaTransactionCount;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -33,6 +34,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class PrivGetEeaTransactionCountTest {
+  private static final String ENCLAVE_PUBLIC_KEY = "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
 
   private final PrivacyParameters privacyParameters = mock(PrivacyParameters.class);
   private final PrivacyController privacyController = mock(PrivacyController.class);
@@ -41,6 +43,7 @@ public class PrivGetEeaTransactionCountTest {
   private final String privateFrom = "thePrivateFromKey";
   private final String[] privateFor = new String[] {"first", "second", "third"};
   private final Address address = Address.fromHexString("55");
+  private final EnclavePublicKeyProvider enclavePublicKeyProvider = (user) -> ENCLAVE_PUBLIC_KEY;
 
   @Before
   public void setup() {
@@ -54,9 +57,10 @@ public class PrivGetEeaTransactionCountTest {
   @Test
   public void validRequestProducesExpectedNonce() {
     final long reportedNonce = 8L;
-    final PrivGetEeaTransactionCount method = new PrivGetEeaTransactionCount(privacyController);
+    final PrivGetEeaTransactionCount method =
+        new PrivGetEeaTransactionCount(privacyController, enclavePublicKeyProvider);
 
-    when(privacyController.determineNonce(privateFrom, privateFor, address))
+    when(privacyController.determineNonce(privateFrom, privateFor, address, ENCLAVE_PUBLIC_KEY))
         .thenReturn(reportedNonce);
 
     final JsonRpcResponse response = method.response(request);
@@ -69,9 +73,10 @@ public class PrivGetEeaTransactionCountTest {
 
   @Test
   public void nonceProviderThrowsRuntimeExceptionProducesErrorResponse() {
-    final PrivGetEeaTransactionCount method = new PrivGetEeaTransactionCount(privacyController);
+    final PrivGetEeaTransactionCount method =
+        new PrivGetEeaTransactionCount(privacyController, enclavePublicKeyProvider);
 
-    when(privacyController.determineNonce(privateFrom, privateFor, address))
+    when(privacyController.determineNonce(privateFrom, privateFor, address, ENCLAVE_PUBLIC_KEY))
         .thenThrow(RuntimeException.class);
 
     final JsonRpcResponse response = method.response(request);
@@ -84,9 +89,10 @@ public class PrivGetEeaTransactionCountTest {
 
   @Test
   public void nonceProviderThrowsAnExceptionProducesErrorResponse() {
-    final PrivGetEeaTransactionCount method = new PrivGetEeaTransactionCount(privacyController);
+    final PrivGetEeaTransactionCount method =
+        new PrivGetEeaTransactionCount(privacyController, enclavePublicKeyProvider);
 
-    when(privacyController.determineNonce(privateFrom, privateFor, address))
+    when(privacyController.determineNonce(privateFrom, privateFor, address, ENCLAVE_PUBLIC_KEY))
         .thenThrow(RuntimeException.class);
 
     final JsonRpcResponse response = method.response(request);

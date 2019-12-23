@@ -37,9 +37,13 @@ public class PrivacySendTransaction {
   private static final Logger LOG = LogManager.getLogger();
 
   protected final PrivacyController privacyController;
+  private EnclavePublicKeyProvider enclavePublicKeyProvider;
 
-  public PrivacySendTransaction(final PrivacyController privacyController) {
+  public PrivacySendTransaction(
+      final PrivacyController privacyController,
+      final EnclavePublicKeyProvider enclavePublicKeyProvider) {
     this.privacyController = privacyController;
+    this.enclavePublicKeyProvider = enclavePublicKeyProvider;
   }
 
   public PrivateTransaction validateAndDecodeRequest(final JsonRpcRequestContext request)
@@ -74,7 +78,10 @@ public class PrivacySendTransaction {
       final String privacyGroupId,
       final Supplier<JsonRpcResponse> successfulJsonRpcResponse) {
     return privacyController
-        .validatePrivateTransaction(privateTransaction, privacyGroupId)
+        .validatePrivateTransaction(
+            privateTransaction,
+            privacyGroupId,
+            enclavePublicKeyProvider.getEnclaveKey(request.getUser()))
         .either(
             successfulJsonRpcResponse,
             (errorReason) ->
