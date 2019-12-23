@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivCreatePrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivDeletePrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivDistributeRawTransaction;
@@ -49,16 +50,22 @@ public class PrivJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
   }
 
   @Override
-  protected Map<String, JsonRpcMethod> create(final PrivacyController privacyController) {
+  protected Map<String, JsonRpcMethod> create(
+      final PrivacyController privacyController,
+      final EnclavePublicKeyProvider enclavePublicKeyProvider) {
     return mapOf(
         new PrivGetTransactionReceipt(
-            getBlockchainQueries(), getPrivacyParameters(), privacyController),
-        new PrivCreatePrivacyGroup(privacyController),
-        new PrivDeletePrivacyGroup(privacyController),
-        new PrivFindPrivacyGroup(privacyController),
+            getBlockchainQueries(),
+            getPrivacyParameters(),
+            privacyController,
+            enclavePublicKeyProvider),
+        new PrivCreatePrivacyGroup(privacyController, enclavePublicKeyProvider),
+        new PrivDeletePrivacyGroup(privacyController, enclavePublicKeyProvider),
+        new PrivFindPrivacyGroup(privacyController, enclavePublicKeyProvider),
         new PrivGetPrivacyPrecompileAddress(getPrivacyParameters()),
-        new PrivGetTransactionCount(privacyController),
-        new PrivGetPrivateTransaction(getBlockchainQueries(), privacyController),
-        new PrivDistributeRawTransaction(privacyController));
+        new PrivGetTransactionCount(privacyController, enclavePublicKeyProvider),
+        new PrivGetPrivateTransaction(
+            getBlockchainQueries(), privacyController, enclavePublicKeyProvider),
+        new PrivDistributeRawTransaction(privacyController, enclavePublicKeyProvider));
   }
 }

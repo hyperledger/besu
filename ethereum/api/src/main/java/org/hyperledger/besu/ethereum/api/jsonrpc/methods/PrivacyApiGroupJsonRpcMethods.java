@@ -14,9 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.MultiTenancyUserUtil.enclavePublicKey;
+
 import org.hyperledger.besu.ethereum.api.jsonrpc.LatestNonceProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.DisabledPrivacyRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.MultiTenancyRpcMethodDecorator;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -77,13 +80,25 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
         new PrivacyController(
             privacyParameters, protocolSchedule.getChainId(), markerTransactionFactory);
 
-    return create(privacyController).entrySet().stream()
+    final EnclavePublicKeyProvider enclavePublicProvider =
+        privacyParameters.isMultiTenancyEnabled()
+            ? user ->
+                enclavePublicKey(user)
+                    .orElseThrow(
+                        () ->
+                            new IllegalStateException(
+                                "Request does not contain an authorization token"))
+            : user -> privacyParameters.getEnclavePublicKey();
+
+    return create(privacyController, enclavePublicProvider).entrySet().stream()
         .collect(
             Collectors.toMap(
                 Entry::getKey, entry -> createPrivacyMethod(privacyParameters, entry.getValue())));
   }
 
-  protected abstract Map<String, JsonRpcMethod> create(final PrivacyController privacyController);
+  protected abstract Map<String, JsonRpcMethod> create(
+      final PrivacyController privacyController,
+      final EnclavePublicKeyProvider enclavePublicKeyProvider);
 
   private PrivateMarkerTransactionFactory createPrivateMarkerTransactionFactory(
       final PrivacyParameters privacyParameters,

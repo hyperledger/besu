@@ -12,17 +12,13 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.crypto;
+package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods;
 
-import com.google.common.primitives.Bytes;
-import com.google.common.primitives.Ints;
-import com.google.common.primitives.Longs;
+import java.util.Optional;
 
-public class QuickEntropy {
+import io.vertx.ext.auth.User;
 
-  public byte[] getQuickEntropy() {
-    final byte[] nanoTimeBytes = Longs.toByteArray(System.nanoTime());
-    final byte[] objectHashBytes = Ints.toByteArray(new Object().hashCode());
-    return Bytes.concat(nanoTimeBytes, objectHashBytes);
-  }
+@FunctionalInterface
+public interface EnclavePublicKeyProvider {
+  String getEnclaveKey(Optional<User> user);
 }
