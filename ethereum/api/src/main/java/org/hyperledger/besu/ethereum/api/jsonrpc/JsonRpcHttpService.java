@@ -295,7 +295,9 @@ public class JsonRpcHttpService {
   }
 
   private boolean isClientAuthenticationRequired() {
-    return config.getTlsConfiguration().map(TlsConfiguration::getKnownClientsFile).isPresent();
+    return isTlsConfigurationEnabled()
+        ? config.getTlsConfiguration().get().getKnownClientsFile().isPresent()
+        : false;
   }
 
   private Handler<RoutingContext> checkWhitelistHostHeader() {

@@ -464,6 +464,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   @Option(
       names = {"--rpc-http-tls-keystore-password-file"},
+      paramLabel = MANDATORY_FILE_FORMAT_HELP,
       description =
           "Key store password file for the JSON-RPC HTTP service. Required if TLS is enabled.")
   private final Path rpcHttpTlsKeystorePasswordFile = null;
@@ -1226,7 +1227,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       if (rpcHttpTlsKeystorePasswordFile == null) {
         throw new ParameterException(
             commandLine,
-            "Key store password is required when TLS is enabled for JSON-RPC HTTP endpoint");
+            "Key store password file is required when TLS is enabled for JSON-RPC HTTP endpoint");
       }
     }
 
