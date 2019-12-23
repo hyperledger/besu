@@ -14,19 +14,19 @@
  */
 package org.hyperledger.besu.ethereum.chain;
 
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.util.uint.UInt256;
 
 /** Head of a blockchain. */
 public final class ChainHead {
 
   private final Hash hash;
 
-  private final UInt256 totalDifficulty;
+  private final Difficulty totalDifficulty;
 
   private final long height;
 
-  public ChainHead(final Hash hash, final UInt256 totalDifficulty, final long height) {
+  public ChainHead(final Hash hash, final Difficulty totalDifficulty, final long height) {
     this.hash = hash;
     this.totalDifficulty = totalDifficulty;
     this.height = height;
@@ -36,7 +36,7 @@ public final class ChainHead {
     return hash;
   }
 
-  public UInt256 getTotalDifficulty() {
+  public Difficulty getTotalDifficulty() {
     return totalDifficulty;
   }
 

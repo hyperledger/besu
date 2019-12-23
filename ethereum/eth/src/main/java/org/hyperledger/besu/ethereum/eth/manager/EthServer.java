@@ -35,7 +35,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -46,6 +45,7 @@ import java.util.Optional;
 import com.google.common.collect.Lists;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 class EthServer {
   private static final Logger LOG = LogManager.getLogger();
@@ -229,7 +229,7 @@ class EthServer {
     final GetNodeDataMessage getNodeDataMessage = GetNodeDataMessage.readFrom(message);
     final Iterable<Hash> hashes = getNodeDataMessage.hashes();
 
-    final List<BytesValue> nodeData = new ArrayList<>();
+    final List<Bytes> nodeData = new ArrayList<>();
     int count = 0;
     for (final Hash hash : hashes) {
       if (count >= requestLimit) {

@@ -14,12 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.logging.log4j.LogManager.getLogger;
 
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.privacy.PrivateTransactionGroupResult;
@@ -30,9 +32,9 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
-import org.hyperledger.besu.util.bytes.BytesValues;
 
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 public class PrivGetPrivateTransaction implements JsonRpcMethod {
 
@@ -40,11 +42,15 @@ public class PrivGetPrivateTransaction implements JsonRpcMethod {
 
   private final BlockchainQueries blockchain;
   private final PrivacyController privacyController;
+  private EnclavePublicKeyProvider enclavePublicKeyProvider;
 
   public PrivGetPrivateTransaction(
-      final BlockchainQueries blockchain, final PrivacyController privacyController) {
+      final BlockchainQueries blockchain,
+      final PrivacyController privacyController,
+      final EnclavePublicKeyProvider enclavePublicKeyProvider) {
     this.blockchain = blockchain;
     this.privacyController = privacyController;
+    this.enclavePublicKeyProvider = enclavePublicKeyProvider;
   }
 
   @Override
@@ -67,13 +73,15 @@ public class PrivGetPrivateTransaction implements JsonRpcMethod {
       LOG.trace("Fetching transaction information");
       final ReceiveResponse receiveResponse =
           privacyController.retrieveTransaction(
-              BytesValues.asBase64String(resultTransaction.getTransaction().getPayload()));
+              resultTransaction.getTransaction().getPayload().toBase64String(),
+              enclavePublicKeyProvider.getEnclaveKey(requestContext.getUser()));
       LOG.trace("Received transaction information");
 
-      final BytesValueRLPInput bytesValueRLPInput =
-          new BytesValueRLPInput(BytesValues.fromBase64(receiveResponse.getPayload()), false);
+      final BytesValueRLPInput input =
+          new BytesValueRLPInput(
+              Bytes.fromBase64String(new String(receiveResponse.getPayload(), UTF_8)), false);
 
-      final PrivateTransaction privateTransaction = PrivateTransaction.readFrom(bytesValueRLPInput);
+      final PrivateTransaction privateTransaction = PrivateTransaction.readFrom(input);
       if (privateTransaction.getPrivacyGroupId().isPresent()) {
         return new JsonRpcSuccessResponse(
             requestContext.getRequest().getId(),

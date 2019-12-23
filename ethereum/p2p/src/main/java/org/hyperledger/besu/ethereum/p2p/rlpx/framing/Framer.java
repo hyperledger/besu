@@ -23,13 +23,14 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.handshake.Handshaker;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Arrays;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import io.netty.buffer.ByteBuf;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.MutableBytes;
 import org.bouncycastle.crypto.BlockCipher;
 import org.bouncycastle.crypto.StreamCipher;
 import org.bouncycastle.crypto.engines.AESEngine;
@@ -67,7 +68,7 @@ public class Framer {
                 out.writeNull();
                 out.endList();
               })
-          .extractArray();
+          .toArray();
 
   private final HandshakeSecrets secrets;
   private static final SnappyCompressor compressor = new SnappyCompressor();
@@ -166,8 +167,8 @@ public class Framer {
    * consists of (32 bytes at this time). Returns the frame size as extracted from the header.
    *
    * @param encryptedHeader The header as seen on the wire.
-   * @throws FramingException If header parsing or decryption failed.
    * @return The frame size as extracted from the header.
+   * @throws FramingException If header parsing or decryption failed.
    */
   private int processHeader(final ByteBuf encryptedHeader) throws FramingException {
     if (encryptedHeader.readableBytes() != LENGTH_FULL_HEADER) {
@@ -202,7 +203,7 @@ public class Framer {
 
     // Discard the header data (RLP): being set to fixed value 0xc28080 (list of two null
     // elements) by other clients.
-    final int headerDataLength = RLP.calculateSize(BytesValue.wrapBuffer(h.nioBuffer()));
+    final int headerDataLength = RLP.calculateSize(Bytes.wrapByteBuffer(h.nioBuffer()));
     if (h.readableBytes() < headerDataLength) {
       throw error(
           "Expected at least %d readable bytes while processing header, remaining: %s",
@@ -256,11 +257,11 @@ public class Framer {
     decryptor.processBytes(frameData, 0, frameData.length, frameData, 0);
 
     // Read the id.
-    final BytesValue idbv = RLP.decodeOne(BytesValue.of(frameData[0]));
+    final Bytes idbv = RLP.decodeOne(Bytes.of(frameData[0]));
     final int id = idbv.isZero() || idbv.size() == 0 ? 0 : idbv.get(0);
 
     // Write message data to ByteBuf, decompressing as necessary
-    final BytesValue data;
+    final Bytes data;
     if (compressionEnabled) {
       final byte[] compressedMessageData = Arrays.copyOfRange(frameData, 1, frameData.length - pad);
       final int uncompressedLength = compressor.uncompressedLength(compressedMessageData);
@@ -268,11 +269,11 @@ public class Framer {
         throw error("Message size %s in excess of maximum length.", uncompressedLength);
       }
       final byte[] decompressedMessageData = compressor.decompress(compressedMessageData);
-      data = BytesValue.wrap(decompressedMessageData);
+      data = Bytes.wrap(decompressedMessageData);
     } else {
       // Move data to a ByteBuf
       final int messageLength = frameSize - LENGTH_MESSAGE_ID;
-      data = BytesValue.wrap(frameData, 1, messageLength);
+      data = Bytes.wrap(frameData, 1, messageLength);
     }
 
     return new RawMessage(id, data);
@@ -300,9 +301,9 @@ public class Framer {
     if (compressionEnabled) {
       // Extract data from message
       // Compress data
-      final byte[] compressed = compressor.compress(message.getData().getArrayUnsafe());
+      final byte[] compressed = compressor.compress(message.getData().toArrayUnsafe());
       // Construct new, compressed message
-      frameMessage(new RawMessage(message.getCode(), BytesValue.wrap(compressed)), output);
+      frameMessage(new RawMessage(message.getCode(), Bytes.wrap(compressed)), output);
     } else {
       frameMessage(message, output);
     }
@@ -332,23 +333,24 @@ public class Framer {
     buf.writeBytes(h).writeBytes(hMac);
 
     // Encrypt payload.
-    final byte[] f = new byte[frameSize + pad];
+    final MutableBytes f = MutableBytes.create(frameSize + pad);
 
-    final BytesValue bv = id == 0 ? RLP.NULL : RLP.encodeOne(BytesValue.of(id));
+    final Bytes bv = id == 0 ? RLP.NULL : RLP.encodeOne(Bytes.of(id));
     assert bv.size() == 1;
-    f[0] = bv.get(0);
+    f.set(0, bv.get(0));
 
     // Zero-padded to 16-byte boundary.
-    message.getData().copyTo(f, 0, 1);
-    encryptor.processBytes(f, 0, f.length, f, 0);
+    message.getData().copyTo(f, 1);
+    encryptor.processBytes(f.toArrayUnsafe(), 0, f.size(), f.toArrayUnsafe(), 0);
 
     // Calculate the frame MAC.
-    final byte[] fMacSeed = Arrays.copyOf(secrets.updateEgress(f).getEgressMac(), LENGTH_MAC);
+    final byte[] fMacSeed =
+        Arrays.copyOf(secrets.updateEgress(f.toArrayUnsafe()).getEgressMac(), LENGTH_MAC);
     byte[] fMac = new byte[16];
     macEncryptor.processBlock(fMacSeed, 0, fMac, 0);
     fMac = Arrays.copyOf(secrets.updateEgress(xor(fMac, fMacSeed)).getEgressMac(), LENGTH_MAC);
 
-    buf.writeBytes(f).writeBytes(fMac);
+    buf.writeBytes(f.toArrayUnsafe()).writeBytes(fMac);
   }
 
   private static int padding16(final int size) {

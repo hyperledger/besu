@@ -24,17 +24,17 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
 public class IbftBlockHeaderValidationRulesetFactoryTest {
@@ -211,7 +211,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
         getPresetHeaderBuilder(1, proposerKeyPair, validators, null).buildHeader();
     final BlockHeader blockHeader =
         getPresetHeaderBuilder(2, proposerKeyPair, validators, parentHeader)
-            .difficulty(UInt256.of(5))
+            .difficulty(Difficulty.of(5))
             .buildHeader();
 
     final BlockHeaderValidator<IbftContext> validator =
@@ -308,13 +308,13 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
         Hash.fromHexString("0x63746963616c2062797a616e74696e65206661756c7420746f6c6572616e6365"));
     builder.ommersHash(Hash.EMPTY_LIST_HASH);
     builder.nonce(0);
-    builder.difficulty(UInt256.ONE);
+    builder.difficulty(Difficulty.ONE);
     builder.coinbase(Util.publicKeyToAddress(proposerKeyPair.getPublicKey()));
 
     final IbftExtraData ibftExtraData =
         IbftExtraDataFixture.createExtraData(
             builder.buildHeader(),
-            BytesValue.wrap(new byte[IbftExtraData.EXTRA_VANITY_LENGTH]),
+            Bytes.wrap(new byte[IbftExtraData.EXTRA_VANITY_LENGTH]),
             Optional.of(Vote.authVote(Address.fromHexString("1"))),
             validators,
             singletonList(proposerKeyPair),

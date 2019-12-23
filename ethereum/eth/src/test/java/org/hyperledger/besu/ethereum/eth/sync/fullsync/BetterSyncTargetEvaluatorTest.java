@@ -18,15 +18,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.eth.manager.ChainState;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.Optional;
 
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Test;
 
 public class BetterSyncTargetEvaluatorTest {
@@ -41,7 +42,7 @@ public class BetterSyncTargetEvaluatorTest {
       new BetterSyncTargetEvaluator(
           SynchronizerConfiguration.builder()
               .downloaderChangeTargetThresholdByHeight(HEIGHT_THRESHOLD)
-              .downloaderChangeTargetThresholdByTd(UInt256.of(TD_THRESHOLD))
+              .downloaderChangeTargetThresholdByTd(UInt256.valueOf(TD_THRESHOLD))
               .build(),
           ethPeers);
 
@@ -152,7 +153,7 @@ public class BetterSyncTargetEvaluatorTest {
     final EthPeer peer = mock(EthPeer.class);
     final ChainState chainState = new ChainState();
     chainState.updateHeightEstimate(chainHeight);
-    chainState.statusReceived(Hash.EMPTY, UInt256.of(totalDifficulty));
+    chainState.statusReceived(Hash.EMPTY, Difficulty.of(totalDifficulty));
     when(peer.chainState()).thenReturn(chainState);
     return peer;
   }

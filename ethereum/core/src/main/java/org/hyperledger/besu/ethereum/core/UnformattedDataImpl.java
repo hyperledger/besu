@@ -1,4 +1,5 @@
 /*
+ *
  * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
@@ -11,23 +12,29 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
+ *
  */
-package org.hyperledger.besu.ethereum.vm;
+package org.hyperledger.besu.ethereum.core;
 
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.plugin.data.UnformattedData;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.DelegatingBytes;
 
-/** A AccountAddress mock for testing. */
-public class AddressMock extends Address {
+/** Wrapper for a Bytes value to be exposed as UnformattedData. */
+public class UnformattedDataImpl extends DelegatingBytes implements UnformattedData {
 
-  /**
-   * Public constructor.
-   *
-   * @param value The value the AccountAddress represents.
-   */
-  @JsonCreator
-  public AddressMock(final String value) {
-    super(Address.fromHexString(value));
+  public UnformattedDataImpl(final Bytes value) {
+    super(value);
+  }
+
+  @Override
+  public byte[] getByteArray() {
+    return toArray();
+  }
+
+  @Override
+  public String getHexString() {
+    return toHexString();
   }
 }

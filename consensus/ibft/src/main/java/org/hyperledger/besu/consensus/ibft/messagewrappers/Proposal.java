@@ -23,9 +23,10 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Optional;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class Proposal extends IbftMessage<ProposalPayload> {
 
@@ -55,7 +56,7 @@ public class Proposal extends IbftMessage<ProposalPayload> {
   }
 
   @Override
-  public BytesValue encode() {
+  public Bytes encode() {
     final BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
     rlpOut.startList();
     getSignedPayload().writeTo(rlpOut);
@@ -69,7 +70,7 @@ public class Proposal extends IbftMessage<ProposalPayload> {
     return rlpOut.encoded();
   }
 
-  public static Proposal decode(final BytesValue data) {
+  public static Proposal decode(final Bytes data) {
     RLPInput rlpIn = RLP.input(data);
     rlpIn.enterList();
     final SignedData<ProposalPayload> payload = SignedData.readSignedProposalPayloadFrom(rlpIn);

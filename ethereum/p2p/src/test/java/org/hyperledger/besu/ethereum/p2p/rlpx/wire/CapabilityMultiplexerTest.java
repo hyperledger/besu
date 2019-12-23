@@ -17,13 +17,13 @@ package org.hyperledger.besu.ethereum.p2p.rlpx.wire;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.CapabilityMultiplexer.ProtocolMessage;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
 public class CapabilityMultiplexerTest {
@@ -60,7 +60,7 @@ public class CapabilityMultiplexerTest {
     assertThat(multiplexerB.getAgreedCapabilities()).isEqualTo(expectedCaps);
 
     // Multiplex a message and check the value
-    final BytesValue ethData = BytesValue.of(1, 2, 3, 4, 5);
+    final Bytes ethData = Bytes.of(1, 2, 3, 4, 5);
     final int ethCode = 1;
     final MessageData ethMessage = new RawMessage(ethCode, ethData);
     // Check offset
@@ -70,13 +70,13 @@ public class CapabilityMultiplexerTest {
     assertThat(multiplexerB.multiplex(eth62, ethMessage).getCode())
         .isEqualTo(ethCode + expectedOffset);
     // Check data is unchanged
-    final BytesValue multiplexedData = multiplexerA.multiplex(eth62, ethMessage).getData();
+    final Bytes multiplexedData = multiplexerA.multiplex(eth62, ethMessage).getData();
     assertThat(multiplexedData).isEqualTo(ethData);
 
     // Demultiplex and check value
     final MessageData multiplexedEthMessage = new RawMessage(ethCode + expectedOffset, ethData);
     ProtocolMessage demultiplexed = multiplexerA.demultiplex(multiplexedEthMessage);
-    final BytesValue demultiplexedData = ethMessage.getData();
+    final Bytes demultiplexedData = ethMessage.getData();
     // Check returned result
     assertThat(demultiplexed.getMessage().getCode()).isEqualTo(ethCode);
     assertThat(demultiplexed.getCapability()).isEqualTo(eth62);

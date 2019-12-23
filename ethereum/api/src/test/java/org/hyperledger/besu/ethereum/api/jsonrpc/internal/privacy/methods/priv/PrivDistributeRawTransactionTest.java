@@ -16,19 +16,26 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.SendTransactionResponse;
-import org.hyperledger.besu.util.bytes.BytesValues;
 
+import java.util.Base64;
+
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.auth.User;
+import io.vertx.ext.auth.jwt.impl.JWTUser;
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -46,22 +53,27 @@ public class PrivDistributeRawTransactionTest {
           + "e60551d7a19cf30603db5bfc23e5ac43a56f57f25f75486aa00f"
           + "200e885ff29e973e2576b6600181d1b0a2b5294e30d9be4a1981"
           + "ffb33a0b8c8a72657374726963746564";
+  private static final String ENCLAVE_PUBLIC_KEY = "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
+
+  private final User user =
+      new JWTUser(new JsonObject().put("privacyPublicKey", ENCLAVE_PUBLIC_KEY), "");
+  private final EnclavePublicKeyProvider enclavePublicKeyProvider = (user) -> ENCLAVE_PUBLIC_KEY;
 
   @Mock private PrivDistributeRawTransaction method;
   @Mock private PrivacyController privacyController;
 
   @Before
   public void before() {
-    method = new PrivDistributeRawTransaction(privacyController);
+    method = new PrivDistributeRawTransaction(privacyController, enclavePublicKeyProvider);
   }
 
   @Test
   public void validTransactionHashReturnedAfterDistribute() {
     final String enclavePublicKey = "93Ky7lXwFkMc7+ckoFgUMku5bpr9tz4zhmWmk9RlNng=";
-    when(privacyController.sendTransaction(any(PrivateTransaction.class)))
+    when(privacyController.sendTransaction(any(PrivateTransaction.class), any()))
         .thenReturn(new SendTransactionResponse(enclavePublicKey, ""));
     when(privacyController.validatePrivateTransaction(
-            any(PrivateTransaction.class), any(String.class)))
+            any(PrivateTransaction.class), any(String.class), any()))
         .thenReturn(ValidationResult.valid());
 
     final JsonRpcRequestContext request =
@@ -69,17 +81,21 @@ public class PrivDistributeRawTransactionTest {
             new JsonRpcRequest(
                 "2.0",
                 "priv_distributeRawTransaction",
-                new String[] {VALID_PRIVATE_TRANSACTION_RLP_PRIVACY_GROUP}));
+                new String[] {VALID_PRIVATE_TRANSACTION_RLP_PRIVACY_GROUP}),
+            user);
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(
-            request.getRequest().getId(), BytesValues.fromBase64(enclavePublicKey).toString());
+            request.getRequest().getId(),
+            Bytes.wrap(Base64.getDecoder().decode(enclavePublicKey)).toString());
 
     final JsonRpcResponse actualResponse = method.response(request);
 
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
-    verify(privacyController).sendTransaction(any(PrivateTransaction.class));
     verify(privacyController)
-        .validatePrivateTransaction(any(PrivateTransaction.class), any(String.class));
+        .sendTransaction(any(PrivateTransaction.class), eq(ENCLAVE_PUBLIC_KEY));
+    verify(privacyController)
+        .validatePrivateTransaction(
+            any(PrivateTransaction.class), any(String.class), eq(ENCLAVE_PUBLIC_KEY));
   }
 }

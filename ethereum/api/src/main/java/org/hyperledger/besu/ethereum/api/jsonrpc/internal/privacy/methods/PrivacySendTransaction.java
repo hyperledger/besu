@@ -25,21 +25,25 @@ import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.Restriction;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.function.Supplier;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 public class PrivacySendTransaction {
 
   private static final Logger LOG = LogManager.getLogger();
 
   protected final PrivacyController privacyController;
+  private EnclavePublicKeyProvider enclavePublicKeyProvider;
 
-  public PrivacySendTransaction(final PrivacyController privacyController) {
+  public PrivacySendTransaction(
+      final PrivacyController privacyController,
+      final EnclavePublicKeyProvider enclavePublicKeyProvider) {
     this.privacyController = privacyController;
+    this.enclavePublicKeyProvider = enclavePublicKeyProvider;
   }
 
   public PrivateTransaction validateAndDecodeRequest(final JsonRpcRequestContext request)
@@ -74,7 +78,10 @@ public class PrivacySendTransaction {
       final String privacyGroupId,
       final Supplier<JsonRpcResponse> successfulJsonRpcResponse) {
     return privacyController
-        .validatePrivateTransaction(privateTransaction, privacyGroupId)
+        .validatePrivateTransaction(
+            privateTransaction,
+            privacyGroupId,
+            enclavePublicKeyProvider.getEnclaveKey(request.getUser()))
         .either(
             successfulJsonRpcResponse,
             (errorReason) ->
@@ -86,7 +93,7 @@ public class PrivacySendTransaction {
   private PrivateTransaction decodeRawTransaction(final String hash)
       throws InvalidJsonRpcRequestException {
     try {
-      return PrivateTransaction.readFrom(RLP.input(BytesValue.fromHexString(hash)));
+      return PrivateTransaction.readFrom(RLP.input(Bytes.fromHexString(hash)));
     } catch (final IllegalArgumentException | RLPException e) {
       LOG.debug(e);
       throw new InvalidJsonRpcRequestException("Invalid raw private transaction hex", e);

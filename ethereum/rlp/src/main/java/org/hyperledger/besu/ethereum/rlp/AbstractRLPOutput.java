@@ -16,13 +16,13 @@ package org.hyperledger.besu.ethereum.rlp;
 
 import static com.google.common.base.Preconditions.checkState;
 
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.MutableBytesValue;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.List;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.MutableBytes;
 
 abstract class AbstractRLPOutput implements RLPOutput {
   /*
@@ -57,9 +57,9 @@ abstract class AbstractRLPOutput implements RLPOutput {
    * Side-note: this class internally and informally use "element" to refer to a non list items.
    */
 
-  private static final BytesValue LIST_MARKER = BytesValue.wrap(new byte[0]);
+  private static final Bytes LIST_MARKER = Bytes.wrap(new byte[0]);
 
-  private final List<BytesValue> values = new ArrayList<>();
+  private final List<Bytes> values = new ArrayList<>();
   // For every value i in values, rlpEncoded.get(i) will be true only if the value stored is an
   // already encoded item.
   private final BitSet rlpEncoded = new BitSet();
@@ -78,7 +78,7 @@ abstract class AbstractRLPOutput implements RLPOutput {
   }
 
   @Override
-  public void writeBytesValue(final BytesValue v) {
+  public void writeBytes(final Bytes v) {
     checkState(
         stackSize > 1 || values.isEmpty(), "Terminated RLP output, cannot add more elements");
     values.add(v);
@@ -86,7 +86,7 @@ abstract class AbstractRLPOutput implements RLPOutput {
   }
 
   @Override
-  public void writeRLPUnsafe(final BytesValue v) {
+  public void writeRLPUnsafe(final Bytes v) {
     checkState(
         stackSize > 1 || values.isEmpty(), "Terminated RLP output, cannot add more elements");
     values.add(v);
@@ -138,31 +138,32 @@ abstract class AbstractRLPOutput implements RLPOutput {
     checkState(stackSize == 1, "A list has been entered (startList()) but not left (endList())");
     return payloadSizes[0];
   }
+
   /**
-   * Write the rlp encoded value to the provided {@link MutableBytesValue}
+   * Write the rlp encoded value to the provided {@link MutableBytes}
    *
-   * @param mutableBytesValue the value to which the rlp-data will be written
+   * @param mutableBytes the value to which the rlp-data will be written
    */
-  public void writeEncoded(final MutableBytesValue mutableBytesValue) {
+  public void writeEncoded(final MutableBytes mutableBytes) {
     // Special case where we encode only a single non-list item (note that listsCount is initially
     // set to 1, so listsCount == 1 really mean no list explicitly added to the output).
     if (listsCount == 1) {
-      // writeBytesValue make sure we cannot have more than 1 value without a list
+      // writeBytes make sure we cannot have more than 1 value without a list
       assert values.size() == 1;
-      final BytesValue value = values.get(0);
+      final Bytes value = values.get(0);
 
       final int finalOffset;
       // Single non-list value.
       if (rlpEncoded.get(0)) {
-        value.copyTo(mutableBytesValue, 0);
+        value.copyTo(mutableBytes, 0);
         finalOffset = value.size();
       } else {
-        finalOffset = RLPEncodingHelpers.writeElement(value, mutableBytesValue, 0);
+        finalOffset = RLPEncodingHelpers.writeElement(value, mutableBytes, 0);
       }
       checkState(
-          finalOffset == mutableBytesValue.size(),
+          finalOffset == mutableBytes.size(),
           "Expected single element RLP encode to be of size %s but was of size %s.",
-          mutableBytesValue.size(),
+          mutableBytes.size(),
           finalOffset);
       return;
     }
@@ -170,22 +171,22 @@ abstract class AbstractRLPOutput implements RLPOutput {
     int offset = 0;
     int listIdx = 0;
     for (int i = 0; i < values.size(); i++) {
-      final BytesValue value = values.get(i);
+      final Bytes value = values.get(i);
       if (value == LIST_MARKER) {
         final int payloadSize = payloadSizes[++listIdx];
-        offset = RLPEncodingHelpers.writeListHeader(payloadSize, mutableBytesValue, offset);
+        offset = RLPEncodingHelpers.writeListHeader(payloadSize, mutableBytes, offset);
       } else if (rlpEncoded.get(i)) {
-        value.copyTo(mutableBytesValue, offset);
+        value.copyTo(mutableBytes, offset);
         offset += value.size();
       } else {
-        offset = RLPEncodingHelpers.writeElement(value, mutableBytesValue, offset);
+        offset = RLPEncodingHelpers.writeElement(value, mutableBytes, offset);
       }
     }
 
     checkState(
-        offset == mutableBytesValue.size(),
+        offset == mutableBytes.size(),
         "Expected RLP encoding to be of size %s but was of size %s.",
-        mutableBytesValue.size(),
+        mutableBytes.size(),
         offset);
   }
 }

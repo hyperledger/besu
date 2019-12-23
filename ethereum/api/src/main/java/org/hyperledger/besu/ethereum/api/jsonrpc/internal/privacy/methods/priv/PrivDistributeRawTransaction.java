@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcEnclaveErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacySendTransaction;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacySendTransaction.ErrorResponseException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -26,16 +27,24 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.SendTransactionResponse;
-import org.hyperledger.besu.util.bytes.BytesValues;
+
+import java.util.Base64;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class PrivDistributeRawTransaction implements JsonRpcMethod {
 
   private final PrivacyController privacyController;
   private final PrivacySendTransaction privacySendTransaction;
+  private EnclavePublicKeyProvider enclavePublicKeyProvider;
 
-  public PrivDistributeRawTransaction(final PrivacyController privacyController) {
+  public PrivDistributeRawTransaction(
+      final PrivacyController privacyController,
+      final EnclavePublicKeyProvider enclavePublicKeyProvider) {
     this.privacyController = privacyController;
-    this.privacySendTransaction = new PrivacySendTransaction(privacyController);
+    this.privacySendTransaction =
+        new PrivacySendTransaction(privacyController, enclavePublicKeyProvider);
+    this.enclavePublicKeyProvider = enclavePublicKeyProvider;
   }
 
   @Override
@@ -54,7 +63,9 @@ public class PrivDistributeRawTransaction implements JsonRpcMethod {
 
     final SendTransactionResponse sendTransactionResponse;
     try {
-      sendTransactionResponse = privacyController.sendTransaction(privateTransaction);
+      sendTransactionResponse =
+          privacyController.sendTransaction(
+              privateTransaction, enclavePublicKeyProvider.getEnclaveKey(requestContext.getUser()));
     } catch (final Exception e) {
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(),
@@ -68,6 +79,7 @@ public class PrivDistributeRawTransaction implements JsonRpcMethod {
         () ->
             new JsonRpcSuccessResponse(
                 requestContext.getRequest().getId(),
-                BytesValues.fromBase64(sendTransactionResponse.getEnclaveKey()).toString()));
+                Bytes.wrap(Base64.getDecoder().decode(sendTransactionResponse.getEnclaveKey()))
+                    .toHexString()));
   }
 }

@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
@@ -44,9 +45,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.plugin.data.SyncStatus;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -58,6 +56,8 @@ import java.util.stream.Collectors;
 
 import com.google.common.base.Preconditions;
 import graphql.schema.DataFetcher;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class GraphQLDataFetchers {
   public GraphQLDataFetchers(final Set<Capability> supportedCapabilities) {
@@ -80,7 +80,7 @@ public class GraphQLDataFetchers {
       try {
         final TransactionPool transactionPool =
             ((GraphQLDataFetcherContext) dataFetchingEnvironment.getContext()).getTransactionPool();
-        final BytesValue rawTran = dataFetchingEnvironment.getArgument("data");
+        final Bytes rawTran = dataFetchingEnvironment.getArgument("data");
 
         final Transaction transaction = Transaction.readFrom(RLP.input(rawTran));
         final ValidationResult<TransactionInvalidReason> validationResult =
@@ -113,12 +113,12 @@ public class GraphQLDataFetchers {
     };
   }
 
-  DataFetcher<Optional<UInt256>> getGasPriceDataFetcher() {
+  DataFetcher<Optional<Wei>> getGasPriceDataFetcher() {
     return dataFetchingEnvironment -> {
       final MiningCoordinator miningCoordinator =
           ((GraphQLDataFetcherContext) dataFetchingEnvironment.getContext()).getMiningCoordinator();
 
-      return Optional.of(miningCoordinator.getMinTransactionGasPrice().asUInt256());
+      return Optional.of(miningCoordinator.getMinTransactionGasPrice());
     };
   }
 

@@ -19,10 +19,10 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.tuweni.bytes.Bytes;
 
 /**
  * A wrapper for the environmental information that corresponds to a particular message call or
@@ -46,7 +46,7 @@ public class EnvironmentInformation {
 
   private final int version;
 
-  private final BytesValue data;
+  private final Bytes data;
 
   private final int depth;
 
@@ -89,7 +89,7 @@ public class EnvironmentInformation {
         balance == null ? Wei.ZERO : Wei.fromHexString(balance),
         caller == null ? null : Address.fromHexString(caller),
         origin == null ? null : Address.fromHexString(origin),
-        data == null ? null : BytesValue.fromHexString(data),
+        data == null ? null : Bytes.fromHexString(data),
         value == null ? null : Wei.fromHexString(value),
         gasPrice == null ? null : Wei.fromHexString(gasPrice),
         gas == null ? null : Gas.fromHexString(gas),
@@ -103,7 +103,7 @@ public class EnvironmentInformation {
       final Wei accountBalance,
       final Address callerAddress,
       final Address originAddress,
-      final BytesValue data,
+      final Bytes data,
       final Wei value,
       final Wei gasPrice,
       final Gas gas,
@@ -161,7 +161,7 @@ public class EnvironmentInformation {
   }
 
   /** @return The input data to be used. */
-  public BytesValue getData() {
+  public Bytes getData() {
     return data;
   }
 

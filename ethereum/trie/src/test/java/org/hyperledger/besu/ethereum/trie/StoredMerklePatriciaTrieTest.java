@@ -18,36 +18,36 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import java.util.function.Function;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Test;
 
 public class StoredMerklePatriciaTrieTest extends AbstractMerklePatriciaTrieTest {
   private KeyValueStorage keyValueStore;
   private MerkleStorage merkleStorage;
-  private Function<String, BytesValue> valueSerializer;
-  private Function<BytesValue, String> valueDeserializer;
+  private Function<String, Bytes> valueSerializer;
+  private Function<Bytes, String> valueDeserializer;
 
   @Override
-  protected MerklePatriciaTrie<BytesValue, String> createTrie() {
+  protected MerklePatriciaTrie<Bytes, String> createTrie() {
     keyValueStore = new InMemoryKeyValueStorage();
     merkleStorage = new KeyValueMerkleStorage(keyValueStore);
     valueSerializer =
-        value -> (value != null) ? BytesValue.wrap(value.getBytes(StandardCharsets.UTF_8)) : null;
-    valueDeserializer = bytes -> new String(bytes.getArrayUnsafe(), StandardCharsets.UTF_8);
+        value -> (value != null) ? Bytes.wrap(value.getBytes(StandardCharsets.UTF_8)) : null;
+    valueDeserializer = bytes -> new String(bytes.toArrayUnsafe(), StandardCharsets.UTF_8);
     return new StoredMerklePatriciaTrie<>(merkleStorage::get, valueSerializer, valueDeserializer);
   }
 
   @Test
   public void canReloadTrieFromHash() {
-    final BytesValue key1 = BytesValue.of(1, 5, 8, 9);
-    final BytesValue key2 = BytesValue.of(1, 6, 1, 2);
-    final BytesValue key3 = BytesValue.of(1, 6, 1, 3);
+    final Bytes key1 = Bytes.of(1, 5, 8, 9);
+    final Bytes key2 = Bytes.of(1, 6, 1, 2);
+    final Bytes key3 = Bytes.of(1, 6, 1, 3);
 
     // Push some values into the trie and commit changes so nodes are persisted
     final String value1 = "value1";

@@ -18,14 +18,14 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
 
 import com.google.common.io.Resources;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.assertj.core.api.Assertions;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.Test;
@@ -41,8 +41,7 @@ public final class EthHashTest {
   public void hashimotoLight() throws Exception {
     final RLPInput input =
         new BytesValueRLPInput(
-            BytesValue.wrap(
-                Resources.toByteArray(EthHashTest.class.getResource("block_300005.blocks"))),
+            Bytes.wrap(Resources.toByteArray(EthHashTest.class.getResource("block_300005.blocks"))),
             false);
     input.enterList();
     final BlockHeader header = BlockHeader.readFrom(input, new MainnetBlockHeaderFunctions());

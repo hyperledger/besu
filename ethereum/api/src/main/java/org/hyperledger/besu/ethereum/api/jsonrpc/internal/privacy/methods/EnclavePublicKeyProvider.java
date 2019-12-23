@@ -12,22 +12,13 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.util.bytes;
+package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods;
 
-import org.hyperledger.besu.plugin.data.BinaryData;
+import java.util.Optional;
 
-/** Base interface for a value whose content is stored as bytes. */
-public interface BytesBacked extends BinaryData {
-  /** @return The underlying backing bytes of the value. */
-  BytesValue getBytes();
+import io.vertx.ext.auth.User;
 
-  @Override
-  default byte[] getByteArray() {
-    return getBytes().getByteArray();
-  }
-
-  @Override
-  default String getHexString() {
-    return getBytes().getHexString();
-  }
+@FunctionalInterface
+public interface EnclavePublicKeyProvider {
+  String getEnclaveKey(Optional<User> user);
 }

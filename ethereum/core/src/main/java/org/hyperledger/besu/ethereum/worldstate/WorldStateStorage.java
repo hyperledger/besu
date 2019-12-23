@@ -15,22 +15,23 @@
 package org.hyperledger.besu.ethereum.worldstate;
 
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Collection;
 import java.util.Optional;
 import java.util.function.Predicate;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+
 public interface WorldStateStorage {
 
-  Optional<BytesValue> getCode(Bytes32 codeHash);
+  Optional<Bytes> getCode(Bytes32 codeHash);
 
-  Optional<BytesValue> getAccountStateTrieNode(Bytes32 nodeHash);
+  Optional<Bytes> getAccountStateTrieNode(Bytes32 nodeHash);
 
-  Optional<BytesValue> getAccountStorageTrieNode(Bytes32 nodeHash);
+  Optional<Bytes> getAccountStorageTrieNode(Bytes32 nodeHash);
 
-  Optional<BytesValue> getNodeData(Bytes32 hash);
+  Optional<Bytes> getNodeData(Bytes32 hash);
 
   boolean isWorldStateAvailable(Bytes32 rootHash);
 
@@ -50,17 +51,17 @@ public interface WorldStateStorage {
 
     Updater removeAccountStateTrieNode(Bytes32 nodeHash);
 
-    Updater putCode(Bytes32 nodeHash, BytesValue code);
+    Updater putCode(Bytes32 nodeHash, Bytes code);
 
-    default Updater putCode(final BytesValue code) {
+    default Updater putCode(final Bytes code) {
       // Skip the hash calculation for empty code
       final Hash codeHash = code.size() == 0 ? Hash.EMPTY : Hash.hash(code);
       return putCode(codeHash, code);
     }
 
-    Updater putAccountStateTrieNode(Bytes32 nodeHash, BytesValue node);
+    Updater putAccountStateTrieNode(Bytes32 nodeHash, Bytes node);
 
-    Updater putAccountStorageTrieNode(Bytes32 nodeHash, BytesValue node);
+    Updater putAccountStorageTrieNode(Bytes32 nodeHash, Bytes node);
 
     void commit();
 
