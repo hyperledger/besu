@@ -145,8 +145,10 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Charsets;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.io.Files;
 import com.google.common.io.Resources;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
@@ -457,29 +459,21 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--rpc-http-tls-keystore-file"},
       paramLabel = MANDATORY_FILE_FORMAT_HELP,
       description =
-          "Path to PKCS#12 format key store for the JSON-RPC HTTP service. Required if TLS is enabled.")
-  private final File rpcHttpTlsKeystoreFile = null;
+          "PKCS#12 format key store file for the JSON-RPC HTTP service. Required if TLS is enabled.")
+  private final Path rpcHttpTlsKeystoreFile = null;
 
-  @SuppressWarnings("FieldMayBeFinal") // Because PicoCLI requires Strings to not be final.
   @Option(
-      names = {"--rpc-http-tls-keystore-password"},
+      names = {"--rpc-http-tls-keystore-password-file"},
       description =
-          "Password for key store for the JSON-RPC HTTP service. Required if TLS is enabled.")
-  private String rpcHttpTlsKeystorePassword = null;
+          "Key store password file for the JSON-RPC HTTP service. Required if TLS is enabled.")
+  private final Path rpcHttpTlsKeystorePasswordFile = null;
 
   @Option(
-      names = {"--rpc-http-tls-truststore-file"},
+      names = {"--rpc-http-tls-known-clients-file"},
       paramLabel = MANDATORY_FILE_FORMAT_HELP,
       description =
-          "Path to PKCS#12 format trust store for the JSON-RPC HTTP service client trust.")
-  private final File rpcHttpTlsTruststoreFile = null;
-
-  @SuppressWarnings("FieldMayBeFinal") // Because PicoCLI requires Strings to not be final.
-  @Option(
-      names = {"--rpc-http-tls-truststore-password"},
-      description =
-          "Password for trust store for the JSON-RPC HTTP service. Required if trust store is specified.")
-  private String rpcHttpTlsTruststorePassword = null;
+          "Known clients common name and fingerprints to enable TLS client authentication for the JSON-RPC HTTP service.")
+  private final Path rpcHttpTlsKnownClientsFile = null;
 
   @Option(
       names = {"--rpc-ws-enabled"},
@@ -1194,10 +1188,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         "--rpc-http-tls-enabled",
         !isRpcHttpTlsEnabled,
         asList(
-            "--rpc-http-tls-keystore-path",
-            "--rpc-http-tls-keystore-password",
-            "--rpc-http-tls-truststore-path",
-            "--rpc-http-tls-truststore-password"));
+            "--rpc-http-tls-keystore-file",
+            "--rpc-http-tls-keystore-password-file",
+            "--rpc-http-tls-known-clients-file"));
 
     CommandLineUtils.checkOptionDependencies(
         logger,
@@ -1230,15 +1223,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "Key store file is required when TLS is enabled for JSON-RPC HTTP endpoint");
       }
 
-      if (rpcHttpTlsKeystorePassword == null) {
+      if (rpcHttpTlsKeystorePasswordFile == null) {
         throw new ParameterException(
             commandLine,
             "Key store password is required when TLS is enabled for JSON-RPC HTTP endpoint");
-      }
-
-      if (rpcHttpTlsTruststoreFile != null && rpcHttpTlsTruststorePassword == null) {
-        throw new ParameterException(
-            commandLine, "Trust store password is required for JSON-RPC HTTP endpoint");
       }
     }
 
@@ -1254,22 +1242,27 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     jsonRpcConfiguration.setAuthenticationPublicKeyFile(rpcHttpAuthenticationPublicKeyFile());
 
     if (isRpcHttpTlsEnabled) {
-      jsonRpcConfiguration.setTlsConfiguration(rpcHttpTlsConfiguration());
+      jsonRpcConfiguration.setTlsConfiguration(getRpcHttpTlsConfiguration());
     }
     return jsonRpcConfiguration;
   }
 
-  private TlsConfiguration rpcHttpTlsConfiguration() {
-    final TlsStoreConfiguration keyStoreConfiguration =
-        new TlsStoreConfiguration(rpcHttpTlsKeystoreFile.getPath(), rpcHttpTlsKeystorePassword);
-    final Optional<TlsStoreConfiguration> trustStoreConfiguration =
-        rpcHttpTlsTruststoreFile == null
-            ? Optional.empty()
-            : Optional.of(
-                new TlsStoreConfiguration(
-                    rpcHttpTlsTruststoreFile.getPath(), rpcHttpTlsTruststorePassword));
+  private TlsConfiguration getRpcHttpTlsConfiguration() {
+    final String password;
+    try {
+      password =
+          Files.asCharSource(rpcHttpTlsKeystorePasswordFile.toFile(), Charsets.UTF_8)
+              .readFirstLine();
+    } catch (IOException e) {
+      throw new ParameterException(
+          commandLine, "Unable to read key store password file for JSON-RPC HTTP endpoint", e);
+    }
 
-    return new TlsConfiguration(keyStoreConfiguration, trustStoreConfiguration);
+    final TlsStoreConfiguration keyStoreConfiguration =
+        new TlsStoreConfiguration(rpcHttpTlsKeystoreFile.normalize().toString(), password);
+
+    return new TlsConfiguration(
+        keyStoreConfiguration, Optional.ofNullable(rpcHttpTlsKnownClientsFile));
   }
 
   private WebSocketConfiguration webSocketConfiguration() {

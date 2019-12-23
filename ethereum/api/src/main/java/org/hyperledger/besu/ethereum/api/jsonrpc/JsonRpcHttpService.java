@@ -32,6 +32,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcNoResp
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponseType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcUnauthorizedResponse;
+import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
+import org.hyperledger.besu.ethereum.api.tls.TlsStoreConfiguration;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.nat.upnp.UpnpNatManager;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -47,6 +49,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
@@ -73,6 +76,7 @@ import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.CorsHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.net.tls.VertxTrustOptions;
 
 public class JsonRpcHttpService {
 
@@ -253,36 +257,45 @@ public class JsonRpcHttpService {
   }
 
   private HttpServerOptions getHttpServerOptions() {
-    final HttpServerOptions httpServerOptions =
-        new HttpServerOptions()
-            .setHost(config.getHost())
-            .setPort(config.getPort())
-            .setHandle100ContinueAutomatically(true);
-    config
-        .getTlsConfiguration()
-        .ifPresent(
-            tlsConfiguration -> {
-              httpServerOptions
-                  .setSsl(true)
-                  .setPfxKeyCertOptions(
-                      new PfxOptions()
-                          .setPath(tlsConfiguration.getKeyStore().getStorePath())
-                          .setPassword(tlsConfiguration.getKeyStore().getStorePassword()));
+    return getHttpServerOptionsWithTls()
+        .setHost(config.getHost())
+        .setPort(config.getPort())
+        .setHandle100ContinueAutomatically(true);
+  }
 
-              tlsConfiguration
-                  .getTrustStore()
-                  .ifPresent(
-                      trustStore -> {
-                        httpServerOptions
-                            .setClientAuth(ClientAuth.REQUIRED)
-                            .setPfxTrustOptions(
-                                new PfxOptions()
-                                    .setPath(trustStore.getStorePath())
-                                    .setPassword(trustStore.getStorePassword()));
-                      });
-            });
+  private HttpServerOptions getHttpServerOptionsWithTls() {
+    final HttpServerOptions httpServerOptions = new HttpServerOptions();
+    if (!isTlsConfigurationEnabled()) {
+      return httpServerOptions;
+    }
+
+    final TlsConfiguration tlsConfiguration = config.getTlsConfiguration().get();
+    httpServerOptions
+        .setSsl(true)
+        .setPfxTrustOptions(storeToPfxOptions.apply(tlsConfiguration.getKeyStore()));
+
+    if (isClientAuthenticationRequired()) {
+      final Path knownClientsFile = tlsConfiguration.getKnownClientsFile().get();
+      httpServerOptions
+          .setClientAuth(ClientAuth.REQUIRED)
+          .setTrustOptions(VertxTrustOptions.whitelistClients(knownClientsFile));
+    }
 
     return httpServerOptions;
+  }
+
+  private Function<TlsStoreConfiguration, PfxOptions> storeToPfxOptions =
+      tlsStoreConfiguration ->
+          new PfxOptions()
+              .setPath(tlsStoreConfiguration.getStorePath())
+              .setPassword(tlsStoreConfiguration.getStorePassword());
+
+  private boolean isTlsConfigurationEnabled() {
+    return config.getTlsConfiguration().isPresent();
+  }
+
+  private boolean isClientAuthenticationRequired() {
+    return config.getTlsConfiguration().map(TlsConfiguration::getKnownClientsFile).isPresent();
   }
 
   private Handler<RoutingContext> checkWhitelistHostHeader() {

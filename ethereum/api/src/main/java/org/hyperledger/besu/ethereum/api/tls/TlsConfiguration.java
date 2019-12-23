@@ -15,27 +15,28 @@
 
 package org.hyperledger.besu.ethereum.api.tls;
 
+import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
 
 public class TlsConfiguration {
   private final TlsStoreConfiguration keyStore;
 
-  // trust store to verify identify of clients
-  private final Optional<TlsStoreConfiguration> trustStore;
+  /** client's common name and fingerprint must be present in the {@code knownClientsFile}. */
+  private final Optional<Path> knownClientsFile;
 
   public TlsConfiguration(
-      final TlsStoreConfiguration keyStore, final Optional<TlsStoreConfiguration> trustStore) {
+      final TlsStoreConfiguration keyStore, final Optional<Path> knownClientsFile) {
     this.keyStore = keyStore;
-    this.trustStore = trustStore;
+    this.knownClientsFile = knownClientsFile;
   }
 
   public TlsStoreConfiguration getKeyStore() {
     return keyStore;
   }
 
-  public Optional<TlsStoreConfiguration> getTrustStore() {
-    return trustStore;
+  public Optional<Path> getKnownClientsFile() {
+    return knownClientsFile;
   }
 
   @Override
@@ -43,11 +44,11 @@ public class TlsConfiguration {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     final TlsConfiguration that = (TlsConfiguration) o;
-    return keyStore.equals(that.keyStore) && trustStore.equals(that.trustStore);
+    return keyStore.equals(that.keyStore) && knownClientsFile.equals(that.knownClientsFile);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(keyStore, trustStore);
+    return Objects.hash(keyStore, knownClientsFile);
   }
 }
