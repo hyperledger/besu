@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.PRIVACY_NOT_ENABLED;
 import static org.mockito.Mockito.when;
 
@@ -23,6 +24,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.MultiTenancyRpcMethodDecorator;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -34,7 +36,11 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 import java.util.Map;
+import java.util.Optional;
 
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.auth.User;
+import io.vertx.ext.auth.jwt.impl.JWTUser;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -43,18 +49,23 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class PrivacyApiGroupJsonRpcMethodsTest {
+  private static final String DEFAULT_ENCLAVE_PUBLIC_KEY =
+      "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
+
   @Mock private JsonRpcMethod rpcMethod;
   @Mock private BlockchainQueries blockchainQueries;
   @Mock private ProtocolSchedule<?> protocolSchedule;
   @Mock private TransactionPool transactionPool;
   @Mock private PrivacyParameters privacyParameters;
 
-  private PrivacyApiGroupJsonRpcMethods privacyApiGroupJsonRpcMethods;
+  private TestPrivacyApiGroupJsonRpcMethods privacyApiGroupJsonRpcMethods;
 
   @Before
   public void setup() {
     when(rpcMethod.getName()).thenReturn("priv_method");
-    privacyApiGroupJsonRpcMethods = createPrivacyApiGroupJsonRpcMethods();
+    privacyApiGroupJsonRpcMethods =
+        new TestPrivacyApiGroupJsonRpcMethods(
+            blockchainQueries, protocolSchedule, transactionPool, privacyParameters, rpcMethod);
   }
 
   @Test
@@ -76,6 +87,52 @@ public class PrivacyApiGroupJsonRpcMethodsTest {
   }
 
   @Test
+  public void rpcsCreatedWithoutMultiTenancyUseFixedEnclavePublicKey() {
+    when(privacyParameters.isEnabled()).thenReturn(true);
+    when(privacyParameters.getEnclavePublicKey()).thenReturn(DEFAULT_ENCLAVE_PUBLIC_KEY);
+
+    final User user = createUser(DEFAULT_ENCLAVE_PUBLIC_KEY);
+    privacyApiGroupJsonRpcMethods.create();
+    final EnclavePublicKeyProvider enclavePublicKeyProvider =
+        privacyApiGroupJsonRpcMethods.enclavePublicKeyProvider;
+
+    assertThat(enclavePublicKeyProvider.getEnclaveKey(Optional.of(user)))
+        .isEqualTo(DEFAULT_ENCLAVE_PUBLIC_KEY);
+    assertThat(enclavePublicKeyProvider.getEnclaveKey(Optional.empty()))
+        .isEqualTo(DEFAULT_ENCLAVE_PUBLIC_KEY);
+  }
+
+  @Test
+  public void rpcsCreatedWithMultiTenancyUseEnclavePublicKeyFromRequest() {
+    when(privacyParameters.isEnabled()).thenReturn(true);
+    when(privacyParameters.isMultiTenancyEnabled()).thenReturn(true);
+
+    final User user1 = createUser("key1");
+    final User user2 = createUser("key2");
+
+    privacyApiGroupJsonRpcMethods.create();
+    final EnclavePublicKeyProvider enclavePublicKeyProvider =
+        privacyApiGroupJsonRpcMethods.enclavePublicKeyProvider;
+
+    assertThat(enclavePublicKeyProvider.getEnclaveKey(Optional.of(user1))).isEqualTo("key1");
+    assertThat(enclavePublicKeyProvider.getEnclaveKey(Optional.of(user2))).isEqualTo("key2");
+  }
+
+  @Test
+  public void rpcsCreatedWithMultiTenancyAndWithoutUserFail() {
+    when(privacyParameters.isEnabled()).thenReturn(true);
+    when(privacyParameters.isMultiTenancyEnabled()).thenReturn(true);
+
+    privacyApiGroupJsonRpcMethods.create();
+    final EnclavePublicKeyProvider enclavePublicKeyProvider =
+        privacyApiGroupJsonRpcMethods.enclavePublicKeyProvider;
+
+    assertThatThrownBy(() -> enclavePublicKeyProvider.getEnclaveKey(Optional.empty()))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessage("Request does not contain an authorization token");
+  }
+
+  @Test
   public void rpcMethodsCreatedWhenPrivacyIsNotEnabledAreDisabled() {
     final Map<String, JsonRpcMethod> rpcMethods = privacyApiGroupJsonRpcMethods.create();
     assertThat(rpcMethods).hasSize(1);
@@ -90,19 +147,36 @@ public class PrivacyApiGroupJsonRpcMethodsTest {
     assertThat(errorResponse.getError()).isEqualTo(PRIVACY_NOT_ENABLED);
   }
 
-  private PrivacyApiGroupJsonRpcMethods createPrivacyApiGroupJsonRpcMethods() {
-    return new PrivacyApiGroupJsonRpcMethods(
-        blockchainQueries, protocolSchedule, transactionPool, privacyParameters) {
+  private User createUser(final String enclavePublicKey) {
+    return new JWTUser(new JsonObject().put("privacyPublicKey", enclavePublicKey), "");
+  }
 
-      @Override
-      protected RpcApi getApiGroup() {
-        return RpcApis.PRIV;
-      }
+  private static class TestPrivacyApiGroupJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
 
-      @Override
-      protected Map<String, JsonRpcMethod> create(final PrivacyController privacyController) {
-        return mapOf(rpcMethod);
-      }
-    };
+    private final JsonRpcMethod rpcMethod;
+    private EnclavePublicKeyProvider enclavePublicKeyProvider;
+
+    public TestPrivacyApiGroupJsonRpcMethods(
+        final BlockchainQueries blockchainQueries,
+        final ProtocolSchedule<?> protocolSchedule,
+        final TransactionPool transactionPool,
+        final PrivacyParameters privacyParameters,
+        final JsonRpcMethod rpcMethod) {
+      super(blockchainQueries, protocolSchedule, transactionPool, privacyParameters);
+      this.rpcMethod = rpcMethod;
+    }
+
+    @Override
+    protected Map<String, JsonRpcMethod> create(
+        final PrivacyController privacyController,
+        final EnclavePublicKeyProvider enclavePublicKeyProvider) {
+      this.enclavePublicKeyProvider = enclavePublicKeyProvider;
+      return mapOf(rpcMethod);
+    }
+
+    @Override
+    protected RpcApi getApiGroup() {
+      return RpcApis.PRIV;
+    }
   }
 }

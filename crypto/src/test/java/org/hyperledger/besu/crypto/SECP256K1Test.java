@@ -246,7 +246,7 @@ public class SECP256K1Test {
             this.getClass()
                 .getResource("/org/hyperledger/besu/crypto/validPrivateKey.txt")
                 .toURI());
-    final SECP256K1.PrivateKey privateKey = SECP256K1.PrivateKey.load(file);
+    final SECP256K1.PrivateKey privateKey = KeyPairUtil.loadPrivateKey(file);
     assertThat(privateKey.getEncodedBytes())
         .isEqualTo(
             Bytes.fromHexString(
@@ -259,24 +259,24 @@ public class SECP256K1Test {
     final SECP256K1.KeyPair keyPair1 = SECP256K1.KeyPair.create(privateKey);
     final File tempFile = Files.createTempFile(suiteName(), ".keypair").toFile();
     tempFile.deleteOnExit();
-    keyPair1.store(tempFile);
-    final SECP256K1.KeyPair keyPair2 = SECP256K1.KeyPair.load(tempFile);
+    KeyPairUtil.storeKeyPair(keyPair1, tempFile);
+    final SECP256K1.KeyPair keyPair2 = KeyPairUtil.load(tempFile);
     assertThat(keyPair2).isEqualTo(keyPair1);
   }
 
-  @Test(expected = InvalidSEC256K1PrivateKeyStoreException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void invalidFileThrowsInvalidKeyPairException() throws Exception {
     final File tempFile = Files.createTempFile(suiteName(), ".keypair").toFile();
     tempFile.deleteOnExit();
     Files.write(tempFile.toPath(), "not valid".getBytes(UTF_8));
-    SECP256K1.PrivateKey.load(tempFile);
+    KeyPairUtil.load(tempFile);
   }
 
-  @Test(expected = InvalidSEC256K1PrivateKeyStoreException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void invalidMultiLineFileThrowsInvalidIdException() throws Exception {
     final File tempFile = Files.createTempFile(suiteName(), ".keypair").toFile();
     tempFile.deleteOnExit();
     Files.write(tempFile.toPath(), "not\n\nvalid".getBytes(UTF_8));
-    SECP256K1.PrivateKey.load(tempFile);
+    KeyPairUtil.load(tempFile);
   }
 }
