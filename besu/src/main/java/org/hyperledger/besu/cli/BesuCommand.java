@@ -1217,7 +1217,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "Unable to authenticate JSON-RPC HTTP endpoint without a supplied credentials file or authentication public key file");
     }
 
-    if (isRpcHttpTlsEnabled) {
+    if (isRpcHttpEnabled && isRpcHttpTlsEnabled) {
       if (rpcHttpTlsKeystoreFile == null) {
         throw new ParameterException(
             commandLine,
@@ -1242,7 +1242,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     jsonRpcConfiguration.setAuthenticationCredentialsFile(rpcHttpAuthenticationCredentialsFile());
     jsonRpcConfiguration.setAuthenticationPublicKeyFile(rpcHttpAuthenticationPublicKeyFile());
 
-    if (isRpcHttpTlsEnabled) {
+    if (isRpcHttpEnabled && isRpcHttpTlsEnabled) {
       jsonRpcConfiguration.setTlsConfiguration(getRpcHttpTlsConfiguration());
     }
     return jsonRpcConfiguration;
