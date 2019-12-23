@@ -12,21 +12,13 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibftlegacy;
+package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods;
 
-import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.core.Hash;
+import java.util.Optional;
 
-public class LegacyIbftBlockHeaderFunctions implements BlockHeaderFunctions {
+import io.vertx.ext.auth.User;
 
-  @Override
-  public Hash hash(final BlockHeader header) {
-    return IbftBlockHashing.calculateHashOfIbftBlockOnChain(header);
-  }
-
-  @Override
-  public IbftExtraData parseExtraData(final BlockHeader header) {
-    return IbftExtraData.decodeRaw(header.getExtraData());
-  }
+@FunctionalInterface
+public interface EnclavePublicKeyProvider {
+  String getEnclaveKey(Optional<User> user);
 }

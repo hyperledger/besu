@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcEnclaveErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.parameters.CreatePrivacyGroupParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -33,9 +34,13 @@ public class PrivCreatePrivacyGroup implements JsonRpcMethod {
 
   private static final Logger LOG = getLogger();
   private PrivacyController privacyController;
+  private EnclavePublicKeyProvider enclavePublicKeyProvider;
 
-  public PrivCreatePrivacyGroup(final PrivacyController privacyController) {
+  public PrivCreatePrivacyGroup(
+      final PrivacyController privacyController,
+      final EnclavePublicKeyProvider enclavePublicKeyProvider) {
     this.privacyController = privacyController;
+    this.enclavePublicKeyProvider = enclavePublicKeyProvider;
   }
 
   @Override
@@ -59,7 +64,10 @@ public class PrivCreatePrivacyGroup implements JsonRpcMethod {
     try {
       response =
           privacyController.createPrivacyGroup(
-              parameter.getAddresses(), parameter.getName(), parameter.getDescription());
+              parameter.getAddresses(),
+              parameter.getName(),
+              parameter.getDescription(),
+              enclavePublicKeyProvider.getEnclaveKey(requestContext.getUser()));
     } catch (Exception e) {
       LOG.error("Failed to create privacy group", e);
       return new JsonRpcErrorResponse(

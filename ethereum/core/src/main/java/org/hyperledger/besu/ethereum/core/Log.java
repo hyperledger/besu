@@ -40,7 +40,11 @@ public class Log implements org.hyperledger.besu.plugin.data.Log {
    * @param data Data associated with this log.
    * @param topics Indexable topics associated with this log.
    */
-  public Log(final Address logger, final UnformattedData data, final List<LogTopic> topics) {
+  public Log(final Address logger, final Bytes data, final List<LogTopic> topics) {
+    this(logger, (UnformattedData) new UnformattedDataImpl(data), topics);
+  }
+
+  protected Log(final Address logger, final UnformattedData data, final List<LogTopic> topics) {
     this.logger = logger;
     this.data = data;
     this.topics = ImmutableList.copyOf(topics);
@@ -71,7 +75,7 @@ public class Log implements org.hyperledger.besu.plugin.data.Log {
     final List<LogTopic> topics = in.readList(listIn -> LogTopic.wrap(listIn.readBytes32()));
     final Bytes data = in.readBytes();
     in.leaveList();
-    return new Log(logger, new UnformattedDataWrapper(data), topics);
+    return new Log(logger, data, topics);
   }
 
   @Override
