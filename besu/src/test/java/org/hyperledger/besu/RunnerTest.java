@@ -24,8 +24,8 @@ import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.GasLimitCalculator;
-import org.hyperledger.besu.controller.KeyPairUtil;
 import org.hyperledger.besu.controller.MainnetBesuControllerBuilder;
+import org.hyperledger.besu.crypto.KeyPairUtil;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
@@ -82,6 +82,8 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.awaitility.Awaitility;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -93,6 +95,18 @@ public final class RunnerTest {
   private static final long CACHE_CAPACITY = 8388608;
   private static final int MAX_BACKGROUND_COMPACTIONS = 4;
   private static final int BACKGROUND_THREAD_COUNT = 4;
+
+  private Vertx vertx;
+
+  @Before
+  public void initVertx() {
+    vertx = Vertx.vertx();
+  }
+
+  @After
+  public void stopVertx() {
+    vertx.close();
+  }
 
   @Rule public final TemporaryFolder temp = new TemporaryFolder();
 
@@ -179,7 +193,7 @@ public final class RunnerTest {
     final MetricsConfiguration aheadMetricsConfiguration = metricsConfiguration();
     final RunnerBuilder runnerBuilder =
         new RunnerBuilder()
-            .vertx(Vertx.vertx())
+            .vertx(vertx)
             .discovery(true)
             .p2pAdvertisedHost(listenHost)
             .p2pListenPort(0)
@@ -313,7 +327,7 @@ public final class RunnerTest {
               });
 
       final Future<Void> future = Future.future();
-      final HttpClient httpClient = Vertx.vertx().createHttpClient();
+      final HttpClient httpClient = vertx.createHttpClient();
       httpClient.websocket(
           runnerBehind.getWebsocketPort().get(),
           WebSocketConfiguration.DEFAULT_WEBSOCKET_HOST,

@@ -14,15 +14,25 @@
  */
 package org.hyperledger.besu.crypto;
 
-import com.google.common.primitives.Bytes;
-import com.google.common.primitives.Ints;
-import com.google.common.primitives.Longs;
+import static org.assertj.core.api.Assertions.assertThat;
 
-public class QuickEntropy {
+import java.io.File;
 
-  public byte[] getQuickEntropy() {
-    final byte[] nanoTimeBytes = Longs.toByteArray(System.nanoTime());
-    final byte[] objectHashBytes = Ints.toByteArray(new Object().hashCode());
-    return Bytes.concat(nanoTimeBytes, objectHashBytes);
+import org.junit.Test;
+
+public class KeyPairUtilTest {
+
+  @Test
+  public void shouldLoadValidKeyPair() throws Exception {
+    assertThat(
+            KeyPairUtil.loadKeyPair(
+                new File(this.getClass().getResource("/validPrivateKey.txt").toURI())))
+        .isNotNull();
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void shouldNotLoadInvalidKeyPair() throws Exception {
+    KeyPairUtil.loadKeyPair(
+        new File(this.getClass().getResource("/invalidPrivateKey.txt").toURI()));
   }
 }
