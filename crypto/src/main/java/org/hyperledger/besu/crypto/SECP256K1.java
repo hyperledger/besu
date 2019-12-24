@@ -16,21 +16,13 @@ package org.hyperledger.besu.crypto;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
-import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
-import java.io.File;
-import java.io.IOException;
 import java.math.BigInteger;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.KeyPairGenerator;
 import java.security.Security;
 import java.security.spec.ECGenParameterSpec;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.UnaryOperator;
@@ -318,19 +310,6 @@ public class SECP256K1 {
       return new PrivateKey(key);
     }
 
-    public static PrivateKey load(final File file)
-        throws IOException, InvalidSEC256K1PrivateKeyStoreException {
-      try {
-        final List<String> info = Files.readAllLines(file.toPath());
-        if (info.size() != 1) {
-          throw new InvalidSEC256K1PrivateKeyStoreException();
-        }
-        return SECP256K1.PrivateKey.create(Bytes32.fromHexString((info.get(0))));
-      } catch (final IllegalArgumentException ex) {
-        throw new InvalidSEC256K1PrivateKeyStoreException();
-      }
-    }
-
     public ECPoint asEcPoint() {
       return CURVE.getCurve().decodePoint(encoded.toArrayUnsafe());
     }
@@ -371,14 +350,6 @@ public class SECP256K1 {
     @Override
     public int hashCode() {
       return encoded.hashCode();
-    }
-
-    public void store(final File file) throws IOException {
-      final File privateKeyDir = file.getParentFile();
-      privateKeyDir.mkdirs();
-      final Path tempPath = Files.createTempFile(privateKeyDir.toPath(), ".tmp", "");
-      Files.write(tempPath, encoded.toString().getBytes(StandardCharsets.UTF_8));
-      Files.move(tempPath, file.toPath(), REPLACE_EXISTING, ATOMIC_MOVE);
     }
 
     @Override
@@ -532,11 +503,6 @@ public class SECP256K1 {
       return new KeyPair(PrivateKey.create(privateKeyValue), PublicKey.create(publicKeyValue));
     }
 
-    public static KeyPair load(final File file)
-        throws IOException, InvalidSEC256K1PrivateKeyStoreException {
-      return create(PrivateKey.load(file));
-    }
-
     @Override
     public int hashCode() {
       return Objects.hash(privateKey, publicKey);
@@ -558,10 +524,6 @@ public class SECP256K1 {
 
     public PublicKey getPublicKey() {
       return publicKey;
-    }
-
-    public void store(final File file) throws IOException {
-      privateKey.store(file);
     }
   }
 
