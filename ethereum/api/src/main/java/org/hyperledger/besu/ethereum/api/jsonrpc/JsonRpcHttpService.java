@@ -272,7 +272,7 @@ public class JsonRpcHttpService {
     final TlsConfiguration tlsConfiguration = config.getTlsConfiguration().get();
     httpServerOptions
         .setSsl(true)
-        .setPfxTrustOptions(storeToPfxOptions.apply(tlsConfiguration.getKeyStore()));
+        .setPfxKeyCertOptions(storeToPfxOptions.apply(tlsConfiguration.getKeyStore()));
 
     if (isClientAuthenticationRequired()) {
       final Path knownClientsFile = tlsConfiguration.getKnownClientsFile().get();
@@ -368,7 +368,11 @@ public class JsonRpcHttpService {
     if (httpServer == null) {
       return "";
     }
-    return NetworkUtility.urlForSocketAddress("http", socketAddress());
+    return NetworkUtility.urlForSocketAddress(getScheme(), socketAddress());
+  }
+
+  private String getScheme() {
+    return isTlsConfigurationEnabled() ? "https" : "http";
   }
 
   private void handleJsonRPCRequest(final RoutingContext routingContext) {
