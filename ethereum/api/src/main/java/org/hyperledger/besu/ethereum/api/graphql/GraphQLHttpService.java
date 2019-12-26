@@ -68,6 +68,7 @@ public class GraphQLHttpService {
 
   private static final InetSocketAddress EMPTY_SOCKET_ADDRESS = new InetSocketAddress("0.0.0.0", 0);
   private static final String APPLICATION_JSON = "application/json";
+  private static final String GRAPH_QL_ROUTE = "/graphql";
   private static final MediaType MEDIA_TYPE_JUST_JSON = MediaType.JSON_UTF_8.withoutParameters();
   private static final String EMPTY_RESPONSE = "";
 
@@ -140,9 +141,13 @@ public class GraphQLHttpService {
             BodyHandler.create()
                 .setUploadsDirectory(dataDir.resolve("uploads").toString())
                 .setDeleteUploadedFilesOnEnd(true));
-    router.route("/").method(GET).handler(this::handleEmptyRequest);
     router
-        .route("/graphql")
+      .route("/")
+      .method(GET)
+      .method(POST)
+      .handler(this::handleEmptyRequestAndRedirect);
+    router
+        .route(GRAPH_QL_ROUTE)
         .method(GET)
         .method(POST)
         .produces(APPLICATION_JSON)
@@ -244,8 +249,8 @@ public class GraphQLHttpService {
   }
 
   // Facilitate remote health-checks in AWS, inter alia.
-  private void handleEmptyRequest(final RoutingContext routingContext) {
-    routingContext.response().setStatusCode(201).end();
+  private void handleEmptyRequestAndRedirect(final RoutingContext routingContext) {
+    routingContext.reroute(GRAPH_QL_ROUTE);
   }
 
   private void handleGraphQLRequest(final RoutingContext routingContext) {
