@@ -80,6 +80,9 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 public class JsonRpcHttpServiceTlsTest {
+  static {
+    System.setProperty("javax.net.debug", "ssl, handshake");
+  }
 
   @ClassRule public static final TemporaryFolder folder = new TemporaryFolder();
 
@@ -104,8 +107,6 @@ public class JsonRpcHttpServiceTlsTest {
 
   @Before
   public void initServerAndClient() throws Exception {
-    System.setProperty("javax.net.debug", "ssl, handshake");
-
     final P2PNetwork peerDiscoveryMock = mock(P2PNetwork.class);
     final BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
     final Synchronizer synchronizer = mock(Synchronizer.class);
@@ -223,14 +224,21 @@ public class JsonRpcHttpServiceTlsTest {
             .header("Accept", JSON_HEADER)
             .build();
 
-    HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-    assertThat(response.statusCode()).isEqualTo(200);
-    // Check general format of result
-    final JsonObject jsonObject = new JsonObject(response.body());
-    testHelper.assertValidJsonRpcResult(jsonObject, id);
-    // Check result
-    final String result = jsonObject.getString("result");
-    assertThat(result).isEqualTo(String.valueOf(CHAIN_ID));
+    try {
+      HttpResponse<String> response =
+          httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+      assertThat(response.statusCode()).isEqualTo(200);
+      // Check general format of result
+      final JsonObject jsonObject = new JsonObject(response.body());
+      testHelper.assertValidJsonRpcResult(jsonObject, id);
+      // Check result
+      final String result = jsonObject.getString("result");
+      assertThat(result).isEqualTo(String.valueOf(CHAIN_ID));
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw e;
+    }
   }
 
   private HttpClient getHttpClient() {
