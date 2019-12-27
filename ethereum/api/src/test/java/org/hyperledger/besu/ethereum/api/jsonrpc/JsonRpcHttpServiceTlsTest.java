@@ -81,7 +81,7 @@ import org.junit.rules.TemporaryFolder;
 
 public class JsonRpcHttpServiceTlsTest {
   static {
-    System.setProperty("javax.net.debug", "ssl, handshake");
+    System.setProperty("javax.net.debug", "ssl:handshake:verbose");
   }
 
   @ClassRule public static final TemporaryFolder folder = new TemporaryFolder();
@@ -172,9 +172,10 @@ public class JsonRpcHttpServiceTlsTest {
 
   private static String getKeyStorePath() {
     try {
-      return Paths.get(ClassLoader.getSystemResource(KEYSTORE_RESOURCE).toURI())
-          .toAbsolutePath()
-          .toString();
+      final String keyStorePath =
+          Paths.get(ClassLoader.getSystemResource(KEYSTORE_RESOURCE).toURI()).toString();
+      System.out.println("Key Store Path: " + keyStorePath);
+      return keyStorePath;
     } catch (URISyntaxException e) {
       throw new RuntimeException("Unable to read keystore resource.", e);
     }
@@ -184,10 +185,8 @@ public class JsonRpcHttpServiceTlsTest {
     try {
       final Path keyStorePassdwordFile =
           Paths.get(
-                  ClassLoader.getSystemResource(
-                          JsonRpcHttpServiceTlsTest.KEYSTORE_PASSWORD_RESOURCE)
-                      .toURI())
-              .toAbsolutePath();
+              ClassLoader.getSystemResource(JsonRpcHttpServiceTlsTest.KEYSTORE_PASSWORD_RESOURCE)
+                  .toURI());
 
       return Files.asCharSource(keyStorePassdwordFile.toFile(), Charsets.UTF_8).readFirstLine();
     } catch (URISyntaxException | IOException e) {
@@ -197,8 +196,7 @@ public class JsonRpcHttpServiceTlsTest {
 
   private static Path getKnownClientsFile() {
     try {
-      return Paths.get(ClassLoader.getSystemResource(KNOWN_CLIENTS_RESOURCE).toURI())
-          .toAbsolutePath();
+      return Paths.get(ClassLoader.getSystemResource(KNOWN_CLIENTS_RESOURCE).toURI());
     } catch (URISyntaxException e) {
       throw new RuntimeException("Unable to read keystore resource.", e);
     }
@@ -248,7 +246,6 @@ public class JsonRpcHttpServiceTlsTest {
       final SSLContext sslContext = getCustomSslContext(keyManagerFactory, trustManagerFactory);
       final SSLParameters sslParameters = sslContext.getDefaultSSLParameters();
       sslParameters.setNeedClientAuth(true);
-      sslParameters.setWantClientAuth(true);
 
       return HttpClient.newBuilder().sslContext(sslContext).sslParameters(sslParameters).build();
 

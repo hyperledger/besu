@@ -228,8 +228,12 @@ public class JsonRpcHttpService {
               if (!res.failed()) {
                 resultFuture.complete(null);
                 final int actualPort = httpServer.actualPort();
+                final String tlsMessage = isTlsConfigurationEnabled() ? " with TLS enabled." : "";
                 LOG.info(
-                    "JsonRPC service started and listening on {}:{}", config.getHost(), actualPort);
+                    "JsonRPC service started and listening on {}:{}{}",
+                    config.getHost(),
+                    actualPort,
+                    tlsMessage);
                 config.setPort(actualPort);
                 // Request that a NAT port forward for our server port
                 if (natManager.isPresent()) {
