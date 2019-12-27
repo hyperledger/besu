@@ -106,6 +106,7 @@ public class JsonRpcHttpServiceTlsTest {
   private static final String KEYSTORE_PASSWORD_RESOURCE =
       "JsonRpcHttpService/rpc_keystore.password";
   private static final String KNOWN_CLIENTS_RESOURCE = "JsonRpcHttpService/rpc_known_clients.txt";
+  private static final boolean useClientAuthentication = false;
 
   @Before
   public void initServerAndClient() throws Exception {
@@ -196,14 +197,13 @@ public class JsonRpcHttpServiceTlsTest {
   }
 
   private static Optional<Path> getKnownClientsFile() {
-    return Optional.empty();
-    /*
     try {
-      return Paths.get(ClassLoader.getSystemResource(KNOWN_CLIENTS_RESOURCE).toURI());
+      return useClientAuthentication
+          ? Optional.of(Paths.get(ClassLoader.getSystemResource(KNOWN_CLIENTS_RESOURCE).toURI()))
+          : Optional.empty();
     } catch (URISyntaxException e) {
       throw new RuntimeException("Unable to read keystore resource.", e);
     }
-    */
   }
 
   @After
@@ -217,7 +217,7 @@ public class JsonRpcHttpServiceTlsTest {
     final String id = "123";
     final String json =
         "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_version\"}";
-    final HttpClient httpClient = getTlsHttpClient();
+    final HttpClient httpClient = getTlsHttpClient(useClientAuthentication);
 
     final HttpRequest request =
         HttpRequest.newBuilder()
@@ -243,15 +243,16 @@ public class JsonRpcHttpServiceTlsTest {
     }
   }
 
-  private HttpClient getTlsHttpClient() {
+  private HttpClient getTlsHttpClient(final boolean useClientAuthentication) {
     try {
       final TrustManagerFactory trustManagerFactory = getTrustManagerFactory();
       final KeyManagerFactory keyManagerFactory = getKeyManagerFactory();
       final SSLContext sslContext =
           getCustomSslContext(
-              keyManagerFactory.getKeyManagers(), trustManagerFactory.getTrustManagers());
+              useClientAuthentication ? keyManagerFactory.getKeyManagers() : null,
+              trustManagerFactory.getTrustManagers());
       final SSLParameters sslParameters = sslContext.getDefaultSSLParameters();
-      sslParameters.setNeedClientAuth(false);
+      sslParameters.setNeedClientAuth(useClientAuthentication);
 
       return HttpClient.newBuilder().sslContext(sslContext).sslParameters(sslParameters).build();
 
