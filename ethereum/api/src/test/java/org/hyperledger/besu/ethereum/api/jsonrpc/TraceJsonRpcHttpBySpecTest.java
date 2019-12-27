@@ -56,7 +56,9 @@ public class TraceJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpBySpecTest {
     // TODO: Once this method is generally enabled, we won't need to add this here
     final BlockchainQueries blockchainQueries =
         new BlockchainQueries(
-            blockchainSetupUtil.getBlockchain(), blockchainSetupUtil.getWorldArchive());
+            blockchainSetupUtil.getBlockchain(),
+            blockchainSetupUtil.getWorldArchive(),
+            blockchainSetupUtil.getScheduler());
     final BlockReplay blockReplay =
         new BlockReplay(
             blockchainSetupUtil.getProtocolSchedule(),

@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.messages;
 
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractMessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
@@ -21,24 +22,24 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.math.BigInteger;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 public final class StatusMessage extends AbstractMessageData {
 
   private EthStatus status;
 
-  public StatusMessage(final BytesValue data) {
+  public StatusMessage(final Bytes data) {
     super(data);
   }
 
   public static StatusMessage create(
       final int protocolVersion,
       final BigInteger networkId,
-      final UInt256 totalDifficulty,
+      final Difficulty totalDifficulty,
       final Hash bestHash,
       final Hash genesisHash) {
     final EthStatus status =
@@ -77,7 +78,7 @@ public final class StatusMessage extends AbstractMessageData {
   }
 
   /** @return The total difficulty of the head of the associated node's local blockchain. */
-  public UInt256 totalDifficulty() {
+  public Difficulty totalDifficulty() {
     return status().totalDifficulty;
   }
 
@@ -104,14 +105,14 @@ public final class StatusMessage extends AbstractMessageData {
   private static class EthStatus {
     private final int protocolVersion;
     private final BigInteger networkId;
-    private final UInt256 totalDifficulty;
+    private final Difficulty totalDifficulty;
     private final Hash bestHash;
     private final Hash genesisHash;
 
     EthStatus(
         final int protocolVersion,
         final BigInteger networkId,
-        final UInt256 totalDifficulty,
+        final Difficulty totalDifficulty,
         final Hash bestHash,
         final Hash genesisHash) {
       this.protocolVersion = protocolVersion;
@@ -127,8 +128,8 @@ public final class StatusMessage extends AbstractMessageData {
       out.writeIntScalar(protocolVersion);
       out.writeBigIntegerScalar(networkId);
       out.writeUInt256Scalar(totalDifficulty);
-      out.writeBytesValue(bestHash);
-      out.writeBytesValue(genesisHash);
+      out.writeBytes(bestHash);
+      out.writeBytes(genesisHash);
 
       out.endList();
     }
@@ -138,7 +139,7 @@ public final class StatusMessage extends AbstractMessageData {
 
       final int protocolVersion = in.readIntScalar();
       final BigInteger networkId = in.readBigIntegerScalar();
-      final UInt256 totalDifficulty = in.readUInt256Scalar();
+      final Difficulty totalDifficulty = Difficulty.of(in.readUInt256Scalar());
       final Hash bestHash = Hash.wrap(in.readBytes32());
       final Hash genesisHash = Hash.wrap(in.readBytes32());
 

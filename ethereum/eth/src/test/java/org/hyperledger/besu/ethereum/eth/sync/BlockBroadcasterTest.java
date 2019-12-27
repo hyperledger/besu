@@ -24,12 +24,12 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.messages.NewBlockMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.Collections;
 import java.util.stream.Stream;
@@ -52,7 +52,7 @@ public class BlockBroadcasterTest {
     final NewBlockMessage newBlockMessage =
         NewBlockMessage.create(block, block.getHeader().getDifficulty());
 
-    blockBroadcaster.propagate(block, UInt256.ZERO);
+    blockBroadcaster.propagate(block, Difficulty.ZERO);
 
     verify(ethPeer, times(1)).send(newBlockMessage);
   }
@@ -75,7 +75,7 @@ public class BlockBroadcasterTest {
     final NewBlockMessage newBlockMessage =
         NewBlockMessage.create(block, block.getHeader().getDifficulty());
 
-    blockBroadcaster.propagate(block, UInt256.ZERO);
+    blockBroadcaster.propagate(block, Difficulty.ZERO);
 
     verify(ethPeer0, never()).send(newBlockMessage);
     verify(ethPeer1, times(1)).send(newBlockMessage);

@@ -50,11 +50,11 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.List;
 
 import com.google.common.collect.Lists;
+import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Java6Assertions;
 import org.junit.Before;
 import org.junit.Test;
@@ -111,8 +111,8 @@ public class CliqueBlockCreatorTest {
   @Test
   public void proposerAddressCanBeExtractFromAConstructedBlock() {
 
-    final BytesValue extraData =
-        CliqueExtraData.createWithoutProposerSeal(BytesValue.wrap(new byte[32]), validatorList);
+    final Bytes extraData =
+        CliqueExtraData.createWithoutProposerSeal(Bytes.wrap(new byte[32]), validatorList);
 
     final Address coinbase = AddressHelpers.ofValue(1);
     final CliqueBlockCreator blockCreator =
@@ -140,8 +140,8 @@ public class CliqueBlockCreatorTest {
 
   @Test
   public void insertsValidVoteIntoConstructedBlock() {
-    final BytesValue extraData =
-        CliqueExtraData.createWithoutProposerSeal(BytesValue.wrap(new byte[32]), validatorList);
+    final Bytes extraData =
+        CliqueExtraData.createWithoutProposerSeal(Bytes.wrap(new byte[32]), validatorList);
     final Address a1 = Address.fromHexString("5");
     voteProposer.auth(a1);
     final Address coinbase = AddressHelpers.ofValue(1);
@@ -170,8 +170,8 @@ public class CliqueBlockCreatorTest {
 
   @Test
   public void insertsNoVoteWhenAuthInValidators() {
-    final BytesValue extraData =
-        CliqueExtraData.createWithoutProposerSeal(BytesValue.wrap(new byte[32]), validatorList);
+    final Bytes extraData =
+        CliqueExtraData.createWithoutProposerSeal(Bytes.wrap(new byte[32]), validatorList);
     final Address a1 = Util.publicKeyToAddress(otherKeyPair.getPublicKey());
     voteProposer.auth(a1);
     final Address coinbase = AddressHelpers.ofValue(1);
@@ -203,8 +203,8 @@ public class CliqueBlockCreatorTest {
     // ensure that the next block is epoch
     epochManager = new EpochManager(1);
 
-    final BytesValue extraData =
-        CliqueExtraData.createWithoutProposerSeal(BytesValue.wrap(new byte[32]), validatorList);
+    final Bytes extraData =
+        CliqueExtraData.createWithoutProposerSeal(Bytes.wrap(new byte[32]), validatorList);
     final Address a1 = Address.fromHexString("5");
     voteProposer.auth(a1);
     final Address coinbase = AddressHelpers.ofValue(1);

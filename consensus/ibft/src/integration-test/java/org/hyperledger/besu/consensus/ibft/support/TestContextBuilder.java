@@ -60,6 +60,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Util;
@@ -72,8 +73,6 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
 import org.hyperledger.besu.util.Subscribers;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -86,6 +85,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.Iterables;
+import org.apache.tuweni.bytes.Bytes;
 
 public class TestContextBuilder {
 
@@ -237,14 +237,10 @@ public class TestContextBuilder {
     final BlockHeaderTestFixture headerTestFixture = new BlockHeaderTestFixture();
     final IbftExtraData extraData =
         new IbftExtraData(
-            BytesValue.wrap(new byte[32]),
-            Collections.emptyList(),
-            Optional.empty(),
-            0,
-            validators);
+            Bytes.wrap(new byte[32]), Collections.emptyList(), Optional.empty(), 0, validators);
     headerTestFixture.extraData(extraData.encode());
     headerTestFixture.mixHash(IbftHelpers.EXPECTED_MIX_HASH);
-    headerTestFixture.difficulty(UInt256.ONE);
+    headerTestFixture.difficulty(Difficulty.ONE);
     headerTestFixture.ommersHash(Hash.EMPTY_LIST_HASH);
     headerTestFixture.nonce(0);
     headerTestFixture.timestamp(0);
@@ -272,7 +268,7 @@ public class TestContextBuilder {
         new MiningParameters(
             AddressHelpers.ofValue(1),
             Wei.ZERO,
-            BytesValue.wrap("Ibft Int tests".getBytes(UTF_8)),
+            Bytes.wrap("Ibft Int tests".getBytes(UTF_8)),
             true);
 
     final StubGenesisConfigOptions genesisConfigOptions = new StubGenesisConfigOptions();

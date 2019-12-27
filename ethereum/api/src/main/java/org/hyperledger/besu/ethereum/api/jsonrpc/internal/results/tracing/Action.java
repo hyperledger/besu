@@ -17,19 +17,20 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing;
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 @JsonInclude(NON_NULL)
 public class Action {
@@ -84,7 +85,7 @@ public class Action {
         .input(dumpMemory(traceFrame.getMemory()))
         .gas(gasRemaining.toHexString())
         .callType("call")
-        .value(transaction.getValue().toShortHexString());
+        .value(Quantity.create(transaction.getValue()));
   }
 
   public static Builder createSelfDestructAction(
@@ -102,7 +103,7 @@ public class Action {
                 "0x"
                     .concat(
                         Arrays.stream(element)
-                            .map(BytesValue::toUnprefixedString)
+                            .map(Bytes::toUnprefixedHexString)
                             .collect(Collectors.joining())))
         .orElse("");
   }
@@ -180,7 +181,7 @@ public class Action {
       return new Builder()
           .from(trace.getTransaction().getSender().getHexString())
           .gas(trace.getTraceFrames().get(0).getGasRemaining().toHexString())
-          .value(trace.getTransaction().getValue().toShortHexString());
+          .value(Quantity.create(trace.getTransaction().getValue()));
     }
 
     public Builder callType(final String callType) {

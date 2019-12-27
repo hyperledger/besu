@@ -34,12 +34,12 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
 public class EthGetTransactionReceiptTest {
@@ -59,7 +59,7 @@ public class EthGetTransactionReceiptTest {
           .nonce(1)
           .gasPrice(Wei.of(12))
           .gasLimit(43)
-          .payload(BytesValue.EMPTY)
+          .payload(Bytes.EMPTY)
           .value(Wei.ZERO)
           .signature(signature)
           .sender(sender)

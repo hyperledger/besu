@@ -18,20 +18,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveFactory;
-import org.hyperledger.besu.enclave.types.ReceiveRequest;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyAcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.BytesValues;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 
 import io.vertx.core.Vertx;
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -161,16 +159,12 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
     final Enclave aliceEnclave = enclaveFactory.createVertxEnclave(alice.getOrion().clientUrl());
     final ReceiveResponse aliceRR =
         aliceEnclave.receive(
-            new ReceiveRequest(
-                BytesValues.asBase64String(BytesValue.fromHexString(transactionKey)),
-                alice.getEnclaveKey()));
+            Bytes.fromHexString(transactionKey).toBase64String(), alice.getEnclaveKey());
 
     final Enclave bobEnclave = enclaveFactory.createVertxEnclave(bob.getOrion().clientUrl());
     final ReceiveResponse bobRR =
         bobEnclave.receive(
-            new ReceiveRequest(
-                BytesValues.asBase64String(BytesValue.fromHexString(transactionKey)),
-                bob.getEnclaveKey()));
+            Bytes.fromHexString(transactionKey).toBase64String(), bob.getEnclaveKey());
 
     assertThat(bobRR).isEqualToComparingFieldByField(aliceRR);
 

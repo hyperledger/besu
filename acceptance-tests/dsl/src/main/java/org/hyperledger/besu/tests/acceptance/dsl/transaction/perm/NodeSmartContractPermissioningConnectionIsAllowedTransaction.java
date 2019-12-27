@@ -25,18 +25,18 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 import org.hyperledger.besu.tests.acceptance.dsl.node.RunnableNode;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.NodeRequests;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.io.IOException;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.web3j.protocol.core.DefaultBlockParameterName;
 
 public class NodeSmartContractPermissioningConnectionIsAllowedTransaction
     implements Transaction<Boolean> {
 
-  private static final BytesValue IS_CONNECTION_ALLOWED_SIGNATURE =
+  private static final Bytes IS_CONNECTION_ALLOWED_SIGNATURE =
       Hash.keccak256(
-              BytesValue.of(
+              Bytes.of(
                   "connectionAllowed(bytes32,bytes32,bytes16,uint16,bytes32,bytes32,bytes16,uint16)"
                       .getBytes(UTF_8)))
           .slice(0, 4);
@@ -57,7 +57,7 @@ public class NodeSmartContractPermissioningConnectionIsAllowedTransaction
     try {
       final String value =
           node.eth().ethCall(payload(), DefaultBlockParameterName.LATEST).send().getValue();
-      return checkTransactionResult(BytesValue.fromHexString(value));
+      return checkTransactionResult(Bytes.fromHexString(value));
     } catch (final IOException e) {
       throw new RuntimeException(e);
     }
@@ -66,7 +66,7 @@ public class NodeSmartContractPermissioningConnectionIsAllowedTransaction
   private org.web3j.protocol.core.methods.request.Transaction payload() {
     final String sourceEnodeURL = ((RunnableNode) source).enodeUrl().toASCIIString();
     final String targetEnodeURL = ((RunnableNode) target).enodeUrl().toASCIIString();
-    final BytesValue payload =
+    final Bytes payload =
         NodeSmartContractPermissioningController.createPayload(
             IS_CONNECTION_ALLOWED_SIGNATURE,
             EnodeURL.fromString(sourceEnodeURL),

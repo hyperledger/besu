@@ -21,12 +21,13 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class RLPTestUtil {
 
@@ -35,17 +36,17 @@ public class RLPTestUtil {
    * zeros are allowed).
    *
    * @param value The RLP encoded value to decode.
-   * @return The output of decoding {@code value}. It will be either directly a {@link BytesValue},
-   *     or a list whose elements are either {@link BytesValue}, or similarly composed sub-lists.
+   * @return The output of decoding {@code value}. It will be either directly a {@link Bytes}, or a
+   *     list whose elements are either {@link Bytes}, or similarly composed sub-lists.
    * @throws RLPException if {@code value} is not a properly formed RLP encoding.
    */
-  public static Object decode(final BytesValue value) {
+  public static Object decode(final Bytes value) {
     return decode(RLP.input(value));
   }
 
   private static Object decode(final RLPInput in) {
     if (!in.nextIsList()) {
-      return in.readBytesValue();
+      return in.readBytes();
     }
 
     final int size = in.enterList();
@@ -56,24 +57,24 @@ public class RLPTestUtil {
   }
 
   /**
-   * Recursively RLP encode an object consisting of recursive lists of {@link BytesValue}.
-   * BytesValues are assumed to be non-scalar (leading zeros are not trimmed).
+   * Recursively RLP encode an object consisting of recursive lists of {@link Bytes}. Bytes are
+   * assumed to be non-scalar (leading zeros are not trimmed).
    *
-   * @param obj An object that must be either directly a {@link BytesValue}, or a list whose
-   *     elements are either {@link BytesValue}, or similarly composed sub-lists.
+   * @param obj An object that must be either directly a {@link Bytes}, or a list whose elements are
+   *     either {@link Bytes}, or similarly composed sub-lists.
    * @return The RLP encoding corresponding to {@code obj}.
    * @throws IllegalArgumentException if {@code obj} is not a valid input (not entirely composed
-   *     from lists and {@link BytesValue}).
+   *     from lists and {@link Bytes}).
    */
-  public static BytesValue encode(final Object obj) {
+  public static Bytes encode(final Object obj) {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     encode(obj, out);
     return out.encoded();
   }
 
   private static void encode(final Object obj, final RLPOutput out) {
-    if (obj instanceof BytesValue) {
-      out.writeBytesValue((BytesValue) obj);
+    if (obj instanceof Bytes) {
+      out.writeBytes((Bytes) obj);
     } else if (obj instanceof List) {
       final List<?> l = (List<?>) obj;
       out.startList();
@@ -115,7 +116,7 @@ public class RLPTestUtil {
     switch (random.nextInt(12)) {
       case 0:
         // Write empty byte string
-        out.writeBytesValue(BytesValue.EMPTY);
+        out.writeBytes(Bytes.EMPTY);
         break;
       case 1:
         // Small single byte
@@ -129,12 +130,12 @@ public class RLPTestUtil {
       case 3:
         // Small byte string
         int smallBytesSize = random.nextInt(54) + 2;
-        out.writeBytesValue(randomBytesValue(random, smallBytesSize));
+        out.writeBytes(randomBytes(random, smallBytesSize));
         break;
       case 4:
         // Large byte string
         int largeBytesSize = random.nextInt(500) + 56;
-        out.writeBytesValue(randomBytesValue(random, largeBytesSize));
+        out.writeBytes(randomBytes(random, largeBytesSize));
         break;
       case 5:
         // Close list
@@ -154,11 +155,11 @@ public class RLPTestUtil {
     }
   }
 
-  private static BytesValue randomBytesValue(final Random random, final int size) {
+  private static Bytes randomBytes(final Random random, final int size) {
     final byte[] bytes = new byte[size];
     for (int i = 0; i < bytes.length; i++) {
       bytes[i] = (byte) random.nextInt(256);
     }
-    return BytesValue.wrap(bytes);
+    return Bytes.wrap(bytes);
   }
 }

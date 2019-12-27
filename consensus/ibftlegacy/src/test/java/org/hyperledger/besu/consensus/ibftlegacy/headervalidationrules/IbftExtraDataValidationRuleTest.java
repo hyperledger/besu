@@ -31,7 +31,6 @@ import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -39,6 +38,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
+import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
@@ -52,10 +52,7 @@ public class IbftExtraDataValidationRuleTest {
     // Construct an extraData block and add to a header
     final IbftExtraData initialIbftExtraData =
         new IbftExtraData(
-            BytesValue.wrap(new byte[IbftExtraData.EXTRA_VANITY_LENGTH]),
-            emptyList(),
-            null,
-            validators);
+            Bytes.wrap(new byte[IbftExtraData.EXTRA_VANITY_LENGTH]), emptyList(), null, validators);
     builder.extraData(initialIbftExtraData.encode());
     final BlockHeader header = builder.buildHeader();
 
@@ -67,7 +64,7 @@ public class IbftExtraDataValidationRuleTest {
     // Construct a new extraData block, containing the constructed proposer signature
     final IbftExtraData proposedData =
         new IbftExtraData(
-            BytesValue.wrap(new byte[IbftExtraData.EXTRA_VANITY_LENGTH]),
+            Bytes.wrap(new byte[IbftExtraData.EXTRA_VANITY_LENGTH]),
             emptyList(),
             proposerSignature,
             validators);

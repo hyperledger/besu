@@ -21,11 +21,12 @@ import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.proof.WorldStateProof;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.List;
 import java.util.Optional;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class WorldStateArchive {
   private final WorldStateStorage worldStateStorage;
@@ -64,7 +65,7 @@ public class WorldStateArchive {
     return getMutable(EMPTY_ROOT_HASH).get();
   }
 
-  public Optional<BytesValue> getNodeData(final Hash hash) {
+  public Optional<Bytes> getNodeData(final Hash hash) {
     return worldStateStorage.getNodeData(hash);
   }
 

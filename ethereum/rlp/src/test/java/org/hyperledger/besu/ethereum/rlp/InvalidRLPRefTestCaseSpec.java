@@ -14,24 +14,23 @@
  */
 package org.hyperledger.besu.ethereum.rlp;
 
-import org.hyperledger.besu.util.bytes.BytesValue;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.tuweni.bytes.Bytes;
 
 @JsonIgnoreProperties({"in"})
 public class InvalidRLPRefTestCaseSpec {
 
   /** The rlp data to analyze. */
-  private final BytesValue rlp;
+  private final Bytes rlp;
 
   @JsonCreator
   public InvalidRLPRefTestCaseSpec(@JsonProperty("out") final String out) {
-    this.rlp = BytesValue.fromHexStringLenient(out);
+    this.rlp = Bytes.fromHexStringLenient(out);
   }
 
-  public BytesValue getRLP() {
+  public Bytes getRLP() {
     return rlp;
   }
 }

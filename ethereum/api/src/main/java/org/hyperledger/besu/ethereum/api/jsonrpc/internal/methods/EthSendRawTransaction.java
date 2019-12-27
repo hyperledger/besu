@@ -29,13 +29,13 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInv
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 public class EthSendRawTransaction implements JsonRpcMethod {
 
@@ -93,7 +93,7 @@ public class EthSendRawTransaction implements JsonRpcMethod {
   private Transaction decodeRawTransaction(final String hash)
       throws InvalidJsonRpcRequestException {
     try {
-      return Transaction.readFrom(RLP.input(BytesValue.fromHexString(hash)));
+      return Transaction.readFrom(RLP.input(Bytes.fromHexString(hash)));
     } catch (final IllegalArgumentException | RLPException e) {
       LOG.debug(e);
       throw new InvalidJsonRpcRequestException("Invalid raw transaction hex", e);

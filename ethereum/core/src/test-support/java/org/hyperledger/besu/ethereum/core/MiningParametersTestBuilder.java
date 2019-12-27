@@ -14,13 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import org.hyperledger.besu.util.bytes.BytesValue;
+import org.apache.tuweni.bytes.Bytes;
 
 public class MiningParametersTestBuilder {
 
   private Address coinbase = AddressHelpers.ofValue(1);
   private Wei minTransactionGasPrice = Wei.of(1000);
-  private BytesValue extraData = BytesValue.EMPTY;
+  private Bytes extraData = Bytes.EMPTY;
   private Boolean enabled = false;
 
   public MiningParametersTestBuilder coinbase(final Address coinbase) {
@@ -33,7 +33,7 @@ public class MiningParametersTestBuilder {
     return this;
   }
 
-  public MiningParametersTestBuilder extraData(final BytesValue extraData) {
+  public MiningParametersTestBuilder extraData(final Bytes extraData) {
     this.extraData = extraData;
     return this;
   }

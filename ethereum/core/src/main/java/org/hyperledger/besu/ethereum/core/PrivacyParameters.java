@@ -16,8 +16,8 @@ package org.hyperledger.besu.ethereum.core;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+import org.hyperledger.besu.crypto.KeyPairUtil;
 import org.hyperledger.besu.crypto.SECP256K1;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyStorageProvider;
@@ -51,6 +51,7 @@ public class PrivacyParameters {
   private PrivacyStorageProvider privateStorageProvider;
   private WorldStateArchive privateWorldStateArchive;
   private PrivateStateStorage privateStateStorage;
+  private boolean multiTenancyEnabled;
 
   public Integer getPrivacyAddress() {
     return privacyAddress;
@@ -132,9 +133,25 @@ public class PrivacyParameters {
     this.enclave = enclave;
   }
 
+  private void setMultiTenancyEnabled(final boolean multiTenancyEnabled) {
+    this.multiTenancyEnabled = multiTenancyEnabled;
+  }
+
+  public boolean isMultiTenancyEnabled() {
+    return multiTenancyEnabled;
+  }
+
   @Override
   public String toString() {
-    return "PrivacyParameters{" + "enabled=" + enabled + ", enclaveUri='" + enclaveUri + '\'' + '}';
+    return "PrivacyParameters{"
+        + "enabled="
+        + enabled
+        + ", multiTenancyEnabled = "
+        + multiTenancyEnabled
+        + ", enclaveUri='"
+        + enclaveUri
+        + '\''
+        + '}';
   }
 
   public static class Builder {
@@ -147,6 +164,7 @@ public class PrivacyParameters {
     private Path privateKeyPath;
     private PrivacyStorageProvider storageProvider;
     private EnclaveFactory enclaveFactory;
+    private boolean multiTenancyEnabled;
 
     public Builder setPrivacyAddress(final Integer privacyAddress) {
       this.privacyAddress = privacyAddress;
@@ -178,7 +196,12 @@ public class PrivacyParameters {
       return this;
     }
 
-    public PrivacyParameters build() throws IOException {
+    public Builder setMultiTenancyEnabled(final boolean multiTenancyEnabled) {
+      this.multiTenancyEnabled = multiTenancyEnabled;
+      return this;
+    }
+
+    public PrivacyParameters build() {
       final PrivacyParameters config = new PrivacyParameters();
       if (enabled) {
         final WorldStateStorage privateWorldStateStorage =
@@ -198,12 +221,13 @@ public class PrivacyParameters {
         config.setEnclave(enclaveFactory.createVertxEnclave(enclaveUrl));
 
         if (privateKeyPath != null) {
-          config.setSigningKeyPair(KeyPair.load(privateKeyPath.toFile()));
+          config.setSigningKeyPair(KeyPairUtil.load(privateKeyPath.toFile()));
         }
       }
       config.setEnabled(enabled);
       config.setEnclaveUri(enclaveUrl);
       config.setPrivacyAddress(privacyAddress);
+      config.setMultiTenancyEnabled(multiTenancyEnabled);
       return config;
     }
 

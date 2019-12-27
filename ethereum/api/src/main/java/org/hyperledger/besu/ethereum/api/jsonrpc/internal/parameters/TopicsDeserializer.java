@@ -49,11 +49,19 @@ public class TopicsDeserializer extends StdDeserializer<List<List<LogTopic>>> {
         if (child.isArray()) {
           final List<LogTopic> childItems = Lists.newArrayList();
           for (JsonNode subChild : child) {
-            childItems.add(LogTopic.fromHexString(subChild.textValue()));
+            if (subChild.isNull()) {
+              childItems.add(null);
+            } else {
+              childItems.add(LogTopic.fromHexString(subChild.textValue()));
+            }
           }
           topics.add(childItems);
         } else {
-          topics.add(singletonList(LogTopic.fromHexString(child.textValue())));
+          if (child.isNull()) {
+            topics.add(singletonList(null));
+          } else {
+            topics.add(singletonList(LogTopic.fromHexString(child.textValue())));
+          }
         }
       }
     }
