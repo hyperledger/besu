@@ -1,2 +1,3 @@
-#okhttp client fingerprint obtained from rpc_client_keystore.pfx
+#client certificates fingerprint obtained from rpc_client_keystore.pfx
 localhost DF:65:B8:02:08:5E:91:82:0F:91:F5:1C:96:56:92:C4:1A:F6:C6:27:FD:6C:FC:31:F2:BB:90:17:22:59:5B:50
+127.0.0.1 DF:65:B8:02:08:5E:91:82:0F:91:F5:1C:96:56:92:C4:1A:F6:C6:27:FD:6C:FC:31:F2:BB:90:17:22:59:5B:50
