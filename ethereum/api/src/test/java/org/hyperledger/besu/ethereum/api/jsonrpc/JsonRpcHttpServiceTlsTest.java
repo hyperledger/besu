@@ -63,9 +63,11 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
+import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 
 import com.google.common.base.Charsets;
@@ -167,7 +169,7 @@ public class JsonRpcHttpServiceTlsTest {
   private static TlsConfiguration getRpcHttpTlsConfiguration() {
     return new TlsConfiguration(
         new TlsStoreConfiguration(getKeyStorePath(), getKeystorePassword()),
-        Optional.of(getKnownClientsFile()));
+        Optional.empty() /*getKnownClientsFile()*/);
   }
 
   private static String getKeyStorePath() {
@@ -213,7 +215,7 @@ public class JsonRpcHttpServiceTlsTest {
     final String id = "123";
     final String json =
         "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_version\"}";
-    final HttpClient httpClient = getHttpClient();
+    final HttpClient httpClient = getTlsHttpClient();
 
     final HttpRequest request =
         HttpRequest.newBuilder()
@@ -239,13 +241,14 @@ public class JsonRpcHttpServiceTlsTest {
     }
   }
 
-  private HttpClient getHttpClient() {
+  private HttpClient getTlsHttpClient() {
     try {
       final TrustManagerFactory trustManagerFactory = getTrustManagerFactory();
       final KeyManagerFactory keyManagerFactory = getKeyManagerFactory();
-      final SSLContext sslContext = getCustomSslContext(keyManagerFactory, trustManagerFactory);
+      final SSLContext sslContext =
+          getCustomSslContext(null, trustManagerFactory.getTrustManagers());
       final SSLParameters sslParameters = sslContext.getDefaultSSLParameters();
-      sslParameters.setNeedClientAuth(true);
+      sslParameters.setNeedClientAuth(false);
 
       return HttpClient.newBuilder().sslContext(sslContext).sslParameters(sslParameters).build();
 
@@ -273,13 +276,10 @@ public class JsonRpcHttpServiceTlsTest {
   }
 
   private SSLContext getCustomSslContext(
-      final KeyManagerFactory keyManagerFactory, final TrustManagerFactory trustManagerFactory)
+      final KeyManager[] keyManagers, final TrustManager[] trustManagers)
       throws GeneralSecurityException {
-    final SSLContext sslContext = SSLContext.getInstance("TLS");
-    sslContext.init(
-        keyManagerFactory.getKeyManagers(),
-        trustManagerFactory.getTrustManagers(),
-        SecureRandom.getInstanceStrong());
+    final SSLContext sslContext = SSLContext.getInstance("TLSv1.2");
+    sslContext.init(keyManagers, trustManagers, SecureRandom.getInstanceStrong());
     return sslContext;
   }
 
