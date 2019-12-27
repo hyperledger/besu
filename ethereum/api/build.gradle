@@ -27,6 +27,11 @@ jar {
   }
 }
 
+test {
+  // show standard out and standard error of the test JVM(s) on the console
+  testLogging.showStandardStreams = true
+}
+
 dependencies {
   implementation project(':ethereum:blockcreation')
   implementation project(':ethereum:core')
