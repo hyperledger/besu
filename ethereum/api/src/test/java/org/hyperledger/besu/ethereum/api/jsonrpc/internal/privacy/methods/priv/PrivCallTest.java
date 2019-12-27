@@ -35,10 +35,10 @@ import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionSimulator;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionSimulatorResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -95,9 +95,9 @@ public class PrivCallTest {
     final CallParameter callParameter = new JsonCallParameter(null, "0x0", null, null, null, null);
     final JsonRpcRequestContext request = ethCallRequest(privacyGroupId, callParameter, "latest");
     final JsonRpcResponse expectedResponse =
-        new JsonRpcSuccessResponse(null, BytesValue.of().toString());
+        new JsonRpcSuccessResponse(null, Bytes.of().toString());
 
-    mockTransactionProcessorSuccessResult(BytesValue.of());
+    mockTransactionProcessorSuccessResult(Bytes.of());
 
     final JsonRpcResponse response = method.response(request);
 
@@ -109,8 +109,8 @@ public class PrivCallTest {
   public void shouldReturnExecutionResultWhenExecutionIsSuccessful() {
     final JsonRpcRequestContext request = ethCallRequest(privacyGroupId, callParameter(), "latest");
     final JsonRpcResponse expectedResponse =
-        new JsonRpcSuccessResponse(null, BytesValue.of(1).toString());
-    mockTransactionProcessorSuccessResult(BytesValue.of(1));
+        new JsonRpcSuccessResponse(null, Bytes.of(1).toString());
+    mockTransactionProcessorSuccessResult(Bytes.of(1));
 
     final JsonRpcResponse response = method.response(request);
 
@@ -175,7 +175,7 @@ public class PrivCallTest {
             "2.0", "priv_call", new Object[] {privacyGroupId, callParameter, blockNumberInHex}));
   }
 
-  private void mockTransactionProcessorSuccessResult(final BytesValue output) {
+  private void mockTransactionProcessorSuccessResult(final Bytes output) {
     final PrivateTransactionSimulatorResult result = mock(PrivateTransactionSimulatorResult.class);
 
     when(result.getValidationResult()).thenReturn(ValidationResult.valid());

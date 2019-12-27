@@ -31,10 +31,10 @@ import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.BytesValues;
 
 import java.util.Optional;
+
+import org.apache.tuweni.bytes.Bytes;
 
 /*
  * Used to process transactions for eth_call and eth_estimateGas.
@@ -98,7 +98,7 @@ public class PrivateTransactionSimulator {
     }
 
     // get the last world state root hash or create a new one
-    final BytesValue privacyGroupId = BytesValues.fromBase64(privacyGroupIdString);
+    final Bytes privacyGroupId = Bytes.fromBase64String(privacyGroupIdString);
     final Hash lastRootHash =
         privacyParameters
             .getPrivateStateStorage()
@@ -116,12 +116,11 @@ public class PrivateTransactionSimulator {
         callParams.getGasLimit() >= 0 ? callParams.getGasLimit() : header.getGasLimit();
     final Wei gasPrice = callParams.getGasPrice() != null ? callParams.getGasPrice() : Wei.ZERO;
     final Wei value = callParams.getValue() != null ? callParams.getValue() : Wei.ZERO;
-    final BytesValue payload =
-        callParams.getPayload() != null ? callParams.getPayload() : BytesValue.EMPTY;
+    final Bytes payload = callParams.getPayload() != null ? callParams.getPayload() : Bytes.EMPTY;
 
     final PrivateTransaction transaction =
         PrivateTransaction.builder()
-            .privateFrom(BytesValue.EMPTY)
+            .privateFrom(Bytes.EMPTY)
             .privacyGroupId(privacyGroupId)
             .restriction(Restriction.RESTRICTED)
             .nonce(nonce)
