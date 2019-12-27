@@ -168,8 +168,7 @@ public class JsonRpcHttpServiceTlsTest {
 
   private static TlsConfiguration getRpcHttpTlsConfiguration() {
     return new TlsConfiguration(
-        new TlsStoreConfiguration(getKeyStorePath(), getKeystorePassword()),
-        Optional.empty() /*getKnownClientsFile()*/);
+        new TlsStoreConfiguration(getKeyStorePath(), getKeystorePassword()), getKnownClientsFile());
   }
 
   private static String getKeyStorePath() {
@@ -196,12 +195,15 @@ public class JsonRpcHttpServiceTlsTest {
     }
   }
 
-  private static Path getKnownClientsFile() {
+  private static Optional<Path> getKnownClientsFile() {
+    return Optional.empty();
+    /*
     try {
       return Paths.get(ClassLoader.getSystemResource(KNOWN_CLIENTS_RESOURCE).toURI());
     } catch (URISyntaxException e) {
       throw new RuntimeException("Unable to read keystore resource.", e);
     }
+    */
   }
 
   @After
@@ -246,7 +248,8 @@ public class JsonRpcHttpServiceTlsTest {
       final TrustManagerFactory trustManagerFactory = getTrustManagerFactory();
       final KeyManagerFactory keyManagerFactory = getKeyManagerFactory();
       final SSLContext sslContext =
-          getCustomSslContext(null, trustManagerFactory.getTrustManagers());
+          getCustomSslContext(
+              keyManagerFactory.getKeyManagers(), trustManagerFactory.getTrustManagers());
       final SSLParameters sslParameters = sslContext.getDefaultSSLParameters();
       sslParameters.setNeedClientAuth(false);
 
