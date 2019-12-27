@@ -95,6 +95,7 @@ jobs:
           name: Build
           no_output_timeout: 20m
           command: |
+            ./gradlew --no-daemon :ethereum:api:test --tests="org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcHttpServiceTlsTest"
             ./gradlew --no-daemon --parallel build
       - capture_test_results
 
