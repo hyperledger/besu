@@ -101,6 +101,7 @@ public class JsonRpcHttpServiceTlsTest {
   private static final String KEYSTORE_PASSWORD_RESOURCE =
       "JsonRpcHttpService/rpc_keystore.password";
   private static final String KNOWN_CLIENTS_RESOURCE = "JsonRpcHttpService/rpc_known_clients.txt";
+
   @Before
   public void initServerAndClient() throws Exception {
     System.setProperty("javax.net.debug", "ssl, handshake");
