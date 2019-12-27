@@ -234,6 +234,7 @@ allprojects {
    */
   test {
     jvmArgs = [
+      '-Djavax.net.debug=ssl,handshake',
       '-Xmx4g',
       '-XX:-UseGCOverheadLimit',
       // Mockito and jackson-databind do some strange reflection during tests.
