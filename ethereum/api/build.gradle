@@ -29,7 +29,7 @@ jar {
 
 test {
   jvmArgs = [
-    '-Djavax.net.debug=ssl:handshake:verbose',
+    '-Djavax.net.debug=ssl:handshake:verbose:keymanager',
     '-Xmx4g',
     '-XX:-UseGCOverheadLimit',
     // Mockito and jackson-databind do some strange reflection during tests.
