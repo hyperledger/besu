@@ -28,6 +28,17 @@ jar {
 }
 
 test {
+  jvmArgs = [
+          '-Djavax.net.debug=ssl,handshake',
+          '-Xmx4g',
+          '-XX:-UseGCOverheadLimit',
+          // Mockito and jackson-databind do some strange reflection during tests.
+          // This suppresses an illegal access warning.
+          '--add-opens',
+          'java.base/java.util=ALL-UNNAMED',
+          '--add-opens',
+          'java.base/java.util.concurrent=ALL-UNNAMED'
+  ]
   // show standard out and standard error of the test JVM(s) on the console
   testLogging.showStandardStreams = true
 }
