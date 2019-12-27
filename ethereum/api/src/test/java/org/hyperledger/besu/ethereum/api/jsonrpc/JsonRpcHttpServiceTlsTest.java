@@ -43,7 +43,11 @@ import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
+import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
@@ -61,19 +65,14 @@ import java.util.Optional;
 import java.util.Set;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters;
 import javax.net.ssl.TrustManagerFactory;
-import javax.net.ssl.X509TrustManager;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -89,7 +88,7 @@ public class JsonRpcHttpServiceTlsTest {
   private static Map<String, JsonRpcMethod> rpcMethods;
   private static JsonRpcHttpService service;
   private static String baseUrl;
-  private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
+  private static final String JSON_HEADER = "application/json; charset=utf-8";
   private static final String CLIENT_VERSION = "TestClientVersion/0.1.0";
   private static final BigInteger CHAIN_ID = BigInteger.valueOf(123);
   private static final Collection<RpcApi> JSON_RPC_APIS =
@@ -210,36 +209,38 @@ public class JsonRpcHttpServiceTlsTest {
   @Test
   public void netVersionSuccessfulOnTls() throws Exception {
     final String id = "123";
-    final RequestBody body =
-        RequestBody.create(
-            "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_version\"}",
-            JSON);
+    final String json =
+        "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_version\"}";
+    final HttpClient httpClient = getHttpClient();
 
-    final OkHttpClient tlsClient = getTlsClient();
-    try (final Response resp = tlsClient.newCall(buildPostRequest(body)).execute()) {
-      assertThat(resp.code()).isEqualTo(200);
-      // Check general format of result
-      assertThat(resp.body()).isNotNull();
-      final JsonObject json = new JsonObject(resp.body().string());
-      testHelper.assertValidJsonRpcResult(json, id);
-      // Check result
-      final String result = json.getString("result");
-      assertThat(result).isEqualTo(String.valueOf(CHAIN_ID));
-    }
+    final HttpRequest request =
+        HttpRequest.newBuilder()
+            .POST(HttpRequest.BodyPublishers.ofString(json))
+            .uri(URI.create(baseUrl))
+            .header("Accept", JSON_HEADER)
+            .build();
+
+    HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+    assertThat(response.statusCode()).isEqualTo(200);
+    // Check general format of result
+    final JsonObject jsonObject = new JsonObject(response.body());
+    testHelper.assertValidJsonRpcResult(jsonObject, id);
+    // Check result
+    final String result = jsonObject.getString("result");
+    assertThat(result).isEqualTo(String.valueOf(CHAIN_ID));
   }
 
-  private OkHttpClient getTlsClient() {
+  private HttpClient getHttpClient() {
     try {
       final TrustManagerFactory trustManagerFactory = getTrustManagerFactory();
       final KeyManagerFactory keyManagerFactory = getKeyManagerFactory();
       final SSLContext sslContext = getCustomSslContext(keyManagerFactory, trustManagerFactory);
+      final SSLParameters sslParameters = sslContext.getDefaultSSLParameters();
+      sslParameters.setNeedClientAuth(true);
+      sslParameters.setWantClientAuth(true);
 
-      return new OkHttpClient.Builder()
-          .sslSocketFactory(
-              sslContext.getSocketFactory(),
-              (X509TrustManager)
-                  trustManagerFactory.getTrustManagers()[0]) // we only have one trust manager
-          .build();
+      return HttpClient.newBuilder().sslContext(sslContext).sslParameters(sslParameters).build();
+
     } catch (GeneralSecurityException e) {
       throw new RuntimeException(e);
     }
@@ -283,9 +284,5 @@ public class JsonRpcHttpServiceTlsTest {
       throw new RuntimeException("Unable to load keystore.", e);
     }
     return store;
-  }
-
-  private Request buildPostRequest(final RequestBody body) {
-    return new Request.Builder().post(body).url(baseUrl).build();
   }
 }
