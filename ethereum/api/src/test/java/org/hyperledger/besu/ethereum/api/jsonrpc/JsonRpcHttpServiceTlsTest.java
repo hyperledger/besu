@@ -276,7 +276,7 @@ public class JsonRpcHttpServiceTlsTest {
     sslContext.init(
         useClientAuthentication ? kmf.getKeyManagers() : null,
         tmf.getTrustManagers(),
-        SecureRandom.getInstanceStrong());
+        SecureRandom.getInstance("SHA1PRNG"));
     return sslContext;
   }
 
