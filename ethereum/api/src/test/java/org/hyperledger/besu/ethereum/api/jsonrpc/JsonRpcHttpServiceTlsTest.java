@@ -158,6 +158,7 @@ public class JsonRpcHttpServiceTlsTest {
 
   private static JsonRpcConfiguration createJsonRpcConfig() {
     final JsonRpcConfiguration config = JsonRpcConfiguration.createDefault();
+    config.setHost("localhost");
     config.setPort(0);
     config.setHostsWhitelist(Collections.singletonList("*"));
     config.setTlsConfiguration(getRpcHttpTlsConfiguration());
@@ -214,8 +215,8 @@ public class JsonRpcHttpServiceTlsTest {
     final String id = "123";
     final String json =
         "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_version\"}";
-    final HttpClient httpClient = getTlsHttpClient();
     System.out.println("Connecting to: " + baseUrl);
+    final HttpClient httpClient = getTlsHttpClient();
     final HttpRequest request =
         HttpRequest.newBuilder()
             .POST(HttpRequest.BodyPublishers.ofString(json))
@@ -271,7 +272,7 @@ public class JsonRpcHttpServiceTlsTest {
   private SSLContext getCustomSslContext() throws GeneralSecurityException {
     final TrustManagerFactory tmf = getTrustManagerFactory();
     final KeyManagerFactory kmf = getKeyManagerFactory();
-    final SSLContext sslContext = SSLContext.getInstance("TLS");
+    final SSLContext sslContext = SSLContext.getInstance("TLSv1.2");
     sslContext.init(
         useClientAuthentication ? kmf.getKeyManagers() : null,
         tmf.getTrustManagers(),
