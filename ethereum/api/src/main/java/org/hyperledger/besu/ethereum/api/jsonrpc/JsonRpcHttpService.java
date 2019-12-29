@@ -276,6 +276,8 @@ public class JsonRpcHttpService {
     final TlsConfiguration tlsConfiguration = config.getTlsConfiguration().get();
     httpServerOptions
         .setSsl(true)
+        .setSslHandshakeTimeout(
+            20) // TODO: Make it configurable. Increasing from default for unit test case
         .setPfxKeyCertOptions(storeToPfxOptions.apply(tlsConfiguration.getKeyStore()));
 
     if (isClientAuthenticationRequired()) {
