@@ -83,7 +83,7 @@ import org.junit.rules.TemporaryFolder;
 
 public class JsonRpcHttpServiceTlsTest {
   static {
-    System.setProperty("javax.net.debug", "ssl:handshake:verbose:keymanager");
+    System.setProperty("javax.net.debug", "all");
   }
 
   @ClassRule public static final TemporaryFolder folder = new TemporaryFolder();
