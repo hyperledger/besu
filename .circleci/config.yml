@@ -3,7 +3,7 @@ version: 2.1
 executors:
   besu_executor_med: # 2cpu, 4G ram
     docker:
-      - image: circleci/openjdk:13.0.1-jdk-buster
+      - image: circleci/openjdk:11.0.4-jdk-stretch
     resource_class: medium
     working_directory: ~/project
     environment:
@@ -11,7 +11,7 @@ executors:
 
   besu_executor_xl: # 8cpu, 16G ram
     docker:
-      - image: circleci/openjdk:13.0.1-jdk-buster
+      - image: circleci/openjdk:11.0.4-jdk-stretch
     resource_class: xlarge
     working_directory: ~/project
     environment:
@@ -30,7 +30,7 @@ commands:
           name: Install Packages - LibSodium
           command: |
             sudo apt-get update
-            sudo apt-get install -y libsodium23 libsodium-dev apt-transport-https
+            sudo apt-get install -y libsodium18 libsodium-dev apt-transport-https
       - restore_cache:
           name: Restore cached gradle dependencies
           keys:
