@@ -63,11 +63,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLParameters;
-import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 
 import com.google.common.base.Charsets;
@@ -83,7 +80,7 @@ import org.junit.rules.TemporaryFolder;
 
 public class JsonRpcHttpServiceTlsTest {
   static {
-    System.setProperty("javax.net.debug", "all");
+    System.setProperty("javax.net.debug", "ssl:handshake:data:verbose");
   }
 
   @ClassRule public static final TemporaryFolder folder = new TemporaryFolder();
@@ -169,28 +166,28 @@ public class JsonRpcHttpServiceTlsTest {
 
   private static TlsConfiguration getRpcHttpTlsConfiguration() {
     return new TlsConfiguration(
-        new TlsStoreConfiguration(getKeyStorePath(), getKeystorePassword()), getKnownClientsFile());
+        new TlsStoreConfiguration(getKeyStorePath(), new String(getKeystorePassword())),
+        getKnownClientsFile());
   }
 
   private static String getKeyStorePath() {
     try {
-      final String keyStorePath =
-          Paths.get(ClassLoader.getSystemResource(KEYSTORE_RESOURCE).toURI()).toString();
-      System.out.println("Key Store Path: " + keyStorePath);
-      return keyStorePath;
+      return Paths.get(ClassLoader.getSystemResource(KEYSTORE_RESOURCE).toURI()).toString();
     } catch (URISyntaxException e) {
       throw new RuntimeException("Unable to read keystore resource.", e);
     }
   }
 
-  private static String getKeystorePassword() {
+  private static char[] getKeystorePassword() {
     try {
       final Path keyStorePassdwordFile =
           Paths.get(
               ClassLoader.getSystemResource(JsonRpcHttpServiceTlsTest.KEYSTORE_PASSWORD_RESOURCE)
                   .toURI());
 
-      return Files.asCharSource(keyStorePassdwordFile.toFile(), Charsets.UTF_8).readFirstLine();
+      return Files.asCharSource(keyStorePassdwordFile.toFile(), Charsets.UTF_8)
+          .readFirstLine()
+          .toCharArray();
     } catch (URISyntaxException | IOException e) {
       throw new RuntimeException("Unable to read keystore password file", e);
     }
@@ -217,7 +214,7 @@ public class JsonRpcHttpServiceTlsTest {
     final String id = "123";
     final String json =
         "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_version\"}";
-    final HttpClient httpClient = getTlsHttpClient(useClientAuthentication);
+    final HttpClient httpClient = getTlsHttpClient();
 
     final HttpRequest request =
         HttpRequest.newBuilder()
@@ -243,55 +240,50 @@ public class JsonRpcHttpServiceTlsTest {
     }
   }
 
-  private HttpClient getTlsHttpClient(final boolean useClientAuthentication) {
+  private HttpClient getTlsHttpClient() {
     try {
-      final TrustManagerFactory trustManagerFactory = getTrustManagerFactory();
-      final KeyManagerFactory keyManagerFactory = getKeyManagerFactory();
-      final SSLContext sslContext =
-          getCustomSslContext(
-              useClientAuthentication ? keyManagerFactory.getKeyManagers() : null,
-              trustManagerFactory.getTrustManagers());
-      final SSLParameters sslParameters = sslContext.getDefaultSSLParameters();
-      sslParameters.setNeedClientAuth(useClientAuthentication);
-
-      return HttpClient.newBuilder().sslContext(sslContext).sslParameters(sslParameters).build();
-
+      return HttpClient.newBuilder()
+          .sslContext(getCustomSslContext())
+          .version(HttpClient.Version.HTTP_1_1)
+          .build();
     } catch (GeneralSecurityException e) {
       throw new RuntimeException(e);
     }
   }
 
   private TrustManagerFactory getTrustManagerFactory() throws GeneralSecurityException {
-    final String keystorePassword = getKeystorePassword();
-    final KeyStore trustStore = loadP12KeyStore(KEYSTORE_RESOURCE, keystorePassword);
-    final TrustManagerFactory trustManagerFactory =
-        TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+    // load server's keystore as client's truststore
+    final KeyStore trustStore = loadP12KeyStore(KEYSTORE_RESOURCE, getKeystorePassword());
+    final TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance("PKIX");
     trustManagerFactory.init(trustStore);
     return trustManagerFactory;
   }
 
   private KeyManagerFactory getKeyManagerFactory() throws GeneralSecurityException {
-    final String keystorePassword = getKeystorePassword();
+    // load client's keystore
+    final char[] keystorePassword = getKeystorePassword();
     final KeyStore keyStore = loadP12KeyStore(KEYSTORE_CLIENT_RESOURCE, keystorePassword);
-    final KeyManagerFactory keyManagerFactory =
-        KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-    keyManagerFactory.init(keyStore, keystorePassword.toCharArray());
+    final KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance("PKIX");
+    keyManagerFactory.init(keyStore, keystorePassword);
     return keyManagerFactory;
   }
 
-  private SSLContext getCustomSslContext(
-      final KeyManager[] keyManagers, final TrustManager[] trustManagers)
-      throws GeneralSecurityException {
-    final SSLContext sslContext = SSLContext.getInstance("TLSv1.2");
-    sslContext.init(keyManagers, trustManagers, SecureRandom.getInstanceStrong());
+  private SSLContext getCustomSslContext() throws GeneralSecurityException {
+    final TrustManagerFactory tmf = getTrustManagerFactory();
+    final KeyManagerFactory kmf = getKeyManagerFactory();
+    final SSLContext sslContext = SSLContext.getInstance("TLS");
+    sslContext.init(
+        useClientAuthentication ? kmf.getKeyManagers() : null,
+        tmf.getTrustManagers(),
+        SecureRandom.getInstanceStrong());
     return sslContext;
   }
 
-  private KeyStore loadP12KeyStore(final String resource, final String password)
+  private KeyStore loadP12KeyStore(final String resource, final char[] password)
       throws KeyStoreException, NoSuchAlgorithmException, CertificateException {
     final KeyStore store = KeyStore.getInstance("pkcs12");
     try (final InputStream keystoreStream = ClassLoader.getSystemResource(resource).openStream()) {
-      store.load(keystoreStream, password.toCharArray());
+      store.load(keystoreStream, password);
     } catch (IOException e) {
       throw new RuntimeException("Unable to load keystore.", e);
     }
