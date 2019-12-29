@@ -272,6 +272,7 @@ public class JsonRpcHttpServiceTlsTest {
   private SSLContext getCustomSslContext() throws GeneralSecurityException {
     final TrustManagerFactory tmf = getTrustManagerFactory();
     final KeyManagerFactory kmf = getKeyManagerFactory();
+    @SuppressWarnings("DoNotCreateSecureRandomDirectly")
     final SSLContext sslContext = SSLContext.getInstance("TLSv1.2");
     sslContext.init(
         useClientAuthentication ? kmf.getKeyManagers() : null,
