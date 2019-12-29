@@ -215,7 +215,7 @@ public class JsonRpcHttpServiceTlsTest {
     final String json =
         "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_version\"}";
     final HttpClient httpClient = getTlsHttpClient();
-
+    System.out.println("Connecting to: " + baseUrl);
     final HttpRequest request =
         HttpRequest.newBuilder()
             .POST(HttpRequest.BodyPublishers.ofString(json))
