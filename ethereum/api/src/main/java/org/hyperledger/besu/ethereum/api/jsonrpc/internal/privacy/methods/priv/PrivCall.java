@@ -21,6 +21,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.AbstractBlockParameterMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -31,12 +33,15 @@ import org.hyperledger.besu.ethereum.transaction.CallParameter;
 public class PrivCall extends AbstractBlockParameterMethod {
 
   private final PrivateTransactionSimulator privateTransactionSimulator;
+  private final EnclavePublicKeyProvider enclavePublicKeyProvider;
 
   public PrivCall(
       final BlockchainQueries blockchainQueries,
+      final EnclavePublicKeyProvider enclavePublicKeyProvider,
       final PrivateTransactionSimulator privateTransactionSimulator) {
     super(blockchainQueries);
     this.privateTransactionSimulator = privateTransactionSimulator;
+    this.enclavePublicKeyProvider = enclavePublicKeyProvider;
   }
 
   @Override
@@ -54,11 +59,19 @@ public class PrivCall extends AbstractBlockParameterMethod {
       final JsonRpcRequestContext request, final long blockNumber) {
     final CallParameter callParams = validateAndGetCallParams(request);
     final String privacyGroupId = request.getRequiredParameter(0, String.class);
+    // TODO: We should check that this privacy group exists. Otherwise the
 
-    // TODO: if multi-tenancy is enabled we need to check whether access to the privacyGroup can be
-    // granted!
+    // For now we do only support privCall on the head of the chain.
+    // TODO: Once we support privacy on PoW chains (mainnet) this can be removed
+    if (blockNumber != blockchainQueries.get().headBlockNumber()) {
+      return new JsonRpcErrorResponse(
+          request.getRequest().getId(), JsonRpcError.PRIV_CALL_ONLY_SUPPORTED_ON_CHAIN_HEAD);
+    }
+
+    final String enclaveKey = enclavePublicKeyProvider.getEnclaveKey(request.getUser());
+
     return privateTransactionSimulator
-        .process(privacyGroupId, callParams, blockNumber)
+        .process(privacyGroupId, enclaveKey, callParams, blockNumber)
         .map(
             result ->
                 result

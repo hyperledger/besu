@@ -54,7 +54,7 @@ public class PrivCallAcceptanceTest extends PrivacyAcceptanceTestBase {
   }
 
   @Test
-  public void deployingAndDoPrivCallMust() throws Exception {
+  public void privCallMustReturnCorrtectValue() throws Exception {
 
     final String privacyGroupId =
         minerNode.execute(
@@ -89,6 +89,41 @@ public class PrivCallAcceptanceTest extends PrivacyAcceptanceTestBase {
     value = resp.getValue();
     assertThat(new BigInteger(value.substring(2), 16))
         .isEqualByComparingTo(BigInteger.valueOf(VALUE));
+  }
+
+  @Test
+  public void privCallWithWrongPrivacyGroupIdMustNotSucceed() throws Exception {
+
+    final String privacyGroupId =
+        minerNode.execute(
+            privacyTransactions.createPrivacyGroup(
+                "myGroupName", "my group description", minerNode));
+
+    final EventEmitter eventEmitter =
+        minerNode.execute(
+            privateContractTransactions.createSmartContractWithPrivacyGroupId(
+                EventEmitter.class,
+                minerNode.getTransactionSigningKey(),
+                POW_CHAIN_ID,
+                minerNode.getEnclaveKey(),
+                privacyGroupId));
+
+    privateContractVerifier
+        .validPrivateContractDeployed(
+            eventEmitter.getContractAddress(), minerNode.getAddress().toString())
+        .verify(eventEmitter);
+
+    final char[] chars = privacyGroupId.toCharArray();
+    if (chars[0] == '0') {
+      chars[0] = '1';
+    } else {
+      chars[0] = '0';
+    }
+    final Request<Object, EthCall> priv_call = privCall(String.valueOf(chars), eventEmitter);
+
+    final EthCall resp = priv_call.send();
+
+    assertThat(resp.getResult()).isEqualTo("0x");
   }
 
   @NotNull

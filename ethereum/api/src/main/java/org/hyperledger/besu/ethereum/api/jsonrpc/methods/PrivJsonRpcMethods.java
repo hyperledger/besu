@@ -71,6 +71,7 @@ public class PrivJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
         new PrivDistributeRawTransaction(privacyController, enclavePublicKeyProvider),
         new PrivCall(
             getBlockchainQueries(),
+            enclavePublicKeyProvider,
             new PrivateTransactionSimulator(
                 getBlockchainQueries().getBlockchain(),
                 getBlockchainQueries().getWorldStateArchive(),

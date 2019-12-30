@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.privacy;
 
 import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -37,10 +38,10 @@ import java.util.Optional;
 import org.apache.tuweni.bytes.Bytes;
 
 /*
- * Used to process transactions for eth_call and eth_estimateGas.
+ * Used to process transactions for priv_call.
  *
- * The processing won't affect the world state, it is used to execute read operations on the
- * blockchain or to estimate the transaction gas cost.
+ * The processing won't affect the private world state, it is used to execute read operations on the
+ * blockchain.
  */
 public class PrivateTransactionSimulator {
 
@@ -70,26 +71,43 @@ public class PrivateTransactionSimulator {
   }
 
   public Optional<PrivateTransactionSimulatorResult> process(
-      final String privacyGroupId, final CallParameter callParams, final Hash blockHeaderHash) {
+      final String privacyGroupId,
+      final String enclaveKey,
+      final CallParameter callParams,
+      final Hash blockHeaderHash) {
     final BlockHeader header = blockchain.getBlockHeader(blockHeaderHash).orElse(null);
-    return process(privacyGroupId, callParams, header);
+    return process(privacyGroupId, enclaveKey, callParams, header);
   }
 
   public Optional<PrivateTransactionSimulatorResult> process(
-      final String privacyGroupId, final CallParameter callParams, final long blockNumber) {
+      final String privacyGroupId,
+      final String enclaveKey,
+      final CallParameter callParams,
+      final long blockNumber) {
     final BlockHeader header = blockchain.getBlockHeader(blockNumber).orElse(null);
-    return process(privacyGroupId, callParams, header);
+    return process(privacyGroupId, enclaveKey, callParams, header);
   }
 
   public Optional<PrivateTransactionSimulatorResult> processAtHead(
-      final String privacyGroupId, final CallParameter callParams) {
-    return process(privacyGroupId, callParams, blockchain.getChainHeadHeader());
+      final String privacyGroupId, final String enclaveKey, final CallParameter callParams) {
+    return process(privacyGroupId, enclaveKey, callParams, blockchain.getChainHeadHeader());
   }
 
   private Optional<PrivateTransactionSimulatorResult> process(
-      final String privacyGroupIdString, final CallParameter callParams, final BlockHeader header) {
+      final String privacyGroupIdString,
+      final String enclaveKey,
+      final CallParameter callParams,
+      final BlockHeader header) {
     if (header == null) {
       return Optional.empty();
+    }
+
+    // check whether the user (enclaveKey) is part of the current privacy group if multi tenancy is
+    // enabled
+    if (privacyParameters.isMultiTenancyEnabled()) {
+      final PrivacyGroup privacyGroup =
+          privacyParameters.getEnclave().retrievePrivacyGroup(privacyGroupIdString);
+      if (!privacyGroup.getMembers().contains(enclaveKey)) {}
     }
     final MutableWorldState publicWorldState =
         worldStateArchive.getMutable(header.getStateRoot()).orElse(null);
