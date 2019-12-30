@@ -82,13 +82,13 @@ public class PrivCallTest {
     final JsonRpcRequestContext request = ethCallRequest(privacyGroupId, callParameter(), "latest");
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, null);
 
-    when(privateTransactionSimulator.process(any(), enclaveKey, any(), anyLong()))
+    when(privateTransactionSimulator.process(any(), any(), any(), anyLong()))
         .thenReturn(Optional.empty());
 
     final JsonRpcResponse response = method.response(request);
 
     assertThat(response).isEqualToComparingFieldByField(expectedResponse);
-    verify(privateTransactionSimulator).process(any(), enclaveKey, any(), anyLong());
+    verify(privateTransactionSimulator).process(any(), any(), any(), anyLong());
   }
 
   @Test
@@ -103,7 +103,7 @@ public class PrivCallTest {
     final JsonRpcResponse response = method.response(request);
 
     assertThat(response).isEqualToComparingFieldByFieldRecursively(expectedResponse);
-    verify(privateTransactionSimulator).process(any(), enclaveKey, eq(callParameter), anyLong());
+    verify(privateTransactionSimulator).process(any(), any(), eq(callParameter), anyLong());
   }
 
   @Test
@@ -116,42 +116,42 @@ public class PrivCallTest {
     final JsonRpcResponse response = method.response(request);
 
     assertThat(response).isEqualToComparingFieldByFieldRecursively(expectedResponse);
-    verify(privateTransactionSimulator).process(any(), enclaveKey, eq(callParameter()), anyLong());
+    verify(privateTransactionSimulator).process(any(), any(), eq(callParameter()), anyLong());
   }
 
   @Test
   public void shouldUseCorrectBlockNumberWhenLatest() {
     final JsonRpcRequestContext request = ethCallRequest(privacyGroupId, callParameter(), "latest");
     when(blockchainQueries.headBlockNumber()).thenReturn(11L);
-    when(privateTransactionSimulator.process(any(), enclaveKey, any(), anyLong()))
+    when(privateTransactionSimulator.process(any(), any(), any(), anyLong()))
         .thenReturn(Optional.empty());
 
     method.response(request);
 
-    verify(privateTransactionSimulator).process(any(), enclaveKey, any(), eq(11L));
+    verify(privateTransactionSimulator).process(any(), any(), any(), eq(11L));
   }
 
   @Test
   public void shouldUseCorrectBlockNumberWhenEarliest() {
     final JsonRpcRequestContext request =
         ethCallRequest(privacyGroupId, callParameter(), "earliest");
-    when(privateTransactionSimulator.process(any(), enclaveKey, any(), anyLong()))
+    when(privateTransactionSimulator.process(any(), any(), any(), anyLong()))
         .thenReturn(Optional.empty());
     method.response(request);
 
-    verify(privateTransactionSimulator).process(any(), enclaveKey, any(), eq(0L));
+    verify(privateTransactionSimulator).process(any(), any(), any(), eq(0L));
   }
 
   @Test
   public void shouldUseCorrectBlockNumberWhenSpecified() {
     final JsonRpcRequestContext request =
         ethCallRequest(privacyGroupId, callParameter(), Quantity.create(13L));
-    when(privateTransactionSimulator.process(any(), enclaveKey, any(), anyLong()))
+    when(privateTransactionSimulator.process(any(), any(), any(), anyLong()))
         .thenReturn(Optional.empty());
 
     method.response(request);
 
-    verify(privateTransactionSimulator).process(any(), enclaveKey, any(), eq(13L));
+    verify(privateTransactionSimulator).process(any(), any(), any(), eq(13L));
   }
 
   @Test
@@ -184,7 +184,7 @@ public class PrivCallTest {
 
     when(result.getValidationResult()).thenReturn(ValidationResult.valid());
     when(result.getOutput()).thenReturn(output);
-    when(privateTransactionSimulator.process(any(), enclaveKey, any(), anyLong()))
+    when(privateTransactionSimulator.process(any(), any(), any(), anyLong()))
         .thenReturn(Optional.of(result));
   }
 }
