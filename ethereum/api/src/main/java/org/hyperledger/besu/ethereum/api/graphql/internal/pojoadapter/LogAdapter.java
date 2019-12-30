@@ -19,14 +19,13 @@ import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogTopic;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 import graphql.schema.DataFetchingEnvironment;
+import org.apache.tuweni.bytes.Bytes;
 
 @SuppressWarnings("unused") // reflected by GraphQL
 public class LogAdapter extends AdapterBase {
@@ -40,17 +39,13 @@ public class LogAdapter extends AdapterBase {
     return Optional.of(logWithMetadata.getLogIndex());
   }
 
-  public List<Bytes32> getTopics() {
+  public List<LogTopic> getTopics() {
     final List<LogTopic> topics = logWithMetadata.getTopics();
-    final List<Bytes32> result = new ArrayList<>();
-    for (final LogTopic topic : topics) {
-      result.add(Bytes32.leftPad(topic));
-    }
-    return result;
+    return new ArrayList<>(topics);
   }
 
-  public Optional<BytesValue> getData() {
-    return Optional.of(logWithMetadata.getData());
+  public Optional<Bytes> getData() {
+    return Optional.of(Bytes.wrap(logWithMetadata.getData().getByteArray()));
   }
 
   public Optional<TransactionAdapter> getTransaction(final DataFetchingEnvironment environment) {

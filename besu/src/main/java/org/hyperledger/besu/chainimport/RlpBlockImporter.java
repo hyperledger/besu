@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
@@ -30,7 +31,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.util.RawBlockIterator;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -204,11 +204,11 @@ public class RlpBlockImporter {
 
   public static final class ImportResult {
 
-    public final UInt256 td;
+    public final Difficulty td;
 
     final int count;
 
-    ImportResult(final UInt256 td, final int count) {
+    ImportResult(final Difficulty td, final int count) {
       this.td = td;
       this.count = count;
     }

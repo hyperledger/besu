@@ -20,11 +20,11 @@ import static org.hyperledger.besu.ethereum.p2p.peers.PeerTestHelper.enode;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
 public class NeighborsPacketDataTest {
@@ -36,7 +36,7 @@ public class NeighborsPacketDataTest {
         Arrays.asList(DiscoveryPeer.fromEnode(enode()), DiscoveryPeer.fromEnode(enode()));
 
     final NeighborsPacketData packet = NeighborsPacketData.create(peers);
-    final BytesValue serialized = RLP.encode(packet::writeTo);
+    final Bytes serialized = RLP.encode(packet::writeTo);
     final NeighborsPacketData deserialized = NeighborsPacketData.readFrom(RLP.input(serialized));
 
     assertThat(deserialized.getNodes()).isEqualTo(peers);
@@ -54,7 +54,7 @@ public class NeighborsPacketDataTest {
     out.writeList(peers, DiscoveryPeer::writeTo);
     out.writeLongScalar(time);
     out.endList();
-    BytesValue encoded = out.encoded();
+    Bytes encoded = out.encoded();
 
     final NeighborsPacketData deserialized = NeighborsPacketData.readFrom(RLP.input(encoded));
     assertThat(deserialized.getNodes()).isEqualTo(peers);
@@ -72,7 +72,7 @@ public class NeighborsPacketDataTest {
     out.writeList(peers, DiscoveryPeer::writeTo);
     out.writeLongScalar(time);
     out.endList();
-    BytesValue encoded = out.encoded();
+    Bytes encoded = out.encoded();
 
     final NeighborsPacketData deserialized = NeighborsPacketData.readFrom(RLP.input(encoded));
     assertThat(deserialized.getNodes()).isEqualTo(peers);

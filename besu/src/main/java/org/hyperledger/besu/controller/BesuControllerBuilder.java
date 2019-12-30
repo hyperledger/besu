@@ -15,7 +15,7 @@
 package org.hyperledger.besu.controller;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.hyperledger.besu.controller.KeyPairUtil.loadKeyPair;
+import static org.hyperledger.besu.crypto.KeyPairUtil.loadKeyPair;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;

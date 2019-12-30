@@ -14,15 +14,16 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.logging.log4j.LogManager.getLogger;
 
-import org.hyperledger.besu.enclave.Enclave;
-import org.hyperledger.besu.enclave.EnclaveException;
-import org.hyperledger.besu.enclave.types.ReceiveRequest;
+import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcEnclaveErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -36,31 +37,37 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.BytesValues;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
-public class PrivGetTransactionReceipt extends PrivacyApiMethod {
+public class PrivGetTransactionReceipt implements JsonRpcMethod {
 
   private static final Logger LOG = getLogger();
 
   private final BlockchainQueries blockchain;
-  private final Enclave enclave;
+  private PrivacyParameters privacyParameters;
+  private PrivacyController privacyController;
+  private EnclavePublicKeyProvider enclavePublicKeyProvider;
 
   public PrivGetTransactionReceipt(
-      final BlockchainQueries blockchain, final PrivacyParameters privacyParameters) {
-    super(privacyParameters);
+      final BlockchainQueries blockchain,
+      final PrivacyParameters privacyParameters,
+      final PrivacyController privacyController,
+      final EnclavePublicKeyProvider enclavePublicKeyProvider) {
     this.blockchain = blockchain;
-    this.enclave = privacyParameters.getEnclave();
+    this.privacyParameters = privacyParameters;
+    this.privacyController = privacyController;
+    this.enclavePublicKeyProvider = enclavePublicKeyProvider;
   }
 
   @Override
@@ -69,7 +76,7 @@ public class PrivGetTransactionReceipt extends PrivacyApiMethod {
   }
 
   @Override
-  public JsonRpcResponse doResponse(final JsonRpcRequestContext requestContext) {
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     LOG.trace("Executing {}", RpcMethod.PRIV_GET_TRANSACTION_RECEIPT.getMethodName());
     final Hash transactionHash = requestContext.getRequiredParameter(0, Hash.class);
     final Optional<TransactionLocation> maybeLocation =
@@ -85,19 +92,22 @@ public class PrivGetTransactionReceipt extends PrivacyApiMethod {
     final Hash blockhash = location.getBlockHash();
     final long blockNumber = blockchain.getBlockchain().getBlockHeader(blockhash).get().getNumber();
 
-    final String publicKey = privacyParameters.getEnclavePublicKey();
     final PrivateTransaction privateTransaction;
     final String privacyGroupId;
     try {
-      final ReceiveResponse receiveResponse = getReceiveResponseFromEnclave(transaction, publicKey);
-      LOG.trace("Received transaction information from Enclave");
+      final ReceiveResponse receiveResponse =
+          privacyController.retrieveTransaction(
+              transaction.getPayload().toBase64String(),
+              enclavePublicKeyProvider.getEnclaveKey(requestContext.getUser()));
+      LOG.trace("Received transaction information");
 
-      final BytesValueRLPInput bytesValueRLPInput =
-          new BytesValueRLPInput(BytesValues.fromBase64(receiveResponse.getPayload()), false);
+      final BytesValueRLPInput input =
+          new BytesValueRLPInput(
+              Bytes.fromBase64String(new String(receiveResponse.getPayload(), UTF_8)), false);
 
-      privateTransaction = PrivateTransaction.readFrom(bytesValueRLPInput);
+      privateTransaction = PrivateTransaction.readFrom(input);
       privacyGroupId = receiveResponse.getPrivacyGroupId();
-    } catch (final EnclaveException e) {
+    } catch (final EnclaveClientException e) {
       return handleEnclaveException(requestContext, e);
     }
 
@@ -106,13 +116,13 @@ public class PrivGetTransactionReceipt extends PrivacyApiMethod {
             ? Address.privateContractAddress(
                     privateTransaction.getSender(),
                     privateTransaction.getNonce(),
-                    BytesValues.fromBase64(privacyGroupId))
+                    Bytes.fromBase64String(privacyGroupId))
                 .toString()
             : null;
 
     LOG.trace("Calculated contractAddress: {}", contractAddress);
 
-    final BytesValue rlpEncoded = RLP.encode(privateTransaction::writeTo);
+    final Bytes rlpEncoded = RLP.encode(privateTransaction::writeTo);
     final Bytes32 txHash = org.hyperledger.besu.crypto.Hash.keccak256(rlpEncoded);
 
     LOG.trace("Calculated private transaction hash: {}", txHash);
@@ -125,22 +135,19 @@ public class PrivGetTransactionReceipt extends PrivacyApiMethod {
 
     LOG.trace("Processed private transaction events");
 
-    final BytesValue transactionOutput =
-        privacyParameters
-            .getPrivateStateStorage()
-            .getTransactionOutput(txHash)
-            .orElse(BytesValue.wrap(new byte[0]));
+    final Bytes transactionOutput =
+        privacyParameters.getPrivateStateStorage().getTransactionOutput(txHash).orElse(Bytes.EMPTY);
 
-    final BytesValue revertReason =
+    final Bytes revertReason =
         privacyParameters.getPrivateStateStorage().getRevertReason(txHash).orElse(null);
 
     final String transactionStatus =
         Quantity.create(
-            BytesValues.asUnsignedBigInteger(
-                privacyParameters
-                    .getPrivateStateStorage()
-                    .getStatus(txHash)
-                    .orElse(BytesValue.wrap(new byte[0]))));
+            privacyParameters
+                .getPrivateStateStorage()
+                .getStatus(txHash)
+                .orElse(Bytes.EMPTY)
+                .toUnsignedBigInteger());
 
     LOG.trace("Processed private transaction output");
 
@@ -167,18 +174,8 @@ public class PrivGetTransactionReceipt extends PrivacyApiMethod {
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), result);
   }
 
-  private ReceiveResponse getReceiveResponseFromEnclave(
-      final Transaction transaction, final String publicKey) {
-    LOG.trace("Fetching transaction information from Enclave");
-    final ReceiveRequest enclaveRequest =
-        new ReceiveRequest(BytesValues.asBase64String(transaction.getPayload()), publicKey);
-    final ReceiveResponse enclaveResponse = enclave.receive(enclaveRequest);
-    LOG.trace("Received transaction information from Enclave");
-    return enclaveResponse;
-  }
-
   private JsonRpcResponse handleEnclaveException(
-      final JsonRpcRequestContext requestContext, final EnclaveException e) {
+      final JsonRpcRequestContext requestContext, final EnclaveClientException e) {
     final JsonRpcError jsonRpcError =
         JsonRpcEnclaveErrorConverter.convertEnclaveInvalidReason(e.getMessage());
     switch (jsonRpcError) {

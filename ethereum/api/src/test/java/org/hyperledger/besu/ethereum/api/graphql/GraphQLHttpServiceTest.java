@@ -27,7 +27,6 @@ import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.testutil.BlockTestUtil;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.net.InetSocketAddress;
 import java.net.URL;
@@ -44,6 +43,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -277,7 +277,7 @@ public class GraphQLHttpServiceTest {
   @Test
   public void ethGetUncleCountByBlockHash() throws Exception {
     final int uncleCount = 4;
-    final Hash blockHash = Hash.hash(BytesValue.of(1));
+    final Hash blockHash = Hash.hash(Bytes.of(1));
     @SuppressWarnings("unchecked")
     final BlockWithMetadata<TransactionWithMetadata, Hash> block =
         Mockito.mock(BlockWithMetadata.class);

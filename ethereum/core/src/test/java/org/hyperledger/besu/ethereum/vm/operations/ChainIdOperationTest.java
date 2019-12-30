@@ -20,8 +20,8 @@ import static org.mockito.Mockito.mock;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.mainnet.ConstantinopleGasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.util.bytes.Bytes32;
 
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -59,7 +59,7 @@ public class ChainIdOperationTest {
     operation.execute(messageFrame);
     Mockito.verify(messageFrame).pushStackItem(arg.capture());
     Mockito.verifyNoMoreInteractions(messageFrame);
-    assertThat(arg.getValue()).isEqualByComparingTo(chainId);
+    assertThat(arg.getValue()).isEqualTo(chainId);
   }
 
   @Test

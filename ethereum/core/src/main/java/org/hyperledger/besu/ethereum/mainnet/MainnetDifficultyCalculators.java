@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.util.uint.UInt256;
+import org.hyperledger.besu.plugin.data.Quantity;
 
 import java.math.BigInteger;
 
@@ -125,7 +125,7 @@ public abstract class MainnetDifficultyCalculators {
     return difficulty.compareTo(MINIMUM_DIFFICULTY) < 0 ? MINIMUM_DIFFICULTY : difficulty;
   }
 
-  private static BigInteger difficulty(final UInt256 value) {
-    return new BigInteger(1, value.getBytes().extractArray());
+  private static BigInteger difficulty(final Quantity value) {
+    return (BigInteger) value.getValue();
   }
 }

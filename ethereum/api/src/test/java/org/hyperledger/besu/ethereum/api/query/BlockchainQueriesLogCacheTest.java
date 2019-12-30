@@ -16,7 +16,7 @@
 
 package org.hyperledger.besu.ethereum.api.query;
 
-import static org.hyperledger.besu.ethereum.api.query.BlockchainQueries.BLOCKS_PER_BLOOM_CACHE;
+import static org.hyperledger.besu.ethereum.api.query.TransactionLogsIndexer.BLOCKS_PER_BLOOM_CACHE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.times;
@@ -24,18 +24,17 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -43,6 +42,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -63,12 +63,13 @@ public class BlockchainQueriesLogCacheTest {
 
   @Mock MutableBlockchain blockchain;
   @Mock WorldStateArchive worldStateArchive;
+  @Mock EthScheduler scheduler;
   private BlockchainQueries blockchainQueries;
 
   @BeforeClass
   public static void setupClass() throws IOException {
     final Address testAddress = Address.fromHexString("0x123456");
-    final BytesValue testMessage = BytesValue.fromHexString("0x9876");
+    final Bytes testMessage = Bytes.fromHexString("0x9876");
     final Log testLog = new Log(testAddress, testMessage, List.of());
     testLogsBloomFilter = new LogsBloomFilter();
     testLogsBloomFilter.insertLog(testLog);
@@ -101,12 +102,12 @@ public class BlockchainQueriesLogCacheTest {
             Hash.EMPTY,
             Hash.EMPTY,
             testLogsBloomFilter,
-            UInt256.ZERO,
+            Difficulty.ZERO,
             0,
             0,
             0,
             0,
-            BytesValue.EMPTY,
+            Bytes.EMPTY,
             Hash.EMPTY,
             0,
             new MainnetBlockHeaderFunctions());
@@ -119,8 +120,10 @@ public class BlockchainQueriesLogCacheTest {
     when(blockchain.getBlockBody(any())).thenReturn(Optional.of(fakeBody));
     blockchainQueries =
         new BlockchainQueries(
-            new ProtocolContext<Void>(blockchain, worldStateArchive, null),
-            Optional.of(cacheDir.getRoot().toPath()));
+            blockchain,
+            worldStateArchive,
+            Optional.of(cacheDir.getRoot().toPath()),
+            Optional.of(scheduler));
   }
 
   /**

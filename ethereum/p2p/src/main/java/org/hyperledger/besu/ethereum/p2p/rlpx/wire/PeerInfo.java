@@ -14,20 +14,20 @@
  */
 package org.hyperledger.besu.ethereum.p2p.rlpx.wire;
 
-import static org.hyperledger.besu.util.bytes.BytesValue.wrap;
+import static org.apache.tuweni.bytes.Bytes.wrap;
 
 import org.hyperledger.besu.crypto.SECP256K1.PublicKey;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.BytesValues;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+
+import org.apache.tuweni.bytes.Bytes;
 
 /**
  * Encapsulates information about a peer, including their protocol version, client ID, capabilities
@@ -40,14 +40,14 @@ public class PeerInfo {
   private final String clientId;
   private final List<Capability> capabilities;
   private final int port;
-  private final BytesValue nodeId;
+  private final Bytes nodeId;
 
   public PeerInfo(
       final int version,
       final String clientId,
       final List<Capability> capabilities,
       final int port,
-      final BytesValue nodeId) {
+      final Bytes nodeId) {
     this.version = version;
     this.clientId = clientId;
     this.capabilities = capabilities;
@@ -58,11 +58,11 @@ public class PeerInfo {
   public static PeerInfo readFrom(final RLPInput in) {
     in.enterList();
     final int version = in.readUnsignedByte();
-    final String clientId = in.readBytesValue(BytesValues::asString);
+    final String clientId = new String(in.readBytes().toArrayUnsafe(), StandardCharsets.UTF_8);
     final List<Capability> caps =
         in.nextIsNull() ? Collections.emptyList() : in.readList(Capability::readFrom);
     final int port = in.readIntScalar();
-    final BytesValue nodeId = in.readBytesValue();
+    final Bytes nodeId = in.readBytes();
     in.leaveListLenient();
     return new PeerInfo(version, clientId, caps, port, nodeId);
   }
@@ -90,7 +90,7 @@ public class PeerInfo {
     return port;
   }
 
-  public BytesValue getNodeId() {
+  public Bytes getNodeId() {
     return nodeId;
   }
 
@@ -102,10 +102,10 @@ public class PeerInfo {
   public void writeTo(final RLPOutput out) {
     out.startList();
     out.writeUnsignedByte(getVersion());
-    out.writeBytesValue(wrap(getClientId().getBytes(StandardCharsets.UTF_8)));
+    out.writeBytes(wrap(getClientId().getBytes(StandardCharsets.UTF_8)));
     out.writeList(getCapabilities(), Capability::writeTo);
     out.writeIntScalar(getPort());
-    out.writeBytesValue(getNodeId());
+    out.writeBytes(getNodeId());
     out.endList();
   }
 

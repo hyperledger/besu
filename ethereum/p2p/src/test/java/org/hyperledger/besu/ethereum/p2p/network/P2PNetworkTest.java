@@ -37,7 +37,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.net.InetAddress;
 import java.util.Arrays;
@@ -45,6 +44,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import io.vertx.core.Vertx;
+import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
 import org.junit.After;
 import org.junit.Test;
@@ -73,7 +73,7 @@ public class P2PNetworkTest {
       listener.start();
       connector.start();
       final EnodeURL listenerEnode = listener.getLocalEnode().get();
-      final BytesValue listenId = listenerEnode.getNodeId();
+      final Bytes listenId = listenerEnode.getNodeId();
       final int listenPort = listenerEnode.getListeningPort().getAsInt();
 
       Assertions.assertThat(
@@ -95,7 +95,7 @@ public class P2PNetworkTest {
       listener.start();
       connector.start();
       final EnodeURL listenerEnode = listener.getLocalEnode().get();
-      final BytesValue listenId = listenerEnode.getNodeId();
+      final Bytes listenId = listenerEnode.getNodeId();
       final int listenPort = listenerEnode.getListeningPort().getAsInt();
 
       final CompletableFuture<PeerConnection> firstFuture =
@@ -139,7 +139,7 @@ public class P2PNetworkTest {
       listener.start();
       connector1.start();
       final EnodeURL listenerEnode = listener.getLocalEnode().get();
-      final BytesValue listenId = listenerEnode.getNodeId();
+      final Bytes listenId = listenerEnode.getNodeId();
       final int listenPort = listenerEnode.getListeningPort().getAsInt();
 
       final Peer listeningPeer = createPeer(listenId, listenPort);
@@ -189,7 +189,7 @@ public class P2PNetworkTest {
       listener.start();
       connector.start();
       final EnodeURL listenerEnode = listener.getLocalEnode().get();
-      final BytesValue listenId = listenerEnode.getNodeId();
+      final Bytes listenId = listenerEnode.getNodeId();
       final int listenPort = listenerEnode.getListeningPort().getAsInt();
 
       final Peer listenerPeer = createPeer(listenId, listenPort);
@@ -209,11 +209,11 @@ public class P2PNetworkTest {
       remoteNetwork.start();
 
       final EnodeURL localEnode = localNetwork.getLocalEnode().get();
-      final BytesValue localId = localEnode.getNodeId();
+      final Bytes localId = localEnode.getNodeId();
       final int localPort = localEnode.getListeningPort().getAsInt();
 
       final EnodeURL remoteEnode = remoteNetwork.getLocalEnode().get();
-      final BytesValue remoteId = remoteEnode.getNodeId();
+      final Bytes remoteId = remoteEnode.getNodeId();
       final int remotePort = remoteEnode.getListeningPort().getAsInt();
 
       final Peer localPeer = createPeer(localId, localPort);
@@ -279,7 +279,7 @@ public class P2PNetworkTest {
       final CompletableFuture<PeerConnection> connectFuture = remoteNetwork.connect(localPeer);
 
       // Check connection is made, and then a disconnect is registered at remote
-      final BytesValue localId = localEnode.getNodeId();
+      final Bytes localId = localEnode.getNodeId();
       Assertions.assertThat(connectFuture.get(5L, TimeUnit.SECONDS).getPeerInfo().getNodeId())
           .isEqualTo(localId);
       Assertions.assertThat(peerFuture.get(5L, TimeUnit.SECONDS).getPeerInfo().getNodeId())
@@ -289,7 +289,7 @@ public class P2PNetworkTest {
     }
   }
 
-  private Peer createPeer(final BytesValue nodeId, final int listenPort) {
+  private Peer createPeer(final Bytes nodeId, final int listenPort) {
     return DefaultPeer.fromEnodeURL(
         EnodeURL.builder()
             .ipAddress(InetAddress.getLoopbackAddress().getHostAddress())

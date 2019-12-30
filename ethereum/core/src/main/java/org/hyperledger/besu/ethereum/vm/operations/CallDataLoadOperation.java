@@ -18,10 +18,11 @@ import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.vm.AbstractOperation;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.MutableBytes32;
-import org.hyperledger.besu.util.uint.UInt256;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.bytes.MutableBytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class CallDataLoadOperation extends AbstractOperation {
 
@@ -36,7 +37,7 @@ public class CallDataLoadOperation extends AbstractOperation {
 
   @Override
   public void execute(final MessageFrame frame) {
-    final UInt256 startWord = frame.popStackItem().asUInt256();
+    final UInt256 startWord = UInt256.fromBytes(frame.popStackItem());
 
     // If the start index doesn't fit a int, it comes after anything in data, and so the returned
     // word should be zero.
@@ -45,11 +46,11 @@ public class CallDataLoadOperation extends AbstractOperation {
       return;
     }
 
-    final int offset = startWord.toInt();
-    final BytesValue data = frame.getInputData();
+    final int offset = startWord.intValue();
+    final Bytes data = frame.getInputData();
     final MutableBytes32 res = MutableBytes32.create();
     if (offset < data.size()) {
-      final BytesValue toCopy = data.slice(offset, Math.min(Bytes32.SIZE, data.size() - offset));
+      final Bytes toCopy = data.slice(offset, Math.min(Bytes32.SIZE, data.size() - offset));
       toCopy.copyTo(res, 0);
     }
     frame.pushStackItem(res);

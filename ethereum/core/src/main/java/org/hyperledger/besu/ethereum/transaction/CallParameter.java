@@ -16,9 +16,10 @@ package org.hyperledger.besu.ethereum.transaction;
 
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Objects;
+
+import org.apache.tuweni.bytes.Bytes;
 
 // Represents parameters for a eth_call or eth_estimateGas JSON-RPC methods.
 public class CallParameter {
@@ -33,7 +34,7 @@ public class CallParameter {
 
   private final Wei value;
 
-  private final BytesValue payload;
+  private final Bytes payload;
 
   public CallParameter(
       final Address from,
@@ -41,7 +42,7 @@ public class CallParameter {
       final long gasLimit,
       final Wei gasPrice,
       final Wei value,
-      final BytesValue payload) {
+      final Bytes payload) {
     this.from = from;
     this.to = to;
     this.gasLimit = gasLimit;
@@ -70,7 +71,7 @@ public class CallParameter {
     return value;
   }
 
-  public BytesValue getPayload() {
+  public Bytes getPayload() {
     return payload;
   }
 

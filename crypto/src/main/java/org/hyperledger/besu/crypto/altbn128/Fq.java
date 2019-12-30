@@ -14,13 +14,11 @@
  */
 package org.hyperledger.besu.crypto.altbn128;
 
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.BytesValues;
-
 import java.math.BigInteger;
 import java.util.Objects;
 
 import com.google.common.base.MoreObjects;
+import org.apache.tuweni.bytes.Bytes;
 
 /**
  * Adapted from the pc_ecc (Apache 2 License) implementation:
@@ -52,8 +50,8 @@ public class Fq implements FieldElement<Fq> {
     this.n = n;
   }
 
-  public BytesValue toBytesValue() {
-    return BytesValues.trimLeadingZeros(BytesValue.wrap(n.toByteArray()));
+  public Bytes toBytes() {
+    return Bytes.wrap(n.toByteArray()).trimLeadingZeros();
   }
 
   @Override

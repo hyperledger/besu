@@ -16,12 +16,11 @@ package org.hyperledger.besu.ethereum.trie;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-import org.hyperledger.besu.util.bytes.BytesValue;
-
 import java.util.ArrayList;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.tuweni.bytes.Bytes;
 
 /**
  * A Trie reference test case specification.
@@ -31,10 +30,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class TrieRefTestCaseSpec {
 
   /** The set of inputs to insert into the Trie. */
-  private final BytesValue[][] in;
+  private final Bytes[][] in;
 
   /** The expected root hash of the Trie after all inputs have been entered. */
-  private final BytesValue root;
+  private final Bytes root;
 
   /**
    * Public constructor.
@@ -49,7 +48,7 @@ public class TrieRefTestCaseSpec {
       @SuppressWarnings("unchecked")
       final ArrayList<ArrayList<String>> in = (ArrayList<ArrayList<String>>) inAsObj;
 
-      this.in = new BytesValue[in.size()][2];
+      this.in = new Bytes[in.size()][2];
 
       for (int i = 0; i < in.size(); ++i) {
         final String key = in.get(i).get(0);
@@ -62,17 +61,17 @@ public class TrieRefTestCaseSpec {
       throw new RuntimeException("in has unknown structure.");
     }
 
-    this.root = BytesValue.fromHexStringLenient(root);
+    this.root = Bytes.fromHexStringLenient(root);
   }
 
-  private BytesValue stringParamToBytes(final String s) {
+  private Bytes stringParamToBytes(final String s) {
     if (s == null) {
       return null;
     }
     if (s.startsWith("0x")) {
-      return BytesValue.fromHexString(s);
+      return Bytes.fromHexString(s);
     }
-    return BytesValue.wrap(s.getBytes(UTF_8));
+    return Bytes.wrap(s.getBytes(UTF_8));
   }
 
   /**
@@ -80,7 +79,7 @@ public class TrieRefTestCaseSpec {
    *
    * @return The set of inputs to insert into the Trie.
    */
-  public BytesValue[][] getIn() {
+  public Bytes[][] getIn() {
     return in;
   }
 
@@ -89,7 +88,7 @@ public class TrieRefTestCaseSpec {
    *
    * @return The expected root hash of the Trie after all inputs have been entered.
    */
-  public BytesValue getRoot() {
+  public Bytes getRoot() {
     return root;
   }
 }

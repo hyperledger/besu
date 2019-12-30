@@ -24,8 +24,8 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.MessageFrame.State;
-import org.hyperledger.besu.util.uint.UInt256;
 
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -89,7 +89,7 @@ public class ConstantinopleSStoreOperationGasCostTest {
             code,
             Account.DEFAULT_VERSION,
             gasLimit,
-            account -> account.setStorageValue(UInt256.ZERO, UInt256.of(originalValue)));
+            account -> account.setStorageValue(UInt256.ZERO, UInt256.valueOf(originalValue)));
     assertThat(frame.getState()).isEqualTo(State.COMPLETED_SUCCESS);
     assertThat(frame.getRemainingGas()).isEqualTo(Gas.of(gasLimit - expectedGasUsed));
     assertThat(frame.getGasRefund()).isEqualTo(Gas.of(expectedGasRefund));

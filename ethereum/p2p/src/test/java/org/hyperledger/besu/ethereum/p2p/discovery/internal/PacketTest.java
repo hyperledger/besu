@@ -17,11 +17,11 @@ package org.hyperledger.besu.ethereum.p2p.discovery.internal;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.p2p.discovery.Endpoint;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.OptionalInt;
 
 import io.vertx.core.buffer.Buffer;
+import org.apache.tuweni.bytes.Bytes;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.Test;
 
@@ -40,16 +40,16 @@ public class PacketTest {
         .isEqualTo(new Endpoint("180.181.122.26", 1025, OptionalInt.of(30303)));
     assertThat(packetData.getPingHash())
         .isEqualTo(
-            BytesValue.fromHexString(
+            Bytes.fromHexString(
                 "0x46896547d3b4259aa1a67bd26e7ec58ab4be650c5552ef0360caf9dae489d53b"));
     assertThat(packetData.getExpiration()).isEqualTo(1535585736);
     assertThat(packet.getNodeId())
         .isEqualTo(
-            BytesValue.fromHexString(
+            Bytes.fromHexString(
                 "0x669f45b66acf3b804c26ce13cfdd1f7e3d0ff4ed85060841b9af3af6dbfbacd05181e1c9363161446a307f3ca24e707856a01e4bf1eed5e1aefc14011a5c1c1c"));
     assertThat(packet.getHash())
         .isEqualTo(
-            BytesValue.fromHexString(
+            Bytes.fromHexString(
                 "0xa1581c1705e744976d0341011c4490b3ab0b48283407ae5cf7526b9487174896"));
   }
 

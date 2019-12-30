@@ -39,13 +39,13 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.DefaultMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import com.google.common.collect.Lists;
+import org.apache.tuweni.bytes.Bytes;
 
 // Each "inject" function returns the SignedPayload representation of the transmitted message.
 public class ValidatorPeer {
@@ -66,7 +66,7 @@ public class ValidatorPeer {
     this.nodeKeys = nodeParams.getNodeKeyPair();
     this.nodeAddress = nodeParams.getAddress();
     this.messageFactory = messageFactory;
-    final BytesValue nodeId = nodeKeys.getPublicKey().getEncodedBytes();
+    final Bytes nodeId = nodeKeys.getPublicKey().getEncodedBytes();
     this.peerConnection = StubbedPeerConnection.create(nodeId);
     this.localEventMultiplexer = localEventMultiplexer;
   }

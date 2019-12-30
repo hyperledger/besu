@@ -35,14 +35,14 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor.Result;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.stream.Stream;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -80,7 +80,7 @@ public class TraceTransactionIntegrationTest {
             .gasLimit(300_000)
             .gasPrice(Wei.ZERO)
             .nonce(0)
-            .payload(BytesValue.fromHexString(CONTRACT_CREATION_DATA))
+            .payload(Bytes.fromHexString(CONTRACT_CREATION_DATA))
             .value(Wei.ZERO)
             .signAndBuild(keyPair);
 
@@ -113,7 +113,7 @@ public class TraceTransactionIntegrationTest {
             .gasLimit(300_000)
             .gasPrice(Wei.ZERO)
             .nonce(1)
-            .payload(BytesValue.fromHexString(CALL_SET_OTHER))
+            .payload(Bytes.fromHexString(CALL_SET_OTHER))
             .to(createdContract.getAddress())
             .value(Wei.ZERO)
             .signAndBuild(keyPair);
@@ -155,7 +155,7 @@ public class TraceTransactionIntegrationTest {
         new DebugOperationTracer(new TraceOptions(true, true, true));
     final Transaction transaction =
         Transaction.readFrom(
-            new BytesValueRLPInput(BytesValue.fromHexString(CONTRACT_CREATION_TX), false));
+            new BytesValueRLPInput(Bytes.fromHexString(CONTRACT_CREATION_TX), false));
     transactionProcessor.processTransaction(
         blockchain,
         worldStateArchive.getMutable(genesisBlock.getHeader().getStateRoot()).get().updater(),

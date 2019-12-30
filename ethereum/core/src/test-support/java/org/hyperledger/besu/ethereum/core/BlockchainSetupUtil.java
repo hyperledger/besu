@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -30,6 +31,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.util.RawBlockIterator;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.testutil.BlockTestUtil;
 import org.hyperledger.besu.testutil.BlockTestUtil.ChainResources;
 
@@ -51,6 +53,7 @@ public class BlockchainSetupUtil<C> {
   private final ProtocolSchedule<C> protocolSchedule;
   private final WorldStateArchive worldArchive;
   private final List<Block> blocks;
+  private final EthScheduler scheduler;
   private long maxBlockNumber;
 
   private BlockchainSetupUtil(
@@ -59,13 +62,15 @@ public class BlockchainSetupUtil<C> {
       final ProtocolContext<C> protocolContext,
       final ProtocolSchedule<C> protocolSchedule,
       final WorldStateArchive worldArchive,
-      final List<Block> blocks) {
+      final List<Block> blocks,
+      final EthScheduler scheduler) {
     this.genesisState = genesisState;
     this.blockchain = blockchain;
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
     this.worldArchive = worldArchive;
     this.blocks = blocks;
+    this.scheduler = scheduler;
   }
 
   public Blockchain importAllBlocks() {
@@ -115,7 +120,8 @@ public class BlockchainSetupUtil<C> {
     return create(
         chainResources,
         BlockchainSetupUtil::mainnetProtocolScheduleProvider,
-        BlockchainSetupUtil::mainnetProtocolContextProvider);
+        BlockchainSetupUtil::mainnetProtocolContextProvider,
+        new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()));
   }
 
   private static ProtocolSchedule<Void> mainnetProtocolScheduleProvider(
@@ -131,7 +137,8 @@ public class BlockchainSetupUtil<C> {
   private static <T> BlockchainSetupUtil<T> create(
       final ChainResources chainResources,
       final ProtocolScheduleProvider<T> protocolScheduleProvider,
-      final ProtocolContextProvider<T> protocolContextProvider) {
+      final ProtocolContextProvider<T> protocolContextProvider,
+      final EthScheduler scheduler) {
     final TemporaryFolder temp = new TemporaryFolder();
     try {
       temp.create();
@@ -160,7 +167,13 @@ public class BlockchainSetupUtil<C> {
         }
       }
       return new BlockchainSetupUtil<T>(
-          genesisState, blockchain, protocolContext, protocolSchedule, worldArchive, blocks);
+          genesisState,
+          blockchain,
+          protocolContext,
+          protocolSchedule,
+          worldArchive,
+          blocks,
+          scheduler);
     } catch (final IOException | URISyntaxException ex) {
       throw new IllegalStateException(ex);
     } finally {
@@ -190,6 +203,10 @@ public class BlockchainSetupUtil<C> {
 
   public WorldStateArchive getWorldArchive() {
     return worldArchive;
+  }
+
+  public EthScheduler getScheduler() {
+    return scheduler;
   }
 
   private void importBlocks(final List<Block> blocks) {

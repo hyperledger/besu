@@ -17,39 +17,36 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcRequestException;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivacyApiMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransactionHandler;
 import org.hyperledger.besu.ethereum.privacy.Restriction;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
-import org.hyperledger.besu.util.bytes.BytesValue;
+
+import java.util.function.Supplier;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
-public abstract class PrivacySendTransaction extends PrivacyApiMethod {
+public class PrivacySendTransaction {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  protected final PrivateTransactionHandler privateTransactionHandler;
-  protected final TransactionPool transactionPool;
+  protected final PrivacyController privacyController;
+  private EnclavePublicKeyProvider enclavePublicKeyProvider;
 
   public PrivacySendTransaction(
-      final PrivacyParameters privacyParameters,
-      final PrivateTransactionHandler privateTransactionHandler,
-      final TransactionPool transactionPool) {
-    super(privacyParameters);
-    this.privateTransactionHandler = privateTransactionHandler;
-    this.transactionPool = transactionPool;
+      final PrivacyController privacyController,
+      final EnclavePublicKeyProvider enclavePublicKeyProvider) {
+    this.privacyController = privacyController;
+    this.enclavePublicKeyProvider = enclavePublicKeyProvider;
   }
 
-  protected PrivateTransaction validateAndDecodeRequest(final JsonRpcRequestContext request)
+  public PrivateTransaction validateAndDecodeRequest(final JsonRpcRequestContext request)
       throws ErrorResponseException {
     if (request.getRequest().getParamLength() != 1) {
       throw new ErrorResponseException(
@@ -75,15 +72,18 @@ public abstract class PrivacySendTransaction extends PrivacyApiMethod {
     return privateTransaction;
   }
 
-  protected JsonRpcResponse validateAndExecute(
+  public JsonRpcResponse validateAndExecute(
       final JsonRpcRequestContext request,
       final PrivateTransaction privateTransaction,
       final String privacyGroupId,
-      final AfterTransactionValid afterValid) {
-    return privateTransactionHandler
-        .validatePrivateTransaction(privateTransaction, privacyGroupId)
+      final Supplier<JsonRpcResponse> successfulJsonRpcResponse) {
+    return privacyController
+        .validatePrivateTransaction(
+            privateTransaction,
+            privacyGroupId,
+            enclavePublicKeyProvider.getEnclaveKey(request.getUser()))
         .either(
-            afterValid::getResponse,
+            successfulJsonRpcResponse,
             (errorReason) ->
                 new JsonRpcErrorResponse(
                     request.getRequest().getId(),
@@ -93,14 +93,14 @@ public abstract class PrivacySendTransaction extends PrivacyApiMethod {
   private PrivateTransaction decodeRawTransaction(final String hash)
       throws InvalidJsonRpcRequestException {
     try {
-      return PrivateTransaction.readFrom(RLP.input(BytesValue.fromHexString(hash)));
+      return PrivateTransaction.readFrom(RLP.input(Bytes.fromHexString(hash)));
     } catch (final IllegalArgumentException | RLPException e) {
       LOG.debug(e);
       throw new InvalidJsonRpcRequestException("Invalid raw private transaction hex", e);
     }
   }
 
-  protected static class ErrorResponseException extends Exception {
+  public static class ErrorResponseException extends Exception {
     private final JsonRpcResponse response;
 
     private ErrorResponseException(final JsonRpcResponse response) {
@@ -111,9 +111,5 @@ public abstract class PrivacySendTransaction extends PrivacyApiMethod {
     public JsonRpcResponse getResponse() {
       return response;
     }
-  }
-
-  protected interface AfterTransactionValid {
-    JsonRpcResponse getResponse();
   }
 }

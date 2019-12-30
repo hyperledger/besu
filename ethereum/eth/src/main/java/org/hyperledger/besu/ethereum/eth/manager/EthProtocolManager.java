@@ -19,6 +19,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
@@ -37,7 +38,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.Di
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.math.BigInteger;
 import java.time.Clock;
@@ -347,7 +347,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   @Override
   public void blockMined(final Block block) {
     // This assumes the block has already been included in the chain
-    final UInt256 totalDifficulty =
+    final Difficulty totalDifficulty =
         blockchain
             .getTotalDifficultyByHash(block.getHash())
             .orElseThrow(

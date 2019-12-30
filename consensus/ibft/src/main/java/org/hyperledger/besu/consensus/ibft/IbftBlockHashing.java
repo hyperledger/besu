@@ -20,11 +20,12 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class IbftBlockHashing {
 
@@ -78,8 +79,8 @@ public class IbftBlockHashing {
         .collect(Collectors.toList());
   }
 
-  private static BytesValue serializeHeader(
-      final BlockHeader header, final Supplier<BytesValue> extraDataSerializer) {
+  private static Bytes serializeHeader(
+      final BlockHeader header, final Supplier<Bytes> extraDataSerializer) {
 
     // create a block header which is a copy of the header supplied as parameter except of the
     // extraData field

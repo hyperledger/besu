@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.trie;
 
-import org.hyperledger.besu.util.bytes.BytesValue;
+import org.apache.tuweni.bytes.Bytes;
 
 class PutVisitor<V> implements PathNodeVisitor<V> {
   private final NodeFactory<V> nodeFactory;
@@ -26,8 +26,8 @@ class PutVisitor<V> implements PathNodeVisitor<V> {
   }
 
   @Override
-  public Node<V> visit(final ExtensionNode<V> extensionNode, final BytesValue path) {
-    final BytesValue extensionPath = extensionNode.getPath();
+  public Node<V> visit(final ExtensionNode<V> extensionNode, final Bytes path) {
+    final Bytes extensionPath = extensionNode.getPath();
 
     final int commonPathLength = extensionPath.commonPrefixLength(path);
     assert commonPathLength < path.size()
@@ -41,7 +41,7 @@ class PutVisitor<V> implements PathNodeVisitor<V> {
     // path diverges before the end of the extension - create a new branch
 
     final byte leafIndex = path.get(commonPathLength);
-    final BytesValue leafPath = path.slice(commonPathLength + 1);
+    final Bytes leafPath = path.slice(commonPathLength + 1);
 
     final byte extensionIndex = extensionPath.get(commonPathLength);
     final Node<V> updatedExtension =
@@ -58,7 +58,7 @@ class PutVisitor<V> implements PathNodeVisitor<V> {
   }
 
   @Override
-  public Node<V> visit(final BranchNode<V> branchNode, final BytesValue path) {
+  public Node<V> visit(final BranchNode<V> branchNode, final Bytes path) {
     assert path.size() > 0 : "Visiting path doesn't end with a non-matching terminator";
 
     final byte childIndex = path.get(0);
@@ -71,8 +71,8 @@ class PutVisitor<V> implements PathNodeVisitor<V> {
   }
 
   @Override
-  public Node<V> visit(final LeafNode<V> leafNode, final BytesValue path) {
-    final BytesValue leafPath = leafNode.getPath();
+  public Node<V> visit(final LeafNode<V> leafNode, final Bytes path) {
+    final Bytes leafPath = leafNode.getPath();
     final int commonPathLength = leafPath.commonPrefixLength(path);
 
     // Check if the current leaf node should be replaced
@@ -86,7 +86,7 @@ class PutVisitor<V> implements PathNodeVisitor<V> {
     // The current leaf path must be split to accommodate the new value.
 
     final byte newLeafIndex = path.get(commonPathLength);
-    final BytesValue newLeafPath = path.slice(commonPathLength + 1);
+    final Bytes newLeafPath = path.slice(commonPathLength + 1);
 
     final byte updatedLeafIndex = leafPath.get(commonPathLength);
 
@@ -102,7 +102,7 @@ class PutVisitor<V> implements PathNodeVisitor<V> {
   }
 
   @Override
-  public Node<V> visit(final NullNode<V> nullNode, final BytesValue path) {
+  public Node<V> visit(final NullNode<V> nullNode, final Bytes path) {
     return nodeFactory.createLeaf(path, value);
   }
 }

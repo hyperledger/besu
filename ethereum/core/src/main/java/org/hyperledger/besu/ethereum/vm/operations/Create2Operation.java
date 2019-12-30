@@ -19,13 +19,14 @@ import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class Create2Operation extends AbstractCreateOperation {
 
-  private static final BytesValue PREFIX = BytesValue.fromHexString("0xFF");
+  private static final Bytes PREFIX = Bytes.fromHexString("0xFF");
 
   public Create2Operation(final GasCalculator gasCalculator) {
     super(0xF5, "CREATE2", 4, 1, false, 1, gasCalculator);
@@ -34,11 +35,11 @@ public class Create2Operation extends AbstractCreateOperation {
   @Override
   protected Address targetContractAddress(final MessageFrame frame) {
     final Address sender = frame.getRecipientAddress();
-    final UInt256 offset = frame.getStackItem(1).asUInt256();
-    final UInt256 length = frame.getStackItem(2).asUInt256();
+    final UInt256 offset = UInt256.fromBytes(frame.getStackItem(1));
+    final UInt256 length = UInt256.fromBytes(frame.getStackItem(2));
     final Bytes32 salt = frame.getStackItem(3);
-    final BytesValue initCode = frame.readMemory(offset, length);
-    final Hash hash = Hash.hash(PREFIX.concat(sender).concat(salt).concat(Hash.hash(initCode)));
+    final Bytes initCode = frame.readMemory(offset, length);
+    final Hash hash = Hash.hash(Bytes.concatenate(PREFIX, sender, salt, Hash.hash(initCode)));
     return Address.extract(hash);
   }
 
