@@ -42,11 +42,7 @@ import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -62,6 +58,11 @@ import com.google.common.io.Files;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -196,21 +197,13 @@ public class JsonRpcHttpServiceTlsTest {
     final String id = "123";
     final String json =
         "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_version\"}";
-    final HttpClient httpClient = getTlsHttpClient();
-    final HttpRequest request =
-        HttpRequest.newBuilder()
-            .POST(HttpRequest.BodyPublishers.ofString(json))
-            .uri(URI.create(baseUrl))
-            .header("Accept", JSON_HEADER)
-            .build();
 
-    try {
-      HttpResponse<String> response =
-          httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+    final OkHttpClient httpClient = getTlsHttpClient();
+    try (final Response response = httpClient.newCall(buildPostRequest(json)).execute()) {
 
-      assertThat(response.statusCode()).isEqualTo(200);
+      assertThat(response.code()).isEqualTo(200);
       // Check general format of result
-      final JsonObject jsonObject = new JsonObject(response.body());
+      final JsonObject jsonObject = new JsonObject(response.body().string());
       testHelper.assertValidJsonRpcResult(jsonObject, id);
       // Check result
       final String result = jsonObject.getString("result");
@@ -221,7 +214,7 @@ public class JsonRpcHttpServiceTlsTest {
     }
   }
 
-  private HttpClient getTlsHttpClient() {
+  private OkHttpClient getTlsHttpClient() {
     return TlsHttpClient.TlsHttpClientBuilder.aTlsHttpClient()
         .withKeyStoreResource(KEYSTORE_CLIENT_RESOURCE)
         .withKeyStorePasswordResource(KEYSTORE_PASSWORD_RESOURCE)
@@ -229,5 +222,10 @@ public class JsonRpcHttpServiceTlsTest {
         .withTrustStorePasswordResource(KEYSTORE_PASSWORD_RESOURCE)
         .build()
         .getHttpClient();
+  }
+
+  private Request buildPostRequest(final String json) {
+    final RequestBody body = RequestBody.create(json, MediaType.parse(JSON_HEADER));
+    return new Request.Builder().post(body).url(baseUrl).build();
   }
 }

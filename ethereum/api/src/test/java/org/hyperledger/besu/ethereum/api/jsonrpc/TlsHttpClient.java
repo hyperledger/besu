@@ -18,7 +18,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
-import java.net.http.HttpClient;
 import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
@@ -29,9 +28,11 @@ import java.security.cert.CertificateException;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
+import okhttp3.OkHttpClient;
 
 public class TlsHttpClient {
   private String keyStoreResource;
@@ -39,11 +40,13 @@ public class TlsHttpClient {
   private String trustStoreResource;
   private String trustStorePasswordResource;
 
-  public HttpClient getHttpClient() {
+  public OkHttpClient getHttpClient() {
     try {
-      return HttpClient.newBuilder()
-          .sslContext(getCustomSslContext())
-          .version(HttpClient.Version.HTTP_1_1)
+      return new OkHttpClient.Builder()
+          .sslSocketFactory(
+              getCustomSslContext().getSocketFactory(),
+              (X509TrustManager)
+                  getTrustManagerFactory().getTrustManagers()[0]) // we only have one trust manager
           .build();
     } catch (GeneralSecurityException e) {
       throw new RuntimeException(e);
@@ -56,12 +59,17 @@ public class TlsHttpClient {
     final SSLContext sslContext = SSLContext.getInstance("TLS");
     /*
     SecureRandom.getStrongInstance() is causing initial handshake timeout in Virtualized CI environment
-    (such as CircleCI). Hence we are using SHA1PRNG instead. This class has been excluded from errorprone
+    (such as CircleCI). Hence we are using non-blocking instead. This class has been excluded from errorprone
     checks as we don't allow SecureRandom.getInstance call directly.
 
     See https://stackoverflow.com/questions/137212/how-to-deal-with-a-slow-securerandom-generator
-     */
-    final SecureRandom secureRandom = SecureRandom.getInstance("SHA1PRNG");
+    */
+    SecureRandom secureRandom;
+    try {
+      secureRandom = SecureRandom.getInstance("NativePRNGNonBlocking");
+    } catch (NoSuchAlgorithmException nsae) {
+      secureRandom = new SecureRandom();
+    }
     sslContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), secureRandom);
     return sslContext;
   }
