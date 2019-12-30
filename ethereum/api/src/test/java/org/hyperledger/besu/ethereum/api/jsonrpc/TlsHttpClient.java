@@ -25,6 +25,7 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
+import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
@@ -39,6 +40,8 @@ public class TlsHttpClient {
   private String keyStorePasswordResource;
   private String trustStoreResource;
   private String trustStorePasswordResource;
+  private TrustManagerFactory trustManagerFactory;
+  private KeyManagerFactory keyManagerFactory;
 
   public OkHttpClient getHttpClient() {
     try {
@@ -46,7 +49,7 @@ public class TlsHttpClient {
           .sslSocketFactory(
               getCustomSslContext().getSocketFactory(),
               (X509TrustManager)
-                  getTrustManagerFactory().getTrustManagers()[0]) // we only have one trust manager
+                  trustManagerFactory.getTrustManagers()[0]) // we only have one trust manager
           .build();
     } catch (GeneralSecurityException e) {
       throw new RuntimeException(e);
@@ -54,8 +57,7 @@ public class TlsHttpClient {
   }
 
   private SSLContext getCustomSslContext() throws GeneralSecurityException {
-    final TrustManagerFactory tmf = getTrustManagerFactory();
-    final KeyManagerFactory kmf = getKeyManagerFactory();
+    final KeyManager[] km = isClientAuthRequired() ? keyManagerFactory.getKeyManagers() : null;
     final SSLContext sslContext = SSLContext.getInstance("TLS");
     /*
     SecureRandom.getStrongInstance() is causing initial handshake timeout in Virtualized CI environment
@@ -70,24 +72,40 @@ public class TlsHttpClient {
     } catch (NoSuchAlgorithmException nsae) {
       secureRandom = new SecureRandom();
     }
-    sslContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), secureRandom);
+    sslContext.init(km, trustManagerFactory.getTrustManagers(), secureRandom);
     return sslContext;
   }
 
-  private TrustManagerFactory getTrustManagerFactory() throws GeneralSecurityException {
-    final char[] password = getKeystorePassword(trustStorePasswordResource);
-    final KeyStore trustStore = loadP12KeyStore(trustStoreResource, password);
-    final TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance("PKIX");
-    trustManagerFactory.init(trustStore);
-    return trustManagerFactory;
+  private boolean isClientAuthRequired() {
+    return keyStoreResource != null;
   }
 
-  private KeyManagerFactory getKeyManagerFactory() throws GeneralSecurityException {
-    final char[] password = getKeystorePassword(keyStorePasswordResource);
-    final KeyStore keyStore = loadP12KeyStore(keyStoreResource, password);
-    final KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance("PKIX");
-    keyManagerFactory.init(keyStore, password);
-    return keyManagerFactory;
+  private void initTrustManagerFactory() {
+    try {
+      final char[] password = getKeystorePassword(trustStorePasswordResource);
+      final KeyStore trustStore = loadP12KeyStore(trustStoreResource, password);
+      final TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance("PKIX");
+      trustManagerFactory.init(trustStore);
+      this.trustManagerFactory = trustManagerFactory;
+    } catch (GeneralSecurityException gse) {
+      throw new RuntimeException("Unable to load trust manager factory", gse);
+    }
+  }
+
+  private void initKeyManagerFactory() {
+    if (!isClientAuthRequired()) {
+      return;
+    }
+
+    try {
+      final char[] password = getKeystorePassword(keyStorePasswordResource);
+      final KeyStore keyStore = loadP12KeyStore(keyStoreResource, password);
+      final KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance("PKIX");
+      keyManagerFactory.init(keyStore, password);
+      this.keyManagerFactory = keyManagerFactory;
+    } catch (GeneralSecurityException gse) {
+      throw new RuntimeException("Unable to load key manager factory", gse);
+    }
   }
 
   private char[] getKeystorePassword(final String passwordResource) {
@@ -150,6 +168,8 @@ public class TlsHttpClient {
       tlsHttpClient.trustStoreResource = this.trustStoreResource;
       tlsHttpClient.trustStorePasswordResource = this.trustStorePasswordResource;
       tlsHttpClient.keyStoreResource = this.keyStoreResource;
+      tlsHttpClient.initTrustManagerFactory();
+      tlsHttpClient.initKeyManagerFactory();
       return tlsHttpClient;
     }
   }

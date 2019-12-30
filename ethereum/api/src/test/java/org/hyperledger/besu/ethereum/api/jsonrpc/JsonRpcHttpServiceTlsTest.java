@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
@@ -42,6 +43,7 @@ import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.net.ConnectException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -63,6 +65,8 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import okhttp3.ResponseBody;
+import org.assertj.core.api.Assertions;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -87,6 +91,7 @@ public class JsonRpcHttpServiceTlsTest {
       "JsonRpcHttpService/rpc_client_keystore.pfx";
   private static final String KEYSTORE_PASSWORD_RESOURCE =
       "JsonRpcHttpService/rpc_keystore.password";
+  private static final String KEYSTORE_CLIENT_2_RESOURCE = "JsonRpcHttpService/rpc_client_2.pfx";
   private static final String KNOWN_CLIENTS_RESOURCE = "JsonRpcHttpService/rpc_known_clients.txt";
   private final JsonRpcConfiguration jsonRpcConfig = createJsonRpcConfig();
   private final JsonRpcTestHelper testHelper = new JsonRpcTestHelper();
@@ -171,9 +176,9 @@ public class JsonRpcHttpServiceTlsTest {
               ClassLoader.getSystemResource(JsonRpcHttpServiceTlsTest.KEYSTORE_PASSWORD_RESOURCE)
                   .toURI());
 
-      return Files.asCharSource(keyStorePassdwordFile.toFile(), Charsets.UTF_8)
-          .readFirstLine()
-          .toCharArray();
+      final String password =
+          Files.asCharSource(keyStorePassdwordFile.toFile(), Charsets.UTF_8).readFirstLine();
+      return password == null ? new char[0] : password.toCharArray();
     } catch (URISyntaxException | IOException e) {
       throw new RuntimeException("Unable to read keystore password file", e);
     }
@@ -203,7 +208,9 @@ public class JsonRpcHttpServiceTlsTest {
 
       assertThat(response.code()).isEqualTo(200);
       // Check general format of result
-      final JsonObject jsonObject = new JsonObject(response.body().string());
+      final ResponseBody body = response.body();
+      assertThat(body).isNotNull();
+      final JsonObject jsonObject = new JsonObject(body.string());
       testHelper.assertValidJsonRpcResult(jsonObject, id);
       // Check result
       final String result = jsonObject.getString("result");
@@ -214,10 +221,60 @@ public class JsonRpcHttpServiceTlsTest {
     }
   }
 
+  @Test
+  public void connectionFailsWhenTlsClientAuthIsNotProvided() {
+    final String id = "123";
+    final String json =
+        "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_version\"}";
+
+    final OkHttpClient httpClient = getTlsHttpClientWithoutClientAuthentication();
+    assertThatExceptionOfType(ConnectException.class)
+        .isThrownBy(
+            () -> {
+              try (final Response response = httpClient.newCall(buildPostRequest(json)).execute()) {
+                Assertions.fail("Call should have failed. Got: " + response);
+              }
+            });
+  }
+
+  @Test
+  public void connectionFailsWhenClientIsNotWhitelisted() {
+    final String id = "123";
+    final String json =
+        "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_version\"}";
+
+    final OkHttpClient httpClient = getTlsHttpClientNotWhitelisted();
+    assertThatExceptionOfType(ConnectException.class)
+        .isThrownBy(
+            () -> {
+              try (final Response response = httpClient.newCall(buildPostRequest(json)).execute()) {
+                Assertions.fail("Call should have failed. Got: " + response);
+              }
+            });
+  }
+
   private OkHttpClient getTlsHttpClient() {
     return TlsHttpClient.TlsHttpClientBuilder.aTlsHttpClient()
         .withKeyStoreResource(KEYSTORE_CLIENT_RESOURCE)
         .withKeyStorePasswordResource(KEYSTORE_PASSWORD_RESOURCE)
+        .withTrustStoreResource(KEYSTORE_RESOURCE)
+        .withTrustStorePasswordResource(KEYSTORE_PASSWORD_RESOURCE)
+        .build()
+        .getHttpClient();
+  }
+
+  private OkHttpClient getTlsHttpClientNotWhitelisted() {
+    return TlsHttpClient.TlsHttpClientBuilder.aTlsHttpClient()
+        .withKeyStoreResource(KEYSTORE_CLIENT_2_RESOURCE)
+        .withKeyStorePasswordResource(KEYSTORE_PASSWORD_RESOURCE)
+        .withTrustStoreResource(KEYSTORE_RESOURCE)
+        .withTrustStorePasswordResource(KEYSTORE_PASSWORD_RESOURCE)
+        .build()
+        .getHttpClient();
+  }
+
+  private OkHttpClient getTlsHttpClientWithoutClientAuthentication() {
+    return TlsHttpClient.TlsHttpClientBuilder.aTlsHttpClient()
         .withTrustStoreResource(KEYSTORE_RESOURCE)
         .withTrustStorePasswordResource(KEYSTORE_PASSWORD_RESOURCE)
         .build()
