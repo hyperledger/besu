@@ -49,7 +49,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -277,10 +276,6 @@ public class JsonRpcHttpService {
     final TlsConfiguration tlsConfiguration = config.getTlsConfiguration().get();
     httpServerOptions
         .setSsl(true)
-        .setSslHandshakeTimeout(
-            2) // TODO: Make it configurable. Increasing from default for unit test case
-        .setSslHandshakeTimeoutUnit(TimeUnit.MINUTES)
-        .setLogActivity(true)
         .setPfxKeyCertOptions(storeToPfxOptions.apply(tlsConfiguration.getKeyStore()));
 
     if (isClientAuthenticationRequired()) {

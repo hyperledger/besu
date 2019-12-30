@@ -41,7 +41,6 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.math.BigInteger;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -50,12 +49,6 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.GeneralSecurityException;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.security.cert.CertificateException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -63,9 +56,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManagerFactory;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
@@ -79,10 +69,6 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 public class JsonRpcHttpServiceTlsTest {
-  static {
-    System.setProperty("javax.net.debug", "all");
-  }
-
   @ClassRule public static final TemporaryFolder folder = new TemporaryFolder();
 
   protected static final Vertx vertx = Vertx.vertx();
@@ -95,15 +81,14 @@ public class JsonRpcHttpServiceTlsTest {
   private static final BigInteger CHAIN_ID = BigInteger.valueOf(123);
   private static final Collection<RpcApi> JSON_RPC_APIS =
       Arrays.asList(RpcApis.ETH, RpcApis.NET, RpcApis.WEB3);
-  private final JsonRpcConfiguration jsonRpcConfig = createJsonRpcConfig();
-  private final JsonRpcTestHelper testHelper = new JsonRpcTestHelper();
   private static final String KEYSTORE_RESOURCE = "JsonRpcHttpService/rpc_keystore.pfx";
   private static final String KEYSTORE_CLIENT_RESOURCE =
       "JsonRpcHttpService/rpc_client_keystore.pfx";
   private static final String KEYSTORE_PASSWORD_RESOURCE =
       "JsonRpcHttpService/rpc_keystore.password";
   private static final String KNOWN_CLIENTS_RESOURCE = "JsonRpcHttpService/rpc_known_clients.txt";
-  private static final boolean useClientAuthentication = true;
+  private final JsonRpcConfiguration jsonRpcConfig = createJsonRpcConfig();
+  private final JsonRpcTestHelper testHelper = new JsonRpcTestHelper();
 
   @Before
   public void initServerAndClient() throws Exception {
@@ -158,7 +143,6 @@ public class JsonRpcHttpServiceTlsTest {
 
   private static JsonRpcConfiguration createJsonRpcConfig() {
     final JsonRpcConfiguration config = JsonRpcConfiguration.createDefault();
-    config.setHost("localhost");
     config.setPort(0);
     config.setHostsWhitelist(Collections.singletonList("*"));
     config.setTlsConfiguration(getRpcHttpTlsConfiguration());
@@ -196,9 +180,7 @@ public class JsonRpcHttpServiceTlsTest {
 
   private static Optional<Path> getKnownClientsFile() {
     try {
-      return useClientAuthentication
-          ? Optional.of(Paths.get(ClassLoader.getSystemResource(KNOWN_CLIENTS_RESOURCE).toURI()))
-          : Optional.empty();
+      return Optional.of(Paths.get(ClassLoader.getSystemResource(KNOWN_CLIENTS_RESOURCE).toURI()));
     } catch (URISyntaxException e) {
       throw new RuntimeException("Unable to read keystore resource.", e);
     }
@@ -207,7 +189,6 @@ public class JsonRpcHttpServiceTlsTest {
   @After
   public void shutdownServer() {
     service.stop().join();
-    System.clearProperty("javax.net.debug");
   }
 
   @Test
@@ -215,7 +196,6 @@ public class JsonRpcHttpServiceTlsTest {
     final String id = "123";
     final String json =
         "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_version\"}";
-    System.out.println("Connecting to: " + baseUrl);
     final HttpClient httpClient = getTlsHttpClient();
     final HttpRequest request =
         HttpRequest.newBuilder()
@@ -242,53 +222,12 @@ public class JsonRpcHttpServiceTlsTest {
   }
 
   private HttpClient getTlsHttpClient() {
-    try {
-      return HttpClient.newBuilder()
-          .sslContext(getCustomSslContext())
-          .version(HttpClient.Version.HTTP_1_1)
-          .build();
-    } catch (GeneralSecurityException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  private TrustManagerFactory getTrustManagerFactory() throws GeneralSecurityException {
-    // load server's keystore as client's truststore
-    final KeyStore trustStore = loadP12KeyStore(KEYSTORE_RESOURCE, getKeystorePassword());
-    final TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance("PKIX");
-    trustManagerFactory.init(trustStore);
-    return trustManagerFactory;
-  }
-
-  private KeyManagerFactory getKeyManagerFactory() throws GeneralSecurityException {
-    // load client's keystore
-    final char[] keystorePassword = getKeystorePassword();
-    final KeyStore keyStore = loadP12KeyStore(KEYSTORE_CLIENT_RESOURCE, keystorePassword);
-    final KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance("PKIX");
-    keyManagerFactory.init(keyStore, keystorePassword);
-    return keyManagerFactory;
-  }
-
-  private SSLContext getCustomSslContext() throws GeneralSecurityException {
-    final TrustManagerFactory tmf = getTrustManagerFactory();
-    final KeyManagerFactory kmf = getKeyManagerFactory();
-    @SuppressWarnings("DoNotCreateSecureRandomDirectly")
-    final SSLContext sslContext = SSLContext.getInstance("TLSv1.2");
-    sslContext.init(
-        useClientAuthentication ? kmf.getKeyManagers() : null,
-        tmf.getTrustManagers(),
-        SecureRandom.getInstance("SHA1PRNG"));
-    return sslContext;
-  }
-
-  private KeyStore loadP12KeyStore(final String resource, final char[] password)
-      throws KeyStoreException, NoSuchAlgorithmException, CertificateException {
-    final KeyStore store = KeyStore.getInstance("pkcs12");
-    try (final InputStream keystoreStream = ClassLoader.getSystemResource(resource).openStream()) {
-      store.load(keystoreStream, password);
-    } catch (IOException e) {
-      throw new RuntimeException("Unable to load keystore.", e);
-    }
-    return store;
+    return TlsHttpClient.TlsHttpClientBuilder.aTlsHttpClient()
+        .withKeyStoreResource(KEYSTORE_CLIENT_RESOURCE)
+        .withKeyStorePasswordResource(KEYSTORE_PASSWORD_RESOURCE)
+        .withTrustStoreResource(KEYSTORE_RESOURCE)
+        .withTrustStorePasswordResource(KEYSTORE_PASSWORD_RESOURCE)
+        .build()
+        .getHttpClient();
   }
 }
