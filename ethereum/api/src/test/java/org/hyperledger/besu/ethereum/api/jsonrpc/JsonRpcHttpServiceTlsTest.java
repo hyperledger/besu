@@ -222,7 +222,8 @@ public class JsonRpcHttpServiceTlsTest {
     }
   }
 
-  @Test @Ignore
+  @Test
+  @Ignore
   public void connectionFailsWhenTlsClientAuthIsNotProvided() {
     final String id = "123";
     final String json =
@@ -241,7 +242,8 @@ public class JsonRpcHttpServiceTlsTest {
             });
   }
 
-  @Test @Ignore
+  @Test
+  @Ignore
   public void connectionFailsWhenClientIsNotWhitelisted() {
     final String id = "123";
     final String json =
