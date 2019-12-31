@@ -12,18 +12,17 @@
  */
 package org.hyperledger.besu.crosschain.core.keys;
 
-import org.hyperledger.besu.crosschain.core.CoordinationContractInformation;
 import org.hyperledger.besu.crosschain.core.keys.generation.KeyGenFailureToCompleteReason;
 import org.hyperledger.besu.crosschain.core.keys.generation.SimulatedThresholdKeyGenContractWrapper;
 import org.hyperledger.besu.crosschain.core.keys.generation.ThresholdKeyGenContractInterface;
 import org.hyperledger.besu.crosschain.core.keys.generation.ThresholdKeyGeneration;
+import org.hyperledger.besu.crosschain.core.messages.ThresholdSignedMessage;
 import org.hyperledger.besu.crosschain.p2p.CrosschainDevP2PInterface;
 import org.hyperledger.besu.crosschain.p2p.SimulatedCrosschainDevP2P;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.core.Address;
 
 import java.math.BigInteger;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -55,8 +54,6 @@ public class CrosschainKeyManager {
   // TODO blockkchain ID will be used when interacting with the crosschain coordination contract.
   //  private BigInteger blockchainId;
   private SECP256K1.KeyPair nodeKeys;
-
-  Map<String, CoordinationContractInformation> coordinationContracts = new HashMap<>();
 
   private long NO_ACTIVE_VERSION = 0;
   long activeKeyVersion = NO_ACTIVE_VERSION;
@@ -99,27 +96,6 @@ public class CrosschainKeyManager {
     this.nodeKeys = nodeKeys;
 
     this.thresholdKeyGenContract.init(nodeKeys);
-  }
-
-  public void addCoordinationContract(
-      final BigInteger coordinationBlockchainId,
-      final Address coodinationContractAddress,
-      final String ipAddressAndPort) {
-    String key = coordinationBlockchainId.toString(16) + coodinationContractAddress.getHexString();
-    this.coordinationContracts.put(
-        key,
-        new CoordinationContractInformation(
-            coordinationBlockchainId, coodinationContractAddress, ipAddressAndPort));
-  }
-
-  public void removeCoordinationContract(
-      final BigInteger coordinationBlockchainId, final Address coodinationContractAddress) {
-    String key = coordinationBlockchainId.toString(16) + coodinationContractAddress.getHexString();
-    this.coordinationContracts.remove(key);
-  }
-
-  public Collection<CoordinationContractInformation> getAllCoordinationContracts() {
-    return this.coordinationContracts.values();
   }
 
   public void setKeyGenerationContractAddress(final Address address) {
@@ -198,6 +174,9 @@ public class CrosschainKeyManager {
   }
 
   public void activateKey(final long keyVersion) {
+    LOG.info(" activating key version: {}", keyVersion);
+    LOG.info(" current active key version: {}", this.activeKeyVersion);
+
     if (keyVersion == this.activeKeyVersion) {
       // The key version is already active: there is nothing to do.
       return;
@@ -219,9 +198,10 @@ public class CrosschainKeyManager {
           && (keyGeneration.getKeyStatus().equals(KeyStatus.KEY_GEN_COMPLETE))) {
         this.credentials.put(keyVersion, keyGeneration.getCredentials());
         this.activeKeyGenerations.remove(keyVersion);
+      } else {
+        // If the key isn't ready or doesn't exist, then just ignore the request.
+        return;
       }
-      // If the key isn't ready or doesn't exist, then just ignore the request.
-      return;
     }
     this.activeKeyVersion = keyVersion;
   }
@@ -252,19 +232,11 @@ public class CrosschainKeyManager {
    * @param message The message to be signed.
    * @return The signed message.
    */
-  //  private BytesValue thresholdSign(final BytesValue message) {
-  //    // TODO this is going to need to be re-written assuming asynchronous signature results
-  //
-  //  }
-  //
-  //  public BytesValue signSubordinateViewResult(final BytesValue message) {
-  //    LOG.info("Subordinate View Result: coordinating the signing of message: {}", message);
-  //    return thresholdSign(message);
-  //  }
-  //
-  //
-  //  public BytesValue localSign(final long keyVersion, final BytesValue message) {
-  //
-  //  }
+  public ThresholdSignedMessage thresholdSign(final ThresholdSignedMessage message) {
+    // TODO this is going to need to be re-written assuming asynchronous signature results
 
+    // TODO use ThresholdSigning.
+
+    return null;
+  }
 }

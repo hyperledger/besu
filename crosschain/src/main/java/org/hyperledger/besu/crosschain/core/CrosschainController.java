@@ -61,14 +61,20 @@ public class CrosschainController {
   WorldStateArchive worldStateArchive;
 
   CrosschainProcessor processor;
+  OriginatingBlockchainMessageProcessor origMsgProcessor;
   CrosschainKeyManager crosschainKeyManager;
 
   LinkedNodeManager linkedNodeManager;
+  CoordContractManager coordContractManager;
 
   public CrosschainController() {
     this.linkedNodeManager = new LinkedNodeManager();
+    this.coordContractManager = new CoordContractManager();
     this.processor = new CrosschainProcessor(this.linkedNodeManager);
     this.crosschainKeyManager = CrosschainKeyManager.getCrosschainKeyManager();
+    this.origMsgProcessor =
+        new OriginatingBlockchainMessageProcessor(
+            this.crosschainKeyManager, this.coordContractManager);
   }
 
   public void init(
@@ -105,6 +111,12 @@ public class CrosschainController {
    */
   public ValidationResult<TransactionValidator.TransactionInvalidReason> addLocalTransaction(
       final CrosschainTransaction transaction) {
+    if (transaction.getType().isOriginatingTransaction()) {
+      // TODO The start message stuff will take a while. The rest of the code should be executed in
+      // some sort of "do later"
+      origMsgProcessor.doStartMessageMagic(transaction);
+    }
+
     // Get Subordinate View results.
     if (this.processor.processSubordinates(transaction, false)) {
       return ValidationResult.invalid(
@@ -304,15 +316,15 @@ public class CrosschainController {
 
   public void addCoordinationContract(
       final BigInteger blockchainId, final Address address, final String ipAddressAndPort) {
-    this.crosschainKeyManager.addCoordinationContract(blockchainId, address, ipAddressAndPort);
+    this.coordContractManager.addCoordinationContract(blockchainId, address, ipAddressAndPort);
   }
 
   public void removeCoordinationContract(final BigInteger blockchainId, final Address address) {
-    this.crosschainKeyManager.removeCoordinationContract(blockchainId, address);
+    this.coordContractManager.removeCoordinationContract(blockchainId, address);
   }
 
   public Collection<CoordinationContractInformation> listCoordinationContracts() {
-    return this.crosschainKeyManager.getAllCoordinationContracts();
+    return this.coordContractManager.getAllCoordinationContracts();
   }
 
   public void addLinkedNode(final BigInteger blockchainId, final String ipAddressAndPort) {

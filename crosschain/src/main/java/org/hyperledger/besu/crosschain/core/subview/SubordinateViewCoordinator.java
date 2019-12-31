@@ -13,7 +13,7 @@
 package org.hyperledger.besu.crosschain.core.subview;
 
 import org.hyperledger.besu.crosschain.core.keys.signatures.NodeBlsSigner;
-import org.hyperledger.besu.crosschain.core.messages.SubordinateViewResult;
+import org.hyperledger.besu.crosschain.core.messages.SubordinateViewResultMessage;
 import org.hyperledger.besu.crosschain.crypto.threshold.crypto.BlsPoint;
 import org.hyperledger.besu.crosschain.crypto.threshold.scheme.BlsPointSecretShare;
 import org.hyperledger.besu.crosschain.p2p.OtherNodeSimulator;
@@ -90,8 +90,8 @@ public class SubordinateViewCoordinator {
       final long blockNumber,
       final BytesValue resultBytesValue) {
 
-    SubordinateViewResult result =
-        new SubordinateViewResult(subordinateView, resultBytesValue, blockNumber);
+    SubordinateViewResultMessage result =
+        new SubordinateViewResultMessage(subordinateView, resultBytesValue, blockNumber);
 
     ArrayList<BlsPointSecretShare> partialSignatures = new ArrayList<>();
     for (OtherNodeSimulator otherNode : this.otherNodes) {

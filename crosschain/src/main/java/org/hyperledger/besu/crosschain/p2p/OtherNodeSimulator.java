@@ -13,7 +13,7 @@
 package org.hyperledger.besu.crosschain.p2p;
 
 import org.hyperledger.besu.crosschain.core.keys.signatures.NodeBlsSigner;
-import org.hyperledger.besu.crosschain.core.messages.SubordinateViewResult;
+import org.hyperledger.besu.crosschain.core.messages.SubordinateViewResultMessage;
 import org.hyperledger.besu.crosschain.crypto.threshold.scheme.BlsPointSecretShare;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
@@ -34,21 +34,23 @@ public class OtherNodeSimulator {
     this.executor = new SubordinateViewExecutor(transactionSimulator);
   }
 
-  public BlsPointSecretShare requestSign(final SubordinateViewResult subordinateViewResult) {
+  public BlsPointSecretShare requestSign(
+      final SubordinateViewResultMessage subordinateViewResultMessage) {
     Object resultObj =
         this.executor.getResult(
-            subordinateViewResult.getTransaction(), subordinateViewResult.getBlockNumber());
+            subordinateViewResultMessage.getTransaction(),
+            subordinateViewResultMessage.getBlockNumber());
     if (resultObj instanceof TransactionSimulatorResult) {
       TransactionSimulatorResult resultTxSim = (TransactionSimulatorResult) resultObj;
       BytesValue resultBytesValue = resultTxSim.getOutput();
 
-      if (!resultBytesValue.equals(subordinateViewResult.getResult())) {
+      if (!resultBytesValue.equals(subordinateViewResultMessage.getResult())) {
         // TODO we don't agree with the result!!!!
         // TODO need to log this and return an error.
         throw new Error("Didn't get the same result");
       }
 
-      return this.signer.sign(subordinateViewResult);
+      return this.signer.sign(subordinateViewResultMessage);
     }
 
     // TODO need to deal with transaction not executing correctly

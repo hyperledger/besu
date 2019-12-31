@@ -12,7 +12,7 @@
  */
 package org.hyperledger.besu.crosschain.core.keys.signatures;
 
-import org.hyperledger.besu.crosschain.core.messages.SubordinateViewResult;
+import org.hyperledger.besu.crosschain.core.messages.SubordinateViewResultMessage;
 import org.hyperledger.besu.crosschain.crypto.threshold.crypto.BlsCryptoProvider;
 import org.hyperledger.besu.crosschain.crypto.threshold.crypto.BlsPoint;
 import org.hyperledger.besu.crosschain.crypto.threshold.scheme.BlsPointSecretShare;
@@ -32,7 +32,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * SIDECHAINS CROSSCHAIN
+ * TODO THIS CLASS IS DEAD CODE AND SHOULD BE REMOVED ONCE THRESHOLS SIGNING HAS BEEN COMPLETED
  *
  * <p>Holds the keys and other values needed to sign and verify information.
  */
@@ -119,8 +119,8 @@ public class NodeBlsSigner {
     }
   }
 
-  public BlsPointSecretShare sign(final SubordinateViewResult toBeSigned) {
-    BytesValue bytesToBeSigned = toBeSigned.getEncoded();
+  public BlsPointSecretShare sign(final SubordinateViewResultMessage toBeSigned) {
+    BytesValue bytesToBeSigned = toBeSigned.getEncodedMessage();
     BlsPoint partialSig =
         this.cryptoProvider.sign(this.nodePrivateKeyShare, bytesToBeSigned.extractArray());
     return new BlsPointSecretShare(this.nodeId, partialSig);
@@ -129,7 +129,7 @@ public class NodeBlsSigner {
   public BlsPoint combineSignatureShares(
       final BlsPointSecretShare localPartialSignature,
       final ArrayList<BlsPointSecretShare> otherNodePartialSignatures,
-      final SubordinateViewResult toBeSigned) {
+      final SubordinateViewResultMessage toBeSigned) {
     if (otherNodePartialSignatures.size() <= this.threshold - 1) {
       // TODO
       throw new Error(
@@ -154,7 +154,7 @@ public class NodeBlsSigner {
     // Verify the signature.
     boolean verified =
         this.cryptoProvider.verify(
-            this.sidechainPublicKey, toBeSigned.getEncoded().extractArray(), signature);
+            this.sidechainPublicKey, toBeSigned.getEncodedMessage().extractArray(), signature);
 
     if (!verified) {
       // TODO try out other combinations of validators. Should determine which is the malicious
