@@ -95,7 +95,7 @@ jobs:
           name: Build
           no_output_timeout: 20m
           command: |
-            ./gradlew --no-daemon --parallel build
+            ./gradlew --no-daemon --parallel -Djava.security.egd=file:/dev/./urandom build
       - capture_test_results
 
   integrationTests:

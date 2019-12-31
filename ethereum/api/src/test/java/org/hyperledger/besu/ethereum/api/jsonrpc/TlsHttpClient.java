@@ -59,20 +59,7 @@ public class TlsHttpClient {
   private SSLContext getCustomSslContext() throws GeneralSecurityException {
     final KeyManager[] km = isClientAuthRequired() ? keyManagerFactory.getKeyManagers() : null;
     final SSLContext sslContext = SSLContext.getInstance("TLS");
-    /*
-    SecureRandom.getStrongInstance() is causing initial handshake timeout in Virtualized CI environment
-    (such as CircleCI). Hence we are using non-blocking instead. This class has been excluded from errorprone
-    checks as we don't allow SecureRandom.getInstance call directly.
-
-    See https://stackoverflow.com/questions/137212/how-to-deal-with-a-slow-securerandom-generator
-    */
-    SecureRandom secureRandom;
-    try {
-      secureRandom = SecureRandom.getInstance("NativePRNGNonBlocking");
-    } catch (NoSuchAlgorithmException nsae) {
-      secureRandom = new SecureRandom();
-    }
-    sslContext.init(km, trustManagerFactory.getTrustManagers(), secureRandom);
+    sslContext.init(km, trustManagerFactory.getTrustManagers(), SecureRandom.getInstanceStrong());
     return sslContext;
   }
 
