@@ -27,19 +27,6 @@ jar {
   }
 }
 
-test {
-  /*
-   In TLS unit test org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcHttpServiceTlsTest
-   SecureRandom.getStrongInstance() uses /dev/random which can cause block in Virtualized CI environment
-   (such as CircleCI). Specifying following system property in CircleCI environment will allow to use
-   non-blocking /dev/urandom. -Djava.security.egd=file:/dev/./urandom
-   See https://stackoverflow.com/questions/137212/how-to-deal-with-a-slow-securerandom-generator
-   */
-  if (System.getProperty('java.security.egd') != null) {
-    systemProperty name, System.getProperty(name)
-  }
-}
-
 dependencies {
   implementation project(':ethereum:blockcreation')
   implementation project(':ethereum:core')
