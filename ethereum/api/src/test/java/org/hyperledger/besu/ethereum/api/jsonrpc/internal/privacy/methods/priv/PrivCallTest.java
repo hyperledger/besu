@@ -33,8 +33,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionSimulator;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransactionSimulatorResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 
 import java.util.Optional;
@@ -185,7 +185,8 @@ public class PrivCallTest {
   }
 
   private void mockTransactionProcessorSuccessResult(final Bytes output) {
-    final PrivateTransactionSimulatorResult result = mock(PrivateTransactionSimulatorResult.class);
+    final PrivateTransactionProcessor.Result result =
+        mock(PrivateTransactionProcessor.Result.class);
 
     when(result.getValidationResult()).thenReturn(ValidationResult.valid());
     when(result.getOutput()).thenReturn(output);

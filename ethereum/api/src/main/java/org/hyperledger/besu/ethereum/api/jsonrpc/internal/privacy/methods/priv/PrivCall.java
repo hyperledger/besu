@@ -59,7 +59,6 @@ public class PrivCall extends AbstractBlockParameterMethod {
       final JsonRpcRequestContext request, final long blockNumber) {
     final CallParameter callParams = validateAndGetCallParams(request);
     final String privacyGroupId = request.getRequiredParameter(0, String.class);
-    // TODO: We should check that this privacy group exists. Otherwise the
 
     // For now we do only support privCall on the head of the chain.
     // TODO: Once we support privacy on PoW chains (mainnet) this can be removed

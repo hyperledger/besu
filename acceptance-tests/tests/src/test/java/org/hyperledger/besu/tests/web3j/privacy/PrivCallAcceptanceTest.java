@@ -15,6 +15,7 @@
 package org.hyperledger.besu.tests.web3j.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyAcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
@@ -35,6 +36,7 @@ import org.web3j.protocol.core.Request;
 import org.web3j.protocol.core.methods.request.Transaction;
 import org.web3j.protocol.core.methods.response.EthCall;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
+import org.web3j.protocol.exceptions.ClientConnectionException;
 import org.web3j.protocol.http.HttpService;
 import org.web3j.tx.Contract;
 
@@ -92,7 +94,7 @@ public class PrivCallAcceptanceTest extends PrivacyAcceptanceTestBase {
   }
 
   @Test
-  public void privCallWithWrongPrivacyGroupIdMustNotSucceed() throws Exception {
+  public void privCallWithNonExistingPrivacyGroupMustNotSucceed() {
 
     final String privacyGroupId =
         minerNode.execute(
@@ -113,17 +115,23 @@ public class PrivCallAcceptanceTest extends PrivacyAcceptanceTestBase {
             eventEmitter.getContractAddress(), minerNode.getAddress().toString())
         .verify(eventEmitter);
 
+    final String invalidPrivacyGroup = constructInvalidPrivacyGroupString(privacyGroupId);
+    final Request<Object, EthCall> priv_call = privCall(invalidPrivacyGroup, eventEmitter);
+
+    assertThatExceptionOfType(ClientConnectionException.class)
+        .isThrownBy(() -> priv_call.send())
+        .withMessageContaining("Privacy group does not exist.");
+  }
+
+  @NotNull
+  private String constructInvalidPrivacyGroupString(final String privacyGroupId) {
     final char[] chars = privacyGroupId.toCharArray();
     if (chars[0] == '0') {
       chars[0] = '1';
     } else {
       chars[0] = '0';
     }
-    final Request<Object, EthCall> priv_call = privCall(String.valueOf(chars), eventEmitter);
-
-    final EthCall resp = priv_call.send();
-
-    assertThat(resp.getResult()).isEqualTo("0x");
+    return String.valueOf(chars);
   }
 
   @NotNull

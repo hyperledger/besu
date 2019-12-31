@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.privacy;
 
 import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Account;
@@ -27,6 +28,8 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
@@ -70,7 +73,7 @@ public class PrivateTransactionSimulator {
     this.privacyParameters = privacyParameters;
   }
 
-  public Optional<PrivateTransactionSimulatorResult> process(
+  public Optional<PrivateTransactionProcessor.Result> process(
       final String privacyGroupId,
       final String enclaveKey,
       final CallParameter callParams,
@@ -79,7 +82,7 @@ public class PrivateTransactionSimulator {
     return process(privacyGroupId, enclaveKey, callParams, header);
   }
 
-  public Optional<PrivateTransactionSimulatorResult> process(
+  public Optional<PrivateTransactionProcessor.Result> process(
       final String privacyGroupId,
       final String enclaveKey,
       final CallParameter callParams,
@@ -88,12 +91,12 @@ public class PrivateTransactionSimulator {
     return process(privacyGroupId, enclaveKey, callParams, header);
   }
 
-  public Optional<PrivateTransactionSimulatorResult> processAtHead(
+  public Optional<PrivateTransactionProcessor.Result> processAtHead(
       final String privacyGroupId, final String enclaveKey, final CallParameter callParams) {
     return process(privacyGroupId, enclaveKey, callParams, blockchain.getChainHeadHeader());
   }
 
-  private Optional<PrivateTransactionSimulatorResult> process(
+  private Optional<PrivateTransactionProcessor.Result> process(
       final String privacyGroupIdString,
       final String enclaveKey,
       final CallParameter callParams,
@@ -102,13 +105,22 @@ public class PrivateTransactionSimulator {
       return Optional.empty();
     }
 
-    // check whether the user (enclaveKey) is part of the current privacy group if multi tenancy is
-    // enabled
-    if (privacyParameters.isMultiTenancyEnabled()) {
-      final PrivacyGroup privacyGroup =
-          privacyParameters.getEnclave().retrievePrivacyGroup(privacyGroupIdString);
-      if (!privacyGroup.getMembers().contains(enclaveKey)) {}
+    // check whether the user (enclaveKey) is part of the current privacy group
+    PrivacyGroup privacyGroup = null;
+    try {
+      privacyGroup = privacyParameters.getEnclave().retrievePrivacyGroup(privacyGroupIdString);
+    } catch (final EnclaveClientException e) {
+      // do not do anything. This is handled in the following if
     }
+    if (privacyGroup == null || !privacyGroup.getMembers().contains(enclaveKey)) {
+      return Optional.of(
+          PrivateTransactionProcessor.Result.failed(
+              0L,
+              ValidationResult.invalid(
+                  TransactionValidator.TransactionInvalidReason.PRIVACY_GROUP_DOES_NOT_EXIST),
+              Optional.empty()));
+    }
+
     final MutableWorldState publicWorldState =
         worldStateArchive.getMutable(header.getStateRoot()).orElse(null);
     if (publicWorldState == null) {
@@ -168,7 +180,7 @@ public class PrivateTransactionSimulator {
             new BlockHashLookup(header, blockchain),
             privacyGroupId);
 
-    return Optional.of(new PrivateTransactionSimulatorResult(transaction, result));
+    return Optional.of(result);
   }
 
   public Optional<Boolean> doesAddressExistAtHead(final Address address) {
