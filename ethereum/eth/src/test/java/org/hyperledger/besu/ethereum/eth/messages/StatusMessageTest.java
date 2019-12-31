@@ -71,7 +71,7 @@ public class StatusMessageTest {
   public void serializeDeserializeWithForkId() {
     final int version = EthProtocol.EthVersion.V64;
     final BigInteger networkId = BigInteger.ONE;
-    final UInt256 td = UInt256.of(1000L);
+    final Difficulty td = Difficulty.of(1000L);
     final Hash bestHash = randHash(1L);
     final Hash genesisHash = randHash(2L);
     final ForkIdManager.ForkId forkId = ForkIdManager.createIdEntry("0xa00bc334", 0L);

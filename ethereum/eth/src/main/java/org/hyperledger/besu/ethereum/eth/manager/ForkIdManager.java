@@ -21,9 +21,8 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.BytesValues;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -85,8 +84,8 @@ public class ForkIdManager {
 
   public static ForkId readFrom(final RLPInput in) {
     in.enterList();
-    final BytesValue hash = in.readBytesValue();
-    final BytesValue next = in.readBytesValue();
+    final Bytes hash = in.readBytes();
+    final Bytes next = in.readBytes();
     in.leaveList();
     return new ForkId(hash, next);
   }
@@ -142,7 +141,7 @@ public class ForkIdManager {
     return !peerGenesisHash.equals(genesisHash);
   }
 
-  private boolean isHashKnown(final BytesValue forkHash) {
+  private boolean isHashKnown(final Bytes forkHash) {
     return forkAndHashList.stream().map(ForkId::getHash).anyMatch(hash -> hash.equals(forkHash));
   }
 
@@ -151,7 +150,7 @@ public class ForkIdManager {
         || forkAndHashList.stream().map(ForkId::getNext).anyMatch(fork -> fork.equals(nextFork));
   }
 
-  private boolean isRemoteAwareOfPresent(final BytesValue forkHash, final Long nextFork) {
+  private boolean isRemoteAwareOfPresent(final Bytes forkHash, final Long nextFork) {
     for (ForkId j : forkAndHashList) {
       if (forkHash.equals(j.getHash())) {
         if (nextFork.equals(j.getNext())) {
@@ -169,7 +168,7 @@ public class ForkIdManager {
   private List<ForkId> createForkIds(final List<Long> forks) {
     final CRC32 crc = new CRC32();
     crc.update(this.genesisHash.getByteArray());
-    final List<BytesValue> forkHashes = new ArrayList<>(List.of(getCurrentCrcHash(crc)));
+    final List<Bytes> forkHashes = new ArrayList<>(List.of(getCurrentCrcHash(crc)));
     for (final Long fork : forks) {
       updateCrc(crc, fork);
       forkHashes.add(getCurrentCrcHash(crc));
@@ -195,16 +194,16 @@ public class ForkIdManager {
     crc.update(byteRepresentationFork, 0, byteRepresentationFork.length);
   }
 
-  private BytesValue getCurrentCrcHash(final CRC32 crc) {
-    return BytesValues.ofUnsignedInt(crc.getValue());
+  private Bytes getCurrentCrcHash(final CRC32 crc) {
+    return Bytes.ofUnsignedInt(crc.getValue());
   }
 
   public static class ForkId {
-    final BytesValue hash;
-    final BytesValue next;
-    BytesValue forkIdRLP;
+    final Bytes hash;
+    final Bytes next;
+    Bytes forkIdRLP;
 
-    ForkId(final BytesValue hash, final BytesValue next) {
+    ForkId(final Bytes hash, final Bytes next) {
       this.hash = hash;
       this.next = next;
       createForkIdRLP();
@@ -212,35 +211,35 @@ public class ForkIdManager {
 
     ForkId(final String hash, final String next) {
       this.hash =
-          padToEightBytes(BytesValue.fromHexString((hash.length() % 2 == 0 ? "" : "0") + hash));
+          padToEightBytes(Bytes.fromHexString((hash.length() % 2 == 0 ? "" : "0") + hash));
       if (next.equals("") || next.equals("0x")) {
-        this.next = BytesValue.EMPTY;
+        this.next = Bytes.EMPTY;
       } else if (next.startsWith("0x")) {
         long asLong = Long.parseLong(next.replaceFirst("0x", ""), 16);
-        this.next = BytesValues.trimLeadingZeros(BytesValue.wrap(longToBigEndian(asLong)));
+        this.next = Bytes.wrap(longToBigEndian(asLong)).trimLeadingZeros();
       } else {
-        this.next = BytesValue.wrap(longToBigEndian(Long.parseLong(next)));
+        this.next = Bytes.wrap(longToBigEndian(Long.parseLong(next)));
       }
       createForkIdRLP();
     }
 
     ForkId(final String hash, final long next) {
-      this.hash = BytesValue.fromHexString(hash);
-      this.next = BytesValue.wrap(longToBigEndian(next));
+      this.hash = Bytes.fromHexString(hash);
+      this.next = Bytes.wrap(longToBigEndian(next));
       createForkIdRLP();
     }
 
-    ForkId(final BytesValue hash, final long next) {
+    ForkId(final Bytes hash, final long next) {
       this.hash = hash;
-      this.next = BytesValue.wrap(longToBigEndian(next));
+      this.next = Bytes.wrap(longToBigEndian(next));
       createForkIdRLP();
     }
 
     public long getNext() {
-      return BytesValues.extractLong(next);
+      return next.toLong();
     }
 
-    public BytesValue getHash() {
+    public Bytes getHash() {
       return hash;
     }
 
@@ -252,14 +251,14 @@ public class ForkIdManager {
 
     public void writeTo(final RLPOutput out) {
       out.startList();
-      out.writeBytesValue(hash);
-      out.writeBytesValue(next);
+      out.writeBytes(hash);
+      out.writeBytes(next);
       out.endList();
     }
 
     public static ForkId readFrom(final RLPInput in) {
       in.enterList();
-      final BytesValue hash = in.readBytesValue();
+      final Bytes hash = in.readBytes();
       final long next = in.readLong();
       in.leaveList();
       return new ForkId(hash, next);
@@ -271,9 +270,9 @@ public class ForkIdManager {
       return forRLP;
     }
 
-    private static BytesValue padToEightBytes(final BytesValue hash) {
+    private static Bytes padToEightBytes(final Bytes hash) {
       if (hash.size() < 4) {
-        BytesValue padded = BytesValues.concatenate(hash, BytesValue.fromHexString("0x00"));
+        Bytes padded = Bytes.concatenate(hash, Bytes.fromHexString("0x00"));
         return padToEightBytes(padded);
       } else {
         return hash;
@@ -282,14 +281,14 @@ public class ForkIdManager {
 
     @Override
     public String toString() {
-      return "ForkId(hash=" + this.hash + ", next=" + BytesValues.extractLong(next) + ")";
+      return "ForkId(hash=" + this.hash + ", next=" + next.toLong() + ")";
     }
 
     @Override
     public boolean equals(final Object obj) {
       if (obj instanceof ForkId) {
         ForkId other = (ForkId) obj;
-        long thisNext = BytesValues.extractLong(next);
+        long thisNext = next.toLong();
         return other.getHash().equals(this.hash) && thisNext == other.getNext();
       }
       return false;

@@ -16,10 +16,10 @@ package org.hyperledger.besu.ethereum.eth.manager;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -263,7 +263,7 @@ public class ForkIdManagerTest {
     ForkIdManager.ForkId forkIdEntry = ForkIdManager.createIdEntry("0xa00bc324", 7280000L);
     BytesValueRLPOutput out = new BytesValueRLPOutput();
     forkIdEntry.writeTo(out);
-    BytesValue bytesValue = out.encoded();
+    Bytes bytesValue = out.encoded();
     BytesValueRLPInput in = new BytesValueRLPInput(bytesValue, false);
     ForkIdManager.ForkId decodedEntry = ForkIdManager.readFrom(in);
     assertThat(forkIdEntry.equals(decodedEntry)).isTrue();
@@ -275,7 +275,7 @@ public class ForkIdManagerTest {
     BytesValueRLPOutput out = new BytesValueRLPOutput();
     forkIdEntry.writeTo(out);
     String str1 = "0xc6840000000080";
-    BytesValue bytesValue = out.encoded();
+    Bytes bytesValue = out.encoded();
     assertThat(str1.equals(bytesValue.toString())).isTrue();
     BytesValueRLPInput in = new BytesValueRLPInput(bytesValue, false);
     ForkIdManager.ForkId decodedEntry = ForkIdManager.readFrom(in);
@@ -288,7 +288,7 @@ public class ForkIdManagerTest {
     BytesValueRLPOutput out = new BytesValueRLPOutput();
     forkIdEntry.writeTo(out);
     String str1 = "0xca84deadbeef84baddcafe";
-    BytesValue bytesValue = out.encoded();
+    Bytes bytesValue = out.encoded();
     assertThat(str1.equals(bytesValue.toString())).isTrue();
     BytesValueRLPInput in = new BytesValueRLPInput(bytesValue, false);
     ForkIdManager.ForkId decodedEntry = ForkIdManager.readFrom(in);
@@ -303,8 +303,7 @@ public class ForkIdManagerTest {
     forkIdEntry.writeTo(out);
     String str1 =
         "0xce84ffffffff88ffffffffffffffff"; // Check value supplied in EIP-2124 spec via GO lang
-    BytesValue bytesValue = out.encoded();
-    System.out.println(bytesValue); // todo remove dev item
+    Bytes bytesValue = out.encoded();
     assertThat(str1.equals(bytesValue.toString())).isTrue();
     BytesValueRLPInput in = new BytesValueRLPInput(bytesValue, false);
     ForkIdManager.ForkId decodedEntry = ForkIdManager.readFrom(in);

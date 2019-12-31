@@ -54,7 +54,7 @@ public final class StatusMessage extends AbstractMessageData {
   public static StatusMessage create(
       final int protocolVersion,
       final BigInteger networkId,
-      final UInt256 totalDifficulty,
+      final Difficulty totalDifficulty,
       final Hash bestHash,
       final Hash genesisHash,
       final ForkIdManager.ForkId forkId) {
@@ -148,7 +148,7 @@ public final class StatusMessage extends AbstractMessageData {
     EthStatus(
         final int protocolVersion,
         final BigInteger networkId,
-        final UInt256 totalDifficulty,
+        final Difficulty totalDifficulty,
         final Hash bestHash,
         final Hash genesisHash,
         final ForkIdManager.ForkId forkHash) {
@@ -166,11 +166,9 @@ public final class StatusMessage extends AbstractMessageData {
       out.writeIntScalar(protocolVersion);
       out.writeBigIntegerScalar(networkId);
       out.writeUInt256Scalar(totalDifficulty);
-      out.writeBytesValue(bestHash);
-      out.writeBytesValue(genesisHash);
-      if (forkId != null) {
-        forkId.writeTo(out);
-      }
+      out.writeBytes(bestHash);
+      out.writeBytes(genesisHash);
+
       out.endList();
     }
 
