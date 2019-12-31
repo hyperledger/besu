@@ -21,8 +21,6 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +28,8 @@ import java.util.stream.Collectors;
 import java.util.zip.CRC32;
 
 import com.google.common.annotations.VisibleForTesting;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class ForkIdManager {
 
@@ -210,8 +210,7 @@ public class ForkIdManager {
     }
 
     ForkId(final String hash, final String next) {
-      this.hash =
-          padToEightBytes(Bytes.fromHexString((hash.length() % 2 == 0 ? "" : "0") + hash));
+      this.hash = padToEightBytes(Bytes.fromHexString((hash.length() % 2 == 0 ? "" : "0") + hash));
       if (next.equals("") || next.equals("0x")) {
         this.next = Bytes.EMPTY;
       } else if (next.startsWith("0x")) {
