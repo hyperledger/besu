@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.assertThatIOException;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
@@ -43,7 +43,6 @@ import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.net.ConnectException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -223,14 +222,13 @@ public class JsonRpcHttpServiceTlsTest {
   }
 
   @Test
-  @Ignore
   public void connectionFailsWhenTlsClientAuthIsNotProvided() {
     final String id = "123";
     final String json =
         "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_version\"}";
 
     final OkHttpClient httpClient = getTlsHttpClientWithoutClientAuthentication();
-    assertThatExceptionOfType(ConnectException.class)
+    assertThatIOException()
         .isThrownBy(
             () -> {
               try (final Response response = httpClient.newCall(buildPostRequest(json)).execute()) {
@@ -243,18 +241,20 @@ public class JsonRpcHttpServiceTlsTest {
   }
 
   @Test
-  @Ignore
   public void connectionFailsWhenClientIsNotWhitelisted() {
     final String id = "123";
     final String json =
         "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_version\"}";
 
     final OkHttpClient httpClient = getTlsHttpClientNotWhitelisted();
-    assertThatExceptionOfType(ConnectException.class)
+    assertThatIOException()
         .isThrownBy(
             () -> {
               try (final Response response = httpClient.newCall(buildPostRequest(json)).execute()) {
                 Assertions.fail("Call should have failed. Got: " + response);
+              } catch (Exception e) {
+                e.printStackTrace();
+                throw e;
               }
             });
   }
