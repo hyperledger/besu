@@ -168,7 +168,9 @@ public final class StatusMessage extends AbstractMessageData {
       out.writeUInt256Scalar(totalDifficulty);
       out.writeBytes(bestHash);
       out.writeBytes(genesisHash);
-
+      if (forkId != null) {
+        forkId.writeTo(out);
+      }
       out.endList();
     }
 
