@@ -146,17 +146,18 @@ public class PrivCallTest {
     verify(privateTransactionSimulator).process(any(), any(), any(), eq(0L));
   }
 
-  //  @Test
-  //  public void shouldUseCorrectBlockNumberWhenSpecified() {
-  //    final JsonRpcRequestContext request =
-  //        ethCallRequest(privacyGroupId, callParameter(), Quantity.create(13L));
-  //    when(privateTransactionSimulator.process(any(), any(), any(), anyLong()))
-  //        .thenReturn(Optional.empty());
-  //
-  //    method.response(request);
-  //
-  //    verify(privateTransactionSimulator).process(any(), any(), any(), eq(13L));
-  //  }
+  @Test
+  public void shouldUseCorrectBlockNumberWhenSpecified() {
+    final JsonRpcRequestContext request =
+        ethCallRequest(privacyGroupId, callParameter(), Quantity.create(13L));
+    when(privateTransactionSimulator.process(any(), any(), any(), anyLong()))
+        .thenReturn(Optional.empty());
+    when(blockchainQueries.headBlockNumber()).thenReturn(13L);
+
+    method.response(request);
+
+    verify(privateTransactionSimulator).process(any(), any(), any(), eq(13L));
+  }
 
   @Test
   public void shouldThrowCorrectExceptionWhenNoPrivacyGroupSpecified() {
