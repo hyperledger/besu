@@ -129,28 +129,30 @@ public class TlsHttpClient {
       return new TlsHttpClientBuilder();
     }
 
-    public TlsHttpClientBuilder withKeyStoreResource(String keyStoreResource) {
+    public TlsHttpClientBuilder withKeyStoreResource(final String keyStoreResource) {
       this.keyStoreResource = keyStoreResource;
       return this;
     }
 
-    public TlsHttpClientBuilder withKeyStorePasswordResource(String keyStorePasswordResource) {
+    public TlsHttpClientBuilder withKeyStorePasswordResource(
+        final String keyStorePasswordResource) {
       this.keyStorePasswordResource = keyStorePasswordResource;
       return this;
     }
 
-    public TlsHttpClientBuilder withTrustStoreResource(String trustStoreResource) {
+    public TlsHttpClientBuilder withTrustStoreResource(final String trustStoreResource) {
       this.trustStoreResource = trustStoreResource;
       return this;
     }
 
-    public TlsHttpClientBuilder withTrustStorePasswordResource(String trustStorePasswordResource) {
+    public TlsHttpClientBuilder withTrustStorePasswordResource(
+        final String trustStorePasswordResource) {
       this.trustStorePasswordResource = trustStorePasswordResource;
       return this;
     }
 
     public TlsHttpClient build() {
-      TlsHttpClient tlsHttpClient = new TlsHttpClient();
+      final TlsHttpClient tlsHttpClient = new TlsHttpClient();
       tlsHttpClient.keyStorePasswordResource = this.keyStorePasswordResource;
       tlsHttpClient.trustStoreResource = this.trustStoreResource;
       tlsHttpClient.trustStorePasswordResource = this.trustStorePasswordResource;
