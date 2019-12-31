@@ -23,7 +23,6 @@ import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
@@ -59,7 +58,7 @@ public class TlsHttpClient {
   private SSLContext getCustomSslContext() throws GeneralSecurityException {
     final KeyManager[] km = isClientAuthRequired() ? keyManagerFactory.getKeyManagers() : null;
     final SSLContext sslContext = SSLContext.getInstance("TLS");
-    sslContext.init(km, trustManagerFactory.getTrustManagers(), SecureRandom.getInstanceStrong());
+    sslContext.init(km, trustManagerFactory.getTrustManagers(), null);
     return sslContext;
   }
 
