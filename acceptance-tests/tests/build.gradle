@@ -12,25 +12,25 @@
  */
 
 dependencies {
+  testImplementation project(':acceptance-tests:dsl')
+  testImplementation project(':besu')
+  testImplementation project(':consensus:clique')
+  testImplementation project(':enclave')
+  testImplementation project(':ethereum:api')
+  testImplementation project(':ethereum:core')
+  testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
+  testImplementation project(':ethereum:permissioning')
+  testImplementation project(':plugin-api')
+  testImplementation project(':testutil')
+  testImplementation project(':util')
 
   testImplementation 'junit:junit'
   testImplementation 'net.consensys:orion'
   testImplementation 'org.apache.tuweni:tuweni-crypto'
   testImplementation 'org.assertj:assertj-core'
+  testImplementation 'org.awaitility:awaitility'
   testImplementation 'org.web3j:abi'
   testImplementation 'org.web3j:besu'
-  testImplementation project(':ethereum:api')
-  testImplementation project(':acceptance-tests:dsl')
-  testImplementation project(':enclave')
-  testImplementation 'org.awaitility:awaitility'
-  testImplementation project(':consensus:clique')
-  testImplementation project(':ethereum:permissioning')
-  testImplementation project(':util')
-  testImplementation project(':plugin-api')
-  testImplementation project(':besu')
-  testImplementation project(':ethereum:core')
-  testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
-  testImplementation project(':testutil')
   testImplementation 'tech.pegasys.ethsigner.internal:core'
   testImplementation 'tech.pegasys.ethsigner.internal:file-based'
 }

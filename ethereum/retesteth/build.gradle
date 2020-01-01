@@ -26,25 +26,25 @@ jar {
 }
 
 dependencies {
-  implementation(project(':config'))
-  implementation(project(':ethereum:blockcreation'))
-  implementation(project(':ethereum:core'))
-  implementation(project(':ethereum:eth'))
-  implementation(project(':ethereum:api'))
-  implementation(project(':ethereum:api'))
-  implementation(project(':ethereum:rlp'))
-  implementation(project(':ethereum:p2p'))
-  implementation(project(':metrics:core'))
-  implementation(project(':nat'))
-  implementation(project(':services:kvstore'))
-  implementation(project(':util'))
+  implementation project(':config')
+  implementation project(':ethereum:api')
+  implementation project(':ethereum:api')
+  implementation project(':ethereum:blockcreation')
+  implementation project(':ethereum:core')
+  implementation project(':ethereum:eth')
+  implementation project(':ethereum:p2p')
+  implementation project(':ethereum:rlp')
+  implementation project(':metrics:core')
+  implementation project(':nat')
+  implementation project(':services:kvstore')
+  implementation project(':util')
 
-  implementation 'org.apache.tuweni:tuweni-bytes'
-  implementation 'org.apache.tuweni:tuweni-units'
   implementation 'com.google.guava:guava'
   implementation 'io.vertx:vertx-core'
   implementation 'io.vertx:vertx-web'
   implementation 'org.apache.logging.log4j:log4j-api'
+  implementation 'org.apache.tuweni:tuweni-bytes'
+  implementation 'org.apache.tuweni:tuweni-units'
 
   testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
