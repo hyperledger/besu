@@ -36,8 +36,10 @@ import java.util.Optional;
 import java.util.Set;
 
 import graphql.GraphQL;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
+import okhttp3.HttpUrl;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -153,10 +155,26 @@ public class GraphQLHttpServiceTest {
   }
 
   @Test
-  public void handleEmptyRequest() throws Exception {
+  public void handleEmptyRequestAndRedirect() throws Exception {
     try (final Response resp =
         client.newCall(new Request.Builder().get().url(service.url()).build()).execute()) {
-      Assertions.assertThat(resp.code()).isEqualTo(201);
+      Assertions.assertThat(resp.code()).isEqualTo(HttpResponseStatus.BAD_REQUEST.code());
+    }
+    final RequestBody body = RequestBody.create(null, "");
+    try (final Response resp =
+        client.newCall(new Request.Builder().post(body).url(service.url()).build()).execute()) {
+      Assertions.assertThat(resp.code()).isEqualTo(HttpResponseStatus.PERMANENT_REDIRECT.code());
+      String location = resp.header("Location");
+      Assertions.assertThat(location).isNotEmpty().isNotNull();
+      HttpUrl redirectUrl = resp.request().url().resolve(location);
+      Assertions.assertThat(redirectUrl).isNotNull();
+      Request.Builder redirectBuilder = resp.request().newBuilder();
+      redirectBuilder.post(resp.request().body());
+      resp.body().close();
+      try (final Response redirectResp =
+          client.newCall(redirectBuilder.url(redirectUrl).build()).execute()) {
+        Assertions.assertThat(redirectResp.code()).isEqualTo(HttpResponseStatus.BAD_REQUEST.code());
+      }
     }
   }
 
