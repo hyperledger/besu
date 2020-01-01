@@ -68,6 +68,7 @@ public class GraphQLHttpService {
 
   private static final InetSocketAddress EMPTY_SOCKET_ADDRESS = new InetSocketAddress("0.0.0.0", 0);
   private static final String APPLICATION_JSON = "application/json";
+  private static final String GRAPH_QL_ROUTE = "/graphql";
   private static final MediaType MEDIA_TYPE_JUST_JSON = MediaType.JSON_UTF_8.withoutParameters();
   private static final String EMPTY_RESPONSE = "";
 
@@ -140,9 +141,9 @@ public class GraphQLHttpService {
             BodyHandler.create()
                 .setUploadsDirectory(dataDir.resolve("uploads").toString())
                 .setDeleteUploadedFilesOnEnd(true));
-    router.route("/").method(GET).handler(this::handleEmptyRequest);
+    router.route("/").method(GET).method(POST).handler(this::handleEmptyRequestAndRedirect);
     router
-        .route("/graphql")
+        .route(GRAPH_QL_ROUTE)
         .method(GET)
         .method(POST)
         .produces(APPLICATION_JSON)
@@ -243,9 +244,12 @@ public class GraphQLHttpService {
     return NetworkUtility.urlForSocketAddress("http", socketAddress());
   }
 
-  // Facilitate remote health-checks in AWS, inter alia.
-  private void handleEmptyRequest(final RoutingContext routingContext) {
-    routingContext.response().setStatusCode(201).end();
+  // Empty Get/Post requests to / will be redirected to /graphql using 308 Permanent Redirect
+  private void handleEmptyRequestAndRedirect(final RoutingContext routingContext) {
+    HttpServerResponse response = routingContext.response();
+    response.setStatusCode(HttpResponseStatus.PERMANENT_REDIRECT.code());
+    response.putHeader("Location", "/graphql");
+    response.end();
   }
 
   private void handleGraphQLRequest(final RoutingContext routingContext) {
@@ -257,7 +261,12 @@ public class GraphQLHttpService {
 
       switch (request.method()) {
         case GET:
-          query = request.getParam("query");
+          final String queryString = request.getParam("query");
+          if (queryString == null) {
+            query = "";
+          } else {
+            query = queryString;
+          }
           operationName = request.getParam("operationName");
           final String variableString = request.getParam("variables");
           if (variableString != null) {
@@ -272,7 +281,12 @@ public class GraphQLHttpService {
             final String requestBody = routingContext.getBodyAsString().trim();
             final GraphQLJsonRequest jsonRequest =
                 Json.decodeValue(requestBody, GraphQLJsonRequest.class);
-            query = jsonRequest.getQuery();
+            final String jsonQuery = jsonRequest.getQuery();
+            if (jsonQuery == null) {
+              query = "";
+            } else {
+              query = jsonQuery;
+            }
             operationName = jsonRequest.getOperationName();
             Map<String, Object> jsonVariables = jsonRequest.getVariables();
             if (jsonVariables != null) {
@@ -282,7 +296,12 @@ public class GraphQLHttpService {
             }
           } else {
             // treat all else as application/graphql
-            query = routingContext.getBodyAsString().trim();
+            final String requestQuery = routingContext.getBodyAsString().trim();
+            if (requestQuery == null) {
+              query = "";
+            } else {
+              query = requestQuery;
+            }
             operationName = null;
             variables = Collections.emptyMap();
           }
