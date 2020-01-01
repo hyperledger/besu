@@ -137,7 +137,7 @@ public class JsonRpcConfiguration {
   }
 
   public void setTlsConfiguration(final TlsConfiguration tlsConfiguration) {
-    this.tlsConfiguration = Optional.of(tlsConfiguration);
+    this.tlsConfiguration = Optional.ofNullable(tlsConfiguration);
   }
 
   @Override
