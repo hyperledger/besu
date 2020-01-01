@@ -30,12 +30,11 @@ sourceCompatibility = 11
 targetCompatibility = 11
 
 dependencies {
+  annotationProcessor 'com.google.auto.service:auto-service'
 
+  implementation 'com.google.auto.service:auto-service'
   implementation 'com.google.errorprone:error_prone_annotation'
   implementation 'com.google.errorprone:error_prone_core'
-  implementation 'com.google.auto.service:auto-service'
-
-  annotationProcessor 'com.google.auto.service:auto-service'
 
   testImplementation 'com.google.errorprone:error_prone_test_helpers'
   testImplementation 'junit:junit'

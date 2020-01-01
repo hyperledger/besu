@@ -28,24 +28,24 @@ jar {
 }
 
 dependencies {
+  annotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess'
+
   api project(':plugin-api')
   api project(':util')
 
-  implementation 'org.apache.tuweni:tuweni-bytes'
-  implementation 'org.apache.tuweni:tuweni-units'
   implementation 'com.google.guava:guava'
   implementation 'io.vertx:vertx-core'
-
-  compileOnly 'org.openjdk.jmh:jmh-generator-annprocess'
+  implementation 'org.apache.tuweni:tuweni-bytes'
+  implementation 'org.apache.tuweni:tuweni-units'
 
   jmh project(':util')
 
   testImplementation project(path: ':ethereum:referencetests', configuration: 'testOutput')
   testImplementation project(':testutil')
 
-  testImplementation 'org.assertj:assertj-core'
   testImplementation 'com.fasterxml.jackson.core:jackson-databind'
   testImplementation 'junit:junit'
+  testImplementation 'org.assertj:assertj-core'
 }
 
 test {

@@ -29,11 +29,12 @@ jar {
 
 dependencies {
   api project(':util')
+
   implementation project(':metrics:core')
   implementation project(':plugin-api')
 
-  implementation 'org.apache.logging.log4j:log4j-api'
   implementation 'com.google.guava:guava'
+  implementation 'org.apache.logging.log4j:log4j-api'
 
   runtime 'org.apache.logging.log4j:log4j-core'
 

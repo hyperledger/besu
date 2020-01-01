@@ -1,16 +1,17 @@
 dependencies {
   implementation 'com.fasterxml.jackson.core:jackson-databind'
-  implementation 'org.apache.logging.log4j:log4j-api'
   implementation 'io.vertx:vertx-core'
+  implementation 'org.apache.logging.log4j:log4j-api'
 
   // test dependencies.
-  testImplementation 'junit:junit'
   testImplementation project(':testutil')
 
+  testImplementation 'junit:junit'
+
   // integration test dependencies.
-  integrationTestImplementation 'junit:junit'
-  integrationTestImplementation 'org.assertj:assertj-core'
   integrationTestImplementation project(':testutil')
 
+  integrationTestImplementation 'junit:junit'
   integrationTestImplementation 'net.consensys:orion'
+  integrationTestImplementation 'org.assertj:assertj-core'
 }
