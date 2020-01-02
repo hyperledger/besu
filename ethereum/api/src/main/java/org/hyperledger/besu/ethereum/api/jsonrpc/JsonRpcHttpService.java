@@ -32,8 +32,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcNoResp
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponseType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcUnauthorizedResponse;
+import org.hyperledger.besu.ethereum.api.tls.PfxOptionsMapper;
 import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
-import org.hyperledger.besu.ethereum.api.tls.TlsStoreConfiguration;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.nat.upnp.UpnpNatManager;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -49,7 +49,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Function;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
@@ -68,7 +67,6 @@ import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.net.PfxOptions;
 import io.vertx.ext.auth.User;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
@@ -228,7 +226,8 @@ public class JsonRpcHttpService {
               if (!res.failed()) {
                 resultFuture.complete(null);
                 final int actualPort = httpServer.actualPort();
-                final String tlsMessage = isTlsConfigurationEnabled() ? " with TLS enabled." : "";
+                final String tlsMessage =
+                    config.isTlsConfigurationEnabled() ? " with TLS enabled." : "";
                 LOG.info(
                     "JsonRPC service started and listening on {}:{}{}",
                     config.getHost(),
@@ -269,16 +268,16 @@ public class JsonRpcHttpService {
 
   private HttpServerOptions getHttpServerOptionsWithTls() {
     final HttpServerOptions httpServerOptions = new HttpServerOptions();
-    if (!isTlsConfigurationEnabled()) {
+    if (!config.isTlsConfigurationEnabled()) {
       return httpServerOptions;
     }
 
     final TlsConfiguration tlsConfiguration = config.getTlsConfiguration().get();
     httpServerOptions
         .setSsl(true)
-        .setPfxKeyCertOptions(storeToPfxOptions.apply(tlsConfiguration.getKeyStore()));
+        .setPfxKeyCertOptions(PfxOptionsMapper.from(tlsConfiguration.getKeyStore()));
 
-    if (isClientAuthenticationRequired()) {
+    if (config.isClientAuthenticationRequired()) {
       final Path knownClientsFile = tlsConfiguration.getKnownClientsFile().get();
       httpServerOptions
           .setClientAuth(ClientAuth.REQUIRED)
@@ -286,22 +285,6 @@ public class JsonRpcHttpService {
     }
 
     return httpServerOptions;
-  }
-
-  private Function<TlsStoreConfiguration, PfxOptions> storeToPfxOptions =
-      tlsStoreConfiguration ->
-          new PfxOptions()
-              .setPath(tlsStoreConfiguration.getStorePath())
-              .setPassword(tlsStoreConfiguration.getStorePassword());
-
-  private boolean isTlsConfigurationEnabled() {
-    return config.getTlsConfiguration().isPresent();
-  }
-
-  private boolean isClientAuthenticationRequired() {
-    return isTlsConfigurationEnabled()
-        ? config.getTlsConfiguration().get().getKnownClientsFile().isPresent()
-        : false;
   }
 
   private Handler<RoutingContext> checkWhitelistHostHeader() {
@@ -376,7 +359,7 @@ public class JsonRpcHttpService {
   }
 
   private String getScheme() {
-    return isTlsConfigurationEnabled() ? "https" : "http";
+    return config.isTlsConfigurationEnabled() ? "https" : "http";
   }
 
   private void handleJsonRPCRequest(final RoutingContext routingContext) {
