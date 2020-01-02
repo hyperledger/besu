@@ -160,9 +160,9 @@ public class JsonRpcHttpServiceTlsTest {
         getKnownClientsFile());
   }
 
-  private static String getKeyStorePath() {
+  private static Path getKeyStorePath() {
     try {
-      return Paths.get(ClassLoader.getSystemResource(KEYSTORE_RESOURCE).toURI()).toString();
+      return Paths.get(ClassLoader.getSystemResource(KEYSTORE_RESOURCE).toURI());
     } catch (URISyntaxException e) {
       throw new RuntimeException("Unable to read keystore resource.", e);
     }

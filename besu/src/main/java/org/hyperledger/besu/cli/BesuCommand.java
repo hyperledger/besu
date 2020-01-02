@@ -1207,7 +1207,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--rpc-http-authentication-enabled",
             "--rpc-http-authentication-credentials-file",
             "--rpc-http-authentication-public-key-file",
-            "--rpc-http-tls-enabled"));
+            "--rpc-http-tls-enabled",
+            "--rpc-http-tls-keystore-file",
+            "--rpc-http-tls-keystore-password-file",
+            "--rpc-http-tls-known-clients-file"));
 
     if (isRpcHttpAuthenticationEnabled
         && rpcHttpAuthenticationCredentialsFile() == null
@@ -1254,13 +1257,17 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       password =
           Files.asCharSource(rpcHttpTlsKeystorePasswordFile.toFile(), Charsets.UTF_8)
               .readFirstLine();
+      if (password == null) {
+        throw new ParameterException(
+            commandLine, "Unable to read key store password for JSON-RPC HTTP endpoint");
+      }
     } catch (IOException e) {
       throw new ParameterException(
           commandLine, "Unable to read key store password file for JSON-RPC HTTP endpoint", e);
     }
 
     final TlsStoreConfiguration keyStoreConfiguration =
-        new TlsStoreConfiguration(rpcHttpTlsKeystoreFile.normalize().toString(), password);
+        new TlsStoreConfiguration(rpcHttpTlsKeystoreFile.normalize(), password);
 
     return new TlsConfiguration(
         keyStoreConfiguration, Optional.ofNullable(rpcHttpTlsKnownClientsFile));
