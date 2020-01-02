@@ -119,7 +119,7 @@ public enum RpcMethod {
 
   private final String methodName;
 
-  private static Collection<String> allMethodNames;
+  private static final Collection<String> allMethodNames;
 
   public String getMethodName() {
     return methodName;

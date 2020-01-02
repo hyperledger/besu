@@ -47,7 +47,7 @@ public class TraceTypeParameter {
     }
   }
 
-  private Set<TraceType> traceTypes;
+  private final Set<TraceType> traceTypes;
 
   @JsonCreator
   public TraceTypeParameter(final List<String> traceTypesInput) {

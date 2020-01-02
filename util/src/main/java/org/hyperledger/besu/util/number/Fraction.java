@@ -21,7 +21,7 @@ import java.util.Objects;
 
 public class Fraction {
 
-  private float value;
+  private final float value;
 
   private Fraction(final float value) {
     this.value = value;

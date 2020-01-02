@@ -77,7 +77,7 @@ public class PrivGetPrivateTransactionIntegrationTest {
 
   private static final Vertx vertx = Vertx.vertx();
 
-  private EnclavePublicKeyProvider enclavePublicKeyProvider = (user) -> ENCLAVE_PUBLIC_KEY;
+  private final EnclavePublicKeyProvider enclavePublicKeyProvider = (user) -> ENCLAVE_PUBLIC_KEY;
 
   @BeforeClass
   public static void setUpOnce() throws Exception {

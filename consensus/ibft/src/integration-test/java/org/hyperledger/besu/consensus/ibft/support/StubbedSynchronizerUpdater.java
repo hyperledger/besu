@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 
 public class StubbedSynchronizerUpdater implements SynchronizerUpdater {
 
-  private Map<PeerConnection, ValidatorPeer> validatorNodes = new HashMap<>();
+  private final Map<PeerConnection, ValidatorPeer> validatorNodes = new HashMap<>();
 
   @Override
   public void updatePeerChainState(
