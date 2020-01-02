@@ -24,7 +24,7 @@ public class RunnableCounter implements Counter {
   private final Counter backedCounter;
   private final Runnable task;
   private final int step;
-  private AtomicLong stepCounter;
+  private final AtomicLong stepCounter;
 
   public RunnableCounter(final Counter backedCounter, final Runnable task, final int step) {
     this.backedCounter = backedCounter;

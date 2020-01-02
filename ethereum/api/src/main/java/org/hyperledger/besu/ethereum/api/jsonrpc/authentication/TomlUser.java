@@ -30,7 +30,7 @@ public class TomlUser extends AbstractUser {
   private final List<String> groups;
   private final List<String> permissions;
   private final List<String> roles;
-  private Optional<String> privacyPublicKey;
+  private final Optional<String> privacyPublicKey;
 
   TomlUser(
       final String username,

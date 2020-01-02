@@ -41,7 +41,7 @@ public class LoadPrivateSmartContractTransaction<T extends Contract> implements 
   private final long chainId;
   private final Base64String privateFrom;
   private final List<Base64String> privateFor;
-  private String contractAddress;
+  private final String contractAddress;
 
   public LoadPrivateSmartContractTransaction(
       final String contractAddress,

@@ -95,21 +95,21 @@ public class RLPSubCommand implements Runnable {
         description =
             "Type of the RLP data to encode, possible values are ${COMPLETION-CANDIDATES}. (default: ${DEFAULT-VALUE})",
         arity = "1..1")
-    private RLPType type = RLPType.IBFT_EXTRA_DATA;
+    private final RLPType type = RLPType.IBFT_EXTRA_DATA;
 
     @Option(
         names = "--from",
         paramLabel = DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP,
         description = "File containing JSON object to encode",
         arity = "1..1")
-    private File jsonSourceFile = null;
+    private final File jsonSourceFile = null;
 
     @Option(
         names = "--to",
         paramLabel = DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP,
         description = "File to write encoded RLP string to.",
         arity = "1..1")
-    private File rlpTargetFile = null;
+    private final File rlpTargetFile = null;
 
     @Override
     public void run() {

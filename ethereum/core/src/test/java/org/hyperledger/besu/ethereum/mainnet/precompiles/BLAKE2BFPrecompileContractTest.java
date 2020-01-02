@@ -33,7 +33,7 @@ public class BLAKE2BFPrecompileContractTest {
 
   public BLAKE2BFPrecompileContractTest() {}
 
-  private MessageFrame messageFrame = mock(MessageFrame.class);
+  private final MessageFrame messageFrame = mock(MessageFrame.class);
 
   @Parameterized.Parameters
   public static Object[][] parameters() {

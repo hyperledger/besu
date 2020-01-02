@@ -36,7 +36,7 @@ public class PrivDistributeRawTransaction implements JsonRpcMethod {
 
   private final PrivacyController privacyController;
   private final PrivacySendTransaction privacySendTransaction;
-  private EnclavePublicKeyProvider enclavePublicKeyProvider;
+  private final EnclavePublicKeyProvider enclavePublicKeyProvider;
 
   public PrivDistributeRawTransaction(
       final PrivacyController privacyController,
