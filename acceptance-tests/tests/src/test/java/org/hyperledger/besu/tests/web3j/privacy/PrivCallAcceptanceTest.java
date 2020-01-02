@@ -121,7 +121,8 @@ public class PrivCallAcceptanceTest extends PrivacyAcceptanceTestBase {
         .verify(eventEmitter);
 
     final String invalidPrivacyGroup = constructInvalidString(privacyGroupId);
-    final Request<Object, EthCall> priv_call = privCall(invalidPrivacyGroup, eventEmitter, false, false);
+    final Request<Object, EthCall> priv_call =
+        privCall(invalidPrivacyGroup, eventEmitter, false, false);
 
     assertThatExceptionOfType(ClientConnectionException.class)
         .isThrownBy(() -> priv_call.send())
@@ -132,52 +133,52 @@ public class PrivCallAcceptanceTest extends PrivacyAcceptanceTestBase {
   public void privCallWithWronglyEncodedFunctionMustNotSucceed() {
 
     final String privacyGroupId =
-            minerNode.execute(
-                    privacyTransactions.createPrivacyGroup(
-                            "myGroupName", "my group description", minerNode));
+        minerNode.execute(
+            privacyTransactions.createPrivacyGroup(
+                "myGroupName", "my group description", minerNode));
 
     final EventEmitter eventEmitter =
-            minerNode.execute(
-                    privateContractTransactions.createSmartContractWithPrivacyGroupId(
-                            EventEmitter.class,
-                            minerNode.getTransactionSigningKey(),
-                            POW_CHAIN_ID,
-                            minerNode.getEnclaveKey(),
-                            privacyGroupId));
+        minerNode.execute(
+            privateContractTransactions.createSmartContractWithPrivacyGroupId(
+                EventEmitter.class,
+                minerNode.getTransactionSigningKey(),
+                POW_CHAIN_ID,
+                minerNode.getEnclaveKey(),
+                privacyGroupId));
 
     privateContractVerifier
-            .validPrivateContractDeployed(
-                    eventEmitter.getContractAddress(), minerNode.getAddress().toString())
-            .verify(eventEmitter);
+        .validPrivateContractDeployed(
+            eventEmitter.getContractAddress(), minerNode.getAddress().toString())
+        .verify(eventEmitter);
 
     final Request<Object, EthCall> priv_call = privCall(privacyGroupId, eventEmitter, true, false);
 
     assertThatExceptionOfType(ClientConnectionException.class)
-            .isThrownBy(() -> priv_call.send())
-            .withMessageContaining("Invalid params");
+        .isThrownBy(() -> priv_call.send())
+        .withMessageContaining("Invalid params");
   }
 
   @Test
   public void privCallWithInvalidContractAddressMustReturn0x() throws IOException {
 
     final String privacyGroupId =
-            minerNode.execute(
-                    privacyTransactions.createPrivacyGroup(
-                            "myGroupName", "my group description", minerNode));
+        minerNode.execute(
+            privacyTransactions.createPrivacyGroup(
+                "myGroupName", "my group description", minerNode));
 
     final EventEmitter eventEmitter =
-            minerNode.execute(
-                    privateContractTransactions.createSmartContractWithPrivacyGroupId(
-                            EventEmitter.class,
-                            minerNode.getTransactionSigningKey(),
-                            POW_CHAIN_ID,
-                            minerNode.getEnclaveKey(),
-                            privacyGroupId));
+        minerNode.execute(
+            privateContractTransactions.createSmartContractWithPrivacyGroupId(
+                EventEmitter.class,
+                minerNode.getTransactionSigningKey(),
+                POW_CHAIN_ID,
+                minerNode.getEnclaveKey(),
+                privacyGroupId));
 
     privateContractVerifier
-            .validPrivateContractDeployed(
-                    eventEmitter.getContractAddress(), minerNode.getAddress().toString())
-            .verify(eventEmitter);
+        .validPrivateContractDeployed(
+            eventEmitter.getContractAddress(), minerNode.getAddress().toString())
+        .verify(eventEmitter);
 
     final Request<Object, EthCall> priv_call = privCall(privacyGroupId, eventEmitter, false, true);
 
@@ -200,37 +201,44 @@ public class PrivCallAcceptanceTest extends PrivacyAcceptanceTestBase {
 
   @NotNull
   private Request<Object, EthCall> privCall(
-          final String privacyGroupId, final Contract eventEmitter, final boolean useInvalidParameters, final boolean useInvalidContractAddress) {
+      final String privacyGroupId,
+      final Contract eventEmitter,
+      final boolean useInvalidParameters,
+      final boolean useInvalidContractAddress) {
 
-    final List<Type> invalidInputParameters = Arrays.<Type>asList(new Address(160, eventEmitter.getContractAddress()));
+    final List<Type> invalidInputParameters =
+        Arrays.<Type>asList(new Address(160, eventEmitter.getContractAddress()));
     final List<Type> validInputParameters = List.of();
-    final List<Type> inputParameters = useInvalidParameters ? invalidInputParameters : validInputParameters;
+    final List<Type> inputParameters =
+        useInvalidParameters ? invalidInputParameters : validInputParameters;
 
     final Function function =
-            new Function(
-                    "value", inputParameters, Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() {}));
+        new Function(
+            "value",
+            inputParameters,
+            Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() {}));
 
     final String encoded = FunctionEncoder.encode(function);
 
     final HttpService httpService =
-            new HttpService(
-                    "http://"
-                            + minerNode.getBesu().getHostName()
-                            + ":"
-                            + minerNode.getBesu().getJsonRpcSocketPort().get());
-
+        new HttpService(
+            "http://"
+                + minerNode.getBesu().getHostName()
+                + ":"
+                + minerNode.getBesu().getJsonRpcSocketPort().get());
 
     final String validContractAddress = eventEmitter.getContractAddress();
     final String invalidContractAddress = constructInvalidString(validContractAddress);
-    final String contractAddress = useInvalidContractAddress ? invalidContractAddress : validContractAddress;
+    final String contractAddress =
+        useInvalidContractAddress ? invalidContractAddress : validContractAddress;
 
     final Transaction transaction =
-            Transaction.createEthCallTransaction(null, contractAddress, encoded);
+        Transaction.createEthCallTransaction(null, contractAddress, encoded);
 
     return new Request<>(
-            "priv_call",
-            Arrays.asList(privacyGroupId, transaction, "latest"),
-            httpService,
-            EthCall.class);
+        "priv_call",
+        Arrays.asList(privacyGroupId, transaction, "latest"),
+        httpService,
+        EthCall.class);
   }
 }
