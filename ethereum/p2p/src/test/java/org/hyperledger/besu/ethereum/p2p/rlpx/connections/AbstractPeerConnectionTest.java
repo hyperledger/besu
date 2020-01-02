@@ -161,7 +161,7 @@ public class AbstractPeerConnectionTest {
   }
 
   private static class TestPeerConnection extends AbstractPeerConnection {
-    private List<SentMessage> sentMessages = new ArrayList<>();
+    private final List<SentMessage> sentMessages = new ArrayList<>();
     private int closedCount = 0;
 
     TestPeerConnection(

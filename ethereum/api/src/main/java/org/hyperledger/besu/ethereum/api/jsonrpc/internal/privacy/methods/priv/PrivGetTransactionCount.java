@@ -29,7 +29,7 @@ import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 public class PrivGetTransactionCount implements JsonRpcMethod {
 
   private final PrivacyController privacyController;
-  private EnclavePublicKeyProvider enclavePublicKeyProvider;
+  private final EnclavePublicKeyProvider enclavePublicKeyProvider;
 
   public PrivGetTransactionCount(
       final PrivacyController privacyController,

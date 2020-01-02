@@ -30,13 +30,13 @@ import org.junit.Test;
 
 public class AuthenticationUtilsTest {
 
-  private static String INVALID_TOKEN_WITHOUT_EXP =
+  private static final String INVALID_TOKEN_WITHOUT_EXP =
       "ewogICJhbGciOiAibm9uZSIsCiAgInR5cCI6ICJKV1QiCn"
           + "0.eyJpYXQiOjE1MTYyMzkwMjIsInBlcm1pc3Npb25zIjpbIm5ldDpwZWVyQ291bnQiXX0";
-  private static String VALID_TOKEN =
+  private static final String VALID_TOKEN =
       "ewogICJhbGciOiAibm9uZSIsCiAgInR5cCI6ICJKV1QiCn0.eyJpYXQiOjE1"
           + "MTYyMzkwMjIsImV4cCI6NDcyOTM2MzIwMCwicGVybWlzc2lvbnMiOlsibmV0OnBlZXJDb3VudCJdfQ";
-  private static String VALID_TOKEN_DECODED_PAYLOAD =
+  private static final String VALID_TOKEN_DECODED_PAYLOAD =
       "{\"iat\": 1516239022,\"exp\": 4729363200," + "\"permissions\": [\"net:peerCount\"]}";
 
   @Test
