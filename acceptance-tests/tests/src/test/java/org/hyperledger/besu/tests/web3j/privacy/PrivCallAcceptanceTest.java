@@ -24,6 +24,7 @@ import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +32,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.web3j.abi.FunctionEncoder;
 import org.web3j.abi.TypeReference;
-import org.web3j.abi.datatypes.Address;
 import org.web3j.abi.datatypes.Function;
 import org.web3j.abi.datatypes.Type;
 import org.web3j.abi.datatypes.generated.Uint256;
@@ -206,11 +206,11 @@ public class PrivCallAcceptanceTest extends PrivacyAcceptanceTestBase {
       final boolean useInvalidParameters,
       final boolean useInvalidContractAddress) {
 
-    final List<Type> invalidInputParameters =
-        Arrays.<Type>asList(new Address(160, eventEmitter.getContractAddress()));
-    final List<Type> validInputParameters = List.of();
+    final Uint256 invalid = new Uint256(BigInteger.TEN);
+
+    @SuppressWarnings("rawtypes")
     final List<Type> inputParameters =
-        useInvalidParameters ? invalidInputParameters : validInputParameters;
+        useInvalidParameters ? Arrays.asList(invalid) : Collections.emptyList();
 
     final Function function =
         new Function(
