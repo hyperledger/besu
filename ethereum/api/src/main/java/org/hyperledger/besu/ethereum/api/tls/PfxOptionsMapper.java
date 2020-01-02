@@ -18,6 +18,8 @@ import io.vertx.core.net.PfxOptions;
 
 public final class PfxOptionsMapper {
   public static PfxOptions from(final TlsStoreConfiguration config) {
-    return new PfxOptions().setPath(config.getStorePath().toString()).setPassword(config.getStorePassword());
+    return new PfxOptions()
+        .setPath(config.getStorePath().toString())
+        .setPassword(config.getStorePassword());
   }
 }
