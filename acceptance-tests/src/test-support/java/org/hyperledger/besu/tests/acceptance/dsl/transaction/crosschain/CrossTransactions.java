@@ -14,6 +14,8 @@ package org.hyperledger.besu.tests.acceptance.dsl.transaction.crosschain;
 
 import java.math.BigInteger;
 
+import org.web3j.protocol.besu.crypto.crosschain.BlsThresholdCryptoSystem;
+
 public class CrossTransactions {
 
   public CrossAddLinkedNode getAddLinkedNode(
@@ -31,5 +33,53 @@ public class CrossTransactions {
 
   public CrossRemoveLinkedNode getRemoveLinkedNode(final BigInteger blockchainId) {
     return new CrossRemoveLinkedNode(blockchainId);
+  }
+
+  public CrossActivateKey activateKey(final long keyVersion) {
+    return new CrossActivateKey(keyVersion);
+  }
+
+  public CrossGetActiveKeyVersion getActiveKeyVersion() {
+    return new CrossGetActiveKeyVersion();
+  }
+
+  public CrossGetBlockchainPublicKey getBlockchainPublicKey(final long keyVersion) {
+    return new CrossGetBlockchainPublicKey(keyVersion);
+  }
+
+  public CrossStartThresholdKeyGeneration startThresholdKeyGeneration(
+      final int threshold, final BlsThresholdCryptoSystem algorithm) {
+    return new CrossStartThresholdKeyGeneration(threshold, algorithm);
+  }
+
+  public CrossGetKeyStatus getKeyStatus(final long keyVersion) {
+    return new CrossGetKeyStatus(keyVersion);
+  }
+
+  public CrossGetKeyActiveNodes getKeyActiveNodes(final long keyVersion) {
+    return new CrossGetKeyActiveNodes(keyVersion);
+  }
+
+  public CrossGetKeyGenFailureReason getKeyGenFailureReason(final long keyVersion) {
+    return new CrossGetKeyGenFailureReason(keyVersion);
+  }
+
+  public CrossGetKeyGenNodesDroppedOutOfKeyGeneration getKeyGenNodesDroppedOutOfKeyGeneration(
+      final long keyVersion) {
+    return new CrossGetKeyGenNodesDroppedOutOfKeyGeneration(keyVersion);
+  }
+
+  public CrossListCoordinationContracts listCoordinationContracts() {
+    return new CrossListCoordinationContracts();
+  }
+
+  public CrossAddCoordinationContract addCoordinationContract(
+      final BigInteger blockchainId, final String address, final String ipAddressAndPort) {
+    return new CrossAddCoordinationContract(blockchainId, address, ipAddressAndPort);
+  }
+
+  public CrossRemoveCoordinationContract removeCoordinationContract(
+      final BigInteger blockchainId, final String address) {
+    return new CrossRemoveCoordinationContract(blockchainId, address);
   }
 }
