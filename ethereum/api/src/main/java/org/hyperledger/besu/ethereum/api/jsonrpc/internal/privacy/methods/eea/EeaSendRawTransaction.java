@@ -34,9 +34,9 @@ import org.hyperledger.besu.ethereum.privacy.SendTransactionResponse;
 public class EeaSendRawTransaction implements JsonRpcMethod {
 
   private final PrivacySendTransaction privacySendTransaction;
-  private EnclavePublicKeyProvider enclavePublicKeyProvider;
-  private TransactionPool transactionPool;
-  private PrivacyController privacyController;
+  private final EnclavePublicKeyProvider enclavePublicKeyProvider;
+  private final TransactionPool transactionPool;
+  private final PrivacyController privacyController;
 
   public EeaSendRawTransaction(
       final TransactionPool transactionPool,

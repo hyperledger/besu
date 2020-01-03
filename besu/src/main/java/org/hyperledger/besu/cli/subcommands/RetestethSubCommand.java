@@ -64,7 +64,7 @@ public class RetestethSubCommand implements Runnable {
           "Logging verbosity levels: OFF, FATAL, ERROR, WARN, INFO, DEBUG, TRACE, ALL (default: ${DEFAULT-VALUE})")
   private final Level logLevel = LogManager.getRootLogger().getLevel();
 
-  @SuppressWarnings("FieldMayBeFinal") // Because PicoCLI requires Strings to not be final.
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @Option(
       names = {"--rpc-http-host"},
       paramLabel = DefaultCommandValues.MANDATORY_HOST_FORMAT_HELP,

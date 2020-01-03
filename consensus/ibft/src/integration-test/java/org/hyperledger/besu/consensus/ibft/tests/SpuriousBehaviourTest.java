@@ -63,7 +63,7 @@ public class SpuriousBehaviourTest {
   private final ConsensusRoundIdentifier roundId = new ConsensusRoundIdentifier(1, 0);
   private final RoundSpecificPeers peers = context.roundSpecificPeers(roundId);
 
-  private Block proposedBlock = context.createBlockForProposalFromChainHead(0, 30);
+  private final Block proposedBlock = context.createBlockForProposalFromChainHead(0, 30);
   private Prepare expectedPrepare;
   private Commit expectedCommit;
 

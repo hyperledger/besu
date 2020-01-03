@@ -20,9 +20,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonInclude(NON_NULL)
 public class Result {
-  private String gasUsed;
-  private String output;
-  private String code;
+  private final String gasUsed;
+  private final String output;
+  private final String code;
 
   public Result(
       final String gasUsed, final String output, final String code, final String address) {
@@ -32,7 +32,7 @@ public class Result {
     this.address = address;
   }
 
-  private String address;
+  private final String address;
 
   public String getGasUsed() {
     return gasUsed;

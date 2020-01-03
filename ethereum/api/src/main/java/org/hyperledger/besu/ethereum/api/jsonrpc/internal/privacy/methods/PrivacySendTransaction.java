@@ -37,7 +37,7 @@ public class PrivacySendTransaction {
   private static final Logger LOG = LogManager.getLogger();
 
   protected final PrivacyController privacyController;
-  private EnclavePublicKeyProvider enclavePublicKeyProvider;
+  private final EnclavePublicKeyProvider enclavePublicKeyProvider;
 
   public PrivacySendTransaction(
       final PrivacyController privacyController,

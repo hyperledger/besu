@@ -52,7 +52,7 @@ public class PrivateTransactionTestFixture {
 
   private Optional<Bytes> privacyGroupId = Optional.empty();
 
-  private Restriction restriction = Restriction.RESTRICTED;
+  private final Restriction restriction = Restriction.RESTRICTED;
 
   public PrivateTransaction createTransaction(final KeyPair keys) {
     final PrivateTransaction.Builder builder = PrivateTransaction.builder();

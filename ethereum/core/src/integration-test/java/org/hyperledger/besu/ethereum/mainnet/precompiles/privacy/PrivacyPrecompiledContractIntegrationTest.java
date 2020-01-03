@@ -83,7 +83,7 @@ public class PrivacyPrecompiledContractIntegrationTest {
   private static OrionTestHarness testHarness;
   private static WorldStateArchive worldStateArchive;
   private static PrivateStateStorage privateStateStorage;
-  private static Vertx vertx = Vertx.vertx();
+  private static final Vertx vertx = Vertx.vertx();
 
   private PrivateTransactionProcessor mockPrivateTxProcessor() {
     final PrivateTransactionProcessor mockPrivateTransactionProcessor =

@@ -245,7 +245,7 @@ public class OperatorSubCommandTest extends CommandTestAbstract {
   }
 
   static class Cmd {
-    private List<String> args;
+    private final List<String> args;
 
     private Cmd(final List<String> args) {
       this.args = args;
