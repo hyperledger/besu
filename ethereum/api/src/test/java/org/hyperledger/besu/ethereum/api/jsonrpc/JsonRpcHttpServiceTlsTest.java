@@ -225,7 +225,7 @@ public class JsonRpcHttpServiceTlsTest {
   public void netVersionSuccessfulOnTls() throws Exception {
     final String id = "123";
     final String json =
-            "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_version\"}";
+        "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_version\"}";
 
     final OkHttpClient httpClient = getTlsHttpClient();
     try (final Response response = httpClient.newCall(buildPostRequest(json)).execute()) {
