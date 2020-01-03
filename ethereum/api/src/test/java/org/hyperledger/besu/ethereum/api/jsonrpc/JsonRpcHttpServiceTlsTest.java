@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc;
 
+import static com.google.common.base.Charsets.UTF_8;
+import static com.google.common.io.Resources.asCharSource;
+import static com.google.common.io.Resources.getResource;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIOException;
 import static org.mockito.Mockito.mock;
@@ -27,7 +30,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
-import org.hyperledger.besu.ethereum.api.tls.TlsStoreConfiguration;
 import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
@@ -43,7 +45,6 @@ import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -54,8 +55,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import com.google.common.base.Charsets;
-import com.google.common.io.Files;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
@@ -155,69 +154,33 @@ public class JsonRpcHttpServiceTlsTest {
   }
 
   private static TlsConfiguration getRpcHttpTlsConfiguration() {
-    return new TlsConfiguration(
-        new TlsStoreConfiguration(getKeyStorePath(), new String(getKeystorePassword())),
-        getKnownClientsFile());
+    return TlsConfiguration.TlsConfigurationBuilder.aTlsConfiguration()
+        .withKeyStorePath(getKeyStorePath())
+        .withKeyStorePassword(new String(getKeystorePassword(KEYSTORE_PASSWORD_RESOURCE)))
+        .withKnownClientsFile(getKnownClientsFile())
+        .build();
   }
 
   private static Path getKeyStorePath() {
-    try {
-      return Paths.get(ClassLoader.getSystemResource(KEYSTORE_RESOURCE).toURI());
-    } catch (URISyntaxException e) {
-      throw new RuntimeException("Unable to read keystore resource.", e);
-    }
+    return Paths.get(getResource(KEYSTORE_RESOURCE).getPath());
   }
 
-  private static char[] getKeystorePassword() {
+  static char[] getKeystorePassword(final String passwordResource) {
     try {
-      final Path keyStorePassdwordFile =
-          Paths.get(
-              ClassLoader.getSystemResource(JsonRpcHttpServiceTlsTest.KEYSTORE_PASSWORD_RESOURCE)
-                  .toURI());
-
-      final String password =
-          Files.asCharSource(keyStorePassdwordFile.toFile(), Charsets.UTF_8).readFirstLine();
+      final String password = asCharSource(getResource(passwordResource), UTF_8).readFirstLine();
       return password == null ? new char[0] : password.toCharArray();
-    } catch (URISyntaxException | IOException e) {
+    } catch (IOException e) {
       throw new RuntimeException("Unable to read keystore password file", e);
     }
   }
 
-  private static Optional<Path> getKnownClientsFile() {
-    try {
-      return Optional.of(Paths.get(ClassLoader.getSystemResource(KNOWN_CLIENTS_RESOURCE).toURI()));
-    } catch (URISyntaxException e) {
-      throw new RuntimeException("Unable to read keystore resource.", e);
-    }
+  private static Path getKnownClientsFile() {
+    return Paths.get(getResource(KNOWN_CLIENTS_RESOURCE).getPath());
   }
 
   @After
   public void shutdownServer() {
     service.stop().join();
-  }
-
-  @Test
-  public void netVersionSuccessfulOnTls() throws Exception {
-    final String id = "123";
-    final String json =
-        "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_version\"}";
-
-    final OkHttpClient httpClient = getTlsHttpClient();
-    try (final Response response = httpClient.newCall(buildPostRequest(json)).execute()) {
-
-      assertThat(response.code()).isEqualTo(200);
-      // Check general format of result
-      final ResponseBody body = response.body();
-      assertThat(body).isNotNull();
-      final JsonObject jsonObject = new JsonObject(body.string());
-      testHelper.assertValidJsonRpcResult(jsonObject, id);
-      // Check result
-      final String result = jsonObject.getString("result");
-      assertThat(result).isEqualTo(String.valueOf(CHAIN_ID));
-    } catch (Exception e) {
-      e.printStackTrace();
-      throw e;
-    }
   }
 
   @Test
@@ -256,6 +219,30 @@ public class JsonRpcHttpServiceTlsTest {
                 throw e;
               }
             });
+  }
+
+  @Test
+  public void netVersionSuccessfulOnTls() throws Exception {
+    final String id = "123";
+    final String json =
+            "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_version\"}";
+
+    final OkHttpClient httpClient = getTlsHttpClient();
+    try (final Response response = httpClient.newCall(buildPostRequest(json)).execute()) {
+
+      assertThat(response.code()).isEqualTo(200);
+      // Check general format of result
+      final ResponseBody body = response.body();
+      assertThat(body).isNotNull();
+      final JsonObject jsonObject = new JsonObject(body.string());
+      testHelper.assertValidJsonRpcResult(jsonObject, id);
+      // Check result
+      final String result = jsonObject.getString("result");
+      assertThat(result).isEqualTo(String.valueOf(CHAIN_ID));
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw e;
+    }
   }
 
   private OkHttpClient getTlsHttpClient() {

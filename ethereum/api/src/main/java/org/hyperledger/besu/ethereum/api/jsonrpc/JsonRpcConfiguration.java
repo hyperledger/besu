@@ -140,16 +140,6 @@ public class JsonRpcConfiguration {
     this.tlsConfiguration = Optional.ofNullable(tlsConfiguration);
   }
 
-  public boolean isTlsConfigurationEnabled() {
-    return tlsConfiguration.isPresent();
-  }
-
-  public boolean isClientAuthenticationRequired() {
-    return isTlsConfigurationEnabled()
-        ? tlsConfiguration.get().getKnownClientsFile().isPresent()
-        : false;
-  }
-
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)

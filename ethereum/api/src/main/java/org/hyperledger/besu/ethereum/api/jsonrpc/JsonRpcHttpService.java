@@ -32,7 +32,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcNoResp
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponseType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcUnauthorizedResponse;
-import org.hyperledger.besu.ethereum.api.tls.PfxOptionsMapper;
 import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.nat.upnp.UpnpNatManager;
@@ -74,7 +73,6 @@ import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.CorsHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.tuweni.net.tls.VertxTrustOptions;
 
 public class JsonRpcHttpService {
 
@@ -226,13 +224,11 @@ public class JsonRpcHttpService {
               if (!res.failed()) {
                 resultFuture.complete(null);
                 final int actualPort = httpServer.actualPort();
-                final String tlsMessage =
-                    config.isTlsConfigurationEnabled() ? " with TLS enabled." : "";
                 LOG.info(
                     "JsonRPC service started and listening on {}:{}{}",
                     config.getHost(),
                     actualPort,
-                    tlsMessage);
+                    tlsLogMessage());
                 config.setPort(actualPort);
                 // Request that a NAT port forward for our server port
                 if (natManager.isPresent()) {
@@ -260,31 +256,35 @@ public class JsonRpcHttpService {
   }
 
   private HttpServerOptions getHttpServerOptions() {
-    return getHttpServerOptionsWithTls()
-        .setHost(config.getHost())
-        .setPort(config.getPort())
-        .setHandle100ContinueAutomatically(true);
+    final HttpServerOptions httpServerOptions =
+        new HttpServerOptions()
+            .setHost(config.getHost())
+            .setPort(config.getPort())
+            .setHandle100ContinueAutomatically(true);
+
+    return applyTlsConfig(httpServerOptions);
   }
 
-  private HttpServerOptions getHttpServerOptionsWithTls() {
-    final HttpServerOptions httpServerOptions = new HttpServerOptions();
-    if (!config.isTlsConfigurationEnabled()) {
-      return httpServerOptions;
+  private HttpServerOptions applyTlsConfig(final HttpServerOptions origHttpServerOptions) {
+    if (config.getTlsConfiguration().isEmpty()) {
+      return origHttpServerOptions;
     }
 
+    final HttpServerOptions httpServerOptions = new HttpServerOptions(origHttpServerOptions);
     final TlsConfiguration tlsConfiguration = config.getTlsConfiguration().get();
-    httpServerOptions
-        .setSsl(true)
-        .setPfxKeyCertOptions(PfxOptionsMapper.from(tlsConfiguration.getKeyStore()));
+    httpServerOptions.setSsl(true).setPfxKeyCertOptions(tlsConfiguration.getPfxKeyCertOptions());
 
-    if (config.isClientAuthenticationRequired()) {
-      final Path knownClientsFile = tlsConfiguration.getKnownClientsFile().get();
+    if (tlsConfiguration.getTrustOptions().isPresent()) {
       httpServerOptions
           .setClientAuth(ClientAuth.REQUIRED)
-          .setTrustOptions(VertxTrustOptions.whitelistClients(knownClientsFile));
+          .setTrustOptions(tlsConfiguration.getTrustOptions().get());
     }
 
     return httpServerOptions;
+  }
+
+  private String tlsLogMessage() {
+    return config.getTlsConfiguration().isPresent() ? " with TLS enabled." : "";
   }
 
   private Handler<RoutingContext> checkWhitelistHostHeader() {
@@ -359,7 +359,7 @@ public class JsonRpcHttpService {
   }
 
   private String getScheme() {
-    return config.isTlsConfigurationEnabled() ? "https" : "http";
+    return config.getTlsConfiguration().isPresent() ? "https" : "http";
   }
 
   private void handleJsonRPCRequest(final RoutingContext routingContext) {

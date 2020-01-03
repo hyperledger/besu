@@ -16,17 +16,13 @@ package org.hyperledger.besu.ethereum.api.jsonrpc;
 
 import static org.hyperledger.besu.crypto.SecureRandomProvider.createSecureRandom;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URISyntaxException;
-import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
-import java.util.Objects;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -34,8 +30,6 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
-import com.google.common.base.Charsets;
-import com.google.common.io.Files;
 import okhttp3.OkHttpClient;
 
 public class TlsHttpClient {
@@ -80,7 +74,8 @@ public class TlsHttpClient {
 
   private void initTrustManagerFactory() {
     try {
-      final char[] password = getKeystorePassword(trustStorePasswordResource);
+      final char[] password =
+          JsonRpcHttpServiceTlsTest.getKeystorePassword(trustStorePasswordResource);
       final KeyStore trustStore = loadP12KeyStore(trustStoreResource, password);
       final TrustManagerFactory trustManagerFactory =
           TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
@@ -97,7 +92,8 @@ public class TlsHttpClient {
     }
 
     try {
-      final char[] password = getKeystorePassword(keyStorePasswordResource);
+      final char[] password =
+          JsonRpcHttpServiceTlsTest.getKeystorePassword(keyStorePasswordResource);
       final KeyStore keyStore = loadP12KeyStore(keyStoreResource, password);
       final KeyManagerFactory keyManagerFactory =
           KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
@@ -110,22 +106,6 @@ public class TlsHttpClient {
 
   private boolean isClientAuthRequired() {
     return keyStoreResource != null;
-  }
-
-  private char[] getKeystorePassword(final String passwordResource) {
-    Objects.requireNonNull(passwordResource, "Password Resource cannot be null");
-    try {
-      final File passwordFile =
-          Paths.get(ClassLoader.getSystemResource(passwordResource).toURI()).toFile();
-
-      final String password = Files.asCharSource(passwordFile, Charsets.UTF_8).readFirstLine();
-      if (password == null) {
-        throw new RuntimeException("Null keystore password from file");
-      }
-      return password.toCharArray();
-    } catch (URISyntaxException | IOException e) {
-      throw new RuntimeException("Unable to read keystore password file", e);
-    }
   }
 
   private KeyStore loadP12KeyStore(final String resource, final char[] password)

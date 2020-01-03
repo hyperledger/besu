@@ -16,39 +16,72 @@
 package org.hyperledger.besu.ethereum.api.tls;
 
 import java.nio.file.Path;
-import java.util.Objects;
 import java.util.Optional;
 
+import io.vertx.core.net.PfxOptions;
+import io.vertx.core.net.TrustOptions;
+import org.apache.tuweni.net.tls.VertxTrustOptions;
+
 public class TlsConfiguration {
-  private final TlsStoreConfiguration keyStore;
+  private final Path keyStorePath;
+  private final String keyStorePassword;
+  private final Path knownClientsFile;
+  private Optional<TrustOptions> trustOptions;
+  private PfxOptions pfxKeyCertOptions;
 
-  /** client's common name and fingerprint must be present in the {@code knownClientsFile}. */
-  private final Optional<Path> knownClientsFile;
-
-  public TlsConfiguration(
-      final TlsStoreConfiguration keyStore, final Optional<Path> knownClientsFile) {
-    this.keyStore = keyStore;
+  private TlsConfiguration(
+      final Path keyStorePath, final String keyStorePassword, final Path knownClientsFile) {
+    this.keyStorePath = keyStorePath;
+    this.keyStorePassword = keyStorePassword;
     this.knownClientsFile = knownClientsFile;
   }
 
-  public TlsStoreConfiguration getKeyStore() {
-    return keyStore;
+  private void init() {
+    this.pfxKeyCertOptions =
+        new PfxOptions().setPath(keyStorePath.toString()).setPassword(keyStorePassword);
+    this.trustOptions =
+        Optional.ofNullable(knownClientsFile).map(VertxTrustOptions::whitelistClients);
   }
 
-  public Optional<Path> getKnownClientsFile() {
-    return knownClientsFile;
+  public PfxOptions getPfxKeyCertOptions() {
+    return pfxKeyCertOptions;
   }
 
-  @Override
-  public boolean equals(final Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    final TlsConfiguration that = (TlsConfiguration) o;
-    return keyStore.equals(that.keyStore) && knownClientsFile.equals(that.knownClientsFile);
+  public Optional<TrustOptions> getTrustOptions() {
+    return trustOptions;
   }
 
-  @Override
-  public int hashCode() {
-    return Objects.hash(keyStore, knownClientsFile);
+  public static final class TlsConfigurationBuilder {
+    private Path keyStorePath;
+    private String keyStorePassword;
+    private Path knownClientsFile;
+
+    private TlsConfigurationBuilder() {}
+
+    public static TlsConfigurationBuilder aTlsConfiguration() {
+      return new TlsConfigurationBuilder();
+    }
+
+    public TlsConfigurationBuilder withKeyStorePath(final Path keyStorePath) {
+      this.keyStorePath = keyStorePath;
+      return this;
+    }
+
+    public TlsConfigurationBuilder withKeyStorePassword(final String keyStorePassword) {
+      this.keyStorePassword = keyStorePassword;
+      return this;
+    }
+
+    public TlsConfigurationBuilder withKnownClientsFile(final Path knownClientsFile) {
+      this.knownClientsFile = knownClientsFile;
+      return this;
+    }
+
+    public TlsConfiguration build() {
+      final TlsConfiguration tlsConfiguration =
+          new TlsConfiguration(keyStorePath, keyStorePassword, knownClientsFile);
+      tlsConfiguration.init();
+      return tlsConfiguration;
+    }
   }
 }
