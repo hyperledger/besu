@@ -21,7 +21,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonPropertyOrder({"payload", "from", "to"})
 public class SendRequestLegacy extends SendRequest {
-  private List<String> to;
+  private final List<String> to;
 
   public SendRequestLegacy(
       @JsonProperty(value = "payload") final String payload,

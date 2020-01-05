@@ -43,7 +43,7 @@ import org.apache.logging.log4j.Logger;
  * @param <T> the type of subscribers
  */
 public class Subscribers<T> {
-  private static Subscribers<?> NONE = new EmptySubscribers<>();
+  private static final Subscribers<?> NONE = new EmptySubscribers<>();
   private static final Logger LOG = LogManager.getLogger();
 
   private final AtomicLong subscriberId = new AtomicLong();

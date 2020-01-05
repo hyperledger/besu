@@ -21,7 +21,7 @@ import java.math.BigInteger;
  * https://github.com/ethereum/py_ecc/blob/master/py_ecc/bn128/bn128_field_elements.py
  */
 public class AltBn128Fq2Point extends AbstractFieldPoint<AltBn128Fq2Point> {
-  private static BigInteger CURVE_ORDER =
+  private static final BigInteger CURVE_ORDER =
       new BigInteger(
           "21888242871839275222246405745257275088548364400416034343698204186575808495617", 10);
 

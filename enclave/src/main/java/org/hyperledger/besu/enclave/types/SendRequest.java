@@ -17,8 +17,8 @@ package org.hyperledger.besu.enclave.types;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public abstract class SendRequest {
-  private byte[] payload;
-  private String from;
+  private final byte[] payload;
+  private final String from;
 
   public SendRequest(final String payload, final String from) {
     this.payload = payload.getBytes(UTF_8);

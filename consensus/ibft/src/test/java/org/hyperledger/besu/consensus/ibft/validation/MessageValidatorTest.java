@@ -55,12 +55,12 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class MessageValidatorTest {
 
-  private KeyPair keyPair = KeyPair.generate();
-  private MessageFactory messageFactory = new MessageFactory(keyPair);
-  private ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(1, 0);
+  private final KeyPair keyPair = KeyPair.generate();
+  private final MessageFactory messageFactory = new MessageFactory(keyPair);
+  private final ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(1, 0);
 
-  private SignedDataValidator signedDataValidator = mock(SignedDataValidator.class);
-  private ProposalBlockConsistencyValidator proposalBlockConsistencyValidator =
+  private final SignedDataValidator signedDataValidator = mock(SignedDataValidator.class);
+  private final ProposalBlockConsistencyValidator proposalBlockConsistencyValidator =
       mock(ProposalBlockConsistencyValidator.class);
 
   @Mock private BlockValidator<IbftContext> blockValidator;

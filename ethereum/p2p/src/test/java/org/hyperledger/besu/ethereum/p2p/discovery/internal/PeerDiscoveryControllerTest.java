@@ -1242,7 +1242,7 @@ public class PeerDiscoveryControllerTest {
     private PeerTable peerTable;
     private OutboundMessageHandler outboundMessageHandler = OutboundMessageHandler.NOOP;
     private static final PeerDiscoveryTestHelper helper = new PeerDiscoveryTestHelper();
-    private Subscribers<PeerBondedObserver> peerBondedObservers = Subscribers.create();
+    private final Subscribers<PeerBondedObserver> peerBondedObservers = Subscribers.create();
     private PeerPermissions peerPermissions = PeerPermissions.noop();
 
     public static ControllerBuilder create() {

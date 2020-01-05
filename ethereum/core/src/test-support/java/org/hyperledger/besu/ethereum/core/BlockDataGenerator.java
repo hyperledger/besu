@@ -487,7 +487,7 @@ public class BlockDataGenerator {
     private Optional<Hash> parentHash = Optional.empty();
     private Optional<Hash> stateRoot = Optional.empty();
     private Optional<Difficulty> difficulty = Optional.empty();
-    private List<Transaction> transactions = new ArrayList<>();
+    private final List<Transaction> transactions = new ArrayList<>();
     private Optional<Bytes> extraData = Optional.empty();
     private Optional<BlockHeaderFunctions> blockHeaderFunctions = Optional.empty();
 
