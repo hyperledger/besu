@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.plugin.BesuPlugin;
 
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.logging.log4j.LogManager;
@@ -47,12 +46,11 @@ public class PluginsReloadConfiguration implements JsonRpcMethod {
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     try {
-      final Optional<String> maybePluginName = requestContext.getOptionalParameter(0, String.class);
-      if (maybePluginName.isPresent() && namedPlugins.containsKey(maybePluginName.get())) {
-        reloadPluginConfig(maybePluginName.get(), namedPlugins.get(maybePluginName.get()));
+      final String pluginName = requestContext.getRequiredParameter(0, String.class);
+      if (!namedPlugins.containsKey(pluginName)) {
+        LOG.info("Cannot reload plugin because not registered.");
       } else {
-        LOG.info("Attempting to reload all plugins configurations.");
-        namedPlugins.forEach(this::reloadPluginConfig);
+        reloadPluginConfig(pluginName, namedPlugins.get(pluginName));
       }
       return new JsonRpcSuccessResponse(requestContext.getRequest().getId());
     } catch (InvalidJsonRpcParameters invalidJsonRpcParameters) {
