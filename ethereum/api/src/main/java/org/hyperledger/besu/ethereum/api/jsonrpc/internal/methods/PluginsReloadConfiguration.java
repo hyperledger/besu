@@ -48,9 +48,11 @@ public class PluginsReloadConfiguration implements JsonRpcMethod {
     try {
       final String pluginName = requestContext.getRequiredParameter(0, String.class);
       if (!namedPlugins.containsKey(pluginName)) {
-        LOG.info("Cannot reload plugin because not registered.");
+        LOG.info(
+            "Plugin cannot be reloaded because no plugin has been registered with specified name: {}.",
+            pluginName);
       } else {
-        reloadPluginConfig(pluginName, namedPlugins.get(pluginName));
+        reloadPluginConfig(namedPlugins.get(pluginName));
       }
       return new JsonRpcSuccessResponse(requestContext.getRequest().getId());
     } catch (InvalidJsonRpcParameters invalidJsonRpcParameters) {
@@ -59,7 +61,8 @@ public class PluginsReloadConfiguration implements JsonRpcMethod {
     }
   }
 
-  private void reloadPluginConfig(final String name, final BesuPlugin plugin) {
+  private void reloadPluginConfig(final BesuPlugin plugin) {
+    final String name = plugin.getName().orElseThrow();
     LOG.info("Reloading plugin configuration: {}.", name);
     final CompletableFuture<Void> future = plugin.reloadConfiguration();
     future.thenAcceptAsync(aVoid -> LOG.info("Plugin {} has been reloaded.", name));
