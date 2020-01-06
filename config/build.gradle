@@ -16,12 +16,12 @@
 apply plugin: 'java-library'
 
 jar {
-  baseName 'besu-config'
+  archiveBaseName = 'besu-config'
   manifest {
     attributes(
-      'Specification-Title': baseName,
+      'Specification-Title': archiveBaseName,
       'Specification-Version': project.version,
-      'Implementation-Title': baseName,
+      'Implementation-Title': archiveBaseName,
       'Implementation-Version': calculateVersion()
       )
   }
@@ -32,7 +32,7 @@ dependencies {
   implementation 'com.google.guava:guava'
   implementation 'org.apache.logging.log4j:log4j-api'
 
-  runtime 'org.apache.logging.log4j:log4j-core'
+  runtimeOnly 'org.apache.logging.log4j:log4j-core'
 
   testImplementation project(':testutil')
 

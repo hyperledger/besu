@@ -309,7 +309,7 @@ subprojects {
   }
 
   task testSupportJar(type: Jar) {
-    baseName = "${project.name}-support-test"
+    archiveBaseName = "${project.name}-support-test"
     classifier = 'test-support'
     from sourceSets.testSupport.output
   }
@@ -401,6 +401,12 @@ subprojects {
     group = "verification"
     description = "Runs the Besu integration tests"
 
+    jvmArgs = [
+      '--add-opens',
+      'java.base/java.util=ALL-UNNAMED',
+      '--add-opens',
+      'java.base/java.util.concurrent=ALL-UNNAMED'
+    ]
     testClassesDirs = sourceSets.integrationTest.output.classesDirs
     classpath = sourceSets.integrationTest.runtimeClasspath
     outputs.upToDateWhen { false }
@@ -499,7 +505,7 @@ distTar {
     delete fileTree(dir: 'build/distributions', include: '*.tar.gz')
   }
   compression = Compression.GZIP
-  extension = 'tar.gz'
+  archiveExtension = 'tar.gz'
 }
 
 distZip {
@@ -684,8 +690,8 @@ bintray {
   key = bintrayKey
 
   filesSpec {
-    from distTar.destinationDir.path
-    from distZip.destinationDir.path
+    from distTar.destinationDirectory
+    from distZip.destinationDirectory
     into '.'
   }
 
