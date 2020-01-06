@@ -36,14 +36,12 @@ import org.junit.Test;
 
 public class PrivacyBlockProcessorTest {
 
-  private PrivacyParameters privacyParameters;
   private PrivacyBlockProcessor privacyBlockProcessor;
   private PrivateStateStorage privateStateStorage;
 
   @Before
   public void setUp() {
     final AbstractBlockProcessor blockProcessor = mock(AbstractBlockProcessor.class);
-    this.privacyParameters = mock(PrivacyParameters.class);
     privateStateStorage = new PrivateStateKeyValueStorage(new InMemoryKeyValueStorage());
     this.privacyBlockProcessor = new PrivacyBlockProcessor(blockProcessor, privateStateStorage);
   }
