@@ -59,7 +59,7 @@ public class PrivCallAcceptanceTest extends PrivacyAcceptanceTestBase {
   }
 
   @Test
-  public void privCallMustReturnCorrtectValue() throws Exception {
+  public void mustReturnCorrectValue() throws Exception {
 
     final String privacyGroupId =
         minerNode.execute(
@@ -97,7 +97,7 @@ public class PrivCallAcceptanceTest extends PrivacyAcceptanceTestBase {
   }
 
   @Test
-  public void privCallWithNonExistingPrivacyGroupMustNotSucceed() {
+  public void mustNotSucceedWithNonExistingPrivacyGroup() {
 
     final String privacyGroupId =
         minerNode.execute(
@@ -130,7 +130,7 @@ public class PrivCallAcceptanceTest extends PrivacyAcceptanceTestBase {
   }
 
   @Test
-  public void privCallWithWronglyEncodedFunctionMustNotSucceed() {
+  public void mustNotSucceedWithWronglyEncodedFunction() {
 
     final String privacyGroupId =
         minerNode.execute(
@@ -159,7 +159,7 @@ public class PrivCallAcceptanceTest extends PrivacyAcceptanceTestBase {
   }
 
   @Test
-  public void privCallWithInvalidContractAddressMustReturn0x() throws IOException {
+  public void mustReturn0xUsingInvalidContractAddress() throws IOException {
 
     final String privacyGroupId =
         minerNode.execute(

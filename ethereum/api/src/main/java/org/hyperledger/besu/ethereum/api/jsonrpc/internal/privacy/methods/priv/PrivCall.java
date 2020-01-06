@@ -61,8 +61,11 @@ public class PrivCall extends AbstractBlockParameterMethod {
     final String privacyGroupId = request.getRequiredParameter(0, String.class);
 
     // For now we do only support privCall on the head of the chain.
-    // TODO: Once we support privacy on PoW chains (mainnet) this can be removed
+    // TODO: Once we support privacy on PoW chains (mainnet) this can be removed and the
+    // blockchainQueries field can be made private again
     if (blockNumber != blockchainQueries.get().headBlockNumber()) {
+      // TODO: Remove PRIV_CALL_ONLY_SUPPORTED_ON_CHAIN_HEAD in JsonRpcError when removing this
+      // code.
       return new JsonRpcErrorResponse(
           request.getRequest().getId(), JsonRpcError.PRIV_CALL_ONLY_SUPPORTED_ON_CHAIN_HEAD);
     }

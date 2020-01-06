@@ -91,11 +91,6 @@ public class PrivateTransactionSimulator {
     return process(privacyGroupId, enclaveKey, callParams, header);
   }
 
-  public Optional<PrivateTransactionProcessor.Result> processAtHead(
-      final String privacyGroupId, final String enclaveKey, final CallParameter callParams) {
-    return process(privacyGroupId, enclaveKey, callParams, blockchain.getChainHeadHeader());
-  }
-
   private Optional<PrivateTransactionProcessor.Result> process(
       final String privacyGroupIdString,
       final String enclaveKey,
@@ -110,15 +105,11 @@ public class PrivateTransactionSimulator {
     try {
       privacyGroup = privacyParameters.getEnclave().retrievePrivacyGroup(privacyGroupIdString);
     } catch (final EnclaveClientException e) {
-      // do not do anything. This is handled in the following if
+      // This is thrown if the privacy group does not exist. Don't do anything. This is handled in
+      // the following if.
     }
     if (privacyGroup == null || !privacyGroup.getMembers().contains(enclaveKey)) {
-      return Optional.of(
-          PrivateTransactionProcessor.Result.failed(
-              0L,
-              ValidationResult.invalid(
-                  TransactionValidator.TransactionInvalidReason.PRIVACY_GROUP_DOES_NOT_EXIST),
-              Optional.empty()));
+      return privacyGroupDoesNotExistResult();
     }
 
     final MutableWorldState publicWorldState =
@@ -138,30 +129,8 @@ public class PrivateTransactionSimulator {
     final MutableWorldState disposablePrivateState =
         privacyParameters.getPrivateWorldStateArchive().getMutable(lastRootHash).get();
 
-    final Address senderAddress =
-        callParams.getFrom() != null ? callParams.getFrom() : DEFAULT_FROM;
-    final Account sender = publicWorldState.get(senderAddress);
-    final long nonce = sender != null ? sender.getNonce() : 0L;
-    final long gasLimit =
-        callParams.getGasLimit() >= 0 ? callParams.getGasLimit() : header.getGasLimit();
-    final Wei gasPrice = callParams.getGasPrice() != null ? callParams.getGasPrice() : Wei.ZERO;
-    final Wei value = callParams.getValue() != null ? callParams.getValue() : Wei.ZERO;
-    final Bytes payload = callParams.getPayload() != null ? callParams.getPayload() : Bytes.EMPTY;
-
     final PrivateTransaction transaction =
-        PrivateTransaction.builder()
-            .privateFrom(Bytes.EMPTY)
-            .privacyGroupId(privacyGroupId)
-            .restriction(Restriction.RESTRICTED)
-            .nonce(nonce)
-            .gasPrice(gasPrice)
-            .gasLimit(gasLimit)
-            .to(callParams.getTo())
-            .sender(senderAddress)
-            .value(value)
-            .payload(payload)
-            .signature(FAKE_SIGNATURE)
-            .build();
+        getPrivateTransaction(callParams, header, privacyGroupId, disposablePrivateState);
 
     final ProtocolSpec<?> protocolSpec = protocolSchedule.getByBlockNumber(header.getNumber());
 
@@ -183,21 +152,42 @@ public class PrivateTransactionSimulator {
     return Optional.of(result);
   }
 
-  public Optional<Boolean> doesAddressExistAtHead(final Address address) {
-    return doesAddressExist(address, blockchain.getChainHeadHeader());
+  private PrivateTransaction getPrivateTransaction(
+      final CallParameter callParams,
+      final BlockHeader header,
+      final Bytes privacyGroupId,
+      final MutableWorldState disposablePrivateState) {
+    final Address senderAddress =
+        callParams.getFrom() != null ? callParams.getFrom() : DEFAULT_FROM;
+    final Account sender = disposablePrivateState.get(senderAddress);
+    final long nonce = sender != null ? sender.getNonce() : 0L;
+    final long gasLimit =
+        callParams.getGasLimit() >= 0 ? callParams.getGasLimit() : header.getGasLimit();
+    final Wei gasPrice = callParams.getGasPrice() != null ? callParams.getGasPrice() : Wei.ZERO;
+    final Wei value = callParams.getValue() != null ? callParams.getValue() : Wei.ZERO;
+    final Bytes payload = callParams.getPayload() != null ? callParams.getPayload() : Bytes.EMPTY;
+
+    return PrivateTransaction.builder()
+        .privateFrom(Bytes.EMPTY)
+        .privacyGroupId(privacyGroupId)
+        .restriction(Restriction.RESTRICTED)
+        .nonce(nonce)
+        .gasPrice(gasPrice)
+        .gasLimit(gasLimit)
+        .to(callParams.getTo())
+        .sender(senderAddress)
+        .value(value)
+        .payload(payload)
+        .signature(FAKE_SIGNATURE)
+        .build();
   }
 
-  public Optional<Boolean> doesAddressExist(final Address address, final BlockHeader header) {
-    if (header == null) {
-      return Optional.empty();
-    }
-
-    final MutableWorldState worldState =
-        worldStateArchive.getMutable(header.getStateRoot()).orElse(null);
-    if (worldState == null) {
-      return Optional.empty();
-    }
-
-    return Optional.of(worldState.get(address) != null);
+  private Optional<PrivateTransactionProcessor.Result> privacyGroupDoesNotExistResult() {
+    return Optional.of(
+        PrivateTransactionProcessor.Result.failed(
+            0L,
+            ValidationResult.invalid(
+                TransactionValidator.TransactionInvalidReason.PRIVACY_GROUP_DOES_NOT_EXIST),
+            Optional.empty()));
   }
 }
