@@ -42,7 +42,7 @@ public class PrivGetPrivateTransaction implements JsonRpcMethod {
 
   private final BlockchainQueries blockchain;
   private final PrivacyController privacyController;
-  private EnclavePublicKeyProvider enclavePublicKeyProvider;
+  private final EnclavePublicKeyProvider enclavePublicKeyProvider;
 
   public PrivGetPrivateTransaction(
       final BlockchainQueries blockchain,

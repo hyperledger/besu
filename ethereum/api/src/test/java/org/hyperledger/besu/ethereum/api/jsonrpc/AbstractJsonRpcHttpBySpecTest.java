@@ -43,7 +43,7 @@ import org.junit.runners.Parameterized;
 @RunWith(Parameterized.class)
 public abstract class AbstractJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpServiceTest {
 
-  private static ObjectMapper objectMapper = new ObjectMapper();
+  private static final ObjectMapper objectMapper = new ObjectMapper();
   private final URL specURL;
 
   public AbstractJsonRpcHttpBySpecTest(final String specName, final URL specURL) {

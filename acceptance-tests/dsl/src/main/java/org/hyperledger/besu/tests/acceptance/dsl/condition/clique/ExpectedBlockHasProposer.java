@@ -30,7 +30,7 @@ import org.web3j.protocol.core.methods.response.EthBlock.Block;
 
 public class ExpectedBlockHasProposer implements Condition {
   private final EthTransactions eth;
-  private Address proposer;
+  private final Address proposer;
 
   public ExpectedBlockHasProposer(final EthTransactions eth, final Address proposer) {
     this.eth = eth;

@@ -55,9 +55,9 @@ public class PrivGetTransactionReceipt implements JsonRpcMethod {
   private static final Logger LOG = getLogger();
 
   private final BlockchainQueries blockchain;
-  private PrivacyParameters privacyParameters;
-  private PrivacyController privacyController;
-  private EnclavePublicKeyProvider enclavePublicKeyProvider;
+  private final PrivacyParameters privacyParameters;
+  private final PrivacyController privacyController;
+  private final EnclavePublicKeyProvider enclavePublicKeyProvider;
 
   public PrivGetTransactionReceipt(
       final BlockchainQueries blockchain,

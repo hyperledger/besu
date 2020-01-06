@@ -25,7 +25,7 @@ public class EthSignerConfig implements Config {
   private final Level logLevel;
   private final String downstreamHttpHost;
   private final Integer downStreamHttpPort;
-  private Duration downstreamHttpRequestTimeout;
+  private final Duration downstreamHttpRequestTimeout;
   private final String httpListenHost;
   private final Integer httpListenPort;
   private final ChainIdProvider chainId;

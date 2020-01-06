@@ -20,7 +20,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
 import java.io.IOException;
 
 public class PrivDistributeTransactionTransaction implements Transaction<String> {
-  private String signedPrivateTransaction;
+  private final String signedPrivateTransaction;
 
   public PrivDistributeTransactionTransaction(final String signedPrivateTransaction) {
     this.signedPrivateTransaction = signedPrivateTransaction;

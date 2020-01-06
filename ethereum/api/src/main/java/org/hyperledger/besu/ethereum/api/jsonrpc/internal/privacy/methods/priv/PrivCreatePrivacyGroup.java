@@ -33,8 +33,8 @@ import org.apache.logging.log4j.Logger;
 public class PrivCreatePrivacyGroup implements JsonRpcMethod {
 
   private static final Logger LOG = getLogger();
-  private PrivacyController privacyController;
-  private EnclavePublicKeyProvider enclavePublicKeyProvider;
+  private final PrivacyController privacyController;
+  private final EnclavePublicKeyProvider enclavePublicKeyProvider;
 
   public PrivCreatePrivacyGroup(
       final PrivacyController privacyController,

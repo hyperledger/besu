@@ -71,37 +71,37 @@ public class EventEmitter extends Contract {
 
   @Deprecated
   protected EventEmitter(
-      String contractAddress,
-      Web3j web3j,
-      Credentials credentials,
-      BigInteger gasPrice,
-      BigInteger gasLimit) {
+      final String contractAddress,
+      final Web3j web3j,
+      final Credentials credentials,
+      final BigInteger gasPrice,
+      final BigInteger gasLimit) {
     super(BINARY, contractAddress, web3j, credentials, gasPrice, gasLimit);
   }
 
   protected EventEmitter(
-      String contractAddress,
-      Web3j web3j,
-      Credentials credentials,
-      ContractGasProvider contractGasProvider) {
+      final String contractAddress,
+      final Web3j web3j,
+      final Credentials credentials,
+      final ContractGasProvider contractGasProvider) {
     super(BINARY, contractAddress, web3j, credentials, contractGasProvider);
   }
 
   @Deprecated
   protected EventEmitter(
-      String contractAddress,
-      Web3j web3j,
-      TransactionManager transactionManager,
-      BigInteger gasPrice,
-      BigInteger gasLimit) {
+      final String contractAddress,
+      final Web3j web3j,
+      final TransactionManager transactionManager,
+      final BigInteger gasPrice,
+      final BigInteger gasLimit) {
     super(BINARY, contractAddress, web3j, transactionManager, gasPrice, gasLimit);
   }
 
   protected EventEmitter(
-      String contractAddress,
-      Web3j web3j,
-      TransactionManager transactionManager,
-      ContractGasProvider contractGasProvider) {
+      final String contractAddress,
+      final Web3j web3j,
+      final TransactionManager transactionManager,
+      final ContractGasProvider contractGasProvider) {
     super(BINARY, contractAddress, web3j, transactionManager, contractGasProvider);
   }
 
@@ -114,7 +114,7 @@ public class EventEmitter extends Contract {
     return executeRemoteCallSingleValueReturn(function, BigInteger.class);
   }
 
-  public RemoteFunctionCall<TransactionReceipt> store(BigInteger _amount) {
+  public RemoteFunctionCall<TransactionReceipt> store(final BigInteger _amount) {
     final Function function =
         new Function(
             FUNC_STORE,
@@ -132,7 +132,7 @@ public class EventEmitter extends Contract {
     return executeRemoteCallSingleValueReturn(function, String.class);
   }
 
-  public List<StoredEventResponse> getStoredEvents(TransactionReceipt transactionReceipt) {
+  public List<StoredEventResponse> getStoredEvents(final TransactionReceipt transactionReceipt) {
     List<Contract.EventValuesWithLog> valueList =
         extractEventParametersWithLog(STORED_EVENT, transactionReceipt);
     ArrayList<StoredEventResponse> responses = new ArrayList<StoredEventResponse>(valueList.size());
@@ -146,13 +146,13 @@ public class EventEmitter extends Contract {
     return responses;
   }
 
-  public Flowable<StoredEventResponse> storedEventFlowable(EthFilter filter) {
+  public Flowable<StoredEventResponse> storedEventFlowable(final EthFilter filter) {
     return web3j
         .ethLogFlowable(filter)
         .map(
             new io.reactivex.functions.Function<Log, StoredEventResponse>() {
               @Override
-              public StoredEventResponse apply(Log log) {
+              public StoredEventResponse apply(final Log log) {
                 Contract.EventValuesWithLog eventValues =
                     extractEventParametersWithLog(STORED_EVENT, log);
                 StoredEventResponse typedResponse = new StoredEventResponse();
@@ -166,7 +166,7 @@ public class EventEmitter extends Contract {
   }
 
   public Flowable<StoredEventResponse> storedEventFlowable(
-      DefaultBlockParameter startBlock, DefaultBlockParameter endBlock) {
+      final DefaultBlockParameter startBlock, final DefaultBlockParameter endBlock) {
     EthFilter filter = new EthFilter(startBlock, endBlock, getContractAddress());
     filter.addSingleTopic(EventEncoder.encode(STORED_EVENT));
     return storedEventFlowable(filter);
@@ -174,64 +174,71 @@ public class EventEmitter extends Contract {
 
   @Deprecated
   public static EventEmitter load(
-      String contractAddress,
-      Web3j web3j,
-      Credentials credentials,
-      BigInteger gasPrice,
-      BigInteger gasLimit) {
+      final String contractAddress,
+      final Web3j web3j,
+      final Credentials credentials,
+      final BigInteger gasPrice,
+      final BigInteger gasLimit) {
     return new EventEmitter(contractAddress, web3j, credentials, gasPrice, gasLimit);
   }
 
   @Deprecated
   public static EventEmitter load(
-      String contractAddress,
-      Web3j web3j,
-      TransactionManager transactionManager,
-      BigInteger gasPrice,
-      BigInteger gasLimit) {
+      final String contractAddress,
+      final Web3j web3j,
+      final TransactionManager transactionManager,
+      final BigInteger gasPrice,
+      final BigInteger gasLimit) {
     return new EventEmitter(contractAddress, web3j, transactionManager, gasPrice, gasLimit);
   }
 
   public static EventEmitter load(
-      String contractAddress,
-      Web3j web3j,
-      Credentials credentials,
-      ContractGasProvider contractGasProvider) {
+      final String contractAddress,
+      final Web3j web3j,
+      final Credentials credentials,
+      final ContractGasProvider contractGasProvider) {
     return new EventEmitter(contractAddress, web3j, credentials, contractGasProvider);
   }
 
   public static EventEmitter load(
-      String contractAddress,
-      Web3j web3j,
-      TransactionManager transactionManager,
-      ContractGasProvider contractGasProvider) {
+      final String contractAddress,
+      final Web3j web3j,
+      final TransactionManager transactionManager,
+      final ContractGasProvider contractGasProvider) {
     return new EventEmitter(contractAddress, web3j, transactionManager, contractGasProvider);
   }
 
   public static RemoteCall<EventEmitter> deploy(
-      Web3j web3j, Credentials credentials, ContractGasProvider contractGasProvider) {
+      final Web3j web3j,
+      final Credentials credentials,
+      final ContractGasProvider contractGasProvider) {
     return deployRemoteCall(
         EventEmitter.class, web3j, credentials, contractGasProvider, BINARY, "");
   }
 
   public static RemoteCall<EventEmitter> deploy(
-      Web3j web3j, TransactionManager transactionManager, ContractGasProvider contractGasProvider) {
+      final Web3j web3j,
+      final TransactionManager transactionManager,
+      final ContractGasProvider contractGasProvider) {
     return deployRemoteCall(
         EventEmitter.class, web3j, transactionManager, contractGasProvider, BINARY, "");
   }
 
   @Deprecated
   public static RemoteCall<EventEmitter> deploy(
-      Web3j web3j, Credentials credentials, BigInteger gasPrice, BigInteger gasLimit) {
+      final Web3j web3j,
+      final Credentials credentials,
+      final BigInteger gasPrice,
+      final BigInteger gasLimit) {
     return deployRemoteCall(EventEmitter.class, web3j, credentials, gasPrice, gasLimit, BINARY, "");
   }
 
   @Deprecated
   public static RemoteCall<EventEmitter> deploy(
-      Web3j web3j,
-      TransactionManager transactionManager,
-      BigInteger gasPrice,
-      BigInteger gasLimit) {
+      final Web3j web3j,
+      final TransactionManager transactionManager,
+      final BigInteger gasPrice,
+      final BigInteger gasLimit) {
     return deployRemoteCall(
         EventEmitter.class, web3j, transactionManager, gasPrice, gasLimit, BINARY, "");
   }

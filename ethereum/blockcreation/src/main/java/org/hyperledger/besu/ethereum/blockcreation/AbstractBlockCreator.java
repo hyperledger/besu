@@ -285,7 +285,7 @@ public abstract class AbstractBlockCreator<C> implements AsyncBlockCreator {
       final ProcessableBlockHeader header,
       final List<BlockHeader> ommers,
       final Wei blockReward,
-      boolean skipZeroBlockRewards) {
+      final boolean skipZeroBlockRewards) {
 
     // TODO(tmm): Added to make this work, should come from blockProcessor.
     final int MAX_GENERATION = 6;
