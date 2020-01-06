@@ -16,32 +16,33 @@ package org.hyperledger.besu.ethereum.privacy.storage;
 
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Objects;
 
-public class RLPMapEntry {
-  private final BytesValue key;
-  private final BytesValue value;
+import org.apache.tuweni.bytes.Bytes;
 
-  public RLPMapEntry(final BytesValue key, final BytesValue value) {
+public class RLPMapEntry {
+  private final Bytes key;
+  private final Bytes value;
+
+  public RLPMapEntry(final Bytes key, final Bytes value) {
     this.key = key;
     this.value = value;
   }
 
-  public BytesValue getKey() {
+  public Bytes getKey() {
     return key;
   }
 
-  public BytesValue getValue() {
+  public Bytes getValue() {
     return value;
   }
 
   public void writeTo(final RLPOutput out) {
     out.startList();
 
-    out.writeBytesValue(key);
-    out.writeBytesValue(value);
+    out.writeBytes(key);
+    out.writeBytes(value);
 
     out.endList();
   }
@@ -49,7 +50,7 @@ public class RLPMapEntry {
   public static RLPMapEntry readFrom(final RLPInput input) {
     input.enterList();
 
-    final RLPMapEntry rlpMapEntry = new RLPMapEntry(input.readBytesValue(), input.readBytesValue());
+    final RLPMapEntry rlpMapEntry = new RLPMapEntry(input.readBytes(), input.readBytes());
 
     input.leaveList();
     return rlpMapEntry;

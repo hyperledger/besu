@@ -39,12 +39,8 @@ public class PrivateTransactionMetadata {
   public void writeTo(final RLPOutput out) {
     out.startList();
 
-<<<<<<< HEAD
+    out.writeBytes(privacyMarkerTransactionHash);
     out.writeBytes(stateRoot);
-=======
-    out.writeBytesValue(privacyMarkerTransactionHash);
-    out.writeBytesValue(stateRoot);
->>>>>>> WIP - need to fix AT
 
     out.endList();
   }

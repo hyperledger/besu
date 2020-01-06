@@ -19,16 +19,13 @@ import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.enclave.types.PrivacyGroup.Type;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.enclave.types.SendResponse;
-import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.PrivateMarkerTransactionFactory;
-import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -40,40 +37,38 @@ import com.google.common.collect.Lists;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class PrivacyController {
 
   private static final Logger LOG = LogManager.getLogger();
 
   private final Enclave enclave;
-  private final PrivateStateStorage privateStateStorage;
-  private final WorldStateArchive privateWorldStateArchive;
   private final PrivateTransactionValidator privateTransactionValidator;
   private final PrivateMarkerTransactionFactory privateMarkerTransactionFactory;
+  private final PrivateNonceProvider nonceProvider;
 
   public PrivacyController(
       final PrivacyParameters privacyParameters,
       final Optional<BigInteger> chainId,
-      final PrivateMarkerTransactionFactory privateMarkerTransactionFactory) {
+      final PrivateMarkerTransactionFactory privateMarkerTransactionFactory,
+      final PrivateNonceProvider nonceProvider) {
     this(
         privacyParameters.getEnclave(),
-        privacyParameters.getPrivateStateStorage(),
-        privacyParameters.getPrivateWorldStateArchive(),
         new PrivateTransactionValidator(chainId),
-        privateMarkerTransactionFactory);
+        privateMarkerTransactionFactory,
+        nonceProvider);
   }
 
   public PrivacyController(
       final Enclave enclave,
-      final PrivateStateStorage privateStateStorage,
-      final WorldStateArchive privateWorldStateArchive,
       final PrivateTransactionValidator privateTransactionValidator,
-      final PrivateMarkerTransactionFactory privateMarkerTransactionFactory) {
+      final PrivateMarkerTransactionFactory privateMarkerTransactionFactory,
+      final PrivateNonceProvider nonceProvider) {
     this.enclave = enclave;
-    this.privateStateStorage = privateStateStorage;
-    this.privateWorldStateArchive = privateWorldStateArchive;
     this.privateTransactionValidator = privateTransactionValidator;
     this.privateMarkerTransactionFactory = privateMarkerTransactionFactory;
+    this.nonceProvider = nonceProvider;
   }
 
   public SendTransactionResponse sendTransaction(
@@ -129,7 +124,8 @@ public class PrivacyController {
       final String enclavePublicKey) {
     return privateTransactionValidator.validate(
         privateTransaction,
-        determineNonce(privateTransaction.getSender(), privacyGroupId, enclavePublicKey));
+        nonceProvider.getNonce(
+            privateTransaction.getSender(), Bytes32.wrap(Bytes.fromBase64String(privacyGroupId))));
   }
 
   public long determineNonce(
@@ -163,27 +159,7 @@ public class PrivacyController {
 
   public long determineNonce(
       final Address sender, final String privacyGroupId, final String enclavePublicKey) {
-    return privateStateStorage
-        .getLatestStateRoot(Bytes.fromBase64String(privacyGroupId))
-        .map(
-            lastRootHash ->
-                privateWorldStateArchive
-                    .getMutable(lastRootHash)
-                    .map(
-                        worldState -> {
-                          final Account maybePrivateSender = worldState.get(sender);
-
-                          if (maybePrivateSender != null) {
-                            return maybePrivateSender.getNonce();
-                          }
-                          // account has not interacted in this private state
-                          return Account.DEFAULT_NONCE;
-                        })
-                    // private state does not exist
-                    .orElse(Account.DEFAULT_NONCE))
-        .orElse(
-            // private state does not exist
-            Account.DEFAULT_NONCE);
+    return nonceProvider.getNonce(sender, Bytes32.wrap(Bytes.fromBase64String(privacyGroupId)));
   }
 
   private SendResponse sendRequest(

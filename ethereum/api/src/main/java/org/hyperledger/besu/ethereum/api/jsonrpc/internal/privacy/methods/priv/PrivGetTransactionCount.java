@@ -24,16 +24,22 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.privacy.PrivacyController;
+import org.hyperledger.besu.ethereum.privacy.PrivateNonceProvider;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class PrivGetTransactionCount implements JsonRpcMethod {
 
-  private final PrivacyController privacyController;
+  private final PrivateNonceProvider privateNonceProvider;
+
+  @SuppressWarnings("UnusedVariable")
   private final EnclavePublicKeyProvider enclavePublicKeyProvider;
 
   public PrivGetTransactionCount(
-      final PrivacyController privacyController, final EnclavePublicKeyProvider enclavePublicKeyProvider) {
-    this.privacyController = privacyController;
+      final PrivateNonceProvider privateNonceProvider,
+      final EnclavePublicKeyProvider enclavePublicKeyProvider) {
+    this.privateNonceProvider = privateNonceProvider;
     this.enclavePublicKeyProvider = enclavePublicKeyProvider;
   }
 

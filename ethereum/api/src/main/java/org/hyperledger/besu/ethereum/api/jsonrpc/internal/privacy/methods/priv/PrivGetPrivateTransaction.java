@@ -31,12 +31,7 @@ import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
-<<<<<<< HEAD
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
-=======
-import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.util.bytes.BytesValues;
->>>>>>> WIP - need to fix AT
 
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
@@ -86,13 +81,7 @@ public class PrivGetPrivateTransaction implements JsonRpcMethod {
           new BytesValueRLPInput(
               Bytes.fromBase64String(new String(receiveResponse.getPayload(), UTF_8)), false);
 
-<<<<<<< HEAD
       final PrivateTransaction privateTransaction = PrivateTransaction.readFrom(input);
-=======
-      final PrivateTransaction privateTransaction =
-          PrivateTransaction.readFrom(
-              RLP.input(BytesValues.fromBase64(receiveResponse.getPayload())));
->>>>>>> WIP - need to fix AT
       if (privateTransaction.getPrivacyGroupId().isPresent()) {
         return new JsonRpcSuccessResponse(
             requestContext.getRequest().getId(),

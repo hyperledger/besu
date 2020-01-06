@@ -140,14 +140,16 @@ public class PrivacyPrecompiledContractTest {
   }
 
   @Test
-  public void testPayloadFoundInEnaclave() {
+  public void testPayloadFoundInEnclave() {
     Enclave enclave = mock(Enclave.class);
     PrivacyPrecompiledContract contract =
         new PrivacyPrecompiledContract(
             new SpuriousDragonGasCalculator(), enclave, worldStateArchive, privateStateStorage);
     contract.setPrivateTransactionProcessor(mockPrivateTxProcessor());
 
-    final ReceiveResponse response = new ReceiveResponse(VALID_PRIVATE_TRANSACTION_RLP_BASE64, "");
+    final ReceiveResponse response =
+        new ReceiveResponse(
+            VALID_PRIVATE_TRANSACTION_RLP_BASE64, "8lDVI66RZHIrBsolz6Kn88Rd+WsJ4hUjb4hsh29xW/o=");
     when(enclave.receive(any(String.class))).thenReturn(response);
 
     final Bytes actual = contract.compute(key, messageFrame);
