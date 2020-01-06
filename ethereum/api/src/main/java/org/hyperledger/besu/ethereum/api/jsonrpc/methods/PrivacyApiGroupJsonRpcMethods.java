@@ -83,7 +83,8 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
             privacyParameters, protocolSchedule.getChainId(), markerTransactionFactory);
     final PrivacyController privacyController =
         privacyParameters.isMultiTenancyEnabled()
-            ? new MultiTenancyPrivacyController(defaultPrivacyController)
+            ? new MultiTenancyPrivacyController(
+                defaultPrivacyController, privacyParameters.getEnclave())
             : defaultPrivacyController;
 
     final EnclavePublicKeyProvider enclavePublicProvider =

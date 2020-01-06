@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.privacy;
 
+import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -26,14 +27,30 @@ import java.util.List;
 public class MultiTenancyPrivacyController implements PrivacyController {
 
   private PrivacyController privacyController;
+  private Enclave enclave;
 
-  public MultiTenancyPrivacyController(final PrivacyController privacyController) {
+  public MultiTenancyPrivacyController(
+      final PrivacyController privacyController, final Enclave enclave) {
     this.privacyController = privacyController;
+    this.enclave = enclave;
   }
 
   @Override
   public SendTransactionResponse sendTransaction(
       final PrivateTransaction privateTransaction, final String enclavePublicKey) {
+    if (!privateTransaction.getPrivateFrom().toBase64String().equals(enclavePublicKey)) {
+      throw new MultiTenancyValidationException(
+          "Transaction privateFrom must match enclave public key");
+    }
+    if (privateTransaction.getPrivacyGroupId().isPresent()) {
+      final PrivacyGroup privacyGroup =
+          enclave.retrievePrivacyGroup(
+              privateTransaction.getPrivacyGroupId().get().toBase64String());
+      if (!privacyGroup.getMembers().contains(enclavePublicKey)) {
+        throw new MultiTenancyValidationException(
+            "Privacy group must contain the enclave public key");
+      }
+    }
     return privacyController.sendTransaction(privateTransaction, enclavePublicKey);
   }
 
