@@ -141,8 +141,8 @@ public class PrivacyPrecompiledContractTest {
 
   @Test
   public void testPayloadFoundInEnclave() {
-    Enclave enclave = mock(Enclave.class);
-    PrivacyPrecompiledContract contract =
+    final Enclave enclave = mock(Enclave.class);
+    final PrivacyPrecompiledContract contract =
         new PrivacyPrecompiledContract(
             new SpuriousDragonGasCalculator(), enclave, worldStateArchive, privateStateStorage);
     contract.setPrivateTransactionProcessor(mockPrivateTxProcessor());
@@ -159,9 +159,9 @@ public class PrivacyPrecompiledContractTest {
 
   @Test
   public void testPayloadNotFoundInEnclave() {
-    Enclave enclave = mock(Enclave.class);
+    final Enclave enclave = mock(Enclave.class);
 
-    PrivacyPrecompiledContract contract =
+    final PrivacyPrecompiledContract contract =
         new PrivacyPrecompiledContract(
             new SpuriousDragonGasCalculator(), enclave, worldStateArchive, privateStateStorage);
 
@@ -173,9 +173,9 @@ public class PrivacyPrecompiledContractTest {
 
   @Test(expected = RuntimeException.class)
   public void testEnclaveDown() {
-    Enclave enclave = mock(Enclave.class);
+    final Enclave enclave = mock(Enclave.class);
 
-    PrivacyPrecompiledContract contract =
+    final PrivacyPrecompiledContract contract =
         new PrivacyPrecompiledContract(
             new SpuriousDragonGasCalculator(), enclave, worldStateArchive, privateStateStorage);
 

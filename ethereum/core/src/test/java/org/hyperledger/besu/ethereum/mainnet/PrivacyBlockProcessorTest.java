@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -39,20 +38,19 @@ public class PrivacyBlockProcessorTest {
 
   private PrivacyParameters privacyParameters;
   private PrivacyBlockProcessor privacyBlockProcessor;
+  private PrivateStateStorage privateStateStorage;
 
   @Before
   public void setUp() {
     final AbstractBlockProcessor blockProcessor = mock(AbstractBlockProcessor.class);
     this.privacyParameters = mock(PrivacyParameters.class);
-    this.privacyBlockProcessor = new PrivacyBlockProcessor(blockProcessor, privacyParameters);
+    privateStateStorage = new PrivateStateKeyValueStorage(new InMemoryKeyValueStorage());
+    this.privacyBlockProcessor = new PrivacyBlockProcessor(blockProcessor, privateStateStorage);
   }
 
   @Test
   public void mustCopyPreviousPrivacyGroupBlockHeadMap() {
     final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
-    final PrivateStateStorage privateStateStorage =
-        new PrivateStateKeyValueStorage(new InMemoryKeyValueStorage());
-    when(privacyParameters.getPrivateStateStorage()).thenReturn(privateStateStorage);
     final Blockchain blockchain = mock(Blockchain.class);
     final MutableWorldState mutableWorldState = mock(MutableWorldState.class);
     final PrivacyGroupHeadBlockMap expected =
