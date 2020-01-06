@@ -18,7 +18,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
@@ -38,24 +37,12 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
   private static final Bytes METADATA_KEY_SUFFIX = Bytes.of("METADATA".getBytes(UTF_8));
   private static final Bytes STATUS_KEY_SUFFIX = Bytes.of("STATUS".getBytes(UTF_8));
   private static final Bytes REVERT_KEY_SUFFIX = Bytes.of("REVERT".getBytes(UTF_8));
-  private static final Bytes PRIVACY_GROUP_HEAD_BLOCK_MAP_PREFIX =
-          Bytes.of("MAP".getBytes(UTF_8));
+  private static final Bytes PRIVACY_GROUP_HEAD_BLOCK_MAP_PREFIX = Bytes.of("MAP".getBytes(UTF_8));
 
   private final KeyValueStorage keyValueStorage;
 
   public PrivateStateKeyValueStorage(final KeyValueStorage keyValueStorage) {
     this.keyValueStorage = keyValueStorage;
-  }
-
-  @Override
-  public Optional<Hash> getLatestStateRoot(final Bytes privacyId) {
-    final byte[] id = privacyId.toArrayUnsafe();
-
-    if (keyValueStorage.get(id).isPresent()) {
-      return Optional.of(Hash.wrap(Bytes32.wrap(keyValueStorage.get(id).get())));
-    } else {
-      return Optional.empty();
-    }
   }
 
   @Override
@@ -75,8 +62,6 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
   @Override
   public Optional<Bytes> getStatus(final Bytes32 transactionHash) {
     return get(transactionHash, STATUS_KEY_SUFFIX);
-  public Optional<Bytes> getStatus(final Bytes32 transactionHash) {
-    return Optional.empty();
   }
 
   @Override
@@ -85,17 +70,10 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
   }
 
   @Override
-<<<<<<< HEAD
-  public Optional<PrivateTransactionMetadata> getTransactionMetadata(
-      final Bytes32 blockHash, final Bytes32 transactionHash) {
-    return get(Bytes.concatenate(blockHash, transactionHash), METADATA_KEY_SUFFIX)
-        .map(bytes -> PrivateTransactionMetadata.readFrom(new BytesValueRLPInput(bytes, false)));
-=======
   public Optional<PrivateBlockMetadata> getPrivateBlockMetadata(
       final Bytes32 blockHash, final Bytes32 privacyGroupId) {
-    return get(BytesValues.concatenate(blockHash, privacyGroupId), METADATA_KEY_SUFFIX)
+    return get(Bytes.concatenate(blockHash, privacyGroupId), METADATA_KEY_SUFFIX)
         .map(this::rlpDecodePrivateBlockMetadata);
->>>>>>> WIP - need to fix AT
   }
 
   @Override
@@ -126,10 +104,6 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
     return PrivateBlockMetadata.readFrom(RLP.input(bytes));
   }
 
-  private List<Bytes> rlpDecodeList(final Bytes bytes) {
-    return RLP.input(bytes).readList(RLPInput::readBytesValue);
-  }
-
   @Override
   public PrivateStateStorage.Updater updater() {
     return new PrivateStateKeyValueStorage.Updater(keyValueStorage.startTransaction());
@@ -141,12 +115,6 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
 
     private Updater(final KeyValueStorageTransaction transaction) {
       this.transaction = transaction;
-    }
-
-    @Override
-    public Updater putLatestStateRoot(final Bytes privacyId, final Hash privateStateHash) {
-      transaction.put(privacyId.toArrayUnsafe(), privateStateHash.toArray());
-      return this;
     }
 
     @Override

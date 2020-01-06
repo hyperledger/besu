@@ -26,14 +26,13 @@ import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateBlockMetadata;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateTransactionMetadata;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.BytesValues;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -47,10 +46,10 @@ public class PrivateStateRootResolverTest {
       Hash.fromHexString("0x37659019840d6e04e740614d1ad93d62f0d9d7cc423b2178189f391db602a6a6");
   private static final Hash pmt2StateHash =
       Hash.fromHexString("0x12d390c87b405e91523b5829002bf90095005366eb9aa168ff8a18540902e410");
-  private static final BytesValue privacyGroupId =
-      BytesValues.fromBase64("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=");
-  private static final BytesValue failingPrivacyGroupId =
-      BytesValues.fromBase64("Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=");
+  private static final Bytes32 privacyGroupId =
+      Bytes32.wrap(Bytes.fromBase64String("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo="));
+  private static final Bytes32 failingPrivacyGroupId =
+      Bytes32.wrap(Bytes.fromBase64String("Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs="));
 
   private PrivateStateStorage privateStateStorage;
 

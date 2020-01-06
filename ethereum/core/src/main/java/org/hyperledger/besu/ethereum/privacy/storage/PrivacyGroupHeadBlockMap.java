@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.privacy.storage;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-import org.hyperledger.besu.util.bytes.Bytes32;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -26,6 +25,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+
+import org.apache.tuweni.bytes.Bytes32;
 
 public class PrivacyGroupHeadBlockMap implements Map<Bytes32, Hash> {
   private final HashMap<Bytes32, Hash> map;

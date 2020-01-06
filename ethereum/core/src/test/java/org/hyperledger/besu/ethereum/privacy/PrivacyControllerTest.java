@@ -27,7 +27,6 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.SECP256K1;
@@ -38,24 +37,19 @@ import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.enclave.types.PrivacyGroup.Type;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.enclave.types.SendResponse;
-import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.FixedKeySigningPrivateMarkerTransactionFactory;
-import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.orion.testutil.OrionKeyUtils;
 
 import java.math.BigInteger;
 import java.util.List;
-import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.io.Base64;
 import org.junit.Before;
 import org.junit.Test;
@@ -83,12 +77,8 @@ public class PrivacyControllerTest {
   private PrivacyController brokenPrivacyController;
   private PrivateTransactionValidator privateTransactionValidator;
   private Enclave enclave;
-  private Account account;
   private String enclavePublicKey;
-  private PrivateStateStorage privateStateStorage;
-  private WorldStateArchive worldStateArchive;
-  private MutableWorldState mutableWorldState;
-  private final Hash hash = mock(Hash.class);
+  private PrivateNonceProvider privateNonceProvider;
 
   private static final Transaction PUBLIC_TRANSACTION =
       Transaction.builder()
@@ -105,7 +95,7 @@ public class PrivacyControllerTest {
   private Enclave mockEnclave() {
     Enclave mockEnclave = mock(Enclave.class);
     SendResponse response = new SendResponse(TRANSACTION_KEY);
-    ReceiveResponse receiveResponse = new ReceiveResponse(new byte[0], "mock", null);
+    ReceiveResponse receiveResponse = new ReceiveResponse(new byte[0], PRIVACY_GROUP_ID, null);
     when(mockEnclave.send(anyString(), anyString(), anyList())).thenReturn(response);
     when(mockEnclave.send(anyString(), anyString(), anyString())).thenReturn(response);
     when(mockEnclave.receive(any(), any())).thenReturn(receiveResponse);
@@ -127,14 +117,7 @@ public class PrivacyControllerTest {
 
   @Before
   public void setUp() throws Exception {
-    privateStateStorage = mock(PrivateStateStorage.class);
-    when(privateStateStorage.getLatestStateRoot(any(Bytes.class))).thenReturn(Optional.of(hash));
-    worldStateArchive = mock(WorldStateArchive.class);
-    account = mock(Account.class);
-    when(account.getNonce()).thenReturn(1L);
-    mutableWorldState = mock(MutableWorldState.class);
-    when(worldStateArchive.getMutable(any(Hash.class))).thenReturn(Optional.of(mutableWorldState));
-    when(mutableWorldState.get(any(Address.class))).thenReturn(account);
+    privateNonceProvider = mock(ChainHeadPrivateNonceProvider.class);
 
     enclavePublicKey = OrionKeyUtils.loadKey("orion_key_0.pub");
     privateTransactionValidator = mockPrivateTransactionValidator();
@@ -143,19 +126,17 @@ public class PrivacyControllerTest {
     privacyController =
         new PrivacyController(
             enclave,
-            privateStateStorage,
-            worldStateArchive,
             privateTransactionValidator,
             new FixedKeySigningPrivateMarkerTransactionFactory(
-                Address.DEFAULT_PRIVACY, (address) -> 0, KEY_PAIR));
+                Address.DEFAULT_PRIVACY, (address) -> 0, KEY_PAIR),
+            privateNonceProvider);
     brokenPrivacyController =
         new PrivacyController(
             brokenMockEnclave(),
-            privateStateStorage,
-            worldStateArchive,
             privateTransactionValidator,
             new FixedKeySigningPrivateMarkerTransactionFactory(
-                Address.DEFAULT_PRIVACY, (address) -> 0, KEY_PAIR));
+                Address.DEFAULT_PRIVACY, (address) -> 0, KEY_PAIR),
+            privateNonceProvider);
   }
 
   @Test
@@ -194,7 +175,9 @@ public class PrivacyControllerTest {
 
     final ValidationResult<TransactionInvalidReason> validationResult =
         privacyController.validatePrivateTransaction(
-            transaction, transaction.getPrivacyGroupId().get().toString(), ENCLAVE_PUBLIC_KEY);
+            transaction,
+            transaction.getPrivacyGroupId().get().toBase64String(),
+            ENCLAVE_PUBLIC_KEY);
 
     final Transaction markerTransaction =
         privacyController.createPrivacyMarkerTransaction(
@@ -323,20 +306,21 @@ public class PrivacyControllerTest {
     final long reportedNonce = 8L;
     final PrivacyGroup[] returnedGroups =
         new PrivacyGroup[] {
-          new PrivacyGroup("Group1", Type.LEGACY, "Group1_Name", "Group1_Desc", emptyList()),
+          new PrivacyGroup(
+              PRIVACY_GROUP_ID, Type.LEGACY, "Group1_Name", "Group1_Desc", emptyList()),
         };
 
     when(enclave.findPrivacyGroup(any())).thenReturn(returnedGroups);
-    when(account.getNonce()).thenReturn(8L);
+    when(privateNonceProvider.getNonce(any(Address.class), any(Bytes32.class))).thenReturn(8L);
 
     final long nonce =
         privacyController.determineNonce(
-            "privateFrom", new String[] {"first", "second"}, address, ENCLAVE_PUBLIC_KEY);
+            ENCLAVE_PUBLIC_KEY, new String[] {ENCLAVE_KEY2}, address, ENCLAVE_PUBLIC_KEY);
 
     assertThat(nonce).isEqualTo(reportedNonce);
     verify(enclave)
         .findPrivacyGroup(
-            argThat((m) -> m.containsAll(newArrayList("first", "second", "privateFrom"))));
+            argThat((m) -> m.containsAll(newArrayList(ENCLAVE_PUBLIC_KEY, ENCLAVE_KEY2))));
   }
 
   @Test
@@ -375,62 +359,6 @@ public class PrivacyControllerTest {
                     "privateFrom", new String[] {"first", "second"}, address, ENCLAVE_PUBLIC_KEY));
   }
 
-  @Test
-  public void determineNonceForPrivacyGroupRequestWhenAccountExists() {
-    final Address address = Address.fromHexString("55");
-
-    when(account.getNonce()).thenReturn(4L);
-
-    final long nonce = privacyController.determineNonce(address, "Group1", ENCLAVE_PUBLIC_KEY);
-
-    assertThat(nonce).isEqualTo(4L);
-    verify(privateStateStorage).getLatestStateRoot(Base64.decode("Group1"));
-    verify(worldStateArchive).getMutable(hash);
-    verify(mutableWorldState).get(address);
-  }
-
-  @Test
-  public void determineNonceForPrivacyGroupRequestWhenPrivateStateDoesNotExist() {
-    final Address address = Address.fromHexString("55");
-
-    when(privateStateStorage.getLatestStateRoot(Base64.decode("Group1")))
-        .thenReturn(Optional.empty());
-
-    final long nonce = privacyController.determineNonce(address, "Group1", ENCLAVE_PUBLIC_KEY);
-
-    assertThat(nonce).isEqualTo(Account.DEFAULT_NONCE);
-    verifyNoInteractions(worldStateArchive, mutableWorldState, account);
-  }
-
-  @Test
-  public void determineNonceForPrivacyGroupRequestWhenWorldStateDoesNotExist() {
-    final Address address = Address.fromHexString("55");
-
-    when(privateStateStorage.getLatestStateRoot(Base64.decode("Group1")))
-        .thenReturn(Optional.of(hash));
-    when(worldStateArchive.getMutable(hash)).thenReturn(Optional.empty());
-
-    final long nonce = privacyController.determineNonce(address, "Group1", ENCLAVE_PUBLIC_KEY);
-
-    assertThat(nonce).isEqualTo(Account.DEFAULT_NONCE);
-    verifyNoInteractions(mutableWorldState, account);
-  }
-
-  @Test
-  public void determineNonceForPrivacyGroupRequestWhenAccountDoesNotExist() {
-    final Address address = Address.fromHexString("55");
-
-    when(privateStateStorage.getLatestStateRoot(Base64.decode("Group1")))
-        .thenReturn(Optional.of(hash));
-    when(worldStateArchive.getMutable(hash)).thenReturn(Optional.of(mutableWorldState));
-    when(mutableWorldState.get(address)).thenReturn(null);
-
-    final long nonce = privacyController.determineNonce(address, "Group1", ENCLAVE_PUBLIC_KEY);
-
-    assertThat(nonce).isEqualTo(Account.DEFAULT_NONCE);
-    verifyNoInteractions(account);
-  }
-
   private static PrivateTransaction buildLegacyPrivateTransaction() {
     return buildLegacyPrivateTransaction(0);
   }
@@ -445,8 +373,8 @@ public class PrivacyControllerTest {
   private static PrivateTransaction buildBesuPrivateTransaction(final long nonce) {
 
     return buildPrivateTransaction(nonce)
-        .privateFrom(Base64.decode(ENCLAVE_PUBLIC_KEY))
-        .privacyGroupId(Base64.decode(PRIVACY_GROUP_ID))
+        .privateFrom(Bytes.fromBase64String(ENCLAVE_PUBLIC_KEY))
+        .privacyGroupId(Bytes.fromBase64String(PRIVACY_GROUP_ID))
         .signAndBuild(KEY_PAIR);
   }
 

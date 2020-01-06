@@ -22,15 +22,13 @@ import org.hyperledger.besu.controller.GasLimitCalculator;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveFactory;
-import org.hyperledger.besu.enclave.types.SendRequest;
-import org.hyperledger.besu.enclave.types.SendRequestBesu;
-import org.hyperledger.besu.enclave.types.SendRequestLegacy;
 import org.hyperledger.besu.enclave.types.SendResponse;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
 import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
@@ -58,10 +56,6 @@ import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactor
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBFactoryConfiguration;
 import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.testutil.TestClock;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.BytesValues;
-import org.hyperledger.besu.util.uint.UInt256;
 import org.hyperledger.orion.testutil.OrionKeyConfiguration;
 import org.hyperledger.orion.testutil.OrionTestHarness;
 import org.hyperledger.orion.testutil.OrionTestHarnessFactory;
@@ -76,6 +70,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import io.vertx.core.Vertx;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -95,12 +91,12 @@ public class PrivacyReorgTest {
           SECP256K1.PrivateKey.create(
               new BigInteger(
                   "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63", 16)));
-  private static final BytesValue ENCLAVE_PUBLIC_KEY =
-      BytesValues.fromBase64("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=");
+  private static final Bytes ENCLAVE_PUBLIC_KEY =
+      Bytes.fromBase64String("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=");
 
   // EventEmitter contract binary
-  private static final BytesValue MOCK_PAYLOAD =
-      BytesValue.fromHexString(
+  private static final Bytes MOCK_PAYLOAD =
+      Bytes.fromHexString(
           "0x608060405234801561001057600080fd5b5060008054600160a060020a03191633179055610199806100326000396000f3fe6080604052600436106100565763ffffffff7c01000000000000000000000000000000000000000000000000000000006000350416633fa4f245811461005b5780636057361d1461008257806367e404ce146100ae575b600080fd5b34801561006757600080fd5b506100706100ec565b60408051918252519081900360200190f35b34801561008e57600080fd5b506100ac600480360360208110156100a557600080fd5b50356100f2565b005b3480156100ba57600080fd5b506100c3610151565b6040805173ffffffffffffffffffffffffffffffffffffffff9092168252519081900360200190f35b60025490565b604080513381526020810183905281517fc9db20adedc6cf2b5d25252b101ab03e124902a73fcb12b753f3d1aaa2d8f9f5929181900390910190a16002556001805473ffffffffffffffffffffffffffffffffffffffff191633179055565b60015473ffffffffffffffffffffffffffffffffffffffff169056fea165627a7a72305820c7f729cb24e05c221f5aa913700793994656f233fe2ce3b9fd9a505ea17e8d8a0029");
   private static final PrivateTransaction PRIVATE_TRANSACTION =
       PrivateTransaction.builder()
@@ -336,7 +332,7 @@ public class PrivacyReorgTest {
         "0x2121b68f1333e93bae8cd717a3ca68c9d7e7003f6b288c36dfc59b0f87be9590");
 
     // Create parallel fork of length 1 which removes privacy marker transaction
-    final UInt256 remainingDifficultyToOutpace =
+    final Difficulty remainingDifficultyToOutpace =
         blockchain
             .getBlockByNumber(1)
             .get()
@@ -488,12 +484,11 @@ public class PrivacyReorgTest {
         .build();
   }
 
-  private BytesValue getEnclaveKey(final URI enclaveURI) {
+  private Bytes getEnclaveKey(final URI enclaveURI) {
     final Enclave enclave = new EnclaveFactory(Vertx.vertx()).createVertxEnclave(enclaveURI);
-    final SendRequest sendRequest = createSendRequest(PRIVATE_TRANSACTION);
-    final SendResponse sendResponse;
-    sendResponse = enclave.send(sendRequest);
-    final BytesValue payload = BytesValues.fromBase64(sendResponse.getKey());
+    final SendResponse sendResponse =
+        sendRequest(enclave, PRIVATE_TRANSACTION, "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=");
+    final Bytes payload = Bytes.fromBase64String(sendResponse.getKey());
 
     // If the key has 0 bytes generate a new key.
     // This is to keep the gasUsed constant allowing
@@ -507,33 +502,32 @@ public class PrivacyReorgTest {
     return payload;
   }
 
-  private SendRequest createSendRequest(final PrivateTransaction privateTransaction) {
-    final BytesValueRLPOutput bvrlp = new BytesValueRLPOutput();
-    privateTransaction.writeTo(bvrlp);
-    final String payload = BytesValues.asBase64String(bvrlp.encoded());
+  private SendResponse sendRequest(
+      final Enclave enclave,
+      final PrivateTransaction privateTransaction,
+      final String enclavePublicKey) {
+    final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
+    privateTransaction.writeTo(rlpOutput);
+    final String payload = rlpOutput.encoded().toBase64String();
 
     if (privateTransaction.getPrivacyGroupId().isPresent()) {
-      return new SendRequestBesu(
-          payload,
-          "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=",
-          BytesValues.asBase64String(privateTransaction.getPrivacyGroupId().get()));
+      return enclave.send(
+          payload, enclavePublicKey, privateTransaction.getPrivacyGroupId().get().toBase64String());
     } else {
       final List<String> privateFor =
           privateTransaction.getPrivateFor().get().stream()
-              .map(BytesValues::asBase64String)
+              .map(Bytes::toBase64String)
               .collect(Collectors.toList());
 
-      // FIXME: orion should accept empty privateFor
       if (privateFor.isEmpty()) {
-        privateFor.add(BytesValues.asBase64String(privateTransaction.getPrivateFrom()));
+        privateFor.add(privateTransaction.getPrivateFrom().toBase64String());
       }
-
-      return new SendRequestLegacy(
-          payload, BytesValues.asBase64String(privateTransaction.getPrivateFrom()), privateFor);
+      return enclave.send(
+          payload, privateTransaction.getPrivateFrom().toBase64String(), privateFor);
     }
   }
 
-  private Transaction generateMarker(final BytesValue payload) {
+  private Transaction generateMarker(final Bytes payload) {
     return Transaction.builder()
         .chainId(BigInteger.valueOf(2018))
         .gasLimit(60000)
@@ -546,12 +540,13 @@ public class PrivacyReorgTest {
   }
 
   private void assertPrivateStateRoot(
-      final PrivateStateRootResolver psrr,
+      final PrivateStateRootResolver privateStateRootResolver,
       final DefaultBlockchain blockchain,
       final String expected) {
     assertThat(
-            psrr.resolveLastStateRoot(
-                BytesValues.fromBase64("8lDVI66RZHIrBsolz6Kn88Rd+WsJ4hUjb4hsh29xW/o="),
+            privateStateRootResolver.resolveLastStateRoot(
+                Bytes32.wrap(
+                    Bytes.fromBase64String("8lDVI66RZHIrBsolz6Kn88Rd+WsJ4hUjb4hsh29xW/o=")),
                 blockchain.getChainHeadHash()))
         .isEqualTo(Hash.fromHexString(expected));
   }
