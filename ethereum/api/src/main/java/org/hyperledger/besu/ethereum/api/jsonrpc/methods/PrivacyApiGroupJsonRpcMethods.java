@@ -27,6 +27,8 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.privacy.DefaultPrivacyController;
+import org.hyperledger.besu.ethereum.privacy.MultiTenancyPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.FixedKeySigningPrivateMarkerTransactionFactory;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.PrivateMarkerTransactionFactory;
@@ -76,9 +78,13 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
         createPrivateMarkerTransactionFactory(
             privacyParameters, blockchainQueries, transactionPool.getPendingTransactions());
 
-    final PrivacyController privacyController =
-        new PrivacyController(
+    final DefaultPrivacyController defaultPrivacyController =
+        new DefaultPrivacyController(
             privacyParameters, protocolSchedule.getChainId(), markerTransactionFactory);
+    final PrivacyController privacyController =
+        privacyParameters.isMultiTenancyEnabled()
+            ? new MultiTenancyPrivacyController(defaultPrivacyController)
+            : defaultPrivacyController;
 
     final EnclavePublicKeyProvider enclavePublicProvider =
         privacyParameters.isMultiTenancyEnabled()

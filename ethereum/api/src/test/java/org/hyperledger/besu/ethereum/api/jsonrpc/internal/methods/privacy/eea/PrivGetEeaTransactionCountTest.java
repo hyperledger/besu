@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.privacy.DefaultPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 import org.junit.Before;
@@ -37,7 +38,7 @@ public class PrivGetEeaTransactionCountTest {
   private static final String ENCLAVE_PUBLIC_KEY = "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
 
   private final PrivacyParameters privacyParameters = mock(PrivacyParameters.class);
-  private final PrivacyController privacyController = mock(PrivacyController.class);
+  private final PrivacyController privacyController = mock(DefaultPrivacyController.class);
   private JsonRpcRequestContext request;
 
   private final String privateFrom = "thePrivateFromKey";

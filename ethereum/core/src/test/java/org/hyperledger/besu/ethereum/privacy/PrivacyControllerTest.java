@@ -141,7 +141,7 @@ public class PrivacyControllerTest {
     enclave = mockEnclave();
 
     privacyController =
-        new PrivacyController(
+        new DefaultPrivacyController(
             enclave,
             privateStateStorage,
             worldStateArchive,
@@ -149,7 +149,7 @@ public class PrivacyControllerTest {
             new FixedKeySigningPrivateMarkerTransactionFactory(
                 Address.DEFAULT_PRIVACY, (address) -> 0, KEY_PAIR));
     brokenPrivacyController =
-        new PrivacyController(
+        new DefaultPrivacyController(
             brokenMockEnclave(),
             privateStateStorage,
             worldStateArchive,
