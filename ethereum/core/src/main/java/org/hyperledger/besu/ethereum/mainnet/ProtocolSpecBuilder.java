@@ -314,7 +314,9 @@ public class ProtocolSpecBuilder<T> {
       privacyPrecompiledContract.setPrivateTransactionProcessor(privateTransactionProcessor);
       if (AbstractBlockProcessor.class.isAssignableFrom(blockProcessor.getClass())) {
         blockProcessor =
-            new PrivacyBlockProcessor((AbstractBlockProcessor) blockProcessor, privacyParameters);
+            new PrivacyBlockProcessor(
+                (AbstractBlockProcessor) blockProcessor,
+                privacyParameters.getPrivateStateStorage());
       }
     }
 

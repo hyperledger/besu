@@ -49,6 +49,7 @@ import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.privacy.storage.keyvalue.PrivacyKeyValueStorageProviderBuilder;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
+import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBKeyValuePrivacyStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBKeyValueStorageFactory;
@@ -85,6 +86,8 @@ public class PrivacyReorgTest {
   private static final int BACKGROUND_THREAD_COUNT = 4;
 
   @Rule public final TemporaryFolder folder = new TemporaryFolder();
+
+  public static final Hash EMPTY_ROOT_HASH = Hash.wrap(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
 
   private static final SECP256K1.KeyPair KEY_PAIR =
       SECP256K1.KeyPair.create(
@@ -208,9 +211,7 @@ public class PrivacyReorgTest {
                 .setParentHash(firstBlock.getHeader().getHash())
                 .hasTransactions(false)
                 .hasOmmers(false)
-                .setReceiptsRoot(
-                    Hash.fromHexString(
-                        "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421"))
+                .setReceiptsRoot(EMPTY_ROOT_HASH)
                 .setGasUsed(0)
                 .setLogsBloom(LogsBloomFilter.empty())
                 .setStateRoot(
@@ -221,7 +222,7 @@ public class PrivacyReorgTest {
 
     assertThat(privateStateStorage.getPrivacyGroupHeadBlockMap(secondBlock.getHash())).isNotEmpty();
 
-    assertThat(privateStateStorage.getPrivacyGroupHeadBlockMap(firstBlock.getHash()))
+    assertThat(privateStateStorage.getPrivacyGroupHeadBlockMap(secondBlock.getHash()))
         .contains(expected);
   }
 
@@ -258,14 +259,12 @@ public class PrivacyReorgTest {
     // Create parallel fork of length 1 which removes privacy marker transaction
     final BlockDataGenerator.BlockOptions options =
         new BlockDataGenerator.BlockOptions()
-            .setBlockNumber(firstBlock.getHeader().getNumber())
+            .setBlockNumber(1)
             .setParentHash(blockchain.getGenesisBlock().getHash())
             .hasTransactions(false)
             .hasOmmers(false)
             .setDifficulty(blockchain.getChainHeadHeader().getDifficulty().plus(10L))
-            .setReceiptsRoot(
-                Hash.fromHexString(
-                    "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421"))
+            .setReceiptsRoot(EMPTY_ROOT_HASH)
             .setGasUsed(0)
             .setLogsBloom(LogsBloomFilter.empty())
             .setStateRoot(
@@ -276,10 +275,7 @@ public class PrivacyReorgTest {
     appendBlock(besuController, blockchain, protocolContext, forkBlock);
 
     // Check that the private state root is the empty state
-    assertPrivateStateRoot(
-        privateStateRootResolver,
-        blockchain,
-        "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421");
+    assertPrivateStateRoot(privateStateRootResolver, blockchain, EMPTY_ROOT_HASH);
   }
 
   @Test
@@ -295,9 +291,7 @@ public class PrivacyReorgTest {
                 .setParentHash(blockchain.getGenesisBlock().getHash())
                 .hasTransactions(false)
                 .hasOmmers(false)
-                .setReceiptsRoot(
-                    Hash.fromHexString(
-                        "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421"))
+                .setReceiptsRoot(EMPTY_ROOT_HASH)
                 .setGasUsed(0)
                 .setLogsBloom(LogsBloomFilter.empty())
                 .setStateRoot(
@@ -346,9 +340,7 @@ public class PrivacyReorgTest {
             .hasTransactions(false)
             .hasOmmers(false)
             .setDifficulty(remainingDifficultyToOutpace.plus(10L))
-            .setReceiptsRoot(
-                Hash.fromHexString(
-                    "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421"))
+            .setReceiptsRoot(EMPTY_ROOT_HASH)
             .setGasUsed(0)
             .setLogsBloom(LogsBloomFilter.empty())
             .setStateRoot(
@@ -361,10 +353,7 @@ public class PrivacyReorgTest {
     assertThat(blockchain.getChainHeadBlockNumber()).isEqualTo(1);
 
     // Check that the private state root is the empty state
-    assertPrivateStateRoot(
-        privateStateRootResolver,
-        blockchain,
-        "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421");
+    assertPrivateStateRoot(privateStateRootResolver, blockchain, EMPTY_ROOT_HASH);
   }
 
   @Test
@@ -408,9 +397,7 @@ public class PrivacyReorgTest {
                 .hasTransactions(false)
                 .hasOmmers(false)
                 .setDifficulty(firstBlock.getHeader().getDifficulty().plus(10L))
-                .setReceiptsRoot(
-                    Hash.fromHexString(
-                        "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421"))
+                .setReceiptsRoot(EMPTY_ROOT_HASH)
                 .setGasUsed(0)
                 .setLogsBloom(LogsBloomFilter.empty())
                 .setStateRoot(
@@ -446,10 +433,33 @@ public class PrivacyReorgTest {
     assertThat(blockchain.getChainHeadBlockNumber()).isEqualTo(2);
 
     // Check that the private state root is the empty state
+    assertPrivateStateRoot(privateStateRootResolver, blockchain, EMPTY_ROOT_HASH);
+
+    // Add another private transaction
+    final Block thirdForkBlock =
+        gen.block(
+            new BlockDataGenerator.BlockOptions()
+                .setBlockNumber(3)
+                .setParentHash(secondForkBlock.getHeader().getHash())
+                .addTransaction(generateMarker(getEnclaveKey(enclave.clientUrl())))
+                .hasOmmers(false)
+                .setDifficulty(firstBlock.getHeader().getDifficulty().plus(10L))
+                .setReceiptsRoot(
+                    Hash.fromHexString(
+                        "0xc8267b3f9ed36df3ff8adb51a6d030716f23eeb50270e7fce8d9822ffa7f0461"))
+                .setGasUsed(23176)
+                .setLogsBloom(LogsBloomFilter.empty())
+                .setStateRoot(
+                    Hash.fromHexString(
+                        "0xe22344ade05260177b79dcc6c4fed8f87ab95a506c2a6147631ac6547cf44846")));
+
+    appendBlock(besuController, blockchain, protocolContext, thirdForkBlock);
+
+    // Check that the private state did change after reorg
     assertPrivateStateRoot(
         privateStateRootResolver,
         blockchain,
-        "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421");
+        "0x2121b68f1333e93bae8cd717a3ca68c9d7e7003f6b288c36dfc59b0f87be9590");
   }
 
   @SuppressWarnings("unchecked")
@@ -543,11 +553,18 @@ public class PrivacyReorgTest {
       final PrivateStateRootResolver privateStateRootResolver,
       final DefaultBlockchain blockchain,
       final String expected) {
+    assertPrivateStateRoot(privateStateRootResolver, blockchain, Hash.fromHexString(expected));
+  }
+
+  private void assertPrivateStateRoot(
+      final PrivateStateRootResolver privateStateRootResolver,
+      final DefaultBlockchain blockchain,
+      final Hash expected) {
     assertThat(
             privateStateRootResolver.resolveLastStateRoot(
                 Bytes32.wrap(
                     Bytes.fromBase64String("8lDVI66RZHIrBsolz6Kn88Rd+WsJ4hUjb4hsh29xW/o=")),
                 blockchain.getChainHeadHash()))
-        .isEqualTo(Hash.fromHexString(expected));
+        .isEqualTo(expected);
   }
 }

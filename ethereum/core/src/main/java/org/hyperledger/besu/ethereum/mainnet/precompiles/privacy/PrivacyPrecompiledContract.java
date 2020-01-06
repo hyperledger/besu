@@ -98,8 +98,8 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
   public Bytes compute(final Bytes input, final MessageFrame messageFrame) {
     final ProcessableBlockHeader currentBlockHeader = messageFrame.getBlockHeader();
     if (!BlockHeader.class.isAssignableFrom(currentBlockHeader.getClass())) {
-      LOG.info("Privacy works with BlockHeader only!.");
-      return Bytes.EMPTY;
+      throw new IllegalArgumentException(
+          "The MessageFrame contains an illegal block header type. Privacy works with BlockHeader only!.");
     }
     final Hash currentBlockHash = ((BlockHeader) currentBlockHeader).getHash();
 
@@ -173,17 +173,13 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
       disposablePrivateState.persist();
 
       final PrivateStateStorage.Updater privateStateUpdater = privateStateStorage.updater();
-      final PrivateBlockMetadata privateBlockMetadata =
-          privateStateStorage
-              .getPrivateBlockMetadata(currentBlockHash, Bytes32.wrap(privacyGroupId))
-              .orElseGet(PrivateBlockMetadata::empty);
-      privateBlockMetadata.addPrivateTransactionMetadata(
-          new PrivateTransactionMetadata(
-              messageFrame.getTransactionHash(), disposablePrivateState.rootHash()));
-      privateStateUpdater.putPrivateBlockMetadata(
-          Bytes32.wrap(currentBlockHash),
-          Bytes32.wrap(privacyGroupId),
-          privateBlockMetadata);
+
+      updatePrivateBlockMetadata(
+          messageFrame.getTransactionHash(),
+          currentBlockHash,
+          privacyGroupId,
+          disposablePrivateState.rootHash(),
+          privateStateUpdater);
 
       final Bytes32 txHash = keccak256(RLP.encode(privateTransaction::writeTo));
       final List<Log> logs = result.getLogs();
@@ -211,5 +207,23 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
     }
 
     return result.getOutput();
+  }
+
+  private void updatePrivateBlockMetadata(
+      final Hash markerTransactionHash,
+      final Hash currentBlockHash,
+      final Bytes32 privacyGroupId,
+      final Hash rootHash,
+      final PrivateStateStorage.Updater privateStateUpdater) {
+    final PrivateBlockMetadata privateBlockMetadata =
+        privateStateStorage
+            .getPrivateBlockMetadata(currentBlockHash, Bytes32.wrap(privacyGroupId))
+            .orElseGet(PrivateBlockMetadata::empty);
+    privateBlockMetadata.addPrivateTransactionMetadata(
+        new PrivateTransactionMetadata(markerTransactionHash, rootHash));
+    privateStateUpdater.putPrivateBlockMetadata(
+        Bytes32.wrap(currentBlockHash),
+        Bytes32.wrap(privacyGroupId),
+        privateBlockMetadata);
   }
 }
