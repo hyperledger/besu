@@ -112,7 +112,7 @@ public class PrivacyReorgTest {
           .value(Wei.ZERO)
           .signAndBuild(KEY_PAIR);
 
-  private BlockDataGenerator gen = new BlockDataGenerator();
+  private final BlockDataGenerator gen = new BlockDataGenerator();
   private BesuController besuController;
   private OrionTestHarness enclave;
   private PrivateStateRootResolver privateStateRootResolver;

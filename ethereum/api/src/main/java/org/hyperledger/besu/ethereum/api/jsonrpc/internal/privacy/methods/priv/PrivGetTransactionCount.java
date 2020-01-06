@@ -59,10 +59,8 @@ public class PrivGetTransactionCount implements JsonRpcMethod {
     final String privacyGroupId = requestContext.getRequiredParameter(1, String.class);
 
     final long nonce =
-        privacyController.determineNonce(
-            address,
-            privacyGroupId,
-            enclavePublicKeyProvider.getEnclaveKey(requestContext.getUser()));
+        privateNonceProvider.getNonce(
+            address, Bytes32.wrap(Bytes.fromBase64String(privacyGroupId)));
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), Quantity.create(nonce));
   }
 }
