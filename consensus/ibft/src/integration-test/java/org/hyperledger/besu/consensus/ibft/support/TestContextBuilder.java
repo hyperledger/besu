@@ -89,14 +89,14 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class TestContextBuilder {
 
-  private static MetricsSystem metricsSystem = new NoOpMetricsSystem();
+  private static final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
   private static class ControllerAndState {
 
     private final IbftExecutors ibftExecutors;
-    private IbftController controller;
-    private IbftFinalState finalState;
-    private EventMultiplexer eventMultiplexer;
+    private final IbftController controller;
+    private final IbftFinalState finalState;
+    private final EventMultiplexer eventMultiplexer;
 
     public ControllerAndState(
         final IbftExecutors ibftExecutors,

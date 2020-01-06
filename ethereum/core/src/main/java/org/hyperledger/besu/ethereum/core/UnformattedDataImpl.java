@@ -1,4 +1,5 @@
 /*
+ *
  * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
@@ -11,18 +12,29 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
+ *
  */
-package org.hyperledger.besu.crypto;
+package org.hyperledger.besu.ethereum.core;
 
-import com.google.common.primitives.Bytes;
-import com.google.common.primitives.Ints;
-import com.google.common.primitives.Longs;
+import org.hyperledger.besu.plugin.data.UnformattedData;
 
-public class QuickEntropy {
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.DelegatingBytes;
 
-  public byte[] getQuickEntropy() {
-    final byte[] nanoTimeBytes = Longs.toByteArray(System.nanoTime());
-    final byte[] objectHashBytes = Ints.toByteArray(new Object().hashCode());
-    return Bytes.concat(nanoTimeBytes, objectHashBytes);
+/** Wrapper for a Bytes value to be exposed as UnformattedData. */
+public class UnformattedDataImpl extends DelegatingBytes implements UnformattedData {
+
+  public UnformattedDataImpl(final Bytes value) {
+    super(value);
+  }
+
+  @Override
+  public byte[] getByteArray() {
+    return toArray();
+  }
+
+  @Override
+  public String getHexString() {
+    return toHexString();
   }
 }

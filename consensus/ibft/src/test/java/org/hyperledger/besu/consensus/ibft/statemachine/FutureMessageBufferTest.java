@@ -36,7 +36,7 @@ import org.junit.Test;
 public class FutureMessageBufferTest {
   private Message message;
   private FutureMessageBuffer futureMsgBuffer;
-  private PeerConnection peerConnection = MockPeerFactory.create(AddressHelpers.ofValue(9));
+  private final PeerConnection peerConnection = MockPeerFactory.create(AddressHelpers.ofValue(9));
 
   @Before
   public void setup() {

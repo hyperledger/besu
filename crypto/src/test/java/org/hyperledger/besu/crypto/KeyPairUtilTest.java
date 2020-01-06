@@ -12,11 +12,9 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.util;
+package org.hyperledger.besu.crypto;
 
 import static org.assertj.core.api.Assertions.assertThat;
-
-import org.hyperledger.besu.controller.KeyPairUtil;
 
 import java.io.File;
 

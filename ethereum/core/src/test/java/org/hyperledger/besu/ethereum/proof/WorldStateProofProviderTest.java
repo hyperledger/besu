@@ -47,7 +47,7 @@ public class WorldStateProofProviderTest {
   private static final Address address =
       Address.fromHexString("0x1234567890123456789012345678901234567890");
 
-  private WorldStateStorage worldStateStorage =
+  private final WorldStateStorage worldStateStorage =
       new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
 
   private WorldStateProofProvider worldStateProofProvider;

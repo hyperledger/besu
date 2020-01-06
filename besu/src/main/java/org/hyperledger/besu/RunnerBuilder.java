@@ -115,7 +115,7 @@ public class RunnerBuilder {
   private BesuController<?> besuController;
 
   private NetworkingConfiguration networkingConfiguration = NetworkingConfiguration.create();
-  private Collection<Bytes> bannedNodeIds = new ArrayList<>();
+  private final Collection<Bytes> bannedNodeIds = new ArrayList<>();
   private boolean p2pEnabled = true;
   private boolean discovery;
   private String p2pAdvertisedHost;

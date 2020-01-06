@@ -44,13 +44,15 @@ public class EnclaveTest {
   private static final String PAYLOAD = "a wonderful transaction";
   private static final String MOCK_KEY = "iOCzoGo5kwtZU0J41Z9xnGXHN6ZNukIa9MspvHtu3Jk=";
   private static Enclave enclave;
-  private Vertx vertx = Vertx.vertx();
-  private EnclaveFactory factory = new EnclaveFactory(vertx);
+  private Vertx vertx;
+  private EnclaveFactory factory;
 
   private static OrionTestHarness testHarness;
 
   @Before
   public void setUp() throws Exception {
+    vertx = Vertx.vertx();
+    factory = new EnclaveFactory(vertx);
     folder.create();
 
     testHarness =

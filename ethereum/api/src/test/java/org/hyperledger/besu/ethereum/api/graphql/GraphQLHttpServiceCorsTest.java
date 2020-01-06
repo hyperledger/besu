@@ -140,7 +140,10 @@ public class GraphQLHttpServiceCorsTest {
   public void requestWithNoOriginShouldSucceedWhenCorsIsSet() throws Exception {
     graphQLHttpService = createGraphQLHttpServiceWithAllowedDomains("http://foo.io");
 
-    final Request request = new Request.Builder().url(graphQLHttpService.url()).build();
+    final Request request =
+        new Request.Builder()
+            .url(graphQLHttpService.url() + "/graphql?query={protocolVersion}")
+            .build();
 
     try (final Response response = client.newCall(request).execute()) {
       Assertions.assertThat(response.isSuccessful()).isTrue();

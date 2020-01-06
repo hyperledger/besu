@@ -14,63 +14,75 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.User;
 import io.vertx.ext.auth.jwt.impl.JWTUser;
-import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.Test;
 
-public class PrivGetTransactionCountTest {
-
+public class PrivDeletePrivacyGroupTest {
   private static final String ENCLAVE_PUBLIC_KEY = "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
+  private static final String PRIVACY_GROUP_ID = "privacyGroupId";
+
+  private final Enclave enclave = mock(Enclave.class);
   private final PrivacyParameters privacyParameters = mock(PrivacyParameters.class);
   private final PrivacyController privacyController = mock(PrivacyController.class);
-
-  private final String privacyGroupId = Bytes.wrap("0x123".getBytes(UTF_8)).toBase64String();
-
-  private final Address senderAddress =
-      Address.fromHexString("0x627306090abab3a6e1400e9345bc60c78a8bef57");
-  private final long NONCE = 5;
   private final User user =
       new JWTUser(new JsonObject().put("privacyPublicKey", ENCLAVE_PUBLIC_KEY), "");
   private final EnclavePublicKeyProvider enclavePublicKeyProvider = (user) -> ENCLAVE_PUBLIC_KEY;
+  private JsonRpcRequestContext request;
 
   @Before
-  public void before() {
+  public void setUp() {
+    when(privacyParameters.getEnclave()).thenReturn(enclave);
     when(privacyParameters.isEnabled()).thenReturn(true);
-    when(privacyController.determineNonce(senderAddress, privacyGroupId, ENCLAVE_PUBLIC_KEY))
-        .thenReturn(NONCE);
+    request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest("1", "priv_deletePrivacyGroup", new Object[] {PRIVACY_GROUP_ID}),
+            user);
   }
 
   @Test
-  public void verifyTransactionCount() {
-    final PrivGetTransactionCount privGetTransactionCount =
-        new PrivGetTransactionCount(privacyController, enclavePublicKeyProvider);
+  public void deletesPrivacyGroupWithValidGroupId() {
+    when(privacyController.deletePrivacyGroup(PRIVACY_GROUP_ID, ENCLAVE_PUBLIC_KEY))
+        .thenReturn(PRIVACY_GROUP_ID);
 
-    final Object[] params = new Object[] {senderAddress, privacyGroupId};
-    final JsonRpcRequestContext request =
-        new JsonRpcRequestContext(
-            new JsonRpcRequest("1", "priv_getTransactionCount", params), user);
+    final PrivDeletePrivacyGroup privDeletePrivacyGroup =
+        new PrivDeletePrivacyGroup(privacyController, enclavePublicKeyProvider);
 
     final JsonRpcSuccessResponse response =
-        (JsonRpcSuccessResponse) privGetTransactionCount.response(request);
+        (JsonRpcSuccessResponse) privDeletePrivacyGroup.response(request);
+    final String result = (String) response.getResult();
+    assertThat(result).isEqualTo(PRIVACY_GROUP_ID);
+    verify(privacyController).deletePrivacyGroup(PRIVACY_GROUP_ID, ENCLAVE_PUBLIC_KEY);
+  }
 
-    assertThat(response.getResult()).isEqualTo(String.format("0x%X", NONCE));
-    verify(privacyController).determineNonce(senderAddress, privacyGroupId, ENCLAVE_PUBLIC_KEY);
+  @Test
+  public void failsWithDeletePrivacyGroupErrorIfEnclaveFails() {
+    when(privacyController.deletePrivacyGroup(PRIVACY_GROUP_ID, ENCLAVE_PUBLIC_KEY))
+        .thenThrow(new IllegalStateException("some failure"));
+
+    final PrivDeletePrivacyGroup privDeletePrivacyGroup =
+        new PrivDeletePrivacyGroup(privacyController, enclavePublicKeyProvider);
+
+    final JsonRpcErrorResponse response =
+        (JsonRpcErrorResponse) privDeletePrivacyGroup.response(request);
+    assertThat(response.getError()).isEqualTo(JsonRpcError.DELETE_PRIVACY_GROUP_ERROR);
+    verify(privacyController).deletePrivacyGroup(PRIVACY_GROUP_ID, ENCLAVE_PUBLIC_KEY);
   }
 }

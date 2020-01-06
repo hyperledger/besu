@@ -1798,8 +1798,7 @@ public class JsonRpcHttpServiceTest {
     assertThat(Wei.fromHexString(result.getString("gasPrice")))
         .isEqualTo(transaction.getGasPrice());
     assertThat(Long.decode(result.getString("gas"))).isEqualTo(transaction.getGasLimit());
-    assertThat(Bytes.fromHexString(result.getString("input")))
-        .isEqualTo(transaction.getPayloadBytes());
+    assertThat(Bytes.fromHexString(result.getString("input"))).isEqualTo(transaction.getPayload());
   }
 
   private void assertBlockResultMatchesBlock(final JsonObject result, final Block block) {
@@ -1817,7 +1816,7 @@ public class JsonRpcHttpServiceTest {
     assertThat(Difficulty.fromHexString(result.getString("difficulty")))
         .isEqualTo(header.getDifficulty());
     assertThat(Bytes.fromHexStringLenient(result.getString("extraData")))
-        .isEqualTo(header.internalGetExtraData());
+        .isEqualTo(header.getExtraData());
     assertThat(hexStringToInt(result.getString("size"))).isEqualTo(block.calculateSize());
     assertThat(Long.decode(result.getString("gasLimit"))).isEqualTo(header.getGasLimit());
     assertThat(Long.decode(result.getString("gasUsed"))).isEqualTo(header.getGasUsed());

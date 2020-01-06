@@ -123,7 +123,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
   private final PeerPermissions peerPermissions;
   private final MaintainedPeers maintainedPeers;
 
-  private Optional<UpnpNatManager> natManager;
+  private final Optional<UpnpNatManager> natManager;
   private Optional<String> natExternalAddress;
 
   private OptionalLong peerBondedObserverId = OptionalLong.empty();

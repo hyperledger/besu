@@ -36,7 +36,7 @@ public class VoteTallyCache {
 
   private final Cache<Hash, VoteTally> voteTallyCache =
       CacheBuilder.newBuilder().maximumSize(100).build();
-  private BlockInterface blockInterface;
+  private final BlockInterface blockInterface;
 
   public VoteTallyCache(
       final Blockchain blockchain,

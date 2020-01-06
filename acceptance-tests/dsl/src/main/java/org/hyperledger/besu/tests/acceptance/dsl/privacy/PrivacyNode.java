@@ -16,7 +16,7 @@ package org.hyperledger.besu.tests.acceptance.dsl.privacy;
 
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
 
-import org.hyperledger.besu.controller.KeyPairUtil;
+import org.hyperledger.besu.crypto.KeyPairUtil;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.enclave.EnclaveFactory;

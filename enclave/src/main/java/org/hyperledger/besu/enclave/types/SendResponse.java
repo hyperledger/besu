@@ -20,7 +20,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonPropertyOrder({"key"})
 public class SendResponse {
-  private String key;
+  private final String key;
 
   @JsonCreator
   public SendResponse(@JsonProperty("key") final String key) {

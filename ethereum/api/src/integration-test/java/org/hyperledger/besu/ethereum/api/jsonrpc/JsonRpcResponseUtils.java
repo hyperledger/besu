@@ -48,7 +48,7 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.UnformattedDataWrapper;
+import org.hyperledger.besu.ethereum.core.UnformattedDataImpl;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 
@@ -165,7 +165,7 @@ public class JsonRpcResponseUtils {
     when(transaction.getHash()).thenReturn(hash(hash));
     when(transaction.getTo()).thenReturn(Optional.ofNullable(address(toAddress)));
     when(transaction.getSender()).thenReturn(address(fromAddress));
-    when(transaction.getPayload()).thenReturn(new UnformattedDataWrapper(bytes(input)));
+    when(transaction.getPayload()).thenReturn(new UnformattedDataImpl(bytes(input)));
     when(transaction.getValue()).thenReturn(wei(value));
     when(transaction.getGasLimit()).thenReturn(unsignedLong(gas));
 

@@ -44,9 +44,9 @@ public class Pruner {
       new AtomicReference<>(PruningPhase.IDLE);
   private volatile long markBlockNumber = 0;
   private volatile BlockHeader markedBlockHeader;
-  private long blockConfirmations;
+  private final long blockConfirmations;
 
-  private AtomicReference<State> state = new AtomicReference<>(State.IDLE);
+  private final AtomicReference<State> state = new AtomicReference<>(State.IDLE);
   private final Supplier<ExecutorService> executorServiceSupplier;
   private ExecutorService executorService;
 

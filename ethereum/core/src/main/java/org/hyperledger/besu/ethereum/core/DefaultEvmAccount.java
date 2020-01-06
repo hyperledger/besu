@@ -21,7 +21,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class DefaultEvmAccount implements EvmAccount {
-  private MutableAccount mutableAccount;
+  private final MutableAccount mutableAccount;
 
   public boolean isImmutable() {
     return isImmutable;

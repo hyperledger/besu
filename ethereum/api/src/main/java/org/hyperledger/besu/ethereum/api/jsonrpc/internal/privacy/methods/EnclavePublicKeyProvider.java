@@ -12,6 +12,13 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.crypto;
+package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods;
 
-public class InvalidSEC256K1PrivateKeyStoreException extends RuntimeException {}
+import java.util.Optional;
+
+import io.vertx.ext.auth.User;
+
+@FunctionalInterface
+public interface EnclavePublicKeyProvider {
+  String getEnclaveKey(Optional<User> user);
+}

@@ -51,7 +51,7 @@ public class TransactionLogsIndexer {
   private final Blockchain blockchain;
   private final Path cacheDir;
 
-  private IndexingStatus indexingStatus = new IndexingStatus();
+  private final IndexingStatus indexingStatus = new IndexingStatus();
 
   public TransactionLogsIndexer(
       final Blockchain blockchain, final Path cacheDir, final EthScheduler scheduler) {

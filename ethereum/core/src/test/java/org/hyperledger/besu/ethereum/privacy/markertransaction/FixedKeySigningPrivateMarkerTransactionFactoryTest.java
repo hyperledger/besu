@@ -68,7 +68,7 @@ public class FixedKeySigningPrivateMarkerTransactionFactoryTest {
     assertThat(transaction.getSender())
         .isEqualTo(Util.publicKeyToAddress(signingKeys.getPublicKey()));
     assertThat(transaction.getTo()).isEqualTo(Optional.of(precompiledAddress));
-    assertThat(transaction.getPayloadBytes())
+    assertThat(transaction.getPayload())
         .isEqualTo(Bytes.wrap(Base64.getDecoder().decode(enclaveKey)));
 
     final Transaction nextTransaction = factory.create("enclaveKey", privTransaction);
