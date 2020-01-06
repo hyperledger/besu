@@ -14,11 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc;
 
-import static com.google.common.base.Charsets.UTF_8;
-import static com.google.common.io.Resources.asCharSource;
 import static com.google.common.io.Resources.getResource;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIOException;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ETH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.NET;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.WEB3;
@@ -46,6 +43,7 @@ import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningC
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 
+import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.file.Path;
@@ -59,14 +57,8 @@ import java.util.Optional;
 import java.util.Set;
 
 import io.vertx.core.Vertx;
-import io.vertx.core.json.Json;
-import io.vertx.core.json.JsonObject;
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
+import io.vertx.core.VertxException;
+import io.vertx.core.file.FileSystemException;
 import org.assertj.core.api.Assertions;
 import org.junit.After;
 import org.junit.Before;
@@ -74,12 +66,11 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-public class JsonRpcHttpServiceTlsTest {
+public class JsonRpcHttpServiceTlsMisconfigurationTest {
   @ClassRule public static final TemporaryFolder folder = new TemporaryFolder();
 
   protected static final Vertx vertx = Vertx.vertx();
 
-  private static final String JSON_HEADER = "application/json; charset=utf-8";
   private static final String CLIENT_VERSION = "TestClientVersion/0.1.0";
   private static final BigInteger CHAIN_ID = BigInteger.valueOf(123);
   private static final Collection<RpcApi> JSON_RPC_APIS = List.of(ETH, NET, WEB3);
@@ -91,12 +82,11 @@ public class JsonRpcHttpServiceTlsTest {
   private static final String KEYSTORE_CLIENT_2_RESOURCE = "JsonRpcHttpService/rpc_client_2.pfx";
   private static final String KNOWN_CLIENTS_RESOURCE = "JsonRpcHttpService/rpc_known_clients.txt";
 
+  private Map<String, JsonRpcMethod> rpcMethods;
   private JsonRpcHttpService service;
-  private String baseUrl;
-  private final JsonRpcTestHelper testHelper = new JsonRpcTestHelper();
 
   @Before
-  public void initServer() throws Exception {
+  public void beforeEach() {
     final P2PNetwork peerDiscoveryMock = mock(P2PNetwork.class);
     final BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
     final Synchronizer synchronizer = mock(Synchronizer.class);
@@ -105,7 +95,7 @@ public class JsonRpcHttpServiceTlsTest {
     supportedCapabilities.add(EthProtocol.ETH62);
     supportedCapabilities.add(EthProtocol.ETH63);
 
-    final Map<String, JsonRpcMethod> rpcMethods =
+    rpcMethods =
         spy(
             new JsonRpcMethodsFactory()
                 .methods(
@@ -129,14 +119,85 @@ public class JsonRpcHttpServiceTlsTest {
                     mock(JsonRpcConfiguration.class),
                     mock(WebSocketConfiguration.class),
                     mock(MetricsConfiguration.class)));
-    service = createJsonRpcHttpService(rpcMethods, createJsonRpcConfig());
-    service.start().join();
-    baseUrl = service.url();
+  }
+
+  @After
+  public void shutdownServer() {
+    Optional.ofNullable(service).ifPresent(s -> service.stop().join());
+  }
+
+  @Test
+  public void exceptionRaisedWhenNonExistentKeystoreFileIsSpecified() throws IOException {
+    service =
+        createJsonRpcHttpService(
+            rpcMethods, createJsonRpcConfig(invalidKeystorePathTlsConfiguration()));
+    assertThatExceptionOfType(VertxException.class)
+        .isThrownBy(
+            () -> {
+              service.start().join();
+              Assertions.fail("service.start should have failed");
+            })
+        .withCauseInstanceOf(FileSystemException.class);
+  }
+
+  @Test
+  public void exceptionRaisedWhenIncorrectKeystorePasswordIsSpecified() throws IOException {
+    service =
+        createJsonRpcHttpService(
+            rpcMethods, createJsonRpcConfig(invalidPasswordTlsConfiguration()));
+    assertThatExceptionOfType(VertxException.class)
+        .isThrownBy(
+            () -> {
+              service.start().join();
+              Assertions.fail("service.start should have failed");
+            })
+        .withCauseInstanceOf(IOException.class)
+        .withMessageContaining("keystore password was incorrect");
+  }
+
+  @Test
+  public void exceptionRaisedWhenInvalidKeystoreFileIsSpecified() throws IOException {
+    service =
+        createJsonRpcHttpService(
+            rpcMethods, createJsonRpcConfig(invalidKeystoreFileTlsConfiguration()));
+    assertThatExceptionOfType(VertxException.class)
+        .isThrownBy(
+            () -> {
+              service.start().join();
+              Assertions.fail("service.start should have failed");
+            })
+        .withCauseInstanceOf(IOException.class)
+        .withMessageContaining("Short read of DER length");
+  }
+
+  private TlsConfiguration invalidKeystoreFileTlsConfiguration() throws IOException {
+    final File tempFile = folder.newFile();
+    return TlsConfiguration.TlsConfigurationBuilder.aTlsConfiguration()
+        .withKeyStorePath(tempFile.toPath())
+        .withKeyStorePassword("invalid_password")
+        .withKnownClientsFile(getKnownClientsFile())
+        .build();
+  }
+
+  private TlsConfiguration invalidKeystorePathTlsConfiguration() {
+    return TlsConfiguration.TlsConfigurationBuilder.aTlsConfiguration()
+        .withKeyStorePath(Path.of("/tmp/invalidkeystore.pfx"))
+        .withKeyStorePassword("invalid_password")
+        .withKnownClientsFile(getKnownClientsFile())
+        .build();
+  }
+
+  private TlsConfiguration invalidPasswordTlsConfiguration() {
+    return TlsConfiguration.TlsConfigurationBuilder.aTlsConfiguration()
+        .withKeyStorePath(getKeyStorePath())
+        .withKeyStorePassword("invalid password")
+        .withKnownClientsFile(getKnownClientsFile())
+        .build();
   }
 
   private JsonRpcHttpService createJsonRpcHttpService(
       final Map<String, JsonRpcMethod> rpcMethods, final JsonRpcConfiguration jsonRpcConfig)
-      throws Exception {
+      throws IOException {
     return new JsonRpcHttpService(
         vertx,
         folder.newFolder().toPath(),
@@ -148,136 +209,20 @@ public class JsonRpcHttpServiceTlsTest {
         HealthService.ALWAYS_HEALTHY);
   }
 
-  private JsonRpcConfiguration createJsonRpcConfig() {
+  private JsonRpcConfiguration createJsonRpcConfig(
+      final TlsConfiguration tlsConfigurationSupplier) {
     final JsonRpcConfiguration config = JsonRpcConfiguration.createDefault();
     config.setPort(0);
     config.setHostsWhitelist(Collections.singletonList("*"));
-    config.setTlsConfiguration(getRpcHttpTlsConfiguration());
+    config.setTlsConfiguration(tlsConfigurationSupplier);
     return config;
-  }
-
-  private TlsConfiguration getRpcHttpTlsConfiguration() {
-    return TlsConfiguration.TlsConfigurationBuilder.aTlsConfiguration()
-        .withKeyStorePath(getKeyStorePath())
-        .withKeyStorePassword(new String(getKeystorePassword(KEYSTORE_PASSWORD_RESOURCE)))
-        .withKnownClientsFile(getKnownClientsFile())
-        .build();
   }
 
   private static Path getKeyStorePath() {
     return Paths.get(getResource(KEYSTORE_RESOURCE).getPath());
   }
 
-  static char[] getKeystorePassword(final String passwordResource) {
-    try {
-      final String password = asCharSource(getResource(passwordResource), UTF_8).readFirstLine();
-      return password == null ? new char[0] : password.toCharArray();
-    } catch (IOException e) {
-      throw new RuntimeException("Unable to read keystore password file", e);
-    }
-  }
-
   private static Path getKnownClientsFile() {
     return Paths.get(getResource(KNOWN_CLIENTS_RESOURCE).getPath());
-  }
-
-  @After
-  public void shutdownServer() {
-    service.stop().join();
-  }
-
-  @Test
-  public void connectionFailsWhenTlsClientAuthIsNotProvided() {
-    final String id = "123";
-    final String json =
-        "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_version\"}";
-
-    final OkHttpClient httpClient = getTlsHttpClientWithoutClientAuthentication();
-    assertThatIOException()
-        .isThrownBy(
-            () -> {
-              try (final Response response = httpClient.newCall(buildPostRequest(json)).execute()) {
-                Assertions.fail("Call should have failed. Got: " + response);
-              } catch (Exception e) {
-                e.printStackTrace();
-                throw e;
-              }
-            });
-  }
-
-  @Test
-  public void connectionFailsWhenClientIsNotWhitelisted() {
-    final String id = "123";
-    final String json =
-        "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_version\"}";
-
-    final OkHttpClient httpClient = getTlsHttpClientNotWhitelisted();
-    assertThatIOException()
-        .isThrownBy(
-            () -> {
-              try (final Response response = httpClient.newCall(buildPostRequest(json)).execute()) {
-                Assertions.fail("Call should have failed. Got: " + response);
-              } catch (Exception e) {
-                e.printStackTrace();
-                throw e;
-              }
-            });
-  }
-
-  @Test
-  public void netVersionSuccessfulOnTls() throws Exception {
-    final String id = "123";
-    final String json =
-        "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_version\"}";
-
-    final OkHttpClient httpClient = getTlsHttpClient();
-    try (final Response response = httpClient.newCall(buildPostRequest(json)).execute()) {
-
-      assertThat(response.code()).isEqualTo(200);
-      // Check general format of result
-      final ResponseBody body = response.body();
-      assertThat(body).isNotNull();
-      final JsonObject jsonObject = new JsonObject(body.string());
-      testHelper.assertValidJsonRpcResult(jsonObject, id);
-      // Check result
-      final String result = jsonObject.getString("result");
-      assertThat(result).isEqualTo(String.valueOf(CHAIN_ID));
-    } catch (Exception e) {
-      e.printStackTrace();
-      throw e;
-    }
-  }
-
-  private OkHttpClient getTlsHttpClient() {
-    return TlsHttpClient.TlsHttpClientBuilder.aTlsHttpClient()
-        .withKeyStoreResource(KEYSTORE_CLIENT_RESOURCE)
-        .withKeyStorePasswordResource(KEYSTORE_PASSWORD_RESOURCE)
-        .withTrustStoreResource(KEYSTORE_RESOURCE)
-        .withTrustStorePasswordResource(KEYSTORE_PASSWORD_RESOURCE)
-        .build()
-        .getHttpClient();
-  }
-
-  private OkHttpClient getTlsHttpClientNotWhitelisted() {
-    return TlsHttpClient.TlsHttpClientBuilder.aTlsHttpClient()
-        .withKeyStoreResource(KEYSTORE_CLIENT_2_RESOURCE)
-        .withKeyStorePasswordResource(KEYSTORE_PASSWORD_RESOURCE)
-        .withTrustStoreResource(KEYSTORE_RESOURCE)
-        .withTrustStorePasswordResource(KEYSTORE_PASSWORD_RESOURCE)
-        .build()
-        .getHttpClient();
-  }
-
-  private OkHttpClient getTlsHttpClientWithoutClientAuthentication() {
-    return TlsHttpClient.TlsHttpClientBuilder.aTlsHttpClient()
-        .withTrustStoreResource(KEYSTORE_RESOURCE)
-        .withTrustStorePasswordResource(KEYSTORE_PASSWORD_RESOURCE)
-        .build()
-        .getHttpClient();
-  }
-
-  private Request buildPostRequest(final String json) {
-    final RequestBody body = RequestBody.create(json, MediaType.parse(JSON_HEADER));
-    return new Request.Builder().post(body).url(baseUrl).build();
   }
 }
