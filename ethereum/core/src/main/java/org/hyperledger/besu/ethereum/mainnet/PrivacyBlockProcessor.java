@@ -25,8 +25,8 @@ import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import java.util.List;
 
 public class PrivacyBlockProcessor extends AbstractBlockProcessor {
-  private AbstractBlockProcessor blockProcessor;
-  private PrivacyParameters privacyParameters;
+  private final AbstractBlockProcessor blockProcessor;
+  private final PrivacyParameters privacyParameters;
 
   public PrivacyBlockProcessor(
       final AbstractBlockProcessor blockProcessor, final PrivacyParameters privacyParameters) {
