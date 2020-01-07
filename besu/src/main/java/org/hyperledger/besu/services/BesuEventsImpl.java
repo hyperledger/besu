@@ -38,7 +38,7 @@ import java.util.function.Supplier;
 import org.apache.tuweni.bytes.Bytes;
 
 public class BesuEventsImpl implements BesuEvents {
-  private Blockchain blockchain;
+  private final Blockchain blockchain;
   private final BlockBroadcaster blockBroadcaster;
   private final TransactionPool transactionPool;
   private final SyncState syncState;

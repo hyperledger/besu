@@ -31,7 +31,7 @@ public class IbftProcessor implements Runnable {
   private final IbftEventQueue incomingQueue;
   private volatile boolean shutdown = false;
   private final EventMultiplexer eventMultiplexer;
-  private CountDownLatch shutdownLatch = new CountDownLatch(1);
+  private final CountDownLatch shutdownLatch = new CountDownLatch(1);
 
   /**
    * Construct a new IbftProcessor

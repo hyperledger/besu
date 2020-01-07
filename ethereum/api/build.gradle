@@ -28,45 +28,45 @@ jar {
 }
 
 dependencies {
+  implementation project(':config')
+  implementation project(':crypto')
+  implementation project(':enclave')
   implementation project(':ethereum:blockcreation')
   implementation project(':ethereum:core')
   implementation project(':ethereum:eth')
   implementation project(':ethereum:p2p')
-  implementation project(':ethereum:rlp')
   implementation project(':ethereum:permissioning')
+  implementation project(':ethereum:rlp')
   implementation project(':metrics:core')
   implementation project(':nat')
   implementation project(':plugin-api')
-  implementation project(':enclave')
   implementation project(':util')
-  implementation project(':config')
-  implementation project(':crypto')
 
-  implementation 'org.springframework.security:spring-security-crypto'
+  implementation 'com.google.guava:guava'
+  implementation 'com.graphql-java:graphql-java'
+  implementation 'io.vertx:vertx-auth-jwt'
+  implementation 'io.vertx:vertx-core'
+  implementation 'io.vertx:vertx-unit'
+  implementation 'io.vertx:vertx-web'
   implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.apache.tuweni:tuweni-toml'
   implementation 'org.apache.tuweni:tuweni-units'
-  implementation 'com.graphql-java:graphql-java'
-  implementation 'com.google.guava:guava'
-  implementation 'io.vertx:vertx-core'
-  implementation 'io.vertx:vertx-web'
-  implementation 'io.vertx:vertx-auth-jwt'
-  implementation 'io.vertx:vertx-unit'
   implementation 'org.bouncycastle:bcprov-jdk15on'
+  implementation 'org.springframework.security:spring-security-crypto'
 
-  testImplementation 'com.squareup.okhttp3:okhttp'
-  testImplementation 'junit:junit'
-  testImplementation 'org.assertj:assertj-core'
-  testImplementation 'org.mockito:mockito-core'
-  testImplementation 'io.vertx:vertx-codegen'
-  testImplementation 'io.vertx:vertx-unit'
-
-  testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
-  testImplementation project(':testutil')
   testImplementation project(':config')
   testImplementation project(path: ':config', configuration: 'testSupportArtifacts')
   testImplementation project(path: ':ethereum:core', configuration: 'testArtifacts')
+  testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
   testImplementation project(':services:kvstore')
+  testImplementation project(':testutil')
+
+  testImplementation 'com.squareup.okhttp3:okhttp'
+  testImplementation 'io.vertx:vertx-codegen'
+  testImplementation 'io.vertx:vertx-unit'
+  testImplementation 'junit:junit'
+  testImplementation 'org.assertj:assertj-core'
+  testImplementation 'org.mockito:mockito-core'
 
   integrationTestImplementation project(':config')
   integrationTestImplementation project(path: ':config', configuration: 'testSupportArtifacts')

@@ -29,7 +29,7 @@ import org.apache.logging.log4j.Logger;
 
 public class MultiTenancyRpcMethodDecorator implements JsonRpcMethod {
   private static final Logger LOG = getLogger();
-  private JsonRpcMethod rpcMethod;
+  private final JsonRpcMethod rpcMethod;
 
   public MultiTenancyRpcMethodDecorator(final JsonRpcMethod rpcMethod) {
     this.rpcMethod = rpcMethod;

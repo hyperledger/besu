@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcEnclaveErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -54,16 +55,19 @@ public class PrivGetTransactionReceipt implements JsonRpcMethod {
   private static final Logger LOG = getLogger();
 
   private final BlockchainQueries blockchain;
-  private PrivacyParameters privacyParameters;
-  private PrivacyController privacyController;
+  private final PrivacyParameters privacyParameters;
+  private final PrivacyController privacyController;
+  private final EnclavePublicKeyProvider enclavePublicKeyProvider;
 
   public PrivGetTransactionReceipt(
       final BlockchainQueries blockchain,
       final PrivacyParameters privacyParameters,
-      final PrivacyController privacyController) {
+      final PrivacyController privacyController,
+      final EnclavePublicKeyProvider enclavePublicKeyProvider) {
     this.blockchain = blockchain;
     this.privacyParameters = privacyParameters;
     this.privacyController = privacyController;
+    this.enclavePublicKeyProvider = enclavePublicKeyProvider;
   }
 
   @Override
@@ -92,7 +96,9 @@ public class PrivGetTransactionReceipt implements JsonRpcMethod {
     final String privacyGroupId;
     try {
       final ReceiveResponse receiveResponse =
-          privacyController.retrieveTransaction(transaction.getPayload().toBase64String());
+          privacyController.retrieveTransaction(
+              transaction.getPayload().toBase64String(),
+              enclavePublicKeyProvider.getEnclaveKey(requestContext.getUser()));
       LOG.trace("Received transaction information");
 
       final BytesValueRLPInput input =

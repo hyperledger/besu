@@ -39,7 +39,7 @@ public class MessageValidator {
   private final ProposalBlockConsistencyValidator proposalConsistencyValidator;
   private final BlockValidator<IbftContext> blockValidator;
   private final ProtocolContext<IbftContext> protocolContext;
-  private RoundChangeCertificateValidator roundChangeCertificateValidator;
+  private final RoundChangeCertificateValidator roundChangeCertificateValidator;
 
   public MessageValidator(
       final SignedDataValidator signedDataValidator,

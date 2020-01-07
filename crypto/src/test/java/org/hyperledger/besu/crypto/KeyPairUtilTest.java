@@ -14,4 +14,25 @@
  */
 package org.hyperledger.besu.crypto;
 
-public class InvalidSEC256K1PrivateKeyStoreException extends RuntimeException {}
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.io.File;
+
+import org.junit.Test;
+
+public class KeyPairUtilTest {
+
+  @Test
+  public void shouldLoadValidKeyPair() throws Exception {
+    assertThat(
+            KeyPairUtil.loadKeyPair(
+                new File(this.getClass().getResource("/validPrivateKey.txt").toURI())))
+        .isNotNull();
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void shouldNotLoadInvalidKeyPair() throws Exception {
+    KeyPairUtil.loadKeyPair(
+        new File(this.getClass().getResource("/invalidPrivateKey.txt").toURI()));
+  }
+}

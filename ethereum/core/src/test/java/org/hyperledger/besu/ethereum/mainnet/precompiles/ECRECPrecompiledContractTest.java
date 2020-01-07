@@ -36,7 +36,7 @@ public class ECRECPrecompiledContractTest {
 
   public ECRECPrecompiledContractTest() {}
 
-  private MessageFrame messageFrame = mock(MessageFrame.class);
+  private final MessageFrame messageFrame = mock(MessageFrame.class);
 
   @Parameters
   public static Object[][] parameters() {

@@ -19,7 +19,9 @@ import static org.apache.logging.log4j.LogManager.getLogger;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
@@ -29,10 +31,14 @@ import org.apache.logging.log4j.Logger;
 public class PrivDeletePrivacyGroup implements JsonRpcMethod {
 
   private static final Logger LOG = getLogger();
-  private PrivacyController privacyController;
+  private final PrivacyController privacyController;
+  private final EnclavePublicKeyProvider enclavePublicKeyProvider;
 
-  public PrivDeletePrivacyGroup(final PrivacyController privacyController) {
+  public PrivDeletePrivacyGroup(
+      final PrivacyController privacyController,
+      final EnclavePublicKeyProvider enclavePublicKeyProvider) {
     this.privacyController = privacyController;
+    this.enclavePublicKeyProvider = enclavePublicKeyProvider;
   }
 
   @Override
@@ -48,10 +54,12 @@ public class PrivDeletePrivacyGroup implements JsonRpcMethod {
 
     final String response;
     try {
-      response = privacyController.deletePrivacyGroup(privacyGroupId);
+      response =
+          privacyController.deletePrivacyGroup(
+              privacyGroupId, enclavePublicKeyProvider.getEnclaveKey(requestContext.getUser()));
     } catch (Exception e) {
       LOG.error("Failed to fetch transaction", e);
-      return new JsonRpcSuccessResponse(
+      return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(), JsonRpcError.DELETE_PRIVACY_GROUP_ERROR);
     }
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), response);

@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -28,9 +29,13 @@ import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 public class PrivGetTransactionCount implements JsonRpcMethod {
 
   private final PrivacyController privacyController;
+  private final EnclavePublicKeyProvider enclavePublicKeyProvider;
 
-  public PrivGetTransactionCount(final PrivacyController privacyController) {
+  public PrivGetTransactionCount(
+      final PrivacyController privacyController,
+      final EnclavePublicKeyProvider enclavePublicKeyProvider) {
     this.privacyController = privacyController;
+    this.enclavePublicKeyProvider = enclavePublicKeyProvider;
   }
 
   @Override
@@ -48,7 +53,11 @@ public class PrivGetTransactionCount implements JsonRpcMethod {
     final Address address = requestContext.getRequiredParameter(0, Address.class);
     final String privacyGroupId = requestContext.getRequiredParameter(1, String.class);
 
-    final long nonce = privacyController.determineNonce(address, privacyGroupId);
+    final long nonce =
+        privacyController.determineNonce(
+            address,
+            privacyGroupId,
+            enclavePublicKeyProvider.getEnclaveKey(requestContext.getUser()));
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), Quantity.create(nonce));
   }
 }

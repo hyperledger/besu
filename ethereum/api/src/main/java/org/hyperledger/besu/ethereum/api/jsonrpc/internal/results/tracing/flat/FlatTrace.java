@@ -21,11 +21,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class FlatTrace implements Trace {
-  private Action action;
-  private Result result;
-  private int subtraces;
-  private List<Integer> traceAddress;
-  private String type;
+  private final Action action;
+  private final Result result;
+  private final int subtraces;
+  private final List<Integer> traceAddress;
+  private final String type;
 
   private FlatTrace(
       final Action.Builder actionBuilder,
@@ -86,7 +86,7 @@ public class FlatTrace implements Trace {
 
   public static class Context {
 
-    private Builder builder;
+    private final Builder builder;
     private boolean returned;
     private boolean isSubtrace = false;
 

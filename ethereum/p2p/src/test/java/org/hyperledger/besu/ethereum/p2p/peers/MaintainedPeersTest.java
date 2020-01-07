@@ -26,7 +26,7 @@ import org.junit.Test;
 
 public class MaintainedPeersTest {
 
-  private MaintainedPeers maintainedPeers = new MaintainedPeers();
+  private final MaintainedPeers maintainedPeers = new MaintainedPeers();
 
   @Test
   public void add_newPeer() {
