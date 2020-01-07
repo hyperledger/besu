@@ -194,6 +194,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
                 node.getStaticNodes().stream()
                     .map(EnodeURL::fromString)
                     .collect(Collectors.toList()))
+            .besuPluginContext(new BesuPluginContextImpl())
             .build();
 
     runner.start();
