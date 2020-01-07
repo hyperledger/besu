@@ -39,6 +39,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 /*
  * Used to process transactions for priv_call.
@@ -123,8 +124,9 @@ public class PrivateTransactionSimulator {
     final Hash lastRootHash =
         privacyParameters
             .getPrivateStateStorage()
-            .getLatestStateRoot(privacyGroupId)
-            .orElse(EMPTY_ROOT_HASH);
+            .getPrivacyGroupHeadBlockMap(header.getHash())
+            .map(map -> map.get(Bytes32.wrap(privacyGroupId)))
+            .orElse(Hash.EMPTY_TRIE_HASH);
 
     final MutableWorldState disposablePrivateState =
         privacyParameters.getPrivateWorldStateArchive().getMutable(lastRootHash).get();
