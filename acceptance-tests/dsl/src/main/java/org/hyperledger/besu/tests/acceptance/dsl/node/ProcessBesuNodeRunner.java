@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.node;
 
+import static com.google.common.base.Preconditions.checkState;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import org.hyperledger.besu.cli.options.NetworkingOptions;
