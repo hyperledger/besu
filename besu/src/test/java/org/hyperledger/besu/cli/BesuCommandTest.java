@@ -2727,8 +2727,7 @@ public class BesuCommandTest extends CommandTestAbstract {
         ENCLAVE_PUBLIC_KEY_PATH);
 
     assertThat(commandErrorOutput.toString())
-        .startsWith(
-            "Privacy multi-tenancy and privacy public key cannot be used together");
+        .startsWith("Privacy multi-tenancy and privacy public key cannot be used together");
   }
 
   private Path createFakeGenesisFile(final JsonObject jsonGenesis) throws IOException {
