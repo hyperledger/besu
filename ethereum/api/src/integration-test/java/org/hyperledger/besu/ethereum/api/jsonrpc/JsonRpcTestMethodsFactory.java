@@ -47,7 +47,9 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -98,6 +100,11 @@ public class JsonRpcTestMethodsFactory {
     final WebSocketConfiguration webSocketConfiguration = mock(WebSocketConfiguration.class);
     final MetricsConfiguration metricsConfiguration = mock(MetricsConfiguration.class);
 
+    final List<RpcApi> apis = new ArrayList<>();
+    apis.add(RpcApis.ETH);
+    apis.add(RpcApis.NET);
+    apis.add(RpcApis.WEB3);
+    apis.add(RpcApis.PRIV);
     return new JsonRpcMethodsFactory()
         .methods(
             CLIENT_VERSION,
@@ -114,7 +121,7 @@ public class JsonRpcTestMethodsFactory {
             new HashSet<>(),
             accountWhitelistController,
             nodeWhitelistController,
-            RpcApis.DEFAULT_JSON_RPC_APIS,
+            apis,
             privacyParameters,
             jsonRpcConfiguration,
             webSocketConfiguration,

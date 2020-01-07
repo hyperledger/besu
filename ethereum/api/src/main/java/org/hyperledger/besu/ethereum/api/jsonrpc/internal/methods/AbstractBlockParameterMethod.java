@@ -27,7 +27,7 @@ import com.google.common.base.Suppliers;
 
 public abstract class AbstractBlockParameterMethod implements JsonRpcMethod {
 
-  private final Supplier<BlockchainQueries> blockchainQueries;
+  protected final Supplier<BlockchainQueries> blockchainQueries;
 
   protected AbstractBlockParameterMethod(final BlockchainQueries blockchainQueries) {
     this(Suppliers.ofInstance(blockchainQueries));
