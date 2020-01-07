@@ -16,6 +16,7 @@
 package org.hyperledger.besu.ethereum.api.tls;
 
 import java.nio.file.Path;
+import java.util.Objects;
 import java.util.Optional;
 
 import io.vertx.core.net.PfxOptions;
@@ -26,11 +27,13 @@ public class TlsConfiguration {
   private final Path keyStorePath;
   private final String keyStorePassword;
   private final Path knownClientsFile;
-  private Optional<TrustOptions> trustOptions;
+  private TrustOptions trustOptions;
   private PfxOptions pfxKeyCertOptions;
 
   private TlsConfiguration(
       final Path keyStorePath, final String keyStorePassword, final Path knownClientsFile) {
+    Objects.requireNonNull(keyStorePath, "Key Store Path must not be null");
+    Objects.requireNonNull(keyStorePassword, "Key Store password must not be null");
     this.keyStorePath = keyStorePath;
     this.keyStorePassword = keyStorePassword;
     this.knownClientsFile = knownClientsFile;
@@ -39,8 +42,14 @@ public class TlsConfiguration {
   private void init() {
     this.pfxKeyCertOptions =
         new PfxOptions().setPath(keyStorePath.toString()).setPassword(keyStorePassword);
-    this.trustOptions =
-        Optional.ofNullable(knownClientsFile).map(VertxTrustOptions::whitelistClients);
+    try {
+      this.trustOptions =
+          Optional.ofNullable(knownClientsFile)
+              .map(VertxTrustOptions::whitelistClients)
+              .orElse(null);
+    } catch (RuntimeException exception) {
+      throw new TlsConfigurationException(exception.getMessage());
+    }
   }
 
   public PfxOptions getPfxKeyCertOptions() {
@@ -48,7 +57,7 @@ public class TlsConfiguration {
   }
 
   public Optional<TrustOptions> getTrustOptions() {
-    return trustOptions;
+    return Optional.ofNullable(trustOptions);
   }
 
   public static final class TlsConfigurationBuilder {

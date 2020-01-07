@@ -177,7 +177,7 @@ public class JsonRpcHttpServiceTlsTest {
     }
   }
 
-  private static Path getKnownClientsFile() {
+  public static Path getKnownClientsFile() {
     return Paths.get(getResource(KNOWN_CLIENTS_RESOURCE).getPath());
   }
 
