@@ -126,7 +126,7 @@ public class PrivateTransactionSimulator {
             .getPrivateStateStorage()
             .getPrivacyGroupHeadBlockMap(header.getHash())
             .map(map -> map.get(Bytes32.wrap(privacyGroupId)))
-            .orElse(Hash.EMPTY_TRIE_HASH);
+            .orElse(EMPTY_ROOT_HASH);
 
     final MutableWorldState disposablePrivateState =
         privacyParameters.getPrivateWorldStateArchive().getMutable(lastRootHash).get();
