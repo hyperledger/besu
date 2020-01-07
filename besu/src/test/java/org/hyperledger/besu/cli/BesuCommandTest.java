@@ -2691,9 +2691,7 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--rpc-http-authentication-enabled",
         "--privacy-multi-tenancy-enabled",
         "--rpc-http-authentication-jwt-public-key-file",
-        "/non/existent/file",
-        "--privacy-public-key-file",
-        ENCLAVE_PUBLIC_KEY_PATH);
+        "/non/existent/file");
 
     final ArgumentCaptor<PrivacyParameters> privacyParametersArgumentCaptor =
         ArgumentCaptor.forClass(PrivacyParameters.class);
@@ -2710,13 +2708,27 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--privacy-enabled",
         "--privacy-multi-tenancy-enabled",
         "--rpc-http-authentication-jwt-public-key-file",
+        "/non/existent/file");
+
+    assertThat(commandErrorOutput.toString())
+        .startsWith(
+            "Privacy multi-tenancy requires either http authentication to be enabled or WebSocket authentication to be enabled");
+  }
+
+  @Test
+  public void privacyMultiTenancyWithPrivacyPublicKeyFileFails() {
+    parseCommand(
+        "--privacy-enabled",
+        "--rpc-http-authentication-enabled",
+        "--privacy-multi-tenancy-enabled",
+        "--rpc-http-authentication-jwt-public-key-file",
         "/non/existent/file",
         "--privacy-public-key-file",
         ENCLAVE_PUBLIC_KEY_PATH);
 
     assertThat(commandErrorOutput.toString())
         .startsWith(
-            "Privacy multi-tenancy requires either http authentication to be enabled or WebSocket authentication to be enabled");
+            "Privacy multi-tenancy and privacy public key cannot be used together");
   }
 
   private Path createFakeGenesisFile(final JsonObject jsonGenesis) throws IOException {
