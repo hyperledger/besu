@@ -24,8 +24,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.AdminNodeInfo;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.AdminPeers;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.AdminRemovePeer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.PluginsReloadConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
+import org.hyperledger.besu.plugin.BesuPlugin;
 
 import java.math.BigInteger;
 import java.util.Map;
@@ -37,18 +39,21 @@ public class AdminJsonRpcMethods extends ApiGroupJsonRpcMethods {
   private final GenesisConfigOptions genesisConfigOptions;
   private final P2PNetwork p2pNetwork;
   private final BlockchainQueries blockchainQueries;
+  private final Map<String, BesuPlugin> namedPlugins;
 
   public AdminJsonRpcMethods(
       final String clientVersion,
       final BigInteger networkId,
       final GenesisConfigOptions genesisConfigOptions,
       final P2PNetwork p2pNetwork,
-      final BlockchainQueries blockchainQueries) {
+      final BlockchainQueries blockchainQueries,
+      final Map<String, BesuPlugin> namedPlugins) {
     this.clientVersion = clientVersion;
     this.networkId = networkId;
     this.genesisConfigOptions = genesisConfigOptions;
     this.p2pNetwork = p2pNetwork;
     this.blockchainQueries = blockchainQueries;
+    this.namedPlugins = namedPlugins;
   }
 
   @Override
@@ -65,6 +70,7 @@ public class AdminJsonRpcMethods extends ApiGroupJsonRpcMethods {
             clientVersion, networkId, genesisConfigOptions, p2pNetwork, blockchainQueries),
         new AdminPeers(p2pNetwork),
         new AdminChangeLogLevel(),
-        new AdminGenerateLogBloomCache(blockchainQueries));
+        new AdminGenerateLogBloomCache(blockchainQueries),
+        new PluginsReloadConfiguration(namedPlugins));
   }
 }
