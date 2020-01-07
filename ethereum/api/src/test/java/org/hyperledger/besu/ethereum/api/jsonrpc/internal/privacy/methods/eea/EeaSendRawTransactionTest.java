@@ -314,8 +314,7 @@ public class EeaSendRawTransactionTest {
   }
 
   @Test
-  public void
-      invalidTransactionFailingWithMultiTenancyValidationErrorReturnsUnauthorizedRpcError() {
+  public void invalidTransactionFailingWithMultiTenancyValidationErrorReturnsUnauthorizedError() {
     when(privacyController.sendTransaction(any(PrivateTransaction.class), any()))
         .thenThrow(new MultiTenancyValidationException("validation failed"));
 

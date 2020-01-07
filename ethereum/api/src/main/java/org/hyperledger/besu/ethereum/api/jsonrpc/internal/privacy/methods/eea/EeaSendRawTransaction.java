@@ -77,7 +77,7 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
           privacyController.sendTransaction(
               privateTransaction, enclavePublicKeyProvider.getEnclaveKey(requestContext.getUser()));
     } catch (final MultiTenancyValidationException e) {
-      LOG.error("Unauthorized multi-tenancy request. {}", e.getMessage());
+      LOG.error("Unauthorized privacy multi-tenancy rpc request. {}", e.getMessage());
       return new JsonRpcUnauthorizedResponse(requestContext.getRequest().getId(), UNAUTHORIZED);
     } catch (final Exception e) {
       return new JsonRpcErrorResponse(
