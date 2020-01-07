@@ -30,7 +30,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
-import org.hyperledger.besu.ethereum.core.LogSeries;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -54,6 +53,7 @@ import org.hyperledger.besu.testutil.TestClock;
 
 import java.math.BigInteger;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -172,7 +172,7 @@ public class BlockTransactionSelectorTest {
             any(), any(), any(), any(), any(), any(), anyBoolean(), any()))
         .thenReturn(
             MainnetTransactionProcessor.Result.successful(
-                new LogSeries(Lists.newArrayList()), 0, Bytes.EMPTY, ValidationResult.valid()));
+                new ArrayList<>(), 0, Bytes.EMPTY, ValidationResult.valid()));
     when(transactionProcessor.processTransaction(
             any(),
             any(),
@@ -227,7 +227,7 @@ public class BlockTransactionSelectorTest {
             any(), any(), any(), any(), any(), any(), anyBoolean(), any()))
         .thenReturn(
             MainnetTransactionProcessor.Result.successful(
-                new LogSeries(Lists.newArrayList()), 0, Bytes.EMPTY, ValidationResult.valid()));
+                new ArrayList<>(), 0, Bytes.EMPTY, ValidationResult.valid()));
 
     final ProcessableBlockHeader blockHeader = createBlockWithGasLimit(301);
 
@@ -295,7 +295,7 @@ public class BlockTransactionSelectorTest {
             any(), any(), any(), any(), any(), any(), anyBoolean(), any()))
         .thenReturn(
             MainnetTransactionProcessor.Result.successful(
-                new LogSeries(Lists.newArrayList()), 0, Bytes.EMPTY, ValidationResult.valid()));
+                new ArrayList<>(), 0, Bytes.EMPTY, ValidationResult.valid()));
 
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
     final BlockTransactionSelector selector =
@@ -349,7 +349,7 @@ public class BlockTransactionSelectorTest {
             any(), any(), any(), any(), any(), any(), anyBoolean(), any()))
         .thenReturn(
             MainnetTransactionProcessor.Result.successful(
-                new LogSeries(Lists.newArrayList()), 0, Bytes.EMPTY, ValidationResult.valid()));
+                new ArrayList<>(), 0, Bytes.EMPTY, ValidationResult.valid()));
 
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
     final BlockTransactionSelector selector =
@@ -442,7 +442,7 @@ public class BlockTransactionSelectorTest {
             any()))
         .thenReturn(
             MainnetTransactionProcessor.Result.successful(
-                LogSeries.empty(), 10000, Bytes.EMPTY, ValidationResult.valid()));
+                new ArrayList<>(), 10000, Bytes.EMPTY, ValidationResult.valid()));
     when(transactionProcessor.processTransaction(
             eq(blockchain),
             any(WorldUpdater.class),
