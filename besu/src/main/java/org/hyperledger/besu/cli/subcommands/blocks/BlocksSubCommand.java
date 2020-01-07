@@ -253,7 +253,7 @@ public class BlocksSubCommand implements Runnable {
         paramLabel = DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP,
         description = "File to write the block list to.",
         arity = "1..1")
-    private File blocksExportFile = null;
+    private final File blocksExportFile = null;
 
     @SuppressWarnings("unused")
     @Spec

@@ -37,7 +37,7 @@ class FileStateChecker extends DefaultTask {
   def CheckState() {
     def digestor = MessageDigest.getInstance("SHA-256")
 
-    this.files.sort().each {
+    this.files.toSorted(Comparator.comparing({it.canonicalPath})).each {
       digestor.update(it.readBytes())
     }
     def currentHash = digestor.digest().encodeBase64().toString()

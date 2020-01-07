@@ -49,7 +49,7 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
   private static final String NAME = "rocksdb";
   private final RocksDBMetricsFactory rocksDBMetricsFactory;
 
-  private int defaultVersion;
+  private final int defaultVersion;
   private Integer databaseVersion;
   private Boolean isSegmentIsolationSupported;
   private SegmentedKeyValueStorage<?> segmentedStorage;

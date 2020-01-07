@@ -26,7 +26,7 @@ import org.web3j.protocol.besu.response.privacy.PrivacyGroup;
 import org.web3j.utils.Base64String;
 
 public class FindPrivacyGroupTransaction implements Transaction<List<PrivacyGroup>> {
-  private List<Base64String> nodes;
+  private final List<Base64String> nodes;
 
   public FindPrivacyGroupTransaction(final List<String> nodeEnclaveKeys) {
 

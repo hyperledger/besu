@@ -27,7 +27,7 @@ public class BlockAddedEvent {
   private final List<Transaction> addedTransactions;
   private final List<Transaction> removedTransactions;
   private final EventType eventType;
-  private List<LogWithMetadata> logsWithMetadata;
+  private final List<LogWithMetadata> logsWithMetadata;
 
   public enum EventType {
     HEAD_ADVANCED,

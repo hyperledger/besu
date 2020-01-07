@@ -341,7 +341,7 @@ public class RespondingEthPeer {
     private Hash chainHeadHash = gen.hash();
     private Difficulty totalDifficulty = Difficulty.of(1000L);
     private OptionalLong estimatedHeight = OptionalLong.of(1000L);
-    private List<PeerValidator> peerValidators = new ArrayList<>();
+    private final List<PeerValidator> peerValidators = new ArrayList<>();
 
     public RespondingEthPeer build() {
       checkNotNull(ethProtocolManager, "Must configure EthProtocolManager");
