@@ -282,7 +282,7 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
 
   private boolean isNotAliveOrphan(final String name) {
     final Process orphan = besuProcesses.get(name);
-    return orphan != null && orphan.isAlive();
+    return orphan == null || !orphan.isAlive();
   }
 
   private void printOutput(final BesuNode node, final Process process) {
