@@ -94,12 +94,10 @@ public final class BodyValidation {
    * @return the logs bloom filter
    */
   public static LogsBloomFilter logsBloom(final List<TransactionReceipt> receipts) {
-    final LogsBloomFilter logsBloom = new LogsBloomFilter();
+    LogsBloomFilter.Builder filterBuilder = LogsBloomFilter.builder();
 
-    for (final TransactionReceipt receipt : receipts) {
-      logsBloom.digest(receipt.getBloomFilter());
-    }
+    receipts.forEach(receipt -> filterBuilder.insertFilter(receipt.getBloomFilter()));
 
-    return logsBloom;
+    return filterBuilder.build();
   }
 }
