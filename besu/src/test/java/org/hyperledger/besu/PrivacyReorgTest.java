@@ -95,6 +95,11 @@ public class PrivacyReorgTest {
   private static final Bytes ENCLAVE_PUBLIC_KEY =
       Bytes.fromBase64String("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=");
 
+  private static final Hash BLOCK_WITH_SINGLE_TRANSACTION_RECEIPTS_ROOT =
+      Hash.fromHexString("0xc8267b3f9ed36df3ff8adb51a6d030716f23eeb50270e7fce8d9822ffa7f0461");
+  private static final String STATE_ROOT_AFTER_TRANSACTION_APPENDED_TO_EMTPY_STATE =
+      "0x2121b68f1333e93bae8cd717a3ca68c9d7e7003f6b288c36dfc59b0f87be9590";
+
   // EventEmitter contract binary
   private static final Bytes MOCK_PAYLOAD =
       Bytes.fromHexString(
@@ -177,9 +182,7 @@ public class PrivacyReorgTest {
                 .setParentHash(blockchain.getGenesisBlock().getHash())
                 .addTransaction(generateMarker(getEnclaveKey(enclave.clientUrl())))
                 .hasOmmers(false)
-                .setReceiptsRoot(
-                    Hash.fromHexString(
-                        "0xc8267b3f9ed36df3ff8adb51a6d030716f23eeb50270e7fce8d9822ffa7f0461"))
+                .setReceiptsRoot(BLOCK_WITH_SINGLE_TRANSACTION_RECEIPTS_ROOT)
                 .setGasUsed(23176)
                 .setLogsBloom(LogsBloomFilter.empty())
                 .setStateRoot(
@@ -237,9 +240,7 @@ public class PrivacyReorgTest {
                 .setParentHash(blockchain.getGenesisBlock().getHash())
                 .addTransaction(generateMarker(getEnclaveKey(enclave.clientUrl())))
                 .hasOmmers(false)
-                .setReceiptsRoot(
-                    Hash.fromHexString(
-                        "0xc8267b3f9ed36df3ff8adb51a6d030716f23eeb50270e7fce8d9822ffa7f0461"))
+                .setReceiptsRoot(BLOCK_WITH_SINGLE_TRANSACTION_RECEIPTS_ROOT)
                 .setGasUsed(23176)
                 .setLogsBloom(LogsBloomFilter.empty())
                 .setStateRoot(
@@ -250,9 +251,7 @@ public class PrivacyReorgTest {
 
     // Check that the private state root is not the empty state
     assertPrivateStateRoot(
-        privateStateRootResolver,
-        blockchain,
-        "0x2121b68f1333e93bae8cd717a3ca68c9d7e7003f6b288c36dfc59b0f87be9590");
+        privateStateRootResolver, blockchain, STATE_ROOT_AFTER_TRANSACTION_APPENDED_TO_EMTPY_STATE);
 
     // Create parallel fork of length 1 which removes privacy marker transaction
     final BlockDataGenerator.BlockOptions options =
@@ -303,9 +302,7 @@ public class PrivacyReorgTest {
                 .setParentHash(firstBlock.getHeader().getHash())
                 .addTransaction(generateMarker(getEnclaveKey(enclave.clientUrl())))
                 .hasOmmers(false)
-                .setReceiptsRoot(
-                    Hash.fromHexString(
-                        "0xc8267b3f9ed36df3ff8adb51a6d030716f23eeb50270e7fce8d9822ffa7f0461"))
+                .setReceiptsRoot(BLOCK_WITH_SINGLE_TRANSACTION_RECEIPTS_ROOT)
                 .setGasUsed(23176)
                 .setLogsBloom(LogsBloomFilter.empty())
                 .setStateRoot(
@@ -319,9 +316,7 @@ public class PrivacyReorgTest {
 
     // Check that the private state root is not the empty state
     assertPrivateStateRoot(
-        privateStateRootResolver,
-        blockchain,
-        "0x2121b68f1333e93bae8cd717a3ca68c9d7e7003f6b288c36dfc59b0f87be9590");
+        privateStateRootResolver, blockchain, STATE_ROOT_AFTER_TRANSACTION_APPENDED_TO_EMTPY_STATE);
 
     // Create parallel fork of length 1 which removes privacy marker transaction
     final Difficulty remainingDifficultyToOutpace =
@@ -367,9 +362,7 @@ public class PrivacyReorgTest {
                 .setParentHash(blockchain.getGenesisBlock().getHeader().getHash())
                 .addTransaction(generateMarker(getEnclaveKey(enclave.clientUrl())))
                 .hasOmmers(false)
-                .setReceiptsRoot(
-                    Hash.fromHexString(
-                        "0xc8267b3f9ed36df3ff8adb51a6d030716f23eeb50270e7fce8d9822ffa7f0461"))
+                .setReceiptsRoot(BLOCK_WITH_SINGLE_TRANSACTION_RECEIPTS_ROOT)
                 .setGasUsed(23176)
                 .setLogsBloom(LogsBloomFilter.empty())
                 .setStateRoot(
@@ -382,9 +375,7 @@ public class PrivacyReorgTest {
 
     // Check that the private state root is not the empty state
     assertPrivateStateRoot(
-        privateStateRootResolver,
-        blockchain,
-        "0x2121b68f1333e93bae8cd717a3ca68c9d7e7003f6b288c36dfc59b0f87be9590");
+        privateStateRootResolver, blockchain, STATE_ROOT_AFTER_TRANSACTION_APPENDED_TO_EMTPY_STATE);
 
     // Create parallel fork of length 1 which removes privacy marker transaction
     final Block forkBlock =
@@ -404,9 +395,7 @@ public class PrivacyReorgTest {
 
     // Check that the private state root did not change
     assertPrivateStateRoot(
-        privateStateRootResolver,
-        blockchain,
-        "0x2121b68f1333e93bae8cd717a3ca68c9d7e7003f6b288c36dfc59b0f87be9590");
+        privateStateRootResolver, blockchain, STATE_ROOT_AFTER_TRANSACTION_APPENDED_TO_EMTPY_STATE);
 
     final Block secondForkBlock =
         gen.block(
@@ -442,9 +431,7 @@ public class PrivacyReorgTest {
                 .addTransaction(generateMarker(getEnclaveKey(enclave.clientUrl())))
                 .hasOmmers(false)
                 .setDifficulty(firstBlock.getHeader().getDifficulty().plus(10L))
-                .setReceiptsRoot(
-                    Hash.fromHexString(
-                        "0xc8267b3f9ed36df3ff8adb51a6d030716f23eeb50270e7fce8d9822ffa7f0461"))
+                .setReceiptsRoot(BLOCK_WITH_SINGLE_TRANSACTION_RECEIPTS_ROOT)
                 .setGasUsed(23176)
                 .setLogsBloom(LogsBloomFilter.empty())
                 .setStateRoot(
@@ -455,9 +442,7 @@ public class PrivacyReorgTest {
 
     // Check that the private state did change after reorg
     assertPrivateStateRoot(
-        privateStateRootResolver,
-        blockchain,
-        "0x2121b68f1333e93bae8cd717a3ca68c9d7e7003f6b288c36dfc59b0f87be9590");
+        privateStateRootResolver, blockchain, STATE_ROOT_AFTER_TRANSACTION_APPENDED_TO_EMTPY_STATE);
   }
 
   @SuppressWarnings("unchecked")

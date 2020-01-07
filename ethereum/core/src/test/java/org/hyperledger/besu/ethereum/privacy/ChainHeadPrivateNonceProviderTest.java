@@ -38,6 +38,7 @@ import org.junit.Test;
 public class ChainHeadPrivateNonceProviderTest {
   private static final Bytes32 PRIVACY_GROUP_ID =
       Bytes32.wrap(Bytes.fromBase64String("DyAOiF/ynpc+JXa2YAGB0bCitSlOMNm+ShmB/7M6C4w="));
+  private static final Address ADDRESS = Address.fromHexString("55");;
 
   private Account account;
   private WorldState worldState;
@@ -64,42 +65,36 @@ public class ChainHeadPrivateNonceProviderTest {
 
   @Test
   public void determineNonceForPrivacyGroupRequestWhenPrivateStateDoesNotExist() {
-    final Address address = Address.fromHexString("55");
-
     when(privateStateRootResolver.resolveLastStateRoot(any(Bytes32.class), any(Hash.class)))
         .thenReturn(Hash.ZERO);
     when(privateWorldStateArchive.get(any(Hash.class))).thenReturn(Optional.empty());
 
-    final long nonce = privateNonceProvider.getNonce(address, PRIVACY_GROUP_ID);
+    final long nonce = privateNonceProvider.getNonce(ADDRESS, PRIVACY_GROUP_ID);
 
     assertThat(nonce).isEqualTo(Account.DEFAULT_NONCE);
   }
 
   @Test
   public void determineNonceForPrivacyGroupRequestWhenAccountExists() {
-    final Address address = Address.fromHexString("55");
-
     when(account.getNonce()).thenReturn(4L);
     when(worldState.get(any(Address.class))).thenReturn(account);
     when(privateStateRootResolver.resolveLastStateRoot(any(Bytes32.class), any(Hash.class)))
         .thenReturn(Hash.ZERO);
     when(privateWorldStateArchive.get(any(Hash.class))).thenReturn(Optional.of(worldState));
 
-    final long nonce = privateNonceProvider.getNonce(address, PRIVACY_GROUP_ID);
+    final long nonce = privateNonceProvider.getNonce(ADDRESS, PRIVACY_GROUP_ID);
 
     assertThat(nonce).isEqualTo(4L);
   }
 
   @Test
   public void determineNonceForPrivacyGroupRequestWhenAccountDoesNotExist() {
-    final Address address = Address.fromHexString("55");
-
     when(privateStateRootResolver.resolveLastStateRoot(any(Bytes32.class), any(Hash.class)))
         .thenReturn(Hash.ZERO);
     when(privateWorldStateArchive.get(any(Hash.class))).thenReturn(Optional.of(worldState));
     when(account.getNonce()).thenReturn(4L);
 
-    final long nonce = privateNonceProvider.getNonce(address, PRIVACY_GROUP_ID);
+    final long nonce = privateNonceProvider.getNonce(ADDRESS, PRIVACY_GROUP_ID);
 
     assertThat(nonce).isEqualTo(Account.DEFAULT_NONCE);
     verifyNoInteractions(account);

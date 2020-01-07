@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -37,10 +38,11 @@ public class PrivacyBlockProcessorTest {
 
   private PrivacyBlockProcessor privacyBlockProcessor;
   private PrivateStateStorage privateStateStorage;
+  private AbstractBlockProcessor blockProcessor;
 
   @Before
   public void setUp() {
-    final AbstractBlockProcessor blockProcessor = mock(AbstractBlockProcessor.class);
+    blockProcessor = mock(AbstractBlockProcessor.class);
     privateStateStorage = new PrivateStateKeyValueStorage(new InMemoryKeyValueStorage());
     this.privacyBlockProcessor = new PrivacyBlockProcessor(blockProcessor, privateStateStorage);
   }
@@ -64,5 +66,12 @@ public class PrivacyBlockProcessorTest {
     privacyBlockProcessor.processBlock(blockchain, mutableWorldState, secondBlock);
     assertThat(privateStateStorage.getPrivacyGroupHeadBlockMap(secondBlock.getHash()))
         .contains(expected);
+    verify(blockProcessor)
+        .processBlock(
+            blockchain,
+            mutableWorldState,
+            firstBlock.getHeader(),
+            firstBlock.getBody().getTransactions(),
+            firstBlock.getBody().getOmmers());
   }
 }
