@@ -19,13 +19,16 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.AdminAddPeer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.AdminChangeLogLevel;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.AdminGenerateLogBloomCache;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.AdminNodeInfo;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.AdminPeers;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.AdminRemovePeer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.PluginsReloadConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.nat.NatService;
+import org.hyperledger.besu.plugin.BesuPlugin;
 
 import java.math.BigInteger;
 import java.util.Map;
@@ -38,6 +41,7 @@ public class AdminJsonRpcMethods extends ApiGroupJsonRpcMethods {
   private final P2PNetwork p2pNetwork;
   private final BlockchainQueries blockchainQueries;
   private final NatService natService;
+  private final Map<String, BesuPlugin> namedPlugins;
 
   public AdminJsonRpcMethods(
       final String clientVersion,
@@ -45,12 +49,14 @@ public class AdminJsonRpcMethods extends ApiGroupJsonRpcMethods {
       final GenesisConfigOptions genesisConfigOptions,
       final P2PNetwork p2pNetwork,
       final BlockchainQueries blockchainQueries,
+      final Map<String, BesuPlugin> namedPlugins,
       final NatService natService) {
     this.clientVersion = clientVersion;
     this.networkId = networkId;
     this.genesisConfigOptions = genesisConfigOptions;
     this.p2pNetwork = p2pNetwork;
     this.blockchainQueries = blockchainQueries;
+    this.namedPlugins = namedPlugins;
     this.natService = natService;
   }
 
@@ -72,6 +78,8 @@ public class AdminJsonRpcMethods extends ApiGroupJsonRpcMethods {
             blockchainQueries,
             natService),
         new AdminPeers(p2pNetwork),
-        new AdminChangeLogLevel());
+        new AdminChangeLogLevel(),
+        new AdminGenerateLogBloomCache(blockchainQueries),
+        new PluginsReloadConfiguration(namedPlugins));
   }
 }

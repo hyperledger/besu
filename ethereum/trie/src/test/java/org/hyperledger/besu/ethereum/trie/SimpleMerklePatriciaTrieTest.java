@@ -14,15 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.trie;
 
-import org.hyperledger.besu.util.bytes.BytesValue;
-
 import java.nio.charset.Charset;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class SimpleMerklePatriciaTrieTest extends AbstractMerklePatriciaTrieTest {
   @Override
-  protected MerklePatriciaTrie<BytesValue, String> createTrie() {
+  protected MerklePatriciaTrie<Bytes, String> createTrie() {
     return new SimpleMerklePatriciaTrie<>(
-        value ->
-            (value != null) ? BytesValue.wrap(value.getBytes(Charset.forName("UTF-8"))) : null);
+        value -> (value != null) ? Bytes.wrap(value.getBytes(Charset.forName("UTF-8"))) : null);
   }
 }

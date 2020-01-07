@@ -20,11 +20,12 @@ import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.EnumSet;
 import java.util.Optional;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class ReturnDataCopyOperation extends AbstractOperation {
 
@@ -34,19 +35,19 @@ public class ReturnDataCopyOperation extends AbstractOperation {
 
   @Override
   public Gas cost(final MessageFrame frame) {
-    final UInt256 offset = frame.getStackItem(0).asUInt256();
-    final UInt256 length = frame.getStackItem(2).asUInt256();
+    final UInt256 offset = UInt256.fromBytes(frame.getStackItem(0));
+    final UInt256 length = UInt256.fromBytes(frame.getStackItem(2));
 
     return gasCalculator().dataCopyOperationGasCost(frame, offset, length);
   }
 
   @Override
   public void execute(final MessageFrame frame) {
-    final BytesValue returnData = frame.getReturnData();
+    final Bytes returnData = frame.getReturnData();
 
-    final UInt256 memOffset = frame.popStackItem().asUInt256();
-    final UInt256 sourceOffset = frame.popStackItem().asUInt256();
-    final UInt256 numBytes = frame.popStackItem().asUInt256();
+    final UInt256 memOffset = UInt256.fromBytes(frame.popStackItem());
+    final UInt256 sourceOffset = UInt256.fromBytes(frame.popStackItem());
+    final UInt256 numBytes = UInt256.fromBytes(frame.popStackItem());
 
     frame.writeMemory(memOffset, sourceOffset, numBytes, returnData);
   }
@@ -56,15 +57,15 @@ public class ReturnDataCopyOperation extends AbstractOperation {
       final MessageFrame frame,
       final EnumSet<ExceptionalHaltReason> previousReasons,
       final EVM evm) {
-    final BytesValue returnData = frame.getReturnData();
+    final Bytes returnData = frame.getReturnData();
 
-    final UInt256 start = frame.getStackItem(1).asUInt256();
-    final UInt256 length = frame.getStackItem(2).asUInt256();
-    final UInt256 returnDataLength = UInt256.of(returnData.size());
+    final UInt256 start = UInt256.fromBytes(frame.getStackItem(1));
+    final UInt256 length = UInt256.fromBytes(frame.getStackItem(2));
+    final UInt256 returnDataLength = UInt256.valueOf(returnData.size());
 
     if (!start.fitsInt()
         || !length.fitsInt()
-        || start.plus(length).compareTo(returnDataLength) > 0) {
+        || start.add(length).compareTo(returnDataLength) > 0) {
       return Optional.of(ExceptionalHaltReason.INVALID_RETURN_DATA_BUFFER_ACCESS);
     } else {
       return Optional.empty();

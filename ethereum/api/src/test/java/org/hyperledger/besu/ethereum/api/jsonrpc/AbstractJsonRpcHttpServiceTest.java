@@ -51,6 +51,7 @@ import java.math.BigInteger;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
@@ -162,7 +163,8 @@ public abstract class AbstractJsonRpcHttpServiceTest {
             config,
             mock(WebSocketConfiguration.class),
             mock(MetricsConfiguration.class),
-            natService);
+            natService,
+            new HashMap<>());
   }
 
   protected void startService() throws Exception {

@@ -21,13 +21,13 @@ import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Collection;
 
 import com.google.common.collect.ImmutableSet;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 public class MainnetMessageCallProcessor extends AbstractMessageProcessor {
   private static final Logger LOG = LogManager.getLogger();
@@ -126,7 +126,7 @@ public class MainnetMessageCallProcessor extends AbstractMessageProcessor {
       frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
     } else {
       frame.decrementRemainingGas(gasRequirement);
-      final BytesValue output = contract.compute(frame.getInputData(), frame);
+      final Bytes output = contract.compute(frame.getInputData(), frame);
       if (output != null) {
         if (contract.getName().equals("Privacy")) {
           // do not decrement the gas requirement for a privacy pre-compile contract call -> leads

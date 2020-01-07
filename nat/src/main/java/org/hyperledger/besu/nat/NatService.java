@@ -35,8 +35,8 @@ public class NatService {
 
   protected static final Logger LOG = LogManager.getLogger();
 
-  private NatMethod currentNatMethod;
-  private Optional<NatManager> currentNatManager;
+  private final NatMethod currentNatMethod;
+  private final Optional<NatManager> currentNatManager;
 
   public NatService(final Optional<NatManager> natManager) {
     this.currentNatMethod = retrieveNatMethod(natManager);

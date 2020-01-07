@@ -16,9 +16,9 @@ package org.hyperledger.besu.ethereum.chain;
 
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.Collection;
 import java.util.List;
@@ -38,7 +38,7 @@ public interface BlockchainStorage {
 
   Optional<Hash> getBlockHash(long blockNumber);
 
-  Optional<UInt256> getTotalDifficulty(Hash blockHash);
+  Optional<Difficulty> getTotalDifficulty(Hash blockHash);
 
   Optional<TransactionLocation> getTransactionLocation(Hash transactionHash);
 
@@ -56,7 +56,7 @@ public interface BlockchainStorage {
 
     void putBlockHash(long blockNumber, Hash blockHash);
 
-    void putTotalDifficulty(Hash blockHash, UInt256 totalDifficulty);
+    void putTotalDifficulty(Hash blockHash, Difficulty totalDifficulty);
 
     void setChainHead(Hash blockHash);
 

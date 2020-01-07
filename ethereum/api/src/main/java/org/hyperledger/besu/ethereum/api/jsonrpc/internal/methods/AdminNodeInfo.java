@@ -29,7 +29,6 @@ import org.hyperledger.besu.nat.NatService;
 import org.hyperledger.besu.nat.core.domain.NatPortMapping;
 import org.hyperledger.besu.nat.core.domain.NatServiceType;
 import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.math.BigInteger;
 import java.net.URI;
@@ -38,6 +37,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import com.google.common.collect.ImmutableMap;
+import org.apache.tuweni.bytes.Bytes;
 
 public class AdminNodeInfo implements JsonRpcMethod {
 
@@ -84,7 +84,9 @@ public class AdminNodeInfo implements JsonRpcMethod {
     }
     final EnodeURL enode = maybeEnode.get();
 
-    final BytesValue nodeId = enode.getNodeId();
+    response.put("enode", enode.toString());
+    response.put("ip", enode.getIpAsString());
+    final Bytes nodeId = enode.getNodeId();
 
     final String ip = getIp(enode);
     final int listeningPort = getListeningPort(enode);
@@ -96,7 +98,7 @@ public class AdminNodeInfo implements JsonRpcMethod {
     if (enode.isListening()) {
       response.put("listenAddr", String.format("%s:%d", ip, listeningPort));
     }
-    response.put("id", nodeId.toUnprefixedString());
+    response.put("id", nodeId.toUnprefixedHexString());
     response.put("name", clientVersion);
 
     if (enode.isRunningDiscovery()) {
@@ -131,7 +133,7 @@ public class AdminNodeInfo implements JsonRpcMethod {
       final EnodeURL enodeURL, final String ip, final int listeningPort, final int discoveryPort) {
     final String uri =
         String.format(
-            "enode://%s@%s:%d", enodeURL.getNodeId().toUnprefixedString(), ip, listeningPort);
+            "enode://%s@%s:%d", enodeURL.getNodeId().toUnprefixedHexString(), ip, listeningPort);
     if (listeningPort != discoveryPort) {
       return URI.create(uri + String.format("?discport=%d", discoveryPort)).toString();
     } else {

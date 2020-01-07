@@ -29,7 +29,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.io.IOException;
 import java.util.List;
@@ -39,6 +38,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 import org.xerial.snappy.Snappy;
 
@@ -58,7 +58,7 @@ public class FramerTest {
 
     final byte[] byteArray = new byte[0xFFFFFF];
     new Random().nextBytes(byteArray);
-    final MessageData ethMessage = new RawMessage(0x00, BytesValue.wrap(byteArray));
+    final MessageData ethMessage = new RawMessage(0x00, Bytes.wrap(byteArray));
 
     final HandshakeSecrets secrets = new HandshakeSecrets(aes, mac, mac);
     final Framer framer = new Framer(secrets);
@@ -83,7 +83,7 @@ public class FramerTest {
 
     final byte[] byteArray = Snappy.compress(new byte[0x1000000]);
 
-    final MessageData ethMessage = new RawMessage(0x00, BytesValue.wrap(byteArray));
+    final MessageData ethMessage = new RawMessage(0x00, Bytes.wrap(byteArray));
     final ByteBuf framedMessage = Unpooled.buffer();
     framer.frameMessage(ethMessage, framedMessage);
 
@@ -221,15 +221,15 @@ public class FramerTest {
   public void shouldThrowFramingExceptionWhenMessageIsNotCompressedButShouldBe() {
     final HandshakeSecrets secrets =
         new HandshakeSecrets(
-            BytesValue.fromHexString(
+            Bytes.fromHexString(
                     "0x75b3ee95adff0c529a05efd7612aa1dbe5057eb9facdde0dfc837ad143da1d43")
-                .extractArray(),
-            BytesValue.fromHexString(
+                .toArray(),
+            Bytes.fromHexString(
                     "0x030dfd1566f4800c4842c177f7d476b64ae2b99a2aa0ab5600aa2f41a8710575")
-                .extractArray(),
-            BytesValue.fromHexString(
+                .toArray(),
+            Bytes.fromHexString(
                     "0xc9d3385b1588a5969cba312f8c29bedb4cb9d56ec0cf825436addc1ec644f1d6")
-                .extractArray());
+                .toArray());
     final Framer receivingFramer = new Framer(secrets);
     final Framer sendingFramer = new Framer(secrets);
 

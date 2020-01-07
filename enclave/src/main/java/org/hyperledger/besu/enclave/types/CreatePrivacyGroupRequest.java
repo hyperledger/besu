@@ -14,19 +14,21 @@
  */
 package org.hyperledger.besu.enclave.types;
 
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class CreatePrivacyGroupRequest {
 
-  private final String[] addresses;
+  private final List<String> addresses;
   private final String from;
   private final String name;
   private final String description;
 
   @JsonCreator
   public CreatePrivacyGroupRequest(
-      @JsonProperty("addresses") final String[] addresses,
+      @JsonProperty("addresses") final List<String> addresses,
       @JsonProperty("from") final String from,
       @JsonProperty("name") final String name,
       @JsonProperty("description") final String description) {
@@ -37,7 +39,7 @@ public class CreatePrivacyGroupRequest {
   }
 
   @JsonProperty("addresses")
-  public String[] addresses() {
+  public List<String> addresses() {
     return addresses;
   }
 

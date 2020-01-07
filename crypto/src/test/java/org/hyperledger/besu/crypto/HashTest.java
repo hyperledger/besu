@@ -17,8 +17,7 @@ package org.hyperledger.besu.crypto;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.util.bytes.BytesValue;
-
+import org.apache.tuweni.bytes.Bytes;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.Test;
 
@@ -38,17 +37,17 @@ public class HashTest {
   /** Validate keccak256 hash. */
   @Test
   public void keccak256Hash() {
-    final BytesValue resultHorse = Hash.keccak256(BytesValue.wrap("horse".getBytes(UTF_8)));
-    assertThat(resultHorse).isEqualTo(BytesValue.fromHexString(horseKeccak256));
+    final Bytes resultHorse = Hash.keccak256(Bytes.wrap("horse".getBytes(UTF_8)));
+    assertThat(resultHorse).isEqualTo(Bytes.fromHexString(horseKeccak256));
 
-    final BytesValue resultCow = Hash.keccak256(BytesValue.wrap("cow".getBytes(UTF_8)));
-    assertThat(resultCow).isEqualTo(BytesValue.fromHexString(cowKeccak256));
+    final Bytes resultCow = Hash.keccak256(Bytes.wrap("cow".getBytes(UTF_8)));
+    assertThat(resultCow).isEqualTo(Bytes.fromHexString(cowKeccak256));
   }
 
   /** Validate blake2f compression digest. */
   @Test
   public void blake2bfCompression() {
-    final BytesValue result = Hash.blake2bf(BytesValue.wrap(Hex.decode(inputBlake2bf)));
-    assertThat(result).isEqualTo(BytesValue.fromHexString(outputBlake2bf));
+    final Bytes result = Hash.blake2bf(Bytes.wrap(Hex.decode(inputBlake2bf)));
+    assertThat(result).isEqualTo(Bytes.fromHexString(outputBlake2bf));
   }
 }

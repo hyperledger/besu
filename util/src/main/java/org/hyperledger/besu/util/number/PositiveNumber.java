@@ -21,7 +21,7 @@ import java.util.Objects;
 
 public class PositiveNumber {
 
-  private int value;
+  private final int value;
 
   private PositiveNumber(final int value) {
     this.value = value;

@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerDiscoveryControl
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.nat.NatService;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayDeque;
@@ -32,9 +31,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
+import org.apache.tuweni.bytes.Bytes;
+
 public class MockPeerDiscoveryAgent extends PeerDiscoveryAgent {
   // The set of known agents operating on the network
-  private final Map<BytesValue, MockPeerDiscoveryAgent> agentNetwork;
+  private final Map<Bytes, MockPeerDiscoveryAgent> agentNetwork;
   private final Deque<IncomingPacket> incomingPackets = new ArrayDeque<>();
   private boolean isRunning = false;
 
@@ -42,7 +43,7 @@ public class MockPeerDiscoveryAgent extends PeerDiscoveryAgent {
       final KeyPair keyPair,
       final DiscoveryConfiguration config,
       final PeerPermissions peerPermissions,
-      final Map<BytesValue, MockPeerDiscoveryAgent> agentNetwork,
+      final Map<Bytes, MockPeerDiscoveryAgent> agentNetwork,
       final NatService natService) {
     super(keyPair, config, peerPermissions, natService, new NoOpMetricsSystem());
     this.agentNetwork = agentNetwork;

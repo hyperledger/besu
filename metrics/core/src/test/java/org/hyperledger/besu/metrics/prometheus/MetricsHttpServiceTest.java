@@ -73,6 +73,7 @@ public class MetricsHttpServiceTest {
   @AfterClass
   public static void shutdownServer() {
     service.stop().join();
+    vertx.close();
   }
 
   @Test

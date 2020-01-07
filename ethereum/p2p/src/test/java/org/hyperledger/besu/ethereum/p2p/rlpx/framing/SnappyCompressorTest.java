@@ -18,10 +18,9 @@ import static io.netty.buffer.ByteBufUtil.decodeHexDump;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import org.hyperledger.besu.util.bytes.BytesValue;
-
 import java.nio.charset.StandardCharsets;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
 public class SnappyCompressorTest {
@@ -72,8 +71,7 @@ public class SnappyCompressorTest {
 
   @Test
   public void shouldRejectMessageWithNonZeroDeclaredLengthButNoCompressedData() {
-    assertThatThrownBy(
-            () -> snappy.decompress(BytesValue.fromHexString("0xFFFFFF01").extractArray()))
+    assertThatThrownBy(() -> snappy.decompress(Bytes.fromHexString("0xFFFFFF01").toArray()))
         .isInstanceOf(FramingException.class);
   }
 

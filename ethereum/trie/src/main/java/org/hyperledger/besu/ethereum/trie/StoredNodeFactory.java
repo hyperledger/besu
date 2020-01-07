@@ -19,8 +19,6 @@ import static java.lang.String.format;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -28,25 +26,28 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+
 class StoredNodeFactory<V> implements NodeFactory<V> {
   @SuppressWarnings("rawtypes")
   private static final NullNode NULL_NODE = NullNode.instance();
 
   private final NodeLoader nodeLoader;
-  private final Function<V, BytesValue> valueSerializer;
-  private final Function<BytesValue, V> valueDeserializer;
+  private final Function<V, Bytes> valueSerializer;
+  private final Function<Bytes, V> valueDeserializer;
 
   StoredNodeFactory(
       final NodeLoader nodeLoader,
-      final Function<V, BytesValue> valueSerializer,
-      final Function<BytesValue, V> valueDeserializer) {
+      final Function<V, Bytes> valueSerializer,
+      final Function<Bytes, V> valueDeserializer) {
     this.nodeLoader = nodeLoader;
     this.valueSerializer = valueSerializer;
     this.valueDeserializer = valueDeserializer;
   }
 
   @Override
-  public Node<V> createExtension(final BytesValue path, final Node<V> child) {
+  public Node<V> createExtension(final Bytes path, final Node<V> child) {
     return handleNewNode(new ExtensionNode<>(path, child, this));
   }
 
@@ -80,7 +81,7 @@ class StoredNodeFactory<V> implements NodeFactory<V> {
   }
 
   @Override
-  public Node<V> createLeaf(final BytesValue path, final V value) {
+  public Node<V> createLeaf(final Bytes path, final V value) {
     return handleNewNode(new LeafNode<>(path, value, this, valueSerializer));
   }
 
@@ -102,11 +103,11 @@ class StoredNodeFactory<V> implements NodeFactory<V> {
             });
   }
 
-  public Node<V> decode(final BytesValue rlp) {
+  public Node<V> decode(final Bytes rlp) {
     return decode(rlp, () -> String.format("Failed to decode value %s", rlp.toString()));
   }
 
-  private Node<V> decode(final BytesValue rlp, final Supplier<String> errMessage)
+  private Node<V> decode(final Bytes rlp, final Supplier<String> errMessage)
       throws MerkleTrieException {
     try {
       return decode(RLP.input(rlp), errMessage);
@@ -123,8 +124,8 @@ class StoredNodeFactory<V> implements NodeFactory<V> {
           return decodeNull(nodeRLPs, errMessage);
 
         case 2:
-          final BytesValue encodedPath = nodeRLPs.readBytesValue();
-          final BytesValue path;
+          final Bytes encodedPath = nodeRLPs.readBytes();
+          final Bytes path;
           try {
             path = CompactEncoding.decode(encodedPath);
           } catch (final IllegalArgumentException ex) {
@@ -151,7 +152,7 @@ class StoredNodeFactory<V> implements NodeFactory<V> {
   }
 
   private Node<V> decodeExtension(
-      final BytesValue path, final RLPInput valueRlp, final Supplier<String> errMessage) {
+      final Bytes path, final RLPInput valueRlp, final Supplier<String> errMessage) {
     final RLPInput childRlp = valueRlp.readAsRlp();
     if (childRlp.nextIsList()) {
       final Node<V> childNode = decode(childRlp, errMessage);
@@ -191,7 +192,7 @@ class StoredNodeFactory<V> implements NodeFactory<V> {
   }
 
   private LeafNode<V> decodeLeaf(
-      final BytesValue path, final RLPInput valueRlp, final Supplier<String> errMessage) {
+      final Bytes path, final RLPInput valueRlp, final Supplier<String> errMessage) {
     if (valueRlp.nextIsNull()) {
       throw new MerkleTrieException(errMessage.get() + ": leaf has null value");
     }
@@ -209,9 +210,9 @@ class StoredNodeFactory<V> implements NodeFactory<V> {
   }
 
   private V decodeValue(final RLPInput valueRlp, final Supplier<String> errMessage) {
-    final BytesValue bytes;
+    final Bytes bytes;
     try {
-      bytes = valueRlp.readBytesValue();
+      bytes = valueRlp.readBytes();
     } catch (final RLPException ex) {
       throw new MerkleTrieException(
           errMessage.get() + ": failed decoding value rlp " + valueRlp, ex);
@@ -219,7 +220,7 @@ class StoredNodeFactory<V> implements NodeFactory<V> {
     return deserializeValue(errMessage, bytes);
   }
 
-  private V deserializeValue(final Supplier<String> errMessage, final BytesValue bytes) {
+  private V deserializeValue(final Supplier<String> errMessage, final Bytes bytes) {
     final V value;
     try {
       value = valueDeserializer.apply(bytes);

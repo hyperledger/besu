@@ -88,6 +88,7 @@ public class WebSocketRequestHandler {
             future.complete(new JsonRpcErrorResponse(request.getId(), JsonRpcError.INTERNAL_ERROR));
           }
         },
+        false,
         result -> {
           if (result.succeeded()) {
             replyToClient(id, Json.encodeToBuffer(result.result()));

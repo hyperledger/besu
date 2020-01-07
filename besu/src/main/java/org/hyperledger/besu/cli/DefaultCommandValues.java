@@ -18,7 +18,6 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
 import org.hyperledger.besu.nat.NatMethod;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.io.File;
 import java.io.IOException;
@@ -28,6 +27,7 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import org.apache.tuweni.bytes.Bytes;
 import picocli.CommandLine;
 
 public interface DefaultCommandValues {
@@ -45,7 +45,7 @@ public interface DefaultCommandValues {
   String MANDATORY_NETWORK_FORMAT_HELP = "<NETWORK>";
   String MANDATORY_NODE_ID_FORMAT_HELP = "<NODEID>";
   Wei DEFAULT_MIN_TRANSACTION_GAS_PRICE = Wei.of(1000);
-  BytesValue DEFAULT_EXTRA_DATA = BytesValue.EMPTY;
+  Bytes DEFAULT_EXTRA_DATA = Bytes.EMPTY;
   long DEFAULT_MAX_REFRESH_DELAY = 3600000;
   long DEFAULT_MIN_REFRESH_DELAY = 1;
   String DOCKER_GENESIS_LOCATION = "/etc/besu/genesis.json";

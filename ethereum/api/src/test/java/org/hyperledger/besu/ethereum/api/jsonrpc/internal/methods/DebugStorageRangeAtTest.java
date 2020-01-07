@@ -34,12 +34,11 @@ import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.AccountStorageEntry;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -49,6 +48,8 @@ import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.TreeMap;
 
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
@@ -93,7 +94,7 @@ public class DebugStorageRangeAtTest {
             blockHeader,
             Collections.singletonList(transactionWithMetadata),
             Collections.emptyList(),
-            UInt256.ONE,
+            Difficulty.ONE,
             1);
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
@@ -116,11 +117,13 @@ public class DebugStorageRangeAtTest {
         .thenAnswer(this::callAction);
 
     final List<AccountStorageEntry> entries = new ArrayList<>();
-    entries.add(AccountStorageEntry.forKeyAndValue(UInt256.fromHexString("0x33"), UInt256.of(6)));
-    entries.add(AccountStorageEntry.forKeyAndValue(UInt256.fromHexString("0x44"), UInt256.of(7)));
+    entries.add(
+        AccountStorageEntry.forKeyAndValue(UInt256.fromHexString("0x33"), UInt256.valueOf(6)));
+    entries.add(
+        AccountStorageEntry.forKeyAndValue(UInt256.fromHexString("0x44"), UInt256.valueOf(7)));
     entries.add(
         AccountStorageEntry.create(
-            UInt256.of(7), Hash.hash(Bytes32.fromHexString("0x45")), Optional.empty()));
+            UInt256.valueOf(7), Hash.hash(Bytes32.fromHexString("0x45")), Optional.empty()));
     final NavigableMap<Bytes32, AccountStorageEntry> rawEntries = new TreeMap<>();
     entries.forEach(e -> rawEntries.put(e.getKeyHash(), e));
 

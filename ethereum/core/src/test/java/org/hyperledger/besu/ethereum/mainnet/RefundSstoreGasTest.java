@@ -14,16 +14,16 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import static org.hyperledger.besu.util.uint.UInt256.ONE;
-import static org.hyperledger.besu.util.uint.UInt256.ZERO;
+import static org.apache.tuweni.units.bigints.UInt256.ONE;
+import static org.apache.tuweni.units.bigints.UInt256.ZERO;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
-import org.hyperledger.besu.util.uint.UInt256;
 
+import org.apache.tuweni.units.bigints.UInt256;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
@@ -35,7 +35,7 @@ import org.junit.runners.Parameterized.Parameters;
 @RunWith(Parameterized.class)
 public class RefundSstoreGasTest {
 
-  private static final UInt256 TWO = UInt256.of(2);
+  private static final UInt256 TWO = UInt256.valueOf(2);
 
   @Parameters(name = "calculator: {0}, original: {2}, current: {3}, new: {4}")
   public static Object[][] scenarios() {

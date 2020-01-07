@@ -31,16 +31,16 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.math.BigInteger;
 import java.util.Collection;
 import java.util.List;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
 public class IbftBlockHeaderValidationRulesetFactoryTest {
@@ -120,12 +120,12 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
         Hash.fromHexString("0x63746963616c2062797a616e74696e65206661756c7420746f6c6572616e6365"));
     builder.ommersHash(Hash.EMPTY_LIST_HASH);
     builder.nonce(IbftLegacyBlockInterface.DROP_NONCE);
-    builder.difficulty(UInt256.ONE);
+    builder.difficulty(Difficulty.ONE);
 
     // Construct an extraData block
     final IbftExtraData initialIbftExtraData =
         new IbftExtraData(
-            BytesValue.wrap(new byte[IbftExtraData.EXTRA_VANITY_LENGTH]),
+            Bytes.wrap(new byte[IbftExtraData.EXTRA_VANITY_LENGTH]),
             emptyList(),
             Signature.create(BigInteger.ONE, BigInteger.ONE, (byte) 0),
             validators);
@@ -139,7 +139,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
 
     final IbftExtraData proposedData =
         new IbftExtraData(
-            BytesValue.wrap(new byte[IbftExtraData.EXTRA_VANITY_LENGTH]),
+            Bytes.wrap(new byte[IbftExtraData.EXTRA_VANITY_LENGTH]),
             singletonList(proposerSignature),
             proposerSignature,
             validators);
@@ -151,7 +151,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
 
     final IbftExtraData sealedData =
         new IbftExtraData(
-            BytesValue.wrap(new byte[IbftExtraData.EXTRA_VANITY_LENGTH]),
+            Bytes.wrap(new byte[IbftExtraData.EXTRA_VANITY_LENGTH]),
             singletonList(proposerAsCommitterSignature),
             proposerSignature,
             validators);

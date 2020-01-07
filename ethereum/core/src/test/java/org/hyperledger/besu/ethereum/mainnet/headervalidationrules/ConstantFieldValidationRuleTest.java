@@ -18,8 +18,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import org.junit.Test;
 
@@ -45,16 +45,16 @@ public class ConstantFieldValidationRuleTest {
 
   @Test
   public void difficultyFieldIsValidatedCorrectly() {
-    final ConstantFieldValidationRule<UInt256> uut =
-        new ConstantFieldValidationRule<>("Difficulty", BlockHeader::getDifficulty, UInt256.ONE);
+    final ConstantFieldValidationRule<Difficulty> uut =
+        new ConstantFieldValidationRule<>("Difficulty", BlockHeader::getDifficulty, Difficulty.ONE);
 
     final BlockHeaderTestFixture blockHeaderBuilder = new BlockHeaderTestFixture();
-    blockHeaderBuilder.difficulty(UInt256.ONE);
+    blockHeaderBuilder.difficulty(Difficulty.ONE);
     BlockHeader header = blockHeaderBuilder.buildHeader();
 
     assertThat(uut.validate(header, null)).isTrue();
 
-    blockHeaderBuilder.difficulty(UInt256.ZERO);
+    blockHeaderBuilder.difficulty(Difficulty.ZERO);
     header = blockHeaderBuilder.buildHeader();
     assertThat(uut.validate(header, null)).isFalse();
   }

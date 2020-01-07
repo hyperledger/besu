@@ -122,9 +122,10 @@ allprojects {
     mavenCentral()
     mavenLocal()
     maven { url "https://consensys.bintray.com/pegasys-repo" }
+    maven { url "https://repository.apache.org/content/repositories/snapshots/" }
   }
 
-  dependencies { errorprone("com.google.errorprone:error_prone_core") }
+  dependencies { errorprone "com.google.errorprone:error_prone_core" }
 
   apply plugin: 'com.diffplug.gradle.spotless'
   spotless {
@@ -188,8 +189,6 @@ allprojects {
       check('ImmutableEnumChecker', CheckSeverity.OFF)
       // This is a style check instead of an error-prone pattern.
       check('UnnecessaryParentheses', CheckSeverity.OFF)
-      // Lazy impl causes excess CPU usage O(n) of non-final fiield when it should be O(1).
-      check('FieldCanBeFinal', CheckSeverity.OFF)
 
       // This check is broken in Java 12.  See https://github.com/google/error-prone/issues/1257
       if (JavaVersion.current() == JavaVersion.VERSION_12) {
@@ -200,6 +199,7 @@ allprojects {
         check('TypeParameterUnusedInFormals', CheckSeverity.OFF)
       }
 
+      check('FieldCanBeFinal', CheckSeverity.WARN)
       check('InsecureCryptoUsage', CheckSeverity.WARN)
       check('WildcardImport', CheckSeverity.WARN)
     }
@@ -476,7 +476,7 @@ startScripts {
 
 
 dependencies {
-  compile project(':besu')
+  implementation project(':besu')
   errorprone 'com.google.errorprone:error_prone_core'
 }
 
@@ -531,7 +531,8 @@ tasks.register("dockerDistUntar") {
 task distDocker(type: Exec) {
   dependsOn dockerDistUntar
   def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
-  def image = project.hasProperty('release.releaseVersion') ? "hyperledger/besu:" + project.property('release.releaseVersion') : "hyperledger/besu:${project.version}"
+  def imageName = "hyperledger/besu"
+  def image = "${imageName}:${dockerBuildVersion}"
   def dockerBuildDir = "build/docker-besu/"
   workingDir "${dockerBuildDir}"
 
@@ -562,9 +563,10 @@ task testDocker(type: Exec) {
 
 task dockerUpload(type: Exec) {
   dependsOn distDocker
+  def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
   def imageName = "hyperledger/besu"
   def azureImageName = "hyperledger.azurecr.io/besu"
-  def image = project.hasProperty('release.releaseVersion') ? "${imageName}:" + project.property('release.releaseVersion') : "${imageName}:${project.version}"
+  def image = "${imageName}:${dockerBuildVersion}"
   def cmd = "docker push '${image}'"
   def additionalTags = []
 
@@ -572,9 +574,9 @@ task dockerUpload(type: Exec) {
     additionalTags.add('develop')
   }
 
-  if (! version ==~ /.*-SNAPSHOT/) {
+  if (!(dockerBuildVersion ==~ /.*-SNAPSHOT/)) {
     additionalTags.add('latest')
-    additionalTags.add(version.split(/\./)[0..1].join('.'))
+    additionalTags.add(dockerBuildVersion.split(/\./)[0..1].join('.'))
   }
 
   additionalTags.each { tag ->

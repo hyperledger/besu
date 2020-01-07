@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.RpcModules;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -32,10 +31,10 @@ import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioningController;
 import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningController;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatService;
+import org.hyperledger.besu.plugin.BesuPlugin;
 
 import java.math.BigInteger;
 import java.util.Collection;
@@ -46,53 +45,6 @@ import java.util.Optional;
 import java.util.Set;
 
 public class JsonRpcMethodsFactory {
-
-  public Map<String, JsonRpcMethod> methods(
-      final String clientVersion,
-      final BigInteger networkId,
-      final GenesisConfigOptions genesisConfigOptions,
-      final P2PNetwork peerNetworkingService,
-      final Blockchain blockchain,
-      final WorldStateArchive worldStateArchive,
-      final Synchronizer synchronizer,
-      final TransactionPool transactionPool,
-      final ProtocolSchedule<?> protocolSchedule,
-      final MiningCoordinator miningCoordinator,
-      final ObservableMetricsSystem metricsSystem,
-      final Set<Capability> supportedCapabilities,
-      final Collection<RpcApi> rpcApis,
-      final FilterManager filterManager,
-      final Optional<AccountLocalConfigPermissioningController> accountsWhitelistController,
-      final Optional<NodeLocalConfigPermissioningController> nodeWhitelistController,
-      final PrivacyParameters privacyParameters,
-      final JsonRpcConfiguration jsonRpcConfiguration,
-      final WebSocketConfiguration webSocketConfiguration,
-      final MetricsConfiguration metricsConfiguration,
-      final NatService natService) {
-    final BlockchainQueries blockchainQueries =
-        new BlockchainQueries(blockchain, worldStateArchive);
-    return methods(
-        clientVersion,
-        networkId,
-        genesisConfigOptions,
-        peerNetworkingService,
-        blockchainQueries,
-        synchronizer,
-        protocolSchedule,
-        filterManager,
-        transactionPool,
-        miningCoordinator,
-        metricsSystem,
-        supportedCapabilities,
-        accountsWhitelistController,
-        nodeWhitelistController,
-        rpcApis,
-        privacyParameters,
-        jsonRpcConfiguration,
-        webSocketConfiguration,
-        metricsConfiguration,
-        natService);
-  }
 
   public Map<String, JsonRpcMethod> methods(
       final String clientVersion,
@@ -114,7 +66,8 @@ public class JsonRpcMethodsFactory {
       final JsonRpcConfiguration jsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
       final MetricsConfiguration metricsConfiguration,
-      final NatService natService) {
+      final NatService natService,
+      final Map<String, BesuPlugin> namedPlugins) {
     final Map<String, JsonRpcMethod> enabled = new HashMap<>();
 
     if (!rpcApis.isEmpty()) {
@@ -129,6 +82,7 @@ public class JsonRpcMethodsFactory {
                   genesisConfigOptions,
                   p2pNetwork,
                   blockchainQueries,
+                  namedPlugins,
                   natService),
               new DebugJsonRpcMethods(blockchainQueries, protocolSchedule, metricsSystem),
               new EeaJsonRpcMethods(
@@ -154,7 +108,8 @@ public class JsonRpcMethodsFactory {
               new Web3JsonRpcMethods(clientVersion),
               // TRACE Methods (Disabled while under development)
               // new TraceJsonRpcMethods(blockchainQueries,protocolSchedule)
-              new TxPoolJsonRpcMethods(transactionPool));
+              new TxPoolJsonRpcMethods(transactionPool),
+              new PluginsJsonRpcMethods(namedPlugins));
 
       for (final JsonRpcMethods apiGroup : availableApiGroups) {
         enabled.putAll(apiGroup.create(rpcApis));

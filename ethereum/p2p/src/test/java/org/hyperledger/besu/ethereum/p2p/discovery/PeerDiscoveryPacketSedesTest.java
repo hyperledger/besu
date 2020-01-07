@@ -25,13 +25,13 @@ import org.hyperledger.besu.ethereum.p2p.discovery.internal.PacketData;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PacketType;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.MutableBytesValue;
 
 import java.util.List;
 import java.util.Random;
 
 import io.vertx.core.buffer.Buffer;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.MutableBytes;
 import org.junit.Test;
 
 public class PeerDiscoveryPacketSedesTest {
@@ -41,7 +41,7 @@ public class PeerDiscoveryPacketSedesTest {
   public void serializeDeserializeEntirePacket() {
     final byte[] r = new byte[64];
     new Random().nextBytes(r);
-    final BytesValue target = BytesValue.wrap(r);
+    final Bytes target = Bytes.wrap(r);
     final SECP256K1.KeyPair kp = SECP256K1.KeyPair.generate();
 
     final FindNeighborsPacketData packetData = FindNeighborsPacketData.create(target);
@@ -60,10 +60,10 @@ public class PeerDiscoveryPacketSedesTest {
   public void serializeDeserializeFindNeighborsPacketData() {
     final byte[] r = new byte[64];
     new Random().nextBytes(r);
-    final BytesValue target = BytesValue.wrap(r);
+    final Bytes target = Bytes.wrap(r);
 
     final FindNeighborsPacketData packet = FindNeighborsPacketData.create(target);
-    final BytesValue serialized = RLP.encode(packet::writeTo);
+    final Bytes serialized = RLP.encode(packet::writeTo);
     assertThat(serialized).isNotNull();
 
     final FindNeighborsPacketData deserialized =
@@ -81,7 +81,7 @@ public class PeerDiscoveryPacketSedesTest {
     final List<DiscoveryPeer> peers = helper.createDiscoveryPeers(5);
 
     final NeighborsPacketData packet = NeighborsPacketData.create(peers);
-    final BytesValue serialized = RLP.encode(packet::writeTo);
+    final Bytes serialized = RLP.encode(packet::writeTo);
     assertThat(serialized).isNotNull();
 
     final NeighborsPacketData deserialized = NeighborsPacketData.readFrom(RLP.input(serialized));
@@ -97,10 +97,10 @@ public class PeerDiscoveryPacketSedesTest {
   public void deserializeDifferentPacketData() {
     final byte[] r = new byte[64];
     new Random().nextBytes(r);
-    final BytesValue target = BytesValue.wrap(r);
+    final Bytes target = Bytes.wrap(r);
 
     final FindNeighborsPacketData packet = FindNeighborsPacketData.create(target);
-    final BytesValue serialized = RLP.encode(packet::writeTo);
+    final Bytes serialized = RLP.encode(packet::writeTo);
     assertThat(serialized).isNotNull();
 
     NeighborsPacketData.readFrom(RLP.input(serialized));
@@ -110,19 +110,19 @@ public class PeerDiscoveryPacketSedesTest {
   public void integrityCheckFailsUnmatchedHash() {
     final byte[] r = new byte[64];
     new Random().nextBytes(r);
-    final BytesValue target = BytesValue.wrap(r);
+    final Bytes target = Bytes.wrap(r);
 
     final SECP256K1.KeyPair kp = SECP256K1.KeyPair.generate();
 
     final FindNeighborsPacketData data = FindNeighborsPacketData.create(target);
     final Packet packet = Packet.create(PacketType.FIND_NEIGHBORS, data, kp);
 
-    final BytesValue encoded = BytesValue.wrapBuffer(packet.encode());
-    final MutableBytesValue garbled = encoded.mutableCopy();
+    final Bytes encoded = Bytes.wrapBuffer(packet.encode());
+    final MutableBytes garbled = encoded.mutableCopy();
     final int i = garbled.size() - 1;
     // Change one bit in the last byte, which belongs to the payload, hence the hash will not match
     // any longer.
     garbled.set(i, (byte) (garbled.get(i) + 0x01));
-    Packet.decode(Buffer.buffer(garbled.extractArray()));
+    Packet.decode(Buffer.buffer(garbled.toArray()));
   }
 }

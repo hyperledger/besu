@@ -26,19 +26,19 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 import org.hyperledger.besu.tests.acceptance.dsl.node.RunnableNode;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.NodeRequests;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.io.IOException;
 import java.math.BigInteger;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.web3j.crypto.RawTransaction;
 import org.web3j.crypto.TransactionEncoder;
 
 public class NodeSmartContractPermissioningAllowNodeTransaction implements Transaction<Hash> {
 
-  private static final BytesValue ADD_ENODE_SIGNATURE =
+  private static final Bytes ADD_ENODE_SIGNATURE =
       org.hyperledger.besu.crypto.Hash.keccak256(
-              BytesValue.of("addEnode(bytes32,bytes32,bytes16,uint16)".getBytes(UTF_8)))
+              Bytes.of("addEnode(bytes32,bytes32,bytes16,uint16)".getBytes(UTF_8)))
           .slice(0, 4);
 
   private final Account sender;
@@ -66,7 +66,7 @@ public class NodeSmartContractPermissioningAllowNodeTransaction implements Trans
 
   private String signedTransactionData() {
     final String enodeURL = ((RunnableNode) node).enodeUrl().toASCIIString();
-    final BytesValue payload =
+    final Bytes payload =
         NodeSmartContractPermissioningController.createPayload(
             ADD_ENODE_SIGNATURE, EnodeURL.fromString(enodeURL));
 

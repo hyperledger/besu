@@ -49,6 +49,7 @@ import org.hyperledger.besu.nat.NatService;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -209,7 +210,8 @@ public class JsonRpcHttpServiceRpcApisTest {
                     mock(JsonRpcConfiguration.class),
                     mock(WebSocketConfiguration.class),
                     mock(MetricsConfiguration.class),
-                    natService));
+                    natService,
+                    new HashMap<>()));
     final JsonRpcHttpService jsonRpcHttpService =
         new JsonRpcHttpService(
             vertx,
@@ -301,7 +303,8 @@ public class JsonRpcHttpServiceRpcApisTest {
                     jsonRpcConfiguration,
                     webSocketConfiguration,
                     metricsConfiguration,
-                    natService));
+                    natService,
+                    new HashMap<>()));
     final JsonRpcHttpService jsonRpcHttpService =
         new JsonRpcHttpService(
             vertx,

@@ -19,10 +19,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.ethereum.p2p.discovery.Endpoint;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.OptionalInt;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
 public class PingPacketDataTest {
@@ -34,7 +34,7 @@ public class PingPacketDataTest {
     final Endpoint from = new Endpoint("127.0.0.1", 30303, OptionalInt.of(30303));
     final Endpoint to = new Endpoint("127.0.0.2", 30303, OptionalInt.empty());
     final PingPacketData packet = PingPacketData.create(from, to);
-    final BytesValue serialized = RLP.encode(packet::writeTo);
+    final Bytes serialized = RLP.encode(packet::writeTo);
     final PingPacketData deserialized = PingPacketData.readFrom(RLP.input(serialized));
 
     assertThat(deserialized.getFrom()).isEqualTo(from);
@@ -57,7 +57,7 @@ public class PingPacketDataTest {
     out.writeLongScalar(time);
     out.endList();
 
-    final BytesValue serialized = out.encoded();
+    final Bytes serialized = out.encoded();
     final PingPacketData deserialized = PingPacketData.readFrom(RLP.input(serialized));
 
     assertThat(deserialized.getFrom()).isEqualTo(from);
@@ -82,7 +82,7 @@ public class PingPacketDataTest {
     out.writeLongScalar(11);
     out.endList();
 
-    final BytesValue serialized = out.encoded();
+    final Bytes serialized = out.encoded();
     final PingPacketData deserialized = PingPacketData.readFrom(RLP.input(serialized));
 
     assertThat(deserialized.getFrom()).isEqualTo(from);
@@ -105,7 +105,7 @@ public class PingPacketDataTest {
     out.writeLongScalar(time);
     out.endList();
 
-    final BytesValue serialized = out.encoded();
+    final Bytes serialized = out.encoded();
     final PingPacketData deserialized = PingPacketData.readFrom(RLP.input(serialized));
 
     assertThat(deserialized.getFrom()).isEqualTo(from);

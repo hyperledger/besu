@@ -21,8 +21,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.vm.operations.StopOperation;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -44,7 +44,7 @@ public class EVMTest {
 
   @Test
   public void assertThatEndOfScriptNotExplicitlySetInCodeReturnsAVirtualOperation() {
-    final Code code = new Code(BytesValue.fromHexString("0x60203560003555606035604035556000"));
+    final Code code = new Code(Bytes.fromHexString("0x60203560003555606035604035556000"));
     final Operation operation =
         evm.operationAtOffset(code, CONTRACT_ACCOUNT_VERSION, code.getSize());
     assertThat(operation).isNotNull();
@@ -53,7 +53,7 @@ public class EVMTest {
 
   @Test
   public void assertThatEndOfScriptExplicitlySetInCodeDoesNotReturnAVirtualOperation() {
-    final Code code = new Code(BytesValue.fromHexString("0x6020356000355560603560403555600000"));
+    final Code code = new Code(Bytes.fromHexString("0x6020356000355560603560403555600000"));
     when(operationRegistry.getOrDefault(
             anyByte(), eq(CONTRACT_ACCOUNT_VERSION), any(Operation.class)))
         .thenReturn(new StopOperation(gasCalculator));

@@ -19,6 +19,7 @@ import static org.mockito.Mockito.mock;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.difficulty.fixed.FixedDifficultyProtocolSchedule;
 import org.hyperledger.besu.ethereum.eth.manager.ChainState;
@@ -28,7 +29,6 @@ import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer.Responder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
@@ -81,7 +81,7 @@ public class ChainHeadTrackerTest {
     chainHeadTracker.onPeerConnected(respondingPeer.getEthPeer());
 
     // Change the hash of the current known head
-    respondingPeer.getEthPeer().chainState().statusReceived(Hash.EMPTY_TRIE_HASH, UInt256.ONE);
+    respondingPeer.getEthPeer().chainState().statusReceived(Hash.EMPTY_TRIE_HASH, Difficulty.ONE);
 
     respondingPeer.respond(responder);
 

@@ -18,8 +18,9 @@ package org.hyperledger.besu.nat.core;
 import org.hyperledger.besu.nat.NatMethod;
 
 public class AutoDetectionResult {
-  private NatMethod natMethod;
-  private boolean isDetectedNatMethod;
+
+  private final NatMethod natMethod;
+  private final boolean isDetectedNatMethod;
 
   public AutoDetectionResult(final NatMethod natMethod, final boolean isDetectedNatMethod) {
     this.natMethod = natMethod;

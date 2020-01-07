@@ -14,13 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.p2p.rlpx.wire;
 
-import org.hyperledger.besu.util.bytes.BytesValue;
+import org.apache.tuweni.bytes.Bytes;
 
 public final class RawMessage extends AbstractMessageData {
 
   private final int code;
 
-  public RawMessage(final int code, final BytesValue data) {
+  public RawMessage(final int code, final Bytes data) {
     super(data);
     this.code = code;
   }

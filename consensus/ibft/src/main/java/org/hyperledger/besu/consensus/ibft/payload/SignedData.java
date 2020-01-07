@@ -20,10 +20,11 @@ import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Objects;
 import java.util.StringJoiner;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class SignedData<M extends Payload> implements Authored {
 
@@ -50,11 +51,11 @@ public class SignedData<M extends Payload> implements Authored {
 
     output.startList();
     unsignedPayload.writeTo(output);
-    output.writeBytesValue(signature.encodedBytes());
+    output.writeBytes(signature.encodedBytes());
     output.endList();
   }
 
-  public BytesValue encode() {
+  public Bytes encode() {
     final BytesValueRLPOutput rlpEncode = new BytesValueRLPOutput();
     writeTo(rlpEncode);
     return rlpEncode.encoded();
@@ -110,7 +111,7 @@ public class SignedData<M extends Payload> implements Authored {
   }
 
   protected static Signature readSignature(final RLPInput signedMessage) {
-    return signedMessage.readBytesValue(Signature::decode);
+    return signedMessage.readBytes(Signature::decode);
   }
 
   protected static Address recoverSender(

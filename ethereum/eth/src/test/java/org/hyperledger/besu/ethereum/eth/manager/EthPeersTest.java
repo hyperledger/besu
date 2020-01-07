@@ -24,13 +24,13 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.NoAvailablePeersException;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.PeerDisconnectedException;
 import org.hyperledger.besu.ethereum.eth.messages.NodeDataMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNotConnected;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.Optional;
 import java.util.OptionalLong;
@@ -59,9 +59,11 @@ public class EthPeersTest {
   public void comparesPeersWithHeightAndTd() {
     // Set peerA with better height, lower td
     final EthPeer peerA =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, UInt256.of(50), 20).getEthPeer();
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, Difficulty.of(50), 20)
+            .getEthPeer();
     final EthPeer peerB =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, UInt256.of(100), 10).getEthPeer();
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, Difficulty.of(100), 10)
+            .getEthPeer();
 
     assertThat(EthPeers.CHAIN_HEIGHT.compare(peerA, peerB)).isGreaterThan(0);
     assertThat(EthPeers.TOTAL_DIFFICULTY.compare(peerA, peerB)).isLessThan(0);
@@ -80,11 +82,11 @@ public class EthPeersTest {
   public void comparesPeersWithTdAndNoHeight() {
     final EthPeer peerA =
         EthProtocolManagerTestUtil.createPeer(
-                ethProtocolManager, UInt256.of(100), OptionalLong.empty())
+                ethProtocolManager, Difficulty.of(100), OptionalLong.empty())
             .getEthPeer();
     final EthPeer peerB =
         EthProtocolManagerTestUtil.createPeer(
-                ethProtocolManager, UInt256.of(50), OptionalLong.empty())
+                ethProtocolManager, Difficulty.of(50), OptionalLong.empty())
             .getEthPeer();
 
     // Sanity check
