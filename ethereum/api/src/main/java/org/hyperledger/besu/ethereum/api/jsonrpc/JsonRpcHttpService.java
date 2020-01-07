@@ -38,6 +38,7 @@ import org.hyperledger.besu.nat.upnp.UpnpNatManager;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
+import org.hyperledger.besu.util.ExceptionUtils;
 import org.hyperledger.besu.util.NetworkUtility;
 
 import java.net.InetSocketAddress;
@@ -57,6 +58,7 @@ import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.core.VertxException;
 import io.vertx.core.http.ClientAuth;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
@@ -217,40 +219,49 @@ public class JsonRpcHttpService {
     }
 
     final CompletableFuture<?> resultFuture = new CompletableFuture<>();
-    httpServer
-        .requestHandler(router)
-        .listen(
-            res -> {
-              if (!res.failed()) {
-                resultFuture.complete(null);
-                final int actualPort = httpServer.actualPort();
-                LOG.info(
-                    "JsonRPC service started and listening on {}:{}{}",
-                    config.getHost(),
-                    actualPort,
-                    tlsLogMessage());
-                config.setPort(actualPort);
-                // Request that a NAT port forward for our server port
-                if (natManager.isPresent()) {
-                  natManager
-                      .get()
-                      .requestPortForward(
-                          config.getPort(), UpnpNatManager.Protocol.TCP, "besu-json-rpc");
+    try {
+      httpServer
+          .requestHandler(router)
+          .listen(
+              res -> {
+                if (!res.failed()) {
+                  resultFuture.complete(null);
+                  final int actualPort = httpServer.actualPort();
+                  LOG.info(
+                      "JsonRPC service started and listening on {}:{}{}",
+                      config.getHost(),
+                      actualPort,
+                      tlsLogMessage());
+                  config.setPort(actualPort);
+                  // Request that a NAT port forward for our server port
+                  if (natManager.isPresent()) {
+                    natManager
+                        .get()
+                        .requestPortForward(
+                            config.getPort(), UpnpNatManager.Protocol.TCP, "besu-json-rpc");
+                  }
+                  return;
                 }
-                return;
-              }
-              httpServer = null;
-              final Throwable cause = res.cause();
-              if (cause instanceof SocketException) {
-                resultFuture.completeExceptionally(
-                    new JsonRpcServiceException(
-                        String.format(
-                            "Failed to bind Ethereum JSON RPC listener to %s:%s: %s",
-                            config.getHost(), config.getPort(), cause.getMessage())));
-                return;
-              }
-              resultFuture.completeExceptionally(cause);
-            });
+                httpServer = null;
+                final Throwable cause = res.cause();
+                if (cause instanceof SocketException) {
+                  resultFuture.completeExceptionally(
+                      new JsonRpcServiceException(
+                          String.format(
+                              "Failed to bind Ethereum JSON RPC listener to %s:%s: %s",
+                              config.getHost(), config.getPort(), cause.getMessage())));
+                  return;
+                }
+                resultFuture.completeExceptionally(cause);
+              });
+    } catch (VertxException e) {
+      httpServer = null;
+      resultFuture.completeExceptionally(
+          new JsonRpcServiceException(
+              String.format(
+                  "Ethereum JSON RPC listener failed to start: %s",
+                  ExceptionUtils.rootCause(e).getMessage())));
+    }
 
     return resultFuture;
   }

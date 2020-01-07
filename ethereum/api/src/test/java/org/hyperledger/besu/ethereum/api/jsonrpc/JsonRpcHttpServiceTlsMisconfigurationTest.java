@@ -55,10 +55,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletionException;
 
 import io.vertx.core.Vertx;
-import io.vertx.core.VertxException;
-import io.vertx.core.file.FileSystemException;
 import org.assertj.core.api.Assertions;
 import org.junit.After;
 import org.junit.Before;
@@ -75,11 +74,6 @@ public class JsonRpcHttpServiceTlsMisconfigurationTest {
   private static final BigInteger CHAIN_ID = BigInteger.valueOf(123);
   private static final Collection<RpcApi> JSON_RPC_APIS = List.of(ETH, NET, WEB3);
   private static final String KEYSTORE_RESOURCE = "JsonRpcHttpService/rpc_keystore.pfx";
-  private static final String KEYSTORE_CLIENT_RESOURCE =
-      "JsonRpcHttpService/rpc_client_keystore.pfx";
-  private static final String KEYSTORE_PASSWORD_RESOURCE =
-      "JsonRpcHttpService/rpc_keystore.password";
-  private static final String KEYSTORE_CLIENT_2_RESOURCE = "JsonRpcHttpService/rpc_client_2.pfx";
   private static final String KNOWN_CLIENTS_RESOURCE = "JsonRpcHttpService/rpc_known_clients.txt";
 
   private Map<String, JsonRpcMethod> rpcMethods;
@@ -131,13 +125,13 @@ public class JsonRpcHttpServiceTlsMisconfigurationTest {
     service =
         createJsonRpcHttpService(
             rpcMethods, createJsonRpcConfig(invalidKeystorePathTlsConfiguration()));
-    assertThatExceptionOfType(VertxException.class)
+    assertThatExceptionOfType(CompletionException.class)
         .isThrownBy(
             () -> {
               service.start().join();
               Assertions.fail("service.start should have failed");
             })
-        .withCauseInstanceOf(FileSystemException.class);
+        .withCauseInstanceOf(JsonRpcServiceException.class);
   }
 
   @Test
@@ -145,14 +139,14 @@ public class JsonRpcHttpServiceTlsMisconfigurationTest {
     service =
         createJsonRpcHttpService(
             rpcMethods, createJsonRpcConfig(invalidPasswordTlsConfiguration()));
-    assertThatExceptionOfType(VertxException.class)
+    assertThatExceptionOfType(CompletionException.class)
         .isThrownBy(
             () -> {
               service.start().join();
               Assertions.fail("service.start should have failed");
             })
-        .withCauseInstanceOf(IOException.class)
-        .withMessageContaining("keystore password was incorrect");
+        .withCauseInstanceOf(JsonRpcServiceException.class)
+        .withMessageContaining("failed to decrypt safe contents entry");
   }
 
   @Test
@@ -160,13 +154,13 @@ public class JsonRpcHttpServiceTlsMisconfigurationTest {
     service =
         createJsonRpcHttpService(
             rpcMethods, createJsonRpcConfig(invalidKeystoreFileTlsConfiguration()));
-    assertThatExceptionOfType(VertxException.class)
+    assertThatExceptionOfType(CompletionException.class)
         .isThrownBy(
             () -> {
               service.start().join();
               Assertions.fail("service.start should have failed");
             })
-        .withCauseInstanceOf(IOException.class)
+        .withCauseInstanceOf(JsonRpcServiceException.class)
         .withMessageContaining("Short read of DER length");
   }
 
