@@ -264,6 +264,11 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     }
 
     try {
+      checkState(
+          isNotAliveOrphan(node.getName()),
+          "A live process with name: %s, already exists. Cannot create another with the same name as it would orphan the first",
+          node.getName());
+
       final Process process = processBuilder.start();
       outputProcessorExecutor.execute(() -> printOutput(node, process));
       besuProcesses.put(node.getName(), process);
@@ -272,6 +277,11 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     }
 
     waitForPortsFile(dataDir);
+  }
+
+  private boolean isNotAliveOrphan(final String name) {
+    final Process orphan = besuProcesses.get(name);
+    return orphan == null || !orphan.isAlive();
   }
 
   private void printOutput(final BesuNode node, final Process process) {
