@@ -35,7 +35,7 @@ public class CrossGetKeyStatus implements Transaction<KeyStatus> {
       final KeyStatusResponse result = node.eth().crossGetKeyStatus(keyVersion).send();
       assertThat(result.hasError()).isFalse();
       assertThat(result).isNotNull();
-      return result.getResult();
+      return result.getStatus();
 
     } catch (final IOException e) {
       throw new RuntimeException(e);

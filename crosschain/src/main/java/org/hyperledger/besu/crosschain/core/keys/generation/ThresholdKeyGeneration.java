@@ -261,6 +261,8 @@ public class ThresholdKeyGeneration {
       this.publicKey = calculatePublicKey();
 
       this.keyGenerationStatus = KeyStatus.KEY_GEN_COMPLETE;
+      this.failureReason = KeyGenFailureToCompleteReason.SUCCESS;
+
       return keyVersionNumber;
     } catch (Exception ex) {
       throw new RuntimeException(ex);
@@ -311,6 +313,10 @@ public class ThresholdKeyGeneration {
 
   public KeyStatus getKeyStatus() {
     return this.keyGenerationStatus;
+  }
+
+  public void setKeyStatusToActive() {
+    this.keyGenerationStatus = KeyStatus.ACTIVE_KEY;
   }
 
   public KeyGenFailureToCompleteReason getFailureReason() {

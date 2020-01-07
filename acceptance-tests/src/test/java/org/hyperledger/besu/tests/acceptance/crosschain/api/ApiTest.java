@@ -32,9 +32,12 @@ import org.web3j.protocol.besu.response.crosschain.BlockchainNodeInformation;
 import org.web3j.protocol.besu.response.crosschain.CoordinationContractInformation;
 import org.web3j.protocol.besu.response.crosschain.CrossBlockchainPublicKeyResponse;
 import org.web3j.protocol.besu.response.crosschain.KeyGenFailureToCompleteReason;
+import org.web3j.protocol.besu.response.crosschain.KeyStatus;
 
 /*
  * Two blockchains with one node are created. And all the crosschain API methods are then tested.
+ * KeyGeneration is not well tested, because we do not currently support multiple nodes in a blockchain.
+ * DevP2P for crosschain is WIP. TODO Testing all aspects of Key Generation and various ways it can fail.
  */
 
 public class ApiTest extends CrosschainAcceptanceTestBase {
@@ -112,16 +115,15 @@ public class ApiTest extends CrosschainAcceptanceTestBase {
                 1, BlsThresholdCryptoSystem.ALT_BN_128_WITH_KECCAK256));
     assertThat(keyVersion.longValue()).isEqualTo(1);
 
-    // TODO: Check that the failure reason is SUCCESS
-    // KeyGenFailureToCompleteReason reason = this.nodeOnBlockchain1.execute(
-    //        crossTransactions.getKeyGenFailureReason(keyVersion.longValue()));
-    // assertThat(reason.value).isEqualTo(KeyGenFailureToCompleteReason.SUCCESS.value);
+    KeyGenFailureToCompleteReason reason =
+        this.nodeOnBlockchain1.execute(
+            crossTransactions.getKeyGenFailureReason(keyVersion.longValue()));
+    assertThat(reason.value).isEqualTo(KeyGenFailureToCompleteReason.SUCCESS.value);
 
     // Get the key version from the API and check
-    // KeyStatus keyStatus =
-    // this.nodeOnBlockchain1.execute(crossTransactions.getKeyStatus(keyVersion.longValue()));
-    // TODO: Deserialising the response to KeyStatus is failing at the moment
-    // assertThat(keyStatus.value).isEqualTo(KeyStatus.KEY_GEN_COMPLETE.value);
+    KeyStatus keyStatus =
+        this.nodeOnBlockchain1.execute(crossTransactions.getKeyStatus(keyVersion.longValue()));
+    assertThat(keyStatus.value).isEqualTo(KeyStatus.KEY_GEN_COMPLETE.value);
 
     // Activate the key of version 1 and check the APIs crossGetActiveKeyVersion and
     // crossGetKeyStatus
@@ -145,9 +147,9 @@ public class ApiTest extends CrosschainAcceptanceTestBase {
             crossTransactions.getKeyGenNodesDroppedOutOfKeyGeneration(keyVersion.longValue()));
     assertThat(nodesReasons.size()).isEqualTo(0);
 
-    // keyStatus =
-    // this.nodeOnBlockchain1.execute(crossTransactions.getKeyStatus(keyVersion.longValue()));
-    // assertThat(keyStatus.value).isEqualTo(KeyStatus.ACTIVE_KEY.value);
+    keyStatus =
+        this.nodeOnBlockchain1.execute(crossTransactions.getKeyStatus(keyVersion.longValue()));
+    assertThat(keyStatus.value).isEqualTo(KeyStatus.ACTIVE_KEY.value);
 
     // Generate the key once again
     keyVersion =

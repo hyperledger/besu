@@ -196,6 +196,7 @@ public class CrosschainKeyManager {
       ThresholdKeyGeneration keyGeneration = this.activeKeyGenerations.get(keyVersion);
       if ((keyGeneration != null)
           && (keyGeneration.getKeyStatus().equals(KeyStatus.KEY_GEN_COMPLETE))) {
+        keyGeneration.setKeyStatusToActive();
         this.credentials.put(keyVersion, keyGeneration.getCredentials());
         this.activeKeyGenerations.remove(keyVersion);
       } else {
