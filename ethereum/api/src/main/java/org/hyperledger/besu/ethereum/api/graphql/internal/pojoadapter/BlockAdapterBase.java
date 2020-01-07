@@ -112,7 +112,7 @@ public class BlockAdapterBase extends AdapterBase {
   }
 
   public Optional<Bytes> getLogsBloom() {
-    return Optional.of(header.getLogsBloom().getBytes());
+    return Optional.of(header.getLogsBloom());
   }
 
   public Optional<Bytes32> getMixHash() {

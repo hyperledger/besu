@@ -37,13 +37,12 @@ public class LogSeries extends AbstractList<Log> {
   }
 
   private final List<Log> series;
-  private final LogsBloomFilter bloomFilter;
+  private final LogsBloomFilter.Builder bloomFilterBuilder;
 
   public LogSeries(final Collection<Log> logs) {
     this.series = new ArrayList<>(logs);
-    this.bloomFilter = new LogsBloomFilter();
-
-    logs.forEach(bloomFilter::insertLog);
+    this.bloomFilterBuilder = LogsBloomFilter.builder();
+    bloomFilterBuilder.insertLogs(logs);
   }
 
   /**
@@ -52,7 +51,7 @@ public class LogSeries extends AbstractList<Log> {
    * @return the log series bloom filter.
    */
   public LogsBloomFilter getBloomFilter() {
-    return bloomFilter;
+    return bloomFilterBuilder.build();
   }
 
   /**
@@ -88,7 +87,7 @@ public class LogSeries extends AbstractList<Log> {
   @Override
   public void add(final int index, final Log log) {
     series.add(index, log);
-    bloomFilter.insertLog(log);
+    bloomFilterBuilder.insertLog(log);
   }
 
   @Override
