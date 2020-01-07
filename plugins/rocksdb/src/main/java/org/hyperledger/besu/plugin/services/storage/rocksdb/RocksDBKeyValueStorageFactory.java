@@ -44,7 +44,6 @@ import org.apache.logging.log4j.Logger;
 public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
 
   private static final Logger LOG = LogManager.getLogger();
-  /** Source of truth for the default database version. */
   private static final int DEFAULT_VERSION = 1;
   private static final Set<Integer> SUPPORTED_VERSIONS = Set.of(0, 1);
   private static final String NAME = "rocksdb";
