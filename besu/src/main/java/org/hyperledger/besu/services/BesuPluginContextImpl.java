@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -210,5 +211,11 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
     }
 
     return Optional.empty();
+  }
+
+  public Map<String, BesuPlugin> getNamedPlugins() {
+    return plugins.stream()
+        .filter(plugin -> plugin.getName().isPresent())
+        .collect(Collectors.toMap(plugin -> plugin.getName().get(), plugin -> plugin, (a, b) -> b));
   }
 }

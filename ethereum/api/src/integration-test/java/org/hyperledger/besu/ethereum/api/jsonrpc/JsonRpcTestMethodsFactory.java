@@ -48,6 +48,7 @@ import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -125,6 +126,7 @@ public class JsonRpcTestMethodsFactory {
             privacyParameters,
             jsonRpcConfiguration,
             webSocketConfiguration,
-            metricsConfiguration);
+            metricsConfiguration,
+            new HashMap<>());
   }
 }

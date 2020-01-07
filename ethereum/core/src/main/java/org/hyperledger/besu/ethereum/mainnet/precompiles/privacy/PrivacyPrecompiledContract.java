@@ -23,7 +23,7 @@ import org.hyperledger.besu.enclave.EnclaveServerException;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.LogSeries;
+import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
@@ -42,6 +42,7 @@ import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.Base64;
+import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -158,7 +159,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
       privateStateUpdater.putLatestStateRoot(privacyGroupId, disposablePrivateState.rootHash());
 
       final Bytes32 txHash = keccak256(RLP.encode(privateTransaction::writeTo));
-      final LogSeries logs = result.getLogs();
+      final List<Log> logs = result.getLogs();
       if (!logs.isEmpty()) {
         privateStateUpdater.putTransactionLogs(txHash, result.getLogs());
       }

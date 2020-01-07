@@ -1614,6 +1614,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .metricsConfiguration(metricsConfiguration)
             .staticNodes(staticNodes)
             .identityString(identityString)
+            .besuPluginContext(besuPluginContext)
             .build();
 
     addShutdownHook(runner);

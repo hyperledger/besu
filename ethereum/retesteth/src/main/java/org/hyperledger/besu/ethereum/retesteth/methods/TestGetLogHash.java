@@ -20,7 +20,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.TransactionReceiptWithMetadata;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.LogSeries;
+import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.retesteth.RetestethContext;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 
@@ -51,7 +51,10 @@ public class TestGetLogHash implements JsonRpcMethod {
 
   private Hash calculateLogHash(
       final TransactionReceiptWithMetadata transactionReceiptWithMetadata) {
-    final LogSeries logs = new LogSeries(transactionReceiptWithMetadata.getReceipt().getLogs());
-    return Hash.hash(RLP.encode(logs::writeTo));
+    return Hash.hash(
+        RLP.encode(
+            out ->
+                out.writeList(
+                    transactionReceiptWithMetadata.getReceipt().getLogs(), Log::writeTo)));
   }
 }
