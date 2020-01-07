@@ -20,7 +20,7 @@ import java.util.List;
 /** Record of an executed virtual machine operation. */
 public class VmOperationExecutionReport {
   private Mem mem;
-  private List<String> push;
+  private final List<String> push;
   private Store store;
   private long used;
 
