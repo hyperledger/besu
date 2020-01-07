@@ -73,6 +73,7 @@ public interface TransactionValidator {
     // Private Transaction Invalid Reasons
     PRIVATE_TRANSACTION_FAILED,
     PRIVATE_NONCE_TOO_LOW,
+    PRIVACY_GROUP_DOES_NOT_EXIST,
     INCORRECT_PRIVATE_NONCE,
     GAS_PRICE_TOO_LOW;
   }
