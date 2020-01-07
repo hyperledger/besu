@@ -14,7 +14,11 @@
  */
 package org.hyperledger.besu.nat;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import org.hyperledger.besu.nat.core.AutoDetectionResult;
 import org.hyperledger.besu.nat.core.NatManager;
+import org.hyperledger.besu.nat.core.NatMethodAutoDetection;
 import org.hyperledger.besu.nat.core.domain.NatPortMapping;
 import org.hyperledger.besu.nat.core.domain.NatServiceType;
 import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
@@ -178,5 +182,23 @@ public class NatService {
    */
   private NatMethod retrieveNatMethod(final Optional<NatManager> natManager) {
     return natManager.map(NatManager::getNatMethod).orElse(NatMethod.NONE);
+  }
+
+  /**
+   * Attempts to automatically detect the Nat method being used by the node.
+   *
+   * @param natMethodAutoDetections list of nat method auto detections
+   * @return a {@link NatMethod} equal to NONE if no Nat method has been detected automatically.
+   */
+  public static NatMethod autoDetectNatMethod(
+      final NatMethodAutoDetection... natMethodAutoDetections) {
+    checkNotNull(natMethodAutoDetections);
+    for (NatMethodAutoDetection autoDetection : natMethodAutoDetections) {
+      final AutoDetectionResult result = autoDetection.shouldBeThisNatMethod();
+      if (result.isDetectedNatMethod()) {
+        return result.getNatMethod();
+      }
+    }
+    return NatMethod.NONE;
   }
 }

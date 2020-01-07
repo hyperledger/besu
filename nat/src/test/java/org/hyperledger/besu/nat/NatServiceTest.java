@@ -20,6 +20,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.nat.core.AutoDetectionResult;
 import org.hyperledger.besu.nat.core.NatManager;
 import org.hyperledger.besu.nat.core.domain.NatPortMapping;
 import org.hyperledger.besu.nat.core.domain.NatServiceType;
@@ -29,7 +30,6 @@ import org.hyperledger.besu.nat.upnp.UpnpNatManager;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -80,7 +80,7 @@ public class NatServiceTest {
     verify(natManager)
         .getPortMapping(natPortMapping.getNatServiceType(), natPortMapping.getProtocol());
 
-    Assertions.assertThat(portMapping).contains(natPortMapping);
+    assertThat(portMapping).contains(natPortMapping);
   }
 
   @Test
@@ -91,7 +91,7 @@ public class NatServiceTest {
     final Optional<NatPortMapping> portMapping =
         natService.getPortMapping(NatServiceType.DISCOVERY, NetworkProtocol.TCP);
 
-    Assertions.assertThat(portMapping).isNotPresent();
+    assertThat(portMapping).isNotPresent();
   }
 
   @Test
@@ -108,7 +108,7 @@ public class NatServiceTest {
 
     verify(natManager).queryExternalIPAddress();
 
-    Assertions.assertThat(resultIp).containsSame(externalIp);
+    assertThat(resultIp).containsSame(externalIp);
   }
 
   @Test
@@ -118,7 +118,7 @@ public class NatServiceTest {
 
     final Optional<String> resultIp = natService.queryExternalIPAddress();
 
-    Assertions.assertThat(resultIp).isNotPresent();
+    assertThat(resultIp).isNotPresent();
   }
 
   @Test
@@ -135,7 +135,7 @@ public class NatServiceTest {
 
     verify(natManager).queryLocalIPAddress();
 
-    Assertions.assertThat(resultIp).containsSame(externalIp);
+    assertThat(resultIp).containsSame(externalIp);
   }
 
   @Test
@@ -145,6 +145,28 @@ public class NatServiceTest {
 
     final Optional<String> resultIp = natService.queryLocalIPAddress();
 
-    Assertions.assertThat(resultIp).isNotPresent();
+    assertThat(resultIp).isNotPresent();
+  }
+
+  @Test
+  public void givenOneAutoDetectionWorksWhenAutoDetectThenReturnCorrectNatMethod() {
+    final NatMethod natMethod =
+        NatService.autoDetectNatMethod(NatServiceTest::alwaysTrueShouldBeUpnpMethod);
+    assertThat(natMethod).isEqualTo(NatMethod.UPNP);
+  }
+
+  @Test
+  public void givenNoAutoDetectionWorksWhenAutoDetectThenReturnEmptyNatMethod() {
+    final NatMethod natMethod =
+        NatService.autoDetectNatMethod(NatServiceTest::alwaysFalseShouldBeUpnpMethod);
+    assertThat(natMethod).isEqualTo(NatMethod.NONE);
+  }
+
+  private static AutoDetectionResult alwaysTrueShouldBeUpnpMethod() {
+    return new AutoDetectionResult(NatMethod.UPNP, true);
+  }
+
+  private static AutoDetectionResult alwaysFalseShouldBeUpnpMethod() {
+    return new AutoDetectionResult(NatMethod.UPNP, false);
   }
 }

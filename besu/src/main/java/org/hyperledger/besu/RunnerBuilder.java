@@ -16,6 +16,8 @@ package org.hyperledger.besu;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Objects.isNull;
+import static java.util.function.Predicate.isEqual;
+import static java.util.function.Predicate.not;
 
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.controller.BesuController;
@@ -122,7 +124,7 @@ public class RunnerBuilder {
   private String p2pAdvertisedHost;
   private String p2pListenInterface = NetworkUtility.INADDR_ANY;
   private int p2pListenPort;
-  private NatMethod natMethod = NatMethod.NONE;
+  private NatMethod natMethod = NatMethod.AUTO;
   private int maxPeers;
   private boolean limitRemoteWireConnectionsEnabled = false;
   private float fractionRemoteConnectionsAllowed;
@@ -558,7 +560,12 @@ public class RunnerBuilder {
   }
 
   private Optional<NatManager> buildNatManager(final NatMethod natMethod) {
-    switch (natMethod) {
+
+    final NatMethod detectedNatMethod =
+        Optional.of(natMethod)
+            .filter(not(isEqual(NatMethod.AUTO)))
+            .orElse(NatService.autoDetectNatMethod());
+    switch (detectedNatMethod) {
       case UPNP:
         return Optional.of(new UpnpNatManager());
       case MANUAL:
