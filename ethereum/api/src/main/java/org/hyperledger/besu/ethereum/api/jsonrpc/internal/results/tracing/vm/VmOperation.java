@@ -25,7 +25,7 @@ public class VmOperation {
   private long pc;
   private VmTrace sub;
 
-  public VmOperation() {}
+  VmOperation() {}
 
   public long getCost() {
     return cost;
@@ -48,8 +48,8 @@ public class VmOperation {
     this.cost = cost;
   }
 
-  public void setVmOperationExecutionReport(
-      final VmOperationExecutionReport vmOperationExecutionReport) {
+  void setVmOperationExecutionReport(
+          final VmOperationExecutionReport vmOperationExecutionReport) {
     this.vmOperationExecutionReport = vmOperationExecutionReport;
   }
 

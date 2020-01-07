@@ -16,14 +16,14 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.vm;
 
 public class Mem {
 
-  private String data;
-  private int off;
+  private final String data;
+  private final int off;
 
-  public Mem(final String data) {
+  Mem(final String data) {
     this(data, 0);
   }
 
-  public Mem(final String data, final int off) {
+  private Mem(final String data, final int off) {
     this.data = data;
     this.off = off;
   }
