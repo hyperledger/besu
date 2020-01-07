@@ -48,8 +48,7 @@ public class VmOperation {
     this.cost = cost;
   }
 
-  void setVmOperationExecutionReport(
-          final VmOperationExecutionReport vmOperationExecutionReport) {
+  void setVmOperationExecutionReport(final VmOperationExecutionReport vmOperationExecutionReport) {
     this.vmOperationExecutionReport = vmOperationExecutionReport;
   }
 
