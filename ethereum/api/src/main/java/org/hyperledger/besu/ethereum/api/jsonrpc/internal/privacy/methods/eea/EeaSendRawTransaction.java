@@ -14,7 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcEnclaveErrorConverter;
+import static org.apache.logging.log4j.LogManager.getLogger;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcEnclaveErrorConverter.convertEnclaveInvalidReason;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.UNAUTHORIZED;
+
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -25,14 +28,19 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.Privac
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcUnauthorizedResponse;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.SendTransactionResponse;
 
+import org.apache.logging.log4j.Logger;
+
 public class EeaSendRawTransaction implements JsonRpcMethod {
 
+  private static final Logger LOG = getLogger();
   private final PrivacySendTransaction privacySendTransaction;
   private final EnclavePublicKeyProvider enclavePublicKeyProvider;
   private final TransactionPool transactionPool;
@@ -68,10 +76,12 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
       sendTransactionResponse =
           privacyController.sendTransaction(
               privateTransaction, enclavePublicKeyProvider.getEnclaveKey(requestContext.getUser()));
+    } catch (final MultiTenancyValidationException e) {
+      LOG.error("Unauthorized multi-tenancy request. {}", e.getMessage());
+      return new JsonRpcUnauthorizedResponse(requestContext.getRequest().getId(), UNAUTHORIZED);
     } catch (final Exception e) {
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(),
-          JsonRpcEnclaveErrorConverter.convertEnclaveInvalidReason(e.getMessage()));
+          requestContext.getRequest().getId(), convertEnclaveInvalidReason(e.getMessage()));
     }
 
     return privacySendTransaction.validateAndExecute(
