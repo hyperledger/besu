@@ -112,7 +112,8 @@ public class JsonRpcHttpServiceTlsMisconfigurationTest {
                     mock(PrivacyParameters.class),
                     mock(JsonRpcConfiguration.class),
                     mock(WebSocketConfiguration.class),
-                    mock(MetricsConfiguration.class)));
+                    mock(MetricsConfiguration.class),
+                    Collections.emptyMap()));
   }
 
   @After

@@ -37,11 +37,17 @@ public class TlsConfigurationTest {
 
   @Test
   public void validTrustOptionsFileWorks() throws IOException {
+    final Path tempFile = temporaryFolder.newFile().toPath();
+    Files.write(
+        tempFile,
+        List.of(
+            "localhost DF:65:B8:02:08:5E:91:82:0F:91:F5:1C:96:56:92:C4:1A:F6:C6:27:FD:6C:FC:31:F2:BB:90:17:22:59:5B:50"),
+        UTF_8);
     final TlsConfiguration tlsConfiguration =
         TlsConfiguration.TlsConfigurationBuilder.aTlsConfiguration()
             .withKeyStorePath(temporaryFolder.newFolder().toPath())
             .withKeyStorePassword("test")
-            .withKnownClientsFile(getKnownClientsFile())
+            .withKnownClientsFile(tempFile)
             .build();
     Assertions.assertThat(tlsConfiguration).isNotNull();
     Assertions.assertThat(tlsConfiguration.getTrustOptions().isPresent()).isTrue();
