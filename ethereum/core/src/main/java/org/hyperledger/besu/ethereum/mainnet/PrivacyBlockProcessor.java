@@ -17,20 +17,18 @@ package org.hyperledger.besu.ethereum.mainnet;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 
 import java.util.List;
 
-public class PrivacyBlockProcessor extends AbstractBlockProcessor {
+public class PrivacyBlockProcessor implements BlockProcessor {
   private final AbstractBlockProcessor blockProcessor;
   private final PrivateStateStorage privateStateStorage;
 
   public PrivacyBlockProcessor(
       final AbstractBlockProcessor blockProcessor, final PrivateStateStorage privateStateStorage) {
-    super(blockProcessor);
     this.blockProcessor = blockProcessor;
     this.privateStateStorage = privateStateStorage;
   }
@@ -52,14 +50,5 @@ public class PrivacyBlockProcessor extends AbstractBlockProcessor {
         .putPrivacyGroupHeadBlockMap(blockHeader.getHash(), privacyGroupHeadBlockHash)
         .commit();
     return blockProcessor.processBlock(blockchain, worldState, blockHeader, transactions, ommers);
-  }
-
-  @Override
-  public boolean rewardCoinbase(
-      final MutableWorldState worldState,
-      final ProcessableBlockHeader header,
-      final List<BlockHeader> ommers,
-      final boolean skipZeroBlockRewards) {
-    return blockProcessor.rewardCoinbase(worldState, header, ommers, skipZeroBlockRewards);
   }
 }

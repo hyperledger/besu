@@ -73,19 +73,4 @@ public class PrivGetTransactionCountTest {
     assertThat(response.getResult()).isEqualTo(String.format("0x%X", NONCE));
     verify(privateNonceProvider).getNonce(senderAddress, PRIVACY_GROUP_ID);
   }
-
-  //  @Test
-  //  public void returnPrivacyDisabledErrorWhenPrivacyIsDisabled() {
-  //    when(privacyParameters.isEnabled()).thenReturn(false);
-  //    final PrivGetTransactionCount privGetTransactionCount =
-  //        new PrivGetTransactionCount(privateNonceProvider, enclavePublicKeyProvider);
-  //
-  //    final JsonRpcRequestContext request =
-  //        new JsonRpcRequestContext(
-  //            new JsonRpcRequest("1", "priv_getTransactionCount", new Object[] {}));
-  //    final JsonRpcErrorResponse response =
-  //        (JsonRpcErrorResponse) privGetTransactionCount.response(request);
-  //
-  //    assertThat(response.getError()).isEqualTo(JsonRpcError.PRIVACY_NOT_ENABLED);
-  //  }
 }

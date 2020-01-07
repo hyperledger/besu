@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.privacy.ChainHeadPrivateNonceProvider;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
+import org.hyperledger.besu.ethereum.privacy.PrivateNonceProvider;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.FixedKeySigningPrivateMarkerTransactionFactory;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.PrivateMarkerTransactionFactory;
@@ -44,7 +45,7 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
   private final ProtocolSchedule<?> protocolSchedule;
   private final TransactionPool transactionPool;
   private final PrivacyParameters privacyParameters;
-  private final ChainHeadPrivateNonceProvider nonceProvider;
+  private final PrivateNonceProvider nonceProvider;
 
   public PrivacyApiGroupJsonRpcMethods(
       final BlockchainQueries blockchainQueries,
@@ -81,7 +82,7 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
     return privacyParameters;
   }
 
-  public ChainHeadPrivateNonceProvider getNonceProvider() {
+  public PrivateNonceProvider getNonceProvider() {
     return nonceProvider;
   }
 

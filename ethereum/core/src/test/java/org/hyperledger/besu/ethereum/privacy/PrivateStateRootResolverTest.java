@@ -73,7 +73,7 @@ public class PrivateStateRootResolverTest {
   }
 
   @Test
-  public void mustResolveStateRootIfChainHeadIsNotCommitted() {
+  public void mustResolveEmptyStateRootWhenChainHeadIsNotCommitted() {
     final BlockDataGenerator.BlockOptions options =
         new BlockDataGenerator.BlockOptions()
             .setBlockNumber(BLOCKCHAIN.getChainHeadBlockNumber())
@@ -88,7 +88,7 @@ public class PrivateStateRootResolverTest {
   }
 
   @Test
-  public void ifNoCommitmentForPrivacyGroupExistsReturnEmptyRootHash() {
+  public void resolveEmptyRootHashWhenNoCommitmentForPrivacyGroupExists() {
     final PrivateStateRootResolver privateStateRootResolver =
         new PrivateStateRootResolver(privateStateStorage);
     assertThat(
@@ -98,7 +98,7 @@ public class PrivateStateRootResolverTest {
   }
 
   @Test
-  public void ifCommitmentForPrivacyGroupExistsReturnsRootHash() {
+  public void resolveExpectedRootHashWhenCommitmentForPrivacyGroupExists() {
     final PrivateStateStorage.Updater updater = privateStateStorage.updater();
     updater.putPrivateBlockMetadata(
         BLOCKCHAIN.getBlockByNumber(16).get().getHash(),
@@ -122,7 +122,7 @@ public class PrivateStateRootResolverTest {
   }
 
   @Test
-  public void ifMultipleCommitmentsExistsReturnsRootHashForCorrectPrivacyGroup() {
+  public void resolveCorrectRootHashWhenMultipleCommitmentsExistForPrivacyGroup() {
     final PrivateStateStorage.Updater updater = privateStateStorage.updater();
     updater.putPrivateBlockMetadata(
         BLOCKCHAIN.getBlockByNumber(16).get().getHash(),
@@ -153,7 +153,7 @@ public class PrivateStateRootResolverTest {
   }
 
   @Test
-  public void ifMultipleCommitmentsForSamePrivacyGroupExistsReturnsLatestStateRoot() {
+  public void resolveLatestRootHashWhenMultipleCommitmentsForTheSamePrivacyGroupExist() {
     final PrivateStateStorage.Updater updater = privateStateStorage.updater();
     updater.putPrivateBlockMetadata(
         BLOCKCHAIN.getBlockByNumber(16).get().getHash(),

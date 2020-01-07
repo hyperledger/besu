@@ -37,7 +37,8 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
   private static final Bytes METADATA_KEY_SUFFIX = Bytes.of("METADATA".getBytes(UTF_8));
   private static final Bytes STATUS_KEY_SUFFIX = Bytes.of("STATUS".getBytes(UTF_8));
   private static final Bytes REVERT_KEY_SUFFIX = Bytes.of("REVERT".getBytes(UTF_8));
-  private static final Bytes PRIVACY_GROUP_HEAD_BLOCK_MAP_PREFIX = Bytes.of("MAP".getBytes(UTF_8));
+  private static final Bytes PRIVACY_GROUP_HEAD_BLOCK_MAP_SUFFIX =
+      Bytes.of("PGHEADMAP".getBytes(UTF_8));
 
   private final KeyValueStorage keyValueStorage;
 
@@ -78,7 +79,7 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
 
   @Override
   public Optional<PrivacyGroupHeadBlockMap> getPrivacyGroupHeadBlockMap(final Bytes32 blockHash) {
-    return get(blockHash, PRIVACY_GROUP_HEAD_BLOCK_MAP_PREFIX)
+    return get(blockHash, PRIVACY_GROUP_HEAD_BLOCK_MAP_SUFFIX)
         .map(b -> PrivacyGroupHeadBlockMap.readFrom(new BytesValueRLPInput(b, false)));
   }
 
@@ -158,7 +159,7 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
     @Override
     public PrivateStateStorage.Updater putPrivacyGroupHeadBlockMap(
         final Bytes32 blockHash, final PrivacyGroupHeadBlockMap map) {
-      set(blockHash, PRIVACY_GROUP_HEAD_BLOCK_MAP_PREFIX, RLP.encode(map::writeTo));
+      set(blockHash, PRIVACY_GROUP_HEAD_BLOCK_MAP_SUFFIX, RLP.encode(map::writeTo));
       return this;
     }
 
