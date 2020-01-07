@@ -267,7 +267,7 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     try {
       checkState(
           isNotAliveOrphan(node.getName()),
-          "A live process with name: %s already exists, cannot create another with the same name as it orphans the first",
+          "A live process with name: %s, already exists. Cannot create another with the same name as it would orphan the first",
           node.getName());
 
       final Process process = processBuilder.start();
