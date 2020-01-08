@@ -73,18 +73,8 @@ public final class Difficulty extends BaseUInt256Value<Difficulty> implements Qu
   }
 
   @Override
-  public byte[] getByteArray() {
-    return toBytes().toArray();
-  }
-
-  @Override
-  public String getHexString() {
-    return toHexString();
-  }
-
-  @Override
-  public int size() {
-    return toMinimalBytes().size();
+  public String toHexString() {
+    return super.toHexString();
   }
 
   @Override

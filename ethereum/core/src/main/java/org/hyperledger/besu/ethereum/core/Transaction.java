@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-import org.hyperledger.besu.plugin.data.UnformattedData;
 
 import java.math.BigInteger;
 import java.util.Objects;
@@ -60,7 +59,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
 
   private final SECP256K1.Signature signature;
 
-  private final UnformattedDataImpl payload;
+  private final Bytes payload;
 
   private final Optional<BigInteger> chainId;
 
@@ -147,7 +146,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     this.to = to;
     this.value = value;
     this.signature = signature;
-    this.payload = new UnformattedDataImpl(payload);
+    this.payload = payload;
     this.sender = sender;
     this.chainId = chainId;
   }
@@ -220,7 +219,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
    * @return the transaction payload
    */
   @Override
-  public UnformattedDataImpl getPayload() {
+  public Bytes getPayload() {
     return payload;
   }
 
@@ -230,7 +229,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
    * @return if present the init code
    */
   @Override
-  public Optional<UnformattedData> getInit() {
+  public Optional<Bytes> getInit() {
     return getTo().isPresent() ? Optional.empty() : Optional.of(payload);
   }
 
@@ -240,7 +239,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
    * @return if present the init code
    */
   @Override
-  public Optional<UnformattedData> getData() {
+  public Optional<Bytes> getData() {
     return getTo().isPresent() ? Optional.of(payload) : Optional.empty();
   }
 
