@@ -28,14 +28,14 @@ import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
 public class ForkIdManagerTest {
-  private Long[] forksMainnet = {1150000L, 1920000L, 2463000L, 2675000L, 4370000L, 7280000L};
-  private String mainnetGenHash =
-      "0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3";
+  private final Long[] forksMainnet = {1150000L, 1920000L, 2463000L, 2675000L, 4370000L, 7280000L};
+  private final String mainnetGenHash =
+          "0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3";
 
   @Test
   public void checkItFunctionsWithPresentBehavior() {
     ForkIdManager forkIdManager =
-        new ForkIdManager(Hash.fromHexString(mainnetGenHash), Collections.emptyList(), null);
+            new ForkIdManager(Hash.fromHexString(mainnetGenHash), Collections.emptyList(), null);
     assertThat(forkIdManager.peerCheck(Hash.fromHexString(mainnetGenHash))).isFalse();
   }
 

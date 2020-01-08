@@ -33,22 +33,23 @@ import org.apache.tuweni.bytes.Bytes32;
 
 public class ForkIdManager {
 
-  private Hash genesisHash;
-  private Long currentHead;
+  private final Hash genesisHash;
+  private final Long currentHead;
   private Long forkNext;
-  private Long highestKnownFork = 0L;
-  private ForkId lastKnownEntry = null;
-  private List<ForkId> forkAndHashList;
+  private final Long highestKnownFork = 0L;
+  private final List<ForkId> forkAndHashList;
 
   public ForkIdManager(final Hash genesisHash, final List<Long> forks, final Long currentHead) {
     this.genesisHash = genesisHash;
     this.currentHead = currentHead;
     this.forkAndHashList =
-        createForkIds(
-            // If there are two forks at the same block height, we only want to add it once to the
-            // crc checksum
-            forks.stream().distinct().collect(Collectors.toUnmodifiableList()));
-  };
+            createForkIds(
+                    // If there are two forks at the same block height, we only want to add it once to the
+                    // crc checksum
+                    forks.stream().distinct().collect(Collectors.toUnmodifiableList()));
+  }
+
+  ;
 
   static ForkIdManager buildCollection(
       final Hash genesisHash, final List<Long> forks, final Blockchain blockchain) {
@@ -79,7 +80,7 @@ public class ForkIdManager {
   }
 
   ForkId getLatestForkId() {
-    return lastKnownEntry;
+    return forkAndHashList.get(forkAndHashList.size() - 1);
   }
 
   public static ForkId readFrom(final RLPInput in) {
