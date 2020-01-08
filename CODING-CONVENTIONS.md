@@ -38,7 +38,7 @@ Simple does not mean the fewest lines of code. Simple code is:
 
 Besu embraces typical Java idioms including using an Object Oriented approach to design. This includes:   
 * Providing alternate behaviours via polymorphism instead of having conditional logic scattered through the codebase. For example, `ProtocolSpec` provides a standard interface to blockchain operations and multiple implementations define the different behaviours for each Ethereum milestone. 
-* Encapsulating behaviour and data together in classes. For example, `BytesValue` encapsulates byte data and methods operating on the byte data. `BytesValue.isZero()` is an instance method instead of accepting a `BytesValue` parameter.
+* Encapsulating behaviour and data together in classes. For example, `Bytes` encapsulates byte data and methods operating on the byte data. `Bytes.isZero()` is an instance method instead of accepting a `Bytes` parameter.
 
   `ProtocolSpec` is an exception and does not hold the blockchain data on which it operates. This is because that blockchain data is widely shared and not specifically owned by `ProtocolSpec`.
 * Embracing modern Java features like Optional, Streams and lambdas when they make code simpler and clearer. 

@@ -25,10 +25,10 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.retesteth.RetestethContext;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 public class TestImportRawBlock implements JsonRpcMethod {
   private static final Logger LOG = LogManager.getLogger();
@@ -56,7 +56,7 @@ public class TestImportRawBlock implements JsonRpcMethod {
     try {
       block =
           Block.readFrom(
-              RLP.input(BytesValue.fromHexString(input)), protocolSpec.getBlockHeaderFunctions());
+              RLP.input(Bytes.fromHexString(input)), protocolSpec.getBlockHeaderFunctions());
     } catch (final RLPException | IllegalArgumentException e) {
       LOG.debug("Failed to parse block RLP", e);
       return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), "0x");

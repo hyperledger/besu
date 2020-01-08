@@ -23,9 +23,10 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Optional;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class RoundChange extends IbftMessage<RoundChangePayload> {
 
@@ -51,7 +52,7 @@ public class RoundChange extends IbftMessage<RoundChangePayload> {
   }
 
   @Override
-  public BytesValue encode() {
+  public Bytes encode() {
     final BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
     rlpOut.startList();
     getSignedPayload().writeTo(rlpOut);
@@ -64,7 +65,7 @@ public class RoundChange extends IbftMessage<RoundChangePayload> {
     return rlpOut.encoded();
   }
 
-  public static RoundChange decode(final BytesValue data) {
+  public static RoundChange decode(final Bytes data) {
 
     final RLPInput rlpIn = RLP.input(data);
     rlpIn.enterList();

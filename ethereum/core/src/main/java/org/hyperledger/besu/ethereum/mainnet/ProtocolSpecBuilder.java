@@ -296,10 +296,11 @@ public class ProtocolSpecBuilder<T> {
             miningBeneficiaryCalculator,
             skipZeroBlockRewards);
     // Set private Tx Processor
+    PrivateTransactionProcessor privateTransactionProcessor = null;
     if (privacyParameters.isEnabled()) {
       final PrivateTransactionValidator privateTransactionValidator =
           privateTransactionValidatorBuilder.apply();
-      final PrivateTransactionProcessor privateTransactionProcessor =
+      privateTransactionProcessor =
           privateTransactionProcessorBuilder.apply(
               gasCalculator,
               transactionValidator,
@@ -313,7 +314,9 @@ public class ProtocolSpecBuilder<T> {
       privacyPrecompiledContract.setPrivateTransactionProcessor(privateTransactionProcessor);
       if (AbstractBlockProcessor.class.isAssignableFrom(blockProcessor.getClass())) {
         blockProcessor =
-            new PrivacyBlockProcessor((AbstractBlockProcessor) blockProcessor, privacyParameters);
+            new PrivacyBlockProcessor(
+                (AbstractBlockProcessor) blockProcessor,
+                privacyParameters.getPrivateStateStorage());
       }
     }
 
@@ -325,6 +328,7 @@ public class ProtocolSpecBuilder<T> {
         evm,
         transactionValidator,
         transactionProcessor,
+        privateTransactionProcessor,
         blockHeaderValidator,
         ommerHeaderValidator,
         blockBodyValidator,

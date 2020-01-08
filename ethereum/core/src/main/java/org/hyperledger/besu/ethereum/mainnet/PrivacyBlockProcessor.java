@@ -17,22 +17,20 @@ package org.hyperledger.besu.ethereum.mainnet;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 
 import java.util.List;
 
-public class PrivacyBlockProcessor extends AbstractBlockProcessor {
-  private AbstractBlockProcessor blockProcessor;
-  private PrivacyParameters privacyParameters;
+public class PrivacyBlockProcessor implements BlockProcessor {
+  private final AbstractBlockProcessor blockProcessor;
+  private final PrivateStateStorage privateStateStorage;
 
   public PrivacyBlockProcessor(
-      final AbstractBlockProcessor blockProcessor, final PrivacyParameters privacyParameters) {
-    super(blockProcessor);
+      final AbstractBlockProcessor blockProcessor, final PrivateStateStorage privateStateStorage) {
     this.blockProcessor = blockProcessor;
-    this.privacyParameters = privacyParameters;
+    this.privateStateStorage = privateStateStorage;
   }
 
   @Override
@@ -44,24 +42,13 @@ public class PrivacyBlockProcessor extends AbstractBlockProcessor {
       final List<BlockHeader> ommers) {
     final PrivacyGroupHeadBlockMap privacyGroupHeadBlockHash =
         new PrivacyGroupHeadBlockMap(
-            privacyParameters
-                .getPrivateStateStorage()
+            privateStateStorage
                 .getPrivacyGroupHeadBlockMap(blockHeader.getParentHash())
                 .orElse(PrivacyGroupHeadBlockMap.EMPTY));
-    privacyParameters
-        .getPrivateStateStorage()
+    privateStateStorage
         .updater()
         .putPrivacyGroupHeadBlockMap(blockHeader.getHash(), privacyGroupHeadBlockHash)
         .commit();
     return blockProcessor.processBlock(blockchain, worldState, blockHeader, transactions, ommers);
-  }
-
-  @Override
-  public boolean rewardCoinbase(
-      final MutableWorldState worldState,
-      final ProcessableBlockHeader header,
-      final List<BlockHeader> ommers,
-      final boolean skipZeroBlockRewards) {
-    return blockProcessor.rewardCoinbase(worldState, header, ommers, skipZeroBlockRewards);
   }
 }

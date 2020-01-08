@@ -28,6 +28,8 @@ jar {
 }
 
 dependencies {
+  annotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess'
+
   implementation project(':config')
   implementation project(':crypto')
   implementation project(':enclave')
@@ -41,6 +43,8 @@ dependencies {
   implementation 'com.google.guava:guava'
   implementation 'io.vertx:vertx-core'
   implementation 'org.apache.logging.log4j:log4j-api'
+  implementation 'org.apache.tuweni:tuweni-bytes'
+  implementation 'org.apache.tuweni:tuweni-units'
 
   runtime 'org.apache.logging.log4j:log4j-core'
 
@@ -49,25 +53,27 @@ dependencies {
   testImplementation project(':testutil')
 
   testImplementation 'junit:junit'
+  testImplementation 'org.apache.tuweni:tuweni-bytes'
+  testImplementation 'org.apache.tuweni:tuweni-io'
+  testImplementation 'org.apache.tuweni:tuweni-units'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.mockito:mockito-core'
 
   integrationTestImplementation project(path: ':config', configuration: 'testSupportArtifacts')
+  integrationTestImplementation project(':testutil')
 
   integrationTestImplementation 'junit:junit'
+  integrationTestImplementation 'net.consensys:orion'
   integrationTestImplementation 'org.assertj:assertj-core'
   integrationTestImplementation 'org.mockito:mockito-core'
-  integrationTestImplementation project(':testutil')
-  integrationTestImplementation 'net.consensys:orion'
 
   testSupportImplementation project(path: ':config', configuration: 'testSupportArtifacts')
+  testSupportImplementation project(':ethereum:eth')
   testSupportImplementation project(':testutil')
 
   testSupportImplementation 'junit:junit'
   testSupportImplementation 'org.assertj:assertj-core'
   testSupportImplementation 'org.mockito:mockito-core'
-
-  compileOnly 'org.openjdk.jmh:jmh-generator-annprocess'
 
   jmhImplementation project(path: ':config', configuration: 'testSupportArtifacts')
   jmhImplementation project(':crypto')
@@ -75,9 +81,9 @@ dependencies {
   jmhImplementation project(':ethereum:rlp')
   jmhImplementation project(':ethereum:trie')
   jmhImplementation project(':metrics:core')
-  jmhImplementation project(':services:kvstore')
   jmhImplementation project(':plugin-api')
   jmhImplementation project(':plugins:rocksdb')
+  jmhImplementation project(':services:kvstore')
   jmhImplementation project(':util')
 
   jmhImplementation 'com.google.guava:guava'

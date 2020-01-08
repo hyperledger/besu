@@ -17,30 +17,28 @@ package org.hyperledger.besu.ethereum.privacy.storage;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import org.hyperledger.besu.ethereum.core.Log;
-import org.hyperledger.besu.ethereum.core.LogSeries;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.BytesValues;
 
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+
 public class PrivateStateKeyValueStorage implements PrivateStateStorage {
 
-  @Deprecated
-  private static final BytesValue EVENTS_KEY_SUFFIX = BytesValue.of("EVENTS".getBytes(UTF_8));
+  @Deprecated private static final Bytes EVENTS_KEY_SUFFIX = Bytes.of("EVENTS".getBytes(UTF_8));
 
-  private static final BytesValue LOGS_KEY_SUFFIX = BytesValue.of("LOGS".getBytes(UTF_8));
-  private static final BytesValue OUTPUT_KEY_SUFFIX = BytesValue.of("OUTPUT".getBytes(UTF_8));
-  private static final BytesValue METADATA_KEY_SUFFIX = BytesValue.of("METADATA".getBytes(UTF_8));
-  private static final BytesValue STATUS_KEY_SUFFIX = BytesValue.of("STATUS".getBytes(UTF_8));
-  private static final BytesValue REVERT_KEY_SUFFIX = BytesValue.of("REVERT".getBytes(UTF_8));
-  private static final BytesValue PRIVACY_GROUP_HEAD_BLOCK_MAP_PREFIX =
-      BytesValue.of("MAP".getBytes(UTF_8));
+  private static final Bytes LOGS_KEY_SUFFIX = Bytes.of("LOGS".getBytes(UTF_8));
+  private static final Bytes OUTPUT_KEY_SUFFIX = Bytes.of("OUTPUT".getBytes(UTF_8));
+  private static final Bytes METADATA_KEY_SUFFIX = Bytes.of("METADATA".getBytes(UTF_8));
+  private static final Bytes STATUS_KEY_SUFFIX = Bytes.of("STATUS".getBytes(UTF_8));
+  private static final Bytes REVERT_KEY_SUFFIX = Bytes.of("REVERT".getBytes(UTF_8));
+  private static final Bytes PRIVACY_GROUP_HEAD_BLOCK_MAP_SUFFIX =
+      Bytes.of("PGHEADMAP".getBytes(UTF_8));
 
   private final KeyValueStorage keyValueStorage;
 
@@ -58,30 +56,30 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
   }
 
   @Override
-  public Optional<BytesValue> getTransactionOutput(final Bytes32 transactionHash) {
+  public Optional<Bytes> getTransactionOutput(final Bytes32 transactionHash) {
     return get(transactionHash, OUTPUT_KEY_SUFFIX);
   }
 
   @Override
-  public Optional<BytesValue> getStatus(final Bytes32 transactionHash) {
+  public Optional<Bytes> getStatus(final Bytes32 transactionHash) {
     return get(transactionHash, STATUS_KEY_SUFFIX);
   }
 
   @Override
-  public Optional<BytesValue> getRevertReason(final Bytes32 transactionHash) {
+  public Optional<Bytes> getRevertReason(final Bytes32 transactionHash) {
     return get(transactionHash, REVERT_KEY_SUFFIX);
   }
 
   @Override
   public Optional<PrivateBlockMetadata> getPrivateBlockMetadata(
       final Bytes32 blockHash, final Bytes32 privacyGroupId) {
-    return get(BytesValues.concatenate(blockHash, privacyGroupId), METADATA_KEY_SUFFIX)
+    return get(Bytes.concatenate(blockHash, privacyGroupId), METADATA_KEY_SUFFIX)
         .map(this::rlpDecodePrivateBlockMetadata);
   }
 
   @Override
   public Optional<PrivacyGroupHeadBlockMap> getPrivacyGroupHeadBlockMap(final Bytes32 blockHash) {
-    return get(blockHash, PRIVACY_GROUP_HEAD_BLOCK_MAP_PREFIX)
+    return get(blockHash, PRIVACY_GROUP_HEAD_BLOCK_MAP_SUFFIX)
         .map(b -> PrivacyGroupHeadBlockMap.readFrom(new BytesValueRLPInput(b, false)));
   }
 
@@ -95,17 +93,15 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
     return false;
   }
 
-  private Optional<BytesValue> get(final BytesValue key, final BytesValue keySuffix) {
-    return keyValueStorage
-        .get(BytesValues.concatenate(key, keySuffix).getArrayUnsafe())
-        .map(BytesValue::wrap);
+  private Optional<Bytes> get(final Bytes key, final Bytes keySuffix) {
+    return keyValueStorage.get(Bytes.concatenate(key, keySuffix).toArrayUnsafe()).map(Bytes::wrap);
   }
 
-  private List<Log> rlpDecodeLog(final BytesValue bytes) {
+  private List<Log> rlpDecodeLog(final Bytes bytes) {
     return RLP.input(bytes).readList(Log::readFrom);
   }
 
-  private PrivateBlockMetadata rlpDecodePrivateBlockMetadata(final BytesValue bytes) {
+  private PrivateBlockMetadata rlpDecodePrivateBlockMetadata(final Bytes bytes) {
     return PrivateBlockMetadata.readFrom(RLP.input(bytes));
   }
 
@@ -123,27 +119,27 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
     }
 
     @Override
-    public Updater putTransactionLogs(final Bytes32 transactionHash, final LogSeries logs) {
-      set(transactionHash, LOGS_KEY_SUFFIX, RLP.encode(logs::writeTo));
+    public Updater putTransactionLogs(final Bytes32 transactionHash, final List<Log> logs) {
+      set(transactionHash, LOGS_KEY_SUFFIX, RLP.encode(out -> out.writeList(logs, Log::writeTo)));
       return this;
     }
 
     @Override
-    public Updater putTransactionResult(final Bytes32 transactionHash, final BytesValue events) {
+    public Updater putTransactionResult(final Bytes32 transactionHash, final Bytes events) {
       set(transactionHash, OUTPUT_KEY_SUFFIX, events);
       return this;
     }
 
     @Override
     public PrivateStateStorage.Updater putTransactionStatus(
-        final Bytes32 transactionHash, final BytesValue status) {
+        final Bytes32 transactionHash, final Bytes status) {
       set(transactionHash, STATUS_KEY_SUFFIX, status);
       return this;
     }
 
     @Override
     public PrivateStateStorage.Updater putTransactionRevertReason(
-        final Bytes32 transactionHash, final BytesValue revertReason) {
+        final Bytes32 transactionHash, final Bytes revertReason) {
       set(transactionHash, REVERT_KEY_SUFFIX, revertReason);
       return this;
     }
@@ -154,7 +150,7 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
         final Bytes32 privacyGroupId,
         final PrivateBlockMetadata metadata) {
       set(
-          BytesValues.concatenate(blockHash, privacyGroupId),
+          Bytes.concatenate(blockHash, privacyGroupId),
           METADATA_KEY_SUFFIX,
           RLP.encode(metadata::writeTo));
       return this;
@@ -163,7 +159,7 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
     @Override
     public PrivateStateStorage.Updater putPrivacyGroupHeadBlockMap(
         final Bytes32 blockHash, final PrivacyGroupHeadBlockMap map) {
-      set(blockHash, PRIVACY_GROUP_HEAD_BLOCK_MAP_PREFIX, RLP.encode(map::writeTo));
+      set(blockHash, PRIVACY_GROUP_HEAD_BLOCK_MAP_SUFFIX, RLP.encode(map::writeTo));
       return this;
     }
 
@@ -177,9 +173,8 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
       transaction.rollback();
     }
 
-    private void set(final BytesValue key, final BytesValue keySuffix, final BytesValue value) {
-      transaction.put(
-          BytesValues.concatenate(key, keySuffix).getArrayUnsafe(), value.getArrayUnsafe());
+    private void set(final Bytes key, final Bytes keySuffix, final Bytes value) {
+      transaction.put(Bytes.concatenate(key, keySuffix).toArrayUnsafe(), value.toArrayUnsafe());
     }
   }
 }

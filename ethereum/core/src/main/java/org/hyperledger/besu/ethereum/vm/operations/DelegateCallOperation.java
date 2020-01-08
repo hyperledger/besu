@@ -22,7 +22,8 @@ import org.hyperledger.besu.ethereum.vm.AbstractCallOperation;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.Words;
-import org.hyperledger.besu.util.uint.UInt256;
+
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class DelegateCallOperation extends AbstractCallOperation {
 
@@ -52,22 +53,22 @@ public class DelegateCallOperation extends AbstractCallOperation {
 
   @Override
   protected UInt256 inputDataOffset(final MessageFrame frame) {
-    return frame.getStackItem(2).asUInt256();
+    return UInt256.fromBytes(frame.getStackItem(2));
   }
 
   @Override
   protected UInt256 inputDataLength(final MessageFrame frame) {
-    return frame.getStackItem(3).asUInt256();
+    return UInt256.fromBytes(frame.getStackItem(3));
   }
 
   @Override
   protected UInt256 outputDataOffset(final MessageFrame frame) {
-    return frame.getStackItem(4).asUInt256();
+    return UInt256.fromBytes(frame.getStackItem(4));
   }
 
   @Override
   protected UInt256 outputDataLength(final MessageFrame frame) {
-    return frame.getStackItem(5).asUInt256();
+    return UInt256.fromBytes(frame.getStackItem(5));
   }
 
   @Override
@@ -93,10 +94,10 @@ public class DelegateCallOperation extends AbstractCallOperation {
   @Override
   public Gas cost(final MessageFrame frame) {
     final Gas stipend = gas(frame);
-    final UInt256 inputDataOffset = inputDataOffset(frame).asUInt256();
-    final UInt256 inputDataLength = inputDataLength(frame).asUInt256();
-    final UInt256 outputDataOffset = outputDataOffset(frame).asUInt256();
-    final UInt256 outputDataLength = outputDataLength(frame).asUInt256();
+    final UInt256 inputDataOffset = inputDataOffset(frame);
+    final UInt256 inputDataLength = inputDataLength(frame);
+    final UInt256 outputDataOffset = outputDataOffset(frame);
+    final UInt256 outputDataLength = outputDataLength(frame);
     final Account recipient = frame.getWorldState().get(address(frame));
 
     return gasCalculator()

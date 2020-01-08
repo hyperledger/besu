@@ -25,12 +25,12 @@ import org.hyperledger.besu.ethereum.permissioning.SmartContractPermissioningCon
 import org.hyperledger.besu.ethereum.permissioning.TransactionSmartContractPermissioningController;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Optional;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 public class AccountPermissioningControllerFactory {
 
@@ -130,7 +130,7 @@ public class AccountPermissioningControllerFactory {
               .gasLimit(0)
               .gasPrice(Wei.ZERO)
               .value(Wei.ZERO)
-              .payload(BytesValue.EMPTY)
+              .payload(Bytes.EMPTY)
               .nonce(0)
               .signature(FAKE_SIGNATURE)
               .build();

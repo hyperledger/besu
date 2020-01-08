@@ -20,8 +20,6 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +28,8 @@ import javax.annotation.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 /**
  * Represents the "transaction" part of the JSON of a general state tests.
@@ -58,7 +58,7 @@ public class StateTestVersionedTransaction {
 
   private final List<Gas> gasLimits;
   private final List<Wei> values;
-  private final List<BytesValue> payloads;
+  private final List<Bytes> payloads;
 
   /** Constructor for populating a mock account with json data. */
   @JsonCreator
@@ -78,7 +78,7 @@ public class StateTestVersionedTransaction {
 
     this.gasLimits = parseArray(gasLimit, Gas::fromHexString);
     this.values = parseArray(value, Wei::fromHexString);
-    this.payloads = parseArray(data, BytesValue::fromHexString);
+    this.payloads = parseArray(data, Bytes::fromHexString);
   }
 
   private static <T> List<T> parseArray(final String[] array, final Function<String, T> parseFct) {

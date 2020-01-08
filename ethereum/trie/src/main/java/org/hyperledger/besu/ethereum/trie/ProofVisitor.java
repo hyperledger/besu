@@ -14,10 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.trie;
 
-import org.hyperledger.besu.util.bytes.BytesValue;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import org.apache.tuweni.bytes.Bytes;
 
 class ProofVisitor<V> extends GetVisitor<V> implements PathNodeVisitor<V> {
 
@@ -29,25 +29,25 @@ class ProofVisitor<V> extends GetVisitor<V> implements PathNodeVisitor<V> {
   }
 
   @Override
-  public Node<V> visit(final ExtensionNode<V> extensionNode, final BytesValue path) {
+  public Node<V> visit(final ExtensionNode<V> extensionNode, final Bytes path) {
     maybeTrackNode(extensionNode);
     return super.visit(extensionNode, path);
   }
 
   @Override
-  public Node<V> visit(final BranchNode<V> branchNode, final BytesValue path) {
+  public Node<V> visit(final BranchNode<V> branchNode, final Bytes path) {
     maybeTrackNode(branchNode);
     return super.visit(branchNode, path);
   }
 
   @Override
-  public Node<V> visit(final LeafNode<V> leafNode, final BytesValue path) {
+  public Node<V> visit(final LeafNode<V> leafNode, final Bytes path) {
     maybeTrackNode(leafNode);
     return super.visit(leafNode, path);
   }
 
   @Override
-  public Node<V> visit(final NullNode<V> nullNode, final BytesValue path) {
+  public Node<V> visit(final NullNode<V> nullNode, final Bytes path) {
     return super.visit(nullNode, path);
   }
 

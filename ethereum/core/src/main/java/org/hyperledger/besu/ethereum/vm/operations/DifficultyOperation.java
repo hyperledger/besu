@@ -14,11 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.vm.AbstractOperation;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.util.uint.UInt256;
 
 public class DifficultyOperation extends AbstractOperation {
 
@@ -33,7 +33,7 @@ public class DifficultyOperation extends AbstractOperation {
 
   @Override
   public void execute(final MessageFrame frame) {
-    final UInt256 difficulty = frame.getBlockHeader().getDifficulty();
-    frame.pushStackItem(difficulty.getBytes());
+    final Difficulty difficulty = frame.getBlockHeader().getDifficulty();
+    frame.pushStackItem(difficulty.toBytes());
   }
 }

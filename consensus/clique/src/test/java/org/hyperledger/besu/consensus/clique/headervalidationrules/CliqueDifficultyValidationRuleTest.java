@@ -31,8 +31,8 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Util;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.List;
 
@@ -67,7 +67,7 @@ public class CliqueDifficultyValidationRuleTest {
   @Test
   public void isTrueIfInTurnValidatorSuppliesDifficultyOfTwo() {
     final long IN_TURN_BLOCK_NUMBER = validatorList.size(); // i.e. proposer is 'in turn'
-    final UInt256 REPORTED_DIFFICULTY = UInt256.of(2);
+    final Difficulty REPORTED_DIFFICULTY = Difficulty.of(2);
 
     blockHeaderBuilder.number(IN_TURN_BLOCK_NUMBER - 1L);
     final BlockHeader parentHeader =
@@ -86,7 +86,7 @@ public class CliqueDifficultyValidationRuleTest {
   @Test
   public void isTrueIfOutTurnValidatorSuppliesDifficultyOfOne() {
     final long OUT_OF_TURN_BLOCK_NUMBER = validatorList.size() - 1L;
-    final UInt256 REPORTED_DIFFICULTY = UInt256.of(1);
+    final Difficulty REPORTED_DIFFICULTY = Difficulty.ONE;
 
     blockHeaderBuilder.number(OUT_OF_TURN_BLOCK_NUMBER - 1L);
     final BlockHeader parentHeader =
@@ -105,7 +105,7 @@ public class CliqueDifficultyValidationRuleTest {
   @Test
   public void isFalseIfOutTurnValidatorSuppliesDifficultyOfTwo() {
     final long OUT_OF_TURN_BLOCK_NUMBER = validatorList.size() - 1L;
-    final UInt256 REPORTED_DIFFICULTY = UInt256.of(2);
+    final Difficulty REPORTED_DIFFICULTY = Difficulty.of(2);
 
     blockHeaderBuilder.number(OUT_OF_TURN_BLOCK_NUMBER - 1L);
     final BlockHeader parentHeader =
@@ -125,7 +125,7 @@ public class CliqueDifficultyValidationRuleTest {
   @Test
   public void isFalseIfInTurnValidatorSuppliesDifficultyOfOne() {
     final long IN_TURN_BLOCK_NUMBER = validatorList.size();
-    final UInt256 REPORTED_DIFFICULTY = UInt256.of(1);
+    final Difficulty REPORTED_DIFFICULTY = Difficulty.ONE;
 
     blockHeaderBuilder.number(IN_TURN_BLOCK_NUMBER - 1L);
     final BlockHeader parentHeader =

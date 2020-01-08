@@ -18,11 +18,10 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
-
 import java.time.Instant;
 import java.util.OptionalLong;
+
+import org.apache.tuweni.bytes.Bytes;
 
 /** A utility class for building block headers. */
 public class BlockHeaderBuilder {
@@ -41,7 +40,7 @@ public class BlockHeaderBuilder {
 
   private LogsBloomFilter logsBloom;
 
-  private UInt256 difficulty;
+  private Difficulty difficulty;
 
   private long number = -1L;
 
@@ -51,7 +50,7 @@ public class BlockHeaderBuilder {
 
   private long timestamp = -1L;
 
-  private BytesValue extraData;
+  private Bytes extraData;
 
   private Hash mixHash;
 
@@ -252,7 +251,7 @@ public class BlockHeaderBuilder {
     return this;
   }
 
-  public BlockHeaderBuilder difficulty(final UInt256 difficulty) {
+  public BlockHeaderBuilder difficulty(final Difficulty difficulty) {
     checkNotNull(difficulty);
     this.difficulty = difficulty;
     return this;
@@ -282,7 +281,7 @@ public class BlockHeaderBuilder {
     return this;
   }
 
-  public BlockHeaderBuilder extraData(final BytesValue data) {
+  public BlockHeaderBuilder extraData(final Bytes data) {
     checkNotNull(data);
 
     this.extraData = data;

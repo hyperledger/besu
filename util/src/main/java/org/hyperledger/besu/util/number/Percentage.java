@@ -21,7 +21,7 @@ import java.util.Objects;
 
 public class Percentage {
 
-  private int value;
+  private final int value;
 
   private Percentage(final int value) {
     this.value = value;

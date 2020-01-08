@@ -20,11 +20,11 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
-import org.hyperledger.besu.util.bytes.Bytes32;
 
 import java.util.concurrent.TimeUnit;
 
 import io.vertx.core.Vertx;
+import org.apache.tuweni.bytes.Bytes32;
 import org.awaitility.Awaitility;
 import org.junit.After;
 import org.junit.Before;

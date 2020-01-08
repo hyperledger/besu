@@ -15,13 +15,13 @@
 package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.ethereum.vm.LogMock;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.tuweni.bytes.Bytes;
 
 /**
  * A VM test case specification.
@@ -43,7 +43,7 @@ public class LogsBloomFilterTestCaseSpec {
       @JsonProperty("logs") final List<LogMock> logs,
       @JsonProperty("bloom") final String finalBloom) {
     this.logs = logs;
-    this.finalBloom = new LogsBloomFilter(BytesValue.fromHexString(finalBloom));
+    this.finalBloom = new LogsBloomFilter(Bytes.fromHexString(finalBloom));
   }
 
   public List<LogMock> getLogs() {

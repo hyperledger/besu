@@ -19,10 +19,10 @@ import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateBlockMetadata;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Optional;
+
+import org.apache.tuweni.bytes.Bytes32;
 
 public class PrivateStateRootResolver {
   public static final Hash EMPTY_ROOT_HASH = Hash.wrap(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
@@ -33,9 +33,9 @@ public class PrivateStateRootResolver {
     this.privateStateStorage = privateStateStorage;
   }
 
-  public Hash resolveLastStateRoot(final BytesValue privacyGroupId, final Hash blockHash) {
+  public Hash resolveLastStateRoot(final Bytes32 privacyGroupId, final Hash blockHash) {
     final Optional<PrivateBlockMetadata> privateBlockMetadataOptional =
-        privateStateStorage.getPrivateBlockMetadata(blockHash, Bytes32.wrap(privacyGroupId));
+        privateStateStorage.getPrivateBlockMetadata(blockHash, privacyGroupId);
     if (privateBlockMetadataOptional.isPresent()) {
       // Check if block already has meta data for the privacy group
       return privateBlockMetadataOptional.get().getLatestStateRoot();
@@ -48,15 +48,14 @@ public class PrivateStateRootResolver {
   }
 
   private Hash resolveLastStateRoot(
-      final BytesValue privacyGroupId, final PrivacyGroupHeadBlockMap privacyGroupHeadBlockMap) {
+      final Bytes32 privacyGroupId, final PrivacyGroupHeadBlockMap privacyGroupHeadBlockMap) {
     final Hash lastRootHash;
-    if (privacyGroupHeadBlockMap.containsKey(Bytes32.wrap(privacyGroupId))) {
+    if (privacyGroupHeadBlockMap.containsKey(privacyGroupId)) {
       // Check this PG head block is being tracked
-      final Hash blockHashForLastBlockWithTx =
-          privacyGroupHeadBlockMap.get(Bytes32.wrap(privacyGroupId));
+      final Hash blockHashForLastBlockWithTx = privacyGroupHeadBlockMap.get(privacyGroupId);
       lastRootHash =
           privateStateStorage
-              .getPrivateBlockMetadata(blockHashForLastBlockWithTx, Bytes32.wrap(privacyGroupId))
+              .getPrivateBlockMetadata(blockHashForLastBlockWithTx, privacyGroupId)
               .get()
               .getLatestStateRoot();
     } else {

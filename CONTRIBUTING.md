@@ -60,12 +60,12 @@ open a new issue and include a link to the original issue in the body of your ne
 #### Before Submitting A Bug Report
 * **Confirm the problem** is reproducible in the latest version of the software
 * **Check [Besu documentation]**. You might be able to find the cause of the problem and fix things yourself. 
-* **Perform a [cursory search of project issues](https://pegasys1.atlassian.net/browse/PAN-2502?jql=project%20%3D%20PAN)** 
+* **Perform a [cursory search of project issues](https://jira.hyperledger.org/projects/BESU/issues/BESU-122?filter=allopenissues)**
 to see if the problem has already been reported. If it has **and the issue is still open**, add a comment 
 to the existing issue instead of opening a new one.
 
 #### How Do I Submit A (Good) Bug Report?
-Bugs are tracked as [Jira issues](https://pegasys1.atlassian.net/secure/Dashboard.jspa?selectPageId=10000).  
+Bugs are tracked as [Jira issues](https://jira.hyperledger.org/browse/BESU-122?jql=project%20%3D%20BESU%20AND%20resolution%20%3D%20Unresolved%20ORDER%20BY%20priority%20DESC%2C%20updated%20DESC).  
 
 Explain the problem and include additional details to help maintainers reproduce the problem:
 
@@ -125,7 +125,7 @@ to the existing issue instead of opening a new one.
 
 #### How Do I Submit A (Good) Enhancement Suggestion?
 
-Enhancement suggestions are tracked as [Jira issues](https://pegasys1.atlassian.net/secure/Dashboard.jspa?selectPageId=10000).
+Enhancement suggestions are tracked as [Jira issues](https://jira.hyperledger.org/browse/BESU-122?jql=project%20%3D%20BESU%20AND%20resolution%20%3D%20Unresolved%20ORDER%20BY%20priority%20DESC%2C%20updated%20DESC).
 Provide the following information:
 
 * **Use a clear and descriptive title** for the issue to identify the suggestion.
@@ -141,7 +141,7 @@ Provide the following information:
 * **Specify the name and version of the OS you're using.**
 
 ## Your First Contribution
-Start by looking through the 'good first issue' and 'help wanted' labeled issues on the [Jira dashboard](https://pegasys1.atlassian.net/secure/Dashboard.jspa?selectPageId=10000):
+Start by looking through the 'good first issue' and 'help wanted' labeled issues on the [Jira dashboard](https://jira.hyperledger.org/projects/BESU/issues/BESU-122?filter=allopenissues):
 * [Good First Issue][search-label-good-first-issue] - issues which should only require a few lines of code or documentation, 
 and a test or two.
 * [Help wanted issues][search-label-help-wanted] - issues which are a bit more involved than `good first issue` issues.
@@ -170,7 +170,7 @@ another part of the software. Running the `./gradlew clean check test` command l
 to be confident that your changes will pass CI tests once pushed as a Pull Request.
 1. **Push your changes** to your remote fork (usually labeled as `origin`).
 1. **Create a pull-request** (PR) on the Besu repository. If the PR addresses an existing Jira issue, 
-include the issue number in the PR title in square brackets (for example, `[PAN-2374]`). 
+include the issue number in the PR title in square brackets (for example, `[BESU-2374]`). 
 1. **Add labels** to identify the type of your PR. _For example, if your PR is not ready to validate,
 add the "work-in-progress" label. If it fixes a bug, add the "bug" label._
 1. If the PR address an existing Jira issue, comment in the Jira issue with the PR number. 

@@ -20,8 +20,8 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
 public class StateTrieAccountValueTest {
@@ -71,7 +71,7 @@ public class StateTrieAccountValueTest {
 
     StateTrieAccountValue accountValue =
         new StateTrieAccountValue(nonce, balance, storageRoot, codeHash, version);
-    BytesValue encoded = RLP.encode(accountValue::writeTo);
+    Bytes encoded = RLP.encode(accountValue::writeTo);
     final RLPInput in = RLP.input(encoded);
     StateTrieAccountValue roundTripAccountValue = StateTrieAccountValue.readFrom(in);
 

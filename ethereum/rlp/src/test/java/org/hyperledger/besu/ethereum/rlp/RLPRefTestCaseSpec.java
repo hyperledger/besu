@@ -16,9 +16,6 @@ package org.hyperledger.besu.ethereum.rlp;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.BytesValues;
-
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
@@ -27,6 +24,7 @@ import java.util.stream.Collectors;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.Lists;
+import org.apache.tuweni.bytes.Bytes;
 
 /**
  * A RLP reference test case specification.
@@ -42,16 +40,16 @@ public class RLPRefTestCaseSpec {
   private final Object in;
 
   /** The expected output. */
-  private final BytesValue out;
+  private final Bytes out;
 
   @SuppressWarnings("unchecked")
   private static Object parseIn(final Object in) {
     if (in instanceof String && ((String) in).startsWith(BIG_INT_PREFIX)) {
-      return BytesValue.wrap(new BigInteger(((String) in).substring(1)).toByteArray());
+      return Bytes.wrap(new BigInteger(((String) in).substring(1)).toByteArray());
     } else if (in instanceof String) {
-      return BytesValue.wrap(((String) in).getBytes(UTF_8));
+      return Bytes.wrap(((String) in).getBytes(UTF_8));
     } else if (in instanceof Integer) {
-      return BytesValues.toMinimalBytes((Integer) in);
+      return Bytes.minimalBytes((Integer) in);
     } else if (in instanceof List) {
       return Lists.transform((List<Object>) in, RLPRefTestCaseSpec::parseIn);
     } else if (in instanceof Object[]) {
@@ -74,7 +72,7 @@ public class RLPRefTestCaseSpec {
       @JsonProperty("in") final Object in, @JsonProperty("out") final String out) {
     // Check if the input is an integer-encoded string.
     this.in = parseIn(in);
-    this.out = BytesValue.fromHexString(out);
+    this.out = Bytes.fromHexString(out);
   }
 
   /**
@@ -91,7 +89,7 @@ public class RLPRefTestCaseSpec {
    *
    * @return The expected output.
    */
-  public BytesValue getOut() {
+  public Bytes getOut() {
     return out;
   }
 }

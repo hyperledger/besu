@@ -47,12 +47,12 @@ public class BesuNodeConfigurationBuilder {
   private boolean devMode = true;
   private GenesisConfigurationProvider genesisConfigProvider = ignore -> Optional.empty();
   private Boolean p2pEnabled = true;
-  private NetworkingConfiguration networkingConfiguration = NetworkingConfiguration.create();
+  private final NetworkingConfiguration networkingConfiguration = NetworkingConfiguration.create();
   private boolean discoveryEnabled = true;
   private boolean bootnodeEligible = true;
   private boolean revertReasonEnabled = false;
-  private List<String> plugins = new ArrayList<>();
-  private List<String> extraCLIOptions = new ArrayList<>();
+  private final List<String> plugins = new ArrayList<>();
+  private final List<String> extraCLIOptions = new ArrayList<>();
   private List<String> staticNodes = new ArrayList<>();
 
   public BesuNodeConfigurationBuilder() {

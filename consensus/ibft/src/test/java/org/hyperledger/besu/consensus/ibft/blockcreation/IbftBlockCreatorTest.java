@@ -43,13 +43,13 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import com.google.common.collect.Lists;
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
 public class IbftBlockCreatorTest {
@@ -95,7 +95,7 @@ public class IbftBlockCreatorTest {
             initialValidatorList.get(0),
             parent ->
                 new IbftExtraData(
-                        BytesValue.wrap(new byte[32]),
+                        Bytes.wrap(new byte[32]),
                         Collections.emptyList(),
                         Optional.empty(),
                         0,

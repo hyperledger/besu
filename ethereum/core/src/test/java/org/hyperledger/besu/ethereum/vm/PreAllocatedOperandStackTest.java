@@ -16,8 +16,7 @@ package org.hyperledger.besu.ethereum.vm;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.util.bytes.Bytes32;
-
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Test;
 
 public class PreAllocatedOperandStackTest {

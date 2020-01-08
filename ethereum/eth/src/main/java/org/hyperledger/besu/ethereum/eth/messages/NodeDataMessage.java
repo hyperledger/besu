@@ -19,10 +19,11 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public final class NodeDataMessage extends AbstractMessageData {
 
@@ -38,15 +39,15 @@ public final class NodeDataMessage extends AbstractMessageData {
     return new NodeDataMessage(message.getData());
   }
 
-  public static NodeDataMessage create(final Iterable<BytesValue> nodeData) {
+  public static NodeDataMessage create(final Iterable<Bytes> nodeData) {
     final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
     tmp.startList();
-    nodeData.forEach(tmp::writeBytesValue);
+    nodeData.forEach(tmp::writeBytes);
     tmp.endList();
     return new NodeDataMessage(tmp.encoded());
   }
 
-  private NodeDataMessage(final BytesValue data) {
+  private NodeDataMessage(final Bytes data) {
     super(data);
   }
 
@@ -55,12 +56,12 @@ public final class NodeDataMessage extends AbstractMessageData {
     return EthPV63.NODE_DATA;
   }
 
-  public List<BytesValue> nodeData() {
+  public List<Bytes> nodeData() {
     final RLPInput input = new BytesValueRLPInput(data, false);
     input.enterList();
-    final List<BytesValue> nodeData = new ArrayList<>();
+    final List<Bytes> nodeData = new ArrayList<>();
     while (!input.isEndOfCurrentList()) {
-      nodeData.add(input.readBytesValue());
+      nodeData.add(input.readBytes());
     }
     input.leaveList();
     return nodeData;

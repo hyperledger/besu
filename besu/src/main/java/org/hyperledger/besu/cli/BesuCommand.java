@@ -64,7 +64,7 @@ import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
-import org.hyperledger.besu.controller.KeyPairUtil;
+import org.hyperledger.besu.crypto.KeyPairUtil;
 import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
@@ -115,10 +115,8 @@ import org.hyperledger.besu.services.PicoCLIOptionsImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
 import org.hyperledger.besu.util.NetworkUtility;
 import org.hyperledger.besu.util.PermissioningConfigurationValidator;
-import org.hyperledger.besu.util.bytes.BytesValue;
 import org.hyperledger.besu.util.number.Fraction;
 import org.hyperledger.besu.util.number.PositiveNumber;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.io.File;
 import java.io.IOException;
@@ -154,6 +152,8 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 import picocli.CommandLine;
 import picocli.CommandLine.AbstractParseResultHandler;
 import picocli.CommandLine.Command;
@@ -315,7 +315,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
-  private Collection<BytesValue> bannedNodeIds = new ArrayList<>();
+  private Collection<Bytes> bannedNodeIds = new ArrayList<>();
 
   @Option(
       names = {"--sync-mode"},
@@ -339,7 +339,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
               + " (default: MAINNET)")
   private final NetworkName network = null;
 
-  @SuppressWarnings("FieldMayBeFinal") // Because PicoCLI requires Strings to not be final.
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @Option(
       names = {"--p2p-host"},
       paramLabel = MANDATORY_HOST_FORMAT_HELP,
@@ -347,6 +347,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       arity = "1")
   private String p2pHost = autoDiscoverDefaultIP().getHostAddress();
 
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @Option(
       names = {"--p2p-interface"},
       paramLabel = MANDATORY_HOST_FORMAT_HELP,
@@ -382,7 +383,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Set to start the GraphQL HTTP service (default: ${DEFAULT-VALUE})")
   private final Boolean isGraphQLHttpEnabled = false;
 
-  @SuppressWarnings("FieldMayBeFinal") // Because PicoCLI requires Strings to not be final.
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @Option(
       names = {"--graphql-http-host"},
       paramLabel = MANDATORY_HOST_FORMAT_HELP,
@@ -408,7 +409,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Set to start the JSON-RPC HTTP service (default: ${DEFAULT-VALUE})")
   private final Boolean isRpcHttpEnabled = false;
 
-  @SuppressWarnings("FieldMayBeFinal") // Because PicoCLI requires Strings to not be final.
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @Option(
       names = {"--rpc-http-host"},
       paramLabel = MANDATORY_HOST_FORMAT_HELP,
@@ -451,7 +452,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Set to start the JSON-RPC WebSocket service (default: ${DEFAULT-VALUE})")
   private final Boolean isRpcWsEnabled = false;
 
-  @SuppressWarnings("FieldMayBeFinal") // Because PicoCLI requires Strings to not be final.
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @Option(
       names = {"--rpc-ws-host"},
       paramLabel = MANDATORY_HOST_FORMAT_HELP,
@@ -487,7 +488,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Set to start the metrics exporter (default: ${DEFAULT-VALUE})")
   private final Boolean isMetricsEnabled = false;
 
-  @SuppressWarnings("FieldMayBeFinal") // Because PicoCLI requires Strings to not be final.
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @Option(
       names = {"--metrics-host"},
       paramLabel = MANDATORY_HOST_FORMAT_HELP,
@@ -516,7 +517,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Enable the metrics push gateway integration (default: ${DEFAULT-VALUE})")
   private final Boolean isMetricsPushEnabled = false;
 
-  @SuppressWarnings("FieldMayBeFinal") // Because PicoCLI requires Strings to not be final.
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @Option(
       names = {"--metrics-push-host"},
       paramLabel = MANDATORY_HOST_FORMAT_HELP,
@@ -539,7 +540,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       arity = "1")
   private final Integer metricsPushInterval = 15;
 
-  @SuppressWarnings("FieldMayBeFinal") // Because PicoCLI requires Strings to not be final.
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @Option(
       names = {"--metrics-push-prometheus-job"},
       description = "Job name to use when in push mode (default: ${DEFAULT-VALUE})",
@@ -571,7 +572,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Set if node will perform Stratum mining (default: ${DEFAULT-VALUE})")
   private final Boolean iStratumMiningEnabled = false;
 
-  @SuppressWarnings("FieldMayBeFinal") // Because PicoCLI requires Strings to not be final.
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @Option(
       names = {"--miner-stratum-host"},
       description = "Host for Stratum network mining service (default: ${DEFAULT-VALUE})")
@@ -582,7 +583,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Stratum port binding (default: ${DEFAULT-VALUE})")
   private final Integer stratumPort = 8008;
 
-  @SuppressWarnings("FieldMayBeFinal") // Because PicoCLI requires Strings to not be final.
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @Option(
       hidden = true,
       names = {"--Xminer-stratum-extranonce"},
@@ -611,7 +612,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "A hex string representing the (32) bytes to be included in the extra data "
               + "field of a mined block (default: ${DEFAULT-VALUE})",
       arity = "1")
-  private final BytesValue extraData = DEFAULT_EXTRA_DATA;
+  private final Bytes extraData = DEFAULT_EXTRA_DATA;
 
   @Option(
       names = {"--pruning-enabled"},
@@ -656,6 +657,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--privacy-enabled"},
       description = "Enable private transactions (default: ${DEFAULT-VALUE})")
   private final Boolean isPrivacyEnabled = false;
+
+  @Option(
+      names = {"--privacy-multi-tenancy-enabled"},
+      description = "Enable multi-tenant private transactions (default: ${DEFAULT-VALUE})",
+      hidden = true)
+  private final Boolean isPrivacyMultiTenancyEnabled = false;
 
   @Option(
       names = {"--revert-reason-enabled"},
@@ -711,7 +718,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Integer pendingTxRetentionPeriod =
       TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS;
 
-  @SuppressWarnings("FieldMayBeFinal") // Because PicoCLI requires Strings to not be final.
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @Option(
       names = {"--key-value-storage"},
       description = "Identity for the key-value storage to be used.",
@@ -862,10 +869,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private BesuCommand registerConverters() {
     commandLine.registerConverter(Address.class, Address::fromHexStringStrict);
-    commandLine.registerConverter(BytesValue.class, BytesValue::fromHexString);
+    commandLine.registerConverter(Bytes.class, Bytes::fromHexString);
     commandLine.registerConverter(Level.class, Level::valueOf);
     commandLine.registerConverter(SyncMode.class, SyncMode::fromString);
-    commandLine.registerConverter(UInt256.class, (arg) -> UInt256.of(new BigInteger(arg)));
+    commandLine.registerConverter(UInt256.class, (arg) -> UInt256.valueOf(new BigInteger(arg)));
     commandLine.registerConverter(Wei.class, (arg) -> Wei.of(Long.parseUnsignedLong(arg)));
     commandLine.registerConverter(PositiveNumber.class, PositiveNumber::fromString);
     commandLine.registerConverter(Hash.class, Hash::fromHexString);
@@ -1352,14 +1359,18 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return permissionsNodesContractEnabled || permissionsAccountsContractEnabled;
   }
 
-  private PrivacyParameters privacyParameters() throws IOException {
+  private PrivacyParameters privacyParameters() {
 
     CommandLineUtils.checkOptionDependencies(
         logger,
         commandLine,
         "--privacy-enabled",
         !isPrivacyEnabled,
-        asList("--privacy-url", "--privacy-public-key-file", "--privacy-precompiled-address"));
+        asList(
+            "--privacy-url",
+            "--privacy-public-key-file",
+            "--privacy-precompiled-address",
+            "--privacy-multi-tenancy-enabled"));
 
     final PrivacyParameters.Builder privacyParametersBuilder = new PrivacyParameters.Builder();
     if (isPrivacyEnabled) {
@@ -1371,8 +1382,17 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         throw new ParameterException(commandLine, String.format("%s %s", "Pruning", errorSuffix));
       }
 
+      if (isPrivacyMultiTenancyEnabled
+          && !jsonRpcConfiguration.isAuthenticationEnabled()
+          && !webSocketConfiguration.isAuthenticationEnabled()) {
+        throw new ParameterException(
+            commandLine,
+            "Privacy multi-tenancy requires either http authentication to be enabled or WebSocket authentication to be enabled");
+      }
+
       privacyParametersBuilder.setEnabled(true);
       privacyParametersBuilder.setEnclaveUrl(privacyUrl);
+      privacyParametersBuilder.setMultiTenancyEnabled(isPrivacyMultiTenancyEnabled);
       if (privacyPublicKeyFile() != null) {
         try {
           privacyParametersBuilder.setEnclavePublicKeyUsingFile(privacyPublicKeyFile());
@@ -1502,6 +1522,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .metricsConfiguration(metricsConfiguration)
             .staticNodes(staticNodes)
             .identityString(identityString)
+            .besuPluginContext(besuPluginContext)
             .build();
 
     addShutdownHook(runner);

@@ -34,8 +34,9 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldState;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.util.uint.UInt256;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -44,15 +45,18 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Before;
 import org.junit.Test;
 
 public class BlockchainQueriesTest {
   private BlockDataGenerator gen;
+  private EthScheduler scheduler;
 
   @Before
   public void setup() {
     gen = new BlockDataGenerator();
+    scheduler = new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem());
   }
 
   @Test
@@ -255,7 +259,7 @@ public class BlockchainQueriesTest {
 
     // Get random non-existent account
     final Wei result = queries.accountBalance(gen.address(), 1L).get();
-    assertThat(result).isEqualByComparingTo(Wei.ZERO);
+    assertThat(result).isEqualTo(Wei.ZERO);
   }
 
   @Test
@@ -329,7 +333,7 @@ public class BlockchainQueriesTest {
             .setParentHash(data.blockchain.getBlockHashByNumber(commonAncestor).get())
             .setBlockNumber(forkBlock)
             .setDifficulty(
-                data.blockchain.getBlockHeader(forkBlock).get().getDifficulty().plus(10L));
+                data.blockchain.getBlockHeader(forkBlock).get().getDifficulty().add(10L));
     final Block fork = gen.block(options);
     final List<TransactionReceipt> forkReceipts = gen.receipts(fork);
 
@@ -513,7 +517,7 @@ public class BlockchainQueriesTest {
     for (int i = 0; i < result.getTransactions().size(); i++) {
       final Hash txResult = result.getTransactions().get(i);
       final Transaction actualTx = targetBlock.getBody().getTransactions().get(i);
-      assertThat(txResult).isEqualByComparingTo(actualTx.getHash());
+      assertThat(txResult).isEqualTo(actualTx.getHash());
     }
   }
 
@@ -548,7 +552,7 @@ public class BlockchainQueriesTest {
         .subList(1, blockData.size())
         .forEach(b -> blockchain.appendBlock(b.block, b.receipts));
 
-    return new BlockchainWithData(blockchain, blockData, worldStateArchive);
+    return new BlockchainWithData(blockchain, blockData, worldStateArchive, scheduler);
   }
 
   private static class BlockchainWithData {
@@ -556,15 +560,18 @@ public class BlockchainQueriesTest {
     final List<BlockData> blockData;
     final WorldStateArchive worldStateArchive;
     final BlockchainQueries blockchainQueries;
+    final EthScheduler scheduler;
 
     private BlockchainWithData(
         final MutableBlockchain blockchain,
         final List<BlockData> blockData,
-        final WorldStateArchive worldStateArchive) {
+        final WorldStateArchive worldStateArchive,
+        final EthScheduler scheduler) {
       this.blockchain = blockchain;
       this.blockData = blockData;
       this.worldStateArchive = worldStateArchive;
-      this.blockchainQueries = new BlockchainQueries(blockchain, worldStateArchive);
+      this.scheduler = scheduler;
+      this.blockchainQueries = new BlockchainQueries(blockchain, worldStateArchive, scheduler);
     }
   }
 

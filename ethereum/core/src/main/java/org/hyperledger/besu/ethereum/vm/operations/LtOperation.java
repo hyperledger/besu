@@ -18,8 +18,9 @@ import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.vm.AbstractOperation;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.uint.UInt256;
+
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class LtOperation extends AbstractOperation {
 
@@ -34,10 +35,11 @@ public class LtOperation extends AbstractOperation {
 
   @Override
   public void execute(final MessageFrame frame) {
-    final UInt256 value0 = frame.popStackItem().asUInt256();
-    final UInt256 value1 = frame.popStackItem().asUInt256();
+    final UInt256 value0 = UInt256.fromBytes(frame.popStackItem());
+    final UInt256 value1 = UInt256.fromBytes(frame.popStackItem());
 
-    final Bytes32 result = value0.compareTo(value1) < 0 ? Bytes32.TRUE : Bytes32.FALSE;
+    final Bytes32 result =
+        value0.compareTo(value1) < 0 ? UInt256.ONE.toBytes() : UInt256.ZERO.toBytes();
 
     frame.pushStackItem(result);
   }

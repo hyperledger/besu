@@ -17,13 +17,15 @@ package org.hyperledger.besu.ethereum.mainnet.precompiles.privacy;
 import static org.hyperledger.besu.crypto.Hash.keccak256;
 
 import org.hyperledger.besu.enclave.Enclave;
-import org.hyperledger.besu.enclave.types.ReceiveRequest;
+import org.hyperledger.besu.enclave.EnclaveClientException;
+import org.hyperledger.besu.enclave.EnclaveIOException;
+import org.hyperledger.besu.enclave.EnclaveServerException;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.LogSeries;
+import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
@@ -43,12 +45,14 @@ import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.BytesValues;
+
+import java.util.Base64;
+import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
   private final Enclave enclave;
@@ -86,35 +90,47 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
   }
 
   @Override
-  public Gas gasRequirement(final BytesValue input) {
+  public Gas gasRequirement(final Bytes input) {
     return Gas.of(0L);
   }
 
   @Override
-  public BytesValue compute(final BytesValue input, final MessageFrame messageFrame) {
+  public Bytes compute(final Bytes input, final MessageFrame messageFrame) {
     final ProcessableBlockHeader currentBlockHeader = messageFrame.getBlockHeader();
     if (!BlockHeader.class.isAssignableFrom(currentBlockHeader.getClass())) {
-      LOG.info("Privacy works with BlockHeader only!.");
-      return BytesValue.EMPTY;
+      if (!messageFrame.isPersistingState()) {
+        // We get in here from block mining.
+        return Bytes.EMPTY;
+      } else {
+        throw new IllegalArgumentException(
+            "The MessageFrame contains an illegal block header type. Cannot persist private block metadata without current block hash.");
+      }
     }
     final Hash currentBlockHash = ((BlockHeader) currentBlockHeader).getHash();
 
-    final String key = BytesValues.asBase64String(input);
-    final ReceiveRequest receiveRequest = new ReceiveRequest(key);
+    final String key = input.toBase64String();
 
     final ReceiveResponse receiveResponse;
     try {
-      receiveResponse = enclave.receive(receiveRequest);
-    } catch (final Exception e) {
-      LOG.debug("Enclave does not have private transaction payload with key {}", key, e);
-      return BytesValue.EMPTY;
+      receiveResponse = enclave.receive(key);
+    } catch (final EnclaveClientException e) {
+      LOG.debug("Can not fetch private transaction payload with key {}", key, e);
+      return Bytes.EMPTY;
+    } catch (final EnclaveServerException e) {
+      LOG.error("Enclave is responding but errored perhaps it has a misconfiguration?", e);
+      throw e;
+    } catch (final EnclaveIOException e) {
+      LOG.error("Can not communicate with enclave is it up?", e);
+      throw e;
     }
 
     final BytesValueRLPInput bytesValueRLPInput =
-        new BytesValueRLPInput(BytesValues.fromBase64(receiveResponse.getPayload()), false);
+        new BytesValueRLPInput(
+            Bytes.wrap(Base64.getDecoder().decode(receiveResponse.getPayload())), false);
     final PrivateTransaction privateTransaction = PrivateTransaction.readFrom(bytesValueRLPInput);
     final WorldUpdater publicWorldState = messageFrame.getWorldState();
-    final BytesValue privacyGroupId = BytesValues.fromBase64(receiveResponse.getPrivacyGroupId());
+    final Bytes32 privacyGroupId =
+        Bytes32.wrap(Bytes.fromBase64String(receiveResponse.getPrivacyGroupId()));
 
     LOG.trace(
         "Processing private transaction {} in privacy group {}",
@@ -150,7 +166,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
           "Failed to process private transaction {}: {}",
           privateTransaction.getHash(),
           result.getValidationResult().getErrorMessage());
-      return BytesValue.EMPTY;
+      return Bytes.EMPTY;
     }
 
     if (messageFrame.isPersistingState()) {
@@ -162,20 +178,16 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
       disposablePrivateState.persist();
 
       final PrivateStateStorage.Updater privateStateUpdater = privateStateStorage.updater();
-      final PrivateBlockMetadata privateBlockMetadata =
-          privateStateStorage
-              .getPrivateBlockMetadata(currentBlockHash, Bytes32.wrap(privacyGroupId))
-              .orElseGet(PrivateBlockMetadata::empty);
-      privateBlockMetadata.addPrivateTransactionMetadata(
-          new PrivateTransactionMetadata(
-              messageFrame.getTransactionHash(), disposablePrivateState.rootHash()));
-      privateStateUpdater.putPrivateBlockMetadata(
-          Bytes32.wrap(currentBlockHash.getByteArray()),
-          Bytes32.wrap(privacyGroupId),
-          privateBlockMetadata);
+
+      updatePrivateBlockMetadata(
+          messageFrame.getTransactionHash(),
+          currentBlockHash,
+          privacyGroupId,
+          disposablePrivateState.rootHash(),
+          privateStateUpdater);
 
       final Bytes32 txHash = keccak256(RLP.encode(privateTransaction::writeTo));
-      final LogSeries logs = result.getLogs();
+      final List<Log> logs = result.getLogs();
       if (!logs.isEmpty()) {
         privateStateUpdater.putTransactionLogs(txHash, result.getLogs());
       }
@@ -185,7 +197,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
 
       privateStateUpdater.putTransactionStatus(
           txHash,
-          BytesValue.of(
+          Bytes.of(
               result.getStatus() == PrivateTransactionProcessor.Result.Status.SUCCESSFUL ? 1 : 0));
       privateStateUpdater.putTransactionResult(txHash, result.getOutput());
 
@@ -200,5 +212,23 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
     }
 
     return result.getOutput();
+  }
+
+  private void updatePrivateBlockMetadata(
+      final Hash markerTransactionHash,
+      final Hash currentBlockHash,
+      final Bytes32 privacyGroupId,
+      final Hash rootHash,
+      final PrivateStateStorage.Updater privateStateUpdater) {
+    final PrivateBlockMetadata privateBlockMetadata =
+        privateStateStorage
+            .getPrivateBlockMetadata(currentBlockHash, Bytes32.wrap(privacyGroupId))
+            .orElseGet(PrivateBlockMetadata::empty);
+    privateBlockMetadata.addPrivateTransactionMetadata(
+        new PrivateTransactionMetadata(markerTransactionHash, rootHash));
+    privateStateUpdater.putPrivateBlockMetadata(
+        Bytes32.wrap(currentBlockHash.getByteArray()),
+        Bytes32.wrap(privacyGroupId),
+        privateBlockMetadata);
   }
 }

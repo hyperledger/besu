@@ -15,8 +15,6 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import org.hyperledger.besu.ethereum.core.AccountStorageEntry;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.NavigableMap;
 import java.util.Objects;
@@ -25,6 +23,8 @@ import java.util.TreeMap;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.google.common.base.MoreObjects;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class DebugStorageRangeAtResult implements JsonRpcResult {
 
@@ -87,8 +87,8 @@ public class DebugStorageRangeAtResult implements JsonRpcResult {
 
     public StorageEntry(final AccountStorageEntry entry, final boolean shortValues) {
       if (shortValues) {
-        this.value = entry.getValue().toStrictShortHexString();
-        this.key = entry.getKey().map(UInt256::toStrictShortHexString).orElse(null);
+        this.value = entry.getValue().toShortHexString();
+        this.key = entry.getKey().map(UInt256::toShortHexString).orElse(null);
       } else {
         this.value = entry.getValue().toHexString();
         this.key = entry.getKey().map(UInt256::toHexString).orElse(null);

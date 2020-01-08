@@ -33,11 +33,10 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.Restriction;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.BytesValues;
 
 import java.math.BigInteger;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -66,7 +65,7 @@ public class PrivGetCodeTest {
           .to(null)
           .value(Wei.ZERO)
           .payload(
-              BytesValue.fromHexString(
+              Bytes.fromBase64String(
                   "0x608060405234801561001057600080fd5b5060d08061001f60003960"
                       + "00f3fe60806040526004361060485763ffffffff7c01000000"
                       + "00000000000000000000000000000000000000000000000000"
@@ -79,11 +78,11 @@ public class PrivGetCodeTest {
                       + "daa4f6b2f003d1b0180029"))
           .sender(sender)
           .chainId(BigInteger.valueOf(2018))
-          .privateFrom(BytesValues.fromBase64("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo="))
+          .privateFrom(Bytes.fromBase64String("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo="))
           .restriction(Restriction.RESTRICTED);
 
   private final String enclaveKey =
-      BytesValues.fromBase64("93Ky7lXwFkMc7+ckoFgUMku5bpr9tz4zhmWmk9RlNng=").toString();
+      Bytes.fromBase64String("93Ky7lXwFkMc7+ckoFgUMku5bpr9tz4zhmWmk9RlNng=").toString();
 
   private final Enclave enclave = mock(Enclave.class);
 
@@ -108,7 +107,7 @@ public class PrivGetCodeTest {
   public void returnPrivacyDisabledErrorWhenPrivacyIsDisabled() {
     PrivateTransaction transaction =
         privateTransactionBuilder
-            .privacyGroupId(BytesValues.fromBase64("Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs="))
+            .privacyGroupId(Bytes.fromBase64String("Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs="))
             .signAndBuild(KEY_PAIR);
 
     final JsonRpcRequestContext request =

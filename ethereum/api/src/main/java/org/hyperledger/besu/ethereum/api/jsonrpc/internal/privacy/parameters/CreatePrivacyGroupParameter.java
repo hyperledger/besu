@@ -14,13 +14,15 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.parameters;
 
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class CreatePrivacyGroupParameter {
 
-  private final String[] addresses;
+  private final List<String> addresses;
 
   @JsonInclude(JsonInclude.Include.NON_NULL)
   private final String name;
@@ -30,7 +32,7 @@ public class CreatePrivacyGroupParameter {
 
   @JsonCreator
   public CreatePrivacyGroupParameter(
-      @JsonProperty(value = "addresses", required = true) final String[] addresses,
+      @JsonProperty(value = "addresses", required = true) final List<String> addresses,
       @JsonProperty("name") final String name,
       @JsonProperty("description") final String description) {
     this.addresses = addresses;
@@ -38,7 +40,7 @@ public class CreatePrivacyGroupParameter {
     this.description = description;
   }
 
-  public String[] getAddresses() {
+  public List<String> getAddresses() {
     return addresses;
   }
 

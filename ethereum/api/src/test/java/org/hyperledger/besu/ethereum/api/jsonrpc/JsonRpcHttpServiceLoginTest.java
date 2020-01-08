@@ -55,6 +55,7 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -138,7 +139,8 @@ public class JsonRpcHttpServiceLoginTest {
                     mock(PrivacyParameters.class),
                     mock(JsonRpcConfiguration.class),
                     mock(WebSocketConfiguration.class),
-                    mock(MetricsConfiguration.class)));
+                    mock(MetricsConfiguration.class),
+                    new HashMap<>()));
     service = createJsonRpcHttpService();
     jwtAuth = service.authenticationService.get().getJwtAuthProvider();
     service.start().join();

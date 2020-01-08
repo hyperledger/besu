@@ -18,6 +18,7 @@ import static org.apache.logging.log4j.LogManager.getLogger;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -26,22 +27,24 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
-import org.hyperledger.besu.util.bytes.BytesValues;
 
 import java.util.Optional;
 
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
-public class PrivGetCode extends PrivacyApiMethod {
+public class PrivGetCode implements JsonRpcMethod {
 
   private static final Logger LOG = getLogger();
 
   private final BlockchainQueries blockchain;
   private final PrivateStateRootResolver privateStateRootResolver;
+  private final PrivacyParameters privacyParameters;
 
   public PrivGetCode(
       final BlockchainQueries blockchain, final PrivacyParameters privacyParameters) {
-    super(privacyParameters);
+    this.privacyParameters = privacyParameters;
     this.blockchain = blockchain;
     this.privateStateRootResolver =
         new PrivateStateRootResolver(privacyParameters.getPrivateStateStorage());
@@ -53,7 +56,7 @@ public class PrivGetCode extends PrivacyApiMethod {
   }
 
   @Override
-  public JsonRpcResponse doResponse(final JsonRpcRequestContext requestContext) {
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     LOG.trace("Executing {}", RpcMethod.PRIV_GET_CODE.getMethodName());
 
     final Address address =
@@ -62,11 +65,13 @@ public class PrivGetCode extends PrivacyApiMethod {
     final BlockParameter blockParameter =
         requestContext.getRequiredParameter(1, BlockParameter.class);
 
-    final String privacyGroupId = requestContext.getRequiredParameter(2, String.class);
+    final String privacyGroupString = requestContext.getRequiredParameter(2, String.class);
+
+    final Bytes32 privacyGroupId = Bytes32.wrap(Bytes.fromBase64String(privacyGroupString));
 
     final Hash latestStateRoot =
         privateStateRootResolver.resolveLastStateRoot(
-            BytesValues.fromBase64(privacyGroupId),
+            privacyGroupId,
             blockParameter.isNumeric() && blockParameter.getNumber().isPresent()
                 ? blockchain
                     .getBlockchain()

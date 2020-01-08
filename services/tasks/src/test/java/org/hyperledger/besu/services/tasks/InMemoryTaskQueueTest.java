@@ -14,12 +14,12 @@
  */
 package org.hyperledger.besu.services.tasks;
 
-import org.hyperledger.besu.util.bytes.BytesValue;
+import org.apache.tuweni.bytes.Bytes;
 
-public class InMemoryTaskQueueTest extends AbstractTaskQueueTest<InMemoryTaskQueue<BytesValue>> {
+public class InMemoryTaskQueueTest extends AbstractTaskQueueTest<InMemoryTaskQueue<Bytes>> {
 
   @Override
-  protected InMemoryTaskQueue<BytesValue> createQueue() throws Exception {
+  protected InMemoryTaskQueue<Bytes> createQueue() throws Exception {
     return new InMemoryTaskQueue<>();
   }
 }

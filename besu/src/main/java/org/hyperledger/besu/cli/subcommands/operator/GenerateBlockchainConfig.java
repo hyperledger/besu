@@ -24,7 +24,6 @@ import org.hyperledger.besu.consensus.ibft.IbftExtraData;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Util;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.io.File;
 import java.io.IOException;
@@ -43,6 +42,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.io.Resources;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParentCommand;
@@ -60,7 +60,7 @@ class GenerateBlockchainConfig implements Runnable {
       paramLabel = DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP,
       description = "Configuration file.",
       arity = "1..1")
-  private File configurationFile = null;
+  private final File configurationFile = null;
 
   @Option(
       required = true,
@@ -68,8 +68,9 @@ class GenerateBlockchainConfig implements Runnable {
       paramLabel = DefaultCommandValues.MANDATORY_DIRECTORY_FORMAT_HELP,
       description = "Directory to write output files to.",
       arity = "1..1")
-  private File outputDirectory = null;
+  private final File outputDirectory = null;
 
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @Option(
       names = "--genesis-file-name",
       paramLabel = DefaultCommandValues.MANDATORY_PATH_FORMAT_HELP,
@@ -77,6 +78,7 @@ class GenerateBlockchainConfig implements Runnable {
       arity = "1..1")
   private String genesisFileName = "genesis.json";
 
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @Option(
       names = "--private-key-file-name",
       paramLabel = DefaultCommandValues.MANDATORY_PATH_FORMAT_HELP,
@@ -84,6 +86,7 @@ class GenerateBlockchainConfig implements Runnable {
       arity = "1..1")
   private String privateKeyFileName = "key.priv";
 
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @Option(
       names = "--public-key-file-name",
       paramLabel = DefaultCommandValues.MANDATORY_PATH_FORMAT_HELP,
@@ -99,7 +102,7 @@ class GenerateBlockchainConfig implements Runnable {
   private ObjectNode blockchainConfig;
   private ObjectNode nodesConfig;
   private boolean generateNodesKeys;
-  private List<Address> addressesForGenesisExtraData = new ArrayList<>();
+  private final List<Address> addressesForGenesisExtraData = new ArrayList<>();
   private Path keysDirectory;
 
   @Override
@@ -154,7 +157,7 @@ class GenerateBlockchainConfig implements Runnable {
 
     try {
       final SECP256K1.PublicKey publicKey =
-          SECP256K1.PublicKey.create(BytesValue.fromHexString(publicKeyText));
+          SECP256K1.PublicKey.create(Bytes.fromHexString(publicKeyText));
       writeKeypair(publicKey, null);
       LOG.info("Public key imported from configuration.({})", publicKey.toString());
     } catch (final IOException e) {

@@ -34,13 +34,13 @@ import org.apache.tuweni.toml.TomlParseResult;
 
 public class WhitelistPersistor {
 
-  private File configurationFile;
+  private final File configurationFile;
 
   public enum WHITELIST_TYPE {
     ACCOUNTS("accounts-whitelist"),
     NODES("nodes-whitelist");
 
-    private String tomlKey;
+    private final String tomlKey;
 
     WHITELIST_TYPE(final String tomlKey) {
       this.tomlKey = tomlKey;

@@ -16,43 +16,40 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
-import org.hyperledger.besu.util.bytes.Bytes32;
 
 import java.util.Collections;
 
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Before;
 import org.junit.Test;
 
 public class PrivacyBlockProcessorTest {
 
-  private PrivacyParameters privacyParameters;
   private PrivacyBlockProcessor privacyBlockProcessor;
+  private PrivateStateStorage privateStateStorage;
+  private AbstractBlockProcessor blockProcessor;
 
   @Before
   public void setUp() {
-    final AbstractBlockProcessor blockProcessor = mock(AbstractBlockProcessor.class);
-    this.privacyParameters = mock(PrivacyParameters.class);
-    this.privacyBlockProcessor = new PrivacyBlockProcessor(blockProcessor, privacyParameters);
+    blockProcessor = mock(AbstractBlockProcessor.class);
+    privateStateStorage = new PrivateStateKeyValueStorage(new InMemoryKeyValueStorage());
+    this.privacyBlockProcessor = new PrivacyBlockProcessor(blockProcessor, privateStateStorage);
   }
 
   @Test
   public void mustCopyPreviousPrivacyGroupBlockHeadMap() {
     final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
-    final PrivateStateStorage privateStateStorage =
-        new PrivateStateKeyValueStorage(new InMemoryKeyValueStorage());
-    when(privacyParameters.getPrivateStateStorage()).thenReturn(privateStateStorage);
     final Blockchain blockchain = mock(Blockchain.class);
     final MutableWorldState mutableWorldState = mock(MutableWorldState.class);
     final PrivacyGroupHeadBlockMap expected =
@@ -69,5 +66,12 @@ public class PrivacyBlockProcessorTest {
     privacyBlockProcessor.processBlock(blockchain, mutableWorldState, secondBlock);
     assertThat(privateStateStorage.getPrivacyGroupHeadBlockMap(secondBlock.getHash()))
         .contains(expected);
+    verify(blockProcessor)
+        .processBlock(
+            blockchain,
+            mutableWorldState,
+            firstBlock.getHeader(),
+            firstBlock.getBody().getTransactions(),
+            firstBlock.getBody().getOmmers());
   }
 }

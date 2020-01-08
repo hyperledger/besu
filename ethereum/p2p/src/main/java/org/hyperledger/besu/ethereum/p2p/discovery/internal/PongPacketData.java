@@ -17,7 +17,8 @@ package org.hyperledger.besu.ethereum.p2p.discovery.internal;
 import org.hyperledger.besu.ethereum.p2p.discovery.Endpoint;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-import org.hyperledger.besu.util.bytes.BytesValue;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class PongPacketData implements PacketData {
 
@@ -25,18 +26,18 @@ public class PongPacketData implements PacketData {
   private final Endpoint to;
 
   /* Hash of the PING packet. */
-  private final BytesValue pingHash;
+  private final Bytes pingHash;
 
   /* In millis after epoch. */
   private final long expiration;
 
-  private PongPacketData(final Endpoint to, final BytesValue pingHash, final long expiration) {
+  private PongPacketData(final Endpoint to, final Bytes pingHash, final long expiration) {
     this.to = to;
     this.pingHash = pingHash;
     this.expiration = expiration;
   }
 
-  public static PongPacketData create(final Endpoint to, final BytesValue pingHash) {
+  public static PongPacketData create(final Endpoint to, final Bytes pingHash) {
     return new PongPacketData(
         to, pingHash, System.currentTimeMillis() + PacketData.DEFAULT_EXPIRATION_PERIOD_MS);
   }
@@ -44,7 +45,7 @@ public class PongPacketData implements PacketData {
   public static PongPacketData readFrom(final RLPInput in) {
     in.enterList();
     final Endpoint to = Endpoint.decodeStandalone(in);
-    final BytesValue hash = in.readBytesValue();
+    final Bytes hash = in.readBytes();
     final long expiration = in.readLongScalar();
     in.leaveListLenient();
     return new PongPacketData(to, hash, expiration);
@@ -54,7 +55,7 @@ public class PongPacketData implements PacketData {
   public void writeTo(final RLPOutput out) {
     out.startList();
     to.encodeStandalone(out);
-    out.writeBytesValue(pingHash);
+    out.writeBytes(pingHash);
     out.writeLongScalar(expiration);
     out.endList();
   }
@@ -75,7 +76,7 @@ public class PongPacketData implements PacketData {
     return to;
   }
 
-  public BytesValue getPingHash() {
+  public Bytes getPingHash() {
     return pingHash;
   }
 
