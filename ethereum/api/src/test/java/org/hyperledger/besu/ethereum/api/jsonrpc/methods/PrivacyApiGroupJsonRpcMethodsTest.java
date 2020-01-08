@@ -154,8 +154,7 @@ public class PrivacyApiGroupJsonRpcMethodsTest {
     when(privacyParameters.isMultiTenancyEnabled()).thenReturn(true);
 
     privacyApiGroupJsonRpcMethods.create();
-    final PrivacyController privacyController =
-        privacyApiGroupJsonRpcMethods.privacyController;
+    final PrivacyController privacyController = privacyApiGroupJsonRpcMethods.privacyController;
 
     assertThat(privacyController).isInstanceOf(MultiTenancyPrivacyController.class);
   }
