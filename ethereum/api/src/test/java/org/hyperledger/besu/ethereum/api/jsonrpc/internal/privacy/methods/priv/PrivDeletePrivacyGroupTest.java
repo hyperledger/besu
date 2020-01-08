@@ -25,9 +25,12 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcUnauthorizedResponse;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.privacy.DefaultPrivacyController;
+import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 import io.vertx.core.json.JsonObject;
@@ -85,5 +88,21 @@ public class PrivDeletePrivacyGroupTest {
         (JsonRpcErrorResponse) privDeletePrivacyGroup.response(request);
     assertThat(response.getError()).isEqualTo(JsonRpcError.DELETE_PRIVACY_GROUP_ERROR);
     verify(privacyController).deletePrivacyGroup(PRIVACY_GROUP_ID, ENCLAVE_PUBLIC_KEY);
+  }
+
+  @Test
+  public void failsWithUnauthorizedErrorIfMultiTenancyValidationFails() {
+    when(privacyController.deletePrivacyGroup(PRIVACY_GROUP_ID, ENCLAVE_PUBLIC_KEY))
+        .thenThrow(new MultiTenancyValidationException("validation failed"));
+
+    final PrivDeletePrivacyGroup privDeletePrivacyGroup =
+        new PrivDeletePrivacyGroup(privacyController, enclavePublicKeyProvider);
+
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcUnauthorizedResponse(request.getRequest().getId(), JsonRpcError.UNAUTHORIZED);
+
+    final JsonRpcUnauthorizedResponse response =
+        (JsonRpcUnauthorizedResponse) privDeletePrivacyGroup.response(request);
+    assertThat(response).isEqualTo(expectedResponse);
   }
 }
