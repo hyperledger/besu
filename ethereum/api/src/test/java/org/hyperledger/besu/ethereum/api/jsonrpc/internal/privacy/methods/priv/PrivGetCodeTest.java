@@ -15,33 +15,39 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.SECP256K1;
-import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.core.WorldState;
+import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.Restriction;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.math.BigInteger;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -56,6 +62,9 @@ public class PrivGetCodeTest {
           SECP256K1.PrivateKey.create(
               new BigInteger(
                   "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63", 16)));
+
+  private final Bytes privacyGroupId =
+      Bytes.fromBase64String("Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=");
 
   private final PrivateTransaction.Builder privateTransactionBuilder =
       PrivateTransaction.builder()
@@ -81,44 +90,62 @@ public class PrivGetCodeTest {
           .privateFrom(Bytes.fromBase64String("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo="))
           .restriction(Restriction.RESTRICTED);
 
-  private final String enclaveKey =
-      Bytes.fromBase64String("93Ky7lXwFkMc7+ckoFgUMku5bpr9tz4zhmWmk9RlNng=").toString();
+  private PrivGetCode method;
 
-  private final Enclave enclave = mock(Enclave.class);
+  @Mock private BlockchainQueries mockBlockchainQueries;
+  @Mock private PrivacyParameters mockPrivacyParameters;
+  @Mock private Blockchain mockBlockchain;
+  @Mock private Block mockBlock;
+  @Mock private Hash mockHash;
+  @Mock private PrivateStateRootResolver mockResolver;
+  @Mock private WorldStateArchive mockArchive;
+  @Mock private WorldState mockWorldState;
+  @Mock private Account mockAccount;
 
-  private final PrivacyParameters privacyParameters = mock(PrivacyParameters.class);
-  private final BlockchainQueries blockchain = mock(BlockchainQueries.class);;
-  private final Blockchain mockBlockchain = mock(Blockchain.class);
-  private final Block mockBlock = mock(Block.class);
-  private final WorldStateArchive mockArchive = mock(WorldStateArchive.class);
-  private PrivGetCode privGetCode;
+  private final Hash lastStateRoot =
+      Hash.fromHexString("0x2121b68f1333e93bae8cd717a3ca68c9d7e7003f6b288c36dfc59b0f87be9590");
+
+  private final Bytes fakeAccountCode = Bytes.fromBase64String("ZXhhbXBsZQ==");
 
   @Before
   public void before() {
-    when(privacyParameters.getEnclave()).thenReturn(enclave);
-    when(privacyParameters.isEnabled()).thenReturn(true);
-    when(privacyParameters.getPrivateWorldStateArchive()).thenReturn(mockArchive);
-    when(blockchain.getBlockchain()).thenReturn(mockBlockchain);
-    when(mockBlockchain.getChainHeadBlock()).thenReturn(mockBlock);
-    this.privGetCode = new PrivGetCode(blockchain, privacyParameters);
+    method = new PrivGetCode(mockBlockchainQueries, mockPrivacyParameters, mockResolver);
   }
 
   @Test
-  public void returnPrivacyDisabledErrorWhenPrivacyIsDisabled() {
+  public void returnValidCodeWhenCalledOnValidContract() {
     PrivateTransaction transaction =
-        privateTransactionBuilder
-            .privacyGroupId(Bytes.fromBase64String("Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs="))
-            .signAndBuild(KEY_PAIR);
+        privateTransactionBuilder.privacyGroupId(privacyGroupId).signAndBuild(KEY_PAIR);
+
+    Address resultantContractAddress =
+        Address.privateContractAddress(
+            transaction.getSender(), transaction.getNonce(), privacyGroupId);
+
+    when(mockBlockchainQueries.getBlockchain()).thenReturn(mockBlockchain);
+    when(mockBlockchain.getChainHeadBlock()).thenReturn(mockBlock);
+    when(mockBlock.getHash()).thenReturn(mockHash);
+    when(mockResolver.resolveLastStateRoot(any(Bytes32.class), any(Hash.class)))
+        .thenReturn(lastStateRoot);
+    when(mockPrivacyParameters.getPrivateWorldStateArchive()).thenReturn(mockArchive);
+    when(mockArchive.get(lastStateRoot)).thenReturn(Optional.of(mockWorldState));
+    when(mockWorldState.get(resultantContractAddress)).thenReturn(mockAccount);
+    when(mockAccount.getCode()).thenReturn(fakeAccountCode);
 
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
             new JsonRpcRequest(
                 "2.0",
                 "priv_getCode",
-                new Object[] {transaction.getSender().toString(), enclaveKey}));
+                new Object[] {
+                  resultantContractAddress.getHexString(),
+                  "latest",
+                  "Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs="
+                }));
 
-    final JsonRpcErrorResponse response = (JsonRpcErrorResponse) privGetCode.response(request);
+    final JsonRpcResponse response = method.response(request);
 
-    assertThat(response.getError()).isEqualTo(JsonRpcError.PRIVACY_NOT_ENABLED);
+    assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);
+    assertThat(fakeAccountCode.toString())
+        .isEqualTo(((JsonRpcSuccessResponse) response).getResult());
   }
 }

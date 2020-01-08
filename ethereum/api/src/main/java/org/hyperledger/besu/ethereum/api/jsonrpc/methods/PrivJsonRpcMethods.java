@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.P
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivDeletePrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivDistributeRawTransaction;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivFindPrivacyGroup;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivGetCode;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivGetPrivacyPrecompileAddress;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivGetPrivateTransaction;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivGetTransactionCount;
@@ -32,6 +33,7 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
+import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionSimulator;
 
 import java.util.Map;
@@ -76,6 +78,10 @@ public class PrivJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
                 getBlockchainQueries().getBlockchain(),
                 getBlockchainQueries().getWorldStateArchive(),
                 getProtocolSchedule(),
-                getPrivacyParameters())));
+                getPrivacyParameters())),
+        new PrivGetCode(
+            getBlockchainQueries(),
+            getPrivacyParameters(),
+            new PrivateStateRootResolver(getPrivacyParameters().getPrivateStateStorage())));
   }
 }

@@ -43,11 +43,12 @@ public class PrivGetCode implements JsonRpcMethod {
   private final PrivacyParameters privacyParameters;
 
   public PrivGetCode(
-      final BlockchainQueries blockchain, final PrivacyParameters privacyParameters) {
+      final BlockchainQueries blockchain,
+      final PrivacyParameters privacyParameters,
+      final PrivateStateRootResolver privateStateRootResolver) {
     this.privacyParameters = privacyParameters;
     this.blockchain = blockchain;
-    this.privateStateRootResolver =
-        new PrivateStateRootResolver(privacyParameters.getPrivateStateStorage());
+    this.privateStateRootResolver = privateStateRootResolver;
   }
 
   @Override
