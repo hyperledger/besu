@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.vm;
 
-import java.util.Objects;
-
 import com.fasterxml.jackson.annotation.JsonGetter;
+
+import java.util.Objects;
 
 public class VmOperation {
   private long cost;
@@ -75,8 +75,8 @@ public class VmOperation {
     }
     final VmOperation that = (VmOperation) o;
     return Objects.equals(vmOperationExecutionReport, that.vmOperationExecutionReport)
+        && Objects.equals(sub, that.sub)
         && cost == that.cost
-        && pc == that.pc
-        && sub == that.sub;
+        && pc == that.pc;
   }
 }
