@@ -198,8 +198,7 @@ public class PrivGetPrivateTransactionTest {
     when(blockchain.transactionByHash(any(Hash.class)))
         .thenReturn(Optional.of(returnedTransaction));
     when(returnedTransaction.getTransaction()).thenReturn(justTransaction);
-    when(justTransaction.getPayload())
-        .thenReturn(new UnformattedDataImpl(Bytes.fromBase64String("")));
+    when(justTransaction.getPayload()).thenReturn(Bytes.fromBase64String(""));
 
     final PrivateTransaction privateTransaction =
         privateTransactionBuilder
