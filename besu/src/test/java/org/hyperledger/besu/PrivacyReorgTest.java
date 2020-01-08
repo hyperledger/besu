@@ -181,12 +181,14 @@ public class PrivacyReorgTest {
     final DefaultBlockchain blockchain = (DefaultBlockchain) protocolContext.getBlockchain();
     final PrivateStateStorage privateStateStorage = privacyParameters.getPrivateStateStorage();
 
+    final String firstBlockStateRoot =
+        "0x16979b290f429e06d86a43584c7d8689d4292ade9a602e5c78e2867c6ebd904e";
     final Block firstBlock =
         gen.block(
             getBlockOptionsNoTransaction(
                 blockchain.getGenesisBlock(),
                 generateMarker(getEnclaveKey(enclave.clientUrl())),
-                "0x16979b290f429e06d86a43584c7d8689d4292ade9a602e5c78e2867c6ebd904e"));
+                firstBlockStateRoot));
 
     appendBlock(besuController, blockchain, protocolContext, firstBlock);
 
@@ -201,10 +203,10 @@ public class PrivacyReorgTest {
     assertThat(privateStateStorage.getPrivacyGroupHeadBlockMap(firstBlock.getHash()))
         .contains(expected);
 
+    final String secondBlockStateRoot =
+        "0xd86a520e49caf215e7e4028262924db50540a5b26e415ab7c944e46a0c01d704";
     final Block secondBlock =
-        gen.block(
-            getBlockOptionsNoTransaction(
-                firstBlock, "0xd86a520e49caf215e7e4028262924db50540a5b26e415ab7c944e46a0c01d704"));
+        gen.block(getBlockOptionsNoTransaction(firstBlock, secondBlockStateRoot));
 
     appendBlock(besuController, blockchain, protocolContext, secondBlock);
 
@@ -220,12 +222,14 @@ public class PrivacyReorgTest {
     final ProtocolContext<?> protocolContext = besuController.getProtocolContext();
     final DefaultBlockchain blockchain = (DefaultBlockchain) protocolContext.getBlockchain();
 
+    final String firstBlockStateRoot =
+        "0x16979b290f429e06d86a43584c7d8689d4292ade9a602e5c78e2867c6ebd904e";
     final Block firstBlock =
         gen.block(
             getBlockOptionsNoTransaction(
                 blockchain.getGenesisBlock(),
                 generateMarker(getEnclaveKey(enclave.clientUrl())),
-                "0x16979b290f429e06d86a43584c7d8689d4292ade9a602e5c78e2867c6ebd904e"));
+                firstBlockStateRoot));
 
     appendBlock(besuController, blockchain, protocolContext, firstBlock);
 
@@ -253,18 +257,19 @@ public class PrivacyReorgTest {
     final ProtocolContext<?> protocolContext = besuController.getProtocolContext();
     final DefaultBlockchain blockchain = (DefaultBlockchain) protocolContext.getBlockchain();
 
+    final String firstBlockStateRoot =
+        "0xbca927086c294984d6c2add82731c386cf2df3cd75509907dac928de12b7c472";
     final Block firstBlock =
-        gen.block(
-            getBlockOptionsNoTransaction(
-                blockchain.getGenesisBlock(),
-                "0xbca927086c294984d6c2add82731c386cf2df3cd75509907dac928de12b7c472"));
+        gen.block(getBlockOptionsNoTransaction(blockchain.getGenesisBlock(), firstBlockStateRoot));
 
+    final String secondBlockStateRoot =
+        "0x35c315ee7d272e5b612d454ee87c948657310ab33208b57122f8d0525e91f35e";
     final Block secondBlock =
         gen.block(
             getBlockOptionsNoTransaction(
                 firstBlock,
                 generateMarker(getEnclaveKey(enclave.clientUrl())),
-                "0x35c315ee7d272e5b612d454ee87c948657310ab33208b57122f8d0525e91f35e"));
+                secondBlockStateRoot));
 
     appendBlock(besuController, blockchain, protocolContext, firstBlock);
     appendBlock(besuController, blockchain, protocolContext, secondBlock);
@@ -284,12 +289,14 @@ public class PrivacyReorgTest {
             .getDifficulty()
             .plus(blockchain.getBlockByNumber(2).get().getHeader().getDifficulty());
 
+    final String forkBlockStateRoot =
+        "0x4a33bdf9d16e6dd4f4c67f1638971f663f132ebceac0c7c65c9a3f35172af4de";
     final Block forkBlock =
         gen.block(
             getBlockOptionsNoTransactionWithDifficulty(
                 blockchain.getGenesisBlock(),
                 remainingDifficultyToOutpace.plus(10L),
-                "0x4a33bdf9d16e6dd4f4c67f1638971f663f132ebceac0c7c65c9a3f35172af4de"));
+                forkBlockStateRoot));
 
     appendBlock(besuController, blockchain, protocolContext, forkBlock);
 
@@ -332,12 +339,14 @@ public class PrivacyReorgTest {
     assertPrivateStateRoot(
         privateStateRootResolver, blockchain, STATE_ROOT_AFTER_TRANSACTION_APPENDED_TO_EMTPY_STATE);
 
+    final String secondForkBlockStateRoot =
+        "0xd35eea814b8b5a0b12e690ab320785f3a33d9685bbf6875637c40a64203915da";
     final Block secondForkBlock =
         gen.block(
             getBlockOptionsNoTransactionWithDifficulty(
                 forkBlock,
                 forkBlock.getHeader().getDifficulty().plus(10L),
-                "0xd35eea814b8b5a0b12e690ab320785f3a33d9685bbf6875637c40a64203915da"));
+                secondForkBlockStateRoot));
 
     appendBlock(besuController, blockchain, protocolContext, forkBlock);
     appendBlock(besuController, blockchain, protocolContext, secondForkBlock);
@@ -348,13 +357,15 @@ public class PrivacyReorgTest {
     assertPrivateStateRoot(privateStateRootResolver, blockchain, EMPTY_ROOT_HASH);
 
     // Add another private transaction
+    final String thirdForkBlockStateRoot =
+        "0xe22344ade05260177b79dcc6c4fed8f87ab95a506c2a6147631ac6547cf44846";
     final Block thirdForkBlock =
         gen.block(
             getBlockOptionsWithTransactionAndDifficulty(
                 secondForkBlock,
                 generateMarker(getEnclaveKey(enclave.clientUrl())),
                 secondForkBlock.getHeader().getDifficulty().plus(10L),
-                "0xe22344ade05260177b79dcc6c4fed8f87ab95a506c2a6147631ac6547cf44846"));
+                thirdForkBlockStateRoot));
 
     appendBlock(besuController, blockchain, protocolContext, thirdForkBlock);
 
