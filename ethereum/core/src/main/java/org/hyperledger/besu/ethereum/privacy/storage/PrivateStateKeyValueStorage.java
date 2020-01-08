@@ -18,7 +18,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Log;
-import org.hyperledger.besu.ethereum.core.LogSeries;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
@@ -126,8 +125,8 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
     }
 
     @Override
-    public Updater putTransactionLogs(final Bytes32 transactionHash, final LogSeries logs) {
-      set(transactionHash, LOGS_KEY_SUFFIX, RLP.encode(logs::writeTo));
+    public Updater putTransactionLogs(final Bytes32 transactionHash, final List<Log> logs) {
+      set(transactionHash, LOGS_KEY_SUFFIX, RLP.encode(out -> out.writeList(logs, Log::writeTo)));
       return this;
     }
 

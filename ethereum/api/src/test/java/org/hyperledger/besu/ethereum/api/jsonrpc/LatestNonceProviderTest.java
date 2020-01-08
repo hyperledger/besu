@@ -30,9 +30,9 @@ public class LatestNonceProviderTest {
 
   private final Address senderAdress = Address.fromHexString("1");
 
-  private PendingTransactions pendingTransactions = mock(PendingTransactions.class);
-  private BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
-  private LatestNonceProvider nonceProvider =
+  private final PendingTransactions pendingTransactions = mock(PendingTransactions.class);
+  private final BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
+  private final LatestNonceProvider nonceProvider =
       new LatestNonceProvider(blockchainQueries, pendingTransactions);
 
   @Test

@@ -25,8 +25,8 @@ import org.web3j.utils.Convert.Unit;
 
 public class Amount {
 
-  private BigDecimal value;
-  private Unit unit;
+  private final BigDecimal value;
+  private final Unit unit;
 
   private Amount(final BigDecimal value, final Unit unit) {
     this.value = value;

@@ -31,7 +31,7 @@ public class PrivacyKeyValueStorageProvider implements PrivacyStorageProvider {
   private final KeyValueStorage privateWorldStatePreimageStorage;
   private final KeyValueStorage privateStateStorage;
 
-  private int factoryVersion;
+  private final int factoryVersion;
 
   public PrivacyKeyValueStorageProvider(
       final KeyValueStorage privateWorldStateStorage,

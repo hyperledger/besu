@@ -50,37 +50,37 @@ public class RevertReason extends Contract {
 
   @Deprecated
   protected RevertReason(
-      String contractAddress,
-      Web3j web3j,
-      Credentials credentials,
-      BigInteger gasPrice,
-      BigInteger gasLimit) {
+      final String contractAddress,
+      final Web3j web3j,
+      final Credentials credentials,
+      final BigInteger gasPrice,
+      final BigInteger gasLimit) {
     super(BINARY, contractAddress, web3j, credentials, gasPrice, gasLimit);
   }
 
   protected RevertReason(
-      String contractAddress,
-      Web3j web3j,
-      Credentials credentials,
-      ContractGasProvider contractGasProvider) {
+      final String contractAddress,
+      final Web3j web3j,
+      final Credentials credentials,
+      final ContractGasProvider contractGasProvider) {
     super(BINARY, contractAddress, web3j, credentials, contractGasProvider);
   }
 
   @Deprecated
   protected RevertReason(
-      String contractAddress,
-      Web3j web3j,
-      TransactionManager transactionManager,
-      BigInteger gasPrice,
-      BigInteger gasLimit) {
+      final String contractAddress,
+      final Web3j web3j,
+      final TransactionManager transactionManager,
+      final BigInteger gasPrice,
+      final BigInteger gasLimit) {
     super(BINARY, contractAddress, web3j, transactionManager, gasPrice, gasLimit);
   }
 
   protected RevertReason(
-      String contractAddress,
-      Web3j web3j,
-      TransactionManager transactionManager,
-      ContractGasProvider contractGasProvider) {
+      final String contractAddress,
+      final Web3j web3j,
+      final TransactionManager transactionManager,
+      final ContractGasProvider contractGasProvider) {
     super(BINARY, contractAddress, web3j, transactionManager, contractGasProvider);
   }
 
@@ -104,64 +104,71 @@ public class RevertReason extends Contract {
 
   @Deprecated
   public static RevertReason load(
-      String contractAddress,
-      Web3j web3j,
-      Credentials credentials,
-      BigInteger gasPrice,
-      BigInteger gasLimit) {
+      final String contractAddress,
+      final Web3j web3j,
+      final Credentials credentials,
+      final BigInteger gasPrice,
+      final BigInteger gasLimit) {
     return new RevertReason(contractAddress, web3j, credentials, gasPrice, gasLimit);
   }
 
   @Deprecated
   public static RevertReason load(
-      String contractAddress,
-      Web3j web3j,
-      TransactionManager transactionManager,
-      BigInteger gasPrice,
-      BigInteger gasLimit) {
+      final String contractAddress,
+      final Web3j web3j,
+      final TransactionManager transactionManager,
+      final BigInteger gasPrice,
+      final BigInteger gasLimit) {
     return new RevertReason(contractAddress, web3j, transactionManager, gasPrice, gasLimit);
   }
 
   public static RevertReason load(
-      String contractAddress,
-      Web3j web3j,
-      Credentials credentials,
-      ContractGasProvider contractGasProvider) {
+      final String contractAddress,
+      final Web3j web3j,
+      final Credentials credentials,
+      final ContractGasProvider contractGasProvider) {
     return new RevertReason(contractAddress, web3j, credentials, contractGasProvider);
   }
 
   public static RevertReason load(
-      String contractAddress,
-      Web3j web3j,
-      TransactionManager transactionManager,
-      ContractGasProvider contractGasProvider) {
+      final String contractAddress,
+      final Web3j web3j,
+      final TransactionManager transactionManager,
+      final ContractGasProvider contractGasProvider) {
     return new RevertReason(contractAddress, web3j, transactionManager, contractGasProvider);
   }
 
   public static RemoteCall<RevertReason> deploy(
-      Web3j web3j, Credentials credentials, ContractGasProvider contractGasProvider) {
+      final Web3j web3j,
+      final Credentials credentials,
+      final ContractGasProvider contractGasProvider) {
     return deployRemoteCall(
         RevertReason.class, web3j, credentials, contractGasProvider, BINARY, "");
   }
 
   @Deprecated
   public static RemoteCall<RevertReason> deploy(
-      Web3j web3j, Credentials credentials, BigInteger gasPrice, BigInteger gasLimit) {
+      final Web3j web3j,
+      final Credentials credentials,
+      final BigInteger gasPrice,
+      final BigInteger gasLimit) {
     return deployRemoteCall(RevertReason.class, web3j, credentials, gasPrice, gasLimit, BINARY, "");
   }
 
   public static RemoteCall<RevertReason> deploy(
-      Web3j web3j, TransactionManager transactionManager, ContractGasProvider contractGasProvider) {
+      final Web3j web3j,
+      final TransactionManager transactionManager,
+      final ContractGasProvider contractGasProvider) {
     return deployRemoteCall(
         RevertReason.class, web3j, transactionManager, contractGasProvider, BINARY, "");
   }
 
   @Deprecated
   public static RemoteCall<RevertReason> deploy(
-      Web3j web3j,
-      TransactionManager transactionManager,
-      BigInteger gasPrice,
-      BigInteger gasLimit) {
+      final Web3j web3j,
+      final TransactionManager transactionManager,
+      final BigInteger gasPrice,
+      final BigInteger gasLimit) {
     return deployRemoteCall(
         RevertReason.class, web3j, transactionManager, gasPrice, gasLimit, BINARY, "");
   }

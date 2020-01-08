@@ -103,7 +103,7 @@ public class PublicKeySubCommand implements Runnable {
         paramLabel = DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP,
         description = "File to write public key to instead of standard output",
         arity = "1..1")
-    private File publicKeyExportFile = null;
+    private final File publicKeyExportFile = null;
 
     @SuppressWarnings("unused")
     @ParentCommand
@@ -155,7 +155,7 @@ public class PublicKeySubCommand implements Runnable {
         paramLabel = DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP,
         description = "File to write address to instead of standard output",
         arity = "1..1")
-    private File addressExportFile = null;
+    private final File addressExportFile = null;
 
     @SuppressWarnings("unused")
     @ParentCommand

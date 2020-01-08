@@ -71,8 +71,7 @@ public class BlockchainQueriesLogCacheTest {
     final Address testAddress = Address.fromHexString("0x123456");
     final Bytes testMessage = Bytes.fromHexString("0x9876");
     final Log testLog = new Log(testAddress, testMessage, List.of());
-    testLogsBloomFilter = new LogsBloomFilter();
-    testLogsBloomFilter.insertLog(testLog);
+    testLogsBloomFilter = LogsBloomFilter.builder().insertLog(testLog).build();
     logsQuery = new LogsQuery(List.of(testAddress), List.of());
 
     for (int i = 0; i < 2; i++) {

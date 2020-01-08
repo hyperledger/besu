@@ -67,7 +67,7 @@ public class TransactionReceipt {
         NONEXISTENT,
         cumulativeGasUsed,
         logs,
-        LogsBloomFilter.compute(logs),
+        LogsBloomFilter.builder().insertLogs(logs).build(),
         revertReason);
   }
 
@@ -93,7 +93,13 @@ public class TransactionReceipt {
       final long cumulativeGasUsed,
       final List<Log> logs,
       final Optional<Bytes> revertReason) {
-    this(null, status, cumulativeGasUsed, logs, LogsBloomFilter.compute(logs), revertReason);
+    this(
+        null,
+        status,
+        cumulativeGasUsed,
+        logs,
+        LogsBloomFilter.builder().insertLogs(logs).build(),
+        revertReason);
   }
 
   private TransactionReceipt(
@@ -146,7 +152,7 @@ public class TransactionReceipt {
       out.writeLongScalar(status);
     }
     out.writeLongScalar(cumulativeGasUsed);
-    out.writeBytes(bloomFilter.getBytes());
+    out.writeBytes(bloomFilter);
     out.writeList(logs, Log::writeTo);
     if (withRevertReason && revertReason.isPresent()) {
       out.writeBytes(revertReason.get());

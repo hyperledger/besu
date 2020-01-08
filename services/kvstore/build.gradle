@@ -34,10 +34,10 @@ dependencies {
   implementation project(':metrics:core')
   implementation project(':metrics:rocksdb')
 
-  implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'com.google.guava:guava'
   implementation 'io.prometheus:simpleclient'
   implementation 'org.apache.logging.log4j:log4j-api'
+  implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.rocksdb:rocksdbjni'
 
   runtime 'org.apache.logging.log4j:log4j-core'
@@ -45,6 +45,6 @@ dependencies {
   testImplementation project(':testutil')
 
   testImplementation 'junit:junit'
-  testImplementation 'org.mockito:mockito-core'
   testImplementation 'org.assertj:assertj-core'
+  testImplementation 'org.mockito:mockito-core'
 }

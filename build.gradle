@@ -125,7 +125,7 @@ allprojects {
     maven { url "https://repository.apache.org/content/repositories/snapshots/" }
   }
 
-  dependencies { errorprone("com.google.errorprone:error_prone_core") }
+  dependencies { errorprone "com.google.errorprone:error_prone_core" }
 
   apply plugin: 'com.diffplug.gradle.spotless'
   spotless {
@@ -189,8 +189,6 @@ allprojects {
       check('ImmutableEnumChecker', CheckSeverity.OFF)
       // This is a style check instead of an error-prone pattern.
       check('UnnecessaryParentheses', CheckSeverity.OFF)
-      // Lazy impl causes excess CPU usage O(n) of non-final fiield when it should be O(1).
-      check('FieldCanBeFinal', CheckSeverity.OFF)
 
       // This check is broken in Java 12.  See https://github.com/google/error-prone/issues/1257
       if (JavaVersion.current() == JavaVersion.VERSION_12) {
@@ -201,6 +199,7 @@ allprojects {
         check('TypeParameterUnusedInFormals', CheckSeverity.OFF)
       }
 
+      check('FieldCanBeFinal', CheckSeverity.WARN)
       check('InsecureCryptoUsage', CheckSeverity.WARN)
       check('WildcardImport', CheckSeverity.WARN)
     }
@@ -477,7 +476,7 @@ startScripts {
 
 
 dependencies {
-  compile project(':besu')
+  implementation project(':besu')
   errorprone 'com.google.errorprone:error_prone_core'
 }
 

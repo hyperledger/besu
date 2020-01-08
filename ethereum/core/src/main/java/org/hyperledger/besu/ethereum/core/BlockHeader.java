@@ -133,7 +133,7 @@ public class BlockHeader extends SealableBlockHeader
     out.writeBytes(stateRoot);
     out.writeBytes(transactionsRoot);
     out.writeBytes(receiptsRoot);
-    out.writeBytes(logsBloom.getBytes());
+    out.writeBytes(logsBloom);
     out.writeUInt256Scalar(difficulty);
     out.writeLongScalar(number);
     out.writeLongScalar(gasLimit);

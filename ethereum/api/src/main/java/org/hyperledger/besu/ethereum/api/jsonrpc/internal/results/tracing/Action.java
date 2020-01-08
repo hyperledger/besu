@@ -35,16 +35,16 @@ import org.apache.tuweni.bytes.Bytes32;
 @JsonInclude(NON_NULL)
 public class Action {
 
-  private String callType;
-  private String from;
-  private String gas;
-  private String input;
-  private String to;
-  private String init;
-  private String value;
-  private String address;
-  private String balance;
-  private String refundAddress;
+  private final String callType;
+  private final String from;
+  private final String gas;
+  private final String input;
+  private final String to;
+  private final String init;
+  private final String value;
+  private final String address;
+  private final String balance;
+  private final String refundAddress;
 
   private Action(
       final String callType,

@@ -32,6 +32,7 @@ public class RpcApis {
   public static final RpcApi TX_POOL = new RpcApi("TXPOOL");
   // Disable TRACE functionality while under development
   //  public static final RpcApi TRACE = new RpcApi("TRACE");
+  public static final RpcApi PLUGINS = new RpcApi("PLUGINS");
 
   public static final List<RpcApi> DEFAULT_JSON_RPC_APIS = Arrays.asList(ETH, NET, WEB3);
 
@@ -59,6 +60,8 @@ public class RpcApis {
       // Disable TRACE functionality while under development
       //    } else if (name.equals(TRACE.getCliValue())) {
       //      return Optional.of(TRACE);
+    } else if (name.equals(PLUGINS.getCliValue())) {
+      return Optional.of(PLUGINS);
     } else {
       return Optional.empty();
     }

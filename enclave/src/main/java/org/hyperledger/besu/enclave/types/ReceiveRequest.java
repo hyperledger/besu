@@ -19,8 +19,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonPropertyOrder({"key", "to"})
 public class ReceiveRequest {
-  private String key;
-  private String to;
+  private final String key;
+  private final String to;
 
   public ReceiveRequest(
       @JsonProperty(value = "key") final String key, @JsonProperty(value = "to") final String to) {

@@ -36,6 +36,7 @@ public enum RpcMethod {
   DEBUG_TRACE_BLOCK_BY_HASH("debug_traceBlockByHash"),
   DEBUG_TRACE_BLOCK_BY_NUMBER("debug_traceBlockByNumber"),
   DEBUG_TRACE_TRANSACTION("debug_traceTransaction"),
+  PRIV_CALL("priv_call"),
   PRIV_GET_PRIVATE_TRANSACTION("priv_getPrivateTransaction"),
   PRIV_GET_TRANSACTION_COUNT("priv_getTransactionCount"),
   PRIV_GET_PRIVACY_PRECOMPILE_ADDRESS("priv_getPrivacyPrecompileAddress"),
@@ -114,11 +115,12 @@ public enum RpcMethod {
   TX_POOL_BESU_STATISTICS("txpool_besuStatistics"),
   TX_POOL_BESU_TRANSACTIONS("txpool_besuTransactions"),
   WEB3_CLIENT_VERSION("web3_clientVersion"),
-  WEB3_SHA3("web3_sha3");
+  WEB3_SHA3("web3_sha3"),
+  PLUGINS_RELOAD_CONFIG("plugins_reloadPluginConfig");
 
   private final String methodName;
 
-  private static Collection<String> allMethodNames;
+  private static final Collection<String> allMethodNames;
 
   public String getMethodName() {
     return methodName;
