@@ -98,8 +98,13 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
   public Bytes compute(final Bytes input, final MessageFrame messageFrame) {
     final ProcessableBlockHeader currentBlockHeader = messageFrame.getBlockHeader();
     if (!BlockHeader.class.isAssignableFrom(currentBlockHeader.getClass())) {
-      throw new IllegalArgumentException(
-          "The MessageFrame contains an illegal block header type. Privacy works with BlockHeader only!.");
+      if (!messageFrame.isPersistingState()) {
+        // We get in here from block mining.
+        return Bytes.EMPTY;
+      } else {
+        throw new IllegalArgumentException(
+            "The MessageFrame contains an illegal block header type. Cannot persist private block metadata without current block hash.");
+      }
     }
     final Hash currentBlockHash = ((BlockHeader) currentBlockHeader).getHash();
 

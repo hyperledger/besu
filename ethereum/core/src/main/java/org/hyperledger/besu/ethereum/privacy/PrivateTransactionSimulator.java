@@ -62,6 +62,7 @@ public class PrivateTransactionSimulator {
   private final WorldStateArchive worldStateArchive;
   private final ProtocolSchedule<?> protocolSchedule;
   private final PrivacyParameters privacyParameters;
+  private final PrivateStateRootResolver privateStateRootResolver;
 
   public PrivateTransactionSimulator(
       final Blockchain blockchain,
@@ -72,6 +73,7 @@ public class PrivateTransactionSimulator {
     this.worldStateArchive = worldStateArchive;
     this.protocolSchedule = protocolSchedule;
     this.privacyParameters = privacyParameters;
+    this.privateStateRootResolver = new PrivateStateRootResolver(privacyParameters.getPrivateStateStorage());
   }
 
   public Optional<PrivateTransactionProcessor.Result> process(
@@ -120,13 +122,8 @@ public class PrivateTransactionSimulator {
     }
 
     // get the last world state root hash or create a new one
-    final Bytes privacyGroupId = Bytes.fromBase64String(privacyGroupIdString);
-    final Hash lastRootHash =
-        privacyParameters
-            .getPrivateStateStorage()
-            .getPrivacyGroupHeadBlockMap(header.getHash())
-            .map(map -> map.get(Bytes32.wrap(privacyGroupId)))
-            .orElse(EMPTY_ROOT_HASH);
+    final Bytes32 privacyGroupId = Bytes32.wrap(Bytes.fromBase64String(privacyGroupIdString));
+    final Hash lastRootHash = privateStateRootResolver.resolveLastStateRoot(privacyGroupId, header.getHash());
 
     final MutableWorldState disposablePrivateState =
         privacyParameters.getPrivateWorldStateArchive().getMutable(lastRootHash).get();
