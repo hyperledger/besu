@@ -43,13 +43,11 @@ public class ForkIdManager {
     this.genesisHash = genesisHash;
     this.currentHead = currentHead;
     this.forkAndHashList =
-            createForkIds(
-                    // If there are two forks at the same block height, we only want to add it once to the
-                    // crc checksum
-                    forks.stream().distinct().collect(Collectors.toUnmodifiableList()));
-  }
-
-  ;
+        createForkIds(
+            // If there are two forks at the same block height, we only want to add it once to the
+            // crc checksum
+            forks.stream().distinct().collect(Collectors.toUnmodifiableList()));
+  };
 
   static ForkIdManager buildCollection(
       final Hash genesisHash, final List<Long> forks, final Blockchain blockchain) {
