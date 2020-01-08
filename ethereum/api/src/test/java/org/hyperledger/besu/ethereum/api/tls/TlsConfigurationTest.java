@@ -14,15 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.api.tls;
 
-import static com.google.common.io.Resources.getResource;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.junit.Assert.*;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 
 import org.assertj.core.api.Assertions;
@@ -31,8 +28,6 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 public class TlsConfigurationTest {
-  private static final String KNOWN_CLIENTS_RESOURCE = "JsonRpcHttpService/rpc_known_clients.txt";
-
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Test
@@ -59,13 +54,12 @@ public class TlsConfigurationTest {
     Files.write(tempFile, List.of("common_name invalid_sha256"), UTF_8);
     Assertions.assertThatExceptionOfType(TlsConfigurationException.class)
         .isThrownBy(
-            () -> {
-              TlsConfiguration.TlsConfigurationBuilder.aTlsConfiguration()
-                  .withKeyStorePath(temporaryFolder.newFolder().toPath())
-                  .withKeyStorePassword("test")
-                  .withKnownClientsFile(tempFile)
-                  .build();
-            })
+            () ->
+                TlsConfiguration.TlsConfigurationBuilder.aTlsConfiguration()
+                    .withKeyStorePath(temporaryFolder.newFolder().toPath())
+                    .withKeyStorePassword("test")
+                    .withKnownClientsFile(tempFile)
+                    .build())
         .withMessageContaining("Invalid fingerprint in");
   }
 
@@ -91,9 +85,5 @@ public class TlsConfigurationTest {
             .build();
     Assertions.assertThat(tlsConfiguration).isNotNull();
     Assertions.assertThat(tlsConfiguration.getTrustOptions().isEmpty()).isTrue();
-  }
-
-  private Path getKnownClientsFile() {
-    return Paths.get(getResource(KNOWN_CLIENTS_RESOURCE).getPath());
   }
 }
