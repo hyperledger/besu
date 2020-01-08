@@ -26,9 +26,11 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcUnauthorizedResponse;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.privacy.DefaultPrivacyController;
+import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 import org.junit.Before;
@@ -102,5 +104,20 @@ public class PrivGetEeaTransactionCountTest {
     final JsonRpcErrorResponse errorResponse = (JsonRpcErrorResponse) response;
     assertThat(errorResponse.getError())
         .isEqualTo(JsonRpcError.GET_PRIVATE_TRANSACTION_NONCE_ERROR);
+  }
+
+  @Test
+  public void failsWithUnauthorizedErrorIfMultiTenancyValidationFails() {
+    final PrivGetEeaTransactionCount method =
+        new PrivGetEeaTransactionCount(privacyController, enclavePublicKeyProvider);
+
+    when(privacyController.determineNonce(privateFrom, privateFor, address, ENCLAVE_PUBLIC_KEY))
+        .thenThrow(new MultiTenancyValidationException("validation failed"));
+
+    final JsonRpcResponse response = method.response(request);
+    assertThat(response).isInstanceOf(JsonRpcUnauthorizedResponse.class);
+
+    final JsonRpcUnauthorizedResponse errorResponse = (JsonRpcUnauthorizedResponse) response;
+    assertThat(errorResponse.getError()).isEqualTo(JsonRpcError.UNAUTHORIZED);
   }
 }
