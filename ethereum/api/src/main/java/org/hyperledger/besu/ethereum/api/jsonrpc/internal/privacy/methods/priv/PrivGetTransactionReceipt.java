@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.logging.log4j.LogManager.getLogger;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.UNAUTHORIZED;
 
 import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
@@ -28,7 +27,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.Enclav
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcUnauthorizedResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.privacy.PrivateTransactionReceiptResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -39,7 +37,6 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
@@ -112,9 +109,6 @@ public class PrivGetTransactionReceipt implements JsonRpcMethod {
       privacyGroupId = receiveResponse.getPrivacyGroupId();
     } catch (final EnclaveClientException e) {
       return handleEnclaveException(requestContext, e);
-    } catch (final MultiTenancyValidationException e) {
-      LOG.error("Unauthorized privacy multi-tenancy rpc request. {}", e.getMessage());
-      return new JsonRpcUnauthorizedResponse(requestContext.getRequest().getId(), UNAUTHORIZED);
     }
 
     final String contractAddress =

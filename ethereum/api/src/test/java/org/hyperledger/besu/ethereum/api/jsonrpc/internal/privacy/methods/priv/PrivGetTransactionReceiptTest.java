@@ -31,10 +31,7 @@ import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcUnauthorizedResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.privacy.PrivateTransactionReceiptResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -48,7 +45,6 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.privacy.DefaultPrivacyController;
-import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.Restriction;
@@ -254,23 +250,6 @@ public class PrivGetTransactionReceiptTest {
 
     final Throwable t = catchThrowable(() -> privGetTransactionReceipt.response(request));
     assertThat(t).isInstanceOf(RuntimeException.class);
-  }
-
-  @Test
-  public void failsWithUnauthorizedErrorIfMultiTenancyValidationFails() {
-    when(privacyController.retrieveTransaction(anyString(), any()))
-        .thenThrow(MultiTenancyValidationException.class);
-    final PrivGetTransactionReceipt privGetTransactionReceipt =
-        new PrivGetTransactionReceipt(
-            blockchainQueries, privacyParameters, privacyController, enclavePublicKeyProvider);
-    final Object[] params = new Object[] {transaction.getHash()};
-    final JsonRpcRequestContext request =
-        new JsonRpcRequestContext(new JsonRpcRequest("1", "priv_getTransactionReceipt", params));
-
-    final JsonRpcResponse response = privGetTransactionReceipt.response(request);
-    final JsonRpcResponse expectedResponse =
-        new JsonRpcUnauthorizedResponse(request.getRequest().getId(), JsonRpcError.UNAUTHORIZED);
-    assertThat(response).isEqualTo(expectedResponse);
   }
 
   @Test
