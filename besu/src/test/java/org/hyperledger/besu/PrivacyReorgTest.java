@@ -95,10 +95,16 @@ public class PrivacyReorgTest {
   private static final Bytes ENCLAVE_PUBLIC_KEY =
       Bytes.fromBase64String("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=");
 
-  private static final Hash BLOCK_WITH_SINGLE_TRANSACTION_RECEIPTS_ROOT =
-      Hash.fromHexString("0xc8267b3f9ed36df3ff8adb51a6d030716f23eeb50270e7fce8d9822ffa7f0461");
+  private static final String FIRST_BLOCK_WITH_NO_TRANSACTIONS_STATE_ROOT =
+      "0x1bdf13f6d14c7322d6e695498aab258949e55574bef7eac366eb777f43d7dd2b";
+  private static final String FIRST_BLOCK_WITH_SINGLE_TRANSACTION_STATE_ROOT =
+      "0x16979b290f429e06d86a43584c7d8689d4292ade9a602e5c78e2867c6ebd904e";
+  private static final String BLOCK_WITH_SINGLE_TRANSACTION_RECEIPTS_ROOT =
+      "0xc8267b3f9ed36df3ff8adb51a6d030716f23eeb50270e7fce8d9822ffa7f0461";
   private static final String STATE_ROOT_AFTER_TRANSACTION_APPENDED_TO_EMTPY_STATE =
       "0x2121b68f1333e93bae8cd717a3ca68c9d7e7003f6b288c36dfc59b0f87be9590";
+  private static final Bytes32 PRIVACY_GROUP_BYTES32 =
+      Bytes32.fromHexString("0xf250d523ae9164722b06ca25cfa2a7f3c45df96b09e215236f886c876f715bfa");
 
   // EventEmitter contract binary
   private static final Bytes MOCK_PAYLOAD =
@@ -177,26 +183,16 @@ public class PrivacyReorgTest {
 
     final Block firstBlock =
         gen.block(
-            new BlockDataGenerator.BlockOptions()
-                .setBlockNumber(1)
-                .setParentHash(blockchain.getGenesisBlock().getHash())
-                .addTransaction(generateMarker(getEnclaveKey(enclave.clientUrl())))
-                .hasOmmers(false)
-                .setReceiptsRoot(BLOCK_WITH_SINGLE_TRANSACTION_RECEIPTS_ROOT)
-                .setGasUsed(23176)
-                .setLogsBloom(LogsBloomFilter.empty())
-                .setStateRoot(
-                    Hash.fromHexString(
-                        "0x16979b290f429e06d86a43584c7d8689d4292ade9a602e5c78e2867c6ebd904e")));
+            getBlockOptionsNoTransaction(
+                blockchain.getGenesisBlock(),
+                generateMarker(getEnclaveKey(enclave.clientUrl())),
+                "0x16979b290f429e06d86a43584c7d8689d4292ade9a602e5c78e2867c6ebd904e"));
 
     appendBlock(besuController, blockchain, protocolContext, firstBlock);
 
     final PrivacyGroupHeadBlockMap expected =
         new PrivacyGroupHeadBlockMap(
-            Collections.singletonMap(
-                Bytes32.fromHexString(
-                    "0xf250d523ae9164722b06ca25cfa2a7f3c45df96b09e215236f886c876f715bfa"),
-                firstBlock.getHash()));
+            Collections.singletonMap(PRIVACY_GROUP_BYTES32, firstBlock.getHash()));
 
     assertThat(
             privateStateStorage.getPrivacyGroupHeadBlockMap(blockchain.getGenesisBlock().getHash()))
@@ -207,17 +203,8 @@ public class PrivacyReorgTest {
 
     final Block secondBlock =
         gen.block(
-            new BlockDataGenerator.BlockOptions()
-                .setBlockNumber(2)
-                .setParentHash(firstBlock.getHeader().getHash())
-                .hasTransactions(false)
-                .hasOmmers(false)
-                .setReceiptsRoot(EMPTY_ROOT_HASH)
-                .setGasUsed(0)
-                .setLogsBloom(LogsBloomFilter.empty())
-                .setStateRoot(
-                    Hash.fromHexString(
-                        "0xd86a520e49caf215e7e4028262924db50540a5b26e415ab7c944e46a0c01d704")));
+            getBlockOptionsNoTransaction(
+                firstBlock, "0xd86a520e49caf215e7e4028262924db50540a5b26e415ab7c944e46a0c01d704"));
 
     appendBlock(besuController, blockchain, protocolContext, secondBlock);
 
@@ -235,17 +222,10 @@ public class PrivacyReorgTest {
 
     final Block firstBlock =
         gen.block(
-            new BlockDataGenerator.BlockOptions()
-                .setBlockNumber(1)
-                .setParentHash(blockchain.getGenesisBlock().getHash())
-                .addTransaction(generateMarker(getEnclaveKey(enclave.clientUrl())))
-                .hasOmmers(false)
-                .setReceiptsRoot(BLOCK_WITH_SINGLE_TRANSACTION_RECEIPTS_ROOT)
-                .setGasUsed(23176)
-                .setLogsBloom(LogsBloomFilter.empty())
-                .setStateRoot(
-                    Hash.fromHexString(
-                        "0x16979b290f429e06d86a43584c7d8689d4292ade9a602e5c78e2867c6ebd904e")));
+            getBlockOptionsNoTransaction(
+                blockchain.getGenesisBlock(),
+                generateMarker(getEnclaveKey(enclave.clientUrl())),
+                "0x16979b290f429e06d86a43584c7d8689d4292ade9a602e5c78e2867c6ebd904e"));
 
     appendBlock(besuController, blockchain, protocolContext, firstBlock);
 
@@ -254,20 +234,12 @@ public class PrivacyReorgTest {
         privateStateRootResolver, blockchain, STATE_ROOT_AFTER_TRANSACTION_APPENDED_TO_EMTPY_STATE);
 
     // Create parallel fork of length 1 which removes privacy marker transaction
-    final BlockDataGenerator.BlockOptions options =
-        new BlockDataGenerator.BlockOptions()
-            .setBlockNumber(1)
-            .setParentHash(blockchain.getGenesisBlock().getHash())
-            .hasTransactions(false)
-            .hasOmmers(false)
-            .setDifficulty(blockchain.getChainHeadHeader().getDifficulty().plus(10L))
-            .setReceiptsRoot(EMPTY_ROOT_HASH)
-            .setGasUsed(0)
-            .setLogsBloom(LogsBloomFilter.empty())
-            .setStateRoot(
-                Hash.fromHexString(
-                    "0x1bdf13f6d14c7322d6e695498aab258949e55574bef7eac366eb777f43d7dd2b"));
-    final Block forkBlock = gen.block(options);
+    final Block forkBlock =
+        gen.block(
+            getBlockOptionsNoTransactionWithDifficulty(
+                blockchain.getGenesisBlock(),
+                blockchain.getChainHeadHeader().getDifficulty().plus(10L),
+                FIRST_BLOCK_WITH_NO_TRANSACTIONS_STATE_ROOT));
 
     appendBlock(besuController, blockchain, protocolContext, forkBlock);
 
@@ -283,31 +255,16 @@ public class PrivacyReorgTest {
 
     final Block firstBlock =
         gen.block(
-            new BlockDataGenerator.BlockOptions()
-                .setBlockNumber(1)
-                .setParentHash(blockchain.getGenesisBlock().getHash())
-                .hasTransactions(false)
-                .hasOmmers(false)
-                .setReceiptsRoot(EMPTY_ROOT_HASH)
-                .setGasUsed(0)
-                .setLogsBloom(LogsBloomFilter.empty())
-                .setStateRoot(
-                    Hash.fromHexString(
-                        "0xbca927086c294984d6c2add82731c386cf2df3cd75509907dac928de12b7c472")));
+            getBlockOptionsNoTransaction(
+                blockchain.getGenesisBlock(),
+                "0xbca927086c294984d6c2add82731c386cf2df3cd75509907dac928de12b7c472"));
 
     final Block secondBlock =
         gen.block(
-            new BlockDataGenerator.BlockOptions()
-                .setBlockNumber(2)
-                .setParentHash(firstBlock.getHeader().getHash())
-                .addTransaction(generateMarker(getEnclaveKey(enclave.clientUrl())))
-                .hasOmmers(false)
-                .setReceiptsRoot(BLOCK_WITH_SINGLE_TRANSACTION_RECEIPTS_ROOT)
-                .setGasUsed(23176)
-                .setLogsBloom(LogsBloomFilter.empty())
-                .setStateRoot(
-                    Hash.fromHexString(
-                        "0x35c315ee7d272e5b612d454ee87c948657310ab33208b57122f8d0525e91f35e")));
+            getBlockOptionsNoTransaction(
+                firstBlock,
+                generateMarker(getEnclaveKey(enclave.clientUrl())),
+                "0x35c315ee7d272e5b612d454ee87c948657310ab33208b57122f8d0525e91f35e"));
 
     appendBlock(besuController, blockchain, protocolContext, firstBlock);
     appendBlock(besuController, blockchain, protocolContext, secondBlock);
@@ -326,20 +283,13 @@ public class PrivacyReorgTest {
             .getHeader()
             .getDifficulty()
             .plus(blockchain.getBlockByNumber(2).get().getHeader().getDifficulty());
-    final BlockDataGenerator.BlockOptions options =
-        new BlockDataGenerator.BlockOptions()
-            .setBlockNumber(1)
-            .setParentHash(blockchain.getGenesisBlock().getHash())
-            .hasTransactions(false)
-            .hasOmmers(false)
-            .setDifficulty(remainingDifficultyToOutpace.plus(10L))
-            .setReceiptsRoot(EMPTY_ROOT_HASH)
-            .setGasUsed(0)
-            .setLogsBloom(LogsBloomFilter.empty())
-            .setStateRoot(
-                Hash.fromHexString(
-                    "0x4a33bdf9d16e6dd4f4c67f1638971f663f132ebceac0c7c65c9a3f35172af4de"));
-    final Block forkBlock = gen.block(options);
+
+    final Block forkBlock =
+        gen.block(
+            getBlockOptionsNoTransactionWithDifficulty(
+                blockchain.getGenesisBlock(),
+                remainingDifficultyToOutpace.plus(10L),
+                "0x4a33bdf9d16e6dd4f4c67f1638971f663f132ebceac0c7c65c9a3f35172af4de"));
 
     appendBlock(besuController, blockchain, protocolContext, forkBlock);
 
@@ -357,17 +307,10 @@ public class PrivacyReorgTest {
 
     final Block firstBlock =
         gen.block(
-            new BlockDataGenerator.BlockOptions()
-                .setBlockNumber(1)
-                .setParentHash(blockchain.getGenesisBlock().getHeader().getHash())
-                .addTransaction(generateMarker(getEnclaveKey(enclave.clientUrl())))
-                .hasOmmers(false)
-                .setReceiptsRoot(BLOCK_WITH_SINGLE_TRANSACTION_RECEIPTS_ROOT)
-                .setGasUsed(23176)
-                .setLogsBloom(LogsBloomFilter.empty())
-                .setStateRoot(
-                    Hash.fromHexString(
-                        "0x16979b290f429e06d86a43584c7d8689d4292ade9a602e5c78e2867c6ebd904e")));
+            getBlockOptionsNoTransaction(
+                blockchain.getGenesisBlock(),
+                generateMarker(getEnclaveKey(enclave.clientUrl())),
+                FIRST_BLOCK_WITH_SINGLE_TRANSACTION_STATE_ROOT));
 
     appendBlock(besuController, blockchain, protocolContext, firstBlock);
 
@@ -380,18 +323,10 @@ public class PrivacyReorgTest {
     // Create parallel fork of length 1 which removes privacy marker transaction
     final Block forkBlock =
         gen.block(
-            new BlockDataGenerator.BlockOptions()
-                .setBlockNumber(1)
-                .setParentHash(blockchain.getGenesisBlock().getHash())
-                .hasTransactions(false)
-                .hasOmmers(false)
-                .setDifficulty(firstBlock.getHeader().getDifficulty().plus(10L))
-                .setReceiptsRoot(EMPTY_ROOT_HASH)
-                .setGasUsed(0)
-                .setLogsBloom(LogsBloomFilter.empty())
-                .setStateRoot(
-                    Hash.fromHexString(
-                        "0x1bdf13f6d14c7322d6e695498aab258949e55574bef7eac366eb777f43d7dd2b")));
+            getBlockOptionsNoTransactionWithDifficulty(
+                blockchain.getGenesisBlock(),
+                firstBlock.getHeader().getDifficulty().plus(10L),
+                FIRST_BLOCK_WITH_NO_TRANSACTIONS_STATE_ROOT));
 
     // Check that the private state root did not change
     assertPrivateStateRoot(
@@ -399,20 +334,10 @@ public class PrivacyReorgTest {
 
     final Block secondForkBlock =
         gen.block(
-            new BlockDataGenerator.BlockOptions()
-                .setBlockNumber(2)
-                .setParentHash(forkBlock.getHeader().getHash())
-                .hasTransactions(false)
-                .hasOmmers(false)
-                .setDifficulty(firstBlock.getHeader().getDifficulty().plus(10L))
-                .setReceiptsRoot(
-                    Hash.fromHexString(
-                        "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421"))
-                .setGasUsed(0)
-                .setLogsBloom(LogsBloomFilter.empty())
-                .setStateRoot(
-                    Hash.fromHexString(
-                        "0xd35eea814b8b5a0b12e690ab320785f3a33d9685bbf6875637c40a64203915da")));
+            getBlockOptionsNoTransactionWithDifficulty(
+                forkBlock,
+                forkBlock.getHeader().getDifficulty().plus(10L),
+                "0xd35eea814b8b5a0b12e690ab320785f3a33d9685bbf6875637c40a64203915da"));
 
     appendBlock(besuController, blockchain, protocolContext, forkBlock);
     appendBlock(besuController, blockchain, protocolContext, secondForkBlock);
@@ -425,18 +350,11 @@ public class PrivacyReorgTest {
     // Add another private transaction
     final Block thirdForkBlock =
         gen.block(
-            new BlockDataGenerator.BlockOptions()
-                .setBlockNumber(3)
-                .setParentHash(secondForkBlock.getHeader().getHash())
-                .addTransaction(generateMarker(getEnclaveKey(enclave.clientUrl())))
-                .hasOmmers(false)
-                .setDifficulty(firstBlock.getHeader().getDifficulty().plus(10L))
-                .setReceiptsRoot(BLOCK_WITH_SINGLE_TRANSACTION_RECEIPTS_ROOT)
-                .setGasUsed(23176)
-                .setLogsBloom(LogsBloomFilter.empty())
-                .setStateRoot(
-                    Hash.fromHexString(
-                        "0xe22344ade05260177b79dcc6c4fed8f87ab95a506c2a6147631ac6547cf44846")));
+            getBlockOptionsWithTransactionAndDifficulty(
+                secondForkBlock,
+                generateMarker(getEnclaveKey(enclave.clientUrl())),
+                secondForkBlock.getHeader().getDifficulty().plus(10L),
+                "0xe22344ade05260177b79dcc6c4fed8f87ab95a506c2a6147631ac6547cf44846"));
 
     appendBlock(besuController, blockchain, protocolContext, thirdForkBlock);
 
@@ -549,5 +467,63 @@ public class PrivacyReorgTest {
                     Bytes.fromBase64String("8lDVI66RZHIrBsolz6Kn88Rd+WsJ4hUjb4hsh29xW/o=")),
                 blockchain.getChainHeadHash()))
         .isEqualTo(expected);
+  }
+
+  private BlockDataGenerator.BlockOptions getBlockOptionsNoTransaction(
+      final Block parentBlock, final String stateRoot) {
+    return getBlockOptions(
+        new BlockDataGenerator.BlockOptions()
+            .hasTransactions(false)
+            .setReceiptsRoot(PrivateStateRootResolver.EMPTY_ROOT_HASH)
+            .setGasUsed(0)
+            .setStateRoot(Hash.fromHexString(stateRoot)),
+        parentBlock);
+  }
+
+  private BlockDataGenerator.BlockOptions getBlockOptionsNoTransaction(
+      final Block parentBlock, final Transaction markerTransaction, final String stateRoot) {
+    return getBlockOptions(
+        new BlockDataGenerator.BlockOptions()
+            .addTransaction(markerTransaction)
+            .setReceiptsRoot(Hash.fromHexString(BLOCK_WITH_SINGLE_TRANSACTION_RECEIPTS_ROOT))
+            .setGasUsed(23176)
+            .setStateRoot(Hash.fromHexString(stateRoot)),
+        parentBlock);
+  }
+
+  private BlockDataGenerator.BlockOptions getBlockOptionsNoTransactionWithDifficulty(
+      final Block parentBlock, final Difficulty difficulty, final String stateRoot) {
+    return getBlockOptions(
+        new BlockDataGenerator.BlockOptions()
+            .hasTransactions(false)
+            .setDifficulty(difficulty)
+            .setReceiptsRoot(PrivateStateRootResolver.EMPTY_ROOT_HASH)
+            .setGasUsed(0)
+            .setStateRoot(Hash.fromHexString(stateRoot)),
+        parentBlock);
+  }
+
+  private BlockDataGenerator.BlockOptions getBlockOptionsWithTransactionAndDifficulty(
+      final Block parentBlock,
+      final Transaction markerTransaction,
+      final Difficulty difficulty,
+      final String stateRoot) {
+    return getBlockOptions(
+        new BlockDataGenerator.BlockOptions()
+            .addTransaction(markerTransaction)
+            .setDifficulty(difficulty)
+            .setReceiptsRoot(Hash.fromHexString(BLOCK_WITH_SINGLE_TRANSACTION_RECEIPTS_ROOT))
+            .setGasUsed(23176)
+            .setStateRoot(Hash.fromHexString(stateRoot)),
+        parentBlock);
+  }
+
+  private BlockDataGenerator.BlockOptions getBlockOptions(
+      final BlockDataGenerator.BlockOptions blockOptions, final Block parentBlock) {
+    return blockOptions
+        .setBlockNumber(parentBlock.getHeader().getNumber() + 1)
+        .setParentHash(parentBlock.getHash())
+        .hasOmmers(false)
+        .setLogsBloom(LogsBloomFilter.empty());
   }
 }
