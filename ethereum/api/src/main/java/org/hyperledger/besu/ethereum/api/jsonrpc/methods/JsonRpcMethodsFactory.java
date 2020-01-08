@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioni
 import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningController;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
+import org.hyperledger.besu.nat.NatService;
 import org.hyperledger.besu.plugin.BesuPlugin;
 
 import java.math.BigInteger;
@@ -65,6 +66,7 @@ public class JsonRpcMethodsFactory {
       final JsonRpcConfiguration jsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
       final MetricsConfiguration metricsConfiguration,
+      final NatService natService,
       final Map<String, BesuPlugin> namedPlugins) {
     final Map<String, JsonRpcMethod> enabled = new HashMap<>();
 
@@ -80,7 +82,8 @@ public class JsonRpcMethodsFactory {
                   genesisConfigOptions,
                   p2pNetwork,
                   blockchainQueries,
-                  namedPlugins),
+                  namedPlugins,
+                  natService),
               new DebugJsonRpcMethods(blockchainQueries, protocolSchedule, metricsSystem),
               new EeaJsonRpcMethods(
                   blockchainQueries, protocolSchedule, transactionPool, privacyParameters),
