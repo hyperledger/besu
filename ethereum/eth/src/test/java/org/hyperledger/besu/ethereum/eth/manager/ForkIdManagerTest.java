@@ -37,6 +37,7 @@ public class ForkIdManagerTest {
     ForkIdManager forkIdManager =
         new ForkIdManager(Hash.fromHexString(mainnetGenHash), Collections.emptyList(), null);
     assertThat(forkIdManager.peerCheck(Hash.fromHexString(mainnetGenHash))).isFalse();
+    assertThat(forkIdManager.getLatestForkId()).isNull();
   }
 
   @Test
@@ -55,6 +56,8 @@ public class ForkIdManagerTest {
         ForkIdManager.buildCollection(Hash.fromHexString(mainnetGenHash), list);
     List<ForkIdManager.ForkId> entries = forkIdManager.getForkAndHashList();
     assertThat(entries).containsExactly(checkIds);
+    assertThat(forkIdManager.getLatestForkId()).isNotNull();
+    assertThat(forkIdManager.getLatestForkId().equals(checkIds[6])).isTrue();
   }
 
   @Test
@@ -74,6 +77,8 @@ public class ForkIdManagerTest {
     List<ForkIdManager.ForkId> entries = forkIdManager.getForkAndHashList();
 
     assertThat(entries).containsExactly(checkIds);
+    assertThat(forkIdManager.getLatestForkId()).isNotNull();
+    assertThat(forkIdManager.getLatestForkId().equals(checkIds[4])).isTrue();
   }
 
   @Test
@@ -95,6 +100,8 @@ public class ForkIdManagerTest {
     List<ForkIdManager.ForkId> entries = forkIdManager.getForkAndHashList();
 
     assertThat(entries).containsExactly(checkIds);
+    assertThat(forkIdManager.getLatestForkId()).isNotNull();
+    assertThat(forkIdManager.getLatestForkId().equals(checkIds[6])).isTrue();
   }
 
   @Test
@@ -106,6 +113,7 @@ public class ForkIdManagerTest {
         new ForkIdManager(Hash.fromHexString(mainnetGenHash), forkList, 7987396L);
     Boolean result = forkIdManager.peerCheck(ForkIdManager.createIdEntry("0x668db0af", 0L));
     assertThat(result).isTrue();
+    assertThat(forkIdManager.getLatestForkId()).isNotNull();
   }
 
   @Test
