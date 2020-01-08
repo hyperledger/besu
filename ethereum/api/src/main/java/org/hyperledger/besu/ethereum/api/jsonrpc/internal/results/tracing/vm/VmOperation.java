@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.vm;
 
-import com.fasterxml.jackson.annotation.JsonGetter;
-
 import java.util.Objects;
+
+import com.fasterxml.jackson.annotation.JsonGetter;
 
 public class VmOperation {
   private long cost;
