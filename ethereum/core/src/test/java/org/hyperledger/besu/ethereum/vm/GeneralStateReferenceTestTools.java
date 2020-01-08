@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.LogSeries;
+import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.WorldState;
@@ -136,8 +136,8 @@ public class GeneralStateReferenceTestTools {
 
     // Check the logs.
     final Hash expectedLogsHash = spec.expectedLogsHash();
-    final LogSeries logs = result.getLogs();
-    assertThat(Hash.hash(RLP.encode(logs::writeTo)))
+    final List<Log> logs = result.getLogs();
+    assertThat(Hash.hash(RLP.encode(out -> out.writeList(logs, Log::writeTo))))
         .withFailMessage("Unmatched logs hash. Generated logs: %s", logs)
         .isEqualTo(expectedLogsHash);
   }
