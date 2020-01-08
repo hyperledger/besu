@@ -30,7 +30,7 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
 
   protected final long gasUsed;
 
-  protected final UnformattedDataImpl extraData;
+  protected final Bytes extraData;
 
   protected SealableBlockHeader(
       final Hash parentHash,
@@ -53,7 +53,7 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
     this.receiptsRoot = receiptsRoot;
     this.logsBloom = logsBloom;
     this.gasUsed = gasUsed;
-    this.extraData = new UnformattedDataImpl(extraData);
+    this.extraData = extraData;
   }
 
   /**
@@ -115,7 +115,7 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
    *
    * @return the raw bytes of the extra data field
    */
-  public UnformattedDataImpl getExtraData() {
+  public Bytes getExtraData() {
     return extraData;
   }
 }

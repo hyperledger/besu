@@ -20,7 +20,6 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
-import org.hyperledger.besu.plugin.data.UnformattedData;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -51,7 +50,7 @@ public class FlatTraceGenerator {
       final TransactionTrace transactionTrace, final AtomicInteger traceCounter) {
     final FlatTrace.Builder firstFlatTraceBuilder = FlatTrace.freshBuilder(transactionTrace);
     final String lastContractAddress =
-        transactionTrace.getTransaction().getTo().orElse(Address.ZERO).getHexString();
+        transactionTrace.getTransaction().getTo().orElse(Address.ZERO).toHexString();
 
     final Optional<String> smartContractCode =
         transactionTrace.getTransaction().getInit().isPresent()
@@ -63,7 +62,7 @@ public class FlatTraceGenerator {
                 Address.contractAddress(
                         transactionTrace.getTransaction().getSender(),
                         transactionTrace.getTransaction().getNonce())
-                    .getHexString())
+                    .toHexString())
             : Optional.empty();
     // set code field in result node
     smartContractCode.ifPresent(firstFlatTraceBuilder.getResultBuilder()::code);
@@ -71,7 +70,7 @@ public class FlatTraceGenerator {
     transactionTrace
         .getTransaction()
         .getInit()
-        .map(UnformattedData::getHexString)
+        .map(Bytes::toHexString)
         .ifPresent(firstFlatTraceBuilder.getActionBuilder()::init);
     // set to, input and callType fields if not a smart contract
     transactionTrace
@@ -87,12 +86,12 @@ public class FlatTraceGenerator {
                         transactionTrace
                             .getTransaction()
                             .getData()
-                            .map(UnformattedData::getHexString)
+                            .map(Bytes::toHexString)
                             .orElse(
                                 transactionTrace
                                     .getTransaction()
                                     .getInit()
-                                    .map(UnformattedData::getHexString)
+                                    .map(Bytes::toHexString)
                                     .orElse(Bytes.EMPTY.toHexString()))));
     // declare a queue of transactionTrace contexts
     final Deque<FlatTrace.Context> tracesContexts = new ArrayDeque<>();

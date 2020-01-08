@@ -91,7 +91,7 @@ public class ProofOfWorkValidationRuleTest {
     final byte[] hashBuffer = new byte[64];
     final Hash headerHash = validationRule.hashHeader(preHeader);
     ProofOfWorkValidationRule.HASHER.hash(
-        hashBuffer, preHeader.getNonce(), preHeader.getNumber(), headerHash.getByteArray());
+        hashBuffer, preHeader.getNonce(), preHeader.getNumber(), headerHash.toArray());
 
     final BlockHeader header =
         headerBuilder

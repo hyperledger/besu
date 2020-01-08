@@ -162,7 +162,7 @@ public class Action {
 
     public static Builder from(final TransactionTrace trace) {
       return new Builder()
-          .from(trace.getTransaction().getSender().getHexString())
+          .from(trace.getTransaction().getSender().toHexString())
           .gas(trace.getTraceFrames().get(0).getGasRemaining().toHexString())
           .value(Quantity.create(trace.getTransaction().getValue()));
     }

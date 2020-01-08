@@ -85,9 +85,9 @@ public class BlockchainQueriesLogCacheTest {
 
   private static void writeThreeEntries(final LogsBloomFilter filter, final RandomAccessFile file)
       throws IOException {
-    file.write(filter.getByteArray());
-    file.write(filter.getByteArray());
-    file.write(filter.getByteArray());
+    file.write(filter.toArray());
+    file.write(filter.toArray());
+    file.write(filter.toArray());
   }
 
   @Before

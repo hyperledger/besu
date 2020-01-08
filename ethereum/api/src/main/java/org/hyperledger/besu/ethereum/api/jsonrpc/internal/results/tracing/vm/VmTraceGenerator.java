@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.Tracin
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.vm.Code;
-import org.hyperledger.besu.plugin.data.UnformattedData;
 
 import java.util.ArrayDeque;
 import java.util.Arrays;
@@ -71,7 +70,7 @@ public class VmTraceGenerator {
       transactionTrace
           .getTransaction()
           .getInit()
-          .map(UnformattedData::getHexString)
+          .map(Bytes::toHexString)
           .ifPresent(rootVmTrace::setCode);
       transactionTrace.getTraceFrames().forEach(this::addFrame);
     }
