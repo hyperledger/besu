@@ -180,16 +180,6 @@ public class Address extends DelegatingBytes implements org.hyperledger.besu.plu
   }
 
   public static Address fromPlugin(final org.hyperledger.besu.plugin.data.Address logger) {
-    return logger instanceof Address ? (Address) logger : wrap(Bytes.wrap(logger.getByteArray()));
-  }
-
-  @Override
-  public byte[] getByteArray() {
-    return toArrayUnsafe();
-  }
-
-  @Override
-  public String getHexString() {
-    return toHexString();
+    return logger instanceof Address ? (Address) logger : wrap(logger.copy());
   }
 }

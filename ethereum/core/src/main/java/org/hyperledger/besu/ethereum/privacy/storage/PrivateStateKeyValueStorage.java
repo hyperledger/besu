@@ -120,7 +120,7 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
 
     @Override
     public Updater putLatestStateRoot(final Bytes privacyId, final Hash privateStateHash) {
-      transaction.put(privacyId.toArrayUnsafe(), privateStateHash.getByteArray());
+      transaction.put(privacyId.toArrayUnsafe(), privateStateHash.toArray());
       return this;
     }
 

@@ -106,7 +106,7 @@ public abstract class AbstractMinerExecutor<
   }
 
   public void setMinTransactionGasPrice(final Wei minTransactionGasPrice) {
-    this.minTransactionGasPrice = minTransactionGasPrice.copy();
+    this.minTransactionGasPrice = minTransactionGasPrice;
   }
 
   public Wei getMinTransactionGasPrice() {

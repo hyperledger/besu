@@ -148,7 +148,7 @@ public final class GenesisStateTest {
             MainnetProtocolSchedule.create());
     final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
     genesisState.getBlock().writeTo(tmp);
-    assertThat(Hex.toHexString(genesisState.getBlock().getHeader().getHash().getByteArray()))
+    assertThat(Hex.toHexString(genesisState.getBlock().getHeader().getHash().toArray()))
         .isEqualTo(OLYMPIC_HASH);
     assertThat(Hex.toHexString(tmp.encoded().toArray())).isEqualTo(OLYMPIC_RLP);
   }

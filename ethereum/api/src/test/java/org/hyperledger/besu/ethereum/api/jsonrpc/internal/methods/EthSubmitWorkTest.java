@@ -104,7 +104,7 @@ public class EthSubmitWorkTest {
         requestWithParams(
             Bytes.ofUnsignedLong(expectedFirstOutput.getNonce()).trimLeadingZeros().toHexString(),
             Bytes.wrap(expectedFirstOutput.getPowHash()).toHexString(),
-            expectedFirstOutput.getMixHash().getHexString());
+            expectedFirstOutput.getMixHash().toHexString());
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(request.getRequest().getId(), true);
     when(miningCoordinator.getWorkDefinition()).thenReturn(Optional.of(firstInputs));

@@ -215,21 +215,21 @@ public class BlockHeader extends SealableBlockHeader
       final org.hyperledger.besu.plugin.data.BlockHeader pluginBlockHeader,
       final BlockHeaderFunctions blockHeaderFunctions) {
     return new org.hyperledger.besu.ethereum.core.BlockHeader(
-        Hash.fromHexString(pluginBlockHeader.getParentHash().getHexString()),
-        Hash.fromHexString(pluginBlockHeader.getOmmersHash().getHexString()),
+        Hash.fromHexString(pluginBlockHeader.getParentHash().toHexString()),
+        Hash.fromHexString(pluginBlockHeader.getOmmersHash().toHexString()),
         org.hyperledger.besu.ethereum.core.Address.fromHexString(
-            pluginBlockHeader.getCoinbase().getHexString()),
-        Hash.fromHexString(pluginBlockHeader.getStateRoot().getHexString()),
-        Hash.fromHexString(pluginBlockHeader.getTransactionsRoot().getHexString()),
-        Hash.fromHexString(pluginBlockHeader.getReceiptsRoot().getHexString()),
-        LogsBloomFilter.fromHexString(pluginBlockHeader.getLogsBloom().getHexString()),
-        Difficulty.fromHexString(pluginBlockHeader.getDifficulty().getHexString()),
+            pluginBlockHeader.getCoinbase().toHexString()),
+        Hash.fromHexString(pluginBlockHeader.getStateRoot().toHexString()),
+        Hash.fromHexString(pluginBlockHeader.getTransactionsRoot().toHexString()),
+        Hash.fromHexString(pluginBlockHeader.getReceiptsRoot().toHexString()),
+        LogsBloomFilter.fromHexString(pluginBlockHeader.getLogsBloom().toHexString()),
+        Difficulty.fromHexString(pluginBlockHeader.getDifficulty().toHexString()),
         pluginBlockHeader.getNumber(),
         pluginBlockHeader.getGasLimit(),
         pluginBlockHeader.getGasUsed(),
         pluginBlockHeader.getTimestamp(),
-        Bytes.wrap(pluginBlockHeader.getExtraData().getByteArray()),
-        Hash.fromHexString(pluginBlockHeader.getMixHash().getHexString()),
+        pluginBlockHeader.getExtraData(),
+        Hash.fromHexString(pluginBlockHeader.getMixHash().toHexString()),
         pluginBlockHeader.getNonce(),
         blockHeaderFunctions);
   }
