@@ -26,8 +26,8 @@ import java.util.List;
 
 public class MultiTenancyPrivacyController implements PrivacyController {
 
-  private PrivacyController privacyController;
-  private Enclave enclave;
+  private final PrivacyController privacyController;
+  private final Enclave enclave;
 
   public MultiTenancyPrivacyController(
       final PrivacyController privacyController, final Enclave enclave) {
