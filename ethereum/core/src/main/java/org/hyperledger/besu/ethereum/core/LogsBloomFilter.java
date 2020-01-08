@@ -19,7 +19,6 @@ import static org.hyperledger.besu.crypto.Hash.keccak256;
 
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.plugin.data.UnformattedData;
 
 import java.util.Collection;
 
@@ -36,7 +35,7 @@ import org.apache.tuweni.bytes.MutableBytes;
  * corresponding double-bytes are: bd2b, 01af, cd27, corresponding to the following bits in the
  * bloom filter: 1323, 431, 1319
  */
-public class LogsBloomFilter extends DelegatingBytes implements UnformattedData {
+public class LogsBloomFilter extends DelegatingBytes {
 
   public static final int BYTE_SIZE = 256;
   private static final int LEAST_SIGNIFICANT_BYTE = 0xFF;
@@ -98,16 +97,6 @@ public class LogsBloomFilter extends DelegatingBytes implements UnformattedData 
       }
     }
     return true;
-  }
-
-  @Override
-  public byte[] getByteArray() {
-    return toArray();
-  }
-
-  @Override
-  public String getHexString() {
-    return toHexString();
   }
 
   public static Builder builder() {
