@@ -60,7 +60,7 @@ public class IbftQueryServiceImpl extends PoaQueryServiceImpl implements IbftQue
       return (BlockHeader) header;
     }
 
-    final Hash blockHash = Hash.wrap(Bytes32.wrap(header.getBlockHash().getByteArray()));
+    final Hash blockHash = Hash.wrap(Bytes32.wrap(header.getBlockHash().toArray()));
     return getBlockchain().getBlockHeader(blockHash).orElseThrow();
   }
 }

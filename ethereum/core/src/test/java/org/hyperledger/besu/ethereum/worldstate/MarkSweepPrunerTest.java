@@ -178,7 +178,7 @@ public class MarkSweepPrunerTest {
     }
     inOrder.verify(stateStorage).removeAllKeysUnless(any());
 
-    assertThat(stateStorage.containsKey(markedRoot.getByteArray())).isTrue();
+    assertThat(stateStorage.containsKey(markedRoot.toArray())).isTrue();
   }
 
   private void generateBlockchainData(final int numBlocks, final int numAccounts) {
@@ -219,7 +219,7 @@ public class MarkSweepPrunerTest {
               final StateTrieAccountValue accountValue =
                   StateTrieAccountValue.readFrom(RLP.input(val));
               stateStorage
-                  .get(accountValue.getCodeHash().getByteArray())
+                  .get(accountValue.getCodeHash().toArray())
                   .ifPresent(v -> collector.add(Bytes.wrap(v)));
               storageRoots.add(accountValue.getStorageRoot());
             });
