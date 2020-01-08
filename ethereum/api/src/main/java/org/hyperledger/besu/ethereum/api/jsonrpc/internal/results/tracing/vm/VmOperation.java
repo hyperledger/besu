@@ -64,4 +64,19 @@ public class VmOperation {
   public int hashCode() {
     return Objects.hash(cost, vmOperationExecutionReport, pc, sub);
   }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    final VmOperation that = (VmOperation) o;
+    return Objects.equals(vmOperationExecutionReport, that.vmOperationExecutionReport)
+        && cost == that.cost
+        && pc == that.pc
+        && sub == that.sub;
+  }
 }
