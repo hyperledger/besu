@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.privacy.MultiTenancyPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 import java.util.Map;
@@ -147,6 +148,18 @@ public class PrivacyApiGroupJsonRpcMethodsTest {
     assertThat(errorResponse.getError()).isEqualTo(PRIVACY_NOT_ENABLED);
   }
 
+  @Test
+  public void rpcsCreatedWithMultiTenancyUseMultiTenancyController() {
+    when(privacyParameters.isEnabled()).thenReturn(true);
+    when(privacyParameters.isMultiTenancyEnabled()).thenReturn(true);
+
+    privacyApiGroupJsonRpcMethods.create();
+    final PrivacyController privacyController =
+        privacyApiGroupJsonRpcMethods.privacyController;
+
+    assertThat(privacyController).isInstanceOf(MultiTenancyPrivacyController.class);
+  }
+
   private User createUser(final String enclavePublicKey) {
     return new JWTUser(new JsonObject().put("privacyPublicKey", enclavePublicKey), "");
   }
@@ -154,6 +167,7 @@ public class PrivacyApiGroupJsonRpcMethodsTest {
   private static class TestPrivacyApiGroupJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
 
     private final JsonRpcMethod rpcMethod;
+    private PrivacyController privacyController;
     private EnclavePublicKeyProvider enclavePublicKeyProvider;
 
     public TestPrivacyApiGroupJsonRpcMethods(
@@ -170,6 +184,7 @@ public class PrivacyApiGroupJsonRpcMethodsTest {
     protected Map<String, JsonRpcMethod> create(
         final PrivacyController privacyController,
         final EnclavePublicKeyProvider enclavePublicKeyProvider) {
+      this.privacyController = privacyController;
       this.enclavePublicKeyProvider = enclavePublicKeyProvider;
       return mapOf(rpcMethod);
     }
