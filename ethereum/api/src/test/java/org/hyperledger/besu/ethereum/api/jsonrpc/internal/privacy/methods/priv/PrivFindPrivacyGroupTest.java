@@ -26,9 +26,12 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcUnauthorizedResponse;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.privacy.DefaultPrivacyController;
+import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 import java.util.List;
@@ -98,5 +101,18 @@ public class PrivFindPrivacyGroupTest {
         (JsonRpcErrorResponse) privFindPrivacyGroup.response(request);
     assertThat(response.getError()).isEqualTo(JsonRpcError.FIND_PRIVACY_GROUP_ERROR);
     verify(privacyController).findPrivacyGroup(ADDRESSES, ENCLAVE_PUBLIC_KEY);
+  }
+
+  @Test
+  public void failsWithUnauthorizedErrorIfMultiTenancyValidationFails() {
+    when(privacyController.findPrivacyGroup(ADDRESSES, ENCLAVE_PUBLIC_KEY))
+        .thenThrow(new MultiTenancyValidationException("validation failed"));
+    final PrivFindPrivacyGroup privFindPrivacyGroup =
+        new PrivFindPrivacyGroup(privacyController, enclavePublicKeyProvider);
+
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcUnauthorizedResponse(request.getRequest().getId(), JsonRpcError.UNAUTHORIZED);
+    final JsonRpcResponse response = privFindPrivacyGroup.response(request);
+    assertThat(response).isEqualTo(expectedResponse);
   }
 }
