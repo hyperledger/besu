@@ -201,7 +201,7 @@ public class PrunerIntegrationTest {
               final StateTrieAccountValue accountValue =
                   StateTrieAccountValue.readFrom(RLP.input(val));
               stateStorage
-                  .get(accountValue.getCodeHash().getByteArray())
+                  .get(accountValue.getCodeHash().toArray())
                   .ifPresent(v -> collector.add(Bytes.wrap(v)));
               storageRoots.add(accountValue.getStorageRoot());
             });

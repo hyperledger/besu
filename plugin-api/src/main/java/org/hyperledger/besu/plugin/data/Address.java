@@ -16,6 +16,8 @@ package org.hyperledger.besu.plugin.data;
 
 import org.hyperledger.besu.plugin.Unstable;
 
-/** An interface for {@link BinaryData} that also represents an Ethereum account address. */
+import org.apache.tuweni.bytes.Bytes;
+
+/** An interface for {@link Bytes} that also represents an Ethereum account address. */
 @Unstable
-public interface Address extends UnformattedData {}
+public interface Address extends Bytes {}
