@@ -16,6 +16,7 @@ import java.util.concurrent.TimeUnit;
  * This class describes the behaviour of the Manual NAT manager. Manual Nat manager add the ability
  * to explicitly configure the external IP and Ports to broadcast without regards to NAT or other
  * considerations.
+ * SPDX-License-Identifier: Apache-2.0
  */
 public class ManualNatManager extends AbstractNatManager {
 
