@@ -37,7 +37,7 @@ public enum NatServiceType {
   }
 
   /**
-   * Parses and returns corresponding enum value to the passed method name. This method throws an
+   * Parses and returns corresponding enum value to passed method name. This method throws an
    * {@link IllegalStateException} if the method name is invalid.
    * @param natServiceTypeName The name of the NAT service type.
    * @return The corresponding {@link NatServiceType}
