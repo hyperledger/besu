@@ -56,8 +56,8 @@ public class RpcApis {
       return Optional.of(PRIV);
     } else if (name.equals(TX_POOL.getCliValue())) {
       return Optional.of(TX_POOL);
-    } else if (name.equals(TRACE.getCliValue())) {
-      return Optional.of(TRACE);
+      // } else if (name.equals(TRACE.getCliValue())) {
+      //  return Optional.of(TRACE);
     } else if (name.equals(PLUGINS.getCliValue())) {
       return Optional.of(PLUGINS);
     } else {
