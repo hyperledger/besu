@@ -43,8 +43,8 @@ public interface PrivacyController {
   ValidationResult<TransactionInvalidReason> validatePrivateTransaction(
       PrivateTransaction privateTransaction, String privacyGroupId, String enclavePublicKey);
 
-  long determineNonce(
+  long determineEeaNonce(
       String privateFrom, String[] privateFor, Address address, String enclavePublicKey);
 
-  long determineNonce(Address sender, String privacyGroupId, String enclavePublicKey);
+  long determineBesuNonce(Address sender, String privacyGroupId, String enclavePublicKey);
 }

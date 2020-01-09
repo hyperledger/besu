@@ -136,11 +136,11 @@ public class DefaultPrivacyController implements PrivacyController {
       final String enclavePublicKey) {
     return privateTransactionValidator.validate(
         privateTransaction,
-        determineNonce(privateTransaction.getSender(), privacyGroupId, enclavePublicKey));
+        determineBesuNonce(privateTransaction.getSender(), privacyGroupId, enclavePublicKey));
   }
 
   @Override
-  public long determineNonce(
+  public long determineEeaNonce(
       final String privateFrom,
       final String[] privateFor,
       final Address address,
@@ -166,11 +166,11 @@ public class DefaultPrivacyController implements PrivacyController {
 
     final String privacyGroupId = legacyGroups.get(0).getPrivacyGroupId();
 
-    return determineNonce(address, privacyGroupId, enclavePublicKey);
+    return determineBesuNonce(address, privacyGroupId, enclavePublicKey);
   }
 
   @Override
-  public long determineNonce(
+  public long determineBesuNonce(
       final Address sender, final String privacyGroupId, final String enclavePublicKey) {
     return privateStateStorage
         .getLatestStateRoot(Bytes.fromBase64String(privacyGroupId))
@@ -219,7 +219,7 @@ public class DefaultPrivacyController implements PrivacyController {
   }
 
   private String getPrivacyGroupId(final String key, final String privateFrom) {
-    LOG.debug("Getting privacy group for {}", privateFrom);
+    LOG.debug("Getting privacy group for key {} and privateFrom {}", key, privateFrom);
     try {
       return enclave.receive(key, privateFrom).getPrivacyGroupId();
     } catch (final RuntimeException e) {

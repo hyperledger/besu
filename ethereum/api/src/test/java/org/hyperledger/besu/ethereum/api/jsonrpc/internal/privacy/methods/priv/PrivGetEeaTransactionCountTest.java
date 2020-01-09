@@ -62,7 +62,7 @@ public class PrivGetEeaTransactionCountTest {
     final PrivGetEeaTransactionCount method =
         new PrivGetEeaTransactionCount(privacyController, enclavePublicKeyProvider);
 
-    when(privacyController.determineNonce(privateFrom, privateFor, address, ENCLAVE_PUBLIC_KEY))
+    when(privacyController.determineEeaNonce(privateFrom, privateFor, address, ENCLAVE_PUBLIC_KEY))
         .thenReturn(reportedNonce);
 
     final JsonRpcResponse response = method.response(request);
@@ -78,7 +78,7 @@ public class PrivGetEeaTransactionCountTest {
     final PrivGetEeaTransactionCount method =
         new PrivGetEeaTransactionCount(privacyController, enclavePublicKeyProvider);
 
-    when(privacyController.determineNonce(privateFrom, privateFor, address, ENCLAVE_PUBLIC_KEY))
+    when(privacyController.determineEeaNonce(privateFrom, privateFor, address, ENCLAVE_PUBLIC_KEY))
         .thenThrow(RuntimeException.class);
 
     final JsonRpcResponse response = method.response(request);
@@ -94,7 +94,7 @@ public class PrivGetEeaTransactionCountTest {
     final PrivGetEeaTransactionCount method =
         new PrivGetEeaTransactionCount(privacyController, enclavePublicKeyProvider);
 
-    when(privacyController.determineNonce(privateFrom, privateFor, address, ENCLAVE_PUBLIC_KEY))
+    when(privacyController.determineEeaNonce(privateFrom, privateFor, address, ENCLAVE_PUBLIC_KEY))
         .thenThrow(RuntimeException.class);
 
     final JsonRpcResponse response = method.response(request);
@@ -110,7 +110,7 @@ public class PrivGetEeaTransactionCountTest {
     final PrivGetEeaTransactionCount method =
         new PrivGetEeaTransactionCount(privacyController, enclavePublicKeyProvider);
 
-    when(privacyController.determineNonce(privateFrom, privateFor, address, ENCLAVE_PUBLIC_KEY))
+    when(privacyController.determineEeaNonce(privateFrom, privateFor, address, ENCLAVE_PUBLIC_KEY))
         .thenThrow(new MultiTenancyValidationException("validation failed"));
 
     final JsonRpcResponse response = method.response(request);

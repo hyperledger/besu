@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 import static org.apache.logging.log4j.LogManager.getLogger;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.UNAUTHORIZED;
 
+import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -63,8 +64,8 @@ public class PrivDeletePrivacyGroup implements JsonRpcMethod {
     } catch (final MultiTenancyValidationException e) {
       LOG.error("Unauthorized privacy multi-tenancy rpc request. {}", e.getMessage());
       return new JsonRpcUnauthorizedResponse(requestContext.getRequest().getId(), UNAUTHORIZED);
-    } catch (Exception e) {
-      LOG.error("Failed to fetch transaction", e);
+    } catch (EnclaveClientException e) {
+      LOG.error("Failed to delete privacy group", e);
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(), JsonRpcError.DELETE_PRIVACY_GROUP_ERROR);
     }

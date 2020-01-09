@@ -330,7 +330,7 @@ public class DefaultPrivacyControllerTest {
     when(account.getNonce()).thenReturn(8L);
 
     final long nonce =
-        privacyController.determineNonce(
+        privacyController.determineEeaNonce(
             "privateFrom", new String[] {"first", "second"}, address, ENCLAVE_PUBLIC_KEY);
 
     assertThat(nonce).isEqualTo(reportedNonce);
@@ -348,7 +348,7 @@ public class DefaultPrivacyControllerTest {
     when(enclave.findPrivacyGroup(any())).thenReturn(returnedGroups);
 
     final long nonce =
-        privacyController.determineNonce(
+        privacyController.determineEeaNonce(
             "privateFrom", new String[] {"first", "second"}, address, ENCLAVE_PUBLIC_KEY);
 
     assertThat(nonce).isEqualTo(reportedNonce);
@@ -371,7 +371,7 @@ public class DefaultPrivacyControllerTest {
     assertThatExceptionOfType(RuntimeException.class)
         .isThrownBy(
             () ->
-                privacyController.determineNonce(
+                privacyController.determineEeaNonce(
                     "privateFrom", new String[] {"first", "second"}, address, ENCLAVE_PUBLIC_KEY));
   }
 
@@ -381,7 +381,7 @@ public class DefaultPrivacyControllerTest {
 
     when(account.getNonce()).thenReturn(4L);
 
-    final long nonce = privacyController.determineNonce(address, "Group1", ENCLAVE_PUBLIC_KEY);
+    final long nonce = privacyController.determineBesuNonce(address, "Group1", ENCLAVE_PUBLIC_KEY);
 
     assertThat(nonce).isEqualTo(4L);
     verify(privateStateStorage).getLatestStateRoot(Base64.decode("Group1"));
@@ -396,7 +396,7 @@ public class DefaultPrivacyControllerTest {
     when(privateStateStorage.getLatestStateRoot(Base64.decode("Group1")))
         .thenReturn(Optional.empty());
 
-    final long nonce = privacyController.determineNonce(address, "Group1", ENCLAVE_PUBLIC_KEY);
+    final long nonce = privacyController.determineBesuNonce(address, "Group1", ENCLAVE_PUBLIC_KEY);
 
     assertThat(nonce).isEqualTo(Account.DEFAULT_NONCE);
     verifyNoInteractions(worldStateArchive, mutableWorldState, account);
@@ -410,7 +410,7 @@ public class DefaultPrivacyControllerTest {
         .thenReturn(Optional.of(hash));
     when(worldStateArchive.getMutable(hash)).thenReturn(Optional.empty());
 
-    final long nonce = privacyController.determineNonce(address, "Group1", ENCLAVE_PUBLIC_KEY);
+    final long nonce = privacyController.determineBesuNonce(address, "Group1", ENCLAVE_PUBLIC_KEY);
 
     assertThat(nonce).isEqualTo(Account.DEFAULT_NONCE);
     verifyNoInteractions(mutableWorldState, account);
@@ -425,7 +425,7 @@ public class DefaultPrivacyControllerTest {
     when(worldStateArchive.getMutable(hash)).thenReturn(Optional.of(mutableWorldState));
     when(mutableWorldState.get(address)).thenReturn(null);
 
-    final long nonce = privacyController.determineNonce(address, "Group1", ENCLAVE_PUBLIC_KEY);
+    final long nonce = privacyController.determineBesuNonce(address, "Group1", ENCLAVE_PUBLIC_KEY);
 
     assertThat(nonce).isEqualTo(Account.DEFAULT_NONCE);
     verifyNoInteractions(account);
