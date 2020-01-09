@@ -26,6 +26,7 @@ import org.hyperledger.besu.nat.NatService;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.Properties;
@@ -293,6 +294,13 @@ public class Runner implements AutoCloseable {
   private void createBesuFile(
       final Properties properties, final String fileName, final String fileHeader) {
     final File file = new File(dataDir.toFile(), String.format("besu.%s", fileName));
+    try {
+      if (!file.exists() && !file.createNewFile()) {
+        return;
+      }
+    } catch (IOException e) {
+      LOG.error("Cannot create file.", e);
+    }
     file.deleteOnExit();
 
     try (final FileOutputStream fileOutputStream = new FileOutputStream(file)) {
