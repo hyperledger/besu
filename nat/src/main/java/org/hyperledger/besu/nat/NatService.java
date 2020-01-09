@@ -89,7 +89,7 @@ public class NatService {
       try {
         getNatManager().orElseThrow().start();
       } catch (Exception e) {
-        LOG.warn("Caught exception while trying to start the manager or service", e);
+        LOG.warn("Caught exception while trying to start the manager or service.", e);
       }
     } else {
       LOG.info("No NAT environment detected so no service could be started");
