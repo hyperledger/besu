@@ -12,19 +12,27 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing;
+package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.vm;
 
-/**
- * Trace is a marker interface representing different types of Parity style JSON responses for the
- * trace_replayBlockTransactions RPC API. trace_replayBlockTransactions is part of the trace RPC API
- * group. 3 implementations:
- *
- * <ul>
- *   <li>trace: {@link
- *       org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTrace}
- *   <li>vmTrace: {@link
- *       org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.vm.VmTrace}
- *   <li>stateDiff:
- * </ul>
- */
-public interface Trace {}
+public class Mem {
+
+  private final String data;
+  private final int off;
+
+  Mem(final String data) {
+    this(data, 0);
+  }
+
+  private Mem(final String data, final int off) {
+    this.data = data;
+    this.off = off;
+  }
+
+  public String getData() {
+    return data;
+  }
+
+  public int getOff() {
+    return off;
+  }
+}
