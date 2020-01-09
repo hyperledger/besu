@@ -12,20 +12,11 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.nat;
 
-public enum NatMethod {
-  UPNP,
-  MANUAL,
-  AUTO,
-  NONE;
+package org.hyperledger.besu.nat.core;
 
-  public static NatMethod fromString(final String str) {
-    for (final NatMethod mode : NatMethod.values()) {
-      if (mode.name().equalsIgnoreCase(str)) {
-        return mode;
-      }
-    }
-    return null;
-  }
+@FunctionalInterface
+public interface NatMethodAutoDetection {
+
+  AutoDetectionResult shouldBeThisNatMethod();
 }
