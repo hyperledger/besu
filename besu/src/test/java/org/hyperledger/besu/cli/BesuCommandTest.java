@@ -2667,6 +2667,14 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void privacyWithoutPrivacyPublicKeyFails() {
+    parseCommand("--privacy-enabled", "--privacy-url", ENCLAVE_URI);
+
+    assertThat(commandErrorOutput.toString())
+        .startsWith("Please specify Enclave public key file path to enable privacy");
+  }
+
+  @Test
   public void mustVerifyPrivacyIsDisabled() {
     parseCommand();
 

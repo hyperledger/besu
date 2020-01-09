@@ -1389,15 +1389,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "Privacy multi-tenancy requires either http authentication to be enabled or WebSocket authentication to be enabled");
       }
 
-      if (privacyPublicKeyFile() != null && isPrivacyMultiTenancyEnabled) {
-        throw new ParameterException(
-            commandLine, "Privacy multi-tenancy and privacy public key cannot be used together");
-      }
-
       privacyParametersBuilder.setEnabled(true);
       privacyParametersBuilder.setEnclaveUrl(privacyUrl);
       privacyParametersBuilder.setMultiTenancyEnabled(isPrivacyMultiTenancyEnabled);
-      if (privacyPublicKeyFile() != null) {
+
+      final boolean hasPrivacyPublicKey = privacyPublicKeyFile() != null;
+      if (hasPrivacyPublicKey && !isPrivacyMultiTenancyEnabled) {
         try {
           privacyParametersBuilder.setEnclavePublicKeyUsingFile(privacyPublicKeyFile());
         } catch (final IOException e) {
@@ -1407,6 +1404,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           throw new ParameterException(
               commandLine, "Contents of privacy-public-key-file invalid: " + e.getMessage(), e);
         }
+      } else if (hasPrivacyPublicKey) {
+        throw new ParameterException(
+            commandLine, "Privacy multi-tenancy and privacy public key cannot be used together");
       } else if (!isPrivacyMultiTenancyEnabled) {
         throw new ParameterException(
             commandLine, "Please specify Enclave public key file path to enable privacy");
