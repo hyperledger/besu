@@ -286,11 +286,6 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     return orphan == null || !orphan.isAlive();
   }
 
-  private boolean isNotAliveOrphan(final String name) {
-    final Process orphan = besuProcesses.get(name);
-    return orphan == null || !orphan.isAlive();
-  }
-
   private void printOutput(final BesuNode node, final Process process) {
     try (final BufferedReader in =
         new BufferedReader(new InputStreamReader(process.getInputStream(), UTF_8))) {
