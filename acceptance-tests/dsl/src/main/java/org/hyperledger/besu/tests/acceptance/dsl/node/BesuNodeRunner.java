@@ -15,8 +15,8 @@
 package org.hyperledger.besu.tests.acceptance.dsl.node;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
@@ -48,7 +48,7 @@ public interface BesuNodeRunner {
             () -> {
               try (final Stream<String> s = Files.lines(file.toPath())) {
                 return s.count() > 0;
-              } catch (FileNotFoundException __) {
+              } catch (NoSuchFileException __) {
                 return false;
               }
             });
