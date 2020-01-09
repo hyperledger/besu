@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.enclave;
 
-public class EnclaveServerException extends RuntimeException {
+public class EnclaveServerException extends EnclaveException {
   private final int statusCode;
 
   public EnclaveServerException(final int statusCode, final String message) {

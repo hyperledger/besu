@@ -14,12 +14,13 @@
  */
 package org.hyperledger.besu.enclave;
 
-public class EnclaveIOException extends EnclaveException {
-  public EnclaveIOException(final String message, final Throwable cause) {
-    super(message, cause);
+public abstract class EnclaveException extends RuntimeException {
+
+  public EnclaveException(final String message) {
+    super(message);
   }
 
-  public EnclaveIOException(final String message) {
-    super(message);
+  public EnclaveException(final String message, final Throwable cause) {
+    super(message, cause);
   }
 }
