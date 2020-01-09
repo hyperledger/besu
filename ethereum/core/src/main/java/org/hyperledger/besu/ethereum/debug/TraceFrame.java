@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.debug;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.vm.Code;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 
 import java.util.EnumSet;
@@ -41,6 +42,15 @@ public class TraceFrame {
   private final Optional<Map<UInt256, UInt256>> storage;
   private final Optional<Bytes> revertReason;
   private final Optional<Map<Address, Wei>> maybeRefunds;
+  private final Optional<Code> maybeCode;
+  private final int stackItemsProduced;
+  private final Optional<Bytes32[]> stackPostExecution;
+  private final Optional<Bytes32[]> memoryPostExecution;
+  private Optional<Integer> maybeNextDepth;
+
+  private Gas gasRemainingPostExecution;
+  private final Optional<Map<UInt256, UInt256>> storagePreExecution;
+  private final boolean virtualOperation;
 
   public TraceFrame(
       final int pc,
@@ -53,7 +63,13 @@ public class TraceFrame {
       final Optional<Bytes32[]> memory,
       final Optional<Map<UInt256, UInt256>> storage,
       final Optional<Bytes> revertReason,
-      final Optional<Map<Address, Wei>> maybeRefunds) {
+      final Optional<Map<Address, Wei>> maybeRefunds,
+      final Optional<Code> maybeCode,
+      final int stackItemsProduced,
+      final Optional<Bytes32[]> stackPostExecution,
+      final Optional<Bytes32[]> memoryPostExecution,
+      final Optional<Map<UInt256, UInt256>> storagePreExecution,
+      final boolean virtualOperation) {
     this.pc = pc;
     this.opcode = opcode;
     this.gasRemaining = gasRemaining;
@@ -65,6 +81,13 @@ public class TraceFrame {
     this.storage = storage;
     this.revertReason = revertReason;
     this.maybeRefunds = maybeRefunds;
+    this.maybeCode = maybeCode;
+    this.stackItemsProduced = stackItemsProduced;
+    this.stackPostExecution = stackPostExecution;
+    this.memoryPostExecution = memoryPostExecution;
+    this.maybeNextDepth = Optional.empty();
+    this.storagePreExecution = storagePreExecution;
+    this.virtualOperation = virtualOperation;
   }
 
   public TraceFrame(
@@ -77,7 +100,13 @@ public class TraceFrame {
       final Optional<Bytes32[]> stack,
       final Optional<Bytes32[]> memory,
       final Optional<Map<UInt256, UInt256>> storage,
-      final Optional<Bytes> revertReason) {
+      final Optional<Bytes> revertReason,
+      final Optional<Map<Address, Wei>> maybeRefunds,
+      final Optional<Code> maybeCode,
+      final int stackItemsProduced,
+      final Optional<Bytes32[]> stackPostExecution,
+      final Optional<Bytes32[]> memoryPostExecution,
+      final Optional<Map<UInt256, UInt256>> storagePreExecution) {
     this(
         pc,
         opcode,
@@ -89,30 +118,13 @@ public class TraceFrame {
         memory,
         storage,
         revertReason,
-        Optional.empty());
-  }
-
-  public TraceFrame(
-      final int pc,
-      final String opcode,
-      final Gas gasRemaining,
-      final Optional<Gas> gasCost,
-      final int depth,
-      final EnumSet<ExceptionalHaltReason> exceptionalHaltReasons,
-      final Optional<Bytes32[]> stack,
-      final Optional<Bytes32[]> memory,
-      final Optional<Map<UInt256, UInt256>> storage) {
-    this(
-        pc,
-        opcode,
-        gasRemaining,
-        gasCost,
-        depth,
-        exceptionalHaltReasons,
-        stack,
-        memory,
-        storage,
-        Optional.empty());
+        maybeRefunds,
+        maybeCode,
+        stackItemsProduced,
+        stackPostExecution,
+        memoryPostExecution,
+        storagePreExecution,
+        false);
   }
 
   public int getPc() {
@@ -172,5 +184,53 @@ public class TraceFrame {
         .add("memory", memory)
         .add("storage", storage)
         .toString();
+  }
+
+  public Optional<Code> getMaybeCode() {
+    return maybeCode;
+  }
+
+  public int getStackItemsProduced() {
+    return stackItemsProduced;
+  }
+
+  public Optional<Bytes32[]> getStackPostExecution() {
+    return stackPostExecution;
+  }
+
+  public Optional<Bytes32[]> getMemoryPostExecution() {
+    return memoryPostExecution;
+  }
+
+  public boolean depthHasIncreased() {
+    return maybeNextDepth.map(next -> next > depth).orElse(false);
+  }
+
+  public boolean depthHasDecreased() {
+    return maybeNextDepth.map(next -> next < depth).orElse(false);
+  }
+
+  public Optional<Integer> getMaybeNextDepth() {
+    return maybeNextDepth;
+  }
+
+  public void setMaybeNextDepth(final Optional<Integer> maybeNextDepth) {
+    this.maybeNextDepth = maybeNextDepth;
+  }
+
+  public Gas getGasRemainingPostExecution() {
+    return gasRemainingPostExecution;
+  }
+
+  public Optional<Map<UInt256, UInt256>> getStoragePreExecution() {
+    return storagePreExecution;
+  }
+
+  public void setGasRemainingPostExecution(final Gas gasRemainingPostExecution) {
+    this.gasRemainingPostExecution = gasRemainingPostExecution;
+  }
+
+  public boolean isVirtualOperation() {
+    return virtualOperation;
   }
 }
