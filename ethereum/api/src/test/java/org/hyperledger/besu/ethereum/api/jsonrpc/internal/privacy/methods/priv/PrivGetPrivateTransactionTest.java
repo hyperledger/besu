@@ -38,7 +38,6 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.UnformattedDataImpl;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
@@ -121,7 +120,7 @@ public class PrivGetPrivateTransactionTest {
     when(blockchain.transactionByHash(any(Hash.class)))
         .thenReturn(Optional.of(returnedTransaction));
     when(returnedTransaction.getTransaction()).thenReturn(justTransaction);
-    when(justTransaction.getPayload()).thenReturn(new UnformattedDataImpl(ENCLAVE_KEY));
+    when(justTransaction.getPayload()).thenReturn(ENCLAVE_KEY);
 
     final PrivateTransaction privateTransaction =
         privateTransactionBuilder
@@ -144,7 +143,9 @@ public class PrivGetPrivateTransactionTest {
     when(privacyController.retrieveTransaction(anyString(), any()))
         .thenReturn(
             new ReceiveResponse(
-                Base64.getEncoder().encodeToString(bvrlp.encoded().toArray()).getBytes(UTF_8), ""));
+                Base64.getEncoder().encodeToString(bvrlp.encoded().toArray()).getBytes(UTF_8),
+                "",
+                null));
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) privGetPrivateTransaction.response(request);
     final PrivateTransactionResult result = (PrivateTransactionResult) response.getResult();
@@ -158,8 +159,7 @@ public class PrivGetPrivateTransactionTest {
     when(blockchain.transactionByHash(any(Hash.class)))
         .thenReturn(Optional.of(returnedTransaction));
     when(returnedTransaction.getTransaction()).thenReturn(justTransaction);
-    when(justTransaction.getPayload())
-        .thenReturn(new UnformattedDataImpl(Bytes.fromBase64String("")));
+    when(justTransaction.getPayload()).thenReturn(Bytes.fromBase64String(""));
 
     final PrivateTransaction privateTransaction =
         privateTransactionBuilder
@@ -181,7 +181,8 @@ public class PrivGetPrivateTransactionTest {
         .thenReturn(
             new ReceiveResponse(
                 Base64.getEncoder().encodeToString(bvrlp.encoded().toArrayUnsafe()).getBytes(UTF_8),
-                ""));
+                "",
+                null));
 
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) privGetPrivateTransaction.response(request);

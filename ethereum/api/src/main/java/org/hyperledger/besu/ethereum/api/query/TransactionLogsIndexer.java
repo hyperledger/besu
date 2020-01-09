@@ -117,7 +117,7 @@ public class TransactionLogsIndexer {
       if (maybeHeader.isEmpty()) {
         break;
       }
-      final byte[] logs = maybeHeader.get().getLogsBloom().getByteArray();
+      final byte[] logs = maybeHeader.get().getLogsBloom().toArray();
       checkNotNull(logs);
       checkState(logs.length == 256, "BloomBits are not the correct length");
       fos.write(logs);

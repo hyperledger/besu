@@ -19,7 +19,7 @@ import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.DefaultEvmAccount;
 import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.core.LogSeries;
+import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -32,7 +32,9 @@ import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
+import java.util.List;
 import java.util.Optional;
 
 import org.apache.logging.log4j.LogManager;
@@ -61,7 +63,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
 
     private final long gasRemaining;
 
-    private final LogSeries logs;
+    private final List<Log> logs;
 
     private final Bytes output;
 
@@ -71,7 +73,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
     public static Result invalid(
         final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult) {
       return new Result(
-          Status.INVALID, LogSeries.empty(), -1, Bytes.EMPTY, validationResult, Optional.empty());
+          Status.INVALID, new ArrayList<>(), -1, Bytes.EMPTY, validationResult, Optional.empty());
     }
 
     public static Result failed(
@@ -80,7 +82,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
         final Optional<Bytes> revertReason) {
       return new Result(
           Status.FAILED,
-          LogSeries.empty(),
+          new ArrayList<>(),
           gasRemaining,
           Bytes.EMPTY,
           validationResult,
@@ -88,7 +90,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
     }
 
     public static Result successful(
-        final LogSeries logs,
+        final List<Log> logs,
         final long gasRemaining,
         final Bytes output,
         final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult) {
@@ -98,7 +100,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
 
     Result(
         final Status status,
-        final LogSeries logs,
+        final List<Log> logs,
         final long gasRemaining,
         final Bytes output,
         final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult,
@@ -112,7 +114,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
     }
 
     @Override
-    public LogSeries getLogs() {
+    public List<Log> getLogs() {
       return logs;
     }
 

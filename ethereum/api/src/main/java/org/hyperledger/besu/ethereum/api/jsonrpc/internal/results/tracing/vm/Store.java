@@ -12,10 +12,24 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.plugin.data;
+package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.vm;
 
-import org.hyperledger.besu.plugin.Unstable;
+public class Store {
 
-/** An interface to mark BinaryData that is not a scalar {@link Quantity}. */
-@Unstable
-public interface UnformattedData extends BinaryData {}
+  private final String key;
+
+  private final String val;
+
+  Store(final String key, final String val) {
+    this.key = key;
+    this.val = val;
+  }
+
+  public String getKey() {
+    return key;
+  }
+
+  public String getVal() {
+    return val;
+  }
+}

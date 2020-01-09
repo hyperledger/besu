@@ -1,5 +1,4 @@
 /*
- *
  * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
@@ -12,29 +11,28 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
-package org.hyperledger.besu.ethereum.core;
+package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.vm;
 
-import org.hyperledger.besu.plugin.data.UnformattedData;
+public class Mem {
 
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.DelegatingBytes;
+  private final String data;
+  private final int off;
 
-/** Wrapper for a Bytes value to be exposed as UnformattedData. */
-public class UnformattedDataImpl extends DelegatingBytes implements UnformattedData {
-
-  public UnformattedDataImpl(final Bytes value) {
-    super(value);
+  Mem(final String data) {
+    this(data, 0);
   }
 
-  @Override
-  public byte[] getByteArray() {
-    return toArray();
+  private Mem(final String data, final int off) {
+    this.data = data;
+    this.off = off;
   }
 
-  @Override
-  public String getHexString() {
-    return toHexString();
+  public String getData() {
+    return data;
+  }
+
+  public int getOff() {
+    return off;
   }
 }
