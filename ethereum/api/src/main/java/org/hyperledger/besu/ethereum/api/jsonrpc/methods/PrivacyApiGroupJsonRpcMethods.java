@@ -77,26 +77,8 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
     final PrivateMarkerTransactionFactory markerTransactionFactory =
         createPrivateMarkerTransactionFactory(
             privacyParameters, blockchainQueries, transactionPool.getPendingTransactions());
-
-    final DefaultPrivacyController defaultPrivacyController =
-        new DefaultPrivacyController(
-            privacyParameters, protocolSchedule.getChainId(), markerTransactionFactory);
-    final PrivacyController privacyController =
-        privacyParameters.isMultiTenancyEnabled()
-            ? new MultiTenancyPrivacyController(
-                defaultPrivacyController, privacyParameters.getEnclave())
-            : defaultPrivacyController;
-
-    final EnclavePublicKeyProvider enclavePublicProvider =
-        privacyParameters.isMultiTenancyEnabled()
-            ? user ->
-                enclavePublicKey(user)
-                    .orElseThrow(
-                        () ->
-                            new IllegalStateException(
-                                "Request does not contain an authorization token"))
-            : user -> privacyParameters.getEnclavePublicKey();
-
+    final EnclavePublicKeyProvider enclavePublicProvider = createEnclavePublicKeyProvider();
+    final PrivacyController privacyController = createPrivacyController(markerTransactionFactory);
     return create(privacyController, enclavePublicProvider).entrySet().stream()
         .collect(
             Collectors.toMap(
@@ -122,6 +104,34 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
           privacyParameters.getSigningKeyPair().get());
     }
     return new RandomSigningPrivateMarkerTransactionFactory(privateContractAddress);
+  }
+
+  private EnclavePublicKeyProvider createEnclavePublicKeyProvider() {
+    return privacyParameters.isMultiTenancyEnabled()
+        ? multiTenancyEnclavePublicKeyProvider()
+        : defaultEnclavePublicKeyProvider();
+  }
+
+  private EnclavePublicKeyProvider multiTenancyEnclavePublicKeyProvider() {
+    return user ->
+        enclavePublicKey(user)
+            .orElseThrow(
+                () -> new IllegalStateException("Request does not contain an authorization token"));
+  }
+
+  private EnclavePublicKeyProvider defaultEnclavePublicKeyProvider() {
+    return user -> privacyParameters.getEnclavePublicKey();
+  }
+
+  private PrivacyController createPrivacyController(
+      final PrivateMarkerTransactionFactory markerTransactionFactory) {
+    final DefaultPrivacyController defaultPrivacyController =
+        new DefaultPrivacyController(
+            privacyParameters, protocolSchedule.getChainId(), markerTransactionFactory);
+    return privacyParameters.isMultiTenancyEnabled()
+        ? new MultiTenancyPrivacyController(
+            defaultPrivacyController, privacyParameters.getEnclave())
+        : defaultPrivacyController;
   }
 
   private JsonRpcMethod createPrivacyMethod(
