@@ -143,7 +143,9 @@ public class PrivGetPrivateTransactionTest {
     when(privacyController.retrieveTransaction(anyString(), any()))
         .thenReturn(
             new ReceiveResponse(
-                Base64.getEncoder().encodeToString(bvrlp.encoded().toArray()).getBytes(UTF_8), ""));
+                Base64.getEncoder().encodeToString(bvrlp.encoded().toArray()).getBytes(UTF_8),
+                "",
+                null));
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) privGetPrivateTransaction.response(request);
     final PrivateTransactionResult result = (PrivateTransactionResult) response.getResult();
@@ -179,7 +181,8 @@ public class PrivGetPrivateTransactionTest {
         .thenReturn(
             new ReceiveResponse(
                 Base64.getEncoder().encodeToString(bvrlp.encoded().toArrayUnsafe()).getBytes(UTF_8),
-                ""));
+                "",
+                null));
 
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) privGetPrivateTransaction.response(request);
