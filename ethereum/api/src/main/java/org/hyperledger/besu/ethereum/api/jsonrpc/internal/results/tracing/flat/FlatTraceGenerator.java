@@ -12,15 +12,14 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing;
+package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.Trace;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
-import org.hyperledger.besu.ethereum.vm.GasCalculator;
-import org.hyperledger.besu.plugin.data.UnformattedData;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -35,30 +34,23 @@ import java.util.stream.Stream;
 
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Atomics;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class FlatTraceGenerator {
-
-  public static final Logger LOG = LogManager.getLogger();
 
   /**
    * Generates a stream of {@link Trace} from the passed {@link TransactionTrace} data.
    *
    * @param transactionTrace the {@link TransactionTrace} to use
    * @param traceCounter the current trace counter value
-   * @param gasCalculator the {@link GasCalculator} to use
    * @return a stream of generated traces {@link Trace}
    */
   public static Stream<Trace> generateFromTransactionTrace(
-      final TransactionTrace transactionTrace,
-      final AtomicInteger traceCounter,
-      final GasCalculator gasCalculator) {
+      final TransactionTrace transactionTrace, final AtomicInteger traceCounter) {
     final FlatTrace.Builder firstFlatTraceBuilder = FlatTrace.freshBuilder(transactionTrace);
     final String lastContractAddress =
-        transactionTrace.getTransaction().getTo().orElse(Address.ZERO).getHexString();
+        transactionTrace.getTransaction().getTo().orElse(Address.ZERO).toHexString();
 
     final Optional<String> smartContractCode =
         transactionTrace.getTransaction().getInit().isPresent()
@@ -70,7 +62,7 @@ public class FlatTraceGenerator {
                 Address.contractAddress(
                         transactionTrace.getTransaction().getSender(),
                         transactionTrace.getTransaction().getNonce())
-                    .getHexString())
+                    .toHexString())
             : Optional.empty();
     // set code field in result node
     smartContractCode.ifPresent(firstFlatTraceBuilder.getResultBuilder()::code);
@@ -78,7 +70,7 @@ public class FlatTraceGenerator {
     transactionTrace
         .getTransaction()
         .getInit()
-        .map(UnformattedData::getHexString)
+        .map(Bytes::toHexString)
         .ifPresent(firstFlatTraceBuilder.getActionBuilder()::init);
     // set to, input and callType fields if not a smart contract
     transactionTrace
@@ -94,12 +86,12 @@ public class FlatTraceGenerator {
                         transactionTrace
                             .getTransaction()
                             .getData()
-                            .map(UnformattedData::getHexString)
+                            .map(Bytes::toHexString)
                             .orElse(
                                 transactionTrace
                                     .getTransaction()
                                     .getInit()
-                                    .map(UnformattedData::getHexString)
+                                    .map(Bytes::toHexString)
                                     .orElse(Bytes.EMPTY.toHexString()))));
     // declare a queue of transactionTrace contexts
     final Deque<FlatTrace.Context> tracesContexts = new ArrayDeque<>();
@@ -108,12 +100,7 @@ public class FlatTraceGenerator {
     // declare the first transactionTrace context as the previous transactionTrace context
     final List<Integer> addressVector = new ArrayList<>();
     final AtomicLong cumulativeGasCost = new AtomicLong(0);
-    final Gas transactionIntrinsicGasCost =
-        gasCalculator.transactionIntrinsicGasCost(transactionTrace.getTransaction());
-    LOG.debug(
-        "Transaction intrinsic gas cost: {} - {}",
-        transactionIntrinsicGasCost.toLong(),
-        transactionIntrinsicGasCost.toHexString());
+
     int traceFrameIndex = 0;
     for (TraceFrame traceFrame : transactionTrace.getTraceFrames()) {
       cumulativeGasCost.addAndGet(traceFrame.getGasCost().orElse(Gas.ZERO).toLong());

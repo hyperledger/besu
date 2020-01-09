@@ -45,7 +45,7 @@ public class LogAdapter extends AdapterBase {
   }
 
   public Optional<Bytes> getData() {
-    return Optional.of(Bytes.wrap(logWithMetadata.getData().getByteArray()));
+    return Optional.of(logWithMetadata.getData());
   }
 
   public Optional<TransactionAdapter> getTransaction(final DataFetchingEnvironment environment) {

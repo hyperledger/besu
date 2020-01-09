@@ -88,7 +88,13 @@ public class DebugTraceTransactionTest {
             Optional.empty(),
             Optional.empty(),
             Optional.empty(),
-            Optional.of(Bytes.fromHexString("0x1122334455667788")));
+            Optional.of(Bytes.fromHexString("0x1122334455667788")),
+            Optional.empty(),
+            Optional.empty(),
+            0,
+            Optional.empty(),
+            Optional.empty(),
+            Optional.empty());
     final List<TraceFrame> traceFrames = Collections.singletonList(traceFrame);
     final TransactionTrace transactionTrace =
         new TransactionTrace(transaction, result, traceFrames);
@@ -132,7 +138,13 @@ public class DebugTraceTransactionTest {
             Optional.empty(),
             Optional.empty(),
             Optional.empty(),
-            Optional.of(Bytes.fromHexString("0x1122334455667788")));
+            Optional.of(Bytes.fromHexString("0x1122334455667788")),
+            Optional.empty(),
+            Optional.empty(),
+            0,
+            Optional.empty(),
+            Optional.empty(),
+            Optional.empty());
     final List<TraceFrame> traceFrames = Collections.singletonList(traceFrame);
     final TransactionTrace transactionTrace =
         new TransactionTrace(transaction, result, traceFrames);

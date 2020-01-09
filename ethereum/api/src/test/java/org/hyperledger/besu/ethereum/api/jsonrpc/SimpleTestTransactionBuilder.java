@@ -20,7 +20,6 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.UnformattedDataImpl;
 import org.hyperledger.besu.ethereum.core.Wei;
 
 import java.math.BigInteger;
@@ -69,7 +68,7 @@ public class SimpleTestTransactionBuilder {
     when(transaction.getS()).thenReturn(bigInteger(s));
     when(transaction.getTo()).thenReturn(Optional.ofNullable(address(toAddress)));
     when(transaction.getSender()).thenReturn(address(fromAddress));
-    when(transaction.getPayload()).thenReturn(new UnformattedDataImpl(Bytes.fromHexString(input)));
+    when(transaction.getPayload()).thenReturn(Bytes.fromHexString(input));
     when(transaction.getValue()).thenReturn(wei(value));
     when(transaction.getGasLimit()).thenReturn(unsignedLong(gas));
     return transaction;

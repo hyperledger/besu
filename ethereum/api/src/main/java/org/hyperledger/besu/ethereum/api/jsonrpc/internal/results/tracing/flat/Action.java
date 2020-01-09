@@ -12,25 +12,20 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing;
+package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.TracingUtils;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 
-import java.util.Arrays;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
 @JsonInclude(NON_NULL)
 public class Action {
@@ -73,7 +68,7 @@ public class Action {
     return new Builder();
   }
 
-  public static Builder createCallAction(
+  static Builder createCallAction(
       final Transaction transaction,
       final String lastContractAddress,
       final Address contractCallAddress,
@@ -82,30 +77,18 @@ public class Action {
     return builder()
         .from(lastContractAddress)
         .to(contractCallAddress.toString())
-        .input(dumpMemory(traceFrame.getMemory()))
+        .input(TracingUtils.dumpMemory(traceFrame.getMemory()))
         .gas(gasRemaining.toHexString())
         .callType("call")
         .value(Quantity.create(transaction.getValue()));
   }
 
-  public static Builder createSelfDestructAction(
+  static Builder createSelfDestructAction(
       final String lastContractAddress, final Address contractCallAddress, final Wei balance) {
     return builder()
         .address(lastContractAddress)
         .refundAddress(contractCallAddress.toString())
         .balance(balance.toShortHexString());
-  }
-
-  private static String dumpMemory(final Optional<Bytes32[]> memory) {
-    return memory
-        .map(
-            element ->
-                "0x"
-                    .concat(
-                        Arrays.stream(element)
-                            .map(Bytes::toUnprefixedHexString)
-                            .collect(Collectors.joining())))
-        .orElse("");
   }
 
   public String getCallType() {
@@ -179,7 +162,7 @@ public class Action {
 
     public static Builder from(final TransactionTrace trace) {
       return new Builder()
-          .from(trace.getTransaction().getSender().getHexString())
+          .from(trace.getTransaction().getSender().toHexString())
           .gas(trace.getTraceFrames().get(0).getGasRemaining().toHexString())
           .value(Quantity.create(trace.getTransaction().getValue()));
     }
