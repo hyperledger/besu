@@ -54,7 +54,8 @@ public class MultiTenancyPrivacyControllerTest {
   }
 
   @Test
-  public void sendsEeaTransactionWithMatchingPrivateFromAndEnclavePublicKeyAndProducesSuccessfulResponse() {
+  public void
+      sendsEeaTransactionWithMatchingPrivateFromAndEnclavePublicKeyAndProducesSuccessfulResponse() {
     final PrivateTransaction transaction =
         PrivateTransaction.builder()
             .privateFrom(Bytes.fromBase64String(ENCLAVE_PUBLIC_KEY1))
@@ -71,7 +72,8 @@ public class MultiTenancyPrivacyControllerTest {
   }
 
   @Test
-  public void sendsBesuTransactionWithEnclavePublicKeyInPrivacyGroupAndProducesSuccessfulResponse() {
+  public void
+      sendsBesuTransactionWithEnclavePublicKeyInPrivacyGroupAndProducesSuccessfulResponse() {
     final PrivateTransaction transaction =
         PrivateTransaction.builder()
             .privateFrom(Bytes.fromBase64String(ENCLAVE_PUBLIC_KEY1))
@@ -82,7 +84,11 @@ public class MultiTenancyPrivacyControllerTest {
         .thenReturn(new SendTransactionResponse(ENCLAVE_KEY, PRIVACY_GROUP_ID));
     final PrivacyGroup privacyGroupWithEnclavePublicKey =
         new PrivacyGroup(
-            PRIVACY_GROUP_ID, Type.PANTHEON, "", "", List.of(ENCLAVE_PUBLIC_KEY1, ENCLAVE_PUBLIC_KEY2));
+            PRIVACY_GROUP_ID,
+            Type.PANTHEON,
+            "",
+            "",
+            List.of(ENCLAVE_PUBLIC_KEY1, ENCLAVE_PUBLIC_KEY2));
     when(enclave.retrievePrivacyGroup(PRIVACY_GROUP_ID))
         .thenReturn(privacyGroupWithEnclavePublicKey);
 
@@ -183,7 +189,11 @@ public class MultiTenancyPrivacyControllerTest {
   public void deletesPrivacyGroupWhenEnclavePublicKeyInPrivacyGroup() {
     final PrivacyGroup privacyGroupWithEnclavePublicKey =
         new PrivacyGroup(
-            PRIVACY_GROUP_ID, Type.PANTHEON, "", "", List.of(ENCLAVE_PUBLIC_KEY1, ENCLAVE_PUBLIC_KEY2));
+            PRIVACY_GROUP_ID,
+            Type.PANTHEON,
+            "",
+            "",
+            List.of(ENCLAVE_PUBLIC_KEY1, ENCLAVE_PUBLIC_KEY2));
     when(enclave.retrievePrivacyGroup(PRIVACY_GROUP_ID))
         .thenReturn(privacyGroupWithEnclavePublicKey);
     when(privacyController.deletePrivacyGroup(PRIVACY_GROUP_ID, ENCLAVE_PUBLIC_KEY1))
@@ -267,7 +277,11 @@ public class MultiTenancyPrivacyControllerTest {
   public void determineBesuNonceWhenEnclavePublicKeyInPrivacyGroup() {
     final PrivacyGroup privacyGroupWithEnclavePublicKey =
         new PrivacyGroup(
-            PRIVACY_GROUP_ID, Type.PANTHEON, "", "", List.of(ENCLAVE_PUBLIC_KEY1, ENCLAVE_PUBLIC_KEY2));
+            PRIVACY_GROUP_ID,
+            Type.PANTHEON,
+            "",
+            "",
+            List.of(ENCLAVE_PUBLIC_KEY1, ENCLAVE_PUBLIC_KEY2));
     when(enclave.retrievePrivacyGroup(PRIVACY_GROUP_ID))
         .thenReturn(privacyGroupWithEnclavePublicKey);
     when(privacyController.determineBesuNonce(Address.ZERO, PRIVACY_GROUP_ID, ENCLAVE_PUBLIC_KEY1))
@@ -277,7 +291,8 @@ public class MultiTenancyPrivacyControllerTest {
         multiTenancyPrivacyController.determineBesuNonce(
             Address.ZERO, PRIVACY_GROUP_ID, ENCLAVE_PUBLIC_KEY1);
     assertThat(nonce).isEqualTo(10);
-    verify(privacyController).determineBesuNonce(Address.ZERO, PRIVACY_GROUP_ID, ENCLAVE_PUBLIC_KEY1);
+    verify(privacyController)
+        .determineBesuNonce(Address.ZERO, PRIVACY_GROUP_ID, ENCLAVE_PUBLIC_KEY1);
   }
 
   @Test
