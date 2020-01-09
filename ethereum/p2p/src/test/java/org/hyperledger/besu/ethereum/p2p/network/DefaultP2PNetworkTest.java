@@ -19,6 +19,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -43,8 +44,10 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MockSubProtocol;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.nat.NatMethod;
+import org.hyperledger.besu.nat.NatService;
+import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
 import org.hyperledger.besu.nat.upnp.UpnpNatManager;
-import org.hyperledger.besu.nat.upnp.UpnpNatManager.Protocol;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -61,6 +64,7 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.StrictStubs.class)
@@ -69,7 +73,6 @@ public final class DefaultP2PNetworkTest {
   final MaintainedPeers maintainedPeers = new MaintainedPeers();
   @Mock PeerDiscoveryAgent discoveryAgent;
   @Mock RlpxAgent rlpxAgent;
-  @Mock UpnpNatManager natManager;
 
   private final ArgumentCaptor<PeerBondedObserver> discoverySubscriberCaptor =
       ArgumentCaptor.forClass(PeerBondedObserver.class);
@@ -217,15 +220,20 @@ public final class DefaultP2PNetworkTest {
     config.getRlpx().setBindPort(30303);
     config.getDiscovery().setBindPort(30301);
 
-    when(natManager.queryExternalIPAddress())
+    final UpnpNatManager upnpNatManager = mock(UpnpNatManager.class);
+    when(upnpNatManager.getNatMethod()).thenReturn(NatMethod.UPNP);
+    when(upnpNatManager.queryExternalIPAddress())
         .thenReturn(CompletableFuture.completedFuture(externalIp));
-    final P2PNetwork network = builder().natManager(natManager).build();
+
+    final NatService natService = Mockito.spy(new NatService(Optional.of(upnpNatManager)));
+    final P2PNetwork network = builder().natService(natService).build();
 
     network.start();
-    verify(natManager)
-        .requestPortForward(eq(config.getRlpx().getBindPort()), eq(Protocol.TCP), any());
-    verify(natManager)
-        .requestPortForward(eq(config.getDiscovery().getBindPort()), eq(Protocol.UDP), any());
+    verify(upnpNatManager)
+        .requestPortForward(eq(config.getRlpx().getBindPort()), eq(NetworkProtocol.TCP), any());
+    verify(upnpNatManager)
+        .requestPortForward(
+            eq(config.getDiscovery().getBindPort()), eq(NetworkProtocol.UDP), any());
 
     Assertions.assertThat(network.getLocalEnode().get().getIpAsString()).isEqualTo(externalIp);
   }
