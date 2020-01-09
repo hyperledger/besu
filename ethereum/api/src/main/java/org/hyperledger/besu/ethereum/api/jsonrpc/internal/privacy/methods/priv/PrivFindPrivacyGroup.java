@@ -18,6 +18,7 @@ import static org.apache.logging.log4j.LogManager.getLogger;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.UNAUTHORIZED;
 
 import org.hyperledger.besu.enclave.EnclaveClientException;
+import org.hyperledger.besu.enclave.EnclaveServerException;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -70,7 +71,7 @@ public class PrivFindPrivacyGroup implements JsonRpcMethod {
     } catch (final MultiTenancyValidationException e) {
       LOG.error("Unauthorized privacy multi-tenancy rpc request. {}", e.getMessage());
       return new JsonRpcUnauthorizedResponse(requestContext.getRequest().getId(), UNAUTHORIZED);
-    } catch (EnclaveClientException e) {
+    } catch (EnclaveClientException | EnclaveServerException e) {
       LOG.error("Failed to fetch privacy group", e);
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(), JsonRpcError.FIND_PRIVACY_GROUP_ERROR);

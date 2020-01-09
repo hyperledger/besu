@@ -24,7 +24,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.enclave.Enclave;
-import org.hyperledger.besu.enclave.EnclaveIOException;
+import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -215,7 +215,7 @@ public class PrivGetPrivateTransactionTest {
     final BytesValueRLPOutput bvrlp = new BytesValueRLPOutput();
     privateTransaction.writeTo(bvrlp);
     when(privacyController.retrieveTransaction(anyString(), any()))
-        .thenThrow(new EnclaveIOException("enclave failure"));
+        .thenThrow(new EnclaveClientException(500, "enclave failure"));
 
     final JsonRpcResponse response = privGetPrivateTransaction.response(request);
     final JsonRpcResponse expectedResponse =

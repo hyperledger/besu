@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
@@ -79,7 +80,7 @@ public class PrivGetEeaTransactionCountTest {
         new PrivGetEeaTransactionCount(privacyController, enclavePublicKeyProvider);
 
     when(privacyController.determineEeaNonce(privateFrom, privateFor, address, ENCLAVE_PUBLIC_KEY))
-        .thenThrow(RuntimeException.class);
+        .thenThrow(EnclaveClientException.class);
 
     final JsonRpcResponse response = method.response(request);
     assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);
@@ -95,7 +96,7 @@ public class PrivGetEeaTransactionCountTest {
         new PrivGetEeaTransactionCount(privacyController, enclavePublicKeyProvider);
 
     when(privacyController.determineEeaNonce(privateFrom, privateFor, address, ENCLAVE_PUBLIC_KEY))
-        .thenThrow(RuntimeException.class);
+        .thenThrow(EnclaveClientException.class);
 
     final JsonRpcResponse response = method.response(request);
     assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);

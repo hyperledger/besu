@@ -20,6 +20,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
@@ -86,7 +87,7 @@ public class PrivGetTransactionCountTest {
         new PrivGetTransactionCount(privacyController, enclavePublicKeyProvider);
 
     when(privacyController.determineBesuNonce(senderAddress, privacyGroupId, ENCLAVE_PUBLIC_KEY))
-        .thenThrow(RuntimeException.class);
+        .thenThrow(EnclaveClientException.class);
 
     final Object[] params = new Object[] {senderAddress, privacyGroupId};
     final JsonRpcRequestContext request =

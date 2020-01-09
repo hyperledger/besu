@@ -20,6 +20,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.enclave.Enclave;
+import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -93,7 +94,7 @@ public class PrivFindPrivacyGroupTest {
   @Test
   public void failsWithFindPrivacyGroupErrorIfEnclaveFails() {
     when(privacyController.findPrivacyGroup(ADDRESSES, ENCLAVE_PUBLIC_KEY))
-        .thenThrow(new IllegalStateException("some failure"));
+        .thenThrow(new EnclaveClientException(500, "some failure"));
     final PrivFindPrivacyGroup privFindPrivacyGroup =
         new PrivFindPrivacyGroup(privacyController, enclavePublicKeyProvider);
 
