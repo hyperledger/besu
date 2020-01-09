@@ -1,0 +1,30 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "trace_replayBlockTransactions",
+    "params": [
+      "0x2",
+      [
+        "vmTrace"
+      ]
+    ],
+    "id": 415
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "result": [
+      {
+        "output": "0x",
+        "stateDiff": null,
+        "trace": [],
+        "transactionHash": "0x28fa8042c7b5835f4f91fc20937f3e70dcf3585c1afe31202bb6075185f9abfe",
+        "vmTrace": {
+          "code": "0x",
+          "ops": []
+        }
+      }
+    ],
+    "id": 415
+  },
+  "statusCode": 200
+}
