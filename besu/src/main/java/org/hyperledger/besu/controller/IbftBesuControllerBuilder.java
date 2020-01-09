@@ -20,6 +20,7 @@ import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.VoteProposer;
 import org.hyperledger.besu.consensus.common.VoteTallyCache;
 import org.hyperledger.besu.consensus.common.VoteTallyUpdater;
+import org.hyperledger.besu.consensus.common.network.ValidatorPeers;
 import org.hyperledger.besu.consensus.ibft.BlockTimer;
 import org.hyperledger.besu.consensus.ibft.EthSynchronizerUpdater;
 import org.hyperledger.besu.consensus.ibft.EventMultiplexer;
@@ -36,7 +37,6 @@ import org.hyperledger.besu.consensus.ibft.blockcreation.IbftBlockCreatorFactory
 import org.hyperledger.besu.consensus.ibft.blockcreation.IbftMiningCoordinator;
 import org.hyperledger.besu.consensus.ibft.blockcreation.ProposerSelector;
 import org.hyperledger.besu.consensus.ibft.jsonrpc.IbftJsonRpcMethodsFactory;
-import org.hyperledger.besu.consensus.ibft.network.ValidatorPeers;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.ibft.protocol.IbftProtocolManager;
 import org.hyperledger.besu.consensus.ibft.protocol.IbftSubProtocol;
@@ -46,6 +46,8 @@ import org.hyperledger.besu.consensus.ibft.statemachine.IbftController;
 import org.hyperledger.besu.consensus.ibft.statemachine.IbftFinalState;
 import org.hyperledger.besu.consensus.ibft.statemachine.IbftRoundFactory;
 import org.hyperledger.besu.consensus.ibft.validation.MessageValidatorFactory;
+import org.hyperledger.besu.crosschain.protocol.CrosschainProtocolManager;
+import org.hyperledger.besu.crosschain.protocol.CrosschainSubProtocol;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethodFactory;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
@@ -76,7 +78,8 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder<IbftContext
   private static final Logger LOG = LogManager.getLogger();
   private IbftEventQueue ibftEventQueue;
   private IbftConfigOptions ibftConfig;
-  private ValidatorPeers peers;
+  private ValidatorPeers peersIBFT;
+  private ValidatorPeers peersCC;
   private final BlockInterface blockInterface = new IbftBlockInterface();
 
   @Override
@@ -96,7 +99,8 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder<IbftContext
       final EthProtocolManager ethProtocolManager) {
     return new SubProtocolConfiguration()
         .withSubProtocol(EthProtocol.get(), ethProtocolManager)
-        .withSubProtocol(IbftSubProtocol.get(), new IbftProtocolManager(ibftEventQueue, peers));
+        .withSubProtocol(CrosschainSubProtocol.get(), new CrosschainProtocolManager(peersCC))
+        .withSubProtocol(IbftSubProtocol.get(), new IbftProtocolManager(ibftEventQueue, peersIBFT));
   }
 
   @Override
@@ -124,10 +128,11 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder<IbftContext
     // NOTE: peers should not be used for accessing the network as it does not enforce the
     // "only send once" filter applied by the UniqueMessageMulticaster.
     final VoteTallyCache voteTallyCache = protocolContext.getConsensusState().getVoteTallyCache();
-    peers = new ValidatorPeers(voteTallyCache);
+    peersIBFT = new ValidatorPeers(voteTallyCache, IbftSubProtocol.NAME);
+    peersCC = new ValidatorPeers(voteTallyCache, CrosschainSubProtocol.NAME);
 
     final UniqueMessageMulticaster uniqueMessageMulticaster =
-        new UniqueMessageMulticaster(peers, ibftConfig.getGossipedHistoryLimit());
+        new UniqueMessageMulticaster(peersIBFT, ibftConfig.getGossipedHistoryLimit());
 
     final IbftGossip gossiper = new IbftGossip(uniqueMessageMulticaster);
 

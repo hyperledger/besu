@@ -1565,7 +1565,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   public File nodePrivateKeyFile() {
     File nodePrivateKeyFile = null;
     if (isFullInstantiation()) {
-      nodePrivateKeyFile = standaloneCommands.nodePrivateKeyFile;
+      nodePrivateKeyFile = standaloneCommands.nodePrivateKeyFile; // always null!
     }
 
     return nodePrivateKeyFile != null

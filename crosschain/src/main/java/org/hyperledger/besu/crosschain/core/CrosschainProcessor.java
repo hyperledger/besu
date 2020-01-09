@@ -81,8 +81,10 @@ public class CrosschainProcessor {
     this.worldStateArchive = worldStateArchive;
 
     this.vertx = Vertx.vertx();
+    // this seems to cause a couple of internal exceptions visible in DEBUG
+    // logging. java.lang.UnsupportedOperationException: Reflective
+    // setAccessible(true) disabled
   }
-
   /**
    * Process subordinate transactions or subordinate views.
    *

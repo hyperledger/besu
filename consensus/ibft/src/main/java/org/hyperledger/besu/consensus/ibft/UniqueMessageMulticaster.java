@@ -12,7 +12,7 @@
  */
 package org.hyperledger.besu.consensus.ibft;
 
-import org.hyperledger.besu.consensus.ibft.network.ValidatorMulticaster;
+import org.hyperledger.besu.consensus.common.network.ValidatorMulticaster;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 

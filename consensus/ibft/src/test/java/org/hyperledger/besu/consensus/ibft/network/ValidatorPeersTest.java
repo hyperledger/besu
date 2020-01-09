@@ -22,6 +22,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.common.VoteTally;
 import org.hyperledger.besu.consensus.common.VoteTallyCache;
+import org.hyperledger.besu.consensus.common.network.ValidatorPeers;
 import org.hyperledger.besu.crypto.SECP256K1.PublicKey;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Util;
@@ -79,7 +80,7 @@ public class ValidatorPeersTest {
     // Only add the first Peer's address to the validators.
     validators.add(Util.publicKeyToAddress(publicKeys.get(0)));
 
-    final ValidatorPeers peers = new ValidatorPeers(voteTallyCache);
+    final ValidatorPeers peers = new ValidatorPeers(voteTallyCache, "IBF");
     for (final PeerConnection peer : peerConnections) {
       peers.add(peer);
     }
@@ -99,7 +100,7 @@ public class ValidatorPeersTest {
     validators.add(peer0Address);
     final PeerConnection duplicatePeer = mockPeerConnection(peer0Address);
 
-    final ValidatorPeers peers = new ValidatorPeers(voteTallyCache);
+    final ValidatorPeers peers = new ValidatorPeers(voteTallyCache, "IBF");
     for (final PeerConnection peer : peerConnections) {
       peers.add(peer);
     }
@@ -121,7 +122,7 @@ public class ValidatorPeersTest {
     validators.add(peer0Address);
     final PeerConnection duplicatePeer = mockPeerConnection(peer0Address);
 
-    final ValidatorPeers peers = new ValidatorPeers(voteTallyCache);
+    final ValidatorPeers peers = new ValidatorPeers(voteTallyCache, "IBF");
     for (final PeerConnection peer : peerConnections) {
       peers.add(peer);
     }
@@ -142,7 +143,7 @@ public class ValidatorPeersTest {
   public void doesntSendToValidatorsWhichAreNotDirectlyConnected() throws PeerNotConnected {
     validators.add(Util.publicKeyToAddress(publicKeys.get(0)));
 
-    final ValidatorPeers peers = new ValidatorPeers(voteTallyCache);
+    final ValidatorPeers peers = new ValidatorPeers(voteTallyCache, "IBF");
 
     // only add peer connections 1, 2 & 3, none of which should be invoked.
     newArrayList(1, 2, 3).forEach(i -> peers.add(peerConnections.get(i)));
@@ -163,7 +164,7 @@ public class ValidatorPeersTest {
     validators.add(validatorAddress);
     validators.add(Util.publicKeyToAddress(publicKeys.get(1)));
 
-    final ValidatorPeers peers = new ValidatorPeers(voteTallyCache);
+    final ValidatorPeers peers = new ValidatorPeers(voteTallyCache, "IBF");
     for (final PeerConnection peer : peerConnections) {
       peers.add(peer);
     }

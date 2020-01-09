@@ -10,16 +10,13 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package org.hyperledger.besu.consensus.ibft.network;
+package org.hyperledger.besu.consensus.common.network;
 
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
+import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 
-import java.util.Collection;
+public interface PeerConnectionTracker {
 
-public interface ValidatorMulticaster {
+  void add(final PeerConnection newConnection);
 
-  void send(final MessageData message);
-
-  void send(final MessageData message, final Collection<Address> blackList);
+  void remove(final PeerConnection removedConnection);
 }

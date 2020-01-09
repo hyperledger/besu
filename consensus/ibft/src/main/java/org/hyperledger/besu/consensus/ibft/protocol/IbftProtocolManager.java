@@ -12,10 +12,10 @@
  */
 package org.hyperledger.besu.consensus.ibft.protocol;
 
+import org.hyperledger.besu.consensus.common.network.PeerConnectionTracker;
 import org.hyperledger.besu.consensus.ibft.IbftEventQueue;
 import org.hyperledger.besu.consensus.ibft.ibftevent.IbftEvent;
 import org.hyperledger.besu.consensus.ibft.ibftevent.IbftEvents;
-import org.hyperledger.besu.consensus.ibft.network.PeerConnectionTracker;
 import org.hyperledger.besu.ethereum.p2p.network.ProtocolManager;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
@@ -25,7 +25,13 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.Di
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public class IbftProtocolManager implements ProtocolManager {
+
+  private static final Logger LOG = LogManager.getLogger();
+
   private final IbftEventQueue ibftEventQueue;
 
   private final PeerConnectionTracker peers;
@@ -63,9 +69,9 @@ public class IbftProtocolManager implements ProtocolManager {
    * function is responsible for:
    *
    * <ul>
-   *   <li>Determining if the message was from a current validator (discard if not)
+   *   <li>Determining if the message was from a current validator (discard if not) - UNIMPLEMENTED
    *   <li>Determining if the message received was for the 'current round', discarding if old and
-   *       buffering for the future if ahead of current state.
+   *       buffering for the future if ahead of current state. - UNIMPLEMENTED
    *   <li>If the received message is otherwise valid, it is sent to the state machine which is
    *       responsible for determining how to handle the message given its internal state.
    * </ul>
@@ -75,6 +81,10 @@ public class IbftProtocolManager implements ProtocolManager {
    */
   @Override
   public void processMessage(final Capability cap, final Message message) {
+    if (!cap.equals(IbftSubProtocol.IBFV1)) {
+      LOG.debug("IBFT protocol manager dropped a message for capability {}", cap.toString());
+      return;
+    }
     final IbftEvent messageEvent = IbftEvents.fromMessage(message);
     ibftEventQueue.add(messageEvent);
   }
