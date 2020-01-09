@@ -26,7 +26,6 @@ import org.hyperledger.besu.nat.NatService;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.Properties;
@@ -220,18 +219,6 @@ public class Runner implements AutoCloseable {
     if (getMetricsPort().isPresent()) {
       properties.setProperty("metrics", String.valueOf(getMetricsPort().get()));
     }
-
-    final File portsFile = new File(dataDir.toFile(), "besu.ports");
-    portsFile.deleteOnExit();
-
-    try (final FileOutputStream fileOutputStream = new FileOutputStream(portsFile)) {
-      properties.store(
-          fileOutputStream,
-          "This file contains the ports used by the running instance of Besu. This file will be deleted after the node is shutdown.");
-    } catch (final Exception e) {
-      LOG.warn("Error writing ports file", e);
-    }
-
     // create besu.ports file
     createBesuFile(
         properties, "ports", "This file contains the ports used by the running instance of Besu");
@@ -294,13 +281,6 @@ public class Runner implements AutoCloseable {
   private void createBesuFile(
       final Properties properties, final String fileName, final String fileHeader) {
     final File file = new File(dataDir.toFile(), String.format("besu.%s", fileName));
-    try {
-      if (!file.exists() && !file.createNewFile()) {
-        return;
-      }
-    } catch (IOException e) {
-      LOG.error("Cannot create file.", e);
-    }
     file.deleteOnExit();
 
     try (final FileOutputStream fileOutputStream = new FileOutputStream(file)) {
