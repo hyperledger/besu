@@ -278,7 +278,7 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     }
 
     waitForFile(dataDir, "besu.ports");
-    //waitForFile(dataDir, "besu.networks");
+    // waitForFile(dataDir, "besu.networks");
   }
 
   private boolean isNotAliveOrphan(final String name) {
