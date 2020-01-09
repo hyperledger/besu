@@ -42,6 +42,7 @@ import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioni
 import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningController;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
+import org.hyperledger.besu.nat.NatService;
 
 import java.io.File;
 import java.io.IOException;
@@ -75,6 +76,7 @@ public class JsonRpcHttpServiceTlsMisconfigurationTest {
   private static final Collection<RpcApi> JSON_RPC_APIS = List.of(ETH, NET, WEB3);
   private static final String KEYSTORE_RESOURCE = "JsonRpcHttpService/rpc_keystore.pfx";
   private static final String KNOWN_CLIENTS_RESOURCE = "JsonRpcHttpService/rpc_known_clients.txt";
+  private static final NatService natService = new NatService(Optional.empty());
 
   private Map<String, JsonRpcMethod> rpcMethods;
   private JsonRpcHttpService service;
@@ -113,6 +115,7 @@ public class JsonRpcHttpServiceTlsMisconfigurationTest {
                     mock(JsonRpcConfiguration.class),
                     mock(WebSocketConfiguration.class),
                     mock(MetricsConfiguration.class),
+                    natService,
                     Collections.emptyMap()));
   }
 
@@ -198,7 +201,7 @@ public class JsonRpcHttpServiceTlsMisconfigurationTest {
         folder.newFolder().toPath(),
         jsonRpcConfig,
         new NoOpMetricsSystem(),
-        Optional.empty(),
+        natService,
         rpcMethods,
         HealthService.ALWAYS_HEALTHY,
         HealthService.ALWAYS_HEALTHY);
