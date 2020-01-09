@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-import org.hyperledger.besu.plugin.data.UnformattedData;
 
 import java.util.List;
 import java.util.Objects;
@@ -32,7 +31,7 @@ import org.apache.tuweni.bytes.Bytes;
 public class Log implements org.hyperledger.besu.plugin.data.Log {
 
   private final Address logger;
-  private final UnformattedData data;
+  private final Bytes data;
   private final ImmutableList<LogTopic> topics;
 
   /**
@@ -41,10 +40,6 @@ public class Log implements org.hyperledger.besu.plugin.data.Log {
    * @param topics Indexable topics associated with this log.
    */
   public Log(final Address logger, final Bytes data, final List<LogTopic> topics) {
-    this(logger, (UnformattedData) new UnformattedDataImpl(data), topics);
-  }
-
-  protected Log(final Address logger, final UnformattedData data, final List<LogTopic> topics) {
     this.logger = logger;
     this.data = data;
     this.topics = ImmutableList.copyOf(topics);
@@ -59,7 +54,7 @@ public class Log implements org.hyperledger.besu.plugin.data.Log {
     out.startList();
     out.writeBytes(logger);
     out.writeList(topics, (topic, listOut) -> listOut.writeBytes(topic));
-    out.writeBytes(Bytes.wrap(data.getByteArray()));
+    out.writeBytes(data);
     out.endList();
   }
 
@@ -84,7 +79,7 @@ public class Log implements org.hyperledger.besu.plugin.data.Log {
   }
 
   @Override
-  public UnformattedData getData() {
+  public Bytes getData() {
     return data;
   }
 

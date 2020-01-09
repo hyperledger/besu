@@ -16,19 +16,14 @@ package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-import org.hyperledger.besu.plugin.data.UnformattedData;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.DelegatingBytes32;
 
-public class LogTopic extends DelegatingBytes32 implements UnformattedData {
+public class LogTopic extends DelegatingBytes32 {
 
   protected LogTopic(final Bytes bytes) {
     super(bytes);
-  }
-
-  public static LogTopic create(final UnformattedData data) {
-    return create(Bytes.wrap(data.getByteArray()));
   }
 
   public static LogTopic create(final Bytes bytes) {
@@ -64,15 +59,5 @@ public class LogTopic extends DelegatingBytes32 implements UnformattedData {
    */
   public void writeTo(final RLPOutput out) {
     out.writeBytes(this);
-  }
-
-  @Override
-  public byte[] getByteArray() {
-    return toArray();
-  }
-
-  @Override
-  public String getHexString() {
-    return toHexString();
   }
 }

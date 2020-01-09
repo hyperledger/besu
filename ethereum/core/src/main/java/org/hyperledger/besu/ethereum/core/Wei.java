@@ -73,22 +73,7 @@ public final class Wei extends BaseUInt256Value<Wei> implements Quantity {
   }
 
   @Override
-  public byte[] getByteArray() {
-    return toBytes().toArray();
-  }
-
-  @Override
-  public String getHexString() {
-    return toHexString();
-  }
-
-  @Override
-  public int size() {
-    return toMinimalBytes().size();
-  }
-
-  @Override
-  public Wei copy() {
-    return super.copy();
+  public String toHexString() {
+    return super.toHexString();
   }
 }
