@@ -169,7 +169,7 @@ public class ForkIdManager {
 
   private List<ForkId> createForkIds(final List<Long> forks) {
     final CRC32 crc = new CRC32();
-    crc.update(this.genesisHash.getByteArray());
+    crc.update(this.genesisHash.toArray());
     final List<Bytes> forkHashes = new ArrayList<>(List.of(getCurrentCrcHash(crc)));
     for (final Long fork : forks) {
       updateCrc(crc, fork);
