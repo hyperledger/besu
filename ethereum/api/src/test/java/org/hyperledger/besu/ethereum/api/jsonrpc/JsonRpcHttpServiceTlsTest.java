@@ -199,7 +199,7 @@ public class JsonRpcHttpServiceTlsTest {
             () -> {
               try (final Response response = httpClient.newCall(buildPostRequest(json)).execute()) {
                 Assertions.fail("Call should have failed. Got: " + response);
-              } catch (Exception e) {
+              } catch (final Exception e) {
                 e.printStackTrace();
                 throw e;
               }
@@ -218,7 +218,7 @@ public class JsonRpcHttpServiceTlsTest {
             () -> {
               try (final Response response = httpClient.newCall(buildPostRequest(json)).execute()) {
                 Assertions.fail("Call should have failed. Got: " + response);
-              } catch (Exception e) {
+              } catch (final Exception e) {
                 e.printStackTrace();
                 throw e;
               }
@@ -243,7 +243,7 @@ public class JsonRpcHttpServiceTlsTest {
       // Check result
       final String result = jsonObject.getString("result");
       assertThat(result).isEqualTo(String.valueOf(CHAIN_ID));
-    } catch (Exception e) {
+    } catch (final Exception e) {
       e.printStackTrace();
       throw e;
     }

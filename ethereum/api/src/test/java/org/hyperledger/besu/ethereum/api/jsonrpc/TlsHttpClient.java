@@ -67,7 +67,7 @@ public class TlsHttpClient {
                   (X509TrustManager)
                       trustManagerFactory.getTrustManagers()[0]) // we only have one trust manager
               .build();
-    } catch (GeneralSecurityException e) {
+    } catch (final GeneralSecurityException e) {
       throw new RuntimeException(e);
     }
   }
@@ -81,7 +81,7 @@ public class TlsHttpClient {
           TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
       trustManagerFactory.init(trustStore);
       this.trustManagerFactory = trustManagerFactory;
-    } catch (GeneralSecurityException gse) {
+    } catch (final GeneralSecurityException gse) {
       throw new RuntimeException("Unable to load trust manager factory", gse);
     }
   }
@@ -99,7 +99,7 @@ public class TlsHttpClient {
           KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
       keyManagerFactory.init(keyStore, password);
       this.keyManagerFactory = keyManagerFactory;
-    } catch (GeneralSecurityException gse) {
+    } catch (final GeneralSecurityException gse) {
       throw new RuntimeException("Unable to load key manager factory", gse);
     }
   }
@@ -113,7 +113,7 @@ public class TlsHttpClient {
     final KeyStore store = KeyStore.getInstance("pkcs12");
     try (final InputStream keystoreStream = ClassLoader.getSystemResource(resource).openStream()) {
       store.load(keystoreStream, password);
-    } catch (IOException e) {
+    } catch (final IOException e) {
       throw new RuntimeException("Unable to load keystore.", e);
     }
     return store;

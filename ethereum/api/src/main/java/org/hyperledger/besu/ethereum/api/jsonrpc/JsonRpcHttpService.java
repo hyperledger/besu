@@ -254,7 +254,7 @@ public class JsonRpcHttpService {
                 }
                 resultFuture.completeExceptionally(cause);
               });
-    } catch (VertxException e) {
+    } catch (final VertxException e) {
       httpServer = null;
       resultFuture.completeExceptionally(
           new JsonRpcServiceException(

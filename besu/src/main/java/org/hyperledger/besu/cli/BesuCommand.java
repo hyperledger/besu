@@ -1262,7 +1262,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         throw new ParameterException(
             commandLine, "Unable to read key store password for JSON-RPC HTTP endpoint");
       }
-    } catch (IOException e) {
+    } catch (final IOException e) {
       throw new ParameterException(
           commandLine, "Unable to read key store password file for JSON-RPC HTTP endpoint", e);
     }
@@ -1273,7 +1273,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           .withKeyStorePassword(password)
           .withKnownClientsFile(rpcHttpTlsKnownClientsFile)
           .build();
-    } catch (TlsConfigurationException e) {
+    } catch (final TlsConfigurationException e) {
       throw new ParameterException(
           commandLine,
           String.format(
