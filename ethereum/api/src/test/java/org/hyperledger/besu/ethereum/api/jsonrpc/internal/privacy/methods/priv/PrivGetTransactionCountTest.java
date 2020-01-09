@@ -28,7 +28,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcUnauthorizedResponse;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.privacy.DefaultPrivacyController;
@@ -115,7 +114,7 @@ public class PrivGetTransactionCountTest {
             new JsonRpcRequest("1", "priv_getTransactionCount", params), user);
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcUnauthorizedResponse(request.getRequest().getId(), JsonRpcError.UNAUTHORIZED);
+        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.ENCLAVE_ERROR);
     final JsonRpcResponse response = privGetTransactionCount.response(request);
     assertThat(response).isEqualTo(expectedResponse);
   }

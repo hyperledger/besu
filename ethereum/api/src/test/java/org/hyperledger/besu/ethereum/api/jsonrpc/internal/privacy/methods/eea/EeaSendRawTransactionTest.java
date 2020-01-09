@@ -22,7 +22,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.SECP256K1;
-import org.hyperledger.besu.enclave.EnclaveServerException;
+import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
@@ -30,7 +30,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcUnauthorizedResponse;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
@@ -297,7 +296,7 @@ public class EeaSendRawTransactionTest {
   @Test
   public void invalidTransactionIsNotSentToTransactionPool() {
     when(privacyController.sendTransaction(any(PrivateTransaction.class), any()))
-        .thenThrow(new EnclaveServerException(500, "enclave failed to execute"));
+        .thenThrow(new EnclaveClientException(400, "enclave failed to execute"));
 
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
@@ -324,7 +323,7 @@ public class EeaSendRawTransactionTest {
                 "2.0", "eea_sendRawTransaction", new String[] {VALID_PRIVATE_TRANSACTION_RLP}));
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcUnauthorizedResponse(request.getRequest().getId(), JsonRpcError.UNAUTHORIZED);
+        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.ENCLAVE_ERROR);
 
     final JsonRpcResponse actualResponse = method.response(request);
 

@@ -28,7 +28,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcUnauthorizedResponse;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.privacy.DefaultPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
@@ -100,10 +99,10 @@ public class PrivDeletePrivacyGroupTest {
         new PrivDeletePrivacyGroup(privacyController, enclavePublicKeyProvider);
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcUnauthorizedResponse(request.getRequest().getId(), JsonRpcError.UNAUTHORIZED);
+        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.ENCLAVE_ERROR);
 
-    final JsonRpcUnauthorizedResponse response =
-        (JsonRpcUnauthorizedResponse) privDeletePrivacyGroup.response(request);
+    final JsonRpcErrorResponse response =
+        (JsonRpcErrorResponse) privDeletePrivacyGroup.response(request);
     assertThat(response).isEqualTo(expectedResponse);
   }
 }

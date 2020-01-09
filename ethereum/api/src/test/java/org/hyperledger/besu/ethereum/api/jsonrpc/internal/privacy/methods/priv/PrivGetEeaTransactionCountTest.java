@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcUnauthorizedResponse;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.privacy.DefaultPrivacyController;
@@ -115,9 +114,9 @@ public class PrivGetEeaTransactionCountTest {
         .thenThrow(new MultiTenancyValidationException("validation failed"));
 
     final JsonRpcResponse response = method.response(request);
-    assertThat(response).isInstanceOf(JsonRpcUnauthorizedResponse.class);
+    assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);
 
-    final JsonRpcUnauthorizedResponse errorResponse = (JsonRpcUnauthorizedResponse) response;
-    assertThat(errorResponse.getError()).isEqualTo(JsonRpcError.UNAUTHORIZED);
+    final JsonRpcErrorResponse errorResponse = (JsonRpcErrorResponse) response;
+    assertThat(errorResponse.getError()).isEqualTo(JsonRpcError.ENCLAVE_ERROR);
   }
 }
