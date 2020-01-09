@@ -18,18 +18,21 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-@JsonPropertyOrder({"payload", "privacyGroupId"})
+@JsonPropertyOrder({"payload", "privacyGroupId", "senderKey"})
 public class ReceiveResponse {
 
   private final byte[] payload;
   private final String privacyGroupId;
+  private final String senderKey;
 
   @JsonCreator
   public ReceiveResponse(
       @JsonProperty(value = "payload") final byte[] payload,
-      @JsonProperty(value = "privacyGroupId") final String privacyGroupId) {
+      @JsonProperty(value = "privacyGroupId") final String privacyGroupId,
+      @JsonProperty(value = "senderKey") final String senderKey) {
     this.payload = payload;
     this.privacyGroupId = privacyGroupId;
+    this.senderKey = senderKey;
   }
 
   public byte[] getPayload() {
@@ -38,5 +41,9 @@ public class ReceiveResponse {
 
   public String getPrivacyGroupId() {
     return privacyGroupId;
+  }
+
+  public String getSenderKey() {
+    return senderKey;
   }
 }
