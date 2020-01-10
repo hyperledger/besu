@@ -74,12 +74,7 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
       final Supplier<RocksDBFactoryConfiguration> configuration,
       final List<SegmentIdentifier> segments,
       final RocksDBMetricsFactory rocksDBMetricsFactory) {
-    this(
-        configuration,
-        segments,
-        /** Source of truth for the default database version. */
-        DEFAULT_VERSION,
-        rocksDBMetricsFactory);
+    this(configuration, segments, DEFAULT_VERSION, rocksDBMetricsFactory);
   }
 
   int getDefaultVersion() {

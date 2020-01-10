@@ -1388,6 +1388,9 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand("--nat-method", "UPNP");
     verify(mockRunnerBuilder).natMethod(eq(NatMethod.UPNP));
 
+    parseCommand("--nat-method", "AUTO");
+    verify(mockRunnerBuilder).natMethod(eq(NatMethod.AUTO));
+
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
   }
@@ -1400,7 +1403,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString())
         .contains(
-            "Invalid value for option '--nat-method': expected one of [UPNP, NONE] (case-insensitive) but was 'invalid'");
+            "Invalid value for option '--nat-method': expected one of [UPNP, MANUAL, AUTO, NONE] (case-insensitive) but was 'invalid'");
   }
 
   @Test
@@ -1414,10 +1417,10 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void natMethodPropertyDefaultIsNone() {
+  public void natMethodPropertyDefaultIsAuto() {
     parseCommand();
 
-    verify(mockRunnerBuilder).natMethod(eq(NatMethod.NONE));
+    verify(mockRunnerBuilder).natMethod(eq(NatMethod.AUTO));
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
