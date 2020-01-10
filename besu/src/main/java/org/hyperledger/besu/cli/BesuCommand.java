@@ -72,7 +72,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
-import org.hyperledger.besu.ethereum.api.tls.TlsConfigurationException;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
@@ -1268,20 +1267,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           commandLine, "Unable to read key store password file for JSON-RPC HTTP endpoint", e);
     }
 
-    try {
-      return TlsConfiguration.TlsConfigurationBuilder.aTlsConfiguration()
-          .withKeyStorePath(rpcHttpTlsKeyStoreFile.normalize())
-          .withKeyStorePassword(password)
-          .withKnownClientsFile(rpcHttpTlsKnownClientsFile)
-          .build();
-    } catch (final TlsConfigurationException e) {
-      throw new ParameterException(
-          commandLine,
-          String.format(
-              "Unable to initialize TLS configuration for JSON-RPC HTTP endpoint: %s",
-              e.getMessage()),
-          e);
-    }
+    return TlsConfiguration.TlsConfigurationBuilder.aTlsConfiguration()
+        .withKeyStorePath(rpcHttpTlsKeyStoreFile.normalize())
+        .withKeyStorePassword(password)
+        .withKnownClientsFile(rpcHttpTlsKnownClientsFile)
+        .build();
   }
 
   private WebSocketConfiguration webSocketConfiguration() {

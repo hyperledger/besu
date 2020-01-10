@@ -15,49 +15,35 @@
 
 package org.hyperledger.besu.ethereum.api.tls;
 
-import java.nio.file.Path;
-import java.util.Objects;
-import java.util.Optional;
+import static java.util.Objects.requireNonNull;
 
-import io.vertx.core.net.PfxOptions;
-import io.vertx.core.net.TrustOptions;
-import org.apache.tuweni.net.tls.VertxTrustOptions;
+import java.nio.file.Path;
+import java.util.Optional;
 
 public class TlsConfiguration {
   private final Path keyStorePath;
   private final String keyStorePassword;
   private final Path knownClientsFile;
-  private TrustOptions trustOptions;
-  private PfxOptions pfxKeyCertOptions;
 
   private TlsConfiguration(
       final Path keyStorePath, final String keyStorePassword, final Path knownClientsFile) {
-    Objects.requireNonNull(keyStorePath, "Key Store Path must not be null");
-    Objects.requireNonNull(keyStorePassword, "Key Store password must not be null");
+    requireNonNull(keyStorePath, "Key Store Path must not be null");
+    requireNonNull(keyStorePassword, "Key Store password must not be null");
     this.keyStorePath = keyStorePath;
     this.keyStorePassword = keyStorePassword;
     this.knownClientsFile = knownClientsFile;
   }
 
-  private void init() {
-    this.pfxKeyCertOptions =
-        new PfxOptions().setPath(keyStorePath.toString()).setPassword(keyStorePassword);
-    try {
-      this.trustOptions =
-          Optional.ofNullable(knownClientsFile)
-              .map(VertxTrustOptions::whitelistClients)
-              .orElse(null);
-    } catch (RuntimeException exception) {
-      throw new TlsConfigurationException(exception.getMessage());
-    }
+  public Path getKeyStorePath() {
+    return keyStorePath;
   }
 
-  public PfxOptions getPfxKeyCertOptions() {
-    return pfxKeyCertOptions;
+  public String getKeyStorePassword() {
+    return keyStorePassword;
   }
 
-  public Optional<TrustOptions> getTrustOptions() {
-    return Optional.ofNullable(trustOptions);
+  public Optional<Path> getKnownClientsFile() {
+    return Optional.ofNullable(knownClientsFile);
   }
 
   public static final class TlsConfigurationBuilder {
@@ -87,10 +73,7 @@ public class TlsConfiguration {
     }
 
     public TlsConfiguration build() {
-      final TlsConfiguration tlsConfiguration =
-          new TlsConfiguration(keyStorePath, keyStorePassword, knownClientsFile);
-      tlsConfiguration.init();
-      return tlsConfiguration;
+      return new TlsConfiguration(keyStorePath, keyStorePassword, knownClientsFile);
     }
   }
 }

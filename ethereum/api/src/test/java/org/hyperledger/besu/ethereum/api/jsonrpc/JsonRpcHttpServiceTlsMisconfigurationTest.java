@@ -47,6 +47,7 @@ import org.hyperledger.besu.nat.NatService;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
@@ -168,6 +169,21 @@ public class JsonRpcHttpServiceTlsMisconfigurationTest {
         .withMessageContaining("Short read of DER length");
   }
 
+  @Test
+  public void exceptionRaisedWhenInvalidKnownClientsFileIsSpecified() throws IOException {
+    service =
+        createJsonRpcHttpService(
+            rpcMethods, createJsonRpcConfig(invalidKnownClientsTlsConfiguration()));
+    assertThatExceptionOfType(CompletionException.class)
+        .isThrownBy(
+            () -> {
+              service.start().join();
+              Assertions.fail("service.start should have failed");
+            })
+        .withCauseInstanceOf(JsonRpcServiceException.class)
+        .withMessageContaining("Invalid fingerprint in");
+  }
+
   private TlsConfiguration invalidKeystoreFileTlsConfiguration() throws IOException {
     final File tempFile = folder.newFile();
     return TlsConfiguration.TlsConfigurationBuilder.aTlsConfiguration()
@@ -190,6 +206,24 @@ public class JsonRpcHttpServiceTlsMisconfigurationTest {
         .withKeyStorePath(getKeyStorePath())
         .withKeyStorePassword("invalid password")
         .withKnownClientsFile(getKnownClientsFile())
+        .build();
+  }
+
+  private TlsConfiguration invalidKnownClientsTlsConfiguration() throws IOException {
+    final Path tempKnownClientsFile = folder.newFile().toPath();
+    Files.write(tempKnownClientsFile, List.of("cn invalid_sha256"));
+    return TlsConfiguration.TlsConfigurationBuilder.aTlsConfiguration()
+        .withKeyStorePath(getKeyStorePath())
+        .withKeyStorePassword("changeit")
+        .withKnownClientsFile(tempKnownClientsFile)
+        .build();
+  }
+
+  private TlsConfiguration knownClientsInvalidPathTlsConfiguration() throws IOException {
+    return TlsConfiguration.TlsConfigurationBuilder.aTlsConfiguration()
+        .withKeyStorePath(getKeyStorePath())
+        .withKeyStorePassword("changeit")
+        .withKnownClientsFile(Path.of("/tmp/should_not_exist_file"))
         .build();
   }
 
