@@ -219,14 +219,6 @@ public class JsonRpcHttpServiceTlsMisconfigurationTest {
         .build();
   }
 
-  private TlsConfiguration knownClientsInvalidPathTlsConfiguration() throws IOException {
-    return TlsConfiguration.TlsConfigurationBuilder.aTlsConfiguration()
-        .withKeyStorePath(getKeyStorePath())
-        .withKeyStorePassword("changeit")
-        .withKnownClientsFile(Path.of("/tmp/should_not_exist_file"))
-        .build();
-  }
-
   private JsonRpcHttpService createJsonRpcHttpService(
       final Map<String, JsonRpcMethod> rpcMethods, final JsonRpcConfiguration jsonRpcConfig)
       throws IOException {
