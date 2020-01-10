@@ -459,21 +459,21 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--rpc-http-tls-keystore-file"},
       paramLabel = MANDATORY_FILE_FORMAT_HELP,
       description =
-          "PKCS#12 format key store file for the JSON-RPC HTTP service. Required if TLS is enabled.")
+          "Keystore (PKCS#12) containing key/certificate for the JSON-RPC HTTP service. Required if TLS is enabled.")
   private final Path rpcHttpTlsKeyStoreFile = null;
 
   @Option(
       names = {"--rpc-http-tls-keystore-password-file"},
       paramLabel = MANDATORY_FILE_FORMAT_HELP,
       description =
-          "Key store password file for the JSON-RPC HTTP service. Required if TLS is enabled.")
+          "File containing password to unlock keystore for the JSON-RPC HTTP service. Required if TLS is enabled.")
   private final Path rpcHttpTlsKeyStorePasswordFile = null;
 
   @Option(
       names = {"--rpc-http-tls-known-clients-file"},
       paramLabel = MANDATORY_FILE_FORMAT_HELP,
       description =
-          "Known clients common name and fingerprints to enable TLS client authentication for the JSON-RPC HTTP service.")
+          "Require clients to present known or CA-signed certificates. File must contain common name and fingerprint if certificate is not CA-signed")
   private final Path rpcHttpTlsKnownClientsFile = null;
 
   @Option(
@@ -1225,13 +1225,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       if (rpcHttpTlsKeyStoreFile == null) {
         throw new ParameterException(
             commandLine,
-            "Key store file is required when TLS is enabled for JSON-RPC HTTP endpoint");
+            "Keystore file is required when TLS is enabled for JSON-RPC HTTP endpoint");
       }
 
       if (rpcHttpTlsKeyStorePasswordFile == null) {
         throw new ParameterException(
             commandLine,
-            "Key store password file is required when TLS is enabled for JSON-RPC HTTP endpoint");
+            "Password file to unlock keystore is required when TLS is enabled for JSON-RPC HTTP endpoint");
       }
       tlsConfiguration = getRpcHttpTlsConfiguration();
     } else {
@@ -1260,11 +1260,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
               .readFirstLine();
       if (password == null) {
         throw new ParameterException(
-            commandLine, "Unable to read key store password for JSON-RPC HTTP endpoint");
+            commandLine, "Unable to read keystore password for JSON-RPC HTTP endpoint");
       }
     } catch (final IOException e) {
       throw new ParameterException(
-          commandLine, "Unable to read key store password file for JSON-RPC HTTP endpoint", e);
+          commandLine, "Unable to read keystore password file for JSON-RPC HTTP endpoint", e);
     }
 
     return TlsConfiguration.TlsConfigurationBuilder.aTlsConfiguration()

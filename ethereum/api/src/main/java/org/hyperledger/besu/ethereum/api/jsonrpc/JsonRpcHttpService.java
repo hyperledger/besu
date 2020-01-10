@@ -314,7 +314,7 @@ public class JsonRpcHttpService {
     return config.getTlsConfiguration().isPresent() ? " with TLS enabled." : "";
   }
 
-  private Throwable getFailureException(Throwable listenFailure) {
+  private Throwable getFailureException(final Throwable listenFailure) {
     if (listenFailure instanceof SocketException) {
       return new JsonRpcServiceException(
           String.format(
