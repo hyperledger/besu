@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.PluginsReloadConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
+import org.hyperledger.besu.nat.NatService;
 import org.hyperledger.besu.plugin.BesuPlugin;
 
 import java.math.BigInteger;
@@ -39,6 +40,7 @@ public class AdminJsonRpcMethods extends ApiGroupJsonRpcMethods {
   private final GenesisConfigOptions genesisConfigOptions;
   private final P2PNetwork p2pNetwork;
   private final BlockchainQueries blockchainQueries;
+  private final NatService natService;
   private final Map<String, BesuPlugin> namedPlugins;
 
   public AdminJsonRpcMethods(
@@ -47,13 +49,15 @@ public class AdminJsonRpcMethods extends ApiGroupJsonRpcMethods {
       final GenesisConfigOptions genesisConfigOptions,
       final P2PNetwork p2pNetwork,
       final BlockchainQueries blockchainQueries,
-      final Map<String, BesuPlugin> namedPlugins) {
+      final Map<String, BesuPlugin> namedPlugins,
+      final NatService natService) {
     this.clientVersion = clientVersion;
     this.networkId = networkId;
     this.genesisConfigOptions = genesisConfigOptions;
     this.p2pNetwork = p2pNetwork;
     this.blockchainQueries = blockchainQueries;
     this.namedPlugins = namedPlugins;
+    this.natService = natService;
   }
 
   @Override
@@ -67,7 +71,12 @@ public class AdminJsonRpcMethods extends ApiGroupJsonRpcMethods {
         new AdminAddPeer(p2pNetwork),
         new AdminRemovePeer(p2pNetwork),
         new AdminNodeInfo(
-            clientVersion, networkId, genesisConfigOptions, p2pNetwork, blockchainQueries),
+            clientVersion,
+            networkId,
+            genesisConfigOptions,
+            p2pNetwork,
+            blockchainQueries,
+            natService),
         new AdminPeers(p2pNetwork),
         new AdminChangeLogLevel(),
         new AdminGenerateLogBloomCache(blockchainQueries),
