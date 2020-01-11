@@ -12,10 +12,26 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.plugin.data;
 
-import org.hyperledger.besu.plugin.Unstable;
+package org.hyperledger.besu.nat.core;
 
-/** An interface to mark BinaryData that is not a scalar {@link Quantity}. */
-@Unstable
-public interface UnformattedData extends BinaryData {}
+import org.hyperledger.besu.nat.NatMethod;
+
+public class AutoDetectionResult {
+
+  private final NatMethod natMethod;
+  private final boolean isDetectedNatMethod;
+
+  public AutoDetectionResult(final NatMethod natMethod, final boolean isDetectedNatMethod) {
+    this.natMethod = natMethod;
+    this.isDetectedNatMethod = isDetectedNatMethod;
+  }
+
+  public NatMethod getNatMethod() {
+    return natMethod;
+  }
+
+  public boolean isDetectedNatMethod() {
+    return isDetectedNatMethod;
+  }
+}

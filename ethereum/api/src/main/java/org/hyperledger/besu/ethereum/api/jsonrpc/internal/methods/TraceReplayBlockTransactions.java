@@ -22,17 +22,19 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceTypePa
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.FlatTraceGenerator;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.TraceFormatter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.TraceWriter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTraceGenerator;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.vm.VmTraceGenerator;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -47,15 +49,11 @@ public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
   private static final Logger LOG = LogManager.getLogger();
 
   private final BlockTracer blockTracer;
-  private final ProtocolSchedule<?> protocolSchedule;
 
   public TraceReplayBlockTransactions(
-      final BlockTracer blockTracer,
-      final BlockchainQueries queries,
-      final ProtocolSchedule<?> protocolSchedule) {
+      final BlockTracer blockTracer, final BlockchainQueries queries) {
     super(queries);
     this.blockTracer = blockTracer;
-    this.protocolSchedule = protocolSchedule;
   }
 
   @Override
@@ -76,8 +74,7 @@ public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
 
     // TODO : method returns an error if any option other than “trace” is supplied.
     // remove when others options are implemented
-    if (traceTypeParameter.getTraceTypes().contains(TraceTypeParameter.TraceType.STATE_DIFF)
-        || traceTypeParameter.getTraceTypes().contains(TraceTypeParameter.TraceType.VM_TRACE)) {
+    if (traceTypeParameter.getTraceTypes().contains(TraceTypeParameter.TraceType.STATE_DIFF)) {
       LOG.warn("Unsupported trace option");
       throw new InvalidJsonRpcParameters("Invalid trace types supplied.");
     }
@@ -104,14 +101,12 @@ public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
     return blockTracer
         .trace(block, new DebugOperationTracer(traceOptions))
         .map(BlockTrace::getTransactionTraces)
-        .map((traces) -> formatTraces(block.getHeader().getNumber(), traces, traceTypeParameter))
+        .map((traces) -> formatTraces(traces, traceTypeParameter))
         .orElse(null);
   }
 
   private JsonNode formatTraces(
-      final long blockNumber,
-      final List<TransactionTrace> traces,
-      final TraceTypeParameter traceTypeParameter) {
+      final List<TransactionTrace> traces, final TraceTypeParameter traceTypeParameter) {
     final Set<TraceTypeParameter.TraceType> traceTypes = traceTypeParameter.getTraceTypes();
     final ObjectMapper mapper = new ObjectMapper();
     final ArrayNode resultArrayNode = mapper.createArrayNode();
@@ -125,36 +120,54 @@ public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
                   "transactionHash", transactionTrace.getTransaction().getHash().toHexString());
               resultNode.put("output", transactionTrace.getResult().getOutput().toString());
             });
-    resultNode.put("stateDiff", (String) null);
-    resultNode.put("vmTrace", (String) null);
 
     if (traceTypes.contains(TraceTypeParameter.TraceType.TRACE)) {
       formatTraces(
-          blockNumber,
           resultNode.putArray("trace")::addPOJO,
           traces,
           FlatTraceGenerator::generateFromTransactionTrace,
           traceCounter);
     }
+    if (traceTypes.contains(TraceTypeParameter.TraceType.VM_TRACE)) {
+      formatTraces(
+          trace -> resultNode.putPOJO("vmTrace", trace),
+          traces,
+          (transactionTrace, ignored) ->
+              new VmTraceGenerator(transactionTrace).generateTraceStream(),
+          traceCounter);
+    }
+
+    setEmptyArrayIfNotPresent(resultNode, "trace");
+    setNullNodesIfNotPresent(resultNode, "vmTrace", "stateDiff");
 
     resultArrayNode.add(resultNode);
     return resultArrayNode;
   }
 
   private void formatTraces(
-      final long blockNumber,
       final TraceWriter writer,
       final List<TransactionTrace> traces,
       final TraceFormatter formatter,
       final AtomicInteger traceCounter) {
     traces.forEach(
         (transactionTrace) ->
-            formatter
-                .format(
-                    transactionTrace,
-                    traceCounter,
-                    protocolSchedule.getByBlockNumber(blockNumber).getGasCalculator())
-                .forEachOrdered(writer::write));
+            formatter.format(transactionTrace, traceCounter).forEachOrdered(writer::write));
+  }
+
+  private void setNullNodesIfNotPresent(final ObjectNode parentNode, final String... keys) {
+    Arrays.asList(keys)
+        .forEach(
+            key ->
+                Optional.ofNullable(parentNode.get(key))
+                    .ifPresentOrElse(ignored -> {}, () -> parentNode.put(key, (String) null)));
+  }
+
+  private void setEmptyArrayIfNotPresent(final ObjectNode parentNode, final String... keys) {
+    Arrays.asList(keys)
+        .forEach(
+            key ->
+                Optional.ofNullable(parentNode.get(key))
+                    .ifPresentOrElse(ignored -> {}, () -> parentNode.putArray(key)));
   }
 
   private Object emptyResult() {

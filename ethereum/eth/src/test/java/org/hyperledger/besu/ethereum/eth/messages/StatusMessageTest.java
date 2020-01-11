@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
+import org.hyperledger.besu.ethereum.eth.manager.ForkIdManager;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 
 import java.math.BigInteger;
@@ -64,6 +65,28 @@ public class StatusMessageTest {
     assertThat(copy.totalDifficulty()).isEqualTo(td);
     assertThat(copy.bestHash()).isEqualTo(bestHash);
     assertThat(copy.genesisHash()).isEqualTo(genesisHash);
+  }
+
+  @Test
+  public void serializeDeserializeWithForkId() {
+    final int version = EthProtocol.EthVersion.V64;
+    final BigInteger networkId = BigInteger.ONE;
+    final Difficulty td = Difficulty.of(1000L);
+    final Hash bestHash = randHash(1L);
+    final Hash genesisHash = randHash(2L);
+    final ForkIdManager.ForkId forkId = ForkIdManager.createIdEntry("0xa00bc334", 0L);
+
+    final MessageData msg =
+        StatusMessage.create(version, networkId, td, bestHash, genesisHash, forkId);
+
+    final StatusMessage copy = new StatusMessage(msg.getData());
+
+    assertThat(copy.protocolVersion()).isEqualTo(version);
+    assertThat(copy.networkId()).isEqualTo(networkId);
+    assertThat(copy.totalDifficulty()).isEqualTo(td);
+    assertThat(copy.bestHash()).isEqualTo(bestHash);
+    assertThat(copy.genesisHash()).isEqualTo(genesisHash);
+    assertThat(copy.forkId()).isEqualTo(forkId);
   }
 
   private Hash randHash(final long seed) {

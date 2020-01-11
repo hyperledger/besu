@@ -21,17 +21,18 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Log;
-import org.hyperledger.besu.ethereum.core.LogSeries;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.mainnet.AbstractMessageProcessor;
 
+import java.util.ArrayList;
 import java.util.Deque;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -203,7 +204,7 @@ public class MessageFrame {
   private final boolean isStatic;
 
   // Transaction substate fields.
-  private final LogSeries logs;
+  private final List<Log> logs;
   private Gas gasRefund;
   private final Set<Address> selfDestructs;
   private final Map<Address, Wei> refunds;
@@ -273,7 +274,7 @@ public class MessageFrame {
     this.stack = new PreAllocatedOperandStack(maxStackSize);
     this.output = Bytes.EMPTY;
     this.returnData = Bytes.EMPTY;
-    this.logs = LogSeries.empty();
+    this.logs = new ArrayList<>();
     this.gasRefund = Gas.ZERO;
     this.selfDestructs = new HashSet<>();
     this.refunds = new HashMap<>();
@@ -583,7 +584,7 @@ public class MessageFrame {
    *
    * @param logs The logs to accumulate
    */
-  public void addLogs(final LogSeries logs) {
+  public void addLogs(final List<Log> logs) {
     this.logs.addAll(logs);
   }
 
@@ -597,7 +598,7 @@ public class MessageFrame {
    *
    * @return the accumulated logs
    */
-  public LogSeries getLogs() {
+  public List<Log> getLogs() {
     return logs;
   }
 

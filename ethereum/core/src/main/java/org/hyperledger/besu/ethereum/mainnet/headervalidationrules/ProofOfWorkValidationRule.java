@@ -40,7 +40,7 @@ public final class ProofOfWorkValidationRule implements DetachedBlockHeaderValid
   public boolean validate(final BlockHeader header, final BlockHeader parent) {
     final byte[] hashBuffer = new byte[64];
     final Hash headerHash = hashHeader(header);
-    HASHER.hash(hashBuffer, header.getNonce(), header.getNumber(), headerHash.getByteArray());
+    HASHER.hash(hashBuffer, header.getNonce(), header.getNumber(), headerHash.toArray());
 
     if (header.getDifficulty().isZero()) {
       LOG.trace("Rejecting header because difficulty is 0");
@@ -88,7 +88,7 @@ public final class ProofOfWorkValidationRule implements DetachedBlockHeaderValid
     out.writeBytes(header.getStateRoot());
     out.writeBytes(header.getTransactionsRoot());
     out.writeBytes(header.getReceiptsRoot());
-    out.writeBytes(header.getLogsBloom().getBytes());
+    out.writeBytes(header.getLogsBloom());
     out.writeUInt256Scalar(header.getDifficulty());
     out.writeLongScalar(header.getNumber());
     out.writeLongScalar(header.getGasLimit());

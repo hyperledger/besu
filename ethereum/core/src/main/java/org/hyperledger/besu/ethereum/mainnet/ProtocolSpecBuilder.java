@@ -282,10 +282,11 @@ public class ProtocolSpecBuilder<T> {
             gasCalculator, transactionValidator, contractCreationProcessor, messageCallProcessor);
 
     // Set private Tx Processor
+    PrivateTransactionProcessor privateTransactionProcessor = null;
     if (privacyParameters.isEnabled()) {
       final PrivateTransactionValidator privateTransactionValidator =
           privateTransactionValidatorBuilder.apply();
-      final PrivateTransactionProcessor privateTransactionProcessor =
+      privateTransactionProcessor =
           privateTransactionProcessorBuilder.apply(
               gasCalculator,
               transactionValidator,
@@ -320,6 +321,7 @@ public class ProtocolSpecBuilder<T> {
         evm,
         transactionValidator,
         transactionProcessor,
+        privateTransactionProcessor,
         blockHeaderValidator,
         ommerHeaderValidator,
         blockBodyValidator,

@@ -55,6 +55,7 @@ import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioni
 import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningController;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
+import org.hyperledger.besu.nat.NatService;
 import org.hyperledger.besu.plugin.data.SyncStatus;
 
 import java.math.BigInteger;
@@ -108,6 +109,7 @@ public class JsonRpcHttpServiceTest {
   protected static final Collection<RpcApi> JSON_RPC_APIS =
       Arrays.asList(RpcApis.ETH, RpcApis.NET, RpcApis.WEB3, RpcApis.ADMIN);
   protected final JsonRpcTestHelper testHelper = new JsonRpcTestHelper();
+  protected static final NatService natService = new NatService(Optional.empty());
 
   @BeforeClass
   public static void initServerAndClient() throws Exception {
@@ -142,7 +144,9 @@ public class JsonRpcHttpServiceTest {
                     mock(PrivacyParameters.class),
                     mock(JsonRpcConfiguration.class),
                     mock(WebSocketConfiguration.class),
-                    mock(MetricsConfiguration.class)));
+                    mock(MetricsConfiguration.class),
+                    natService,
+                    new HashMap<>()));
     service = createJsonRpcHttpService();
     service.start().join();
 
@@ -158,7 +162,7 @@ public class JsonRpcHttpServiceTest {
         folder.newFolder().toPath(),
         config,
         new NoOpMetricsSystem(),
-        Optional.empty(),
+        natService,
         rpcMethods,
         HealthService.ALWAYS_HEALTHY,
         HealthService.ALWAYS_HEALTHY);
@@ -170,7 +174,7 @@ public class JsonRpcHttpServiceTest {
         folder.newFolder().toPath(),
         createJsonRpcConfig(),
         new NoOpMetricsSystem(),
-        Optional.empty(),
+        natService,
         rpcMethods,
         HealthService.ALWAYS_HEALTHY,
         HealthService.ALWAYS_HEALTHY);
@@ -1826,8 +1830,7 @@ public class JsonRpcHttpServiceTest {
     assertThat(nonceResult.length() == 18 && nonceResult.startsWith("0x")).isTrue();
     assertThat(Long.parseUnsignedLong(nonceResult.substring(2), 16)).isEqualTo(header.getNonce());
     assertThat(Hash.fromHexString(result.getString("hash"))).isEqualTo(header.getHash());
-    assertThat(Bytes.fromHexString(result.getString("logsBloom")))
-        .isEqualTo(header.getLogsBloom().getBytes());
+    assertThat(Bytes.fromHexString(result.getString("logsBloom"))).isEqualTo(header.getLogsBloom());
   }
 
   private int hexStringToInt(final String hexString) {
