@@ -1093,7 +1093,8 @@ public final class EthProtocolManagerTest {
             ethScheduler,
             EthProtocolConfiguration.defaultConfig(),
             TestClock.fixed(),
-            metricsSystem)) {
+            metricsSystem,
+            ForkIdManager.buildCollection(blockchain.getBlockHashByNumber(0L).get()))) {
 
       // Create a transaction pool.  This has a side effect of registering a listener for the
       // transactions message.
