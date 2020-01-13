@@ -105,7 +105,7 @@ public class DefaultPrivacyControllerTest {
   private Enclave mockEnclave() {
     Enclave mockEnclave = mock(Enclave.class);
     SendResponse response = new SendResponse(TRANSACTION_KEY);
-    ReceiveResponse receiveResponse = new ReceiveResponse(new byte[0], "mock");
+    ReceiveResponse receiveResponse = new ReceiveResponse(new byte[0], "mock", null);
     when(mockEnclave.send(anyString(), anyString(), anyList())).thenReturn(response);
     when(mockEnclave.send(anyString(), anyString(), anyString())).thenReturn(response);
     when(mockEnclave.receive(any(), any())).thenReturn(receiveResponse);
@@ -250,7 +250,7 @@ public class DefaultPrivacyControllerTest {
   @Test
   public void retrievesTransaction() {
     when(enclave.receive(anyString(), anyString()))
-        .thenReturn(new ReceiveResponse(PAYLOAD, PRIVACY_GROUP_ID));
+        .thenReturn(new ReceiveResponse(PAYLOAD, PRIVACY_GROUP_ID, null));
 
     final ReceiveResponse receiveResponse =
         privacyController.retrieveTransaction(TRANSACTION_KEY, ENCLAVE_PUBLIC_KEY);

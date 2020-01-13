@@ -355,7 +355,8 @@ public abstract class BesuControllerBuilder<C> {
         syncConfig.getComputationParallelism(),
         clock,
         metricsSystem,
-        ethereumWireProtocolConfiguration);
+        ethereumWireProtocolConfiguration,
+        genesisConfig.getForks());
   }
 
   private List<PeerValidator> createPeerValidators(final ProtocolSchedule<C> protocolSchedule) {

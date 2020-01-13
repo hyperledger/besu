@@ -22,7 +22,7 @@ import org.hyperledger.besu.ethereum.p2p.network.NetworkRunner;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.stratum.StratumServer;
 import org.hyperledger.besu.metrics.prometheus.MetricsService;
-import org.hyperledger.besu.nat.upnp.UpnpNatManager;
+import org.hyperledger.besu.nat.NatService;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -49,7 +49,7 @@ public class Runner implements AutoCloseable {
   private final CountDownLatch shutdown = new CountDownLatch(1);
 
   private final NetworkRunner networkRunner;
-  private final Optional<UpnpNatManager> natManager;
+  private final NatService natService;
   private final Optional<JsonRpcHttpService> jsonRpc;
   private final Optional<GraphQLHttpService> graphQLHttp;
   private final Optional<WebSocketService> websocketRpc;
@@ -62,7 +62,7 @@ public class Runner implements AutoCloseable {
   Runner(
       final Vertx vertx,
       final NetworkRunner networkRunner,
-      final Optional<UpnpNatManager> natManager,
+      final NatService natService,
       final Optional<JsonRpcHttpService> jsonRpc,
       final Optional<GraphQLHttpService> graphQLHttp,
       final Optional<WebSocketService> websocketRpc,
@@ -72,7 +72,7 @@ public class Runner implements AutoCloseable {
       final Path dataDir) {
     this.vertx = vertx;
     this.networkRunner = networkRunner;
-    this.natManager = natManager;
+    this.natService = natService;
     this.graphQLHttp = graphQLHttp;
     this.jsonRpc = jsonRpc;
     this.websocketRpc = websocketRpc;
@@ -85,7 +85,7 @@ public class Runner implements AutoCloseable {
   public void start() {
     try {
       LOG.info("Starting Ethereum main loop ... ");
-      natManager.ifPresent(UpnpNatManager::start);
+      natService.start();
       networkRunner.start();
       if (networkRunner.getNetwork().isP2pEnabled()) {
         besuController.getSynchronizer().start();
@@ -102,6 +102,7 @@ public class Runner implements AutoCloseable {
       metrics.ifPresent(service -> waitForServiceToStart("metrics", service.start()));
       LOG.info("Ethereum main loop is up.");
       writeBesuPortsToFile();
+      writeBesuNetworksToFile();
     } catch (final Exception ex) {
       LOG.error("Startup failed", ex);
       throw new IllegalStateException(ex);
@@ -125,7 +126,7 @@ public class Runner implements AutoCloseable {
     networkRunner.stop();
     waitForServiceToStop("Network", networkRunner::awaitStop);
 
-    natManager.ifPresent(UpnpNatManager::stop);
+    natService.stop();
     besuController.close();
     vertx.close((res) -> vertxShutdownLatch.countDown());
     waitForServiceToStop("Vertx", vertxShutdownLatch::await);
@@ -218,17 +219,33 @@ public class Runner implements AutoCloseable {
     if (getMetricsPort().isPresent()) {
       properties.setProperty("metrics", String.valueOf(getMetricsPort().get()));
     }
+    // create besu.ports file
+    createBesuFile(
+        properties, "ports", "This file contains the ports used by the running instance of Besu");
+  }
 
-    final File portsFile = new File(dataDir.toFile(), "besu.ports");
-    portsFile.deleteOnExit();
+  private void writeBesuNetworksToFile() {
+    final Properties properties = new Properties();
+    if (networkRunner.getNetwork().isP2pEnabled()) {
+      networkRunner
+          .getNetwork()
+          .getLocalEnode()
+          .ifPresent(
+              enode -> {
+                final String globalIp =
+                    natService.queryExternalIPAddress().orElseGet(enode::getIpAsString);
+                properties.setProperty("global-ip", globalIp);
 
-    try (final FileOutputStream fileOutputStream = new FileOutputStream(portsFile)) {
-      properties.store(
-          fileOutputStream,
-          "This file contains the ports used by the running instance of Besu. This file will be deleted after the node is shutdown.");
-    } catch (final Exception e) {
-      LOG.warn("Error writing ports file", e);
+                final String localIp =
+                    natService.queryLocalIPAddress().orElseGet(enode::getIpAsString);
+                properties.setProperty("local-ip", localIp);
+              });
     }
+    // create besu.networks file
+    createBesuFile(
+        properties,
+        "networks",
+        "This file contains the IP Addresses (global and local) used by the running instance of Besu");
   }
 
   public Optional<Integer> getJsonRpcPort() {
@@ -259,5 +276,19 @@ public class Runner implements AutoCloseable {
   @FunctionalInterface
   private interface SynchronousShutdown {
     void await() throws InterruptedException;
+  }
+
+  private void createBesuFile(
+      final Properties properties, final String fileName, final String fileHeader) {
+    final File file = new File(dataDir.toFile(), String.format("besu.%s", fileName));
+    file.deleteOnExit();
+
+    try (final FileOutputStream fileOutputStream = new FileOutputStream(file)) {
+      properties.store(
+          fileOutputStream,
+          String.format("%s. This file will be deleted after the node is shutdown.", fileHeader));
+    } catch (final Exception e) {
+      LOG.warn(String.format("Error writing %s file", fileName), e);
+    }
   }
 }

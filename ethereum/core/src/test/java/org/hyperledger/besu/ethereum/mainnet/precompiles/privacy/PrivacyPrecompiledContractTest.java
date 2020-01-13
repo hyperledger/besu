@@ -126,7 +126,8 @@ public class PrivacyPrecompiledContractTest {
             new SpuriousDragonGasCalculator(), enclave, worldStateArchive, privateStateStorage);
     contract.setPrivateTransactionProcessor(mockPrivateTxProcessor());
 
-    final ReceiveResponse response = new ReceiveResponse(VALID_PRIVATE_TRANSACTION_RLP_BASE64, "");
+    final ReceiveResponse response =
+        new ReceiveResponse(VALID_PRIVATE_TRANSACTION_RLP_BASE64, "", null);
     when(enclave.receive(any(String.class))).thenReturn(response);
 
     final Bytes actual = contract.compute(key, messageFrame);

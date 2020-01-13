@@ -158,7 +158,9 @@ public class PrivGetTransactionReceiptTest {
     when(privacyController.retrieveTransaction(anyString(), any()))
         .thenReturn(
             new ReceiveResponse(
-                Base64.getEncoder().encode(RLP.encode(privateTransaction::writeTo).toArray()), ""));
+                Base64.getEncoder().encode(RLP.encode(privateTransaction::writeTo).toArray()),
+                "",
+                null));
 
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
     final TransactionLocation transactionLocation = new TransactionLocation(Hash.EMPTY, 0);
