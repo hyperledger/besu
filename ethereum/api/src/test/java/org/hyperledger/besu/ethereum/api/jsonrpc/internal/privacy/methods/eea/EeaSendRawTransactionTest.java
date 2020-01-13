@@ -19,11 +19,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.SECP256K1;
-import org.hyperledger.besu.enclave.EnclaveServerException;
+import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
@@ -37,6 +36,7 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.SendTransactionResponse;
@@ -107,7 +107,7 @@ public class EeaSendRawTransactionTest {
                   "32886959230931919120748662916110619501838190146643992583529828535682419954515"),
               new BigInteger(
                   "14473701025599600909210599917245952381483216609124029382871721729679842002948"),
-              Byte.valueOf("0")),
+              Byte.parseByte("0")),
           Bytes.fromHexString("0x"),
           Address.wrap(Bytes.fromHexString("0x8411b12666f68ef74cace3615c9d5a377729d03f")),
           Optional.empty());
@@ -290,13 +290,32 @@ public class EeaSendRawTransactionTest {
     final JsonRpcResponse actualResponse = method.response(request);
 
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
-    verifyZeroInteractions(privacyController);
+    verifyNoInteractions(privacyController);
   }
 
   @Test
   public void invalidTransactionIsNotSentToTransactionPool() {
     when(privacyController.sendTransaction(any(PrivateTransaction.class), any()))
-        .thenThrow(new EnclaveServerException(500, "enclave failed to execute"));
+        .thenThrow(new EnclaveClientException(400, "enclave failed to execute"));
+
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest(
+                "2.0", "eea_sendRawTransaction", new String[] {VALID_PRIVATE_TRANSACTION_RLP}));
+
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.ENCLAVE_ERROR);
+
+    final JsonRpcResponse actualResponse = method.response(request);
+
+    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+    verifyNoInteractions(transactionPool);
+  }
+
+  @Test
+  public void invalidTransactionFailingWithMultiTenancyValidationErrorReturnsUnauthorizedError() {
+    when(privacyController.sendTransaction(any(PrivateTransaction.class), any()))
+        .thenThrow(new MultiTenancyValidationException("validation failed"));
 
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(

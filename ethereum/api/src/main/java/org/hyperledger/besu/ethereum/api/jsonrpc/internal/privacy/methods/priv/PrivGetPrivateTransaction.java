@@ -22,6 +22,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.privacy.PrivateTransactionGroupResult;
@@ -93,7 +95,8 @@ public class PrivGetPrivateTransaction implements JsonRpcMethod {
       }
     } catch (final Exception e) {
       LOG.error("Failed to fetch private transaction", e);
-      return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), null);
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), JsonRpcError.ENCLAVE_ERROR);
     }
   }
 }
