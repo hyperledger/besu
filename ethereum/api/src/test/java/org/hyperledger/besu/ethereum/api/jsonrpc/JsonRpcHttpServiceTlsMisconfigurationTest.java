@@ -19,7 +19,6 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ETH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.NET;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.WEB3;
-import static org.hyperledger.besu.ethereum.api.tls.TlsConfiguration.fromKeyStoreAndKnownClientConfigurations;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
@@ -203,22 +202,20 @@ public class JsonRpcHttpServiceTlsMisconfigurationTest {
 
   private TlsConfiguration invalidKeystoreFileTlsConfiguration() throws IOException {
     final File tempFile = folder.newFile();
-    return fromKeyStoreAndKnownClientConfigurations(
-        tempFile.toPath(), () -> "invalid_password", getKnownClientsFile());
+    return new TlsConfiguration(tempFile.toPath(), () -> "invalid_password", getKnownClientsFile());
   }
 
   private TlsConfiguration invalidKeystorePathTlsConfiguration() {
-    return fromKeyStoreAndKnownClientConfigurations(
+    return new TlsConfiguration(
         Path.of("/tmp/invalidkeystore.pfx"), () -> "invalid_password", getKnownClientsFile());
   }
 
   private TlsConfiguration invalidPasswordTlsConfiguration() {
-    return fromKeyStoreAndKnownClientConfigurations(
-        getKeyStorePath(), () -> "invalid_password", getKnownClientsFile());
+    return new TlsConfiguration(getKeyStorePath(), () -> "invalid_password", getKnownClientsFile());
   }
 
   private TlsConfiguration invalidPasswordFileTlsConfiguration() {
-    return fromKeyStoreAndKnownClientConfigurations(
+    return new TlsConfiguration(
         getKeyStorePath(),
         new FileBasedPasswordProvider(Path.of("/tmp/invalid_password_file.txt")),
         getKnownClientsFile());
@@ -227,8 +224,7 @@ public class JsonRpcHttpServiceTlsMisconfigurationTest {
   private TlsConfiguration invalidKnownClientsTlsConfiguration() throws IOException {
     final Path tempKnownClientsFile = folder.newFile().toPath();
     Files.write(tempKnownClientsFile, List.of("cn invalid_sha256"));
-    return fromKeyStoreAndKnownClientConfigurations(
-        getKeyStorePath(), () -> "changeit", tempKnownClientsFile);
+    return new TlsConfiguration(getKeyStorePath(), () -> "changeit", tempKnownClientsFile);
   }
 
   private JsonRpcHttpService createJsonRpcHttpService(

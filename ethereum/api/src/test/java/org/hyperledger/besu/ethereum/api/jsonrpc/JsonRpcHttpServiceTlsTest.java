@@ -20,8 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatIOException;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ETH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.NET;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.WEB3;
-import static org.hyperledger.besu.ethereum.api.tls.TlsConfiguration.fromKeyStoreAndKnownClientConfigurations;
-import static org.hyperledger.besu.ethereum.api.tls.TlsConfiguration.fromKeyStoreConfigurations;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
@@ -58,6 +56,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
@@ -165,7 +164,7 @@ public class JsonRpcHttpServiceTlsTest {
   }
 
   private TlsConfiguration getRpcHttpTlsConfiguration() {
-    return fromKeyStoreAndKnownClientConfigurations(
+    return new TlsConfiguration(
         KEYSTORE_PATH, new FileBasedPasswordProvider(KEYSTORE_PASSWORD_FILE), KNOWN_CLIENTS_FILE);
   }
 
@@ -270,5 +269,10 @@ public class JsonRpcHttpServiceTlsTest {
   private Request buildPostRequest(final String json) {
     final RequestBody body = RequestBody.create(json, MediaType.parse(JSON_HEADER));
     return new Request.Builder().post(body).url(baseUrl).build();
+  }
+
+  private static TlsConfiguration fromKeyStoreConfigurations(
+      final Path keyStorePath, final Supplier<String> keyStorePasswordSupplier) {
+    return new TlsConfiguration(keyStorePath, keyStorePasswordSupplier, null);
   }
 }

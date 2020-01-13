@@ -21,14 +21,12 @@ import java.nio.file.Path;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-import com.google.common.annotations.VisibleForTesting;
-
 public class TlsConfiguration {
   private final Path keyStorePath;
   private final Supplier<String> keyStorePasswordSupplier;
   private final Path knownClientsFile;
 
-  private TlsConfiguration(
+  public TlsConfiguration(
       final Path keyStorePath,
       final Supplier<String> keyStorePasswordSupplier,
       final Path knownClientsFile) {
@@ -37,19 +35,6 @@ public class TlsConfiguration {
     this.keyStorePath = keyStorePath;
     this.keyStorePasswordSupplier = keyStorePasswordSupplier;
     this.knownClientsFile = knownClientsFile;
-  }
-
-  @VisibleForTesting
-  public static TlsConfiguration fromKeyStoreConfigurations(
-      final Path keyStorePath, final Supplier<String> keyStorePasswordSupplier) {
-    return new TlsConfiguration(keyStorePath, keyStorePasswordSupplier, null);
-  }
-
-  public static TlsConfiguration fromKeyStoreAndKnownClientConfigurations(
-      final Path keyStorePath,
-      final Supplier<String> keyStorePasswordSupplier,
-      final Path knownClientsFile) {
-    return new TlsConfiguration(keyStorePath, keyStorePasswordSupplier, knownClientsFile);
   }
 
   public Path getKeyStorePath() {
