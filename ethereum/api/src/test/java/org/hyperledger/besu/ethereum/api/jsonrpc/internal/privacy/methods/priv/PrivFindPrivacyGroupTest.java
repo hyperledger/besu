@@ -20,14 +20,17 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.enclave.Enclave;
+import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 import java.util.List;
@@ -89,7 +92,7 @@ public class PrivFindPrivacyGroupTest {
   @Test
   public void failsWithFindPrivacyGroupErrorIfEnclaveFails() {
     when(privacyController.findPrivacyGroup(ADDRESSES, ENCLAVE_PUBLIC_KEY))
-        .thenThrow(new IllegalStateException("some failure"));
+        .thenThrow(new EnclaveClientException(500, "some failure"));
     final PrivFindPrivacyGroup privFindPrivacyGroup =
         new PrivFindPrivacyGroup(privacyController, enclavePublicKeyProvider);
 
@@ -97,5 +100,19 @@ public class PrivFindPrivacyGroupTest {
         (JsonRpcErrorResponse) privFindPrivacyGroup.response(request);
     assertThat(response.getError()).isEqualTo(JsonRpcError.FIND_PRIVACY_GROUP_ERROR);
     verify(privacyController).findPrivacyGroup(ADDRESSES, ENCLAVE_PUBLIC_KEY);
+  }
+
+  @Test
+  public void failsWithUnauthorizedErrorIfMultiTenancyValidationFails() {
+    when(privacyController.findPrivacyGroup(ADDRESSES, ENCLAVE_PUBLIC_KEY))
+        .thenThrow(new MultiTenancyValidationException("validation failed"));
+    final PrivFindPrivacyGroup privFindPrivacyGroup =
+        new PrivFindPrivacyGroup(privacyController, enclavePublicKeyProvider);
+
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(
+            request.getRequest().getId(), JsonRpcError.FIND_PRIVACY_GROUP_ERROR);
+    final JsonRpcResponse response = privFindPrivacyGroup.response(request);
+    assertThat(response).isEqualTo(expectedResponse);
   }
 }
