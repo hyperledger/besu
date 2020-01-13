@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.logging.log4j.LogManager.getLogger;
 
-import org.hyperledger.besu.enclave.EnclaveException;
+import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcEnclaveErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
@@ -107,7 +107,7 @@ public class PrivGetTransactionReceipt implements JsonRpcMethod {
 
       privateTransaction = PrivateTransaction.readFrom(input);
       privacyGroupId = receiveResponse.getPrivacyGroupId();
-    } catch (final EnclaveException e) {
+    } catch (final EnclaveClientException e) {
       return handleEnclaveException(requestContext, e);
     }
 
@@ -175,7 +175,7 @@ public class PrivGetTransactionReceipt implements JsonRpcMethod {
   }
 
   private JsonRpcResponse handleEnclaveException(
-      final JsonRpcRequestContext requestContext, final EnclaveException e) {
+      final JsonRpcRequestContext requestContext, final EnclaveClientException e) {
     final JsonRpcError jsonRpcError =
         JsonRpcEnclaveErrorConverter.convertEnclaveInvalidReason(e.getMessage());
     switch (jsonRpcError) {

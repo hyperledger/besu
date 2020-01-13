@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.enclave;
 
-public class EnclaveIOException extends EnclaveException {
+public class EnclaveIOException extends RuntimeException {
   public EnclaveIOException(final String message, final Throwable cause) {
     super(message, cause);
   }
