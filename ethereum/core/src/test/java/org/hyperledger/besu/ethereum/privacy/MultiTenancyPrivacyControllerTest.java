@@ -156,7 +156,7 @@ public class MultiTenancyPrivacyControllerTest {
   @Test
   public void retrieveTransactionDelegatesToPrivacyController() {
     final ReceiveResponse delegateRetrieveResponse =
-        new ReceiveResponse(new byte[] {}, PRIVACY_GROUP_ID);
+        new ReceiveResponse(new byte[] {}, PRIVACY_GROUP_ID, ENCLAVE_KEY);
     when(privacyController.retrieveTransaction(ENCLAVE_KEY, ENCLAVE_PUBLIC_KEY1))
         .thenReturn(delegateRetrieveResponse);
 
