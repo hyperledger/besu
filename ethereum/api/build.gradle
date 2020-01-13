@@ -49,6 +49,7 @@ dependencies {
   implementation 'io.vertx:vertx-unit'
   implementation 'io.vertx:vertx-web'
   implementation 'org.apache.tuweni:tuweni-bytes'
+  implementation 'org.apache.tuweni:tuweni-net'
   implementation 'org.apache.tuweni:tuweni-toml'
   implementation 'org.apache.tuweni:tuweni-units'
   implementation 'org.bouncycastle:bcprov-jdk15on'
