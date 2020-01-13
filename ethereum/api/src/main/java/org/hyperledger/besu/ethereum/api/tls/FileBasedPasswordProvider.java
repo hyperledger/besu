@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 public class FileBasedPasswordProvider implements Supplier<String> {
   private final Path passwordFile;
@@ -31,8 +32,8 @@ public class FileBasedPasswordProvider implements Supplier<String> {
 
   @Override
   public String get() {
-    try {
-      return Files.lines(passwordFile)
+    try (final Stream<String> fileStream = Files.lines(passwordFile)) {
+      return fileStream
           .findFirst()
           .orElseThrow(
               () ->
