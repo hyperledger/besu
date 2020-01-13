@@ -56,7 +56,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Supplier;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
@@ -237,11 +236,11 @@ public class JsonRpcHttpServiceTlsTest {
 
   private OkHttpClient getTlsHttpClient() {
     final TlsConfiguration serverTrustConfiguration =
-        fromKeyStoreConfigurations(
-            KEYSTORE_PATH, new FileBasedPasswordProvider(KEYSTORE_PASSWORD_FILE));
+        new TlsConfiguration(
+            KEYSTORE_PATH, new FileBasedPasswordProvider(KEYSTORE_PASSWORD_FILE), null);
     final TlsConfiguration clientCertConfiguration =
-        fromKeyStoreConfigurations(
-            CLIENT_CERT_KEYSTORE_PATH, new FileBasedPasswordProvider(KEYSTORE_PASSWORD_FILE));
+        new TlsConfiguration(
+            CLIENT_CERT_KEYSTORE_PATH, new FileBasedPasswordProvider(KEYSTORE_PASSWORD_FILE), null);
     return TlsHttpClient.fromServerTrustAndClientCertConfiguration(
             serverTrustConfiguration, clientCertConfiguration)
         .getHttpClient();
@@ -249,11 +248,13 @@ public class JsonRpcHttpServiceTlsTest {
 
   private OkHttpClient getTlsHttpClientNotTrustedWithServer() {
     final TlsConfiguration serverTrustConfiguration =
-        fromKeyStoreConfigurations(
-            KEYSTORE_PATH, new FileBasedPasswordProvider(KEYSTORE_PASSWORD_FILE));
+        new TlsConfiguration(
+            KEYSTORE_PATH, new FileBasedPasswordProvider(KEYSTORE_PASSWORD_FILE), null);
     final TlsConfiguration clientCertConfiguration =
-        fromKeyStoreConfigurations(
-            X_CLIENT_CERT_KEYSTORE_PATH, new FileBasedPasswordProvider(KEYSTORE_PASSWORD_FILE));
+        new TlsConfiguration(
+            X_CLIENT_CERT_KEYSTORE_PATH,
+            new FileBasedPasswordProvider(KEYSTORE_PASSWORD_FILE),
+            null);
     return TlsHttpClient.fromServerTrustAndClientCertConfiguration(
             serverTrustConfiguration, clientCertConfiguration)
         .getHttpClient();
@@ -261,18 +262,13 @@ public class JsonRpcHttpServiceTlsTest {
 
   private OkHttpClient getTlsHttpClientWithoutClientAuthentication() {
     final TlsConfiguration serverTrustConfiguration =
-        fromKeyStoreConfigurations(
-            KEYSTORE_PATH, new FileBasedPasswordProvider(KEYSTORE_PASSWORD_FILE));
+        new TlsConfiguration(
+            KEYSTORE_PATH, new FileBasedPasswordProvider(KEYSTORE_PASSWORD_FILE), null);
     return TlsHttpClient.fromServerTrustConfiguration(serverTrustConfiguration).getHttpClient();
   }
 
   private Request buildPostRequest(final String json) {
     final RequestBody body = RequestBody.create(json, MediaType.parse(JSON_HEADER));
     return new Request.Builder().post(body).url(baseUrl).build();
-  }
-
-  private static TlsConfiguration fromKeyStoreConfigurations(
-      final Path keyStorePath, final Supplier<String> keyStorePasswordSupplier) {
-    return new TlsConfiguration(keyStorePath, keyStorePasswordSupplier, null);
   }
 }
