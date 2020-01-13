@@ -27,6 +27,8 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.privacy.DefaultPrivacyController;
+import org.hyperledger.besu.ethereum.privacy.MultiTenancyPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.FixedKeySigningPrivateMarkerTransactionFactory;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.PrivateMarkerTransactionFactory;
@@ -75,21 +77,8 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
     final PrivateMarkerTransactionFactory markerTransactionFactory =
         createPrivateMarkerTransactionFactory(
             privacyParameters, blockchainQueries, transactionPool.getPendingTransactions());
-
-    final PrivacyController privacyController =
-        new PrivacyController(
-            privacyParameters, protocolSchedule.getChainId(), markerTransactionFactory);
-
-    final EnclavePublicKeyProvider enclavePublicProvider =
-        privacyParameters.isMultiTenancyEnabled()
-            ? user ->
-                enclavePublicKey(user)
-                    .orElseThrow(
-                        () ->
-                            new IllegalStateException(
-                                "Request does not contain an authorization token"))
-            : user -> privacyParameters.getEnclavePublicKey();
-
+    final EnclavePublicKeyProvider enclavePublicProvider = createEnclavePublicKeyProvider();
+    final PrivacyController privacyController = createPrivacyController(markerTransactionFactory);
     return create(privacyController, enclavePublicProvider).entrySet().stream()
         .collect(
             Collectors.toMap(
@@ -115,6 +104,34 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
           privacyParameters.getSigningKeyPair().get());
     }
     return new RandomSigningPrivateMarkerTransactionFactory(privateContractAddress);
+  }
+
+  private EnclavePublicKeyProvider createEnclavePublicKeyProvider() {
+    return privacyParameters.isMultiTenancyEnabled()
+        ? multiTenancyEnclavePublicKeyProvider()
+        : defaultEnclavePublicKeyProvider();
+  }
+
+  private EnclavePublicKeyProvider multiTenancyEnclavePublicKeyProvider() {
+    return user ->
+        enclavePublicKey(user)
+            .orElseThrow(
+                () -> new IllegalStateException("Request does not contain an authorization token"));
+  }
+
+  private EnclavePublicKeyProvider defaultEnclavePublicKeyProvider() {
+    return user -> privacyParameters.getEnclavePublicKey();
+  }
+
+  private PrivacyController createPrivacyController(
+      final PrivateMarkerTransactionFactory markerTransactionFactory) {
+    final DefaultPrivacyController defaultPrivacyController =
+        new DefaultPrivacyController(
+            privacyParameters, protocolSchedule.getChainId(), markerTransactionFactory);
+    return privacyParameters.isMultiTenancyEnabled()
+        ? new MultiTenancyPrivacyController(
+            defaultPrivacyController, privacyParameters.getEnclave())
+        : defaultPrivacyController;
   }
 
   private JsonRpcMethod createPrivacyMethod(
