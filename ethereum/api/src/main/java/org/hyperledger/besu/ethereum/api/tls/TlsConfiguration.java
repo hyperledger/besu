@@ -19,19 +19,37 @@ import static java.util.Objects.requireNonNull;
 
 import java.nio.file.Path;
 import java.util.Optional;
+import java.util.function.Supplier;
+
+import com.google.common.annotations.VisibleForTesting;
 
 public class TlsConfiguration {
   private final Path keyStorePath;
-  private final String keyStorePassword;
+  private final Supplier<String> keyStorePasswordSupplier;
   private final Path knownClientsFile;
 
   private TlsConfiguration(
-      final Path keyStorePath, final String keyStorePassword, final Path knownClientsFile) {
+      final Path keyStorePath,
+      final Supplier<String> keyStorePasswordSupplier,
+      final Path knownClientsFile) {
     requireNonNull(keyStorePath, "Key Store Path must not be null");
-    requireNonNull(keyStorePassword, "Key Store password must not be null");
+    requireNonNull(keyStorePasswordSupplier, "Key Store password supplier must not be null");
     this.keyStorePath = keyStorePath;
-    this.keyStorePassword = keyStorePassword;
+    this.keyStorePasswordSupplier = keyStorePasswordSupplier;
     this.knownClientsFile = knownClientsFile;
+  }
+
+  @VisibleForTesting
+  public static TlsConfiguration fromKeyStoreConfigurations(
+      final Path keyStorePath, final Supplier<String> keyStorePasswordSupplier) {
+    return new TlsConfiguration(keyStorePath, keyStorePasswordSupplier, null);
+  }
+
+  public static TlsConfiguration fromKeyStoreAndKnownClientConfigurations(
+      final Path keyStorePath,
+      final Supplier<String> keyStorePasswordSupplier,
+      final Path knownClientsFile) {
+    return new TlsConfiguration(keyStorePath, keyStorePasswordSupplier, knownClientsFile);
   }
 
   public Path getKeyStorePath() {
@@ -39,41 +57,10 @@ public class TlsConfiguration {
   }
 
   public String getKeyStorePassword() {
-    return keyStorePassword;
+    return keyStorePasswordSupplier.get();
   }
 
   public Optional<Path> getKnownClientsFile() {
     return Optional.ofNullable(knownClientsFile);
-  }
-
-  public static final class TlsConfigurationBuilder {
-    private Path keyStorePath;
-    private String keyStorePassword;
-    private Path knownClientsFile;
-
-    private TlsConfigurationBuilder() {}
-
-    public static TlsConfigurationBuilder aTlsConfiguration() {
-      return new TlsConfigurationBuilder();
-    }
-
-    public TlsConfigurationBuilder withKeyStorePath(final Path keyStorePath) {
-      this.keyStorePath = keyStorePath;
-      return this;
-    }
-
-    public TlsConfigurationBuilder withKeyStorePassword(final String keyStorePassword) {
-      this.keyStorePassword = keyStorePassword;
-      return this;
-    }
-
-    public TlsConfigurationBuilder withKnownClientsFile(final Path knownClientsFile) {
-      this.knownClientsFile = knownClientsFile;
-      return this;
-    }
-
-    public TlsConfiguration build() {
-      return new TlsConfiguration(keyStorePath, keyStorePassword, knownClientsFile);
-    }
   }
 }

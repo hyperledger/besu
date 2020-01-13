@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ETH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.NET;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.WEB3;
+import static org.hyperledger.besu.ethereum.api.tls.TlsConfiguration.fromKeyStoreAndKnownClientConfigurations;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
@@ -29,6 +30,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.api.tls.FileBasedPasswordProvider;
 import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
 import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
@@ -155,6 +157,21 @@ public class JsonRpcHttpServiceTlsMisconfigurationTest {
   }
 
   @Test
+  public void exceptionRaisedWhenIncorrectKeystorePasswordFileIsSpecified() throws IOException {
+    service =
+        createJsonRpcHttpService(
+            rpcMethods, createJsonRpcConfig(invalidPasswordFileTlsConfiguration()));
+    assertThatExceptionOfType(CompletionException.class)
+        .isThrownBy(
+            () -> {
+              service.start().join();
+              Assertions.fail("service.start should have failed");
+            })
+        .withCauseInstanceOf(JsonRpcServiceException.class)
+        .withMessageContaining("Unable to read keystore password file");
+  }
+
+  @Test
   public void exceptionRaisedWhenInvalidKeystoreFileIsSpecified() throws IOException {
     service =
         createJsonRpcHttpService(
@@ -186,37 +203,32 @@ public class JsonRpcHttpServiceTlsMisconfigurationTest {
 
   private TlsConfiguration invalidKeystoreFileTlsConfiguration() throws IOException {
     final File tempFile = folder.newFile();
-    return TlsConfiguration.TlsConfigurationBuilder.aTlsConfiguration()
-        .withKeyStorePath(tempFile.toPath())
-        .withKeyStorePassword("invalid_password")
-        .withKnownClientsFile(getKnownClientsFile())
-        .build();
+    return fromKeyStoreAndKnownClientConfigurations(
+        tempFile.toPath(), () -> "invalid_password", getKnownClientsFile());
   }
 
   private TlsConfiguration invalidKeystorePathTlsConfiguration() {
-    return TlsConfiguration.TlsConfigurationBuilder.aTlsConfiguration()
-        .withKeyStorePath(Path.of("/tmp/invalidkeystore.pfx"))
-        .withKeyStorePassword("invalid_password")
-        .withKnownClientsFile(getKnownClientsFile())
-        .build();
+    return fromKeyStoreAndKnownClientConfigurations(
+        Path.of("/tmp/invalidkeystore.pfx"), () -> "invalid_password", getKnownClientsFile());
   }
 
   private TlsConfiguration invalidPasswordTlsConfiguration() {
-    return TlsConfiguration.TlsConfigurationBuilder.aTlsConfiguration()
-        .withKeyStorePath(getKeyStorePath())
-        .withKeyStorePassword("invalid password")
-        .withKnownClientsFile(getKnownClientsFile())
-        .build();
+    return fromKeyStoreAndKnownClientConfigurations(
+        getKeyStorePath(), () -> "invalid_password", getKnownClientsFile());
+  }
+
+  private TlsConfiguration invalidPasswordFileTlsConfiguration() {
+    return fromKeyStoreAndKnownClientConfigurations(
+        getKeyStorePath(),
+        new FileBasedPasswordProvider(Path.of("/tmp/invalid_password_file.txt")),
+        getKnownClientsFile());
   }
 
   private TlsConfiguration invalidKnownClientsTlsConfiguration() throws IOException {
     final Path tempKnownClientsFile = folder.newFile().toPath();
     Files.write(tempKnownClientsFile, List.of("cn invalid_sha256"));
-    return TlsConfiguration.TlsConfigurationBuilder.aTlsConfiguration()
-        .withKeyStorePath(getKeyStorePath())
-        .withKeyStorePassword("changeit")
-        .withKnownClientsFile(tempKnownClientsFile)
-        .build();
+    return fromKeyStoreAndKnownClientConfigurations(
+        getKeyStorePath(), () -> "changeit", tempKnownClientsFile);
   }
 
   private JsonRpcHttpService createJsonRpcHttpService(

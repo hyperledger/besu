@@ -284,14 +284,14 @@ public class JsonRpcHttpService {
         .getTlsConfiguration()
         .ifPresent(
             tlsConfiguration -> {
-              httpServerOptions
-                  .setSsl(true)
-                  .setPfxKeyCertOptions(
-                      new PfxOptions()
-                          .setPath(tlsConfiguration.getKeyStorePath().toString())
-                          .setPassword(tlsConfiguration.getKeyStorePassword()));
-
               try {
+                httpServerOptions
+                    .setSsl(true)
+                    .setPfxKeyCertOptions(
+                        new PfxOptions()
+                            .setPath(tlsConfiguration.getKeyStorePath().toString())
+                            .setPassword(tlsConfiguration.getKeyStorePassword()));
+
                 tlsConfiguration
                     .getKnownClientsFile()
                     .ifPresent(
@@ -303,7 +303,7 @@ public class JsonRpcHttpService {
               } catch (final RuntimeException re) {
                 throw new JsonRpcServiceException(
                     String.format(
-                        "TLS trust options failed to initialise for Ethereum JSON RPC listener: %s",
+                        "TLS options failed to initialise for Ethereum JSON RPC listener: %s",
                         re.getMessage()));
               }
             });

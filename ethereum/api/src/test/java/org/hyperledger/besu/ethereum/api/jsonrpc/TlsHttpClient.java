@@ -16,8 +16,12 @@ package org.hyperledger.besu.ethereum.api.jsonrpc;
 
 import static org.hyperledger.besu.crypto.SecureRandomProvider.createSecureRandom;
 
+import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
+
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -33,23 +37,33 @@ import javax.net.ssl.X509TrustManager;
 import okhttp3.OkHttpClient;
 
 public class TlsHttpClient {
-  private final String keyStoreResource;
-  private final String keyStorePasswordResource;
-  private final String trustStoreResource;
-  private final String trustStorePasswordResource;
-  private OkHttpClient client;
+  private final TlsConfiguration serverTrustConfiguration;
+  private final TlsConfiguration clientCertConfiguration;
   private TrustManagerFactory trustManagerFactory;
   private KeyManagerFactory keyManagerFactory;
+  private OkHttpClient client;
 
   private TlsHttpClient(
-      final String keyStoreResource,
-      final String keyStorePasswordResource,
-      final String trustStoreResource,
-      final String trustStorePasswordResource) {
-    this.keyStoreResource = keyStoreResource;
-    this.keyStorePasswordResource = keyStorePasswordResource;
-    this.trustStoreResource = trustStoreResource;
-    this.trustStorePasswordResource = trustStorePasswordResource;
+      final TlsConfiguration serverTrustConfiguration,
+      final TlsConfiguration clientCertConfiguration) {
+    this.serverTrustConfiguration = serverTrustConfiguration;
+    this.clientCertConfiguration = clientCertConfiguration;
+  }
+
+  public static TlsHttpClient fromServerTrustConfiguration(
+      final TlsConfiguration serverTrustConfiguration) {
+    final TlsHttpClient tlsHttpClient = new TlsHttpClient(serverTrustConfiguration, null);
+    tlsHttpClient.initHttpClient();
+    return tlsHttpClient;
+  }
+
+  public static TlsHttpClient fromServerTrustAndClientCertConfiguration(
+      final TlsConfiguration serverTrustConfiguration,
+      final TlsConfiguration clientCertConfiguration) {
+    final TlsHttpClient tlsHttpClient =
+        new TlsHttpClient(serverTrustConfiguration, clientCertConfiguration);
+    tlsHttpClient.initHttpClient();
+    return tlsHttpClient;
   }
 
   public OkHttpClient getHttpClient() {
@@ -74,9 +88,10 @@ public class TlsHttpClient {
 
   private void initTrustManagerFactory() {
     try {
-      final char[] password =
-          JsonRpcHttpServiceTlsTest.getKeystorePassword(trustStorePasswordResource);
-      final KeyStore trustStore = loadP12KeyStore(trustStoreResource, password);
+      final KeyStore trustStore =
+          loadP12KeyStore(
+              serverTrustConfiguration.getKeyStorePath(),
+              serverTrustConfiguration.getKeyStorePassword().toCharArray());
       final TrustManagerFactory trustManagerFactory =
           TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
       trustManagerFactory.init(trustStore);
@@ -92,12 +107,12 @@ public class TlsHttpClient {
     }
 
     try {
-      final char[] password =
-          JsonRpcHttpServiceTlsTest.getKeystorePassword(keyStorePasswordResource);
-      final KeyStore keyStore = loadP12KeyStore(keyStoreResource, password);
+      final char[] keyStorePassword = clientCertConfiguration.getKeyStorePassword().toCharArray();
+      final KeyStore keyStore =
+          loadP12KeyStore(clientCertConfiguration.getKeyStorePath(), keyStorePassword);
       final KeyManagerFactory keyManagerFactory =
           KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-      keyManagerFactory.init(keyStore, password);
+      keyManagerFactory.init(keyStore, keyStorePassword);
       this.keyManagerFactory = keyManagerFactory;
     } catch (final GeneralSecurityException gse) {
       throw new RuntimeException("Unable to load key manager factory", gse);
@@ -105,13 +120,13 @@ public class TlsHttpClient {
   }
 
   private boolean isClientAuthRequired() {
-    return keyStoreResource != null;
+    return clientCertConfiguration != null;
   }
 
-  private KeyStore loadP12KeyStore(final String resource, final char[] password)
+  private KeyStore loadP12KeyStore(final Path keyStore, final char[] password)
       throws KeyStoreException, NoSuchAlgorithmException, CertificateException {
     final KeyStore store = KeyStore.getInstance("pkcs12");
-    try (final InputStream keystoreStream = ClassLoader.getSystemResource(resource).openStream()) {
+    try (final InputStream keystoreStream = Files.newInputStream(keyStore)) {
       store.load(keystoreStream, password);
     } catch (final IOException e) {
       throw new RuntimeException("Unable to load keystore.", e);
@@ -125,51 +140,5 @@ public class TlsHttpClient {
     final SSLContext sslContext = SSLContext.getInstance("TLS");
     sslContext.init(km, tm, createSecureRandom());
     return sslContext;
-  }
-
-  public static final class TlsHttpClientBuilder {
-    private String keyStoreResource;
-    private String keyStorePasswordResource;
-    private String trustStoreResource;
-    private String trustStorePasswordResource;
-
-    private TlsHttpClientBuilder() {}
-
-    public static TlsHttpClientBuilder aTlsHttpClient() {
-      return new TlsHttpClientBuilder();
-    }
-
-    public TlsHttpClientBuilder withKeyStoreResource(final String keyStoreResource) {
-      this.keyStoreResource = keyStoreResource;
-      return this;
-    }
-
-    public TlsHttpClientBuilder withKeyStorePasswordResource(
-        final String keyStorePasswordResource) {
-      this.keyStorePasswordResource = keyStorePasswordResource;
-      return this;
-    }
-
-    public TlsHttpClientBuilder withTrustStoreResource(final String trustStoreResource) {
-      this.trustStoreResource = trustStoreResource;
-      return this;
-    }
-
-    public TlsHttpClientBuilder withTrustStorePasswordResource(
-        final String trustStorePasswordResource) {
-      this.trustStorePasswordResource = trustStorePasswordResource;
-      return this;
-    }
-
-    public TlsHttpClient build() {
-      final TlsHttpClient tlsHttpClient =
-          new TlsHttpClient(
-              keyStoreResource,
-              keyStorePasswordResource,
-              trustStoreResource,
-              trustStorePasswordResource);
-      tlsHttpClient.initHttpClient();
-      return tlsHttpClient;
-    }
   }
 }

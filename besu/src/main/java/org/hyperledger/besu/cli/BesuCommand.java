@@ -25,6 +25,7 @@ import static org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration.DEF
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration.DEFAULT_JSON_RPC_PORT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.DEFAULT_JSON_RPC_APIS;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration.DEFAULT_WEBSOCKET_PORT;
+import static org.hyperledger.besu.ethereum.api.tls.TlsConfiguration.fromKeyStoreAndKnownClientConfigurations;
 import static org.hyperledger.besu.metrics.BesuMetricCategory.DEFAULT_METRIC_CATEGORIES;
 import static org.hyperledger.besu.metrics.prometheus.MetricsConfiguration.DEFAULT_METRICS_PORT;
 import static org.hyperledger.besu.metrics.prometheus.MetricsConfiguration.DEFAULT_METRICS_PUSH_PORT;
@@ -71,6 +72,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
+import org.hyperledger.besu.ethereum.api.tls.FileBasedPasswordProvider;
 import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
@@ -142,10 +144,8 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Charsets;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.io.Files;
 import com.google.common.io.Resources;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
@@ -1220,24 +1220,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "Unable to authenticate JSON-RPC HTTP endpoint without a supplied credentials file or authentication public key file");
     }
 
-    final TlsConfiguration tlsConfiguration;
-    if (isRpcHttpEnabled && isRpcHttpTlsEnabled) {
-      if (rpcHttpTlsKeyStoreFile == null) {
-        throw new ParameterException(
-            commandLine,
-            "Keystore file is required when TLS is enabled for JSON-RPC HTTP endpoint");
-      }
-
-      if (rpcHttpTlsKeyStorePasswordFile == null) {
-        throw new ParameterException(
-            commandLine,
-            "Password file to unlock keystore is required when TLS is enabled for JSON-RPC HTTP endpoint");
-      }
-      tlsConfiguration = getRpcHttpTlsConfiguration();
-    } else {
-      tlsConfiguration = null;
-    }
-
     final JsonRpcConfiguration jsonRpcConfiguration = JsonRpcConfiguration.createDefault();
     jsonRpcConfiguration.setEnabled(isRpcHttpEnabled);
     jsonRpcConfiguration.setHost(rpcHttpHost);
@@ -1248,30 +1230,29 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     jsonRpcConfiguration.setAuthenticationEnabled(isRpcHttpAuthenticationEnabled);
     jsonRpcConfiguration.setAuthenticationCredentialsFile(rpcHttpAuthenticationCredentialsFile());
     jsonRpcConfiguration.setAuthenticationPublicKeyFile(rpcHttpAuthenticationPublicKeyFile());
-    jsonRpcConfiguration.setTlsConfiguration(tlsConfiguration);
+    jsonRpcConfiguration.setTlsConfiguration(rpcHttpTlsConfiguration());
     return jsonRpcConfiguration;
   }
 
-  private TlsConfiguration getRpcHttpTlsConfiguration() {
-    final String password;
-    try {
-      password =
-          Files.asCharSource(rpcHttpTlsKeyStorePasswordFile.toFile(), Charsets.UTF_8)
-              .readFirstLine();
-      if (password == null) {
-        throw new ParameterException(
-            commandLine, "Unable to read keystore password for JSON-RPC HTTP endpoint");
-      }
-    } catch (final IOException e) {
-      throw new ParameterException(
-          commandLine, "Unable to read keystore password file for JSON-RPC HTTP endpoint", e);
+  private TlsConfiguration rpcHttpTlsConfiguration() {
+    if (isRpcHttpEnabled && isRpcHttpTlsEnabled) {
+      return fromKeyStoreAndKnownClientConfigurations(
+          Optional.ofNullable(rpcHttpTlsKeyStoreFile)
+              .orElseThrow(
+                  () ->
+                      new ParameterException(
+                          commandLine,
+                          "Keystore file is required when TLS is enabled for JSON-RPC HTTP endpoint")),
+          new FileBasedPasswordProvider(
+              Optional.ofNullable(rpcHttpTlsKeyStorePasswordFile)
+                  .orElseThrow(
+                      () ->
+                          new ParameterException(
+                              commandLine,
+                              "File containing password to unlock keystore is required when TLS is enabled for JSON-RPC HTTP endpoint"))),
+          rpcHttpTlsKnownClientsFile);
     }
-
-    return TlsConfiguration.TlsConfigurationBuilder.aTlsConfiguration()
-        .withKeyStorePath(rpcHttpTlsKeyStoreFile.normalize())
-        .withKeyStorePassword(password)
-        .withKnownClientsFile(rpcHttpTlsKnownClientsFile)
-        .build();
+    return null;
   }
 
   private WebSocketConfiguration webSocketConfiguration() {
