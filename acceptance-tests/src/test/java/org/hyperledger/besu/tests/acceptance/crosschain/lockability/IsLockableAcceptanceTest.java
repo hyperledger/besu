@@ -26,7 +26,7 @@ import org.junit.Test;
 public class IsLockableAcceptanceTest extends CrosschainAcceptanceTestBase {
   @Before
   public void setUp() throws Exception {
-    setUpCoordiantionChain();
+    setUpCoordinationChain();
     setUpBlockchain1();
   }
 

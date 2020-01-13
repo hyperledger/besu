@@ -45,7 +45,7 @@ public class GetInfoTest extends CrosschainAcceptanceTestBase {
   @Before
   public void setUp() throws Exception {
 
-    setUpCoordiantionChain();
+    setUpCoordinationChain();
     setUpBlockchain1();
     setUpBlockchain2();
     setUpBlockchain3();

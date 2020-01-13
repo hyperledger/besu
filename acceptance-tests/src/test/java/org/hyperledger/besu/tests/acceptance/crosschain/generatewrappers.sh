@@ -31,3 +31,9 @@ solc getinfo/Ctrt3.sol --allow-paths . --bin --abi --overwrite --optimize -o bui
 $WEB3J solidity generate -cc -a=build/Ctrt1.abi -b=build/Ctrt1.bin -o=../../../../../../ -p=org.hyperledger.besu.tests.acceptance.crosschain.getinfo.generated
 $WEB3J solidity generate -cc -a=build/Ctrt2.abi -b=build/Ctrt2.bin -o=../../../../../../ -p=org.hyperledger.besu.tests.acceptance.crosschain.getinfo.generated
 $WEB3J solidity generate -cc -a=build/Ctrt3.abi -b=build/Ctrt3.bin -o=../../../../../../ -p=org.hyperledger.besu.tests.acceptance.crosschain.getinfo.generated
+
+# Testing viewtxcallArgs
+solc viewtxcallArgs/FooArgsCtrt.sol --allow-paths . --bin --abi --overwrite --optimize -o build
+solc viewtxcallArgs/BarArgsCtrt.sol --allow-paths . --bin --abi --overwrite --optimize -o build
+$WEB3J solidity generate -cc -a=build/FooArgsCtrt.abi -b=build/FooArgsCtrt.bin -o=../../../../../../ -p=org.hyperledger.besu.tests.acceptance.crosschain.viewtxcallArgs.generated
+$WEB3J solidity generate -cc -a=build/BarArgsCtrt.abi -b=build/BarArgsCtrt.bin -o=../../../../../../ -p=org.hyperledger.besu.tests.acceptance.crosschain.viewtxcallArgs.generated

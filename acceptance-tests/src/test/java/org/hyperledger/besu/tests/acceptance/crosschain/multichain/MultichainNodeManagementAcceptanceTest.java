@@ -29,7 +29,7 @@ import org.web3j.protocol.besu.response.crosschain.BlockchainNodeInformation;
 public class MultichainNodeManagementAcceptanceTest extends CrosschainAcceptanceTestBase {
   @Before
   public void setUp() throws Exception {
-    setUpCoordiantionChain();
+    setUpCoordinationChain();
     setUpBlockchain1();
     setUpBlockchain2();
   }

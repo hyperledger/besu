@@ -45,7 +45,7 @@ public class ApiTest extends CrosschainAcceptanceTestBase {
 
   @Before
   public void setUp() throws Exception {
-    setUpCoordiantionChain();
+    setUpCoordinationChain();
     setUpBlockchain1();
   }
 
@@ -175,15 +175,29 @@ public class ApiTest extends CrosschainAcceptanceTestBase {
    */
   public void coordTest() throws Exception {
 
-    // There are no coordination contracts on Blockchain1
     List<CoordinationContractInformation> coordCtrtList =
         this.nodeOnBlockchain1.execute(crossTransactions.listCoordinationContracts());
-    assertThat(coordCtrtList.size()).isEqualTo(0);
+    assertThat(coordCtrtList.size()).isEqualTo(1);
 
     // There is one coordination contract on a separate chain called coordination chain
     coordCtrtList =
         this.nodeOnCoordinationBlockchain.execute(crossTransactions.listCoordinationContracts());
     // I thought there is one. Surprised to learn there isn't any. Need to explicitly add.
+    assertThat(coordCtrtList.size()).isEqualTo(1);
+
+    // Removing a coordination contract
+    this.nodeOnBlockchain1.execute(
+        crossTransactions.removeCoordinationContract(
+            this.nodeOnCoordinationBlockchain.getChainId(),
+            this.coordContract.getContractAddress()));
+    coordCtrtList = this.nodeOnBlockchain1.execute(crossTransactions.listCoordinationContracts());
+    assertThat(coordCtrtList.size()).isEqualTo(0);
+
+    this.nodeOnCoordinationBlockchain.execute(
+        crossTransactions.removeCoordinationContract(
+            this.nodeOnCoordinationBlockchain.getChainId(),
+            this.coordContract.getContractAddress()));
+    coordCtrtList = this.nodeOnBlockchain1.execute(crossTransactions.listCoordinationContracts());
     assertThat(coordCtrtList.size()).isEqualTo(0);
 
     // Adding a coordination contract
@@ -223,21 +237,6 @@ public class ApiTest extends CrosschainAcceptanceTestBase {
           coordCtrt.coordinationBlockchainId,
           coordCtrt.ipAddressAndPort);
     }
-
-    // Removing a coordination contract
-    this.nodeOnBlockchain1.execute(
-        crossTransactions.removeCoordinationContract(
-            this.nodeOnCoordinationBlockchain.getChainId(),
-            this.coordContract.getContractAddress()));
-    coordCtrtList = this.nodeOnBlockchain1.execute(crossTransactions.listCoordinationContracts());
-    assertThat(coordCtrtList.size()).isEqualTo(0);
-
-    this.nodeOnCoordinationBlockchain.execute(
-        crossTransactions.removeCoordinationContract(
-            this.nodeOnCoordinationBlockchain.getChainId(),
-            this.coordContract.getContractAddress()));
-    coordCtrtList = this.nodeOnBlockchain1.execute(crossTransactions.listCoordinationContracts());
-    assertThat(coordCtrtList.size()).isEqualTo(0);
   }
 
   @After

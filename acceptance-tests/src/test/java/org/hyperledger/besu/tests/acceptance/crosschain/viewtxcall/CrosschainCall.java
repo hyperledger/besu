@@ -53,7 +53,7 @@ public class CrosschainCall extends CrosschainAcceptanceTestBase {
   @Before
   public void setUp() throws Exception {
 
-    setUpCoordiantionChain();
+    setUpCoordinationChain();
     setUpBlockchain1();
     setUpBlockchain2();
 
@@ -101,7 +101,6 @@ public class CrosschainCall extends CrosschainAcceptanceTestBase {
     byte[][] subordTxAndViews = new byte[][] {subordTrans};
     CrosschainContext origTxCtx = ctxGenerator.createCrosschainContext(subordTxAndViews);
 
-    // LOG.info("Flag value = {}", barCtrt.flag().send().longValue());
     TransactionReceipt txReceipt = barCtrt.bar_AsCrosschainTransaction(origTxCtx).send();
     if (!txReceipt.isStatusOK()) {
       LOG.info("txReceipt details " + txReceipt.toString());
@@ -109,7 +108,6 @@ public class CrosschainCall extends CrosschainAcceptanceTestBase {
     }
 
     waitForUnlock(barCtrt.getContractAddress(), nodeOnBlockchain1);
-    LOG.info("Flag value After = {}", barCtrt.flag().send().longValue());
     assertThat(barCtrt.flag().send().longValue()).isEqualTo(1);
   }
 
