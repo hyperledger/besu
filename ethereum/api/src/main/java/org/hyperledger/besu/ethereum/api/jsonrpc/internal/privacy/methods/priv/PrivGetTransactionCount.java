@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.ENCLAVE_ERROR;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.GET_PRIVATE_TRANSACTION_NONCE_ERROR;
 
 import org.hyperledger.besu.enclave.EnclaveException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
@@ -71,11 +71,12 @@ public class PrivGetTransactionCount implements JsonRpcMethod {
           requestContext.getRequest().getId(), Quantity.create(nonce));
     } catch (final MultiTenancyValidationException e) {
       LOG.error("Unauthorized privacy multi-tenancy rpc request. {}", e.getMessage());
-      return new JsonRpcErrorResponse(requestContext.getRequest().getId(), ENCLAVE_ERROR);
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), GET_PRIVATE_TRANSACTION_NONCE_ERROR);
     } catch (final EnclaveException e) {
       LOG.error(e.getMessage(), e);
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), JsonRpcError.GET_PRIVATE_TRANSACTION_NONCE_ERROR);
+          requestContext.getRequest().getId(), GET_PRIVATE_TRANSACTION_NONCE_ERROR);
     }
   }
 }

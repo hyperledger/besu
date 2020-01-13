@@ -15,14 +15,13 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.ENCLAVE_ERROR;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.DELETE_PRIVACY_GROUP_ERROR;
 
 import org.hyperledger.besu.enclave.EnclaveException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -62,11 +61,12 @@ public class PrivDeletePrivacyGroup implements JsonRpcMethod {
               privacyGroupId, enclavePublicKeyProvider.getEnclaveKey(requestContext.getUser()));
     } catch (final MultiTenancyValidationException e) {
       LOG.error("Unauthorized privacy multi-tenancy rpc request. {}", e.getMessage());
-      return new JsonRpcErrorResponse(requestContext.getRequest().getId(), ENCLAVE_ERROR);
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), DELETE_PRIVACY_GROUP_ERROR);
     } catch (EnclaveException e) {
       LOG.error("Failed to delete privacy group", e);
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), JsonRpcError.DELETE_PRIVACY_GROUP_ERROR);
+          requestContext.getRequest().getId(), DELETE_PRIVACY_GROUP_ERROR);
     }
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), response);
   }
