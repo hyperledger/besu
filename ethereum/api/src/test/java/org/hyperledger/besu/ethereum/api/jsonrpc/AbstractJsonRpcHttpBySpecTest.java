@@ -27,6 +27,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -77,6 +78,7 @@ public abstract class AbstractJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpS
       try (final Stream<Path> s = Files.walk(dir, 1)) {
         s.map(Path::toFile)
             .filter(f -> f.getPath().endsWith(".json"))
+            .filter(f -> !f.getPath().contains("genesis"))
             .map(AbstractJsonRpcHttpBySpecTest::fileToParams)
             .forEach(specFiles::add);
       } catch (final IOException e) {
@@ -113,7 +115,8 @@ public abstract class AbstractJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpS
 
       final ObjectNode responseBody;
       try {
-        responseBody = (ObjectNode) objectMapper.readTree(resp.body().string());
+        responseBody =
+            (ObjectNode) objectMapper.readTree(Objects.requireNonNull(resp.body()).string());
       } catch (Exception e) {
         throw new RuntimeException("Unable to parse response as json object", e);
       }
