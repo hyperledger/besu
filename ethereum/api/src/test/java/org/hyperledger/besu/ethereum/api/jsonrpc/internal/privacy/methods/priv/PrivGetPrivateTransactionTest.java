@@ -43,7 +43,6 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.privacy.DefaultPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.Restriction;
@@ -109,7 +108,7 @@ public class PrivGetPrivateTransactionTest {
   private final BlockchainQueries blockchain = mock(BlockchainQueries.class);
   private final TransactionWithMetadata returnedTransaction = mock(TransactionWithMetadata.class);
   private final Transaction justTransaction = mock(Transaction.class);
-  private final PrivacyController privacyController = mock(DefaultPrivacyController.class);
+  private final PrivacyController privacyController = mock(PrivacyController.class);
   private final User user =
       new JWTUser(new JsonObject().put("privacyPublicKey", ENCLAVE_PUBLIC_KEY), "");
   private final EnclavePublicKeyProvider enclavePublicKeyProvider = (user) -> ENCLAVE_PUBLIC_KEY;
