@@ -117,6 +117,7 @@ public class PrivGetEeaTransactionCountTest {
     assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);
 
     final JsonRpcErrorResponse errorResponse = (JsonRpcErrorResponse) response;
-    assertThat(errorResponse.getError()).isEqualTo(JsonRpcError.ENCLAVE_ERROR);
+    assertThat(errorResponse.getError())
+        .isEqualTo(JsonRpcError.GET_PRIVATE_TRANSACTION_NONCE_ERROR);
   }
 }

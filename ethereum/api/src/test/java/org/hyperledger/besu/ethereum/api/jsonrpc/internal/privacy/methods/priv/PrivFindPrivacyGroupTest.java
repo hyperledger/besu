@@ -111,7 +111,8 @@ public class PrivFindPrivacyGroupTest {
         new PrivFindPrivacyGroup(privacyController, enclavePublicKeyProvider);
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.ENCLAVE_ERROR);
+        new JsonRpcErrorResponse(
+            request.getRequest().getId(), JsonRpcError.FIND_PRIVACY_GROUP_ERROR);
     final JsonRpcResponse response = privFindPrivacyGroup.response(request);
     assertThat(response).isEqualTo(expectedResponse);
   }

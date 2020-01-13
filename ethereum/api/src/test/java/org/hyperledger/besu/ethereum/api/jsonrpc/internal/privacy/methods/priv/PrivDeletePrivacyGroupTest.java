@@ -99,7 +99,8 @@ public class PrivDeletePrivacyGroupTest {
         new PrivDeletePrivacyGroup(privacyController, enclavePublicKeyProvider);
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.ENCLAVE_ERROR);
+        new JsonRpcErrorResponse(
+            request.getRequest().getId(), JsonRpcError.DELETE_PRIVACY_GROUP_ERROR);
 
     final JsonRpcErrorResponse response =
         (JsonRpcErrorResponse) privDeletePrivacyGroup.response(request);

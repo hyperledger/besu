@@ -114,7 +114,8 @@ public class PrivGetTransactionCountTest {
             new JsonRpcRequest("1", "priv_getTransactionCount", params), user);
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.ENCLAVE_ERROR);
+        new JsonRpcErrorResponse(
+            request.getRequest().getId(), JsonRpcError.GET_PRIVATE_TRANSACTION_NONCE_ERROR);
     final JsonRpcResponse response = privGetTransactionCount.response(request);
     assertThat(response).isEqualTo(expectedResponse);
   }
