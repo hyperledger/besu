@@ -13,10 +13,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// See https://github.com/tbroyer/gradle-errorprone-plugin
-// See https://github.com/tbroyer/gradle-apt-plugin
-plugins { id 'net.ltgt.apt' version '0.21' apply false }
-
 // we use this config to get the path of the JDK 9 javac jar, to
 // stick it in the bootclasspath when running tests
 configurations.maybeCreate("epJavac")
@@ -24,7 +20,6 @@ configurations.maybeCreate("epJavac")
 
 apply plugin: 'java'
 apply plugin: 'net.ltgt.errorprone'
-apply plugin: 'net.ltgt.apt'
 
 sourceCompatibility = 11
 targetCompatibility = 11

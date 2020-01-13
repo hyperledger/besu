@@ -15,12 +15,12 @@ import java.security.MessageDigest
 
 apply plugin: 'java-library'
 jar {
-  baseName 'plugin-api'
+  archiveBaseName = 'plugin-api'
   manifest {
     attributes(
-      'Specification-Title': baseName,
+      'Specification-Title': archiveBaseName,
       'Specification-Version': project.version,
-      'Implementation-Title': baseName,
+      'Implementation-Title': archiveBaseName,
       'Implementation-Version': calculateVersion()
       )
   }
@@ -35,7 +35,11 @@ configurations { testArtifacts }
 artifacts { testSupportArtifacts testSupportJar }
 
 class FileStateChecker extends DefaultTask {
+
+  @Input
   Set<File> files
+
+  @Input
   String knownHash
 
   @TaskAction
