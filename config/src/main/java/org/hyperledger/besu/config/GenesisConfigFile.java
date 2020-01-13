@@ -15,10 +15,12 @@
 package org.hyperledger.besu.config;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.stream.Collectors.toUnmodifiableList;
 import static org.hyperledger.besu.config.JsonUtil.normalizeKeys;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -129,6 +131,20 @@ public class GenesisConfigFile {
 
   public long getTimestamp() {
     return parseLong("timestamp", JsonUtil.getValueAsString(configRoot, "timestamp", "0x0"));
+  }
+
+  public List<Long> getForks() {
+    return JsonUtil.getObjectNode(configRoot, "config").stream()
+        .flatMap(
+            node ->
+                Streams.stream(node.fieldNames())
+                    .map(String::toLowerCase)
+                    .filter(name -> !name.equals("chainid"))
+                    .filter(name -> node.get(name).canConvertToLong())
+                    .filter(name -> name.contains("block"))
+                    .map(name -> node.get(name).asLong()))
+        .sorted()
+        .collect(toUnmodifiableList());
   }
 
   private String getRequiredString(final String key) {

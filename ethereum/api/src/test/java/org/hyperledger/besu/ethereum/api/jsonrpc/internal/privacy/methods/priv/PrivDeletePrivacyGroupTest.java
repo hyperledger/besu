@@ -20,13 +20,16 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.enclave.Enclave;
+import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 import io.vertx.core.json.JsonObject;
@@ -75,7 +78,7 @@ public class PrivDeletePrivacyGroupTest {
   @Test
   public void failsWithDeletePrivacyGroupErrorIfEnclaveFails() {
     when(privacyController.deletePrivacyGroup(PRIVACY_GROUP_ID, ENCLAVE_PUBLIC_KEY))
-        .thenThrow(new IllegalStateException("some failure"));
+        .thenThrow(new EnclaveClientException(500, "some failure"));
 
     final PrivDeletePrivacyGroup privDeletePrivacyGroup =
         new PrivDeletePrivacyGroup(privacyController, enclavePublicKeyProvider);
@@ -84,5 +87,24 @@ public class PrivDeletePrivacyGroupTest {
         (JsonRpcErrorResponse) privDeletePrivacyGroup.response(request);
     assertThat(response.getError()).isEqualTo(JsonRpcError.DELETE_PRIVACY_GROUP_ERROR);
     verify(privacyController).deletePrivacyGroup(PRIVACY_GROUP_ID, ENCLAVE_PUBLIC_KEY);
+  }
+
+  @Test
+  public void failsWithUnauthorizedErrorIfMultiTenancyValidationFails() {
+    when(privacyController.deletePrivacyGroup(PRIVACY_GROUP_ID, ENCLAVE_PUBLIC_KEY))
+        .thenThrow(new MultiTenancyValidationException("validation failed"));
+
+    final PrivDeletePrivacyGroup privDeletePrivacyGroup =
+        new PrivDeletePrivacyGroup(privacyController, enclavePublicKeyProvider);
+
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(
+            request.getRequest().getId(), JsonRpcError.DELETE_PRIVACY_GROUP_ERROR);
+
+    final JsonRpcResponse response = privDeletePrivacyGroup.response(request);
+    assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);
+
+    final JsonRpcErrorResponse errorResponse = (JsonRpcErrorResponse) response;
+    assertThat(errorResponse).isEqualTo(expectedResponse);
   }
 }

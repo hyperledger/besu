@@ -19,6 +19,7 @@ import static org.apache.logging.log4j.LogManager.getLogger;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcUnauthorizedResponse;
 
@@ -49,7 +50,7 @@ public class MultiTenancyRpcMethodDecorator implements JsonRpcMethod {
       return new JsonRpcUnauthorizedResponse(id, JsonRpcError.UNAUTHORIZED);
     } else if (MultiTenancyUserUtil.enclavePublicKey(user).isEmpty()) {
       LOG.error("Request token does not contain an enclave public key");
-      return new JsonRpcUnauthorizedResponse(id, JsonRpcError.UNAUTHORIZED);
+      return new JsonRpcErrorResponse(id, JsonRpcError.INVALID_REQUEST);
     } else {
       return rpcMethod.response(requestContext);
     }
