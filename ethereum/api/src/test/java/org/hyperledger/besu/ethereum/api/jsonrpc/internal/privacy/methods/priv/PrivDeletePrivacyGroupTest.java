@@ -102,8 +102,10 @@ public class PrivDeletePrivacyGroupTest {
         new JsonRpcErrorResponse(
             request.getRequest().getId(), JsonRpcError.DELETE_PRIVACY_GROUP_ERROR);
 
-    final JsonRpcErrorResponse response =
-        (JsonRpcErrorResponse) privDeletePrivacyGroup.response(request);
-    assertThat(response).isEqualTo(expectedResponse);
+    final JsonRpcResponse response = privDeletePrivacyGroup.response(request);
+    assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);
+
+    final JsonRpcErrorResponse errorResponse = (JsonRpcErrorResponse) response;
+    assertThat(errorResponse).isEqualTo(expectedResponse);
   }
 }
