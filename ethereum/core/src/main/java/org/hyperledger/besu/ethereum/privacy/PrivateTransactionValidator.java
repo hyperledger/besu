@@ -56,7 +56,7 @@ public class PrivateTransactionValidator {
     if (accountNonce > transactionNonce) {
       final String errorMessage =
           String.format(
-              "Private Transaction nonce %s, does not match sender account nonce %s.",
+              "Private Transaction nonce %s, is lower than sender account nonce %s.",
               transactionNonce, accountNonce);
       LOG.debug(errorMessage);
       return ValidationResult.invalid(
@@ -90,7 +90,7 @@ public class PrivateTransactionValidator {
     if (!chainId.isPresent() && transaction.getChainId().isPresent()) {
       return ValidationResult.invalid(
           TransactionValidator.TransactionInvalidReason.REPLAY_PROTECTED_SIGNATURES_NOT_SUPPORTED,
-          "Replay protected signatures is not supported");
+          "Replay protection (chainId) is not supported");
     }
 
     // org.bouncycastle.math.ec.ECCurve.AbstractFp.decompressPoint throws an
