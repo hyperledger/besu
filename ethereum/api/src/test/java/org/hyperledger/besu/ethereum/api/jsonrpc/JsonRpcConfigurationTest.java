@@ -16,6 +16,8 @@ package org.hyperledger.besu.ethereum.api.jsonrpc;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.Optional;
+
 import com.google.common.collect.Lists;
 import org.junit.Test;
 
@@ -65,5 +67,11 @@ public class JsonRpcConfigurationTest {
 
     configuration.setRpcApis(Lists.newArrayList(RpcApis.DEBUG));
     assertThat(configuration.getRpcApis()).containsExactly(RpcApis.DEBUG);
+  }
+
+  @Test
+  public void tlsConfigurationDefaultShouldBeEmpty() {
+    final JsonRpcConfiguration configuration = JsonRpcConfiguration.createDefault();
+    assertThat(configuration.getTlsConfiguration()).isEqualTo(Optional.empty());
   }
 }

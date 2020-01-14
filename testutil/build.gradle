@@ -16,12 +16,12 @@
 apply plugin: 'java-library'
 
 jar {
-  baseName 'besu-util-test'
+  archiveBaseName = 'besu-util-test'
   manifest {
     attributes(
-      'Specification-Title': baseName,
+      'Specification-Title': archiveBaseName,
       'Specification-Version': project.version,
-      'Implementation-Title': baseName,
+      'Implementation-Title': archiveBaseName,
       'Implementation-Version': calculateVersion()
       )
   }
@@ -36,10 +36,10 @@ dependencies {
   implementation 'com.squareup.okhttp3:okhttp'
   implementation 'junit:junit'
   implementation 'net.consensys:orion'
+  implementation 'org.apache.tuweni:tuweni-bytes'
+  implementation 'org.apache.tuweni:tuweni-io'
+  implementation 'org.apache.tuweni:tuweni-toml'
   implementation 'org.assertj:assertj-core'
   implementation 'org.mockito:mockito-core'
   implementation 'org.web3j:core'
-  implementation 'org.apache.tuweni:tuweni-toml'
-  implementation 'org.apache.tuweni:tuweni-bytes'
-  implementation 'org.apache.tuweni:tuweni-io'
 }

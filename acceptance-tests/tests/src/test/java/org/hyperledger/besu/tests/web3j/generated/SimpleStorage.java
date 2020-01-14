@@ -52,41 +52,41 @@ public class SimpleStorage extends Contract {
 
   @Deprecated
   protected SimpleStorage(
-      String contractAddress,
-      Web3j web3j,
-      Credentials credentials,
-      BigInteger gasPrice,
-      BigInteger gasLimit) {
+      final String contractAddress,
+      final Web3j web3j,
+      final Credentials credentials,
+      final BigInteger gasPrice,
+      final BigInteger gasLimit) {
     super(BINARY, contractAddress, web3j, credentials, gasPrice, gasLimit);
   }
 
   protected SimpleStorage(
-      String contractAddress,
-      Web3j web3j,
-      Credentials credentials,
-      ContractGasProvider contractGasProvider) {
+      final String contractAddress,
+      final Web3j web3j,
+      final Credentials credentials,
+      final ContractGasProvider contractGasProvider) {
     super(BINARY, contractAddress, web3j, credentials, contractGasProvider);
   }
 
   @Deprecated
   protected SimpleStorage(
-      String contractAddress,
-      Web3j web3j,
-      TransactionManager transactionManager,
-      BigInteger gasPrice,
-      BigInteger gasLimit) {
+      final String contractAddress,
+      final Web3j web3j,
+      final TransactionManager transactionManager,
+      final BigInteger gasPrice,
+      final BigInteger gasLimit) {
     super(BINARY, contractAddress, web3j, transactionManager, gasPrice, gasLimit);
   }
 
   protected SimpleStorage(
-      String contractAddress,
-      Web3j web3j,
-      TransactionManager transactionManager,
-      ContractGasProvider contractGasProvider) {
+      final String contractAddress,
+      final Web3j web3j,
+      final TransactionManager transactionManager,
+      final ContractGasProvider contractGasProvider) {
     super(BINARY, contractAddress, web3j, transactionManager, contractGasProvider);
   }
 
-  public RemoteCall<TransactionReceipt> set(BigInteger value) {
+  public RemoteCall<TransactionReceipt> set(final BigInteger value) {
     final Function function =
         new Function(
             FUNC_SET,
@@ -106,65 +106,72 @@ public class SimpleStorage extends Contract {
 
   @Deprecated
   public static SimpleStorage load(
-      String contractAddress,
-      Web3j web3j,
-      Credentials credentials,
-      BigInteger gasPrice,
-      BigInteger gasLimit) {
+      final String contractAddress,
+      final Web3j web3j,
+      final Credentials credentials,
+      final BigInteger gasPrice,
+      final BigInteger gasLimit) {
     return new SimpleStorage(contractAddress, web3j, credentials, gasPrice, gasLimit);
   }
 
   @Deprecated
   public static SimpleStorage load(
-      String contractAddress,
-      Web3j web3j,
-      TransactionManager transactionManager,
-      BigInteger gasPrice,
-      BigInteger gasLimit) {
+      final String contractAddress,
+      final Web3j web3j,
+      final TransactionManager transactionManager,
+      final BigInteger gasPrice,
+      final BigInteger gasLimit) {
     return new SimpleStorage(contractAddress, web3j, transactionManager, gasPrice, gasLimit);
   }
 
   public static SimpleStorage load(
-      String contractAddress,
-      Web3j web3j,
-      Credentials credentials,
-      ContractGasProvider contractGasProvider) {
+      final String contractAddress,
+      final Web3j web3j,
+      final Credentials credentials,
+      final ContractGasProvider contractGasProvider) {
     return new SimpleStorage(contractAddress, web3j, credentials, contractGasProvider);
   }
 
   public static SimpleStorage load(
-      String contractAddress,
-      Web3j web3j,
-      TransactionManager transactionManager,
-      ContractGasProvider contractGasProvider) {
+      final String contractAddress,
+      final Web3j web3j,
+      final TransactionManager transactionManager,
+      final ContractGasProvider contractGasProvider) {
     return new SimpleStorage(contractAddress, web3j, transactionManager, contractGasProvider);
   }
 
   public static RemoteCall<SimpleStorage> deploy(
-      Web3j web3j, Credentials credentials, ContractGasProvider contractGasProvider) {
+      final Web3j web3j,
+      final Credentials credentials,
+      final ContractGasProvider contractGasProvider) {
     return deployRemoteCall(
         SimpleStorage.class, web3j, credentials, contractGasProvider, BINARY, "");
   }
 
   @Deprecated
   public static RemoteCall<SimpleStorage> deploy(
-      Web3j web3j, Credentials credentials, BigInteger gasPrice, BigInteger gasLimit) {
+      final Web3j web3j,
+      final Credentials credentials,
+      final BigInteger gasPrice,
+      final BigInteger gasLimit) {
     return deployRemoteCall(
         SimpleStorage.class, web3j, credentials, gasPrice, gasLimit, BINARY, "");
   }
 
   public static RemoteCall<SimpleStorage> deploy(
-      Web3j web3j, TransactionManager transactionManager, ContractGasProvider contractGasProvider) {
+      final Web3j web3j,
+      final TransactionManager transactionManager,
+      final ContractGasProvider contractGasProvider) {
     return deployRemoteCall(
         SimpleStorage.class, web3j, transactionManager, contractGasProvider, BINARY, "");
   }
 
   @Deprecated
   public static RemoteCall<SimpleStorage> deploy(
-      Web3j web3j,
-      TransactionManager transactionManager,
-      BigInteger gasPrice,
-      BigInteger gasLimit) {
+      final Web3j web3j,
+      final TransactionManager transactionManager,
+      final BigInteger gasPrice,
+      final BigInteger gasLimit) {
     return deployRemoteCall(
         SimpleStorage.class, web3j, transactionManager, gasPrice, gasLimit, BINARY, "");
   }

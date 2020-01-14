@@ -16,6 +16,7 @@ package org.hyperledger.besu.tests.acceptance.dsl.node;
 
 import java.io.File;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
@@ -40,16 +41,14 @@ public interface BesuNodeRunner {
 
   boolean isActive(String nodeName);
 
-  default void waitForPortsFile(final Path dataDir) {
-    final File file = new File(dataDir.toFile(), "besu.ports");
+  default void waitForFile(final Path dataDir, final String fileName) {
+    final File file = new File(dataDir.toFile(), fileName);
     Awaitility.waitAtMost(30, TimeUnit.SECONDS)
         .until(
             () -> {
-              if (file.exists()) {
-                try (final Stream<String> s = Files.lines(file.toPath())) {
-                  return s.count() > 0;
-                }
-              } else {
+              try (final Stream<String> s = Files.lines(file.toPath())) {
+                return s.count() > 0;
+              } catch (NoSuchFileException __) {
                 return false;
               }
             });

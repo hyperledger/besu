@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.4 Beta 1 
+
+### Additions and Improvements 
+
+- Besu stops processing blocks if Orion is unavailable [\#253](https://github.com/hyperledger/besu/pull/253)
+
 ## 1.3.8 
 
 ### Additions and Improvements 

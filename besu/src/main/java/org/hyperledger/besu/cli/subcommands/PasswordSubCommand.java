@@ -63,7 +63,7 @@ public class PasswordSubCommand implements Runnable {
       mixinStandardHelpOptions = true)
   static class HashSubCommand implements Runnable {
 
-    @SuppressWarnings("FieldMustBeFinal")
+    @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
     @Option(
         names = "--password",
         arity = "1..1",

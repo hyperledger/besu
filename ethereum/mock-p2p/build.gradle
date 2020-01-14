@@ -16,12 +16,12 @@
 apply plugin: 'java-library'
 
 jar {
-  baseName 'besu-mock-p2p'
+  archiveBaseName = 'besu-mock-p2p'
   manifest {
     attributes(
-      'Specification-Title': baseName,
+      'Specification-Title': archiveBaseName,
       'Specification-Version': project.version,
-      'Implementation-Title': baseName,
+      'Implementation-Title': archiveBaseName,
       'Implementation-Version': calculateVersion()
       )
   }
@@ -34,8 +34,8 @@ dependencies {
   implementation project(':ethereum:permissioning')
   implementation project(':util')
 
-  implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'io.vertx:vertx-core'
+  implementation 'org.apache.tuweni:tuweni-bytes'
 
   testImplementation "junit:junit"
   testImplementation 'org.assertj:assertj-core'

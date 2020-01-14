@@ -26,19 +26,17 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.plugin.data.Address;
 import org.hyperledger.besu.plugin.data.BlockHeader;
-import org.hyperledger.besu.plugin.data.Hash;
 import org.hyperledger.besu.plugin.data.PropagatedBlockContext;
-import org.hyperledger.besu.plugin.data.Quantity;
-import org.hyperledger.besu.plugin.data.UnformattedData;
 import org.hyperledger.besu.plugin.services.BesuEvents;
 
 import java.util.List;
 import java.util.function.Supplier;
 
-import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class BesuEventsImpl implements BesuEvents {
-  private Blockchain blockchain;
+  private final Blockchain blockchain;
   private final BlockBroadcaster blockBroadcaster;
   private final TransactionPool transactionPool;
   private final SyncState syncState;
@@ -101,7 +99,9 @@ public class BesuEventsImpl implements BesuEvents {
 
   @Override
   public long addLogListener(
-      final List<Address> addresses, final List<List<Hash>> topics, final LogListener logListener) {
+      final List<Address> addresses,
+      final List<List<Bytes32>> topics,
+      final LogListener logListener) {
     final List<org.hyperledger.besu.ethereum.core.Address> besuAddresses =
         addresses.stream()
             .map(org.hyperledger.besu.ethereum.core.Address::fromPlugin)
@@ -111,8 +111,7 @@ public class BesuEventsImpl implements BesuEvents {
             .map(
                 subList ->
                     subList.stream()
-                        .map(UnformattedData::getByteArray)
-                        .map(bytes -> LogTopic.wrap(Bytes.wrap(bytes)))
+                        .map(bytes -> LogTopic.wrap(bytes))
                         .collect(toUnmodifiableList()))
             .collect(toUnmodifiableList());
 
@@ -141,8 +140,8 @@ public class BesuEventsImpl implements BesuEvents {
       }
 
       @Override
-      public Quantity getTotalDifficulty() {
-        return totalDifficultySupplier.get();
+      public UInt256 getTotalDifficulty() {
+        return totalDifficultySupplier.get().toUInt256();
       }
     };
   }

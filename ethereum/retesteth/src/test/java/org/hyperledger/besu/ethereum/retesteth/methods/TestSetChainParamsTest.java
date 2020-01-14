@@ -66,7 +66,7 @@ public class TestSetChainParamsTest {
     assertThat(blockHeader.getCoinbase().toString())
         .isEqualTo("0x8888f1f195afa192cfee860698584c030f4c9db1");
     assertThat(blockHeader.getDifficulty()).isEqualTo(UInt256.fromHexString("0x20000"));
-    assertThat(blockHeader.getExtraData().getHexString()).isEqualTo("0x42");
+    assertThat(blockHeader.getExtraData().toHexString()).isEqualTo("0x42");
     assertThat(blockHeader.getGasLimit()).isEqualTo(3141592);
     assertThat(blockHeader.getGasUsed()).isEqualTo(0);
     assertThat(blockHeader.getMixHash().toString())

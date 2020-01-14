@@ -16,13 +16,12 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import org.hyperledger.besu.plugin.data.UnformattedData;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import com.google.common.base.MoreObjects;
+import org.apache.tuweni.bytes.Bytes;
 
 public class LogWithMetadata extends Log
     implements org.hyperledger.besu.plugin.data.LogWithMetadata {
@@ -41,7 +40,7 @@ public class LogWithMetadata extends Log
       final Hash transactionHash,
       final int transactionIndex,
       final Address address,
-      final UnformattedData data,
+      final Bytes data,
       final List<LogTopic> topics,
       final boolean removed) {
     super(address, data, topics);

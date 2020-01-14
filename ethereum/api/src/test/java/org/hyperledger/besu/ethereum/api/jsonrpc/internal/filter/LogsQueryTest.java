@@ -43,7 +43,7 @@ public class LogsQueryTest {
     final List<LogTopic> topics = new ArrayList<>();
     final Log log = new Log(address, data, topics);
 
-    assertThat(query.couldMatch(LogsBloomFilter.compute(List.of(log)))).isTrue();
+    assertThat(query.couldMatch(LogsBloomFilter.builder().insertLog(log).build())).isTrue();
     assertThat(query.matches(log)).isTrue();
   }
 
@@ -55,7 +55,7 @@ public class LogsQueryTest {
     final List<LogTopic> topics = new ArrayList<>();
     final Log log = new Log(address, data, topics);
 
-    assertThat(query.couldMatch(LogsBloomFilter.compute(List.of(log)))).isTrue();
+    assertThat(query.couldMatch(LogsBloomFilter.builder().insertLog(log).build())).isTrue();
     assertThat(query.matches(log)).isTrue();
   }
 
@@ -80,7 +80,7 @@ public class LogsQueryTest {
     final List<LogTopic> topics = new ArrayList<>();
     final Log log = new Log(address1, data, topics);
 
-    assertThat(query.couldMatch(LogsBloomFilter.compute(List.of(log)))).isTrue();
+    assertThat(query.couldMatch(LogsBloomFilter.builder().insertLog(log).build())).isTrue();
     assertThat(query.matches(log)).isTrue();
   }
 
@@ -132,7 +132,7 @@ public class LogsQueryTest {
     final LogsQuery query = new LogsQuery.Builder().address(address).topics(topicsQuery).build();
     final Log log = new Log(address, data, Lists.newArrayList(topic));
 
-    assertThat(query.couldMatch(LogsBloomFilter.compute(List.of(log)))).isTrue();
+    assertThat(query.couldMatch(LogsBloomFilter.builder().insertLog(log).build())).isTrue();
     assertThat(query.matches(log)).isTrue();
   }
 
@@ -217,7 +217,7 @@ public class LogsQueryTest {
         new LogsQuery.Builder().address(address1).topics(queryParameter).build();
     final Log log = new Log(address1, data, logTopics);
 
-    assertThat(query.couldMatch(LogsBloomFilter.compute(List.of(log)))).isTrue();
+    assertThat(query.couldMatch(LogsBloomFilter.builder().insertLog(log).build())).isTrue();
     assertThat(query.matches(log)).isTrue();
   }
 
@@ -247,7 +247,7 @@ public class LogsQueryTest {
     final LogsQuery query = new LogsQuery.Builder().address(address).topics(queryParameter).build();
     final Log log = new Log(address, data, logTopics);
 
-    assertThat(query.couldMatch(LogsBloomFilter.compute(List.of(log)))).isTrue();
+    assertThat(query.couldMatch(LogsBloomFilter.builder().insertLog(log).build())).isTrue();
     assertThat(query.matches(log)).isTrue();
   }
 
@@ -280,7 +280,7 @@ public class LogsQueryTest {
     final LogsQuery query = new LogsQuery.Builder().address(address).topics(queryParameter).build();
     final Log log = new Log(address, data, logTopics);
 
-    assertThat(query.couldMatch(LogsBloomFilter.compute(List.of(log)))).isTrue();
+    assertThat(query.couldMatch(LogsBloomFilter.builder().insertLog(log).build())).isTrue();
     assertThat(query.matches(log)).isTrue();
   }
 
@@ -314,7 +314,7 @@ public class LogsQueryTest {
     final LogsQuery query = new LogsQuery.Builder().address(address).topics(queryParameter).build();
     final Log log = new Log(address, data, logTopics);
 
-    assertThat(query.couldMatch(LogsBloomFilter.compute(List.of(log)))).isTrue();
+    assertThat(query.couldMatch(LogsBloomFilter.builder().insertLog(log).build())).isTrue();
     assertThat(query.matches(log)).isTrue();
   }
 
@@ -351,7 +351,7 @@ public class LogsQueryTest {
     final LogsQuery query = new LogsQuery.Builder().address(address).topics(queryParameter).build();
     final Log log = new Log(address, data, logTopics);
 
-    assertThat(query.couldMatch(LogsBloomFilter.compute(List.of(log)))).isTrue();
+    assertThat(query.couldMatch(LogsBloomFilter.builder().insertLog(log).build())).isTrue();
     assertThat(query.matches(log)).isTrue();
   }
 
@@ -425,7 +425,7 @@ public class LogsQueryTest {
     final LogsQuery query = new LogsQuery.Builder().address(address).topics(queryParameter).build();
     final Log log = new Log(address, data, logTopics);
 
-    assertThat(query.couldMatch(LogsBloomFilter.compute(List.of(log)))).isTrue();
+    assertThat(query.couldMatch(LogsBloomFilter.builder().insertLog(log).build())).isTrue();
     assertThat(query.matches(log)).isTrue();
   }
 

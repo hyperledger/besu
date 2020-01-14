@@ -187,7 +187,7 @@ public class BesuEventsImplTest {
 
     assertThat(result.get()).isNotNull();
     assertThat(result.get().getBlockHeader()).isEqualTo(block.getHeader());
-    assertThat(result.get().getTotalDifficulty().getValue()).isEqualTo(BigInteger.ONE);
+    assertThat(result.get().getTotalDifficulty().toBigInteger()).isEqualTo(BigInteger.ONE);
   }
 
   @Test
@@ -201,7 +201,7 @@ public class BesuEventsImplTest {
 
     assertThat(result.get()).isNotNull();
     assertThat(result.get().getBlockHeader()).isEqualTo(block.getHeader());
-    assertThat(result.get().getTotalDifficulty().getValue()).isEqualTo(BigInteger.valueOf(2L));
+    assertThat(result.get().getTotalDifficulty().toBigInteger()).isEqualTo(BigInteger.valueOf(2L));
     serviceImpl.removeBlockPropagatedListener(id);
     result.set(null);
 

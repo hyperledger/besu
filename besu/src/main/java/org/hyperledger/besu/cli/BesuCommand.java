@@ -71,6 +71,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
+import org.hyperledger.besu.ethereum.api.tls.FileBasedPasswordProvider;
+import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
@@ -339,7 +341,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
               + " (default: MAINNET)")
   private final NetworkName network = null;
 
-  @SuppressWarnings("FieldMayBeFinal") // Because PicoCLI requires Strings to not be final.
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @Option(
       names = {"--p2p-host"},
       paramLabel = MANDATORY_HOST_FORMAT_HELP,
@@ -347,6 +349,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       arity = "1")
   private String p2pHost = autoDiscoverDefaultIP().getHostAddress();
 
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @Option(
       names = {"--p2p-interface"},
       paramLabel = MANDATORY_HOST_FORMAT_HELP,
@@ -382,7 +385,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Set to start the GraphQL HTTP service (default: ${DEFAULT-VALUE})")
   private final Boolean isGraphQLHttpEnabled = false;
 
-  @SuppressWarnings("FieldMayBeFinal") // Because PicoCLI requires Strings to not be final.
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @Option(
       names = {"--graphql-http-host"},
       paramLabel = MANDATORY_HOST_FORMAT_HELP,
@@ -408,7 +411,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Set to start the JSON-RPC HTTP service (default: ${DEFAULT-VALUE})")
   private final Boolean isRpcHttpEnabled = false;
 
-  @SuppressWarnings("FieldMayBeFinal") // Because PicoCLI requires Strings to not be final.
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @Option(
       names = {"--rpc-http-host"},
       paramLabel = MANDATORY_HOST_FORMAT_HELP,
@@ -447,11 +450,37 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Boolean isRpcHttpAuthenticationEnabled = false;
 
   @Option(
+      names = {"--rpc-http-tls-enabled"},
+      description = "Enable TLS for the JSON-RPC HTTP service (default: ${DEFAULT-VALUE})")
+  private final Boolean isRpcHttpTlsEnabled = false;
+
+  @Option(
+      names = {"--rpc-http-tls-keystore-file"},
+      paramLabel = MANDATORY_FILE_FORMAT_HELP,
+      description =
+          "Keystore (PKCS#12) containing key/certificate for the JSON-RPC HTTP service. Required if TLS is enabled.")
+  private final Path rpcHttpTlsKeyStoreFile = null;
+
+  @Option(
+      names = {"--rpc-http-tls-keystore-password-file"},
+      paramLabel = MANDATORY_FILE_FORMAT_HELP,
+      description =
+          "File containing password to unlock keystore for the JSON-RPC HTTP service. Required if TLS is enabled.")
+  private final Path rpcHttpTlsKeyStorePasswordFile = null;
+
+  @Option(
+      names = {"--rpc-http-tls-known-clients-file"},
+      paramLabel = MANDATORY_FILE_FORMAT_HELP,
+      description =
+          "Require clients to present known or CA-signed certificates. File must contain common name and fingerprint if certificate is not CA-signed")
+  private final Path rpcHttpTlsKnownClientsFile = null;
+
+  @Option(
       names = {"--rpc-ws-enabled"},
       description = "Set to start the JSON-RPC WebSocket service (default: ${DEFAULT-VALUE})")
   private final Boolean isRpcWsEnabled = false;
 
-  @SuppressWarnings("FieldMayBeFinal") // Because PicoCLI requires Strings to not be final.
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @Option(
       names = {"--rpc-ws-host"},
       paramLabel = MANDATORY_HOST_FORMAT_HELP,
@@ -487,7 +516,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Set to start the metrics exporter (default: ${DEFAULT-VALUE})")
   private final Boolean isMetricsEnabled = false;
 
-  @SuppressWarnings("FieldMayBeFinal") // Because PicoCLI requires Strings to not be final.
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @Option(
       names = {"--metrics-host"},
       paramLabel = MANDATORY_HOST_FORMAT_HELP,
@@ -516,7 +545,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Enable the metrics push gateway integration (default: ${DEFAULT-VALUE})")
   private final Boolean isMetricsPushEnabled = false;
 
-  @SuppressWarnings("FieldMayBeFinal") // Because PicoCLI requires Strings to not be final.
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @Option(
       names = {"--metrics-push-host"},
       paramLabel = MANDATORY_HOST_FORMAT_HELP,
@@ -539,7 +568,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       arity = "1")
   private final Integer metricsPushInterval = 15;
 
-  @SuppressWarnings("FieldMayBeFinal") // Because PicoCLI requires Strings to not be final.
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @Option(
       names = {"--metrics-push-prometheus-job"},
       description = "Job name to use when in push mode (default: ${DEFAULT-VALUE})",
@@ -571,7 +600,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Set if node will perform Stratum mining (default: ${DEFAULT-VALUE})")
   private final Boolean iStratumMiningEnabled = false;
 
-  @SuppressWarnings("FieldMayBeFinal") // Because PicoCLI requires Strings to not be final.
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @Option(
       names = {"--miner-stratum-host"},
       description = "Host for Stratum network mining service (default: ${DEFAULT-VALUE})")
@@ -582,7 +611,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Stratum port binding (default: ${DEFAULT-VALUE})")
   private final Integer stratumPort = 8008;
 
-  @SuppressWarnings("FieldMayBeFinal") // Because PicoCLI requires Strings to not be final.
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @Option(
       hidden = true,
       names = {"--Xminer-stratum-extranonce"},
@@ -659,8 +688,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   @Option(
       names = {"--privacy-multi-tenancy-enabled"},
-      description = "Enable multi-tenant private transactions (default: ${DEFAULT-VALUE})",
-      hidden = true)
+      description = "Enable multi-tenant private transactions (default: ${DEFAULT-VALUE})")
   private final Boolean isPrivacyMultiTenancyEnabled = false;
 
   @Option(
@@ -717,7 +745,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Integer pendingTxRetentionPeriod =
       TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS;
 
-  @SuppressWarnings("FieldMayBeFinal") // Because PicoCLI requires Strings to not be final.
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @Option(
       names = {"--key-value-storage"},
       description = "Identity for the key-value storage to be used.",
@@ -1153,6 +1181,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private JsonRpcConfiguration jsonRpcConfiguration() {
+    CommandLineUtils.checkOptionDependencies(
+        logger,
+        commandLine,
+        "--rpc-http-tls-enabled",
+        !isRpcHttpTlsEnabled,
+        asList(
+            "--rpc-http-tls-keystore-file",
+            "--rpc-http-tls-keystore-password-file",
+            "--rpc-http-tls-known-clients-file"));
 
     CommandLineUtils.checkOptionDependencies(
         logger,
@@ -1167,7 +1204,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--rpc-http-port",
             "--rpc-http-authentication-enabled",
             "--rpc-http-authentication-credentials-file",
-            "--rpc-http-authentication-public-key-file"));
+            "--rpc-http-authentication-public-key-file",
+            "--rpc-http-tls-enabled",
+            "--rpc-http-tls-keystore-file",
+            "--rpc-http-tls-keystore-password-file",
+            "--rpc-http-tls-known-clients-file"));
 
     if (isRpcHttpAuthenticationEnabled
         && rpcHttpAuthenticationCredentialsFile() == null
@@ -1187,7 +1228,29 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     jsonRpcConfiguration.setAuthenticationEnabled(isRpcHttpAuthenticationEnabled);
     jsonRpcConfiguration.setAuthenticationCredentialsFile(rpcHttpAuthenticationCredentialsFile());
     jsonRpcConfiguration.setAuthenticationPublicKeyFile(rpcHttpAuthenticationPublicKeyFile());
+    jsonRpcConfiguration.setTlsConfiguration(rpcHttpTlsConfiguration());
     return jsonRpcConfiguration;
+  }
+
+  private TlsConfiguration rpcHttpTlsConfiguration() {
+    if (isRpcHttpEnabled && isRpcHttpTlsEnabled) {
+      return new TlsConfiguration(
+          Optional.ofNullable(rpcHttpTlsKeyStoreFile)
+              .orElseThrow(
+                  () ->
+                      new ParameterException(
+                          commandLine,
+                          "Keystore file is required when TLS is enabled for JSON-RPC HTTP endpoint")),
+          new FileBasedPasswordProvider(
+              Optional.ofNullable(rpcHttpTlsKeyStorePasswordFile)
+                  .orElseThrow(
+                      () ->
+                          new ParameterException(
+                              commandLine,
+                              "File containing password to unlock keystore is required when TLS is enabled for JSON-RPC HTTP endpoint"))),
+          rpcHttpTlsKnownClientsFile);
+    }
+    return null;
   }
 
   private WebSocketConfiguration webSocketConfiguration() {
@@ -1392,7 +1455,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       privacyParametersBuilder.setEnabled(true);
       privacyParametersBuilder.setEnclaveUrl(privacyUrl);
       privacyParametersBuilder.setMultiTenancyEnabled(isPrivacyMultiTenancyEnabled);
-      if (privacyPublicKeyFile() != null) {
+
+      final boolean hasPrivacyPublicKey = privacyPublicKeyFile() != null;
+      if (hasPrivacyPublicKey && !isPrivacyMultiTenancyEnabled) {
         try {
           privacyParametersBuilder.setEnclavePublicKeyUsingFile(privacyPublicKeyFile());
         } catch (final IOException e) {
@@ -1402,7 +1467,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           throw new ParameterException(
               commandLine, "Contents of privacy-public-key-file invalid: " + e.getMessage(), e);
         }
-      } else {
+      } else if (hasPrivacyPublicKey) {
+        throw new ParameterException(
+            commandLine, "Privacy multi-tenancy and privacy public key cannot be used together");
+      } else if (!isPrivacyMultiTenancyEnabled) {
         throw new ParameterException(
             commandLine, "Please specify Enclave public key file path to enable privacy");
       }
@@ -1521,6 +1589,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .metricsConfiguration(metricsConfiguration)
             .staticNodes(staticNodes)
             .identityString(identityString)
+            .besuPluginContext(besuPluginContext)
             .build();
 
     addShutdownHook(runner);

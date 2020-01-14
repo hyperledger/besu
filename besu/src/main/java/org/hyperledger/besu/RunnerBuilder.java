@@ -16,6 +16,8 @@ package org.hyperledger.besu;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Objects.isNull;
+import static java.util.function.Predicate.isEqual;
+import static java.util.function.Predicate.not;
 import static org.hyperledger.besu.controller.BesuController.CACHE_PATH;
 
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
@@ -87,7 +89,12 @@ import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsService;
 import org.hyperledger.besu.nat.NatMethod;
+import org.hyperledger.besu.nat.NatService;
+import org.hyperledger.besu.nat.core.NatManager;
+import org.hyperledger.besu.nat.manual.ManualNatManager;
 import org.hyperledger.besu.nat.upnp.UpnpNatManager;
+import org.hyperledger.besu.plugin.BesuPlugin;
+import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.util.NetworkUtility;
 
 import java.io.IOException;
@@ -113,13 +120,13 @@ public class RunnerBuilder {
   private BesuController<?> besuController;
 
   private NetworkingConfiguration networkingConfiguration = NetworkingConfiguration.create();
-  private Collection<Bytes> bannedNodeIds = new ArrayList<>();
+  private final Collection<Bytes> bannedNodeIds = new ArrayList<>();
   private boolean p2pEnabled = true;
   private boolean discovery;
   private String p2pAdvertisedHost;
   private String p2pListenInterface = NetworkUtility.INADDR_ANY;
   private int p2pListenPort;
-  private NatMethod natMethod = NatMethod.NONE;
+  private NatMethod natMethod = NatMethod.AUTO;
   private int maxPeers;
   private boolean limitRemoteWireConnectionsEnabled = false;
   private float fractionRemoteConnectionsAllowed;
@@ -134,6 +141,7 @@ public class RunnerBuilder {
   private Optional<PermissioningConfiguration> permissioningConfiguration = Optional.empty();
   private Collection<EnodeURL> staticNodes = Collections.emptyList();
   private Optional<String> identityString = Optional.empty();
+  private BesuPluginContextImpl besuPluginContext;
 
   public RunnerBuilder vertx(final Vertx vertx) {
     this.vertx = vertx;
@@ -255,6 +263,11 @@ public class RunnerBuilder {
     return this;
   }
 
+  public RunnerBuilder besuPluginContext(final BesuPluginContextImpl besuPluginContext) {
+    this.besuPluginContext = besuPluginContext;
+    return this;
+  }
+
   public Runner build() {
 
     Preconditions.checkNotNull(besuController);
@@ -325,7 +338,7 @@ public class RunnerBuilder {
             .map(nodePerms -> PeerPermissions.combine(nodePerms, bannedNodes))
             .orElse(bannedNodes);
 
-    final Optional<UpnpNatManager> natManager = buildNatManager(natMethod);
+    final NatService natService = new NatService(buildNatManager(natMethod));
 
     final NetworkBuilder inactiveNetwork = (caps) -> new NoopP2PNetwork();
     final NetworkBuilder activeNetwork =
@@ -337,7 +350,7 @@ public class RunnerBuilder {
                 .peerPermissions(peerPermissions)
                 .metricsSystem(metricsSystem)
                 .supportedCapabilities(caps)
-                .natManager(natManager)
+                .natService(natService)
                 .build();
 
     final NetworkRunner networkRunner =
@@ -419,7 +432,9 @@ public class RunnerBuilder {
               privacyParameters,
               jsonRpcConfiguration,
               webSocketConfiguration,
-              metricsConfiguration);
+              metricsConfiguration,
+              natService,
+              besuPluginContext.getNamedPlugins());
       jsonRpcHttpService =
           Optional.of(
               new JsonRpcHttpService(
@@ -427,7 +442,7 @@ public class RunnerBuilder {
                   dataDir,
                   jsonRpcConfiguration,
                   metricsSystem,
-                  natManager,
+                  natService,
                   jsonRpcMethods,
                   new HealthService(new LivenessCheck()),
                   new HealthService(new ReadinessCheck(peerNetwork, synchronizer))));
@@ -476,7 +491,9 @@ public class RunnerBuilder {
               privacyParameters,
               jsonRpcConfiguration,
               webSocketConfiguration,
-              metricsConfiguration);
+              metricsConfiguration,
+              natService,
+              besuPluginContext.getNamedPlugins());
 
       final SubscriptionManager subscriptionManager =
           createSubscriptionManager(vertx, transactionPool);
@@ -502,7 +519,7 @@ public class RunnerBuilder {
     return new Runner(
         vertx,
         networkRunner,
-        natManager,
+        natService,
         jsonRpcHttpService,
         graphQLHttpService,
         webSocketService,
@@ -537,16 +554,6 @@ public class RunnerBuilder {
     }
   }
 
-  private Optional<UpnpNatManager> buildNatManager(final NatMethod natMethod) {
-    switch (natMethod) {
-      case UPNP:
-        return Optional.of(new UpnpNatManager());
-      case NONE:
-      default:
-        return Optional.ofNullable(null);
-    }
-  }
-
   private Optional<AccountPermissioningController> buildAccountPermissioningController(
       final Optional<PermissioningConfiguration> permissioningConfiguration,
       final BesuController<?> besuController,
@@ -566,6 +573,24 @@ public class RunnerBuilder {
       return accountPermissioningController;
     } else {
       return Optional.empty();
+    }
+  }
+
+  private Optional<NatManager> buildNatManager(final NatMethod natMethod) {
+
+    final NatMethod detectedNatMethod =
+        Optional.of(natMethod)
+            .filter(not(isEqual(NatMethod.AUTO)))
+            .orElse(NatService.autoDetectNatMethod());
+    switch (detectedNatMethod) {
+      case UPNP:
+        return Optional.of(new UpnpNatManager());
+      case MANUAL:
+        return Optional.of(
+            new ManualNatManager(p2pAdvertisedHost, p2pListenPort, jsonRpcConfiguration.getPort()));
+      case NONE:
+      default:
+        return Optional.empty();
     }
   }
 
@@ -605,7 +630,9 @@ public class RunnerBuilder {
       final PrivacyParameters privacyParameters,
       final JsonRpcConfiguration jsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
-      final MetricsConfiguration metricsConfiguration) {
+      final MetricsConfiguration metricsConfiguration,
+      final NatService natService,
+      final Map<String, BesuPlugin> namedPlugins) {
     final Map<String, JsonRpcMethod> methods =
         new JsonRpcMethodsFactory()
             .methods(
@@ -627,7 +654,9 @@ public class RunnerBuilder {
                 privacyParameters,
                 jsonRpcConfiguration,
                 webSocketConfiguration,
-                metricsConfiguration);
+                metricsConfiguration,
+                natService,
+                namedPlugins);
     methods.putAll(besuController.getAdditionalJsonRpcMethods(jsonRpcApis));
     return methods;
   }

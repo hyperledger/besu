@@ -34,7 +34,7 @@ public class DatabaseMetadata {
   private static final Logger LOG = LogManager.getLogger();
 
   private static final String METADATA_FILENAME = "DATABASE_METADATA.json";
-  private static ObjectMapper MAPPER = new ObjectMapper();
+  private static final ObjectMapper MAPPER = new ObjectMapper();
   private final int version;
 
   private Optional<Integer> privacyVersion;
