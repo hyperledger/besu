@@ -46,7 +46,7 @@
     {
       "number": 5,
       "transactions": [
-        {
+          {
           "comment": "Clear contract storage keys 1 and 2",
           "secretKey": "0x8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63",
           "gasLimit": "0xFFFFF2",
@@ -99,7 +99,7 @@
       "number": 9,
       "transactions": [
         {
-          "comment": "Proxy call to another contract - several levels deep.",
+          "comment": "Proxy call to another contract - several levels deep. Using CALL.",
           "secretKey": "0x8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63",
           "gasLimit": "0xFFFFF2",
           "gasPrice": "0xEF",
@@ -112,12 +112,25 @@
       "number": "0xA",
       "transactions": [
         {
-          "comment": "Set contract storage (key,value)'s: (1,1),(2,2)",
+          "comment": "Proxy call to another contract - 1 level deep. Using CALLCODE.",
           "secretKey": "0x8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63",
           "gasLimit": "0xFFFFF2",
           "gasPrice": "0xEF",
           "to": "0x0050000000000000000000000000000000000000",
-          "data": "0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000002"
+          "data": "0x0000000000000000000000000030000000000000000000000000000000000000f000000000000000000000000000000000000000000000000000000000000001"
+        }
+      ]
+    },
+    {
+      "number": "0xB",
+      "transactions": [
+        {
+          "comment": "Proxy call to another contract - 1 level deep. Using DELEGATECALL.",
+          "secretKey": "0x8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63",
+          "gasLimit": "0xFFFFF2",
+          "gasPrice": "0xEF",
+          "to": "0x0060000000000000000000000000000000000000",
+          "data": "0x0000000000000000000000000030000000000000000000000000000000000000f000000000000000000000000000000000000000000000000000000000000001"
         }
       ]
     }
