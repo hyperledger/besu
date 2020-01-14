@@ -16,12 +16,12 @@
 plugins { id 'java' }
 
 jar {
-  baseName 'besu-clique'
+  archiveBaseName = 'besu-clique'
   manifest {
     attributes(
-      'Specification-Title': baseName,
+      'Specification-Title': archiveBaseName,
       'Specification-Version': project.version,
-      'Implementation-Title': baseName,
+      'Implementation-Title': archiveBaseName,
       'Implementation-Version': calculateVersion()
       )
   }
