@@ -33,7 +33,7 @@ public class Store {
     return val;
   }
 
-  //TODO Remove when https://issues.apache.org/jira/browse/TUWENI-31 is fixed.
+  // TODO Remove when https://issues.apache.org/jira/browse/TUWENI-31 is fixed.
   private static String handle0x(final String input) {
     return input.equals("0x") ? "0x0" : input;
   }
