@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
+import org.hyperledger.besu.ethereum.chain.MiningCoordinator;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
@@ -69,7 +70,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
   @ClassRule public static final TemporaryFolder folder = new TemporaryFolder();
 
   protected BlockchainSetupUtil<Void> blockchainSetupUtil;
-
+  protected MiningCoordinator miningCoordinatorMock;
   protected static String CLIENT_VERSION = "TestClientVersion/0.1.0";
   protected static final BigInteger NETWORK_ID = BigInteger.valueOf(123);
   protected static final Collection<RpcApi> JSON_RPC_APIS =
@@ -93,11 +94,13 @@ public abstract class AbstractJsonRpcHttpServiceTest {
 
   protected BlockchainSetupUtil<Void> createBlockchainSetupUtil(
       final String genesisPath, final String blocksPath) {
+    miningCoordinatorMock = mock(EthHashMiningCoordinator.class);
     final URL genesisURL = AbstractJsonRpcHttpServiceTest.class.getResource(genesisPath);
     final URL blocksURL = AbstractJsonRpcHttpServiceTest.class.getResource(blocksPath);
     checkArgument(genesisURL != null, "Unable to locate genesis file: " + genesisPath);
     checkArgument(blocksURL != null, "Unable to locate blocks file: " + blocksPath);
-    return BlockchainSetupUtil.createForEthashChain(new ChainResources(genesisURL, blocksURL));
+    return BlockchainSetupUtil.createForEthashChain(
+        new ChainResources(genesisURL, blocksURL), Optional.of(miningCoordinatorMock));
   }
 
   @Before
@@ -116,7 +119,6 @@ public abstract class AbstractJsonRpcHttpServiceTest {
     final Synchronizer synchronizerMock = mock(Synchronizer.class);
     final P2PNetwork peerDiscoveryMock = mock(P2PNetwork.class);
     final TransactionPool transactionPoolMock = mock(TransactionPool.class);
-    final EthHashMiningCoordinator miningCoordinatorMock = mock(EthHashMiningCoordinator.class);
     when(transactionPoolMock.addLocalTransaction(any(Transaction.class)))
         .thenReturn(ValidationResult.valid());
     // nonce too low tests uses a tx with nonce=16

@@ -12,12 +12,10 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.chainimport;
+package org.hyperledger.besu.ethereum.chain;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.chain.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.internal.BlockData;
 import org.hyperledger.besu.ethereum.chain.internal.ChainData;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -50,7 +48,7 @@ import org.apache.tuweni.bytes.Bytes;
  *
  * @param <C> The consensus algorithm context
  */
-public class JsonBlockImporter<C> {
+public class JsonBlockImportUtil<C> {
   private static final Logger LOG = LogManager.getLogger();
 
   private final ObjectMapper mapper;
@@ -60,15 +58,7 @@ public class JsonBlockImporter<C> {
   private final MiningCoordinator miningCoordinator;
   private List<Block> importedBlocks;
 
-  public JsonBlockImporter(final BesuController<C> controller) {
-    this(
-        controller.getGenesisConfigOptions(),
-        controller.getProtocolSchedule(),
-        controller.getProtocolContext(),
-        controller.getMiningCoordinator());
-  }
-
-  public JsonBlockImporter(
+  public JsonBlockImportUtil(
       final GenesisConfigOptions genesisConfigOptions,
       final ProtocolSchedule<C> protocolSchedule,
       final ProtocolContext<C> protocolContext,

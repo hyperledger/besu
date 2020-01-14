@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.chainimport.internal;
+package org.hyperledger.besu.ethereum.chain.internal;
 
 import java.util.List;
 

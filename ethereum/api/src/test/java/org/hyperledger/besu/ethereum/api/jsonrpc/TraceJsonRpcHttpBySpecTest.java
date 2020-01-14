@@ -44,7 +44,7 @@ public class TraceJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpBySpecTest {
   @Override
   protected BlockchainSetupUtil<Void> getBlockchainSetupUtil() {
     return createBlockchainSetupUtil(
-        "trace/chain-data/genesis.json", "trace/chain-data/blocks.bin");
+        "trace/chain-data/genesis.json", "trace/chain-data/src/blocks.json");
   }
 
   @Override
@@ -74,6 +74,6 @@ public class TraceJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpBySpecTest {
 
   @Parameters(name = "{index}: {0}")
   public static Object[][] specs() {
-    return AbstractJsonRpcHttpBySpecTest.findSpecFiles("trace");
+    return AbstractJsonRpcHttpBySpecTest.findSpecFiles("trace/specs/flat");
   }
 }

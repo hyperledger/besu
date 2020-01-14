@@ -19,9 +19,13 @@ import static org.hyperledger.besu.ethereum.core.InMemoryStorageProvider.createI
 import static org.hyperledger.besu.ethereum.core.InMemoryStorageProvider.createInMemoryWorldStateArchive;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.JsonGenesisConfigOptions;
+import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
+import org.hyperledger.besu.ethereum.chain.JsonBlockImportUtil;
+import org.hyperledger.besu.ethereum.chain.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
@@ -41,7 +45,9 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import org.junit.rules.TemporaryFolder;
@@ -100,28 +106,30 @@ public class BlockchainSetupUtil<C> {
   }
 
   public static BlockchainSetupUtil<Void> forTesting() {
-    return createForEthashChain(BlockTestUtil.getTestChainResources());
+    return createForEthashChain(BlockTestUtil.getTestChainResources(), Optional.empty());
   }
 
   public static BlockchainSetupUtil<Void> forMainnet() {
-    return createForEthashChain(BlockTestUtil.getMainnetResources());
+    return createForEthashChain(BlockTestUtil.getMainnetResources(), Optional.empty());
   }
 
   public static BlockchainSetupUtil<Void> forOutdatedFork() {
-    return createForEthashChain(BlockTestUtil.getOutdatedForkResources());
+    return createForEthashChain(BlockTestUtil.getOutdatedForkResources(), Optional.empty());
   }
 
   public static BlockchainSetupUtil<Void> forUpgradedFork() {
-    return createForEthashChain(BlockTestUtil.getUpgradedForkResources());
+    return createForEthashChain(BlockTestUtil.getUpgradedForkResources(), Optional.empty());
   }
 
   public static BlockchainSetupUtil<Void> createForEthashChain(
-      final ChainResources chainResources) {
+      final ChainResources chainResources,
+      final Optional<MiningCoordinator> maybeMiningCoordinator) {
     return create(
         chainResources,
         BlockchainSetupUtil::mainnetProtocolScheduleProvider,
         BlockchainSetupUtil::mainnetProtocolContextProvider,
-        new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()));
+        new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()),
+        maybeMiningCoordinator);
   }
 
   private static ProtocolSchedule<Void> mainnetProtocolScheduleProvider(
@@ -138,7 +146,8 @@ public class BlockchainSetupUtil<C> {
       final ChainResources chainResources,
       final ProtocolScheduleProvider<T> protocolScheduleProvider,
       final ProtocolContextProvider<T> protocolContextProvider,
-      final EthScheduler scheduler) {
+      final EthScheduler scheduler,
+      final Optional<MiningCoordinator> maybeMiningCoordinator) {
     final TemporaryFolder temp = new TemporaryFolder();
     try {
       temp.create();
@@ -156,14 +165,28 @@ public class BlockchainSetupUtil<C> {
           protocolContextProvider.get(blockchain, worldArchive);
 
       final Path blocksPath = Path.of(chainResources.getBlocksURL().toURI());
-      final List<Block> blocks = new ArrayList<>();
-      final BlockHeaderFunctions blockHeaderFunctions =
-          ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
-      try (final RawBlockIterator iterator =
-          new RawBlockIterator(
-              blocksPath, rlp -> BlockHeader.readFrom(rlp, blockHeaderFunctions))) {
-        while (iterator.hasNext()) {
-          blocks.add(iterator.next());
+      final List<Block> blocks;
+      if (maybeMiningCoordinator.isPresent()) {
+        final JsonBlockImportUtil<T> jsonBlockImporter =
+            new JsonBlockImportUtil<>(
+                JsonGenesisConfigOptions.fromJsonObject(
+                    (ObjectNode) JsonUtil.objectNodeFromString(genesisJson).get("config")),
+                protocolSchedule,
+                protocolContext,
+                maybeMiningCoordinator.get());
+        jsonBlockImporter.importChain(
+            Resources.toString(chainResources.getBlocksURL(), Charsets.UTF_8));
+        blocks = jsonBlockImporter.getImportedBlocks();
+      } else {
+        blocks = new ArrayList<>();
+        final BlockHeaderFunctions blockHeaderFunctions =
+            ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
+        try (final RawBlockIterator iterator =
+            new RawBlockIterator(
+                blocksPath, rlp -> BlockHeader.readFrom(rlp, blockHeaderFunctions))) {
+          while (iterator.hasNext()) {
+            blocks.add(iterator.next());
+          }
         }
       }
       return new BlockchainSetupUtil<T>(

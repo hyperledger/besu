@@ -21,7 +21,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.miner.MinerSet
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.miner.MinerSetEtherbase;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.miner.MinerStart;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.miner.MinerStop;
-import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
+import org.hyperledger.besu.ethereum.chain.MiningCoordinator;
 
 import java.util.Map;
 

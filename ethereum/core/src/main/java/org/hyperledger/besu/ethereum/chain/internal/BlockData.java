@@ -12,9 +12,9 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.chainimport.internal;
+package org.hyperledger.besu.ethereum.chain.internal;
 
-import org.hyperledger.besu.chainimport.internal.TransactionData.NonceProvider;
+import org.hyperledger.besu.ethereum.chain.internal.TransactionData.NonceProvider;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
