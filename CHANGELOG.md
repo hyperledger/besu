@@ -4,6 +4,7 @@
 
 ### Additions and Improvements 
 
+- Besu has moved from an internal Bytes library to the [Apache Tuweni](https://tuweni.apache.org/) Bytes library.  This includes using the library in the Plugins API interfaces. [#295](https://github.com/hyperledger/besu/pull/295) and [#215](https://github.com/hyperledger/besu/pull/215)
 - Besu stops processing blocks if Orion is unavailable [\#253](https://github.com/hyperledger/besu/pull/253)
 - Support for [EIP-2124](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2124.md), which results in faster peer discovery [\#156](https://github.com/hyperledger/besu/pull/156)
 
