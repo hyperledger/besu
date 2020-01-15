@@ -141,12 +141,12 @@ public class DebugOperationTracer implements OperationTracer {
     return traceFrames;
   }
 
-  public void reset(){
+  public void reset() {
     traceFrames = new ArrayList<>();
     lastFrame = null;
   }
 
-  public List<TraceFrame> copyTraceFrames(){
+  public List<TraceFrame> copyTraceFrames() {
     return new ArrayList<>(traceFrames);
   }
 }
