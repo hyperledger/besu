@@ -4,6 +4,7 @@
 
 ### Additions and Improvements 
 
+- Added priv_call [\#250](https://github.com/hyperledger/besu/pull/250).  Invokes a private contract function locally and does not change the private state.
 - Besu stops processing blocks if Orion is unavailable [\#253](https://github.com/hyperledger/besu/pull/253)
 
 ## 1.3.8 
