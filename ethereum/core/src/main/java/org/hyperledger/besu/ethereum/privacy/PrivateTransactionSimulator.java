@@ -28,8 +28,6 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
-import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
@@ -187,12 +185,12 @@ public class PrivateTransactionSimulator {
         .build();
   }
 
-  private Optional<PrivateTransactionProcessor.Result> privacyGroupDoesNotExistResult() {
+  /*private Optional<PrivateTransactionProcessor.Result> privacyGroupDoesNotExistResult() {
     return Optional.of(
         PrivateTransactionProcessor.Result.failed(
             0L,
             ValidationResult.invalid(
                 TransactionValidator.TransactionInvalidReason.PRIVACY_GROUP_DOES_NOT_EXIST),
             Optional.empty()));
-  }
+  }*/
 }

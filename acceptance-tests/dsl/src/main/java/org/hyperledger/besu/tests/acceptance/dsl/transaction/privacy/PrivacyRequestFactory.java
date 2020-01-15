@@ -65,7 +65,7 @@ public class PrivacyRequestFactory {
     }
   }
 
-  private class PrivxCreatePrivacyGroupRequest {
+  private static class PrivxCreatePrivacyGroupRequest {
     private final List<String> addresses;
     private final String name;
     private final String description;

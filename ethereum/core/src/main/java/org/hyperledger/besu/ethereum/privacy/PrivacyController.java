@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.privacy;
 
-import org.apache.tuweni.units.bigints.UInt256;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.enclave.types.PrivacyGroup.Type;
@@ -48,6 +47,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class PrivacyController {
 
@@ -62,7 +62,7 @@ public class PrivacyController {
   private final PrivateStateStorage privateStateStorage;
 
   public PrivacyController(
-          final Blockchain blockchain,
+      final Blockchain blockchain,
       final PrivacyParameters privacyParameters,
       final Optional<BigInteger> chainId,
       final PrivateMarkerTransactionFactory privateMarkerTransactionFactory,
@@ -138,15 +138,21 @@ public class PrivacyController {
   }
 
   public List<PrivacyGroup> findOnChainPrivacyGroup(
-          final List<String> addresses, final String enclavePublicKey) {
+      final List<String> addresses, final String enclavePublicKey) {
     final ArrayList<PrivacyGroup> privacyGroups = new ArrayList<>();
-    final PrivacyGroupHeadBlockMap privacyGroupHeadBlockMap = privateStateStorage.getPrivacyGroupHeadBlockMap(blockchain.getChainHeadHash()).get();
-    privacyGroupHeadBlockMap.keySet().forEach(c -> {
-      final List<String> participants = getExistingParticipants(c, enclavePublicKey);
-      if(participants.containsAll(addresses)) {
-        privacyGroups.add(new PrivacyGroup(c.toBase64String(), PrivacyGroup.Type.PANTHEON, "", "", participants));
-      }
-    });
+    final PrivacyGroupHeadBlockMap privacyGroupHeadBlockMap =
+        privateStateStorage.getPrivacyGroupHeadBlockMap(blockchain.getChainHeadHash()).get();
+    privacyGroupHeadBlockMap
+        .keySet()
+        .forEach(
+            c -> {
+              final List<String> participants = getExistingParticipants(c, enclavePublicKey);
+              if (participants.containsAll(addresses)) {
+                privacyGroups.add(
+                    new PrivacyGroup(
+                        c.toBase64String(), PrivacyGroup.Type.PANTHEON, "", "", participants));
+              }
+            });
     return privacyGroups;
   }
 
@@ -221,9 +227,11 @@ public class PrivacyController {
               .collect(Collectors.toList()));
     } else if (isGroupCreationTransaction(privateTransaction.getPayload())) {
       privateFor.addAll(getParticipantsFromParameter(privateTransaction.getPayload()));
-      privateFor.addAll(getExistingParticipants(privateTransaction.getPrivacyGroupId().get(), enclavePublicKey));
+      privateFor.addAll(
+          getExistingParticipants(privateTransaction.getPrivacyGroupId().get(), enclavePublicKey));
     } else {
-      privateFor.addAll(getExistingParticipants(privateTransaction.getPrivacyGroupId().get(), enclavePublicKey));
+      privateFor.addAll(
+          getExistingParticipants(privateTransaction.getPrivacyGroupId().get(), enclavePublicKey));
     }
 
     if (privateFor.isEmpty()) {
@@ -275,9 +283,10 @@ public class PrivacyController {
   private List<String> decodeList(final Bytes rlpEncodedList) {
     final ArrayList<String> decodedElements = new ArrayList<>();
     // first 32 bytes is dynamic list offset
-    final UInt256 lengthOfList = UInt256.fromBytes(rlpEncodedList.slice(32, 32)); //length of list
-    for(int i = 0; i < lengthOfList.toLong(); ++i ) {
-      decodedElements.add(Bytes.wrap(rlpEncodedList.slice(64 + (32 * i), 32)).toBase64String()); // participant
+    final UInt256 lengthOfList = UInt256.fromBytes(rlpEncodedList.slice(32, 32)); // length of list
+    for (int i = 0; i < lengthOfList.toLong(); ++i) {
+      decodedElements.add(
+          Bytes.wrap(rlpEncodedList.slice(64 + (32 * i), 32)).toBase64String()); // participant
     }
     return decodedElements;
   }

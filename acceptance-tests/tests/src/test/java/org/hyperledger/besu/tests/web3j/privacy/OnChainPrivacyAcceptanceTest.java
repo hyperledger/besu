@@ -1,3 +1,17 @@
+/*
+ * Copyright ConsenSys AG.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package org.hyperledger.besu.tests.web3j.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -40,14 +54,12 @@ public class OnChainPrivacyAcceptanceTest extends PrivacyAcceptanceTestBase {
   @Test
   public void nodeCanCreatePrivacyGroup() {
     final PrivxCreatePrivacyGroup privxCreatePrivacyGroup =
-        alice.execute(
-            privacyTransactions.createOnChainPrivacyGroup(
-                "", "", alice, bob));
+        alice.execute(privacyTransactions.createOnChainPrivacyGroup("", "", alice, bob));
 
     assertThat(privxCreatePrivacyGroup).isNotNull();
 
     final org.hyperledger.besu.tests.web3j.generated.PrivacyGroup privacyGroup =
-            org.hyperledger.besu.tests.web3j.generated.PrivacyGroup.load(
+        org.hyperledger.besu.tests.web3j.generated.PrivacyGroup.load(
             null, null, Credentials.create(alice.getTransactionSigningKey()), null);
 
     try {
@@ -81,10 +93,14 @@ public class OnChainPrivacyAcceptanceTest extends PrivacyAcceptanceTestBase {
                 null,
                 "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
                 "0x000000000000000000000000000000000000007c",
-                "0x0000000000000000000000000000000000000000000000000000000000000020" // dynamic array offset
-                    + "0000000000000000000000000000000000000000000000000000000000000002" // length of array
-                    + "035695b4cc4b0941e60551d7a19cf30603db5bfc23e5ac43a56f57f25f75486a" // first element
-                    + "2a8d9b56a0fe9cd94d60be4413bcb721d3a7be27ed8e28b3a6346df874ee141b", // second element
+                "0x0000000000000000000000000000000000000000000000000000000000000020" // dynamic
+                    // array offset
+                    + "0000000000000000000000000000000000000000000000000000000000000002" // length
+                    // of array
+                    + "035695b4cc4b0941e60551d7a19cf30603db5bfc23e5ac43a56f57f25f75486a" // first
+                    // element
+                    + "2a8d9b56a0fe9cd94d60be4413bcb721d3a7be27ed8e28b3a6346df874ee141b", // second
+                // element
                 Collections.emptyList(),
                 null,
                 null,
@@ -94,13 +110,13 @@ public class OnChainPrivacyAcceptanceTest extends PrivacyAcceptanceTestBase {
                 "0x1",
                 null)));
 
-        final PrivacyGroup expected =
-            new PrivacyGroup(
-                privxCreatePrivacyGroup.getPrivacyGroupId(),
-                PrivacyGroup.Type.PANTHEON,
-                "",
-                "",
-                Base64String.wrapList(alice.getEnclaveKey(), bob.getEnclaveKey()));
+    final PrivacyGroup expected =
+        new PrivacyGroup(
+            privxCreatePrivacyGroup.getPrivacyGroupId(),
+            PrivacyGroup.Type.PANTHEON,
+            "",
+            "",
+            Base64String.wrapList(alice.getEnclaveKey(), bob.getEnclaveKey()));
 
     alice.verify(privateTransactionVerifier.validPrivacyGroupCreated(expected));
 

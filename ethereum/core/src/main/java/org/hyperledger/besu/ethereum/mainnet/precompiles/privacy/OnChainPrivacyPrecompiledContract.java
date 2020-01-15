@@ -165,7 +165,7 @@ public class OnChainPrivacyPrecompiledContract extends AbstractPrecompiledContra
 
     final WorldUpdater privateWorldStateUpdater = disposablePrivateState.updater();
 
-    if (lastRootHash == EMPTY_ROOT_HASH) {
+    if (lastRootHash.equals(EMPTY_ROOT_HASH)) {
       // inject proxy
       final DefaultEvmAccount managementPrecompile =
           privateWorldStateUpdater.createAccount(Address.PRIVACY_MANAGEMENT);
