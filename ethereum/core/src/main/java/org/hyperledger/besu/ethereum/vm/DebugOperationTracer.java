@@ -35,7 +35,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class DebugOperationTracer implements OperationTracer {
 
   private final TraceOptions options;
-  private final List<TraceFrame> traceFrames = new ArrayList<>();
+  private List<TraceFrame> traceFrames = new ArrayList<>();
   private TraceFrame lastFrame;
 
   public DebugOperationTracer(final TraceOptions options) {
@@ -139,5 +139,14 @@ public class DebugOperationTracer implements OperationTracer {
 
   public List<TraceFrame> getTraceFrames() {
     return traceFrames;
+  }
+
+  public void reset(){
+    traceFrames = new ArrayList<>();
+    lastFrame = null;
+  }
+
+  public List<TraceFrame> copyTraceFrames(){
+    return new ArrayList<>(traceFrames);
   }
 }
