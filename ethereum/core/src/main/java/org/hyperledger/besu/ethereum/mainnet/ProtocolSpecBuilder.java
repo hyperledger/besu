@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.OnChainPrivacyPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.PrivacyPrecompiledContract;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
@@ -312,6 +313,10 @@ public class ProtocolSpecBuilder<T> {
           (PrivacyPrecompiledContract)
               precompileContractRegistry.get(address, Account.DEFAULT_VERSION);
       privacyPrecompiledContract.setPrivateTransactionProcessor(privateTransactionProcessor);
+      final OnChainPrivacyPrecompiledContract onChainPrivacyPrecompiledContract =
+          (OnChainPrivacyPrecompiledContract)
+              precompileContractRegistry.get(Address.ONCHAIN_PRIVACY, Account.DEFAULT_VERSION);
+      onChainPrivacyPrecompiledContract.setPrivateTransactionProcessor(privateTransactionProcessor);
       if (AbstractBlockProcessor.class.isAssignableFrom(blockProcessor.getClass())) {
         blockProcessor =
             new PrivacyBlockProcessor(

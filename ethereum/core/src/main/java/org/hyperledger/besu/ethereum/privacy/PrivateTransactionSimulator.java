@@ -75,6 +75,12 @@ public class PrivateTransactionSimulator {
   }
 
   public Optional<PrivateTransactionProcessor.Result> process(
+      final String privacyGroupId, final String enclaveKey, final CallParameter callParams) {
+    final BlockHeader header = blockchain.getChainHeadHeader();
+    return process(privacyGroupId, enclaveKey, callParams, header);
+  }
+
+  public Optional<PrivateTransactionProcessor.Result> process(
       final String privacyGroupId,
       final String enclaveKey,
       final CallParameter callParams,
@@ -110,7 +116,8 @@ public class PrivateTransactionSimulator {
       // the following if.
     }
     if (privacyGroup == null || !privacyGroup.getMembers().contains(enclaveKey)) {
-      return privacyGroupDoesNotExistResult();
+      // The privacy group is on chain
+      //      return privacyGroupDoesNotExistResult();
     }
 
     final MutableWorldState publicWorldState =

@@ -14,20 +14,30 @@
  */
 package org.hyperledger.besu.ethereum.privacy;
 
+import org.apache.tuweni.units.bigints.UInt256;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.enclave.types.PrivacyGroup.Type;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.enclave.types.SendResponse;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.PrivateMarkerTransactionFactory;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.ethereum.rlp.RLP;
+import org.hyperledger.besu.ethereum.rlp.RLPInput;
+import org.hyperledger.besu.ethereum.transaction.CallParameter;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -43,32 +53,46 @@ public class PrivacyController {
 
   private static final Logger LOG = LogManager.getLogger();
 
+  private final Blockchain blockchain;
   private final Enclave enclave;
   private final PrivateTransactionValidator privateTransactionValidator;
   private final PrivateMarkerTransactionFactory privateMarkerTransactionFactory;
   private final PrivateNonceProvider nonceProvider;
+  private final PrivateTransactionSimulator privateTransactionSimulator;
+  private final PrivateStateStorage privateStateStorage;
 
   public PrivacyController(
+          final Blockchain blockchain,
       final PrivacyParameters privacyParameters,
       final Optional<BigInteger> chainId,
       final PrivateMarkerTransactionFactory privateMarkerTransactionFactory,
-      final PrivateNonceProvider nonceProvider) {
+      final PrivateNonceProvider nonceProvider,
+      final PrivateTransactionSimulator privateTransactionSimulator) {
     this(
+        blockchain,
         privacyParameters.getEnclave(),
         new PrivateTransactionValidator(chainId),
         privateMarkerTransactionFactory,
-        nonceProvider);
+        nonceProvider,
+        privateTransactionSimulator,
+        privacyParameters.getPrivateStateStorage());
   }
 
   public PrivacyController(
+      final Blockchain blockchain,
       final Enclave enclave,
       final PrivateTransactionValidator privateTransactionValidator,
       final PrivateMarkerTransactionFactory privateMarkerTransactionFactory,
-      final PrivateNonceProvider nonceProvider) {
+      final PrivateNonceProvider nonceProvider,
+      final PrivateTransactionSimulator privateTransactionSimulator,
+      final PrivateStateStorage privateStateStorage) {
+    this.blockchain = blockchain;
     this.enclave = enclave;
     this.privateTransactionValidator = privateTransactionValidator;
     this.privateMarkerTransactionFactory = privateMarkerTransactionFactory;
     this.nonceProvider = nonceProvider;
+    this.privateTransactionSimulator = privateTransactionSimulator;
+    this.privateStateStorage = privateStateStorage;
   }
 
   public SendTransactionResponse sendTransaction(
@@ -111,6 +135,19 @@ public class PrivacyController {
   public PrivacyGroup[] findPrivacyGroup(
       final List<String> addresses, final String enclavePublicKey) {
     return enclave.findPrivacyGroup(addresses);
+  }
+
+  public List<PrivacyGroup> findOnChainPrivacyGroup(
+          final List<String> addresses, final String enclavePublicKey) {
+    final ArrayList<PrivacyGroup> privacyGroups = new ArrayList<>();
+    final PrivacyGroupHeadBlockMap privacyGroupHeadBlockMap = privateStateStorage.getPrivacyGroupHeadBlockMap(blockchain.getChainHeadHash()).get();
+    privacyGroupHeadBlockMap.keySet().forEach(c -> {
+      final List<String> participants = getExistingParticipants(c, enclavePublicKey);
+      if(participants.containsAll(addresses)) {
+        privacyGroups.add(new PrivacyGroup(c.toBase64String(), PrivacyGroup.Type.PANTHEON, "", "", participants));
+      }
+    });
+    return privacyGroups;
   }
 
   public Transaction createPrivacyMarkerTransaction(
@@ -168,21 +205,91 @@ public class PrivacyController {
     privateTransaction.writeTo(rlpOutput);
     final String payload = rlpOutput.encoded().toBase64String();
 
-    if (privateTransaction.getPrivacyGroupId().isPresent()) {
-      return enclave.send(
-          payload, enclavePublicKey, privateTransaction.getPrivacyGroupId().get().toBase64String());
-    } else {
-      final List<String> privateFor =
+    final List<String> privateFor = resolvePrivateFor(privateTransaction, enclavePublicKey);
+
+    return enclave.send(payload, privateTransaction.getPrivateFrom().toBase64String(), privateFor);
+  }
+
+  private List<String> resolvePrivateFor(
+      final PrivateTransaction privateTransaction, final String enclavePublicKey) {
+    final ArrayList<String> privateFor = new ArrayList<>();
+    boolean isLegacyTransaction = privateTransaction.getPrivateFor().isPresent();
+    if (isLegacyTransaction) {
+      privateFor.addAll(
           privateTransaction.getPrivateFor().get().stream()
               .map(Bytes::toBase64String)
-              .collect(Collectors.toList());
-
-      if (privateFor.isEmpty()) {
-        privateFor.add(privateTransaction.getPrivateFrom().toBase64String());
-      }
-      return enclave.send(
-          payload, privateTransaction.getPrivateFrom().toBase64String(), privateFor);
+              .collect(Collectors.toList()));
+    } else if (isGroupCreationTransaction(privateTransaction.getPayload())) {
+      privateFor.addAll(getParticipantsFromParameter(privateTransaction.getPayload()));
+      privateFor.addAll(getExistingParticipants(privateTransaction.getPrivacyGroupId().get(), enclavePublicKey));
+    } else {
+      privateFor.addAll(getExistingParticipants(privateTransaction.getPrivacyGroupId().get(), enclavePublicKey));
     }
+
+    if (privateFor.isEmpty()) {
+      privateFor.add(privateTransaction.getPrivateFrom().toBase64String());
+    }
+
+    return privateFor;
+  }
+
+  private boolean isGroupCreationTransaction(final Bytes input) {
+    return input.toUnprefixedHexString().startsWith("f744b089");
+  }
+
+  private List<String> getParticipantsFromParameter(final Bytes input) {
+    final List<String> participants = new ArrayList<>();
+    final Bytes mungedParticipants = input.slice(4 + 32 + 32 + 32);
+    for (int i = 0; i <= mungedParticipants.size() - 32; i += 32) {
+      participants.add(mungedParticipants.slice(i, 32).toBase64String());
+    }
+    return participants;
+  }
+
+  private List<String> getExistingParticipants(
+      final Bytes privacyGroupId, final String enclavePublicKey) {
+    // get the privateFor list from the management contract
+    final Optional<PrivateTransactionProcessor.Result> privateTransactionSimulatorResultOptional =
+        privateTransactionSimulator.process(
+            privacyGroupId.toBase64String(),
+            enclavePublicKey,
+            buildGetParticipantsCallParams(Bytes.fromBase64String(enclavePublicKey)));
+
+    if (privateTransactionSimulatorResultOptional.isPresent()
+        && privateTransactionSimulatorResultOptional.get().isSuccessful()) {
+      final RLPInput rlpInput =
+          RLP.input(privateTransactionSimulatorResultOptional.get().getOutput());
+      if (rlpInput.nextSize() > 0) {
+        return decodeList(rlpInput.raw());
+      } else {
+        return Collections.emptyList();
+      }
+
+    } else {
+      // if the management contract does not exist this will prompt
+      // Orion to resolve the privateFor
+      return Collections.emptyList();
+    }
+  }
+
+  private List<String> decodeList(final Bytes rlpEncodedList) {
+    final ArrayList<String> decodedElements = new ArrayList<>();
+    // first 32 bytes is dynamic list offset
+    final UInt256 lengthOfList = UInt256.fromBytes(rlpEncodedList.slice(32, 32)); //length of list
+    for(int i = 0; i < lengthOfList.toLong(); ++i ) {
+      decodedElements.add(Bytes.wrap(rlpEncodedList.slice(64 + (32 * i), 32)).toBase64String()); // participant
+    }
+    return decodedElements;
+  }
+
+  private CallParameter buildGetParticipantsCallParams(final Bytes enclavePublicKey) {
+    return new CallParameter(
+        Address.ZERO,
+        Address.PRIVACY_PROXY,
+        3000000,
+        Wei.of(1000),
+        Wei.ZERO,
+        Bytes.concatenate(Bytes.fromHexString("0x0b0235be"), enclavePublicKey));
   }
 
   private String getPrivacyGroupId(final String key, final String privateFrom) {

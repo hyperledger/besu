@@ -16,6 +16,10 @@ package org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy;
 
 import static java.util.Collections.singletonList;
 
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.web3j.protocol.Web3jService;
 import org.web3j.protocol.besu.Besu;
 import org.web3j.protocol.core.Request;
@@ -34,6 +38,15 @@ public class PrivacyRequestFactory {
     return besuClient;
   }
 
+  public Request<?, PrivxCreatePrivacyGroupResponse> privxCreatePrivacyGroup(
+      final List<String> addresses, final String name, final String description) {
+    return new Request<>(
+        "privx_createPrivacyGroup",
+        singletonList(new PrivxCreatePrivacyGroupRequest(addresses, name, description)),
+        web3jService,
+        PrivxCreatePrivacyGroupResponse.class);
+  }
+
   public Request<?, PrivDistributeTransactionResponse> privDistributeTransaction(
       final String signedPrivateTransaction) {
     return new Request<>(
@@ -49,6 +62,62 @@ public class PrivacyRequestFactory {
 
     public String getTransactionKey() {
       return getResult();
+    }
+  }
+
+  private class PrivxCreatePrivacyGroupRequest {
+    private final List<String> addresses;
+    private final String name;
+    private final String description;
+
+    public PrivxCreatePrivacyGroupRequest(
+        @JsonProperty("addresses") final List<String> addresses,
+        @JsonProperty("name") final String name,
+        @JsonProperty("description") final String description) {
+      this.addresses = addresses;
+      this.name = name;
+      this.description = description;
+    }
+
+    public List<String> getAddresses() {
+      return addresses;
+    }
+
+    public String getName() {
+      return name;
+    }
+
+    public String getDescription() {
+      return description;
+    }
+  }
+
+  public static class PrivxCreatePrivacyGroupResponse extends Response<PrivxCreatePrivacyGroup> {
+    public PrivxCreatePrivacyGroupResponse() {}
+
+    public PrivxCreatePrivacyGroup getPrivxCreatePrivacyGroup() {
+      return getResult();
+    }
+  }
+
+  public static class PrivxCreatePrivacyGroup {
+    final String privacyGroupId;
+    final String transactionHash;
+
+    @JsonCreator
+    public PrivxCreatePrivacyGroup(
+        @JsonProperty("privacyGroupId") final String privacyGroupId,
+        @JsonProperty("transactionHash") final String transactionHash) {
+      this.privacyGroupId = privacyGroupId;
+      this.transactionHash = transactionHash;
+    }
+
+    public String getPrivacyGroupId() {
+      return privacyGroupId;
+    }
+
+    public String getTransactionHash() {
+      return transactionHash;
     }
   }
 }

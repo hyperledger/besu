@@ -149,7 +149,9 @@ public class PrivacyPrecompiledContractTest {
 
     final ReceiveResponse response =
         new ReceiveResponse(
-            VALID_PRIVATE_TRANSACTION_RLP_BASE64, "8lDVI66RZHIrBsolz6Kn88Rd+WsJ4hUjb4hsh29xW/o=", null);
+            VALID_PRIVATE_TRANSACTION_RLP_BASE64,
+            "8lDVI66RZHIrBsolz6Kn88Rd+WsJ4hUjb4hsh29xW/o=",
+            null);
     when(enclave.receive(any(String.class))).thenReturn(response);
 
     final Bytes actual = contract.compute(key, messageFrame);

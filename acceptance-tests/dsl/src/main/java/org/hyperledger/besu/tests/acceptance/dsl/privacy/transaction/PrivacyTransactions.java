@@ -31,6 +31,11 @@ public class PrivacyTransactions {
     return new CreatePrivacyGroupTransaction(name, description, nodes);
   }
 
+  public CreateOnChainPrivacyGroupTransaction createOnChainPrivacyGroup(
+      final String name, final String description, final PrivacyNode... nodes) {
+    return new CreateOnChainPrivacyGroupTransaction(name, description, nodes);
+  }
+
   public FindPrivacyGroupTransaction findPrivacyGroup(final List<String> nodes) {
     return new FindPrivacyGroupTransaction(nodes);
   }

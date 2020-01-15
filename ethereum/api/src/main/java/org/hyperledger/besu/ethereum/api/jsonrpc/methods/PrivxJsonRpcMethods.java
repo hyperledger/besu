@@ -18,8 +18,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea.EeaSendRawTransaction;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivGetEeaTransactionCount;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.privx.PrivxCreatePrivacyGroup;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -30,14 +29,19 @@ import org.hyperledger.besu.ethereum.privacy.groupcreation.GroupCreationTransact
 
 import java.util.Map;
 
-public class EeaJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
+public class PrivxJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
 
-  public EeaJsonRpcMethods(
+  public PrivxJsonRpcMethods(
       final BlockchainQueries blockchainQueries,
       final ProtocolSchedule<?> protocolSchedule,
       final TransactionPool transactionPool,
       final PrivacyParameters privacyParameters) {
     super(blockchainQueries, protocolSchedule, transactionPool, privacyParameters);
+  }
+
+  @Override
+  protected RpcApi getApiGroup() {
+    return RpcApis.PRIV;
   }
 
   @Override
@@ -47,13 +51,10 @@ public class EeaJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
       final GroupCreationTransactionFactory groupCreationTransactionFactory,
       final PrivateTransactionSimulator privateTransactionSimulator) {
     return mapOf(
-        new EeaSendRawTransaction(
-            getTransactionPool(), privacyController, enclavePublicKeyProvider),
-        new PrivGetEeaTransactionCount(privacyController, enclavePublicKeyProvider));
-  }
-
-  @Override
-  protected RpcApi getApiGroup() {
-    return RpcApis.EEA;
+        new PrivxCreatePrivacyGroup(
+            privacyController,
+            groupCreationTransactionFactory,
+            enclavePublicKeyProvider,
+            getTransactionPool()));
   }
 }

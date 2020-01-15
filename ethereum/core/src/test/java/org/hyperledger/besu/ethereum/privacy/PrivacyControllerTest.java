@@ -129,14 +129,16 @@ public class PrivacyControllerTest {
             privateTransactionValidator,
             new FixedKeySigningPrivateMarkerTransactionFactory(
                 Address.DEFAULT_PRIVACY, (address) -> 0, KEY_PAIR),
-            privateNonceProvider);
+            privateNonceProvider,
+            privateTransactionSimulator);
     brokenPrivacyController =
         new PrivacyController(
             brokenMockEnclave(),
             privateTransactionValidator,
             new FixedKeySigningPrivateMarkerTransactionFactory(
                 Address.DEFAULT_PRIVACY, (address) -> 0, KEY_PAIR),
-            privateNonceProvider);
+            privateNonceProvider,
+            privateTransactionSimulator);
   }
 
   @Test

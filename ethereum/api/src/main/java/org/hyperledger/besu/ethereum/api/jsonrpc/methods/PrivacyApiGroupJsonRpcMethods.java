@@ -31,6 +31,10 @@ import org.hyperledger.besu.ethereum.privacy.ChainHeadPrivateNonceProvider;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateNonceProvider;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
+import org.hyperledger.besu.ethereum.privacy.PrivateTransactionSimulator;
+import org.hyperledger.besu.ethereum.privacy.groupcreation.FixedKeySigningGroupCreationTransactionFactory;
+import org.hyperledger.besu.ethereum.privacy.groupcreation.GroupCreationTransactionFactory;
+import org.hyperledger.besu.ethereum.privacy.groupcreation.RandomKeySigningGroupCreationTransactionFactory;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.FixedKeySigningPrivateMarkerTransactionFactory;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.PrivateMarkerTransactionFactory;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.RandomSigningPrivateMarkerTransactionFactory;
@@ -92,12 +96,24 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
         createPrivateMarkerTransactionFactory(
             privacyParameters, blockchainQueries, transactionPool.getPendingTransactions());
 
+    final GroupCreationTransactionFactory groupCreationTransactionFactory =
+        createGroupCreationTransactionFactory(privacyParameters, nonceProvider);
+
+    final PrivateTransactionSimulator privateTransactionSimulator =
+        new PrivateTransactionSimulator(
+            getBlockchainQueries().getBlockchain(),
+            getBlockchainQueries().getWorldStateArchive(),
+            getProtocolSchedule(),
+            getPrivacyParameters());
+
     final PrivacyController privacyController =
         new PrivacyController(
+            getBlockchainQueries().getBlockchain(),
             privacyParameters,
             protocolSchedule.getChainId(),
             markerTransactionFactory,
-            nonceProvider);
+            nonceProvider,
+            privateTransactionSimulator);
 
     final EnclavePublicKeyProvider enclavePublicProvider =
         privacyParameters.isMultiTenancyEnabled()
@@ -109,7 +125,12 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
                                 "Request does not contain an authorization token"))
             : user -> privacyParameters.getEnclavePublicKey();
 
-    return create(privacyController, enclavePublicProvider).entrySet().stream()
+    return create(
+            privacyController,
+            enclavePublicProvider,
+            groupCreationTransactionFactory,
+            privateTransactionSimulator)
+        .entrySet().stream()
         .collect(
             Collectors.toMap(
                 Entry::getKey, entry -> createPrivacyMethod(privacyParameters, entry.getValue())));
@@ -117,15 +138,16 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
 
   protected abstract Map<String, JsonRpcMethod> create(
       final PrivacyController privacyController,
-      final EnclavePublicKeyProvider enclavePublicKeyProvider);
+      final EnclavePublicKeyProvider enclavePublicKeyProvider,
+      final GroupCreationTransactionFactory groupCreationTransactionFactory,
+      final PrivateTransactionSimulator privateTransactionSimulator);
 
   private PrivateMarkerTransactionFactory createPrivateMarkerTransactionFactory(
       final PrivacyParameters privacyParameters,
       final BlockchainQueries blockchainQueries,
       final PendingTransactions pendingTransactions) {
 
-    final Address privateContractAddress =
-        Address.privacyPrecompiled(privacyParameters.getPrivacyAddress());
+    final Address privateContractAddress = Address.ONCHAIN_PRIVACY;
 
     if (privacyParameters.getSigningKeyPair().isPresent()) {
       return new FixedKeySigningPrivateMarkerTransactionFactory(
@@ -134,6 +156,16 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
           privacyParameters.getSigningKeyPair().get());
     }
     return new RandomSigningPrivateMarkerTransactionFactory(privateContractAddress);
+  }
+
+  private GroupCreationTransactionFactory createGroupCreationTransactionFactory(
+      final PrivacyParameters privacyParameters, final PrivateNonceProvider nonceProvider) {
+
+    if (privacyParameters.getSigningKeyPair().isPresent()) {
+      return new FixedKeySigningGroupCreationTransactionFactory(
+          nonceProvider, privacyParameters.getSigningKeyPair().get());
+    }
+    return new RandomKeySigningGroupCreationTransactionFactory();
   }
 
   private JsonRpcMethod createPrivacyMethod(
