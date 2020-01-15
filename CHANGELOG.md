@@ -4,6 +4,7 @@
 
 ### Additions and Improvements 
 
+- Besu has moved from an internal Bytes library to the Apache Tuweni Bytes library.  This includes using the library in the Plugins API interfaces. [#295](https://github.com/hyperledger/besu/pull/295) and [#215](https://github.com/hyperledger/besu/pull/215)
 - Besu stops processing blocks if Orion is unavailable [\#253](https://github.com/hyperledger/besu/pull/253)
 
 ## 1.3.8 
