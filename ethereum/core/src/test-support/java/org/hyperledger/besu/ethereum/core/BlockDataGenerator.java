@@ -43,6 +43,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import com.google.common.base.Supplier;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -58,6 +59,7 @@ public class BlockDataGenerator {
 
   private final Random random;
   private final KeyPairGenerator keyPairGenerator;
+  private Supplier<BlockOptions> blockOptionsSupplier = BlockOptions::create;
 
   public BlockDataGenerator(final int seed) {
     this.random = new Random(seed);
@@ -66,6 +68,10 @@ public class BlockDataGenerator {
 
   public BlockDataGenerator() {
     this(1);
+  }
+
+  public void setBlockOptionsSupplier(final Supplier<BlockOptions> blockOptionsSupplier) {
+    this.blockOptionsSupplier = blockOptionsSupplier;
   }
 
   private KeyPairGenerator createKeyPairGenerator(final long seed) {
@@ -122,7 +128,7 @@ public class BlockDataGenerator {
         stateUpdater.commit();
       }
       final BlockOptions options =
-          new BlockOptions()
+          blockOptionsSupplier.get()
               .setBlockNumber(nextBlockNumber)
               .setParentHash(parentHash)
               .setStateRoot(worldState.rootHash());
@@ -206,7 +212,7 @@ public class BlockDataGenerator {
   }
 
   public Block genesisBlock() {
-    return genesisBlock(new BlockOptions());
+    return genesisBlock(blockOptionsSupplier.get());
   }
 
   public Block genesisBlock(final BlockOptions options) {
@@ -230,7 +236,7 @@ public class BlockDataGenerator {
   }
 
   public BlockOptions nextBlockOptions(final Block afterBlock) {
-    return new BlockOptions()
+    return blockOptionsSupplier.get()
         .setBlockNumber(afterBlock.getHeader().getNumber() + 1)
         .setParentHash(afterBlock.getHash());
   }
@@ -241,11 +247,11 @@ public class BlockDataGenerator {
   }
 
   public BlockHeader header(final long blockNumber) {
-    return header(blockNumber, new BlockOptions());
+    return header(blockNumber, blockOptionsSupplier.get());
   }
 
   public BlockHeader header() {
-    return header(positiveLong(), new BlockOptions());
+    return header(positiveLong(), blockOptionsSupplier.get());
   }
 
   public BlockHeader header(final long number, final BlockOptions options) {
@@ -273,7 +279,7 @@ public class BlockDataGenerator {
   }
 
   public BlockBody body() {
-    return body(new BlockOptions());
+    return body(blockOptionsSupplier.get());
   }
 
   public BlockBody body(final BlockOptions options) {
