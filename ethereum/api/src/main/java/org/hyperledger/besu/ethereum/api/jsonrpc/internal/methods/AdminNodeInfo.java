@@ -118,7 +118,7 @@ public class AdminNodeInfo implements JsonRpcMethod {
                 "config",
                 genesisConfigOptions.asMap(),
                 "difficulty",
-                chainHead.getTotalDifficulty().toLong(),
+                chainHead.getTotalDifficulty().toBigInteger(),
                 "genesis",
                 blockchainQueries.getBlockHashByNumber(0).get().toString(),
                 "head",
