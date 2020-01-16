@@ -128,7 +128,8 @@ public class BlockDataGenerator {
         stateUpdater.commit();
       }
       final BlockOptions options =
-          blockOptionsSupplier.get()
+          blockOptionsSupplier
+              .get()
               .setBlockNumber(nextBlockNumber)
               .setParentHash(parentHash)
               .setStateRoot(worldState.rootHash());
@@ -236,7 +237,8 @@ public class BlockDataGenerator {
   }
 
   public BlockOptions nextBlockOptions(final Block afterBlock) {
-    return blockOptionsSupplier.get()
+    return blockOptionsSupplier
+        .get()
         .setBlockNumber(afterBlock.getHeader().getNumber() + 1)
         .setParentHash(afterBlock.getHash());
   }

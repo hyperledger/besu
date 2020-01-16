@@ -43,7 +43,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
-import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Test;
 
 public class DefaultBlockchainTest {
@@ -145,7 +144,8 @@ public class DefaultBlockchainTest {
   @Test
   public void initializeReadOnly_withGiantDifficultyAndLiveMetrics() {
     final BlockDataGenerator gen = new BlockDataGenerator();
-    gen.setBlockOptionsSupplier(() -> BlockOptions.create().setDifficulty(Difficulty.of(Long.MAX_VALUE)));
+    gen.setBlockOptionsSupplier(
+        () -> BlockOptions.create().setDifficulty(Difficulty.of(Long.MAX_VALUE)));
     final KeyValueStorage kvStore = new InMemoryKeyValueStorage();
     final List<Block> blocks = gen.blockSequence(10);
     final List<List<TransactionReceipt>> blockReceipts = new ArrayList<>(blocks.size());
@@ -162,7 +162,9 @@ public class DefaultBlockchainTest {
 
     // Create read only chain
     final Blockchain blockchain =
-        DefaultBlockchain.create(createStorage(kvStore), PrometheusMetricsSystem.init(MetricsConfiguration.builder().enabled(true).build()));
+        DefaultBlockchain.create(
+            createStorage(kvStore),
+            PrometheusMetricsSystem.init(MetricsConfiguration.builder().enabled(true).build()));
 
     for (int i = 0; i < blocks.size(); i++) {
       assertBlockDataIsStored(blockchain, blocks.get(i), blockReceipts.get(i));
