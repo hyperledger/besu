@@ -101,57 +101,57 @@ public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
     return blockTracer
         .trace(block, new DebugOperationTracer(traceOptions))
         .map(BlockTrace::getTransactionTraces)
-        .map((traces) -> formatTraces(traces, traceTypeParameter))
+        .map((traces) -> generateTracesFromTransactionTrace(traces, traceTypeParameter))
         .orElse(null);
   }
 
-  private JsonNode formatTraces(
-      final List<TransactionTrace> traces, final TraceTypeParameter traceTypeParameter) {
+  private JsonNode generateTracesFromTransactionTrace(
+      final List<TransactionTrace> transactionTraces, final TraceTypeParameter traceTypeParameter) {
     final Set<TraceTypeParameter.TraceType> traceTypes = traceTypeParameter.getTraceTypes();
     final ObjectMapper mapper = new ObjectMapper();
     final ArrayNode resultArrayNode = mapper.createArrayNode();
-    final ObjectNode resultNode = mapper.createObjectNode();
     final AtomicInteger traceCounter = new AtomicInteger(0);
-    traces.stream()
-        .findFirst()
-        .ifPresent(
-            transactionTrace -> {
-              resultNode.put(
-                  "transactionHash", transactionTrace.getTransaction().getHash().toHexString());
-              resultNode.put("output", transactionTrace.getResult().getOutput().toString());
-            });
+    transactionTraces.forEach(
+        transactionTrace ->
+            handleTransactionTrace(
+                transactionTrace, traceTypes, mapper, resultArrayNode, traceCounter));
+    return resultArrayNode;
+  }
 
+  private void handleTransactionTrace(
+      final TransactionTrace transactionTrace,
+      final Set<TraceTypeParameter.TraceType> traceTypes,
+      final ObjectMapper mapper,
+      final ArrayNode resultArrayNode,
+      final AtomicInteger traceCounter) {
+    final ObjectNode resultNode = mapper.createObjectNode();
+    resultNode.put("transactionHash", transactionTrace.getTransaction().getHash().toHexString());
+    resultNode.put("output", transactionTrace.getResult().getOutput().toString());
+    setEmptyArrayIfNotPresent(resultNode, "trace");
+    setNullNodesIfNotPresent(resultNode, "vmTrace", "stateDiff");
     if (traceTypes.contains(TraceTypeParameter.TraceType.TRACE)) {
-      formatTraces(
+      generateTracesFromTransactionTrace(
           resultNode.putArray("trace")::addPOJO,
-          traces,
+          transactionTrace,
           FlatTraceGenerator::generateFromTransactionTrace,
           traceCounter);
     }
     if (traceTypes.contains(TraceTypeParameter.TraceType.VM_TRACE)) {
-      formatTraces(
+      generateTracesFromTransactionTrace(
           trace -> resultNode.putPOJO("vmTrace", trace),
-          traces,
-          (transactionTrace, ignored) ->
-              new VmTraceGenerator(transactionTrace).generateTraceStream(),
+          transactionTrace,
+          (__, ignored) -> new VmTraceGenerator(transactionTrace).generateTraceStream(),
           traceCounter);
     }
-
-    setEmptyArrayIfNotPresent(resultNode, "trace");
-    setNullNodesIfNotPresent(resultNode, "vmTrace", "stateDiff");
-
     resultArrayNode.add(resultNode);
-    return resultArrayNode;
   }
 
-  private void formatTraces(
+  private void generateTracesFromTransactionTrace(
       final TraceWriter writer,
-      final List<TransactionTrace> traces,
+      final TransactionTrace transactionTrace,
       final TraceFormatter formatter,
       final AtomicInteger traceCounter) {
-    traces.forEach(
-        (transactionTrace) ->
-            formatter.format(transactionTrace, traceCounter).forEachOrdered(writer::write));
+    formatter.format(transactionTrace, traceCounter).forEachOrdered(writer::write);
   }
 
   private void setNullNodesIfNotPresent(final ObjectNode parentNode, final String... keys) {
