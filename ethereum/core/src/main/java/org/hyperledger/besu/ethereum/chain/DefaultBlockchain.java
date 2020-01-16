@@ -82,11 +82,11 @@ public class DefaultBlockchain implements MutableBlockchain {
         "blockchain_height",
         "The current height of the canonical chain",
         this::getChainHeadBlockNumber);
-    metricsSystem.createLongGauge(
+    metricsSystem.createGauge(
         BesuMetricCategory.BLOCKCHAIN,
         "difficulty_total",
         "Total difficulty of the chainhead",
-        () -> this.getChainHead().getTotalDifficulty().toLong());
+        () -> this.getChainHead().getTotalDifficulty().toBigInteger().doubleValue());
 
     metricsSystem.createLongGauge(
         BesuMetricCategory.BLOCKCHAIN,
