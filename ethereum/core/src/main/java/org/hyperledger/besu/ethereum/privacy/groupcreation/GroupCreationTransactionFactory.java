@@ -45,7 +45,7 @@ public abstract class GroupCreationTransactionFactory {
     return PrivateTransaction.builder()
         .nonce(nonce)
         .to(Address.PRIVACY_PROXY)
-        .gasPrice(Wei.of(1000))
+        .gasPrice(Wei.of(0))
         .gasLimit(3000000)
         .value(Wei.ZERO)
         .payload(payload)
