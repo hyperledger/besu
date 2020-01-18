@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc;
 
 import static org.hyperledger.besu.crypto.SecureRandomProvider.createSecureRandom;
 
-import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
+import org.hyperledger.besu.ethereum.api.tls.SelfSignedPfxStore;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -37,29 +37,29 @@ import javax.net.ssl.X509TrustManager;
 import okhttp3.OkHttpClient;
 
 public class TlsHttpClient {
-  private final TlsConfiguration serverTrustConfiguration;
-  private final TlsConfiguration clientCertConfiguration;
+  private final SelfSignedPfxStore serverTrustConfiguration;
+  private final SelfSignedPfxStore clientCertConfiguration;
   private TrustManagerFactory trustManagerFactory;
   private KeyManagerFactory keyManagerFactory;
   private OkHttpClient client;
 
   private TlsHttpClient(
-      final TlsConfiguration serverTrustConfiguration,
-      final TlsConfiguration clientCertConfiguration) {
+      final SelfSignedPfxStore serverTrustConfiguration,
+      final SelfSignedPfxStore clientCertConfiguration) {
     this.serverTrustConfiguration = serverTrustConfiguration;
     this.clientCertConfiguration = clientCertConfiguration;
   }
 
   public static TlsHttpClient fromServerTrustConfiguration(
-      final TlsConfiguration serverTrustConfiguration) {
+      final SelfSignedPfxStore serverTrustConfiguration) {
     final TlsHttpClient tlsHttpClient = new TlsHttpClient(serverTrustConfiguration, null);
     tlsHttpClient.initHttpClient();
     return tlsHttpClient;
   }
 
   public static TlsHttpClient fromServerTrustAndClientCertConfiguration(
-      final TlsConfiguration serverTrustConfiguration,
-      final TlsConfiguration clientCertConfiguration) {
+      final SelfSignedPfxStore serverTrustConfiguration,
+      final SelfSignedPfxStore clientCertConfiguration) {
     final TlsHttpClient tlsHttpClient =
         new TlsHttpClient(serverTrustConfiguration, clientCertConfiguration);
     tlsHttpClient.initHttpClient();
@@ -90,8 +90,7 @@ public class TlsHttpClient {
     try {
       final KeyStore trustStore =
           loadP12KeyStore(
-              serverTrustConfiguration.getKeyStorePath(),
-              serverTrustConfiguration.getKeyStorePassword().toCharArray());
+              serverTrustConfiguration.getTrustStoreFile(), serverTrustConfiguration.getPassword());
       final TrustManagerFactory trustManagerFactory =
           TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
       trustManagerFactory.init(trustStore);
@@ -107,9 +106,9 @@ public class TlsHttpClient {
     }
 
     try {
-      final char[] keyStorePassword = clientCertConfiguration.getKeyStorePassword().toCharArray();
+      final char[] keyStorePassword = clientCertConfiguration.getPassword();
       final KeyStore keyStore =
-          loadP12KeyStore(clientCertConfiguration.getKeyStorePath(), keyStorePassword);
+          loadP12KeyStore(clientCertConfiguration.getKeyStoreFile(), keyStorePassword);
       final KeyManagerFactory keyManagerFactory =
           KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
       keyManagerFactory.init(keyStore, keyStorePassword);

@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc;
 
-import static com.google.common.io.Resources.getResource;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ETH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.NET;
@@ -30,6 +29,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.tls.FileBasedPasswordProvider;
+import org.hyperledger.besu.ethereum.api.tls.SelfSignedPfxStore;
 import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
 import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
@@ -50,7 +50,6 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -76,15 +75,14 @@ public class JsonRpcHttpServiceTlsMisconfigurationTest {
   private static final String CLIENT_VERSION = "TestClientVersion/0.1.0";
   private static final BigInteger CHAIN_ID = BigInteger.valueOf(123);
   private static final Collection<RpcApi> JSON_RPC_APIS = List.of(ETH, NET, WEB3);
-  private static final String KEYSTORE_RESOURCE = "JsonRpcHttpService/rpc_keystore.pfx";
-  private static final String KNOWN_CLIENTS_RESOURCE = "JsonRpcHttpService/rpc_known_clients.txt";
   private static final NatService natService = new NatService(Optional.empty());
-
+  private SelfSignedPfxStore selfSignedPfxStore;
   private Map<String, JsonRpcMethod> rpcMethods;
   private JsonRpcHttpService service;
 
   @Before
-  public void beforeEach() {
+  public void beforeEach() throws Exception {
+    selfSignedPfxStore = SelfSignedPfxStore.create(folder.newFolder().toPath());
     final P2PNetwork peerDiscoveryMock = mock(P2PNetwork.class);
     final BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
     final Synchronizer synchronizer = mock(Synchronizer.class);
@@ -202,29 +200,36 @@ public class JsonRpcHttpServiceTlsMisconfigurationTest {
 
   private TlsConfiguration invalidKeystoreFileTlsConfiguration() throws IOException {
     final File tempFile = folder.newFile();
-    return new TlsConfiguration(tempFile.toPath(), () -> "invalid_password", getKnownClientsFile());
+    return new TlsConfiguration(
+        tempFile.toPath(), () -> "invalid_password", selfSignedPfxStore.getKnownClientsFile());
   }
 
   private TlsConfiguration invalidKeystorePathTlsConfiguration() {
     return new TlsConfiguration(
-        Path.of("/tmp/invalidkeystore.pfx"), () -> "invalid_password", getKnownClientsFile());
+        Path.of("/tmp/invalidkeystore.pfx"),
+        () -> "invalid_password",
+        selfSignedPfxStore.getKnownClientsFile());
   }
 
   private TlsConfiguration invalidPasswordTlsConfiguration() {
-    return new TlsConfiguration(getKeyStorePath(), () -> "invalid_password", getKnownClientsFile());
+    return new TlsConfiguration(
+        selfSignedPfxStore.getKeyStoreFile(),
+        () -> "invalid_password",
+        selfSignedPfxStore.getKnownClientsFile());
   }
 
   private TlsConfiguration invalidPasswordFileTlsConfiguration() {
     return new TlsConfiguration(
-        getKeyStorePath(),
+        selfSignedPfxStore.getKeyStoreFile(),
         new FileBasedPasswordProvider(Path.of("/tmp/invalid_password_file.txt")),
-        getKnownClientsFile());
+        selfSignedPfxStore.getKnownClientsFile());
   }
 
   private TlsConfiguration invalidKnownClientsTlsConfiguration() throws IOException {
     final Path tempKnownClientsFile = folder.newFile().toPath();
     Files.write(tempKnownClientsFile, List.of("cn invalid_sha256"));
-    return new TlsConfiguration(getKeyStorePath(), () -> "changeit", tempKnownClientsFile);
+    return new TlsConfiguration(
+        selfSignedPfxStore.getKeyStoreFile(), () -> "changeit", tempKnownClientsFile);
   }
 
   private JsonRpcHttpService createJsonRpcHttpService(
@@ -248,13 +253,5 @@ public class JsonRpcHttpServiceTlsMisconfigurationTest {
     config.setHostsWhitelist(Collections.singletonList("*"));
     config.setTlsConfiguration(tlsConfigurationSupplier);
     return config;
-  }
-
-  private static Path getKeyStorePath() {
-    return Paths.get(getResource(KEYSTORE_RESOURCE).getPath());
-  }
-
-  private static Path getKnownClientsFile() {
-    return Paths.get(getResource(KNOWN_CLIENTS_RESOURCE).getPath());
   }
 }

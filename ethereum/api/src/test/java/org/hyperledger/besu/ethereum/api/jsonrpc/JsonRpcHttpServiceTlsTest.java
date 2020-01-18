@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc;
 
-import static com.google.common.io.Resources.getResource;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIOException;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ETH;
@@ -31,6 +30,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.tls.FileBasedPasswordProvider;
+import org.hyperledger.besu.ethereum.api.tls.SelfSignedPfxStore;
 import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
 import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
@@ -47,8 +47,6 @@ import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatService;
 
 import java.math.BigInteger;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -83,25 +81,20 @@ public class JsonRpcHttpServiceTlsTest {
   private static final BigInteger CHAIN_ID = BigInteger.valueOf(123);
   private static final Collection<RpcApi> JSON_RPC_APIS = List.of(ETH, NET, WEB3);
   private static final NatService natService = new NatService(Optional.empty());
-  private static final String ROOT_RESOURCE = "JsonRpcHttpService/";
-  private static final Path KEYSTORE_PATH =
-      Paths.get(getResource(ROOT_RESOURCE + "rpc_keystore.pfx").getPath());
-  private static final Path KEYSTORE_PASSWORD_FILE =
-      Paths.get(getResource(ROOT_RESOURCE + "rpc_keystore.password").getPath());
-  private static final Path KNOWN_CLIENTS_FILE =
-      Paths.get(getResource(ROOT_RESOURCE + "rpc_known_clients.txt").getPath());
-  private static final Path CLIENT_CERT_KEYSTORE_PATH =
-      Paths.get(getResource(ROOT_RESOURCE + "rpc_client_keystore.pfx").getPath());
-  private static final Path X_CLIENT_CERT_KEYSTORE_PATH =
-      Paths.get(getResource(ROOT_RESOURCE + "rpc_client_2.pfx").getPath());
-
   private JsonRpcHttpService service;
   private String baseUrl;
   private Map<String, JsonRpcMethod> rpcMethods;
   private final JsonRpcTestHelper testHelper = new JsonRpcTestHelper();
+  private SelfSignedPfxStore selfSignedPfxStore;
+  private SelfSignedPfxStore selfSignedPfxStoreForHttpClient;
+  private SelfSignedPfxStore selfSignedPfxStoreForHttpClientNotTrustedByServer;
 
   @Before
   public void initServer() throws Exception {
+    selfSignedPfxStore = SelfSignedPfxStore.create(folder.newFolder().toPath());
+    selfSignedPfxStoreForHttpClient = SelfSignedPfxStore.create(folder.newFolder().toPath());
+    selfSignedPfxStoreForHttpClientNotTrustedByServer =
+        SelfSignedPfxStore.create(folder.newFolder().toPath());
     final P2PNetwork peerDiscoveryMock = mock(P2PNetwork.class);
     final BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
     final Synchronizer synchronizer = mock(Synchronizer.class);
@@ -164,7 +157,9 @@ public class JsonRpcHttpServiceTlsTest {
 
   private TlsConfiguration getRpcHttpTlsConfiguration() {
     return new TlsConfiguration(
-        KEYSTORE_PATH, new FileBasedPasswordProvider(KEYSTORE_PASSWORD_FILE), KNOWN_CLIENTS_FILE);
+        selfSignedPfxStore.getKeyStoreFile(),
+        new FileBasedPasswordProvider(selfSignedPfxStore.getPasswordFile()),
+        selfSignedPfxStoreForHttpClient.getKnownClientsFile());
   }
 
   @After
@@ -235,36 +230,19 @@ public class JsonRpcHttpServiceTlsTest {
   }
 
   private OkHttpClient getTlsHttpClient() {
-    final TlsConfiguration serverTrustConfiguration =
-        new TlsConfiguration(
-            KEYSTORE_PATH, new FileBasedPasswordProvider(KEYSTORE_PASSWORD_FILE), null);
-    final TlsConfiguration clientCertConfiguration =
-        new TlsConfiguration(
-            CLIENT_CERT_KEYSTORE_PATH, new FileBasedPasswordProvider(KEYSTORE_PASSWORD_FILE), null);
     return TlsHttpClient.fromServerTrustAndClientCertConfiguration(
-            serverTrustConfiguration, clientCertConfiguration)
+            selfSignedPfxStore, selfSignedPfxStoreForHttpClient)
         .getHttpClient();
   }
 
   private OkHttpClient getTlsHttpClientNotTrustedWithServer() {
-    final TlsConfiguration serverTrustConfiguration =
-        new TlsConfiguration(
-            KEYSTORE_PATH, new FileBasedPasswordProvider(KEYSTORE_PASSWORD_FILE), null);
-    final TlsConfiguration clientCertConfiguration =
-        new TlsConfiguration(
-            X_CLIENT_CERT_KEYSTORE_PATH,
-            new FileBasedPasswordProvider(KEYSTORE_PASSWORD_FILE),
-            null);
     return TlsHttpClient.fromServerTrustAndClientCertConfiguration(
-            serverTrustConfiguration, clientCertConfiguration)
+            selfSignedPfxStore, selfSignedPfxStoreForHttpClientNotTrustedByServer)
         .getHttpClient();
   }
 
   private OkHttpClient getTlsHttpClientWithoutClientAuthentication() {
-    final TlsConfiguration serverTrustConfiguration =
-        new TlsConfiguration(
-            KEYSTORE_PATH, new FileBasedPasswordProvider(KEYSTORE_PASSWORD_FILE), null);
-    return TlsHttpClient.fromServerTrustConfiguration(serverTrustConfiguration).getHttpClient();
+    return TlsHttpClient.fromServerTrustConfiguration(selfSignedPfxStore).getHttpClient();
   }
 
   private Request buildPostRequest(final String json) {
