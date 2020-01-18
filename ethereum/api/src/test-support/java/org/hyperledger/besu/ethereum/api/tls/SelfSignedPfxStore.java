@@ -33,7 +33,6 @@ import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.time.Instant;
 import java.time.Period;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -204,14 +203,18 @@ public class SelfSignedPfxStore {
   }
 
   private void createKnownClientsFile() throws IOException, CertificateEncodingException {
-    //common name from distinguishedName
-    final RDN rdn = Stream.of(new X500Name(distinguishedName).getRDNs(BCStyle.CN)).findFirst().orElseThrow(() -> new RuntimeException("No Common Name found from distinguished name"));
+    // common name from distinguishedName
+    final RDN rdn =
+        Stream.of(new X500Name(distinguishedName).getRDNs(BCStyle.CN))
+            .findFirst()
+            .orElseThrow(
+                () -> new RuntimeException("No Common Name found from distinguished name"));
     final String commonName = IETFUtils.valueToString(rdn.getFirst());
     final String fingerPrint = TLS.certificateHexFingerprint(certificate);
 
     final Path tempFile = Files.createTempFile(parentPath, alias + "knownClientsFile", ".txt");
     tempFile.toFile().deleteOnExit();
-    Files.writeString(tempFile,  commonName + " " + fingerPrint);
+    Files.writeString(tempFile, commonName + " " + fingerPrint);
     this.knownClientsFile = tempFile;
   }
 
