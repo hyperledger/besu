@@ -31,6 +31,7 @@ import java.security.SecureRandom;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.time.Period;
 import java.util.Collection;
@@ -64,7 +65,7 @@ import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
  *
  * <p>The generated certificate supports SAN extension for multiple DNS and IP addresses
  */
-public class SelfSignedPfxStore {
+public final class SelfSignedPfxStore {
   private static final char[] DEFAULT_PASSWORD = "changeit".toCharArray();
   private static final String DEFAULT_DN = "CN=localhost";
   private static final String DEFAULT_ALIAS = "test";
@@ -76,7 +77,7 @@ public class SelfSignedPfxStore {
   private final String distinguishedName;
   private final List<String> sanHostNames;
   private final List<String> sanIpAddresses;
-  private Certificate certificate;
+  private X509Certificate certificate;
   private KeyPair keyPair;
   private Path keyStore;
   private Path trustStore;
@@ -203,13 +204,8 @@ public class SelfSignedPfxStore {
   }
 
   private void createKnownClientsFile() throws IOException, CertificateEncodingException {
-    // common name from distinguishedName
-    final RDN rdn =
-        Stream.of(new X500Name(distinguishedName).getRDNs(BCStyle.CN))
-            .findFirst()
-            .orElseThrow(
-                () -> new RuntimeException("No Common Name found from distinguished name"));
-    final String commonName = IETFUtils.valueToString(rdn.getFirst());
+    final RDN commonNameRDN = new X500Name(distinguishedName).getRDNs(BCStyle.CN)[0];
+    final String commonName = IETFUtils.valueToString(commonNameRDN.getFirst().getValue());
     final String fingerPrint = TLS.certificateHexFingerprint(certificate);
 
     final Path tempFile = Files.createTempFile(parentPath, alias + "knownClientsFile", ".txt");
