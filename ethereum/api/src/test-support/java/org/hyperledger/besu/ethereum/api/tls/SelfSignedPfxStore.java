@@ -197,7 +197,7 @@ public final class SelfSignedPfxStore {
       throws IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException {
     final Path pfxPath = Files.createTempFile(parentPath, alias, ".pfx");
     pfxPath.toFile().deleteOnExit();
-    try (FileOutputStream outputStream = new FileOutputStream(pfxPath.toFile())) {
+    try (final FileOutputStream outputStream = new FileOutputStream(pfxPath.toFile())) {
       keyStore.store(outputStream, password);
     }
     return pfxPath;
