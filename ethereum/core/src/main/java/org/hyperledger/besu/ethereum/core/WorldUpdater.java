@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.core;
 
 import java.util.Collection;
+import java.util.Optional;
 
 /**
  * An object that buffers updates made over a particular {@link WorldView}.
@@ -93,6 +94,13 @@ public interface WorldUpdater extends MutableWorldView {
    */
   Collection<Account> getTouchedAccounts();
 
+  /**
+   * Returns the account addresses that have been deleted within the scope of this updater.
+   *
+   * @return the account addresses that have been deleted within the scope of this updater
+   */
+  Collection<Address> getDeletedAccountAddresses();
+
   /** Removes the changes that were made to this updater. */
   void revert();
 
@@ -101,4 +109,10 @@ public interface WorldUpdater extends MutableWorldView {
    * of.
    */
   void commit();
+
+  /** The WorldUpdater if this WorldUpdater wraps a WorldUpdater, empty otherwise */
+  public Optional<WorldUpdater> parentUpdater();
+
+  /** The first ancestor wrapped WorldView that is not a WorldUpdater. */
+  public WorldView rootWorld();
 }

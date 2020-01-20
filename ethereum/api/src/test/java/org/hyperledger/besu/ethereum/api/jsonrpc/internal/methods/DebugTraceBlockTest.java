@@ -80,6 +80,7 @@ public class DebugTraceBlockTest {
 
     final TraceFrame traceFrame =
         new TraceFrame(
+            null,
             12,
             "NONE",
             Gas.of(45),
@@ -95,6 +96,8 @@ public class DebugTraceBlockTest {
             0,
             Optional.empty(),
             Optional.empty(),
+            Optional.empty(),
+            false,
             Optional.empty());
 
     final TransactionProcessor.Result transaction1Result = mock(TransactionProcessor.Result.class);
