@@ -6,7 +6,7 @@
 
 - Enable TLS for JSON-RPC HTTP Service [\#253](https://github.com/hyperledger/besu/pull/253)
 
-Exposes =command line parameters to enable TLS on Ethereum JSON-RPC HTTP interface to allow clients like EthSigner to connect via TLS: 
+Exposes new command line parameters to enable TLS on Ethereum JSON-RPC HTTP interface to allow clients like EthSigner to connect via TLS: 
 `--rpc-http-tls-enabled=true`
 (Optional - Only required if `--rpc-http-enabled` is set to true) Set to `true` to enable TLS. False by default.
 `--rpc-http-tls-keystore-file="/path/to/cert.pfx"`
