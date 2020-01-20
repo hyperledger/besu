@@ -11,23 +11,34 @@
 
 Besu is an Apache 2.0 licensed, MainNet compatible, Ethereum client written in Java.
 
+## Useful Links
+
+* [Besu Docs](http://besu.hyperledger.org/)
+* [Besu Jira](https://jira.hyperledger.org/projects/BESU/issues)
+* [Besu Wiki](https://wiki.hyperledger.org/display/BESU/Hyperledger+Besu)
+
+
 ## Issues 
 
-Besu issues are tracked in [Jira](https://pegasys1.atlassian.net/secure/Dashboard.jspa?selectPageId=10117) not GitHub. 
-See our [contribution guidelines](CONTRIBUTING.md) for more detail on searching and creating issues. 
+Besu issues are tracked in [Jira](https://jira.hyperledger.org/projects/BESU/issues) not GitHub. 
+See our [contribution guidelines](CONTRIBUTING.md) for more details on searching and creating issues.
 
-If you've commented on an existing issue and have been waiting for a reply, feel free to ping us on [RocketChat].  
+If you've commented on an existing issue and have been waiting for a reply, or want to message us for any other reason, feel free to ping us on [RocketChat](https://chat.hyperledger.org/).
+
 
 ## Besu Users
 
-The process for installing and running Besu as a user is different to when developing. Some processes in our [user documentation](https://besu.hyperledger.org/en/latest/) are different to those described in this Readme.
+Users wanting to install Besu should install the Besu binary by following [these instructions](https://besu.hyperledger.org/en/stable/HowTo/Get-Started/Install-Binaries/).    
+Keep in mind that the process for installing and running Besu as a user is different to when developing. Some processes in our user documentation are different to those described in this Readme.
+
 
 ## Besu Developers
 
 * [Contribution Guidelines](CONTRIBUTING.md)
-* [Coding Conventions](CODING-CONVENTIONS.md)
-* [Command Line Interface (CLI) Style Guide](CLI-STYLE-GUIDE.md)
+* [Coding Conventions](https://wiki.hyperledger.org/display/BESU/Coding+Conventions)
+* [Command Line Interface (CLI) Style Guide](https://wiki.hyperledger.org/display/BESU/Besu+CLI+Style+Guide)
 * [User Documentation] for running and using Besu
+
 
 ### Development
 
