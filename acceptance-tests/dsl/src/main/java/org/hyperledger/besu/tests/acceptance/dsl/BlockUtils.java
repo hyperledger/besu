@@ -19,11 +19,11 @@ import static org.hyperledger.besu.ethereum.core.Hash.fromHexString;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.web3j.protocol.core.methods.response.EthBlock.Block;
 
 public class BlockUtils {
@@ -42,12 +42,12 @@ public class BlockUtils {
         fromHexString(block.getTransactionsRoot()),
         fromHexString(block.getReceiptsRoot()),
         LogsBloomFilter.fromHexString(block.getLogsBloom()),
-        UInt256.fromHexString(block.getDifficultyRaw()),
+        Difficulty.fromHexString(block.getDifficultyRaw()),
         block.getNumber().longValue(),
         block.getGasLimit().longValue(),
         block.getGasUsed().longValue(),
         block.getTimestamp().longValue(),
-        BytesValue.fromHexString(block.getExtraData()),
+        Bytes.fromHexString(block.getExtraData()),
         mixHash,
         block.getNonce().longValue(),
         blockHeaderFunctions);

@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.api.query.LogsQuery;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogTopic;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
@@ -30,9 +31,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,6 +40,9 @@ import java.util.stream.Collectors;
 
 import com.google.common.primitives.Longs;
 import graphql.schema.DataFetchingEnvironment;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 @SuppressWarnings("unused") // reflected by GraphQL
 public class BlockAdapterBase extends AdapterBase {
@@ -64,10 +65,10 @@ public class BlockAdapterBase extends AdapterBase {
     return Optional.of(header.getHash());
   }
 
-  public Optional<BytesValue> getNonce() {
+  public Optional<Bytes> getNonce() {
     final long nonce = header.getNonce();
     final byte[] bytes = Longs.toByteArray(nonce);
-    return Optional.of(BytesValue.wrap(bytes));
+    return Optional.of(Bytes.wrap(bytes));
   }
 
   public Optional<Bytes32> getTransactionsRoot() {
@@ -94,7 +95,7 @@ public class BlockAdapterBase extends AdapterBase {
         new AccountAdapter(query.getWorldState(blockNumber).get().get(header.getCoinbase())));
   }
 
-  public Optional<BytesValue> getExtraData() {
+  public Optional<Bytes> getExtraData() {
     return Optional.of(header.getExtraData());
   }
 
@@ -107,18 +108,18 @@ public class BlockAdapterBase extends AdapterBase {
   }
 
   public Optional<UInt256> getTimestamp() {
-    return Optional.of(UInt256.of(header.getTimestamp()));
+    return Optional.of(UInt256.valueOf(header.getTimestamp()));
   }
 
-  public Optional<BytesValue> getLogsBloom() {
-    return Optional.of(header.getLogsBloom().getBytes());
+  public Optional<Bytes> getLogsBloom() {
+    return Optional.of(header.getLogsBloom());
   }
 
   public Optional<Bytes32> getMixHash() {
     return Optional.of(header.getMixHash());
   }
 
-  public Optional<UInt256> getDifficulty() {
+  public Optional<Difficulty> getDifficulty() {
     return Optional.of(header.getDifficulty());
   }
 
@@ -157,7 +158,6 @@ public class BlockAdapterBase extends AdapterBase {
     for (final List<Bytes32> topic : topics) {
       transformedTopics.add(topic.stream().map(LogTopic::of).collect(Collectors.toList()));
     }
-
     final LogsQuery query =
         new LogsQuery.Builder().addresses(addrs).topics(transformedTopics).build();
 
@@ -188,7 +188,7 @@ public class BlockAdapterBase extends AdapterBase {
     final Long gas = (Long) callData.get("gas");
     final UInt256 gasPrice = (UInt256) callData.get("gasPrice");
     final UInt256 value = (UInt256) callData.get("value");
-    final BytesValue data = (BytesValue) callData.get("data");
+    final Bytes data = (Bytes) callData.get("data");
 
     final BlockchainQueries query = getBlockchainQueries(environment);
     final ProtocolSchedule<?> protocolSchedule =

@@ -14,14 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import org.hyperledger.besu.util.bytes.BytesValue;
-
 import java.util.HashMap;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.tuweni.bytes.Bytes;
 
 /** A Transaction test case specification. */
 @JsonIgnoreProperties({"_info"})
@@ -62,7 +61,7 @@ public class TransactionTestCaseSpec {
 
   private final HashMap<String, Expectation> expectations;
 
-  private final BytesValue rlp;
+  private final Bytes rlp;
 
   @SuppressWarnings("unchecked")
   @JsonCreator
@@ -77,9 +76,9 @@ public class TransactionTestCaseSpec {
           new Expectation((String) expectation.get("hash"), (String) expectation.get("sender")));
     }
 
-    BytesValue parsedRlp = null;
+    Bytes parsedRlp = null;
     try {
-      parsedRlp = BytesValue.fromHexString(props.get("rlp").toString());
+      parsedRlp = Bytes.fromHexString(props.get("rlp").toString());
     } catch (final IllegalArgumentException e) {
       // Some test cases include rlp "hex strings" with invalid characters
       // In this case, just set rlp to null
@@ -87,7 +86,7 @@ public class TransactionTestCaseSpec {
     this.rlp = parsedRlp;
   }
 
-  public BytesValue getRlp() {
+  public Bytes getRlp() {
     return rlp;
   }
 

@@ -14,11 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.uint.UInt256;
-
 import java.util.Objects;
 import java.util.Optional;
+
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class AccountStorageEntry {
 
@@ -44,7 +44,7 @@ public class AccountStorageEntry {
   }
 
   public static AccountStorageEntry forKeyAndValue(final UInt256 key, final UInt256 value) {
-    return create(value, Hash.hash(key.getBytes()), key);
+    return create(value, Hash.hash(key.toBytes()), key);
   }
 
   /**

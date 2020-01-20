@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.p2p.discovery;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.hyperledger.besu.util.bytes.BytesValue.wrapBuffer;
+import static org.apache.tuweni.bytes.Bytes.wrapBuffer;
 
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
@@ -29,11 +29,10 @@ import org.hyperledger.besu.ethereum.p2p.discovery.internal.TimerUtil;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
-import org.hyperledger.besu.nat.upnp.UpnpNatManager;
+import org.hyperledger.besu.nat.NatService;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.util.NetworkUtility;
 import org.hyperledger.besu.util.Subscribers;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.net.InetSocketAddress;
 import java.net.SocketException;
@@ -42,7 +41,6 @@ import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -50,6 +48,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.net.InetAddresses;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 /**
  * The peer discovery agent is the network component that sends and receives peer discovery messages
@@ -65,14 +64,14 @@ public abstract class PeerDiscoveryAgent {
   protected final List<DiscoveryPeer> bootstrapPeers;
   private final List<PeerRequirement> peerRequirements = new CopyOnWriteArrayList<>();
   private final PeerPermissions peerPermissions;
-  private final Optional<UpnpNatManager> natManager;
+  private final NatService natService;
   private final MetricsSystem metricsSystem;
   /* The peer controller, which takes care of the state machine of peers. */
   protected Optional<PeerDiscoveryController> controller = Optional.empty();
 
   /* The keypair used to sign messages. */
   protected final SECP256K1.KeyPair keyPair;
-  private final BytesValue id;
+  private final Bytes id;
   protected final DiscoveryConfiguration config;
 
   /* This is the {@link org.hyperledger.besu.ethereum.p2p.Peer} object representing our local node.
@@ -88,7 +87,7 @@ public abstract class PeerDiscoveryAgent {
       final SECP256K1.KeyPair keyPair,
       final DiscoveryConfiguration config,
       final PeerPermissions peerPermissions,
-      final Optional<UpnpNatManager> natManager,
+      final NatService natService,
       final MetricsSystem metricsSystem) {
     this.metricsSystem = metricsSystem;
     checkArgument(keyPair != null, "keypair cannot be null");
@@ -97,7 +96,7 @@ public abstract class PeerDiscoveryAgent {
     validateConfiguration(config);
 
     this.peerPermissions = peerPermissions;
-    this.natManager = natManager;
+    this.natService = natService;
     this.bootstrapPeers =
         config.getBootnodes().stream().map(DiscoveryPeer::fromEnode).collect(Collectors.toList());
 
@@ -125,24 +124,8 @@ public abstract class PeerDiscoveryAgent {
       LOG.info("Starting peer discovery agent on host={}, port={}", host, port);
 
       // override advertised host if we detect an external IP address via NAT manager
-      String externalIpAddress = null;
-      if (natManager.isPresent()) {
-        try {
-          final int timeoutSeconds = 60;
-          LOG.info("Waiting for up to {} seconds to detect external IP address...", timeoutSeconds);
-          externalIpAddress =
-              natManager.get().queryExternalIPAddress().get(timeoutSeconds, TimeUnit.SECONDS);
-
-        } catch (Exception e) {
-          LOG.warn(
-              "Caught exception while trying to query NAT external IP address (ignoring): {}", e);
-        }
-      }
-
       final String advertisedAddress =
-          (null != externalIpAddress && !externalIpAddress.equals(""))
-              ? externalIpAddress
-              : config.getAdvertisedHost();
+          natService.queryExternalIPAddress().orElse(config.getAdvertisedHost());
 
       return listenForConnections()
           .thenApply(
@@ -261,7 +244,7 @@ public abstract class PeerDiscoveryAgent {
     return localNode;
   }
 
-  public BytesValue getId() {
+  public Bytes getId() {
     return id;
   }
 

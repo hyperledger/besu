@@ -40,8 +40,8 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.DefaultSyncStatus;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -55,10 +55,8 @@ import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioni
 import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningController;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
+import org.hyperledger.besu.nat.NatService;
 import org.hyperledger.besu.plugin.data.SyncStatus;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.BytesValues;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.math.BigInteger;
 import java.net.InetSocketAddress;
@@ -83,6 +81,8 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -109,6 +109,7 @@ public class JsonRpcHttpServiceTest {
   protected static final Collection<RpcApi> JSON_RPC_APIS =
       Arrays.asList(RpcApis.ETH, RpcApis.NET, RpcApis.WEB3, RpcApis.ADMIN);
   protected final JsonRpcTestHelper testHelper = new JsonRpcTestHelper();
+  protected static final NatService natService = new NatService(Optional.empty());
 
   @BeforeClass
   public static void initServerAndClient() throws Exception {
@@ -143,7 +144,9 @@ public class JsonRpcHttpServiceTest {
                     mock(PrivacyParameters.class),
                     mock(JsonRpcConfiguration.class),
                     mock(WebSocketConfiguration.class),
-                    mock(MetricsConfiguration.class)));
+                    mock(MetricsConfiguration.class),
+                    natService,
+                    new HashMap<>()));
     service = createJsonRpcHttpService();
     service.start().join();
 
@@ -159,7 +162,7 @@ public class JsonRpcHttpServiceTest {
         folder.newFolder().toPath(),
         config,
         new NoOpMetricsSystem(),
-        Optional.empty(),
+        natService,
         rpcMethods,
         HealthService.ALWAYS_HEALTHY,
         HealthService.ALWAYS_HEALTHY);
@@ -171,7 +174,7 @@ public class JsonRpcHttpServiceTest {
         folder.newFolder().toPath(),
         createJsonRpcConfig(),
         new NoOpMetricsSystem(),
-        Optional.empty(),
+        natService,
         rpcMethods,
         HealthService.ALWAYS_HEALTHY,
         HealthService.ALWAYS_HEALTHY);
@@ -377,7 +380,7 @@ public class JsonRpcHttpServiceTest {
   @Test
   public void ethGetUncleCountByBlockHash() throws Exception {
     final int uncleCount = 2;
-    final Hash blockHash = Hash.hash(BytesValue.of(1));
+    final Hash blockHash = Hash.hash(Bytes.of(1));
     when(blockchainQueries.getOmmerCount(eq(blockHash))).thenReturn(Optional.of(uncleCount));
 
     final String id = "123";
@@ -405,7 +408,7 @@ public class JsonRpcHttpServiceTest {
 
   @Test
   public void ethGetUncleCountByBlockHashNoData() throws Exception {
-    final Hash blockHash = Hash.hash(BytesValue.of(1));
+    final Hash blockHash = Hash.hash(Bytes.of(1));
     when(blockchainQueries.getOmmerCount(eq(blockHash))).thenReturn(Optional.empty());
 
     final String id = "123";
@@ -670,7 +673,7 @@ public class JsonRpcHttpServiceTest {
       testHelper.assertValidJsonRpcResult(json, id);
       // Check result
       final String result = json.getString("result");
-      assertThat("0x0").isEqualTo(result);
+      assertThat(result).isEqualTo("0x0");
     }
   }
 
@@ -1724,7 +1727,7 @@ public class JsonRpcHttpServiceTest {
 
   private void verifyBlockResult(
       final Block block,
-      final UInt256 td,
+      final Difficulty td,
       final JsonObject result,
       final boolean shouldTransactionsBeHashed) {
     assertBlockResultMatchesBlock(result, block);
@@ -1732,7 +1735,7 @@ public class JsonRpcHttpServiceTest {
     if (td == null) {
       assertThat(result.getJsonObject("totalDifficulty")).isNull();
     } else {
-      assertThat(UInt256.fromHexString(result.getString("totalDifficulty"))).isEqualTo(td);
+      assertThat(Difficulty.fromHexString(result.getString("totalDifficulty"))).isEqualTo(td);
     }
 
     // Check ommers
@@ -1782,7 +1785,7 @@ public class JsonRpcHttpServiceTest {
       assertThat(result.getValue("blockNumber")).isNull();
     }
     if (index != null) {
-      assertThat(UInt256.fromHexString(result.getString("transactionIndex")).toInt())
+      assertThat(UInt256.fromHexString(result.getString("transactionIndex")).intValue())
           .isEqualTo(index);
     } else {
       assertThat(result.getValue("transactionIndex")).isNull();
@@ -1798,8 +1801,7 @@ public class JsonRpcHttpServiceTest {
     assertThat(Wei.fromHexString(result.getString("gasPrice")))
         .isEqualTo(transaction.getGasPrice());
     assertThat(Long.decode(result.getString("gas"))).isEqualTo(transaction.getGasLimit());
-    assertThat(BytesValue.fromHexString(result.getString("input")))
-        .isEqualTo(transaction.getPayload());
+    assertThat(Bytes.fromHexString(result.getString("input"))).isEqualTo(transaction.getPayload());
   }
 
   private void assertBlockResultMatchesBlock(final JsonObject result, final Block block) {
@@ -1814,9 +1816,9 @@ public class JsonRpcHttpServiceTest {
     assertThat(Hash.fromHexString(result.getString("receiptsRoot")))
         .isEqualTo(header.getReceiptsRoot());
     assertThat(Address.fromHexString(result.getString("miner"))).isEqualTo(header.getCoinbase());
-    assertThat(UInt256.fromHexString(result.getString("difficulty")))
+    assertThat(Difficulty.fromHexString(result.getString("difficulty")))
         .isEqualTo(header.getDifficulty());
-    assertThat(BytesValue.fromHexString(result.getString("extraData")))
+    assertThat(Bytes.fromHexStringLenient(result.getString("extraData")))
         .isEqualTo(header.getExtraData());
     assertThat(hexStringToInt(result.getString("size"))).isEqualTo(block.calculateSize());
     assertThat(Long.decode(result.getString("gasLimit"))).isEqualTo(header.getGasLimit());
@@ -1828,12 +1830,11 @@ public class JsonRpcHttpServiceTest {
     assertThat(nonceResult.length() == 18 && nonceResult.startsWith("0x")).isTrue();
     assertThat(Long.parseUnsignedLong(nonceResult.substring(2), 16)).isEqualTo(header.getNonce());
     assertThat(Hash.fromHexString(result.getString("hash"))).isEqualTo(header.getHash());
-    assertThat(LogsBloomFilter.fromHexString(result.getString("logsBloom")))
-        .isEqualTo(header.getLogsBloom());
+    assertThat(Bytes.fromHexString(result.getString("logsBloom"))).isEqualTo(header.getLogsBloom());
   }
 
   private int hexStringToInt(final String hexString) {
-    return BytesValues.extractInt(BytesValue.fromHexStringLenient(hexString));
+    return Bytes.fromHexStringLenient(hexString).toInt();
   }
 
   @Test
@@ -1879,7 +1880,7 @@ public class JsonRpcHttpServiceTest {
   }
 
   public BlockWithMetadata<TransactionWithMetadata, Hash> blockWithMetadata(final Block block) {
-    final UInt256 td = block.getHeader().getDifficulty().plus(10L);
+    final Difficulty td = block.getHeader().getDifficulty().add(10L);
     final int size = block.calculateSize();
 
     final List<Transaction> txs = block.getBody().getTransactions();
@@ -1895,7 +1896,7 @@ public class JsonRpcHttpServiceTest {
   }
 
   public BlockWithMetadata<Hash, Hash> blockWithMetadataAndTxHashes(final Block block) {
-    final UInt256 td = block.getHeader().getDifficulty().plus(10L);
+    final Difficulty td = block.getHeader().getDifficulty().add(10L);
     final int size = block.calculateSize();
 
     final List<Hash> txs =

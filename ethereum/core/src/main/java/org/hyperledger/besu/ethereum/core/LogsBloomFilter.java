@@ -19,11 +19,12 @@ import static org.hyperledger.besu.crypto.Hash.keccak256;
 
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.plugin.data.UnformattedData;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.MutableBytesValue;
 
 import java.util.Collection;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.DelegatingBytes;
+import org.apache.tuweni.bytes.MutableBytes;
 
 /*
  * Bloom filter implementation for storing persistent logs, describes a 2048-bit representation of
@@ -34,52 +35,36 @@ import java.util.Collection;
  * corresponding double-bytes are: bd2b, 01af, cd27, corresponding to the following bits in the
  * bloom filter: 1323, 431, 1319
  */
-public class LogsBloomFilter implements UnformattedData {
+public class LogsBloomFilter extends DelegatingBytes {
 
   public static final int BYTE_SIZE = 256;
   private static final int LEAST_SIGNIFICANT_BYTE = 0xFF;
   private static final int LEAST_SIGNIFICANT_THREE_BITS = 0x7;
   private static final int BITS_IN_BYTE = 8;
 
-  private final MutableBytesValue data;
-
   public LogsBloomFilter() {
-    this.data = MutableBytesValue.create(BYTE_SIZE);
+    super(Bytes.wrap(new byte[BYTE_SIZE]));
   }
 
-  public LogsBloomFilter(final BytesValue data) {
+  public LogsBloomFilter(final MutableBytes data) {
+    this(data.copy());
+  }
+
+  public LogsBloomFilter(final Bytes data) {
+    super(data);
     checkArgument(
         data.size() == BYTE_SIZE,
         "Invalid size for bloom filter backing array: expected %s but got %s",
         BYTE_SIZE,
         data.size());
-    this.data = data.mutableCopy();
   }
 
   public static LogsBloomFilter fromHexString(final String hexString) {
-    return new LogsBloomFilter(BytesValue.fromHexString(hexString));
+    return new LogsBloomFilter(Bytes.fromHexString(hexString));
   }
 
   public static LogsBloomFilter empty() {
-    return new LogsBloomFilter(BytesValue.wrap(new byte[LogsBloomFilter.BYTE_SIZE]));
-  }
-
-  /**
-   * Creates a bloom filter corresponding to the provide log series.
-   *
-   * @param logs the logs to populate the bloom filter with.
-   * @return the newly created bloom filter populated with the logs from {@code logs}.
-   */
-  public static LogsBloomFilter compute(final Collection<Log> logs) {
-    final LogsBloomFilter bloom = new LogsBloomFilter();
-    logs.forEach(bloom::insertLog);
-    return bloom;
-  }
-
-  public static LogsBloomFilter computeBytes(final BytesValue bytesValue) {
-    final LogsBloomFilter bloom = new LogsBloomFilter();
-    bloom.insertBytesValue(bytesValue);
-    return bloom;
+    return new LogsBloomFilter(Bytes.wrap(new byte[LogsBloomFilter.BYTE_SIZE]));
   }
 
   /**
@@ -89,7 +74,7 @@ public class LogsBloomFilter implements UnformattedData {
    * @return the input's corresponding bloom filter
    */
   public static LogsBloomFilter readFrom(final RLPInput input) {
-    final BytesValue bytes = input.readBytesValue();
+    final Bytes bytes = input.readBytes();
     if (bytes.size() != BYTE_SIZE) {
       throw new RLPException(
           String.format(
@@ -98,99 +83,82 @@ public class LogsBloomFilter implements UnformattedData {
     return new LogsBloomFilter(bytes);
   }
 
-  /**
-   * Discover the low order 11-bits, of the first three double-bytes, of the SHA3 hash, of each
-   * value and update the bloom filter accordingly.
-   *
-   * @param hashValue The hash of the log item.
-   */
-  private void setBits(final BytesValue hashValue) {
-    for (int counter = 0; counter < 6; counter += 2) {
-      final int setBloomBit =
-          ((hashValue.get(counter) & LEAST_SIGNIFICANT_THREE_BITS) << BITS_IN_BYTE)
-              + (hashValue.get(counter + 1) & LEAST_SIGNIFICANT_BYTE);
-      setBit(setBloomBit);
-    }
-  }
-
-  @Override
-  public final boolean equals(final Object obj) {
-    if (obj == this) {
-      return true;
-    }
-    if (!(obj instanceof LogsBloomFilter)) {
-      return false;
-    }
-    final LogsBloomFilter other = (LogsBloomFilter) obj;
-    return data.equals(other.data);
-  }
-
-  @Override
-  public int hashCode() {
-    return data.hashCode();
-  }
-
-  public BytesValue getBytes() {
-    return data;
-  }
-
-  public void insertLog(final Log log) {
-    insertBytesValue(log.getLogger());
-
-    for (final LogTopic topic : log.getTopics()) {
-      insertBytesValue(topic);
-    }
-  }
-
-  private void insertBytesValue(final BytesValue bytesValue) {
-    setBits(keccak256(bytesValue));
-  }
-
-  private void setBit(final int index) {
-    final int byteIndex = BYTE_SIZE - 1 - index / 8;
-    final int bitIndex = index % 8;
-    data.set(byteIndex, (byte) (data.get(byteIndex) | (1 << bitIndex)));
-  }
-
-  public void digest(final LogsBloomFilter other) {
-    for (int i = 0; i < data.size(); ++i) {
-      data.set(i, (byte) ((data.get(i) | other.data.get(i)) & 0xff));
-    }
-  }
-
   public boolean couldContain(final LogsBloomFilter subset) {
     if (subset == null) {
       return true;
     }
-    if (subset.size() != data.size()) {
+    if (subset.size() != size()) {
       return false;
     }
-    for (int i = 0; i < data.size(); i++) {
-      final byte subsetValue = subset.data.get(i);
-      if ((data.get(i) & subsetValue) != subsetValue) {
+    for (int i = 0; i < size(); i++) {
+      final byte subsetValue = subset.get(i);
+      if ((get(i) & subsetValue) != subsetValue) {
         return false;
       }
     }
     return true;
   }
 
-  @Override
-  public String toString() {
-    return data.toString();
+  public static Builder builder() {
+    return new Builder();
   }
 
-  @Override
-  public byte[] getByteArray() {
-    return data.getByteArray();
-  }
+  public static final class Builder {
+    final MutableBytes data;
 
-  @Override
-  public int size() {
-    return data.size();
-  }
+    private Builder() {
+      data = MutableBytes.create(LogsBloomFilter.BYTE_SIZE);
+    }
 
-  @Override
-  public String getHexString() {
-    return data.getHexString();
+    public Builder insertFilter(final LogsBloomFilter other) {
+      for (int i = 0; i < data.size(); ++i) {
+        data.set(i, (byte) ((data.get(i) | other.get(i)) & 0xff));
+      }
+      return this;
+    }
+
+    public Builder insertLog(final Log log) {
+      insertBytes((Bytes) log.getLogger());
+
+      for (final LogTopic topic : log.getTopics()) {
+        insertBytes(topic);
+      }
+      return this;
+    }
+
+    public Builder insertLogs(final Collection<Log> logs) {
+      logs.forEach(this::insertLog);
+      return this;
+    }
+
+    public Builder insertBytes(final Bytes value) {
+      setBits(keccak256(value));
+      return this;
+    }
+
+    public LogsBloomFilter build() {
+      return new LogsBloomFilter(data);
+    }
+
+    /**
+     * Discover the low order 11-bits, of the first three double-bytes, of the SHA3 hash, of each
+     * value and update the bloom filter accordingly.
+     *
+     * @param hashValue The hash of the log item.
+     */
+    private void setBits(final Bytes hashValue) {
+      for (int counter = 0; counter < 6; counter += 2) {
+        final int setBloomBit =
+            ((hashValue.get(counter) & LEAST_SIGNIFICANT_THREE_BITS) << BITS_IN_BYTE)
+                + (hashValue.get(counter + 1) & LEAST_SIGNIFICANT_BYTE);
+        setBit(setBloomBit);
+      }
+    }
+
+    private void setBit(final int index) {
+      final int byteIndex = BYTE_SIZE - 1 - index / 8;
+      final int bitIndex = index % 8;
+      data.set(byteIndex, (byte) (data.get(byteIndex) | (1 << bitIndex)));
+    }
   }
 }

@@ -18,11 +18,11 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.hyperledger.besu.services.tasks.CachingTaskCollection;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.Range;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class SynchronizerConfiguration {
 
@@ -37,7 +37,7 @@ public class SynchronizerConfiguration {
   public static final Range<Long> DEFAULT_BLOCK_PROPAGATION_RANGE = Range.closed(-10L, 30L);
   public static final long DEFAULT_DOWNLOADER_CHANGE_TARGET_THRESHOLD_BY_HEIGHT = 200L;
   public static final UInt256 DEFAULT_DOWNLOADER_CHANGE_TARGET_THRESHOLD_BY_TD =
-      UInt256.of(1_000_000_000_000_000_000L);
+      UInt256.valueOf(1_000_000_000_000_000_000L);
   public static final int DEFAULT_DOWNLOADER_HEADER_REQUEST_SIZE = 200;
   public static final int DEFAULT_DOWNLOADER_CHECKPOINT_TIMEOUTS_PERMITTED = 5;
   public static final int DEFAULT_DOWNLOADER_CHAIN_SEGMENT_SIZE = 200;

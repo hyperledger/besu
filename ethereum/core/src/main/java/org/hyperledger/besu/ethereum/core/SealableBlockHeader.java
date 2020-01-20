@@ -14,8 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
+import org.apache.tuweni.bytes.Bytes;
 
 /** A block header capable of being sealed. */
 public class SealableBlockHeader extends ProcessableBlockHeader {
@@ -31,7 +30,7 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
 
   protected final long gasUsed;
 
-  protected final BytesValue extraData;
+  protected final Bytes extraData;
 
   protected SealableBlockHeader(
       final Hash parentHash,
@@ -41,12 +40,12 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
       final Hash transactionsRoot,
       final Hash receiptsRoot,
       final LogsBloomFilter logsBloom,
-      final UInt256 difficulty,
+      final Difficulty difficulty,
       final long number,
       final long gasLimit,
       final long gasUsed,
       final long timestamp,
-      final BytesValue extraData) {
+      final Bytes extraData) {
     super(parentHash, coinbase, difficulty, number, gasLimit, timestamp);
     this.ommersHash = ommersHash;
     this.stateRoot = stateRoot;
@@ -116,7 +115,7 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
    *
    * @return the raw bytes of the extra data field
    */
-  public BytesValue getExtraData() {
+  public Bytes getExtraData() {
     return extraData;
   }
 }

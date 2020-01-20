@@ -29,7 +29,6 @@ import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.network.exceptions.P2PDisabledException;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.PeerInfo;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.net.InetSocketAddress;
 import java.util.Collection;
@@ -38,6 +37,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
+import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
@@ -103,8 +103,7 @@ public class AdminPeersTest {
   }
 
   private Collection<PeerConnection> peerList() {
-    final PeerInfo peerInfo =
-        new PeerInfo(5, "0x0", Collections.emptyList(), 30303, BytesValue.EMPTY);
+    final PeerInfo peerInfo = new PeerInfo(5, "0x0", Collections.emptyList(), 30303, Bytes.EMPTY);
     final PeerConnection p =
         MockPeerConnection.create(
             peerInfo,

@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.node;
 
+import static com.google.common.base.Preconditions.checkState;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import org.hyperledger.besu.cli.options.NetworkingOptions;
@@ -264,6 +265,11 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     }
 
     try {
+      checkState(
+          isNotAliveOrphan(node.getName()),
+          "A live process with name: %s, already exists. Cannot create another with the same name as it would orphan the first",
+          node.getName());
+
       final Process process = processBuilder.start();
       outputProcessorExecutor.execute(() -> printOutput(node, process));
       besuProcesses.put(node.getName(), process);
@@ -271,7 +277,13 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
       LOG.error("Error starting BesuNode process", e);
     }
 
-    waitForPortsFile(dataDir);
+    waitForFile(dataDir, "besu.ports");
+    waitForFile(dataDir, "besu.networks");
+  }
+
+  private boolean isNotAliveOrphan(final String name) {
+    final Process orphan = besuProcesses.get(name);
+    return orphan == null || !orphan.isAlive();
   }
 
   private void printOutput(final BesuNode node, final Process process) {

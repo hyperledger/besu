@@ -17,9 +17,6 @@ package org.hyperledger.besu.ethereum.trie;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hyperledger.besu.ethereum.trie.CompactEncoding.bytesToPath;
 
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -27,12 +24,15 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+
 /**
  * An in-memory {@link MerklePatriciaTrie}.
  *
  * @param <V> The type of values stored by this trie.
  */
-public class SimpleMerklePatriciaTrie<K extends BytesValue, V> implements MerklePatriciaTrie<K, V> {
+public class SimpleMerklePatriciaTrie<K extends Bytes, V> implements MerklePatriciaTrie<K, V> {
   private final PathNodeVisitor<V> getVisitor = new GetVisitor<>();
   private final PathNodeVisitor<V> removeVisitor = new RemoveVisitor<>();
   private final DefaultNodeFactory<V> nodeFactory;
@@ -44,7 +44,7 @@ public class SimpleMerklePatriciaTrie<K extends BytesValue, V> implements Merkle
    *
    * @param valueSerializer A function for serializing values to bytes.
    */
-  public SimpleMerklePatriciaTrie(final Function<V, BytesValue> valueSerializer) {
+  public SimpleMerklePatriciaTrie(final Function<V, Bytes> valueSerializer) {
     this.nodeFactory = new DefaultNodeFactory<>(valueSerializer);
     this.root = NullNode.instance();
   }
@@ -60,7 +60,7 @@ public class SimpleMerklePatriciaTrie<K extends BytesValue, V> implements Merkle
     checkNotNull(key);
     final ProofVisitor<V> proofVisitor = new ProofVisitor<>(root);
     final Optional<V> value = root.accept(proofVisitor, bytesToPath(key)).getValue();
-    final List<BytesValue> proof =
+    final List<Bytes> proof =
         proofVisitor.getProof().stream().map(Node::getRlp).collect(Collectors.toList());
     return new Proof<>(value, proof);
   }

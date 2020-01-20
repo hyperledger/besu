@@ -26,11 +26,11 @@ import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolution;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Optional;
 
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 public class EthSubmitWork implements JsonRpcMethod {
 
@@ -52,11 +52,10 @@ public class EthSubmitWork implements JsonRpcMethod {
     if (solver.isPresent()) {
       final EthHashSolution solution =
           new EthHashSolution(
-              BytesValue.fromHexString(requestContext.getRequiredParameter(0, String.class))
-                  .getLong(0),
+              Bytes.fromHexString(requestContext.getRequiredParameter(0, String.class)).getLong(0),
               requestContext.getRequiredParameter(2, Hash.class),
-              BytesValue.fromHexString(requestContext.getRequiredParameter(1, String.class))
-                  .getArrayUnsafe());
+              Bytes.fromHexString(requestContext.getRequiredParameter(1, String.class))
+                  .toArrayUnsafe());
       final boolean result = miner.submitWork(solution);
       return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), result);
     } else {

@@ -16,15 +16,14 @@ package org.hyperledger.besu.ethereum.rlp;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.BytesValues;
-import org.hyperledger.besu.util.bytes.MutableBytesValue;
-import org.hyperledger.besu.util.uint.UInt256Value;
-
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.util.Collection;
 import java.util.function.BiConsumer;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.MutableBytes;
+import org.apache.tuweni.units.bigints.UInt256Value;
 
 /**
  * An output used to encode data in RLP encoding.
@@ -42,8 +41,8 @@ import java.util.function.BiConsumer;
  * <p>A {@link RLPOutput} thus provides methods to write both lists and binary values. A list is
  * started by calling {@link #startList()} and ended by {@link #endList()}. Lists can be nested in
  * other lists in arbitrary ways. Binary values can be written directly with {@link
- * #writeBytesValue(BytesValue)}, but the {@link RLPOutput} interface provides a wealth of
- * convenience methods to write specific types of data with a specific encoding.
+ * #writeBytes(Bytes)}, but the {@link RLPOutput} interface provides a wealth of convenience methods
+ * to write specific types of data with a specific encoding.
  *
  * <p>Amongst the methods to write binary data, some methods are provided to write "scalar". A
  * scalar should simply be understood as a positive integer that is encoded with no leading zeros.
@@ -72,15 +71,24 @@ public interface RLPOutput {
    *
    * @param v The value to write.
    */
-  void writeBytesValue(BytesValue v);
+  void writeBytes(Bytes v);
+
+  /**
+   * Writes a scalar (encoded with no leading zeroes).
+   *
+   * @param v The scalar to write.
+   */
+  default void writeUInt256Scalar(final UInt256Value<?> v) {
+    writeBytes(v.toBytes().trimLeadingZeros());
+  }
 
   /**
    * Writes a RLP "null", that is an empty value.
    *
-   * <p>This is a shortcut for {@code writeBytesValue(BytesValue.EMPTY)}.
+   * <p>This is a shortcut for {@code writeBytes(Bytes.EMPTY)}.
    */
   default void writeNull() {
-    writeBytesValue(BytesValue.EMPTY);
+    writeBytes(Bytes.EMPTY);
   }
 
   /**
@@ -101,7 +109,7 @@ public interface RLPOutput {
    */
   default void writeLongScalar(final long v) {
     checkArgument(v >= 0, "Invalid negative value %s for scalar encoding", v);
-    writeBytesValue(BytesValues.toMinimalBytes(v));
+    writeBytes(Bytes.minimalBytes(v));
   }
 
   /**
@@ -119,19 +127,10 @@ public interface RLPOutput {
     // resulting number is exactly on a byte boundary, then the sign bit constraint will make the
     // value include one extra byte, which will be zero. In other words, they can be one zero bytes
     // in practice we should ignore, but there should never be more than one.
-    writeBytesValue(
+    writeBytes(
         bytes.length > 1 && bytes[0] == 0
-            ? BytesValue.wrap(bytes, 1, bytes.length - 1)
-            : BytesValue.wrap(bytes));
-  }
-
-  /**
-   * Writes a scalar (encoded with no leading zeroes).
-   *
-   * @param v The scalar to write.
-   */
-  default void writeUInt256Scalar(final UInt256Value<?> v) {
-    writeBytesValue(BytesValues.trimLeadingZeros(v.getBytes()));
+            ? Bytes.wrap(bytes, 1, bytes.length - 1)
+            : Bytes.wrap(bytes));
   }
 
   /**
@@ -140,7 +139,7 @@ public interface RLPOutput {
    * @param b The byte to write.
    */
   default void writeByte(final byte b) {
-    writeBytesValue(BytesValue.of(b));
+    writeBytes(Bytes.of(b));
   }
 
   /**
@@ -154,7 +153,7 @@ public interface RLPOutput {
     final byte[] res = new byte[2];
     res[0] = (byte) (s >> 8);
     res[1] = (byte) s;
-    writeBytesValue(BytesValue.wrap(res));
+    writeBytes(Bytes.wrap(res));
   }
 
   /**
@@ -165,9 +164,9 @@ public interface RLPOutput {
    * @param i The 4-bytes int to write.
    */
   default void writeInt(final int i) {
-    final MutableBytesValue v = MutableBytesValue.create(4);
+    final MutableBytes v = MutableBytes.create(4);
     v.setInt(0, i);
-    writeBytesValue(v);
+    writeBytes(v);
   }
 
   /**
@@ -178,9 +177,9 @@ public interface RLPOutput {
    * @param l The 8-bytes long to write.
    */
   default void writeLong(final long l) {
-    final MutableBytesValue v = MutableBytesValue.create(8);
+    final MutableBytes v = MutableBytes.create(8);
     v.setLong(0, l);
-    writeBytesValue(v);
+    writeBytes(v);
   }
 
   /**
@@ -191,7 +190,7 @@ public interface RLPOutput {
    *     {@code b < 0} or {@code b > 0xFF}.
    */
   default void writeUnsignedByte(final int b) {
-    writeBytesValue(BytesValues.ofUnsignedByte(b));
+    writeBytes(Bytes.of(b));
   }
 
   /**
@@ -202,7 +201,7 @@ public interface RLPOutput {
    *     if either {@code s < 0} or {@code s > 0xFFFF}.
    */
   default void writeUnsignedShort(final int s) {
-    writeBytesValue(BytesValues.ofUnsignedShort(s));
+    writeBytes(Bytes.ofUnsignedShort(s));
   }
 
   /**
@@ -213,7 +212,7 @@ public interface RLPOutput {
    *     either {@code i < 0} or {@code i > 0xFFFFFFFFL}.
    */
   default void writeUnsignedInt(final long i) {
-    writeBytesValue(BytesValues.ofUnsignedInt(i));
+    writeBytes(Bytes.ofUnsignedInt(i));
   }
 
   /**
@@ -222,7 +221,7 @@ public interface RLPOutput {
    * @param address The address to write.
    */
   default void writeInetAddress(final InetAddress address) {
-    writeBytesValue(BytesValue.wrap(address.getAddress()));
+    writeBytes(Bytes.wrap(address.getAddress()));
   }
 
   /**
@@ -261,11 +260,11 @@ public interface RLPOutput {
    * more efficient in that it saves most of that decoding/re-encoding work. Please note however
    * that this method <b>does</b> validate that the input is a valid RLP encoding. If you can
    * guaranteed that the input is valid and do not want this validation step, please have a look at
-   * {@link #writeRLPUnsafe(BytesValue)}.
+   * {@link #writeRLPUnsafe(Bytes)}.
    *
    * @param rlpEncodedValue An already RLP encoded value to write as next item of this output.
    */
-  default void writeRLP(final BytesValue rlpEncodedValue) {
+  default void writeRLP(final Bytes rlpEncodedValue) {
     RLP.validate(rlpEncodedValue);
     writeRLPUnsafe(rlpEncodedValue);
   }
@@ -273,11 +272,11 @@ public interface RLPOutput {
   /**
    * Writes an already RLP encoded item to the output.
    *
-   * <p>This method is equivalent to {@link #writeRLP(BytesValue)}, but is unsafe in that it does
-   * not do any validation of the its input. As such, it is faster but can silently yield invalid
-   * RLP output if misused.
+   * <p>This method is equivalent to {@link #writeRLP(Bytes)}, but is unsafe in that it does not do
+   * any validation of the its input. As such, it is faster but can silently yield invalid RLP
+   * output if misused.
    *
    * @param rlpEncodedValue An already RLP encoded value to write as next item of this output.
    */
-  void writeRLPUnsafe(BytesValue rlpEncodedValue);
+  void writeRLPUnsafe(Bytes rlpEncodedValue);
 }

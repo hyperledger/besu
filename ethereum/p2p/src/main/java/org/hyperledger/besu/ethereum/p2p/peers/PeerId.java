@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.p2p.peers;
 
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 public interface PeerId {
   /**
@@ -24,7 +24,7 @@ public interface PeerId {
    *
    * @return The peer's ID.
    */
-  BytesValue getId();
+  Bytes getId();
 
   /**
    * The Keccak-256 hash value of the peer's ID. The value may be memoized to avoid recomputation

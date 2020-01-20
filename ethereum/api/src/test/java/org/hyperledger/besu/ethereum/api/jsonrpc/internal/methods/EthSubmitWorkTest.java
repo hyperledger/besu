@@ -29,13 +29,12 @@ import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolution;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.BytesValues;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.Optional;
 
 import com.google.common.io.BaseEncoding;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -103,9 +102,9 @@ public class EthSubmitWorkTest {
             firstInputs.getPrePowHash());
     final JsonRpcRequestContext request =
         requestWithParams(
-            BytesValues.toMinimalBytes(expectedFirstOutput.getNonce()).getHexString(),
-            BytesValue.wrap(expectedFirstOutput.getPowHash()).getHexString(),
-            expectedFirstOutput.getMixHash().getHexString());
+            Bytes.ofUnsignedLong(expectedFirstOutput.getNonce()).trimLeadingZeros().toHexString(),
+            Bytes.wrap(expectedFirstOutput.getPowHash()).toHexString(),
+            expectedFirstOutput.getMixHash().toHexString());
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(request.getRequest().getId(), true);
     when(miningCoordinator.getWorkDefinition()).thenReturn(Optional.of(firstInputs));

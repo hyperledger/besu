@@ -16,12 +16,12 @@
 apply plugin: 'java-library'
 
 jar {
-  baseName 'besu-consensus-common'
+  archiveBaseName = 'besu-consensus-common'
   manifest {
     attributes(
-      'Specification-Title': baseName,
+      'Specification-Title': archiveBaseName,
       'Specification-Version': project.version,
-      'Implementation-Title': baseName,
+      'Implementation-Title': archiveBaseName,
       'Implementation-Version': calculateVersion()
       )
   }
@@ -30,24 +30,25 @@ jar {
 dependencies {
   api project(':plugin-api')
 
-  implementation project(':ethereum:core')
-  implementation project(':ethereum:api')
   implementation project(':crypto')
+  implementation project(':ethereum:api')
+  implementation project(':ethereum:core')
   implementation project(':util')
 
   implementation 'com.fasterxml.jackson.core:jackson-databind'
   implementation 'com.google.guava:guava'
+  implementation 'org.apache.tuweni:tuweni-bytes'
 
   testImplementation project(':crypto')
   testImplementation project( path: ':ethereum:core', configuration: 'testSupportArtifacts')
 
   testImplementation 'junit:junit'
-  testImplementation "org.assertj:assertj-core"
+  testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.mockito:mockito-core'
 }
 configurations { testArtifacts }
 task testJar (type: Jar) {
-  baseName = "${project.name}-test"
+  archiveBaseName = "${project.name}-test"
   from sourceSets.test.output
 }
 

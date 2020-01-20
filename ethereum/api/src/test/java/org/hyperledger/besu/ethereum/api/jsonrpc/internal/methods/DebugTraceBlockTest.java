@@ -38,13 +38,13 @@ import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -88,6 +88,13 @@ public class DebugTraceBlockTest {
             EnumSet.noneOf(ExceptionalHaltReason.class),
             Optional.empty(),
             Optional.empty(),
+            Optional.empty(),
+            Optional.empty(),
+            Optional.empty(),
+            Optional.empty(),
+            0,
+            Optional.empty(),
+            Optional.empty(),
             Optional.empty());
 
     final TransactionProcessor.Result transaction1Result = mock(TransactionProcessor.Result.class);
@@ -102,8 +109,8 @@ public class DebugTraceBlockTest {
     when(transaction2Trace.getTraceFrames()).thenReturn(singletonList(traceFrame));
     when(transaction1Trace.getResult()).thenReturn(transaction1Result);
     when(transaction2Trace.getResult()).thenReturn(transaction2Result);
-    when(transaction1Result.getOutput()).thenReturn(BytesValue.fromHexString("1234"));
-    when(transaction2Result.getOutput()).thenReturn(BytesValue.fromHexString("1234"));
+    when(transaction1Result.getOutput()).thenReturn(Bytes.fromHexString("1234"));
+    when(transaction2Result.getOutput()).thenReturn(Bytes.fromHexString("1234"));
     when(blockTracer.trace(Mockito.eq(block), any())).thenReturn(Optional.of(blockTrace));
 
     when(blockchainQueries.blockByHash(parentBlock.getHash()))

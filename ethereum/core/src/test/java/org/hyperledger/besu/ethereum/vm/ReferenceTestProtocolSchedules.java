@@ -54,6 +54,7 @@ public class ReferenceTestProtocolSchedules {
         "ConstantinopleFix",
         createSchedule(new StubGenesisConfigOptions().constantinopleFixBlock(0)));
     builder.put("Istanbul", createSchedule(new StubGenesisConfigOptions().istanbulBlock(0)));
+    builder.put("MuirGlacier", createSchedule(new StubGenesisConfigOptions().muirGlacierBlock(0)));
     return new ReferenceTestProtocolSchedules(builder.build());
   }
 

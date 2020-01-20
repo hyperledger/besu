@@ -30,13 +30,13 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 public class IbftMiningCoordinator implements MiningCoordinator, BlockAddedObserver {
 
@@ -56,7 +56,7 @@ public class IbftMiningCoordinator implements MiningCoordinator, BlockAddedObser
   private final IbftExecutors ibftExecutors;
 
   private long blockAddedObserverId;
-  private AtomicReference<State> state = new AtomicReference<>(State.IDLE);
+  private final AtomicReference<State> state = new AtomicReference<>(State.IDLE);
 
   public IbftMiningCoordinator(
       final IbftExecutors ibftExecutors,
@@ -126,7 +126,7 @@ public class IbftMiningCoordinator implements MiningCoordinator, BlockAddedObser
   }
 
   @Override
-  public void setExtraData(final BytesValue extraData) {
+  public void setExtraData(final Bytes extraData) {
     blockCreatorFactory.setExtraData(extraData);
   }
 

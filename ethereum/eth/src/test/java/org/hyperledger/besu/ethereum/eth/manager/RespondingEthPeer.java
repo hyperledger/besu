@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
@@ -38,8 +39,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.DefaultMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -56,6 +55,7 @@ import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
 import com.google.common.collect.Lists;
+import org.apache.tuweni.bytes.Bytes;
 
 public class RespondingEthPeer {
   private static final BlockDataGenerator gen = new BlockDataGenerator();
@@ -108,7 +108,7 @@ public class RespondingEthPeer {
   private static RespondingEthPeer create(
       final EthProtocolManager ethProtocolManager,
       final Hash chainHeadHash,
-      final UInt256 totalDifficulty,
+      final Difficulty totalDifficulty,
       final OptionalLong estimatedHeight,
       final List<PeerValidator> peerValidators) {
     final EthPeers ethPeers = ethProtocolManager.ethContext().getEthPeers();
@@ -305,8 +305,8 @@ public class RespondingEthPeer {
           break;
         case EthPV63.GET_NODE_DATA:
           final NodeDataMessage nodeDataMessage = NodeDataMessage.readFrom(originalResponse);
-          final List<BytesValue> originalNodeData = Lists.newArrayList(nodeDataMessage.nodeData());
-          final List<BytesValue> partialNodeData =
+          final List<Bytes> originalNodeData = Lists.newArrayList(nodeDataMessage.nodeData());
+          final List<Bytes> partialNodeData =
               originalNodeData.subList(0, (int) (originalNodeData.size() * portion));
           partialResponse = NodeDataMessage.create(partialNodeData);
           break;
@@ -339,9 +339,9 @@ public class RespondingEthPeer {
   public static class Builder {
     private EthProtocolManager ethProtocolManager;
     private Hash chainHeadHash = gen.hash();
-    private UInt256 totalDifficulty = UInt256.of(1000L);
+    private Difficulty totalDifficulty = Difficulty.of(1000L);
     private OptionalLong estimatedHeight = OptionalLong.of(1000L);
-    private List<PeerValidator> peerValidators = new ArrayList<>();
+    private final List<PeerValidator> peerValidators = new ArrayList<>();
 
     public RespondingEthPeer build() {
       checkNotNull(ethProtocolManager, "Must configure EthProtocolManager");
@@ -362,7 +362,7 @@ public class RespondingEthPeer {
       return this;
     }
 
-    public Builder totalDifficulty(final UInt256 totalDifficulty) {
+    public Builder totalDifficulty(final Difficulty totalDifficulty) {
       checkNotNull(totalDifficulty);
       this.totalDifficulty = totalDifficulty;
       return this;

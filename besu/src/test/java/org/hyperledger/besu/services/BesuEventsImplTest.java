@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldState;
@@ -55,8 +56,8 @@ import org.hyperledger.besu.plugin.data.SyncStatus;
 import org.hyperledger.besu.plugin.data.Transaction;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import org.hyperledger.besu.testutil.TestClock;
-import org.hyperledger.besu.util.uint.UInt256;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -182,11 +183,11 @@ public class BesuEventsImplTest {
     serviceImpl.addBlockPropagatedListener(result::set);
     final Block block = generateBlock();
     assertThat(result.get()).isNull();
-    blockBroadcaster.propagate(block, UInt256.of(1));
+    blockBroadcaster.propagate(block, Difficulty.of(1));
 
     assertThat(result.get()).isNotNull();
     assertThat(result.get().getBlockHeader()).isEqualTo(block.getHeader());
-    assertThat(result.get().getTotalDifficulty()).isEqualTo(UInt256.of(1));
+    assertThat(result.get().getTotalDifficulty().toBigInteger()).isEqualTo(BigInteger.ONE);
   }
 
   @Test
@@ -196,21 +197,21 @@ public class BesuEventsImplTest {
 
     assertThat(result.get()).isNull();
     final Block block = generateBlock();
-    blockBroadcaster.propagate(block, UInt256.of(2));
+    blockBroadcaster.propagate(block, Difficulty.of(2));
 
     assertThat(result.get()).isNotNull();
     assertThat(result.get().getBlockHeader()).isEqualTo(block.getHeader());
-    assertThat(result.get().getTotalDifficulty()).isEqualTo(UInt256.of(2));
+    assertThat(result.get().getTotalDifficulty().toBigInteger()).isEqualTo(BigInteger.valueOf(2L));
     serviceImpl.removeBlockPropagatedListener(id);
     result.set(null);
 
-    blockBroadcaster.propagate(generateBlock(), UInt256.of(1));
+    blockBroadcaster.propagate(generateBlock(), Difficulty.of(1));
     assertThat(result.get()).isNull();
   }
 
   @Test
   public void propagationWithoutSubscriptionsCompletes() {
-    blockBroadcaster.propagate(generateBlock(), UInt256.of(1));
+    blockBroadcaster.propagate(generateBlock(), Difficulty.of(1));
   }
 
   @Test

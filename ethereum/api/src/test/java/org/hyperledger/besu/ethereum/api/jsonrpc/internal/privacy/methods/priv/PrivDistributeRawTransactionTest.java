@@ -16,22 +16,29 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
+import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransactionHandler;
-import org.hyperledger.besu.util.bytes.BytesValues;
+import org.hyperledger.besu.ethereum.privacy.SendTransactionResponse;
 
+import java.util.Base64;
+
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.auth.User;
+import io.vertx.ext.auth.jwt.impl.JWTUser;
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -49,31 +56,27 @@ public class PrivDistributeRawTransactionTest {
           + "e60551d7a19cf30603db5bfc23e5ac43a56f57f25f75486aa00f"
           + "200e885ff29e973e2576b6600181d1b0a2b5294e30d9be4a1981"
           + "ffb33a0b8c8a72657374726963746564";
+  private static final String ENCLAVE_PUBLIC_KEY = "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
 
-  final String MOCK_ORION_KEY = "93Ky7lXwFkMc7+ckoFgUMku5bpr9tz4zhmWmk9RlNng=";
-  private final String MOCK_PRIVACY_GROUP = "";
-
-  @Mock private TransactionPool transactionPool;
+  private final User user =
+      new JWTUser(new JsonObject().put("privacyPublicKey", ENCLAVE_PUBLIC_KEY), "");
+  private final EnclavePublicKeyProvider enclavePublicKeyProvider = (user) -> ENCLAVE_PUBLIC_KEY;
 
   @Mock private PrivDistributeRawTransaction method;
-
-  @Mock private PrivateTransactionHandler privateTxHandler;
-
-  @Mock private PrivacyParameters privacyParameters;
+  @Mock private PrivacyController privacyController;
 
   @Before
   public void before() {
-    when(privacyParameters.isEnabled()).thenReturn(true);
-    method = new PrivDistributeRawTransaction(privacyParameters, privateTxHandler, transactionPool);
+    method = new PrivDistributeRawTransaction(privacyController, enclavePublicKeyProvider);
   }
 
   @Test
-  public void validTransactionHashReturnedAfterDistribute() throws Exception {
-    when(privateTxHandler.sendToOrion(any(PrivateTransaction.class))).thenReturn(MOCK_ORION_KEY);
-    when(privateTxHandler.getPrivacyGroup(any(String.class), any(PrivateTransaction.class)))
-        .thenReturn(MOCK_PRIVACY_GROUP);
-    when(privateTxHandler.validatePrivateTransaction(
-            any(PrivateTransaction.class), any(String.class)))
+  public void validTransactionHashReturnedAfterDistribute() {
+    final String enclavePublicKey = "93Ky7lXwFkMc7+ckoFgUMku5bpr9tz4zhmWmk9RlNng=";
+    when(privacyController.sendTransaction(any(PrivateTransaction.class), any()))
+        .thenReturn(new SendTransactionResponse(enclavePublicKey, ""));
+    when(privacyController.validatePrivateTransaction(
+            any(PrivateTransaction.class), any(String.class), any()))
         .thenReturn(ValidationResult.valid());
 
     final JsonRpcRequestContext request =
@@ -81,30 +84,42 @@ public class PrivDistributeRawTransactionTest {
             new JsonRpcRequest(
                 "2.0",
                 "priv_distributeRawTransaction",
-                new String[] {VALID_PRIVATE_TRANSACTION_RLP_PRIVACY_GROUP}));
+                new String[] {VALID_PRIVATE_TRANSACTION_RLP_PRIVACY_GROUP}),
+            user);
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(
-            request.getRequest().getId(), BytesValues.fromBase64(MOCK_ORION_KEY).toString());
+            request.getRequest().getId(),
+            Bytes.wrap(Base64.getDecoder().decode(enclavePublicKey)).toString());
 
     final JsonRpcResponse actualResponse = method.response(request);
 
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
-    verify(privateTxHandler).sendToOrion(any(PrivateTransaction.class));
-    verify(privateTxHandler).getPrivacyGroup(any(String.class), any(PrivateTransaction.class));
-    verify(privateTxHandler)
-        .validatePrivateTransaction(any(PrivateTransaction.class), any(String.class));
+    verify(privacyController)
+        .sendTransaction(any(PrivateTransaction.class), eq(ENCLAVE_PUBLIC_KEY));
+    verify(privacyController)
+        .validatePrivateTransaction(
+            any(PrivateTransaction.class), any(String.class), eq(ENCLAVE_PUBLIC_KEY));
   }
 
   @Test
-  public void returnPrivacyDisabledErrorWhenPrivacyIsDisabled() {
-    when(privacyParameters.isEnabled()).thenReturn(false);
+  public void invalidTransactionFailingWithMultiTenancyValidationErrorReturnsUnauthorizedError() {
+    when(privacyController.sendTransaction(any(PrivateTransaction.class), any()))
+        .thenThrow(new MultiTenancyValidationException("validation failed"));
 
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
-            new JsonRpcRequest("1", "priv_distributeRawTransaction", new Object[] {}));
-    final JsonRpcErrorResponse response = (JsonRpcErrorResponse) method.response(request);
+            new JsonRpcRequest(
+                "2.0",
+                "priv_distributeRawTransaction",
+                new String[] {VALID_PRIVATE_TRANSACTION_RLP_PRIVACY_GROUP}),
+            user);
 
-    assertThat(response.getError()).isEqualTo(JsonRpcError.PRIVACY_NOT_ENABLED);
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.ENCLAVE_ERROR);
+
+    final JsonRpcResponse actualResponse = method.response(request);
+
+    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
   }
 }

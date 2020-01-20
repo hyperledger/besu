@@ -30,7 +30,7 @@ public class DeterministicEthScheduler extends EthScheduler {
 
   private final TimeoutPolicy timeoutPolicy;
   private final List<MockExecutorService> executors;
-  private List<PendingTimeout<?>> pendingTimeouts = new ArrayList<>();
+  private final List<PendingTimeout<?>> pendingTimeouts = new ArrayList<>();
 
   public DeterministicEthScheduler() {
     this(TimeoutPolicy.NEVER_TIMEOUT);

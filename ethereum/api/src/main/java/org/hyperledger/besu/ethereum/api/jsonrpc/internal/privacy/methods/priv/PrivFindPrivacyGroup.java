@@ -15,29 +15,34 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.FIND_PRIVACY_GROUP_ERROR;
 
-import org.hyperledger.besu.enclave.Enclave;
-import org.hyperledger.besu.enclave.types.FindPrivacyGroupRequest;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
+import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 import java.util.Arrays;
 
 import org.apache.logging.log4j.Logger;
 
-public class PrivFindPrivacyGroup extends PrivacyApiMethod {
+public class PrivFindPrivacyGroup implements JsonRpcMethod {
 
   private static final Logger LOG = getLogger();
-  private final Enclave enclave;
+  private final PrivacyController privacyController;
+  private final EnclavePublicKeyProvider enclavePublicKeyProvider;
 
-  public PrivFindPrivacyGroup(final PrivacyParameters privacyParameters) {
-    super(privacyParameters);
-    this.enclave = privacyParameters.getEnclave();
+  public PrivFindPrivacyGroup(
+      final PrivacyController privacyController,
+      final EnclavePublicKeyProvider enclavePublicKeyProvider) {
+    this.privacyController = privacyController;
+    this.enclavePublicKeyProvider = enclavePublicKeyProvider;
   }
 
   @Override
@@ -46,22 +51,27 @@ public class PrivFindPrivacyGroup extends PrivacyApiMethod {
   }
 
   @Override
-  public JsonRpcResponse doResponse(final JsonRpcRequestContext requestContext) {
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     LOG.trace("Executing {}", RpcMethod.PRIV_FIND_PRIVACY_GROUP.getMethodName());
 
     final String[] addresses = requestContext.getRequiredParameter(0, String[].class);
 
     LOG.trace("Finding a privacy group with members {}", Arrays.toString(addresses));
 
-    FindPrivacyGroupRequest findPrivacyGroupRequest = new FindPrivacyGroupRequest(addresses);
     PrivacyGroup[] response;
     try {
-      response = enclave.findPrivacyGroup(findPrivacyGroupRequest);
-    } catch (Exception e) {
-      LOG.error("Failed to fetch group from Enclave with error " + e.getMessage());
-      LOG.error(e);
-      return new JsonRpcSuccessResponse(
-          requestContext.getRequest().getId(), JsonRpcError.FIND_PRIVACY_GROUP_ERROR);
+      response =
+          privacyController.findPrivacyGroup(
+              Arrays.asList(addresses),
+              enclavePublicKeyProvider.getEnclaveKey(requestContext.getUser()));
+    } catch (final MultiTenancyValidationException e) {
+      LOG.error("Unauthorized privacy multi-tenancy rpc request. {}", e.getMessage());
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), FIND_PRIVACY_GROUP_ERROR);
+    } catch (final Exception e) {
+      LOG.error("Failed to fetch privacy group", e);
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), FIND_PRIVACY_GROUP_ERROR);
     }
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), response);
   }

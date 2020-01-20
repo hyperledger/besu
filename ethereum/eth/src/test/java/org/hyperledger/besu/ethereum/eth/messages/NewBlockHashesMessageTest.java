@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -30,6 +29,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import com.google.common.io.Resources;
+import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
@@ -42,11 +42,11 @@ public final class NewBlockHashesMessageTest {
     final ByteBuffer buffer =
         ByteBuffer.wrap(Resources.toByteArray(this.getClass().getResource("/50.blocks")));
     for (int i = 0; i < 50; ++i) {
-      final int blockSize = RLP.calculateSize(BytesValue.wrapBuffer(buffer));
+      final int blockSize = RLP.calculateSize(Bytes.wrapByteBuffer(buffer));
       final byte[] block = new byte[blockSize];
       buffer.get(block);
       buffer.compact().position(0);
-      final RLPInput oneBlock = new BytesValueRLPInput(BytesValue.wrap(block), false);
+      final RLPInput oneBlock = new BytesValueRLPInput(Bytes.wrap(block), false);
       oneBlock.enterList();
       final BlockHeader header = BlockHeader.readFrom(oneBlock, new MainnetBlockHeaderFunctions());
       hashes.add(new NewBlockHashesMessage.NewBlockHash(header.getHash(), header.getNumber()));

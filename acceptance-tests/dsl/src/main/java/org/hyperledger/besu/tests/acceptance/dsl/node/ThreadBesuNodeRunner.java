@@ -23,7 +23,7 @@ import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.controller.GasLimitCalculator;
-import org.hyperledger.besu.controller.KeyPairUtil;
+import org.hyperledger.besu.crypto.KeyPairUtil;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
@@ -194,6 +194,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
                 node.getStaticNodes().stream()
                     .map(EnodeURL::fromString)
                     .collect(Collectors.toList()))
+            .besuPluginContext(new BesuPluginContextImpl())
             .build();
 
     runner.start();

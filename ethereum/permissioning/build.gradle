@@ -16,32 +16,35 @@
 apply plugin: 'java-library'
 
 jar {
-  baseName 'besu-permissioning'
+  archiveBaseName = 'besu-permissioning'
   manifest {
     attributes(
-      'Specification-Title': baseName,
+      'Specification-Title': archiveBaseName,
       'Specification-Version': project.version,
-      'Implementation-Title': baseName,
+      'Implementation-Title': archiveBaseName,
       'Implementation-Version': calculateVersion()
       )
   }
 }
 
 dependencies {
-  implementation project(':util')
+  implementation project(':crypto')
   implementation project(':ethereum:core')
   implementation project(':ethereum:p2p')
-  implementation project(':crypto')
   implementation project(':metrics:core')
+  implementation project(':util')
 
   implementation 'com.google.guava:guava'
-  implementation 'org.apache.tuweni:tuweni-toml'
   implementation 'org.apache.logging.log4j:log4j-api'
+  implementation 'org.apache.tuweni:tuweni-bytes'
+  implementation 'org.apache.tuweni:tuweni-toml'
+  implementation 'org.apache.tuweni:tuweni-units'
 
-  testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
   testImplementation project(':config')
-  testImplementation 'junit:junit'
+  testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
+
   testImplementation 'io.vertx:vertx-core'
+  testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.mockito:mockito-core'
 }

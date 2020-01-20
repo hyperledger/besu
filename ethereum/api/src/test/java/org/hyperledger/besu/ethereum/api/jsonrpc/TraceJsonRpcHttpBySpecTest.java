@@ -56,7 +56,9 @@ public class TraceJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpBySpecTest {
     // TODO: Once this method is generally enabled, we won't need to add this here
     final BlockchainQueries blockchainQueries =
         new BlockchainQueries(
-            blockchainSetupUtil.getBlockchain(), blockchainSetupUtil.getWorldArchive());
+            blockchainSetupUtil.getBlockchain(),
+            blockchainSetupUtil.getWorldArchive(),
+            blockchainSetupUtil.getScheduler());
     final BlockReplay blockReplay =
         new BlockReplay(
             blockchainSetupUtil.getProtocolSchedule(),
@@ -64,8 +66,7 @@ public class TraceJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpBySpecTest {
             blockchainSetupUtil.getWorldArchive());
     final BlockTracer blockTracer = new BlockTracer(blockReplay);
     final TraceReplayBlockTransactions traceReplayBlockTransactions =
-        new TraceReplayBlockTransactions(
-            blockTracer, blockchainQueries, blockchainSetupUtil.getProtocolSchedule());
+        new TraceReplayBlockTransactions(blockTracer, blockchainQueries);
     methods.put(traceReplayBlockTransactions.getName(), traceReplayBlockTransactions);
 
     return methods;
@@ -73,6 +74,6 @@ public class TraceJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpBySpecTest {
 
   @Parameters(name = "{index}: {0}")
   public static Object[][] specs() {
-    return AbstractJsonRpcHttpBySpecTest.findSpecFiles("trace");
+    return AbstractJsonRpcHttpBySpecTest.findSpecFiles("trace/specs/flat", "trace/specs/vm-trace");
   }
 }

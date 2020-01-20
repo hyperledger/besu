@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.plugin;
 
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+
 /**
  * Base interface for Besu plugins.
  *
@@ -22,6 +25,16 @@ package org.hyperledger.besu.plugin;
  * register plugins.
  */
 public interface BesuPlugin {
+
+  /**
+   * Returns the name of the plugin. This name is used to trigger specific actions on individual
+   * plugins.
+   *
+   * @return an {@link Optional} wrapping the unique name of the plugin.
+   */
+  default Optional<String> getName() {
+    return Optional.of(this.getClass().getName());
+  }
 
   /**
    * Called when the plugin is first registered with Besu. Plugins are registered very early in the
@@ -43,6 +56,19 @@ public interface BesuPlugin {
    * background threads the plugin requires.
    */
   void start();
+
+  /**
+   * Called when the plugin is being reloaded. This method will be called trough a dedicated JSON
+   * RPC endpoint. If not overridden this method does nothing for convenience. The plugin should
+   * only implement this method if it supports dynamic reloading.
+   *
+   * <p>The plugin should reload its configuration dynamically or do nothing if not applicable.
+   *
+   * @return a {@link CompletableFuture}
+   */
+  default CompletableFuture<Void> reloadConfiguration() {
+    return CompletableFuture.completedFuture(null);
+  }
 
   /**
    * Called when the plugin is being stopped. This method will be called as part of Besu shutting

@@ -16,12 +16,12 @@
 apply plugin: 'java-library'
 
 jar {
-  baseName 'besu-p2p'
+  archiveBaseName = 'besu-p2p'
   manifest {
     attributes(
-      'Specification-Title': baseName,
+      'Specification-Title': archiveBaseName,
       'Specification-Version': project.version,
-      'Implementation-Title': baseName,
+      'Implementation-Title': archiveBaseName,
       'Implementation-Version': calculateVersion()
       )
   }
@@ -38,9 +38,11 @@ dependencies {
   implementation 'io.prometheus:simpleclient'
   implementation 'io.vertx:vertx-core'
   implementation 'org.apache.logging.log4j:log4j-api'
+  implementation 'org.apache.tuweni:tuweni-bytes'
+  implementation 'org.apache.tuweni:tuweni-units'
   implementation 'org.xerial.snappy:snappy-java'
 
-  runtime 'org.apache.logging.log4j:log4j-core'
+  runtimeOnly 'org.apache.logging.log4j:log4j-core'
 
   // test dependencies.
   testImplementation project(path: ':ethereum:core', configuration: 'testArtifacts')
@@ -51,8 +53,8 @@ dependencies {
     exclude group: 'io.pkts', module: 'pkts-sdp'
     exclude group: 'io.pkts', module: 'pkts-sip'
   }
-  testImplementation 'io.vertx:vertx-unit'
   testImplementation 'io.vertx:vertx-codegen'
+  testImplementation 'io.vertx:vertx-unit'
   testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.awaitility:awaitility'

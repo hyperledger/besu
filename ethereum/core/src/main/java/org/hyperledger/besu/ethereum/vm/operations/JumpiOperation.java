@@ -21,11 +21,12 @@ import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.EnumSet;
 import java.util.Optional;
+
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class JumpiOperation extends AbstractOperation {
 
@@ -40,11 +41,11 @@ public class JumpiOperation extends AbstractOperation {
 
   @Override
   public void execute(final MessageFrame frame) {
-    final UInt256 jumpDestination = frame.popStackItem().asUInt256();
+    final UInt256 jumpDestination = UInt256.fromBytes(frame.popStackItem());
     final Bytes32 condition = frame.popStackItem();
 
     if (!condition.isZero()) {
-      frame.setPC(jumpDestination.toInt());
+      frame.setPC(jumpDestination.intValue());
     } else {
       frame.setPC(frame.getPC() + getOpSize());
     }
@@ -61,7 +62,7 @@ public class JumpiOperation extends AbstractOperation {
     }
 
     final Code code = frame.getCode();
-    final UInt256 potentialJumpDestination = frame.getStackItem(0).asUInt256();
+    final UInt256 potentialJumpDestination = UInt256.fromBytes(frame.getStackItem(0));
     return !code.isValidJumpDestination(evm, frame, potentialJumpDestination)
         ? Optional.of(ExceptionalHaltReason.INVALID_JUMP_DESTINATION)
         : Optional.empty();

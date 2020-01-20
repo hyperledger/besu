@@ -29,12 +29,15 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.ChainHead;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeer;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
+import org.hyperledger.besu.nat.NatService;
+import org.hyperledger.besu.nat.core.domain.NatPortMapping;
+import org.hyperledger.besu.nat.core.domain.NatServiceType;
+import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
 
 import java.math.BigInteger;
 import java.util.Collections;
@@ -43,6 +46,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import com.google.common.collect.ImmutableMap;
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -55,13 +59,14 @@ public class AdminNodeInfoTest {
   @Mock private P2PNetwork p2pNetwork;
   @Mock private Blockchain blockchain;
   @Mock private BlockchainQueries blockchainQueries;
+  @Mock private NatService natService;
 
   private AdminNodeInfo method;
 
-  private final BytesValue nodeId =
-      BytesValue.fromHexString(
+  private final Bytes nodeId =
+      Bytes.fromHexString(
           "0x0f1b319e32017c3fcb221841f0f978701b4e9513fe6a567a2db43d43381a9c7e3dfe7cae13cbc2f56943400bacaf9082576ab087cd51983b17d729ae796f6807");
-  private final ChainHead testChainHead = new ChainHead(Hash.EMPTY, UInt256.ONE, 1L);
+  private final ChainHead testChainHead = new ChainHead(Hash.EMPTY, Difficulty.ONE, 1L);
   private final GenesisConfigOptions genesisConfigOptions =
       new StubGenesisConfigOptions().chainId(BigInteger.valueOf(2019));
   private final DefaultPeer defaultPeer =
@@ -85,7 +90,8 @@ public class AdminNodeInfoTest {
             BigInteger.valueOf(2018),
             genesisConfigOptions,
             p2pNetwork,
-            blockchainQueries);
+            blockchainQueries,
+            natService);
   }
 
   @Test
@@ -105,6 +111,57 @@ public class AdminNodeInfoTest {
     expected.put("listenAddr", "1.2.3.4:30303");
     expected.put("name", "testnet/1.0/this/that");
     expected.put("ports", ImmutableMap.of("discovery", 7890, "listener", 30303));
+    expected.put(
+        "protocols",
+        ImmutableMap.of(
+            "eth",
+            ImmutableMap.of(
+                "config",
+                genesisConfigOptions.asMap(),
+                "difficulty",
+                1L,
+                "genesis",
+                Hash.EMPTY.toString(),
+                "head",
+                Hash.EMPTY.toString(),
+                "network",
+                BigInteger.valueOf(2018))));
+
+    final JsonRpcResponse response = method.response(request);
+    assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);
+    final JsonRpcSuccessResponse actual = (JsonRpcSuccessResponse) response;
+    assertThat(actual.getResult()).isEqualTo(expected);
+  }
+
+  @Test
+  public void shouldReturnCorrectResultWhenIsNatEnvironment() {
+    when(p2pNetwork.isP2pEnabled()).thenReturn(true);
+    when(p2pNetwork.getLocalEnode()).thenReturn(Optional.of(defaultPeer.getEnodeURL()));
+
+    when(natService.queryExternalIPAddress()).thenReturn(Optional.of("3.4.5.6"));
+    when(natService.getPortMapping(NatServiceType.DISCOVERY, NetworkProtocol.UDP))
+        .thenReturn(
+            Optional.of(
+                new NatPortMapping(
+                    NatServiceType.DISCOVERY, NetworkProtocol.UDP, "", "", 8080, 8080)));
+    when(natService.getPortMapping(NatServiceType.RLPX, NetworkProtocol.TCP))
+        .thenReturn(
+            Optional.of(
+                new NatPortMapping(NatServiceType.RLPX, NetworkProtocol.TCP, "", "", 8081, 8081)));
+
+    final JsonRpcRequestContext request = adminNodeInfo();
+
+    final Map<String, Object> expected = new HashMap<>();
+    expected.put(
+        "enode",
+        "enode://0f1b319e32017c3fcb221841f0f978701b4e9513fe6a567a2db43d43381a9c7e3dfe7cae13cbc2f56943400bacaf9082576ab087cd51983b17d729ae796f6807@3.4.5.6:8081?discport=8080");
+    expected.put(
+        "id",
+        "0f1b319e32017c3fcb221841f0f978701b4e9513fe6a567a2db43d43381a9c7e3dfe7cae13cbc2f56943400bacaf9082576ab087cd51983b17d729ae796f6807");
+    expected.put("ip", "3.4.5.6");
+    expected.put("listenAddr", "3.4.5.6:8081");
+    expected.put("name", "testnet/1.0/this/that");
+    expected.put("ports", ImmutableMap.of("discovery", 8080, "listener", 8081));
     expected.put(
         "protocols",
         ImmutableMap.of(

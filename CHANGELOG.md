@@ -1,9 +1,67 @@
 # Changelog
 
-## Istanbul Compatibility
+## 1.4 Beta 1 
 
-For compatibility with Ethereum Istanbul upgrade, use v1.3.4 or later. 
+### Additions and Improvements 
 
+- Besu stops processing blocks if Orion is unavailable [\#253](https://github.com/hyperledger/besu/pull/253)
+
+## 1.3.8 
+
+### Additions and Improvements 
+
+- `admin_generateLogBloomCache` JSON-RPC API to generate a cache of the block bloombits that improves performance for log queries [\#262](https://github.com/hyperledger/besu/pull/262)
+
+## Critical Fix in 1.3.7 
+
+1.3.7 includes a critical fix for Ethereum MainNet users and the Muir Glacier upgrade. We recommend users of Ethereum public networks 
+(MainNet, Ropsten, Rinkeby, and Goerli) upgrade immediately. This upgrade is also strongly recommended for users of private networks.
+
+For more details, see [Hyperledger Besu Wiki](https://wiki.hyperledger.org/display/BESU/Mainnet+Consensus+Bug+Identified+and+Resolved+in+Hyperledger+Besu). 
+
+## Muir Glacier Compatibility
+
+For compatibility with Ethereum Muir Glacier upgrade, use v1.3.7 or later.
+
+## ETC Agharta Compatibility
+
+For compatibility with ETC Agharta upgrade, use 1.3.7 or later.
+
+### 1.3.7
+
+### Additions and Improvements
+
+- Hard Fork Support: Configures the Agharta activation block for the ETC MainNet configuration [\#251](https://github.com/hyperledger/besu/pull/251) (thanks to [soc1c](https://github.com/soc1c))
+- `operator generate-log-bloom-cache` command line option to generate a cache of the block bloombits that improves performance for log queries  [\#245](https://github.com/hyperledger/besu/pull/245)
+
+### Bug Fixes 
+
+- Resolves a Mainnet consensus issue [\#254](https://github.com/hyperledger/besu/pull/254) 
+
+### New Maintainer
+
+[Edward Mack](https://github.com/hyperledger/besu/commits?author=edwardmack) added as a [new maintainer](https://github.com/hyperledger/besu/pull/219). 
+
+### 1.3.6 
+
+### Additions and Improvements 
+
+- Performance improvements: 
+  * Multithread Websockets to increase throughput [\#231](https://github.com/hyperledger/besu/pull/231) 
+  * NewBlockHeaders performance improvement [\#230](https://github.com/hyperledger/besu/pull/230)
+- EIP2384 - Ice Age Adustment around Istanbul [\#211](https://github.com/hyperledger/besu/pull/211)
+- Documentation updates include: 
+  * [Configuring mining using the Stratum protocol](https://besu.hyperledger.org/en/latest/HowTo/Configure/Configure-Mining/)
+  * [ETC network command line options](https://besu.hyperledger.org/en/latest/Reference/CLI/CLI-Syntax/#network)
+- Hard Fork Support:
+   * MuirGlacier for Ethereum Mainnet and Ropsten Testnet
+   * Agharta for Kotti and Mordor Testnets
+
+### Bug Fixes 
+
+- [\#210](https://github.com/hyperledger/besu/pull/210) fixes WebSocket frames handling 
+  User impact: PING/PONG frames handling in Websocket services was not implemented 
+ 
 ### 1.3.5
 
 ### Additions and Improvements

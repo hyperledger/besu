@@ -22,8 +22,9 @@ import org.hyperledger.besu.ethereum.vm.AbstractOperation;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.uint.UInt256;
+
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class BlockHashOperation extends AbstractOperation {
 
@@ -40,7 +41,7 @@ public class BlockHashOperation extends AbstractOperation {
 
   @Override
   public void execute(final MessageFrame frame) {
-    final UInt256 blockArg = frame.popStackItem().asUInt256();
+    final UInt256 blockArg = UInt256.fromBytes(frame.popStackItem());
 
     // Short-circuit if value is unreasonably large
     if (!blockArg.fitsLong()) {

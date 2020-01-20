@@ -34,12 +34,12 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.LogsResult;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -202,7 +202,7 @@ public class EthGetFilterChangesTest {
         Hash.ZERO,
         0,
         Address.fromHexString("0x0"),
-        BytesValue.EMPTY,
+        Bytes.EMPTY,
         Lists.newArrayList(),
         false);
   }

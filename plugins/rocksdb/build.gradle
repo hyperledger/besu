@@ -14,12 +14,12 @@
 apply plugin: 'java-library'
 
 jar {
-  baseName 'besu-plugin-rocksdb'
+  archiveBaseName = 'besu-plugin-rocksdb'
   manifest {
     attributes(
-      'Specification-Title': baseName,
+      'Specification-Title': archiveBaseName,
       'Specification-Version': project.version,
-      'Implementation-Title': baseName,
+      'Implementation-Title': archiveBaseName,
       'Implementation-Version': calculateVersion()
       )
   }
@@ -43,9 +43,10 @@ dependencies {
   implementation 'info.picocli:picocli'
   implementation 'io.prometheus:simpleclient'
   implementation 'org.apache.logging.log4j:log4j-api'
+  implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.rocksdb:rocksdbjni'
 
-  runtime 'org.apache.logging.log4j:log4j-core'
+  runtimeOnly 'org.apache.logging.log4j:log4j-core'
 
   testImplementation project(':testutil')
 

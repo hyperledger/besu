@@ -62,7 +62,6 @@ import org.hyperledger.besu.ethereum.worldstate.PrunerConfiguration;
 import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatMethod;
-import org.hyperledger.besu.util.bytes.BytesValue;
 import org.hyperledger.besu.util.number.Fraction;
 import org.hyperledger.besu.util.number.Percentage;
 
@@ -87,6 +86,7 @@ import com.google.common.collect.Lists;
 import com.google.common.io.Resources;
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.text.StringEscapeUtils;
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.toml.Toml;
 import org.apache.tuweni.toml.TomlParseResult;
 import org.junit.Rule;
@@ -113,6 +113,8 @@ public class BesuCommandTest extends CommandTestAbstract {
           .put("config", (new JsonObject()).put("chainId", GENESIS_CONFIG_TEST_CHAINID));
   private static final JsonObject GENESIS_INVALID_DATA =
       (new JsonObject()).put("config", new JsonObject());
+  private static final String ENCLAVE_PUBLIC_KEY_PATH =
+      BesuCommand.class.getResource("/orion_publickey.pub").getPath();
 
   private final String[] validENodeStrings = {
     "enode://" + VALID_NODE_ID + "@192.168.0.1:4567",
@@ -190,7 +192,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString()).isEmpty();
     assertThat(miningArg.getValue().getCoinbase()).isEqualTo(Optional.empty());
     assertThat(miningArg.getValue().getMinTransactionGasPrice()).isEqualTo(Wei.of(1000));
-    assertThat(miningArg.getValue().getExtraData()).isEqualTo(BytesValue.EMPTY);
+    assertThat(miningArg.getValue().getExtraData()).isEqualTo(Bytes.EMPTY);
     assertThat(ethNetworkArg.getValue().getNetworkId()).isEqualTo(1);
     assertThat(ethNetworkArg.getValue().getBootNodes()).isEqualTo(MAINNET_BOOTSTRAP_NODES);
   }
@@ -1157,23 +1159,23 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void bannedNodeIdsOptionMustBeUsed() {
-    final BytesValue[] nodes = {
-      BytesValue.fromHexString(
+    final Bytes[] nodes = {
+      Bytes.fromHexString(
           "6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0"),
-      BytesValue.fromHexString(
+      Bytes.fromHexString(
           "7f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0"),
-      BytesValue.fromHexString(
+      Bytes.fromHexString(
           "0x8f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0")
     };
 
     final String nodeIdsArg =
-        Arrays.stream(nodes).map(BytesValue::toUnprefixedString).collect(Collectors.joining(","));
+        Arrays.stream(nodes).map(Bytes::toShortHexString).collect(Collectors.joining(","));
     parseCommand("--banned-node-ids", nodeIdsArg);
 
-    verify(mockRunnerBuilder).bannedNodeIds(bytesValueCollectionCollector.capture());
+    verify(mockRunnerBuilder).bannedNodeIds(bytesCollectionCollector.capture());
     verify(mockRunnerBuilder).build();
 
-    assertThat(bytesValueCollectionCollector.getValue().toArray()).isEqualTo(nodes);
+    assertThat(bytesCollectionCollector.getValue().toArray()).isEqualTo(nodes);
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
@@ -1386,6 +1388,9 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand("--nat-method", "UPNP");
     verify(mockRunnerBuilder).natMethod(eq(NatMethod.UPNP));
 
+    parseCommand("--nat-method", "AUTO");
+    verify(mockRunnerBuilder).natMethod(eq(NatMethod.AUTO));
+
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
   }
@@ -1398,7 +1403,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString())
         .contains(
-            "Invalid value for option '--nat-method': expected one of [UPNP, NONE] (case-insensitive) but was 'invalid'");
+            "Invalid value for option '--nat-method': expected one of [UPNP, MANUAL, AUTO, NONE] (case-insensitive) but was 'invalid'");
   }
 
   @Test
@@ -1412,10 +1417,10 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void natMethodPropertyDefaultIsNone() {
+  public void natMethodPropertyDefaultIsAuto() {
     parseCommand();
 
-    verify(mockRunnerBuilder).natMethod(eq(NatMethod.NONE));
+    verify(mockRunnerBuilder).natMethod(eq(NatMethod.AUTO));
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
@@ -2352,8 +2357,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString()).isEmpty();
     assertThat(miningArg.getValue().getCoinbase()).isEqualTo(Optional.of(requestedCoinbase));
     assertThat(miningArg.getValue().getMinTransactionGasPrice()).isEqualTo(Wei.of(15));
-    assertThat(miningArg.getValue().getExtraData())
-        .isEqualTo(BytesValue.fromHexString(extraDataString));
+    assertThat(miningArg.getValue().getExtraData()).isEqualTo(Bytes.fromHexString(extraDataString));
   }
 
   @Test
@@ -2666,6 +2670,14 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void privacyWithoutPrivacyPublicKeyFails() {
+    parseCommand("--privacy-enabled", "--privacy-url", ENCLAVE_URI);
+
+    assertThat(commandErrorOutput.toString())
+        .startsWith("Please specify Enclave public key file path to enable privacy");
+  }
+
+  @Test
   public void mustVerifyPrivacyIsDisabled() {
     parseCommand();
 
@@ -2678,6 +2690,55 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
     assertThat(enclaveArg.getValue().isEnabled()).isEqualTo(false);
+  }
+
+  @Test
+  public void privacyMultiTenancyIsConfiguredWhenConfiguredWithNecessaryOptions() {
+    when(storageService.getByName("rocksdb-privacy"))
+        .thenReturn(Optional.of(rocksDBSPrivacyStorageFactory));
+
+    parseCommand(
+        "--privacy-enabled",
+        "--rpc-http-authentication-enabled",
+        "--privacy-multi-tenancy-enabled",
+        "--rpc-http-authentication-jwt-public-key-file",
+        "/non/existent/file");
+
+    final ArgumentCaptor<PrivacyParameters> privacyParametersArgumentCaptor =
+        ArgumentCaptor.forClass(PrivacyParameters.class);
+
+    verify(mockControllerBuilder).privacyParameters(privacyParametersArgumentCaptor.capture());
+    verify(mockControllerBuilder).build();
+
+    assertThat(privacyParametersArgumentCaptor.getValue().isMultiTenancyEnabled()).isTrue();
+  }
+
+  @Test
+  public void privacyMultiTenancyWithoutAuthenticationFails() {
+    parseCommand(
+        "--privacy-enabled",
+        "--privacy-multi-tenancy-enabled",
+        "--rpc-http-authentication-jwt-public-key-file",
+        "/non/existent/file");
+
+    assertThat(commandErrorOutput.toString())
+        .startsWith(
+            "Privacy multi-tenancy requires either http authentication to be enabled or WebSocket authentication to be enabled");
+  }
+
+  @Test
+  public void privacyMultiTenancyWithPrivacyPublicKeyFileFails() {
+    parseCommand(
+        "--privacy-enabled",
+        "--rpc-http-authentication-enabled",
+        "--privacy-multi-tenancy-enabled",
+        "--rpc-http-authentication-jwt-public-key-file",
+        "/non/existent/file",
+        "--privacy-public-key-file",
+        ENCLAVE_PUBLIC_KEY_PATH);
+
+    assertThat(commandErrorOutput.toString())
+        .startsWith("Privacy multi-tenancy and privacy public key cannot be used together");
   }
 
   private Path createFakeGenesisFile(final JsonObject jsonGenesis) throws IOException {
@@ -3137,5 +3198,36 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void privEnclaveKeyFileDoesNotExist() {
+    parseCommand("--privacy-enabled=true", "--privacy-public-key-file", "/non/existent/file");
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).startsWith("Problem with privacy-public-key-file");
+    assertThat(commandErrorOutput.toString()).contains("No such file");
+  }
+
+  @Test
+  public void privEnclaveKeyFileInvalidContentTooShort() throws IOException {
+    final Path file = createTempFile("privacy.key", "lkjashdfiluhwelrk");
+    parseCommand("--privacy-enabled=true", "--privacy-public-key-file", file.toString());
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString())
+        .startsWith("Contents of privacy-public-key-file invalid");
+    assertThat(commandErrorOutput.toString()).contains("needs to be 44 characters long");
+  }
+
+  @Test
+  public void privEnclaveKeyFileInvalidContentNotValidBase64() throws IOException {
+    final Path file = createTempFile("privacy.key", "l*jashdfillk9ashdfillkjashdfillkjashdfilrtg=");
+    parseCommand("--privacy-enabled=true", "--privacy-public-key-file", file.toString());
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString())
+        .startsWith("Contents of privacy-public-key-file invalid");
+    assertThat(commandErrorOutput.toString()).contains("Illegal base64 character");
   }
 }

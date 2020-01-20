@@ -17,10 +17,11 @@ package org.hyperledger.besu.ethereum.core;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.List;
 import java.util.Objects;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class Block {
 
@@ -44,7 +45,7 @@ public class Block {
     return header.getHash();
   }
 
-  public BytesValue toRlp() {
+  public Bytes toRlp() {
     return RLP.encode(this::writeTo);
   }
 

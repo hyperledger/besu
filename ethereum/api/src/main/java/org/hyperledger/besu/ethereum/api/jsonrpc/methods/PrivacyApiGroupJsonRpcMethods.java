@@ -14,20 +14,29 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.MultiTenancyUserUtil.enclavePublicKey;
+
 import org.hyperledger.besu.ethereum.api.jsonrpc.LatestNonceProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.DisabledPrivacyRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.MultiTenancyRpcMethodDecorator;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransactionHandler;
+import org.hyperledger.besu.ethereum.privacy.DefaultPrivacyController;
+import org.hyperledger.besu.ethereum.privacy.MultiTenancyPrivacyController;
+import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.FixedKeySigningPrivateMarkerTransactionFactory;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.PrivateMarkerTransactionFactory;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.RandomSigningPrivateMarkerTransactionFactory;
 
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
@@ -68,16 +77,17 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
     final PrivateMarkerTransactionFactory markerTransactionFactory =
         createPrivateMarkerTransactionFactory(
             privacyParameters, blockchainQueries, transactionPool.getPendingTransactions());
-
-    final PrivateTransactionHandler privateTransactionHandler =
-        new PrivateTransactionHandler(
-            privacyParameters, protocolSchedule.getChainId(), markerTransactionFactory);
-
-    return create(privateTransactionHandler);
+    final EnclavePublicKeyProvider enclavePublicProvider = createEnclavePublicKeyProvider();
+    final PrivacyController privacyController = createPrivacyController(markerTransactionFactory);
+    return create(privacyController, enclavePublicProvider).entrySet().stream()
+        .collect(
+            Collectors.toMap(
+                Entry::getKey, entry -> createPrivacyMethod(privacyParameters, entry.getValue())));
   }
 
   protected abstract Map<String, JsonRpcMethod> create(
-      final PrivateTransactionHandler privateTransactionHandler);
+      final PrivacyController privacyController,
+      final EnclavePublicKeyProvider enclavePublicKeyProvider);
 
   private PrivateMarkerTransactionFactory createPrivateMarkerTransactionFactory(
       final PrivacyParameters privacyParameters,
@@ -94,5 +104,44 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
           privacyParameters.getSigningKeyPair().get());
     }
     return new RandomSigningPrivateMarkerTransactionFactory(privateContractAddress);
+  }
+
+  private EnclavePublicKeyProvider createEnclavePublicKeyProvider() {
+    return privacyParameters.isMultiTenancyEnabled()
+        ? multiTenancyEnclavePublicKeyProvider()
+        : defaultEnclavePublicKeyProvider();
+  }
+
+  private EnclavePublicKeyProvider multiTenancyEnclavePublicKeyProvider() {
+    return user ->
+        enclavePublicKey(user)
+            .orElseThrow(
+                () -> new IllegalStateException("Request does not contain an authorization token"));
+  }
+
+  private EnclavePublicKeyProvider defaultEnclavePublicKeyProvider() {
+    return user -> privacyParameters.getEnclavePublicKey();
+  }
+
+  private PrivacyController createPrivacyController(
+      final PrivateMarkerTransactionFactory markerTransactionFactory) {
+    final DefaultPrivacyController defaultPrivacyController =
+        new DefaultPrivacyController(
+            privacyParameters, protocolSchedule.getChainId(), markerTransactionFactory);
+    return privacyParameters.isMultiTenancyEnabled()
+        ? new MultiTenancyPrivacyController(
+            defaultPrivacyController, privacyParameters.getEnclave())
+        : defaultPrivacyController;
+  }
+
+  private JsonRpcMethod createPrivacyMethod(
+      final PrivacyParameters privacyParameters, final JsonRpcMethod rpcMethod) {
+    if (privacyParameters.isEnabled() && privacyParameters.isMultiTenancyEnabled()) {
+      return new MultiTenancyRpcMethodDecorator(rpcMethod);
+    } else if (!privacyParameters.isEnabled()) {
+      return new DisabledPrivacyRpcMethod(rpcMethod.getName());
+    } else {
+      return rpcMethod;
+    }
   }
 }
