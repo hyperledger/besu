@@ -43,7 +43,8 @@ Keep in mind that the process for installing and running Besu as a user is diffe
 ### Development
 
 Instructions for how to get started with developing on the Besu codebase. Please also read the
-[contribution guidelines](CONTRIBUTING.md) for more detail on how to submit a pull request (PR).
+[contribution guidelines](CONTRIBUTING.md) for more detail on how to submit a pull request (PR).   
+Also feel free to [contact our Developer Advocate](https://chat.hyperledger.org/direct/faraggi) with any questions about contributing to the project.
 
 * [Checking Out and Building](docs/development/building.md)
 * [Running Developer Builds](docs/development/running-developer-builds.md)
