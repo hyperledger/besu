@@ -76,6 +76,7 @@ dependencyManagement {
 
     dependency 'org.awaitility:awaitility:4.0.1'
 
+    dependency 'org.bouncycastle:bcpkix-jdk15on:1.64'
     dependency 'org.bouncycastle:bcprov-jdk15on:1.64'
 
     dependency 'org.java-websocket:Java-WebSocket:1.4.0'
