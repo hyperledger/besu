@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.4 Beta 2 
+
+### Bug Fixes 
+
+- TotalDifficulty is a BigInteger [\#253](https://github.com/hyperledger/besu/pull/253). 
+  Don't try and cast total difficulty down to a long because it will overflow long in a reasonable timeframe.
+
 ## 1.4 Beta 1 
 
 ### Additions and Improvements 
