@@ -16,12 +16,16 @@ package org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy;
 
 import static java.util.Collections.singletonList;
 
+import org.assertj.core.util.Lists;
 import org.web3j.protocol.Web3jService;
 import org.web3j.protocol.besu.Besu;
 import org.web3j.protocol.core.Request;
 import org.web3j.protocol.core.Response;
 
 public class PrivacyRequestFactory {
+
+  public static class GetPrivacyPrecompileAddressResponse extends Response<String> {}
+
   private final Besu besuClient;
   private final Web3jService web3jService;
 
@@ -50,5 +54,13 @@ public class PrivacyRequestFactory {
     public String getTransactionKey() {
       return getResult();
     }
+  }
+
+  public Request<?, GetPrivacyPrecompileAddressResponse> privGetPrivacyPrecompileAddress() {
+    return new Request<>(
+        "priv_getPrivacyPrecompileAddress",
+        Lists.emptyList(),
+        web3jService,
+        GetPrivacyPrecompileAddressResponse.class);
   }
 }

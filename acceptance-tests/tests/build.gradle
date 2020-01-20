@@ -33,6 +33,9 @@ dependencies {
   testImplementation 'org.web3j:besu'
   testImplementation 'tech.pegasys.ethsigner.internal:core'
   testImplementation 'tech.pegasys.ethsigner.internal:file-based'
+
+  testCompile 'org.mock-server:mockserver-netty:5.8.1'
+  testCompile 'org.mock-server:mockserver-client-java:5.8.1'
 }
 
 test.enabled = false
