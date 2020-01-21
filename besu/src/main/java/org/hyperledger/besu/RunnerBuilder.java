@@ -91,6 +91,8 @@ import org.hyperledger.besu.metrics.prometheus.MetricsService;
 import org.hyperledger.besu.nat.NatMethod;
 import org.hyperledger.besu.nat.NatService;
 import org.hyperledger.besu.nat.core.NatManager;
+import org.hyperledger.besu.nat.docker.DockerAutoDetection;
+import org.hyperledger.besu.nat.docker.DockerNatManager;
 import org.hyperledger.besu.nat.manual.ManualNatManager;
 import org.hyperledger.besu.nat.upnp.UpnpNatManager;
 import org.hyperledger.besu.plugin.BesuPlugin;
@@ -581,13 +583,15 @@ public class RunnerBuilder {
     final NatMethod detectedNatMethod =
         Optional.of(natMethod)
             .filter(not(isEqual(NatMethod.AUTO)))
-            .orElse(NatService.autoDetectNatMethod());
+            .orElse(NatService.autoDetectNatMethod(new DockerAutoDetection()));
     switch (detectedNatMethod) {
       case UPNP:
         return Optional.of(new UpnpNatManager());
       case MANUAL:
         return Optional.of(
             new ManualNatManager(p2pAdvertisedHost, p2pListenPort, jsonRpcConfiguration.getPort()));
+      case DOCKER:
+        return Optional.of(new DockerNatManager());
       case NONE:
       default:
         return Optional.empty();

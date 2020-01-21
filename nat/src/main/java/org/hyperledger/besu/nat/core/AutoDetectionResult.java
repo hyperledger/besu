@@ -17,6 +17,8 @@ package org.hyperledger.besu.nat.core;
 
 import org.hyperledger.besu.nat.NatMethod;
 
+import java.util.Objects;
+
 public class AutoDetectionResult {
 
   private final NatMethod natMethod;
@@ -33,5 +35,23 @@ public class AutoDetectionResult {
 
   public boolean isDetectedNatMethod() {
     return isDetectedNatMethod;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(natMethod, isDetectedNatMethod);
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    final AutoDetectionResult that = (AutoDetectionResult) o;
+    return Objects.equals(natMethod, that.natMethod)
+        && isDetectedNatMethod == that.isDetectedNatMethod;
   }
 }
