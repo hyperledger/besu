@@ -22,7 +22,7 @@ public class MemoryEntry {
   private final UInt256 offset;
   private final Bytes value;
 
-  public MemoryEntry(UInt256 offset, Bytes value) {
+  public MemoryEntry(final UInt256 offset, final Bytes value) {
     this.offset = offset;
     this.value = value;
   }
