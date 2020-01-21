@@ -90,9 +90,11 @@ public class DebugOperationTracer implements OperationTracer {
               stackPostExecution,
               memoryPostExecution,
               storagePreExecution,
-              currentOperation.isVirtualOperation());
+              currentOperation.isVirtualOperation(),
+              frame.getMaybeUpdatedMemory());
       traceFrames.add(lastFrame);
     }
+    frame.reset();
   }
 
   private Optional<Map<UInt256, UInt256>> captureStorage(final MessageFrame frame) {

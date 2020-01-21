@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.vm;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.Trace;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.TracingUtils;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.vm.Code;
@@ -127,7 +126,14 @@ public class VmTraceGenerator {
                     .map(stack -> stack[stack.length - 1])
                     .map(last -> Quantity.create(UInt256.fromHexString(last.toHexString())))
                     .ifPresent(report::singlePush);
+                if (!"DELEGATECALL".equals(currentTraceFrame.getOpcode())) {
+                  lastFrameInCall
+                      .getMemory()
+                      .map(mem -> new Mem(mem[0].toHexString(), 0))
+                      .ifPresent(report::setMem);
+                }
               });
+
       op.setSub(newSubTrace);
     }
   }
@@ -157,10 +163,12 @@ public class VmTraceGenerator {
   }
 
   private void generateTracingMemory(final VmOperationExecutionReport report) {
-    updatedMemory(currentTraceFrame.getMemory(), currentTraceFrame.getMemoryPostExecution())
-        .filter(memory -> memory.length > 0)
-        .map(TracingUtils::dumpMemoryAndTrimTrailingZeros)
-        .map(Mem::new)
+    currentTraceFrame
+        .getMaybeUpdatedMemory()
+        .map(
+            updatedMemory ->
+                new Mem(
+                    updatedMemory.getValue().toHexString(), updatedMemory.getOffset().intValue()))
         .ifPresent(report::setMem);
   }
 
