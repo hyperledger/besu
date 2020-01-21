@@ -1,5 +1,32 @@
 # Changelog
 
+## 1.4 Beta 2 
+
+### Additions and Improvements 
+
+- Enable TLS for JSON-RPC HTTP Service [\#253](https://github.com/hyperledger/besu/pull/253)
+
+Exposes new command line parameters to enable TLS on Ethereum JSON-RPC HTTP interface to allow clients like EthSigner to connect via TLS: 
+`--rpc-http-tls-enabled=true`
+(Optional - Only required if `--rpc-http-enabled` is set to true) Set to `true` to enable TLS. False by default.
+`--rpc-http-tls-keystore-file="/path/to/cert.pfx"`
+(Must be specified if TLS is enabled) Path to PKCS12 format key store which contains server's certificate and it's private key
+`--rpc-http-tls-keystore-password-file="/path/to/cert.passwd"`
+(Must be specified if TLS is enabled) Path to the text file containing password for unlocking key store.
+`--rpc-http-tls-known-clients-file="/path/to/rpc_tls_clients.txt"`
+(Optional) Path to a plain text file containing space separated client’s certificate’s common name and its sha-256 fingerprints when 
+they are not signed by a known CA. The presence of this file (even empty) enables TLS client authentication. That is, the client 
+presents the certificate to server on TLS handshake and server establishes that the client certificate is either signed by a 
+proper/known CA. Otherwise, server trusts client certificate by reading the sha-256 fingerprint from known clients file specified above. 
+
+The format of the file is (as an example):
+`localhost DF:65:B8:02:08:5E:91:82:0F:91:F5:1C:96:56:92:C4:1A:F6:C6:27:FD:6C:FC:31:F2:BB:90:17:22:59:5B:50`
+
+### Bug Fixes 
+
+- TotalDifficulty is a BigInteger [\#253](https://github.com/hyperledger/besu/pull/253). 
+  Don't try and cast total difficulty down to a long because it will overflow long in a reasonable timeframe.
+
 ## 1.4 Beta 1 
 
 ### Additions and Improvements 
