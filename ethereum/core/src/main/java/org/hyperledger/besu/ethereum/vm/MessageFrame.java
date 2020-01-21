@@ -629,7 +629,12 @@ public class MessageFrame {
 
   private void setUpdatedMemory(
       final UInt256 offset, final UInt256 sourceOffset, final UInt256 length, final Bytes value) {
-    setUpdatedMemory(offset, value.slice(sourceOffset.intValue(), length.intValue()).copy());
+    final int srcOff = sourceOffset.intValue();
+    final int len = length.intValue();
+    if (srcOff < 0 || srcOff + len > value.size()) {
+      return;
+    }
+    setUpdatedMemory(offset, value.slice(srcOff, len).copy());
   }
 
   private void setUpdatedMemory(final UInt256 offset, final Bytes value) {
