@@ -33,4 +33,12 @@ public class PrivConditions {
   public Condition privDeletePrivacyGroup(final String groupId) {
     return new PrivDeletePrivacyGroupSuccess(transactions.privDeletePrivacyGroup(groupId), groupId);
   }
+
+  public Condition privFindPrivacyGroup(final String[] groupMembers) {
+    return new PrivFindPrivacyGroupSuccess(transactions.privFindPrivacyGroup(groupMembers));
+  }
+
+  public Condition privGetTransactionCount(final Object[] params) {
+    return new PrivGetTransactionCountSuccess(transactions.privGetTransactionCount(params));
+  }
 }

@@ -38,6 +38,7 @@ import org.junit.Test;
 public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
   private BesuNode node;
   private Cluster multiTenancyCluster;
+  private String token;
   private static final int enclavePort = 1080;
   private final String privacyGroupId = "groupId";
   private final String enclaveKey = "negmDcN2P4ODpqn/6WkJ02zT/0w0bjhGpkZ8UP6vARk=";
@@ -49,20 +50,22 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
     final ClusterConfiguration clusterConfiguration =
         new ClusterConfigurationBuilder().awaitPeerDiscovery(false).build();
     multiTenancyCluster = new Cluster(clusterConfiguration, net);
-
     node =
         besu.createNodeWithMultiTenancyEnabled(
             "node1", "http://127.0.0.1:" + enclavePort, "authentication/auth_priv.toml");
     this.multiTenancyCluster.start(node);
+    token = node.execute(permissioningTransactions.createSuccessfulLogin("user", "pegasys"));
   }
 
   @Test
   public void shouldSucceedWithValidTokenParams() {
-    final String token =
-        node.execute(permissioningTransactions.createSuccessfulLogin("user", "pegasys"));
     node.useAuthenticationTokenInHeaderForJsonRpc(token);
     node.verify(priv.privGetPrivacyPrecompileAddressSuccess());
   }
+
+  // priv_getPrivacyPrecompileAddress
+  // priv_getPrivateTransaction
+  // priv_createPrivacyGroup
 
   @Test
   public void shouldDeletePrivacyGroup() throws JsonProcessingException {
@@ -76,9 +79,42 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
     final String deleteGroupResponse = mapper.writeValueAsString(privacyGroupId);
     stubFor(post("/deletePrivacyGroup").willReturn(ok(deleteGroupResponse)));
 
-    final String token =
-        node.execute(permissioningTransactions.createSuccessfulLogin("user", "pegasys"));
     node.useAuthenticationTokenInHeaderForJsonRpc(token);
     node.verify(priv.privDeletePrivacyGroup(privacyGroupId));
+  }
+
+  @Test
+  public void shouldFindPrivacyGroup() throws JsonProcessingException {
+    final ObjectMapper mapper = new ObjectMapper();
+    final String findGroupResponse =
+        mapper.writeValueAsString(
+            List.of(
+                new PrivacyGroup(
+                    "groupId",
+                    PrivacyGroup.Type.PANTHEON,
+                    "test",
+                    "testGroup",
+                    List.of(enclaveKey))));
+    stubFor(post("/findPrivacyGroup").willReturn(ok(findGroupResponse)));
+
+    final String[] paramArray = {enclaveKey};
+
+    node.useAuthenticationTokenInHeaderForJsonRpc(token);
+    node.verify(priv.privFindPrivacyGroup(paramArray));
+  }
+
+  @Test
+  public void shouldGetTransactionCount() throws JsonProcessingException {
+    final ObjectMapper mapper = new ObjectMapper();
+    final String retrieveGroupResponse =
+        mapper.writeValueAsString(
+            new PrivacyGroup(
+                "groupId", PrivacyGroup.Type.PANTHEON, "test", "testGroup", List.of(enclaveKey)));
+    stubFor(post("/retrievePrivacyGroup").willReturn(ok(retrieveGroupResponse)));
+
+    final Object[] params = new Object[] {"0xebf56429e6500e84442467292183d4d621359838", "groupId"};
+
+    node.useAuthenticationTokenInHeaderForJsonRpc(token);
+    node.verify(priv.privGetTransactionCount(params));
   }
 }

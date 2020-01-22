@@ -16,6 +16,12 @@ package org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy;
 
 import static java.util.Collections.singletonList;
 
+import org.hyperledger.besu.enclave.types.PrivacyGroup;
+
+import java.util.Arrays;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.assertj.core.util.Lists;
 import org.web3j.protocol.Web3jService;
 import org.web3j.protocol.besu.Besu;
@@ -27,6 +33,21 @@ public class PrivacyRequestFactory {
   public static class GetPrivacyPrecompileAddressResponse extends Response<String> {}
 
   public static class DeletePrivacyGroup extends Response<String> {}
+
+  public static class FindPrivacyGroup extends Response<PrivacyGroup[]> {}
+
+  public static class GetTransactionCount extends Response<String> {
+    final Integer count;
+
+    @JsonCreator
+    public GetTransactionCount(@JsonProperty("result") final String hex) {
+      this.count = Integer.decode(hex);
+    }
+
+    public Integer getCount() {
+      return count;
+    }
+  }
 
   private final Besu besuClient;
   private final Web3jService web3jService;
@@ -72,5 +93,15 @@ public class PrivacyRequestFactory {
         singletonList(transactionHash),
         web3jService,
         DeletePrivacyGroup.class);
+  }
+
+  public Request<?, FindPrivacyGroup> privFindPrivacyGroup(final String[] groupMembers) {
+    return new Request<>(
+        "priv_findPrivacyGroup", singletonList(groupMembers), web3jService, FindPrivacyGroup.class);
+  }
+
+  public Request<?, GetTransactionCount> privGetTransactionCount(final Object[] params) {
+    return new Request<>(
+        "priv_getTransactionCount", Arrays.asList(params), web3jService, GetTransactionCount.class);
   }
 }

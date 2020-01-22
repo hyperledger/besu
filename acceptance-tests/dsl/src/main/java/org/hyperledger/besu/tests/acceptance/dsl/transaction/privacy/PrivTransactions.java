@@ -22,4 +22,12 @@ public class PrivTransactions {
   public PrivDeletePrivacyGroupTransaction privDeletePrivacyGroup(final String transactionHash) {
     return new PrivDeletePrivacyGroupTransaction(transactionHash);
   }
+
+  public PrivFindPrivacyGroupTransaction privFindPrivacyGroup(final String[] groupMembers) {
+    return new PrivFindPrivacyGroupTransaction(groupMembers);
+  }
+
+  public PrivGetTransactionCountTransaction privGetTransactionCount(final Object[] params) {
+    return new PrivGetTransactionCountTransaction(params);
+  }
 }
