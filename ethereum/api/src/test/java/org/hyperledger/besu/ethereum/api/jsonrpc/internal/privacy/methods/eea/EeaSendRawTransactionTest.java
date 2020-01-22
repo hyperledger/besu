@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea;
 
+import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -24,6 +25,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.enclave.EnclaveServerException;
+import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
@@ -246,6 +248,10 @@ public class EeaSendRawTransactionTest {
     when(privacyController.validatePrivateTransaction(
             any(PrivateTransaction.class), any(String.class), any()))
         .thenReturn(ValidationResult.valid());
+    when(privacyController.retrievePrivacyGroup(any(String.class)))
+        .thenReturn(
+            new PrivacyGroup(
+                "", PrivacyGroup.Type.PANTHEON, "", "", singletonList(ENCLAVE_PUBLIC_KEY)));
     when(privacyController.createPrivacyMarkerTransaction(
             any(String.class), any(PrivateTransaction.class)))
         .thenReturn(PUBLIC_TRANSACTION);
@@ -272,6 +278,43 @@ public class EeaSendRawTransactionTest {
         .validatePrivateTransaction(any(PrivateTransaction.class), any(String.class), any());
     verify(privacyController)
         .createPrivacyMarkerTransaction(any(String.class), any(PrivateTransaction.class));
+    verify(transactionPool).addLocalTransaction(any(Transaction.class));
+  }
+
+  @Test
+  public void validOnChainTransactionPrivacyGroupIsSentToTransactionPool() {
+    when(privacyController.sendTransaction(any(PrivateTransaction.class), any()))
+        .thenReturn(new SendTransactionResponse(MOCK_ORION_KEY, MOCK_PRIVACY_GROUP));
+    when(privacyController.validatePrivateTransaction(
+            any(PrivateTransaction.class), any(String.class), any()))
+        .thenReturn(ValidationResult.valid());
+    when(privacyController.createPrivacyMarkerTransaction(
+            any(String.class), any(PrivateTransaction.class), any(Address.class)))
+        .thenReturn(PUBLIC_TRANSACTION);
+    when(transactionPool.addLocalTransaction(any(Transaction.class)))
+        .thenReturn(ValidationResult.valid());
+
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest(
+                "2.0",
+                "eea_sendRawTransaction",
+                new String[] {VALID_PRIVATE_TRANSACTION_RLP_PRIVACY_GROUP}));
+
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcSuccessResponse(
+            request.getRequest().getId(),
+            "0x221e930a2c18d91fca4d509eaa3512f3e01fef266f660e32473de67474b36c15");
+
+    final JsonRpcResponse actualResponse = method.response(request);
+
+    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+    verify(privacyController).sendTransaction(any(PrivateTransaction.class), any());
+    verify(privacyController)
+        .validatePrivateTransaction(any(PrivateTransaction.class), any(String.class), any());
+    verify(privacyController)
+        .createPrivacyMarkerTransaction(
+            any(String.class), any(PrivateTransaction.class), any(Address.class));
     verify(transactionPool).addLocalTransaction(any(Transaction.class));
   }
 

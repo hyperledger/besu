@@ -37,16 +37,23 @@ import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.enclave.types.PrivacyGroup.Type;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.enclave.types.SendResponse;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.FixedKeySigningPrivateMarkerTransactionFactory;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.orion.testutil.OrionKeyUtils;
 
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -79,6 +86,9 @@ public class PrivacyControllerTest {
   private Enclave enclave;
   private String enclavePublicKey;
   private PrivateNonceProvider privateNonceProvider;
+  private PrivateTransactionSimulator privateTransactionSimulator;
+  private Blockchain blockchain;
+  private PrivateStateStorage privateStateStorage;
 
   private static final Transaction PUBLIC_TRANSACTION =
       Transaction.builder()
@@ -117,6 +127,9 @@ public class PrivacyControllerTest {
 
   @Before
   public void setUp() throws Exception {
+    blockchain = mock(Blockchain.class);
+    privateTransactionSimulator = mock(PrivateTransactionSimulator.class);
+    privateStateStorage = mock(PrivateStateStorage.class);
     privateNonceProvider = mock(ChainHeadPrivateNonceProvider.class);
 
     enclavePublicKey = OrionKeyUtils.loadKey("orion_key_0.pub");
@@ -125,20 +138,24 @@ public class PrivacyControllerTest {
 
     privacyController =
         new PrivacyController(
+            blockchain,
             enclave,
             privateTransactionValidator,
             new FixedKeySigningPrivateMarkerTransactionFactory(
                 Address.DEFAULT_PRIVACY, (address) -> 0, KEY_PAIR),
             privateNonceProvider,
-            privateTransactionSimulator);
+            privateTransactionSimulator,
+            privateStateStorage);
     brokenPrivacyController =
         new PrivacyController(
+            blockchain,
             brokenMockEnclave(),
             privateTransactionValidator,
             new FixedKeySigningPrivateMarkerTransactionFactory(
                 Address.DEFAULT_PRIVACY, (address) -> 0, KEY_PAIR),
             privateNonceProvider,
-            privateTransactionSimulator);
+            privateTransactionSimulator,
+            privateStateStorage);
   }
 
   @Test
@@ -169,7 +186,6 @@ public class PrivacyControllerTest {
 
   @Test
   public void sendValidBesuTransaction() {
-
     final PrivateTransaction transaction = buildBesuPrivateTransaction(1);
 
     final SendTransactionResponse sendTransactionResponse =
@@ -192,6 +208,41 @@ public class PrivacyControllerTest {
     assertThat(markerTransaction.getSender()).isEqualTo(PUBLIC_TRANSACTION.getSender());
     assertThat(markerTransaction.getValue()).isEqualTo(PUBLIC_TRANSACTION.getValue());
     verify(enclave).send(anyString(), eq(ENCLAVE_PUBLIC_KEY), eq(PRIVACY_GROUP_ID));
+  }
+
+  @Test
+  public void findOnChainPrivacyGroups() {
+    final List<String> privacyGroupAddresses = newArrayList(ENCLAVE_PUBLIC_KEY, ENCLAVE_KEY2);
+
+    final PrivacyGroup privacyGroup =
+        new PrivacyGroup(PRIVACY_GROUP_ID, Type.PANTHEON, "", "", privacyGroupAddresses);
+
+    final PrivacyGroupHeadBlockMap privacyGroupHeadBlockMap =
+        new PrivacyGroupHeadBlockMap(
+            Map.of(Bytes32.wrap(Bytes.fromBase64String(PRIVACY_GROUP_ID)), Hash.ZERO));
+    when(privateStateStorage.getPrivacyGroupHeadBlockMap(any()))
+        .thenReturn(Optional.of(privacyGroupHeadBlockMap));
+    when(privateTransactionSimulator.process(any(), any(), any()))
+        .thenReturn(
+            Optional.of(
+                new PrivateTransactionProcessor.Result(
+                    TransactionProcessor.Result.Status.SUCCESSFUL,
+                    emptyList(),
+                    0,
+                    Bytes.fromHexString(
+                        "0x0000000000000000000000000000000000000000000000000000000000000020"
+                            + "0000000000000000000000000000000000000000000000000000000000000002"
+                            + Bytes.fromBase64String(ENCLAVE_PUBLIC_KEY).toUnprefixedHexString()
+                            + Bytes.fromBase64String(ENCLAVE_KEY2).toUnprefixedHexString()),
+                    ValidationResult.valid(),
+                    Optional.empty())));
+
+    final List<PrivacyGroup> privacyGroups =
+        privacyController.findOnChainPrivacyGroup(privacyGroupAddresses, ENCLAVE_PUBLIC_KEY);
+    assertThat(privacyGroups).hasSize(1);
+    assertThat(privacyGroups.get(0)).isEqualToComparingFieldByField(privacyGroup);
+    verify(privateStateStorage).getPrivacyGroupHeadBlockMap(any());
+    verify(privateTransactionSimulator).process(any(), any(), any());
   }
 
   @Test

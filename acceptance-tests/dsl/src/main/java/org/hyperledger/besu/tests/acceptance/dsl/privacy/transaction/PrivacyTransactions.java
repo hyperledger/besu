@@ -32,12 +32,16 @@ public class PrivacyTransactions {
   }
 
   public CreateOnChainPrivacyGroupTransaction createOnChainPrivacyGroup(
-      final String name, final String description, final PrivacyNode... nodes) {
-    return new CreateOnChainPrivacyGroupTransaction(name, description, nodes);
+      final PrivacyNode creator, final PrivacyNode... nodes) {
+    return new CreateOnChainPrivacyGroupTransaction(creator, nodes);
   }
 
   public FindPrivacyGroupTransaction findPrivacyGroup(final List<String> nodes) {
     return new FindPrivacyGroupTransaction(nodes);
+  }
+
+  public FindOnChainPrivacyGroupTransaction findOnChainPrivacyGroup(final List<String> nodes) {
+    return new FindOnChainPrivacyGroupTransaction(nodes);
   }
 
   public PrivDistributeTransactionTransaction privDistributeTransaction(

@@ -18,7 +18,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.privx.PrivxCreatePrivacyGroup;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.privx.PrivxFindPrivacyGroup;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -50,11 +50,6 @@ public class PrivxJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
       final EnclavePublicKeyProvider enclavePublicKeyProvider,
       final GroupCreationTransactionFactory groupCreationTransactionFactory,
       final PrivateTransactionSimulator privateTransactionSimulator) {
-    return mapOf(
-        new PrivxCreatePrivacyGroup(
-            privacyController,
-            groupCreationTransactionFactory,
-            enclavePublicKeyProvider,
-            getTransactionPool()));
+    return mapOf(new PrivxFindPrivacyGroup(privacyController, enclavePublicKeyProvider));
   }
 }

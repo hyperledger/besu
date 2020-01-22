@@ -14,37 +14,96 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Collections.singletonList;
 
+import org.hyperledger.besu.crypto.SecureRandomProvider;
+import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
+
+import java.io.IOException;
+import java.math.BigInteger;
+import java.security.SecureRandom;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.tuweni.bytes.Bytes;
+import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3jService;
 import org.web3j.protocol.besu.Besu;
+import org.web3j.protocol.besu.response.privacy.PrivFindPrivacyGroup;
 import org.web3j.protocol.core.Request;
 import org.web3j.protocol.core.Response;
+import org.web3j.protocol.eea.crypto.PrivateTransactionEncoder;
+import org.web3j.protocol.eea.crypto.RawPrivateTransaction;
+import org.web3j.utils.Base64String;
+import org.web3j.utils.Numeric;
 
 public class PrivacyRequestFactory {
+  private static final Bytes DEFAULT_PRIVACY_ADD_METHOD_SIGNATURE =
+      Bytes.fromHexString("0xf744b089");
   private final Besu besuClient;
   private final Web3jService web3jService;
+  private final SecureRandom secureRandom;
 
   public PrivacyRequestFactory(final Web3jService web3jService) {
     this.web3jService = web3jService;
     this.besuClient = Besu.build(web3jService);
+    this.secureRandom = SecureRandomProvider.createSecureRandom();
   }
 
   public Besu getBesuClient() {
     return besuClient;
   }
 
-  public Request<?, PrivxCreatePrivacyGroupResponse> privxCreatePrivacyGroup(
-      final List<String> addresses, final String name, final String description) {
+  public PrivxCreatePrivacyGroup privxCreatePrivacyGroup(
+      final PrivacyNode creator, final List<String> addresses) throws IOException {
+
+    final byte[] bytes = new byte[32];
+    secureRandom.nextBytes(bytes);
+    final Bytes privacyGroupId = Bytes.wrap(bytes);
+
+    final BigInteger nonce =
+        besuClient
+            .privGetTransactionCount(
+                creator.getAddress().toHexString(),
+                Base64String.wrap(privacyGroupId.toArrayUnsafe()))
+            .send()
+            .getTransactionCount();
+
+    final Bytes payload =
+        encodeParameters(
+            Bytes.fromBase64String(creator.getEnclaveKey()),
+            addresses.stream().map(Bytes::fromBase64String).collect(Collectors.toList()));
+
+    final RawPrivateTransaction privateTransaction =
+        RawPrivateTransaction.createTransaction(
+            nonce,
+            BigInteger.valueOf(1000),
+            BigInteger.valueOf(3000000),
+            Address.PRIVACY_PROXY.toHexString(),
+            payload.toHexString(),
+            Base64String.wrap(creator.getEnclaveKey()),
+            Base64String.wrap(privacyGroupId.toArrayUnsafe()),
+            org.web3j.utils.Restriction.RESTRICTED);
+
+    final String transactionHash =
+        besuClient
+            .eeaSendRawTransaction(
+                Numeric.toHexString(
+                    PrivateTransactionEncoder.signMessage(
+                        privateTransaction,
+                        Credentials.create(creator.getTransactionSigningKey()))))
+            .send()
+            .getTransactionHash();
+    return new PrivxCreatePrivacyGroup(privacyGroupId.toBase64String(), transactionHash);
+  }
+
+  public Request<?, PrivFindPrivacyGroup> privxFindPrivacyGroup(final List<Base64String> nodes) {
     return new Request<>(
-        "privx_createPrivacyGroup",
-        singletonList(new PrivxCreatePrivacyGroupRequest(addresses, name, description)),
-        web3jService,
-        PrivxCreatePrivacyGroupResponse.class);
+        "privx_findPrivacyGroup", singletonList(nodes), web3jService, PrivFindPrivacyGroup.class);
   }
 
   public Request<?, PrivDistributeTransactionResponse> privDistributeTransaction(
@@ -61,41 +120,6 @@ public class PrivacyRequestFactory {
     public PrivDistributeTransactionResponse() {}
 
     public String getTransactionKey() {
-      return getResult();
-    }
-  }
-
-  private static class PrivxCreatePrivacyGroupRequest {
-    private final List<String> addresses;
-    private final String name;
-    private final String description;
-
-    public PrivxCreatePrivacyGroupRequest(
-        @JsonProperty("addresses") final List<String> addresses,
-        @JsonProperty("name") final String name,
-        @JsonProperty("description") final String description) {
-      this.addresses = addresses;
-      this.name = name;
-      this.description = description;
-    }
-
-    public List<String> getAddresses() {
-      return addresses;
-    }
-
-    public String getName() {
-      return name;
-    }
-
-    public String getDescription() {
-      return description;
-    }
-  }
-
-  public static class PrivxCreatePrivacyGroupResponse extends Response<PrivxCreatePrivacyGroup> {
-    public PrivxCreatePrivacyGroupResponse() {}
-
-    public PrivxCreatePrivacyGroup getPrivxCreatePrivacyGroup() {
       return getResult();
     }
   }
@@ -119,5 +143,32 @@ public class PrivacyRequestFactory {
     public String getTransactionHash() {
       return transactionHash;
     }
+  }
+
+  private Bytes encodeParameters(final Bytes privateFrom, final List<Bytes> participants) {
+    return Bytes.concatenate(
+        DEFAULT_PRIVACY_ADD_METHOD_SIGNATURE, privateFrom, encodeList(participants));
+  }
+
+  private Bytes encodeList(final List<Bytes> participants) {
+    final Bytes dynamicParameterOffset = encodeLong(64);
+    final Bytes length = encodeLong(participants.size());
+    return Bytes.concatenate(
+        dynamicParameterOffset,
+        length,
+        Bytes.fromHexString(
+            participants.stream()
+                .map(Bytes::toUnprefixedHexString)
+                .collect(Collectors.joining(""))));
+  }
+
+  // long to uint256, 8 bytes big endian, so left padded by 24 bytes
+  private static Bytes encodeLong(final long l) {
+    checkArgument(l >= 0, "Unsigned value must be positive");
+    final byte[] longBytes = new byte[8];
+    for (int i = 0; i < 8; i++) {
+      longBytes[i] = (byte) ((l >> ((7 - i) * 8)) & 0xFF);
+    }
+    return Bytes.concatenate(Bytes.wrap(new byte[24]), Bytes.wrap(longBytes));
   }
 }

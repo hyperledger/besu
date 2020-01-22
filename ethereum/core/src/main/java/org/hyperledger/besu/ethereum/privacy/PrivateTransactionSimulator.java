@@ -115,7 +115,6 @@ public class PrivateTransactionSimulator {
     }
     if (privacyGroup == null || !privacyGroup.getMembers().contains(enclaveKey)) {
       // The privacy group is on chain
-      //      return privacyGroupDoesNotExistResult();
     }
 
     final MutableWorldState publicWorldState =

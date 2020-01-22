@@ -22,12 +22,9 @@ import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyRequestFactory.PrivxCreatePrivacyGroup;
 
 import java.util.Collections;
-import java.util.concurrent.TimeUnit;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.Test;
-import org.web3j.crypto.Credentials;
 import org.web3j.protocol.besu.response.privacy.PrivacyGroup;
 import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
 import org.web3j.utils.Base64String;
@@ -43,48 +40,45 @@ public class OnChainPrivacyAcceptanceTest extends PrivacyAcceptanceTestBase {
   public void setUp() throws Exception {
     alice =
         privacyBesu.createPrivateTransactionEnabledMinerNode(
-            "node1", privacyAccountResolver.resolve(0));
+            "node1", privacyAccountResolver.resolve(0), Address.PRIVACY);
     bob =
-        privacyBesu.createPrivateTransactionEnabledNode("node2", privacyAccountResolver.resolve(1));
+        privacyBesu.createPrivateTransactionEnabledNode(
+            "node2", privacyAccountResolver.resolve(1), Address.PRIVACY);
     charlie =
-        privacyBesu.createPrivateTransactionEnabledNode("node3", privacyAccountResolver.resolve(2));
+        privacyBesu.createPrivateTransactionEnabledNode(
+            "node3", privacyAccountResolver.resolve(2), Address.PRIVACY);
     privacyCluster.start(alice, bob, charlie);
   }
 
   @Test
   public void nodeCanCreatePrivacyGroup() {
     final PrivxCreatePrivacyGroup privxCreatePrivacyGroup =
-        alice.execute(privacyTransactions.createOnChainPrivacyGroup("", "", alice, bob));
+        alice.execute(privacyTransactions.createOnChainPrivacyGroup(alice, alice, bob));
 
     assertThat(privxCreatePrivacyGroup).isNotNull();
 
-    final org.hyperledger.besu.tests.web3j.generated.PrivacyGroup privacyGroup =
-        org.hyperledger.besu.tests.web3j.generated.PrivacyGroup.load(
-            null, null, Credentials.create(alice.getTransactionSigningKey()), null);
+    final PrivacyGroup expected =
+        new PrivacyGroup(
+            privxCreatePrivacyGroup.getPrivacyGroupId(),
+            PrivacyGroup.Type.PANTHEON,
+            "",
+            "",
+            Base64String.wrapList(alice.getEnclaveKey(), bob.getEnclaveKey()));
 
-    try {
-      TimeUnit.SECONDS.sleep(5);
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    }
+    alice.verify(privateTransactionVerifier.validOnPrivacyGroupCreated(expected));
+
+    bob.verify(privateTransactionVerifier.validOnPrivacyGroupCreated(expected));
 
     final String rlpParticipants =
         alice.execute(
             privateContractTransactions.callOnChainPermissioningSmartContract(
                 Address.PRIVACY_PROXY.toHexString(),
-                privacyGroup
-                    .getParticipants(Bytes.fromBase64String(alice.getEnclaveKey()).toArrayUnsafe())
-                    .encodeFunctionCall(),
+                "0x0b0235be" // get participants method signature
+                    + "035695b4cc4b0941e60551d7a19cf30603db5bfc23e5ac43a56f57f25f75486a",
                 alice.getTransactionSigningKey(),
                 POW_CHAIN_ID,
                 alice.getEnclaveKey(),
                 privxCreatePrivacyGroup.getPrivacyGroupId()));
-
-    try {
-      TimeUnit.SECONDS.sleep(5);
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    }
 
     alice.verify(
         privateTransactionVerifier.validPrivateTransactionReceipt(
@@ -109,17 +103,5 @@ public class OnChainPrivacyAcceptanceTest extends PrivacyAcceptanceTestBase {
                 privxCreatePrivacyGroup.getPrivacyGroupId(),
                 "0x1",
                 null)));
-
-    final PrivacyGroup expected =
-        new PrivacyGroup(
-            privxCreatePrivacyGroup.getPrivacyGroupId(),
-            PrivacyGroup.Type.PANTHEON,
-            "",
-            "",
-            Base64String.wrapList(alice.getEnclaveKey(), bob.getEnclaveKey()));
-
-    alice.verify(privateTransactionVerifier.validPrivacyGroupCreated(expected));
-
-    bob.verify(privateTransactionVerifier.validPrivacyGroupCreated(expected));
   }
 }

@@ -14,33 +14,27 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.privacy.transaction;
 
-import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.NodeRequests;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
-import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyRequestFactory.PrivxCreatePrivacyGroup;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class CreateOnChainPrivacyGroupTransaction implements Transaction<PrivxCreatePrivacyGroup> {
-  private final PrivacyNode creator;
-  private final List<String> addresses;
+import org.web3j.protocol.besu.response.privacy.PrivacyGroup;
+import org.web3j.utils.Base64String;
 
-  public CreateOnChainPrivacyGroupTransaction(
-      final PrivacyNode creator, final PrivacyNode... nodes) {
-    this.creator = creator;
-    this.addresses =
-        Arrays.stream(nodes)
-            .map(n -> n.getOrion().getDefaultPublicKey())
-            .collect(Collectors.toList());
+public class FindOnChainPrivacyGroupTransaction implements Transaction<List<PrivacyGroup>> {
+  private final List<Base64String> nodes;
+
+  public FindOnChainPrivacyGroupTransaction(final List<String> nodeEnclaveKeys) {
+    this.nodes = nodeEnclaveKeys.stream().map(Base64String::wrap).collect(Collectors.toList());
   }
 
   @Override
-  public PrivxCreatePrivacyGroup execute(final NodeRequests node) {
+  public List<PrivacyGroup> execute(final NodeRequests node) {
     try {
-      return node.privacy().privxCreatePrivacyGroup(creator, addresses);
+      return node.privacy().privxFindPrivacyGroup(nodes).send().getGroups();
     } catch (IOException e) {
       throw new RuntimeException(e);
     }

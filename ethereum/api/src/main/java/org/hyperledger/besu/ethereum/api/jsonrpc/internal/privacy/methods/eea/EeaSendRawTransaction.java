@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea;
 
+import org.hyperledger.besu.enclave.EnclaveClientException;
+import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcEnclaveErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
@@ -25,6 +27,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.Privac
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
@@ -79,9 +82,35 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
         privateTransaction,
         sendTransactionResponse.getPrivacyGroupId(),
         () -> {
-          final Transaction privacyMarkerTransaction =
-              privacyController.createPrivacyMarkerTransaction(
-                  sendTransactionResponse.getEnclaveKey(), privateTransaction);
+          final Transaction privacyMarkerTransaction;
+          if (privateTransaction.getPrivacyGroupId().isPresent()) {
+            PrivacyGroup privacyGroup = null;
+            try {
+              privacyGroup =
+                  privacyController.retrievePrivacyGroup(
+                      privateTransaction.getPrivacyGroupId().get().toBase64String());
+            } catch (final EnclaveClientException e) {
+              // it is an onchain group
+            }
+            if (privacyGroup == null
+                || !privacyGroup
+                    .getMembers()
+                    .contains(enclavePublicKeyProvider.getEnclaveKey(requestContext.getUser()))) {
+              privacyMarkerTransaction =
+                  privacyController.createPrivacyMarkerTransaction(
+                      sendTransactionResponse.getEnclaveKey(),
+                      privateTransaction,
+                      Address.ONCHAIN_PRIVACY);
+            } else {
+              privacyMarkerTransaction =
+                  privacyController.createPrivacyMarkerTransaction(
+                      sendTransactionResponse.getEnclaveKey(), privateTransaction);
+            }
+          } else {
+            privacyMarkerTransaction =
+                privacyController.createPrivacyMarkerTransaction(
+                    sendTransactionResponse.getEnclaveKey(), privateTransaction);
+          }
           return transactionPool
               .addLocalTransaction(privacyMarkerTransaction)
               .either(
