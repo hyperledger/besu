@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.privacy;
 
 import org.hyperledger.besu.enclave.Enclave;
+import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.enclave.types.PrivacyGroup.Type;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
@@ -222,8 +223,13 @@ public class PrivacyController {
     final String payload = rlpOutput.encoded().toBase64String();
 
     final List<String> privateFor = resolvePrivateFor(privateTransaction, enclavePublicKey);
-
-    if (privateTransaction.getPrivacyGroupId().isPresent()) {
+    PrivacyGroup privacyGroup = null;
+    try {
+      privacyGroup = enclave.retrievePrivacyGroup(privateTransaction.getPrivacyGroupId().get().toBase64String());
+    } catch (final EnclaveClientException e) {
+      // onchain privacy group
+    }
+    if (privateTransaction.getPrivacyGroupId().isPresent() && privacyGroup != null) {
       return enclave.send(
           payload,
           privateTransaction.getPrivateFrom().toBase64String(),
