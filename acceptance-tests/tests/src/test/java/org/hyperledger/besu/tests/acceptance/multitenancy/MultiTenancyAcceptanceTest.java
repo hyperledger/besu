@@ -20,7 +20,6 @@ import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.Cluster;
@@ -38,8 +37,9 @@ import org.junit.Test;
 
 public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
   private BesuNode node;
-  private Cluster cluster;
+  private Cluster multiTenancyCluster;
   private static final int enclavePort = 1080;
+  private final String privacyGroupId = "groupId";
   private final String enclaveKey = "negmDcN2P4ODpqn/6WkJ02zT/0w0bjhGpkZ8UP6vARk=";
 
   @Rule public WireMockRule wireMockRule = new WireMockRule(options().port(enclavePort));
@@ -48,12 +48,12 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
   public void setUp() throws Exception {
     final ClusterConfiguration clusterConfiguration =
         new ClusterConfigurationBuilder().awaitPeerDiscovery(false).build();
-    cluster = new Cluster(clusterConfiguration, net);
+    multiTenancyCluster = new Cluster(clusterConfiguration, net);
 
     node =
         besu.createNodeWithMultiTenancyEnabled(
             "node1", "http://127.0.0.1:" + enclavePort, "authentication/auth_priv.toml");
-    this.cluster.start(node);
+    this.multiTenancyCluster.start(node);
   }
 
   @Test
@@ -67,19 +67,18 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
   @Test
   public void shouldDeletePrivacyGroup() throws JsonProcessingException {
     final ObjectMapper mapper = new ObjectMapper();
-    final String retrieveJsonString =
+    final String retrieveGroupResponse =
         mapper.writeValueAsString(
             new PrivacyGroup(
                 "groupId", PrivacyGroup.Type.PANTHEON, "test", "testGroup", List.of(enclaveKey)));
-    stubFor(post("/retrievePrivacyGroup").willReturn(ok(retrieveJsonString)));
+    stubFor(post("/retrievePrivacyGroup").willReturn(ok(retrieveGroupResponse)));
 
-    final String deleteJsonString = mapper.writeValueAsString(enclaveKey);
-    stubFor(post("/deletePrivacyGroup").willReturn(ok(deleteJsonString)));
+    final String deleteGroupResponse = mapper.writeValueAsString(privacyGroupId);
+    stubFor(post("/deletePrivacyGroup").willReturn(ok(deleteGroupResponse)));
 
     final String token =
         node.execute(permissioningTransactions.createSuccessfulLogin("user", "pegasys"));
-    final String transactionHash = Hash.ZERO.toString();
     node.useAuthenticationTokenInHeaderForJsonRpc(token);
-    node.verify(priv.privDeletePrivacyGroup(transactionHash));
+    node.verify(priv.privDeletePrivacyGroup(privacyGroupId));
   }
 }
