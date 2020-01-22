@@ -98,6 +98,9 @@ public class VmTraceGenerator {
     if ("STOP".equals(frame.getOpcode()) && transactionTrace.getTraceFrames().size() == 1) {
       return true;
     }
+    if (!frame.getExceptionalHaltReasons().isEmpty()) {
+      return true;
+    }
     return frame.isVirtualOperation();
   }
 
