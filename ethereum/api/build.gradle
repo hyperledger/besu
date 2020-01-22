@@ -27,12 +27,6 @@ jar {
   }
 }
 
-configurations { testArtifacts }
-task testJar (type: Jar) {
-  archiveBaseName = "besu-api-test"
-  from sourceSets.test.output
-}
-
 dependencies {
   implementation project(':config')
   implementation project(':crypto')
@@ -92,6 +86,5 @@ dependencies {
 }
 
 artifacts {
-  testArtifacts testJar
   testSupportArtifacts testSupportJar
 }
