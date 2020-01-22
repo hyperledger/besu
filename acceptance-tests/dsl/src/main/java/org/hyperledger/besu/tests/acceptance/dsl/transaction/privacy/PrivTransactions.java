@@ -18,4 +18,8 @@ public class PrivTransactions {
   public PrivGetPrivacyPrecompileAddressTransaction privGetPrivacyPrecompileAddress() {
     return new PrivGetPrivacyPrecompileAddressTransaction();
   }
+
+  public PrivDeletePrivacyGroupTransaction privDeletePrivacyGroup(final String transactionHash) {
+    return new PrivDeletePrivacyGroupTransaction(transactionHash);
+  }
 }

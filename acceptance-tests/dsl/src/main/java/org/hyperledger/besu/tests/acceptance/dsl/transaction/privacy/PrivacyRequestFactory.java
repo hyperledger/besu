@@ -26,6 +26,8 @@ public class PrivacyRequestFactory {
 
   public static class GetPrivacyPrecompileAddressResponse extends Response<String> {}
 
+  public static class DeletePrivacyGroup extends Response<String> {}
+
   private final Besu besuClient;
   private final Web3jService web3jService;
 
@@ -62,5 +64,13 @@ public class PrivacyRequestFactory {
         Lists.emptyList(),
         web3jService,
         GetPrivacyPrecompileAddressResponse.class);
+  }
+
+  public Request<?, DeletePrivacyGroup> privDeletePrivacyGroup(final String transactionHash) {
+    return new Request<>(
+        "priv_deletePrivacyGroup",
+        singletonList(transactionHash),
+        web3jService,
+        DeletePrivacyGroup.class);
   }
 }

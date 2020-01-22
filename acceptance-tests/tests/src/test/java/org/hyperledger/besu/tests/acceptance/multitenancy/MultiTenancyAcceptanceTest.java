@@ -14,23 +14,35 @@
  */
 package org.hyperledger.besu.tests.acceptance.multitenancy;
 
-import static org.mockserver.integration.ClientAndServer.startClientAndServer;
+import static com.github.tomakehurst.wiremock.client.WireMock.ok;
+import static com.github.tomakehurst.wiremock.client.WireMock.post;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 
+import org.hyperledger.besu.enclave.types.PrivacyGroup;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.Cluster;
 import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.ClusterConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.ClusterConfigurationBuilder;
 
-import org.junit.After;
+import java.util.List;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
-import org.mockserver.integration.ClientAndServer;
 
 public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
   private BesuNode node;
-  private ClientAndServer mockServer;
   private Cluster cluster;
+  private static final int enclavePort = 1080;
+  private final String enclaveKey = "negmDcN2P4ODpqn/6WkJ02zT/0w0bjhGpkZ8UP6vARk=";
+
+  @Rule public WireMockRule wireMockRule = new WireMockRule(options().port(enclavePort));
 
   @Before
   public void setUp() throws Exception {
@@ -38,20 +50,14 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
         new ClusterConfigurationBuilder().awaitPeerDiscovery(false).build();
     cluster = new Cluster(clusterConfiguration, net);
 
-    mockServer = startClientAndServer(1080);
     node =
         besu.createNodeWithMultiTenancyEnabled(
-            "node1", "http://127.0.0.1:1080", "authentication/auth_priv.toml");
+            "node1", "http://127.0.0.1:" + enclavePort, "authentication/auth_priv.toml");
     this.cluster.start(node);
   }
 
-  @After
-  public void stopMockServer() {
-    mockServer.stop();
-  }
-
   @Test
-  public void shouldSucceedWithValidToken() {
+  public void shouldSucceedWithValidTokenParams() {
     final String token =
         node.execute(permissioningTransactions.createSuccessfulLogin("user", "pegasys"));
     node.useAuthenticationTokenInHeaderForJsonRpc(token);
@@ -59,7 +65,21 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
-  public void shouldFailWithInvalidToken() {
-    node.verify(priv.privGetPrivacyPrecompileAddressSuccess());
+  public void shouldDeletePrivacyGroup() throws JsonProcessingException {
+    final ObjectMapper mapper = new ObjectMapper();
+    final String retrieveJsonString =
+        mapper.writeValueAsString(
+            new PrivacyGroup(
+                "groupId", PrivacyGroup.Type.PANTHEON, "test", "testGroup", List.of(enclaveKey)));
+    stubFor(post("/retrievePrivacyGroup").willReturn(ok(retrieveJsonString)));
+
+    final String deleteJsonString = mapper.writeValueAsString(enclaveKey);
+    stubFor(post("/deletePrivacyGroup").willReturn(ok(deleteJsonString)));
+
+    final String token =
+        node.execute(permissioningTransactions.createSuccessfulLogin("user", "pegasys"));
+    final String transactionHash = Hash.ZERO.toString();
+    node.useAuthenticationTokenInHeaderForJsonRpc(token);
+    node.verify(priv.privDeletePrivacyGroup(transactionHash));
   }
 }

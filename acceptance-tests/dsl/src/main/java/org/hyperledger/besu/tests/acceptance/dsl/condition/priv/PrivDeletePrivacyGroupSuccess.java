@@ -15,22 +15,25 @@
 package org.hyperledger.besu.tests.acceptance.dsl.condition.priv;
 
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
-import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivTransactions;
+import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivDeletePrivacyGroupTransaction;
 
-public class PrivConditions {
+import org.assertj.core.api.Assertions;
 
-  private final PrivTransactions transactions;
+public class PrivDeletePrivacyGroupSuccess implements Condition {
 
-  public PrivConditions(final PrivTransactions transactions) {
-    this.transactions = transactions;
+  private final PrivDeletePrivacyGroupTransaction transaction;
+  private final String groupId;
+
+  public PrivDeletePrivacyGroupSuccess(
+      final PrivDeletePrivacyGroupTransaction transaction, final String groupId) {
+    this.transaction = transaction;
+    this.groupId = groupId;
   }
 
-  public Condition privGetPrivacyPrecompileAddressSuccess() {
-    return new PrivGetPrivacyPrecompileAddressSuccess(
-        transactions.privGetPrivacyPrecompileAddress());
-  }
-
-  public Condition privDeletePrivacyGroup(final String groupId) {
-    return new PrivDeletePrivacyGroupSuccess(transactions.privDeletePrivacyGroup(groupId), groupId);
+  @Override
+  public void verify(final Node node) {
+    String result = node.execute(transaction);
+    Assertions.assertThat(result).isEqualTo(groupId);
   }
 }
