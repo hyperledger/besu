@@ -25,7 +25,6 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionSimulator;
-import org.hyperledger.besu.ethereum.privacy.groupcreation.GroupCreationTransactionFactory;
 
 import java.util.Map;
 
@@ -48,7 +47,6 @@ public class PrivxJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
   protected Map<String, JsonRpcMethod> create(
       final PrivacyController privacyController,
       final EnclavePublicKeyProvider enclavePublicKeyProvider,
-      final GroupCreationTransactionFactory groupCreationTransactionFactory,
       final PrivateTransactionSimulator privateTransactionSimulator) {
     return mapOf(new PrivxFindPrivacyGroup(privacyController, enclavePublicKeyProvider));
   }

@@ -16,6 +16,7 @@ package org.hyperledger.besu.tests.web3j.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyAcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
@@ -74,7 +75,7 @@ public class OnChainPrivacyAcceptanceTest extends PrivacyAcceptanceTestBase {
             privateContractTransactions.callOnChainPermissioningSmartContract(
                 Address.PRIVACY_PROXY.toHexString(),
                 "0x0b0235be" // get participants method signature
-                    + "035695b4cc4b0941e60551d7a19cf30603db5bfc23e5ac43a56f57f25f75486a",
+                    + Bytes.fromBase64String(alice.getEnclaveKey()).toUnprefixedHexString(),
                 alice.getTransactionSigningKey(),
                 POW_CHAIN_ID,
                 alice.getEnclaveKey(),
@@ -91,9 +92,9 @@ public class OnChainPrivacyAcceptanceTest extends PrivacyAcceptanceTestBase {
                     // array offset
                     + "0000000000000000000000000000000000000000000000000000000000000002" // length
                     // of array
-                    + "035695b4cc4b0941e60551d7a19cf30603db5bfc23e5ac43a56f57f25f75486a" // first
+                    + Bytes.fromBase64String(alice.getEnclaveKey()).toUnprefixedHexString() // first
                     // element
-                    + "2a8d9b56a0fe9cd94d60be4413bcb721d3a7be27ed8e28b3a6346df874ee141b", // second
+                    + Bytes.fromBase64String(bob.getEnclaveKey()).toUnprefixedHexString(), // second
                 // element
                 Collections.emptyList(),
                 null,

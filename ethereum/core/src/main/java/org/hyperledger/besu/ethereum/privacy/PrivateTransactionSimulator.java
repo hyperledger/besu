@@ -183,13 +183,4 @@ public class PrivateTransactionSimulator {
         .signature(FAKE_SIGNATURE)
         .build();
   }
-
-  /*private Optional<PrivateTransactionProcessor.Result> privacyGroupDoesNotExistResult() {
-    return Optional.of(
-        PrivateTransactionProcessor.Result.failed(
-            0L,
-            ValidationResult.invalid(
-                TransactionValidator.TransactionInvalidReason.PRIVACY_GROUP_DOES_NOT_EXIST),
-            Optional.empty()));
-  }*/
 }

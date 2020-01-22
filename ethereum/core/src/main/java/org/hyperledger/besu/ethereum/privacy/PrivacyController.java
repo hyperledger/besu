@@ -223,17 +223,20 @@ public class PrivacyController {
     final String payload = rlpOutput.encoded().toBase64String();
 
     final List<String> privateFor = resolvePrivateFor(privateTransaction, enclavePublicKey);
-    PrivacyGroup privacyGroup = null;
-    try {
-      privacyGroup = enclave.retrievePrivacyGroup(privateTransaction.getPrivacyGroupId().get().toBase64String());
-    } catch (final EnclaveClientException e) {
-      // onchain privacy group
-    }
-    if (privateTransaction.getPrivacyGroupId().isPresent() && privacyGroup != null) {
-      return enclave.send(
-          payload,
-          privateTransaction.getPrivateFrom().toBase64String(),
-          privateTransaction.getPrivacyGroupId().get().toBase64String());
+
+    if (privateTransaction.getPrivacyGroupId().isPresent()) {
+      PrivacyGroup privacyGroup = null;
+      try {
+        privacyGroup = enclave.retrievePrivacyGroup(privateTransaction.getPrivacyGroupId().get().toBase64String());
+      } catch (final EnclaveClientException e) {
+        // onchain privacy group
+      }
+      if (privacyGroup != null) {
+        return enclave.send(
+                payload,
+                privateTransaction.getPrivateFrom().toBase64String(),
+                privateTransaction.getPrivacyGroupId().get().toBase64String());
+      }
     }
     if (privateFor.isEmpty()) {
       privateFor.add(privateTransaction.getPrivateFrom().toBase64String());

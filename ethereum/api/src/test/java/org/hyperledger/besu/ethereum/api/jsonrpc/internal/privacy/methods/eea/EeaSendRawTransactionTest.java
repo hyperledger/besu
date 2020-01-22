@@ -314,7 +314,7 @@ public class EeaSendRawTransactionTest {
         .validatePrivateTransaction(any(PrivateTransaction.class), any(String.class), any());
     verify(privacyController)
         .createPrivacyMarkerTransaction(
-            any(String.class), any(PrivateTransaction.class), any(Address.class));
+            any(String.class), any(PrivateTransaction.class), eq(Address.ONCHAIN_PRIVACY));
     verify(transactionPool).addLocalTransaction(any(Transaction.class));
   }
 

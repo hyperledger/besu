@@ -166,7 +166,7 @@ public class OnChainPrivacyPrecompiledContract extends AbstractPrecompiledContra
     final WorldUpdater privateWorldStateUpdater = disposablePrivateState.updater();
 
     if (lastRootHash.equals(EMPTY_ROOT_HASH)) {
-      // inject proxy
+      // inject management
       final DefaultEvmAccount managementPrecompile =
           privateWorldStateUpdater.createAccount(Address.PRIVACY_MANAGEMENT);
       final MutableAccount mutableManagementPrecompiled = managementPrecompile.getMutable();
@@ -262,7 +262,7 @@ public class OnChainPrivacyPrecompiledContract extends AbstractPrecompiledContra
     privateBlockMetadata.addPrivateTransactionMetadata(
         new PrivateTransactionMetadata(markerTransactionHash, rootHash));
     privateStateUpdater.putPrivateBlockMetadata(
-        Bytes32.wrap(currentBlockHash.toArrayUnsafe()),
+        Bytes32.wrap(currentBlockHash),
         Bytes32.wrap(privacyGroupId),
         privateBlockMetadata);
   }

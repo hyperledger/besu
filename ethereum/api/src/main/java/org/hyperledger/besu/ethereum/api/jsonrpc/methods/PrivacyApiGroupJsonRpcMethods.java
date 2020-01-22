@@ -32,9 +32,6 @@ import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateNonceProvider;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionSimulator;
-import org.hyperledger.besu.ethereum.privacy.groupcreation.FixedKeySigningGroupCreationTransactionFactory;
-import org.hyperledger.besu.ethereum.privacy.groupcreation.GroupCreationTransactionFactory;
-import org.hyperledger.besu.ethereum.privacy.groupcreation.RandomKeySigningGroupCreationTransactionFactory;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.FixedKeySigningPrivateMarkerTransactionFactory;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.PrivateMarkerTransactionFactory;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.RandomSigningPrivateMarkerTransactionFactory;
@@ -96,9 +93,6 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
         createPrivateMarkerTransactionFactory(
             privacyParameters, blockchainQueries, transactionPool.getPendingTransactions());
 
-    final GroupCreationTransactionFactory groupCreationTransactionFactory =
-        createGroupCreationTransactionFactory(privacyParameters, nonceProvider);
-
     final PrivateTransactionSimulator privateTransactionSimulator =
         new PrivateTransactionSimulator(
             getBlockchainQueries().getBlockchain(),
@@ -128,7 +122,6 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
     return create(
             privacyController,
             enclavePublicProvider,
-            groupCreationTransactionFactory,
             privateTransactionSimulator)
         .entrySet().stream()
         .collect(
@@ -139,7 +132,6 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
   protected abstract Map<String, JsonRpcMethod> create(
       final PrivacyController privacyController,
       final EnclavePublicKeyProvider enclavePublicKeyProvider,
-      final GroupCreationTransactionFactory groupCreationTransactionFactory,
       final PrivateTransactionSimulator privateTransactionSimulator);
 
   private PrivateMarkerTransactionFactory createPrivateMarkerTransactionFactory(
@@ -157,16 +149,6 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
           privacyParameters.getSigningKeyPair().get());
     }
     return new RandomSigningPrivateMarkerTransactionFactory(privateContractAddress);
-  }
-
-  private GroupCreationTransactionFactory createGroupCreationTransactionFactory(
-      final PrivacyParameters privacyParameters, final PrivateNonceProvider nonceProvider) {
-
-    if (privacyParameters.getSigningKeyPair().isPresent()) {
-      return new FixedKeySigningGroupCreationTransactionFactory(
-          nonceProvider, privacyParameters.getSigningKeyPair().get());
-    }
-    return new RandomKeySigningGroupCreationTransactionFactory();
   }
 
   private JsonRpcMethod createPrivacyMethod(
