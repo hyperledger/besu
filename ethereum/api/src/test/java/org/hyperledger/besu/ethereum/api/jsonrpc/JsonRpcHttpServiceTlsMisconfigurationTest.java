@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.tls.FileBasedPasswordProvider;
 import org.hyperledger.besu.ethereum.api.tls.SelfSignedPfxStore;
 import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
+import org.hyperledger.besu.ethereum.api.tls.TrustStoreUtil;
 import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
@@ -79,10 +80,12 @@ public class JsonRpcHttpServiceTlsMisconfigurationTest {
   private SelfSignedPfxStore selfSignedPfxStore;
   private Map<String, JsonRpcMethod> rpcMethods;
   private JsonRpcHttpService service;
+  private Path knownClientsFile;
 
   @Before
   public void beforeEach() throws Exception {
-    selfSignedPfxStore = SelfSignedPfxStore.create(folder.newFolder().toPath());
+    selfSignedPfxStore = SelfSignedPfxStore.create();
+    knownClientsFile = createKnownClientsFile();
     final P2PNetwork peerDiscoveryMock = mock(P2PNetwork.class);
     final BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
     final Synchronizer synchronizer = mock(Synchronizer.class);
@@ -117,6 +120,15 @@ public class JsonRpcHttpServiceTlsMisconfigurationTest {
                     mock(MetricsConfiguration.class),
                     natService,
                     Collections.emptyMap()));
+  }
+
+  private Path createKnownClientsFile() throws Exception {
+    final String knownClientsLine =
+        TrustStoreUtil.commonNameAndFingerPrint(
+            selfSignedPfxStore.getTrustStoreFile(),
+            selfSignedPfxStore.getPassword(),
+            selfSignedPfxStore.getAlias());
+    return Files.writeString(folder.newFile().toPath(), knownClientsLine);
   }
 
   @After
@@ -200,29 +212,24 @@ public class JsonRpcHttpServiceTlsMisconfigurationTest {
 
   private TlsConfiguration invalidKeystoreFileTlsConfiguration() throws IOException {
     final File tempFile = folder.newFile();
-    return new TlsConfiguration(
-        tempFile.toPath(), () -> "invalid_password", selfSignedPfxStore.getKnownClientsFile());
+    return new TlsConfiguration(tempFile.toPath(), () -> "invalid_password", knownClientsFile);
   }
 
   private TlsConfiguration invalidKeystorePathTlsConfiguration() {
     return new TlsConfiguration(
-        Path.of("/tmp/invalidkeystore.pfx"),
-        () -> "invalid_password",
-        selfSignedPfxStore.getKnownClientsFile());
+        Path.of("/tmp/invalidkeystore.pfx"), () -> "invalid_password", knownClientsFile);
   }
 
   private TlsConfiguration invalidPasswordTlsConfiguration() {
     return new TlsConfiguration(
-        selfSignedPfxStore.getKeyStoreFile(),
-        () -> "invalid_password",
-        selfSignedPfxStore.getKnownClientsFile());
+        selfSignedPfxStore.getKeyStoreFile(), () -> "invalid_password", knownClientsFile);
   }
 
   private TlsConfiguration invalidPasswordFileTlsConfiguration() {
     return new TlsConfiguration(
         selfSignedPfxStore.getKeyStoreFile(),
         new FileBasedPasswordProvider(Path.of("/tmp/invalid_password_file.txt")),
-        selfSignedPfxStore.getKnownClientsFile());
+        knownClientsFile);
   }
 
   private TlsConfiguration invalidKnownClientsTlsConfiguration() throws IOException {

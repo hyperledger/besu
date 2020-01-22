@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIOException;
+import static org.assertj.core.api.Assertions.fail;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ETH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.NET;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.WEB3;
@@ -32,6 +33,7 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.tls.FileBasedPasswordProvider;
 import org.hyperledger.besu.ethereum.api.tls.SelfSignedPfxStore;
 import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
+import org.hyperledger.besu.ethereum.api.tls.TrustStoreUtil;
 import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
@@ -46,7 +48,10 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatService;
 
+import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -91,10 +96,9 @@ public class JsonRpcHttpServiceTlsTest {
 
   @Before
   public void initServer() throws Exception {
-    selfSignedPfxStore = SelfSignedPfxStore.create(folder.newFolder().toPath());
-    selfSignedPfxStoreForHttpClient = SelfSignedPfxStore.create(folder.newFolder().toPath());
-    selfSignedPfxStoreForHttpClientNotTrustedByServer =
-        SelfSignedPfxStore.create(folder.newFolder().toPath());
+    selfSignedPfxStore = SelfSignedPfxStore.create();
+    selfSignedPfxStoreForHttpClient = SelfSignedPfxStore.create();
+    selfSignedPfxStoreForHttpClientNotTrustedByServer = SelfSignedPfxStore.create();
     final P2PNetwork peerDiscoveryMock = mock(P2PNetwork.class);
     final BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
     final Synchronizer synchronizer = mock(Synchronizer.class);
@@ -156,10 +160,30 @@ public class JsonRpcHttpServiceTlsTest {
   }
 
   private TlsConfiguration getRpcHttpTlsConfiguration() {
-    return new TlsConfiguration(
-        selfSignedPfxStore.getKeyStoreFile(),
-        new FileBasedPasswordProvider(selfSignedPfxStore.getPasswordFile()),
-        selfSignedPfxStoreForHttpClient.getKnownClientsFile());
+    try {
+      return new TlsConfiguration(
+          selfSignedPfxStore.getKeyStoreFile(),
+          new FileBasedPasswordProvider(createPasswordFile(selfSignedPfxStore)),
+          createKnownClientsFile(selfSignedPfxStoreForHttpClient));
+    } catch (Exception e) {
+      fail("TLS Configuration failed");
+      return null;
+    }
+  }
+
+  private Path createKnownClientsFile(final SelfSignedPfxStore selfSignedPfxStore)
+      throws Exception {
+    final String knownClientsLine =
+        TrustStoreUtil.commonNameAndFingerPrint(
+            selfSignedPfxStore.getTrustStoreFile(),
+            selfSignedPfxStore.getPassword(),
+            selfSignedPfxStore.getAlias());
+    return Files.writeString(folder.newFile().toPath(), knownClientsLine);
+  }
+
+  private Path createPasswordFile(final SelfSignedPfxStore selfSignedPfxStore) throws IOException {
+    return Files.writeString(
+        folder.newFile().toPath(), new String(selfSignedPfxStore.getPassword()));
   }
 
   @After

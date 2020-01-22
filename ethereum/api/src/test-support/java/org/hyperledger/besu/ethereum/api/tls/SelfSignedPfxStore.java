@@ -27,11 +27,10 @@ import java.security.KeyPairGenerator;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
 import java.security.SecureRandom;
 import java.security.cert.Certificate;
-import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.time.Period;
 import java.util.Collection;
@@ -40,20 +39,18 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.tuweni.net.tls.TLS;
-import org.bouncycastle.asn1.x500.RDN;
 import org.bouncycastle.asn1.x500.X500Name;
-import org.bouncycastle.asn1.x500.style.BCStyle;
-import org.bouncycastle.asn1.x500.style.IETFUtils;
 import org.bouncycastle.asn1.x509.BasicConstraints;
 import org.bouncycastle.asn1.x509.Extension;
 import org.bouncycastle.asn1.x509.GeneralName;
 import org.bouncycastle.asn1.x509.GeneralNames;
+import org.bouncycastle.cert.CertIOException;
 import org.bouncycastle.cert.X509v3CertificateBuilder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.operator.ContentSigner;
+import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 
 /**
@@ -66,69 +63,53 @@ import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
  * <p>The generated certificate supports SAN extension for multiple DNS and IP addresses
  */
 public final class SelfSignedPfxStore {
-  private static final char[] DEFAULT_PASSWORD = "changeit".toCharArray();
-  private static final String DEFAULT_DN = "CN=localhost";
-  private static final String DEFAULT_ALIAS = "test";
   private static final BouncyCastleProvider BOUNCY_CASTLE_PROVIDER = new BouncyCastleProvider();
+  private static final String alias = "test";
   private static final boolean IS_CA = true;
-  private final Path parentPath;
-  private final String alias;
-  private final char[] password;
-  private final String distinguishedName;
-  private final List<String> sanHostNames;
-  private final List<String> sanIpAddresses;
-  private X509Certificate certificate;
-  private KeyPair keyPair;
-  private Path keyStore;
-  private Path trustStore;
-  private Path knownClientsFile;
-  private Path passwordFile;
+  private static final String distinguishedName = "CN=localhost";
+  private static final List<String> sanHostNames = List.of("localhost");
+  private static final List<String> sanIpAddresses = List.of("127.0.0.1");
+  private static final char[] password = "changeit".toCharArray();
+  private final Path keyStore;
+  private final Path trustStore;
 
-  private SelfSignedPfxStore(
-      final Path parentPath,
-      final String alias,
-      final char[] password,
-      final String distinguishedName,
-      final List<String> sanHostNames,
-      final List<String> sanIpAddresses) {
-    this.parentPath = parentPath;
-    this.alias = alias;
-    this.password = password;
-    this.distinguishedName = distinguishedName;
-    this.sanHostNames = sanHostNames;
-    this.sanIpAddresses = sanIpAddresses;
+  private SelfSignedPfxStore(final Path keyStore, final Path trustStore) {
+    this.keyStore = keyStore;
+    this.trustStore = trustStore;
   }
 
-  public static SelfSignedPfxStore create(final Path parentPath) throws Exception {
-    try {
-      SelfSignedPfxStore selfSignedPfxStore =
-          new SelfSignedPfxStore(
-              parentPath,
-              DEFAULT_ALIAS,
-              DEFAULT_PASSWORD,
-              DEFAULT_DN,
-              List.of("localhost"),
-              List.of("127.0.0.1"));
-      selfSignedPfxStore.generateKeyPair();
-      selfSignedPfxStore.generateSelfSignedCertificate();
-      selfSignedPfxStore.createKeyStore();
-      selfSignedPfxStore.createTrustStore();
-      selfSignedPfxStore.createKnownClientsFile();
-      selfSignedPfxStore.createPasswordFile();
-      return selfSignedPfxStore;
-    } catch (final IOException | GeneralSecurityException e) {
-      throw new RuntimeException(e);
-    }
+  public static SelfSignedPfxStore create() throws Exception {
+    final KeyPair keyPair = generateKeyPair();
+    final Certificate certificate = generateSelfSignedCertificate(keyPair);
+    return new SelfSignedPfxStore(
+        createKeyStore(keyPair.getPrivate(), certificate), createTrustStore(certificate));
+  }
+
+  public Path getKeyStoreFile() {
+    return keyStore;
+  }
+
+  public Path getTrustStoreFile() {
+    return trustStore;
+  }
+
+  public char[] getPassword() {
+    return password;
+  }
+
+  public String getAlias() {
+    return alias;
   }
 
   @SuppressWarnings("DoNotCreateSecureRandomDirectly")
-  private void generateKeyPair() throws NoSuchAlgorithmException {
+  private static KeyPair generateKeyPair() throws GeneralSecurityException {
     final KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
     keyPairGenerator.initialize(2048, new SecureRandom());
-    this.keyPair = keyPairGenerator.generateKeyPair();
+    return keyPairGenerator.generateKeyPair();
   }
 
-  private void generateSelfSignedCertificate() throws Exception {
+  private static Certificate generateSelfSignedCertificate(final KeyPair keyPair)
+      throws CertIOException, GeneralSecurityException, OperatorCreationException {
     final X500Name issuer = new X500Name(distinguishedName);
     final X500Name subject = new X500Name(distinguishedName);
     final BigInteger serialNumber = new BigInteger(String.valueOf(Instant.now().toEpochMilli()));
@@ -150,13 +131,12 @@ public final class SelfSignedPfxStore {
     final ContentSigner contentSigner =
         new JcaContentSignerBuilder("SHA256WithRSAEncryption").build(keyPair.getPrivate());
 
-    this.certificate =
-        new JcaX509CertificateConverter()
-            .setProvider(BOUNCY_CASTLE_PROVIDER)
-            .getCertificate(v3CertificateBuilder.build(contentSigner));
+    return new JcaX509CertificateConverter()
+        .setProvider(BOUNCY_CASTLE_PROVIDER)
+        .getCertificate(v3CertificateBuilder.build(contentSigner));
   }
 
-  private GeneralNames getSubjectAlternativeNames() {
+  private static GeneralNames getSubjectAlternativeNames() {
     final List<GeneralName> hostGeneralNames =
         sanHostNames.stream()
             .map(hostName -> new GeneralName(GeneralName.dNSName, hostName))
@@ -173,69 +153,29 @@ public final class SelfSignedPfxStore {
     return new GeneralNames(generalNames);
   }
 
-  private void createKeyStore() throws IOException, GeneralSecurityException {
-    this.keyStore = convert(true);
-  }
-
-  private void createTrustStore() throws IOException, GeneralSecurityException {
-    this.trustStore = convert(false);
-  }
-
-  private Path convert(final boolean isKeyStore) throws IOException, GeneralSecurityException {
+  private static Path createKeyStore(final PrivateKey privateKey, final Certificate certificate)
+      throws IOException, GeneralSecurityException {
     final KeyStore keyStore = KeyStore.getInstance("PKCS12");
     keyStore.load(null);
-    if (isKeyStore) {
-      keyStore.setKeyEntry(alias, keyPair.getPrivate(), password, new Certificate[] {certificate});
-    } else {
-      keyStore.setCertificateEntry(alias, certificate);
-    }
-
-    return saveKeyStore(keyStore);
+    keyStore.setKeyEntry(alias, privateKey, password, new Certificate[] {certificate});
+    return saveStore(keyStore);
   }
 
-  private Path saveKeyStore(final KeyStore keyStore)
+  private static Path createTrustStore(final Certificate certificate)
+      throws IOException, GeneralSecurityException {
+    final KeyStore keyStore = KeyStore.getInstance("PKCS12");
+    keyStore.load(null);
+    keyStore.setCertificateEntry(alias, certificate);
+    return saveStore(keyStore);
+  }
+
+  private static Path saveStore(final KeyStore keyStore)
       throws IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException {
-    final Path pfxPath = Files.createTempFile(parentPath, alias, ".pfx");
+    final Path pfxPath = Files.createTempFile(alias, ".pfx");
     pfxPath.toFile().deleteOnExit();
     try (final FileOutputStream outputStream = new FileOutputStream(pfxPath.toFile())) {
       keyStore.store(outputStream, password);
     }
     return pfxPath;
-  }
-
-  private void createKnownClientsFile() throws IOException, CertificateEncodingException {
-    final RDN commonNameRDN = new X500Name(distinguishedName).getRDNs(BCStyle.CN)[0];
-    final String commonName = IETFUtils.valueToString(commonNameRDN.getFirst().getValue());
-    final String fingerPrint = TLS.certificateHexFingerprint(certificate);
-
-    final Path tempFile = Files.createTempFile(parentPath, alias + "knownClientsFile", ".txt");
-    tempFile.toFile().deleteOnExit();
-    Files.writeString(tempFile, commonName + " " + fingerPrint);
-    this.knownClientsFile = tempFile;
-  }
-
-  private void createPasswordFile() throws IOException {
-    final Path tempFile = Files.createTempFile(parentPath, alias + "pass", ".txt");
-    this.passwordFile = Files.writeString(tempFile, new String(password));
-  }
-
-  public Path getKeyStoreFile() {
-    return keyStore;
-  }
-
-  public Path getTrustStoreFile() {
-    return trustStore;
-  }
-
-  public Path getKnownClientsFile() {
-    return knownClientsFile;
-  }
-
-  public Path getPasswordFile() {
-    return passwordFile;
-  }
-
-  public char[] getPassword() {
-    return password;
   }
 }
