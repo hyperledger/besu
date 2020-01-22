@@ -119,11 +119,8 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
                                 "Request does not contain an authorization token"))
             : user -> privacyParameters.getEnclavePublicKey();
 
-    return create(
-            privacyController,
-            enclavePublicProvider,
-            privateTransactionSimulator)
-        .entrySet().stream()
+    return create(privacyController, enclavePublicProvider, privateTransactionSimulator).entrySet()
+        .stream()
         .collect(
             Collectors.toMap(
                 Entry::getKey, entry -> createPrivacyMethod(privacyParameters, entry.getValue())));

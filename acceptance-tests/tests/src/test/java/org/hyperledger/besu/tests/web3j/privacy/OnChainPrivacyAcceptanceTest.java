@@ -16,7 +16,6 @@ package org.hyperledger.besu.tests.web3j.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyAcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
@@ -24,6 +23,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyRequ
 
 import java.util.Collections;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.Test;
 import org.web3j.protocol.besu.response.privacy.PrivacyGroup;

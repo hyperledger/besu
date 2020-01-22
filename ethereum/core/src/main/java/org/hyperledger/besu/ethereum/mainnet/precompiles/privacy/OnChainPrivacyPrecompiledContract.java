@@ -262,8 +262,6 @@ public class OnChainPrivacyPrecompiledContract extends AbstractPrecompiledContra
     privateBlockMetadata.addPrivateTransactionMetadata(
         new PrivateTransactionMetadata(markerTransactionHash, rootHash));
     privateStateUpdater.putPrivateBlockMetadata(
-        Bytes32.wrap(currentBlockHash),
-        Bytes32.wrap(privacyGroupId),
-        privateBlockMetadata);
+        Bytes32.wrap(currentBlockHash), Bytes32.wrap(privacyGroupId), privateBlockMetadata);
   }
 }
