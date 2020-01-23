@@ -51,4 +51,18 @@ public interface BlsPoint {
     }
     throw new Error("Not implemented yet");
   }
+
+  static BlsPoint load(final BlsCryptoProvider.CryptoProviderTypes type, final byte[] data) {
+    switch (type) {
+      case LOCAL_ALT_BN_128:
+        if (data.length == AltBn128PointWrapper.STORED_LEN) {
+          return AltBn128PointWrapper.load(data);
+        } else if (data.length == AltBn128Fq2PointWrapper.STORED_LEN) {
+          return AltBn128Fq2PointWrapper.load(data);
+        }
+        throw new Error("BN128 public key not correct size: " + data.length);
+      default:
+        throw new Error("Not implemented yet");
+    }
+  }
 }

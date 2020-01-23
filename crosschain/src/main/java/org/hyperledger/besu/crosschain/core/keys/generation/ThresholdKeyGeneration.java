@@ -336,6 +336,7 @@ public class ThresholdKeyGeneration {
         .keyVersion(this.keyVersionNumber)
         .threshold(this.threshold)
         .publicKey(this.publicKey)
+        .privateKeyShare(this.privateKeyShare)
         .blockchainId(this.blockchainId)
         .algorithm(this.algorithm)
         .mySecretShares(this.mySecretShares)

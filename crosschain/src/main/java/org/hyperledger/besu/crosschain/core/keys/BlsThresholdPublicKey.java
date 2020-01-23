@@ -32,6 +32,8 @@ public interface BlsThresholdPublicKey {
 
   BytesValue getEncodedPublicKey();
 
+  BytesValue getEncodedPublicKeyForCoordinationContract();
+
   int getThreshold();
 
   BlsThresholdPublicKey NONE =
@@ -58,6 +60,11 @@ public interface BlsThresholdPublicKey {
 
         @Override
         public BytesValue getEncodedPublicKey() {
+          return BytesValue.EMPTY;
+        }
+
+        @Override
+        public BytesValue getEncodedPublicKeyForCoordinationContract() {
           return BytesValue.EMPTY;
         }
 

@@ -95,22 +95,14 @@ public class AltBn128Fq2PointWrapper implements BlsPoint {
 
     // All of the values should be 256 bits long. However, it is possible that some
     // could have leading zeros, in which case we should zero fill.
-    int len = xBytesReal.length;
-    // TODO is this the correct endianess ???
-    System.arraycopy(xBytesReal, 0, output, WORD_LEN - len, len);
-
-    len = xBytesImaginary.length;
-    // TODO is this the correct endianess ???
-    System.arraycopy(xBytesImaginary, 0, output, WORD_LEN + WORD_LEN - len, len);
-
-    len = yBytesReal.length;
-    // TODO is this the correct endianess ???
-    System.arraycopy(yBytesReal, 0, output, WORD_LEN + WORD_LEN + WORD_LEN - len, len);
-
+    int len = xBytesImaginary.length;
+    System.arraycopy(xBytesImaginary, 0, output, WORD_LEN - len, len);
+    len = xBytesReal.length;
+    System.arraycopy(xBytesReal, 0, output, WORD_LEN + WORD_LEN - len, len);
     len = yBytesImaginary.length;
-    // TODO is this the correct endianess ???
-    System.arraycopy(yBytesImaginary, 0, output, STORED_LEN - len, len);
-
+    System.arraycopy(yBytesImaginary, 0, output, WORD_LEN + WORD_LEN + WORD_LEN - len, len);
+    len = yBytesReal.length;
+    System.arraycopy(yBytesReal, 0, output, STORED_LEN - len, len);
     return output;
   }
 
@@ -120,14 +112,14 @@ public class AltBn128Fq2PointWrapper implements BlsPoint {
           "Bn128Fq2 Point data incorrect length. Should be " + STORED_LEN + ", is " + data.length);
     }
 
-    byte[] xBytesReal = new byte[WORD_LEN];
-    System.arraycopy(data, 0, xBytesReal, 0, WORD_LEN);
     byte[] xBytesImaginary = new byte[WORD_LEN];
-    System.arraycopy(data, WORD_LEN, xBytesImaginary, 0, WORD_LEN);
-    byte[] yBytesReal = new byte[WORD_LEN];
-    System.arraycopy(data, WORD_LEN + WORD_LEN, yBytesReal, 0, WORD_LEN);
+    System.arraycopy(data, 0, xBytesImaginary, 0, WORD_LEN);
+    byte[] xBytesReal = new byte[WORD_LEN];
+    System.arraycopy(data, WORD_LEN, xBytesReal, 0, WORD_LEN);
     byte[] yBytesImaginary = new byte[WORD_LEN];
-    System.arraycopy(data, WORD_LEN + WORD_LEN + WORD_LEN, yBytesImaginary, 0, WORD_LEN);
+    System.arraycopy(data, WORD_LEN + WORD_LEN, yBytesImaginary, 0, WORD_LEN);
+    byte[] yBytesReal = new byte[WORD_LEN];
+    System.arraycopy(data, WORD_LEN + WORD_LEN + WORD_LEN, yBytesReal, 0, WORD_LEN);
 
     Fq2 x = Fq2.create(new BigInteger(xBytesReal), new BigInteger(xBytesImaginary));
     Fq2 y = Fq2.create(new BigInteger(yBytesReal), new BigInteger(yBytesImaginary));

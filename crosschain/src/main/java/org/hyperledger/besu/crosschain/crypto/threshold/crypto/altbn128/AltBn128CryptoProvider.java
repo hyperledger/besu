@@ -22,13 +22,10 @@ import org.hyperledger.besu.crypto.altbn128.AltBn128Point;
 import org.hyperledger.besu.crypto.altbn128.Fq12;
 import org.hyperledger.besu.util.bytes.Bytes32;
 import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.BytesValues;
 
 import java.math.BigInteger;
 
 public class AltBn128CryptoProvider extends CryptoProviderBase implements BlsCryptoProvider {
-  private static final String SECURITY_DOMAIN = "BN128";
-
   public BlsCryptoProvider.DigestAlgorithm digestAlgorithm;
 
   public AltBn128CryptoProvider(final BlsCryptoProvider.DigestAlgorithm alg) {
@@ -60,9 +57,7 @@ public class AltBn128CryptoProvider extends CryptoProviderBase implements BlsCry
   // TODO there is a lot of code duplicaiton between hashToCurveE1 and E2
   @Override
   public BlsPoint hashToCurveE1(final byte[] data) {
-    BytesValue dataBV1 = BytesValue.wrap(createSecuerityDomainPrefix(SECURITY_DOMAIN));
-    BytesValue dataBV2 = BytesValue.wrap(data);
-    BytesValue dataBV = BytesValues.concatenate(dataBV1, dataBV2);
+    BytesValue dataBV = BytesValue.wrap(data);
     BlsPoint P = null;
 
     switch (this.digestAlgorithm) {
@@ -84,26 +79,23 @@ public class AltBn128CryptoProvider extends CryptoProviderBase implements BlsCry
 
   /**
    * Map a byte array to a point on the curve by converting the byte array to an integer and then
-   * scalar multiplying the base point by the integer.
+   * scalar multiplying the base point by the integer. Use this approach rather than those specified
+   * in https://tools.ietf.org/html/draft-irtf-cfrg-hash-to-curve-04 as the map to curve function
+   * needs to match something that can be implemented in Solidity.
+   *
+   * @data value to map to a point
+   * @return point on E1
    */
   private BlsPoint mapToCurveE1(final byte[] data) {
     BigInteger q = getPrimeModulus();
 
     BigInteger ctr = BigInteger.ZERO;
 
-    BlsPoint p = null;
+    BlsPoint p;
 
     while (true) {
-      byte[] c = ctr.toByteArray();
-
-      /* Concatenate data with counter */
-      byte[] dc = new byte[data.length + c.length];
-      System.arraycopy(data, 0, dc, 0, data.length);
-      System.arraycopy(c, 0, dc, data.length, c.length);
-
-      // Convert back to a Big Integer mod q.
-      // Indicate dc must be positive.
-      BigInteger x = new BigInteger(1, dc);
+      BigInteger dc1 = new BigInteger(1, data);
+      BigInteger x = dc1.add(ctr);
       x = x.mod(q);
 
       p = createPointE1(x); // map to point
@@ -137,9 +129,7 @@ public class AltBn128CryptoProvider extends CryptoProviderBase implements BlsCry
 
   @Override
   public BlsPoint hashToCurveE2(final byte[] data) {
-    BytesValue dataBV1 = BytesValue.wrap(createSecuerityDomainPrefix(SECURITY_DOMAIN));
-    BytesValue dataBV2 = BytesValue.wrap(data);
-    BytesValue dataBV = BytesValues.concatenate(dataBV1, dataBV2);
+    BytesValue dataBV = BytesValue.wrap(data);
     BlsPoint P = null;
 
     switch (this.digestAlgorithm) {
@@ -154,31 +144,23 @@ public class AltBn128CryptoProvider extends CryptoProviderBase implements BlsCry
     return P;
   }
 
-  // TODO Review this https://tools.ietf.org/html/draft-irtf-cfrg-hash-to-curve-04
-  // TODO to work out whether this is a better approach.
-
   /**
    * Map a byte array to a point on the curve by converting the byte array to an integer and then
    * scalar multiplying the base point by the integer.
+   *
+   * @param data value to map to a point.
+   * @return point on E2.
    */
   private BlsPoint mapToCurveE2(final byte[] data) {
     BigInteger q = getPrimeModulus();
 
     BigInteger ctr = BigInteger.ZERO;
 
-    BlsPoint p = null;
+    BlsPoint p;
 
     while (true) {
-      byte[] c = ctr.toByteArray();
-
-      /* Concatenate data with counter */
-      byte[] dc = new byte[data.length + c.length];
-      System.arraycopy(data, 0, dc, 0, data.length);
-      System.arraycopy(c, 0, dc, data.length, c.length);
-
-      // Convert back to a Big Integer mod q.
-      // Indicate dc must be positive.
-      BigInteger x = new BigInteger(1, dc);
+      BigInteger dc1 = new BigInteger(1, data);
+      BigInteger x = dc1.add(ctr);
       x = x.mod(q);
 
       p = createPointE2(x); // map to point
@@ -245,28 +227,5 @@ public class AltBn128CryptoProvider extends CryptoProviderBase implements BlsCry
     // System.out.println("Result2: " + result2);
 
     return result1.equals(result2);
-  }
-
-  // Taken from here:
-  // https://github.com/PegaSysEng/pantheon/blob/master/ethereum/core/src/main/java/tech/pegasys/pantheon/ethereum/mainnet/precompiles/AltBN128PairingPrecompiledContract.java
-  public boolean pair(final AltBn128Point p1, final AltBn128Fq2Point p2) {
-    if (!p1.isOnCurve()) {
-      // TODO should an exception be thrown?
-      return false;
-    }
-
-    if (!p2.isOnCurve() /*|| !p2.isInGroup() */) {
-      // TODO should an exception be thrown?
-      return false;
-    }
-
-    // TODO this is written as if in a loop, as in the code from the Pantheon precompile
-    Fq12 exponent = Fq12.one();
-    exponent = exponent.multiply(AltBn128Fq12Pairer.pair(p1, p2));
-
-    if (AltBn128Fq12Pairer.finalize(exponent).equals(Fq12.one())) {
-      return true;
-    }
-    return false;
   }
 }

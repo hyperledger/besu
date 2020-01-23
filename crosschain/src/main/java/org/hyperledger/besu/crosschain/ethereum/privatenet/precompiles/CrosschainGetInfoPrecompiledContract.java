@@ -62,15 +62,15 @@ public class CrosschainGetInfoPrecompiledContract extends AbstractPrecompiledCon
 
     CrosschainTransaction tx = CrosschainThreadLocalDataHolder.getCrosschainTransaction();
     if (tx == null) {
-      if (option == 0) {
+      if (option == GET_INFO_CROSSCHAIN_TRANSACTION_TYPE) {
         return toBytes32(BigInteger.ZERO);
-      } else if (option == 1) {
+      } else if (option == GET_INFO_BLOCKCHAIN_ID) {
         Transaction nonXTx = CrosschainThreadLocalDataHolder.getTransaction();
         if (nonXTx != null) {
-          Optional<BigInteger> chId = nonXTx.getChainId();
-          if (chId.isPresent()) {
-            return toBytes32(chId.get());
-          }
+          Optional<BigInteger> maybeId = nonXTx.getChainId();
+          BigInteger id = maybeId.orElse(BigInteger.ZERO);
+          LOG.info("CrosschainGetInfo: Get Blockchain Ida: Returning: {}", id);
+          return toBytes32(id);
         }
       }
       LOG.error("CrosschainGetInfo called without a crosschain transaction context");
@@ -87,6 +87,7 @@ public class CrosschainGetInfoPrecompiledContract extends AbstractPrecompiledCon
       case GET_INFO_BLOCKCHAIN_ID:
         maybeId = tx.getChainId();
         id = maybeId.orElse(BigInteger.ZERO);
+        LOG.info("CrosschainGetInfo: Get Blockchain Idb: Returning: {}", id);
         return toBytes32(id);
       case GET_INFO_COORDINAITON_BLOCKHCAIN_ID:
         maybeId = tx.getCrosschainCoordinationBlockchainId();

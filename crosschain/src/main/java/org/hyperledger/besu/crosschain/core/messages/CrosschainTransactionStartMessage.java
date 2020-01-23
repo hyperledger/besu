@@ -13,8 +13,11 @@
 package org.hyperledger.besu.crosschain.core.messages;
 
 import org.hyperledger.besu.ethereum.core.CrosschainTransaction;
+import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.util.bytes.BytesValue;
+
+import java.math.BigInteger;
 
 public class CrosschainTransactionStartMessage extends AbstractThresholdSignedMessage {
 
@@ -34,5 +37,46 @@ public class CrosschainTransactionStartMessage extends AbstractThresholdSignedMe
   @Override
   public ThresholdSignedMessageType getType() {
     return ThresholdSignedMessageType.CROSSCHAIN_TRANSACTION_START;
+  }
+
+  public BigInteger getTransactionTimeoutBlockNumber() {
+    return this.transaction.getCrosschainTransactionTimeoutBlockNumber().get();
+  }
+
+  @Override
+  public BytesValue getEncodedCoreMessage() {
+    return RLP.encode(
+        out -> {
+          out.startList();
+          sharedEncoding(out);
+          out.writeBigIntegerScalar(getTransactionTimeoutBlockNumber());
+          out.endList();
+        });
+  }
+
+  @Override
+  public BytesValue getEncodedMessage() {
+    return RLP.encode(
+        out -> {
+          out.startList();
+          sharedEncoding(out);
+          out.writeBigIntegerScalar(getTransactionTimeoutBlockNumber());
+          out.writeBytesValue(RLP.encode(this.transaction::writeTo));
+          out.writeLongScalar(this.keyVersion);
+          out.writeBytesValue(this.signature != null ? this.signature : BytesValue.EMPTY);
+          out.endList();
+        });
+  }
+
+  @Override
+  protected void decode(final RLPInput in) {
+    this.transaction = CrosschainTransaction.readFrom(in);
+    this.keyVersion = in.readLongScalar();
+    BytesValue sig = in.readBytesValue();
+    if (sig.isZero()) {
+      this.signature = null;
+    } else {
+      this.signature = sig;
+    }
   }
 }

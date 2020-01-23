@@ -93,7 +93,7 @@ public interface MutableBytes32 extends MutableBytesValue, Bytes32 {
 
       @Override
       public MutableBytes32 mutableCopy() {
-        return wrap(value.extractArray());
+        return MutableBytes32.wrap(value.extractArray());
       }
 
       @Override

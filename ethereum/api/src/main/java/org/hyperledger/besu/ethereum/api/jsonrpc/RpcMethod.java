@@ -63,7 +63,7 @@ public enum RpcMethod {
   ETH_GET_TRANSACTION_BY_BLOCK_HASH_AND_INDEX("eth_getTransactionByBlockHashAndIndex"),
   ETH_GET_TRANSACTION_BY_BLOCK_NUMBER_AND_INDEX("eth_getTransactionByBlockNumberAndIndex"),
   ETH_GET_TRANSACTION_BY_HASH("eth_getTransactionByHash"),
-  ETH_GET_TRANSACTION_COUNT("eth_getTransactionCount"),
+  ETH_GET_TRANSACTION_COUNT(Constants.ETH_GET_TRANSACTION_COUNT),
   ETH_GET_TRANSACTION_RECEIPT("eth_getTransactionReceipt"),
   ETH_GET_UNCLE_BY_BLOCK_HASH_AND_INDEX("eth_getUncleByBlockHashAndIndex"),
   ETH_GET_UNCLE_BY_BLOCK_NUMBER_AND_INDEX("eth_getUncleByBlockNumberAndIndex"),
@@ -76,7 +76,7 @@ public enum RpcMethod {
   ETH_NEW_FILTER("eth_newFilter"),
   ETH_NEW_PENDING_TRANSACTION_FILTER("eth_newPendingTransactionFilter"),
   ETH_PROTOCOL_VERSION("eth_protocolVersion"),
-  ETH_SEND_RAW_TRANSACTION("eth_sendRawTransaction"),
+  ETH_SEND_RAW_TRANSACTION(Constants.ETH_SEND_RAW_TRANSACTION),
   ETH_SEND_TRANSACTION("eth_sendTransaction"),
   ETH_SUBSCRIBE("eth_subscribe"),
   ETH_SYNCING("eth_syncing"),
@@ -133,6 +133,8 @@ public enum RpcMethod {
   CROSS_START_THRESHOLD_KEY_GENERATION("cross_startThresholdKeyGeneration");
 
   public static class Constants {
+    public static final String ETH_GET_TRANSACTION_COUNT = "eth_getTransactionCount";
+    public static final String ETH_SEND_RAW_TRANSACTION = "eth_sendRawTransaction";
     public static final String CROSS_PROCESS_SUBORDINATE_VIEW = "cross_processSubordinateView";
     public static final String CROSS_SEND_RAW_CROSSCHAIN_TRANSACTION_STR =
         "cross_sendRawCrosschainTransaction";

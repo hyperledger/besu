@@ -21,6 +21,7 @@ import java.util.Set;
 
 /** Holds all of the information related to a round of key generation. */
 public class BlsThresholdCredentials extends BlsThresholdPublicKeyImpl {
+  private BigInteger privateKeyShare;
   private Map<BigInteger, BigInteger> mySecretShares;
   private BigInteger myNodeAddress;
   private Set<BigInteger> nodesStillActiveInKeyGeneration;
@@ -32,6 +33,7 @@ public class BlsThresholdCredentials extends BlsThresholdPublicKeyImpl {
       final long keyVersion,
       final int threshold,
       final BlsPoint publicKey,
+      final BigInteger privateKeyShare,
       final BigInteger blockchainId,
       final BlsThresholdCryptoSystem algorithm,
       final Map<BigInteger, BigInteger> mySecretShares,
@@ -41,12 +43,17 @@ public class BlsThresholdCredentials extends BlsThresholdPublicKeyImpl {
       final KeyGenFailureToCompleteReason failureReason,
       final KeyStatus keyStatus) {
     super(publicKey, keyVersion, threshold, blockchainId, algorithm);
+    this.privateKeyShare = privateKeyShare;
     this.mySecretShares = mySecretShares;
     this.myNodeAddress = myNodeAddress;
     this.nodesStillActiveInKeyGeneration = nodesStillActiveInKeyGeneration;
     this.nodesNoLongerInKeyGeneration = nodesNoLongerInKeyGeneration;
     this.failureReason = failureReason;
     this.keyStatus = keyStatus;
+  }
+
+  public BigInteger getPrivateKeyShare() {
+    return this.privateKeyShare;
   }
 
   public Map<BigInteger, BigInteger> getMySecretShares() {
@@ -77,6 +84,7 @@ public class BlsThresholdCredentials extends BlsThresholdPublicKeyImpl {
     private long keyVersion;
     private int threshold;
     private BlsPoint publicKey;
+    private BigInteger privateKeyShare;
     private BigInteger blockchainId;
     private BlsThresholdCryptoSystem algorithm;
     private Map<BigInteger, BigInteger> mySecretShares;
@@ -98,6 +106,11 @@ public class BlsThresholdCredentials extends BlsThresholdPublicKeyImpl {
 
     public Builder publicKey(final BlsPoint publicKey) {
       this.publicKey = publicKey;
+      return this;
+    }
+
+    public Builder privateKeyShare(final BigInteger privateKeyShare) {
+      this.privateKeyShare = privateKeyShare;
       return this;
     }
 
@@ -148,6 +161,7 @@ public class BlsThresholdCredentials extends BlsThresholdPublicKeyImpl {
           keyVersion,
           threshold,
           publicKey,
+          privateKeyShare,
           blockchainId,
           algorithm,
           mySecretShares,

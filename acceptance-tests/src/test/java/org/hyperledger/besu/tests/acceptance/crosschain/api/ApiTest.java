@@ -95,46 +95,50 @@ public class ApiTest extends CrosschainAcceptanceTestBase {
   @Test
   /*
    * Tests the APIs that are related to keys.
+   *
+   * Note: Use blockchain 2 and not blockchain 1 as blockchain 1 has a key generated for it as part of the setUp test phase.
    */
   public void keyTest() throws Exception {
+    setUpBlockchain2_NoKeyGenerate();
+
     // There is no public key generated for this chain yet. So it returns a null response.
     CrossBlockchainPublicKeyResponse pubKey =
-        this.nodeOnBlockchain1.execute(crossTransactions.getBlockchainPublicKey(1));
+        this.nodeOnBlockchain2.execute(crossTransactions.getBlockchainPublicKey(1));
     assertThat(pubKey.getRawResponse()).isNull();
 
     // Because there are no keys, activating the key with version 1 should be ignored.
     // 0 indicates no valid key present
-    this.nodeOnBlockchain1.execute(crossTransactions.activateKey(1));
-    BigInteger keyVersion = this.nodeOnBlockchain1.execute(crossTransactions.getActiveKeyVersion());
+    this.nodeOnBlockchain2.execute(crossTransactions.activateKey(1));
+    BigInteger keyVersion = this.nodeOnBlockchain2.execute(crossTransactions.getActiveKeyVersion());
     assertThat(keyVersion.longValue()).isEqualTo(0);
 
     // Start the key generation process
     keyVersion =
-        this.nodeOnBlockchain1.execute(
+        this.nodeOnBlockchain2.execute(
             crossTransactions.startThresholdKeyGeneration(
                 1, BlsThresholdCryptoSystem.ALT_BN_128_WITH_KECCAK256));
     assertThat(keyVersion.longValue()).isEqualTo(1);
 
     KeyGenFailureToCompleteReason reason =
-        this.nodeOnBlockchain1.execute(
+        this.nodeOnBlockchain2.execute(
             crossTransactions.getKeyGenFailureReason(keyVersion.longValue()));
     assertThat(reason.value).isEqualTo(KeyGenFailureToCompleteReason.SUCCESS.value);
 
     // Get the key version from the API and check
     KeyStatus keyStatus =
-        this.nodeOnBlockchain1.execute(crossTransactions.getKeyStatus(keyVersion.longValue()));
+        this.nodeOnBlockchain2.execute(crossTransactions.getKeyStatus(keyVersion.longValue()));
     assertThat(keyStatus.value).isEqualTo(KeyStatus.KEY_GEN_COMPLETE.value);
 
     // Activate the key of version 1 and check the APIs crossGetActiveKeyVersion and
     // crossGetKeyStatus
-    this.nodeOnBlockchain1.execute(crossTransactions.activateKey(keyVersion.longValue()));
+    this.nodeOnBlockchain2.execute(crossTransactions.activateKey(keyVersion.longValue()));
     BigInteger keyVersionFromApi =
-        this.nodeOnBlockchain1.execute(crossTransactions.getActiveKeyVersion());
+        this.nodeOnBlockchain2.execute(crossTransactions.getActiveKeyVersion());
     assertThat(keyVersionFromApi).isEqualTo(keyVersion);
 
     // Check the API crossGetKeyActiveNodes
     List<BigInteger> activeKeyNodes =
-        this.nodeOnBlockchain1.execute(crossTransactions.getKeyActiveNodes(keyVersion.longValue()));
+        this.nodeOnBlockchain2.execute(crossTransactions.getKeyActiveNodes(keyVersion.longValue()));
     assertThat(activeKeyNodes.size()).isEqualTo(1);
     LOG.info("Active Key Nodes are: ");
     for (BigInteger n : activeKeyNodes) {
@@ -143,29 +147,29 @@ public class ApiTest extends CrosschainAcceptanceTestBase {
 
     // Check the API crossGetKeyGenNodesDroppedOutOfKeyGeneration
     Map<BigInteger, KeyGenFailureToCompleteReason> nodesReasons =
-        this.nodeOnBlockchain1.execute(
+        this.nodeOnBlockchain2.execute(
             crossTransactions.getKeyGenNodesDroppedOutOfKeyGeneration(keyVersion.longValue()));
     assertThat(nodesReasons.size()).isEqualTo(0);
 
     keyStatus =
-        this.nodeOnBlockchain1.execute(crossTransactions.getKeyStatus(keyVersion.longValue()));
+        this.nodeOnBlockchain2.execute(crossTransactions.getKeyStatus(keyVersion.longValue()));
     assertThat(keyStatus.value).isEqualTo(KeyStatus.ACTIVE_KEY.value);
 
     // Generate the key once again
     keyVersion =
-        this.nodeOnBlockchain1.execute(
+        this.nodeOnBlockchain2.execute(
             crossTransactions.startThresholdKeyGeneration(
                 1, BlsThresholdCryptoSystem.ALT_BN_128_WITH_KECCAK256));
     assertThat(keyVersion.longValue()).isEqualTo(2);
 
     // Get the key version again from the API and check
-    this.nodeOnBlockchain1.execute(crossTransactions.activateKey(keyVersion.longValue()));
-    keyVersionFromApi = this.nodeOnBlockchain1.execute(crossTransactions.getActiveKeyVersion());
+    this.nodeOnBlockchain2.execute(crossTransactions.activateKey(keyVersion.longValue()));
+    keyVersionFromApi = this.nodeOnBlockchain2.execute(crossTransactions.getActiveKeyVersion());
     assertThat(keyVersionFromApi).isEqualTo(keyVersion);
 
     // Activate the old version and check the key version from the API
-    this.nodeOnBlockchain1.execute(crossTransactions.activateKey(1));
-    keyVersion = this.nodeOnBlockchain1.execute(crossTransactions.getActiveKeyVersion());
+    this.nodeOnBlockchain2.execute(crossTransactions.activateKey(1));
+    keyVersion = this.nodeOnBlockchain2.execute(crossTransactions.getActiveKeyVersion());
     assertThat(keyVersion.longValue()).isEqualTo(1);
   }
 

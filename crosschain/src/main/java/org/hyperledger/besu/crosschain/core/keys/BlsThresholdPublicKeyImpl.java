@@ -12,12 +12,14 @@
  */
 package org.hyperledger.besu.crosschain.core.keys;
 
+import org.hyperledger.besu.crosschain.crypto.threshold.crypto.BlsCryptoProvider;
 import org.hyperledger.besu.crosschain.crypto.threshold.crypto.BlsPoint;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -75,36 +77,71 @@ public class BlsThresholdPublicKeyImpl implements BlsThresholdPublicKey {
     return RLP.encode(
         out -> {
           out.startList();
+          out.writeBigIntegerScalar(this.blockchainId);
           out.writeLongScalar(this.keyVersion);
           out.writeLongScalar(this.threshold);
           out.writeLongScalar(this.algorithm.value);
           out.writeBytesValue(BytesValue.wrap(this.publicKey.store()));
-          out.writeBigIntegerScalar(this.blockchainId);
           out.endList();
         });
+  }
+
+  @Override
+  public BytesValue getEncodedPublicKeyForCoordinationContract() {
+    byte[] publicKey = this.publicKey.store();
+
+    final ByteBuffer buffer = ByteBuffer.allocate(Integer.BYTES + publicKey.length);
+    buffer.putInt(this.algorithm.value);
+    buffer.put(publicKey);
+    return BytesValue.wrapBuffer(buffer);
   }
 
   public static BlsThresholdPublicKey readFrom(final BytesValue input) {
     RLPInput in = RLP.input(input);
     in.enterList();
+    BigInteger blockchainId = in.readBigIntegerScalar();
     long keyVersion = in.readLongScalar();
     int threshold = (int) in.readLongScalar();
     int algorithm = (int) in.readLongScalar();
     BytesValue publicKeyBytesValue = in.readBytesValue();
-    BigInteger blockchainId = in.readBigIntegerScalar();
 
     BlsThresholdCryptoSystem cryptoSystem = BlsThresholdCryptoSystem.create(algorithm);
     byte[] pubKeyBytes = publicKeyBytesValue.extractArray();
-    BlsPoint publicKey = BlsPoint.load(pubKeyBytes);
-    switch (publicKey.getType()) {
-      case LOCAL_ALT_BN_128:
+    BlsPoint publicKey;
+    switch (cryptoSystem) {
+      case ALT_BN_128_WITH_KECCAK256:
+        publicKey =
+            BlsPoint.load(BlsCryptoProvider.CryptoProviderTypes.LOCAL_ALT_BN_128, pubKeyBytes);
         break;
       default:
-        String msg = "Unknown crypto system " + publicKey.getType();
+        String msg = "Unknown crypto system " + cryptoSystem;
         LOG.error(msg);
         throw new RuntimeException(msg);
     }
     return new BlsThresholdPublicKeyImpl(
         publicKey, keyVersion, threshold, blockchainId, cryptoSystem);
+  }
+
+  public static BlsThresholdPublicKey readFromForCoordinationContract(
+      final BytesValue input, final BigInteger blockchainId, final long keyVersion) {
+    ByteBuffer buffer = ByteBuffer.wrap(input.getByteArray());
+    int algorithm = buffer.getInt();
+    int pubKeySize = buffer.remaining();
+    byte[] pubKeyBytes = new byte[pubKeySize];
+    buffer.get(pubKeyBytes);
+
+    BlsThresholdCryptoSystem cryptoSystem = BlsThresholdCryptoSystem.create(algorithm);
+    BlsPoint publicKey;
+    switch (cryptoSystem) {
+      case ALT_BN_128_WITH_KECCAK256:
+        publicKey =
+            BlsPoint.load(BlsCryptoProvider.CryptoProviderTypes.LOCAL_ALT_BN_128, pubKeyBytes);
+        break;
+      default:
+        String msg = "Unknown crypto system " + cryptoSystem;
+        LOG.error(msg);
+        throw new RuntimeException(msg);
+    }
+    return new BlsThresholdPublicKeyImpl(publicKey, keyVersion, 0, blockchainId, cryptoSystem);
   }
 }

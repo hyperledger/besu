@@ -13,6 +13,7 @@
 package org.hyperledger.besu.crosschain.p2p;
 
 import org.hyperledger.besu.crosschain.core.keys.generation.ThresholdKeyGenContractInterface;
+import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.math.BigInteger;
 import java.util.HashMap;
@@ -86,6 +87,12 @@ public class SimulatedCrosschainDevP2P implements CrosschainDevP2PInterface {
   @Override
   public void setSecretShareCallback(final CrosschainPartSecretShareCallback implementation) {
     this.cb = implementation;
+  }
+
+  @Override
+  public void sendMessageSigningRequest(final BigInteger myAddress, final BytesValue message) {
+    LOG.error("not implemented yet");
+    throw new Error("not implemented yet");
   }
 
   @Override

@@ -12,6 +12,8 @@
  */
 package org.hyperledger.besu.crosschain.p2p;
 
+import org.hyperledger.besu.util.bytes.BytesValue;
+
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
@@ -52,14 +54,13 @@ public interface CrosschainDevP2PInterface {
   // TODO void setSigningRequestCallback(final CrosschainPartSecretShareCallback implementation);
   // TODO void setSigningResponseCallback(final CrosschainPartSecretShareCallback implementation);
 
-  // **
-  //   * Send from this node to a specific node.
-  //   *
-  //   * @param myAddress
-  //   */
-  //  void sendMessageSigningRequest(
-  //      final BigInteger myAddress,
-  //      final BytesValue message);
+  /**
+   * Send from this node to all nodes.
+   *
+   * @param myAddress The address of this node.
+   * @param message The message to be signed.
+   */
+  void sendMessageSigningRequest(final BigInteger myAddress, final BytesValue message);
 
   //  /**
   //   * Send from this node to a specific node.

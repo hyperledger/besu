@@ -12,10 +12,13 @@
  */
 package org.hyperledger.besu.crosschain.core.messages;
 
+import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.CrosschainTransaction;
-import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
+import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.util.bytes.BytesValue;
+
+import java.math.BigInteger;
 
 public abstract class AbstractThresholdSignedMessage implements ThresholdSignedMessage {
   protected long keyVersion = 0;
@@ -39,44 +42,72 @@ public abstract class AbstractThresholdSignedMessage implements ThresholdSignedM
     decode(in);
   }
 
+  @Override
   public void setSignature(final long keyVersion, final BytesValue sig) {
     this.keyVersion = keyVersion;
     this.signature = sig;
   }
 
-  public CrosschainTransaction getTransaction() {
-    return this.transaction;
+  @Override
+  public BigInteger getCoordinationBlockchainId() {
+    return this.transaction.getCrosschainCoordinationBlockchainId().get();
   }
 
+  @Override
+  public Address getCoordinationContractAddress() {
+    return this.transaction.getCrosschainCoordinationContractAddress().get();
+  }
+
+  @Override
+  public BigInteger getOriginatingBlockchainId() {
+    return this.transaction.getOriginatingSidechainId().orElse(this.transaction.getChainId().get());
+  }
+
+  @Override
+  public BigInteger getCrosschainTransactionId() {
+    return this.transaction.getCrosschainTransactionId().get();
+  }
+
+  @Override
+  public BytesValue getCrosschainTransactionHash() {
+    return this.transaction.hash();
+  }
+
+  @Override
   public long getKeyVersion() {
     return this.keyVersion;
   }
 
+  @Override
   public BytesValue getSignature() {
     return this.signature;
   }
 
   @Override
-  public BytesValue getEncodedMessage() {
-    return RLP.encode(
-        out -> {
-          out.startList();
-          out.writeLongScalar(getType().value);
-          out.writeBytesValue(RLP.encode(this.transaction::writeTo));
-          out.writeLongScalar(this.keyVersion);
-          out.writeBytesValue(this.signature != null ? this.signature : BytesValue.EMPTY);
-          out.endList();
-        });
+  public CrosschainTransaction getTransaction() {
+    return this.transaction;
   }
 
-  private void decode(final RLPInput in) {
-    this.transaction = CrosschainTransaction.readFrom(in);
-    this.keyVersion = in.readLongScalar();
-    BytesValue sig = in.readBytesValue();
-    if (sig.isZero()) {
-      this.signature = null;
-    } else {
-      this.signature = sig;
-    }
+  @Override
+  public BytesValue getEncodedCoreMessage() {
+    throw new Error("not implemented yet");
+  }
+
+  @Override
+  public BytesValue getEncodedMessage() {
+    throw new Error("not implemented yet");
+  }
+
+  protected void sharedEncoding(final RLPOutput out) {
+    out.writeLongScalar(getType().value);
+    out.writeBigIntegerScalar(getCoordinationBlockchainId());
+    out.writeBytesValue(getCoordinationContractAddress());
+    out.writeBigIntegerScalar(getOriginatingBlockchainId());
+    out.writeBigIntegerScalar(getCrosschainTransactionId());
+    out.writeBytesValue(getCrosschainTransactionHash());
+  }
+
+  protected void decode(final RLPInput in) {
+    throw new Error("not implemented yet");
   }
 }

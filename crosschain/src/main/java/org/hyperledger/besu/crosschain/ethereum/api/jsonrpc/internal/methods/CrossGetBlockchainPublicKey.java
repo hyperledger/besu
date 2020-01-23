@@ -48,8 +48,9 @@ public class CrossGetBlockchainPublicKey extends AbstractCrossWithKeyVersionPara
         "JSON RPC {}: Public key version: {}, encoded key: {}",
         getName(),
         keyVersion,
-        publicKey.getEncodedPublicKey());
+        publicKey.getEncodedPublicKeyForCoordinationContract());
 
-    return new JsonRpcSuccessResponse(request.getId(), publicKey.getEncodedPublicKey().toString());
+    return new JsonRpcSuccessResponse(
+        request.getId(), publicKey.getEncodedPublicKeyForCoordinationContract().toString());
   }
 }

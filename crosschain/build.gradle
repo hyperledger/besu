@@ -36,4 +36,17 @@ dependencies {
 
 
   implementation 'io.vertx:vertx-core'
+
+  // Web3J related stuff
+  implementation fileTree('../../sidechains-web3j') {include '**/build/libs/*SNAPSHOT.jar'}
+  implementation "org.bouncycastle:bcprov-jdk15on"
+  implementation "com.fasterxml.jackson.core:jackson-databind"
+  implementation "com.github.jnr:jnr-unixsocket"
+  implementation "com.squareup.okhttp3:okhttp"
+  implementation "com.squareup.okhttp3:logging-interceptor"
+  implementation "io.reactivex.rxjava2:rxjava"
+  implementation "org.java-websocket:Java-WebSocket"
+  implementation "com.fasterxml.jackson.core:jackson-databind"
+  implementation "org.slf4j:slf4j-api"
+
 }
