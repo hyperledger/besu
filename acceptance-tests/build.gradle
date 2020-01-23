@@ -50,15 +50,6 @@ dependencies {
   testSupportImplementation 'org.awaitility:awaitility'
   testSupportImplementation 'org.java-websocket:Java-WebSocket'
 
-  testSupportImplementation files('libs/web3j-abi.jar')
-  testSupportImplementation files('libs/web3j-besu.jar')
-  testSupportImplementation files('libs/web3j-core.jar')
-  testSupportImplementation files('libs/web3j-crypto.jar')
-  testSupportImplementation files('libs/web3j-eea.jar')
-  testSupportImplementation files('libs/web3j-rlp.jar')
-  testSupportImplementation files('libs/web3j-tuples.jar')
-  testSupportImplementation files('libs/web3j-utils.jar')
-
   testSupportImplementation "org.bouncycastle:bcprov-jdk15on"
   testSupportImplementation "com.fasterxml.jackson.core:jackson-databind"
   testSupportImplementation "com.github.jnr:jnr-unixsocket"
@@ -72,6 +63,8 @@ dependencies {
   //testSupportImplementation 'org.web3j:abi'
   //testSupportImplementation 'org.web3j:pantheon'
   //testSupportImplementation 'org.web3j:crypto'
+  // Use the Crosschain version of web3j.
+  testSupportImplementation fileTree('../../sidechains-web3j') {include '**/build/libs/*SNAPSHOT.jar'}
   testSupportImplementation 'tech.pegasys.ethsigner.internal:core'
   testSupportImplementation 'tech.pegasys.ethsigner.internal:file-based'
   testSupportImplementation 'tech.pegasys.ethsigner.internal:signing-api'
@@ -81,15 +74,9 @@ dependencies {
   testImplementation 'org.assertj:assertj-core'
   //testImplementation 'org.web3j:abi'
   //testImplementation 'org.web3j:pantheon'
+  // Use the Crosschain version of web3j.
+  testImplementation fileTree('../../sidechains-web3j') {include '**/build/libs/*SNAPSHOT.jar'}
 
-  testImplementation files('libs/web3j-abi.jar')
-  testImplementation files('libs/web3j-besu.jar')
-  testImplementation files('libs/web3j-core.jar')
-  testImplementation files('libs/web3j-crypto.jar')
-  testImplementation files('libs/web3j-eea.jar')
-  testImplementation files('libs/web3j-rlp.jar')
-  testImplementation files('libs/web3j-tuples.jar')
-  testImplementation files('libs/web3j-utils.jar')
   testImplementation "org.bouncycastle:bcprov-jdk15on"
   testImplementation "com.fasterxml.jackson.core:jackson-databind"
   testImplementation "com.github.jnr:jnr-unixsocket"
