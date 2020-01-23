@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.vm.Code;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
+import org.hyperledger.besu.ethereum.vm.internal.MemoryEntry;
 
 import java.util.EnumSet;
 import java.util.Map;
@@ -51,6 +52,7 @@ public class TraceFrame {
   private Gas gasRemainingPostExecution;
   private final Optional<Map<UInt256, UInt256>> storagePreExecution;
   private final boolean virtualOperation;
+  private final Optional<MemoryEntry> maybeUpdatedMemory;
 
   public TraceFrame(
       final int pc,
@@ -69,7 +71,8 @@ public class TraceFrame {
       final Optional<Bytes32[]> stackPostExecution,
       final Optional<Bytes32[]> memoryPostExecution,
       final Optional<Map<UInt256, UInt256>> storagePreExecution,
-      final boolean virtualOperation) {
+      final boolean virtualOperation,
+      final Optional<MemoryEntry> maybeUpdatedMemory) {
     this.pc = pc;
     this.opcode = opcode;
     this.gasRemaining = gasRemaining;
@@ -88,6 +91,7 @@ public class TraceFrame {
     this.maybeNextDepth = Optional.empty();
     this.storagePreExecution = storagePreExecution;
     this.virtualOperation = virtualOperation;
+    this.maybeUpdatedMemory = maybeUpdatedMemory;
   }
 
   public TraceFrame(
@@ -124,7 +128,8 @@ public class TraceFrame {
         stackPostExecution,
         memoryPostExecution,
         storagePreExecution,
-        false);
+        false,
+        Optional.empty());
   }
 
   public int getPc() {
@@ -232,5 +237,9 @@ public class TraceFrame {
 
   public boolean isVirtualOperation() {
     return virtualOperation;
+  }
+
+  public Optional<MemoryEntry> getMaybeUpdatedMemory() {
+    return maybeUpdatedMemory;
   }
 }
