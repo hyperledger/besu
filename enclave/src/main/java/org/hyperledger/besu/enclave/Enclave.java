@@ -143,7 +143,7 @@ public class Enclave {
     try {
       bodyText = objectMapper.writeValueAsString(content);
     } catch (final JsonProcessingException e) {
-      throw new EnclaveClientException(400, "Unable to serialise request.");
+      throw new EnclaveClientException(400, "Unable to serialize request.");
     }
 
     return requestTransmitter.post(mediaType, bodyText, endpoint, responseBodyHandler);
