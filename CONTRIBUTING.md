@@ -6,9 +6,9 @@ Welcome to the Besu repository! The following links are a set of guidelines for 
 ### LF / Jira Accounts
 
 Having the following accounts is necessary for contributing code/issues to Besu.  
-* If you want to contribute code, you can make a [LF foundation account here](#).  
+* If you want to contribute code, you can make a [Linux Foundation (LF) account] here.  
 * If you want to raise an issue, you can login to your [Atlassian account here](https://id.atlassian.com/).   
-* Our Rocket Chat also requires a [LF foundation account](#).
+* Our Rocket Chat also requires a [Linux Foundation (LF) account].
 
 ### Useful contributing links
 
@@ -30,3 +30,6 @@ Having the following accounts is necessary for contributing code/issues to Besu.
 * [Roadmap](https://wiki.hyperledger.org/display/BESU/Roadmap)
 * [Code of Conduct](https://wiki.hyperledger.org/display/BESU/Code-of-conduct)
 * [Governance](https://wiki.hyperledger.org/display/BESU/Governance)
+
+
+[Linux Foundation (LF) account]: https://identity.linuxfoundation.org/
