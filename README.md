@@ -13,48 +13,53 @@ Besu is an Apache 2.0 licensed, MainNet compatible, Ethereum client written in J
 
 ## Useful Links
 
-* [Besu Docs](http://besu.hyperledger.org/)
-* [Besu Jira](https://jira.hyperledger.org/projects/BESU/issues)
+* [Besu User Documentation]
+* [Besu Jira]
 * [Besu Wiki](https://wiki.hyperledger.org/display/BESU/Hyperledger+Besu)
-* [How to Contribute to Besu](CONTRIBUTING.md)
+* [How to Contribute to Besu](https://wiki.hyperledger.org/display/BESU/How+to+Contribute)
 
 
 ## Issues 
 
-Besu issues are tracked in [Jira](https://jira.hyperledger.org/projects/BESU/issues) not GitHub. 
-See our [contribution guidelines](CONTRIBUTING.md) for more details on searching and creating issues.
+Besu issues are tracked in [Jira][Besu Jira] not GitHub. 
+See our [guidelines](https://wiki.hyperledger.org/display/BESU/Issues) for more details on searching and creating issues.
 
-If you've commented on an existing issue and have been waiting for a reply, or want to message us for any other reason, feel free to ping us on [RocketChat](https://chat.hyperledger.org/).
+If you have any questions, queries or comments, [RocketChat] is the place to find us.
 
 
 ## Besu Users
 
-Users wanting to install Besu should install the Besu binary by following [these instructions](https://besu.hyperledger.org/en/stable/HowTo/Get-Started/Install-Binaries/).    
+Users wanting to install Besu should install the Besu binary by following [these instructions](https://besu.hyperledger.org/HowTo/Get-Started/Install-Binaries/).    
 Keep in mind that the process for installing and running Besu as a user is different to when developing. Some processes in our user documentation are different to those described in this Readme.
 
 
 ## Besu Developers
 
-* [Contribution Guidelines](CONTRIBUTING.md)
+* [Contributing Guidelines]
 * [Coding Conventions](https://wiki.hyperledger.org/display/BESU/Coding+Conventions)
 * [Command Line Interface (CLI) Style Guide](https://wiki.hyperledger.org/display/BESU/Besu+CLI+Style+Guide)
-* [User Documentation] for running and using Besu
+* [Besu User Documentation] for running and using Besu
 
 
 ### Development
 
 Instructions for how to get started with developing on the Besu codebase. Please also read the
-[contribution guidelines](CONTRIBUTING.md) for more detail on how to submit a pull request (PR).   
+[wiki](https://wiki.hyperledger.org/display/BESU/Pull+Requests) for more details on how to submit a pull request (PR).  
 Also feel free to [contact our Developer Advocate](https://chat.hyperledger.org/direct/faraggi) with any questions about contributing to the project.
 
-* [Checking Out and Building](docs/development/building.md)
-* [Running Developer Builds](docs/development/running-developer-builds.md)
-* [Code Coverage](docs/development/code-coverage.md)
-* [Logging](docs/development/logging.md)
+* [Checking Out and Building](https://wiki.hyperledger.org/display/BESU/Building+from+source)
+* [Running Developer Builds](https://wiki.hyperledger.org/display/BESU/Building+from+source#running-developer-builds)
+* [Code Coverage](https://wiki.hyperledger.org/display/BESU/Code+coverage)
+* [Logging](https://wiki.hyperledger.org/display/BESU/Logging) or the [Documentation's Logging section](https://besu.hyperledger.org/en/stable/HowTo/Monitor/Logging/)
 
-[User Documentation]: https://besu.hyperledger.org/
-[RocketChat]: https://chat.hyperledger.org/channel/besu
 
 ## Release Notes
 
 [Release Notes](CHANGELOG.md)
+
+
+
+[Besu User Documentation]: https://besu.hyperledger.org
+[RocketChat]: (https://chat.hyperledger.org/)
+[Besu Jira]: https://jira.hyperledger.org/projects/BESU/issues
+[Contributing Guidelines]: CONTRIBUTING.md
