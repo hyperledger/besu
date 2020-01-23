@@ -17,13 +17,11 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.vm;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.Trace;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.TracingUtils;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.vm.Code;
 
 import java.util.ArrayDeque;
-import java.util.Arrays;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
@@ -34,7 +32,6 @@ import java.util.stream.Stream;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class VmTraceGenerator {
@@ -100,8 +97,11 @@ public class VmTraceGenerator {
   private boolean mustIgnore(final TraceFrame frame) {
     if ("STOP".equals(frame.getOpcode()) && transactionTrace.getTraceFrames().size() == 1) {
       return true;
+    } else if (!frame.getExceptionalHaltReasons().isEmpty()) {
+      return true;
+    } else {
+      return frame.isVirtualOperation();
     }
-    return frame.isVirtualOperation();
   }
 
   private void completeStep(final VmOperation op, final VmOperationExecutionReport report) {
@@ -127,7 +127,14 @@ public class VmTraceGenerator {
                     .map(stack -> stack[stack.length - 1])
                     .map(last -> Quantity.create(UInt256.fromHexString(last.toHexString())))
                     .ifPresent(report::singlePush);
+                if (!"DELEGATECALL".equals(currentTraceFrame.getOpcode())) {
+                  lastFrameInCall
+                      .getMemory()
+                      .map(mem -> new Mem(mem[0].toHexString(), 0))
+                      .ifPresent(report::setMem);
+                }
               });
+
       op.setSub(newSubTrace);
     }
   }
@@ -157,10 +164,12 @@ public class VmTraceGenerator {
   }
 
   private void generateTracingMemory(final VmOperationExecutionReport report) {
-    updatedMemory(currentTraceFrame.getMemory(), currentTraceFrame.getMemoryPostExecution())
-        .filter(memory -> memory.length > 0)
-        .map(TracingUtils::dumpMemoryAndTrimTrailingZeros)
-        .map(Mem::new)
+    currentTraceFrame
+        .getMaybeUpdatedMemory()
+        .map(
+            updatedMemory ->
+                new Mem(
+                    updatedMemory.getValue().toHexString(), updatedMemory.getOffset().intValue()))
         .ifPresent(report::setMem);
   }
 
@@ -229,17 +238,6 @@ public class VmTraceGenerator {
           new StorageEntry(firstOnlyOnRightKey, onlyOnRight.get(firstOnlyOnRightKey)));
     }
     return Optional.empty();
-  }
-
-  private Optional<Bytes32[]> updatedMemory(
-      final Optional<Bytes32[]> firstCapture, final Optional<Bytes32[]> secondCapture) {
-    final Bytes32[] first = firstCapture.orElse(new Bytes32[0]);
-    final Bytes32[] second = secondCapture.orElse(new Bytes32[0]);
-    final boolean deepEquals = Arrays.deepEquals(first, second);
-    if (deepEquals) {
-      return Optional.empty();
-    }
-    return Optional.of(second);
   }
 
   /**
