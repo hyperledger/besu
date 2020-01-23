@@ -97,11 +97,11 @@ public class VmTraceGenerator {
   private boolean mustIgnore(final TraceFrame frame) {
     if ("STOP".equals(frame.getOpcode()) && transactionTrace.getTraceFrames().size() == 1) {
       return true;
-    }
-    if (!frame.getExceptionalHaltReasons().isEmpty()) {
+    } else if (!frame.getExceptionalHaltReasons().isEmpty()) {
       return true;
+    } else {
+      return frame.isVirtualOperation();
     }
-    return frame.isVirtualOperation();
   }
 
   private void completeStep(final VmOperation op, final VmOperationExecutionReport report) {
