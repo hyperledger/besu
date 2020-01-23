@@ -12,34 +12,26 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.plugin.data;
 
-import org.hyperledger.besu.plugin.Unstable;
+package org.hyperledger.besu.ethereum.vm.internal;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
-/** The minimum set of data for a PropagatedBlockContext. */
-@Unstable
-public interface PropagatedBlockContext {
+public class MemoryEntry {
+  private final UInt256 offset;
+  private final Bytes value;
 
-  /**
-   * A {@link BlockHeader} object.
-   *
-   * @return A {@link BlockHeader}
-   */
-  BlockHeader getBlockHeader();
+  public MemoryEntry(final UInt256 offset, final Bytes value) {
+    this.offset = offset;
+    this.value = value;
+  }
 
-  /**
-   * A {@link BlockHeader} object.
-   *
-   * @return A {@link BlockHeader}
-   */
-  BlockBody getBlockBody();
+  public UInt256 getOffset() {
+    return offset;
+  }
 
-  /**
-   * A scalar value corresponding to the total difficulty.
-   *
-   * @return A UInt256 value corresponding to the total difficulty.
-   */
-  UInt256 getTotalDifficulty();
+  public Bytes getValue() {
+    return value;
+  }
 }

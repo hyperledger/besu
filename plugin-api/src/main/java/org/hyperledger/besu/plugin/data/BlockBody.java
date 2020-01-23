@@ -11,35 +11,23 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
+ *
  */
+
 package org.hyperledger.besu.plugin.data;
 
-import org.hyperledger.besu.plugin.Unstable;
+import java.util.List;
 
-import org.apache.tuweni.units.bigints.UInt256;
+/**
+ * The parts of a Block not in the {@link BlockHeader}, information corresponding to the comprised
+ * transactions in {@link #getTransactions()}, and a set of other block headers in {@link
+ * #getOmmers()}, as defined in the <a
+ * href="https://ethereum.github.io/yellowpaper/paper.pdf">Ethereum Yellow Paper</a>.
+ */
+public interface BlockBody {
+  /** @return The list of transactions of the block. */
+  public List<? extends Transaction> getTransactions();
 
-/** The minimum set of data for a PropagatedBlockContext. */
-@Unstable
-public interface PropagatedBlockContext {
-
-  /**
-   * A {@link BlockHeader} object.
-   *
-   * @return A {@link BlockHeader}
-   */
-  BlockHeader getBlockHeader();
-
-  /**
-   * A {@link BlockHeader} object.
-   *
-   * @return A {@link BlockHeader}
-   */
-  BlockBody getBlockBody();
-
-  /**
-   * A scalar value corresponding to the total difficulty.
-   *
-   * @return A UInt256 value corresponding to the total difficulty.
-   */
-  UInt256 getTotalDifficulty();
+  /** @return The list of ommers of the block. */
+  public List<? extends BlockHeader> getOmmers();
 }
