@@ -303,7 +303,7 @@ public class JsonRpcHttpService {
               } catch (final RuntimeException re) {
                 throw new JsonRpcServiceException(
                     String.format(
-                        "TLS options failed to initialise for Ethereum JSON RPC listener: %s",
+                        "TLS options failed to initialize for Ethereum JSON RPC listener: %s",
                         re.getMessage()));
               }
             });
@@ -458,7 +458,7 @@ public class JsonRpcHttpService {
           final JsonRpcResponse jsonRpcResponse = (JsonRpcResponse) res.result();
           response.setStatusCode(status(jsonRpcResponse).code());
           response.putHeader("Content-Type", APPLICATION_JSON);
-          response.end(serialise(jsonRpcResponse));
+          response.end(serialize(jsonRpcResponse));
         });
   }
 
@@ -476,7 +476,7 @@ public class JsonRpcHttpService {
     }
   }
 
-  private String serialise(final JsonRpcResponse response) {
+  private String serialize(final JsonRpcResponse response) {
 
     if (response.getType() == JsonRpcResponseType.NONE) {
       return EMPTY_RESPONSE;
