@@ -14,10 +14,21 @@
  */
 package org.hyperledger.besu.enclave;
 
-import java.net.URI;
+import org.hyperledger.besu.util.InvalidConfigurationException;
 
+import java.io.IOException;
+import java.net.URI;
+import java.nio.file.AccessDeniedException;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.util.Optional;
+
+import com.google.common.base.Charsets;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClientOptions;
+import io.vertx.core.net.PfxOptions;
+import org.apache.tuweni.net.tls.VertxTrustOptions;
 
 public class EnclaveFactory {
 
@@ -42,5 +53,64 @@ public class EnclaveFactory {
         new VertxRequestTransmitter(vertx.createHttpClient(clientOptions));
 
     return new Enclave(vertxTransmitter);
+  }
+
+  public Enclave createVertxEnclave(
+      final URI enclaveUri,
+      final Path orionKeyStoreFile,
+      final Path orionKeyStorePasswordFile,
+      final Optional<Path> orionClientWhitelistFile) {
+    if (enclaveUri.getPort() == -1) {
+      throw new EnclaveIOException("Illegal URI - no port specified");
+    }
+
+    final HttpClientOptions clientOptions = new HttpClientOptions();
+    clientOptions.setDefaultHost(enclaveUri.getHost());
+    clientOptions.setDefaultPort(enclaveUri.getPort());
+    clientOptions.setConnectTimeout(CONNECT_TIMEOUT);
+
+    // set TLS options if passed in
+    try {
+      if (orionKeyStoreFile != null && orionKeyStorePasswordFile != null) {
+        clientOptions.setPfxTrustOptions(convertFrom(orionKeyStoreFile, orionKeyStorePasswordFile));
+      }
+
+      // client whitelist file is optional
+      if (orionClientWhitelistFile.isPresent()) {
+        //        clientOptions.
+        //        result.setClientAuth(ClientAuth.REQUIRED);
+        // TODO what does this map to for client
+        try {
+          clientOptions.setTrustOptions(
+              VertxTrustOptions.whitelistClients(orionClientWhitelistFile.get()));
+        } catch (final IllegalArgumentException e) {
+          throw new InvalidConfigurationException("Illegally formatted client fingerprint file.");
+        }
+      }
+    } catch (final NoSuchFileException e) {
+      throw new InvalidConfigurationException(
+          "Requested file " + e.getMessage() + " does not exist at specified location.");
+    } catch (final AccessDeniedException e) {
+      throw new InvalidConfigurationException(
+          "Current user does not have permissions to access " + e.getMessage());
+    } catch (final IOException e) {
+      throw new InvalidConfigurationException("Failed to load TLS files " + e.getMessage());
+    }
+
+    final RequestTransmitter vertxTransmitter =
+        new VertxRequestTransmitter(vertx.createHttpClient(clientOptions));
+
+    return new Enclave(vertxTransmitter);
+  }
+
+  private static PfxOptions convertFrom(
+      final Path orionKeystoreFile, final Path orionKeystorePasswordFile) throws IOException {
+    final String password = readSecretFromFile(orionKeystoreFile);
+    return new PfxOptions().setPassword(password).setPath(orionKeystorePasswordFile.toString());
+  }
+
+  private static String readSecretFromFile(final Path path) throws IOException {
+    final byte[] fileContent = Files.readAllBytes(path);
+    return new String(fileContent, Charsets.UTF_8);
   }
 }

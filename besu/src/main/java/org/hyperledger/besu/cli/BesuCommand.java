@@ -512,6 +512,33 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Boolean isRpcWsAuthenticationEnabled = false;
 
   @Option(
+      names = {"--orion-tls-enabled"},
+      paramLabel = MANDATORY_FILE_FORMAT_HELP,
+      description = "Enable TLS for connecting to Orion (default: ${DEFAULT-VALUE})")
+  private final Boolean isOrionTlsEnabled = false;
+
+  @Option(
+      names = "--orion-tls-keystore-file",
+      paramLabel = MANDATORY_FILE_FORMAT_HELP,
+      description =
+          "Path to a PKCS#12 formatted keystore; used to enable TLS on inbound connections.")
+  private final Path orionKeyStoreFile = null;
+
+  @Option(
+      names = "--orion-tls-keystore-password-file",
+      paramLabel = MANDATORY_FILE_FORMAT_HELP,
+      description = "Path to a file containing the password used to decrypt the keystore.")
+  private final Path orionKeyStorePasswordFile = null;
+
+  @Option(
+      names = "--orion-tls-known-clients-file",
+      paramLabel = MANDATORY_FILE_FORMAT_HELP,
+      description =
+          "Path to a file containing the fingerprints of authorized clients. "
+              + "Any client may connect if this option is not specified.")
+  private final Path orionClientWhitelistFile = null;
+
+  @Option(
       names = {"--metrics-enabled"},
       description = "Set to start the metrics exporter (default: ${DEFAULT-VALUE})")
   private final Boolean isMetricsEnabled = false;
@@ -768,6 +795,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private WebSocketConfiguration webSocketConfiguration;
   private MetricsConfiguration metricsConfiguration;
   private Optional<PermissioningConfiguration> permissioningConfiguration;
+  private TlsConfiguration orionTlsConfiguration;
   private Collection<EnodeURL> staticNodes;
   private BesuController<?> besuController;
   private StandaloneCommand standaloneCommands;
@@ -1077,6 +1105,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     graphQLConfiguration = graphQLConfiguration();
     webSocketConfiguration = webSocketConfiguration();
     permissioningConfiguration = permissioningConfiguration();
+    orionTlsConfiguration = orionTlsConfiguration();
     staticNodes = loadStaticNodes();
     logger.info("Connecting to {} static nodes.", staticNodes.size());
     logger.trace("Static Nodes = {}", staticNodes);
@@ -1249,6 +1278,27 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                               commandLine,
                               "File containing password to unlock keystore is required when TLS is enabled for JSON-RPC HTTP endpoint"))),
           rpcHttpTlsKnownClientsFile);
+    }
+    return null;
+  }
+
+  private TlsConfiguration orionTlsConfiguration() {
+    if (isOrionTlsEnabled) {
+      return new TlsConfiguration(
+          Optional.ofNullable(orionKeyStoreFile)
+              .orElseThrow(
+                  () ->
+                      new ParameterException(
+                          commandLine,
+                          "Keystore file is required when TLS is enabled for Orion endpoint")),
+          new FileBasedPasswordProvider(
+              Optional.ofNullable(orionKeyStorePasswordFile)
+                  .orElseThrow(
+                      () ->
+                          new ParameterException(
+                              commandLine,
+                              "File containing password to unlock keystore is required when TLS is enabled for Orion endpoint"))),
+          orionClientWhitelistFile);
     }
     return null;
   }
@@ -1478,6 +1528,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       privacyParametersBuilder.setPrivateKeyPath(privacyMarkerTransactionSigningKeyPath);
       privacyParametersBuilder.setStorageProvider(
           privacyKeyStorageProvider(keyValueStorageName + "-privacy"));
+      if (isOrionTlsEnabled) {
+        // TODO should this use TlsConfiguration
+        privacyParametersBuilder.setTlsConfiguration(
+            orionTlsConfiguration.getKeyStorePath(),
+            orionKeyStorePasswordFile,
+            orionClientWhitelistFile);
+      }
       privacyParametersBuilder.setEnclaveFactory(new EnclaveFactory(vertx));
     } else {
       if (anyPrivacyApiEnabled()) {

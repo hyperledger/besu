@@ -1,6 +1,9 @@
 dependencies {
+  api project(':util')
+
   implementation 'com.fasterxml.jackson.core:jackson-databind'
   implementation 'io.vertx:vertx-core'
+  implementation 'org.apache.tuweni:tuweni-net:0.9.0'
   implementation 'org.apache.logging.log4j:log4j-api'
 
   // test dependencies.
