@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.condition.priv;
 
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.parameters.CreatePrivacyGroupParameter;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivTransactions;
 
@@ -28,6 +29,16 @@ public class PrivConditions {
   public Condition privGetPrivacyPrecompileAddressSuccess() {
     return new PrivGetPrivacyPrecompileAddressSuccess(
         transactions.privGetPrivacyPrecompileAddress());
+  }
+
+  public Condition privGetPrivateTransaction(final String transactionHash) {
+    return new PrivGetPrivateTransactionSuccess(
+        transactions.privGetPrivateTransaction(transactionHash));
+  }
+
+  public Condition privCreatePrivacyGroup(
+      final CreatePrivacyGroupParameter params, final String groupId) {
+    return new PrivCreatePrivacyGroupSuccess(transactions.privCreatePrivacyGroup(params), groupId);
   }
 
   public Condition privDeletePrivacyGroup(final String groupId) {

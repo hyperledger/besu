@@ -20,7 +20,10 @@ import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.parameters.CreatePrivacyGroupParameter;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
+import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.Cluster;
 import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.ClusterConfiguration;
@@ -43,6 +46,10 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
   private final String privacyGroupId = "groupId";
   private final String enclaveKey = "negmDcN2P4ODpqn/6WkJ02zT/0w0bjhGpkZ8UP6vARk=";
 
+  private final String key1 = "sgFkVOyFndZe/5SAZJO5UYbrl7pezHetveriBBWWnE8=";
+  private final String key2 = "R1kW75NQC9XX3kwNpyPjCBFflM29+XvnKKS9VLrUkzo=";
+  private final String key3 = "QzHuACXpfhoGAgrQriWJcDJ6MrUwcCvutKMoAn9KplQ=";
+
   @Rule public WireMockRule wireMockRule = new WireMockRule(options().port(enclavePort));
 
   @Before
@@ -58,14 +65,40 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
-  public void shouldSucceedWithValidTokenParams() {
+  public void shouldGetPrivacyPrecompileAddress() {
     node.useAuthenticationTokenInHeaderForJsonRpc(token);
     node.verify(priv.privGetPrivacyPrecompileAddressSuccess());
   }
 
-  // priv_getPrivacyPrecompileAddress
-  // priv_getPrivateTransaction
-  // priv_createPrivacyGroup
+  @Test
+  public void shouldGetPrivateTransaction() {
+    node.useAuthenticationTokenInHeaderForJsonRpc(token);
+
+    final Account sender = accounts.createAccount("account1");
+    cluster.verify(sender.balanceEquals(0));
+    Hash transactionHash = node.execute(accountTransactions.createTransfer(sender, 50));
+    cluster.verify(sender.balanceEquals(50));
+
+    node.verify(priv.privGetPrivateTransaction(transactionHash.toString()));
+  }
+
+  @Test
+  public void shouldCreatePrivacyGroup() throws JsonProcessingException {
+    final ObjectMapper mapper = new ObjectMapper();
+    final String groupId = "groupId";
+    final String createGroupResponse =
+        mapper.writeValueAsString(
+            new PrivacyGroup(
+                groupId, PrivacyGroup.Type.PANTHEON, "test", "testGroup", List.of(enclaveKey)));
+
+    CreatePrivacyGroupParameter params =
+        new CreatePrivacyGroupParameter(
+            List.of(key1, key2, key3), "GroupName", "Group description.");
+    stubFor(post("/createPrivacyGroup").willReturn(ok(createGroupResponse)));
+
+    node.useAuthenticationTokenInHeaderForJsonRpc(token);
+    node.verify(priv.privCreatePrivacyGroup(params, groupId));
+  }
 
   @Test
   public void shouldDeletePrivacyGroup() throws JsonProcessingException {

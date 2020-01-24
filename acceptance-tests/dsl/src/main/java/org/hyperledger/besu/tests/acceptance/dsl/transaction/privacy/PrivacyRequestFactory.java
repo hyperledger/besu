@@ -17,6 +17,7 @@ package org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy;
 import static java.util.Collections.singletonList;
 
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.parameters.CreatePrivacyGroupParameter;
 
 import java.util.Arrays;
 
@@ -31,6 +32,8 @@ import org.web3j.protocol.core.Response;
 public class PrivacyRequestFactory {
 
   public static class GetPrivacyPrecompileAddressResponse extends Response<String> {}
+
+  public static class CreatePrivacyGroup extends Response<String> {}
 
   public static class DeletePrivacyGroup extends Response<String> {}
 
@@ -87,12 +90,23 @@ public class PrivacyRequestFactory {
         GetPrivacyPrecompileAddressResponse.class);
   }
 
-  public Request<?, DeletePrivacyGroup> privDeletePrivacyGroup(final String transactionHash) {
+  public Request<?, CreatePrivacyGroup> privGetPrivateTransaction(final String transactionHash) {
     return new Request<>(
-        "priv_deletePrivacyGroup",
+        "priv_getPrivateTransaction",
         singletonList(transactionHash),
         web3jService,
-        DeletePrivacyGroup.class);
+        CreatePrivacyGroup.class);
+  }
+
+  public Request<?, CreatePrivacyGroup> privCreatePrivacyGroup(
+      final CreatePrivacyGroupParameter params) {
+    return new Request<>(
+        "priv_createPrivacyGroup", singletonList(params), web3jService, CreatePrivacyGroup.class);
+  }
+
+  public Request<?, DeletePrivacyGroup> privDeletePrivacyGroup(final String groupId) {
+    return new Request<>(
+        "priv_deletePrivacyGroup", singletonList(groupId), web3jService, DeletePrivacyGroup.class);
   }
 
   public Request<?, FindPrivacyGroup> privFindPrivacyGroup(final String[] groupMembers) {

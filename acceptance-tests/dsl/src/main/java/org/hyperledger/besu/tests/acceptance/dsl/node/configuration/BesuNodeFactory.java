@@ -187,6 +187,7 @@ public class BesuNodeFactory {
             .jsonRpcAuthenticationEnabled(authFile)
             .enablePrivateTransactions()
             .privacyParameters(privacyParameters)
+            .miningEnabled()
             .build());
   }
 
