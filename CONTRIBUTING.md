@@ -13,9 +13,9 @@ Having the following accounts is necessary for contributing code/issues to Besu.
 ### Useful contributing links
 
 * [I just have a quick question](https://wiki.hyperledger.org/display/BESU/I+just+have+a+quick+question)
+* [How to Contribute]
 * [First contribution workflow](https://wiki.hyperledger.org/display/BESU/First+contribution?src=contextnavpagetreemode)
 * [Did you find a bug?](https://wiki.hyperledger.org/display/BESU/Reporting+Bugs)
-* [Contributing Guidelines](https://wiki.hyperledger.org/display/BESU/Contributing+Guidelines)
 * [Issues](https://wiki.hyperledger.org/display/BESU/Issues)
 * [DCO](https://wiki.hyperledger.org/display/BESU/DCO)
 * [Suggesting Enhancements](https://wiki.hyperledger.org/display/BESU/Suggesting+Enhancements)
@@ -31,5 +31,5 @@ Having the following accounts is necessary for contributing code/issues to Besu.
 * [Code of Conduct](https://wiki.hyperledger.org/display/BESU/Code-of-conduct)
 * [Governance](https://wiki.hyperledger.org/display/BESU/Governance)
 
-
+[How to Contribute]: https://wiki.hyperledger.org/display/BESU/How+to+Contribute
 [Linux Foundation (LF) account]: https://identity.linuxfoundation.org/
