@@ -143,7 +143,8 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
    *
    * @return The accounts deleted as part of this updater.
    */
-  protected Collection<Address> deletedAccounts() {
+  @Override
+  public Collection<Address> deletedAccounts() {
     return deletedAccounts;
   }
 

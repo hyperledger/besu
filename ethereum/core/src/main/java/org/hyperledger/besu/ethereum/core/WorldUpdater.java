@@ -92,6 +92,8 @@ public interface WorldUpdater extends MutableWorldView {
    */
   Collection<Account> getTouchedAccounts();
 
+  Collection<Address> deletedAccounts();
+
   /** Removes the changes that were made to this updater. */
   void revert();
 

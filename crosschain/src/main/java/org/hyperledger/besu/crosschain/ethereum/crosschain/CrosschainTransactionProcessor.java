@@ -37,9 +37,14 @@ import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.ArrayDeque;
+import java.util.Collection;
 import java.util.Deque;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public class CrosschainTransactionProcessor extends MainnetTransactionProcessor {
+  private static final Logger LOG = LogManager.getLogger();
 
   public CrosschainTransactionProcessor(
       final GasCalculator gasCalculator,
@@ -83,6 +88,7 @@ public class CrosschainTransactionProcessor extends MainnetTransactionProcessor 
     }
 
     final Address senderAddress = transaction.getSender();
+    LOG.info("Sender address: {}", senderAddress);
     final MutableAccount sender = worldState.getOrCreate(senderAddress);
     validationResult =
         transactionValidator.validateForSender(transaction, sender, transactionValidationParams);
@@ -123,6 +129,7 @@ public class CrosschainTransactionProcessor extends MainnetTransactionProcessor 
       if ((transaction instanceof CrosschainTransaction)
           && ((CrosschainTransaction) transaction).getType().isLockableContractDeploy()) {
         contractCreationType = MessageFrame.Type.CONTRACT_CREATION_LOCKABLE_CONTRACT;
+        LOG.info("Lockable contract deploy: New Contract Address: {}", contractAddress.toString());
       }
 
       initialFrame =
@@ -197,24 +204,6 @@ public class CrosschainTransactionProcessor extends MainnetTransactionProcessor 
               .maxStackSize(maxStackSize)
               .isPersistingState(isPersistingState)
               .build();
-
-      boolean contractIsLockable = contract != null && contract.isLockable();
-      if (contractIsLockable) {
-        if (contract.isLocked()) {
-          LOG.warn("Attempt to execute transaction on locked contract");
-          return Result.failed(gasAvailable.toLong(), validationResult, null);
-        }
-
-        if (transaction instanceof CrosschainTransaction) {
-          final MutableAccount mutableContract = worldState.getMutable(contract.getAddress());
-          mutableContract.lock();
-        }
-      } else {
-        if (transaction instanceof CrosschainTransaction) {
-          LOG.warn("Attempt to execute crosschain transaction on non-lockable contract");
-          return Result.failed(gasAvailable.toLong(), validationResult, null);
-        }
-      }
     }
 
     // If we are processing a crosschain transaction, then add the transaction context such that
@@ -240,7 +229,7 @@ public class CrosschainTransactionProcessor extends MainnetTransactionProcessor 
     // Remove the transaction context from thread local storage.
     if (transaction instanceof CrosschainTransaction) {
       if (((CrosschainTransaction) transaction).getNextSubordinateTransactionOrView() != null) {
-        LOG.warn(
+        LOG.error(
             "Crosschain transaction ended prior to all Subordinate Transactions and Views being consumed.");
         initialFrame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
       }
@@ -248,6 +237,74 @@ public class CrosschainTransactionProcessor extends MainnetTransactionProcessor 
     }
 
     if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
+      // Fail if a locked account is touched + lock touched accounts.
+      Collection<Account> changedAccounts = worldUpdater.getTouchedAccounts();
+      for (Account acc : changedAccounts) {
+        Address accAddress = acc.getAddress();
+        if (acc.isLockable()) {
+          if (acc.isLocked()) {
+            LOG.error(
+                "Attempt to execute transaction on locked contract: {}", accAddress.toString());
+            return Result.failed(gasAvailable.toLong(), validationResult, null);
+          }
+
+          // Normal, non-crosschain transactions do not lock contracts.
+          if (transaction instanceof CrosschainTransaction) {
+            LOG.info("Locking updated account: {}", accAddress.toString());
+            final MutableAccount mutableContract = worldUpdater.getMutable(accAddress);
+            mutableContract.lock();
+          }
+        } else {
+          // Normal non-crosschain transactions can change non-lockable contract.
+          if (transaction instanceof CrosschainTransaction) {
+            CrosschainTransaction xTx = (CrosschainTransaction) transaction;
+            if (xTx.getType().isLockableTransaction()) {
+              if (acc.hasCode()) {
+                LOG.error(
+                    "Attempt to execute crosschain transaction on non-lockable contract: {}",
+                    accAddress.toString());
+                return Result.failed(gasAvailable.toLong(), validationResult, null);
+              } else {
+                // The account that has changed is an EOA or a precompile.
+                // The sender account must increase its nonce as part of a transaction.
+                // However, no other account can change, and the sender's balance at this point
+                // should
+                // remain unchanged. That is, they shouldn't transfer Ether into a locked account or
+                // have Ether sent from a locked account. This is to prevent Ether being created or
+                // destroyed as a result of ignored Crosschain Transactions.
+                if (accAddress.equals(senderAddress)) {
+                  if (!acc.getBalance().equals(previousBalance.plus(upfrontGasCost))) {
+                    LOG.error(
+                        "Sender account has sent or received Ether as part of a Crosschain Transaction: {}",
+                        acc.getAddress().toString());
+                    return Result.failed(gasAvailable.toLong(), validationResult, null);
+                  }
+                } else {
+                  if (accAddress.isPrecompile()) {
+                    LOG.info(
+                        "*****Updated precompile account {}: Needs further investigation",
+                        accAddress.toString());
+                  } else {
+                    LOG.error(
+                        "****Attempt to alter EOA account other than sender: {}",
+                        acc.getAddress().toString());
+                    return Result.failed(gasAvailable.toLong(), validationResult, null);
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+      //      Collection<Address> deletedAccounts = worldUpdater.deletedAccounts();
+      //      for (Address addr: deletedAccounts) {
+      //        // TODO: We will have to work out how to handle deleted accounts in the future.
+      //        // TODO: calling the code below will return null if the account has been deleted.
+      //        //Account acc = worldState.get(addr);
+      //
+      //      }
+
       worldUpdater.commit();
     }
 
