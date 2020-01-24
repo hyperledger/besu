@@ -61,8 +61,7 @@ public class PrivDistributeRawTransaction implements JsonRpcMethod {
       final SendTransactionResponse sendTransactionResponse =
           privacySendTransaction.sendTransactionToEnclave(privateTransaction, requestContext);
       return new JsonRpcSuccessResponse(
-          requestContext.getRequest().getId(),
-          hexEncodeEnclaveKey(sendTransactionResponse));
+          requestContext.getRequest().getId(), hexEncodeEnclaveKey(sendTransactionResponse));
     } catch (final MultiTenancyValidationException e) {
       LOG.error("Unauthorized privacy multi-tenancy rpc request. {}", e.getMessage());
       return new JsonRpcErrorResponse(requestContext.getRequest().getId(), ENCLAVE_ERROR);
