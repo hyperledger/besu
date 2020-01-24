@@ -104,6 +104,9 @@ public class PrivDistributeRawTransactionTest {
 
   @Test
   public void invalidTransactionFailingWithMultiTenancyValidationErrorReturnsUnauthorizedError() {
+    when(privacyController.validatePrivateTransaction(
+            any(PrivateTransaction.class), any(String.class), any()))
+        .thenReturn(ValidationResult.valid());
     when(privacyController.sendTransaction(any(PrivateTransaction.class), any()))
         .thenThrow(new MultiTenancyValidationException("validation failed"));
 
