@@ -56,6 +56,12 @@ rpc-http-tls-keystore-file="none.pfx"
 rpc-http-tls-keystore-password-file="none.passwd"
 rpc-http-tls-known-clients-file="rpc_tls_clients.txt"
 
+# ORION TLS
+orion-tls-enabled=false
+orion-tls-keystore-file="none.pfx"
+orion-tls-keystore-password-file="none.passwd"
+orion-tls-known-clients-file="orion_tls_clients.txt"
+
 # GRAPHQL HTTP
 graphql-http-enabled=false
 graphql-http-host="6.7.8.9"

@@ -165,6 +165,9 @@ public class PrivacyParameters {
     private PrivacyStorageProvider storageProvider;
     private EnclaveFactory enclaveFactory;
     private boolean multiTenancyEnabled;
+    private Path orionKeyStoreFile;
+    private Path orionKeyStorePasswordFile;
+    private Path orionClientWhitelistFile;
 
     public Builder setPrivacyAddress(final Integer privacyAddress) {
       this.privacyAddress = privacyAddress;
@@ -201,6 +204,16 @@ public class PrivacyParameters {
       return this;
     }
 
+    public Builder setTlsConfiguration(
+        final Path orionKeyStoreFile,
+        final Path orionKeyStorePasswordFile,
+        final Path orionClientWhitelistFile) {
+      this.orionKeyStoreFile = orionKeyStoreFile;
+      this.orionKeyStorePasswordFile = orionKeyStorePasswordFile;
+      this.orionClientWhitelistFile = orionClientWhitelistFile;
+      return this;
+    }
+
     public PrivacyParameters build() {
       final PrivacyParameters config = new PrivacyParameters();
       if (enabled) {
@@ -218,7 +231,17 @@ public class PrivacyParameters {
         config.setEnclavePublicKeyFile(enclavePublicKeyFile);
         config.setPrivateStorageProvider(storageProvider);
         config.setPrivateStateStorage(privateStateStorage);
-        config.setEnclave(enclaveFactory.createVertxEnclave(enclaveUrl));
+        // pass TLS options to enclave factory if they are set
+        if (orionKeyStoreFile != null) {
+          config.setEnclave(
+              enclaveFactory.createVertxEnclave(
+                  enclaveUrl,
+                  orionKeyStoreFile,
+                  orionKeyStorePasswordFile,
+                  Optional.of(orionClientWhitelistFile)));
+        } else {
+          config.setEnclave(enclaveFactory.createVertxEnclave(enclaveUrl));
+        }
 
         if (privateKeyPath != null) {
           config.setSigningKeyPair(KeyPairUtil.load(privateKeyPath.toFile()));
