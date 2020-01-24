@@ -134,6 +134,7 @@ public class BlocksSubCommand implements Runnable {
 
     @Override
     public void run() {
+      parentCommand.parentCommand.configureLogging(false);
       LOG.info("Import {} block data from {}", format, blocksImportFile);
 
       checkCommand(parentCommand);
@@ -261,7 +262,7 @@ public class BlocksSubCommand implements Runnable {
 
     @Override
     public void run() {
-
+      parentCommand.parentCommand.configureLogging(false);
       LOG.info("Export {} block data to file {}", format, blocksExportFile.toPath());
 
       checkCommand(this, startBlock, endBlock);
