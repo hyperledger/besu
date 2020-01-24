@@ -60,7 +60,7 @@ public class BesuNodeFactory {
         config.getPlugins(),
         config.getExtraCLIOptions(),
         config.getStaticNodes(),
-        config.getPrivacyParamaters());
+        config.getPrivacyParameters());
   }
 
   public BesuNode createMinerNode(final String name) throws IOException {
@@ -186,7 +186,7 @@ public class BesuNodeFactory {
             .jsonRpcEnabled()
             .jsonRpcAuthenticationEnabled(authFile)
             .enablePrivateTransactions()
-            .privacyParameters(privacyParameters)
+            .privacyParameters(Optional.of(privacyParameters))
             .miningEnabled()
             .build());
   }

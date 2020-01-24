@@ -97,7 +97,7 @@ public class PrivacyNode implements AutoCloseable {
             besuConfig.getPlugins(),
             besuConfig.getExtraCLIOptions(),
             new ArrayList<>(),
-            besuConfig.getPrivacyParamaters());
+            besuConfig.getPrivacyParameters());
   }
 
   public void testOrionConnection(final List<PrivacyNode> otherNodes) {

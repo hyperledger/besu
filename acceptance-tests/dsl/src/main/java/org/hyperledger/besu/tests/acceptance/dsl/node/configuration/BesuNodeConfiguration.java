@@ -45,7 +45,7 @@ public class BesuNodeConfiguration {
   private final List<String> plugins;
   private final List<String> extraCLIOptions;
   private final List<String> staticNodes;
-  private final PrivacyParameters privacyParamaters;
+  private final Optional<PrivacyParameters> privacyParameters;
 
   public BesuNodeConfiguration(
       final String name,
@@ -65,7 +65,7 @@ public class BesuNodeConfiguration {
       final List<String> plugins,
       final List<String> extraCLIOptions,
       final List<String> staticNodes,
-      final PrivacyParameters privacyParameters) {
+      final Optional<PrivacyParameters> privacyParameters) {
     this.name = name;
     this.miningParameters = miningParameters;
     this.jsonRpcConfiguration = jsonRpcConfiguration;
@@ -83,7 +83,7 @@ public class BesuNodeConfiguration {
     this.plugins = plugins;
     this.extraCLIOptions = extraCLIOptions;
     this.staticNodes = staticNodes;
-    this.privacyParamaters = privacyParameters;
+    this.privacyParameters = privacyParameters;
   }
 
   public String getName() {
@@ -154,7 +154,7 @@ public class BesuNodeConfiguration {
     return staticNodes;
   }
 
-  public PrivacyParameters getPrivacyParamaters() {
-    return privacyParamaters;
+  public Optional<PrivacyParameters> getPrivacyParameters() {
+    return privacyParameters;
   }
 }

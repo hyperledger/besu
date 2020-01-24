@@ -55,7 +55,7 @@ public class BesuNodeConfigurationBuilder {
   private final List<String> plugins = new ArrayList<>();
   private final List<String> extraCLIOptions = new ArrayList<>();
   private List<String> staticNodes = new ArrayList<>();
-  private PrivacyParameters privacyParameters;
+  private Optional<PrivacyParameters> privacyParameters = Optional.empty();
 
   public BesuNodeConfigurationBuilder() {
     // Check connections more frequently during acceptance tests to cut down on
@@ -235,7 +235,8 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
-  public BesuNodeConfigurationBuilder privacyParameters(final PrivacyParameters privacyParameters) {
+  public BesuNodeConfigurationBuilder privacyParameters(
+      final Optional<PrivacyParameters> privacyParameters) {
     this.privacyParameters = privacyParameters;
     return this;
   }
