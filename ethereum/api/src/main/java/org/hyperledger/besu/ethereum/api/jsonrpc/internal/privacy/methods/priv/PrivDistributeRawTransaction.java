@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 import static org.apache.logging.log4j.LogManager.getLogger;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.ENCLAVE_ERROR;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcEnclaveErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -40,17 +39,13 @@ import org.apache.tuweni.bytes.Bytes;
 public class PrivDistributeRawTransaction implements JsonRpcMethod {
 
   private static final Logger LOG = getLogger();
-  private final PrivacyController privacyController;
   private final PrivacySendTransaction privacySendTransaction;
-  private final EnclavePublicKeyProvider enclavePublicKeyProvider;
 
   public PrivDistributeRawTransaction(
       final PrivacyController privacyController,
       final EnclavePublicKeyProvider enclavePublicKeyProvider) {
-    this.privacyController = privacyController;
     this.privacySendTransaction =
         new PrivacySendTransaction(privacyController, enclavePublicKeyProvider);
-    this.enclavePublicKeyProvider = enclavePublicKeyProvider;
   }
 
   @Override
@@ -63,32 +58,21 @@ public class PrivDistributeRawTransaction implements JsonRpcMethod {
     final PrivateTransaction privateTransaction;
     try {
       privateTransaction = privacySendTransaction.validateAndDecodeRequest(requestContext);
-    } catch (ErrorResponseException e) {
-      return e.getResponse();
-    }
-
-    final SendTransactionResponse sendTransactionResponse;
-    try {
-      sendTransactionResponse =
-          privacyController.sendTransaction(
-              privateTransaction, enclavePublicKeyProvider.getEnclaveKey(requestContext.getUser()));
+      final SendTransactionResponse sendTransactionResponse =
+          privacySendTransaction.sendTransactionToEnclave(privateTransaction, requestContext);
+      return new JsonRpcSuccessResponse(
+          requestContext.getRequest().getId(),
+          hexEncodeEnclaveKey(sendTransactionResponse));
     } catch (final MultiTenancyValidationException e) {
       LOG.error("Unauthorized privacy multi-tenancy rpc request. {}", e.getMessage());
       return new JsonRpcErrorResponse(requestContext.getRequest().getId(), ENCLAVE_ERROR);
-    } catch (final Exception e) {
-      return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(),
-          JsonRpcEnclaveErrorConverter.convertEnclaveInvalidReason(e.getMessage()));
+    } catch (ErrorResponseException e) {
+      return e.getResponse();
     }
+  }
 
-    return privacySendTransaction.validateAndExecute(
-        requestContext,
-        privateTransaction,
-        sendTransactionResponse.getPrivacyGroupId(),
-        () ->
-            new JsonRpcSuccessResponse(
-                requestContext.getRequest().getId(),
-                Bytes.wrap(Base64.getDecoder().decode(sendTransactionResponse.getEnclaveKey()))
-                    .toHexString()));
+  private String hexEncodeEnclaveKey(final SendTransactionResponse sendTransactionResponse) {
+    return Bytes.wrap(Base64.getDecoder().decode(sendTransactionResponse.getEnclaveKey()))
+        .toHexString();
   }
 }

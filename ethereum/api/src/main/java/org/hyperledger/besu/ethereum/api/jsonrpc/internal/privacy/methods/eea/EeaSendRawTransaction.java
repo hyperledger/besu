@@ -15,10 +15,9 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcEnclaveErrorConverter.convertEnclaveInvalidReason;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter.convertTransactionInvalidReason;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.ENCLAVE_ERROR;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -41,7 +40,6 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
 
   private static final Logger LOG = getLogger();
   private final PrivacySendTransaction privacySendTransaction;
-  private final EnclavePublicKeyProvider enclavePublicKeyProvider;
   private final TransactionPool transactionPool;
   private final PrivacyController privacyController;
 
@@ -53,7 +51,6 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
     this.privacyController = privacyController;
     this.privacySendTransaction =
         new PrivacySendTransaction(privacyController, enclavePublicKeyProvider);
-    this.enclavePublicKeyProvider = enclavePublicKeyProvider;
   }
 
   @Override
@@ -63,45 +60,32 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    final PrivateTransaction privateTransaction;
     try {
-      privateTransaction = privacySendTransaction.validateAndDecodeRequest(requestContext);
-    } catch (final ErrorResponseException e) {
-      return e.getResponse();
-    }
-
-    final SendTransactionResponse sendTransactionResponse;
-    try {
-      sendTransactionResponse =
-          privacyController.sendTransaction(
-              privateTransaction, enclavePublicKeyProvider.getEnclaveKey(requestContext.getUser()));
+      final PrivateTransaction privateTransaction =
+          privacySendTransaction.validateAndDecodeRequest(requestContext);
+      final Transaction privacyMarkerTransaction =
+          createMarkerTransaction(requestContext, privateTransaction);
+      final Object id = requestContext.getRequest().getId();
+      return transactionPool
+          .addLocalTransaction(privacyMarkerTransaction)
+          .either(
+              () -> new JsonRpcSuccessResponse(id, privacyMarkerTransaction.getHash().toString()),
+              errorReason ->
+                  new JsonRpcErrorResponse(id, convertTransactionInvalidReason(errorReason)));
     } catch (final MultiTenancyValidationException e) {
       LOG.error("Unauthorized privacy multi-tenancy rpc request. {}", e.getMessage());
       return new JsonRpcErrorResponse(requestContext.getRequest().getId(), ENCLAVE_ERROR);
-    } catch (final Exception e) {
-      return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), convertEnclaveInvalidReason(e.getMessage()));
+    } catch (final ErrorResponseException e) {
+      return e.getResponse();
     }
+  }
 
-    return privacySendTransaction.validateAndExecute(
-        requestContext,
-        privateTransaction,
-        sendTransactionResponse.getPrivacyGroupId(),
-        () -> {
-          final Transaction privacyMarkerTransaction =
-              privacyController.createPrivacyMarkerTransaction(
-                  sendTransactionResponse.getEnclaveKey(), privateTransaction);
-          return transactionPool
-              .addLocalTransaction(privacyMarkerTransaction)
-              .either(
-                  () ->
-                      new JsonRpcSuccessResponse(
-                          requestContext.getRequest().getId(),
-                          privacyMarkerTransaction.getHash().toString()),
-                  errorReason ->
-                      new JsonRpcErrorResponse(
-                          requestContext.getRequest().getId(),
-                          JsonRpcErrorConverter.convertTransactionInvalidReason(errorReason)));
-        });
+  private Transaction createMarkerTransaction(
+      final JsonRpcRequestContext requestContext, final PrivateTransaction privateTransaction)
+      throws ErrorResponseException {
+    final SendTransactionResponse enclaveKey =
+        privacySendTransaction.sendTransactionToEnclave(privateTransaction, requestContext);
+    return privacyController.createPrivacyMarkerTransaction(
+        enclaveKey.getEnclaveKey(), privateTransaction);
   }
 }

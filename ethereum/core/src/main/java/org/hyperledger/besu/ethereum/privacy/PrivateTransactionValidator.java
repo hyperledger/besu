@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.privacy;
 
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
+import org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 
 import java.math.BigInteger;
@@ -35,6 +36,15 @@ public class PrivateTransactionValidator {
 
   public ValidationResult<TransactionValidator.TransactionInvalidReason> validate(
       final PrivateTransaction transaction, final Long accountNonce) {
+    LOG.debug("Validation private transaction fields");
+    final ValidationResult<TransactionInvalidReason> privateFieldsValidationResult =
+        validatePrivateTransactionFields(transaction);
+    if (!privateFieldsValidationResult.isValid()) {
+      LOG.debug(
+          "Private Transaction fields are invalid {}",
+          privateFieldsValidationResult.getErrorMessage());
+      return privateFieldsValidationResult;
+    }
 
     LOG.debug("Validating the signature of Private Transaction {} ", transaction.hash());
 
@@ -77,6 +87,20 @@ public class PrivateTransactionValidator {
   }
 
   private ValidationResult<TransactionValidator.TransactionInvalidReason>
+      validatePrivateTransactionFields(final PrivateTransaction privateTransaction) {
+    if (!privateTransaction.getValue().isZero()) {
+      return ValidationResult.invalid(
+          TransactionValidator.TransactionInvalidReason.PRIVATE_VALUE_NOT_ZERO);
+    }
+    if (!privateTransaction.getRestriction().equals(Restriction.RESTRICTED)) {
+      return ValidationResult.invalid(
+          TransactionValidator.TransactionInvalidReason.PRIVATE_UNIMPLEMENTED_TRANSACTION_TYPE);
+    }
+
+    return ValidationResult.valid();
+  }
+
+  private ValidationResult<TransactionValidator.TransactionInvalidReason>
       validateTransactionSignature(final PrivateTransaction transaction) {
     if (chainId.isPresent()
         && (transaction.getChainId().isPresent() && !transaction.getChainId().equals(chainId))) {
@@ -87,7 +111,7 @@ public class PrivateTransactionValidator {
               transaction.getChainId().get(), chainId.get()));
     }
 
-    if (!chainId.isPresent() && transaction.getChainId().isPresent()) {
+    if (chainId.isEmpty() && transaction.getChainId().isPresent()) {
       return ValidationResult.invalid(
           TransactionValidator.TransactionInvalidReason.REPLAY_PROTECTED_SIGNATURES_NOT_SUPPORTED,
           "Replay protection (chainId) is not supported");
