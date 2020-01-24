@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -25,8 +26,14 @@ import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.enclave.types.PrivacyGroup.Type;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.Log;
+import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.transaction.CallParameter;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
@@ -42,6 +49,7 @@ public class MultiTenancyPrivacyControllerTest {
   private static final String ENCLAVE_PUBLIC_KEY2 = "OnviftjiizpjRt+HTuFBsKo2bVqD+nNlNYL5EE7y3Id=";
   private static final String PRIVACY_GROUP_ID = "nNlNYL5EE7y3IdM=";
   private static final String ENCLAVE_KEY = "Ko2bVqD";
+  private static final ArrayList<Log> LOGS = new ArrayList<>();
 
   @Mock private PrivacyController privacyController;
   @Mock private Enclave enclave;
@@ -308,6 +316,46 @@ public class MultiTenancyPrivacyControllerTest {
                 multiTenancyPrivacyController.determineBesuNonce(
                     Address.ZERO, PRIVACY_GROUP_ID, ENCLAVE_PUBLIC_KEY1))
         .isInstanceOf(MultiTenancyValidationException.class)
+        .hasMessage("Privacy group must contain the enclave public key");
+  }
+
+  @Test
+  public void simulatePrivateTransactionWorksForValidEnclaveKey() {
+    final PrivacyGroup privacyGroupWithEnclavePublicKey =
+        new PrivacyGroup(PRIVACY_GROUP_ID, Type.PANTHEON, "", "", List.of(ENCLAVE_PUBLIC_KEY1));
+    when(enclave.retrievePrivacyGroup(PRIVACY_GROUP_ID))
+        .thenReturn(privacyGroupWithEnclavePublicKey);
+    when(privacyController.simulatePrivateTransaction(any(), any(), any(), any(long.class)))
+        .thenReturn(
+            Optional.of(
+                PrivateTransactionProcessor.Result.successful(
+                    LOGS, 0, Bytes.EMPTY, ValidationResult.valid())));
+    final Optional<PrivateTransactionProcessor.Result> result =
+        multiTenancyPrivacyController.simulatePrivateTransaction(
+            PRIVACY_GROUP_ID,
+            ENCLAVE_PUBLIC_KEY1,
+            new CallParameter(Address.ZERO, Address.ZERO, 0, Wei.ZERO, Wei.ZERO, Bytes.EMPTY),
+            1);
+
+    assertThat(result.isPresent()).isTrue();
+    assertThat(result.get().getValidationResult().isValid()).isTrue();
+  }
+
+  @Test
+  public void simulatePrivateTransactionFailsForInvalidEnclaveKey() {
+    final PrivacyGroup privacyGroupWithEnclavePublicKey =
+        new PrivacyGroup(PRIVACY_GROUP_ID, Type.PANTHEON, "", "", List.of(ENCLAVE_PUBLIC_KEY1));
+    when(enclave.retrievePrivacyGroup(PRIVACY_GROUP_ID))
+        .thenReturn(privacyGroupWithEnclavePublicKey);
+
+    assertThatThrownBy(
+            () ->
+                multiTenancyPrivacyController.simulatePrivateTransaction(
+                    PRIVACY_GROUP_ID,
+                    ENCLAVE_PUBLIC_KEY2,
+                    new CallParameter(
+                        Address.ZERO, Address.ZERO, 0, Wei.ZERO, Wei.ZERO, Bytes.EMPTY),
+                    1))
         .hasMessage("Privacy group must contain the enclave public key");
   }
 }
