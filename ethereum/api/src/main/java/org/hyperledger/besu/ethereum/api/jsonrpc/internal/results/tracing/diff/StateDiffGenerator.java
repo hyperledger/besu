@@ -38,45 +38,31 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class StateDiffGenerator {
 
-  private final Map<Address, Map<UInt256, UInt256>> midBlockStorageState = new TreeMap<>();
-  private final Map<Address, Wei> midBlockAccountBalance = new TreeMap<>();
-
   public Stream<Trace> generateStateDiff(final TransactionTrace transactionTrace) {
     List<TraceFrame> traceFrames = transactionTrace.getTraceFrames();
     if (traceFrames.size() < 1) {
       return Stream.empty();
     }
 
-    WorldUpdater updatedTx =
+    WorldUpdater transactionUpdater =
         traceFrames.get(0).getMessageFrame().getWorldState().parentUpdater().get();
-    WorldUpdater contextTx = updatedTx.parentUpdater().get();
+    WorldUpdater previousUpdater = transactionUpdater.parentUpdater().get();
 
     StateDiffTrace stateDiffResult = new StateDiffTrace();
 
-    for (Account touchedAccount : updatedTx.getTouchedAccounts()) {
+    for (Account touchedAccount : transactionUpdater.getTouchedAccounts()) {
       if (!(touchedAccount instanceof AbstractWorldUpdater.UpdateTrackingAccount)) {
         continue;
       }
       Address accountAddress = touchedAccount.getAddress();
       UpdateTrackingAccount<?> updatedAccount =
-          (UpdateTrackingAccount<?>) updatedTx.get(accountAddress);
-      Account rootAccount = ((UpdateTrackingAccount<?>) touchedAccount).getWrappedAccount();
+          (UpdateTrackingAccount<?>) transactionUpdater.get(accountAddress);
+      Account rootAccount = previousUpdater.get(accountAddress);
       Map<String, DiffNode> storageDiff = new TreeMap<>();
 
-      Wei originalBalance =
-          midBlockAccountBalance.computeIfAbsent(
-              accountAddress, addr -> (rootAccount == null) ? null : rootAccount.getBalance());
-      Wei newBalance = updatedAccount.getBalance();
-      midBlockAccountBalance.put(accountAddress, newBalance);
-
-      Map<UInt256, UInt256> midBlockAccountStorage =
-          midBlockStorageState.computeIfAbsent(accountAddress, address -> new TreeMap<>());
       for (Map.Entry<UInt256, UInt256> entry : updatedAccount.getUpdatedStorage().entrySet()) {
-        UInt256 originalValue =
-            midBlockAccountStorage.computeIfAbsent(
-                entry.getKey(), key -> updatedAccount.getOriginalStorageValue(entry.getKey()));
+        UInt256 originalValue = rootAccount.getStorageValue(entry.getKey());
         UInt256 newValue = entry.getValue();
-        midBlockAccountStorage.put(entry.getKey(), newValue);
         storageDiff.put(
             entry.getKey().toHexString(),
             new DiffNode(originalValue.toHexString(), newValue.toHexString()));
@@ -84,13 +70,10 @@ public class StateDiffGenerator {
 
       AccountDiff accountDiff =
           new AccountDiff(
-              new DiffNode(
-                  Optional.ofNullable(originalBalance)
-                      .map(Wei::toShortHexString)
-                      .map(StateDiffGenerator::toQuantityShortHex),
-                  Optional.ofNullable(newBalance)
-                      .map(Wei::toShortHexString)
-                      .map(StateDiffGenerator::toQuantityShortHex)),
+              createDiffNode(
+                  rootAccount,
+                  updatedAccount,
+                  account -> toQuantityShortHex(account.getBalance().toShortHexString())),
               updatedAccount.codeWasUpdated()
                   ? createDiffNode(
                       rootAccount, updatedAccount, account -> account.getCode().toHexString())
@@ -108,8 +91,8 @@ public class StateDiffGenerator {
       }
     }
 
-    for (Address accountAddress : updatedTx.getDeletedAccountAddresses()) {
-      Account rootAccount = contextTx.get(accountAddress);
+    for (Address accountAddress : transactionUpdater.getDeletedAccountAddresses()) {
+      Account rootAccount = previousUpdater.get(accountAddress);
       AccountDiff accountDiff =
           new AccountDiff(
               createDiffNode(
