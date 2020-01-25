@@ -86,8 +86,6 @@ public class StateDiffGenerator {
 
       if (accountDiff.hasDifference()) {
         stateDiffResult.put(accountAddress.toHexString(), accountDiff);
-      } else {
-        System.out.println("no diff " + accountAddress);
       }
     }
 
