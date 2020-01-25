@@ -112,7 +112,4 @@ public interface WorldUpdater extends MutableWorldView {
 
   /** The WorldUpdater if this WorldUpdater wraps a WorldUpdater, empty otherwise */
   public Optional<WorldUpdater> parentUpdater();
-
-  /** The first ancestor wrapped WorldView that is not a WorldUpdater. */
-  public WorldView rootWorld();
 }

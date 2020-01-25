@@ -109,8 +109,4 @@ public class DefaultMutablePrivateWorldStateUpdater implements WorldUpdater {
     return privateWorldUpdater.parentUpdater();
   }
 
-  @Override
-  public WorldView rootWorld() {
-    return privateWorldUpdater.rootWorld();
-  }
 }

@@ -142,15 +142,6 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
     }
   }
 
-  @Override
-  public WorldView rootWorld() {
-    WorldView root = world;
-    while (root instanceof WorldUpdater) {
-      root = ((WorldUpdater) root).rootWorld();
-    }
-    return root;
-  }
-
   /**
    * The accounts modified in this updater.
    *
