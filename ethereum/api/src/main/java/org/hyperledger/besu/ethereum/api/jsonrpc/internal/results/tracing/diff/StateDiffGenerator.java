@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
-import org.hyperledger.besu.ethereum.core.WorldView;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 
 import java.util.Collections;
@@ -48,28 +47,25 @@ public class StateDiffGenerator {
       return Stream.empty();
     }
 
-    WorldUpdater topUpdater = traceFrames.get(0).getMessageFrame().getWorldState();
-    WorldUpdater worldUpdater = topUpdater;
-    while (worldUpdater.parentUpdater().isPresent()) {
-      worldUpdater = worldUpdater.parentUpdater().get();
-    }
-    WorldView rootWorld = worldUpdater.rootWorld();
+    WorldUpdater updatedTx =
+        traceFrames.get(0).getMessageFrame().getWorldState().parentUpdater().get();
+    WorldUpdater contextTx = updatedTx.parentUpdater().get();
 
-    StateDiffTrace result = new StateDiffTrace();
+    StateDiffTrace stateDiffResult = new StateDiffTrace();
 
-    for (Account touchedAccount : worldUpdater.getTouchedAccounts()) {
+    for (Account touchedAccount : updatedTx.getTouchedAccounts()) {
       if (!(touchedAccount instanceof AbstractWorldUpdater.UpdateTrackingAccount)) {
         continue;
       }
       Address accountAddress = touchedAccount.getAddress();
       UpdateTrackingAccount<?> updatedAccount =
-          (UpdateTrackingAccount<?>) topUpdater.get(accountAddress);
+          (UpdateTrackingAccount<?>) updatedTx.get(accountAddress);
       Account rootAccount = ((UpdateTrackingAccount<?>) touchedAccount).getWrappedAccount();
       Map<String, DiffNode> storageDiff = new TreeMap<>();
 
       Wei originalBalance =
-          midBlockAccountBalance.getOrDefault(
-              accountAddress, (rootAccount == null) ? null : rootAccount.getBalance());
+          midBlockAccountBalance.computeIfAbsent(
+              accountAddress, addr -> (rootAccount == null) ? null : rootAccount.getBalance());
       Wei newBalance = updatedAccount.getBalance();
       midBlockAccountBalance.put(accountAddress, newBalance);
 
@@ -89,8 +85,12 @@ public class StateDiffGenerator {
       AccountDiff accountDiff =
           new AccountDiff(
               new DiffNode(
-                  Optional.ofNullable(originalBalance).map(Wei::toShortHexString),
-                  Optional.ofNullable(newBalance).map(Wei::toShortHexString)),
+                  Optional.ofNullable(originalBalance)
+                      .map(Wei::toShortHexString)
+                      .map(StateDiffGenerator::toQuantityShortHex),
+                  Optional.ofNullable(newBalance)
+                      .map(Wei::toShortHexString)
+                      .map(StateDiffGenerator::toQuantityShortHex)),
               updatedAccount.codeWasUpdated()
                   ? createDiffNode(
                       rootAccount, updatedAccount, account -> account.getCode().toHexString())
@@ -102,14 +102,14 @@ public class StateDiffGenerator {
               storageDiff);
 
       if (accountDiff.hasDifference()) {
-        result.put(accountAddress.toHexString(), accountDiff);
+        stateDiffResult.put(accountAddress.toHexString(), accountDiff);
       } else {
         System.out.println("no diff " + accountAddress);
       }
     }
 
-    for (Address accountAddress : worldUpdater.getDeletedAccountAddresses()) {
-      Account rootAccount = rootWorld.get(accountAddress);
+    for (Address accountAddress : updatedTx.getDeletedAccountAddresses()) {
+      Account rootAccount = contextTx.get(accountAddress);
       AccountDiff accountDiff =
           new AccountDiff(
               createDiffNode(
@@ -120,10 +120,10 @@ public class StateDiffGenerator {
               createDiffNode(
                   rootAccount, null, account -> "0x" + Long.toHexString(account.getNonce())),
               Collections.emptyMap());
-      result.put(accountAddress.toHexString(), accountDiff);
+      stateDiffResult.put(accountAddress.toHexString(), accountDiff);
     }
 
-    return Stream.of(result);
+    return Stream.of(stateDiffResult);
   }
 
   DiffNode createDiffNode(

@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockReplay.TransactionAction;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
@@ -29,6 +30,7 @@ import java.util.Optional;
 public class BlockTracer {
 
   private final BlockReplay blockReplay;
+  private WorldUpdater chainedUpdater;
 
   public BlockTracer(final BlockReplay blockReplay) {
     this.blockReplay = blockReplay;
@@ -45,10 +47,14 @@ public class BlockTracer {
   private TransactionAction<TransactionTrace> prepareReplayAction(
       final DebugOperationTracer tracer) {
     return (transaction, header, blockchain, mutableWorldState, transactionProcessor) -> {
+      if (chainedUpdater == null) {
+        chainedUpdater = mutableWorldState.updater();
+      }
+      chainedUpdater = chainedUpdater.updater();
       final TransactionProcessor.Result result =
           transactionProcessor.processTransaction(
               blockchain,
-              mutableWorldState.updater(),
+              chainedUpdater,
               header,
               transaction,
               header.getCoinbase(),
