@@ -13,6 +13,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+
+import groovy.transform.Memoized
 import net.ltgt.gradle.errorprone.CheckSeverity
 
 import java.text.SimpleDateFormat
@@ -637,6 +639,7 @@ def buildTime() {
 
 // Takes the version, and if -SNAPSHOT is part of it replaces SNAPSHOT
 // with the git commit version.
+@Memoized
 def calculateVersion() {
   String version = rootProject.version
   if (version.endsWith("-SNAPSHOT")) {
@@ -647,7 +650,7 @@ def calculateVersion() {
 
 def getCheckedOutGitCommitHash() {
   try {
-    def gitFolder = "$projectDir/.git/"
+    def gitFolder = "$projectDir/.gitt/"
     if (!file(gitFolder).isDirectory()) {
       // We are in a submodule.  The file's contents are `gitdir: <gitFolder>\n`.
       // Read the file, cut off the front, and trim the whitespace.
@@ -667,6 +670,8 @@ def getCheckedOutGitCommitHash() {
     def refHead = new File(gitFolder + head[1].trim()) // .git/refs/heads/master
     refHead.text.trim().take takeFromHash
   } catch (Exception e) {
+    logger.warn('Could not calculate git commit, using "xxxxxxxx" (run with --info for stacktrace)')
+    logger.info('Error retrieving git commit', e)
     return "xxxxxxxx"
   }
 }
