@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc;
 
-import static com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT;
 import static com.google.common.base.Preconditions.checkState;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -140,15 +139,7 @@ public abstract class AbstractJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpS
         final String expectedResult = expectedResponse.get("result").toString();
         final String actualResult = responseBody.get("result").toString();
         final ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(INDENT_OUTPUT, true);
-        assertThat(
-                mapper
-                    .writerWithDefaultPrettyPrinter()
-                    .writeValueAsString(mapper.readTree(actualResult)))
-            .isEqualTo(
-                mapper
-                    .writerWithDefaultPrettyPrinter()
-                    .writeValueAsString(mapper.readTree(expectedResult)));
+        assertThat(mapper.readTree(actualResult)).isEqualTo(mapper.readTree(expectedResult));
       }
 
       // Check error

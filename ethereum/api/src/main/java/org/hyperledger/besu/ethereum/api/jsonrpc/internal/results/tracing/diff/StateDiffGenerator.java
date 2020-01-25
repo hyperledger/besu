@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.core.AbstractWorldUpdater;
 import org.hyperledger.besu.ethereum.core.AbstractWorldUpdater.UpdateTrackingAccount;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 
@@ -43,8 +44,11 @@ public class StateDiffGenerator {
       return Stream.empty();
     }
 
+    // This corresponds to the world state after the TX executed
     WorldUpdater transactionUpdater =
         traceFrames.get(0).getMessageFrame().getWorldState().parentUpdater().get();
+    // This corresponds to the world state prior to the TX execution,
+    // Either the initial block state or the state of the prior TX
     WorldUpdater previousUpdater = transactionUpdater.parentUpdater().get();
 
     StateDiffTrace stateDiffResult = new StateDiffTrace();
@@ -57,8 +61,9 @@ public class StateDiffGenerator {
       UpdateTrackingAccount<?> updatedAccount =
           (UpdateTrackingAccount<?>) transactionUpdater.get(accountAddress);
       Account rootAccount = previousUpdater.get(accountAddress);
-      Map<String, DiffNode> storageDiff = new TreeMap<>();
 
+      // calculate storage diff
+      Map<String, DiffNode> storageDiff = new TreeMap<>();
       for (Map.Entry<UInt256, UInt256> entry : updatedAccount.getUpdatedStorage().entrySet()) {
         UInt256 originalValue = rootAccount.getStorageValue(entry.getKey());
         UInt256 newValue = entry.getValue();
@@ -67,20 +72,12 @@ public class StateDiffGenerator {
             new DiffNode(originalValue.toHexString(), newValue.toHexString()));
       }
 
+      // populate the diff object
       AccountDiff accountDiff =
           new AccountDiff(
-              createDiffNode(
-                  rootAccount,
-                  updatedAccount,
-                  account -> toQuantityShortHex(account.getBalance().toShortHexString())),
-              updatedAccount.codeWasUpdated()
-                  ? createDiffNode(
-                      rootAccount, updatedAccount, account -> account.getCode().toHexString())
-                  : DiffNode.EQUAL,
-              createDiffNode(
-                  rootAccount,
-                  updatedAccount,
-                  account -> "0x" + Long.toHexString(account.getNonce())),
+              createDiffNode(rootAccount, updatedAccount, StateDiffGenerator::balanceAsHex),
+              createDiffNode(rootAccount, updatedAccount, StateDiffGenerator::codeAsHex),
+              createDiffNode(rootAccount, updatedAccount, StateDiffGenerator::nonceAsHex),
               storageDiff);
 
       if (accountDiff.hasDifference()) {
@@ -88,17 +85,14 @@ public class StateDiffGenerator {
       }
     }
 
+    // Add deleted accounts
     for (Address accountAddress : transactionUpdater.getDeletedAccountAddresses()) {
-      Account rootAccount = previousUpdater.get(accountAddress);
+      Account deletedAccount = previousUpdater.get(accountAddress);
       AccountDiff accountDiff =
           new AccountDiff(
-              createDiffNode(
-                  rootAccount,
-                  null,
-                  account -> toQuantityShortHex(account.getBalance().toShortHexString())),
-              createDiffNode(rootAccount, null, account -> account.getCode().toHexString()),
-              createDiffNode(
-                  rootAccount, null, account -> "0x" + Long.toHexString(account.getNonce())),
+              createDiffNode(deletedAccount, null, StateDiffGenerator::balanceAsHex),
+              createDiffNode(deletedAccount, null, StateDiffGenerator::codeAsHex),
+              createDiffNode(deletedAccount, null, StateDiffGenerator::nonceAsHex),
               Collections.emptyMap());
       stateDiffResult.put(accountAddress.toHexString(), accountDiff);
     }
@@ -111,8 +105,16 @@ public class StateDiffGenerator {
     return new DiffNode(Optional.ofNullable(from).map(func), Optional.ofNullable(to).map(func));
   }
 
-  private static String toQuantityShortHex(final String hex) {
-    // Skipping '0x'
-    return "0x".equals(hex) ? "0x0" : hex;
+  private static String balanceAsHex(final Account account) {
+    Wei balance = account.getBalance();
+    return balance.isZero() ? "0x0" : balance.toShortHexString();
+  }
+
+  private static String codeAsHex(final Account account) {
+    return account.getCode().toHexString();
+  }
+
+  private static String nonceAsHex(final Account account) {
+    return "0x" + Long.toHexString(account.getNonce());
   }
 }
