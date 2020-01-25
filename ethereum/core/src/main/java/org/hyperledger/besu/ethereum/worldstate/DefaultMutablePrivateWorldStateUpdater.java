@@ -19,7 +19,6 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.DefaultEvmAccount;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
-import org.hyperledger.besu.ethereum.core.WorldView;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -108,5 +107,4 @@ public class DefaultMutablePrivateWorldStateUpdater implements WorldUpdater {
   public Optional<WorldUpdater> parentUpdater() {
     return privateWorldUpdater.parentUpdater();
   }
-
 }
