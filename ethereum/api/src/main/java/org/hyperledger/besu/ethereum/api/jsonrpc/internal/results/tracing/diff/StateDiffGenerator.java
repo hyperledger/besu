@@ -108,7 +108,7 @@ public class StateDiffGenerator {
     return Stream.of(stateDiffResult);
   }
 
-  DiffNode createDiffNode(
+  private DiffNode createDiffNode(
       final Account from, final Account to, final Function<Account, String> func) {
     return new DiffNode(Optional.ofNullable(from).map(func), Optional.ofNullable(to).map(func));
   }

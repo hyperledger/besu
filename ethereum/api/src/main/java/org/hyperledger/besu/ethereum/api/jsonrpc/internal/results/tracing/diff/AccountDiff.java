@@ -20,12 +20,12 @@ import java.util.Map;
 
 public final class AccountDiff {
 
-  final DiffNode balance;
-  final DiffNode code;
-  final DiffNode nonce;
-  final Map<String, DiffNode> storage;
+  private final DiffNode balance;
+  private final DiffNode code;
+  private final DiffNode nonce;
+  private final Map<String, DiffNode> storage;
 
-  public AccountDiff(
+  AccountDiff(
       final DiffNode balance,
       final DiffNode code,
       final DiffNode nonce,
@@ -52,7 +52,7 @@ public final class AccountDiff {
     return storage;
   }
 
-  public boolean hasDifference() {
+  boolean hasDifference() {
     return balance.hasDifference()
         || code.hasDifference()
         || nonce.hasDifference()

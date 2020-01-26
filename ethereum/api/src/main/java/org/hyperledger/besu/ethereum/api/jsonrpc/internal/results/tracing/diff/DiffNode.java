@@ -27,22 +27,20 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 @JsonSerialize(using = DiffNode.Serializer.class)
 public final class DiffNode {
 
-  public static DiffNode EQUAL = new DiffNode();
-
-  final Optional<String> from;
-  final Optional<String> to;
+  private final Optional<String> from;
+  private final Optional<String> to;
 
   public DiffNode() {
     from = Optional.empty();
     to = Optional.empty();
   }
 
-  public DiffNode(final String from, final String to) {
+  DiffNode(final String from, final String to) {
     this.from = Optional.ofNullable(from);
     this.to = Optional.ofNullable(to);
   }
 
-  public DiffNode(final Optional<String> from, final Optional<String> to) {
+  DiffNode(final Optional<String> from, final Optional<String> to) {
     this.from = from;
     this.to = to;
   }
