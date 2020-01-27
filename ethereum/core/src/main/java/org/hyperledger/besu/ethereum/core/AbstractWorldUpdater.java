@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.Optional;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -132,6 +133,15 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
     return world;
   }
 
+  @Override
+  public Optional<WorldUpdater> parentUpdater() {
+    if (world instanceof WorldUpdater) {
+      return Optional.of((WorldUpdater) world);
+    } else {
+      return Optional.empty();
+    }
+  }
+
   /**
    * The accounts modified in this updater.
    *
@@ -228,7 +238,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
      *     with a value of 0 to signify deletion.
      */
     @Override
-    public SortedMap<UInt256, UInt256> getUpdatedStorage() {
+    public Map<UInt256, UInt256> getUpdatedStorage() {
       return updatedStorage;
     }
 
@@ -401,6 +411,11 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
     @Override
     public Collection<Account> getTouchedAccounts() {
       return new ArrayList<>(updatedAccounts());
+    }
+
+    @Override
+    public Collection<Address> getDeletedAccountAddresses() {
+      return new ArrayList<>(deletedAccounts());
     }
 
     @Override

@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.vm.Code;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
+import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.internal.MemoryEntry;
 
 import java.util.EnumSet;
@@ -32,6 +33,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class TraceFrame {
 
+  private final MessageFrame messageFrame;
   private final int pc;
   private final String opcode;
   private final Gas gasRemaining;
@@ -55,6 +57,7 @@ public class TraceFrame {
   private final Optional<MemoryEntry> maybeUpdatedMemory;
 
   public TraceFrame(
+      final MessageFrame messageFrame,
       final int pc,
       final String opcode,
       final Gas gasRemaining,
@@ -73,6 +76,7 @@ public class TraceFrame {
       final Optional<Map<UInt256, UInt256>> storagePreExecution,
       final boolean virtualOperation,
       final Optional<MemoryEntry> maybeUpdatedMemory) {
+    this.messageFrame = messageFrame;
     this.pc = pc;
     this.opcode = opcode;
     this.gasRemaining = gasRemaining;
@@ -94,42 +98,8 @@ public class TraceFrame {
     this.maybeUpdatedMemory = maybeUpdatedMemory;
   }
 
-  public TraceFrame(
-      final int pc,
-      final String opcode,
-      final Gas gasRemaining,
-      final Optional<Gas> gasCost,
-      final int depth,
-      final EnumSet<ExceptionalHaltReason> exceptionalHaltReasons,
-      final Optional<Bytes32[]> stack,
-      final Optional<Bytes32[]> memory,
-      final Optional<Map<UInt256, UInt256>> storage,
-      final Optional<Bytes> revertReason,
-      final Optional<Map<Address, Wei>> maybeRefunds,
-      final Optional<Code> maybeCode,
-      final int stackItemsProduced,
-      final Optional<Bytes32[]> stackPostExecution,
-      final Optional<Bytes32[]> memoryPostExecution,
-      final Optional<Map<UInt256, UInt256>> storagePreExecution) {
-    this(
-        pc,
-        opcode,
-        gasRemaining,
-        gasCost,
-        depth,
-        exceptionalHaltReasons,
-        stack,
-        memory,
-        storage,
-        revertReason,
-        maybeRefunds,
-        maybeCode,
-        stackItemsProduced,
-        stackPostExecution,
-        memoryPostExecution,
-        storagePreExecution,
-        false,
-        Optional.empty());
+  public MessageFrame getMessageFrame() {
+    return messageFrame;
   }
 
   public int getPc() {
