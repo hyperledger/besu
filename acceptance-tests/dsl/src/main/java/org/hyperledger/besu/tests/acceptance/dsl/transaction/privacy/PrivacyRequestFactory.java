@@ -16,12 +16,43 @@ package org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy;
 
 import static java.util.Collections.singletonList;
 
+import org.hyperledger.besu.enclave.types.PrivacyGroup;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.parameters.CreatePrivacyGroupParameter;
+
+import java.util.HashMap;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import org.assertj.core.util.Lists;
 import org.web3j.protocol.Web3jService;
 import org.web3j.protocol.besu.Besu;
 import org.web3j.protocol.core.Request;
 import org.web3j.protocol.core.Response;
 
 public class PrivacyRequestFactory {
+
+  public static class GetPrivacyPrecompileAddressResponse extends Response<String> {}
+
+  public static class GetPrivateTransactionResponse extends Response<HashMap<String, String>> {
+    final String privateFrom;
+
+    @JsonCreator
+    public GetPrivateTransactionResponse(
+        @JsonProperty("result") final HashMap<String, String> result) {
+      this.privateFrom = result.get("privateFrom");
+    }
+
+    public String getPrivateFrom() {
+      return privateFrom;
+    }
+  }
+
+  public static class CreatePrivacyGroupResponse extends Response<String> {}
+
+  public static class DeletePrivacyGroupResponse extends Response<String> {}
+
+  public static class FindPrivacyGroupResponse extends Response<PrivacyGroup[]> {}
+
   private final Besu besuClient;
   private final Web3jService web3jService;
 
@@ -50,5 +81,47 @@ public class PrivacyRequestFactory {
     public String getTransactionKey() {
       return getResult();
     }
+  }
+
+  public Request<?, GetPrivacyPrecompileAddressResponse> privGetPrivacyPrecompileAddress() {
+    return new Request<>(
+        "priv_getPrivacyPrecompileAddress",
+        Lists.emptyList(),
+        web3jService,
+        GetPrivacyPrecompileAddressResponse.class);
+  }
+
+  public Request<?, GetPrivateTransactionResponse> privGetPrivateTransaction(
+      final String transactionHash) {
+    return new Request<>(
+        "priv_getPrivateTransaction",
+        singletonList(transactionHash),
+        web3jService,
+        GetPrivateTransactionResponse.class);
+  }
+
+  public Request<?, CreatePrivacyGroupResponse> privCreatePrivacyGroup(
+      final CreatePrivacyGroupParameter params) {
+    return new Request<>(
+        "priv_createPrivacyGroup",
+        singletonList(params),
+        web3jService,
+        CreatePrivacyGroupResponse.class);
+  }
+
+  public Request<?, DeletePrivacyGroupResponse> privDeletePrivacyGroup(final String groupId) {
+    return new Request<>(
+        "priv_deletePrivacyGroup",
+        singletonList(groupId),
+        web3jService,
+        DeletePrivacyGroupResponse.class);
+  }
+
+  public Request<?, FindPrivacyGroupResponse> privFindPrivacyGroup(final String[] groupMembers) {
+    return new Request<>(
+        "priv_findPrivacyGroup",
+        singletonList(groupMembers),
+        web3jService,
+        FindPrivacyGroupResponse.class);
   }
 }

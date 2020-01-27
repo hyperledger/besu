@@ -33,6 +33,8 @@ dependencies {
   testImplementation 'org.web3j:besu'
   testImplementation 'tech.pegasys.ethsigner.internal:core'
   testImplementation 'tech.pegasys.ethsigner.internal:file-based'
+
+  testCompile "com.github.tomakehurst:wiremock-jre8-standalone:2.25.1"
 }
 
 test.enabled = false

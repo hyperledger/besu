@@ -123,7 +123,8 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
       final boolean revertReasonEnabled,
       final List<String> plugins,
       final List<String> extraCLIOptions,
-      final List<String> staticNodes)
+      final List<String> staticNodes,
+      final Optional<PrivacyParameters> privacyParameters)
       throws IOException {
     this.bootnodeEligible = bootnodeEligible;
     this.revertReasonEnabled = revertReasonEnabled;
@@ -161,6 +162,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
         });
     this.extraCLIOptions = extraCLIOptions;
     this.staticNodes = staticNodes;
+    privacyParameters.ifPresent(this::setPrivacyParameters);
     LOG.info("Created BesuNode {}", this.toString());
   }
 
