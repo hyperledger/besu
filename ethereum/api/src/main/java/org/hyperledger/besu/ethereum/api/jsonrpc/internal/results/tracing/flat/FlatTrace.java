@@ -82,12 +82,14 @@ public class FlatTrace implements Trace {
 
   /**
    * This ridiculous construction returns a true "null" when we have a value in error, resulting in
-   * jackson not serializing it, or a wrapped reference of either null or the value, resutling in
+   * jackson not serializing it, or a wrapped reference of either null or the value, resulting in
    * jackson serializing a null if we don't have an error.
    *
    * <p>This is done for binary compatibility: we need either an absent value, a present null value,
    * or a real value. And since Java Optionals refuse to hold nulls (by design) an atomic reference
    * is used instead.
+   *
+   * @return the jackson optimized result
    */
   @JsonInclude(NON_NULL)
   public AtomicReference<Result> getResult() {
