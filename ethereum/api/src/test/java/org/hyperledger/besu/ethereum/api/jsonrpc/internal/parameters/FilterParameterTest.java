@@ -41,6 +41,11 @@ public class FilterParameterTest {
   private static final String TOPIC_FOUR = String.format(TOPIC_FORMAT, 4);
   private static final String TOPIC_FIVE = String.format(TOPIC_FORMAT, 5);
 
+  private static final String TOPICS_TWO_THREE_ARRAY =
+      "[\"" + TOPIC_TWO + "\", \"" + TOPIC_THREE + "\"]";
+  private static final String TOPICS_FOUR_FIVE_ARRAY =
+      "[\"" + TOPIC_FOUR + "\", \"" + TOPIC_FIVE + "\"]";
+
   @Test
   public void jsonWithArrayOfAddressesShouldSerializeSuccessfully() throws Exception {
     final String jsonWithAddressArray =
@@ -95,11 +100,9 @@ public class FilterParameterTest {
   public void jsonWithSingleAddressAndMultipleTopicsShouldSerializeSuccessfully() throws Exception {
     final String jsonWithSingleAddress =
         "{\"jsonrpc\":\"2.0\",\"method\":\"eth_getLogs\",\"params\":[{\"address\":\"0x0\", "
-            + "\"topics\":[[\""
-            + TOPIC_TWO
-            + "\",\""
-            + TOPIC_THREE
-            + "\"]]}],\"id\":1}";
+            + "\"topics\":["
+            + TOPICS_TWO_THREE_ARRAY
+            + "]}],\"id\":1}";
 
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(readJsonAsJsonRpcRequest(jsonWithSingleAddress));
@@ -118,16 +121,11 @@ public class FilterParameterTest {
       throws Exception {
     final String jsonWithSingleAddress =
         "{\"jsonrpc\":\"2.0\",\"method\":\"eth_getLogs\",\"params\":[{\"address\":\"0x0\", "
-            + "\"topics\":[[\""
-            + TOPIC_TWO
-            + "\",\""
-            + TOPIC_THREE
-            + "\"],"
-            + "[\""
-            + TOPIC_TWO
-            + "\",\""
-            + TOPIC_THREE
-            + "\"]]}],\"id\":1}";
+            + "\"topics\":["
+            + TOPICS_TWO_THREE_ARRAY
+            + ","
+            + TOPICS_TWO_THREE_ARRAY
+            + "]}],\"id\":1}";
 
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(readJsonAsJsonRpcRequest(jsonWithSingleAddress));
@@ -276,7 +274,7 @@ public class FilterParameterTest {
   @Test
   public void twoTopicsGivesTwoTopicListsInTopics() throws java.io.IOException {
     final FilterParameter filterParameter =
-        readJsonAsFilterParameter("{\"topics\":[\"" + TOPIC_TWO + "\", \"" + TOPIC_THREE + "\"]}");
+        readJsonAsFilterParameter("{\"topics\":" + TOPICS_TWO_THREE_ARRAY + "}");
 
     assertThat(filterParameter.getTopics())
         .containsExactly(
@@ -287,8 +285,7 @@ public class FilterParameterTest {
   @Test
   public void twoTopicsInFirstPositionGivesTwoTopicsInFirstTopicList() throws java.io.IOException {
     final FilterParameter filterParameter =
-        readJsonAsFilterParameter(
-            "{\"topics\":[[\"" + TOPIC_TWO + "\", \"" + TOPIC_THREE + "\"]]}");
+        readJsonAsFilterParameter("{\"topics\":[" + TOPICS_TWO_THREE_ARRAY + "]}");
 
     assertThat(filterParameter.getTopics())
         .containsExactly(
@@ -308,11 +305,9 @@ public class FilterParameterTest {
   @Test
   public void twoTopicsInFirstAndSecondPositionGivesTwoTopicsWithTwoElementsInEach()
       throws java.io.IOException {
-    final String firstPositionTopics = "[\"" + TOPIC_TWO + "\", \"" + TOPIC_THREE + "\"]";
-    final String secondPositionTopics = "[\"" + TOPIC_FOUR + "\", \"" + TOPIC_FIVE + "\"]";
     final FilterParameter filterParameter =
         readJsonAsFilterParameter(
-            "{\"topics\":[" + firstPositionTopics + "," + secondPositionTopics + "]}");
+            "{\"topics\":[" + TOPICS_TWO_THREE_ARRAY + "," + TOPICS_FOUR_FIVE_ARRAY + "]}");
 
     assertThat(filterParameter.getTopics())
         .containsExactly(
