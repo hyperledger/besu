@@ -18,14 +18,16 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.TracingUtils;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 
+import java.util.Optional;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
+import org.apache.tuweni.bytes.Bytes;
 
 @JsonInclude(NON_NULL)
 public class Action {
@@ -73,13 +75,15 @@ public class Action {
       final String lastContractAddress,
       final Address contractCallAddress,
       final TraceFrame traceFrame,
-      final Gas gasRemaining) {
+      final Gas gasRemaining,
+      final Optional<Bytes> inputBytes,
+      final String callType) {
     return builder()
         .from(lastContractAddress)
         .to(contractCallAddress.toString())
-        .input(TracingUtils.dumpMemory(traceFrame.getMemory()))
+        .input(inputBytes.map(Bytes::toHexString).orElse(null))
         .gas(gasRemaining.toHexString())
-        .callType("call")
+        .callType(callType)
         .value(Quantity.create(transaction.getValue()));
   }
 

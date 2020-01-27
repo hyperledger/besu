@@ -866,7 +866,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @Override
   public void run() {
     try {
-      prepareLogging();
+      configureLogging(true);
       logger.info("Starting Besu version: {}", BesuInfo.nodeName(identityString));
 
       // Need to create vertx after cmdline has been parsed, such that metricSystem is configurable
@@ -1018,10 +1018,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return this;
   }
 
-  private void prepareLogging() {
+  public void configureLogging(final boolean announce) {
     // set log level per CLI flags
     if (logLevel != null) {
-      System.out.println("Setting logging level to " + logLevel.name());
+      if (announce) {
+        System.out.println("Setting logging level to " + logLevel.name());
+      }
       Configurator.setAllLevels("", logLevel);
     }
   }
