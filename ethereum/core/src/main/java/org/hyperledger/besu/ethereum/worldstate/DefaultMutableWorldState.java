@@ -357,7 +357,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
     }
 
     @Override
-    public Collection<Account> getTouchedAccounts() {
+    public Collection<UpdateTrackingAccount<? extends Account>> getTouchedAccounts() {
       return new ArrayList<>(updatedAccounts());
     }
 

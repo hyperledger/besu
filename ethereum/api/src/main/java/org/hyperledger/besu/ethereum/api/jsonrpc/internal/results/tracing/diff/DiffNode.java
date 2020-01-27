@@ -30,11 +30,6 @@ public final class DiffNode {
   private final Optional<String> from;
   private final Optional<String> to;
 
-  public DiffNode() {
-    from = Optional.empty();
-    to = Optional.empty();
-  }
-
   DiffNode(final String from, final String to) {
     this.from = Optional.ofNullable(from);
     this.to = Optional.ofNullable(to);

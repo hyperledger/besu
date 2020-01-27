@@ -80,16 +80,18 @@ public class DebugTraceBlockTest {
 
     final TraceFrame traceFrame =
         new TraceFrame(
-            null,
             12,
             "NONE",
             Gas.of(45),
             Optional.of(Gas.of(56)),
             2,
             EnumSet.noneOf(ExceptionalHaltReason.class),
+            Bytes.EMPTY,
+            () -> Bytes.EMPTY,
             Optional.empty(),
             Optional.empty(),
             Optional.empty(),
+            null,
             Optional.empty(),
             Optional.empty(),
             Optional.empty(),
