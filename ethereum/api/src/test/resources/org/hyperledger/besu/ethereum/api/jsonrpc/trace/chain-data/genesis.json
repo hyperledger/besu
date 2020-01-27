@@ -71,6 +71,16 @@
       "code": "0x6000546001018060005360005560016000F3",
       "balance": "0x0"
     },
+    "00A0000000000000000000000000000000000000": {
+      "comment": "Append log record with 1 topic using LOG1 OPCODE.",
+      "code": "0x608B60045360FF60016004A1",
+      "balance": "0x0"
+    },
+    "00B0000000000000000000000000000000000000": {
+      "comment": "Append log record with 2 topics using LOG2 OPCODE.",
+      "code": "0x608B60045360AA60FF60016004A2",
+      "balance": "0x0"
+    },
     "fe3b557e8fb62b89f4916b721be55ceb828dbd73": {
       "secretKey": "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63",
       "comment": "private key and this comment are ignored.  In a real chain, the private key should NOT be stored",
