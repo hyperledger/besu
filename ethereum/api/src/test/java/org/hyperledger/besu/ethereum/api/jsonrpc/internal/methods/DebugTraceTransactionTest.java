@@ -79,6 +79,7 @@ public class DebugTraceTransactionTest {
 
     final TraceFrame traceFrame =
         new TraceFrame(
+            null,
             12,
             "NONE",
             Gas.of(45),
@@ -94,6 +95,8 @@ public class DebugTraceTransactionTest {
             0,
             Optional.empty(),
             Optional.empty(),
+            Optional.empty(),
+            false,
             Optional.empty());
     final List<TraceFrame> traceFrames = Collections.singletonList(traceFrame);
     final TransactionTrace transactionTrace =
@@ -129,6 +132,7 @@ public class DebugTraceTransactionTest {
 
     final TraceFrame traceFrame =
         new TraceFrame(
+            null,
             12,
             "NONE",
             Gas.of(45),
@@ -144,6 +148,8 @@ public class DebugTraceTransactionTest {
             0,
             Optional.empty(),
             Optional.empty(),
+            Optional.empty(),
+            false,
             Optional.empty());
     final List<TraceFrame> traceFrames = Collections.singletonList(traceFrame);
     final TransactionTrace transactionTrace =

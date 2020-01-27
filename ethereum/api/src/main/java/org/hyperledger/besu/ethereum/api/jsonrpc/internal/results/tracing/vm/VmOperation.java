@@ -17,7 +17,9 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.vm;
 import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+@JsonPropertyOrder({"cost", "ex", "pc", "sub"})
 public class VmOperation {
   private long cost;
   // Information concerning the execution of the operation.
