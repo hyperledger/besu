@@ -35,14 +35,11 @@ import com.google.common.collect.Lists;
 import org.junit.Test;
 
 public class FilterParameterTest {
-  private static final String TOPIC_TWO =
-      "0x0000000000000000000000000000000000000000000000000000000000000002";
-  private static final String TOPIC_THREE =
-      "0x0000000000000000000000000000000000000000000000000000000000000003";
-  private static final String TOPIC_FOUR =
-      "0x0000000000000000000000000000000000000000000000000000000000000004";
-  private static final String TOPIC_FIVE =
-      "0x0000000000000000000000000000000000000000000000000000000000000005";
+  private static final String TOPIC_FORMAT = "0x%064d";
+  private static final String TOPIC_TWO = String.format(TOPIC_FORMAT, 2);
+  private static final String TOPIC_THREE = String.format(TOPIC_FORMAT, 3);
+  private static final String TOPIC_FOUR = String.format(TOPIC_FORMAT, 4);
+  private static final String TOPIC_FIVE = String.format(TOPIC_FORMAT, 5);
 
   @Test
   public void jsonWithArrayOfAddressesShouldSerializeSuccessfully() throws Exception {
@@ -244,21 +241,22 @@ public class FilterParameterTest {
   }
 
   @Test
-  public void emptyListOfTopicsDecodesCorrectly() throws java.io.IOException {
+  public void emptyListOfTopicsInJsonGivesInEmptyListInFilterParameter()
+      throws java.io.IOException {
     final FilterParameter filterParameter = readJsonAsFilterParameter("{\"topics\":[]}");
 
     assertThat(filterParameter.getTopics().size()).isEqualTo(0);
   }
 
   @Test
-  public void emptyListOfTopicsNestedDecodesCorrectly() throws java.io.IOException {
+  public void emptyListOfTopicsNestedGivesEmptyListInTopics() throws java.io.IOException {
     final FilterParameter filterParameter = readJsonAsFilterParameter("{\"topics\":[[]]}");
 
-    assertThat(filterParameter.getTopics()).containsExactly(List.of());
+    assertThat(filterParameter.getTopics()).containsExactly(emptyList());
   }
 
   @Test
-  public void singleTopicDecodesCorrectly() throws java.io.IOException {
+  public void singleTopicGivesSingleEntryInTopics() throws java.io.IOException {
     final FilterParameter filterParameter =
         readJsonAsFilterParameter("{\"topics\":[\"" + TOPIC_TWO + "\"]}");
 
@@ -267,7 +265,7 @@ public class FilterParameterTest {
   }
 
   @Test
-  public void singleNestedTopicDecodesCorrectly() throws java.io.IOException {
+  public void singleNestedTopicGivesSingleEntryInTopics() throws java.io.IOException {
     final FilterParameter filterParameter =
         readJsonAsFilterParameter("{\"topics\":[[\"" + TOPIC_TWO + "\"]]}");
 
@@ -276,7 +274,7 @@ public class FilterParameterTest {
   }
 
   @Test
-  public void twoTopicsDecodesCorrectly() throws java.io.IOException {
+  public void twoTopicsGivesTwoTopicListsInTopics() throws java.io.IOException {
     final FilterParameter filterParameter =
         readJsonAsFilterParameter("{\"topics\":[\"" + TOPIC_TWO + "\", \"" + TOPIC_THREE + "\"]}");
 
@@ -287,7 +285,7 @@ public class FilterParameterTest {
   }
 
   @Test
-  public void twoTopicsInFirstPositionDecodesCorrectly() throws java.io.IOException {
+  public void twoTopicsInFirstPositionGivesTwoTopicsInFirstTopicList() throws java.io.IOException {
     final FilterParameter filterParameter =
         readJsonAsFilterParameter(
             "{\"topics\":[[\"" + TOPIC_TWO + "\", \"" + TOPIC_THREE + "\"]]}");
@@ -298,7 +296,8 @@ public class FilterParameterTest {
   }
 
   @Test
-  public void nullInFirstPositionDecodesCorrectly() throws java.io.IOException {
+  public void nullInFirstPositionGivesTwoTopicsInFirstPositionWithNullList()
+      throws java.io.IOException {
     final FilterParameter filterParameter =
         readJsonAsFilterParameter("{\"topics\":[null, \"" + TOPIC_THREE + "\"]}");
 
@@ -307,20 +306,13 @@ public class FilterParameterTest {
   }
 
   @Test
-  public void twoTopicsInFirstAndSecondPositionDecodesCorrectly() throws java.io.IOException {
+  public void twoTopicsInFirstAndSecondPositionGivesTwoTopicsWithTwoElementsInEach()
+      throws java.io.IOException {
+    final String firstPositionTopics = "[\"" + TOPIC_TWO + "\", \"" + TOPIC_THREE + "\"]";
+    final String secondPositionTopics = "[\"" + TOPIC_FOUR + "\", \"" + TOPIC_FIVE + "\"]";
     final FilterParameter filterParameter =
         readJsonAsFilterParameter(
-            "{\"topics\":["
-                + "[\""
-                + TOPIC_TWO
-                + "\", \""
-                + TOPIC_THREE
-                + "\"],"
-                + "[\""
-                + TOPIC_FOUR
-                + "\", \""
-                + TOPIC_FIVE
-                + "\"]]}");
+            "{\"topics\":[" + firstPositionTopics + "," + secondPositionTopics + "]}");
 
     assertThat(filterParameter.getTopics())
         .containsExactly(
