@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.debug;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.vm.Code;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 import org.hyperledger.besu.ethereum.vm.internal.MemoryEntry;
@@ -24,6 +25,7 @@ import org.hyperledger.besu.ethereum.vm.internal.MemoryEntry;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import com.google.common.base.MoreObjects;
 import org.apache.tuweni.bytes.Bytes;
@@ -38,9 +40,12 @@ public class TraceFrame {
   private final Optional<Gas> gasCost;
   private final int depth;
   private final EnumSet<ExceptionalHaltReason> exceptionalHaltReasons;
+  private final Bytes inputData;
+  private final Supplier<Bytes> outputData;
   private final Optional<Bytes32[]> stack;
   private final Optional<Bytes32[]> memory;
   private final Optional<Map<UInt256, UInt256>> storage;
+  private final WorldUpdater worldUpdater;
   private final Optional<Bytes> revertReason;
   private final Optional<Map<Address, Wei>> maybeRefunds;
   private final Optional<Code> maybeCode;
@@ -61,9 +66,12 @@ public class TraceFrame {
       final Optional<Gas> gasCost,
       final int depth,
       final EnumSet<ExceptionalHaltReason> exceptionalHaltReasons,
+      final Bytes inputData,
+      final Supplier<Bytes> outputData,
       final Optional<Bytes32[]> stack,
       final Optional<Bytes32[]> memory,
       final Optional<Map<UInt256, UInt256>> storage,
+      final WorldUpdater worldUpdater,
       final Optional<Bytes> revertReason,
       final Optional<Map<Address, Wei>> maybeRefunds,
       final Optional<Code> maybeCode,
@@ -79,9 +87,12 @@ public class TraceFrame {
     this.gasCost = gasCost;
     this.depth = depth;
     this.exceptionalHaltReasons = exceptionalHaltReasons;
+    this.inputData = inputData;
+    this.outputData = outputData;
     this.stack = stack;
     this.memory = memory;
     this.storage = storage;
+    this.worldUpdater = worldUpdater;
     this.revertReason = revertReason;
     this.maybeRefunds = maybeRefunds;
     this.maybeCode = maybeCode;
@@ -92,44 +103,6 @@ public class TraceFrame {
     this.storagePreExecution = storagePreExecution;
     this.virtualOperation = virtualOperation;
     this.maybeUpdatedMemory = maybeUpdatedMemory;
-  }
-
-  public TraceFrame(
-      final int pc,
-      final String opcode,
-      final Gas gasRemaining,
-      final Optional<Gas> gasCost,
-      final int depth,
-      final EnumSet<ExceptionalHaltReason> exceptionalHaltReasons,
-      final Optional<Bytes32[]> stack,
-      final Optional<Bytes32[]> memory,
-      final Optional<Map<UInt256, UInt256>> storage,
-      final Optional<Bytes> revertReason,
-      final Optional<Map<Address, Wei>> maybeRefunds,
-      final Optional<Code> maybeCode,
-      final int stackItemsProduced,
-      final Optional<Bytes32[]> stackPostExecution,
-      final Optional<Bytes32[]> memoryPostExecution,
-      final Optional<Map<UInt256, UInt256>> storagePreExecution) {
-    this(
-        pc,
-        opcode,
-        gasRemaining,
-        gasCost,
-        depth,
-        exceptionalHaltReasons,
-        stack,
-        memory,
-        storage,
-        revertReason,
-        maybeRefunds,
-        maybeCode,
-        stackItemsProduced,
-        stackPostExecution,
-        memoryPostExecution,
-        storagePreExecution,
-        false,
-        Optional.empty());
   }
 
   public int getPc() {
@@ -156,6 +129,14 @@ public class TraceFrame {
     return exceptionalHaltReasons;
   }
 
+  public Bytes getInputData() {
+    return inputData;
+  }
+
+  public Bytes getOutputData() {
+    return outputData.get();
+  }
+
   public Optional<Bytes32[]> getStack() {
     return stack;
   }
@@ -166,6 +147,10 @@ public class TraceFrame {
 
   public Optional<Map<UInt256, UInt256>> getStorage() {
     return storage;
+  }
+
+  public WorldUpdater getWorldUpdater() {
+    return worldUpdater;
   }
 
   public Optional<Bytes> getRevertReason() {

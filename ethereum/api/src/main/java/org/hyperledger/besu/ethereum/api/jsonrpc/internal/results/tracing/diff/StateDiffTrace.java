@@ -11,26 +11,13 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
+ *
  */
-package org.hyperledger.besu.ethereum.vm;
 
-public enum ExceptionalHaltReason {
-  NONE(""),
-  INSUFFICIENT_GAS("Out of gas"),
-  INSUFFICIENT_STACK_ITEMS("Stack underflow"),
-  INVALID_JUMP_DESTINATION("Bad jump destination"),
-  INVALID_OPERATION("Bad instruction"),
-  INVALID_RETURN_DATA_BUFFER_ACCESS("Out of bounds"),
-  TOO_MANY_STACK_ITEMS("Out of stack"),
-  ILLEGAL_STATE_CHANGE("Illegal state change");
+package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.diff;
 
-  String description;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.Trace;
 
-  ExceptionalHaltReason(final String description) {
-    this.description = description;
-  }
+import java.util.TreeMap;
 
-  public String getDescription() {
-    return description;
-  }
-}
+class StateDiffTrace extends TreeMap<String, AccountDiff> implements Trace {}
