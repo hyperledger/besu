@@ -95,7 +95,7 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
 
     stubFor(post("/receive").willReturn(ok(receiveResponse)));
 
-    node.verify(priv.privGetPrivateTransaction(transactionHash.toString(), privateFrom));
+    node.verify(priv.privGetPrivateTransactionSuccess(transactionHash.toString(), privateFrom));
   }
 
   @Test
@@ -110,7 +110,7 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
     stubFor(post("/createPrivacyGroup").willReturn(ok(createGroupResponse)));
 
     node.useAuthenticationTokenInHeaderForJsonRpc(token);
-    node.verify(priv.privCreatePrivacyGroup(params, groupId));
+    node.verify(priv.privCreatePrivacyGroupSuccess(params, groupId));
   }
 
   @Test
@@ -123,7 +123,7 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
     stubFor(post("/deletePrivacyGroup").willReturn(ok(deleteGroupResponse)));
 
     node.useAuthenticationTokenInHeaderForJsonRpc(token);
-    node.verify(priv.privDeletePrivacyGroup(privacyGroupId));
+    node.verify(priv.privDeletePrivacyGroupSuccess(privacyGroupId));
   }
 
   @Test
@@ -135,7 +135,7 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
     final String[] paramArray = {enclaveKey};
 
     node.useAuthenticationTokenInHeaderForJsonRpc(token);
-    node.verify(priv.privFindPrivacyGroup(paramArray));
+    node.verify(priv.privFindPrivacyGroupSuccess(paramArray));
   }
 
   private PrivacyGroup testPrivacyGroup() {

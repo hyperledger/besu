@@ -31,22 +31,22 @@ public class PrivConditions {
         transactions.privGetPrivacyPrecompileAddress());
   }
 
-  public Condition privGetPrivateTransaction(
+  public Condition privGetPrivateTransactionSuccess(
       final String transactionHash, final String privateFrom) {
     return new PrivGetPrivateTransactionSuccess(
         transactions.privGetPrivateTransaction(transactionHash), privateFrom);
   }
 
-  public Condition privCreatePrivacyGroup(
+  public Condition privCreatePrivacyGroupSuccess(
       final CreatePrivacyGroupParameter params, final String groupId) {
     return new PrivCreatePrivacyGroupSuccess(transactions.privCreatePrivacyGroup(params), groupId);
   }
 
-  public Condition privDeletePrivacyGroup(final String groupId) {
+  public Condition privDeletePrivacyGroupSuccess(final String groupId) {
     return new PrivDeletePrivacyGroupSuccess(transactions.privDeletePrivacyGroup(groupId), groupId);
   }
 
-  public Condition privFindPrivacyGroup(final String[] groupMembers) {
+  public Condition privFindPrivacyGroupSuccess(final String[] groupMembers) {
     return new PrivFindPrivacyGroupSuccess(transactions.privFindPrivacyGroup(groupMembers));
   }
 }
