@@ -18,7 +18,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.diff;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.Trace;
-import org.hyperledger.besu.ethereum.core.AbstractWorldUpdater;
 import org.hyperledger.besu.ethereum.core.AbstractWorldUpdater.UpdateTrackingAccount;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -39,49 +38,38 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class StateDiffGenerator {
 
   public Stream<Trace> generateStateDiff(final TransactionTrace transactionTrace) {
-    List<TraceFrame> traceFrames = transactionTrace.getTraceFrames();
+    final List<TraceFrame> traceFrames = transactionTrace.getTraceFrames();
     if (traceFrames.size() < 1) {
       return Stream.empty();
     }
 
     // This corresponds to the world state after the TX executed
     // It is two deep because of the way we addressed Spurious Dragon.
-    WorldUpdater transactionUpdater =
-        traceFrames
-            .get(0)
-            .getMessageFrame()
-            .getWorldState()
-            .parentUpdater()
-            .get()
-            .parentUpdater()
-            .get();
+    final WorldUpdater transactionUpdater =
+        traceFrames.get(0).getWorldUpdater().parentUpdater().get().parentUpdater().get();
     // This corresponds to the world state prior to the TX execution,
     // Either the initial block state or the state of the prior TX
-    WorldUpdater previousUpdater = transactionUpdater.parentUpdater().get();
+    final WorldUpdater previousUpdater = transactionUpdater.parentUpdater().get();
 
-    StateDiffTrace stateDiffResult = new StateDiffTrace();
+    final StateDiffTrace stateDiffResult = new StateDiffTrace();
 
-    for (Account touchedAccount : transactionUpdater.getTouchedAccounts()) {
-      if (!(touchedAccount instanceof AbstractWorldUpdater.UpdateTrackingAccount)) {
-        continue;
-      }
-      Address accountAddress = touchedAccount.getAddress();
-      UpdateTrackingAccount<?> updatedAccount =
-          (UpdateTrackingAccount<?>) transactionUpdater.get(accountAddress);
-      Account rootAccount = previousUpdater.get(accountAddress);
+    for (final UpdateTrackingAccount<?> updatedAccount : transactionUpdater.getTouchedAccounts()) {
+      final Address accountAddress = updatedAccount.getAddress();
+      final Account rootAccount = previousUpdater.get(accountAddress);
 
       // calculate storage diff
-      Map<String, DiffNode> storageDiff = new TreeMap<>();
-      for (Map.Entry<UInt256, UInt256> entry : updatedAccount.getUpdatedStorage().entrySet()) {
-        UInt256 originalValue = rootAccount.getStorageValue(entry.getKey());
-        UInt256 newValue = entry.getValue();
+      final Map<String, DiffNode> storageDiff = new TreeMap<>();
+      for (final Map.Entry<UInt256, UInt256> entry :
+          updatedAccount.getUpdatedStorage().entrySet()) {
+        final UInt256 originalValue = rootAccount.getStorageValue(entry.getKey());
+        final UInt256 newValue = entry.getValue();
         storageDiff.put(
             entry.getKey().toHexString(),
             new DiffNode(originalValue.toHexString(), newValue.toHexString()));
       }
 
       // populate the diff object
-      AccountDiff accountDiff =
+      final AccountDiff accountDiff =
           new AccountDiff(
               createDiffNode(rootAccount, updatedAccount, StateDiffGenerator::balanceAsHex),
               createDiffNode(rootAccount, updatedAccount, StateDiffGenerator::codeAsHex),
@@ -94,9 +82,9 @@ public class StateDiffGenerator {
     }
 
     // Add deleted accounts
-    for (Address accountAddress : transactionUpdater.getDeletedAccountAddresses()) {
-      Account deletedAccount = previousUpdater.get(accountAddress);
-      AccountDiff accountDiff =
+    for (final Address accountAddress : transactionUpdater.getDeletedAccountAddresses()) {
+      final Account deletedAccount = previousUpdater.get(accountAddress);
+      final AccountDiff accountDiff =
           new AccountDiff(
               createDiffNode(deletedAccount, null, StateDiffGenerator::balanceAsHex),
               createDiffNode(deletedAccount, null, StateDiffGenerator::codeAsHex),
@@ -114,7 +102,7 @@ public class StateDiffGenerator {
   }
 
   private static String balanceAsHex(final Account account) {
-    Wei balance = account.getBalance();
+    final Wei balance = account.getBalance();
     return balance.isZero() ? "0x0" : balance.toShortHexString();
   }
 
