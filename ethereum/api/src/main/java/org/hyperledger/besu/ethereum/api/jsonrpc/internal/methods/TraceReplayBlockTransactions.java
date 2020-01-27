@@ -16,14 +16,15 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceTypeParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceTypeParameter.TraceType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.TraceFormatter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.TraceWriter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.diff.StateDiffGenerator;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTraceGenerator;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.vm.VmTraceGenerator;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -42,13 +43,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 
 public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
-  private static final Logger LOG = LogManager.getLogger();
-
   private final BlockTracer blockTracer;
+  private final Supplier<StateDiffGenerator> stateDiffGenerator =
+      Suppliers.memoize(StateDiffGenerator::new);
 
   public TraceReplayBlockTransactions(
       final BlockTracer blockTracer, final BlockchainQueries queries) {
@@ -72,13 +73,6 @@ public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
     final TraceTypeParameter traceTypeParameter =
         request.getRequiredParameter(1, TraceTypeParameter.class);
 
-    // TODO : method returns an error if any option other than “trace” is supplied.
-    // remove when others options are implemented
-    if (traceTypeParameter.getTraceTypes().contains(TraceTypeParameter.TraceType.STATE_DIFF)) {
-      LOG.warn("Unsupported trace option");
-      throw new InvalidJsonRpcParameters("Invalid trace types supplied.");
-    }
-
     if (blockNumber == BlockHeader.GENESIS_BLOCK_NUMBER) {
       // Nothing to trace for the genesis block
       return emptyResult();
@@ -101,57 +95,67 @@ public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
     return blockTracer
         .trace(block, new DebugOperationTracer(traceOptions))
         .map(BlockTrace::getTransactionTraces)
-        .map((traces) -> formatTraces(traces, traceTypeParameter))
+        .map((traces) -> generateTracesFromTransactionTrace(traces, traceTypeParameter))
         .orElse(null);
   }
 
-  private JsonNode formatTraces(
-      final List<TransactionTrace> traces, final TraceTypeParameter traceTypeParameter) {
+  private JsonNode generateTracesFromTransactionTrace(
+      final List<TransactionTrace> transactionTraces, final TraceTypeParameter traceTypeParameter) {
     final Set<TraceTypeParameter.TraceType> traceTypes = traceTypeParameter.getTraceTypes();
     final ObjectMapper mapper = new ObjectMapper();
     final ArrayNode resultArrayNode = mapper.createArrayNode();
-    final ObjectNode resultNode = mapper.createObjectNode();
     final AtomicInteger traceCounter = new AtomicInteger(0);
-    traces.stream()
-        .findFirst()
-        .ifPresent(
-            transactionTrace -> {
-              resultNode.put(
-                  "transactionHash", transactionTrace.getTransaction().getHash().toHexString());
-              resultNode.put("output", transactionTrace.getResult().getOutput().toString());
-            });
-
-    if (traceTypes.contains(TraceTypeParameter.TraceType.TRACE)) {
-      formatTraces(
-          resultNode.putArray("trace")::addPOJO,
-          traces,
-          FlatTraceGenerator::generateFromTransactionTrace,
-          traceCounter);
-    }
-    if (traceTypes.contains(TraceTypeParameter.TraceType.VM_TRACE)) {
-      formatTraces(
-          trace -> resultNode.putPOJO("vmTrace", trace),
-          traces,
-          (transactionTrace, ignored) ->
-              new VmTraceGenerator(transactionTrace).generateTraceStream(),
-          traceCounter);
-    }
-
-    setEmptyArrayIfNotPresent(resultNode, "trace");
-    setNullNodesIfNotPresent(resultNode, "vmTrace", "stateDiff");
-
-    resultArrayNode.add(resultNode);
+    transactionTraces.forEach(
+        transactionTrace ->
+            handleTransactionTrace(
+                transactionTrace, traceTypes, mapper, resultArrayNode, traceCounter));
     return resultArrayNode;
   }
 
-  private void formatTraces(
+  private void handleTransactionTrace(
+      final TransactionTrace transactionTrace,
+      final Set<TraceTypeParameter.TraceType> traceTypes,
+      final ObjectMapper mapper,
+      final ArrayNode resultArrayNode,
+      final AtomicInteger traceCounter) {
+    final ObjectNode resultNode = mapper.createObjectNode();
+
+    resultNode.put("output", transactionTrace.getResult().getOutput().toString());
+
+    if (traceTypes.contains(TraceType.STATE_DIFF)) {
+      generateTracesFromTransactionTrace(
+          trace -> resultNode.putPOJO("stateDiff", trace),
+          transactionTrace,
+          (txTrace, ignored) -> stateDiffGenerator.get().generateStateDiff(txTrace),
+          traceCounter);
+    }
+    setNullNodesIfNotPresent(resultNode, "stateDiff");
+    if (traceTypes.contains(TraceTypeParameter.TraceType.TRACE)) {
+      generateTracesFromTransactionTrace(
+          resultNode.putArray("trace")::addPOJO,
+          transactionTrace,
+          FlatTraceGenerator::generateFromTransactionTrace,
+          traceCounter);
+    }
+    setEmptyArrayIfNotPresent(resultNode, "trace");
+    resultNode.put("transactionHash", transactionTrace.getTransaction().getHash().toHexString());
+    if (traceTypes.contains(TraceTypeParameter.TraceType.VM_TRACE)) {
+      generateTracesFromTransactionTrace(
+          trace -> resultNode.putPOJO("vmTrace", trace),
+          transactionTrace,
+          (__, ignored) -> new VmTraceGenerator(transactionTrace).generateTraceStream(),
+          traceCounter);
+    }
+    setNullNodesIfNotPresent(resultNode, "vmTrace");
+    resultArrayNode.add(resultNode);
+  }
+
+  private void generateTracesFromTransactionTrace(
       final TraceWriter writer,
-      final List<TransactionTrace> traces,
+      final TransactionTrace transactionTrace,
       final TraceFormatter formatter,
       final AtomicInteger traceCounter) {
-    traces.forEach(
-        (transactionTrace) ->
-            formatter.format(transactionTrace, traceCounter).forEachOrdered(writer::write));
+    formatter.format(transactionTrace, traceCounter).forEachOrdered(writer::write);
   }
 
   private void setNullNodesIfNotPresent(final ObjectNode parentNode, final String... keys) {

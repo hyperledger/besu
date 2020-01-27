@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.ModificationNotAllowedException;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.vm.ehalt.ExceptionalHaltException;
@@ -28,14 +29,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
+import java.util.function.Supplier;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class DebugOperationTracer implements OperationTracer {
 
   private final TraceOptions options;
-  private final List<TraceFrame> traceFrames = new ArrayList<>();
+  private List<TraceFrame> traceFrames = new ArrayList<>();
   private TraceFrame lastFrame;
 
   public DebugOperationTracer(final TraceOptions options) {
@@ -55,9 +58,12 @@ public class DebugOperationTracer implements OperationTracer {
     final Gas gasRemaining = frame.getRemainingGas();
     final EnumSet<ExceptionalHaltReason> exceptionalHaltReasons =
         EnumSet.copyOf(frame.getExceptionalHaltReasons());
+    final Bytes inputData = frame.getInputData();
+    final Supplier<Bytes> outputData = frame::getOutputData;
     final Optional<Bytes32[]> stack = captureStack(frame);
     final Optional<Bytes32[]> memory = captureMemory(frame);
     final Optional<Map<UInt256, UInt256>> storagePreExecution = captureStorage(frame);
+    final WorldUpdater worldUpdater = frame.getWorldState();
     final Optional<Bytes32[]> stackPostExecution;
     final Optional<Bytes32[]> memoryPostExecution;
     try {
@@ -80,9 +86,12 @@ public class DebugOperationTracer implements OperationTracer {
               currentGasCost,
               depth,
               exceptionalHaltReasons,
+              inputData,
+              outputData,
               stack,
               memory,
               storage,
+              worldUpdater,
               frame.getRevertReason(),
               maybeRefunds,
               Optional.ofNullable(frame.getCode()),
@@ -90,9 +99,11 @@ public class DebugOperationTracer implements OperationTracer {
               stackPostExecution,
               memoryPostExecution,
               storagePreExecution,
-              currentOperation.isVirtualOperation());
+              currentOperation.isVirtualOperation(),
+              frame.getMaybeUpdatedMemory());
       traceFrames.add(lastFrame);
     }
+    frame.reset();
   }
 
   private Optional<Map<UInt256, UInt256>> captureStorage(final MessageFrame frame) {
@@ -139,5 +150,14 @@ public class DebugOperationTracer implements OperationTracer {
 
   public List<TraceFrame> getTraceFrames() {
     return traceFrames;
+  }
+
+  public void reset() {
+    traceFrames = new ArrayList<>();
+    lastFrame = null;
+  }
+
+  public List<TraceFrame> copyTraceFrames() {
+    return new ArrayList<>(traceFrames);
   }
 }

@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.worldstate;
 
+import org.hyperledger.besu.ethereum.core.AbstractWorldUpdater.UpdateTrackingAccount;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.DefaultEvmAccount;
@@ -21,6 +22,7 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 
 import java.util.Collection;
+import java.util.Optional;
 
 public class DefaultMutablePrivateWorldStateUpdater implements WorldUpdater {
 
@@ -69,8 +71,13 @@ public class DefaultMutablePrivateWorldStateUpdater implements WorldUpdater {
   }
 
   @Override
-  public Collection<Account> getTouchedAccounts() {
+  public Collection<UpdateTrackingAccount<? extends Account>> getTouchedAccounts() {
     return privateWorldUpdater.getTouchedAccounts();
+  }
+
+  @Override
+  public Collection<Address> getDeletedAccountAddresses() {
+    return privateWorldUpdater.getDeletedAccountAddresses();
   }
 
   @Override
@@ -95,5 +102,10 @@ public class DefaultMutablePrivateWorldStateUpdater implements WorldUpdater {
   @Override
   public WorldUpdater updater() {
     return this;
+  }
+
+  @Override
+  public Optional<WorldUpdater> parentUpdater() {
+    return privateWorldUpdater.parentUpdater();
   }
 }

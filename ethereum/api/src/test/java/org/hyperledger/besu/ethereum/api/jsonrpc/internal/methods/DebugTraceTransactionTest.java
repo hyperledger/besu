@@ -85,15 +85,20 @@ public class DebugTraceTransactionTest {
             Optional.of(Gas.of(56)),
             2,
             EnumSet.noneOf(ExceptionalHaltReason.class),
+            Bytes.EMPTY,
+            () -> Bytes.EMPTY,
             Optional.empty(),
             Optional.empty(),
             Optional.empty(),
+            null,
             Optional.of(Bytes.fromHexString("0x1122334455667788")),
             Optional.empty(),
             Optional.empty(),
             0,
             Optional.empty(),
             Optional.empty(),
+            Optional.empty(),
+            false,
             Optional.empty());
     final List<TraceFrame> traceFrames = Collections.singletonList(traceFrame);
     final TransactionTrace transactionTrace =
@@ -135,15 +140,20 @@ public class DebugTraceTransactionTest {
             Optional.of(Gas.of(56)),
             2,
             EnumSet.noneOf(ExceptionalHaltReason.class),
+            Bytes.EMPTY,
+            () -> Bytes.EMPTY,
             Optional.empty(),
             Optional.empty(),
             Optional.empty(),
+            null,
             Optional.of(Bytes.fromHexString("0x1122334455667788")),
             Optional.empty(),
             Optional.empty(),
             0,
             Optional.empty(),
             Optional.empty(),
+            Optional.empty(),
+            false,
             Optional.empty());
     final List<TraceFrame> traceFrames = Collections.singletonList(traceFrame);
     final TransactionTrace transactionTrace =
