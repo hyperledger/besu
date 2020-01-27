@@ -54,7 +54,7 @@
     {
       "number": 5,
       "transactions": [
-        {
+          {
           "comment": "Clear contract storage keys 1 and 2",
           "secretKey": "0x8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63",
           "gasLimit": "0xFFFFF2",
@@ -189,6 +189,25 @@
           "gasLimit": "0xFFFFF2",
           "gasPrice": "0xEF",
           "to": "0x0090000000000000000000000000000000000000"
+        }
+      ]
+    },
+    {
+      "number": "0xF",
+      "transactions": [
+        {
+          "comment": "Log output with LOG1.",
+          "secretKey": "0x8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63",
+          "gasLimit": "0xFFFFF2",
+          "gasPrice": "0xEF",
+          "to": "0x00A0000000000000000000000000000000000000"
+        },
+        {
+          "comment": "Log output with LOG2.",
+          "secretKey": "0x8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63",
+          "gasLimit": "0xFFFFF2",
+          "gasPrice": "0xEF",
+          "to": "0x00B0000000000000000000000000000000000000"
         }
       ]
     }
