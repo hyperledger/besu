@@ -21,7 +21,8 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
 
 import java.io.IOException;
 
-public class PrivGetPrivateTransactionTransaction implements Transaction<String> {
+public class PrivGetPrivateTransactionTransaction
+    implements Transaction<PrivacyRequestFactory.GetPrivateTransactionResponse> {
 
   final String transactionHash;
 
@@ -30,12 +31,12 @@ public class PrivGetPrivateTransactionTransaction implements Transaction<String>
   }
 
   @Override
-  public String execute(final NodeRequests node) {
+  public PrivacyRequestFactory.GetPrivateTransactionResponse execute(final NodeRequests node) {
     try {
-      PrivacyRequestFactory.CreatePrivacyGroup result =
+      PrivacyRequestFactory.GetPrivateTransactionResponse result =
           node.privacy().privGetPrivateTransaction(transactionHash).send();
       assertThat(result).isNotNull();
-      return result.getResult();
+      return result;
     } catch (final IOException e) {
       throw new RuntimeException(e);
     }

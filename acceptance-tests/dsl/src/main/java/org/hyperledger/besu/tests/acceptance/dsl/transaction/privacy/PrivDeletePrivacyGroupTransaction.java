@@ -32,7 +32,7 @@ public class PrivDeletePrivacyGroupTransaction implements Transaction<String> {
   @Override
   public String execute(final NodeRequests node) {
     try {
-      PrivacyRequestFactory.DeletePrivacyGroup result =
+      PrivacyRequestFactory.DeletePrivacyGroupResponse result =
           node.privacy().privDeletePrivacyGroup(transactionHash).send();
       assertThat(result).isNotNull();
       return result.getResult();

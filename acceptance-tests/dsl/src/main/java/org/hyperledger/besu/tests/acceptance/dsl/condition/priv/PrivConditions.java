@@ -31,9 +31,10 @@ public class PrivConditions {
         transactions.privGetPrivacyPrecompileAddress());
   }
 
-  public Condition privGetPrivateTransaction(final String transactionHash) {
+  public Condition privGetPrivateTransaction(
+      final String transactionHash, final String privateFrom) {
     return new PrivGetPrivateTransactionSuccess(
-        transactions.privGetPrivateTransaction(transactionHash));
+        transactions.privGetPrivateTransaction(transactionHash), privateFrom);
   }
 
   public Condition privCreatePrivacyGroup(
@@ -47,9 +48,5 @@ public class PrivConditions {
 
   public Condition privFindPrivacyGroup(final String[] groupMembers) {
     return new PrivFindPrivacyGroupSuccess(transactions.privFindPrivacyGroup(groupMembers));
-  }
-
-  public Condition privGetTransactionCount(final Object[] params) {
-    return new PrivGetTransactionCountSuccess(transactions.privGetTransactionCount(params));
   }
 }

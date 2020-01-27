@@ -33,7 +33,7 @@ public class PrivCreatePrivacyGroupTransaction implements Transaction<String> {
   @Override
   public String execute(final NodeRequests node) {
     try {
-      PrivacyRequestFactory.CreatePrivacyGroup result =
+      PrivacyRequestFactory.CreatePrivacyGroupResponse result =
           node.privacy().privCreatePrivacyGroup(params).send();
       assertThat(result).isNotNull();
       return result.getResult();

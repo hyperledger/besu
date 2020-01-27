@@ -38,8 +38,4 @@ public class PrivTransactions {
   public PrivFindPrivacyGroupTransaction privFindPrivacyGroup(final String[] groupMembers) {
     return new PrivFindPrivacyGroupTransaction(groupMembers);
   }
-
-  public PrivGetTransactionCountTransaction privGetTransactionCount(final Object[] params) {
-    return new PrivGetTransactionCountTransaction(params);
-  }
 }

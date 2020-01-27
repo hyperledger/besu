@@ -18,8 +18,10 @@ import static com.github.tomakehurst.wiremock.client.WireMock.ok;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
+import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.parameters.CreatePrivacyGroupParameter;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
@@ -71,25 +73,36 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
-  public void shouldGetPrivateTransaction() {
+  public void shouldGetPrivateTransaction() throws JsonProcessingException {
     node.useAuthenticationTokenInHeaderForJsonRpc(token);
 
-    final Account sender = accounts.createAccount("account1");
-    cluster.verify(sender.balanceEquals(0));
-    Hash transactionHash = node.execute(accountTransactions.createTransfer(sender, 50));
-    cluster.verify(sender.balanceEquals(50));
+    String base64SignedPrivateTransactionRLP =
+        "+MyAAYJSCJQJXnuupqbHxMLf65d++sMmr1Uth6D//////////////////////////////////////////4AboEi1W/qRWseVxDGXjYpqmStijVV9pf91mzB9SVo2ZJNToB//0xCsdD83HeO59/nLVsCyitQ2AbSrlJ9T+qB70sgEoANWlbTMSwlB5gVR16Gc8wYD21v8I+WsQ6VvV/JfdUhqoA8gDohf8p6XPiV2tmABgdGworUpTjDZvkoZgf+zOguMinJlc3RyaWN0ZWQ=";
 
-    node.verify(priv.privGetPrivateTransaction(transactionHash.toString()));
+    // privateFrom value from above transaction
+    final String privateFrom = "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
+
+    // Create a transaction
+    final Account sender = accounts.createAccount("account1");
+    final Hash transactionHash = node.execute(accountTransactions.createTransfer(sender, 50));
+    multiTenancyCluster.verify(sender.balanceEquals(50));
+
+    final ObjectMapper mapper = new ObjectMapper();
+    final String receiveResponse =
+        mapper.writeValueAsString(
+            new ReceiveResponse(
+                base64SignedPrivateTransactionRLP.getBytes(UTF_8), privacyGroupId, "senderKey"));
+
+    stubFor(post("/receive").willReturn(ok(receiveResponse)));
+
+    node.verify(priv.privGetPrivateTransaction(transactionHash.toString(), privateFrom));
   }
 
   @Test
   public void shouldCreatePrivacyGroup() throws JsonProcessingException {
     final ObjectMapper mapper = new ObjectMapper();
     final String groupId = "groupId";
-    final String createGroupResponse =
-        mapper.writeValueAsString(
-            new PrivacyGroup(
-                groupId, PrivacyGroup.Type.PANTHEON, "test", "testGroup", List.of(enclaveKey)));
+    final String createGroupResponse = mapper.writeValueAsString(testPrivacyGroup());
 
     CreatePrivacyGroupParameter params =
         new CreatePrivacyGroupParameter(
@@ -103,10 +116,7 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
   @Test
   public void shouldDeletePrivacyGroup() throws JsonProcessingException {
     final ObjectMapper mapper = new ObjectMapper();
-    final String retrieveGroupResponse =
-        mapper.writeValueAsString(
-            new PrivacyGroup(
-                "groupId", PrivacyGroup.Type.PANTHEON, "test", "testGroup", List.of(enclaveKey)));
+    final String retrieveGroupResponse = mapper.writeValueAsString(testPrivacyGroup());
     stubFor(post("/retrievePrivacyGroup").willReturn(ok(retrieveGroupResponse)));
 
     final String deleteGroupResponse = mapper.writeValueAsString(privacyGroupId);
@@ -119,15 +129,7 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
   @Test
   public void shouldFindPrivacyGroup() throws JsonProcessingException {
     final ObjectMapper mapper = new ObjectMapper();
-    final String findGroupResponse =
-        mapper.writeValueAsString(
-            List.of(
-                new PrivacyGroup(
-                    "groupId",
-                    PrivacyGroup.Type.PANTHEON,
-                    "test",
-                    "testGroup",
-                    List.of(enclaveKey))));
+    final String findGroupResponse = mapper.writeValueAsString(List.of(testPrivacyGroup()));
     stubFor(post("/findPrivacyGroup").willReturn(ok(findGroupResponse)));
 
     final String[] paramArray = {enclaveKey};
@@ -136,18 +138,8 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
     node.verify(priv.privFindPrivacyGroup(paramArray));
   }
 
-  @Test
-  public void shouldGetTransactionCount() throws JsonProcessingException {
-    final ObjectMapper mapper = new ObjectMapper();
-    final String retrieveGroupResponse =
-        mapper.writeValueAsString(
-            new PrivacyGroup(
-                "groupId", PrivacyGroup.Type.PANTHEON, "test", "testGroup", List.of(enclaveKey)));
-    stubFor(post("/retrievePrivacyGroup").willReturn(ok(retrieveGroupResponse)));
-
-    final Object[] params = new Object[] {"0xebf56429e6500e84442467292183d4d621359838", "groupId"};
-
-    node.useAuthenticationTokenInHeaderForJsonRpc(token);
-    node.verify(priv.privGetTransactionCount(params));
+  private PrivacyGroup testPrivacyGroup() {
+    return new PrivacyGroup(
+        privacyGroupId, PrivacyGroup.Type.PANTHEON, "test", "testGroup", List.of(enclaveKey));
   }
 }

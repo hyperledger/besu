@@ -32,7 +32,7 @@ public class PrivFindPrivacyGroupTransaction implements Transaction<String> {
   @Override
   public String execute(final NodeRequests node) {
     try {
-      PrivacyRequestFactory.FindPrivacyGroup result =
+      PrivacyRequestFactory.FindPrivacyGroupResponse result =
           node.privacy().privFindPrivacyGroup(groupMembers).send();
       assertThat(result).isNotNull();
       return result.toString();

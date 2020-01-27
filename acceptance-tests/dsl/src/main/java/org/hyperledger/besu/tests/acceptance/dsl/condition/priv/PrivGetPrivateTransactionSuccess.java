@@ -14,24 +14,27 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.condition.priv;
 
-import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
-
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivGetPrivateTransactionTransaction;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyRequestFactory;
+
+import org.assertj.core.api.Assertions;
 
 public class PrivGetPrivateTransactionSuccess implements Condition {
 
   private final PrivGetPrivateTransactionTransaction transaction;
+  private final String privateFrom;
 
-  public PrivGetPrivateTransactionSuccess(final PrivGetPrivateTransactionTransaction transaction) {
+  public PrivGetPrivateTransactionSuccess(
+      final PrivGetPrivateTransactionTransaction transaction, final String privateFrom) {
     this.transaction = transaction;
+    this.privateFrom = privateFrom;
   }
 
   @Override
   public void verify(final Node node) {
-    String result = node.execute(transaction);
-    assertThat(result).isNull();
-    // TODO: Need better assertion
+    PrivacyRequestFactory.GetPrivateTransactionResponse result = node.execute(transaction);
+    Assertions.assertThat(result.getPrivateFrom()).isEqualTo(privateFrom);
   }
 }
