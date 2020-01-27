@@ -409,7 +409,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
     }
 
     @Override
-    public Collection<Account> getTouchedAccounts() {
+    public Collection<UpdateTrackingAccount<? extends Account>> getTouchedAccounts() {
       return new ArrayList<>(updatedAccounts());
     }
 

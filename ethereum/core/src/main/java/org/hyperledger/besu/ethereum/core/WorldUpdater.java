@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import org.hyperledger.besu.ethereum.core.AbstractWorldUpdater.UpdateTrackingAccount;
+
 import java.util.Collection;
 import java.util.Optional;
 
@@ -92,7 +94,7 @@ public interface WorldUpdater extends MutableWorldView {
    *
    * @return the accounts that have been touched within the scope of this updater
    */
-  Collection<Account> getTouchedAccounts();
+  Collection<UpdateTrackingAccount<? extends Account>> getTouchedAccounts();
 
   /**
    * Returns the account addresses that have been deleted within the scope of this updater.
