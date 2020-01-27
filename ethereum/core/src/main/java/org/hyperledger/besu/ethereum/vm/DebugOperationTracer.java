@@ -74,6 +74,7 @@ public class DebugOperationTracer implements OperationTracer {
           frame.getRefunds().isEmpty() ? Optional.empty() : Optional.of(frame.getRefunds());
       lastFrame =
           new TraceFrame(
+              frame,
               pc,
               opcode,
               gasRemaining,

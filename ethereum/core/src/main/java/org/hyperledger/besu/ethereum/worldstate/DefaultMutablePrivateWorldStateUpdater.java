@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 
 import java.util.Collection;
+import java.util.Optional;
 
 public class DefaultMutablePrivateWorldStateUpdater implements WorldUpdater {
 
@@ -74,6 +75,11 @@ public class DefaultMutablePrivateWorldStateUpdater implements WorldUpdater {
   }
 
   @Override
+  public Collection<Address> getDeletedAccountAddresses() {
+    return privateWorldUpdater.getDeletedAccountAddresses();
+  }
+
+  @Override
   public void revert() {
     privateWorldUpdater.revert();
   }
@@ -95,5 +101,10 @@ public class DefaultMutablePrivateWorldStateUpdater implements WorldUpdater {
   @Override
   public WorldUpdater updater() {
     return this;
+  }
+
+  @Override
+  public Optional<WorldUpdater> parentUpdater() {
+    return privateWorldUpdater.parentUpdater();
   }
 }

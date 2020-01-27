@@ -16,8 +16,7 @@
       {
         "output": "0x",
         "stateDiff": null,
-        "trace": [
-        ],
+        "trace": [],
         "transactionHash": "0x4de634fe767d1f6d0512ca0c9c0a054d3a2596f7cdd7c1eea5f93046a740b3c7",
         "vmTrace": {
           "code": "0x6020356000355560603560403555",
@@ -78,8 +77,7 @@
               "cost": 20000,
               "ex": {
                 "mem": null,
-                "push": [
-                ],
+                "push": [],
                 "store": {
                   "key": "0x1",
                   "val": "0x1"
@@ -145,8 +143,7 @@
               "cost": 20000,
               "ex": {
                 "mem": null,
-                "push": [
-                ],
+                "push": [],
                 "store": {
                   "key": "0x2",
                   "val": "0x2"
@@ -162,8 +159,7 @@
       {
         "output": "0x",
         "stateDiff": null,
-        "trace": [
-        ],
+        "trace": [],
         "transactionHash": "0xf882ec206292910527fd7095e59a1ca027b873296f1eba3886aa1addc4ff0ab9",
         "vmTrace": {
           "code": "0x6020356000355560603560403555",
@@ -221,16 +217,15 @@
               "sub": null
             },
             {
-              "cost": 20000,
+              "cost": 5000,
               "ex": {
                 "mem": null,
-                "push": [
-                ],
+                "push": [],
                 "store": {
                   "key": "0x1",
                   "val": "0x3"
                 },
-                "used": 16735422
+                "used": 16750422
               },
               "pc": 6,
               "sub": null
@@ -243,7 +238,7 @@
                   "0x60"
                 ],
                 "store": null,
-                "used": 16735419
+                "used": 16750419
               },
               "pc": 7,
               "sub": null
@@ -256,7 +251,7 @@
                   "0x4"
                 ],
                 "store": null,
-                "used": 16735416
+                "used": 16750416
               },
               "pc": 9,
               "sub": null
@@ -269,7 +264,7 @@
                   "0x40"
                 ],
                 "store": null,
-                "used": 16735413
+                "used": 16750413
               },
               "pc": 10,
               "sub": null
@@ -282,22 +277,21 @@
                   "0x2"
                 ],
                 "store": null,
-                "used": 16735410
+                "used": 16750410
               },
               "pc": 12,
               "sub": null
             },
             {
-              "cost": 20000,
+              "cost": 5000,
               "ex": {
                 "mem": null,
-                "push": [
-                ],
+                "push": [],
                 "store": {
                   "key": "0x2",
                   "val": "0x4"
                 },
-                "used": 16715410
+                "used": 16745410
               },
               "pc": 13,
               "sub": null
