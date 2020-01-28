@@ -14,15 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.TraceReplayBlockTransactions;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockReplay;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
-import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 
 import java.net.URL;
-import java.util.Map;
 
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -45,31 +39,6 @@ public class TraceJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpBySpecTest {
   protected BlockchainSetupUtil<Void> getBlockchainSetupUtil() {
     return createBlockchainSetupUtil(
         "trace/chain-data/genesis.json", "trace/chain-data/blocks.bin");
-  }
-
-  @Override
-  protected Map<String, JsonRpcMethod> getRpcMethods(
-      final JsonRpcConfiguration config, final BlockchainSetupUtil<Void> blockchainSetupUtil) {
-    final Map<String, JsonRpcMethod> methods = super.getRpcMethods(config, blockchainSetupUtil);
-
-    // Add trace_replayBlockTransactions
-    // TODO: Once this method is generally enabled, we won't need to add this here
-    final BlockchainQueries blockchainQueries =
-        new BlockchainQueries(
-            blockchainSetupUtil.getBlockchain(),
-            blockchainSetupUtil.getWorldArchive(),
-            blockchainSetupUtil.getScheduler());
-    final BlockReplay blockReplay =
-        new BlockReplay(
-            blockchainSetupUtil.getProtocolSchedule(),
-            blockchainSetupUtil.getBlockchain(),
-            blockchainSetupUtil.getWorldArchive());
-    final BlockTracer blockTracer = new BlockTracer(blockReplay);
-    final TraceReplayBlockTransactions traceReplayBlockTransactions =
-        new TraceReplayBlockTransactions(blockTracer, blockchainQueries);
-    methods.put(traceReplayBlockTransactions.getName(), traceReplayBlockTransactions);
-
-    return methods;
   }
 
   @Parameters(name = "{index}: {0}")

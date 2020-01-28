@@ -48,7 +48,7 @@ public class DebugTraceBlockByNumberTest {
   private final BlockchainQueries blockchain = mock(BlockchainQueries.class);
   private final BlockTracer blockTracer = mock(BlockTracer.class);
   private final DebugTraceBlockByNumber debugTraceBlockByNumber =
-      new DebugTraceBlockByNumber(blockTracer, blockchain);
+      new DebugTraceBlockByNumber(() -> blockTracer, blockchain);
 
   private final Hash blockHash =
       Hash.fromHexString("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
