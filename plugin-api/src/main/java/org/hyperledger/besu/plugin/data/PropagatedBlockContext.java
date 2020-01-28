@@ -30,6 +30,13 @@ public interface PropagatedBlockContext {
   BlockHeader getBlockHeader();
 
   /**
+   * A {@link BlockHeader} object.
+   *
+   * @return A {@link BlockHeader}
+   */
+  BlockBody getBlockBody();
+
+  /**
    * A scalar value corresponding to the total difficulty.
    *
    * @return A UInt256 value corresponding to the total difficulty.

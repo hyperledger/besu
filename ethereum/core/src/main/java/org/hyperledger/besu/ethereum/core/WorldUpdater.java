@@ -14,7 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import org.hyperledger.besu.ethereum.core.AbstractWorldUpdater.UpdateTrackingAccount;
+
 import java.util.Collection;
+import java.util.Optional;
 
 /**
  * An object that buffers updates made over a particular {@link WorldView}.
@@ -91,7 +94,14 @@ public interface WorldUpdater extends MutableWorldView {
    *
    * @return the accounts that have been touched within the scope of this updater
    */
-  Collection<Account> getTouchedAccounts();
+  Collection<UpdateTrackingAccount<? extends Account>> getTouchedAccounts();
+
+  /**
+   * Returns the account addresses that have been deleted within the scope of this updater.
+   *
+   * @return the account addresses that have been deleted within the scope of this updater
+   */
+  Collection<Address> getDeletedAccountAddresses();
 
   /** Removes the changes that were made to this updater. */
   void revert();
@@ -101,4 +111,7 @@ public interface WorldUpdater extends MutableWorldView {
    * of.
    */
   void commit();
+
+  /** @return The parent WorldUpdater if this wraps another one, empty otherwise */
+  public Optional<WorldUpdater> parentUpdater();
 }

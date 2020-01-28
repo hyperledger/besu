@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.privacy.DefaultPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.MultiTenancyPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
+import org.hyperledger.besu.ethereum.privacy.PrivateTransactionSimulator;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.FixedKeySigningPrivateMarkerTransactionFactory;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.PrivateMarkerTransactionFactory;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.RandomSigningPrivateMarkerTransactionFactory;
@@ -127,7 +128,10 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
       final PrivateMarkerTransactionFactory markerTransactionFactory) {
     final DefaultPrivacyController defaultPrivacyController =
         new DefaultPrivacyController(
-            privacyParameters, protocolSchedule.getChainId(), markerTransactionFactory);
+            privacyParameters,
+            protocolSchedule.getChainId(),
+            markerTransactionFactory,
+            createPrivateTransactionSimulator());
     return privacyParameters.isMultiTenancyEnabled()
         ? new MultiTenancyPrivacyController(
             defaultPrivacyController, privacyParameters.getEnclave())
@@ -143,5 +147,13 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
     } else {
       return rpcMethod;
     }
+  }
+
+  private PrivateTransactionSimulator createPrivateTransactionSimulator() {
+    return new PrivateTransactionSimulator(
+        getBlockchainQueries().getBlockchain(),
+        getBlockchainQueries().getWorldStateArchive(),
+        getProtocolSchedule(),
+        getPrivacyParameters());
   }
 }
