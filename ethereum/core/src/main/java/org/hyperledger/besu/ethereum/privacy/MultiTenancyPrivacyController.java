@@ -36,7 +36,7 @@ public class MultiTenancyPrivacyController implements PrivacyController {
   }
 
   @Override
-  public SendTransactionResponse sendTransaction(
+  public String sendTransaction(
       final PrivateTransaction privateTransaction, final String enclavePublicKey) {
     verifyPrivateFromMatchesEnclavePublicKey(
         privateTransaction.getPrivateFrom().toBase64String(), enclavePublicKey);

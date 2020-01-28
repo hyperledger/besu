@@ -26,6 +26,7 @@ import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacySendTransaction;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -39,7 +40,6 @@ import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
-import org.hyperledger.besu.ethereum.privacy.SendTransactionResponse;
 
 import java.math.BigInteger;
 import java.util.Optional;
@@ -125,10 +125,12 @@ public class EeaSendRawTransactionTest {
 
   @Mock private PrivacyController privacyController;
 
+  @Mock private PrivacySendTransaction privacySendTransaction;
+
   @Before
   public void before() {
     method =
-        new EeaSendRawTransaction(transactionPool, privacyController, enclavePublicKeyProvider);
+        new EeaSendRawTransaction(transactionPool, privacyController, privacySendTransaction);
   }
 
   @Test

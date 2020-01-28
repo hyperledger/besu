@@ -18,10 +18,10 @@ import static org.apache.logging.log4j.LogManager.getLogger;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter.convertTransactionInvalidReason;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.ENCLAVE_ERROR;
 
+import org.apache.logging.log4j.Logger;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacySendTransaction;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacySendTransaction.ErrorResponseException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -32,9 +32,6 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
-import org.hyperledger.besu.ethereum.privacy.SendTransactionResponse;
-
-import org.apache.logging.log4j.Logger;
 
 public class EeaSendRawTransaction implements JsonRpcMethod {
 
@@ -46,11 +43,10 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
   public EeaSendRawTransaction(
       final TransactionPool transactionPool,
       final PrivacyController privacyController,
-      final EnclavePublicKeyProvider enclavePublicKeyProvider) {
+      final PrivacySendTransaction privacySendTransaction) {
     this.transactionPool = transactionPool;
     this.privacyController = privacyController;
-    this.privacySendTransaction =
-        new PrivacySendTransaction(privacyController, enclavePublicKeyProvider);
+    this.privacySendTransaction = privacySendTransaction;
   }
 
   @Override
@@ -83,9 +79,8 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
   private Transaction createMarkerTransaction(
       final JsonRpcRequestContext requestContext, final PrivateTransaction privateTransaction)
       throws ErrorResponseException {
-    final SendTransactionResponse enclaveKey =
+    final String enclaveKey =
         privacySendTransaction.sendTransactionToEnclave(privateTransaction, requestContext);
-    return privacyController.createPrivacyMarkerTransaction(
-        enclaveKey.getEnclaveKey(), privateTransaction);
+    return privacyController.createPrivacyMarkerTransaction(enclaveKey, privateTransaction);
   }
 }

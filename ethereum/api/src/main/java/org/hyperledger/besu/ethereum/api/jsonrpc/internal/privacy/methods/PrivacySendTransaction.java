@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInv
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
-import org.hyperledger.besu.ethereum.privacy.SendTransactionResponse;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 
@@ -116,7 +115,7 @@ public class PrivacySendTransaction {
     }
   }
 
-  public SendTransactionResponse sendTransactionToEnclave(
+  public String sendTransactionToEnclave(
       final PrivateTransaction privateTransaction, final JsonRpcRequestContext requestContext)
       throws ErrorResponseException {
     try {

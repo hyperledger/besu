@@ -14,6 +14,15 @@
  */
 package org.hyperledger.besu.ethereum.privacy;
 
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
+import java.math.BigInteger;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.enclave.types.PrivacyGroup.Type;
@@ -29,17 +38,6 @@ import org.hyperledger.besu.ethereum.privacy.markertransaction.PrivateMarkerTran
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-
-import java.math.BigInteger;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.apache.tuweni.bytes.Bytes;
 
 public class DefaultPrivacyController implements PrivacyController {
 
@@ -77,20 +75,12 @@ public class DefaultPrivacyController implements PrivacyController {
   }
 
   @Override
-  public SendTransactionResponse sendTransaction(
+  public String sendTransaction(
       final PrivateTransaction privateTransaction, final String enclavePublicKey) {
     try {
       LOG.trace("Storing private transaction in enclave");
       final SendResponse sendResponse = sendRequest(privateTransaction, enclavePublicKey);
-      final String enclaveKey = sendResponse.getKey();
-      if (privateTransaction.getPrivacyGroupId().isPresent()) {
-        final String privacyGroupId = privateTransaction.getPrivacyGroupId().get().toBase64String();
-        return new SendTransactionResponse(enclaveKey, privacyGroupId);
-      } else {
-        final String privateFrom = privateTransaction.getPrivateFrom().toBase64String();
-        final String privacyGroupId = getPrivacyGroupId(enclaveKey, privateFrom);
-        return new SendTransactionResponse(enclaveKey, privacyGroupId);
-      }
+      return sendResponse.getKey();
     } catch (Exception e) {
       LOG.error("Failed to store private transaction in enclave", e);
       throw e;
@@ -218,13 +208,4 @@ public class DefaultPrivacyController implements PrivacyController {
     }
   }
 
-  private String getPrivacyGroupId(final String key, final String privateFrom) {
-    LOG.debug("Getting privacy group for key {} and privateFrom {}", key, privateFrom);
-    try {
-      return enclave.receive(key, privateFrom).getPrivacyGroupId();
-    } catch (final RuntimeException e) {
-      LOG.error("Failed to retrieve private transaction in enclave", e);
-      throw e;
-    }
-  }
 }
