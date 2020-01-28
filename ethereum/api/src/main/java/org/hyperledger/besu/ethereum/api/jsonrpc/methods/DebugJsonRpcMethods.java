@@ -40,7 +40,7 @@ public class DebugJsonRpcMethods extends ApiGroupJsonRpcMethods {
   private final ProtocolSchedule<?> protocolSchedule;
   private final ObservableMetricsSystem metricsSystem;
 
-  public DebugJsonRpcMethods(
+  DebugJsonRpcMethods(
       final BlockchainQueries blockchainQueries,
       final ProtocolSchedule<?> protocolSchedule,
       final ObservableMetricsSystem metricsSystem) {
@@ -68,10 +68,10 @@ public class DebugJsonRpcMethods extends ApiGroupJsonRpcMethods {
         new DebugStorageRangeAt(blockchainQueries, blockReplay),
         new DebugMetrics(metricsSystem),
         new DebugTraceBlock(
-            new BlockTracer(blockReplay),
+            () -> new BlockTracer(blockReplay),
             ScheduleBasedBlockHeaderFunctions.create(protocolSchedule),
             blockchainQueries),
-        new DebugTraceBlockByNumber(new BlockTracer(blockReplay), blockchainQueries),
-        new DebugTraceBlockByHash(new BlockTracer(blockReplay)));
+        new DebugTraceBlockByNumber(() -> new BlockTracer(blockReplay), blockchainQueries),
+        new DebugTraceBlockByHash(() -> new BlockTracer(blockReplay)));
   }
 }
