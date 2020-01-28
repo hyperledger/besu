@@ -37,7 +37,7 @@ public class KnownClientFileUtil {
     try {
       final Certificate certificate = selfSignedP12Certificate.getCertificate();
       final String fingerprint = TLS.certificateHexFingerprint(certificate);
-      final String commonName = getCommonName(certificate);
+      final String commonName = extractCommonName(certificate);
       final String knownClientsLine = String.format("%s %s", commonName, fingerprint);
       final Path temporaryKnownClientsFile = Files.createTempFile("testKnownClients", ".txt");
       temporaryKnownClientsFile.toFile().deleteOnExit();
@@ -47,7 +47,7 @@ public class KnownClientFileUtil {
     }
   }
 
-  private static String getCommonName(final Certificate certificate)
+  private static String extractCommonName(final Certificate certificate)
       throws IOException, CertificateEncodingException {
     final X500Name subject = new X509CertificateHolder(certificate.getEncoded()).getSubject();
     final RDN commonNameRdn = subject.getRDNs(BCStyle.CN)[0];
