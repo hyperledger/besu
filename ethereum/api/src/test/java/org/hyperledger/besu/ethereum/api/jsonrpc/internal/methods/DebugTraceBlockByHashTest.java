@@ -44,7 +44,7 @@ public class DebugTraceBlockByHashTest {
 
   private final BlockTracer blockTracer = mock(BlockTracer.class);
   private final DebugTraceBlockByHash debugTraceBlockByHash =
-      new DebugTraceBlockByHash(blockTracer);
+      new DebugTraceBlockByHash(() -> blockTracer);
 
   private final Hash blockHash =
       Hash.fromHexString("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
