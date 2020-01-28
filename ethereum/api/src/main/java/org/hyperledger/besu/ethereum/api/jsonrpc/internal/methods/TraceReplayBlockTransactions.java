@@ -38,23 +38,23 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 
 public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
-  private final BlockTracer blockTracer;
+  private final Supplier<BlockTracer> blockTracerSupplier;
   private final Supplier<StateDiffGenerator> stateDiffGenerator =
       Suppliers.memoize(StateDiffGenerator::new);
 
   public TraceReplayBlockTransactions(
-      final BlockTracer blockTracer, final BlockchainQueries queries) {
+      final Supplier<BlockTracer> blockTracerSupplier, final BlockchainQueries queries) {
     super(queries);
-    this.blockTracer = blockTracer;
+    this.blockTracerSupplier = blockTracerSupplier;
   }
 
   @Override
@@ -92,7 +92,8 @@ public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
     // TODO: generate options based on traceTypeParameter
     final TraceOptions traceOptions = TraceOptions.DEFAULT;
 
-    return blockTracer
+    return blockTracerSupplier
+        .get()
         .trace(block, new DebugOperationTracer(traceOptions))
         .map(BlockTrace::getTransactionTraces)
         .map((traces) -> generateTracesFromTransactionTrace(traces, traceTypeParameter))
