@@ -239,22 +239,21 @@ public class FilterParameterTest {
   }
 
   @Test
-  public void emptyListOfTopicsInJsonGivesInEmptyListInFilterParameter()
-      throws java.io.IOException {
+  public void emptyListOfTopicsInJsonShouldDeserializeAsEmptyList() throws java.io.IOException {
     final FilterParameter filterParameter = readJsonAsFilterParameter("{\"topics\":[]}");
 
     assertThat(filterParameter.getTopics().size()).isEqualTo(0);
   }
 
   @Test
-  public void emptyListOfTopicsNestedGivesEmptyListInTopics() throws java.io.IOException {
+  public void nestedEmptyListOfTopicsShouldDeserializeAsEmptyList() throws java.io.IOException {
     final FilterParameter filterParameter = readJsonAsFilterParameter("{\"topics\":[[]]}");
 
     assertThat(filterParameter.getTopics()).containsExactly(emptyList());
   }
 
   @Test
-  public void singleTopicGivesSingleEntryInTopics() throws java.io.IOException {
+  public void singleTopicShouldDeserializeAsSingleTopic() throws java.io.IOException {
     final FilterParameter filterParameter =
         readJsonAsFilterParameter("{\"topics\":[\"" + TOPIC_TWO + "\"]}");
 
@@ -263,7 +262,7 @@ public class FilterParameterTest {
   }
 
   @Test
-  public void singleNestedTopicGivesSingleEntryInTopics() throws java.io.IOException {
+  public void nestedSingleTopicShouldDeserializeAsSingleTopic() throws java.io.IOException {
     final FilterParameter filterParameter =
         readJsonAsFilterParameter("{\"topics\":[[\"" + TOPIC_TWO + "\"]]}");
 
@@ -272,7 +271,7 @@ public class FilterParameterTest {
   }
 
   @Test
-  public void twoTopicsGivesTwoTopicListsInTopics() throws java.io.IOException {
+  public void twoTopicsShouldDeserializeAsTwoTopicLists() throws java.io.IOException {
     final FilterParameter filterParameter =
         readJsonAsFilterParameter("{\"topics\":" + TOPICS_TWO_THREE_ARRAY + "}");
 
@@ -283,7 +282,7 @@ public class FilterParameterTest {
   }
 
   @Test
-  public void twoTopicsInFirstPositionGivesTwoTopicsInFirstTopicList() throws java.io.IOException {
+  public void twoTopicsInFirstPositionShouldDeserializeAsOneTopicList() throws java.io.IOException {
     final FilterParameter filterParameter =
         readJsonAsFilterParameter("{\"topics\":[" + TOPICS_TWO_THREE_ARRAY + "]}");
 
@@ -293,8 +292,7 @@ public class FilterParameterTest {
   }
 
   @Test
-  public void nullInFirstPositionGivesTwoTopicsInFirstPositionWithNullList()
-      throws java.io.IOException {
+  public void nullInFirstPositionShouldDeserializeAsEmptyFirstTopic() throws java.io.IOException {
     final FilterParameter filterParameter =
         readJsonAsFilterParameter("{\"topics\":[null, \"" + TOPIC_THREE + "\"]}");
 
@@ -303,7 +301,7 @@ public class FilterParameterTest {
   }
 
   @Test
-  public void twoTopicsInFirstAndSecondPositionGivesTwoTopicsWithTwoElementsInEach()
+  public void twoTopicsInFirstAndSecondPositionShouldDeserializeAsTwoListsOfTopics()
       throws java.io.IOException {
     final FilterParameter filterParameter =
         readJsonAsFilterParameter(
