@@ -35,6 +35,16 @@ import com.google.common.collect.Lists;
 import org.junit.Test;
 
 public class FilterParameterTest {
+  private static final String TOPIC_FORMAT = "0x%064d";
+  private static final String TOPIC_TWO = String.format(TOPIC_FORMAT, 2);
+  private static final String TOPIC_THREE = String.format(TOPIC_FORMAT, 3);
+  private static final String TOPIC_FOUR = String.format(TOPIC_FORMAT, 4);
+  private static final String TOPIC_FIVE = String.format(TOPIC_FORMAT, 5);
+
+  private static final String TOPICS_TWO_THREE_ARRAY =
+      "[\"" + TOPIC_TWO + "\", \"" + TOPIC_THREE + "\"]";
+  private static final String TOPICS_FOUR_FIVE_ARRAY =
+      "[\"" + TOPIC_FOUR + "\", \"" + TOPIC_FIVE + "\"]";
 
   @Test
   public void jsonWithArrayOfAddressesShouldSerializeSuccessfully() throws Exception {
@@ -69,13 +79,15 @@ public class FilterParameterTest {
   @Test
   public void jsonWithSingleAddressAndSingleTopicShouldSerializeSuccessfully() throws Exception {
     final String jsonWithSingleAddress =
-        "{\"jsonrpc\":\"2.0\",\"method\":\"eth_getLogs\",\"params\":[{\"address\":\"0x0\", \"topics\":\"0x0000000000000000000000000000000000000000000000000000000000000002\" }],\"id\":1}";
+        "{\"jsonrpc\":\"2.0\",\"method\":\"eth_getLogs\",\"params\":[{\"address\":\"0x0\", "
+            + "\"topics\":\""
+            + TOPIC_TWO
+            + "\" }],\"id\":1}";
 
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(readJsonAsJsonRpcRequest(jsonWithSingleAddress));
     final FilterParameter expectedFilterParameter =
-        filterParameterWithAddressAndSingleListOfTopics(
-            "0x0", "0x0000000000000000000000000000000000000000000000000000000000000002");
+        filterParameterWithSingleListOfTopics(TOPIC_TWO);
 
     final FilterParameter parsedFilterParameter =
         request.getRequiredParameter(0, FilterParameter.class);
@@ -87,15 +99,15 @@ public class FilterParameterTest {
   @Test
   public void jsonWithSingleAddressAndMultipleTopicsShouldSerializeSuccessfully() throws Exception {
     final String jsonWithSingleAddress =
-        "{\"jsonrpc\":\"2.0\",\"method\":\"eth_getLogs\",\"params\":[{\"address\":\"0x0\", \"topics\":[[\"0x0000000000000000000000000000000000000000000000000000000000000002\",\"0x0000000000000000000000000000000000000000000000000000000000000003\"]]}],\"id\":1}";
+        "{\"jsonrpc\":\"2.0\",\"method\":\"eth_getLogs\",\"params\":[{\"address\":\"0x0\", "
+            + "\"topics\":["
+            + TOPICS_TWO_THREE_ARRAY
+            + "]}],\"id\":1}";
 
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(readJsonAsJsonRpcRequest(jsonWithSingleAddress));
     final FilterParameter expectedFilterParameter =
-        filterParameterWithAddressAndSingleListOfTopics(
-            "0x0",
-            "0x0000000000000000000000000000000000000000000000000000000000000002",
-            "0x0000000000000000000000000000000000000000000000000000000000000003");
+        filterParameterWithSingleListOfTopics(TOPIC_TWO, TOPIC_THREE);
 
     final FilterParameter parsedFilterParameter =
         request.getRequiredParameter(0, FilterParameter.class);
@@ -108,15 +120,17 @@ public class FilterParameterTest {
   public void jsonWithSingleAddressAndMultipleListsOfTopicsShouldSerializeSuccessfully()
       throws Exception {
     final String jsonWithSingleAddress =
-        "{\"jsonrpc\":\"2.0\",\"method\":\"eth_getLogs\",\"params\":[{\"address\":\"0x0\", \"topics\":[[\"0x0000000000000000000000000000000000000000000000000000000000000002\",\"0x0000000000000000000000000000000000000000000000000000000000000003\"],[\"0x0000000000000000000000000000000000000000000000000000000000000002\",\"0x0000000000000000000000000000000000000000000000000000000000000003\"]]}],\"id\":1}";
+        "{\"jsonrpc\":\"2.0\",\"method\":\"eth_getLogs\",\"params\":[{\"address\":\"0x0\", "
+            + "\"topics\":["
+            + TOPICS_TWO_THREE_ARRAY
+            + ","
+            + TOPICS_TWO_THREE_ARRAY
+            + "]}],\"id\":1}";
 
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(readJsonAsJsonRpcRequest(jsonWithSingleAddress));
     final FilterParameter expectedFilterParameter =
-        filterParameterWithAddressAndMultipleListOfTopics(
-            "0x0",
-            "0x0000000000000000000000000000000000000000000000000000000000000002",
-            "0x0000000000000000000000000000000000000000000000000000000000000003");
+        filterParameterWithListOfTopics(TOPIC_TWO, TOPIC_THREE);
 
     final FilterParameter parsedFilterParameter =
         request.getRequiredParameter(0, FilterParameter.class);
@@ -224,6 +238,81 @@ public class FilterParameterTest {
             emptyList());
   }
 
+  @Test
+  public void emptyListOfTopicsInJsonShouldDeserializeAsEmptyList() throws java.io.IOException {
+    final FilterParameter filterParameter = readJsonAsFilterParameter("{\"topics\":[]}");
+
+    assertThat(filterParameter.getTopics().size()).isEqualTo(0);
+  }
+
+  @Test
+  public void nestedEmptyListOfTopicsShouldDeserializeAsEmptyList() throws java.io.IOException {
+    final FilterParameter filterParameter = readJsonAsFilterParameter("{\"topics\":[[]]}");
+
+    assertThat(filterParameter.getTopics()).containsExactly(emptyList());
+  }
+
+  @Test
+  public void singleTopicShouldDeserializeAsSingleTopic() throws java.io.IOException {
+    final FilterParameter filterParameter =
+        readJsonAsFilterParameter("{\"topics\":[\"" + TOPIC_TWO + "\"]}");
+
+    assertThat(filterParameter.getTopics())
+        .containsExactly(List.of(LogTopic.fromHexString(TOPIC_TWO)));
+  }
+
+  @Test
+  public void nestedSingleTopicShouldDeserializeAsSingleTopic() throws java.io.IOException {
+    final FilterParameter filterParameter =
+        readJsonAsFilterParameter("{\"topics\":[[\"" + TOPIC_TWO + "\"]]}");
+
+    assertThat(filterParameter.getTopics())
+        .containsExactly(List.of(LogTopic.fromHexString(TOPIC_TWO)));
+  }
+
+  @Test
+  public void twoTopicsShouldDeserializeAsTwoTopicLists() throws java.io.IOException {
+    final FilterParameter filterParameter =
+        readJsonAsFilterParameter("{\"topics\":" + TOPICS_TWO_THREE_ARRAY + "}");
+
+    assertThat(filterParameter.getTopics())
+        .containsExactly(
+            List.of(LogTopic.fromHexString(TOPIC_TWO)),
+            List.of(LogTopic.fromHexString(TOPIC_THREE)));
+  }
+
+  @Test
+  public void twoTopicsInFirstPositionShouldDeserializeAsOneTopicList() throws java.io.IOException {
+    final FilterParameter filterParameter =
+        readJsonAsFilterParameter("{\"topics\":[" + TOPICS_TWO_THREE_ARRAY + "]}");
+
+    assertThat(filterParameter.getTopics())
+        .containsExactly(
+            List.of(LogTopic.fromHexString(TOPIC_TWO), LogTopic.fromHexString(TOPIC_THREE)));
+  }
+
+  @Test
+  public void nullInFirstPositionShouldDeserializeAsEmptyFirstTopic() throws java.io.IOException {
+    final FilterParameter filterParameter =
+        readJsonAsFilterParameter("{\"topics\":[null, \"" + TOPIC_THREE + "\"]}");
+
+    assertThat(filterParameter.getTopics())
+        .containsExactly(singletonList(null), List.of(LogTopic.fromHexString(TOPIC_THREE)));
+  }
+
+  @Test
+  public void twoTopicsInFirstAndSecondPositionShouldDeserializeAsTwoListsOfTopics()
+      throws java.io.IOException {
+    final FilterParameter filterParameter =
+        readJsonAsFilterParameter(
+            "{\"topics\":[" + TOPICS_TWO_THREE_ARRAY + "," + TOPICS_FOUR_FIVE_ARRAY + "]}");
+
+    assertThat(filterParameter.getTopics())
+        .containsExactly(
+            List.of(LogTopic.fromHexString(TOPIC_TWO), LogTopic.fromHexString(TOPIC_THREE)),
+            List.of(LogTopic.fromHexString(TOPIC_FOUR), LogTopic.fromHexString(TOPIC_FIVE)));
+  }
+
   private <T> FilterParameter createFilterWithTopics(final T inputTopics)
       throws JsonProcessingException {
     final Map<String, T> payload = new HashMap<>();
@@ -242,24 +331,22 @@ public class FilterParameterTest {
         null);
   }
 
-  private FilterParameter filterParameterWithAddressAndSingleListOfTopics(
-      final String address, final String... topics) {
+  private FilterParameter filterParameterWithSingleListOfTopics(final String... topics) {
     return new FilterParameter(
         "latest",
         "latest",
-        singletonList(Address.fromHexString(address)),
+        singletonList(Address.fromHexString("0x0")),
         singletonList(
             Arrays.stream(topics).map(LogTopic::fromHexString).collect(toUnmodifiableList())),
         null);
   }
 
-  private FilterParameter filterParameterWithAddressAndMultipleListOfTopics(
-      final String address, final String... topics) {
+  private FilterParameter filterParameterWithListOfTopics(final String... topics) {
     List<LogTopic> topicsList =
         Arrays.stream(topics).map(LogTopic::fromHexString).collect(toUnmodifiableList());
     List<List<LogTopic>> topicsListList = Arrays.asList(topicsList, topicsList);
     return new FilterParameter(
-        "latest", "latest", singletonList(Address.fromHexString(address)), topicsListList, null);
+        "latest", "latest", singletonList(Address.fromHexString("0x0")), topicsListList, null);
   }
 
   private JsonRpcRequest readJsonAsJsonRpcRequest(final String jsonWithSingleAddress)
