@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.PrivateMarkerTransactionFactory;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.math.BigInteger;
@@ -50,17 +51,20 @@ public class DefaultPrivacyController implements PrivacyController {
   private final WorldStateArchive privateWorldStateArchive;
   private final PrivateTransactionValidator privateTransactionValidator;
   private final PrivateMarkerTransactionFactory privateMarkerTransactionFactory;
+  private final PrivateTransactionSimulator privateTransactionSimulator;
 
   public DefaultPrivacyController(
       final PrivacyParameters privacyParameters,
       final Optional<BigInteger> chainId,
-      final PrivateMarkerTransactionFactory privateMarkerTransactionFactory) {
+      final PrivateMarkerTransactionFactory privateMarkerTransactionFactory,
+      final PrivateTransactionSimulator privateTransactionSimulator) {
     this(
         privacyParameters.getEnclave(),
         privacyParameters.getPrivateStateStorage(),
         privacyParameters.getPrivateWorldStateArchive(),
         new PrivateTransactionValidator(chainId),
-        privateMarkerTransactionFactory);
+        privateMarkerTransactionFactory,
+        privateTransactionSimulator);
   }
 
   public DefaultPrivacyController(
@@ -68,12 +72,14 @@ public class DefaultPrivacyController implements PrivacyController {
       final PrivateStateStorage privateStateStorage,
       final WorldStateArchive privateWorldStateArchive,
       final PrivateTransactionValidator privateTransactionValidator,
-      final PrivateMarkerTransactionFactory privateMarkerTransactionFactory) {
+      final PrivateMarkerTransactionFactory privateMarkerTransactionFactory,
+      final PrivateTransactionSimulator privateTransactionSimulator) {
     this.enclave = enclave;
     this.privateStateStorage = privateStateStorage;
     this.privateWorldStateArchive = privateWorldStateArchive;
     this.privateTransactionValidator = privateTransactionValidator;
     this.privateMarkerTransactionFactory = privateMarkerTransactionFactory;
+    this.privateTransactionSimulator = privateTransactionSimulator;
   }
 
   @Override
@@ -91,7 +97,7 @@ public class DefaultPrivacyController implements PrivacyController {
         final String privacyGroupId = getPrivacyGroupId(enclaveKey, privateFrom);
         return new SendTransactionResponse(enclaveKey, privacyGroupId);
       }
-    } catch (Exception e) {
+    } catch (final Exception e) {
       LOG.error("Failed to store private transaction in enclave", e);
       throw e;
     }
@@ -193,6 +199,17 @@ public class DefaultPrivacyController implements PrivacyController {
         .orElse(
             // private state does not exist
             Account.DEFAULT_NONCE);
+  }
+
+  @Override
+  public Optional<PrivateTransactionProcessor.Result> simulatePrivateTransaction(
+      final String privacyGroupId,
+      final String enclavePublicKey,
+      final CallParameter callParams,
+      final long blockNumber) {
+    final Optional<PrivateTransactionProcessor.Result> result =
+        privateTransactionSimulator.process(privacyGroupId, callParams, blockNumber);
+    return result;
   }
 
   private SendResponse sendRequest(
