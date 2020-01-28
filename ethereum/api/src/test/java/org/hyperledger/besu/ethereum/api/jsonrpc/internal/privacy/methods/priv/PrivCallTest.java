@@ -33,6 +33,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.privacy.DefaultPrivacyController;
+import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
@@ -57,10 +59,11 @@ public class PrivCallTest {
   @Mock private PrivateTransactionSimulator privateTransactionSimulator;
   String privacyGroupId = "privacyGroupId";
   private final EnclavePublicKeyProvider enclavePublicKeyProvider = (user) -> ENCLAVE_PUBLIC_KEY;
+  private final PrivacyController privacyController = mock(DefaultPrivacyController.class);
 
   @Before
   public void setUp() {
-    method = new PrivCall(blockchainQueries, enclavePublicKeyProvider, privateTransactionSimulator);
+    method = new PrivCall(blockchainQueries, privacyController, enclavePublicKeyProvider);
   }
 
   @Test
@@ -86,13 +89,10 @@ public class PrivCallTest {
     final JsonRpcRequestContext request = ethCallRequest(privacyGroupId, callParameter(), "latest");
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, null);
 
-    when(privateTransactionSimulator.process(any(), any(), any(), anyLong()))
-        .thenReturn(Optional.empty());
-
     final JsonRpcResponse response = method.response(request);
 
     assertThat(response).isEqualToComparingFieldByField(expectedResponse);
-    verify(privateTransactionSimulator).process(any(), any(), any(), anyLong());
+    verify(privacyController).simulatePrivateTransaction(any(), any(), any(), anyLong());
   }
 
   @Test
@@ -107,7 +107,8 @@ public class PrivCallTest {
     final JsonRpcResponse response = method.response(request);
 
     assertThat(response).isEqualToComparingFieldByFieldRecursively(expectedResponse);
-    verify(privateTransactionSimulator).process(any(), any(), eq(callParameter), anyLong());
+    verify(privacyController)
+        .simulatePrivateTransaction(any(), any(), eq(callParameter), anyLong());
   }
 
   @Test
@@ -120,43 +121,38 @@ public class PrivCallTest {
     final JsonRpcResponse response = method.response(request);
 
     assertThat(response).isEqualToComparingFieldByFieldRecursively(expectedResponse);
-    verify(privateTransactionSimulator).process(any(), any(), eq(callParameter()), anyLong());
+    verify(privacyController)
+        .simulatePrivateTransaction(any(), any(), eq(callParameter()), anyLong());
   }
 
   @Test
   public void shouldUseCorrectBlockNumberWhenLatest() {
     final JsonRpcRequestContext request = ethCallRequest(privacyGroupId, callParameter(), "latest");
     when(blockchainQueries.headBlockNumber()).thenReturn(11L);
-    when(privateTransactionSimulator.process(any(), any(), any(), anyLong()))
-        .thenReturn(Optional.empty());
 
     method.response(request);
 
-    verify(privateTransactionSimulator).process(any(), any(), any(), eq(11L));
+    verify(privacyController).simulatePrivateTransaction(any(), any(), any(), eq(11L));
   }
 
   @Test
   public void shouldUseCorrectBlockNumberWhenEarliest() {
     final JsonRpcRequestContext request =
         ethCallRequest(privacyGroupId, callParameter(), "earliest");
-    when(privateTransactionSimulator.process(any(), any(), any(), anyLong()))
-        .thenReturn(Optional.empty());
     method.response(request);
 
-    verify(privateTransactionSimulator).process(any(), any(), any(), eq(0L));
+    verify(privacyController).simulatePrivateTransaction(any(), any(), any(), eq(0L));
   }
 
   @Test
   public void shouldUseCorrectBlockNumberWhenSpecified() {
     final JsonRpcRequestContext request =
         ethCallRequest(privacyGroupId, callParameter(), Quantity.create(13L));
-    when(privateTransactionSimulator.process(any(), any(), any(), anyLong()))
-        .thenReturn(Optional.empty());
     when(blockchainQueries.headBlockNumber()).thenReturn(13L);
 
     method.response(request);
 
-    verify(privateTransactionSimulator).process(any(), any(), any(), eq(13L));
+    verify(privacyController).simulatePrivateTransaction(any(), any(), any(), eq(13L));
   }
 
   @Test
@@ -190,7 +186,7 @@ public class PrivCallTest {
 
     when(result.getValidationResult()).thenReturn(ValidationResult.valid());
     when(result.getOutput()).thenReturn(output);
-    when(privateTransactionSimulator.process(any(), any(), any(), anyLong()))
+    when(privacyController.simulatePrivateTransaction(any(), any(), any(), anyLong()))
         .thenReturn(Optional.of(result));
   }
 }

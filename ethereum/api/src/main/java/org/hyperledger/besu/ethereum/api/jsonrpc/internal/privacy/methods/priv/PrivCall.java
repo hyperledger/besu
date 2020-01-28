@@ -27,21 +27,21 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransactionSimulator;
+import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 
 public class PrivCall extends AbstractBlockParameterMethod {
 
-  private final PrivateTransactionSimulator privateTransactionSimulator;
   private final EnclavePublicKeyProvider enclavePublicKeyProvider;
+  private final PrivacyController privacyController;
 
   public PrivCall(
       final BlockchainQueries blockchainQueries,
-      final EnclavePublicKeyProvider enclavePublicKeyProvider,
-      final PrivateTransactionSimulator privateTransactionSimulator) {
+      final PrivacyController privacyController,
+      final EnclavePublicKeyProvider enclavePublicKeyProvider) {
     super(blockchainQueries);
-    this.privateTransactionSimulator = privateTransactionSimulator;
     this.enclavePublicKeyProvider = enclavePublicKeyProvider;
+    this.privacyController = privacyController;
   }
 
   @Override
@@ -70,10 +70,10 @@ public class PrivCall extends AbstractBlockParameterMethod {
           request.getRequest().getId(), JsonRpcError.PRIV_CALL_ONLY_SUPPORTED_ON_CHAIN_HEAD);
     }
 
-    final String enclaveKey = enclavePublicKeyProvider.getEnclaveKey(request.getUser());
+    final String enclavePublicKey = enclavePublicKeyProvider.getEnclaveKey(request.getUser());
 
-    return privateTransactionSimulator
-        .process(privacyGroupId, enclaveKey, callParams, blockNumber)
+    return privacyController
+        .simulatePrivateTransaction(privacyGroupId, enclavePublicKey, callParams, blockNumber)
         .map(
             result ->
                 result
