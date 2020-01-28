@@ -210,6 +210,32 @@
           "to": "0x00B0000000000000000000000000000000000000"
         }
       ]
+    },
+    {
+      "number": "0x10",
+      "transactions": [
+        {
+          "comment": "Various exceptional halt cases. Invalid OPCODE (0x1F).",
+          "secretKey": "0x8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63",
+          "gasLimit": "0xFFFFF2",
+          "gasPrice": "0xEF",
+          "to": "0x00C0000000000000000000000000000000000000"
+        },
+        {
+          "comment": "Various exceptional halt cases. INSUFFICIENT_STACK_ITEMS.",
+          "secretKey": "0x8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63",
+          "gasLimit": "0xFFFFF2",
+          "gasPrice": "0xEF",
+          "to": "0x00D0000000000000000000000000000000000000"
+        },
+        {
+          "comment": "Various exceptional halt cases. INVALID_JUMP_DESTINATION.",
+          "secretKey": "0x8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63",
+          "gasLimit": "0xFFFFF2",
+          "gasPrice": "0xEF",
+          "to": "0x00E0000000000000000000000000000000000000"
+        }
+      ]
     }
   ]
 }
