@@ -97,7 +97,7 @@ public class PrivCallAcceptanceTest extends PrivacyAcceptanceTestBase {
   }
 
   @Test
-  public void mustNotSucceedWithNonExistingPrivacyGroup() throws IOException {
+  public void shouldReturnEmptyResultWithNonExistingPrivacyGroup() throws IOException {
 
     final String privacyGroupId =
         minerNode.execute(
@@ -121,10 +121,10 @@ public class PrivCallAcceptanceTest extends PrivacyAcceptanceTestBase {
         .verify(eventEmitter);
 
     final String invalidPrivacyGroup = constructInvalidString(privacyGroupId);
-    final Request<Object, EthCall> priv_call =
+    final Request<Object, EthCall> privCall =
         privCall(invalidPrivacyGroup, eventEmitter, false, false);
 
-    final EthCall result = priv_call.send();
+    final EthCall result = privCall.send();
 
     assertThat(result.getResult()).isEqualTo("0x");
   }
