@@ -17,8 +17,9 @@
 package org.hyperledger.besu.ethereum.api.tls;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.KeyStore;
+import java.security.GeneralSecurityException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 
@@ -29,14 +30,21 @@ import org.bouncycastle.asn1.x500.style.BCStyle;
 import org.bouncycastle.asn1.x500.style.IETFUtils;
 import org.bouncycastle.cert.X509CertificateHolder;
 
-public class TrustStoreUtil {
-  public static String commonNameAndFingerPrint(
-      final Path trustStore, final char[] password, final String alias) throws Exception {
-    final KeyStore keyStore = KeyStore.getInstance(trustStore.toFile(), password);
-    final Certificate certificate = keyStore.getCertificate(alias);
-    final String hexFingerprint = TLS.certificateHexFingerprint(certificate);
-    final String commonName = getCommonName(certificate);
-    return String.format("%s %s", commonName, hexFingerprint);
+public class KnownClientFileUtil {
+
+  public static Path createKnownClientsFile(
+      final SelfSignedP12Certificate selfSignedP12Certificate) {
+    try {
+      final Certificate certificate = selfSignedP12Certificate.getCertificate();
+      final String fingerprint = TLS.certificateHexFingerprint(certificate);
+      final String commonName = getCommonName(certificate);
+      final String knownClientsLine = String.format("%s %s", commonName, fingerprint);
+      final Path temporaryKnownClientsFile = Files.createTempFile("testKnownClients", ".txt");
+      temporaryKnownClientsFile.toFile().deleteOnExit();
+      return Files.writeString(temporaryKnownClientsFile, knownClientsLine);
+    } catch (final IOException | GeneralSecurityException e) {
+      throw new RuntimeException("Error in creating known clients file", e);
+    }
   }
 
   private static String getCommonName(final Certificate certificate)

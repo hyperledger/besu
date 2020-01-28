@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.fail;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ETH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.NET;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.WEB3;
+import static org.hyperledger.besu.ethereum.api.tls.KnownClientFileUtil.createKnownClientsFile;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
@@ -31,9 +32,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.tls.FileBasedPasswordProvider;
-import org.hyperledger.besu.ethereum.api.tls.SelfSignedPfxStore;
+import org.hyperledger.besu.ethereum.api.tls.SelfSignedP12Certificate;
 import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
-import org.hyperledger.besu.ethereum.api.tls.TrustStoreUtil;
 import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
@@ -90,15 +90,12 @@ public class JsonRpcHttpServiceTlsTest {
   private String baseUrl;
   private Map<String, JsonRpcMethod> rpcMethods;
   private final JsonRpcTestHelper testHelper = new JsonRpcTestHelper();
-  private SelfSignedPfxStore selfSignedPfxStore;
-  private SelfSignedPfxStore selfSignedPfxStoreForHttpClient;
-  private SelfSignedPfxStore selfSignedPfxStoreForHttpClientNotTrustedByServer;
+  private final SelfSignedP12Certificate besuCertificate = SelfSignedP12Certificate.create();
+  private final SelfSignedP12Certificate okHttpClientCertificate =
+      SelfSignedP12Certificate.create();
 
   @Before
   public void initServer() throws Exception {
-    selfSignedPfxStore = SelfSignedPfxStore.create();
-    selfSignedPfxStoreForHttpClient = SelfSignedPfxStore.create();
-    selfSignedPfxStoreForHttpClientNotTrustedByServer = SelfSignedPfxStore.create();
     final P2PNetwork peerDiscoveryMock = mock(P2PNetwork.class);
     final BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
     final Synchronizer synchronizer = mock(Synchronizer.class);
@@ -162,28 +159,19 @@ public class JsonRpcHttpServiceTlsTest {
   private TlsConfiguration getRpcHttpTlsConfiguration() {
     try {
       return new TlsConfiguration(
-          selfSignedPfxStore.getKeyStoreFile(),
-          new FileBasedPasswordProvider(createPasswordFile(selfSignedPfxStore)),
-          createKnownClientsFile(selfSignedPfxStoreForHttpClient));
+          besuCertificate.getKeyStoreFile(),
+          new FileBasedPasswordProvider(createPasswordFile(besuCertificate)),
+          createKnownClientsFile(okHttpClientCertificate));
     } catch (Exception e) {
       fail("TLS Configuration failed");
       return null;
     }
   }
 
-  private Path createKnownClientsFile(final SelfSignedPfxStore selfSignedPfxStore)
-      throws Exception {
-    final String knownClientsLine =
-        TrustStoreUtil.commonNameAndFingerPrint(
-            selfSignedPfxStore.getTrustStoreFile(),
-            selfSignedPfxStore.getPassword(),
-            selfSignedPfxStore.getAlias());
-    return Files.writeString(folder.newFile().toPath(), knownClientsLine);
-  }
-
-  private Path createPasswordFile(final SelfSignedPfxStore selfSignedPfxStore) throws IOException {
+  private Path createPasswordFile(final SelfSignedP12Certificate selfSignedP12Certificate)
+      throws IOException {
     return Files.writeString(
-        folder.newFile().toPath(), new String(selfSignedPfxStore.getPassword()));
+        folder.newFile().toPath(), new String(selfSignedP12Certificate.getPassword()));
   }
 
   @After
@@ -254,19 +242,26 @@ public class JsonRpcHttpServiceTlsTest {
   }
 
   private OkHttpClient getTlsHttpClient() {
-    return TlsHttpClient.fromServerTrustAndClientCertConfiguration(
-            selfSignedPfxStore, selfSignedPfxStoreForHttpClient)
+    return TlsHttpClient.TlsHttpClientBuilder.aTlsHttpClient()
+        .withBesuCertificate(besuCertificate)
+        .withOkHttpCertificate(okHttpClientCertificate)
+        .build()
         .getHttpClient();
   }
 
   private OkHttpClient getTlsHttpClientNotTrustedWithServer() {
-    return TlsHttpClient.fromServerTrustAndClientCertConfiguration(
-            selfSignedPfxStore, selfSignedPfxStoreForHttpClientNotTrustedByServer)
+    return TlsHttpClient.TlsHttpClientBuilder.aTlsHttpClient()
+        .withBesuCertificate(besuCertificate)
+        .withOkHttpCertificate(SelfSignedP12Certificate.create())
+        .build()
         .getHttpClient();
   }
 
   private OkHttpClient getTlsHttpClientWithoutClientAuthentication() {
-    return TlsHttpClient.fromServerTrustConfiguration(selfSignedPfxStore).getHttpClient();
+    return TlsHttpClient.TlsHttpClientBuilder.aTlsHttpClient()
+        .withBesuCertificate(besuCertificate)
+        .build()
+        .getHttpClient();
   }
 
   private Request buildPostRequest(final String json) {

@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ETH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.NET;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.WEB3;
+import static org.hyperledger.besu.ethereum.api.tls.KnownClientFileUtil.createKnownClientsFile;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
@@ -29,9 +30,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.tls.FileBasedPasswordProvider;
-import org.hyperledger.besu.ethereum.api.tls.SelfSignedPfxStore;
+import org.hyperledger.besu.ethereum.api.tls.SelfSignedP12Certificate;
 import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
-import org.hyperledger.besu.ethereum.api.tls.TrustStoreUtil;
 import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
@@ -77,15 +77,13 @@ public class JsonRpcHttpServiceTlsMisconfigurationTest {
   private static final BigInteger CHAIN_ID = BigInteger.valueOf(123);
   private static final Collection<RpcApi> JSON_RPC_APIS = List.of(ETH, NET, WEB3);
   private static final NatService natService = new NatService(Optional.empty());
-  private SelfSignedPfxStore selfSignedPfxStore;
+  private final SelfSignedP12Certificate besuCertificate = SelfSignedP12Certificate.create();
+  private final Path knownClientsFile = createKnownClientsFile(besuCertificate);
   private Map<String, JsonRpcMethod> rpcMethods;
   private JsonRpcHttpService service;
-  private Path knownClientsFile;
 
   @Before
-  public void beforeEach() throws Exception {
-    selfSignedPfxStore = SelfSignedPfxStore.create();
-    knownClientsFile = createKnownClientsFile();
+  public void beforeEach() {
     final P2PNetwork peerDiscoveryMock = mock(P2PNetwork.class);
     final BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
     final Synchronizer synchronizer = mock(Synchronizer.class);
@@ -120,15 +118,6 @@ public class JsonRpcHttpServiceTlsMisconfigurationTest {
                     mock(MetricsConfiguration.class),
                     natService,
                     Collections.emptyMap()));
-  }
-
-  private Path createKnownClientsFile() throws Exception {
-    final String knownClientsLine =
-        TrustStoreUtil.commonNameAndFingerPrint(
-            selfSignedPfxStore.getTrustStoreFile(),
-            selfSignedPfxStore.getPassword(),
-            selfSignedPfxStore.getAlias());
-    return Files.writeString(folder.newFile().toPath(), knownClientsLine);
   }
 
   @After
@@ -222,12 +211,12 @@ public class JsonRpcHttpServiceTlsMisconfigurationTest {
 
   private TlsConfiguration invalidPasswordTlsConfiguration() {
     return new TlsConfiguration(
-        selfSignedPfxStore.getKeyStoreFile(), () -> "invalid_password", knownClientsFile);
+        besuCertificate.getKeyStoreFile(), () -> "invalid_password", knownClientsFile);
   }
 
   private TlsConfiguration invalidPasswordFileTlsConfiguration() {
     return new TlsConfiguration(
-        selfSignedPfxStore.getKeyStoreFile(),
+        besuCertificate.getKeyStoreFile(),
         new FileBasedPasswordProvider(Path.of("/tmp/invalid_password_file.txt")),
         knownClientsFile);
   }
@@ -236,7 +225,7 @@ public class JsonRpcHttpServiceTlsMisconfigurationTest {
     final Path tempKnownClientsFile = folder.newFile().toPath();
     Files.write(tempKnownClientsFile, List.of("cn invalid_sha256"));
     return new TlsConfiguration(
-        selfSignedPfxStore.getKeyStoreFile(), () -> "changeit", tempKnownClientsFile);
+        besuCertificate.getKeyStoreFile(), () -> "changeit", tempKnownClientsFile);
   }
 
   private JsonRpcHttpService createJsonRpcHttpService(

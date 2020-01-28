@@ -55,14 +55,13 @@ import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 
 /**
  * Utility class to generate temporary self-signed certificates in PKCS12 format for testing
- * purposes using BouncyCastle APIs.
+ * purposes using BouncyCastle APIs. The generated certificate supports SAN extension for multiple
+ * DNS and IP addresses
  *
  * <p>Note: DO NOT USE IN PRODUCTION. The generated stores and files are marked to be deleted on JVM
  * exit.
- *
- * <p>The generated certificate supports SAN extension for multiple DNS and IP addresses
  */
-public final class SelfSignedPfxStore {
+public final class SelfSignedP12Certificate {
   private static final BouncyCastleProvider BOUNCY_CASTLE_PROVIDER = new BouncyCastleProvider();
   private static final String alias = "test";
   private static final boolean IS_CA = true;
@@ -70,19 +69,31 @@ public final class SelfSignedPfxStore {
   private static final List<String> sanHostNames = List.of("localhost");
   private static final List<String> sanIpAddresses = List.of("127.0.0.1");
   private static final char[] password = "changeit".toCharArray();
+  private final Certificate certificate;
   private final Path keyStore;
   private final Path trustStore;
 
-  private SelfSignedPfxStore(final Path keyStore, final Path trustStore) {
+  private SelfSignedP12Certificate(
+      final Certificate certificate, final Path keyStore, final Path trustStore) {
+    this.certificate = certificate;
     this.keyStore = keyStore;
     this.trustStore = trustStore;
   }
 
-  public static SelfSignedPfxStore create() throws Exception {
-    final KeyPair keyPair = generateKeyPair();
-    final Certificate certificate = generateSelfSignedCertificate(keyPair);
-    return new SelfSignedPfxStore(
-        createKeyStore(keyPair.getPrivate(), certificate), createTrustStore(certificate));
+  public static SelfSignedP12Certificate create() {
+    try {
+      final KeyPair keyPair = generateKeyPair();
+      final Certificate certificate = generateSelfSignedCertificate(keyPair);
+      final Path keyStore = createKeyStore(keyPair.getPrivate(), certificate);
+      final Path trustStore = createTrustStore(certificate);
+      return new SelfSignedP12Certificate(certificate, keyStore, trustStore);
+    } catch (final IOException | GeneralSecurityException | OperatorCreationException e) {
+      throw new RuntimeException("Error creating self signed certificates", e);
+    }
+  }
+
+  public Certificate getCertificate() {
+    return certificate;
   }
 
   public Path getKeyStoreFile() {
@@ -95,10 +106,6 @@ public final class SelfSignedPfxStore {
 
   public char[] getPassword() {
     return password;
-  }
-
-  public String getAlias() {
-    return alias;
   }
 
   @SuppressWarnings("DoNotCreateSecureRandomDirectly")
