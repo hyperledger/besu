@@ -242,26 +242,21 @@ public class JsonRpcHttpServiceTlsTest {
   }
 
   private OkHttpClient getTlsHttpClient() {
-    return TlsHttpClient.TlsHttpClientBuilder.aTlsHttpClient()
+    return TlsOkHttpClientBuilder.anOkHttpClient()
         .withBesuCertificate(besuCertificate)
         .withOkHttpCertificate(okHttpClientCertificate)
-        .build()
-        .getHttpClient();
+        .build();
   }
 
   private OkHttpClient getTlsHttpClientNotTrustedWithServer() {
-    return TlsHttpClient.TlsHttpClientBuilder.aTlsHttpClient()
+    return TlsOkHttpClientBuilder.anOkHttpClient()
         .withBesuCertificate(besuCertificate)
         .withOkHttpCertificate(SelfSignedP12Certificate.create())
-        .build()
-        .getHttpClient();
+        .build();
   }
 
   private OkHttpClient getTlsHttpClientWithoutClientAuthentication() {
-    return TlsHttpClient.TlsHttpClientBuilder.aTlsHttpClient()
-        .withBesuCertificate(besuCertificate)
-        .build()
-        .getHttpClient();
+    return TlsOkHttpClientBuilder.anOkHttpClient().withBesuCertificate(besuCertificate).build();
   }
 
   private Request buildPostRequest(final String json) {
