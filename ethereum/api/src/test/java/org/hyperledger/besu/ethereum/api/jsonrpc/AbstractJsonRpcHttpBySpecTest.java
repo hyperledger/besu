@@ -135,8 +135,7 @@ public abstract class AbstractJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpS
         }
         for (int i = 0; i < ((ArrayNode) expectedResponse).size(); i++) {
           checkResponse(
-              (ObjectNode) responseBody.get(i),
-              (ObjectNode) ((ArrayNode) expectedResponse).get(i));
+              (ObjectNode) responseBody.get(i), (ObjectNode) ((ArrayNode) expectedResponse).get(i));
         }
       }
     }
