@@ -72,7 +72,8 @@ public class EnclaveFactory {
     // set TLS options if passed in
     try {
       if (orionKeyStoreFile != null && orionKeyStorePasswordFile != null) {
-        clientOptions.setPfxKeyCertOptions(convertFrom(orionKeyStoreFile, orionKeyStorePasswordFile));
+        clientOptions.setPfxKeyCertOptions(
+            convertFrom(orionKeyStoreFile, orionKeyStorePasswordFile));
       }
 
       // server whitelist file is optional, and if supplied we turn off CA
