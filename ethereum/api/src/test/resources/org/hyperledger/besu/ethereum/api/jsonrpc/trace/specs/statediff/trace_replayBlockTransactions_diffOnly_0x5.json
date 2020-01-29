@@ -19,8 +19,8 @@
           "0x0000000000000000000000000000000000000000": {
             "balance": {
               "*": {
-                "from": "0x6f05b59d3d896d28",
-                "to": "0x6f05b59d3dc329d0"
+                "from": "0x6f05b59d3db75ad6",
+                "to": "0x6f05b59d3de93e66"
               }
             },
             "code": "=",
@@ -32,12 +32,6 @@
             "code": "=",
             "nonce": "=",
             "storage": {
-              "0x0000000000000000000000000000000000000000000000000000000000000001": {
-                "*": {
-                  "from": "0x0000000000000000000000000000000000000000000000000000000000000003",
-                  "to": "0x0000000000000000000000000000000000000000000000000000000000000000"
-                }
-              },
               "0x0000000000000000000000000000000000000000000000000000000000000002": {
                 "*": {
                   "from": "0x0000000000000000000000000000000000000000000000000000000000000004",
@@ -49,8 +43,8 @@
           "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73": {
             "balance": {
               "*": {
-                "from": "0xfffffffffffffffffffffffffffffffffff1ea75f",
-                "to": "0xffffffffffffffffffffffffffffffffffee4eab7"
+                "from": "0xfffffffffffffffffffffffffffffffffff1f698f",
+                "to": "0xffffffffffffffffffffffffffffffffffeed85ff"
               }
             },
             "code": "=",

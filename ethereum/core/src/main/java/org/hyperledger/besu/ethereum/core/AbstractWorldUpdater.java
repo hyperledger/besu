@@ -185,6 +185,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
     // deletion.
     private final SortedMap<UInt256, UInt256> updatedStorage;
     private boolean storageWasCleared = false;
+    private boolean transactionBoundary = false;
 
     UpdateTrackingAccount(final Address address) {
       checkNotNull(address);
@@ -314,6 +315,10 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
       return version;
     }
 
+    void markTransactionBoundary() {
+      this.transactionBoundary = true;
+    }
+
     @Override
     public UInt256 getStorageValue(final UInt256 key) {
       final UInt256 value = updatedStorage.get(key);
@@ -331,9 +336,13 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
 
     @Override
     public UInt256 getOriginalStorageValue(final UInt256 key) {
-      return storageWasCleared || account == null
-          ? UInt256.ZERO
-          : account.getOriginalStorageValue(key);
+      if (transactionBoundary) {
+        return getStorageValue(key);
+      } else if (storageWasCleared || account == null) {
+        return UInt256.ZERO;
+      } else {
+        return account.getOriginalStorageValue(key);
+      }
     }
 
     @Override
@@ -383,7 +392,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
     }
   }
 
-  static class StackedUpdater<W extends WorldView, A extends Account>
+  public static class StackedUpdater<W extends WorldView, A extends Account>
       extends AbstractWorldUpdater<AbstractWorldUpdater<W, A>, UpdateTrackingAccount<A>> {
 
     StackedUpdater(final AbstractWorldUpdater<W, A> world) {
@@ -459,6 +468,10 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
         }
         update.getUpdatedStorage().forEach(existing::setStorageValue);
       }
+    }
+
+    public void markTransactionBoundary() {
+      updatedAccounts().forEach(UpdateTrackingAccount::markTransactionBoundary);
     }
   }
 }
