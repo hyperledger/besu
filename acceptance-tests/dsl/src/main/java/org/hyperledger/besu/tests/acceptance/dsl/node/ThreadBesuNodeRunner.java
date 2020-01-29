@@ -58,6 +58,7 @@ import java.util.stream.Collectors;
 import io.vertx.core.Vertx;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.ThreadContext;
 import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
 
@@ -99,6 +100,9 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
 
   @Override
   public void startNode(final BesuNode node) {
+
+    assert (!ThreadContext.containsKey("node"));
+    ThreadContext.put("node", node.getName());
 
     final StorageServiceImpl storageService = new StorageServiceImpl();
     final Path dataDir = node.homeDirectory();
@@ -194,6 +198,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     runner.start();
 
     besuRunners.put(node.getName(), runner);
+    ThreadContext.remove("node");
   }
 
   @Override

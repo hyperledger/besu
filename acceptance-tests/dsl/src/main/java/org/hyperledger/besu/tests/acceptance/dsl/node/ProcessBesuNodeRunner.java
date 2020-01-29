@@ -45,7 +45,7 @@ import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.awaitility.Awaitility;
+import org.apache.logging.log4j.ThreadContext;
 
 public class ProcessBesuNodeRunner implements BesuNodeRunner {
 
@@ -61,6 +61,13 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
 
   @Override
   public void startNode(final BesuNode node) {
+
+    if (ThreadContext.containsKey("node")) {
+      LOG.error("ThreadContext node is already set to {}", ThreadContext.get("node"));
+    }
+    assert (!ThreadContext.containsKey("node"));
+    ThreadContext.put("node", node.getName());
+
     final Path dataDir = node.homeDirectory();
 
     final List<String> params = new ArrayList<>();
@@ -279,6 +286,7 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
 
     waitForFile(dataDir, "besu.ports");
     waitForFile(dataDir, "besu.networks");
+    ThreadContext.remove("node");
   }
 
   private boolean isNotAliveOrphan(final String name) {
@@ -291,11 +299,11 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
         new BufferedReader(new InputStreamReader(process.getInputStream(), UTF_8))) {
       String line = in.readLine();
       while (line != null) {
-        PROCESS_LOG.info("{}: {}", node.getName(), line);
+        PROCESS_LOG.info(line);
         line = in.readLine();
       }
     } catch (final IOException e) {
-      LOG.error("Failed to read output from process", e);
+      LOG.error("Failed to read output from process for node " + node.getName(), e);
     }
   }
 

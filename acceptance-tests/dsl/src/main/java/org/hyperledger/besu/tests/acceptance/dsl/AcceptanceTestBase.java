@@ -39,7 +39,11 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.net.NetTransactions
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.perm.PermissioningTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.web3.Web3Transactions;
 
+import org.apache.logging.log4j.ThreadContext;
 import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.rules.TestName;
 
 public class AcceptanceTestBase {
 
@@ -90,6 +94,17 @@ public class AcceptanceTestBase {
     besu = new BesuNodeFactory();
     contractVerifier = new ContractVerifier(accounts.getPrimaryBenefactor());
     permissionedNodeBuilder = new PermissionedNodeBuilder();
+  }
+
+  static {
+    System.setProperty("log4j2.isThreadContextMapInheritable", "true");
+  }
+
+  @Rule public final TestName name = new TestName();
+
+  @Before
+  public void setUpAcceptanceTestBase() {
+    ThreadContext.put("test", name.getMethodName());
   }
 
   @After
