@@ -15,6 +15,7 @@
 package org.hyperledger.besu.consensus.common.jsonrpc;
 
 import org.hyperledger.besu.consensus.common.BlockInterface;
+import org.hyperledger.besu.consensus.common.VoteTallyCache;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
@@ -32,15 +33,21 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.LongStream;
 
+import org.apache.logging.log4j.LogManager;
+
 public abstract class AbstractGetSignerMetricsMethod {
 
   private static final long DEFAULT_RANGE_BLOCK = 100;
 
+  private final VoteTallyCache voteTallyCache;
   private final BlockInterface blockInterface;
   private final BlockchainQueries blockchainQueries;
 
   public AbstractGetSignerMetricsMethod(
-      final BlockInterface blockInterface, final BlockchainQueries blockchainQueries) {
+      final VoteTallyCache voteTallyCache,
+      final BlockInterface blockInterface,
+      final BlockchainQueries blockchainQueries) {
+    this.voteTallyCache = voteTallyCache;
     this.blockInterface = blockInterface;
     this.blockchainQueries = blockchainQueries;
   }
@@ -83,12 +90,14 @@ public abstract class AbstractGetSignerMetricsMethod {
                     // Get All validators present in the last block of the range even
                     // if they didn't propose a block
                     if (currentIndex == lastBlockIndex) {
-                      blockInterface
-                          .validatorsInBlock(header)
+                      voteTallyCache
+                          .getVoteTallyAfterBlock(header)
+                          .getValidators()
                           .forEach(
-                              address ->
-                                  proposersMap.computeIfAbsent(
-                                      proposerAddress, SignerMetricResult::new));
+                              address -> {
+                                LogManager.getLogger().info("--> " + address);
+                                proposersMap.computeIfAbsent(address, SignerMetricResult::new);
+                              });
                     }
                   });
             });
