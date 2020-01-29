@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ETH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.NET;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.WEB3;
-import static org.hyperledger.besu.ethereum.api.tls.KnownClientFileUtil.createKnownClientsFile;
+import static org.hyperledger.besu.ethereum.api.tls.KnownClientFileUtil.writeToKnownClientsFile;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
@@ -78,12 +78,17 @@ public class JsonRpcHttpServiceTlsMisconfigurationTest {
   private static final Collection<RpcApi> JSON_RPC_APIS = List.of(ETH, NET, WEB3);
   private static final NatService natService = new NatService(Optional.empty());
   private final SelfSignedP12Certificate besuCertificate = SelfSignedP12Certificate.create();
-  private final Path knownClientsFile = createKnownClientsFile(besuCertificate);
+  private Path knownClientsFile;
   private Map<String, JsonRpcMethod> rpcMethods;
   private JsonRpcHttpService service;
 
   @Before
-  public void beforeEach() {
+  public void beforeEach() throws IOException {
+    knownClientsFile = folder.newFile().toPath();
+    writeToKnownClientsFile(
+        besuCertificate.getCommonName(),
+        besuCertificate.getCertificateHexFingerprint(),
+        knownClientsFile);
     final P2PNetwork peerDiscoveryMock = mock(P2PNetwork.class);
     final BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
     final Synchronizer synchronizer = mock(Synchronizer.class);

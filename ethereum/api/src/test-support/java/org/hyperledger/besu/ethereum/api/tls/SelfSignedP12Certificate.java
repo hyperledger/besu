@@ -16,6 +16,8 @@
  */
 package org.hyperledger.besu.ethereum.api.tls;
 
+import static org.hyperledger.besu.crypto.SecureRandomProvider.createSecureRandom;
+
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
@@ -28,8 +30,8 @@ import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
-import java.security.SecureRandom;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.time.Instant;
 import java.time.Period;
@@ -39,12 +41,17 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.tuweni.net.tls.TLS;
+import org.bouncycastle.asn1.x500.RDN;
 import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.asn1.x500.style.BCStyle;
+import org.bouncycastle.asn1.x500.style.IETFUtils;
 import org.bouncycastle.asn1.x509.BasicConstraints;
 import org.bouncycastle.asn1.x509.Extension;
 import org.bouncycastle.asn1.x509.GeneralName;
 import org.bouncycastle.asn1.x509.GeneralNames;
 import org.bouncycastle.cert.CertIOException;
+import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.X509v3CertificateBuilder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
@@ -108,10 +115,27 @@ public final class SelfSignedP12Certificate {
     return password;
   }
 
-  @SuppressWarnings("DoNotCreateSecureRandomDirectly")
+  public String getCommonName() {
+    try {
+      final X500Name subject = new X509CertificateHolder(certificate.getEncoded()).getSubject();
+      final RDN commonNameRdn = subject.getRDNs(BCStyle.CN)[0];
+      return IETFUtils.valueToString(commonNameRdn.getFirst().getValue());
+    } catch (final IOException | CertificateEncodingException e) {
+      throw new RuntimeException("Error extracting common name from certificate", e);
+    }
+  }
+
+  public String getCertificateHexFingerprint() {
+    try {
+      return TLS.certificateHexFingerprint(certificate);
+    } catch (CertificateEncodingException e) {
+      throw new RuntimeException("Error extracting certificate fingerprint", e);
+    }
+  }
+
   private static KeyPair generateKeyPair() throws GeneralSecurityException {
     final KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
-    keyPairGenerator.initialize(2048, new SecureRandom());
+    keyPairGenerator.initialize(2048, createSecureRandom());
     return keyPairGenerator.generateKeyPair();
   }
 

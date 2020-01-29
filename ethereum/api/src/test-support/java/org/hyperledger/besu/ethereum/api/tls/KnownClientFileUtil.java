@@ -19,38 +19,17 @@ package org.hyperledger.besu.ethereum.api.tls;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.GeneralSecurityException;
-import java.security.cert.Certificate;
-import java.security.cert.CertificateEncodingException;
-
-import org.apache.tuweni.net.tls.TLS;
-import org.bouncycastle.asn1.x500.RDN;
-import org.bouncycastle.asn1.x500.X500Name;
-import org.bouncycastle.asn1.x500.style.BCStyle;
-import org.bouncycastle.asn1.x500.style.IETFUtils;
-import org.bouncycastle.cert.X509CertificateHolder;
+import java.util.List;
 
 public class KnownClientFileUtil {
 
-  public static Path createKnownClientsFile(
-      final SelfSignedP12Certificate selfSignedP12Certificate) {
+  public static void writeToKnownClientsFile(
+      final String commonName, final String fingerprint, final Path knownClientsFile) {
     try {
-      final Certificate certificate = selfSignedP12Certificate.getCertificate();
-      final String fingerprint = TLS.certificateHexFingerprint(certificate);
-      final String commonName = extractCommonName(certificate);
       final String knownClientsLine = String.format("%s %s", commonName, fingerprint);
-      final Path temporaryKnownClientsFile = Files.createTempFile("testKnownClients", ".txt");
-      temporaryKnownClientsFile.toFile().deleteOnExit();
-      return Files.writeString(temporaryKnownClientsFile, knownClientsLine);
-    } catch (final IOException | GeneralSecurityException e) {
-      throw new RuntimeException("Error in creating known clients file", e);
+      Files.write(knownClientsFile, List.of("#Known Clients File", knownClientsLine));
+    } catch (final IOException e) {
+      throw new RuntimeException("Error in updating known clients file", e);
     }
-  }
-
-  private static String extractCommonName(final Certificate certificate)
-      throws IOException, CertificateEncodingException {
-    final X500Name subject = new X509CertificateHolder(certificate.getEncoded()).getSubject();
-    final RDN commonNameRdn = subject.getRDNs(BCStyle.CN)[0];
-    return IETFUtils.valueToString(commonNameRdn.getFirst().getValue());
   }
 }

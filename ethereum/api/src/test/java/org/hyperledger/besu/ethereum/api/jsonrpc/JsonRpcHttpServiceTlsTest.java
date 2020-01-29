@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.fail;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ETH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.NET;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.WEB3;
-import static org.hyperledger.besu.ethereum.api.tls.KnownClientFileUtil.createKnownClientsFile;
+import static org.hyperledger.besu.ethereum.api.tls.KnownClientFileUtil.writeToKnownClientsFile;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
@@ -158,10 +158,16 @@ public class JsonRpcHttpServiceTlsTest {
 
   private TlsConfiguration getRpcHttpTlsConfiguration() {
     try {
+      final Path knownClientsFile = folder.newFile().toPath();
+      writeToKnownClientsFile(
+          okHttpClientCertificate.getCommonName(),
+          okHttpClientCertificate.getCertificateHexFingerprint(),
+          knownClientsFile);
+
       return new TlsConfiguration(
           besuCertificate.getKeyStoreFile(),
           new FileBasedPasswordProvider(createPasswordFile(besuCertificate)),
-          createKnownClientsFile(okHttpClientCertificate));
+          knownClientsFile);
     } catch (Exception e) {
       fail("TLS Configuration failed");
       return null;
