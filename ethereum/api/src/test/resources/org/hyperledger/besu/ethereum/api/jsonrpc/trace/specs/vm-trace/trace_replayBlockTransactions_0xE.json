@@ -35,14 +35,14 @@
               "sub": null
             },
             {
-              "cost": 200,
+              "cost": 800,
               "ex": {
                 "mem": null,
                 "push": [
                   "0x0"
                 ],
                 "store": null,
-                "used": 16755999
+                "used": 16755399
               },
               "pc": 2,
               "sub": null
@@ -55,7 +55,7 @@
                   "0x1"
                 ],
                 "store": null,
-                "used": 16755996
+                "used": 16755396
               },
               "pc": 3,
               "sub": null
@@ -68,7 +68,7 @@
                   "0x1"
                 ],
                 "store": null,
-                "used": 16755993
+                "used": 16755393
               },
               "pc": 5,
               "sub": null
@@ -82,7 +82,7 @@
                   "0x1"
                 ],
                 "store": null,
-                "used": 16755990
+                "used": 16755390
               },
               "pc": 6,
               "sub": null
@@ -95,7 +95,7 @@
                   "0x0"
                 ],
                 "store": null,
-                "used": 16755987
+                "used": 16755387
               },
               "pc": 7,
               "sub": null
@@ -109,7 +109,7 @@
                 },
                 "push": [],
                 "store": null,
-                "used": 16755981
+                "used": 16755381
               },
               "pc": 9,
               "sub": null
@@ -122,7 +122,7 @@
                   "0x0"
                 ],
                 "store": null,
-                "used": 16755978
+                "used": 16755378
               },
               "pc": 10,
               "sub": null
@@ -136,7 +136,7 @@
                   "key": "0x0",
                   "val": "0x1"
                 },
-                "used": 16735978
+                "used": 16735378
               },
               "pc": 12,
               "sub": null
@@ -149,7 +149,7 @@
                   "0x1"
                 ],
                 "store": null,
-                "used": 16735975
+                "used": 16735375
               },
               "pc": 13,
               "sub": null
@@ -162,7 +162,7 @@
                   "0x0"
                 ],
                 "store": null,
-                "used": 16735972
+                "used": 16735372
               },
               "pc": 15,
               "sub": null
@@ -173,7 +173,7 @@
                 "mem": null,
                 "push": [],
                 "store": null,
-                "used": 16735972
+                "used": 16735372
               },
               "pc": 17,
               "sub": null
@@ -203,14 +203,14 @@
               "sub": null
             },
             {
-              "cost": 200,
+              "cost": 800,
               "ex": {
                 "mem": null,
                 "push": [
                   "0x1"
                 ],
                 "store": null,
-                "used": 16755999
+                "used": 16755399
               },
               "pc": 2,
               "sub": null
@@ -223,7 +223,7 @@
                   "0x1"
                 ],
                 "store": null,
-                "used": 16755996
+                "used": 16755396
               },
               "pc": 3,
               "sub": null
@@ -236,7 +236,7 @@
                   "0x2"
                 ],
                 "store": null,
-                "used": 16755993
+                "used": 16755393
               },
               "pc": 5,
               "sub": null
@@ -250,7 +250,7 @@
                   "0x2"
                 ],
                 "store": null,
-                "used": 16755990
+                "used": 16755390
               },
               "pc": 6,
               "sub": null
@@ -263,7 +263,7 @@
                   "0x0"
                 ],
                 "store": null,
-                "used": 16755987
+                "used": 16755387
               },
               "pc": 7,
               "sub": null
@@ -277,7 +277,7 @@
                 },
                 "push": [],
                 "store": null,
-                "used": 16755981
+                "used": 16755381
               },
               "pc": 9,
               "sub": null
@@ -290,7 +290,7 @@
                   "0x0"
                 ],
                 "store": null,
-                "used": 16755978
+                "used": 16755378
               },
               "pc": 10,
               "sub": null
@@ -304,7 +304,7 @@
                   "key": "0x0",
                   "val": "0x2"
                 },
-                "used": 16750978
+                "used": 16750378
               },
               "pc": 12,
               "sub": null
@@ -317,7 +317,7 @@
                   "0x1"
                 ],
                 "store": null,
-                "used": 16750975
+                "used": 16750375
               },
               "pc": 13,
               "sub": null
@@ -330,7 +330,7 @@
                   "0x0"
                 ],
                 "store": null,
-                "used": 16750972
+                "used": 16750372
               },
               "pc": 15,
               "sub": null
@@ -341,7 +341,7 @@
                 "mem": null,
                 "push": [],
                 "store": null,
-                "used": 16750972
+                "used": 16750372
               },
               "pc": 17,
               "sub": null
@@ -371,14 +371,14 @@
               "sub": null
             },
             {
-              "cost": 200,
+              "cost": 800,
               "ex": {
                 "mem": null,
                 "push": [
                   "0x2"
                 ],
                 "store": null,
-                "used": 16755999
+                "used": 16755399
               },
               "pc": 2,
               "sub": null
@@ -391,7 +391,7 @@
                   "0x1"
                 ],
                 "store": null,
-                "used": 16755996
+                "used": 16755396
               },
               "pc": 3,
               "sub": null
@@ -404,7 +404,7 @@
                   "0x3"
                 ],
                 "store": null,
-                "used": 16755993
+                "used": 16755393
               },
               "pc": 5,
               "sub": null
@@ -418,7 +418,7 @@
                   "0x3"
                 ],
                 "store": null,
-                "used": 16755990
+                "used": 16755390
               },
               "pc": 6,
               "sub": null
@@ -431,7 +431,7 @@
                   "0x0"
                 ],
                 "store": null,
-                "used": 16755987
+                "used": 16755387
               },
               "pc": 7,
               "sub": null
@@ -445,7 +445,7 @@
                 },
                 "push": [],
                 "store": null,
-                "used": 16755981
+                "used": 16755381
               },
               "pc": 9,
               "sub": null
@@ -458,7 +458,7 @@
                   "0x0"
                 ],
                 "store": null,
-                "used": 16755978
+                "used": 16755378
               },
               "pc": 10,
               "sub": null
@@ -472,7 +472,7 @@
                   "key": "0x0",
                   "val": "0x3"
                 },
-                "used": 16750978
+                "used": 16750378
               },
               "pc": 12,
               "sub": null
@@ -485,7 +485,7 @@
                   "0x1"
                 ],
                 "store": null,
-                "used": 16750975
+                "used": 16750375
               },
               "pc": 13,
               "sub": null
@@ -498,7 +498,7 @@
                   "0x0"
                 ],
                 "store": null,
-                "used": 16750972
+                "used": 16750372
               },
               "pc": 15,
               "sub": null
@@ -509,7 +509,7 @@
                 "mem": null,
                 "push": [],
                 "store": null,
-                "used": 16750972
+                "used": 16750372
               },
               "pc": 17,
               "sub": null

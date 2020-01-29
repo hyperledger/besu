@@ -63,9 +63,11 @@ public class StateDiffGenerator {
           updatedAccount.getUpdatedStorage().entrySet()) {
         final UInt256 originalValue = rootAccount.getStorageValue(entry.getKey());
         final UInt256 newValue = entry.getValue();
-        storageDiff.put(
-            entry.getKey().toHexString(),
-            new DiffNode(originalValue.toHexString(), newValue.toHexString()));
+        if (!originalValue.equals(newValue)) {
+          storageDiff.put(
+              entry.getKey().toHexString(),
+              new DiffNode(originalValue.toHexString(), newValue.toHexString()));
+        }
       }
 
       // populate the diff object

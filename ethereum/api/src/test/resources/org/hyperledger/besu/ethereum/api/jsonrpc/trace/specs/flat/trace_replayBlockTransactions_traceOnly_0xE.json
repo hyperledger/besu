@@ -27,7 +27,7 @@
               "value": "0x0"
             },
             "result": {
-              "gasUsed": "0x4f06",
+              "gasUsed": "0x515e",
               "output": "0x01"
             },
             "subtraces": 0,
@@ -52,7 +52,7 @@
               "value": "0x0"
             },
             "result": {
-              "gasUsed": "0x146e",
+              "gasUsed": "0x16c6",
               "output": "0x02"
             },
             "subtraces": 0,
@@ -77,7 +77,7 @@
               "value": "0x0"
             },
             "result": {
-              "gasUsed": "0x146e",
+              "gasUsed": "0x16c6",
               "output": "0x03"
             },
             "subtraces": 0,

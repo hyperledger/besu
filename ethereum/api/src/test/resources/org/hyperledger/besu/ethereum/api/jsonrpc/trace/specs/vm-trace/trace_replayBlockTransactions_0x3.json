@@ -29,7 +29,7 @@
                   "0x4"
                 ],
                 "store": null,
-                "used": 16723303
+                "used": 16723979
               },
               "pc": 0,
               "sub": null
@@ -42,7 +42,7 @@
                   "0xc"
                 ],
                 "store": null,
-                "used": 16723300
+                "used": 16723976
               },
               "pc": 2,
               "sub": null
@@ -55,7 +55,7 @@
                   "0x0"
                 ],
                 "store": null,
-                "used": 16723297
+                "used": 16723973
               },
               "pc": 4,
               "sub": null
@@ -69,7 +69,7 @@
                 },
                 "push": [],
                 "store": null,
-                "used": 16723288
+                "used": 16723964
               },
               "pc": 6,
               "sub": null
@@ -82,7 +82,7 @@
                   "0x4"
                 ],
                 "store": null,
-                "used": 16723285
+                "used": 16723961
               },
               "pc": 7,
               "sub": null
@@ -95,7 +95,7 @@
                   "0x0"
                 ],
                 "store": null,
-                "used": 16723282
+                "used": 16723958
               },
               "pc": 9,
               "sub": null
@@ -106,7 +106,7 @@
                 "mem": null,
                 "push": [],
                 "store": null,
-                "used": 16723282
+                "used": 16723958
               },
               "pc": 11,
               "sub": null
