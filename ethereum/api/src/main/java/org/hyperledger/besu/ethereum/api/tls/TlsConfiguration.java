@@ -58,17 +58,18 @@ public class TlsConfiguration {
       return new Builder();
     }
 
-    public Builder withKeyStorePath(Path keyStorePath) {
+    public Builder withKeyStorePath(final Path keyStorePath) {
       this.keyStorePath = keyStorePath;
       return this;
     }
 
-    public Builder withKeyStorePasswordSupplier(Supplier<String> keyStorePasswordSupplier) {
+    public Builder withKeyStorePasswordSupplier(final Supplier<String> keyStorePasswordSupplier) {
       this.keyStorePasswordSupplier = keyStorePasswordSupplier;
       return this;
     }
 
-    public Builder withClientAuthConfiguration(TlsClientAuthConfiguration clientAuthConfiguration) {
+    public Builder withClientAuthConfiguration(
+        final TlsClientAuthConfiguration clientAuthConfiguration) {
       this.clientAuthConfiguration = clientAuthConfiguration;
       return this;
     }
