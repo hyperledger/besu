@@ -29,7 +29,7 @@
                   "0x20"
                 ],
                 "store": null,
-                "used": 16755559
+                "used": 16755663
               },
               "pc": 0,
               "sub": null
@@ -42,7 +42,7 @@
                   "0x0"
                 ],
                 "store": null,
-                "used": 16755556
+                "used": 16755660
               },
               "pc": 2,
               "sub": null
@@ -55,7 +55,7 @@
                   "0x0"
                 ],
                 "store": null,
-                "used": 16755553
+                "used": 16755657
               },
               "pc": 3,
               "sub": null
@@ -68,13 +68,13 @@
                   "0x1"
                 ],
                 "store": null,
-                "used": 16755550
+                "used": 16755654
               },
               "pc": 5,
               "sub": null
             },
             {
-              "cost": 5000,
+              "cost": 800,
               "ex": {
                 "mem": null,
                 "push": [],
@@ -82,7 +82,7 @@
                   "key": "0x1",
                   "val": "0x0"
                 },
-                "used": 16750550
+                "used": 16754854
               },
               "pc": 6,
               "sub": null
@@ -95,7 +95,7 @@
                   "0x60"
                 ],
                 "store": null,
-                "used": 16750547
+                "used": 16754851
               },
               "pc": 7,
               "sub": null
@@ -108,7 +108,7 @@
                   "0x0"
                 ],
                 "store": null,
-                "used": 16750544
+                "used": 16754848
               },
               "pc": 9,
               "sub": null
@@ -121,7 +121,7 @@
                   "0x40"
                 ],
                 "store": null,
-                "used": 16750541
+                "used": 16754845
               },
               "pc": 10,
               "sub": null
@@ -134,7 +134,7 @@
                   "0x2"
                 ],
                 "store": null,
-                "used": 16750538
+                "used": 16754842
               },
               "pc": 12,
               "sub": null
@@ -148,7 +148,7 @@
                   "key": "0x2",
                   "val": "0x0"
                 },
-                "used": 16745538
+                "used": 16749842
               },
               "pc": 13,
               "sub": null
