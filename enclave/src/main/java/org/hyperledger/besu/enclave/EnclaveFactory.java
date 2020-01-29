@@ -59,7 +59,7 @@ public class EnclaveFactory {
       final URI enclaveUri,
       final Path orionKeyStoreFile,
       final Path orionKeyStorePasswordFile,
-      final Optional<Path> orionClientWhitelistFile) {
+      final Optional<Path> orionWhitelistFile) {
     if (enclaveUri.getPort() == -1) {
       throw new EnclaveIOException("Illegal URI - no port specified");
     }
@@ -72,17 +72,15 @@ public class EnclaveFactory {
     // set TLS options if passed in
     try {
       if (orionKeyStoreFile != null && orionKeyStorePasswordFile != null) {
-        clientOptions.setPfxTrustOptions(convertFrom(orionKeyStoreFile, orionKeyStorePasswordFile));
+        clientOptions.setPfxKeyCertOptions(convertFrom(orionKeyStoreFile, orionKeyStorePasswordFile));
       }
 
-      // client whitelist file is optional
-      if (orionClientWhitelistFile.isPresent()) {
-        //        clientOptions.
-        //        result.setClientAuth(ClientAuth.REQUIRED);
-        // TODO what does this map to for client
+      // server whitelist file is optional, and if supplied we turn off CA
+      if (orionWhitelistFile.isPresent()) {
         try {
+          final boolean trustCA = false;
           clientOptions.setTrustOptions(
-              VertxTrustOptions.whitelistClients(orionClientWhitelistFile.get()));
+              VertxTrustOptions.whitelistServers(orionWhitelistFile.get(), trustCA));
         } catch (final IllegalArgumentException e) {
           throw new InvalidConfigurationException("Illegally formatted client fingerprint file.");
         }

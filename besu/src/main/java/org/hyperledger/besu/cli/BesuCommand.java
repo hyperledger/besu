@@ -531,11 +531,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Path orionKeyStorePasswordFile = null;
 
   @Option(
-      names = "--orion-tls-known-clients-file",
+      names = "--orion-tls-known-servers-file",
       paramLabel = MANDATORY_FILE_FORMAT_HELP,
       description =
-          "Path to a file containing the fingerprints of authorized clients. "
-              + "Any client may connect if this option is not specified.")
+          "Path to a file containing the fingerprints of authorized servers (Orions). "
+              + "Can connect to any server if this option is not specified.")
   private final Path orionClientWhitelistFile = null;
 
   @Option(
