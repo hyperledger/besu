@@ -235,6 +235,8 @@ public class CliqueGetSignerMetricsTest {
 
     final List<SignerMetricResult> signerMetricResultList = new ArrayList<>();
 
+    when(blockchainQueries.headBlockNumber()).thenReturn(endBlock);
+
     LongStream.range(startBlock, endBlock)
         .forEach(value -> signerMetricResultList.add(generateBlock(value)));
 

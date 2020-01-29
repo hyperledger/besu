@@ -109,9 +109,11 @@ public abstract class AbstractGetSignerMetricsMethod {
   }
 
   private long getEndBlockNumber(final Optional<BlockParameter> endBlockParameter) {
+    final long headBlockNumber = blockchainQueries.headBlockNumber();
     return endBlockParameter
         .map(this::resolveBlockNumber)
-        .orElseGet(blockchainQueries::headBlockNumber);
+        .filter(blockNumber -> blockNumber <= headBlockNumber)
+        .orElse(headBlockNumber);
   }
 
   private boolean isValidParameters(final long startBlock, final long endBlock) {
