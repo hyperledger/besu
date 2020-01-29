@@ -159,7 +159,7 @@ public class JsonRpcHttpServiceTlsTest {
   }
 
   private Optional<TlsConfiguration> getRpcHttpTlsConfiguration() {
-    final Path knownClientsFile = getKnownClientsFile();
+    final Path knownClientsFile = createTempFile();
     writeToKnownClientsFile(
         okHttpClientCertificate.getCommonName(),
         okHttpClientCertificate.getCertificateHexFingerprint(),
@@ -177,19 +177,19 @@ public class JsonRpcHttpServiceTlsTest {
     return Optional.of(tlsConfiguration);
   }
 
-  private Path getKnownClientsFile() {
+  private Path createPasswordFile(final SelfSignedP12Certificate selfSignedP12Certificate) {
     try {
-      return folder.newFile().toPath();
-    } catch (IOException e) {
+      return Files.writeString(
+          createTempFile(), new String(selfSignedP12Certificate.getPassword()));
+    } catch (final IOException e) {
       throw new UncheckedIOException(e);
     }
   }
 
-  private Path createPasswordFile(final SelfSignedP12Certificate selfSignedP12Certificate) {
+  private Path createTempFile() {
     try {
-      return Files.writeString(
-          folder.newFile().toPath(), new String(selfSignedP12Certificate.getPassword()));
-    } catch (final IOException e) {
+      return folder.newFile().toPath();
+    } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
   }
