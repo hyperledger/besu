@@ -33,8 +33,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.LongStream;
 
-import org.apache.logging.log4j.LogManager;
-
 public abstract class AbstractGetSignerMetricsMethod {
 
   private static final long DEFAULT_RANGE_BLOCK = 100;
@@ -94,10 +92,8 @@ public abstract class AbstractGetSignerMetricsMethod {
                           .getVoteTallyAfterBlock(header)
                           .getValidators()
                           .forEach(
-                              address -> {
-                                LogManager.getLogger().info("--> " + address);
-                                proposersMap.computeIfAbsent(address, SignerMetricResult::new);
-                              });
+                              address ->
+                                  proposersMap.computeIfAbsent(address, SignerMetricResult::new));
                     }
                   });
             });
