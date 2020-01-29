@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.Trace;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.vm.Code;
+import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -97,7 +98,10 @@ public class VmTraceGenerator {
   private boolean mustIgnore(final TraceFrame frame) {
     if ("STOP".equals(frame.getOpcode()) && transactionTrace.getTraceFrames().size() == 1) {
       return true;
-    } else if (!frame.getExceptionalHaltReasons().isEmpty()) {
+    } else if (!frame.getExceptionalHaltReasons().isEmpty()
+        && !frame
+            .getExceptionalHaltReasons()
+            .contains(ExceptionalHaltReason.INVALID_JUMP_DESTINATION)) {
       return true;
     } else {
       return frame.isVirtualOperation();
