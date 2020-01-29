@@ -3,7 +3,7 @@
     "jsonrpc": "2.0",
     "method": "trace_replayBlockTransactions",
     "params": [
-      "0xD",
+      "0x11",
       [
         "trace",
         "vmTrace",
@@ -21,8 +21,8 @@
           "0x0000000000000000000000000000000000000000": {
             "balance": {
               "*": {
-                "from": "0x14d1120d7b66e8c4f",
-                "to": "0x14d1120d8a56e7f3d"
+                "from": "0x1bc16d678af8acf45",
+                "to": "0x1bc16d678afd772be"
               }
             },
             "code": "=",
@@ -32,15 +32,15 @@
           "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73": {
             "balance": {
               "*": {
-                "from": "0xffffffffffffffffffffffffffffffffffca83816",
-                "to": "0xfffffffffffffffffffffffffffffffff0da84528"
+                "from": "0xffffffffffffffffffffffffffffffffc3eabf520",
+                "to": "0xffffffffffffffffffffffffffffffffc3e5f51a7"
               }
             },
             "code": "=",
             "nonce": {
               "*": {
-                "from": "0x9",
-                "to": "0xa"
+                "from": "0x12",
+                "to": "0x13"
               }
             },
             "storage": {}
@@ -53,25 +53,28 @@
               "from": "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
               "gas": "0xffadea",
               "input": "0x",
-              "to": "0x0080000000000000000000000000000000000000",
+              "to": "0x00f0000000000000000000000000000000000000",
               "value": "0x0"
             },
-            "error": "Out of gas",
+            "result": {
+              "gasUsed": "0xf",
+              "output": "0x"
+            },
             "subtraces": 0,
             "traceAddress": [],
             "type": "call"
           }
         ],
-        "transactionHash": "0x547c7e2fcdf9f88b03b4f4184d667d6768c669f279785774d0cf42435cab06f1",
+        "transactionHash": "0x93d974a14c784be231a7b580a6476a330e5d6f9ddfef70a6b5cacd9f91a1e495",
         "vmTrace": {
-          "code": "0x7f3940be4289e4c3587d88c1856cc95352461992db0a584c281226faefe560b3017f14c4d2c102bdeb2354bfc3dc96a95e4512cf3a8461e0560e2272dbf884ef390552",
+          "code": "0x6001600260039190",
           "ops": [
             {
               "cost": 3,
               "ex": {
                 "mem": null,
                 "push": [
-                  "0x3940be4289e4c3587d88c1856cc95352461992db0a584c281226faefe560b301"
+                  "0x1"
                 ],
                 "store": null,
                 "used": 16756199
@@ -84,12 +87,54 @@
               "ex": {
                 "mem": null,
                 "push": [
-                  "0x14c4d2c102bdeb2354bfc3dc96a95e4512cf3a8461e0560e2272dbf884ef3905"
+                  "0x2"
                 ],
                 "store": null,
                 "used": 16756196
               },
-              "pc": 33,
+              "pc": 2,
+              "sub": null
+            },
+            {
+              "cost": 3,
+              "ex": {
+                "mem": null,
+                "push": [
+                  "0x3"
+                ],
+                "store": null,
+                "used": 16756193
+              },
+              "pc": 4,
+              "sub": null
+            },
+            {
+              "cost": 3,
+              "ex": {
+                "mem": null,
+                "push": [
+                  "0x3",
+                  "0x2",
+                  "0x1"
+                ],
+                "store": null,
+                "used": 16756190
+              },
+              "pc": 6,
+              "sub": null
+            },
+            {
+              "cost": 3,
+              "ex": {
+                "mem": null,
+                "push": [
+                  "0x1",
+                  "0x2"
+                ],
+                "store": null,
+                "used": 16756187
+              },
+              "pc": 7,
               "sub": null
             }
           ]
