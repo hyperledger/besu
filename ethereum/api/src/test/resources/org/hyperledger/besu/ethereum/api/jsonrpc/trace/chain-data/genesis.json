@@ -9,6 +9,7 @@
     "byzantiumBlock": 0,
     "constantinopleBlock": 0,
     "constantinopleFixBlock": 0,
+    "istanbulBlock": 0,
     "ethash": {
       "fixeddifficulty": 15
     },
