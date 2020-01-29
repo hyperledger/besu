@@ -16,11 +16,12 @@ package org.hyperledger.besu.ethereum.api.jsonrpc;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIOException;
-import static org.assertj.core.api.Assertions.fail;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ETH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.NET;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.WEB3;
 import static org.hyperledger.besu.ethereum.api.tls.KnownClientFileUtil.writeToKnownClientsFile;
+import static org.hyperledger.besu.ethereum.api.tls.TlsClientAuthConfiguration.Builder.aTlsClientAuthConfiguration;
+import static org.hyperledger.besu.ethereum.api.tls.TlsConfiguration.Builder.aTlsConfiguration;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
@@ -49,6 +50,7 @@ import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatService;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -156,28 +158,40 @@ public class JsonRpcHttpServiceTlsTest {
     return config;
   }
 
-  private TlsConfiguration getRpcHttpTlsConfiguration() {
-    try {
-      final Path knownClientsFile = folder.newFile().toPath();
-      writeToKnownClientsFile(
-          okHttpClientCertificate.getCommonName(),
-          okHttpClientCertificate.getCertificateHexFingerprint(),
-          knownClientsFile);
+  private Optional<TlsConfiguration> getRpcHttpTlsConfiguration() {
+    final Path knownClientsFile = getKnownClientsFile();
+    writeToKnownClientsFile(
+        okHttpClientCertificate.getCommonName(),
+        okHttpClientCertificate.getCertificateHexFingerprint(),
+        knownClientsFile);
 
-      return new TlsConfiguration(
-          besuCertificate.getKeyStoreFile(),
-          new FileBasedPasswordProvider(createPasswordFile(besuCertificate)),
-          knownClientsFile);
-    } catch (Exception e) {
-      fail("TLS Configuration failed");
-      return null;
+    final TlsConfiguration tlsConfiguration =
+        aTlsConfiguration()
+            .withKeyStorePath(besuCertificate.getKeyStoreFile())
+            .withKeyStorePasswordSupplier(
+                new FileBasedPasswordProvider(createPasswordFile(besuCertificate)))
+            .withClientAuthConfiguration(
+                aTlsClientAuthConfiguration().withKnownClientsFile(knownClientsFile).build())
+            .build();
+
+    return Optional.of(tlsConfiguration);
+  }
+
+  private Path getKnownClientsFile() {
+    try {
+      return folder.newFile().toPath();
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
     }
   }
 
-  private Path createPasswordFile(final SelfSignedP12Certificate selfSignedP12Certificate)
-      throws IOException {
-    return Files.writeString(
-        folder.newFile().toPath(), new String(selfSignedP12Certificate.getPassword()));
+  private Path createPasswordFile(final SelfSignedP12Certificate selfSignedP12Certificate) {
+    try {
+      return Files.writeString(
+          folder.newFile().toPath(), new String(selfSignedP12Certificate.getPassword()));
+    } catch (final IOException e) {
+      throw new UncheckedIOException(e);
+    }
   }
 
   @After

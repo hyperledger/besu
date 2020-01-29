@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Streams.stream;
 import static java.util.stream.Collectors.toList;
+import static org.apache.tuweni.net.tls.VertxTrustOptions.whitelistClients;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationUtils;
@@ -32,6 +33,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcNoResp
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponseType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcUnauthorizedResponse;
+import org.hyperledger.besu.ethereum.api.tls.TlsClientAuthConfiguration;
+import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.nat.NatMethod;
 import org.hyperledger.besu.nat.NatService;
@@ -79,7 +82,6 @@ import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.CorsHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.tuweni.net.tls.VertxTrustOptions;
 
 public class JsonRpcHttpService {
 
@@ -279,34 +281,47 @@ public class JsonRpcHttpService {
     return applyTlsConfig(httpServerOptions);
   }
 
-  private HttpServerOptions applyTlsConfig(final HttpServerOptions httpServerOptions) {
-    config
-        .getTlsConfiguration()
-        .ifPresent(
-            tlsConfiguration -> {
-              try {
-                httpServerOptions
-                    .setSsl(true)
-                    .setPfxKeyCertOptions(
-                        new PfxOptions()
-                            .setPath(tlsConfiguration.getKeyStorePath().toString())
-                            .setPassword(tlsConfiguration.getKeyStorePassword()));
+  private HttpServerOptions applyTlsConfig(final HttpServerOptions input) {
+    if (config.getTlsConfiguration().isEmpty()) {
+      return input;
+    }
 
-                tlsConfiguration
-                    .getKnownClientsFile()
-                    .ifPresent(
-                        knownClientsFile ->
-                            httpServerOptions
-                                .setClientAuth(ClientAuth.REQUIRED)
-                                .setTrustOptions(
-                                    VertxTrustOptions.whitelistClients(knownClientsFile)));
-              } catch (final RuntimeException re) {
-                throw new JsonRpcServiceException(
-                    String.format(
-                        "TLS options failed to initialize for Ethereum JSON RPC listener: %s",
-                        re.getMessage()));
-              }
-            });
+    final TlsConfiguration tlsConfiguration = config.getTlsConfiguration().get();
+    final HttpServerOptions httpServerOptions = new HttpServerOptions(input);
+    try {
+      httpServerOptions
+          .setSsl(true)
+          .setPfxKeyCertOptions(
+              new PfxOptions()
+                  .setPath(tlsConfiguration.getKeyStorePath().toString())
+                  .setPassword(tlsConfiguration.getKeyStorePassword()));
+
+      if (tlsConfiguration.getClientAuthConfiguration().isEmpty()) {
+        return httpServerOptions;
+      }
+
+      return applyTlsClientAuth(
+          tlsConfiguration.getClientAuthConfiguration().get(), httpServerOptions);
+    } catch (final RuntimeException re) {
+      throw new JsonRpcServiceException(
+          String.format(
+              "TLS options failed to initialize for Ethereum JSON RPC listener: %s",
+              re.getMessage()));
+    }
+  }
+
+  private HttpServerOptions applyTlsClientAuth(
+      final TlsClientAuthConfiguration clientAuthConfiguration, final HttpServerOptions input) {
+    final HttpServerOptions httpServerOptions = new HttpServerOptions(input);
+    httpServerOptions.setClientAuth(ClientAuth.REQUIRED);
+    clientAuthConfiguration
+        .getKnownClientsFile()
+        .ifPresent(
+            knownClientsFile ->
+                httpServerOptions.setTrustOptions(
+                    whitelistClients(
+                        knownClientsFile, clientAuthConfiguration.isCaClientsEnabled())));
+
     return httpServerOptions;
   }
 
