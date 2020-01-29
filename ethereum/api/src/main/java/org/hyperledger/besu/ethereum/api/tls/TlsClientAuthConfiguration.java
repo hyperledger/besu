@@ -32,12 +32,12 @@ public class TlsClientAuthConfiguration {
       return new Builder();
     }
 
-    public Builder withKnownClientsFile(Path knownClientsFile) {
+    public Builder withKnownClientsFile(final Path knownClientsFile) {
       this.knownClientsFile = knownClientsFile;
       return this;
     }
 
-    public Builder withCaClientsEnabled(boolean caClientsEnabled) {
+    public Builder withCaClientsEnabled(final boolean caClientsEnabled) {
       this.caClientsEnabled = caClientsEnabled;
       return this;
     }
