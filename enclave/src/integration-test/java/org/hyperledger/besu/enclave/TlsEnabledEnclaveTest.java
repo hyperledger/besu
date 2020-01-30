@@ -54,7 +54,6 @@ public class TlsEnabledEnclaveTest {
   public void setup() {
     serverFactory = new TlsEnabledHttpServerFactory();
     this.vertx = Vertx.vertx();
-
   }
 
   @After
@@ -63,9 +62,7 @@ public class TlsEnabledEnclaveTest {
     this.shutdown();
   }
 
-  private Enclave createAndStartEnclave(
-      final int orionPort,
-      final Path workDir)
+  private Enclave createAndStartEnclave(final int orionPort, final Path workDir)
       throws IOException {
 
     final Path serverFingerprintFile = workDir.resolve("server_known_clients");
@@ -100,8 +97,7 @@ public class TlsEnabledEnclaveTest {
     // Note: the HttpServer always responds with a JsonRpcSuccess, result="I'm up".
     final HttpServer orionHttpServer = serverFactory.create(orionCert, besuCert, workDir);
 
-    final Enclave enclave =
-        createAndStartEnclave(orionHttpServer.actualPort(), workDir);
+    final Enclave enclave = createAndStartEnclave(orionHttpServer.actualPort(), workDir);
 
     assertThat(enclave.upCheck()).isEqualTo(true);
   }

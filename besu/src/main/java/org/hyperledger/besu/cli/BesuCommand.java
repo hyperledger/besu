@@ -533,10 +533,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @Option(
       names = "--orion-tls-known-servers-file",
       paramLabel = MANDATORY_FILE_FORMAT_HELP,
-      description =
-          "Path to a file containing the fingerprints of authorized servers (Orions). "
-              + "Can connect to any server if this option is not specified.")
-  private final Path orionClientWhitelistFile = null;
+      description = "Path to a file containing the fingerprints of authorized servers (Orions).")
+  private final Path orionServersWhitelistFile = null;
 
   @Option(
       names = {"--metrics-enabled"},
@@ -1300,7 +1298,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                           new ParameterException(
                               commandLine,
                               "File containing password to unlock keystore is required when TLS is enabled for Orion endpoint"))),
-          orionClientWhitelistFile);
+          orionServersWhitelistFile);
     }
     return null;
   }
@@ -1535,7 +1533,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         privacyParametersBuilder.setTlsConfiguration(
             orionTlsConfiguration.getKeyStorePath(),
             orionKeyStorePasswordFile,
-            orionClientWhitelistFile);
+            orionServersWhitelistFile);
       }
       privacyParametersBuilder.setEnclaveFactory(new EnclaveFactory(vertx));
     } else {

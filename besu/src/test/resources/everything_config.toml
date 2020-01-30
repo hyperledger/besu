@@ -60,7 +60,7 @@ rpc-http-tls-known-clients-file="rpc_tls_clients.txt"
 orion-tls-enabled=false
 orion-tls-keystore-file="none.pfx"
 orion-tls-keystore-password-file="none.passwd"
-orion-tls-known-clients-file="orion_tls_clients.txt"
+orion-tls-known-servers-file="orion_tls_servers.txt"
 
 # GRAPHQL HTTP
 graphql-http-enabled=false

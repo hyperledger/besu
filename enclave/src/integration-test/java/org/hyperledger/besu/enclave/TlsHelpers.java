@@ -4,6 +4,8 @@
 
 package org.hyperledger.besu.enclave;
 
+import org.hyperledger.besu.crypto.MessageDigestFactory;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -22,7 +24,6 @@ import java.util.List;
 import java.util.StringJoiner;
 
 import com.google.common.collect.Lists;
-import org.hyperledger.besu.crypto.MessageDigestFactory;
 
 public class TlsHelpers {
 
