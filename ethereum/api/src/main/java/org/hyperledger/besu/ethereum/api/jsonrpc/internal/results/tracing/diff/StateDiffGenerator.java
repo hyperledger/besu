@@ -86,6 +86,9 @@ public class StateDiffGenerator {
     // Add deleted accounts
     for (final Address accountAddress : transactionUpdater.getDeletedAccountAddresses()) {
       final Account deletedAccount = previousUpdater.get(accountAddress);
+      if (deletedAccount == null) {
+        continue;
+      }
       final AccountDiff accountDiff =
           new AccountDiff(
               createDiffNode(deletedAccount, null, StateDiffGenerator::balanceAsHex),
