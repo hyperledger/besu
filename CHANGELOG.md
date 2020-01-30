@@ -1,5 +1,28 @@
 # Changelog
 
+## 1.4 Beta 3 
+
+### Additions and Improvements 
+
+- Stable Plugins APIs [\#346](https://github.com/hyperledger/besu/pull/346)
+
+The `BesuEvents` service and related `data` package have been marked as a stable plugin api. 
+
+### Bug Fixes
+
+- Return missing signers from getSignerMetrics [\#343](https://github.com/hyperledger/besu/pull/)
+
+### Experimental Features
+
+- Experimental support for `trace_replayBlockTransactions` (many PRs)
+
+We have added support for the `trace_replayBlockTransactions` JSON-RPC call. To enable this API add 
+`TRACE` to your `rpc-http-api` options (such as `--rpc-http-api TRACE` at the command line). 
+
+This is not a production ready API.  There are still bugs relating to traced memory from calls and 
+returns, and the gas calculation reported in the flat traces does not always match up with the 
+correct gas calculated for consensus.
+
 ## 1.4 Beta 2 
 
 ### Additions and Improvements 
