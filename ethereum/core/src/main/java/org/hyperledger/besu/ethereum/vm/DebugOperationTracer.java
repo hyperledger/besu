@@ -132,7 +132,7 @@ public class DebugOperationTracer implements OperationTracer {
     }
     final Bytes[] memoryContents = new Bytes32[frame.memoryWordSize().intValue()];
     for (int i = 0; i < memoryContents.length; i++) {
-      memoryContents[i] = frame.readMemory(UInt256.valueOf(i * 32), UINT256_32);
+      memoryContents[i] = frame.readMemory(UInt256.valueOf(i * 32L), UINT256_32);
     }
     return Optional.of(memoryContents);
   }
