@@ -6,34 +6,22 @@
 
 - CLI option to enable TLS client auth for JSON-RPC HTTP [\#340](https://github.com/hyperledger/besu/pull/340)
 
-Following cli options are added to enable TLS client authentication and trusting client certificates.
+Added CLI options to enable TLS client authentication and trusting client certificates: 
 ~~~
 --rpc-http-tls-client-auth-enabled - Enable TLS client authentication for the JSON-RPC HTTP service (default: false)
 --rpc-http-tls-known-clients-file - Path to file containing client's certificate common name and fingerprint for client authentication.
 --rpc-http-tls-ca-clients-enabled - Enable to accept clients certificate signed by a valid CA for client authentication (default: false)
 ~~~
-If client-auth is enabled, then user must either enable CA signed clients OR provide a known-clients file. An error is reported if both CA signed clients is disabled and known-clients file is not specified.
+If client-auth is enabled, user must either enable CA signed clients OR provide a known-clients file. An error is reported 
+if both CA signed clients is disabled and known-clients file is not specified.
 
 - Stable Plugins APIs [\#346](https://github.com/hyperledger/besu/pull/346)
 
-The `BesuEvents` service and related `data` package have been marked as a stable plugin api. 
+The `BesuEvents` service and related `data` package have been marked as a stable plugin API. 
 
 ### Bug Fixes
 
 - Return missing signers from getSignerMetrics [\#343](https://github.com/hyperledger/besu/pull/)
-
-### Experimental Features
-
-- Experimental support for `trace_replayBlockTransactions` (many PRs)
-
-We have added support for the `trace_replayBlockTransactions` JSON-RPC call. To enable this API add 
-`TRACE` to your `rpc-http-api` options (such as `--rpc-http-api TRACE` at the command line). 
-
-This is not a production ready API.  There are still bugs relating to traced memory from calls and 
-returns, and the gas calculation reported in the flat traces does not always match up with the 
-correct gas calculated for consensus.
-
---
 
 ## 1.4 Beta 2 
 
