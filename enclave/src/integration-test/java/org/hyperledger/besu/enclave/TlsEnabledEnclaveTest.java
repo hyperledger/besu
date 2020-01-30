@@ -62,7 +62,7 @@ public class TlsEnabledEnclaveTest {
     this.shutdown();
   }
 
-  private Enclave createAndStartEnclave(final int orionPort, final Path workDir)
+  private Enclave createAndStartEnclave(final int orionPort, final Path workDir, boolean tlsEnabled)
       throws IOException {
 
     final Path serverFingerprintFile = workDir.resolve("server_known_clients");
@@ -71,15 +71,18 @@ public class TlsEnabledEnclaveTest {
       populateFingerprintFile(serverFingerprintFile, orionCert);
       Files.write(passwordFile, besuCert.getPassword().getBytes(Charset.defaultCharset()));
 
-      final Enclave enclave =
-          new EnclaveFactory(vertx)
-              .createVertxEnclave(
-                  new URI("http://localhost:" + orionPort),
-                  besuCert.getPkcs12File().toPath(),
-                  passwordFile,
-                  Optional.of(serverFingerprintFile));
-
-      return enclave;
+      final EnclaveFactory factory = new EnclaveFactory(vertx);
+      final URI orionUri = new URI("http://localhost:" + orionPort);
+      if (tlsEnabled) {
+        return factory
+                .createVertxEnclave(
+                    orionUri,
+                    besuCert.getPkcs12File().toPath(),
+                    passwordFile,
+                    Optional.of(serverFingerprintFile));
+      } else {
+        return factory.createVertxEnclave(orionUri);
+      }
     } catch (KeyStoreException | NoSuchAlgorithmException | CertificateException e) {
       fail("unable to populate fingerprint file");
       return null;
@@ -97,8 +100,21 @@ public class TlsEnabledEnclaveTest {
     // Note: the HttpServer always responds with a JsonRpcSuccess, result="I'm up".
     final HttpServer orionHttpServer = serverFactory.create(orionCert, besuCert, workDir);
 
-    final Enclave enclave = createAndStartEnclave(orionHttpServer.actualPort(), workDir);
+    final Enclave enclave = createAndStartEnclave(orionHttpServer.actualPort(), workDir, true);
 
     assertThat(enclave.upCheck()).isEqualTo(true);
+  }
+
+  @Test
+  public void enclaveWithoutTlsEnabledCannotConnect() throws IOException {
+
+    Path workDir = Files.createTempDirectory("test-certs");
+
+    // Note: the HttpServer always responds with a JsonRpcSuccess, result="I'm up".
+    final HttpServer orionHttpServer = serverFactory.create(orionCert, besuCert, workDir);
+
+    final Enclave enclave = createAndStartEnclave(orionHttpServer.actualPort(), workDir, false);
+
+    assertThat(enclave.upCheck()).isEqualTo(false);
   }
 }
