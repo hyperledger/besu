@@ -60,8 +60,8 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     try {
-      final PrivateTransaction privateTransaction =
-          privacySendTransaction.validateAndDecodeRequest(requestContext);
+      final PrivateTransaction privateTransaction = privacySendTransaction.decode(requestContext);
+      privacySendTransaction.validate(requestContext, privateTransaction);
       final Transaction privacyMarkerTransaction =
           createMarkerTransaction(requestContext, privateTransaction);
       final Object id = requestContext.getRequest().getId();
@@ -83,7 +83,7 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
       final JsonRpcRequestContext requestContext, final PrivateTransaction privateTransaction)
       throws ErrorResponseException {
     final String enclaveKey =
-        privacySendTransaction.sendTransactionToEnclave(privateTransaction, requestContext);
+        privacySendTransaction.sendToEnclave(privateTransaction, requestContext);
     return privacyController.createPrivacyMarkerTransaction(enclaveKey, privateTransaction);
   }
 }

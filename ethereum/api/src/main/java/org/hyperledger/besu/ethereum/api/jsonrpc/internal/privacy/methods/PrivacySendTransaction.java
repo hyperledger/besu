@@ -53,14 +53,7 @@ public class PrivacySendTransaction {
     this.enclavePublicKeyProvider = enclavePublicKeyProvider;
   }
 
-  public PrivateTransaction validateAndDecodeRequest(final JsonRpcRequestContext request)
-      throws ErrorResponseException {
-    final PrivateTransaction privateTransaction = decodeTransaction(request);
-    validateTransaction(request, privateTransaction);
-    return privateTransaction;
-  }
-
-  private PrivateTransaction decodeTransaction(final JsonRpcRequestContext request)
+  public PrivateTransaction decode(final JsonRpcRequestContext request)
       throws ErrorResponseException {
     if (request.getRequest().getParamLength() != 1) {
       throw new ErrorResponseException(
@@ -77,17 +70,7 @@ public class PrivacySendTransaction {
     return privateTransaction;
   }
 
-  private PrivateTransaction decodeRawTransaction(final String hash)
-      throws InvalidJsonRpcRequestException {
-    try {
-      return PrivateTransaction.readFrom(RLP.input(Bytes.fromHexString(hash)));
-    } catch (final IllegalArgumentException | RLPException e) {
-      LOG.debug(e);
-      throw new InvalidJsonRpcRequestException("Invalid raw private transaction hex", e);
-    }
-  }
-
-  private void validateTransaction(
+  public void validate(
       final JsonRpcRequestContext request, final PrivateTransaction privateTransaction)
       throws ErrorResponseException {
     final String privacyGroupId = privacyGroupId(privateTransaction);
@@ -103,7 +86,30 @@ public class PrivacySendTransaction {
     }
   }
 
-  public String privacyGroupId(final PrivateTransaction privateTransaction) {
+  public String sendToEnclave(
+      final PrivateTransaction privateTransaction, final JsonRpcRequestContext requestContext)
+      throws ErrorResponseException {
+    try {
+      return privacyController.sendTransaction(
+          privateTransaction, enclavePublicKeyProvider.getEnclaveKey(requestContext.getUser()));
+    } catch (final Exception e) {
+      throw new ErrorResponseException(
+          new JsonRpcErrorResponse(
+              requestContext.getRequest().getId(), convertEnclaveInvalidReason(e.getMessage())));
+    }
+  }
+
+  private PrivateTransaction decodeRawTransaction(final String hash)
+      throws InvalidJsonRpcRequestException {
+    try {
+      return PrivateTransaction.readFrom(RLP.input(Bytes.fromHexString(hash)));
+    } catch (final IllegalArgumentException | RLPException e) {
+      LOG.debug(e);
+      throw new InvalidJsonRpcRequestException("Invalid raw private transaction hex", e);
+    }
+  }
+
+  private String privacyGroupId(final PrivateTransaction privateTransaction) {
     if (privateTransaction.getPrivacyGroupId().isPresent()) {
       return privateTransaction.getPrivacyGroupId().get().toBase64String();
     } else {
@@ -120,19 +126,6 @@ public class PrivacySendTransaction {
                           .collect(Collectors.toList()))
               .orElse(Lists.newArrayList());
       return PrivacyGroupUtils.generateLegacyGroup(privateFrom, privateFor).toString();
-    }
-  }
-
-  public String sendTransactionToEnclave(
-      final PrivateTransaction privateTransaction, final JsonRpcRequestContext requestContext)
-      throws ErrorResponseException {
-    try {
-      return privacyController.sendTransaction(
-          privateTransaction, enclavePublicKeyProvider.getEnclaveKey(requestContext.getUser()));
-    } catch (final Exception e) {
-      throw new ErrorResponseException(
-          new JsonRpcErrorResponse(
-              requestContext.getRequest().getId(), convertEnclaveInvalidReason(e.getMessage())));
     }
   }
 
