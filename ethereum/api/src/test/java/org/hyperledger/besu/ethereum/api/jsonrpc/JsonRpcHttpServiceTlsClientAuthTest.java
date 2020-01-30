@@ -61,6 +61,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
@@ -88,6 +89,8 @@ public class JsonRpcHttpServiceTlsClientAuthTest {
   private static final BigInteger CHAIN_ID = BigInteger.valueOf(123);
   private static final Collection<RpcApi> JSON_RPC_APIS = List.of(ETH, NET, WEB3);
   private static final NatService natService = new NatService(Optional.empty());
+  private static final SelfSignedP12Certificate CLIENT_AS_CA_CERT =
+      SelfSignedP12Certificate.create();
   private JsonRpcHttpService service;
   private String baseUrl;
   private Map<String, JsonRpcMethod> rpcMethods;
@@ -132,6 +135,11 @@ public class JsonRpcHttpServiceTlsClientAuthTest {
                     mock(MetricsConfiguration.class),
                     natService,
                     Collections.emptyMap()));
+
+    System.setProperty("javax.net.ssl.trustStore", CLIENT_AS_CA_CERT.getKeyStoreFile().toString());
+    System.setProperty(
+        "javax.net.ssl.trustStorePassword", new String(CLIENT_AS_CA_CERT.getPassword()));
+
     service = createJsonRpcHttpService(createJsonRpcConfig());
     service.start().join();
     baseUrl = service.url();
@@ -171,7 +179,10 @@ public class JsonRpcHttpServiceTlsClientAuthTest {
             .withKeyStorePasswordSupplier(
                 new FileBasedPasswordProvider(createPasswordFile(besuCertificate)))
             .withClientAuthConfiguration(
-                aTlsClientAuthConfiguration().withKnownClientsFile(knownClientsFile).build())
+                aTlsClientAuthConfiguration()
+                    .withKnownClientsFile(knownClientsFile)
+                    .withCaClientsEnabled(true)
+                    .build())
             .build();
 
     return Optional.of(tlsConfiguration);
@@ -196,35 +207,38 @@ public class JsonRpcHttpServiceTlsClientAuthTest {
 
   @After
   public void shutdownServer() {
+    System.clearProperty("javax.net.ssl.trustStore");
+    System.clearProperty("javax.net.ssl.trustStorePassword");
+
     service.stop().join();
   }
 
   @Test
   public void connectionFailsWhenTlsClientAuthIsNotProvided() {
-    final String id = "123";
-    final String json =
-        "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_version\"}";
-
-    final OkHttpClient httpClient = getTlsHttpClientWithoutClientAuth();
-    assertThatIOException()
-        .isThrownBy(
-            () -> {
-              try (final Response response = httpClient.newCall(buildPostRequest(json)).execute()) {
-                Assertions.fail("Call should have failed. Got: " + response);
-              } catch (final Exception e) {
-                e.printStackTrace();
-                throw e;
-              }
-            });
+    netVersionFailed(this::getTlsHttpClientWithoutClientAuth);
   }
 
   @Test
   public void connectionFailsWhenClientIsNotWhitelisted() {
+    netVersionFailed(this::getTlsHttpClientNotKnownToServer);
+  }
+
+  @Test
+  public void netVersionSuccessfulOnTlsWithClientAuth() throws Exception {
+    netVersionSuccessful(this::getTlsHttpClientWithClientAuth);
+  }
+
+  @Test
+  public void netVersionSuccessfulOnTlsWithClientCertAddedAsCA() throws Exception {
+    netVersionSuccessful(this::getTlsHttpClientAddedAsCA);
+  }
+
+  private void netVersionFailed(final Supplier<OkHttpClient> okHttpClientSupplier) {
     final String id = "123";
     final String json =
         "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_version\"}";
 
-    final OkHttpClient httpClient = getTlsHttpClientNotKnownToServer();
+    final OkHttpClient httpClient = okHttpClientSupplier.get();
     assertThatIOException()
         .isThrownBy(
             () -> {
@@ -237,13 +251,13 @@ public class JsonRpcHttpServiceTlsClientAuthTest {
             });
   }
 
-  @Test
-  public void netVersionSuccessfulOnTlsWithClientAuth() throws Exception {
+  private void netVersionSuccessful(final Supplier<OkHttpClient> okHttpClientSupplier)
+      throws Exception {
     final String id = "123";
     final String json =
         "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_version\"}";
 
-    final OkHttpClient httpClient = getTlsHttpClientWithClientAuth();
+    final OkHttpClient httpClient = okHttpClientSupplier.get();
     try (final Response response = httpClient.newCall(buildPostRequest(json)).execute()) {
 
       assertThat(response.code()).isEqualTo(200);
@@ -265,6 +279,13 @@ public class JsonRpcHttpServiceTlsClientAuthTest {
     return TlsOkHttpClientBuilder.anOkHttpClient()
         .withBesuCertificate(besuCertificate)
         .withOkHttpCertificate(okHttpClientCertificate)
+        .build();
+  }
+
+  private OkHttpClient getTlsHttpClientAddedAsCA() {
+    return TlsOkHttpClientBuilder.anOkHttpClient()
+        .withBesuCertificate(besuCertificate)
+        .withOkHttpCertificate(CLIENT_AS_CA_CERT)
         .build();
   }
 
