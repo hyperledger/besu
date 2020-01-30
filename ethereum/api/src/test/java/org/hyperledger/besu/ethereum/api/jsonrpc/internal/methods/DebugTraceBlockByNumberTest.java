@@ -48,7 +48,7 @@ public class DebugTraceBlockByNumberTest {
   private final BlockchainQueries blockchain = mock(BlockchainQueries.class);
   private final BlockTracer blockTracer = mock(BlockTracer.class);
   private final DebugTraceBlockByNumber debugTraceBlockByNumber =
-      new DebugTraceBlockByNumber(blockTracer, blockchain);
+      new DebugTraceBlockByNumber(() -> blockTracer, blockchain);
 
   private final Hash blockHash =
       Hash.fromHexString("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
@@ -73,15 +73,20 @@ public class DebugTraceBlockByNumberTest {
             Optional.of(Gas.of(56)),
             2,
             EnumSet.noneOf(ExceptionalHaltReason.class),
+            Bytes.EMPTY,
+            () -> Bytes.EMPTY,
             Optional.empty(),
             Optional.empty(),
             Optional.empty(),
+            null,
             Optional.empty(),
             Optional.empty(),
             Optional.empty(),
             0,
             Optional.empty(),
             Optional.empty(),
+            Optional.empty(),
+            false,
             Optional.empty());
 
     final TransactionProcessor.Result transaction1Result = mock(TransactionProcessor.Result.class);

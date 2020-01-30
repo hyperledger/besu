@@ -40,6 +40,6 @@ public class MStoreOperation extends AbstractOperation {
     final UInt256 location = UInt256.fromBytes(frame.popStackItem());
     final Bytes32 value = frame.popStackItem();
 
-    frame.writeMemory(location, UInt256.valueOf(32), value);
+    frame.writeMemory(location, UInt256.valueOf(32), value, true);
   }
 }

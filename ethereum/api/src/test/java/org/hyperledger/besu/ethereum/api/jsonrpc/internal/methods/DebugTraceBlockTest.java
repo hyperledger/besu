@@ -53,7 +53,7 @@ public class DebugTraceBlockTest {
   private final BlockTracer blockTracer = mock(BlockTracer.class);
   private final BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
   private final DebugTraceBlock debugTraceBlock =
-      new DebugTraceBlock(blockTracer, new MainnetBlockHeaderFunctions(), blockchainQueries);
+      new DebugTraceBlock(() -> blockTracer, new MainnetBlockHeaderFunctions(), blockchainQueries);
 
   @Test
   public void nameShouldBeDebugTraceBlock() {
@@ -86,15 +86,20 @@ public class DebugTraceBlockTest {
             Optional.of(Gas.of(56)),
             2,
             EnumSet.noneOf(ExceptionalHaltReason.class),
+            Bytes.EMPTY,
+            () -> Bytes.EMPTY,
             Optional.empty(),
             Optional.empty(),
             Optional.empty(),
+            null,
             Optional.empty(),
             Optional.empty(),
             Optional.empty(),
             0,
             Optional.empty(),
             Optional.empty(),
+            Optional.empty(),
+            false,
             Optional.empty());
 
     final TransactionProcessor.Result transaction1Result = mock(TransactionProcessor.Result.class);

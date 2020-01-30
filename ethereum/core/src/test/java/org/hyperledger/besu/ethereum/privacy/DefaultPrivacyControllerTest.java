@@ -41,6 +41,7 @@ import org.hyperledger.besu.enclave.types.SendResponse;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
@@ -48,10 +49,12 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInv
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.FixedKeySigningPrivateMarkerTransactionFactory;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
+import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.orion.testutil.OrionKeyUtils;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -78,10 +81,12 @@ public class DefaultPrivacyControllerTest {
   private static final String ENCLAVE_PUBLIC_KEY = "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
   private static final String ENCLAVE_KEY2 = "Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=";
   private static final String PRIVACY_GROUP_ID = "DyAOiF/ynpc+JXa2YAGB0bCitSlOMNm+ShmB/7M6C4w=";
+  private static final ArrayList<Log> LOGS = new ArrayList<>();
 
   private PrivacyController privacyController;
   private PrivacyController brokenPrivacyController;
   private PrivateTransactionValidator privateTransactionValidator;
+  private PrivateTransactionSimulator privateTransactionSimulator;
   private Enclave enclave;
   private Account account;
   private String enclavePublicKey;
@@ -103,9 +108,9 @@ public class DefaultPrivacyControllerTest {
           .signAndBuild(KEY_PAIR);
 
   private Enclave mockEnclave() {
-    Enclave mockEnclave = mock(Enclave.class);
-    SendResponse response = new SendResponse(TRANSACTION_KEY);
-    ReceiveResponse receiveResponse = new ReceiveResponse(new byte[0], "mock", null);
+    final Enclave mockEnclave = mock(Enclave.class);
+    final SendResponse response = new SendResponse(TRANSACTION_KEY);
+    final ReceiveResponse receiveResponse = new ReceiveResponse(new byte[0], "mock", null);
     when(mockEnclave.send(anyString(), anyString(), anyList())).thenReturn(response);
     when(mockEnclave.send(anyString(), anyString(), anyString())).thenReturn(response);
     when(mockEnclave.receive(any(), any())).thenReturn(receiveResponse);
@@ -113,16 +118,26 @@ public class DefaultPrivacyControllerTest {
   }
 
   private Enclave brokenMockEnclave() {
-    Enclave mockEnclave = mock(Enclave.class);
+    final Enclave mockEnclave = mock(Enclave.class);
     when(mockEnclave.send(anyString(), anyString(), anyList()))
         .thenThrow(EnclaveServerException.class);
     return mockEnclave;
   }
 
   private PrivateTransactionValidator mockPrivateTransactionValidator() {
-    PrivateTransactionValidator validator = mock(PrivateTransactionValidator.class);
+    final PrivateTransactionValidator validator = mock(PrivateTransactionValidator.class);
     when(validator.validate(any(), any())).thenReturn(ValidationResult.valid());
     return validator;
+  }
+
+  private PrivateTransactionSimulator mockPrivateTransactionSimulator() {
+    final PrivateTransactionSimulator simulator = mock(PrivateTransactionSimulator.class);
+    when(simulator.process(any(), any(), any(long.class)))
+        .thenReturn(
+            Optional.of(
+                PrivateTransactionProcessor.Result.successful(
+                    LOGS, 0, Bytes.EMPTY, ValidationResult.valid())));
+    return simulator;
   }
 
   @Before
@@ -139,6 +154,7 @@ public class DefaultPrivacyControllerTest {
     enclavePublicKey = OrionKeyUtils.loadKey("orion_key_0.pub");
     privateTransactionValidator = mockPrivateTransactionValidator();
     enclave = mockEnclave();
+    privateTransactionSimulator = mockPrivateTransactionSimulator();
 
     privacyController =
         new DefaultPrivacyController(
@@ -147,7 +163,8 @@ public class DefaultPrivacyControllerTest {
             worldStateArchive,
             privateTransactionValidator,
             new FixedKeySigningPrivateMarkerTransactionFactory(
-                Address.DEFAULT_PRIVACY, (address) -> 0, KEY_PAIR));
+                Address.DEFAULT_PRIVACY, (address) -> 0, KEY_PAIR),
+            privateTransactionSimulator);
     brokenPrivacyController =
         new DefaultPrivacyController(
             brokenMockEnclave(),
@@ -155,7 +172,8 @@ public class DefaultPrivacyControllerTest {
             worldStateArchive,
             privateTransactionValidator,
             new FixedKeySigningPrivateMarkerTransactionFactory(
-                Address.DEFAULT_PRIVACY, (address) -> 0, KEY_PAIR));
+                Address.DEFAULT_PRIVACY, (address) -> 0, KEY_PAIR),
+            privateTransactionSimulator);
   }
 
   @Test
@@ -416,6 +434,15 @@ public class DefaultPrivacyControllerTest {
 
     assertThat(nonce).isEqualTo(Account.DEFAULT_NONCE);
     verifyNoInteractions(account);
+  }
+
+  @Test
+  public void simulatingPrivateTransactionWorks() {
+    final CallParameter callParameter = mock(CallParameter.class);
+    final Optional<PrivateTransactionProcessor.Result> result =
+        privacyController.simulatePrivateTransaction(
+            "Group1", ENCLAVE_PUBLIC_KEY, callParameter, 1);
+    assertThat(result.isPresent()).isTrue();
   }
 
   private static PrivateTransaction buildLegacyPrivateTransaction() {

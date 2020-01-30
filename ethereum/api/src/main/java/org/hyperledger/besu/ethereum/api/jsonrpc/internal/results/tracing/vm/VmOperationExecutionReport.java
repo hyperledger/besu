@@ -37,7 +37,7 @@ public class VmOperationExecutionReport {
   }
 
   public void addPush(final String value) {
-    push.add(value);
+    push.add(0, value);
   }
 
   public void singlePush(final String value) {
