@@ -14,13 +14,10 @@
  */
 package org.hyperledger.besu.plugin.data;
 
-import org.hyperledger.besu.plugin.Unstable;
-
 /**
  * An interface to mark objects that also represents a disceete quantity, such as an unsigned
  * integer value.
  */
-@Unstable
 public interface Quantity {
 
   /**

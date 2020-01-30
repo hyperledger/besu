@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.plugin.services;
 
-import org.hyperledger.besu.plugin.Unstable;
 import org.hyperledger.besu.plugin.data.Address;
 import org.hyperledger.besu.plugin.data.LogWithMetadata;
 import org.hyperledger.besu.plugin.data.PropagatedBlockContext;
@@ -41,7 +40,6 @@ import org.apache.tuweni.bytes.Bytes32;
  *   <li><b>SynchronizerStatus </b> - Fired when the status of the synchronizer changes.
  * </ul>
  */
-@Unstable
 public interface BesuEvents {
 
   /**
