@@ -98,6 +98,8 @@ public class JsonRpcHttpServiceTlsClientAuthTest {
   private final SelfSignedP12Certificate besuCertificate = SelfSignedP12Certificate.create();
   private final SelfSignedP12Certificate okHttpClientCertificate =
       SelfSignedP12Certificate.create();
+  private final FileBasedPasswordProvider fileBasedPasswordProvider =
+      new FileBasedPasswordProvider(createPasswordFile(besuCertificate));
 
   @Before
   public void initServer() throws Exception {
@@ -140,7 +142,7 @@ public class JsonRpcHttpServiceTlsClientAuthTest {
     System.setProperty(
         "javax.net.ssl.trustStorePassword", new String(CLIENT_AS_CA_CERT.getPassword()));
 
-    service = createJsonRpcHttpService(createJsonRpcConfig());
+    service = createJsonRpcHttpService(createJsonRpcConfig(this::getRpcHttpTlsConfiguration));
     service.start().join();
     baseUrl = service.url();
   }
@@ -158,11 +160,12 @@ public class JsonRpcHttpServiceTlsClientAuthTest {
         HealthService.ALWAYS_HEALTHY);
   }
 
-  private JsonRpcConfiguration createJsonRpcConfig() {
+  private JsonRpcConfiguration createJsonRpcConfig(
+      final Supplier<Optional<TlsConfiguration>> tlsConfigurationSupplier) {
     final JsonRpcConfiguration config = JsonRpcConfiguration.createDefault();
     config.setPort(0);
     config.setHostsWhitelist(Collections.singletonList("*"));
-    config.setTlsConfiguration(getRpcHttpTlsConfiguration());
+    config.setTlsConfiguration(tlsConfigurationSupplier.get());
     return config;
   }
 
@@ -176,13 +179,24 @@ public class JsonRpcHttpServiceTlsClientAuthTest {
     final TlsConfiguration tlsConfiguration =
         aTlsConfiguration()
             .withKeyStorePath(besuCertificate.getKeyStoreFile())
-            .withKeyStorePasswordSupplier(
-                new FileBasedPasswordProvider(createPasswordFile(besuCertificate)))
+            .withKeyStorePasswordSupplier(fileBasedPasswordProvider)
             .withClientAuthConfiguration(
                 aTlsClientAuthConfiguration()
                     .withKnownClientsFile(knownClientsFile)
                     .withCaClientsEnabled(true)
                     .build())
+            .build();
+
+    return Optional.of(tlsConfiguration);
+  }
+
+  private Optional<TlsConfiguration> getRpcHttpTlsConfWithoutKnownClients() {
+    final TlsConfiguration tlsConfiguration =
+        aTlsConfiguration()
+            .withKeyStorePath(besuCertificate.getKeyStoreFile())
+            .withKeyStorePasswordSupplier(fileBasedPasswordProvider)
+            .withClientAuthConfiguration(
+                aTlsClientAuthConfiguration().withCaClientsEnabled(true).build())
             .build();
 
     return Optional.of(tlsConfiguration);
@@ -214,26 +228,42 @@ public class JsonRpcHttpServiceTlsClientAuthTest {
   }
 
   @Test
-  public void connectionFailsWhenTlsClientAuthIsNotProvided() {
-    netVersionFailed(this::getTlsHttpClientWithoutClientAuth);
+  public void connectionFailsWhenClientCertIsNotProvided() {
+    netVersionFailed(this::getTlsHttpClientWithoutCert, baseUrl);
   }
 
   @Test
   public void connectionFailsWhenClientIsNotWhitelisted() {
-    netVersionFailed(this::getTlsHttpClientNotKnownToServer);
+    netVersionFailed(this::getTlsHttpClientNotKnownToServer, baseUrl);
   }
 
   @Test
-  public void netVersionSuccessfulOnTlsWithClientAuth() throws Exception {
-    netVersionSuccessful(this::getTlsHttpClientWithClientAuth);
+  public void netVersionSuccessfulOnTlsWithClientCertInKnownClientsFile() throws Exception {
+    netVersionSuccessful(this::getTlsHttpClient, baseUrl);
   }
 
   @Test
   public void netVersionSuccessfulOnTlsWithClientCertAddedAsCA() throws Exception {
-    netVersionSuccessful(this::getTlsHttpClientAddedAsCA);
+    netVersionSuccessful(this::getTlsHttpClientAddedAsCA, baseUrl);
   }
 
-  private void netVersionFailed(final Supplier<OkHttpClient> okHttpClientSupplier) {
+  @Test
+  public void netVersionSuccessfulOnTlsWithClientCertAsCAWithoutKnownFiles() throws Exception {
+    JsonRpcHttpService jsonRpcHttpService = null;
+    try {
+      jsonRpcHttpService =
+          createJsonRpcHttpService(createJsonRpcConfig(this::getRpcHttpTlsConfWithoutKnownClients));
+      jsonRpcHttpService.start().join();
+      netVersionSuccessful(this::getTlsHttpClientAddedAsCA, jsonRpcHttpService.url());
+    } finally {
+      if (jsonRpcHttpService != null) {
+        jsonRpcHttpService.stop().join();
+      }
+    }
+  }
+
+  private void netVersionFailed(
+      final Supplier<OkHttpClient> okHttpClientSupplier, final String baseUrl) {
     final String id = "123";
     final String json =
         "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_version\"}";
@@ -242,7 +272,8 @@ public class JsonRpcHttpServiceTlsClientAuthTest {
     assertThatIOException()
         .isThrownBy(
             () -> {
-              try (final Response response = httpClient.newCall(buildPostRequest(json)).execute()) {
+              try (final Response response =
+                  httpClient.newCall(buildPostRequest(json, baseUrl)).execute()) {
                 Assertions.fail("Call should have failed. Got: " + response);
               } catch (final Exception e) {
                 e.printStackTrace();
@@ -251,14 +282,14 @@ public class JsonRpcHttpServiceTlsClientAuthTest {
             });
   }
 
-  private void netVersionSuccessful(final Supplier<OkHttpClient> okHttpClientSupplier)
-      throws Exception {
+  private void netVersionSuccessful(
+      final Supplier<OkHttpClient> okHttpClientSupplier, final String baseUrl) throws Exception {
     final String id = "123";
     final String json =
         "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_version\"}";
 
     final OkHttpClient httpClient = okHttpClientSupplier.get();
-    try (final Response response = httpClient.newCall(buildPostRequest(json)).execute()) {
+    try (final Response response = httpClient.newCall(buildPostRequest(json, baseUrl)).execute()) {
 
       assertThat(response.code()).isEqualTo(200);
       // Check general format of result
@@ -275,7 +306,7 @@ public class JsonRpcHttpServiceTlsClientAuthTest {
     }
   }
 
-  private OkHttpClient getTlsHttpClientWithClientAuth() {
+  private OkHttpClient getTlsHttpClient() {
     return TlsOkHttpClientBuilder.anOkHttpClient()
         .withBesuCertificate(besuCertificate)
         .withOkHttpCertificate(okHttpClientCertificate)
@@ -296,11 +327,11 @@ public class JsonRpcHttpServiceTlsClientAuthTest {
         .build();
   }
 
-  private OkHttpClient getTlsHttpClientWithoutClientAuth() {
+  private OkHttpClient getTlsHttpClientWithoutCert() {
     return TlsOkHttpClientBuilder.anOkHttpClient().withBesuCertificate(besuCertificate).build();
   }
 
-  private Request buildPostRequest(final String json) {
+  private Request buildPostRequest(final String json, final String baseUrl) {
     final RequestBody body = RequestBody.create(json, MediaType.parse(JSON_HEADER));
     return new Request.Builder().post(body).url(baseUrl).build();
   }

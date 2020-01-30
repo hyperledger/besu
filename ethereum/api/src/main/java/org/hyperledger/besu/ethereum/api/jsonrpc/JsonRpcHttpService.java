@@ -278,16 +278,16 @@ public class JsonRpcHttpService {
             .setPort(config.getPort())
             .setHandle100ContinueAutomatically(true);
 
-    return applyTlsConfig(httpServerOptions);
+    applyTlsConfig(httpServerOptions);
+    return httpServerOptions;
   }
 
-  private HttpServerOptions applyTlsConfig(final HttpServerOptions input) {
+  private void applyTlsConfig(final HttpServerOptions httpServerOptions) {
     if (config.getTlsConfiguration().isEmpty()) {
-      return input;
+      return;
     }
 
     final TlsConfiguration tlsConfiguration = config.getTlsConfiguration().get();
-    final HttpServerOptions httpServerOptions = new HttpServerOptions(input);
     try {
       httpServerOptions
           .setSsl(true)
@@ -296,12 +296,11 @@ public class JsonRpcHttpService {
                   .setPath(tlsConfiguration.getKeyStorePath().toString())
                   .setPassword(tlsConfiguration.getKeyStorePassword()));
 
-      if (tlsConfiguration.getClientAuthConfiguration().isEmpty()) {
-        return httpServerOptions;
-      }
-
-      return applyTlsClientAuth(
-          tlsConfiguration.getClientAuthConfiguration().get(), httpServerOptions);
+      tlsConfiguration
+          .getClientAuthConfiguration()
+          .ifPresent(
+              clientAuthConfiguration ->
+                  applyTlsClientAuth(clientAuthConfiguration, httpServerOptions));
     } catch (final RuntimeException re) {
       throw new JsonRpcServiceException(
           String.format(
@@ -310,9 +309,9 @@ public class JsonRpcHttpService {
     }
   }
 
-  private HttpServerOptions applyTlsClientAuth(
-      final TlsClientAuthConfiguration clientAuthConfiguration, final HttpServerOptions input) {
-    final HttpServerOptions httpServerOptions = new HttpServerOptions(input);
+  private void applyTlsClientAuth(
+      final TlsClientAuthConfiguration clientAuthConfiguration,
+      final HttpServerOptions httpServerOptions) {
     httpServerOptions.setClientAuth(ClientAuth.REQUIRED);
     clientAuthConfiguration
         .getKnownClientsFile()
@@ -321,8 +320,6 @@ public class JsonRpcHttpService {
                 httpServerOptions.setTrustOptions(
                     whitelistClients(
                         knownClientsFile, clientAuthConfiguration.isCaClientsEnabled())));
-
-    return httpServerOptions;
   }
 
   private String tlsLogMessage() {
