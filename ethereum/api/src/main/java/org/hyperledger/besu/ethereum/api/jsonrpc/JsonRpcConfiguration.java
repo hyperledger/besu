@@ -40,7 +40,7 @@ public class JsonRpcConfiguration {
   private boolean authenticationEnabled = false;
   private String authenticationCredentialsFile;
   private File authenticationPublicKeyFile;
-  private TlsConfiguration tlsConfiguration;
+  private Optional<TlsConfiguration> tlsConfiguration = Optional.empty();
 
   public static JsonRpcConfiguration createDefault() {
     final JsonRpcConfiguration config = new JsonRpcConfiguration();
@@ -133,10 +133,10 @@ public class JsonRpcConfiguration {
   }
 
   public Optional<TlsConfiguration> getTlsConfiguration() {
-    return Optional.ofNullable(tlsConfiguration);
+    return tlsConfiguration;
   }
 
-  public void setTlsConfiguration(final TlsConfiguration tlsConfiguration) {
+  public void setTlsConfiguration(final Optional<TlsConfiguration> tlsConfiguration) {
     this.tlsConfiguration = tlsConfiguration;
   }
 
@@ -152,6 +152,7 @@ public class JsonRpcConfiguration {
         .add("authenticationEnabled", authenticationEnabled)
         .add("authenticationCredentialsFile", authenticationCredentialsFile)
         .add("authenticationPublicKeyFile", authenticationPublicKeyFile)
+        .add("tlsConfiguration", tlsConfiguration)
         .toString();
   }
 
