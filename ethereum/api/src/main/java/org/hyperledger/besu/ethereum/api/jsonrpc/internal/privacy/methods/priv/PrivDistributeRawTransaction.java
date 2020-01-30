@@ -54,9 +54,9 @@ public class PrivDistributeRawTransaction implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    final PrivateTransaction privateTransaction;
     try {
-      privateTransaction = privacySendTransaction.validateAndDecodeRequest(requestContext);
+      final PrivateTransaction privateTransaction =
+          privacySendTransaction.validateAndDecodeRequest(requestContext);
       final String enclaveKey =
           privacySendTransaction.sendTransactionToEnclave(privateTransaction, requestContext);
       return new JsonRpcSuccessResponse(

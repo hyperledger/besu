@@ -29,8 +29,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
-import org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
-import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
@@ -67,12 +65,12 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
       final Transaction privacyMarkerTransaction =
           createMarkerTransaction(requestContext, privateTransaction);
       final Object id = requestContext.getRequest().getId();
-      final ValidationResult<TransactionInvalidReason> transactionInvalidReasonValidationResult =
-          transactionPool.addLocalTransaction(privacyMarkerTransaction);
-      return transactionInvalidReasonValidationResult.either(
-          () -> new JsonRpcSuccessResponse(id, privacyMarkerTransaction.getHash().toString()),
-          errorReason ->
-              new JsonRpcErrorResponse(id, convertTransactionInvalidReason(errorReason)));
+      return transactionPool
+          .addLocalTransaction(privacyMarkerTransaction)
+          .either(
+              () -> new JsonRpcSuccessResponse(id, privacyMarkerTransaction.getHash().toString()),
+              errorReason ->
+                  new JsonRpcErrorResponse(id, convertTransactionInvalidReason(errorReason)));
     } catch (final MultiTenancyValidationException e) {
       LOG.error("Unauthorized privacy multi-tenancy rpc request. {}", e.getMessage());
       return new JsonRpcErrorResponse(requestContext.getRequest().getId(), ENCLAVE_ERROR);
