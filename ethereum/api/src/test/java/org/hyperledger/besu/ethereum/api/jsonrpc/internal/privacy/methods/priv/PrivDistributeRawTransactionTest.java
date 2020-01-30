@@ -15,20 +15,30 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.auth.User;
-import io.vertx.ext.auth.jwt.impl.JWTUser;
-import java.util.Base64;
-import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacySendTransaction;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
+import org.hyperledger.besu.ethereum.privacy.PrivacyController;
+import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
+
+import java.util.Base64;
+
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.auth.User;
+import io.vertx.ext.auth.jwt.impl.JWTUser;
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -53,21 +63,21 @@ public class PrivDistributeRawTransactionTest {
   private final EnclavePublicKeyProvider enclavePublicKeyProvider = (user) -> ENCLAVE_PUBLIC_KEY;
 
   @Mock private PrivDistributeRawTransaction method;
-  @Mock private PrivacySendTransaction privacySendTransaction;
+  @Mock private PrivacyController privacyController;
 
   @Before
   public void before() {
-    method = new PrivDistributeRawTransaction(privacySendTransaction);
+    method = new PrivDistributeRawTransaction(privacyController, enclavePublicKeyProvider);
   }
 
   @Test
   public void validTransactionHashReturnedAfterDistribute() {
     final String enclavePublicKey = "93Ky7lXwFkMc7+ckoFgUMku5bpr9tz4zhmWmk9RlNng=";
-//    when(privacyController.sendTransaction(any(PrivateTransaction.class), any()))
-//        .thenReturn(new SendTransactionResponse(enclavePublicKey, ""));
-//    when(privacyController.validatePrivateTransaction(
-//            any(PrivateTransaction.class), any(String.class), any()))
-//        .thenReturn(ValidationResult.valid());
+    when(privacyController.sendTransaction(any(PrivateTransaction.class), any()))
+        .thenReturn(enclavePublicKey);
+    when(privacyController.validatePrivateTransaction(
+            any(PrivateTransaction.class), any(String.class), any()))
+        .thenReturn(ValidationResult.valid());
 
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
@@ -85,20 +95,20 @@ public class PrivDistributeRawTransactionTest {
     final JsonRpcResponse actualResponse = method.response(request);
 
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
-//    verify(privacyController)
-//        .sendTransaction(any(PrivateTransaction.class), eq(ENCLAVE_PUBLIC_KEY));
-//    verify(privacyController)
-//        .validatePrivateTransaction(
-//            any(PrivateTransaction.class), any(String.class), eq(ENCLAVE_PUBLIC_KEY));
+    verify(privacyController)
+        .sendTransaction(any(PrivateTransaction.class), eq(ENCLAVE_PUBLIC_KEY));
+    verify(privacyController)
+        .validatePrivateTransaction(
+            any(PrivateTransaction.class), any(String.class), eq(ENCLAVE_PUBLIC_KEY));
   }
 
   @Test
   public void invalidTransactionFailingWithMultiTenancyValidationErrorReturnsUnauthorizedError() {
-//    when(privacyController.validatePrivateTransaction(
-//            any(PrivateTransaction.class), any(String.class), any()))
-//        .thenReturn(ValidationResult.valid());
-//    when(privacyController.sendTransaction(any(PrivateTransaction.class), any()))
-//        .thenThrow(new MultiTenancyValidationException("validation failed"));
+    when(privacyController.sendTransaction(any(PrivateTransaction.class), any()))
+        .thenThrow(new MultiTenancyValidationException("validation failed"));
+    when(privacyController.validatePrivateTransaction(
+            any(PrivateTransaction.class), anyString(), anyString()))
+        .thenReturn(ValidationResult.valid());
 
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(

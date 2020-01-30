@@ -163,16 +163,11 @@ public class DefaultPrivacyControllerTest {
 
     final PrivateTransaction transaction = buildLegacyPrivateTransaction(1);
 
-    final String enclaveKey =
-        privacyController.sendTransaction(transaction, ENCLAVE_PUBLIC_KEY);
-
     final ValidationResult<TransactionInvalidReason> validationResult =
-        privacyController.validatePrivateTransaction(
-            transaction, "", ENCLAVE_PUBLIC_KEY);
+        privacyController.validatePrivateTransaction(transaction, "", ENCLAVE_PUBLIC_KEY);
 
     final Transaction markerTransaction =
-        privacyController.createPrivacyMarkerTransaction(
-            enclavePublicKey, transaction);
+        privacyController.createPrivacyMarkerTransaction(enclavePublicKey, transaction);
 
     assertThat(validationResult).isEqualTo(ValidationResult.valid());
     assertThat(markerTransaction.contractAddress()).isEqualTo(PUBLIC_TRANSACTION.contractAddress());
@@ -189,16 +184,14 @@ public class DefaultPrivacyControllerTest {
 
     final PrivateTransaction transaction = buildBesuPrivateTransaction(1);
 
-    final String enclaveKey =
-        privacyController.sendTransaction(transaction, ENCLAVE_PUBLIC_KEY);
+    final String enclaveKey = privacyController.sendTransaction(transaction, ENCLAVE_PUBLIC_KEY);
 
     final ValidationResult<TransactionInvalidReason> validationResult =
         privacyController.validatePrivateTransaction(
             transaction, transaction.getPrivacyGroupId().get().toString(), ENCLAVE_PUBLIC_KEY);
 
     final Transaction markerTransaction =
-        privacyController.createPrivacyMarkerTransaction(
-           enclaveKey, transaction);
+        privacyController.createPrivacyMarkerTransaction(enclaveKey, transaction);
 
     assertThat(validationResult).isEqualTo(ValidationResult.valid());
     assertThat(markerTransaction.contractAddress()).isEqualTo(PUBLIC_TRANSACTION.contractAddress());
@@ -224,11 +217,8 @@ public class DefaultPrivacyControllerTest {
         .thenReturn(ValidationResult.invalid(PRIVATE_NONCE_TOO_LOW));
 
     final PrivateTransaction transaction = buildLegacyPrivateTransaction(0);
-    final String enclaveKey =
-        privacyController.sendTransaction(transaction, ENCLAVE_PUBLIC_KEY);
     final ValidationResult<TransactionInvalidReason> validationResult =
-        privacyController.validatePrivateTransaction(
-            transaction, "", ENCLAVE_PUBLIC_KEY);
+        privacyController.validatePrivateTransaction(transaction, "", ENCLAVE_PUBLIC_KEY);
     assertThat(validationResult).isEqualTo(ValidationResult.invalid(PRIVATE_NONCE_TOO_LOW));
   }
 
@@ -239,11 +229,8 @@ public class DefaultPrivacyControllerTest {
 
     final PrivateTransaction transaction = buildLegacyPrivateTransaction(2);
 
-    final String enclaveKey =
-        privacyController.sendTransaction(transaction, ENCLAVE_PUBLIC_KEY);
     final ValidationResult<TransactionInvalidReason> validationResult =
-        privacyController.validatePrivateTransaction(
-            transaction, "", ENCLAVE_PUBLIC_KEY);
+        privacyController.validatePrivateTransaction(transaction, "", ENCLAVE_PUBLIC_KEY);
     assertThat(validationResult).isEqualTo(ValidationResult.invalid(INCORRECT_PRIVATE_NONCE));
   }
 

@@ -55,7 +55,13 @@ public class PrivacySendTransaction {
 
   public PrivateTransaction validateAndDecodeRequest(final JsonRpcRequestContext request)
       throws ErrorResponseException {
-    // private transaction
+    final PrivateTransaction privateTransaction = decodeTransaction(request);
+    validateTransaction(request, privateTransaction);
+    return privateTransaction;
+  }
+
+  private PrivateTransaction decodeTransaction(final JsonRpcRequestContext request)
+      throws ErrorResponseException {
     if (request.getRequest().getParamLength() != 1) {
       throw new ErrorResponseException(
           new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS));
@@ -68,20 +74,6 @@ public class PrivacySendTransaction {
       throw new ErrorResponseException(
           new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.DECODE_ERROR));
     }
-
-    // validation
-    final String privacyGroupId = privacyGroupId(privateTransaction);
-    final String enclaveKey = enclavePublicKeyProvider.getEnclaveKey(request.getUser());
-    final ValidationResult<TransactionInvalidReason> transactionValidationResult =
-        privacyController.validatePrivateTransaction(
-            privateTransaction, privacyGroupId, enclaveKey);
-    if (!transactionValidationResult.isValid()) {
-      throw new ErrorResponseException(
-          new JsonRpcErrorResponse(
-              request.getRequest().getId(),
-              convertTransactionInvalidReason(transactionValidationResult.getInvalidReason())));
-    }
-
     return privateTransaction;
   }
 
@@ -92,6 +84,22 @@ public class PrivacySendTransaction {
     } catch (final IllegalArgumentException | RLPException e) {
       LOG.debug(e);
       throw new InvalidJsonRpcRequestException("Invalid raw private transaction hex", e);
+    }
+  }
+
+  private void validateTransaction(
+      final JsonRpcRequestContext request, final PrivateTransaction privateTransaction)
+      throws ErrorResponseException {
+    final String privacyGroupId = privacyGroupId(privateTransaction);
+    final String enclaveKey = enclavePublicKeyProvider.getEnclaveKey(request.getUser());
+    final ValidationResult<TransactionInvalidReason> transactionValidationResult =
+        privacyController.validatePrivateTransaction(
+            privateTransaction, privacyGroupId, enclaveKey);
+    if (!transactionValidationResult.isValid()) {
+      throw new ErrorResponseException(
+          new JsonRpcErrorResponse(
+              request.getRequest().getId(),
+              convertTransactionInvalidReason(transactionValidationResult.getInvalidReason())));
     }
   }
 

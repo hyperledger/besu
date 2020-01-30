@@ -14,15 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.privacy;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
-import java.math.BigInteger;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.enclave.types.PrivacyGroup.Type;
@@ -38,6 +29,17 @@ import org.hyperledger.besu.ethereum.privacy.markertransaction.PrivateMarkerTran
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+
+import java.math.BigInteger;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 public class DefaultPrivacyController implements PrivacyController {
 
@@ -207,5 +209,4 @@ public class DefaultPrivacyController implements PrivacyController {
           payload, privateTransaction.getPrivateFrom().toBase64String(), privateFor);
     }
   }
-
 }

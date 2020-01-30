@@ -25,8 +25,7 @@ import java.util.List;
 
 public interface PrivacyController {
 
-  String sendTransaction(
-      PrivateTransaction privateTransaction, String enclavePublicKey);
+  String sendTransaction(PrivateTransaction privateTransaction, String enclavePublicKey);
 
   ReceiveResponse retrieveTransaction(String enclaveKey, String enclavePublicKey);
 
