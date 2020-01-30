@@ -53,11 +53,14 @@ public class TlsEnabledEnclaveTest {
   @Before
   public void setup() {
     serverFactory = new TlsEnabledHttpServerFactory();
+    this.vertx = Vertx.vertx();
+
   }
 
   @After
   public void cleanup() {
     serverFactory.shutdown();
+    this.shutdown();
   }
 
   private Enclave createAndStartEnclave(
