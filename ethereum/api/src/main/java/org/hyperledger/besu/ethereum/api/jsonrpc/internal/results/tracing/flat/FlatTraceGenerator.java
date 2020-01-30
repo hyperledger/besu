@@ -16,16 +16,19 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.Trace;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTrace.Context;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
+import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Deque;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -96,28 +99,48 @@ public class FlatTraceGenerator {
     // declare a queue of transactionTrace contexts
     final Deque<FlatTrace.Context> tracesContexts = new ArrayDeque<>();
     // add the first transactionTrace context to the queue of transactionTrace contexts
-    tracesContexts.addLast(new FlatTrace.Context(firstFlatTraceBuilder));
+    final Context traceContext = new Context(firstFlatTraceBuilder);
+    tracesContexts.addLast(traceContext);
     // declare the first transactionTrace context as the previous transactionTrace context
     final List<Integer> addressVector = new ArrayList<>();
     final AtomicLong cumulativeGasCost = new AtomicLong(0);
 
     int traceFrameIndex = 0;
-    for (TraceFrame traceFrame : transactionTrace.getTraceFrames()) {
+    final List<TraceFrame> traceFrames = transactionTrace.getTraceFrames();
+    final int lastTraceFrameIndex = traceFrames.size() - 1;
+    for (final TraceFrame traceFrame : traceFrames) {
       cumulativeGasCost.addAndGet(traceFrame.getGasCost().orElse(Gas.ZERO).toLong());
-      if ("CALL".equals(traceFrame.getOpcode())) {
+      final String opcodeString = traceFrame.getOpcode();
+      if ("CALL".equals(opcodeString)
+          || "CALLCODE".equals(opcodeString)
+          || "DELEGATECALL".equals(opcodeString)
+          || "STATICCALL".equals(opcodeString)) {
+        final Optional<TraceFrame> nextTraceFrame =
+            (traceFrameIndex < lastTraceFrameIndex)
+                ? Optional.of(traceFrames.get(traceFrameIndex + 1))
+                : Optional.empty();
         handleCall(
             transactionTrace,
             traceFrame,
+            nextTraceFrame,
             lastContractAddress,
             cumulativeGasCost,
             addressVector,
             tracesContexts,
-            traceFrameIndex);
-      } else if ("RETURN".equals(traceFrame.getOpcode()) || "STOP".equals(traceFrame.getOpcode())) {
+            traceFrameIndex,
+            opcodeString.toLowerCase(Locale.US));
+      } else if ("RETURN".equals(opcodeString) || "STOP".equals(opcodeString)) {
         handleReturn(transactionTrace, traceFrame, smartContractAddress, tracesContexts);
-      } else if ("SELFDESTRUCT".equals(traceFrame.getOpcode())) {
+      } else if ("SELFDESTRUCT".equals(opcodeString)) {
         handleSelfDestruct(
             traceFrame, lastContractAddress, cumulativeGasCost, addressVector, tracesContexts);
+      } else if (!traceFrame.getExceptionalHaltReasons().isEmpty()) {
+        traceContext
+            .getBuilder()
+            .error(
+                traceFrame.getExceptionalHaltReasons().stream()
+                    .map(ExceptionalHaltReason::getDescription)
+                    .reduce((a, b) -> a + ", " + b));
       }
       traceFrameIndex++;
     }
@@ -130,11 +153,13 @@ public class FlatTraceGenerator {
   private static void handleCall(
       final TransactionTrace transactionTrace,
       final TraceFrame traceFrame,
+      final Optional<TraceFrame> nextTraceFrame,
       final String lastContractAddress,
       final AtomicLong cumulativeGasCost,
       final List<Integer> addressVector,
       final Deque<FlatTrace.Context> tracesContexts,
-      final int traceFrameIndex) {
+      final int traceFrameIndex,
+      final String callType) {
     final Bytes32[] stack = traceFrame.getStack().orElseThrow();
     final Address contractCallAddress = toAddress(stack[stack.length - 2]);
     if (addressVector.size() <= traceFrame.getDepth()) {
@@ -154,7 +179,9 @@ public class FlatTraceGenerator {
             lastContractAddress,
             contractCallAddress,
             traceFrame,
-            traceFrameAfterCall.getGasRemaining());
+            traceFrameAfterCall.getGasRemaining(),
+            nextTraceFrame.map(TraceFrame::getInputData),
+            callType);
 
     final long gasCost = cumulativeGasCost.longValue();
     // retrieve the previous transactionTrace context
@@ -209,11 +236,7 @@ public class FlatTraceGenerator {
             flatTraceBuilder.type("create");
           },
           // set output otherwise
-          () ->
-              resultBuilder.output(
-                  traceFrame.getMemory().isPresent() && traceFrame.getMemory().get().length > 0
-                      ? traceFrame.getMemory().get()[0].toString()
-                      : "0x"));
+          () -> resultBuilder.output(traceFrame.getOutputData().toHexString()));
       ctx.markAsReturned();
       break;
     }
@@ -246,7 +269,7 @@ public class FlatTraceGenerator {
     final long gasCost = cumulativeGasCost.longValue();
     // retrieve the previous transactionTrace context
     if (!tracesContexts.isEmpty()) {
-      FlatTrace.Context previousContext = tracesContexts.peekLast();
+      final FlatTrace.Context previousContext = tracesContexts.peekLast();
       // increment sub traces counter of previous transactionTrace
       previousContext.getBuilder().incSubTraces();
       // set gas cost of previous transactionTrace

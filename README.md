@@ -55,7 +55,17 @@ Also feel free to [contact our Developer Advocate](https://chat.hyperledger.org/
 
 [Release Notes](CHANGELOG.md)
 
+## Special thanks
 
+YourKit for providing us with a free profiler open source license. 
+
+YourKit supports open source projects with innovative and intelligent tools
+for monitoring and profiling Java and .NET applications.
+YourKit is the creator of <a href="https://www.yourkit.com/java/profiler/">YourKit Java Profiler</a>,
+<a href="https://www.yourkit.com/.net/profiler/">YourKit .NET Profiler</a>,
+and <a href="https://www.yourkit.com/youmonitor/">YourKit YouMonitor</a>.
+
+![YourKit Logo](https://www.yourkit.com/images/yklogo.png)
 
 [Besu User Documentation]: https://besu.hyperledger.org
 [RocketChat]: https://chat.hyperledger.org/

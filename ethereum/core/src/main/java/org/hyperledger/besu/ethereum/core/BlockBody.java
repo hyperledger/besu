@@ -21,7 +21,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-public class BlockBody {
+public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
 
   private static final BlockBody EMPTY =
       new BlockBody(Collections.emptyList(), Collections.emptyList());
@@ -39,11 +39,13 @@ public class BlockBody {
   }
 
   /** @return The list of transactions of the block. */
+  @Override
   public List<Transaction> getTransactions() {
     return transactions;
   }
 
   /** @return The list of ommers of the block. */
+  @Override
   public List<BlockHeader> getOmmers() {
     return ommers;
   }
