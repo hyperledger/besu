@@ -296,7 +296,7 @@ public class TestContextBuilder {
         new ProtocolContext<>(
             blockChain,
             worldStateArchive,
-            new IbftContext(voteTallyCache, voteProposer, blockInterface));
+            new IbftContext(voteTallyCache, voteProposer, epochManager, blockInterface));
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
