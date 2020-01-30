@@ -65,15 +65,15 @@ public class CliqueJsonRpcMethods extends ApiGroupJsonRpcMethods {
         new Propose(voteProposer),
         new Discard(voteProposer),
         new CliqueProposals(voteProposer),
-        new CliqueGetSignerMetrics(new CliqueBlockInterface(), blockchainQueries));
+        new CliqueGetSignerMetrics(voteTallyCache, new CliqueBlockInterface(), blockchainQueries));
   }
 
   private VoteTallyCache createVoteTallyCache(
       final ProtocolContext<CliqueContext> context, final MutableBlockchain blockchain) {
     final EpochManager epochManager = context.getConsensusState().getEpochManager();
+    final CliqueBlockInterface cliqueBlockInterface = new CliqueBlockInterface();
     final VoteTallyUpdater voteTallyUpdater =
-        new VoteTallyUpdater(epochManager, new CliqueBlockInterface());
-    return new VoteTallyCache(
-        blockchain, voteTallyUpdater, epochManager, new CliqueBlockInterface());
+        new VoteTallyUpdater(epochManager, cliqueBlockInterface);
+    return new VoteTallyCache(blockchain, voteTallyUpdater, epochManager, cliqueBlockInterface);
   }
 }
