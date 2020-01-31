@@ -71,6 +71,7 @@ public class EnclaveFactory {
     // set TLS options if passed in
     try {
       if (orionKeyStoreFile != null && orionKeyStorePasswordFile != null) {
+        clientOptions.setSsl(true);
         clientOptions.setPfxKeyCertOptions(
             convertFrom(orionKeyStoreFile, orionKeyStorePasswordFile));
       }
