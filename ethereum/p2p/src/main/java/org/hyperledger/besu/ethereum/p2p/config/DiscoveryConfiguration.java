@@ -126,7 +126,7 @@ public class DiscoveryConfiguration {
                   "enode://f840b007500f50c98ea6f9c9e56dabf4690bbbbb7036d43682c531204341aff8315013547e5bee54117eb22bd3603585ae6bf713d9fa710659533fcab65d5b84@35.238.101.58:30303",
                   "enode://1813e90a0afdd7c1e4892c5376960e3577a9e6c5a4f86fa405a405c7421a4a1608248d77cc90333842f13d8954d82113dec480cfb76b4fef8cb475157cf4d5f2@10.28.224.3:30000",
                   "enode://06fdbeb591d26f53b2e7250025fe955ca013431ded930920cf1e3cd1f0c920e9a5e727949d209bc25a07288327b525279b11c5551315c50ff0db483e69fc159b@34.218.225.178:32000")
-                  .map(EnodeURL::fromString)
+              .map(EnodeURL::fromString)
               .collect(toList()));
 
   private boolean active = true;
