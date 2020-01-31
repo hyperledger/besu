@@ -4,7 +4,6 @@
 
 package org.hyperledger.besu.enclave;
 
-import java.util.Optional;
 import org.hyperledger.besu.crypto.MessageDigestFactory;
 
 import java.io.File;
@@ -22,6 +21,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Optional;
 import java.util.StringJoiner;
 
 import com.google.common.collect.Lists;
@@ -40,7 +40,8 @@ public class TlsHelpers {
   }
 
   public static void populateFingerprintFile(
-      final Path knownClientsPath, final TlsCertificateDefinition certDef,
+      final Path knownClientsPath,
+      final TlsCertificateDefinition certDef,
       final Optional<Integer> serverPortToAppendToHostname)
       throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException {
 
@@ -54,7 +55,6 @@ public class TlsHelpers {
     }
     Files.writeString(knownClientsPath, fingerPrintsToAdd.toString());
   }
-
 
   public static List<X509Certificate> getCertsFromPkcs12(final TlsCertificateDefinition certDef)
       throws KeyStoreException, NoSuchAlgorithmException, CertificateException {

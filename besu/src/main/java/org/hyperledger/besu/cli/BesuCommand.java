@@ -1114,6 +1114,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private BesuCommand configure() throws Exception {
     ethNetworkConfig = updateNetworkConfig(getNetwork());
     jsonRpcConfiguration = jsonRpcConfiguration();
+    checkOrionTlsOptionsDependencies();
     graphQLConfiguration = graphQLConfiguration();
     webSocketConfiguration = webSocketConfiguration();
     permissioningConfiguration = permissioningConfiguration();
@@ -1288,6 +1289,20 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         "--rpc-http-tls-client-auth-enabled",
         !isRpcHttpTlsClientAuthEnabled,
         asList("--rpc-http-tls-known-clients-file", "--rpc-http-tls-ca-clients-enabled"));
+  }
+
+  private void checkOrionTlsOptionsDependencies() {
+    CommandLineUtils.checkOptionDependencies(
+        logger,
+        commandLine,
+        "--orion-tls-enabled",
+        !isOrionTlsEnabled,
+        asList(
+            "--orion-tls-keystore-file",
+            "--orion-tls-keystore-password-file",
+            "--orion-tls-client-auth-enabled",
+            "--orion-tls-known-clients-file",
+            "--orion-tls-known-servers-file"));
   }
 
   private Optional<TlsConfiguration> rpcHttpTlsConfiguration() {
@@ -1566,9 +1581,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       if (isOrionTlsEnabled) {
         // TODO should this use TlsConfiguration
         privacyParametersBuilder.setTlsConfiguration(
-            orionKeyStoreFile,
-            orionKeyStorePasswordFile,
-            orionServersWhitelistFile);
+            orionKeyStoreFile, orionKeyStorePasswordFile, orionServersWhitelistFile);
       }
       privacyParametersBuilder.setEnclaveFactory(new EnclaveFactory(vertx));
     } else {
