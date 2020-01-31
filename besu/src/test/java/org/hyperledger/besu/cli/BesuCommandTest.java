@@ -38,7 +38,6 @@ import static org.mockito.ArgumentMatchers.isNotNull;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
@@ -806,7 +805,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void nodekeyOptionMustBeUsed() throws Exception {
-    final File file = new File("./specific/key");
+    final File file = new File("./specific/enclavePrivateKey");
     file.deleteOnExit();
 
     parseCommand("--node-private-key-file", file.getPath());
@@ -827,13 +826,13 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assumeFalse(isFullInstantiation());
 
-    final File file = new File("./specific/key");
+    final File file = new File("./specific/enclavePrivateKey");
     file.deleteOnExit();
 
-    parseCommand("--node-private-key-file", file.getPath());
+    parseCommand("--node-private-enclavePrivateKey-file", file.getPath());
 
     assertThat(commandErrorOutput.toString())
-        .startsWith("Unknown options: --node-private-key-file, .");
+        .startsWith("Unknown options: --node-private-enclavePrivateKey-file, .");
     assertThat(commandOutput.toString()).isEmpty();
   }
 
@@ -2842,8 +2841,6 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void mustUseEnclaveUriAndOptions() {
-    when(storageService.getByName("rocksdb-privacy"))
-        .thenReturn(Optional.of(rocksDBSPrivacyStorageFactory));
     final URL configFile = this.getClass().getResource("/orion_publickey.pub");
 
     parseCommand(
@@ -2870,7 +2867,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void privacyOptionsRequiresServiceToBeEnabled() {
 
-    final File file = new File("./specific/public_key");
+    final File file = new File("./specific/enclavePublicKey");
     file.deleteOnExit();
 
     parseCommand(
@@ -2916,9 +2913,6 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void privacyMultiTenancyIsConfiguredWhenConfiguredWithNecessaryOptions() {
-    when(storageService.getByName("rocksdb-privacy"))
-        .thenReturn(Optional.of(rocksDBSPrivacyStorageFactory));
-
     parseCommand(
         "--privacy-enabled",
         "--rpc-http-authentication-enabled",
@@ -3029,9 +3023,9 @@ public class BesuCommandTest extends CommandTestAbstract {
     assumeFalse(isFullInstantiation());
 
     final Path path = Paths.get(".");
-    parseCommand("--privacy-public-key-file", path.toString());
+    parseCommand("--privacy-public-enclavePrivateKey-file", path.toString());
     assertThat(commandErrorOutput.toString())
-        .startsWith("Unknown options: --privacy-public-key-file, .");
+        .startsWith("Unknown options: --privacy-public-enclavePrivateKey-file, .");
     assertThat(commandOutput.toString()).isEmpty();
   }
 
