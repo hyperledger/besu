@@ -72,6 +72,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.tls.FileBasedPasswordProvider;
+import org.hyperledger.besu.ethereum.api.tls.TlsClientAuthConfiguration;
 import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
@@ -469,11 +470,23 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Path rpcHttpTlsKeyStorePasswordFile = null;
 
   @Option(
+      names = {"--rpc-http-tls-client-auth-enabled"},
+      description =
+          "Enable TLS client authentication for the JSON-RPC HTTP service (default: ${DEFAULT-VALUE})")
+  private final Boolean isRpcHttpTlsClientAuthEnabled = false;
+
+  @Option(
       names = {"--rpc-http-tls-known-clients-file"},
       paramLabel = MANDATORY_FILE_FORMAT_HELP,
       description =
-          "Require clients to present known or CA-signed certificates. File must contain common name and fingerprint if certificate is not CA-signed")
+          "Path to file containing clients certificate common name and fingerprint for client authentication")
   private final Path rpcHttpTlsKnownClientsFile = null;
+
+  @Option(
+      names = {"--rpc-http-tls-ca-clients-enabled"},
+      description =
+          "Enable to accept clients certificate signed by a valid CA for client authentication (default: ${DEFAULT-VALUE})")
+  private final Boolean isRpcHttpTlsCAClientsEnabled = false;
 
   @Option(
       names = {"--rpc-ws-enabled"},
@@ -793,7 +806,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private WebSocketConfiguration webSocketConfiguration;
   private MetricsConfiguration metricsConfiguration;
   private Optional<PermissioningConfiguration> permissioningConfiguration;
-  private TlsConfiguration orionTlsConfiguration;
   private Collection<EnodeURL> staticNodes;
   private BesuController<?> besuController;
   private StandaloneCommand standaloneCommands;
@@ -1105,7 +1117,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     graphQLConfiguration = graphQLConfiguration();
     webSocketConfiguration = webSocketConfiguration();
     permissioningConfiguration = permissioningConfiguration();
-    orionTlsConfiguration = orionTlsConfiguration();
     staticNodes = loadStaticNodes();
     logger.info("Connecting to {} static nodes.", staticNodes.size());
     logger.trace("Static Nodes = {}", staticNodes);
@@ -1210,15 +1221,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private JsonRpcConfiguration jsonRpcConfiguration() {
-    CommandLineUtils.checkOptionDependencies(
-        logger,
-        commandLine,
-        "--rpc-http-tls-enabled",
-        !isRpcHttpTlsEnabled,
-        asList(
-            "--rpc-http-tls-keystore-file",
-            "--rpc-http-tls-keystore-password-file",
-            "--rpc-http-tls-known-clients-file"));
+    checkRpcTlsClientAuthOptionsDependencies();
+    checkRpcTlsOptionsDependencies();
 
     CommandLineUtils.checkOptionDependencies(
         logger,
@@ -1237,7 +1241,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--rpc-http-tls-enabled",
             "--rpc-http-tls-keystore-file",
             "--rpc-http-tls-keystore-password-file",
-            "--rpc-http-tls-known-clients-file"));
+            "--rpc-http-tls-client-auth-enabled",
+            "--rpc-http-tls-known-clients-file",
+            "--rpc-http-tls-ca-clients-enabled"));
 
     if (isRpcHttpAuthenticationEnabled
         && rpcHttpAuthenticationCredentialsFile() == null
@@ -1261,46 +1267,75 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return jsonRpcConfiguration;
   }
 
-  private TlsConfiguration rpcHttpTlsConfiguration() {
-    if (isRpcHttpEnabled && isRpcHttpTlsEnabled) {
-      return new TlsConfiguration(
-          Optional.ofNullable(rpcHttpTlsKeyStoreFile)
-              .orElseThrow(
-                  () ->
-                      new ParameterException(
-                          commandLine,
-                          "Keystore file is required when TLS is enabled for JSON-RPC HTTP endpoint")),
-          new FileBasedPasswordProvider(
-              Optional.ofNullable(rpcHttpTlsKeyStorePasswordFile)
-                  .orElseThrow(
-                      () ->
-                          new ParameterException(
-                              commandLine,
-                              "File containing password to unlock keystore is required when TLS is enabled for JSON-RPC HTTP endpoint"))),
-          rpcHttpTlsKnownClientsFile);
+  private void checkRpcTlsOptionsDependencies() {
+    CommandLineUtils.checkOptionDependencies(
+        logger,
+        commandLine,
+        "--rpc-http-tls-enabled",
+        !isRpcHttpTlsEnabled,
+        asList(
+            "--rpc-http-tls-keystore-file",
+            "--rpc-http-tls-keystore-password-file",
+            "--rpc-http-tls-client-auth-enabled",
+            "--rpc-http-tls-known-clients-file",
+            "--rpc-http-tls-ca-clients-enabled"));
+  }
+
+  private void checkRpcTlsClientAuthOptionsDependencies() {
+    CommandLineUtils.checkOptionDependencies(
+        logger,
+        commandLine,
+        "--rpc-http-tls-client-auth-enabled",
+        !isRpcHttpTlsClientAuthEnabled,
+        asList("--rpc-http-tls-known-clients-file", "--rpc-http-tls-ca-clients-enabled"));
+  }
+
+  private Optional<TlsConfiguration> rpcHttpTlsConfiguration() {
+    if (!isRpcTlsConfigurationRequired()) {
+      return Optional.empty();
     }
+
+    if (rpcHttpTlsKeyStoreFile == null) {
+      throw new ParameterException(
+          commandLine, "Keystore file is required when TLS is enabled for JSON-RPC HTTP endpoint");
+    }
+
+    if (rpcHttpTlsKeyStorePasswordFile == null) {
+      throw new ParameterException(
+          commandLine,
+          "File containing password to unlock keystore is required when TLS is enabled for JSON-RPC HTTP endpoint");
+    }
+
+    if (isRpcHttpTlsClientAuthEnabled
+        && !isRpcHttpTlsCAClientsEnabled
+        && rpcHttpTlsKnownClientsFile == null) {
+      throw new ParameterException(
+          commandLine,
+          "Known-clients file must be specified or CA clients must be enabled when TLS client authentication is enabled for JSON-RPC HTTP endpoint");
+    }
+
+    return Optional.of(
+        TlsConfiguration.Builder.aTlsConfiguration()
+            .withKeyStorePath(rpcHttpTlsKeyStoreFile)
+            .withKeyStorePasswordSupplier(
+                new FileBasedPasswordProvider(rpcHttpTlsKeyStorePasswordFile))
+            .withClientAuthConfiguration(rpcHttpTlsClientAuthConfiguration())
+            .build());
+  }
+
+  private TlsClientAuthConfiguration rpcHttpTlsClientAuthConfiguration() {
+    if (isRpcHttpTlsClientAuthEnabled) {
+      return TlsClientAuthConfiguration.Builder.aTlsClientAuthConfiguration()
+          .withKnownClientsFile(rpcHttpTlsKnownClientsFile)
+          .withCaClientsEnabled(isRpcHttpTlsCAClientsEnabled)
+          .build();
+    }
+
     return null;
   }
 
-  private TlsConfiguration orionTlsConfiguration() {
-    if (isOrionTlsEnabled) {
-      return new TlsConfiguration(
-          Optional.ofNullable(orionKeyStoreFile)
-              .orElseThrow(
-                  () ->
-                      new ParameterException(
-                          commandLine,
-                          "Keystore file is required when TLS is enabled for Orion endpoint")),
-          new FileBasedPasswordProvider(
-              Optional.ofNullable(orionKeyStorePasswordFile)
-                  .orElseThrow(
-                      () ->
-                          new ParameterException(
-                              commandLine,
-                              "File containing password to unlock keystore is required when TLS is enabled for Orion endpoint"))),
-          orionServersWhitelistFile);
-    }
-    return null;
+  private boolean isRpcTlsConfigurationRequired() {
+    return isRpcHttpEnabled && isRpcHttpTlsEnabled;
   }
 
   private WebSocketConfiguration webSocketConfiguration() {
@@ -1531,7 +1566,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       if (isOrionTlsEnabled) {
         // TODO should this use TlsConfiguration
         privacyParametersBuilder.setTlsConfiguration(
-            orionTlsConfiguration.getKeyStorePath(),
+            orionKeyStoreFile,
             orionKeyStorePasswordFile,
             orionServersWhitelistFile);
       }

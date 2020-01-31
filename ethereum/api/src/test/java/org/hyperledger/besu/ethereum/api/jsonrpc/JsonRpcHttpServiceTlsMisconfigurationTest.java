@@ -19,6 +19,8 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ETH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.NET;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.WEB3;
 import static org.hyperledger.besu.ethereum.api.tls.KnownClientFileUtil.writeToKnownClientsFile;
+import static org.hyperledger.besu.ethereum.api.tls.TlsClientAuthConfiguration.Builder.aTlsClientAuthConfiguration;
+import static org.hyperledger.besu.ethereum.api.tls.TlsConfiguration.Builder.aTlsConfiguration;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
@@ -206,31 +208,52 @@ public class JsonRpcHttpServiceTlsMisconfigurationTest {
 
   private TlsConfiguration invalidKeystoreFileTlsConfiguration() throws IOException {
     final File tempFile = folder.newFile();
-    return new TlsConfiguration(tempFile.toPath(), () -> "invalid_password", knownClientsFile);
+    return aTlsConfiguration()
+        .withKeyStorePath(tempFile.toPath())
+        .withKeyStorePasswordSupplier(() -> "invalid_password")
+        .withClientAuthConfiguration(
+            aTlsClientAuthConfiguration().withKnownClientsFile(knownClientsFile).build())
+        .build();
   }
 
   private TlsConfiguration invalidKeystorePathTlsConfiguration() {
-    return new TlsConfiguration(
-        Path.of("/tmp/invalidkeystore.pfx"), () -> "invalid_password", knownClientsFile);
+    return aTlsConfiguration()
+        .withKeyStorePath(Path.of("/tmp/invalidkeystore.pfx"))
+        .withKeyStorePasswordSupplier(() -> "invalid_password")
+        .withClientAuthConfiguration(
+            aTlsClientAuthConfiguration().withKnownClientsFile(knownClientsFile).build())
+        .build();
   }
 
   private TlsConfiguration invalidPasswordTlsConfiguration() {
-    return new TlsConfiguration(
-        besuCertificate.getKeyStoreFile(), () -> "invalid_password", knownClientsFile);
+    return aTlsConfiguration()
+        .withKeyStorePath(besuCertificate.getKeyStoreFile())
+        .withKeyStorePasswordSupplier(() -> "invalid_password")
+        .withClientAuthConfiguration(
+            aTlsClientAuthConfiguration().withKnownClientsFile(knownClientsFile).build())
+        .build();
   }
 
   private TlsConfiguration invalidPasswordFileTlsConfiguration() {
-    return new TlsConfiguration(
-        besuCertificate.getKeyStoreFile(),
-        new FileBasedPasswordProvider(Path.of("/tmp/invalid_password_file.txt")),
-        knownClientsFile);
+    return TlsConfiguration.Builder.aTlsConfiguration()
+        .withKeyStorePath(besuCertificate.getKeyStoreFile())
+        .withKeyStorePasswordSupplier(
+            new FileBasedPasswordProvider(Path.of("/tmp/invalid_password_file.txt")))
+        .withClientAuthConfiguration(
+            aTlsClientAuthConfiguration().withKnownClientsFile(knownClientsFile).build())
+        .build();
   }
 
   private TlsConfiguration invalidKnownClientsTlsConfiguration() throws IOException {
     final Path tempKnownClientsFile = folder.newFile().toPath();
     Files.write(tempKnownClientsFile, List.of("cn invalid_sha256"));
-    return new TlsConfiguration(
-        besuCertificate.getKeyStoreFile(), () -> "changeit", tempKnownClientsFile);
+
+    return TlsConfiguration.Builder.aTlsConfiguration()
+        .withKeyStorePath(besuCertificate.getKeyStoreFile())
+        .withKeyStorePasswordSupplier(() -> new String(besuCertificate.getPassword()))
+        .withClientAuthConfiguration(
+            aTlsClientAuthConfiguration().withKnownClientsFile(tempKnownClientsFile).build())
+        .build();
   }
 
   private JsonRpcHttpService createJsonRpcHttpService(
@@ -247,12 +270,11 @@ public class JsonRpcHttpServiceTlsMisconfigurationTest {
         HealthService.ALWAYS_HEALTHY);
   }
 
-  private JsonRpcConfiguration createJsonRpcConfig(
-      final TlsConfiguration tlsConfigurationSupplier) {
+  private JsonRpcConfiguration createJsonRpcConfig(final TlsConfiguration tlsConfiguration) {
     final JsonRpcConfiguration config = JsonRpcConfiguration.createDefault();
     config.setPort(0);
     config.setHostsWhitelist(Collections.singletonList("*"));
-    config.setTlsConfiguration(tlsConfigurationSupplier);
+    config.setTlsConfiguration(Optional.of(tlsConfiguration));
     return config;
   }
 }

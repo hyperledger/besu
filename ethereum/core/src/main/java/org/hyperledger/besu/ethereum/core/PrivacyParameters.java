@@ -238,7 +238,7 @@ public class PrivacyParameters {
                   enclaveUrl,
                   orionKeyStoreFile,
                   orionKeyStorePasswordFile,
-                  Optional.of(orionClientWhitelistFile)));
+                  orionClientWhitelistFile));
         } else {
           config.setEnclave(enclaveFactory.createVertxEnclave(enclaveUrl));
         }

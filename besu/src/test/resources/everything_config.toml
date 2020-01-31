@@ -54,7 +54,9 @@ rpc-http-authentication-jwt-public-key-file="none"
 rpc-http-tls-enabled=false
 rpc-http-tls-keystore-file="none.pfx"
 rpc-http-tls-keystore-password-file="none.passwd"
+rpc-http-tls-client-auth-enabled=false
 rpc-http-tls-known-clients-file="rpc_tls_clients.txt"
+rpc-http-tls-ca-clients-enabled=false
 
 # ORION TLS
 orion-tls-enabled=false

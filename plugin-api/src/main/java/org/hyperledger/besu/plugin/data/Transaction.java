@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.plugin.data;
 
-import org.hyperledger.besu.plugin.Unstable;
-
 import java.math.BigInteger;
 import java.util.Optional;
 
@@ -31,7 +29,6 @@ import org.apache.tuweni.bytes.Bytes;
  * creation’). Message call transactions will have an address present in the {@link #getTo} method
  * whereas contract creation transactions will not.
  */
-@Unstable
 public interface Transaction {
 
   /**
