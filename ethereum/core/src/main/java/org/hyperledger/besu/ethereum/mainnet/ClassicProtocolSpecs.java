@@ -143,6 +143,7 @@ public class ClassicProtocolSpecs {
     return atlantisDefinition(
             chainId, configContractSizeLimit, configStackSizeLimit, enableRevertReason)
         .evmBuilder(MainnetEvmRegistries::constantinople)
+        .gasCalculator(ConstantinopleFixGasCalculator::new)
         .evmBuilder(
             gasCalculator ->
                 MainnetEvmRegistries.istanbul(gasCalculator, chainId.orElse(BigInteger.ZERO)))
