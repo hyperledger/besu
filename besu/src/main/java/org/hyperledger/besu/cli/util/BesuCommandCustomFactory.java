@@ -32,8 +32,7 @@ public class BesuCommandCustomFactory implements CommandLine.IFactory {
   }
 
   @SuppressWarnings("unchecked")
-  @Override
-  public <T> T create(final Class<T> cls) throws Exception {
+  private <T> T doCreate(final Class<T> cls) throws Exception {
     if (CommandLine.IVersionProvider.class.isAssignableFrom(cls)) {
       return (T) new VersionProvider(pluginVersionsProvider);
     }
@@ -44,6 +43,15 @@ public class BesuCommandCustomFactory implements CommandLine.IFactory {
     } catch (Exception e) {
       constructor.setAccessible(true);
       return constructor.newInstance();
+    }
+  }
+
+  @Override
+  public <T> T create(final Class<T> cls) throws Exception {
+    try {
+      return doCreate(cls);
+    } catch (Exception e) {
+      return CommandLine.defaultFactory().create(cls);
     }
   }
 }
