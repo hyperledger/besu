@@ -17,7 +17,6 @@ package org.hyperledger.besu.enclave;
 
 import static org.hyperledger.besu.enclave.TlsHelpers.populateFingerprintFile;
 
-import io.vertx.core.http.ClientAuth;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.security.KeyStoreException;
@@ -31,6 +30,7 @@ import java.util.concurrent.ExecutionException;
 import com.google.common.collect.Lists;
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.vertx.core.Vertx;
+import io.vertx.core.http.ClientAuth;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
@@ -66,9 +66,9 @@ public class TlsEnabledHttpServerFactory {
       web3HttpServerOptions.setPort(0);
       if (tlsEnabled) {
         web3HttpServerOptions.setSsl(true);
-                web3HttpServerOptions.setClientAuth(ClientAuth.REQUIRED);
-                web3HttpServerOptions.setTrustOptions(
-                    VertxTrustOptions.whitelistClients(serverFingerprintFile));
+        web3HttpServerOptions.setClientAuth(ClientAuth.REQUIRED);
+        web3HttpServerOptions.setTrustOptions(
+            VertxTrustOptions.whitelistClients(serverFingerprintFile));
         web3HttpServerOptions.setPfxKeyCertOptions(
             new PfxOptions()
                 .setPath(serverCert.getPkcs12File().toString())
