@@ -14,9 +14,6 @@
  */
 package org.hyperledger.besu.plugin.data;
 
-import org.hyperledger.besu.plugin.Unstable;
-
-@Unstable
 public interface SyncStatus {
 
   /**

@@ -37,6 +37,8 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class DebugOperationTracer implements OperationTracer {
 
+  private static final UInt256 UINT256_32 = UInt256.valueOf(32);
+
   private final TraceOptions options;
   private List<TraceFrame> traceFrames = new ArrayList<>();
   private TraceFrame lastFrame;
@@ -61,11 +63,11 @@ public class DebugOperationTracer implements OperationTracer {
     final Bytes inputData = frame.getInputData();
     final Supplier<Bytes> outputData = frame::getOutputData;
     final Optional<Bytes32[]> stack = captureStack(frame);
-    final Optional<Bytes32[]> memory = captureMemory(frame);
+    final Optional<Bytes[]> memory = captureMemory(frame);
     final Optional<Map<UInt256, UInt256>> storagePreExecution = captureStorage(frame);
     final WorldUpdater worldUpdater = frame.getWorldState();
     final Optional<Bytes32[]> stackPostExecution;
-    final Optional<Bytes32[]> memoryPostExecution;
+    final Optional<Bytes[]> memoryPostExecution;
     try {
       executeOperation.execute();
     } finally {
@@ -119,19 +121,18 @@ public class DebugOperationTracer implements OperationTracer {
                   .getMutable()
                   .getUpdatedStorage());
       return Optional.of(storageContents);
-    } catch (ModificationNotAllowedException e) {
+    } catch (final ModificationNotAllowedException e) {
       return Optional.of(new TreeMap<>());
     }
   }
 
-  private Optional<Bytes32[]> captureMemory(final MessageFrame frame) {
+  private Optional<Bytes[]> captureMemory(final MessageFrame frame) {
     if (!options.isMemoryEnabled()) {
       return Optional.empty();
     }
-    final Bytes32[] memoryContents = new Bytes32[frame.memoryWordSize().intValue()];
+    final Bytes[] memoryContents = new Bytes32[frame.memoryWordSize().intValue()];
     for (int i = 0; i < memoryContents.length; i++) {
-      memoryContents[i] =
-          Bytes32.wrap(frame.readMemory(UInt256.valueOf(i).multiply(32), UInt256.valueOf(32)), 0);
+      memoryContents[i] = frame.readMemory(UInt256.valueOf(i * 32L), UINT256_32);
     }
     return Optional.of(memoryContents);
   }
