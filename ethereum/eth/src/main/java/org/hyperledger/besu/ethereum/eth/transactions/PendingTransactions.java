@@ -331,6 +331,11 @@ public class PendingTransactions {
       if (transactionsForSender == null) {
         return OptionalLong.empty();
       }
+      for (final Long nonce : transactionsForSender.keySet()) {
+        if (!transactionsForSender.containsKey(nonce + 1)) {
+          return OptionalLong.of(nonce + 1);
+        }
+      }
       return OptionalLong.of(transactionsForSender.lastKey() + 1);
     }
   }

@@ -619,4 +619,22 @@ public class PendingTransactionsTest {
     assertThat(metricsSystem.getCounterValue(ADDED_COUNTER, LOCAL)).isEqualTo(0);
     assertThat(metricsSystem.getCounterValue(ADDED_COUNTER, REMOTE)).isEqualTo(1);
   }
+
+  @Test
+  public void assertThatCorrectNonceIsReturned() {
+    addLocalTransactions(1, 2, 4, 5);
+    assertThat(transactions.getNextNonceForSender(transaction1.getSender()))
+        .isPresent()
+        .hasValue(3);
+    addLocalTransactions(3);
+    assertThat(transactions.getNextNonceForSender(transaction1.getSender()))
+        .isPresent()
+        .hasValue(6);
+  }
+
+  private void addLocalTransactions(final int... nonces) {
+    for (int nonce : nonces) {
+      transactions.addLocalTransaction(createTransaction(nonce));
+    }
+  }
 }
