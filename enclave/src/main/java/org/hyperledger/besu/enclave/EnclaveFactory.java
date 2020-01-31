@@ -22,7 +22,6 @@ import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.util.Optional;
 
 import com.google.common.base.Charsets;
 import io.vertx.core.Vertx;
@@ -59,7 +58,7 @@ public class EnclaveFactory {
       final URI enclaveUri,
       final Path orionKeyStoreFile,
       final Path orionKeyStorePasswordFile,
-      final Optional<Path> orionWhitelistFile) {
+      final Path orionWhitelistFile) {
     if (enclaveUri.getPort() == -1) {
       throw new EnclaveIOException("Illegal URI - no port specified");
     }
@@ -75,23 +74,17 @@ public class EnclaveFactory {
         clientOptions.setPfxKeyCertOptions(
             convertFrom(orionKeyStoreFile, orionKeyStorePasswordFile));
       }
-
-      // server whitelist file is optional, and if supplied we turn off CA
-      if (orionWhitelistFile.isPresent()) {
-        try {
-          final boolean trustCA = false;
-          clientOptions.setTrustOptions(
-              VertxTrustOptions.whitelistServers(orionWhitelistFile.get(), trustCA));
-        } catch (final IllegalArgumentException e) {
-          throw new InvalidConfigurationException("Illegally formatted client fingerprint file.");
-        }
-      }
+      final boolean trustCA = false;
+      clientOptions.setTrustOptions(
+          VertxTrustOptions.whitelistServers(orionWhitelistFile, trustCA));
     } catch (final NoSuchFileException e) {
       throw new InvalidConfigurationException(
           "Requested file " + e.getMessage() + " does not exist at specified location.");
     } catch (final AccessDeniedException e) {
       throw new InvalidConfigurationException(
           "Current user does not have permissions to access " + e.getMessage());
+    } catch (final IllegalArgumentException e) {
+      throw new InvalidConfigurationException("Illegally formatted client fingerprint file.");
     } catch (final IOException e) {
       throw new InvalidConfigurationException("Failed to load TLS files " + e.getMessage());
     }
@@ -102,10 +95,10 @@ public class EnclaveFactory {
     return new Enclave(vertxTransmitter);
   }
 
-  private static PfxOptions convertFrom(
-      final Path orionKeystoreFile, final Path orionKeystorePasswordFile) throws IOException {
-    final String password = readSecretFromFile(orionKeystoreFile);
-    return new PfxOptions().setPassword(password).setPath(orionKeystorePasswordFile.toString());
+  private static PfxOptions convertFrom(final Path keystoreFile, final Path keystorePasswordFile)
+      throws IOException {
+    final String password = readSecretFromFile(keystorePasswordFile);
+    return new PfxOptions().setPassword(password).setPath(keystoreFile.toString());
   }
 
   private static String readSecretFromFile(final Path path) throws IOException {

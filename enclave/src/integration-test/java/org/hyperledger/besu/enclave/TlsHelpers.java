@@ -4,6 +4,7 @@
 
 package org.hyperledger.besu.enclave;
 
+import java.util.Optional;
 import org.hyperledger.besu.crypto.MessageDigestFactory;
 
 import java.io.File;
@@ -39,18 +40,21 @@ public class TlsHelpers {
   }
 
   public static void populateFingerprintFile(
-      final Path knownClientsPath, final TlsCertificateDefinition certDef)
+      final Path knownClientsPath, final TlsCertificateDefinition certDef,
+      final Optional<Integer> serverPortToAppendToHostname)
       throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException {
 
     final List<X509Certificate> certs = getCertsFromPkcs12(certDef);
     final StringBuilder fingerPrintsToAdd = new StringBuilder();
+    final String portFragment = serverPortToAppendToHostname.map(port -> ":" + port).orElse("");
     for (final X509Certificate cert : certs) {
       final String fingerprint = generateFingerprint(cert);
-      fingerPrintsToAdd.append("localhost " + fingerprint + "\n");
-      fingerPrintsToAdd.append("127.0.0.1 " + fingerprint + "\n");
+      fingerPrintsToAdd.append("localhost" + portFragment + " " + fingerprint + "\n");
+      fingerPrintsToAdd.append("127.0.0.1" + portFragment + " " + fingerprint + "\n");
     }
     Files.writeString(knownClientsPath, fingerPrintsToAdd.toString());
   }
+
 
   public static List<X509Certificate> getCertsFromPkcs12(final TlsCertificateDefinition certDef)
       throws KeyStoreException, NoSuchAlgorithmException, CertificateException {

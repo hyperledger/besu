@@ -4,7 +4,7 @@ dependencies {
 
   implementation 'com.fasterxml.jackson.core:jackson-databind'
   implementation 'io.vertx:vertx-core'
-  implementation 'org.apache.tuweni:tuweni-net:0.9.0'
+  implementation 'org.apache.tuweni:tuweni-net'
   implementation 'org.apache.logging.log4j:log4j-api'
 
   // test dependencies.
@@ -14,6 +14,9 @@ dependencies {
 
   // integration test dependencies.
   integrationTestImplementation project(':testutil')
+  integrationTestImplementation 'org.bouncycastle:bcpkix-jdk15on'
+
+
 
   integrationTestImplementation 'junit:junit'
   integrationTestImplementation 'net.consensys:orion'

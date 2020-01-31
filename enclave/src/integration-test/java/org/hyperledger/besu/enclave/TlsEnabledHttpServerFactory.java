@@ -23,6 +23,7 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -54,23 +55,25 @@ public class TlsEnabledHttpServerFactory {
   public HttpServer create(
       final TlsCertificateDefinition serverCert,
       final TlsCertificateDefinition acceptedClientCerts,
-      final Path workDir) {
+      final Path workDir,
+      final boolean tlsEnabled) {
     try {
 
       final Path serverFingerprintFile = workDir.resolve("server_known_clients");
-      populateFingerprintFile(serverFingerprintFile, acceptedClientCerts);
+      populateFingerprintFile(serverFingerprintFile, acceptedClientCerts, Optional.empty());
 
       final HttpServerOptions web3HttpServerOptions = new HttpServerOptions();
-      web3HttpServerOptions.setSsl(true);
-      web3HttpServerOptions.setClientAuth(ClientAuth.REQUIRED);
-      web3HttpServerOptions.setTrustOptions(
-          VertxTrustOptions.whitelistClients(serverFingerprintFile));
       web3HttpServerOptions.setPort(0);
-      web3HttpServerOptions.setPfxKeyCertOptions(
-          new PfxOptions()
-              .setPath(serverCert.getPkcs12File().toString())
-              .setPassword(serverCert.getPassword()));
-
+      if (tlsEnabled) {
+        web3HttpServerOptions.setSsl(true);
+//        web3HttpServerOptions.setClientAuth(ClientAuth.REQUIRED);
+//        web3HttpServerOptions.setTrustOptions(
+//            VertxTrustOptions.whitelistClients(serverFingerprintFile));
+        web3HttpServerOptions.setPfxKeyCertOptions(
+            new PfxOptions()
+                .setPath(serverCert.getPkcs12File().toString())
+                .setPassword(serverCert.getPassword()));
+      }
       final Router router = Router.router(vertx);
       router
           .route(HttpMethod.GET, "/upcheck")
