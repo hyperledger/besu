@@ -62,7 +62,7 @@ public class TlsEnabledEnclaveTest {
     this.shutdown();
   }
 
-  private Enclave createEnclave(final int orionPort, final Path workDir, boolean tlsEnabled)
+  private Enclave createEnclave(final int orionPort, final Path workDir, final boolean tlsEnabled)
       throws IOException {
 
     final Path serverFingerprintFile = workDir.resolve("server_known_clients");
