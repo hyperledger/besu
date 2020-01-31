@@ -14,12 +14,9 @@
  */
 package org.hyperledger.besu.plugin.data;
 
-import org.hyperledger.besu.plugin.Unstable;
-
 import org.apache.tuweni.units.bigints.UInt256;
 
 /** The minimum set of data for a PropagatedBlockContext. */
-@Unstable
 public interface PropagatedBlockContext {
 
   /**

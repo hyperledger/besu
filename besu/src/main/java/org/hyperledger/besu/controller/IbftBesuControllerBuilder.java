@@ -243,6 +243,7 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder<IbftContext
             new IbftBlockInterface(),
             new IbftValidatorOverrides(ibftValidatorForkMap)),
         new VoteProposer(),
+        epochManager,
         blockInterface);
   }
 

@@ -53,7 +53,7 @@ public class DebugTraceBlockTest {
   private final BlockTracer blockTracer = mock(BlockTracer.class);
   private final BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
   private final DebugTraceBlock debugTraceBlock =
-      new DebugTraceBlock(blockTracer, new MainnetBlockHeaderFunctions(), blockchainQueries);
+      new DebugTraceBlock(() -> blockTracer, new MainnetBlockHeaderFunctions(), blockchainQueries);
 
   @Test
   public void nameShouldBeDebugTraceBlock() {

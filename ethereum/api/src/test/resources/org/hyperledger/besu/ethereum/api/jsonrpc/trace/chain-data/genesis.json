@@ -9,6 +9,7 @@
     "byzantiumBlock": 0,
     "constantinopleBlock": 0,
     "constantinopleFixBlock": 0,
+    "istanbulBlock": 0,
     "ethash": {
       "fixeddifficulty": 15
     },
@@ -79,6 +80,26 @@
     "00B0000000000000000000000000000000000000": {
       "comment": "Append log record with 2 topics using LOG2 OPCODE.",
       "code": "0x608B60045360AA60FF60016004A2",
+      "balance": "0x0"
+    },
+    "00C0000000000000000000000000000000000000": {
+      "comment": "INVALID_OPERATION (0x1F).",
+      "code": "0x60011F",
+      "balance": "0x0"
+    },
+    "00D0000000000000000000000000000000000000": {
+      "comment": "INSUFFICIENT_STACK_ITEMS",
+      "code": "0x600120",
+      "balance": "0x0"
+    },
+    "00E0000000000000000000000000000000000000": {
+      "comment": "INVALID_JUMP_DESTINATION",
+      "code": "0x60FF5660016002",
+      "balance": "0x0"
+    },
+    "00F0000000000000000000000000000000000000": {
+      "comment": "pushes 1, 2, 3, then SWAP2 and SWAP1",
+      "code": "0x6001600260039190",
       "balance": "0x0"
     },
     "fe3b557e8fb62b89f4916b721be55ceb828dbd73": {

@@ -22,6 +22,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.common.BlockInterface;
+import org.hyperledger.besu.consensus.common.VoteTally;
+import org.hyperledger.besu.consensus.common.VoteTallyCache;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
@@ -33,6 +35,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -46,13 +49,14 @@ import org.junit.rules.ExpectedException;
 public class CliqueGetSignerMetricsTest {
 
   private static final Address[] VALIDATORS = {
-    Address.fromHexString("0x1"), Address.fromHexString("0x2"), Address.fromHexString("0x3"),
+    Address.fromHexString("0x1"), Address.fromHexString("0x2"), Address.fromHexString("0x3")
   };
 
   private final String CLIQUE_METHOD = "clique_getSignerMetrics";
   private final String JSON_RPC_VERSION = "2.0";
   private CliqueGetSignerMetrics method;
 
+  private VoteTallyCache voteTallyCache;
   private BlockchainQueries blockchainQueries;
   private BlockInterface blockInterface;
 
@@ -60,9 +64,10 @@ public class CliqueGetSignerMetricsTest {
 
   @Before
   public void setup() {
+    voteTallyCache = mock(VoteTallyCache.class);
     blockchainQueries = mock(BlockchainQueries.class);
     blockInterface = mock(BlockInterface.class);
-    method = new CliqueGetSignerMetrics(blockInterface, blockchainQueries);
+    method = new CliqueGetSignerMetrics(voteTallyCache, blockInterface, blockchainQueries);
   }
 
   @Test
@@ -103,6 +108,8 @@ public class CliqueGetSignerMetricsTest {
 
     LongStream.range(startBlock, endBlock)
         .forEach(value -> signerMetricResultList.add(generateBlock(value)));
+
+    signerMetricResultList.add(new SignerMetricResult(VALIDATORS[0])); // missing validator
 
     final JsonRpcRequestContext request = requestWithParams();
 
@@ -158,6 +165,8 @@ public class CliqueGetSignerMetricsTest {
     LongStream.range(startBlock, headBlock)
         .forEach(value -> signerMetricResultList.add(generateBlock(value)));
 
+    signerMetricResultList.add(new SignerMetricResult(VALIDATORS[2])); // missing validator
+
     final JsonRpcRequestContext request = requestWithParams();
 
     final JsonRpcSuccessResponse response = (JsonRpcSuccessResponse) method.response(request);
@@ -183,6 +192,8 @@ public class CliqueGetSignerMetricsTest {
     LongStream.range(startBlock, endBlock)
         .forEach(value -> signerMetricResultList.add(generateBlock(value)));
 
+    signerMetricResultList.add(new SignerMetricResult(VALIDATORS[0])); // missing validator
+
     final JsonRpcRequestContext request = requestWithParams(String.valueOf(startBlock), "latest");
 
     final JsonRpcSuccessResponse response = (JsonRpcSuccessResponse) method.response(request);
@@ -205,6 +216,8 @@ public class CliqueGetSignerMetricsTest {
     LongStream.range(startBlock, endBlock)
         .forEach(value -> signerMetricResultList.add(generateBlock(value)));
 
+    signerMetricResultList.add(new SignerMetricResult(VALIDATORS[0])); // missing validator
+
     final JsonRpcRequestContext request = requestWithParams(String.valueOf(startBlock), "pending");
 
     final JsonRpcSuccessResponse response = (JsonRpcSuccessResponse) method.response(request);
@@ -221,6 +234,8 @@ public class CliqueGetSignerMetricsTest {
     final long endBlock = 3L;
 
     final List<SignerMetricResult> signerMetricResultList = new ArrayList<>();
+
+    when(blockchainQueries.headBlockNumber()).thenReturn(endBlock);
 
     LongStream.range(startBlock, endBlock)
         .forEach(value -> signerMetricResultList.add(generateBlock(value)));
@@ -245,6 +260,9 @@ public class CliqueGetSignerMetricsTest {
 
     when(blockchainQueries.getBlockHeaderByNumber(number)).thenReturn(Optional.of(header));
     when(blockInterface.getProposerOfBlock(header)).thenReturn(proposerAddressBlock);
+
+    when(voteTallyCache.getVoteTallyAfterBlock(header))
+        .thenReturn(new VoteTally(Arrays.asList(VALIDATORS)));
 
     final SignerMetricResult signerMetricResult = new SignerMetricResult(proposerAddressBlock);
     signerMetricResult.incrementeNbBlock();

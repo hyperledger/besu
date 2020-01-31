@@ -61,11 +61,20 @@ public class StateDiffGenerator {
       final Map<String, DiffNode> storageDiff = new TreeMap<>();
       for (final Map.Entry<UInt256, UInt256> entry :
           updatedAccount.getUpdatedStorage().entrySet()) {
-        final UInt256 originalValue = rootAccount.getStorageValue(entry.getKey());
         final UInt256 newValue = entry.getValue();
-        storageDiff.put(
-            entry.getKey().toHexString(),
-            new DiffNode(originalValue.toHexString(), newValue.toHexString()));
+        if (rootAccount == null) {
+          if (!UInt256.ZERO.equals(newValue)) {
+            storageDiff.put(
+                entry.getKey().toHexString(), new DiffNode(null, newValue.toHexString()));
+          }
+        } else {
+          final UInt256 originalValue = rootAccount.getStorageValue(entry.getKey());
+          if (!originalValue.equals(newValue)) {
+            storageDiff.put(
+                entry.getKey().toHexString(),
+                new DiffNode(originalValue.toHexString(), newValue.toHexString()));
+          }
+        }
       }
 
       // populate the diff object
@@ -84,6 +93,9 @@ public class StateDiffGenerator {
     // Add deleted accounts
     for (final Address accountAddress : transactionUpdater.getDeletedAccountAddresses()) {
       final Account deletedAccount = previousUpdater.get(accountAddress);
+      if (deletedAccount == null) {
+        continue;
+      }
       final AccountDiff accountDiff =
           new AccountDiff(
               createDiffNode(deletedAccount, null, StateDiffGenerator::balanceAsHex),

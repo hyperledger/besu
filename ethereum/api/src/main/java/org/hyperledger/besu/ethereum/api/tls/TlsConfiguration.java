@@ -24,17 +24,15 @@ import java.util.function.Supplier;
 public class TlsConfiguration {
   private final Path keyStorePath;
   private final Supplier<String> keyStorePasswordSupplier;
-  private final Path knownClientsFile;
+  private final Optional<TlsClientAuthConfiguration> clientAuthConfiguration;
 
-  public TlsConfiguration(
+  private TlsConfiguration(
       final Path keyStorePath,
       final Supplier<String> keyStorePasswordSupplier,
-      final Path knownClientsFile) {
-    requireNonNull(keyStorePath, "Key Store Path must not be null");
-    requireNonNull(keyStorePasswordSupplier, "Key Store password supplier must not be null");
+      final Optional<TlsClientAuthConfiguration> clientAuthConfiguration) {
     this.keyStorePath = keyStorePath;
     this.keyStorePasswordSupplier = keyStorePasswordSupplier;
-    this.knownClientsFile = knownClientsFile;
+    this.clientAuthConfiguration = clientAuthConfiguration;
   }
 
   public Path getKeyStorePath() {
@@ -45,7 +43,42 @@ public class TlsConfiguration {
     return keyStorePasswordSupplier.get();
   }
 
-  public Optional<Path> getKnownClientsFile() {
-    return Optional.ofNullable(knownClientsFile);
+  public Optional<TlsClientAuthConfiguration> getClientAuthConfiguration() {
+    return clientAuthConfiguration;
+  }
+
+  public static final class Builder {
+    private Path keyStorePath;
+    private Supplier<String> keyStorePasswordSupplier;
+    private TlsClientAuthConfiguration clientAuthConfiguration;
+
+    private Builder() {}
+
+    public static Builder aTlsConfiguration() {
+      return new Builder();
+    }
+
+    public Builder withKeyStorePath(final Path keyStorePath) {
+      this.keyStorePath = keyStorePath;
+      return this;
+    }
+
+    public Builder withKeyStorePasswordSupplier(final Supplier<String> keyStorePasswordSupplier) {
+      this.keyStorePasswordSupplier = keyStorePasswordSupplier;
+      return this;
+    }
+
+    public Builder withClientAuthConfiguration(
+        final TlsClientAuthConfiguration clientAuthConfiguration) {
+      this.clientAuthConfiguration = clientAuthConfiguration;
+      return this;
+    }
+
+    public TlsConfiguration build() {
+      requireNonNull(keyStorePath, "Key Store Path must not be null");
+      requireNonNull(keyStorePasswordSupplier, "Key Store password supplier must not be null");
+      return new TlsConfiguration(
+          keyStorePath, keyStorePasswordSupplier, Optional.ofNullable(clientAuthConfiguration));
+    }
   }
 }

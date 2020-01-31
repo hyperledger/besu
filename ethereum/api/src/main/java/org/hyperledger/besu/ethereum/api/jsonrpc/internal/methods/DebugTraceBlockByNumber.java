@@ -27,15 +27,16 @@ import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 
 import java.util.Optional;
+import java.util.function.Supplier;
 
 public class DebugTraceBlockByNumber extends AbstractBlockParameterMethod {
 
-  private final BlockTracer blockTracer;
+  private final Supplier<BlockTracer> blockTracerSupplier;
 
   public DebugTraceBlockByNumber(
-      final BlockTracer blockTracer, final BlockchainQueries blockchain) {
+      final Supplier<BlockTracer> blockTracerSupplier, final BlockchainQueries blockchain) {
     super(blockchain);
-    this.blockTracer = blockTracer;
+    this.blockTracerSupplier = blockTracerSupplier;
   }
 
   @Override
@@ -61,7 +62,8 @@ public class DebugTraceBlockByNumber extends AbstractBlockParameterMethod {
     return blockHash
         .flatMap(
             hash ->
-                blockTracer
+                blockTracerSupplier
+                    .get()
                     .trace(hash, new DebugOperationTracer(traceOptions))
                     .map(BlockTrace::getTransactionTraces)
                     .map(DebugTraceTransactionResult::of))

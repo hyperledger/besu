@@ -78,6 +78,8 @@ dependencies {
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.mockito:mockito-core'
 
+  testSupportImplementation 'org.bouncycastle:bcpkix-jdk15on'
+
   integrationTestImplementation project(':config')
   integrationTestImplementation project(path: ':config', configuration: 'testSupportArtifacts')
   integrationTestImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
@@ -87,6 +89,10 @@ dependencies {
   integrationTestImplementation 'junit:junit'
   integrationTestImplementation 'org.assertj:assertj-core'
   integrationTestImplementation 'org.mockito:mockito-core'
+}
+
+artifacts {
+  testSupportArtifacts testSupportJar
 }
 
 task generateTestBlockchain() {

@@ -27,13 +27,14 @@ import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 
 import java.util.Collection;
+import java.util.function.Supplier;
 
 public class DebugTraceBlockByHash implements JsonRpcMethod {
 
-  private final BlockTracer blockTracer;
+  private final Supplier<BlockTracer> blockTracerSupplier;
 
-  public DebugTraceBlockByHash(final BlockTracer blockTracer) {
-    this.blockTracer = blockTracer;
+  public DebugTraceBlockByHash(final Supplier<BlockTracer> blockTracerSupplier) {
+    this.blockTracerSupplier = blockTracerSupplier;
   }
 
   @Override
@@ -51,7 +52,8 @@ public class DebugTraceBlockByHash implements JsonRpcMethod {
             .orElse(TraceOptions.DEFAULT);
 
     final Collection<DebugTraceTransactionResult> results =
-        blockTracer
+        blockTracerSupplier
+            .get()
             .trace(blockHash, new DebugOperationTracer(traceOptions))
             .map(BlockTrace::getTransactionTraces)
             .map(DebugTraceTransactionResult::of)
