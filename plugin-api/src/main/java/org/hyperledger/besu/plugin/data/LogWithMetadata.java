@@ -14,15 +14,12 @@
  */
 package org.hyperledger.besu.plugin.data;
 
-import org.hyperledger.besu.plugin.Unstable;
-
 import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 /** A Log entry from a transaction execution. */
-@Unstable
 public interface LogWithMetadata {
 
   /**
