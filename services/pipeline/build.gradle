@@ -16,12 +16,12 @@
 apply plugin: 'java-library'
 
 jar {
-  baseName 'besu-pipeline'
+  archiveBaseName = 'besu-pipeline'
   manifest {
     attributes(
-      'Specification-Title': baseName,
+      'Specification-Title': archiveBaseName,
       'Specification-Version': project.version,
-      'Implementation-Title': baseName,
+      'Implementation-Title': archiveBaseName,
       'Implementation-Version': calculateVersion()
       )
   }
@@ -29,13 +29,14 @@ jar {
 
 dependencies {
   api project(':util')
+
   implementation project(':metrics:core')
   implementation project(':plugin-api')
 
-  implementation 'org.apache.logging.log4j:log4j-api'
   implementation 'com.google.guava:guava'
+  implementation 'org.apache.logging.log4j:log4j-api'
 
-  runtime 'org.apache.logging.log4j:log4j-core'
+  runtimeOnly 'org.apache.logging.log4j:log4j-core'
 
   testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'

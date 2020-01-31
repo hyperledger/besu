@@ -51,6 +51,10 @@ rpc-http-cors-origins=["none"]
 rpc-http-authentication-enabled=false
 rpc-http-authentication-credentials-file="none"
 rpc-http-authentication-jwt-public-key-file="none"
+rpc-http-tls-enabled=false
+rpc-http-tls-keystore-file="none.pfx"
+rpc-http-tls-keystore-password-file="none.passwd"
+rpc-http-tls-known-clients-file="rpc_tls_clients.txt"
 
 # GRAPHQL HTTP
 graphql-http-enabled=false

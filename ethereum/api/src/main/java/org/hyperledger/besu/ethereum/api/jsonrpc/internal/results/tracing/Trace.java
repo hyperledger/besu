@@ -20,8 +20,10 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing;
  * group. 3 implementations:
  *
  * <ul>
- *   <li>trace: {@link FlatTrace}
- *   <li>vmTrace:
+ *   <li>trace: {@link
+ *       org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTrace}
+ *   <li>vmTrace: {@link
+ *       org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.vm.VmTrace}
  *   <li>stateDiff:
  * </ul>
  */

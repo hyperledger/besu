@@ -75,41 +75,41 @@ public class CrossContractReader extends Contract {
 
   @Deprecated
   protected CrossContractReader(
-      String contractAddress,
-      Web3j web3j,
-      Credentials credentials,
-      BigInteger gasPrice,
-      BigInteger gasLimit) {
+      final String contractAddress,
+      final Web3j web3j,
+      final Credentials credentials,
+      final BigInteger gasPrice,
+      final BigInteger gasLimit) {
     super(BINARY, contractAddress, web3j, credentials, gasPrice, gasLimit);
   }
 
   protected CrossContractReader(
-      String contractAddress,
-      Web3j web3j,
-      Credentials credentials,
-      ContractGasProvider contractGasProvider) {
+      final String contractAddress,
+      final Web3j web3j,
+      final Credentials credentials,
+      final ContractGasProvider contractGasProvider) {
     super(BINARY, contractAddress, web3j, credentials, contractGasProvider);
   }
 
   @Deprecated
   protected CrossContractReader(
-      String contractAddress,
-      Web3j web3j,
-      TransactionManager transactionManager,
-      BigInteger gasPrice,
-      BigInteger gasLimit) {
+      final String contractAddress,
+      final Web3j web3j,
+      final TransactionManager transactionManager,
+      final BigInteger gasPrice,
+      final BigInteger gasLimit) {
     super(BINARY, contractAddress, web3j, transactionManager, gasPrice, gasLimit);
   }
 
   protected CrossContractReader(
-      String contractAddress,
-      Web3j web3j,
-      TransactionManager transactionManager,
-      ContractGasProvider contractGasProvider) {
+      final String contractAddress,
+      final Web3j web3j,
+      final TransactionManager transactionManager,
+      final ContractGasProvider contractGasProvider) {
     super(BINARY, contractAddress, web3j, transactionManager, contractGasProvider);
   }
 
-  public RemoteFunctionCall<TransactionReceipt> remoteDestroy(String crossAddress) {
+  public RemoteFunctionCall<TransactionReceipt> remoteDestroy(final String crossAddress) {
     final Function function =
         new Function(
             FUNC_REMOTEDESTROY,
@@ -118,7 +118,7 @@ public class CrossContractReader extends Contract {
     return executeRemoteCallTransaction(function);
   }
 
-  public RemoteFunctionCall<TransactionReceipt> deployRemote(String crossAddress) {
+  public RemoteFunctionCall<TransactionReceipt> deployRemote(final String crossAddress) {
     final Function function =
         new Function(
             FUNC_DEPLOYREMOTE,
@@ -140,7 +140,7 @@ public class CrossContractReader extends Contract {
     return executeRemoteCallTransaction(function);
   }
 
-  public RemoteFunctionCall<BigInteger> read(String emitter_address) {
+  public RemoteFunctionCall<BigInteger> read(final String emitter_address) {
     final Function function =
         new Function(
             FUNC_READ,
@@ -156,7 +156,7 @@ public class CrossContractReader extends Contract {
     return executeRemoteCallTransaction(function);
   }
 
-  public RemoteFunctionCall<TransactionReceipt> incrementRemote(String crossAddress) {
+  public RemoteFunctionCall<TransactionReceipt> incrementRemote(final String crossAddress) {
     final Function function =
         new Function(
             FUNC_INCREMENTREMOTE,
@@ -166,7 +166,7 @@ public class CrossContractReader extends Contract {
   }
 
   public List<NewEventEmitterEventResponse> getNewEventEmitterEvents(
-      TransactionReceipt transactionReceipt) {
+      final TransactionReceipt transactionReceipt) {
     List<Contract.EventValuesWithLog> valueList =
         extractEventParametersWithLog(NEWEVENTEMITTER_EVENT, transactionReceipt);
     ArrayList<NewEventEmitterEventResponse> responses =
@@ -180,13 +180,14 @@ public class CrossContractReader extends Contract {
     return responses;
   }
 
-  public Flowable<NewEventEmitterEventResponse> newEventEmitterEventFlowable(EthFilter filter) {
+  public Flowable<NewEventEmitterEventResponse> newEventEmitterEventFlowable(
+      final EthFilter filter) {
     return web3j
         .ethLogFlowable(filter)
         .map(
             new io.reactivex.functions.Function<Log, NewEventEmitterEventResponse>() {
               @Override
-              public NewEventEmitterEventResponse apply(Log log) {
+              public NewEventEmitterEventResponse apply(final Log log) {
                 Contract.EventValuesWithLog eventValues =
                     extractEventParametersWithLog(NEWEVENTEMITTER_EVENT, log);
                 NewEventEmitterEventResponse typedResponse = new NewEventEmitterEventResponse();
@@ -199,7 +200,7 @@ public class CrossContractReader extends Contract {
   }
 
   public Flowable<NewEventEmitterEventResponse> newEventEmitterEventFlowable(
-      DefaultBlockParameter startBlock, DefaultBlockParameter endBlock) {
+      final DefaultBlockParameter startBlock, final DefaultBlockParameter endBlock) {
     EthFilter filter = new EthFilter(startBlock, endBlock, getContractAddress());
     filter.addSingleTopic(EventEncoder.encode(NEWEVENTEMITTER_EVENT));
     return newEventEmitterEventFlowable(filter);
@@ -207,65 +208,72 @@ public class CrossContractReader extends Contract {
 
   @Deprecated
   public static CrossContractReader load(
-      String contractAddress,
-      Web3j web3j,
-      Credentials credentials,
-      BigInteger gasPrice,
-      BigInteger gasLimit) {
+      final String contractAddress,
+      final Web3j web3j,
+      final Credentials credentials,
+      final BigInteger gasPrice,
+      final BigInteger gasLimit) {
     return new CrossContractReader(contractAddress, web3j, credentials, gasPrice, gasLimit);
   }
 
   @Deprecated
   public static CrossContractReader load(
-      String contractAddress,
-      Web3j web3j,
-      TransactionManager transactionManager,
-      BigInteger gasPrice,
-      BigInteger gasLimit) {
+      final String contractAddress,
+      final Web3j web3j,
+      final TransactionManager transactionManager,
+      final BigInteger gasPrice,
+      final BigInteger gasLimit) {
     return new CrossContractReader(contractAddress, web3j, transactionManager, gasPrice, gasLimit);
   }
 
   public static CrossContractReader load(
-      String contractAddress,
-      Web3j web3j,
-      Credentials credentials,
-      ContractGasProvider contractGasProvider) {
+      final String contractAddress,
+      final Web3j web3j,
+      final Credentials credentials,
+      final ContractGasProvider contractGasProvider) {
     return new CrossContractReader(contractAddress, web3j, credentials, contractGasProvider);
   }
 
   public static CrossContractReader load(
-      String contractAddress,
-      Web3j web3j,
-      TransactionManager transactionManager,
-      ContractGasProvider contractGasProvider) {
+      final String contractAddress,
+      final Web3j web3j,
+      final TransactionManager transactionManager,
+      final ContractGasProvider contractGasProvider) {
     return new CrossContractReader(contractAddress, web3j, transactionManager, contractGasProvider);
   }
 
   public static RemoteCall<CrossContractReader> deploy(
-      Web3j web3j, Credentials credentials, ContractGasProvider contractGasProvider) {
+      final Web3j web3j,
+      final Credentials credentials,
+      final ContractGasProvider contractGasProvider) {
     return deployRemoteCall(
         CrossContractReader.class, web3j, credentials, contractGasProvider, BINARY, "");
   }
 
   @Deprecated
   public static RemoteCall<CrossContractReader> deploy(
-      Web3j web3j, Credentials credentials, BigInteger gasPrice, BigInteger gasLimit) {
+      final Web3j web3j,
+      final Credentials credentials,
+      final BigInteger gasPrice,
+      final BigInteger gasLimit) {
     return deployRemoteCall(
         CrossContractReader.class, web3j, credentials, gasPrice, gasLimit, BINARY, "");
   }
 
   public static RemoteCall<CrossContractReader> deploy(
-      Web3j web3j, TransactionManager transactionManager, ContractGasProvider contractGasProvider) {
+      final Web3j web3j,
+      final TransactionManager transactionManager,
+      final ContractGasProvider contractGasProvider) {
     return deployRemoteCall(
         CrossContractReader.class, web3j, transactionManager, contractGasProvider, BINARY, "");
   }
 
   @Deprecated
   public static RemoteCall<CrossContractReader> deploy(
-      Web3j web3j,
-      TransactionManager transactionManager,
-      BigInteger gasPrice,
-      BigInteger gasLimit) {
+      final Web3j web3j,
+      final TransactionManager transactionManager,
+      final BigInteger gasPrice,
+      final BigInteger gasLimit) {
     return deployRemoteCall(
         CrossContractReader.class, web3j, transactionManager, gasPrice, gasLimit, BINARY, "");
   }

@@ -56,7 +56,7 @@ public class IbftMiningCoordinator implements MiningCoordinator, BlockAddedObser
   private final IbftExecutors ibftExecutors;
 
   private long blockAddedObserverId;
-  private AtomicReference<State> state = new AtomicReference<>(State.IDLE);
+  private final AtomicReference<State> state = new AtomicReference<>(State.IDLE);
 
   public IbftMiningCoordinator(
       final IbftExecutors ibftExecutors,

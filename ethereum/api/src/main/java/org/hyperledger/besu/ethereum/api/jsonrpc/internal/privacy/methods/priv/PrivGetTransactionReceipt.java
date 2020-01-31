@@ -55,9 +55,9 @@ public class PrivGetTransactionReceipt implements JsonRpcMethod {
   private static final Logger LOG = getLogger();
 
   private final BlockchainQueries blockchain;
-  private PrivacyParameters privacyParameters;
-  private PrivacyController privacyController;
-  private EnclavePublicKeyProvider enclavePublicKeyProvider;
+  private final PrivacyParameters privacyParameters;
+  private final PrivacyController privacyController;
+  private final EnclavePublicKeyProvider enclavePublicKeyProvider;
 
   public PrivGetTransactionReceipt(
       final BlockchainQueries blockchain,
@@ -81,7 +81,7 @@ public class PrivGetTransactionReceipt implements JsonRpcMethod {
     final Hash transactionHash = requestContext.getRequiredParameter(0, Hash.class);
     final Optional<TransactionLocation> maybeLocation =
         blockchain.getBlockchain().getTransactionLocation(transactionHash);
-    if (!maybeLocation.isPresent()) {
+    if (maybeLocation.isEmpty()) {
       return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), null);
     }
     final TransactionLocation location = maybeLocation.get();
@@ -112,7 +112,7 @@ public class PrivGetTransactionReceipt implements JsonRpcMethod {
     }
 
     final String contractAddress =
-        !privateTransaction.getTo().isPresent()
+        privateTransaction.getTo().isEmpty()
             ? Address.privateContractAddress(
                     privateTransaction.getSender(),
                     privateTransaction.getNonce(),

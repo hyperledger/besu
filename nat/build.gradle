@@ -16,12 +16,12 @@
 apply plugin: 'java-library'
 
 jar {
-  baseName 'besu-nat'
+  archiveBaseName = 'besu-nat'
   manifest {
     attributes(
-      'Specification-Title': baseName,
+      'Specification-Title': archiveBaseName,
       'Specification-Version': project.version,
-      'Implementation-Title': baseName,
+      'Implementation-Title': archiveBaseName,
       'Implementation-Version': calculateVersion()
       )
   }
@@ -34,7 +34,7 @@ dependencies {
   implementation 'org.jupnp:org.jupnp'
   implementation 'org.jupnp:org.jupnp.support'
 
-  runtime 'org.apache.logging.log4j:log4j-core'
+  runtimeOnly 'org.apache.logging.log4j:log4j-core'
 
   // test dependencies.
   testImplementation project(path: ':ethereum:core', configuration: 'testArtifacts')

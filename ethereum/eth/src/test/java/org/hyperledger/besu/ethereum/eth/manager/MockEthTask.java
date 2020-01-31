@@ -21,8 +21,8 @@ import java.util.concurrent.CountDownLatch;
 
 public class MockEthTask extends AbstractEthTask<Object> {
 
-  private CountDownLatch startedLatch = new CountDownLatch(1);
-  private CountDownLatch countdown;
+  private final CountDownLatch startedLatch = new CountDownLatch(1);
+  private final CountDownLatch countdown;
 
   MockEthTask(final int count) {
     super(new NoOpMetricsSystem());

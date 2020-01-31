@@ -1388,6 +1388,9 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand("--nat-method", "UPNP");
     verify(mockRunnerBuilder).natMethod(eq(NatMethod.UPNP));
 
+    parseCommand("--nat-method", "AUTO");
+    verify(mockRunnerBuilder).natMethod(eq(NatMethod.AUTO));
+
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
   }
@@ -1400,7 +1403,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString())
         .contains(
-            "Invalid value for option '--nat-method': expected one of [UPNP, NONE] (case-insensitive) but was 'invalid'");
+            "Invalid value for option '--nat-method': expected one of [UPNP, MANUAL, AUTO, NONE] (case-insensitive) but was 'invalid'");
   }
 
   @Test
@@ -1414,10 +1417,10 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void natMethodPropertyDefaultIsNone() {
+  public void natMethodPropertyDefaultIsAuto() {
     parseCommand();
 
-    verify(mockRunnerBuilder).natMethod(eq(NatMethod.NONE));
+    verify(mockRunnerBuilder).natMethod(eq(NatMethod.AUTO));
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
@@ -2667,6 +2670,14 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void privacyWithoutPrivacyPublicKeyFails() {
+    parseCommand("--privacy-enabled", "--privacy-url", ENCLAVE_URI);
+
+    assertThat(commandErrorOutput.toString())
+        .startsWith("Please specify Enclave public key file path to enable privacy");
+  }
+
+  @Test
   public void mustVerifyPrivacyIsDisabled() {
     parseCommand();
 
@@ -2691,9 +2702,7 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--rpc-http-authentication-enabled",
         "--privacy-multi-tenancy-enabled",
         "--rpc-http-authentication-jwt-public-key-file",
-        "/non/existent/file",
-        "--privacy-public-key-file",
-        ENCLAVE_PUBLIC_KEY_PATH);
+        "/non/existent/file");
 
     final ArgumentCaptor<PrivacyParameters> privacyParametersArgumentCaptor =
         ArgumentCaptor.forClass(PrivacyParameters.class);
@@ -2710,13 +2719,26 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--privacy-enabled",
         "--privacy-multi-tenancy-enabled",
         "--rpc-http-authentication-jwt-public-key-file",
+        "/non/existent/file");
+
+    assertThat(commandErrorOutput.toString())
+        .startsWith(
+            "Privacy multi-tenancy requires either http authentication to be enabled or WebSocket authentication to be enabled");
+  }
+
+  @Test
+  public void privacyMultiTenancyWithPrivacyPublicKeyFileFails() {
+    parseCommand(
+        "--privacy-enabled",
+        "--rpc-http-authentication-enabled",
+        "--privacy-multi-tenancy-enabled",
+        "--rpc-http-authentication-jwt-public-key-file",
         "/non/existent/file",
         "--privacy-public-key-file",
         ENCLAVE_PUBLIC_KEY_PATH);
 
     assertThat(commandErrorOutput.toString())
-        .startsWith(
-            "Privacy multi-tenancy requires either http authentication to be enabled or WebSocket authentication to be enabled");
+        .startsWith("Privacy multi-tenancy and privacy public key cannot be used together");
   }
 
   private Path createFakeGenesisFile(final JsonObject jsonGenesis) throws IOException {

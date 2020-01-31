@@ -16,12 +16,12 @@
 apply plugin: 'java-library'
 
 jar {
-  baseName 'besu-metrics-core'
+  archiveBaseName = 'besu-metrics-core'
   manifest {
     attributes(
-      'Specification-Title': baseName,
+      'Specification-Title': archiveBaseName,
       'Specification-Version': project.version,
-      'Implementation-Title': baseName,
+      'Implementation-Title': archiveBaseName,
       'Implementation-Version': calculateVersion()
       )
   }
@@ -46,14 +46,15 @@ dependencies {
   implementation 'io.vertx:vertx-web'
   implementation 'org.apache.logging.log4j:log4j-api'
 
-  runtime 'org.apache.logging.log4j:log4j-core'
+  runtimeOnly 'org.apache.logging.log4j:log4j-core'
 
   // test dependencies.
   testImplementation project(':util')
+
+  testImplementation 'com.squareup.okhttp3:okhttp'
   testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.mockito:mockito-core'
-  testImplementation 'com.squareup.okhttp3:okhttp'
 
   testSupportImplementation 'org.mockito:mockito-core'
 }

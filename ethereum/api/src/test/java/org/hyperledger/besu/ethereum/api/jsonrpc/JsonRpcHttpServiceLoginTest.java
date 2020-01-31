@@ -44,6 +44,7 @@ import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
+import org.hyperledger.besu.nat.NatService;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -55,6 +56,7 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -103,6 +105,7 @@ public class JsonRpcHttpServiceLoginTest {
   protected static JWTAuth jwtAuth;
   protected static String authPermissionsConfigFilePath = "JsonRpcHttpService/auth.toml";
   protected final JsonRpcTestHelper testHelper = new JsonRpcTestHelper();
+  protected static final NatService natService = new NatService(Optional.empty());
 
   @BeforeClass
   public static void initServerAndClient() throws Exception {
@@ -116,6 +119,7 @@ public class JsonRpcHttpServiceLoginTest {
 
     final StubGenesisConfigOptions genesisConfigOptions =
         new StubGenesisConfigOptions().constantinopleBlock(0).chainId(CHAIN_ID);
+
     rpcMethods =
         spy(
             new JsonRpcMethodsFactory()
@@ -138,7 +142,9 @@ public class JsonRpcHttpServiceLoginTest {
                     mock(PrivacyParameters.class),
                     mock(JsonRpcConfiguration.class),
                     mock(WebSocketConfiguration.class),
-                    mock(MetricsConfiguration.class)));
+                    mock(MetricsConfiguration.class),
+                    natService,
+                    new HashMap<>()));
     service = createJsonRpcHttpService();
     jwtAuth = service.authenticationService.get().getJwtAuthProvider();
     service.start().join();
@@ -163,7 +169,7 @@ public class JsonRpcHttpServiceLoginTest {
         folder.newFolder().toPath(),
         config,
         new NoOpMetricsSystem(),
-        Optional.empty(),
+        natService,
         rpcMethods,
         HealthService.ALWAYS_HEALTHY,
         HealthService.ALWAYS_HEALTHY);

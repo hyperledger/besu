@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponseType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -87,8 +88,8 @@ public class MultiTenancyRpcMethodDecoratorTest {
     assertThat(tokenRpcDecorator.getName()).isEqualTo("delegate");
 
     final JsonRpcResponse response = tokenRpcDecorator.response(rpcRequestContext);
-    assertThat(response.getType()).isEqualTo(JsonRpcResponseType.UNAUTHORIZED);
-    final JsonRpcUnauthorizedResponse errorResponse = (JsonRpcUnauthorizedResponse) response;
-    assertThat(errorResponse.getError()).isEqualTo(JsonRpcError.UNAUTHORIZED);
+    assertThat(response.getType()).isEqualTo(JsonRpcResponseType.ERROR);
+    final JsonRpcErrorResponse errorResponse = (JsonRpcErrorResponse) response;
+    assertThat(errorResponse.getError()).isEqualTo(JsonRpcError.INVALID_REQUEST);
   }
 }

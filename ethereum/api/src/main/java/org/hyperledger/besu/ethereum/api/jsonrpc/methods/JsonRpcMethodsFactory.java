@@ -33,6 +33,8 @@ import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioni
 import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningController;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
+import org.hyperledger.besu.nat.NatService;
+import org.hyperledger.besu.plugin.BesuPlugin;
 
 import java.math.BigInteger;
 import java.util.Collection;
@@ -63,7 +65,9 @@ public class JsonRpcMethodsFactory {
       final PrivacyParameters privacyParameters,
       final JsonRpcConfiguration jsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
-      final MetricsConfiguration metricsConfiguration) {
+      final MetricsConfiguration metricsConfiguration,
+      final NatService natService,
+      final Map<String, BesuPlugin> namedPlugins) {
     final Map<String, JsonRpcMethod> enabled = new HashMap<>();
 
     if (!rpcApis.isEmpty()) {
@@ -73,7 +77,13 @@ public class JsonRpcMethodsFactory {
       final List<JsonRpcMethods> availableApiGroups =
           List.of(
               new AdminJsonRpcMethods(
-                  clientVersion, networkId, genesisConfigOptions, p2pNetwork, blockchainQueries),
+                  clientVersion,
+                  networkId,
+                  genesisConfigOptions,
+                  p2pNetwork,
+                  blockchainQueries,
+                  namedPlugins,
+                  natService),
               new DebugJsonRpcMethods(blockchainQueries, protocolSchedule, metricsSystem),
               new EeaJsonRpcMethods(
                   blockchainQueries, protocolSchedule, transactionPool, privacyParameters),
@@ -97,8 +107,9 @@ public class JsonRpcMethodsFactory {
                   blockchainQueries, protocolSchedule, transactionPool, privacyParameters),
               new Web3JsonRpcMethods(clientVersion),
               // TRACE Methods (Disabled while under development)
-              // new TraceJsonRpcMethods(blockchainQueries,protocolSchedule)
-              new TxPoolJsonRpcMethods(transactionPool));
+              new TraceJsonRpcMethods(blockchainQueries, protocolSchedule),
+              new TxPoolJsonRpcMethods(transactionPool),
+              new PluginsJsonRpcMethods(namedPlugins));
 
       for (final JsonRpcMethods apiGroup : availableApiGroups) {
         enabled.putAll(apiGroup.create(rpcApis));

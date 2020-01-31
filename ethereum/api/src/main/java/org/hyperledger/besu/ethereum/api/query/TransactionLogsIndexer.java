@@ -51,7 +51,7 @@ public class TransactionLogsIndexer {
   private final Blockchain blockchain;
   private final Path cacheDir;
 
-  private IndexingStatus indexingStatus = new IndexingStatus();
+  private final IndexingStatus indexingStatus = new IndexingStatus();
 
   public TransactionLogsIndexer(
       final Blockchain blockchain, final Path cacheDir, final EthScheduler scheduler) {
@@ -117,7 +117,7 @@ public class TransactionLogsIndexer {
       if (maybeHeader.isEmpty()) {
         break;
       }
-      final byte[] logs = maybeHeader.get().getLogsBloom().getByteArray();
+      final byte[] logs = maybeHeader.get().getLogsBloom().toArray();
       checkNotNull(logs);
       checkState(logs.length == 256, "BloomBits are not the correct length");
       fos.write(logs);

@@ -142,7 +142,8 @@ public class PrivGetTransactionReceiptTest {
           null,
           Quantity.create(Bytes.of(1).toUnsignedBigInteger()));
 
-  private User user = new JWTUser(new JsonObject().put("privacyPublicKey", ENCLAVE_PUBLIC_KEY), "");
+  private final User user =
+      new JWTUser(new JsonObject().put("privacyPublicKey", ENCLAVE_PUBLIC_KEY), "");
   private final EnclavePublicKeyProvider enclavePublicKeyProvider = (user) -> ENCLAVE_PUBLIC_KEY;
 
   private final BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
@@ -156,7 +157,9 @@ public class PrivGetTransactionReceiptTest {
     when(privacyController.retrieveTransaction(anyString(), any()))
         .thenReturn(
             new ReceiveResponse(
-                Base64.getEncoder().encode(RLP.encode(privateTransaction::writeTo).toArray()), ""));
+                Base64.getEncoder().encode(RLP.encode(privateTransaction::writeTo).toArray()),
+                "",
+                null));
 
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
     final TransactionLocation transactionLocation = new TransactionLocation(Hash.EMPTY, 0);

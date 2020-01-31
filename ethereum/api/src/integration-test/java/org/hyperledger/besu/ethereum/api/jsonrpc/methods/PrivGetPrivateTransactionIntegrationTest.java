@@ -36,8 +36,8 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.UnformattedDataImpl;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.privacy.DefaultPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.Restriction;
@@ -75,9 +75,9 @@ public class PrivGetPrivateTransactionIntegrationTest {
 
   private final Transaction justTransaction = mock(Transaction.class);
 
-  private static Vertx vertx = Vertx.vertx();
+  private static final Vertx vertx = Vertx.vertx();
 
-  private EnclavePublicKeyProvider enclavePublicKeyProvider = (user) -> ENCLAVE_PUBLIC_KEY;
+  private final EnclavePublicKeyProvider enclavePublicKeyProvider = (user) -> ENCLAVE_PUBLIC_KEY;
 
   @BeforeClass
   public static void setUpOnce() throws Exception {
@@ -92,7 +92,7 @@ public class PrivGetPrivateTransactionIntegrationTest {
     final EnclaveFactory factory = new EnclaveFactory(vertx);
     enclave = factory.createVertxEnclave(testHarness.clientUrl());
 
-    privacyController = new PrivacyController(enclave, null, null, null, null);
+    privacyController = new DefaultPrivacyController(enclave, null, null, null, null);
   }
 
   @AfterClass
@@ -165,7 +165,7 @@ public class PrivGetPrivateTransactionIntegrationTest {
     final SendResponse sendResponse = enclave.send(payload, ENCLAVE_PUBLIC_KEY, to);
 
     final Bytes hexKey = Bytes.fromBase64String(sendResponse.getKey());
-    when(justTransaction.getPayload()).thenReturn(new UnformattedDataImpl(hexKey));
+    when(justTransaction.getPayload()).thenReturn(hexKey);
 
     final Object[] params = new Object[] {Hash.ZERO};
 

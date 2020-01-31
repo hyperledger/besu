@@ -44,7 +44,7 @@ public class Cluster implements AutoCloseable {
   private final NetConditions net;
   private final ClusterConfiguration clusterConfiguration;
   private List<? extends RunnableNode> originalNodes = emptyList();
-  private List<URI> bootnodes = new ArrayList<>();
+  private final List<URI> bootnodes = new ArrayList<>();
 
   public Cluster(final NetConditions net) {
     this(new ClusterConfigurationBuilder().build(), net, BesuNodeRunner.instance());
