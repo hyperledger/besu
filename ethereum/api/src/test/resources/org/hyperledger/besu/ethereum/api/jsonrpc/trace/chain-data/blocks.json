@@ -256,6 +256,44 @@
           "to": "0x00F0000000000000000000000000000000000000"
         }
       ]
+    },
+    {
+      "number": "0x12",
+      "transactions": [
+        {
+          "comment": "Memory Read.",
+          "secretKey": "0x8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63",
+          "gasLimit": "0xFFFFF2",
+          "gasPrice": "0xEF",
+          "to": "0x0100000000000000000000000000000000000000"
+        },
+        {
+          "comment": "Revert.",
+          "secretKey": "0x8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63",
+          "gasLimit": "0xFFFFF2",
+          "gasPrice": "0xEF",
+          "to": "0x0110000000000000000000000000000000000000"
+        }
+      ]
+    },
+    {
+      "number": "0x13",
+      "transactions": [
+        {
+          "comment": "Deploy contract that will self-destruct when called.",
+          "secretKey": "0xc87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3",
+          "gasLimit": "0xFFFFF2",
+          "gasPrice": "0xEF",
+          "data": "0x6004600C60003960046000F3600035FF"
+        },
+        {
+          "comment": "call the prior contract then call log contract 00a0..00.",
+          "secretKey": "0xc87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3",
+          "gasLimit": "0xFFFFF2",
+          "gasPrice": "0xEF",
+          "data": "0x60006000600060006000738f0483125fcb9aaaefa9209d8e9d7b9c8b9fb90f5AF1600060006000600060007300A00000000000000000000000000000000000005AF1"
+        }
+      ]
     }
   ]
 }

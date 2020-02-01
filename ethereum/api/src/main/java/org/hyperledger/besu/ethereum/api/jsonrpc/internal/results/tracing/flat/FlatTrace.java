@@ -115,37 +115,31 @@ public class FlatTrace implements Trace {
   public static class Context {
 
     private final Builder builder;
-    private boolean returned;
-    private boolean isSubtrace = false;
+    private long gasUsed = 0;
 
-    public Context(final Builder builder) {
-      this(builder, false);
-    }
-
-    Context(final Builder builder, final boolean returned) {
+    Context(final Builder builder) {
       this.builder = builder;
-      this.returned = returned;
     }
 
     public Builder getBuilder() {
       return builder;
     }
 
-    public boolean isReturned() {
-      return returned;
+    void incGasUsed(final long gas) {
+      setGasUsed(gasUsed + gas);
     }
 
-    boolean isSubtrace() {
-      return isSubtrace;
+    void decGasUsed(final long gas) {
+      setGasUsed(gasUsed - gas);
     }
 
-    Context subTrace() {
-      this.isSubtrace = true;
-      return this;
+    public long getGasUsed() {
+      return gasUsed;
     }
 
-    void markAsReturned() {
-      this.returned = true;
+    public void setGasUsed(final long gasUsed) {
+      this.gasUsed = gasUsed;
+      builder.getResultBuilder().gasUsed("0x" + Long.toHexString(gasUsed));
     }
   }
 
@@ -170,9 +164,8 @@ public class FlatTrace implements Trace {
       return this;
     }
 
-    public Builder subtraces(final int subtraces) {
-      this.subtraces = subtraces;
-      return this;
+    public int getSubtraces() {
+      return subtraces;
     }
 
     public Builder traceAddress(final List<Integer> traceAddress) {
@@ -190,13 +183,8 @@ public class FlatTrace implements Trace {
       return this;
     }
 
-    Builder incSubTraces() {
-      return incSubTraces(1);
-    }
-
-    Builder incSubTraces(final int n) {
-      this.subtraces += n;
-      return this;
+    void incSubTraces() {
+      this.subtraces++;
     }
 
     public FlatTrace build() {
