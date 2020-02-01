@@ -209,11 +209,13 @@ public class FlatTraceGenerator {
         .getMaybeRefunds()
         .ifPresent(refunds -> weiBalance.set(refunds.getOrDefault(refundAddress, Wei.ZERO)));
 
+    final Action.Builder callingAction = tracesContexts.peekLast().getBuilder().getActionBuilder();
+    final String actionAddress =
+        callingAction.getCallType().equals("call")
+            ? callingAction.getTo()
+            : callingAction.getFrom();
     final Action.Builder subTraceActionBuilder =
-        Action.createSelfDestructAction(
-            tracesContexts.peekLast().getBuilder().getActionBuilder().getTo(),
-            refundAddress,
-            weiBalance.get());
+        Action.createSelfDestructAction(actionAddress, refundAddress, weiBalance.get());
 
     flatTraces.add(
         new FlatTrace.Context(subTraceBuilder.actionBuilder(subTraceActionBuilder)).getBuilder());

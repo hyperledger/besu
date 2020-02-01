@@ -175,9 +175,17 @@ public class Action {
       return this;
     }
 
+    public String getCallType() {
+      return callType;
+    }
+
     public Builder from(final String from) {
       this.from = from;
       return this;
+    }
+
+    public String getFrom() {
+      return from;
     }
 
     public Builder gas(final String gas) {
