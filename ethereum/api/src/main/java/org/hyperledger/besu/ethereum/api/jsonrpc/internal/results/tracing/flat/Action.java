@@ -70,30 +70,6 @@ public class Action {
     return new Builder();
   }
 
-  static Builder createCallAction(
-      final Transaction transaction,
-      final String lastContractAddress,
-      final Address contractCallAddress,
-      final Gas gasRemaining,
-      final Optional<Bytes> inputBytes,
-      final String callType) {
-    return builder()
-        .from(lastContractAddress)
-        .to(contractCallAddress.toString())
-        .input(inputBytes.map(Bytes::toHexString).orElse(null))
-        .gas(gasRemaining.toHexString())
-        .callType(callType)
-        .value(Quantity.create(transaction.getValue()));
-  }
-
-  static Builder createSelfDestructAction(
-      final String lastContractAddress, final Address contractCallAddress, final Wei balance) {
-    return builder()
-        .address(lastContractAddress)
-        .refundAddress(contractCallAddress.toString())
-        .balance(TracingUtils.weiAsHex(balance));
-  }
-
   public String getCallType() {
     return callType;
   }
