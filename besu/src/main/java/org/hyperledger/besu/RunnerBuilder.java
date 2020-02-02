@@ -117,10 +117,8 @@ import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes;
 
 public class RunnerBuilder {
-
   private Vertx vertx;
   private BesuController<?> besuController;
-
   private NetworkingConfiguration networkingConfiguration = NetworkingConfiguration.create();
   private final Collection<Bytes> bannedNodeIds = new ArrayList<>();
   private boolean p2pEnabled = true;
@@ -341,7 +339,6 @@ public class RunnerBuilder {
             .orElse(bannedNodes);
 
     final NatService natService = new NatService(buildNatManager(natMethod));
-
     final NetworkBuilder inactiveNetwork = (caps) -> new NoopP2PNetwork();
     final NetworkBuilder activeNetwork =
         (caps) ->
@@ -583,7 +580,7 @@ public class RunnerBuilder {
     final NatMethod detectedNatMethod =
         Optional.of(natMethod)
             .filter(not(isEqual(NatMethod.AUTO)))
-            .orElse(NatService.autoDetectNatMethod(new DockerAutoDetection()));
+            .orElse(NatService.autoDetectNatMethod(DockerAutoDetection::shouldBeThisNatMethod));
     switch (detectedNatMethod) {
       case UPNP:
         return Optional.of(new UpnpNatManager());
@@ -591,7 +588,7 @@ public class RunnerBuilder {
         return Optional.of(
             new ManualNatManager(p2pAdvertisedHost, p2pListenPort, jsonRpcConfiguration.getPort()));
       case DOCKER:
-        return Optional.of(new DockerNatManager());
+        return Optional.of(new DockerNatManager(p2pListenPort, jsonRpcConfiguration.getPort()));
       case NONE:
       default:
         return Optional.empty();

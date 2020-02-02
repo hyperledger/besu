@@ -17,17 +17,15 @@ package org.hyperledger.besu.nat.docker;
 
 import org.hyperledger.besu.nat.NatMethod;
 import org.hyperledger.besu.nat.core.AutoDetectionResult;
-import org.hyperledger.besu.nat.core.NatMethodAutoDetection;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.stream.Stream;
 
-public class DockerAutoDetection implements NatMethodAutoDetection {
+public class DockerAutoDetection {
 
-  @Override
-  public AutoDetectionResult shouldBeThisNatMethod() {
+  public static AutoDetectionResult shouldBeThisNatMethod() {
     try (Stream<String> stream = Files.lines(Paths.get("/proc/1/cgroup"))) {
       return new AutoDetectionResult(
           NatMethod.DOCKER, stream.anyMatch(line -> line.contains("/docker")));
