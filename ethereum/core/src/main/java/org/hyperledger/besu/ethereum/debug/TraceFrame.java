@@ -234,4 +234,5 @@ public class TraceFrame {
   public Optional<MemoryEntry> getMaybeUpdatedMemory() {
     return maybeUpdatedMemory;
   }
+
 }
