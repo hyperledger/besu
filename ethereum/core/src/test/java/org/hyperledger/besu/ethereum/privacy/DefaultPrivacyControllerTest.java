@@ -153,7 +153,8 @@ public class DefaultPrivacyControllerTest {
     enclavePublicKey = OrionKeyUtils.loadKey("orion_key_0.pub");
     privateTransactionValidator = mockPrivateTransactionValidator();
     enclave = mockEnclave();
-    final PrivateTransactionSimulator privateTransactionSimulator = mockPrivateTransactionSimulator();
+    final PrivateTransactionSimulator privateTransactionSimulator =
+        mockPrivateTransactionSimulator();
 
     privacyController =
         new DefaultPrivacyController(
@@ -180,11 +181,13 @@ public class DefaultPrivacyControllerTest {
 
     final PrivateTransaction transaction = buildLegacyPrivateTransaction(1);
 
+    final String enclaveKey = privacyController.sendTransaction(transaction, ENCLAVE_PUBLIC_KEY);
+
     final ValidationResult<TransactionInvalidReason> validationResult =
         privacyController.validatePrivateTransaction(transaction, "", ENCLAVE_PUBLIC_KEY);
 
     final Transaction markerTransaction =
-        privacyController.createPrivacyMarkerTransaction(ENCLAVE_PUBLIC_KEY, transaction);
+        privacyController.createPrivacyMarkerTransaction(enclaveKey, transaction);
 
     assertThat(validationResult).isEqualTo(ValidationResult.valid());
     assertThat(markerTransaction.contractAddress()).isEqualTo(PUBLIC_TRANSACTION.contractAddress());
