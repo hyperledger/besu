@@ -51,9 +51,7 @@ class TransactionsForSenderInfo {
       long previousNonce = -1;
       while (nonceIterator.hasNext()) {
         final long currentNonce = nonceIterator.next();
-        if (previousNonce != -1 && currentNonce > (previousNonce + 1)) {
-          LongStream.range(previousNonce + 1, currentNonce).forEach(gaps::add);
-        }
+        LongStream.range(previousNonce + 1, currentNonce).forEach(gaps::add);
         previousNonce = currentNonce;
       }
     }
