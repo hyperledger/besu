@@ -16,10 +16,11 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods;
 
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcEnclaveErrorConverter.convertEnclaveInvalidReason;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter.convertTransactionInvalidReason;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.DECODE_ERROR;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INVALID_PARAMS;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcRequestException;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
@@ -57,7 +58,7 @@ public class PrivacySendTransaction {
       throws ErrorResponseException {
     if (request.getRequest().getParamLength() != 1) {
       throw new ErrorResponseException(
-          new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS));
+          new JsonRpcErrorResponse(request.getRequest().getId(), INVALID_PARAMS));
     }
     final String rawPrivateTransaction = request.getRequiredParameter(0, String.class);
     final PrivateTransaction privateTransaction;
@@ -65,7 +66,7 @@ public class PrivacySendTransaction {
       privateTransaction = decodeRawTransaction(rawPrivateTransaction);
     } catch (final InvalidJsonRpcRequestException e) {
       throw new ErrorResponseException(
-          new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.DECODE_ERROR));
+          new JsonRpcErrorResponse(request.getRequest().getId(), DECODE_ERROR));
     }
     return privateTransaction;
   }
@@ -73,7 +74,14 @@ public class PrivacySendTransaction {
   public void validate(
       final JsonRpcRequestContext request, final PrivateTransaction privateTransaction)
       throws ErrorResponseException {
-    final String privacyGroupId = privacyGroupId(privateTransaction);
+    final String privacyGroupId;
+    try {
+      privacyGroupId = privacyGroupId(privateTransaction);
+    } catch (IllegalArgumentException e) {
+      throw new ErrorResponseException(
+          new JsonRpcErrorResponse(request.getRequest().getId(), INVALID_PARAMS));
+    }
+
     final String enclaveKey = enclavePublicKeyProvider.getEnclaveKey(request.getUser());
     final ValidationResult<TransactionInvalidReason> transactionValidationResult =
         privacyController.validatePrivateTransaction(
