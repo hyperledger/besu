@@ -630,6 +630,10 @@ public class PendingTransactionsTest {
     assertThat(transactions.getNextNonceForSender(transaction1.getSender()))
         .isPresent()
         .hasValue(6);
+    addLocalTransactions(6, 10);
+    assertThat(transactions.getNextNonceForSender(transaction1.getSender()))
+        .isPresent()
+        .hasValue(7);
   }
 
   private void addLocalTransactions(final int... nonces) {
