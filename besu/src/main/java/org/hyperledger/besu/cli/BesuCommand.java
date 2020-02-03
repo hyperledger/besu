@@ -1302,7 +1302,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--privacy-tls-keystore-file",
             "--privacy-tls-keystore-password-file",
             "--privacy-tls-client-auth-enabled",
-            "--privacy-tls-known-clients-file",
             "--privacy-tls-known-servers-file"));
   }
 

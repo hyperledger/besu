@@ -1533,6 +1533,16 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void privacyTlsOptionsRequiresTlsToBeEnabled() {
+    parseCommand("--privacy-tls-keystore-file", "/Users/me/key");
+
+    verifyOptionsConstraintLoggerCall("--privacy-tls-enabled", "--privacy-tls-keystore-file");
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
   public void fastSyncOptionsRequiresFastSyncModeToBeSet() {
     parseCommand("--fast-sync-min-peers", "5");
 
