@@ -41,7 +41,7 @@ public class TlsEnabledEnclaveTest {
   private TlsEnabledHttpServerFactory serverFactory;
   private Vertx vertx;
 
-  final TlsCertificateDefinition orionCert =
+  final TlsCertificateDefinition httpServerCert =
       TlsCertificateDefinition.loadFromResource("tls/cert1.pfx", "password");
   final TlsCertificateDefinition besuCert =
       TlsCertificateDefinition.loadFromResource("tls/cert2.pfx", "password2");
@@ -62,25 +62,25 @@ public class TlsEnabledEnclaveTest {
     this.shutdown();
   }
 
-  private Enclave createEnclave(final int orionPort, final Path workDir, final boolean tlsEnabled)
-      throws IOException {
+  private Enclave createEnclave(
+      final int httpServerPort, final Path workDir, final boolean tlsEnabled) throws IOException {
 
     final Path serverFingerprintFile = workDir.resolve("server_known_clients");
     final Path besuCertPasswordFile = workDir.resolve("password_file");
     try {
-      populateFingerprintFile(serverFingerprintFile, orionCert, Optional.of(orionPort));
+      populateFingerprintFile(serverFingerprintFile, httpServerCert, Optional.of(httpServerPort));
       Files.write(besuCertPasswordFile, besuCert.getPassword().getBytes(Charset.defaultCharset()));
 
       final EnclaveFactory factory = new EnclaveFactory(vertx);
       if (tlsEnabled) {
-        final URI orionUri = new URI("https://localhost:" + orionPort);
+        final URI httpServerUri = new URI("https://localhost:" + httpServerPort);
         return factory.createVertxEnclave(
-            orionUri,
+            httpServerUri,
             besuCert.getPkcs12File().toPath(),
             besuCertPasswordFile,
             serverFingerprintFile);
       } else {
-        return factory.createVertxEnclave(new URI("http://localhost:" + orionPort));
+        return factory.createVertxEnclave(new URI("http://localhost:" + httpServerPort));
       }
     } catch (KeyStoreException | NoSuchAlgorithmException | CertificateException e) {
       fail("unable to populate fingerprint file");
@@ -97,9 +97,9 @@ public class TlsEnabledEnclaveTest {
     Path workDir = Files.createTempDirectory("test-certs");
 
     // Note: the HttpServer always responds with a JsonRpcSuccess, result="I'm up".
-    final HttpServer orionHttpServer = serverFactory.create(orionCert, besuCert, workDir, true);
+    final HttpServer httpServer = serverFactory.create(httpServerCert, besuCert, workDir, true);
 
-    final Enclave enclave = createEnclave(orionHttpServer.actualPort(), workDir, false);
+    final Enclave enclave = createEnclave(httpServer.actualPort(), workDir, false);
 
     assertThat(enclave.upCheck()).isEqualTo(false);
   }
@@ -110,9 +110,9 @@ public class TlsEnabledEnclaveTest {
     Path workDir = Files.createTempDirectory("test-certs");
 
     // Note: the HttpServer always responds with a JsonRpcSuccess, result="I'm up".
-    final HttpServer orionHttpServer = serverFactory.create(orionCert, besuCert, workDir, false);
+    final HttpServer httpServer = serverFactory.create(httpServerCert, besuCert, workDir, false);
 
-    final Enclave enclave = createEnclave(orionHttpServer.actualPort(), workDir, false);
+    final Enclave enclave = createEnclave(httpServer.actualPort(), workDir, false);
 
     assertThat(enclave.upCheck()).isEqualTo(true);
   }
@@ -122,10 +122,10 @@ public class TlsEnabledEnclaveTest {
 
     Path workDir = Files.createTempDirectory("test-certs");
 
-    // Note: the HttpServer always responds with a JsonRpcSuccess, result="I'm up".
-    final HttpServer orionHttpServer = serverFactory.create(orionCert, besuCert, workDir, false);
+    // Note: the HttpServer always responds with a JsonRpcSuccess, result="I'm up!".
+    final HttpServer httpServer = serverFactory.create(httpServerCert, besuCert, workDir, false);
 
-    final Enclave enclave = createEnclave(orionHttpServer.actualPort(), workDir, true);
+    final Enclave enclave = createEnclave(httpServer.actualPort(), workDir, true);
 
     assertThat(enclave.upCheck()).isEqualTo(false);
   }
@@ -136,9 +136,9 @@ public class TlsEnabledEnclaveTest {
     Path workDir = Files.createTempDirectory("test-certs");
 
     // Note: the HttpServer always responds with a JsonRpcSuccess, result="I'm up".
-    final HttpServer orionHttpServer = serverFactory.create(orionCert, besuCert, workDir, true);
+    final HttpServer httpServer = serverFactory.create(httpServerCert, besuCert, workDir, true);
 
-    final Enclave enclave = createEnclave(orionHttpServer.actualPort(), workDir, true);
+    final Enclave enclave = createEnclave(httpServer.actualPort(), workDir, true);
 
     assertThat(enclave.upCheck()).isEqualTo(true);
   }
