@@ -57,9 +57,9 @@ public class EnclaveFactory {
 
   public Enclave createVertxEnclave(
       final URI enclaveUri,
-      final Path orionKeyStoreFile,
-      final Path orionKeyStorePasswordFile,
-      final Path orionWhitelistFile) {
+      final Path privacyKeyStoreFile,
+      final Path privacyKeyStorePasswordFile,
+      final Path privacyWhitelistFile) {
     if (enclaveUri.getPort() == -1) {
       throw new EnclaveIOException("Illegal URI - no port specified");
     }
@@ -71,13 +71,13 @@ public class EnclaveFactory {
 
     // set TLS options if passed in
     try {
-      if (orionKeyStoreFile != null && orionKeyStorePasswordFile != null) {
+      if (privacyKeyStoreFile != null && privacyKeyStorePasswordFile != null) {
         clientOptions.setSsl(true);
         clientOptions.setPfxKeyCertOptions(
-            convertFrom(orionKeyStoreFile, orionKeyStorePasswordFile));
+            convertFrom(privacyKeyStoreFile, privacyKeyStorePasswordFile));
       }
       clientOptions.setTrustOptions(
-          VertxTrustOptions.whitelistServers(orionWhitelistFile, TRUST_CA));
+          VertxTrustOptions.whitelistServers(privacyWhitelistFile, TRUST_CA));
     } catch (final NoSuchFileException e) {
       throw new InvalidConfigurationException(
           "Requested file " + e.getMessage() + " does not exist at specified location.");
