@@ -114,11 +114,14 @@ public class PrivateStorageMigration {
                       parsePrivateTransaction(receiveResponse);
                   final Updater updater = privateStateStorage.updater();
 
-                  migratePrivateTransaction(
-                      blockHeader, privacyGroupId, pmt, privateTransaction, updater);
+                  final PrivateTransactionSimulatorResult result =
+                      migratePrivateTransaction(
+                          blockHeader, privacyGroupId, pmt, privateTransaction, updater);
 
-                  updatePrivacyGroupHeadBlockMap(
-                      blockHash, privacyGroupId, privacyGroupHeadBlockMap, updater);
+                  if (result.isSuccessful()) {
+                    updatePrivacyGroupHeadBlockMap(
+                        blockHash, privacyGroupId, privacyGroupHeadBlockMap, updater);
+                  }
 
                   migratedPrivacyGroups.add(privacyGroupId);
 
@@ -179,7 +182,7 @@ public class PrivateStorageMigration {
     return privateTransaction;
   }
 
-  private void migratePrivateTransaction(
+  private PrivateTransactionSimulatorResult migratePrivateTransaction(
       final BlockHeader blockHeader,
       final String privacyGroupId,
       final Transaction privacyMarkerTransaction,
@@ -201,6 +204,8 @@ public class PrivateStorageMigration {
       }
       migratedTransactions.get(blockHash).add(privateTransaction.getHash());
     }
+
+    return txResult;
   }
 
   private PrivateTransactionSimulatorResult simulatePrivateTransaction(
