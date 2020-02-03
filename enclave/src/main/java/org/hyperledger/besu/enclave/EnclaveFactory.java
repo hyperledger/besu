@@ -40,14 +40,7 @@ public class EnclaveFactory {
   }
 
   public Enclave createVertxEnclave(final URI enclaveUri) {
-    if (enclaveUri.getPort() == -1) {
-      throw new EnclaveIOException("Illegal URI - no port specified");
-    }
-
-    final HttpClientOptions clientOptions = new HttpClientOptions();
-    clientOptions.setDefaultHost(enclaveUri.getHost());
-    clientOptions.setDefaultPort(enclaveUri.getPort());
-    clientOptions.setConnectTimeout(CONNECT_TIMEOUT);
+    final HttpClientOptions clientOptions = createNonTlsClientOptions(enclaveUri);
 
     final RequestTransmitter vertxTransmitter =
         new VertxRequestTransmitter(vertx.createHttpClient(clientOptions));
@@ -55,11 +48,8 @@ public class EnclaveFactory {
     return new Enclave(vertxTransmitter);
   }
 
-  public Enclave createVertxEnclave(
-      final URI enclaveUri,
-      final Path privacyKeyStoreFile,
-      final Path privacyKeyStorePasswordFile,
-      final Path privacyWhitelistFile) {
+  private HttpClientOptions createNonTlsClientOptions(final URI enclaveUri) {
+
     if (enclaveUri.getPort() == -1) {
       throw new EnclaveIOException("Illegal URI - no port specified");
     }
@@ -68,8 +58,16 @@ public class EnclaveFactory {
     clientOptions.setDefaultHost(enclaveUri.getHost());
     clientOptions.setDefaultPort(enclaveUri.getPort());
     clientOptions.setConnectTimeout(CONNECT_TIMEOUT);
+    return clientOptions;
+  }
 
-    // set TLS options if passed in
+  private HttpClientOptions createTlsClientOptions(
+      final URI enclaveUri,
+      final Path privacyKeyStoreFile,
+      final Path privacyKeyStorePasswordFile,
+      final Path privacyWhitelistFile) {
+
+    final HttpClientOptions clientOptions = createNonTlsClientOptions(enclaveUri);
     try {
       if (privacyKeyStoreFile != null && privacyKeyStorePasswordFile != null) {
         clientOptions.setSsl(true);
@@ -89,6 +87,18 @@ public class EnclaveFactory {
     } catch (final IOException e) {
       throw new InvalidConfigurationException("Failed to load TLS files " + e.getMessage());
     }
+    return clientOptions;
+  }
+
+  public Enclave createVertxEnclave(
+      final URI enclaveUri,
+      final Path privacyKeyStoreFile,
+      final Path privacyKeyStorePasswordFile,
+      final Path privacyWhitelistFile) {
+
+    HttpClientOptions clientOptions =
+        createTlsClientOptions(
+            enclaveUri, privacyKeyStoreFile, privacyKeyStorePasswordFile, privacyWhitelistFile);
 
     final RequestTransmitter vertxTransmitter =
         new VertxRequestTransmitter(vertx.createHttpClient(clientOptions));

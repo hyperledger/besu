@@ -57,14 +57,14 @@ public class TlsHelpers {
       throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException {
 
     final List<X509Certificate> certs = getCertsFromPkcs12(certDef);
-    final StringBuilder fingerPrintsToAdd = new StringBuilder();
+    final StringBuilder fingerprintsToAdd = new StringBuilder();
     final String portFragment = serverPortToAppendToHostname.map(port -> ":" + port).orElse("");
     for (final X509Certificate cert : certs) {
       final String fingerprint = generateFingerprint(cert);
-      fingerPrintsToAdd.append("localhost" + portFragment + " " + fingerprint + "\n");
-      fingerPrintsToAdd.append("127.0.0.1" + portFragment + " " + fingerprint + "\n");
+      fingerprintsToAdd.append(String.format("localhost%s %s%n", portFragment, fingerprint));
+      fingerprintsToAdd.append(String.format("127.0.0.1%s %s%n", portFragment, fingerprint));
     }
-    Files.writeString(knownClientsPath, fingerPrintsToAdd.toString());
+    Files.writeString(knownClientsPath, fingerprintsToAdd.toString());
   }
 
   public static List<X509Certificate> getCertsFromPkcs12(final TlsCertificateDefinition certDef)
