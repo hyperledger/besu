@@ -18,16 +18,8 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.TracingUtils;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.Wei;
-
-import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import org.apache.tuweni.bytes.Bytes;
 
 @JsonInclude(NON_NULL)
 public class Action {
@@ -68,30 +60,6 @@ public class Action {
 
   public static Builder builder() {
     return new Builder();
-  }
-
-  static Builder createCallAction(
-      final Transaction transaction,
-      final String lastContractAddress,
-      final Address contractCallAddress,
-      final Gas gasRemaining,
-      final Optional<Bytes> inputBytes,
-      final String callType) {
-    return builder()
-        .from(lastContractAddress)
-        .to(contractCallAddress.toString())
-        .input(inputBytes.map(Bytes::toHexString).orElse(null))
-        .gas(gasRemaining.toHexString())
-        .callType(callType)
-        .value(Quantity.create(transaction.getValue()));
-  }
-
-  static Builder createSelfDestructAction(
-      final String lastContractAddress, final Address contractCallAddress, final Wei balance) {
-    return builder()
-        .address(lastContractAddress)
-        .refundAddress(contractCallAddress.toString())
-        .balance(TracingUtils.weiAsHex(balance));
   }
 
   public String getCallType() {
