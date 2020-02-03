@@ -197,15 +197,20 @@ public class FlatTraceGenerator {
     final FlatTrace.Builder traceFrameBuilder = currentContext.getBuilder();
     final Result.Builder resultBuilder = traceFrameBuilder.getResultBuilder();
     final Action.Builder actionBuilder = traceFrameBuilder.getActionBuilder();
+    final Bytes outputData = traceFrame.getOutputData();
     if (resultBuilder.getCode() == null) {
-      resultBuilder.output(traceFrame.getOutputData().toHexString());
+      resultBuilder.output(outputData.toHexString());
     }
-    // set value for CREATE and CREATE2
+    // set value for contract creation TXes, CREATE, and CREATE2
     if (actionBuilder.getCallType() == null && traceFrame.getMaybeCode().isPresent()) {
       actionBuilder.init(traceFrame.getMaybeCode().get().getBytes().toHexString());
       resultBuilder
-          .code(traceFrame.getOutputData().toHexString())
+          .code(outputData.toHexString())
           .address(traceFrame.getRecipient().toHexString());
+      if (currentContext.isCreateOp()) {
+        // this is from a CREATE/CREATE2, so add code deposit cost.
+        currentContext.incGasUsed(outputData.size() * 200L);
+      }
     }
     tracesContexts.removeLast();
     final FlatTrace.Context nextContext = tracesContexts.peekLast();
@@ -278,6 +283,7 @@ public class FlatTraceGenerator {
 
     final FlatTrace.Context currentContext =
         new FlatTrace.Context(subTraceBuilder.actionBuilder(subTraceActionBuilder));
+    currentContext.setCreateOp(true);
     currentContext.decGasUsed(cumulativeGasCost);
     tracesContexts.addLast(currentContext);
     flatTraces.add(currentContext.getBuilder());
