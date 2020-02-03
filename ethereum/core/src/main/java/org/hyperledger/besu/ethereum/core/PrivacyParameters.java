@@ -165,9 +165,9 @@ public class PrivacyParameters {
     private PrivacyStorageProvider storageProvider;
     private EnclaveFactory enclaveFactory;
     private boolean multiTenancyEnabled;
-    private Path orionKeyStoreFile;
-    private Path orionKeyStorePasswordFile;
-    private Path orionClientWhitelistFile;
+    private Path privacyKeyStoreFile;
+    private Path privacyKeyStorePasswordFile;
+    private Path privacyClientWhitelistFile;
 
     public Builder setPrivacyAddress(final Integer privacyAddress) {
       this.privacyAddress = privacyAddress;
@@ -205,12 +205,12 @@ public class PrivacyParameters {
     }
 
     public Builder setTlsConfiguration(
-        final Path orionKeyStoreFile,
-        final Path orionKeyStorePasswordFile,
-        final Path orionClientWhitelistFile) {
-      this.orionKeyStoreFile = orionKeyStoreFile;
-      this.orionKeyStorePasswordFile = orionKeyStorePasswordFile;
-      this.orionClientWhitelistFile = orionClientWhitelistFile;
+        final Path privacyKeyStoreFile,
+        final Path privacyKeyStorePasswordFile,
+        final Path privacyClientWhitelistFile) {
+      this.privacyKeyStoreFile = privacyKeyStoreFile;
+      this.privacyKeyStorePasswordFile = privacyKeyStorePasswordFile;
+      this.privacyClientWhitelistFile = privacyClientWhitelistFile;
       return this;
     }
 
@@ -232,13 +232,13 @@ public class PrivacyParameters {
         config.setPrivateStorageProvider(storageProvider);
         config.setPrivateStateStorage(privateStateStorage);
         // pass TLS options to enclave factory if they are set
-        if (orionKeyStoreFile != null) {
+        if (privacyKeyStoreFile != null) {
           config.setEnclave(
               enclaveFactory.createVertxEnclave(
                   enclaveUrl,
-                  orionKeyStoreFile,
-                  orionKeyStorePasswordFile,
-                  orionClientWhitelistFile));
+                  privacyKeyStoreFile,
+                  privacyKeyStorePasswordFile,
+                  privacyClientWhitelistFile));
         } else {
           config.setEnclave(enclaveFactory.createVertxEnclave(enclaveUrl));
         }

@@ -33,6 +33,7 @@ public class EnclaveFactory {
 
   private final Vertx vertx;
   private static final int CONNECT_TIMEOUT = 1000;
+  private final boolean TRUST_CA = false;
 
   public EnclaveFactory(final Vertx vertx) {
     this.vertx = vertx;
@@ -75,9 +76,8 @@ public class EnclaveFactory {
         clientOptions.setPfxKeyCertOptions(
             convertFrom(orionKeyStoreFile, orionKeyStorePasswordFile));
       }
-      final boolean trustCA = false;
       clientOptions.setTrustOptions(
-          VertxTrustOptions.whitelistServers(orionWhitelistFile, trustCA));
+          VertxTrustOptions.whitelistServers(orionWhitelistFile, TRUST_CA));
     } catch (final NoSuchFileException e) {
       throw new InvalidConfigurationException(
           "Requested file " + e.getMessage() + " does not exist at specified location.");
