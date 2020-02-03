@@ -28,6 +28,8 @@ public class JsonRpcErrorConverter {
       case INCORRECT_NONCE:
       case INCORRECT_PRIVATE_NONCE:
         return JsonRpcError.INCORRECT_NONCE;
+      case WRONG_CHAIN_ID:
+        return JsonRpcError.WRONG_CHAIN_ID;
       case INVALID_SIGNATURE:
         return JsonRpcError.INVALID_TRANSACTION_SIGNATURE;
       case INTRINSIC_GAS_EXCEEDS_GAS_LIMIT:

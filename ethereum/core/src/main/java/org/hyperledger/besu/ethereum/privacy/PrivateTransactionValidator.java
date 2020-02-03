@@ -78,16 +78,13 @@ public class PrivateTransactionValidator {
 
   private ValidationResult<TransactionValidator.TransactionInvalidReason>
       validateTransactionSignature(final PrivateTransaction transaction) {
-    if (chainId.isPresent()
-        && (transaction.getChainId().isPresent() && !transaction.getChainId().equals(chainId))) {
+    if (chainId.isPresent() && !chainId.equals(transaction.getChainId())) {
       return ValidationResult.invalid(
           TransactionValidator.TransactionInvalidReason.WRONG_CHAIN_ID,
-          String.format(
-              "Transaction was meant for chain id %s, not this chain id %s",
-              transaction.getChainId().get(), chainId.get()));
+          String.format("Transaction has wrong chainId. Expected chainId is %s.", chainId.get()));
     }
 
-    if (!chainId.isPresent() && transaction.getChainId().isPresent()) {
+    if (chainId.isEmpty() && transaction.getChainId().isPresent()) {
       return ValidationResult.invalid(
           TransactionValidator.TransactionInvalidReason.REPLAY_PROTECTED_SIGNATURES_NOT_SUPPORTED,
           "Replay protection (chainId) is not supported");

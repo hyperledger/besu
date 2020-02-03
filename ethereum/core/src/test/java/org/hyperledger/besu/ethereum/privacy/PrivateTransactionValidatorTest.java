@@ -74,7 +74,17 @@ public class PrivateTransactionValidatorTest {
     validator = new PrivateTransactionValidator(Optional.of(BigInteger.ONE));
 
     ValidationResult<TransactionInvalidReason> validationResult =
-        validator.validate(privateTransactionWithChainId(999), 0L);
+        validator.validate(privateTransactionWithChainId(Optional.of(BigInteger.TWO)), 0L);
+
+    assertThat(validationResult).isEqualTo(ValidationResult.invalid(WRONG_CHAIN_ID));
+  }
+
+  @Test
+  public void transactionWithoutChainIdWithValidatorUsingChainIdShouldReturnWrongChainId() {
+    validator = new PrivateTransactionValidator(Optional.of(BigInteger.ONE));
+
+    ValidationResult<TransactionInvalidReason> validationResult =
+        validator.validate(privateTransactionWithChainId(Optional.empty()), 0L);
 
     assertThat(validationResult).isEqualTo(ValidationResult.invalid(WRONG_CHAIN_ID));
   }
@@ -85,7 +95,7 @@ public class PrivateTransactionValidatorTest {
     validator = new PrivateTransactionValidator(Optional.empty());
 
     ValidationResult<TransactionInvalidReason> validationResult =
-        validator.validate(privateTransactionWithChainId(999), 0L);
+        validator.validate(privateTransactionWithChainId(Optional.of(BigInteger.ONE)), 0L);
 
     assertThat(validationResult)
         .isEqualTo(ValidationResult.invalid(REPLAY_PROTECTED_SIGNATURES_NOT_SUPPORTED));
@@ -111,10 +121,10 @@ public class PrivateTransactionValidatorTest {
     return privateTransactionTestFixture.createTransaction(senderKeys);
   }
 
-  private PrivateTransaction privateTransactionWithChainId(final int chainId) {
+  private PrivateTransaction privateTransactionWithChainId(final Optional<BigInteger> chainId) {
     PrivateTransactionTestFixture privateTransactionTestFixture =
         new PrivateTransactionTestFixture();
-    privateTransactionTestFixture.chainId(Optional.of(BigInteger.valueOf(chainId)));
+    privateTransactionTestFixture.chainId(chainId);
     return privateTransactionTestFixture.createTransaction(senderKeys);
   }
 }
