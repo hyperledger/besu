@@ -14,12 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.verifyZeroInteractions;
-
+import com.google.common.collect.Lists;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
@@ -29,14 +24,18 @@ import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
+import org.junit.Test;
 
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.OptionalLong;
 
-import com.google.common.collect.Lists;
-import org.junit.Test;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.verifyZeroInteractions;
 
 public class PendingTransactionsTest {
 
@@ -622,6 +621,7 @@ public class PendingTransactionsTest {
 
   @Test
   public void assertThatCorrectNonceIsReturned() {
+    assertThat(transactions.getNextNonceForSender(transaction1.getSender())).isEmpty();
     addLocalTransactions(1, 2, 4, 5);
     assertThat(transactions.getNextNonceForSender(transaction1.getSender()))
         .isPresent()
