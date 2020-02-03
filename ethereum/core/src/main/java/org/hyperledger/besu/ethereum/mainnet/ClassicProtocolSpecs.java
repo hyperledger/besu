@@ -158,7 +158,7 @@ public class ClassicProtocolSpecs {
       final boolean enableRevertReason) {
     return aghartaDefinition(
             chainId, configContractSizeLimit, configStackSizeLimit, enableRevertReason)
-        .gasCalculator(IstanbulGasCalculator::new)
+        .gasCalculator(AztlanGasCalculator::new)
         .evmBuilder(
             gasCalculator ->
                 MainnetEvmRegistries.istanbul(gasCalculator, chainId.orElse(BigInteger.ZERO)))
