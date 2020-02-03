@@ -38,7 +38,7 @@ class TransactionsForSenderInfo {
     transactionsInfos.put(nonce, transactionInfo);
   }
 
-  private void updateGapsOnNewTransaction(long nonce) {
+  private void updateGapsOnNewTransaction(final long nonce) {
     final long highestNonce = transactionsInfos.lastKey();
     if (nonce > (highestNonce + 1)) {
       LongStream.range(highestNonce + 1, nonce).forEach(gaps::add);
