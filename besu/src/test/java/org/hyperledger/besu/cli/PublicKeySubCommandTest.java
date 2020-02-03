@@ -52,9 +52,9 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
           + System.lineSeparator()
           + "This command outputs the node public key. Default output is standard output."
           + System.lineSeparator()
-          + "      --to=<FILE>   File to write public key to instead of standard output"
-          + System.lineSeparator()
           + "  -h, --help        Show this help message and exit."
+          + System.lineSeparator()
+          + "      --to=<FILE>   File to write public key to instead of standard output"
           + System.lineSeparator()
           + "  -V, --version     Print version information and exit."
           + System.lineSeparator();
@@ -66,9 +66,9 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
           + System.lineSeparator()
           + "output."
           + System.lineSeparator()
-          + "      --to=<FILE>   File to write address to instead of standard output"
-          + System.lineSeparator()
           + "  -h, --help        Show this help message and exit."
+          + System.lineSeparator()
+          + "      --to=<FILE>   File to write address to instead of standard output"
           + System.lineSeparator()
           + "  -V, --version     Print version information and exit."
           + System.lineSeparator();
