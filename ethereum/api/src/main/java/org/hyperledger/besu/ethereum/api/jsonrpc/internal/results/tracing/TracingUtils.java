@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing;
 
+import org.hyperledger.besu.ethereum.core.Wei;
+
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -53,5 +55,9 @@ public class TracingUtils {
       }
     }
     return bytes.size();
+  }
+
+  public static String weiAsHex(final Wei balance) {
+    return balance.isZero() ? "0x0" : balance.toShortHexString();
   }
 }
