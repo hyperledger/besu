@@ -256,7 +256,7 @@ public class EeaSendRawTransactionTest {
   }
 
   @Test
-  public void invalidTransactionIsNotProcessed() {
+  public void invalidTransactionIsNotSentToEnclaveAndIsNotAddedToTransactionPool() {
     when(privacyController.validatePrivateTransaction(
             any(PrivateTransaction.class), anyString(), any()))
         .thenReturn(ValidationResult.invalid(PRIVATE_TRANSACTION_FAILED));

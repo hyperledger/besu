@@ -49,7 +49,7 @@ public class PrivacySendTransactionTest {
   }
 
   @Test
-  public void decodingFailsFOrRequestWithMoreThanOneParam() {
+  public void decodingFailsForRequestWithMoreThanOneParam() {
     final JsonRpcRequestContext requestContext =
         new JsonRpcRequestContext(
             new JsonRpcRequest("2.0", "eea_sendRawTransaction", new Object[] {"a", "b"}));
@@ -130,7 +130,7 @@ public class PrivacySendTransactionTest {
   }
 
   @Test
-  public void sendingFailsWithErrorResponseExceptionWhenPrivacyControllerReturnsError() {
+  public void sendingTransactionFailsWithErrorResponseExceptionWhenPrivacyControllerReturnsError() {
     final PrivateTransaction privateTransaction = createValidTransaction();
     final JsonRpcRequestContext jsonRpcRequest = createSendTransactionRequest(privateTransaction);
 
