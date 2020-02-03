@@ -38,11 +38,6 @@ public class BesuCommandCustomFactory implements CommandLine.IFactory {
       return (T) new VersionProvider(pluginVersionsProvider);
     }
 
-    try {
-      final Constructor<T> constructor = cls.getDeclaredConstructor();
-      return constructor.newInstance();
-    } catch (Exception e) {
-      return CommandLine.defaultFactory().create(cls);
-    }
+    return CommandLine.defaultFactory().create(cls);
   }
 }
