@@ -15,6 +15,7 @@
 package org.hyperledger.besu.consensus.ibft;
 
 import org.hyperledger.besu.consensus.common.BlockInterface;
+import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.PoaContext;
 import org.hyperledger.besu.consensus.common.VoteProposer;
 import org.hyperledger.besu.consensus.common.VoteTallyCache;
@@ -24,14 +25,17 @@ public class IbftContext implements PoaContext {
 
   private final VoteTallyCache voteTallyCache;
   private final VoteProposer voteProposer;
+  private final EpochManager epochManager;
   private final BlockInterface blockInterface;
 
   public IbftContext(
       final VoteTallyCache voteTallyCache,
       final VoteProposer voteProposer,
+      final EpochManager epochManager,
       final BlockInterface blockInterface) {
     this.voteTallyCache = voteTallyCache;
     this.voteProposer = voteProposer;
+    this.epochManager = epochManager;
     this.blockInterface = blockInterface;
   }
 
@@ -41,6 +45,10 @@ public class IbftContext implements PoaContext {
 
   public VoteProposer getVoteProposer() {
     return voteProposer;
+  }
+
+  public EpochManager getEpochManager() {
+    return epochManager;
   }
 
   @Override

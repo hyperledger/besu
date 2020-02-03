@@ -11,37 +11,63 @@
 
 Besu is an Apache 2.0 licensed, MainNet compatible, Ethereum client written in Java.
 
+## Useful Links
+
+* [Besu User Documentation]
+* [Besu Jira]
+* [Besu Wiki](https://wiki.hyperledger.org/display/BESU/Hyperledger+Besu)
+* [How to Contribute to Besu](https://wiki.hyperledger.org/display/BESU/How+to+Contribute)
+
+
 ## Issues 
 
-Besu issues are tracked in [Jira](https://pegasys1.atlassian.net/secure/Dashboard.jspa?selectPageId=10117) not GitHub. 
-See our [contribution guidelines](CONTRIBUTING.md) for more detail on searching and creating issues. 
+Besu issues are tracked in [Jira][Besu Jira], not GitHub. 
+See our [guidelines](https://wiki.hyperledger.org/display/BESU/Issues) for more details on searching and creating issues.
 
-If you've commented on an existing issue and have been waiting for a reply, feel free to ping us on [RocketChat].  
+If you have any questions, queries or comments, [RocketChat] is the place to find us.
+
 
 ## Besu Users
 
-The process for installing and running Besu as a user is different to when developing. Some processes in our [user documentation](https://besu.hyperledger.org/en/latest/) are different to those described in this Readme.
+Users wanting to install Besu should install the Besu binary by following [these instructions](https://besu.hyperledger.org/HowTo/Get-Started/Install-Binaries/).    
 
 ## Besu Developers
 
-* [Contribution Guidelines](CONTRIBUTING.md)
-* [Coding Conventions](CODING-CONVENTIONS.md)
-* [Command Line Interface (CLI) Style Guide](CLI-STYLE-GUIDE.md)
-* [User Documentation] for running and using Besu
+* [Contributing Guidelines]
+* [Coding Conventions](https://wiki.hyperledger.org/display/BESU/Coding+Conventions)
+* [Command Line Interface (CLI) Style Guide](https://wiki.hyperledger.org/display/BESU/Besu+CLI+Style+Guide)
+* [Besu User Documentation] for running and using Besu
+
 
 ### Development
 
 Instructions for how to get started with developing on the Besu codebase. Please also read the
-[contribution guidelines](CONTRIBUTING.md) for more detail on how to submit a pull request (PR).
+[wiki](https://wiki.hyperledger.org/display/BESU/Pull+Requests) for more details on how to submit a pull request (PR).  
+Also feel free to [contact our Developer Advocate](https://chat.hyperledger.org/direct/faraggi) with any questions about contributing to the project.
 
-* [Checking Out and Building](docs/development/building.md)
-* [Running Developer Builds](docs/development/running-developer-builds.md)
-* [Code Coverage](docs/development/code-coverage.md)
-* [Logging](docs/development/logging.md)
+* [Checking Out and Building](https://wiki.hyperledger.org/display/BESU/Building+from+source)
+* [Running Developer Builds](https://wiki.hyperledger.org/display/BESU/Building+from+source#running-developer-builds)
+* [Code Coverage](https://wiki.hyperledger.org/display/BESU/Code+coverage)
+* [Logging](https://wiki.hyperledger.org/display/BESU/Logging) or the [Documentation's Logging section](https://besu.hyperledger.org/en/stable/HowTo/Monitor/Logging/)
 
-[User Documentation]: https://besu.hyperledger.org/
-[RocketChat]: https://chat.hyperledger.org/channel/besu
 
 ## Release Notes
 
 [Release Notes](CHANGELOG.md)
+
+## Special thanks
+
+YourKit for providing us with a free profiler open source license. 
+
+YourKit supports open source projects with innovative and intelligent tools
+for monitoring and profiling Java and .NET applications.
+YourKit is the creator of <a href="https://www.yourkit.com/java/profiler/">YourKit Java Profiler</a>,
+<a href="https://www.yourkit.com/.net/profiler/">YourKit .NET Profiler</a>,
+and <a href="https://www.yourkit.com/youmonitor/">YourKit YouMonitor</a>.
+
+![YourKit Logo](https://www.yourkit.com/images/yklogo.png)
+
+[Besu User Documentation]: https://besu.hyperledger.org
+[RocketChat]: https://chat.hyperledger.org/
+[Besu Jira]: https://jira.hyperledger.org/projects/BESU/issues
+[Contributing Guidelines]: CONTRIBUTING.md

@@ -43,7 +43,7 @@ public class TraceFrame {
   private final Bytes inputData;
   private final Supplier<Bytes> outputData;
   private final Optional<Bytes32[]> stack;
-  private final Optional<Bytes32[]> memory;
+  private final Optional<Bytes[]> memory;
   private final Optional<Map<UInt256, UInt256>> storage;
   private final WorldUpdater worldUpdater;
   private final Optional<Bytes> revertReason;
@@ -51,7 +51,7 @@ public class TraceFrame {
   private final Optional<Code> maybeCode;
   private final int stackItemsProduced;
   private final Optional<Bytes32[]> stackPostExecution;
-  private final Optional<Bytes32[]> memoryPostExecution;
+  private final Optional<Bytes[]> memoryPostExecution;
   private Optional<Integer> maybeNextDepth;
 
   private Gas gasRemainingPostExecution;
@@ -69,7 +69,7 @@ public class TraceFrame {
       final Bytes inputData,
       final Supplier<Bytes> outputData,
       final Optional<Bytes32[]> stack,
-      final Optional<Bytes32[]> memory,
+      final Optional<Bytes[]> memory,
       final Optional<Map<UInt256, UInt256>> storage,
       final WorldUpdater worldUpdater,
       final Optional<Bytes> revertReason,
@@ -77,7 +77,7 @@ public class TraceFrame {
       final Optional<Code> maybeCode,
       final int stackItemsProduced,
       final Optional<Bytes32[]> stackPostExecution,
-      final Optional<Bytes32[]> memoryPostExecution,
+      final Optional<Bytes[]> memoryPostExecution,
       final Optional<Map<UInt256, UInt256>> storagePreExecution,
       final boolean virtualOperation,
       final Optional<MemoryEntry> maybeUpdatedMemory) {
@@ -141,7 +141,7 @@ public class TraceFrame {
     return stack;
   }
 
-  public Optional<Bytes32[]> getMemory() {
+  public Optional<Bytes[]> getMemory() {
     return memory;
   }
 
@@ -188,7 +188,7 @@ public class TraceFrame {
     return stackPostExecution;
   }
 
-  public Optional<Bytes32[]> getMemoryPostExecution() {
+  public Optional<Bytes[]> getMemoryPostExecution() {
     return memoryPostExecution;
   }
 

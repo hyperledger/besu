@@ -18,10 +18,10 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.diff;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.Trace;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.TracingUtils;
 import org.hyperledger.besu.ethereum.core.AbstractWorldUpdater.UpdateTrackingAccount;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 
@@ -61,12 +61,19 @@ public class StateDiffGenerator {
       final Map<String, DiffNode> storageDiff = new TreeMap<>();
       for (final Map.Entry<UInt256, UInt256> entry :
           updatedAccount.getUpdatedStorage().entrySet()) {
-        final UInt256 originalValue = rootAccount.getStorageValue(entry.getKey());
         final UInt256 newValue = entry.getValue();
-        if (!originalValue.equals(newValue)) {
-          storageDiff.put(
-              entry.getKey().toHexString(),
-              new DiffNode(originalValue.toHexString(), newValue.toHexString()));
+        if (rootAccount == null) {
+          if (!UInt256.ZERO.equals(newValue)) {
+            storageDiff.put(
+                entry.getKey().toHexString(), new DiffNode(null, newValue.toHexString()));
+          }
+        } else {
+          final UInt256 originalValue = rootAccount.getStorageValue(entry.getKey());
+          if (!originalValue.equals(newValue)) {
+            storageDiff.put(
+                entry.getKey().toHexString(),
+                new DiffNode(originalValue.toHexString(), newValue.toHexString()));
+          }
         }
       }
 
@@ -86,6 +93,9 @@ public class StateDiffGenerator {
     // Add deleted accounts
     for (final Address accountAddress : transactionUpdater.getDeletedAccountAddresses()) {
       final Account deletedAccount = previousUpdater.get(accountAddress);
+      if (deletedAccount == null) {
+        continue;
+      }
       final AccountDiff accountDiff =
           new AccountDiff(
               createDiffNode(deletedAccount, null, StateDiffGenerator::balanceAsHex),
@@ -104,8 +114,7 @@ public class StateDiffGenerator {
   }
 
   private static String balanceAsHex(final Account account) {
-    final Wei balance = account.getBalance();
-    return balance.isZero() ? "0x0" : balance.toShortHexString();
+    return TracingUtils.weiAsHex(account.getBalance());
   }
 
   private static String codeAsHex(final Account account) {
