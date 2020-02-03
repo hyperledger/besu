@@ -58,11 +58,11 @@ rpc-http-tls-client-auth-enabled=false
 rpc-http-tls-known-clients-file="rpc_tls_clients.txt"
 rpc-http-tls-ca-clients-enabled=false
 
-# ORION TLS
-orion-tls-enabled=false
-orion-tls-keystore-file="none.pfx"
-orion-tls-keystore-password-file="none.passwd"
-orion-tls-known-servers-file="orion_tls_servers.txt"
+# PRIVACY TLS
+privacy-tls-enabled=false
+privacy-tls-keystore-file="none.pfx"
+privacy-tls-keystore-password-file="none.passwd"
+privacy-tls-known-servers-file="privacy_tls_servers.txt"
 
 # GRAPHQL HTTP
 graphql-http-enabled=false

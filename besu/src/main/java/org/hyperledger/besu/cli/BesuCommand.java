@@ -525,29 +525,30 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Boolean isRpcWsAuthenticationEnabled = false;
 
   @Option(
-      names = {"--orion-tls-enabled"},
+      names = {"--privacy-tls-enabled"},
       paramLabel = MANDATORY_FILE_FORMAT_HELP,
-      description = "Enable TLS for connecting to Orion (default: ${DEFAULT-VALUE})")
-  private final Boolean isOrionTlsEnabled = false;
+      description = "Enable TLS for connecting to privacy enclave (default: ${DEFAULT-VALUE})")
+  private final Boolean isPrivacyTlsEnabled = false;
 
   @Option(
-      names = "--orion-tls-keystore-file",
+      names = "--privacy-tls-keystore-file",
       paramLabel = MANDATORY_FILE_FORMAT_HELP,
       description =
           "Path to a PKCS#12 formatted keystore; used to enable TLS on inbound connections.")
-  private final Path orionKeyStoreFile = null;
+  private final Path privacyKeyStoreFile = null;
 
   @Option(
-      names = "--orion-tls-keystore-password-file",
+      names = "--privacy-tls-keystore-password-file",
       paramLabel = MANDATORY_FILE_FORMAT_HELP,
       description = "Path to a file containing the password used to decrypt the keystore.")
-  private final Path orionKeyStorePasswordFile = null;
+  private final Path privacyKeyStorePasswordFile = null;
 
   @Option(
-      names = "--orion-tls-known-servers-file",
+      names = "--privacy-tls-known-servers-file",
       paramLabel = MANDATORY_FILE_FORMAT_HELP,
-      description = "Path to a file containing the fingerprints of authorized servers (Orions).")
-  private final Path orionServersWhitelistFile = null;
+      description =
+          "Path to a file containing the fingerprints of authorized servers (privacy enclaves).")
+  private final Path privacyServersWhitelistFile = null;
 
   @Option(
       names = {"--metrics-enabled"},
@@ -1114,7 +1115,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private BesuCommand configure() throws Exception {
     ethNetworkConfig = updateNetworkConfig(getNetwork());
     jsonRpcConfiguration = jsonRpcConfiguration();
-    checkOrionTlsOptionsDependencies();
+    checkPrivacyTlsOptionsDependencies();
     graphQLConfiguration = graphQLConfiguration();
     webSocketConfiguration = webSocketConfiguration();
     permissioningConfiguration = permissioningConfiguration();
@@ -1291,18 +1292,18 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         asList("--rpc-http-tls-known-clients-file", "--rpc-http-tls-ca-clients-enabled"));
   }
 
-  private void checkOrionTlsOptionsDependencies() {
+  private void checkPrivacyTlsOptionsDependencies() {
     CommandLineUtils.checkOptionDependencies(
         logger,
         commandLine,
-        "--orion-tls-enabled",
-        !isOrionTlsEnabled,
+        "--privacy-tls-enabled",
+        !isPrivacyTlsEnabled,
         asList(
-            "--orion-tls-keystore-file",
-            "--orion-tls-keystore-password-file",
-            "--orion-tls-client-auth-enabled",
-            "--orion-tls-known-clients-file",
-            "--orion-tls-known-servers-file"));
+            "--privacy-tls-keystore-file",
+            "--privacy-tls-keystore-password-file",
+            "--privacy-tls-client-auth-enabled",
+            "--privacy-tls-known-clients-file",
+            "--privacy-tls-known-servers-file"));
   }
 
   private Optional<TlsConfiguration> rpcHttpTlsConfiguration() {
@@ -1578,10 +1579,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       privacyParametersBuilder.setPrivateKeyPath(privacyMarkerTransactionSigningKeyPath);
       privacyParametersBuilder.setStorageProvider(
           privacyKeyStorageProvider(keyValueStorageName + "-privacy"));
-      if (isOrionTlsEnabled) {
-        // TODO should this use TlsConfiguration
+      if (isPrivacyTlsEnabled) {
         privacyParametersBuilder.setTlsConfiguration(
-            orionKeyStoreFile, orionKeyStorePasswordFile, orionServersWhitelistFile);
+            privacyKeyStoreFile, privacyKeyStorePasswordFile, privacyServersWhitelistFile);
       }
       privacyParametersBuilder.setEnclaveFactory(new EnclaveFactory(vertx));
     } else {
