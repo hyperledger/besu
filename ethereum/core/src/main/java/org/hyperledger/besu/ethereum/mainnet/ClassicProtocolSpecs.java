@@ -144,9 +144,7 @@ public class ClassicProtocolSpecs {
             chainId, configContractSizeLimit, configStackSizeLimit, enableRevertReason)
         .evmBuilder(MainnetEvmRegistries::constantinople)
         .gasCalculator(ConstantinopleFixGasCalculator::new)
-        .evmBuilder(
-            gasCalculator ->
-                MainnetEvmRegistries.istanbul(gasCalculator, chainId.orElse(BigInteger.ZERO)))
+        .evmBuilder(gasCalculator -> MainnetEvmRegistries.constantinople(gasCalculator))
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::istanbul)
         .name("Agharta");
   }
@@ -161,7 +159,7 @@ public class ClassicProtocolSpecs {
         .gasCalculator(AztlanGasCalculator::new)
         .evmBuilder(
             gasCalculator ->
-                MainnetEvmRegistries.istanbul(gasCalculator, chainId.orElse(BigInteger.ZERO)))
+                MainnetEvmRegistries.aztlan(gasCalculator, chainId.orElse(BigInteger.ZERO)))
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::istanbul)
         .name("Aztlan");
   }
