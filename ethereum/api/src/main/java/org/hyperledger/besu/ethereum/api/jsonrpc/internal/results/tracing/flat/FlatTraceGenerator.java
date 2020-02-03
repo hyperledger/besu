@@ -118,8 +118,11 @@ public class FlatTraceGenerator {
                 traceFrames,
                 opcodeString.toLowerCase(Locale.US));
       } else if ("RETURN".equals(opcodeString) || "STOP".equals(opcodeString)) {
-        currentContext.incGasUsed(cumulativeGasCost);
-        currentContext = handleReturn(transactionTrace, traceFrame, tracesContexts, currentContext);
+        if (currentContext != null) {
+          currentContext.incGasUsed(cumulativeGasCost);
+          currentContext =
+              handleReturn(transactionTrace, traceFrame, tracesContexts, currentContext);
+        }
       } else if ("SELFDESTRUCT".equals(opcodeString)) {
         currentContext.incGasUsed(cumulativeGasCost);
         currentContext = handleSelfDestruct(traceFrame, flatTraces, tracesContexts);
@@ -156,12 +159,16 @@ public class FlatTraceGenerator {
       final int traceFrameIndex,
       final List<TraceFrame> traceFrames,
       final String opcodeString) {
-    final FlatTrace.Context currentContext;
     final TraceFrame nextTraceFrame = traceFrames.get(traceFrameIndex + 1);
     final Bytes32[] stack = traceFrame.getStack().orElseThrow();
     final Address contractCallAddress = toAddress(stack[stack.length - 2]);
     final FlatTrace.Context lastContext = tracesContexts.peekLast();
     final String callingAddress = calculateCallingAddress(lastContext);
+
+    if (contractCallAddress.numberOfLeadingZeroBytes() >= 19) {
+      // don't log calls to precompiles
+      return tracesContexts.peekLast();
+    }
 
     final FlatTrace.Builder subTraceBuilder =
         FlatTrace.builder()
@@ -179,7 +186,8 @@ public class FlatTraceGenerator {
             .callType(opcodeString.toLowerCase(Locale.US))
             .value(Quantity.create(transactionTrace.getTransaction().getValue()));
 
-    currentContext = new FlatTrace.Context(subTraceBuilder.actionBuilder(subTraceActionBuilder));
+    final FlatTrace.Context currentContext =
+        new FlatTrace.Context(subTraceBuilder.actionBuilder(subTraceActionBuilder));
     currentContext.decGasUsed(cumulativeGasCost);
     tracesContexts.addLast(currentContext);
     flatTraces.add(currentContext.getBuilder());
