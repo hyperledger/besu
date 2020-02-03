@@ -27,6 +27,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.StaticNodesUtils;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.ProcessBuilder.Redirect;
@@ -105,7 +106,21 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
       params.add("--privacy-precompiled-address");
       params.add(String.valueOf(node.getPrivacyParameters().getPrivacyAddress()));
       params.add("--privacy-marker-transaction-signing-key-file");
-      params.add(node.homeDirectory().resolve("key").toString());
+      node.getPrivacyParameters()
+          .getSigningKeyPair()
+          .ifPresentOrElse(
+              keyPair -> {
+                try {
+                  File privKeyFile = File.createTempFile("privKey", ".tmp");
+                  FileWriter writer = new FileWriter(privKeyFile, UTF_8);
+                  writer.write(keyPair.getPrivateKey().toString());
+                  writer.close();
+                  params.add(privKeyFile.getAbsolutePath());
+                } catch (IOException e) {
+                  LOG.error("Unable to create temp key file.");
+                }
+              },
+              () -> params.add(node.homeDirectory().resolve("key").toString()));
     }
 
     params.add("--bootnodes");

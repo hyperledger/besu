@@ -17,9 +17,12 @@ package org.hyperledger.besu.tests.acceptance.dsl.node.configuration;
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
 
+import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
+import org.hyperledger.besu.ethereum.core.InMemoryPrivacyStorageProvider;
+import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 import org.hyperledger.besu.tests.acceptance.dsl.node.RunnableNode;
@@ -28,8 +31,11 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.Gene
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
+
+import io.vertx.core.Vertx;
 
 public class BesuNodeFactory {
 
@@ -54,7 +60,8 @@ public class BesuNodeFactory {
         config.isRevertReasonEnabled(),
         config.getPlugins(),
         config.getExtraCLIOptions(),
-        config.getStaticNodes());
+        config.getStaticNodes(),
+        config.getPrivacyParameters());
   }
 
   public BesuNode createMinerNode(final String name) throws IOException {
@@ -128,13 +135,13 @@ public class BesuNodeFactory {
             .build());
   }
 
-  public BesuNode createNodeWithAuthentication(final String name)
+  public BesuNode createNodeWithAuthentication(final String name, final String authFile)
       throws IOException, URISyntaxException {
     return create(
         new BesuNodeConfigurationBuilder()
             .name(name)
             .jsonRpcEnabled()
-            .jsonRpcAuthenticationEnabled()
+            .jsonRpcAuthenticationEnabled(authFile)
             .webSocketEnabled()
             .webSocketAuthenticationEnabled()
             .build());
@@ -158,6 +165,39 @@ public class BesuNodeFactory {
             .name(name)
             .p2pEnabled(false)
             .jsonRpcConfiguration(node.createJsonRpcEnabledConfig())
+            .build());
+  }
+
+  public BesuNode createNodeWithMultiTenancy(
+      final String name,
+      final String enclaveUrl,
+      final String authFile,
+      final String authPubKeyFile,
+      final String authPrivateKeyPath)
+      throws IOException, URISyntaxException {
+    final PrivacyParameters.Builder privacyParametersBuilder = new PrivacyParameters.Builder();
+    final PrivacyParameters privacyParameters =
+        privacyParametersBuilder
+            .setMultiTenancyEnabled(true)
+            .setEnabled(true)
+            .setStorageProvider(new InMemoryPrivacyStorageProvider())
+            .setEnclaveFactory(new EnclaveFactory(Vertx.vertx()))
+            .setEnclaveUrl(URI.create(enclaveUrl))
+            .setEnclavePublicKeyUsingFile(
+                Paths.get(ClassLoader.getSystemResource(authPubKeyFile).toURI())
+                    .toAbsolutePath()
+                    .toFile())
+            .setPrivateKeyPath(Paths.get(ClassLoader.getSystemResource(authPrivateKeyPath).toURI()))
+            .build();
+
+    return create(
+        new BesuNodeConfigurationBuilder()
+            .name(name)
+            .jsonRpcEnabled()
+            .jsonRpcAuthenticationEnabled(authFile)
+            .enablePrivateTransactions()
+            .privacyParameters(Optional.of(privacyParameters))
+            .miningEnabled()
             .build());
   }
 
