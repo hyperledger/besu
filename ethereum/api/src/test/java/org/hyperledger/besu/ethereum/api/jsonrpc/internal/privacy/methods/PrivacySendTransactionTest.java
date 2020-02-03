@@ -72,26 +72,7 @@ public class PrivacySendTransactionTest {
 
   @Test
   public void decodesRequestWithValidPrivateTransaction() throws ErrorResponseException {
-    final SECP256K1.KeyPair keyPair =
-        SECP256K1.KeyPair.create(
-            SECP256K1.PrivateKey.create(
-                new BigInteger(
-                    "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63", 16)));
-
-    final PrivateTransaction.Builder privateTransactionBuilder =
-        PrivateTransaction.builder()
-            .nonce(0)
-            .gasPrice(Wei.of(1))
-            .gasLimit(21000)
-            .value(Wei.ZERO)
-            .payload(Bytes.EMPTY)
-            .to(Address.fromHexString("0x095e7baea6a6c7c4c2dfeb977efac326af552d87"))
-            .chainId(BigInteger.ONE)
-            .privateFrom(Bytes.fromBase64String("S28yYlZxRCtuTmxOWUw1RUU3eTNJZE9udmlmdGppaXp="))
-            .privacyGroupId(Bytes.fromBase64String("DyAOiF/ynpc+JXa2YAGB0bCitSlOMNm+ShmB/7M6C4w="))
-            .restriction(Restriction.RESTRICTED);
-    final PrivateTransaction transaction = privateTransactionBuilder.signAndBuild(keyPair);
-
+    final PrivateTransaction transaction = createValidTransaction();
     final JsonRpcRequestContext requestContext = createSendTransactionRequest(transaction);
 
     final PrivateTransaction responseTransaction = privacySendTransaction.decode(requestContext);
@@ -100,30 +81,7 @@ public class PrivacySendTransactionTest {
 
   @Test
   public void validationFailsForRequestWithInvalidPrivacyGroupId() {
-    final SECP256K1.KeyPair keyPair =
-        SECP256K1.KeyPair.create(
-            SECP256K1.PrivateKey.create(
-                new BigInteger(
-                    "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63", 16)));
-
-    final PrivateTransaction.Builder privateTransactionBuilder =
-        PrivateTransaction.builder()
-            .nonce(0)
-            .gasPrice(Wei.of(1))
-            .gasLimit(21000)
-            .value(Wei.ZERO)
-            .payload(Bytes.EMPTY)
-            .to(Address.fromHexString("0x095e7baea6a6c7c4c2dfeb977efac326af552d87"))
-            .chainId(BigInteger.ONE)
-            .privateFrom(Bytes.fromBase64String("S28yYlZxRCtuTmxOWUw1RUU3eTNJZE9udmlmdGppaXp="))
-            .privateFor(
-                List.of(
-                    Bytes.fromBase64String(
-                        "S28yYlZxRCtuTmxOWUw1RUU3eTNJZE9udmlmdGppaXpwalJ0K0hUdUZCcz0="),
-                    Bytes.fromBase64String("QTFhVnRNeExDVUhtQlZIWG9aenpCZ1BiVy93ajVheER=")))
-            .restriction(Restriction.RESTRICTED);
-    final PrivateTransaction transaction = privateTransactionBuilder.signAndBuild(keyPair);
-
+    final PrivateTransaction transaction = createInvalidPrivateTransaction();
     final JsonRpcRequestContext requestContext = createSendTransactionRequest(transaction);
 
     assertThatThrownBy(() -> privacySendTransaction.validate(requestContext, transaction))
@@ -188,12 +146,6 @@ public class PrivacySendTransactionTest {
   }
 
   private PrivateTransaction createValidTransaction() {
-    final SECP256K1.KeyPair keyPair =
-        SECP256K1.KeyPair.create(
-            SECP256K1.PrivateKey.create(
-                new BigInteger(
-                    "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63", 16)));
-
     final PrivateTransaction.Builder privateTransactionBuilder =
         PrivateTransaction.builder()
             .nonce(0)
@@ -210,7 +162,34 @@ public class PrivacySendTransactionTest {
                     Bytes.fromBase64String("QTFhVnRNeExDVUhtQlZIWG9aenpCZ1BiVy93ajVheER=")))
             .restriction(Restriction.RESTRICTED);
 
-    return privateTransactionBuilder.signAndBuild(keyPair);
+    return privateTransactionBuilder.signAndBuild(createKeyPair());
+  }
+
+  private PrivateTransaction createInvalidPrivateTransaction() {
+    final PrivateTransaction.Builder privateTransactionBuilder =
+        PrivateTransaction.builder()
+            .nonce(0)
+            .gasPrice(Wei.of(1))
+            .gasLimit(21000)
+            .value(Wei.ZERO)
+            .payload(Bytes.EMPTY)
+            .to(Address.fromHexString("0x095e7baea6a6c7c4c2dfeb977efac326af552d87"))
+            .chainId(BigInteger.ONE)
+            .privateFrom(Bytes.fromBase64String("S28yYlZxRCtuTmxOWUw1RUU3eTNJZE9udmlmdGppaXp="))
+            .privateFor(
+                List.of(
+                    Bytes.fromBase64String(
+                        "S28yYlZxRCtuTmxOWUw1RUU3eTNJZE9udmlmdGppaXpwalJ0K0hUdUZCcz0="),
+                    Bytes.fromBase64String("QTFhVnRNeExDVUhtQlZIWG9aenpCZ1BiVy93ajVheER=")))
+            .restriction(Restriction.RESTRICTED);
+    return privateTransactionBuilder.signAndBuild(createKeyPair());
+  }
+
+  private SECP256K1.KeyPair createKeyPair() {
+    return SECP256K1.KeyPair.create(
+        SECP256K1.PrivateKey.create(
+            new BigInteger(
+                "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63", 16)));
   }
 
   private JsonRpcRequestContext createSendTransactionRequest(final PrivateTransaction transaction) {
