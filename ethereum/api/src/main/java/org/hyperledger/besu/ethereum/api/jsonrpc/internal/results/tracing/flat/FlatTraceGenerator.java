@@ -204,9 +204,7 @@ public class FlatTraceGenerator {
     // set value for contract creation TXes, CREATE, and CREATE2
     if (actionBuilder.getCallType() == null && traceFrame.getMaybeCode().isPresent()) {
       actionBuilder.init(traceFrame.getMaybeCode().get().getBytes().toHexString());
-      resultBuilder
-          .code(outputData.toHexString())
-          .address(traceFrame.getRecipient().toHexString());
+      resultBuilder.code(outputData.toHexString()).address(traceFrame.getRecipient().toHexString());
       if (currentContext.isCreateOp()) {
         // this is from a CREATE/CREATE2, so add code deposit cost.
         currentContext.incGasUsed(outputData.size() * 200L);
