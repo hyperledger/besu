@@ -23,6 +23,17 @@ The `BesuEvents` service and related `data` package have been marked as a stable
 
 - Return missing signers from getSignerMetrics [\#343](https://github.com/hyperledger/besu/pull/)
 
+### Experimental Features
+
+- Experimental support for `trace_replayBlockTransactions` - multiple PRs 
+
+Added support for the `trace_replayBlockTransactions` JSON-RPC call. To enable this API add 
+`TRACE` to the `rpc-http-api` options (for example,  `--rpc-http-api TRACE` on the command line). 
+
+This is not a production ready API.  There are known bugs relating to traced memory from calls and 
+returns, and the gas calculation reported in the flat traces does not always match up with the 
+correct gas calculated for consensus.
+
 ## 1.4 Beta 2 
 
 ### Additions and Improvements 
