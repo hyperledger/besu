@@ -1114,7 +1114,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private BesuCommand configure() throws Exception {
     ethNetworkConfig = updateNetworkConfig(getNetwork());
     jsonRpcConfiguration = jsonRpcConfiguration();
-    checkPrivacyTlsOptionsDependencies();
     graphQLConfiguration = graphQLConfiguration();
     webSocketConfiguration = webSocketConfiguration();
     permissioningConfiguration = permissioningConfiguration();
@@ -1530,7 +1529,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--privacy-url",
             "--privacy-public-key-file",
             "--privacy-precompiled-address",
-            "--privacy-multi-tenancy-enabled"));
+            "--privacy-multi-tenancy-enabled",
+            "--privacy-tls-enabled"));
+
+    checkPrivacyTlsOptionsDependencies();
 
     final PrivacyParameters.Builder privacyParametersBuilder = new PrivacyParameters.Builder();
     if (isPrivacyEnabled) {
