@@ -56,30 +56,18 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
           + System.lineSeparator();
 
   private static final String EXPECTED_BLOCK_IMPORT_USAGE =
-      "Usage: besu blocks import [-hV] [--format=<format>] --from=<FILE>"
-          + System.lineSeparator()
-          + "                          [--start-time=<startTime>]"
-          + System.lineSeparator()
-          + "This command imports blocks from a file into the database."
-          + System.lineSeparator()
-          + "      --format=<format>   The type of data to be imported, possible values are:"
-          + System.lineSeparator()
-          + "                            RLP, JSON (default: RLP)."
-          + System.lineSeparator()
-          + "      --from=<FILE>       File containing blocks to import."
-          + System.lineSeparator()
-          + "  -h, --help              Show this help message and exit."
-          + System.lineSeparator()
-          + "      --start-time=<startTime>"
-          + System.lineSeparator()
-          + "                          The timestamp in seconds of the first block for JSON"
-          + System.lineSeparator()
-          + "                            imports. Subsequent blocks will be 1 second later."
-          + System.lineSeparator()
-          + "                            (default: 1580785221)"
-          + System.lineSeparator()
-          + "  -V, --version           Print version information and exit."
-          + System.lineSeparator();
+      "Usage: besu blocks import [-hV] [--format=<format>] --from=<FILE>\n"
+          + "                          [--start-time=<startTime>]\n"
+          + "This command imports blocks from a file into the database.\n"
+          + "      --format=<format>   The type of data to be imported, possible values are:\n"
+          + "                            RLP, JSON (default: RLP).\n"
+          + "      --from=<FILE>       File containing blocks to import.\n"
+          + "  -h, --help              Show this help message and exit.\n"
+          + "      --start-time=<startTime>\n"
+          + "                          The timestamp in seconds of the first block for JSON\n"
+          + "                            imports. Subsequent blocks will be 1 second later.\n"
+          + "                            (default: current time)\n"
+          + "  -V, --version           Print version information and exit.\n";
 
   private static final String EXPECTED_BLOCK_EXPORT_USAGE =
       "Usage: besu blocks export [-hV] [--end-block=<LONG>] [--start-block=<LONG>]"
@@ -146,7 +134,7 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
   @Test
   public void callingBlockImportSubCommandHelpMustDisplayUsage() {
     parseCommand(BLOCK_SUBCOMMAND_NAME, BLOCK_IMPORT_SUBCOMMAND_NAME, "--help");
-    assertThat(commandOutput.toString()).isEqualToIgnoringWhitespace(EXPECTED_BLOCK_IMPORT_USAGE);
+    assertThat(commandOutput.toString()).isEqualTo(EXPECTED_BLOCK_IMPORT_USAGE);
     assertThat(commandErrorOutput.toString()).isEmpty();
   }
 

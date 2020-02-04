@@ -133,7 +133,7 @@ public class BlocksSubCommand implements Runnable {
     @Option(
         names = "--start-time",
         description =
-            "The timestamp in seconds of the first block for JSON imports. Subsequent blocks will be 1 second later. (default: ${DEFAULT-VALUE})",
+            "The timestamp in seconds of the first block for JSON imports. Subsequent blocks will be 1 second later. (default: current time)",
         arity = "1..1")
     private final Long startTime = System.currentTimeMillis() / 1000;
 
