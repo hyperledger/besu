@@ -546,9 +546,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @Option(
       names = "--privacy-tls-known-enclave-file",
       paramLabel = MANDATORY_FILE_FORMAT_HELP,
-      description =
-          "Path to a file containing the fingerprints of authorized privacy enclaves.")
-  private final Path privacyServersWhitelistFile = null;
+      description = "Path to a file containing the fingerprints of authorized privacy enclaves.")
+  private final Path privacyEnclaveWhitelistFile = null;
 
   @Option(
       names = {"--metrics-enabled"},
@@ -1578,8 +1577,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       privacyParametersBuilder.setStorageProvider(
           privacyKeyStorageProvider(keyValueStorageName + "-privacy"));
       if (isPrivacyTlsEnabled) {
-        privacyParametersBuilder.setTlsConfiguration(
-            privacyKeyStoreFile, privacyKeyStorePasswordFile, privacyServersWhitelistFile);
+        privacyParametersBuilder.setPrivacyKeyStoreFile(privacyKeyStoreFile);
+        privacyParametersBuilder.setPrivacyKeyStorePasswordFile(privacyKeyStorePasswordFile);
+        privacyParametersBuilder.setPrivacyEnclaveWhitelistFile(privacyEnclaveWhitelistFile);
       }
       privacyParametersBuilder.setEnclaveFactory(new EnclaveFactory(vertx));
     } else {
