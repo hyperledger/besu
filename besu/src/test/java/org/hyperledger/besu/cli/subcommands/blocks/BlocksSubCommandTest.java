@@ -56,22 +56,29 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
           + System.lineSeparator();
 
   private static final String EXPECTED_BLOCK_IMPORT_USAGE =
-      "Usage: besu blocks import [-hV] --from=<FILE>"
-          //      "Usage: besu blocks import [-hV] [--format=<format>] --from=<FILE>"
+      "Usage: besu blocks import [-hV] [--format=<format>] --from=<FILE>"
+          + System.lineSeparator()
+          + "                          [--start-time=<startTime>]"
           + System.lineSeparator()
           + "This command imports blocks from a file into the database."
-          // Hide format for while JSON option is under development
-          //          + System.lineSeparator()
-          //          + "      --format=<format>   The type of data to be imported, possible values
-          // are: RLP,\n"
-          //          + "                            JSON (default: RLP)."
           + System.lineSeparator()
-          + "      --from=<FILE>   File containing blocks to import."
+          + "      --format=<format>   The type of data to be imported, possible values are:"
           + System.lineSeparator()
-          + "  -h, --help          Show this help message and exit."
+          + "                            RLP, JSON (default: RLP)."
           + System.lineSeparator()
-          + "  -V, --version       Print version information and exit."
-          + System.lineSeparator();
+          + "      --from=<FILE>       File containing blocks to import."
+          + System.lineSeparator()
+          + "  -h, --help              Show this help message and exit."
+          + System.lineSeparator()
+          + "      --start-time=<startTime>"
+          + System.lineSeparator()
+          + "                          The timestamp in seconds of the first block for JSON"
+          + System.lineSeparator()
+          + "                            imports. Subsequent blocks will be 1 second later."
+          + System.lineSeparator()
+          + "                            (default: 1580785221)"
+          + System.lineSeparator()
+          + "  -V, --version           Print version information and exit.";
 
   private static final String EXPECTED_BLOCK_EXPORT_USAGE =
       "Usage: besu blocks export [-hV] [--end-block=<LONG>] [--start-block=<LONG>]"
