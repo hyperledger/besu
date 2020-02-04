@@ -88,6 +88,7 @@ public class DebugOperationTracer implements OperationTracer {
               currentGasCost,
               depth,
               exceptionalHaltReasons,
+              frame.getRecipientAddress(),
               inputData,
               outputData,
               stack,
