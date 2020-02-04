@@ -33,7 +33,7 @@ public class EnclaveFactory {
 
   private final Vertx vertx;
   private static final int CONNECT_TIMEOUT = 1000;
-  private final boolean TRUST_CA = false;
+  private static final boolean TRUST_CA = false;
 
   public EnclaveFactory(final Vertx vertx) {
     this.vertx = vertx;
