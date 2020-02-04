@@ -1555,8 +1555,6 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void privacyTlsOptionsRequiresPrivacyToBeEnabled() {
-    final URL configFile = this.getClass().getResource("/orion_publickey.pub");
-
     parseCommand("--privacy-tls-enabled", "--privacy-tls-keystore-file", "/Users/me/key");
 
     verifyOptionsConstraintLoggerCall("--privacy-enabled", "--privacy-tls-enabled");
