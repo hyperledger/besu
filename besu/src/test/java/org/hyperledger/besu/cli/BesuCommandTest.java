@@ -830,10 +830,9 @@ public class BesuCommandTest extends CommandTestAbstract {
     final File file = new File("./specific/enclavePrivateKey");
     file.deleteOnExit();
 
-    parseCommand("--node-private-enclavePrivateKey-file", file.getPath());
-
+    parseCommand("--node-private-key-file", file.getPath());
     assertThat(commandErrorOutput.toString())
-        .startsWith("Unknown options: '--node-private-enclavePrivateKey-file', './specific/key'");
+        .startsWith("Unknown options: '--node-private-key-file', './specific/enclavePrivateKey'");
     assertThat(commandOutput.toString()).isEmpty();
   }
 
