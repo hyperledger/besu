@@ -35,15 +35,18 @@ public class PrivacyGroupUtilTest {
   }
 
   @Test
-  public void generatesPrivacyGroupForDuplicatePrivateForValues() {
+  public void generatesPrivacyGroupForDuplicateValues() {
+    final String expectedPrivacyGroupId = "/xzRjCLioUBkm5LYuzll61GXyrD5x7bvXzQk/ovJA/4=";
     assertThat(
             privacyGroupId(
                 PRIVACY_GROUP_ID2, PRIVACY_GROUP_ID1, PRIVACY_GROUP_ID3, PRIVACY_GROUP_ID1))
-        .isEqualTo("4F/ZlRBkBTUTZu9rhkidb+7Ol3np2jIRmKpwviMS9pU=");
+        .isEqualTo(expectedPrivacyGroupId);
     assertThat(
             privacyGroupId(
-                PRIVACY_GROUP_ID3, PRIVACY_GROUP_ID3, PRIVACY_GROUP_ID2, PRIVACY_GROUP_ID2))
-        .isEqualTo("YLWh3AuGLOIB1oHH7R3lYVicEGlifmWq+SeD/Jit2HA=");
+                PRIVACY_GROUP_ID2, PRIVACY_GROUP_ID1, PRIVACY_GROUP_ID1, PRIVACY_GROUP_ID3))
+        .isEqualTo(expectedPrivacyGroupId);
+    assertThat(privacyGroupId(PRIVACY_GROUP_ID2, PRIVACY_GROUP_ID1, PRIVACY_GROUP_ID3))
+        .isEqualTo(expectedPrivacyGroupId);
   }
 
   @Test

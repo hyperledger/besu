@@ -29,13 +29,14 @@ public class PrivacyGroupUtil {
 
   public static String generateEeaPrivacyGroup(
       final Bytes privateFrom, final List<Bytes> privateFor) {
-    final List<byte[]> privacyGroupIds = new ArrayList<>();
-    privacyGroupIds.add(privateFrom.toArray());
-    privateFor.forEach(pg -> privacyGroupIds.add(pg.toArray()));
+    final List<Bytes> privacyGroupIds = new ArrayList<>();
+    privacyGroupIds.add(privateFrom);
+    privacyGroupIds.addAll(privateFor);
 
     final List<byte[]> sortedPrivacyGroupIds =
         privacyGroupIds.stream()
             .distinct()
+            .map(Bytes::toArray)
             .sorted(Comparator.comparing(Arrays::hashCode))
             .collect(Collectors.toList());
 
