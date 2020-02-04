@@ -131,10 +131,15 @@ public class VmTraceGenerator {
                     .map(stack -> stack[stack.length - 1])
                     .map(last -> Quantity.create(UInt256.fromHexString(last.toHexString())))
                     .ifPresent(report::singlePush);
-                if (!"DELEGATECALL".equals(currentTraceFrame.getOpcode())) {
+                switch (currentTraceFrame.getOpcode()) {
+                  case "DELEGATECALL":
+                  case "CREATE":
+                  case "CREATE2":
+                    break;
+                  default:
                   lastFrameInCall
                       .getMemory()
-                      .map(mem -> new Mem(mem[0].toHexString(), 0))
+                        .map(mem -> mem.length > 0 ? new Mem(mem[0].toHexString(), 0) : null)
                       .ifPresent(report::setMem);
                 }
               });

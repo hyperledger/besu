@@ -136,6 +136,8 @@ public class FlatTraceGenerator {
                 cumulativeGasCost,
                 traceFrameIndex,
                 traceFrames);
+      } else if ("REVERT".equals(opcodeString)) {
+        currentContext.getBuilder().error(Optional.of("Reverted"));
       } else if (!traceFrame.getExceptionalHaltReasons().isEmpty()) {
         currentContext
             .getBuilder()

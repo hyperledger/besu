@@ -42,7 +42,7 @@ public class TraceFrame {
   private final EnumSet<ExceptionalHaltReason> exceptionalHaltReasons;
   private final Address recipient;
   private final Bytes inputData;
-  private final Supplier<Bytes> outputData;
+  private final Bytes outputData;
   private final Optional<Bytes32[]> stack;
   private final Optional<Bytes[]> memory;
   private final Optional<Map<UInt256, UInt256>> storage;
@@ -69,7 +69,7 @@ public class TraceFrame {
       final EnumSet<ExceptionalHaltReason> exceptionalHaltReasons,
       final Address recipient,
       final Bytes inputData,
-      final Supplier<Bytes> outputData,
+      final Bytes outputData,
       final Optional<Bytes32[]> stack,
       final Optional<Bytes[]> memory,
       final Optional<Map<UInt256, UInt256>> storage,
@@ -141,7 +141,7 @@ public class TraceFrame {
   }
 
   public Bytes getOutputData() {
-    return outputData.get();
+    return outputData;
   }
 
   public Optional<Bytes32[]> getStack() {

@@ -41,6 +41,7 @@ import java.util.function.Consumer;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.bytes.MutableBytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /**
@@ -535,7 +536,24 @@ public class MessageFrame {
    * @return The bytes in the specified range
    */
   public Bytes readMemory(final UInt256 offset, final UInt256 length) {
-    return memory.getBytes(offset, length);
+    return readMemory(offset, length, false);
+  }
+
+  /**
+   * Read bytes in memory.
+   *
+   * @param offset The offset in memory
+   * @param length The length of the bytes to read
+   * @param explicitMemoryRead true if triggered by a memory opcode, false otherwise
+   * @return The bytes in the specified range
+   */
+  public Bytes readMemory(
+      final UInt256 offset, final UInt256 length, final boolean explicitMemoryRead) {
+    final Bytes value = memory.getBytes(offset, length);
+    if (explicitMemoryRead) {
+      setUpdatedMemory(offset, value);
+    }
+    return value;
   }
 
   /**
@@ -622,7 +640,7 @@ public class MessageFrame {
       final Bytes value,
       final boolean explicitMemoryUpdate) {
     memory.setBytes(offset, sourceOffset, length, value);
-    if (explicitMemoryUpdate) {
+    if (explicitMemoryUpdate && length.toLong() > 0) {
       setUpdatedMemory(offset, sourceOffset, length, value);
     }
   }
@@ -632,10 +650,15 @@ public class MessageFrame {
     final int srcOff = sourceOffset.fitsInt() ? sourceOffset.intValue() : Integer.MAX_VALUE;
     final int len = length.fitsInt() ? length.intValue() : Integer.MAX_VALUE;
     final int endIndex = srcOff + len;
-    if (srcOff < 0 || endIndex <= 0 || endIndex > value.size()) {
-      return;
+    if (srcOff >= 0 && endIndex > 0) {
+      if (endIndex > value.size()) {
+        final MutableBytes paddedAnswer = MutableBytes.create(len);
+        value.slice(srcOff, value.size() - srcOff).copyTo(paddedAnswer, 0);
+        setUpdatedMemory(offset, paddedAnswer.copy());
+      } else {
+        setUpdatedMemory(offset, value.slice(srcOff, len).copy());
+      }
     }
-    setUpdatedMemory(offset, value.slice(srcOff, len).copy());
   }
 
   private void setUpdatedMemory(final UInt256 offset, final Bytes value) {

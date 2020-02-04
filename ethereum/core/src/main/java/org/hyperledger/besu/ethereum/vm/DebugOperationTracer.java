@@ -61,7 +61,6 @@ public class DebugOperationTracer implements OperationTracer {
     final EnumSet<ExceptionalHaltReason> exceptionalHaltReasons =
         EnumSet.copyOf(frame.getExceptionalHaltReasons());
     final Bytes inputData = frame.getInputData();
-    final Supplier<Bytes> outputData = frame::getOutputData;
     final Optional<Bytes32[]> stack = captureStack(frame);
     final Optional<Bytes[]> memory = captureMemory(frame);
     final Optional<Map<UInt256, UInt256>> storagePreExecution = captureStorage(frame);
@@ -71,6 +70,7 @@ public class DebugOperationTracer implements OperationTracer {
     try {
       executeOperation.execute();
     } finally {
+      final Bytes outputData = frame.getOutputData();
       stackPostExecution = captureStack(frame);
       memoryPostExecution = captureMemory(frame);
       if (lastFrame != null) {
