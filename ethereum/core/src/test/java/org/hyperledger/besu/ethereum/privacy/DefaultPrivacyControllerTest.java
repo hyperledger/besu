@@ -30,6 +30,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.io.Base64;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.enclave.Enclave;
@@ -52,14 +58,6 @@ import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.orion.testutil.OrionKeyUtils;
-
-import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.io.Base64;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -184,7 +182,7 @@ public class DefaultPrivacyControllerTest {
     final String enclaveKey = privacyController.sendTransaction(transaction, ENCLAVE_PUBLIC_KEY);
 
     final ValidationResult<TransactionInvalidReason> validationResult =
-        privacyController.validatePrivateTransaction(transaction, "", ENCLAVE_PUBLIC_KEY);
+        privacyController.validatePrivateTransaction(transaction, ENCLAVE_PUBLIC_KEY);
 
     final Transaction markerTransaction =
         privacyController.createPrivacyMarkerTransaction(enclaveKey, transaction);
@@ -208,7 +206,7 @@ public class DefaultPrivacyControllerTest {
 
     final ValidationResult<TransactionInvalidReason> validationResult =
         privacyController.validatePrivateTransaction(
-            transaction, transaction.getPrivacyGroupId().get().toString(), ENCLAVE_PUBLIC_KEY);
+            transaction, ENCLAVE_PUBLIC_KEY);
 
     final Transaction markerTransaction =
         privacyController.createPrivacyMarkerTransaction(enclaveKey, transaction);
@@ -238,7 +236,7 @@ public class DefaultPrivacyControllerTest {
 
     final PrivateTransaction transaction = buildLegacyPrivateTransaction(0);
     final ValidationResult<TransactionInvalidReason> validationResult =
-        privacyController.validatePrivateTransaction(transaction, "", ENCLAVE_PUBLIC_KEY);
+        privacyController.validatePrivateTransaction(transaction, ENCLAVE_PUBLIC_KEY);
     assertThat(validationResult).isEqualTo(ValidationResult.invalid(PRIVATE_NONCE_TOO_LOW));
   }
 
@@ -250,7 +248,7 @@ public class DefaultPrivacyControllerTest {
     final PrivateTransaction transaction = buildLegacyPrivateTransaction(2);
 
     final ValidationResult<TransactionInvalidReason> validationResult =
-        privacyController.validatePrivateTransaction(transaction, "", ENCLAVE_PUBLIC_KEY);
+        privacyController.validatePrivateTransaction(transaction, ENCLAVE_PUBLIC_KEY);
     assertThat(validationResult).isEqualTo(ValidationResult.invalid(INCORRECT_PRIVATE_NONCE));
   }
 

@@ -76,7 +76,7 @@ public class PrivDistributeRawTransactionTest {
     when(privacyController.sendTransaction(any(PrivateTransaction.class), any()))
         .thenReturn(enclavePublicKey);
     when(privacyController.validatePrivateTransaction(
-            any(PrivateTransaction.class), any(String.class), any()))
+            any(PrivateTransaction.class), anyString()))
         .thenReturn(ValidationResult.valid());
 
     final JsonRpcRequestContext request =
@@ -99,7 +99,7 @@ public class PrivDistributeRawTransactionTest {
         .sendTransaction(any(PrivateTransaction.class), eq(ENCLAVE_PUBLIC_KEY));
     verify(privacyController)
         .validatePrivateTransaction(
-            any(PrivateTransaction.class), any(String.class), eq(ENCLAVE_PUBLIC_KEY));
+            any(PrivateTransaction.class), eq(ENCLAVE_PUBLIC_KEY));
   }
 
   @Test
@@ -107,7 +107,7 @@ public class PrivDistributeRawTransactionTest {
     when(privacyController.sendTransaction(any(PrivateTransaction.class), any()))
         .thenThrow(new MultiTenancyValidationException("validation failed"));
     when(privacyController.validatePrivateTransaction(
-            any(PrivateTransaction.class), anyString(), anyString()))
+            any(PrivateTransaction.class), anyString()))
         .thenReturn(ValidationResult.valid());
 
     final JsonRpcRequestContext request =

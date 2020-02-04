@@ -41,6 +41,8 @@ import com.google.common.collect.Lists;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.web3j.utils.Base64String;
+import org.web3j.utils.PrivacyGroupUtils;
 
 public class DefaultPrivacyController implements PrivacyController {
 
@@ -129,9 +131,8 @@ public class DefaultPrivacyController implements PrivacyController {
 
   @Override
   public ValidationResult<TransactionValidator.TransactionInvalidReason> validatePrivateTransaction(
-      final PrivateTransaction privateTransaction,
-      final String privacyGroupId,
-      final String enclavePublicKey) {
+      final PrivateTransaction privateTransaction, final String enclavePublicKey) {
+    final String privacyGroupId = privacyGroupId(privateTransaction);
     return privateTransactionValidator.validate(
         privateTransaction,
         determineBesuNonce(privateTransaction.getSender(), privacyGroupId, enclavePublicKey));
@@ -224,6 +225,26 @@ public class DefaultPrivacyController implements PrivacyController {
       }
       return enclave.send(
           payload, privateTransaction.getPrivateFrom().toBase64String(), privateFor);
+    }
+  }
+
+  private String privacyGroupId(final PrivateTransaction privateTransaction) {
+    if (privateTransaction.getPrivacyGroupId().isPresent()) {
+      return privateTransaction.getPrivacyGroupId().get().toBase64String();
+    } else {
+      final Base64String privateFrom =
+          Base64String.wrap(privateTransaction.getPrivateFrom().toBase64String());
+      final List<Base64String> privateFor =
+          privateTransaction
+              .getPrivateFor()
+              .map(
+                  bytes ->
+                      bytes.stream()
+                          .map(Bytes::toBase64String)
+                          .map(Base64String::wrap)
+                          .collect(Collectors.toList()))
+              .orElse(Lists.newArrayList());
+      return PrivacyGroupUtils.generateLegacyGroup(privateFrom, privateFor).toString();
     }
   }
 }

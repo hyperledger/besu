@@ -170,7 +170,7 @@ public class EeaSendRawTransactionTest {
     when(privacyController.sendTransaction(any(PrivateTransaction.class), any()))
         .thenReturn(MOCK_ORION_KEY);
     when(privacyController.validatePrivateTransaction(
-            any(PrivateTransaction.class), any(String.class), any()))
+            any(PrivateTransaction.class), any(String.class)))
         .thenReturn(ValidationResult.valid());
     when(privacyController.createPrivacyMarkerTransaction(
             any(String.class), any(PrivateTransaction.class)))
@@ -195,7 +195,7 @@ public class EeaSendRawTransactionTest {
         .sendTransaction(any(PrivateTransaction.class), eq(ENCLAVE_PUBLIC_KEY));
     verify(privacyController)
         .validatePrivateTransaction(
-            any(PrivateTransaction.class), any(String.class), eq(ENCLAVE_PUBLIC_KEY));
+            any(PrivateTransaction.class), eq(ENCLAVE_PUBLIC_KEY));
     verify(privacyController)
         .createPrivacyMarkerTransaction(any(String.class), any(PrivateTransaction.class));
     verify(transactionPool).addLocalTransaction(any(Transaction.class));
@@ -206,7 +206,7 @@ public class EeaSendRawTransactionTest {
     when(privacyController.sendTransaction(any(PrivateTransaction.class), any()))
         .thenReturn(MOCK_ORION_KEY);
     when(privacyController.validatePrivateTransaction(
-            any(PrivateTransaction.class), any(String.class), any()))
+            any(PrivateTransaction.class), anyString()))
         .thenReturn(ValidationResult.valid());
     when(privacyController.createPrivacyMarkerTransaction(
             any(String.class), any(PrivateTransaction.class)))
@@ -231,7 +231,7 @@ public class EeaSendRawTransactionTest {
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
     verify(privacyController).sendTransaction(any(PrivateTransaction.class), any());
     verify(privacyController)
-        .validatePrivateTransaction(any(PrivateTransaction.class), any(String.class), any());
+        .validatePrivateTransaction(any(PrivateTransaction.class), anyString());
     verify(privacyController)
         .createPrivacyMarkerTransaction(any(String.class), any(PrivateTransaction.class));
     verify(transactionPool).addLocalTransaction(any(Transaction.class));
@@ -258,7 +258,7 @@ public class EeaSendRawTransactionTest {
   @Test
   public void invalidTransactionIsNotSentToEnclaveAndIsNotAddedToTransactionPool() {
     when(privacyController.validatePrivateTransaction(
-            any(PrivateTransaction.class), anyString(), any()))
+            any(PrivateTransaction.class), anyString()))
         .thenReturn(ValidationResult.invalid(PRIVATE_TRANSACTION_FAILED));
 
     final JsonRpcRequestContext request =
@@ -279,7 +279,7 @@ public class EeaSendRawTransactionTest {
   @Test
   public void invalidTransactionFailingWithMultiTenancyValidationErrorReturnsUnauthorizedError() {
     when(privacyController.validatePrivateTransaction(
-            any(PrivateTransaction.class), anyString(), anyString()))
+            any(PrivateTransaction.class), anyString()))
         .thenReturn(ValidationResult.valid());
     when(privacyController.sendTransaction(any(PrivateTransaction.class), any()))
         .thenThrow(new MultiTenancyValidationException("validation failed"));
@@ -348,7 +348,7 @@ public class EeaSendRawTransactionTest {
     when(privacyController.sendTransaction(any(PrivateTransaction.class), any()))
         .thenReturn(MOCK_ORION_KEY);
     when(privacyController.validatePrivateTransaction(
-            any(PrivateTransaction.class), any(String.class), any()))
+            any(PrivateTransaction.class), anyString()))
         .thenReturn(ValidationResult.valid());
     when(privacyController.createPrivacyMarkerTransaction(
             any(String.class), any(PrivateTransaction.class)))
@@ -368,7 +368,7 @@ public class EeaSendRawTransactionTest {
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
     verify(privacyController).sendTransaction(any(PrivateTransaction.class), any());
     verify(privacyController)
-        .validatePrivateTransaction(any(PrivateTransaction.class), any(String.class), any());
+        .validatePrivateTransaction(any(PrivateTransaction.class), anyString());
     verify(privacyController)
         .createPrivacyMarkerTransaction(any(String.class), any(PrivateTransaction.class));
     verify(transactionPool).addLocalTransaction(any(Transaction.class));
