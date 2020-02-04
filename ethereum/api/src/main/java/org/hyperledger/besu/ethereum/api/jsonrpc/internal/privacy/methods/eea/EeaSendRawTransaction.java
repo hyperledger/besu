@@ -45,7 +45,7 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
   private static final Logger LOG = getLogger();
   private final TransactionPool transactionPool;
   private final PrivacyController privacyController;
-  private EnclavePublicKeyProvider enclavePublicKeyProvider;
+  private final EnclavePublicKeyProvider enclavePublicKeyProvider;
 
   public EeaSendRawTransaction(
       final TransactionPool transactionPool,

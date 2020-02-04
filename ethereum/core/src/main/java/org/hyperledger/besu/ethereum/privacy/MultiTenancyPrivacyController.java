@@ -92,10 +92,8 @@ public class MultiTenancyPrivacyController implements PrivacyController {
 
   @Override
   public ValidationResult<TransactionInvalidReason> validatePrivateTransaction(
-      final PrivateTransaction privateTransaction,
-      final String enclavePublicKey) {
-    return privacyController.validatePrivateTransaction(
-        privateTransaction, enclavePublicKey);
+      final PrivateTransaction privateTransaction, final String enclavePublicKey) {
+    return privacyController.validatePrivateTransaction(privateTransaction, enclavePublicKey);
   }
 
   @Override

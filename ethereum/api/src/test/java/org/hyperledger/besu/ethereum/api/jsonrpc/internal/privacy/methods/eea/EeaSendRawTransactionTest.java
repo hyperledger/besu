@@ -194,8 +194,7 @@ public class EeaSendRawTransactionTest {
     verify(privacyController)
         .sendTransaction(any(PrivateTransaction.class), eq(ENCLAVE_PUBLIC_KEY));
     verify(privacyController)
-        .validatePrivateTransaction(
-            any(PrivateTransaction.class), eq(ENCLAVE_PUBLIC_KEY));
+        .validatePrivateTransaction(any(PrivateTransaction.class), eq(ENCLAVE_PUBLIC_KEY));
     verify(privacyController)
         .createPrivacyMarkerTransaction(any(String.class), any(PrivateTransaction.class));
     verify(transactionPool).addLocalTransaction(any(Transaction.class));
@@ -205,8 +204,7 @@ public class EeaSendRawTransactionTest {
   public void validTransactionPrivacyGroupIsSentToTransactionPool() {
     when(privacyController.sendTransaction(any(PrivateTransaction.class), any()))
         .thenReturn(MOCK_ORION_KEY);
-    when(privacyController.validatePrivateTransaction(
-            any(PrivateTransaction.class), anyString()))
+    when(privacyController.validatePrivateTransaction(any(PrivateTransaction.class), anyString()))
         .thenReturn(ValidationResult.valid());
     when(privacyController.createPrivacyMarkerTransaction(
             any(String.class), any(PrivateTransaction.class)))
@@ -257,8 +255,7 @@ public class EeaSendRawTransactionTest {
 
   @Test
   public void invalidTransactionIsNotSentToEnclaveAndIsNotAddedToTransactionPool() {
-    when(privacyController.validatePrivateTransaction(
-            any(PrivateTransaction.class), anyString()))
+    when(privacyController.validatePrivateTransaction(any(PrivateTransaction.class), anyString()))
         .thenReturn(ValidationResult.invalid(PRIVATE_TRANSACTION_FAILED));
 
     final JsonRpcRequestContext request =
@@ -278,8 +275,7 @@ public class EeaSendRawTransactionTest {
 
   @Test
   public void invalidTransactionFailingWithMultiTenancyValidationErrorReturnsUnauthorizedError() {
-    when(privacyController.validatePrivateTransaction(
-            any(PrivateTransaction.class), anyString()))
+    when(privacyController.validatePrivateTransaction(any(PrivateTransaction.class), anyString()))
         .thenReturn(ValidationResult.valid());
     when(privacyController.sendTransaction(any(PrivateTransaction.class), any()))
         .thenThrow(new MultiTenancyValidationException("validation failed"));
@@ -347,8 +343,7 @@ public class EeaSendRawTransactionTest {
 
     when(privacyController.sendTransaction(any(PrivateTransaction.class), any()))
         .thenReturn(MOCK_ORION_KEY);
-    when(privacyController.validatePrivateTransaction(
-            any(PrivateTransaction.class), anyString()))
+    when(privacyController.validatePrivateTransaction(any(PrivateTransaction.class), anyString()))
         .thenReturn(ValidationResult.valid());
     when(privacyController.createPrivacyMarkerTransaction(
             any(String.class), any(PrivateTransaction.class)))
