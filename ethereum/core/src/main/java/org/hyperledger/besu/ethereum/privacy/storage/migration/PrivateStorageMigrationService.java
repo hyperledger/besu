@@ -64,7 +64,7 @@ public class PrivateStorageMigrationService {
 
     if (schemaVersion == SCHEMA_VERSION_1_0_x && !migrationFlag) {
       final String message =
-          "Private database metadata requires migration. Please enable `privacy-enable-database-migration` option when starting the node. For more information check the 1.4 changelog.";
+          "Private database metadata requires migration. For more information check the 1.4 changelog.";
       LOG.warn(message);
       throw new PrivateStorageMigrationException(message);
     }
