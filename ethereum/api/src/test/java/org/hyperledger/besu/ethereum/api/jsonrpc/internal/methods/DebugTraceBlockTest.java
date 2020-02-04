@@ -86,6 +86,7 @@ public class DebugTraceBlockTest {
             Optional.of(Gas.of(56)),
             2,
             EnumSet.noneOf(ExceptionalHaltReason.class),
+            null,
             Bytes.EMPTY,
             () -> Bytes.EMPTY,
             Optional.empty(),
