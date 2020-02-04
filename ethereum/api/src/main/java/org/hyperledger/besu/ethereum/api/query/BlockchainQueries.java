@@ -538,7 +538,7 @@ public class BlockchainQueries {
       final long nextStep = (segment + 1) * BLOCKS_PER_BLOOM_CACHE;
       result.addAll(
           cachePath
-              .map(path -> path.resolve("logBloom-" + thisSegment + ".index"))
+              .map(path -> path.resolve("logBloom-" + thisSegment + ".cache"))
               .filter(Files::isRegularFile)
               .map(
                   cacheFile ->
