@@ -25,7 +25,6 @@ import org.hyperledger.besu.ethereum.vm.internal.MemoryEntry;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Supplier;
 
 import com.google.common.base.MoreObjects;
 import org.apache.tuweni.bytes.Bytes;

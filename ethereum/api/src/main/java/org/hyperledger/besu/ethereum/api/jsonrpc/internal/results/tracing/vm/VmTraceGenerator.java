@@ -137,10 +137,10 @@ public class VmTraceGenerator {
                   case "CREATE2":
                     break;
                   default:
-                  lastFrameInCall
-                      .getMemory()
+                    lastFrameInCall
+                        .getMemory()
                         .map(mem -> mem.length > 0 ? new Mem(mem[0].toHexString(), 0) : null)
-                      .ifPresent(report::setMem);
+                        .ifPresent(report::setMem);
                 }
               });
 
