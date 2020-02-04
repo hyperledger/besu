@@ -41,8 +41,6 @@ import com.google.common.collect.Lists;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
-import org.web3j.utils.Base64String;
-import org.web3j.utils.PrivacyGroupUtils;
 
 public class DefaultPrivacyController implements PrivacyController {
 
@@ -232,19 +230,10 @@ public class DefaultPrivacyController implements PrivacyController {
     if (privateTransaction.getPrivacyGroupId().isPresent()) {
       return privateTransaction.getPrivacyGroupId().get().toBase64String();
     } else {
-      final Base64String privateFrom =
-          Base64String.wrap(privateTransaction.getPrivateFrom().toBase64String());
-      final List<Base64String> privateFor =
-          privateTransaction
-              .getPrivateFor()
-              .map(
-                  bytes ->
-                      bytes.stream()
-                          .map(Bytes::toBase64String)
-                          .map(Base64String::wrap)
-                          .collect(Collectors.toList()))
-              .orElse(Lists.newArrayList());
-      return PrivacyGroupUtils.generateLegacyGroup(privateFrom, privateFor).toString();
+      final Bytes privateFrom = privateTransaction.getPrivateFrom();
+      final List<Bytes> privateFor =
+          privateTransaction.getPrivateFor().orElse(Lists.newArrayList());
+      return PrivacyGroupUtil.generateEeaPrivacyGroup(privateFrom, privateFor);
     }
   }
 }
