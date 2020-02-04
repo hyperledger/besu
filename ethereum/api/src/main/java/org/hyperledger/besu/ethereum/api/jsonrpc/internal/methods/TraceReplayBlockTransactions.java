@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
+import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor.Result;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 
 import java.util.Arrays;
@@ -121,7 +122,8 @@ public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
       final AtomicInteger traceCounter) {
     final ObjectNode resultNode = mapper.createObjectNode();
 
-    resultNode.put("output", transactionTrace.getResult().getOutput().toString());
+    Result result = transactionTrace.getResult();
+    resultNode.put("output", result.getRevertReason().orElse(result.getOutput()).toString());
 
     if (traceTypes.contains(TraceType.STATE_DIFF)) {
       generateTracesFromTransactionTrace(

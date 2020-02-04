@@ -39,7 +39,7 @@ public class MLoadOperation extends AbstractOperation {
   public void execute(final MessageFrame frame) {
     final UInt256 location = UInt256.fromBytes(frame.popStackItem());
 
-    final Bytes32 value = Bytes32.leftPad(frame.readMemory(location, UInt256.valueOf(32)));
+    final Bytes32 value = Bytes32.leftPad(frame.readMemory(location, UInt256.valueOf(32), true));
 
     frame.pushStackItem(value);
   }
