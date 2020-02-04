@@ -78,7 +78,8 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
           + System.lineSeparator()
           + "                            (default: 1580785221)"
           + System.lineSeparator()
-          + "  -V, --version           Print version information and exit.";
+          + "  -V, --version           Print version information and exit."
+          + System.lineSeparator();
 
   private static final String EXPECTED_BLOCK_EXPORT_USAGE =
       "Usage: besu blocks export [-hV] [--end-block=<LONG>] [--start-block=<LONG>]"
