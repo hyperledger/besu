@@ -96,7 +96,7 @@ public class EnclaveFactory {
       final Path privacyKeyStorePasswordFile,
       final Path privacyWhitelistFile) {
 
-    HttpClientOptions clientOptions =
+    final HttpClientOptions clientOptions =
         createTlsClientOptions(
             enclaveUri, privacyKeyStoreFile, privacyKeyStorePasswordFile, privacyWhitelistFile);
 

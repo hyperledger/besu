@@ -547,7 +547,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = "--privacy-tls-known-enclave-file",
       paramLabel = MANDATORY_FILE_FORMAT_HELP,
       description = "Path to a file containing the fingerprints of the authorized privacy enclave.")
-  private final Path privacyEnclaveWhitelistFile = null;
+  private final Path privacyTlsKnownEnclaveFile = null;
 
   @Option(
       names = {"--metrics-enabled"},
@@ -1581,7 +1581,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       if (isPrivacyTlsEnabled) {
         privacyParametersBuilder.setPrivacyKeyStoreFile(privacyKeyStoreFile);
         privacyParametersBuilder.setPrivacyKeyStorePasswordFile(privacyKeyStorePasswordFile);
-        privacyParametersBuilder.setPrivacyEnclaveWhitelistFile(privacyEnclaveWhitelistFile);
+        privacyParametersBuilder.setPrivacyTlsKnownEnclaveFile(privacyTlsKnownEnclaveFile);
       }
       privacyParametersBuilder.setEnclaveFactory(new EnclaveFactory(vertx));
     } else {

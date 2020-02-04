@@ -167,7 +167,7 @@ public class PrivacyParameters {
     private boolean multiTenancyEnabled;
     private Path privacyKeyStoreFile;
     private Path privacyKeyStorePasswordFile;
-    private Path privacyEnclaveWhitelistFile;
+    private Path privacyTlsKnownEnclaveFile;
 
     public Builder setPrivacyAddress(final Integer privacyAddress) {
       this.privacyAddress = privacyAddress;
@@ -214,8 +214,8 @@ public class PrivacyParameters {
       return this;
     }
 
-    public Builder setPrivacyEnclaveWhitelistFile(final Path privacyEnclaveWhitelistFile) {
-      this.privacyEnclaveWhitelistFile = privacyEnclaveWhitelistFile;
+    public Builder setPrivacyTlsKnownEnclaveFile(final Path privacyTlsKnownEnclaveFile) {
+      this.privacyTlsKnownEnclaveFile = privacyTlsKnownEnclaveFile;
       return this;
     }
 
@@ -243,7 +243,7 @@ public class PrivacyParameters {
                   enclaveUrl,
                   privacyKeyStoreFile,
                   privacyKeyStorePasswordFile,
-                  privacyEnclaveWhitelistFile));
+                  privacyTlsKnownEnclaveFile));
         } else {
           config.setEnclave(enclaveFactory.createVertxEnclave(enclaveUrl));
         }
