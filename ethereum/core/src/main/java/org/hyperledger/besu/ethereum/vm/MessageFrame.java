@@ -651,9 +651,12 @@ public class MessageFrame {
     final int len = length.fitsInt() ? length.intValue() : Integer.MAX_VALUE;
     final int endIndex = srcOff + len;
     if (srcOff >= 0 && endIndex > 0) {
-      if (endIndex > value.size()) {
+      int srcSize = value.size();
+      if (endIndex > srcSize) {
         final MutableBytes paddedAnswer = MutableBytes.create(len);
-        value.slice(srcOff, value.size() - srcOff).copyTo(paddedAnswer, 0);
+        if (srcOff < srcSize) {
+          value.slice(srcOff, srcSize - srcOff).copyTo(paddedAnswer, 0);
+        }
         setUpdatedMemory(offset, paddedAnswer.copy());
       } else {
         setUpdatedMemory(offset, value.slice(srcOff, len).copy());
