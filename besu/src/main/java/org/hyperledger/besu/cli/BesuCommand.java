@@ -546,7 +546,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @Option(
       names = "--privacy-tls-known-enclave-file",
       paramLabel = MANDATORY_FILE_FORMAT_HELP,
-      description = "Path to a file containing the fingerprints of authorized privacy enclaves.")
+      description = "Path to a file containing the fingerprints of the authorized privacy enclave.")
   private final Path privacyEnclaveWhitelistFile = null;
 
   @Option(
