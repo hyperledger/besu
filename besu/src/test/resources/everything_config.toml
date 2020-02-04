@@ -62,7 +62,7 @@ rpc-http-tls-ca-clients-enabled=false
 privacy-tls-enabled=false
 privacy-tls-keystore-file="none.pfx"
 privacy-tls-keystore-password-file="none.passwd"
-privacy-tls-known-servers-file="privacy_tls_servers.txt"
+privacy-tls-known-enclave-file="privacy_tls_enclave.txt"
 
 # GRAPHQL HTTP
 graphql-http-enabled=false

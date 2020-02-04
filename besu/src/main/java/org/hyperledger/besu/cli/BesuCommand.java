@@ -544,10 +544,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Path privacyKeyStorePasswordFile = null;
 
   @Option(
-      names = "--privacy-tls-known-servers-file",
+      names = "--privacy-tls-known-enclave-file",
       paramLabel = MANDATORY_FILE_FORMAT_HELP,
       description =
-          "Path to a file containing the fingerprints of authorized servers (privacy enclaves).")
+          "Path to a file containing the fingerprints of authorized privacy enclaves.")
   private final Path privacyServersWhitelistFile = null;
 
   @Option(
@@ -1301,8 +1301,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         asList(
             "--privacy-tls-keystore-file",
             "--privacy-tls-keystore-password-file",
-            "--privacy-tls-client-auth-enabled",
-            "--privacy-tls-known-servers-file"));
+            "--privacy-tls-known-enclave-file"));
   }
 
   private Optional<TlsConfiguration> rpcHttpTlsConfiguration() {
