@@ -76,7 +76,7 @@ public class BlockchainQueriesLogCacheTest {
 
     for (int i = 0; i < 2; i++) {
       final RandomAccessFile file =
-          new RandomAccessFile(cacheDir.newFile("logBloom-" + i + ".index"), "rws");
+          new RandomAccessFile(cacheDir.newFile("logBloom-" + i + ".cache"), "rws");
       writeThreeEntries(testLogsBloomFilter, file);
       file.seek((BLOCKS_PER_BLOOM_CACHE - 3) * LogsBloomFilter.BYTE_SIZE);
       writeThreeEntries(testLogsBloomFilter, file);
