@@ -51,7 +51,7 @@ gradle.startParameter.taskNames.each {
 }
 gradle.startParameter.taskNames = expandedTaskList.flatten()
 
-// Gets a integer command argument, passed with -Pname=x, or the defaut if not provided.
+// Gets an integer command argument, passed with -Pname=x, or the default if not provided.
 def _intCmdArg(name, defaultValue) {
   return project.hasProperty(name) ? project.property(name) as int : defaultValue
 }

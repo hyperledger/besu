@@ -116,6 +116,7 @@ public class FlatTrace implements Trace {
 
     private final Builder builder;
     private long gasUsed = 0;
+    private boolean createOp;
 
     Context(final Builder builder) {
       this.builder = builder;
@@ -140,6 +141,14 @@ public class FlatTrace implements Trace {
     public void setGasUsed(final long gasUsed) {
       this.gasUsed = gasUsed;
       builder.getResultBuilder().gasUsed("0x" + Long.toHexString(gasUsed));
+    }
+
+    boolean isCreateOp() {
+      return createOp;
+    }
+
+    void setCreateOp(final boolean createOp) {
+      this.createOp = createOp;
     }
   }
 

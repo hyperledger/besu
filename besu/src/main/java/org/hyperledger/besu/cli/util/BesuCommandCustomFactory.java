@@ -16,8 +16,6 @@ package org.hyperledger.besu.cli.util;
 
 import org.hyperledger.besu.services.PluginVersionsProvider;
 
-import java.lang.reflect.Constructor;
-
 import picocli.CommandLine;
 
 /**
@@ -26,6 +24,7 @@ import picocli.CommandLine;
  */
 public class BesuCommandCustomFactory implements CommandLine.IFactory {
   private final PluginVersionsProvider pluginVersionsProvider;
+  private final CommandLine.IFactory defaultFactory = CommandLine.defaultFactory();
 
   public BesuCommandCustomFactory(final PluginVersionsProvider pluginVersionsProvider) {
     this.pluginVersionsProvider = pluginVersionsProvider;
@@ -38,12 +37,6 @@ public class BesuCommandCustomFactory implements CommandLine.IFactory {
       return (T) new VersionProvider(pluginVersionsProvider);
     }
 
-    final Constructor<T> constructor = cls.getDeclaredConstructor();
-    try {
-      return constructor.newInstance();
-    } catch (Exception e) {
-      constructor.setAccessible(true);
-      return constructor.newInstance();
-    }
+    return defaultFactory.create(cls);
   }
 }

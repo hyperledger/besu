@@ -40,6 +40,7 @@ public class TraceFrame {
   private final Optional<Gas> gasCost;
   private final int depth;
   private final EnumSet<ExceptionalHaltReason> exceptionalHaltReasons;
+  private final Address recipient;
   private final Bytes inputData;
   private final Supplier<Bytes> outputData;
   private final Optional<Bytes32[]> stack;
@@ -66,6 +67,7 @@ public class TraceFrame {
       final Optional<Gas> gasCost,
       final int depth,
       final EnumSet<ExceptionalHaltReason> exceptionalHaltReasons,
+      final Address recipient,
       final Bytes inputData,
       final Supplier<Bytes> outputData,
       final Optional<Bytes32[]> stack,
@@ -87,6 +89,7 @@ public class TraceFrame {
     this.gasCost = gasCost;
     this.depth = depth;
     this.exceptionalHaltReasons = exceptionalHaltReasons;
+    this.recipient = recipient;
     this.inputData = inputData;
     this.outputData = outputData;
     this.stack = stack;
@@ -127,6 +130,10 @@ public class TraceFrame {
 
   public EnumSet<ExceptionalHaltReason> getExceptionalHaltReasons() {
     return exceptionalHaltReasons;
+  }
+
+  public Address getRecipient() {
+    return recipient;
   }
 
   public Bytes getInputData() {

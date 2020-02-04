@@ -259,8 +259,8 @@
           "0x627306090abab3a6e1400e9345bc60c78a8bef57": {
             "balance": {
               "*": {
-                "from": "0xefffffffffffffffeee5363",
-                "to": "0xefffffffffffffffe7b24c3"
+                "from": "0xefffffffffffffffffeee5363",
+                "to": "0xefffffffffffffffffe7b24c3"
               }
             },
             "code": "=",
@@ -461,8 +461,8 @@
           "0x627306090abab3a6e1400e9345bc60c78a8bef57": {
             "balance": {
               "*": {
-                "from": "0xefffffffffffffffe7b24c3",
-                "to": "0xefffffffffffffffe493b99"
+                "from": "0xefffffffffffffffffe7b24c3",
+                "to": "0xefffffffffffffffffe493b99"
               }
             },
             "code": "=",

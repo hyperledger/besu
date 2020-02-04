@@ -165,6 +165,9 @@ public class PrivacyParameters {
     private PrivacyStorageProvider storageProvider;
     private EnclaveFactory enclaveFactory;
     private boolean multiTenancyEnabled;
+    private Path privacyKeyStoreFile;
+    private Path privacyKeyStorePasswordFile;
+    private Path privacyTlsKnownEnclaveFile;
 
     public Builder setPrivacyAddress(final Integer privacyAddress) {
       this.privacyAddress = privacyAddress;
@@ -201,6 +204,21 @@ public class PrivacyParameters {
       return this;
     }
 
+    public Builder setPrivacyKeyStoreFile(final Path privacyKeyStoreFile) {
+      this.privacyKeyStoreFile = privacyKeyStoreFile;
+      return this;
+    }
+
+    public Builder setPrivacyKeyStorePasswordFile(final Path privacyKeyStorePasswordFile) {
+      this.privacyKeyStorePasswordFile = privacyKeyStorePasswordFile;
+      return this;
+    }
+
+    public Builder setPrivacyTlsKnownEnclaveFile(final Path privacyTlsKnownEnclaveFile) {
+      this.privacyTlsKnownEnclaveFile = privacyTlsKnownEnclaveFile;
+      return this;
+    }
+
     public PrivacyParameters build() {
       final PrivacyParameters config = new PrivacyParameters();
       if (enabled) {
@@ -218,7 +236,17 @@ public class PrivacyParameters {
         config.setEnclavePublicKeyFile(enclavePublicKeyFile);
         config.setPrivateStorageProvider(storageProvider);
         config.setPrivateStateStorage(privateStateStorage);
-        config.setEnclave(enclaveFactory.createVertxEnclave(enclaveUrl));
+        // pass TLS options to enclave factory if they are set
+        if (privacyKeyStoreFile != null) {
+          config.setEnclave(
+              enclaveFactory.createVertxEnclave(
+                  enclaveUrl,
+                  privacyKeyStoreFile,
+                  privacyKeyStorePasswordFile,
+                  privacyTlsKnownEnclaveFile));
+        } else {
+          config.setEnclave(enclaveFactory.createVertxEnclave(enclaveUrl));
+        }
 
         if (privateKeyPath != null) {
           config.setSigningKeyPair(KeyPairUtil.load(privateKeyPath.toFile()));
