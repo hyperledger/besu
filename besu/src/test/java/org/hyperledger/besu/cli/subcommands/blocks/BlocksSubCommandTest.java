@@ -82,17 +82,17 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
           + System.lineSeparator()
           + "      --end-block=<LONG>     The ending index of the block list to export"
           + System.lineSeparator()
-          + "                               (exclusive). If not specified a single block will be"
+          + "                               (exclusive). If not specified a single block"
           + System.lineSeparator()
-          + "                               exported."
+          + "                               will be exported."
+          + System.lineSeparator()
+          + "  -h, --help                 Show this help message and exit."
           + System.lineSeparator()
           + "      --start-block=<LONG>   The starting index of the block, or block list to"
           + System.lineSeparator()
           + "                               export."
           + System.lineSeparator()
           + "      --to=<FILE>            File to write the block list to."
-          + System.lineSeparator()
-          + "  -h, --help                 Show this help message and exit."
           + System.lineSeparator()
           + "  -V, --version              Print version information and exit."
           + System.lineSeparator();

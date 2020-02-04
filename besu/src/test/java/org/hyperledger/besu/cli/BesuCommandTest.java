@@ -800,7 +800,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     final Path path = Paths.get(".");
     parseCommand("--config", path.toString());
-    assertThat(commandErrorOutput.toString()).startsWith("Unknown options: --config, .");
+    assertThat(commandErrorOutput.toString()).startsWith("Unknown options: '--config', '.'");
     assertThat(commandOutput.toString()).isEmpty();
   }
 
@@ -833,7 +833,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand("--node-private-key-file", file.getPath());
 
     assertThat(commandErrorOutput.toString())
-        .startsWith("Unknown options: --node-private-key-file, .");
+        .startsWith("Unknown options: '--node-private-key-file', './specific/key'");
     assertThat(commandOutput.toString()).isEmpty();
   }
 
@@ -877,7 +877,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     final Path path = Paths.get(".");
 
     parseCommand("--data-path", path.toString());
-    assertThat(commandErrorOutput.toString()).startsWith("Unknown options: --data-path, .");
+    assertThat(commandErrorOutput.toString()).startsWith("Unknown options: '--data-path', '.'");
     assertThat(commandOutput.toString()).isEmpty();
   }
 
@@ -998,7 +998,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     final Path path = Paths.get(".");
 
     parseCommand("--genesis", path.toString());
-    assertThat(commandErrorOutput.toString()).startsWith("Unknown options: --genesis, .");
+    assertThat(commandErrorOutput.toString()).startsWith("Unknown options: '--genesis', '.'");
     assertThat(commandOutput.toString()).isEmpty();
   }
 
@@ -1527,6 +1527,37 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--rpc-http-port",
         "--rpc-http-cors-origins",
         "--rpc-http-api");
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void privacyTlsOptionsRequiresTlsToBeEnabled() {
+    when(storageService.getByName("rocksdb-privacy"))
+        .thenReturn(Optional.of(rocksDBSPrivacyStorageFactory));
+    final URL configFile = this.getClass().getResource("/orion_publickey.pub");
+
+    parseCommand(
+        "--privacy-enabled",
+        "--privacy-url",
+        ENCLAVE_URI,
+        "--privacy-public-key-file",
+        configFile.getPath(),
+        "--privacy-tls-keystore-file",
+        "/Users/me/key");
+
+    verifyOptionsConstraintLoggerCall("--privacy-tls-enabled", "--privacy-tls-keystore-file");
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void privacyTlsOptionsRequiresPrivacyToBeEnabled() {
+    parseCommand("--privacy-tls-enabled", "--privacy-tls-keystore-file", "/Users/me/key");
+
+    verifyOptionsConstraintLoggerCall("--privacy-enabled", "--privacy-tls-enabled");
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
@@ -3031,7 +3062,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     final Path path = Paths.get(".");
     parseCommand("--privacy-public-key-file", path.toString());
     assertThat(commandErrorOutput.toString())
-        .startsWith("Unknown options: --privacy-public-key-file, .");
+        .startsWith("Unknown options: '--privacy-public-key-file', '.'");
     assertThat(commandOutput.toString()).isEmpty();
   }
 
@@ -3060,7 +3091,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     final Path path = Paths.get(".");
     parseCommand("--rpc-http-authentication-credentials-file", path.toString());
     assertThat(commandErrorOutput.toString())
-        .startsWith("Unknown options: --rpc-http-authentication-credentials-file, .");
+        .startsWith("Unknown options: '--rpc-http-authentication-credentials-file', '.'");
     assertThat(commandOutput.toString()).isEmpty();
   }
 
@@ -3073,7 +3104,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     final Path path = Paths.get(".");
     parseCommand("--rpc-ws-authentication-credentials-file", path.toString());
     assertThat(commandErrorOutput.toString())
-        .startsWith("Unknown options: --rpc-ws-authentication-credentials-file, .");
+        .startsWith("Unknown options: '--rpc-ws-authentication-credentials-file', '.'");
     assertThat(commandOutput.toString()).isEmpty();
   }
 
@@ -3086,7 +3117,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     final Path path = Paths.get(".");
     parseCommand("--rpc-http-authentication-public-key-file", path.toString());
     assertThat(commandErrorOutput.toString())
-        .startsWith("Unknown options: --rpc-http-authentication-public-key-file, .");
+        .startsWith("Unknown options: '--rpc-http-authentication-public-key-file', '.'");
     assertThat(commandOutput.toString()).isEmpty();
   }
 
@@ -3099,7 +3130,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     final Path path = Paths.get(".");
     parseCommand("--rpc-ws-authentication-public-key-file", path.toString());
     assertThat(commandErrorOutput.toString())
-        .startsWith("Unknown options: --rpc-ws-authentication-public-key-file, .");
+        .startsWith("Unknown options: '--rpc-ws-authentication-public-key-file', '.'");
     assertThat(commandOutput.toString()).isEmpty();
   }
 
@@ -3112,7 +3143,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     final Path path = Paths.get(".");
     parseCommand("--permissions-config-file", path.toString());
     assertThat(commandErrorOutput.toString())
-        .startsWith("Unknown options: --permissions-config-file, .");
+        .startsWith("Unknown options: '--permissions-config-file', '.'");
     assertThat(commandOutput.toString()).isEmpty();
   }
 
