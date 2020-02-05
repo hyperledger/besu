@@ -14,15 +14,22 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat;
 
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
+
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.Trace;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 public class FlatTrace implements Trace {
   private final Action action;
   private final Result result;
+  private final Optional<String> error;
   private final int subtraces;
   private final List<Integer> traceAddress;
   private final String type;
@@ -32,13 +39,15 @@ public class FlatTrace implements Trace {
       final Result.Builder resultBuilder,
       final int subtraces,
       final List<Integer> traceAddress,
-      final String type) {
+      final String type,
+      final Optional<String> error) {
     this(
         actionBuilder != null ? actionBuilder.build() : null,
         resultBuilder != null ? resultBuilder.build() : null,
         subtraces,
         traceAddress,
-        type);
+        type,
+        error);
   }
 
   private FlatTrace(
@@ -46,15 +55,17 @@ public class FlatTrace implements Trace {
       final Result result,
       final int subtraces,
       final List<Integer> traceAddress,
-      final String type) {
+      final String type,
+      final Optional<String> error) {
     this.action = action;
     this.result = result;
     this.subtraces = subtraces;
     this.traceAddress = traceAddress;
     this.type = type;
+    this.error = error;
   }
 
-  public static Builder freshBuilder(final TransactionTrace transactionTrace) {
+  static Builder freshBuilder(final TransactionTrace transactionTrace) {
     return FlatTrace.builder()
         .resultBuilder(Result.builder())
         .actionBuilder(Action.Builder.from(transactionTrace));
@@ -64,8 +75,25 @@ public class FlatTrace implements Trace {
     return action;
   }
 
-  public Result getResult() {
-    return result;
+  @JsonInclude(NON_NULL)
+  public String getError() {
+    return error.orElse(null);
+  }
+
+  /**
+   * This ridiculous construction returns a true "null" when we have a value in error, resulting in
+   * jackson not serializing it, or a wrapped reference of either null or the value, resulting in
+   * jackson serializing a null if we don't have an error.
+   *
+   * <p>This is done for binary compatibility: we need either an absent value, a present null value,
+   * or a real value. And since Java Optionals refuse to hold nulls (by design) an atomic reference
+   * is used instead.
+   *
+   * @return the jackson optimized result
+   */
+  @JsonInclude(NON_NULL)
+  public AtomicReference<Result> getResult() {
+    return (error.isPresent()) ? null : new AtomicReference<>(result);
   }
 
   public int getSubtraces() {
@@ -87,37 +115,40 @@ public class FlatTrace implements Trace {
   public static class Context {
 
     private final Builder builder;
-    private boolean returned;
-    private boolean isSubtrace = false;
+    private long gasUsed = 0;
+    private boolean createOp;
 
-    public Context(final Builder builder) {
-      this(builder, false);
-    }
-
-    Context(final Builder builder, final boolean returned) {
+    Context(final Builder builder) {
       this.builder = builder;
-      this.returned = returned;
     }
 
     public Builder getBuilder() {
       return builder;
     }
 
-    public boolean isReturned() {
-      return returned;
+    void incGasUsed(final long gas) {
+      setGasUsed(gasUsed + gas);
     }
 
-    public boolean isSubtrace() {
-      return isSubtrace;
+    void decGasUsed(final long gas) {
+      setGasUsed(gasUsed - gas);
     }
 
-    public Context subTrace() {
-      this.isSubtrace = true;
-      return this;
+    public long getGasUsed() {
+      return gasUsed;
     }
 
-    public void markAsReturned() {
-      this.returned = true;
+    public void setGasUsed(final long gasUsed) {
+      this.gasUsed = gasUsed;
+      builder.getResultBuilder().gasUsed("0x" + Long.toHexString(gasUsed));
+    }
+
+    boolean isCreateOp() {
+      return createOp;
+    }
+
+    void setCreateOp(final boolean createOp) {
+      this.createOp = createOp;
     }
   }
 
@@ -128,22 +159,22 @@ public class FlatTrace implements Trace {
     private int subtraces;
     private List<Integer> traceAddress = new ArrayList<>();
     private String type = "call";
+    private Optional<String> error = Optional.empty();
 
     private Builder() {}
 
-    public Builder resultBuilder(final Result.Builder resultBuilder) {
+    Builder resultBuilder(final Result.Builder resultBuilder) {
       this.resultBuilder = resultBuilder;
       return this;
     }
 
-    public Builder actionBuilder(final Action.Builder actionBuilder) {
+    Builder actionBuilder(final Action.Builder actionBuilder) {
       this.actionBuilder = actionBuilder;
       return this;
     }
 
-    public Builder subtraces(final int subtraces) {
-      this.subtraces = subtraces;
-      return this;
+    public int getSubtraces() {
+      return subtraces;
     }
 
     public Builder traceAddress(final List<Integer> traceAddress) {
@@ -156,24 +187,24 @@ public class FlatTrace implements Trace {
       return this;
     }
 
-    public Builder incSubTraces() {
-      return incSubTraces(1);
-    }
-
-    public Builder incSubTraces(final int n) {
-      this.subtraces += n;
+    public Builder error(final Optional<String> error) {
+      this.error = error;
       return this;
     }
 
-    public FlatTrace build() {
-      return new FlatTrace(actionBuilder, resultBuilder, subtraces, traceAddress, type);
+    void incSubTraces() {
+      this.subtraces++;
     }
 
-    public Result.Builder getResultBuilder() {
+    public FlatTrace build() {
+      return new FlatTrace(actionBuilder, resultBuilder, subtraces, traceAddress, type, error);
+    }
+
+    Result.Builder getResultBuilder() {
       return resultBuilder;
     }
 
-    public Action.Builder getActionBuilder() {
+    Action.Builder getActionBuilder() {
       return actionBuilder;
     }
   }

@@ -20,8 +20,10 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.transaction.CallParameter;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface PrivacyController {
 
@@ -47,4 +49,10 @@ public interface PrivacyController {
       String privateFrom, String[] privateFor, Address address, String enclavePublicKey);
 
   long determineBesuNonce(Address sender, String privacyGroupId, String enclavePublicKey);
+
+  Optional<PrivateTransactionProcessor.Result> simulatePrivateTransaction(
+      final String privacyGroupId,
+      final String enclavePublicKey,
+      final CallParameter callParams,
+      final long blockNumber);
 }

@@ -19,11 +19,7 @@ public class Mem {
   private final String data;
   private final int off;
 
-  Mem(final String data) {
-    this(data, 0);
-  }
-
-  private Mem(final String data, final int off) {
+  public Mem(final String data, final int off) {
     this.data = data;
     this.off = off;
   }

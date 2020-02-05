@@ -1,0 +1,224 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "trace_replayBlockTransactions",
+    "params": [
+      "0x5",
+      [
+        "trace",
+        "vmTrace",
+        "stateDiff"
+      ]
+    ],
+    "id": 415
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "result": [
+      {
+        "output": "0x",
+        "stateDiff": {
+          "0x0000000000000000000000000000000000000000": {
+            "balance": {
+              "*": {
+                "from": "0x6f05b59d3db75ad6",
+                "to": "0x6f05b59d3de93e66"
+              }
+            },
+            "code": "=",
+            "nonce": "=",
+            "storage": {}
+          },
+          "0x0010000000000000000000000000000000000000": {
+            "balance": "=",
+            "code": "=",
+            "nonce": "=",
+            "storage": {
+              "0x0000000000000000000000000000000000000000000000000000000000000002": {
+                "*": {
+                  "from": "0x0000000000000000000000000000000000000000000000000000000000000004",
+                  "to": "0x0000000000000000000000000000000000000000000000000000000000000000"
+                }
+              }
+            }
+          },
+          "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73": {
+            "balance": {
+              "*": {
+                "from": "0xfffffffffffffffffffffffffffffffffff1f698f",
+                "to": "0xffffffffffffffffffffffffffffffffffeed85ff"
+              }
+            },
+            "code": "=",
+            "nonce": {
+              "*": {
+                "from": "0x1",
+                "to": "0x2"
+              }
+            },
+            "storage": {}
+          }
+        },
+        "trace": [
+          {
+            "action": {
+              "callType": "call",
+              "from": "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
+              "gas": "0xffabd2",
+              "input": "0x0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000",
+              "to": "0x0010000000000000000000000000000000000000",
+              "value": "0x0"
+            },
+            "result": {
+              "gasUsed": "0x16c0",
+              "output": "0x"
+            },
+            "subtraces": 0,
+            "traceAddress": [],
+            "type": "call"
+          }
+        ],
+        "transactionHash": "0xdb2cd5e93dedae66371fc4a95452c746e11f7d2097464707597b8807c889ef5b",
+        "vmTrace": {
+          "code": "0x6020356000355560603560403555",
+          "ops": [
+            {
+              "cost": 3,
+              "ex": {
+                "mem": null,
+                "push": [
+                  "0x20"
+                ],
+                "store": null,
+                "used": 16755663
+              },
+              "pc": 0,
+              "sub": null
+            },
+            {
+              "cost": 3,
+              "ex": {
+                "mem": null,
+                "push": [
+                  "0x0"
+                ],
+                "store": null,
+                "used": 16755660
+              },
+              "pc": 2,
+              "sub": null
+            },
+            {
+              "cost": 3,
+              "ex": {
+                "mem": null,
+                "push": [
+                  "0x0"
+                ],
+                "store": null,
+                "used": 16755657
+              },
+              "pc": 3,
+              "sub": null
+            },
+            {
+              "cost": 3,
+              "ex": {
+                "mem": null,
+                "push": [
+                  "0x1"
+                ],
+                "store": null,
+                "used": 16755654
+              },
+              "pc": 5,
+              "sub": null
+            },
+            {
+              "cost": 800,
+              "ex": {
+                "mem": null,
+                "push": [],
+                "store": {
+                  "key": "0x1",
+                  "val": "0x0"
+                },
+                "used": 16754854
+              },
+              "pc": 6,
+              "sub": null
+            },
+            {
+              "cost": 3,
+              "ex": {
+                "mem": null,
+                "push": [
+                  "0x60"
+                ],
+                "store": null,
+                "used": 16754851
+              },
+              "pc": 7,
+              "sub": null
+            },
+            {
+              "cost": 3,
+              "ex": {
+                "mem": null,
+                "push": [
+                  "0x0"
+                ],
+                "store": null,
+                "used": 16754848
+              },
+              "pc": 9,
+              "sub": null
+            },
+            {
+              "cost": 3,
+              "ex": {
+                "mem": null,
+                "push": [
+                  "0x40"
+                ],
+                "store": null,
+                "used": 16754845
+              },
+              "pc": 10,
+              "sub": null
+            },
+            {
+              "cost": 3,
+              "ex": {
+                "mem": null,
+                "push": [
+                  "0x2"
+                ],
+                "store": null,
+                "used": 16754842
+              },
+              "pc": 12,
+              "sub": null
+            },
+            {
+              "cost": 5000,
+              "ex": {
+                "mem": null,
+                "push": [],
+                "store": {
+                  "key": "0x2",
+                  "val": "0x0"
+                },
+                "used": 16749842
+              },
+              "pc": 13,
+              "sub": null
+            }
+          ]
+        }
+      }
+    ],
+    "id": 415
+  },
+  "statusCode": 200
+}

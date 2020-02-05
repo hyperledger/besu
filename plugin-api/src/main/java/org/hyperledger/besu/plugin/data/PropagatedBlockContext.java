@@ -14,12 +14,9 @@
  */
 package org.hyperledger.besu.plugin.data;
 
-import org.hyperledger.besu.plugin.Unstable;
-
 import org.apache.tuweni.units.bigints.UInt256;
 
 /** The minimum set of data for a PropagatedBlockContext. */
-@Unstable
 public interface PropagatedBlockContext {
 
   /**
@@ -28,6 +25,13 @@ public interface PropagatedBlockContext {
    * @return A {@link BlockHeader}
    */
   BlockHeader getBlockHeader();
+
+  /**
+   * A {@link BlockHeader} object.
+   *
+   * @return A {@link BlockHeader}
+   */
+  BlockBody getBlockBody();
 
   /**
    * A scalar value corresponding to the total difficulty.

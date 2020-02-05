@@ -14,15 +14,12 @@
  */
 package org.hyperledger.besu.plugin.data;
 
-import org.hyperledger.besu.plugin.Unstable;
-
 import org.apache.tuweni.bytes.Bytes;
 
 /**
  * The minimum set of data for a BlockHeader, as defined in the <a href=
  * "https://ethereum.github.io/yellowpaper/paper.pdf">Ethereum Yellow Paper</a>.
  */
-@Unstable
 public interface BlockHeader {
 
   /**

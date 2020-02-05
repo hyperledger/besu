@@ -30,7 +30,7 @@ public class TraceJsonRpcMethods extends ApiGroupJsonRpcMethods {
   private final BlockchainQueries blockchainQueries;
   private final ProtocolSchedule<?> protocolSchedule;
 
-  public TraceJsonRpcMethods(
+  TraceJsonRpcMethods(
       final BlockchainQueries blockchainQueries, final ProtocolSchedule<?> protocolSchedule) {
     this.blockchainQueries = blockchainQueries;
     this.protocolSchedule = protocolSchedule;
@@ -44,13 +44,12 @@ public class TraceJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   @Override
   protected Map<String, JsonRpcMethod> create() {
+    final BlockReplay blockReplay =
+        new BlockReplay(
+            protocolSchedule,
+            blockchainQueries.getBlockchain(),
+            blockchainQueries.getWorldStateArchive());
     return mapOf(
-        new TraceReplayBlockTransactions(
-            new BlockTracer(
-                new BlockReplay(
-                    protocolSchedule,
-                    blockchainQueries.getBlockchain(),
-                    blockchainQueries.getWorldStateArchive())),
-            blockchainQueries));
+        new TraceReplayBlockTransactions(() -> new BlockTracer(blockReplay), blockchainQueries));
   }
 }

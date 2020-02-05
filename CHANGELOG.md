@@ -1,10 +1,74 @@
 # Changelog
 
+## 1.4 Beta 3 
+
+### Additions and Improvements 
+
+- CLI option to enable TLS client auth for JSON-RPC HTTP [\#340](https://github.com/hyperledger/besu/pull/340)
+
+Added CLI options to enable TLS client authentication and trusting client certificates: 
+~~~
+--rpc-http-tls-client-auth-enabled - Enable TLS client authentication for the JSON-RPC HTTP service (default: false)
+--rpc-http-tls-known-clients-file - Path to file containing client's certificate common name and fingerprint for client authentication.
+--rpc-http-tls-ca-clients-enabled - Enable to accept clients certificate signed by a valid CA for client authentication (default: false)
+~~~
+If client-auth is enabled, user must either enable CA signed clients OR provide a known-clients file. An error is reported 
+if both CA signed clients is disabled and known-clients file is not specified.
+
+- Stable Plugins APIs [\#346](https://github.com/hyperledger/besu/pull/346)
+
+The `BesuEvents` service and related `data` package have been marked as a stable plugin API. 
+
+### Bug Fixes
+
+- Return missing signers from getSignerMetrics [\#343](https://github.com/hyperledger/besu/pull/)
+
+### Experimental Features
+
+- Experimental support for `trace_replayBlockTransactions` - multiple PRs 
+
+Added support for the `trace_replayBlockTransactions` JSON-RPC call. To enable this API add 
+`TRACE` to the `rpc-http-api` options (for example,  `--rpc-http-api TRACE` on the command line). 
+
+This is not a production ready API.  There are known bugs relating to traced memory from calls and 
+returns, and the gas calculation reported in the flat traces does not always match up with the 
+correct gas calculated for consensus.
+
+## 1.4 Beta 2 
+
+### Additions and Improvements 
+
+- Enable TLS for JSON-RPC HTTP Service [\#253](https://github.com/hyperledger/besu/pull/253)
+
+Exposes new command line parameters to enable TLS on Ethereum JSON-RPC HTTP interface to allow clients like EthSigner to connect via TLS: 
+`--rpc-http-tls-enabled=true`
+(Optional - Only required if `--rpc-http-enabled` is set to true) Set to `true` to enable TLS. False by default.
+`--rpc-http-tls-keystore-file="/path/to/cert.pfx"`
+(Must be specified if TLS is enabled) Path to PKCS12 format key store which contains server's certificate and it's private key
+`--rpc-http-tls-keystore-password-file="/path/to/cert.passwd"`
+(Must be specified if TLS is enabled) Path to the text file containing password for unlocking key store.
+`--rpc-http-tls-known-clients-file="/path/to/rpc_tls_clients.txt"`
+(Optional) Path to a plain text file containing space separated client’s certificate’s common name and its sha-256 fingerprints when 
+they are not signed by a known CA. The presence of this file (even empty) enables TLS client authentication. That is, the client 
+presents the certificate to server on TLS handshake and server establishes that the client certificate is either signed by a 
+proper/known CA. Otherwise, server trusts client certificate by reading the sha-256 fingerprint from known clients file specified above. 
+
+The format of the file is (as an example):
+`localhost DF:65:B8:02:08:5E:91:82:0F:91:F5:1C:96:56:92:C4:1A:F6:C6:27:FD:6C:FC:31:F2:BB:90:17:22:59:5B:50`
+
+### Bug Fixes 
+
+- TotalDifficulty is a BigInteger [\#253](https://github.com/hyperledger/besu/pull/253). 
+  Don't try and cast total difficulty down to a long because it will overflow long in a reasonable timeframe.
+
 ## 1.4 Beta 1 
 
 ### Additions and Improvements 
 
+- Besu has moved from an internal Bytes library to the [Apache Tuweni](https://tuweni.apache.org/) Bytes library.  This includes using the library in the Plugins API interfaces. [#295](https://github.com/hyperledger/besu/pull/295) and [#215](https://github.com/hyperledger/besu/pull/215)
 - Besu stops processing blocks if Orion is unavailable [\#253](https://github.com/hyperledger/besu/pull/253)
+- Added priv_call [\#250](https://github.com/hyperledger/besu/pull/250).  Invokes a private contract function locally and does not change the private state.
+- Support for [EIP-2124](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2124.md), which results in faster peer discovery [\#156](https://github.com/hyperledger/besu/pull/156)
 
 ## 1.3.8 
 
@@ -1647,3 +1711,4 @@ Specify `*` or `all` for `--host-whitelist` to effectively disable host protecti
  - Added unit tests for `Web3ClientVersion` (PR [#194](https://github.com/PegaSysEng/pantheon/pull/194) with thanks to [@jvirtanen](https://github.com/jvirtanen))
  - Removed RLPUtils from `RawBlockIterator` (PR [#179](https://github.com/PegaSysEng/pantheon/pull/179))
  - Replace the JNI based snappy library with a pure-Java version (PR [#257](https://github.com/PegaSysEng/pantheon/pull/257))
+
