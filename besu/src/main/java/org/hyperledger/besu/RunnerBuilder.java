@@ -590,7 +590,8 @@ public class RunnerBuilder {
         return Optional.of(
             new ManualNatManager(p2pAdvertisedHost, p2pListenPort, jsonRpcConfiguration.getPort()));
       case DOCKER:
-        return Optional.of(new DockerNatManager(p2pAdvertisedHost, p2pListenPort, jsonRpcConfiguration.getPort()));
+        return Optional.of(
+            new DockerNatManager(p2pAdvertisedHost, p2pListenPort, jsonRpcConfiguration.getPort()));
       case NONE:
       default:
         return Optional.empty();

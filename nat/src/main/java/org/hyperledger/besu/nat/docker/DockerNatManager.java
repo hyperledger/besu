@@ -21,8 +21,6 @@ import org.hyperledger.besu.nat.core.domain.NatPortMapping;
 import org.hyperledger.besu.nat.core.domain.NatServiceType;
 import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -34,8 +32,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * This class describes the behaviour of the Docker NAT manager. Docker Nat manager add support
- * for Docker’s NAT implementation when Besu is being run from a Docker container
+ * This class describes the behaviour of the Docker NAT manager. Docker Nat manager add support for
+ * Docker’s NAT implementation when Besu is being run from a Docker container
  */
 public class DockerNatManager extends AbstractNatManager {
   protected static final Logger LOG = LogManager.getLogger();
@@ -54,8 +52,11 @@ public class DockerNatManager extends AbstractNatManager {
     this(new HostBasedIpDetector(), advertisedHost, p2pPort, rpcHttpPort);
   }
 
-  public DockerNatManager(final IpDetector ipDetector,
-                          final String advertisedHost, final int p2pPort,final int rpcHttpPort) {
+  public DockerNatManager(
+      final IpDetector ipDetector,
+      final String advertisedHost,
+      final int p2pPort,
+      final int rpcHttpPort) {
     super(NatMethod.DOCKER);
     this.ipDetector = ipDetector;
     this.internalAdvertisedHost = advertisedHost;
@@ -110,9 +111,9 @@ public class DockerNatManager extends AbstractNatManager {
   @Override
   protected CompletableFuture<String> retrieveExternalIPAddress() {
     return ipDetector
-            .detectExternalIp()
-            .map(CompletableFuture::completedFuture)
-            .orElse(CompletableFuture.completedFuture(internalAdvertisedHost));
+        .detectExternalIp()
+        .map(CompletableFuture::completedFuture)
+        .orElse(CompletableFuture.completedFuture(internalAdvertisedHost));
   }
 
   @Override
@@ -125,5 +126,4 @@ public class DockerNatManager extends AbstractNatManager {
         .map(Integer::valueOf)
         .orElse(defaultValue);
   }
-
 }

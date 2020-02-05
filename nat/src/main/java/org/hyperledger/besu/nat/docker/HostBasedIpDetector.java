@@ -19,7 +19,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Optional;
 
-public class HostBasedIpDetector implements IpDetector{
+public class HostBasedIpDetector implements IpDetector {
 
   private static final String HOSTNAME = "HOST_IP";
 

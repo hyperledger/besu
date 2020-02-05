@@ -20,5 +20,4 @@ import java.util.Optional;
 public interface IpDetector {
 
   Optional<String> detectExternalIp();
-
 }
