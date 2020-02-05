@@ -14,42 +14,44 @@
  */
 package org.hyperledger.besu.ethereum.api.query;
 
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.eth.sync.BlockBroadcaster;
+
+import java.io.IOException;
+import java.util.OptionalLong;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class AutoTransactionLogsIndexingService {
   protected static final Logger LOG = LogManager.getLogger();
-
+  private final BlockBroadcaster blockBroadcaster;
   private final TransactionLogsIndexer transactionLogsIndexer;
-  private final ScheduledExecutorService executorService =
-      Executors.newSingleThreadScheduledExecutor();
-  private TransactionLogsIndexer.IndexingStatus lastIndexingStatus;
+  private OptionalLong subscriptionId = OptionalLong.empty();
 
-  public AutoTransactionLogsIndexingService(final TransactionLogsIndexer transactionLogsIndexer) {
+  public AutoTransactionLogsIndexingService(
+      final BlockBroadcaster blockBroadcaster,
+      final TransactionLogsIndexer transactionLogsIndexer) {
+    this.blockBroadcaster = blockBroadcaster;
     this.transactionLogsIndexer = transactionLogsIndexer;
   }
 
   public void start() {
     LOG.info("Starting Auto transaction logs indexing service.");
-    executorService.scheduleAtFixedRate(this::doIndex, 0, 10, TimeUnit.SECONDS);
+    subscriptionId = OptionalLong.of(blockBroadcaster.subscribePropagateNewBlocks(this::accept));
   }
 
-  public void doIndex() {
-    LOG.info("Starting auto scheduled indexing.");
-    long startBlock = 0, stopBlock = Long.MAX_VALUE;
-    if (lastIndexingStatus != null) {
-      startBlock = lastIndexingStatus.currentBlock;
+  private void accept(final Block block, final Difficulty totalDifficulty) {
+    try {
+      transactionLogsIndexer.fillPendingCacheWithBlock(block.getHeader());
+    } catch (IOException e) {
+      LOG.error("Unhandled indexing exception.", e);
     }
-    LOG.info("Calling log bloom cache with start = {} and stop = {}", startBlock, stopBlock);
-    lastIndexingStatus = transactionLogsIndexer.generateLogBloomCache(startBlock, stopBlock);
-    LOG.info("generateLogBloomCache completed with status: {}", lastIndexingStatus.toString());
   }
 
   public void stop() {
     LOG.info("Shutting down Auto transaction logs indexing service.");
+    subscriptionId.ifPresent(blockBroadcaster::unsubscribePropagateNewBlocks);
   }
 }

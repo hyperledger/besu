@@ -117,14 +117,26 @@ public class TransactionLogsIndexer {
       if (maybeHeader.isEmpty()) {
         break;
       }
-      final byte[] logs = maybeHeader.get().getLogsBloom().toArray();
-      checkNotNull(logs);
-      checkState(logs.length == 256, "BloomBits are not the correct length");
-      fos.write(logs);
+      fillCacheFileWithBlock(maybeHeader.get(), fos);
       indexingStatus.currentBlock = blockNum;
       blockNum++;
     }
     return blockNum - startBlock;
+  }
+
+  public void fillPendingCacheWithBlock(final BlockHeader blockHeader) throws IOException {
+    final File pendingFile = calculateCacheFileName(PENDING, cacheDir);
+    try (FileOutputStream fos = new FileOutputStream(pendingFile)) {
+      fillCacheFileWithBlock(blockHeader, fos);
+    }
+  }
+
+  public void fillCacheFileWithBlock(final BlockHeader blockHeader, final FileOutputStream fos)
+      throws IOException {
+    final byte[] logs = blockHeader.getLogsBloom().toArray();
+    checkNotNull(logs);
+    checkState(logs.length == 256, "BloomBits are not the correct length");
+    fos.write(logs);
   }
 
   public IndexingStatus requestIndexing(final long fromBlock, final long toBlock) {

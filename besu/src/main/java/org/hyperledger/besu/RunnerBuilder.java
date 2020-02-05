@@ -527,6 +527,7 @@ public class RunnerBuilder {
         metricsService,
         besuController,
         dataDir,
+        besuController.getProtocolManager().getBlockBroadcaster(),
         blockchainQueries.getTransactionLogsIndexer());
   }
 
