@@ -116,7 +116,7 @@ public class PrivacyRequestFactory {
       final Hash transactionHash) {
     return new Request<>(
         "priv_getPrivateTransaction",
-        singletonList(transactionHash),
+        singletonList(transactionHash.toHexString()),
         web3jService,
         GetPrivateTransactionResponse.class);
   }

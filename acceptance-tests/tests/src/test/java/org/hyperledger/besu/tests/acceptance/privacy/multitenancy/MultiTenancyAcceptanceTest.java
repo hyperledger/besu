@@ -83,17 +83,16 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
             "authentication/auth_priv_key");
     multiTenancyCluster.start(node);
     token = node.execute(permissioningTransactions.createSuccessfulLogin("user", "pegasys"));
+    node.useAuthenticationTokenInHeaderForJsonRpc(token);
   }
 
   @Test
   public void getPrivacyPrecompileAddressShouldReturnExpectedAddress() {
-    node.useAuthenticationTokenInHeaderForJsonRpc(token);
     node.verify(priv.privGetPrivacyPrecompileAddressSuccess(DEFAULT_PRIVACY));
   }
 
   @Test
   public void shouldGetPrivateTransaction() throws JsonProcessingException {
-    node.useAuthenticationTokenInHeaderForJsonRpc(token);
 
     final String base64SignedPrivateTransactionRLP =
         "+MyAAYJSCJQJXnuupqbHxMLf65d++sMmr1Uth6D//////////////////////////////////////////4AboEi1W/qRWseVxDGXjYpqmStijVV9pf91mzB9SVo2ZJNToB//0xCsdD83HeO59/nLVsCyitQ2AbSrlJ9T+qB70sgEoANWlbTMSwlB5gVR16Gc8wYD21v8I+WsQ6VvV/JfdUhqoA8gDohf8p6XPiV2tmABgdGworUpTjDZvkoZgf+zOguMinJlc3RyaWN0ZWQ=";
@@ -118,7 +117,6 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
 
     stubFor(post("/createPrivacyGroup").willReturn(ok(createGroupResponse)));
 
-    node.useAuthenticationTokenInHeaderForJsonRpc(token);
     node.verify(
         priv.privCreatePrivacyGroupSuccess(
             List.of(KEY1, KEY2, KEY3), "GroupName", "Group description.", PRIVACY_GROUP_ID));
@@ -133,7 +131,6 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
     final String deleteGroupResponse = mapper.writeValueAsString(PRIVACY_GROUP_ID);
     stubFor(post("/deletePrivacyGroup").willReturn(ok(deleteGroupResponse)));
 
-    node.useAuthenticationTokenInHeaderForJsonRpc(token);
     node.verify(priv.privDeletePrivacyGroupSuccess(PRIVACY_GROUP_ID));
   }
 
@@ -148,7 +145,6 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
     final String findGroupResponse = mapper.writeValueAsString(groupMembership);
     stubFor(post("/findPrivacyGroup").willReturn(ok(findGroupResponse)));
 
-    node.useAuthenticationTokenInHeaderForJsonRpc(token);
     node.verify(priv.privFindPrivacyGroupSuccess(groupMembership.size(), ENCLAVE_KEY));
   }
 
@@ -172,8 +168,6 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
             new ReceiveResponse(
                 bvrlpo.encoded().toBase64String().getBytes(UTF_8), PRIVACY_GROUP_ID, senderKey));
     stubFor(post("/receive").willReturn(ok(receiveResponse)));
-
-    node.useAuthenticationTokenInHeaderForJsonRpc(token);
 
     node.verify(
         priv.eeaSendRawTransactionSuccess(
@@ -204,7 +198,6 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
         getValidSignedPrivateTransaction(senderAddress);
     validSignedPrivateTransaction.writeTo(bvrlpo);
 
-    node.useAuthenticationTokenInHeaderForJsonRpc(token);
     node.verify(
         priv.privDistributeRawTransaction(bvrlpo.encoded().toHexString(), enclaveResponseKeyBytes));
   }
