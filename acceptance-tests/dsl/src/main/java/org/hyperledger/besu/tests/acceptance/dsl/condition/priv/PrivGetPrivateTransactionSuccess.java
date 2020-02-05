@@ -16,25 +16,27 @@ package org.hyperledger.besu.tests.acceptance.dsl.condition.priv;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.privacy.PrivateTransactionGroupResult;
+import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivGetPrivateTransactionTransaction;
-import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyRequestFactory;
 
 public class PrivGetPrivateTransactionSuccess implements Condition {
 
   private final PrivGetPrivateTransactionTransaction transaction;
-  private final String privateFrom;
+  private final PrivateTransactionGroupResult privateTransaction;
 
   public PrivGetPrivateTransactionSuccess(
-      final PrivGetPrivateTransactionTransaction transaction, final String privateFrom) {
+      final PrivGetPrivateTransactionTransaction transaction,
+      final PrivateTransaction privateTransaction) {
     this.transaction = transaction;
-    this.privateFrom = privateFrom;
+    this.privateTransaction = new PrivateTransactionGroupResult(privateTransaction);
   }
 
   @Override
   public void verify(final Node node) {
-    final PrivacyRequestFactory.GetPrivateTransactionResponse result = node.execute(transaction);
-    assertThat(result.getPrivateFrom()).isEqualTo(privateFrom);
+    final PrivateTransactionGroupResult result = node.execute(transaction);
+    assertThat(result).isEqualToComparingFieldByField(privateTransaction);
   }
 }

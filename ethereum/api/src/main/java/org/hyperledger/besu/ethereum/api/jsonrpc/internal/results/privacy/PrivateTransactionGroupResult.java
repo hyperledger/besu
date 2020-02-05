@@ -16,7 +16,9 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.privacy;
 
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonPropertyOrder({
@@ -45,6 +47,26 @@ public class PrivateTransactionGroupResult extends PrivateTransactionResult {
   public PrivateTransactionGroupResult(final PrivateTransaction tx) {
     super(tx);
     this.privacyGroupId = tx.getPrivacyGroupId().get().toBase64String();
+  }
+
+  @JsonCreator
+  public PrivateTransactionGroupResult(
+      @JsonProperty("from") final String from,
+      @JsonProperty("gas") final String gas,
+      @JsonProperty("gasPrice") final String gasPrice,
+      @JsonProperty("hash") final String hash,
+      @JsonProperty("input") final String input,
+      @JsonProperty("nonce") final String nonce,
+      @JsonProperty("to") final String to,
+      @JsonProperty("value") final String value,
+      @JsonProperty("v") final String v,
+      @JsonProperty("r") final String r,
+      @JsonProperty("s") final String s,
+      @JsonProperty("privateFrom") final String privateFrom,
+      @JsonProperty("restriction") final String restriction,
+      @JsonProperty("privacyGroupId") final String privacyGroupId) {
+    super(from, gas, gasPrice, hash, input, nonce, to, value, v, r, s, privateFrom, restriction);
+    this.privacyGroupId = privacyGroupId;
   }
 
   @JsonGetter(value = "privacyGroupId")

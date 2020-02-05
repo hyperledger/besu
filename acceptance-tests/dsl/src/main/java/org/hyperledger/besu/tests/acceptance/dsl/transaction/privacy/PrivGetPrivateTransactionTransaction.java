@@ -16,6 +16,7 @@ package org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.privacy.PrivateTransactionGroupResult;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.NodeRequests;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
@@ -23,21 +24,21 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
 import java.io.IOException;
 
 public class PrivGetPrivateTransactionTransaction
-    implements Transaction<PrivacyRequestFactory.GetPrivateTransactionResponse> {
+    implements Transaction<PrivateTransactionGroupResult> {
 
-  final Hash transactionHash;
+  private final Hash transactionHash;
 
   public PrivGetPrivateTransactionTransaction(final Hash transactionHash) {
     this.transactionHash = transactionHash;
   }
 
   @Override
-  public PrivacyRequestFactory.GetPrivateTransactionResponse execute(final NodeRequests node) {
+  public PrivateTransactionGroupResult execute(final NodeRequests node) {
     try {
       final PrivacyRequestFactory.GetPrivateTransactionResponse result =
           node.privacy().privGetPrivateTransaction(transactionHash).send();
       assertThat(result).isNotNull();
-      return result;
+      return result.getResult();
     } catch (final IOException e) {
       throw new RuntimeException(e);
     }

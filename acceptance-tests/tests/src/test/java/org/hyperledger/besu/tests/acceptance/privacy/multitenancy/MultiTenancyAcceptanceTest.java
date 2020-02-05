@@ -33,7 +33,6 @@ import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.Restriction;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
-import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.Cluster;
 import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.ClusterConfiguration;
@@ -107,8 +106,7 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
                 getRLPOutput(validSignedPrivateTransaction).encoded().toHexString()));
     node.verify(priv.getTransactionReceiptSuccess(transactionHash));
     node.verify(
-        priv.privGetPrivateTransactionSuccess(
-            transactionHash, validSignedPrivateTransaction.getPrivateFrom().toBase64String()));
+        priv.privGetPrivateTransactionSuccess(transactionHash, validSignedPrivateTransaction));
   }
 
   @Test

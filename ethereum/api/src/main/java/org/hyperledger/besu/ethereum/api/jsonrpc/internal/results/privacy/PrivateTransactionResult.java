@@ -20,7 +20,9 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public abstract class PrivateTransactionResult {
   private final String from;
@@ -51,6 +53,36 @@ public abstract class PrivateTransactionResult {
     this.s = Quantity.create(tx.getS());
     this.privateFrom = tx.getPrivateFrom().toBase64String();
     this.restriction = new String(tx.getRestriction().getBytes().toArrayUnsafe(), UTF_8);
+  }
+
+  @JsonCreator
+  public PrivateTransactionResult(
+      @JsonProperty("from") final String from,
+      @JsonProperty("gas") final String gas,
+      @JsonProperty("gasPrice") final String gasPrice,
+      @JsonProperty("hash") final String hash,
+      @JsonProperty("input") final String input,
+      @JsonProperty("nonce") final String nonce,
+      @JsonProperty("to") final String to,
+      @JsonProperty("value") final String value,
+      @JsonProperty("v") final String v,
+      @JsonProperty("r") final String r,
+      @JsonProperty("s") final String s,
+      @JsonProperty("privateFrom") final String privateFrom,
+      @JsonProperty("restriction") final String restriction) {
+    this.from = from;
+    this.gas = gas;
+    this.gasPrice = gasPrice;
+    this.hash = hash;
+    this.input = input;
+    this.nonce = nonce;
+    this.to = to;
+    this.value = value;
+    this.v = v;
+    this.r = r;
+    this.s = s;
+    this.privateFrom = privateFrom;
+    this.restriction = restriction;
   }
 
   @JsonGetter(value = "from")

@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -39,19 +38,7 @@ public class PrivacyRequestFactory {
   public static class GetPrivacyPrecompileAddressResponse extends Response<Address> {}
 
   public static class GetPrivateTransactionResponse
-      extends Response<PrivateTransactionGroupResult> {
-    final String privateFrom;
-
-    @JsonCreator
-    public GetPrivateTransactionResponse(
-        @JsonProperty("result") final HashMap<String, String> result) {
-      this.privateFrom = result.get("privateFrom");
-    }
-
-    public String getPrivateFrom() {
-      return privateFrom;
-    }
-  }
+      extends Response<PrivateTransactionGroupResult> {}
 
   public static class CreatePrivacyGroupResponse extends Response<String> {}
 
