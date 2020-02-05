@@ -40,11 +40,22 @@ public class PrivacyTransactions {
     return new PrivFindPrivacyGroupTransaction(groupMembers);
   }
 
-  public EeaSendRawTransaction sendRawTransaction(final String transaction) {
-    return new EeaSendRawTransaction(transaction);
+  public EeaSendRawTransactionTransaction sendRawTransaction(final String transaction) {
+    return new EeaSendRawTransactionTransaction(transaction);
   }
 
-  public PrivDistributeRawTransaction distributeRawTransaction(final String transaction) {
-    return new PrivDistributeRawTransaction(transaction);
+  public PrivDistributeRawTransactionTransaction distributeRawTransaction(
+      final String transaction) {
+    return new PrivDistributeRawTransactionTransaction(transaction);
+  }
+
+  public PrivGetTransactionCountTransaction privTransactionCount(
+      final String transactionCountSender, final String transactionCountPrivacyGroupId) {
+    return new PrivGetTransactionCountTransaction(
+        transactionCountSender, transactionCountPrivacyGroupId);
+  }
+
+  public PrivGetTransactionReceiptTransaction getTransactionReceipt(final Hash transactionHash) {
+    return new PrivGetTransactionReceiptTransaction(transactionHash);
   }
 }

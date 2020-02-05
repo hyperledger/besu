@@ -18,25 +18,25 @@ import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
-import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivDistributeRawTransactionTransaction;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivGetTransactionCountTransaction;
 
-public class PrivDistributeRawTransactionSuccess implements Condition {
+public class PrivGetTransactionCountSuccess implements Condition {
 
-  private final PrivDistributeRawTransactionTransaction sendRawTransactionTransaction;
-  private final String enclaveResponseKey;
+  private final PrivGetTransactionCountTransaction privGetTransactionCountTransaction;
+  private final int expectedTransactionCount;
 
-  public PrivDistributeRawTransactionSuccess(
-      final PrivDistributeRawTransactionTransaction sendRawTransactionTransaction,
-      final String enclaveResponseKey) {
-    this.sendRawTransactionTransaction = sendRawTransactionTransaction;
-    this.enclaveResponseKey = enclaveResponseKey;
+  public PrivGetTransactionCountSuccess(
+      final PrivGetTransactionCountTransaction privGetTransactionCountTransaction,
+      final int expectedTransactionCount) {
+    this.privGetTransactionCountTransaction = privGetTransactionCountTransaction;
+    this.expectedTransactionCount = expectedTransactionCount;
   }
 
   @Override
   public void verify(final Node node) {
-    final String result = node.execute(sendRawTransactionTransaction);
+    final Integer result = node.execute(privGetTransactionCountTransaction);
     assertThat(result).isNotNull();
-    assertThat(result).isInstanceOf(String.class);
-    assertThat(result).isEqualTo(enclaveResponseKey);
+    assertThat(result).isInstanceOf(Integer.class);
+    assertThat(result).isEqualTo(expectedTransactionCount);
   }
 }

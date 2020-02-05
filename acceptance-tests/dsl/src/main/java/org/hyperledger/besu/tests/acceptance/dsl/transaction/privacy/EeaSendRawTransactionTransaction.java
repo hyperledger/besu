@@ -16,26 +16,27 @@ package org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.NodeRequests;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
 
 import java.io.IOException;
 
-public class PrivDistributeRawTransaction implements Transaction<String> {
+public class EeaSendRawTransactionTransaction implements Transaction<Hash> {
 
   final String transaction;
 
-  public PrivDistributeRawTransaction(final String transaction) {
+  public EeaSendRawTransactionTransaction(final String transaction) {
     this.transaction = transaction;
   }
 
   @Override
-  public String execute(final NodeRequests node) {
+  public Hash execute(final NodeRequests node) {
     try {
-      final PrivacyRequestFactory.PrivDistributeTransactionResponse result =
-          node.privacy().privDistributeTransaction(transaction).send();
+      final PrivacyRequestFactory.SendRawTransactionResponse result =
+          node.privacy().eeaSendRawTransaction(transaction).send();
       assertThat(result).isNotNull();
-      return result.getTransactionKey();
+      return result.getResult();
     } catch (final IOException e) {
       throw new RuntimeException(e);
     }

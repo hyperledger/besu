@@ -41,6 +41,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.ClusterConfigurati
 
 import java.math.BigInteger;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -87,35 +88,33 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
-  public void getPrivacyPrecompileAddressShouldReturnExpectedAddress() {
+  public void privGetPrivacyPrecompileAddressShouldReturnExpectedAddress() {
     node.verify(priv.privGetPrivacyPrecompileAddressSuccess(DEFAULT_PRIVACY));
   }
 
   @Test
-  public void shouldGetPrivateTransaction() throws JsonProcessingException {
+  public void privGetPrivateTransactionSuccessShouldReturnExpectedPrivateTransaction()
+      throws JsonProcessingException {
+    final PrivateTransaction validSignedPrivateTransaction =
+        getValidSignedPrivateTransaction(senderAddress);
 
-    final String base64SignedPrivateTransactionRLP =
-        "+MyAAYJSCJQJXnuupqbHxMLf65d++sMmr1Uth6D//////////////////////////////////////////4AboEi1W/qRWseVxDGXjYpqmStijVV9pf91mzB9SVo2ZJNToB//0xCsdD83HeO59/nLVsCyitQ2AbSrlJ9T+qB70sgEoANWlbTMSwlB5gVR16Gc8wYD21v8I+WsQ6VvV/JfdUhqoA8gDohf8p6XPiV2tmABgdGworUpTjDZvkoZgf+zOguMinJlc3RyaWN0ZWQ=";
-    // privateFrom value from above transaction
-    final String privateFrom = "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
-    final Hash transactionHash = node.execute(accountTransactions.createTransfer(sender, 50));
-    multiTenancyCluster.verify(sender.balanceEquals(50));
+    receiveEnclaveStub(getRLPOutput(validSignedPrivateTransaction));
+    retrievePrivacyGroupEnclaveStub();
+    sendEnclaveStub("testKey");
 
-    final String receiveResponse =
-        mapper.writeValueAsString(
-            new ReceiveResponse(
-                base64SignedPrivateTransactionRLP.getBytes(UTF_8), PRIVACY_GROUP_ID, "senderKey"));
-
-    stubFor(post("/receive").willReturn(ok(receiveResponse)));
-
-    node.verify(priv.privGetPrivateTransactionSuccess(transactionHash, privateFrom));
+    final Hash transactionHash =
+        node.execute(
+            privacyTransactions.sendRawTransaction(
+                getRLPOutput(validSignedPrivateTransaction).encoded().toHexString()));
+    node.verify(priv.getTransactionReceiptSuccess(transactionHash));
+    node.verify(
+        priv.privGetPrivateTransactionSuccess(
+            transactionHash, validSignedPrivateTransaction.getPrivateFrom().toBase64String()));
   }
 
   @Test
-  public void createPrivacyGroupSuccessShouldReturnNewId() throws JsonProcessingException {
-    final String createGroupResponse = mapper.writeValueAsString(testPrivacyGroup(emptyList()));
-
-    stubFor(post("/createPrivacyGroup").willReturn(ok(createGroupResponse)));
+  public void privCreatePrivacyGroupSuccessShouldReturnNewId() throws JsonProcessingException {
+    createPrivacyGroupEnclaveStub();
 
     node.verify(
         priv.privCreatePrivacyGroupSuccess(
@@ -123,61 +122,70 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
-  public void deletePrivacyGroupSuccessShouldReturnId() throws JsonProcessingException {
-    final String retrieveGroupResponse =
-        mapper.writeValueAsString(testPrivacyGroup(List.of(ENCLAVE_KEY)));
-    stubFor(post("/retrievePrivacyGroup").willReturn(ok(retrieveGroupResponse)));
-
-    final String deleteGroupResponse = mapper.writeValueAsString(PRIVACY_GROUP_ID);
-    stubFor(post("/deletePrivacyGroup").willReturn(ok(deleteGroupResponse)));
+  public void privDeletePrivacyGroupSuccessShouldReturnId() throws JsonProcessingException {
+    retrievePrivacyGroupEnclaveStub();
+    deletePrivacyGroupEnclaveStub();
 
     node.verify(priv.privDeletePrivacyGroupSuccess(PRIVACY_GROUP_ID));
   }
 
   @Test
-  public void findPrivacyGroupSuccessShouldReturnExpectedGroupMembership()
+  public void privFindPrivacyGroupSuccessShouldReturnExpectedGroupMembership()
       throws JsonProcessingException {
-    List<PrivacyGroup> groupMembership =
+    final List<PrivacyGroup> groupMembership =
         List.of(
             testPrivacyGroup(emptyList()),
             testPrivacyGroup(emptyList()),
             testPrivacyGroup(emptyList()));
-    final String findGroupResponse = mapper.writeValueAsString(groupMembership);
-    stubFor(post("/findPrivacyGroup").willReturn(ok(findGroupResponse)));
+
+    findPrivacyGroupEnclaveStub(groupMembership);
 
     node.verify(priv.privFindPrivacyGroupSuccess(groupMembership.size(), ENCLAVE_KEY));
   }
 
   @Test
-  public void sendRawTransactionSuccessShouldUpdatePrivateState() throws JsonProcessingException {
-    final String senderKey = "QTFhVnRNeExDVUhtQlZIWG9aenpCZ1BiVy93ajVheERwVzlYOGw5MVNHbz0=";
-    final BytesValueRLPOutput bvrlpo = new BytesValueRLPOutput();
+  public void eeaSendRawTransactionSuccessShouldReturnPrivateTransactionHash()
+      throws JsonProcessingException {
     final PrivateTransaction validSignedPrivateTransaction =
         getValidSignedPrivateTransaction(senderAddress);
-    validSignedPrivateTransaction.writeTo(bvrlpo);
 
-    final String retrieveGroupResponse =
-        mapper.writeValueAsString(testPrivacyGroup(List.of(ENCLAVE_KEY)));
-    stubFor(post("/retrievePrivacyGroup").willReturn(ok(retrieveGroupResponse)));
+    retrievePrivacyGroupEnclaveStub();
+    sendEnclaveStub("testKey");
+    receiveEnclaveStub(getRLPOutput(validSignedPrivateTransaction));
 
-    final String sendResponse = mapper.writeValueAsString(new SendResponse("testKey"));
-    stubFor(post("/send").willReturn(ok(sendResponse)));
-
-    final String receiveResponse =
-        mapper.writeValueAsString(
-            new ReceiveResponse(
-                bvrlpo.encoded().toBase64String().getBytes(UTF_8), PRIVACY_GROUP_ID, senderKey));
-    stubFor(post("/receive").willReturn(ok(receiveResponse)));
+    CompletableFuture<Hash> completableFuture = new CompletableFuture<>();
 
     node.verify(
         priv.eeaSendRawTransactionSuccess(
-            bvrlpo.encoded().toHexString(),
-            validSignedPrivateTransaction.getSender().toHexString(),
-            PRIVACY_GROUP_ID));
+            getRLPOutput(validSignedPrivateTransaction).encoded().toHexString(),
+            completableFuture));
+
+    completableFuture.whenComplete(
+        (hash, throwable) -> node.verify(priv.getTransactionReceiptSuccess(hash)));
   }
 
   @Test
-  public void distributeRawTransactionSuccessShouldReturnEnclaveKey()
+  public void privGetTransactionCountSuccessShouldReturnExpectedTransactionCount()
+      throws JsonProcessingException {
+    final PrivateTransaction validSignedPrivateTransaction =
+        getValidSignedPrivateTransaction(senderAddress);
+    final String senderAddress = validSignedPrivateTransaction.getSender().toHexString();
+    final BytesValueRLPOutput rlpOutput = getRLPOutput(validSignedPrivateTransaction);
+
+    retrievePrivacyGroupEnclaveStub();
+    sendEnclaveStub("testKey");
+    receiveEnclaveStub(rlpOutput);
+
+    node.verify(priv.privGetTransactionCountSuccess(senderAddress, PRIVACY_GROUP_ID, 0));
+    final Hash transactionReceipt =
+        node.execute(privacyTransactions.sendRawTransaction(rlpOutput.encoded().toHexString()));
+
+    node.verify(priv.getTransactionReceiptSuccess(transactionReceipt));
+    node.verify(priv.privGetTransactionCountSuccess(senderAddress, PRIVACY_GROUP_ID, 1));
+  }
+
+  @Test
+  public void privDistributeRawTransactionSuccessShouldReturnEnclaveKey()
       throws JsonProcessingException {
     final String enclaveResponseKey = "TestKey";
     final String enclaveResponseKeyBase64 =
@@ -185,21 +193,56 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
     final String enclaveResponseKeyBytes =
         Bytes.wrap(Bytes.fromBase64String(enclaveResponseKeyBase64)).toString();
 
+    retrievePrivacyGroupEnclaveStub();
+    sendEnclaveStub(enclaveResponseKeyBase64);
+
+    node.verify(
+        priv.privDistributeRawTransaction(
+            getRLPOutput(getValidSignedPrivateTransaction(senderAddress)).encoded().toHexString(),
+            enclaveResponseKeyBytes));
+  }
+
+  private void findPrivacyGroupEnclaveStub(final List<PrivacyGroup> groupMembership)
+      throws JsonProcessingException {
+    final String findGroupResponse = mapper.writeValueAsString(groupMembership);
+    stubFor(post("/findPrivacyGroup").willReturn(ok(findGroupResponse)));
+  }
+
+  private void createPrivacyGroupEnclaveStub() throws JsonProcessingException {
+    final String createGroupResponse = mapper.writeValueAsString(testPrivacyGroup(emptyList()));
+    stubFor(post("/createPrivacyGroup").willReturn(ok(createGroupResponse)));
+  }
+
+  private void deletePrivacyGroupEnclaveStub() throws JsonProcessingException {
+    final String deleteGroupResponse = mapper.writeValueAsString(PRIVACY_GROUP_ID);
+    stubFor(post("/deletePrivacyGroup").willReturn(ok(deleteGroupResponse)));
+  }
+
+  private void retrievePrivacyGroupEnclaveStub() throws JsonProcessingException {
     final String retrieveGroupResponse =
         mapper.writeValueAsString(testPrivacyGroup(List.of(ENCLAVE_KEY)));
     stubFor(post("/retrievePrivacyGroup").willReturn(ok(retrieveGroupResponse)));
+  }
 
-    final String sendResponse =
-        mapper.writeValueAsString(new SendResponse(enclaveResponseKeyBase64));
+  private void sendEnclaveStub(final String testKey) throws JsonProcessingException {
+    final String sendResponse = mapper.writeValueAsString(new SendResponse(testKey));
     stubFor(post("/send").willReturn(ok(sendResponse)));
+  }
 
+  private void receiveEnclaveStub(final BytesValueRLPOutput rlpOutput)
+      throws JsonProcessingException {
+    final String senderKey = "QTFhVnRNeExDVUhtQlZIWG9aenpCZ1BiVy93ajVheERwVzlYOGw5MVNHbz0=";
+    final String receiveResponse =
+        mapper.writeValueAsString(
+            new ReceiveResponse(
+                rlpOutput.encoded().toBase64String().getBytes(UTF_8), PRIVACY_GROUP_ID, senderKey));
+    stubFor(post("/receive").willReturn(ok(receiveResponse)));
+  }
+
+  private BytesValueRLPOutput getRLPOutput(final PrivateTransaction validSignedPrivateTransaction) {
     final BytesValueRLPOutput bvrlpo = new BytesValueRLPOutput();
-    final PrivateTransaction validSignedPrivateTransaction =
-        getValidSignedPrivateTransaction(senderAddress);
     validSignedPrivateTransaction.writeTo(bvrlpo);
-
-    node.verify(
-        priv.privDistributeRawTransaction(bvrlpo.encoded().toHexString(), enclaveResponseKeyBytes));
+    return bvrlpo;
   }
 
   private PrivacyGroup testPrivacyGroup(final List<String> groupMembers) {

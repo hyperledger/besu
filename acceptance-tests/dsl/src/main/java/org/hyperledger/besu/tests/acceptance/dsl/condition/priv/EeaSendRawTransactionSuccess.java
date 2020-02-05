@@ -16,27 +16,30 @@ package org.hyperledger.besu.tests.acceptance.dsl.condition.priv;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
-import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivDistributeRawTransactionTransaction;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.EeaSendRawTransactionTransaction;
 
-public class PrivDistributeRawTransactionSuccess implements Condition {
+import java.util.concurrent.CompletableFuture;
 
-  private final PrivDistributeRawTransactionTransaction sendRawTransactionTransaction;
-  private final String enclaveResponseKey;
+public class EeaSendRawTransactionSuccess implements Condition {
 
-  public PrivDistributeRawTransactionSuccess(
-      final PrivDistributeRawTransactionTransaction sendRawTransactionTransaction,
-      final String enclaveResponseKey) {
+  private final EeaSendRawTransactionTransaction sendRawTransactionTransaction;
+  private final CompletableFuture<Hash> completeableFuture;
+
+  public EeaSendRawTransactionSuccess(
+      final EeaSendRawTransactionTransaction sendRawTransactionTransaction,
+      final CompletableFuture<Hash> completableFuture) {
     this.sendRawTransactionTransaction = sendRawTransactionTransaction;
-    this.enclaveResponseKey = enclaveResponseKey;
+    this.completeableFuture = completableFuture;
   }
 
   @Override
   public void verify(final Node node) {
-    final String result = node.execute(sendRawTransactionTransaction);
-    assertThat(result).isNotNull();
-    assertThat(result).isInstanceOf(String.class);
-    assertThat(result).isEqualTo(enclaveResponseKey);
+    final Hash transactionHash = node.execute(sendRawTransactionTransaction);
+    assertThat(transactionHash).isNotNull();
+    assertThat(transactionHash).isInstanceOf(Hash.class);
+    completeableFuture.complete(transactionHash);
   }
 }

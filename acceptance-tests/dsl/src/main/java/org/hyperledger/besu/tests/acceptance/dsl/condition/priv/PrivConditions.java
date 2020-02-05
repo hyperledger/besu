@@ -20,6 +20,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyTransactions;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public class PrivConditions {
 
@@ -58,14 +59,28 @@ public class PrivConditions {
   }
 
   public Condition eeaSendRawTransactionSuccess(
-      final String transaction, final String sender, final String privacyGroupId) {
-    return new EeaSendRawTransactionWithCountVerification(
-        transactions.sendRawTransaction(transaction), sender, privacyGroupId);
+      final String transaction, final CompletableFuture<Hash> completableFuture) {
+    return new EeaSendRawTransactionSuccess(
+        transactions.sendRawTransaction(transaction), completableFuture);
   }
 
   public Condition privDistributeRawTransaction(
-      final String transaction, final String enclaveResponseKey) {
+      final String transactionRLP, final String enclaveResponseKey) {
     return new PrivDistributeRawTransactionSuccess(
-        transactions.distributeRawTransaction(transaction), enclaveResponseKey);
+        transactions.distributeRawTransaction(transactionRLP), enclaveResponseKey);
+  }
+
+  public Condition privGetTransactionCountSuccess(
+      final String transactionCountSender,
+      final String transactionCountPrivacyGroupId,
+      final int expectedTransactionCount) {
+    return new PrivGetTransactionCountSuccess(
+        transactions.privTransactionCount(transactionCountSender, transactionCountPrivacyGroupId),
+        expectedTransactionCount);
+  }
+
+  public Condition getTransactionReceiptSuccess(final Hash transactionHash) {
+    return new PrivGetTransactionReceiptSuccess(
+        transactions.getTransactionReceipt(transactionHash));
   }
 }
