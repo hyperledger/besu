@@ -16,10 +16,9 @@
 
 package org.hyperledger.besu.ethereum.api.query;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
-
+import com.fasterxml.jackson.annotation.JsonGetter;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
@@ -35,9 +34,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import com.fasterxml.jackson.annotation.JsonGetter;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 public class TransactionLogsIndexer {
 
@@ -194,22 +193,6 @@ public class TransactionLogsIndexer {
     @JsonGetter
     public boolean isRequestAccepted() {
       return requestAccepted;
-    }
-
-    @Override
-    public String toString() {
-      return "IndexingStatus{"
-          + "startBlock="
-          + startBlock
-          + ", endBlock="
-          + endBlock
-          + ", currentBlock="
-          + currentBlock
-          + ", indexing="
-          + indexing
-          + ", requestAccepted="
-          + requestAccepted
-          + '}';
     }
   }
 }
