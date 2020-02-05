@@ -33,22 +33,35 @@ import java.util.concurrent.TimeUnit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+/**
+ * This class describes the behaviour of the Docker NAT manager. Docker Nat manager add support
+ * for Docker’s NAT implementation when Besu is being run from a Docker container
+ */
 public class DockerNatManager extends AbstractNatManager {
   protected static final Logger LOG = LogManager.getLogger();
 
-  private static final String HOSTNAME = "HOST_IP";
-
   private static final String PORT_MAPPING_TAG = "HOST_PORT_";
 
+  private final IpDetector ipDetector;
+
+  private final String internalAdvertisedHost;
   private final int internalP2pPort;
   private final int internalRpcHttpPort;
+
   private final List<NatPortMapping> forwardedPorts;
 
-  public DockerNatManager(final int p2pPort, final int rpcHttpPort) {
+  public DockerNatManager(final String advertisedHost, final int p2pPort, final int rpcHttpPort) {
+    this(new HostBasedIpDetector(), advertisedHost, p2pPort, rpcHttpPort);
+  }
+
+  public DockerNatManager(final IpDetector ipDetector,
+                          final String advertisedHost, final int p2pPort,final int rpcHttpPort) {
     super(NatMethod.DOCKER);
+    this.ipDetector = ipDetector;
+    this.internalAdvertisedHost = advertisedHost;
     this.internalP2pPort = p2pPort;
     this.internalRpcHttpPort = rpcHttpPort;
-    forwardedPorts = buildForwardedPorts();
+    this.forwardedPorts = buildForwardedPorts();
   }
 
   private List<NatPortMapping> buildForwardedPorts() {
@@ -96,11 +109,10 @@ public class DockerNatManager extends AbstractNatManager {
 
   @Override
   protected CompletableFuture<String> retrieveExternalIPAddress() {
-    try {
-      return CompletableFuture.completedFuture(InetAddress.getByName(HOSTNAME).getHostAddress());
-    } catch (UnknownHostException e) {
-      return CompletableFuture.failedFuture(new RuntimeException("Cannot detect IP."));
-    }
+    return ipDetector
+            .detectExternalIp()
+            .map(CompletableFuture::completedFuture)
+            .orElse(CompletableFuture.completedFuture(internalAdvertisedHost));
   }
 
   @Override
@@ -113,4 +125,5 @@ public class DockerNatManager extends AbstractNatManager {
         .map(Integer::valueOf)
         .orElse(defaultValue);
   }
+
 }
