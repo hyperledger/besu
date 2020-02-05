@@ -199,6 +199,23 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
             enclaveResponseKeyBytes));
   }
 
+  @Test
+  public void privGetTransactionReceiptSuccessShouldReturnTransactionReceiptAfterMined()
+      throws JsonProcessingException {
+    final PrivateTransaction validSignedPrivateTransaction =
+        getValidSignedPrivateTransaction(senderAddress);
+    final BytesValueRLPOutput rlpOutput = getRLPOutput(validSignedPrivateTransaction);
+
+    retrievePrivacyGroupEnclaveStub();
+    sendEnclaveStub("testKey");
+    receiveEnclaveStub(rlpOutput);
+
+    final Hash transactionReceipt =
+        node.execute(privacyTransactions.sendRawTransaction(rlpOutput.encoded().toHexString()));
+
+    node.verify(priv.getTransactionReceiptSuccess(transactionReceipt));
+  }
+
   private void findPrivacyGroupEnclaveStub(final List<PrivacyGroup> groupMembership)
       throws JsonProcessingException {
     final String findGroupResponse = mapper.writeValueAsString(groupMembership);

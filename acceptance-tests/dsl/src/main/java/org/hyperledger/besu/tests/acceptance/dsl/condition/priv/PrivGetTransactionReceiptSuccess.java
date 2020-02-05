@@ -14,12 +14,14 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.condition.priv;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.hyperledger.besu.tests.acceptance.dsl.WaitUtils;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivGetTransactionReceiptTransaction;
 
-import org.assertj.core.api.Assertions;
+import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
 
 public class PrivGetTransactionReceiptSuccess implements Condition {
 
@@ -33,6 +35,9 @@ public class PrivGetTransactionReceiptSuccess implements Condition {
   @Override
   public void verify(final Node node) {
     WaitUtils.waitFor(
-        () -> Assertions.assertThat(node.execute(privGetTransactionCountTransaction)).isNotNull());
+        () ->
+            assertThat(node.execute(privGetTransactionCountTransaction))
+                .isNotNull()
+                .isInstanceOf(PrivateTransactionReceipt.class));
   }
 }
