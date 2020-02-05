@@ -117,8 +117,10 @@ import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes;
 
 public class RunnerBuilder {
+
   private Vertx vertx;
   private BesuController<?> besuController;
+  
   private NetworkingConfiguration networkingConfiguration = NetworkingConfiguration.create();
   private final Collection<Bytes> bannedNodeIds = new ArrayList<>();
   private boolean p2pEnabled = true;
