@@ -233,7 +233,7 @@ public class DefaultPrivacyController implements PrivacyController {
       final Bytes privateFrom = privateTransaction.getPrivateFrom();
       final List<Bytes> privateFor =
           privateTransaction.getPrivateFor().orElse(Lists.newArrayList());
-      return PrivacyGroupUtil.generateEeaPrivacyGroup(privateFrom, privateFor);
+      return PrivacyGroupUtil.generateEeaPrivacyGroupId(privateFrom, privateFor);
     }
   }
 }

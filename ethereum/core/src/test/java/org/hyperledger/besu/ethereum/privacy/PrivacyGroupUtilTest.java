@@ -67,7 +67,7 @@ public class PrivacyGroupUtilTest {
   }
 
   private String privacyGroupId(final String privateFrom, final String... privateFor) {
-    return PrivacyGroupUtil.generateEeaPrivacyGroup(
+    return PrivacyGroupUtil.generateEeaPrivacyGroupId(
         Bytes.fromBase64String(privateFrom),
         Arrays.stream(privateFor).map(Bytes::fromBase64String).collect(Collectors.toList()));
   }

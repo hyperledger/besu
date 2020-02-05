@@ -27,7 +27,7 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class PrivacyGroupUtil {
 
-  public static String generateEeaPrivacyGroup(
+  public static String generateEeaPrivacyGroupId(
       final Bytes privateFrom, final List<Bytes> privateFor) {
     final List<Bytes> privacyGroupIds = new ArrayList<>();
     privacyGroupIds.add(privateFrom);
