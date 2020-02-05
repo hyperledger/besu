@@ -18,6 +18,8 @@ import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLHttpService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcHttpService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketService;
+import org.hyperledger.besu.ethereum.api.query.AutoTransactionLogsIndexingService;
+import org.hyperledger.besu.ethereum.api.query.TransactionLogsIndexer;
 import org.hyperledger.besu.ethereum.p2p.network.NetworkRunner;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.stratum.StratumServer;
@@ -58,6 +60,7 @@ public class Runner implements AutoCloseable {
   private final BesuController<?> besuController;
   private final Path dataDir;
   private final Optional<StratumServer> stratumServer;
+  private final Optional<AutoTransactionLogsIndexingService> autoTransactionLogsIndexingService;
 
   Runner(
       final Vertx vertx,
@@ -69,7 +72,8 @@ public class Runner implements AutoCloseable {
       final Optional<StratumServer> stratumServer,
       final Optional<MetricsService> metrics,
       final BesuController<?> besuController,
-      final Path dataDir) {
+      final Path dataDir,
+      final Optional<TransactionLogsIndexer> transactionLogsIndexer) {
     this.vertx = vertx;
     this.networkRunner = networkRunner;
     this.natService = natService;
@@ -80,6 +84,8 @@ public class Runner implements AutoCloseable {
     this.besuController = besuController;
     this.dataDir = dataDir;
     this.stratumServer = stratumServer;
+    this.autoTransactionLogsIndexingService =
+        transactionLogsIndexer.map(AutoTransactionLogsIndexingService::new);
   }
 
   public void start() {
@@ -103,6 +109,7 @@ public class Runner implements AutoCloseable {
       LOG.info("Ethereum main loop is up.");
       writeBesuPortsToFile();
       writeBesuNetworksToFile();
+      autoTransactionLogsIndexingService.ifPresent(AutoTransactionLogsIndexingService::start);
     } catch (final Exception ex) {
       LOG.error("Startup failed", ex);
       throw new IllegalStateException(ex);
@@ -125,7 +132,7 @@ public class Runner implements AutoCloseable {
 
     networkRunner.stop();
     waitForServiceToStop("Network", networkRunner::awaitStop);
-
+    autoTransactionLogsIndexingService.ifPresent(AutoTransactionLogsIndexingService::stop);
     natService.stop();
     besuController.close();
     vertx.close((res) -> vertxShutdownLatch.countDown());

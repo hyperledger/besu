@@ -183,5 +183,21 @@ public class TransactionLogsIndexer {
     public boolean isRequestAccepted() {
       return requestAccepted;
     }
+
+    @Override
+    public String toString() {
+      return "IndexingStatus{"
+          + "startBlock="
+          + startBlock
+          + ", endBlock="
+          + endBlock
+          + ", currentBlock="
+          + currentBlock
+          + ", indexing="
+          + indexing
+          + ", requestAccepted="
+          + requestAccepted
+          + '}';
+    }
   }
 }

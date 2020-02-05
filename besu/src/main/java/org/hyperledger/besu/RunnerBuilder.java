@@ -526,7 +526,8 @@ public class RunnerBuilder {
         stratumServer,
         metricsService,
         besuController,
-        dataDir);
+        dataDir,
+        blockchainQueries.getTransactionLogsIndexer());
   }
 
   private Optional<NodePermissioningController> buildNodePermissioningController(
