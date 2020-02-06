@@ -40,6 +40,7 @@ public class VmTraceGenerator {
   private int currentIndex = 0;
   private VmTrace currentTrace;
   private TraceFrame currentTraceFrame;
+  private String currentOperation;
   private final TransactionTrace transactionTrace;
   private final VmTrace rootVmTrace = new VmTrace();
   private final Deque<VmTrace> parentTraces = new ArrayDeque<>();
@@ -117,10 +118,7 @@ public class VmTraceGenerator {
 
   private void handleDepthIncreased(final VmOperation op, final VmOperationExecutionReport report) {
     // check if next frame depth has increased i.e the current operation is a call
-    if (currentTraceFrame.depthHasIncreased()) {
-      op.setCost(currentTraceFrame.getGasRemainingPostExecution().toLong() + op.getCost());
-      final VmTrace newSubTrace = new VmTrace();
-      parentTraces.addLast(newSubTrace);
+    if (currentTraceFrame.depthHasIncreased() || "STATICCALL".equals(currentOperation)) {
       findLastFrameInCall(currentTraceFrame, currentIndex)
           .ifPresent(
               lastFrameInCall -> {
@@ -138,13 +136,21 @@ public class VmTraceGenerator {
                     break;
                   default:
                     lastFrameInCall
-                        .getMemory()
-                        .map(mem -> mem.length > 0 ? new Mem(mem[0].toHexString(), 0) : null)
+                        .getMaybeUpdatedMemory()
+                        .map(
+                            mem ->
+                                new Mem(mem.getValue().toHexString(), mem.getOffset().intValue()))
                         .ifPresent(report::setMem);
                 }
               });
-
-      op.setSub(newSubTrace);
+      if (currentTraceFrame.depthHasIncreased()) {
+        op.setCost(currentTraceFrame.getGasRemainingPostExecution().toLong() + op.getCost());
+        final VmTrace newSubTrace = new VmTrace();
+        parentTraces.addLast(newSubTrace);
+        op.setSub(newSubTrace);
+      } else {
+        op.setSub(new VmTrace());
+      }
     }
   }
 
@@ -173,13 +179,24 @@ public class VmTraceGenerator {
   }
 
   private void generateTracingMemory(final VmOperationExecutionReport report) {
-    currentTraceFrame
-        .getMaybeUpdatedMemory()
-        .map(
-            updatedMemory ->
-                new Mem(
-                    updatedMemory.getValue().toHexString(), updatedMemory.getOffset().intValue()))
-        .ifPresent(report::setMem);
+    switch (currentOperation) {
+      case "CALLDATACOPY":
+      case "CODECOPY":
+      case "EXTCODECOPY":
+      case "MLOAD":
+      case "MSTORE":
+      case "MSTORE8":
+        currentTraceFrame
+            .getMaybeUpdatedMemory()
+            .map(
+                updatedMemory ->
+                    new Mem(
+                        updatedMemory.getValue().toHexString(),
+                        updatedMemory.getOffset().intValue()))
+            .ifPresent(report::setMem);
+      default:
+        break;
+    }
   }
 
   private void generateTracingPush(final VmOperationExecutionReport report) {
@@ -214,6 +231,7 @@ public class VmTraceGenerator {
    */
   private void initStep(final TraceFrame frame) {
     this.currentTraceFrame = frame;
+    this.currentOperation = frame.getOpcode();
     currentTrace = parentTraces.getLast();
     // set smart contract code
     currentTrace.setCode(
