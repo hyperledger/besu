@@ -14,11 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.api.query;
 
-import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.sync.BlockBroadcaster;
 
-import java.io.IOException;
+import java.time.Duration;
 import java.util.OptionalLong;
 
 import org.apache.logging.log4j.LogManager;
@@ -39,15 +37,14 @@ public class AutoTransactionLogsIndexingService {
 
   public void start() {
     LOG.info("Starting Auto transaction logs indexing service.");
-    subscriptionId = OptionalLong.of(blockBroadcaster.subscribePropagateNewBlocks(this::accept));
-  }
-
-  private void accept(final Block block, final Difficulty totalDifficulty) {
-    try {
-      transactionLogsIndexer.fillPendingCacheWithBlock(block.getHeader());
-    } catch (IOException e) {
-      LOG.error("Unhandled indexing exception.", e);
-    }
+    subscriptionId =
+        OptionalLong.of(
+            blockBroadcaster.subscribePropagateNewBlocks(
+                (block, __) ->
+                    transactionLogsIndexer.cacheLogsBloomForBlockHeader(block.getHeader())));
+    transactionLogsIndexer
+        .getScheduler()
+        .scheduleFutureTask(transactionLogsIndexer::indexAll, Duration.ofMinutes(1));
   }
 
   public void stop() {
