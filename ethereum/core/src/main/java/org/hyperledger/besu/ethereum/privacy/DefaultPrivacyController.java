@@ -130,7 +130,7 @@ public class DefaultPrivacyController implements PrivacyController {
   @Override
   public ValidationResult<TransactionValidator.TransactionInvalidReason> validatePrivateTransaction(
       final PrivateTransaction privateTransaction, final String enclavePublicKey) {
-    final String privacyGroupId = privacyGroupId(privateTransaction);
+    final String privacyGroupId = privateTransaction.determinePrivacyGroupId();
     return privateTransactionValidator.validate(
         privateTransaction,
         determineBesuNonce(privateTransaction.getSender(), privacyGroupId, enclavePublicKey));
@@ -223,17 +223,6 @@ public class DefaultPrivacyController implements PrivacyController {
       }
       return enclave.send(
           payload, privateTransaction.getPrivateFrom().toBase64String(), privateFor);
-    }
-  }
-
-  private String privacyGroupId(final PrivateTransaction privateTransaction) {
-    if (privateTransaction.getPrivacyGroupId().isPresent()) {
-      return privateTransaction.getPrivacyGroupId().get().toBase64String();
-    } else {
-      final Bytes privateFrom = privateTransaction.getPrivateFrom();
-      final List<Bytes> privateFor =
-          privateTransaction.getPrivateFor().orElse(Lists.newArrayList());
-      return PrivacyGroupUtil.generateEeaPrivacyGroupId(privateFrom, privateFor);
     }
   }
 }
