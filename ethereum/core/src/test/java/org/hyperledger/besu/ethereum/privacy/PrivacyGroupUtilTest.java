@@ -24,45 +24,55 @@ import org.junit.Test;
 
 public class PrivacyGroupUtilTest {
 
-  private static final String PRIVACY_GROUP_ID1 = "negmDcN2P4ODpqn/6WkJ02zT/0w0bjhGpkZ8UP6vARk=";
-  private static final String PRIVACY_GROUP_ID2 = "g59BmTeJIn7HIcnq8VQWgyh/pDbvbt2eyP0Ii60aDDw=";
-  private static final String PRIVACY_GROUP_ID3 = "6fg8q5rWMBoAT2oIiU3tYJbk4b7oAr7dxaaVY7TeM3U=";
+  private static final String ENCLAVE_PUBLIC_KEY_1 = "negmDcN2P4ODpqn/6WkJ02zT/0w0bjhGpkZ8UP6vARk=";
+  private static final String ENCLAVE_PUBLIC_KEY_2 = "g59BmTeJIn7HIcnq8VQWgyh/pDbvbt2eyP0Ii60aDDw=";
+  private static final String ENCLAVE_PUBLIC_KEY_3 = "6fg8q5rWMBoAT2oIiU3tYJbk4b7oAr7dxaaVY7TeM3U=";
+
+  // This is the expected generated legacy privacy group id for a privacy group containing the
+  // enclave public keys enclave_public_key_1, enclave_public_key_2 and enclave_public_key_3
+  private static final String EXPECTED_LEGACY_PRIVACY_GROUP_ID =
+      "/xzRjCLioUBkm5LYuzll61GXyrD5x7bvXzQk/ovJA/4=";
 
   @Test
-  public void generatesPrivacyGroupPrivateFromAndEmptyPrivateFor() {
+  public void generatesPrivacyGroupIdWithPrivateFromAndEmptyPrivateFor() {
     final String expected = "kAbelwaVW7okoEn1+okO+AbA4Hhz/7DaCOWVQz9nx5M=";
-    assertThat(privacyGroupId(PRIVACY_GROUP_ID1)).isEqualTo(expected);
+    assertThat(privacyGroupId(ENCLAVE_PUBLIC_KEY_1)).isEqualTo(expected);
   }
 
   @Test
-  public void generatesPrivacyGroupForDuplicateValues() {
-    final String expectedPrivacyGroupId = "/xzRjCLioUBkm5LYuzll61GXyrD5x7bvXzQk/ovJA/4=";
+  public void generatesSamePrivacyGroupIdForDuplicateValues() {
     assertThat(
             privacyGroupId(
-                PRIVACY_GROUP_ID2, PRIVACY_GROUP_ID1, PRIVACY_GROUP_ID3, PRIVACY_GROUP_ID1))
-        .isEqualTo(expectedPrivacyGroupId);
+                ENCLAVE_PUBLIC_KEY_2,
+                ENCLAVE_PUBLIC_KEY_1,
+                ENCLAVE_PUBLIC_KEY_3,
+                ENCLAVE_PUBLIC_KEY_1))
+        .isEqualTo(EXPECTED_LEGACY_PRIVACY_GROUP_ID);
     assertThat(
             privacyGroupId(
-                PRIVACY_GROUP_ID2, PRIVACY_GROUP_ID1, PRIVACY_GROUP_ID1, PRIVACY_GROUP_ID3))
-        .isEqualTo(expectedPrivacyGroupId);
-    assertThat(privacyGroupId(PRIVACY_GROUP_ID2, PRIVACY_GROUP_ID1, PRIVACY_GROUP_ID3))
-        .isEqualTo(expectedPrivacyGroupId);
+                ENCLAVE_PUBLIC_KEY_2,
+                ENCLAVE_PUBLIC_KEY_1,
+                ENCLAVE_PUBLIC_KEY_1,
+                ENCLAVE_PUBLIC_KEY_3))
+        .isEqualTo(EXPECTED_LEGACY_PRIVACY_GROUP_ID);
+    assertThat(privacyGroupId(ENCLAVE_PUBLIC_KEY_2, ENCLAVE_PUBLIC_KEY_1, ENCLAVE_PUBLIC_KEY_3))
+        .isEqualTo(EXPECTED_LEGACY_PRIVACY_GROUP_ID);
   }
 
   @Test
-  public void generatesSamePrivacyGroupForPrivateForInDifferentOrders() {
+  public void generatesSamePrivacyGroupIdForPrivateForInDifferentOrders() {
     final String expectedPrivacyGroupId = "/xzRjCLioUBkm5LYuzll61GXyrD5x7bvXzQk/ovJA/4=";
-    assertThat(privacyGroupId(PRIVACY_GROUP_ID1, PRIVACY_GROUP_ID2, PRIVACY_GROUP_ID3))
+    assertThat(privacyGroupId(ENCLAVE_PUBLIC_KEY_1, ENCLAVE_PUBLIC_KEY_2, ENCLAVE_PUBLIC_KEY_3))
         .isEqualTo(expectedPrivacyGroupId);
-    assertThat(privacyGroupId(PRIVACY_GROUP_ID1, PRIVACY_GROUP_ID3, PRIVACY_GROUP_ID2))
+    assertThat(privacyGroupId(ENCLAVE_PUBLIC_KEY_1, ENCLAVE_PUBLIC_KEY_3, ENCLAVE_PUBLIC_KEY_2))
         .isEqualTo(expectedPrivacyGroupId);
-    assertThat(privacyGroupId(PRIVACY_GROUP_ID2, PRIVACY_GROUP_ID1, PRIVACY_GROUP_ID3))
+    assertThat(privacyGroupId(ENCLAVE_PUBLIC_KEY_2, ENCLAVE_PUBLIC_KEY_1, ENCLAVE_PUBLIC_KEY_3))
         .isEqualTo(expectedPrivacyGroupId);
-    assertThat(privacyGroupId(PRIVACY_GROUP_ID2, PRIVACY_GROUP_ID3, PRIVACY_GROUP_ID1))
+    assertThat(privacyGroupId(ENCLAVE_PUBLIC_KEY_2, ENCLAVE_PUBLIC_KEY_3, ENCLAVE_PUBLIC_KEY_1))
         .isEqualTo(expectedPrivacyGroupId);
-    assertThat(privacyGroupId(PRIVACY_GROUP_ID3, PRIVACY_GROUP_ID1, PRIVACY_GROUP_ID2))
+    assertThat(privacyGroupId(ENCLAVE_PUBLIC_KEY_3, ENCLAVE_PUBLIC_KEY_1, ENCLAVE_PUBLIC_KEY_2))
         .isEqualTo(expectedPrivacyGroupId);
-    assertThat(privacyGroupId(PRIVACY_GROUP_ID3, PRIVACY_GROUP_ID2, PRIVACY_GROUP_ID1))
+    assertThat(privacyGroupId(ENCLAVE_PUBLIC_KEY_3, ENCLAVE_PUBLIC_KEY_2, ENCLAVE_PUBLIC_KEY_1))
         .isEqualTo(expectedPrivacyGroupId);
   }
 
