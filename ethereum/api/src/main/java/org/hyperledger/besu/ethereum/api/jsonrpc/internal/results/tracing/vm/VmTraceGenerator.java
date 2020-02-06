@@ -186,6 +186,7 @@ public class VmTraceGenerator {
       case "MLOAD":
       case "MSTORE":
       case "MSTORE8":
+      case "RETURNDATACOPY":
         currentTraceFrame
             .getMaybeUpdatedMemory()
             .map(
@@ -194,6 +195,7 @@ public class VmTraceGenerator {
                         updatedMemory.getValue().toHexString(),
                         updatedMemory.getOffset().intValue()))
             .ifPresent(report::setMem);
+        break;
       default:
         break;
     }
