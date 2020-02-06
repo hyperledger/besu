@@ -64,6 +64,7 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     final String rawPrivateTransaction = requestContext.getRequiredParameter(0, String.class);
+    final Object id = requestContext.getRequest().getId();
 
     try {
       final PrivateTransaction privateTransaction =
@@ -75,8 +76,7 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
           privacyController.validatePrivateTransaction(privateTransaction, enclavePublicKey);
       if (!validationResult.isValid()) {
         return new JsonRpcErrorResponse(
-            requestContext.getRequest().getId(),
-            convertTransactionInvalidReason(validationResult.getInvalidReason()));
+            id, convertTransactionInvalidReason(validationResult.getInvalidReason()));
       }
 
       final String enclaveKey =
@@ -84,7 +84,6 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
       final Transaction privacyMarkerTransaction =
           privacyController.createPrivacyMarkerTransaction(enclaveKey, privateTransaction);
 
-      final Object id = requestContext.getRequest().getId();
       return transactionPool
           .addLocalTransaction(privacyMarkerTransaction)
           .either(
@@ -93,12 +92,11 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
                   new JsonRpcErrorResponse(id, convertTransactionInvalidReason(errorReason)));
     } catch (final MultiTenancyValidationException e) {
       LOG.error("Unauthorized privacy multi-tenancy rpc request. {}", e.getMessage());
-      return new JsonRpcErrorResponse(requestContext.getRequest().getId(), ENCLAVE_ERROR);
+      return new JsonRpcErrorResponse(id, ENCLAVE_ERROR);
     } catch (final IllegalArgumentException | RLPException e) {
-      return new JsonRpcErrorResponse(requestContext.getRequest().getId(), DECODE_ERROR);
+      return new JsonRpcErrorResponse(id, DECODE_ERROR);
     } catch (final Exception e) {
-      return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), convertEnclaveInvalidReason(e.getMessage()));
+      return new JsonRpcErrorResponse(id, convertEnclaveInvalidReason(e.getMessage()));
     }
   }
 }
