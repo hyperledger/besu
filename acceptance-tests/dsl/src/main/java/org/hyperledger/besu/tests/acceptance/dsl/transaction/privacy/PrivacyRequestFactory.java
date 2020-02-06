@@ -18,9 +18,9 @@ import static java.util.Collections.singletonList;
 
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.parameters.CreatePrivacyGroupParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.privacy.PrivateTransactionGroupResult;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivateTransactionGroupResponse;
 
 import java.util.Collections;
 import java.util.List;
@@ -38,7 +38,7 @@ public class PrivacyRequestFactory {
   public static class GetPrivacyPrecompileAddressResponse extends Response<Address> {}
 
   public static class GetPrivateTransactionResponse
-      extends Response<PrivateTransactionGroupResult> {}
+      extends Response<PrivateTransactionGroupResponse> {}
 
   public static class CreatePrivacyGroupResponse extends Response<String> {}
 

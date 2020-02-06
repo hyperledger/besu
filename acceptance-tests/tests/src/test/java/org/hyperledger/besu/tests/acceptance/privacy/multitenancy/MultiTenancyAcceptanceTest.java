@@ -40,22 +40,21 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.ClusterConfigurati
 
 import java.math.BigInteger;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.io.Base64;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
 public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
   private BesuNode node;
-  private Cluster multiTenancyCluster;
-  private String token;
   private final ObjectMapper mapper = new ObjectMapper();
+  private Cluster multiTenancyCluster;
 
   private static final int ENCLAVE_PORT = 1080;
   private static final String PRIVACY_GROUP_ID = "Z3JvdXBJZA==";
@@ -81,13 +80,19 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
             "authentication/auth_pub_key",
             "authentication/auth_priv_key");
     multiTenancyCluster.start(node);
-    token = node.execute(permissioningTransactions.createSuccessfulLogin("user", "pegasys"));
+    final String token =
+        node.execute(permissioningTransactions.createSuccessfulLogin("user", "pegasys"));
     node.useAuthenticationTokenInHeaderForJsonRpc(token);
+  }
+
+  @After
+  public void tearDown() {
+    multiTenancyCluster.close();
   }
 
   @Test
   public void privGetPrivacyPrecompileAddressShouldReturnExpectedAddress() {
-    node.verify(priv.privGetPrivacyPrecompileAddressSuccess(DEFAULT_PRIVACY));
+    node.verify(priv.getPrivacyPrecompileAddress(DEFAULT_PRIVACY));
   }
 
   @Test
@@ -104,9 +109,8 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
         node.execute(
             privacyTransactions.sendRawTransaction(
                 getRLPOutput(validSignedPrivateTransaction).encoded().toHexString()));
-    node.verify(priv.getTransactionReceiptSuccess(transactionHash));
-    node.verify(
-        priv.privGetPrivateTransactionSuccess(transactionHash, validSignedPrivateTransaction));
+    node.verify(priv.getTransactionReceipt(transactionHash));
+    node.verify(priv.getPrivateTransaction(transactionHash, validSignedPrivateTransaction));
   }
 
   @Test
@@ -114,7 +118,7 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
     createPrivacyGroupEnclaveStub();
 
     node.verify(
-        priv.privCreatePrivacyGroupSuccess(
+        priv.createPrivacyGroup(
             List.of(KEY1, KEY2, KEY3), "GroupName", "Group description.", PRIVACY_GROUP_ID));
   }
 
@@ -123,7 +127,7 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
     retrievePrivacyGroupEnclaveStub();
     deletePrivacyGroupEnclaveStub();
 
-    node.verify(priv.privDeletePrivacyGroupSuccess(PRIVACY_GROUP_ID));
+    node.verify(priv.deletePrivacyGroup(PRIVACY_GROUP_ID));
   }
 
   @Test
@@ -137,7 +141,7 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
 
     findPrivacyGroupEnclaveStub(groupMembership);
 
-    node.verify(priv.privFindPrivacyGroupSuccess(groupMembership.size(), ENCLAVE_KEY));
+    node.verify(priv.findPrivacyGroup(groupMembership.size(), ENCLAVE_KEY));
   }
 
   @Test
@@ -150,15 +154,9 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
     sendEnclaveStub("testKey");
     receiveEnclaveStub(getRLPOutput(validSignedPrivateTransaction));
 
-    CompletableFuture<Hash> completableFuture = new CompletableFuture<>();
-
     node.verify(
-        priv.eeaSendRawTransactionSuccess(
-            getRLPOutput(validSignedPrivateTransaction).encoded().toHexString(),
-            completableFuture));
-
-    completableFuture.whenComplete(
-        (hash, throwable) -> node.verify(priv.getTransactionReceiptSuccess(hash)));
+        priv.eeaSendRawTransaction(
+            getRLPOutput(validSignedPrivateTransaction).encoded().toHexString()));
   }
 
   @Test
@@ -166,19 +164,19 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
       throws JsonProcessingException {
     final PrivateTransaction validSignedPrivateTransaction =
         getValidSignedPrivateTransaction(senderAddress);
-    final String senderAddress = validSignedPrivateTransaction.getSender().toHexString();
+    final String accountAddress = validSignedPrivateTransaction.getSender().toHexString();
     final BytesValueRLPOutput rlpOutput = getRLPOutput(validSignedPrivateTransaction);
 
     retrievePrivacyGroupEnclaveStub();
     sendEnclaveStub("testKey");
     receiveEnclaveStub(rlpOutput);
 
-    node.verify(priv.privGetTransactionCountSuccess(senderAddress, PRIVACY_GROUP_ID, 0));
+    node.verify(priv.getTransactionCount(accountAddress, PRIVACY_GROUP_ID, 0));
     final Hash transactionReceipt =
         node.execute(privacyTransactions.sendRawTransaction(rlpOutput.encoded().toHexString()));
 
-    node.verify(priv.getTransactionReceiptSuccess(transactionReceipt));
-    node.verify(priv.privGetTransactionCountSuccess(senderAddress, PRIVACY_GROUP_ID, 1));
+    node.verify(priv.getTransactionReceipt(transactionReceipt));
+    node.verify(priv.getTransactionCount(accountAddress, PRIVACY_GROUP_ID, 1));
   }
 
   @Test
@@ -194,7 +192,7 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
     sendEnclaveStub(enclaveResponseKeyBase64);
 
     node.verify(
-        priv.privDistributeRawTransaction(
+        priv.distributeRawTransaction(
             getRLPOutput(getValidSignedPrivateTransaction(senderAddress)).encoded().toHexString(),
             enclaveResponseKeyBytes));
   }
@@ -213,7 +211,7 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
     final Hash transactionReceipt =
         node.execute(privacyTransactions.sendRawTransaction(rlpOutput.encoded().toHexString()));
 
-    node.verify(priv.getTransactionReceiptSuccess(transactionReceipt));
+    node.verify(priv.getTransactionReceipt(transactionReceipt));
   }
 
   @Test
@@ -221,8 +219,8 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
       throws JsonProcessingException {
     final PrivateTransaction validSignedPrivateTransaction =
         getValidSignedPrivateTransaction(senderAddress);
-    final String senderAddress = validSignedPrivateTransaction.getSender().toHexString();
-    final String senderAddressBase64 = Base64.encode(Bytes.wrap(senderAddress.getBytes(UTF_8)));
+    final String accountAddress = validSignedPrivateTransaction.getSender().toHexString();
+    final String senderAddressBase64 = Base64.encode(Bytes.wrap(accountAddress.getBytes(UTF_8)));
     final BytesValueRLPOutput rlpOutput = getRLPOutput(validSignedPrivateTransaction);
     final List<PrivacyGroup> groupMembership =
         List.of(testPrivacyGroup(emptyList(), PrivacyGroup.Type.LEGACY));
@@ -232,14 +230,15 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
     receiveEnclaveStub(rlpOutput);
     findPrivacyGroupEnclaveStub(groupMembership);
 
-    node.verify(priv.privGetTransactionCountSuccess(senderAddress, PRIVACY_GROUP_ID, 0));
+    node.verify(priv.getTransactionCount(accountAddress, PRIVACY_GROUP_ID, 0));
     final Hash transactionHash =
         node.execute(privacyTransactions.sendRawTransaction(rlpOutput.encoded().toHexString()));
 
-    node.verify(priv.getTransactionReceiptSuccess(transactionHash));
+    node.verify(priv.getTransactionReceipt(transactionHash));
 
-    final String[] addresses = {senderAddressBase64};
-    node.verify(priv.privGetEeaTransactionCountSuccess(senderAddress, ENCLAVE_KEY, addresses, 1));
+    final String privateFrom = ENCLAVE_KEY;
+    final String[] privateFor = {senderAddressBase64};
+    node.verify(priv.getEeaTransactionCount(accountAddress, privateFrom, privateFor, 1));
   }
 
   private void findPrivacyGroupEnclaveStub(final List<PrivacyGroup> groupMembership)

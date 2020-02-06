@@ -34,7 +34,7 @@ public class PrivGetEeaTransactionCountSuccess implements Condition {
 
   @Override
   public void verify(final Node node) {
-    final Integer result = node.execute(privGetEeaTransactionCountTransaction);
+    final int result = node.execute(privGetEeaTransactionCountTransaction);
     assertThat(result).isNotNull();
     assertThat(result).isInstanceOf(Integer.class);
     assertThat(result).isEqualTo(expectedTransactionCount);

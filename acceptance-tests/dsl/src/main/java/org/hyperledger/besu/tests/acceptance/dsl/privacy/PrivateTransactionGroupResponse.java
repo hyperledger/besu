@@ -12,17 +12,12 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.privacy;
+package org.hyperledger.besu.tests.acceptance.dsl.privacy;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
-
-import com.fasterxml.jackson.annotation.JsonGetter;
-
-public abstract class PrivateTransactionResult {
+public class PrivateTransactionGroupResponse {
   private final String from;
   private final String gas;
   private final String gasPrice;
@@ -36,85 +31,93 @@ public abstract class PrivateTransactionResult {
   private final String s;
   private final String privateFrom;
   private final String restriction;
+  private final String privacyGroupId;
 
-  public PrivateTransactionResult(final PrivateTransaction tx) {
-    this.from = tx.getSender().toString();
-    this.gas = Quantity.create(tx.getGasLimit());
-    this.gasPrice = Quantity.create(tx.getGasPrice());
-    this.hash = tx.hash().toString();
-    this.input = tx.getPayload().toString();
-    this.nonce = Quantity.create(tx.getNonce());
-    this.to = tx.getTo().map(Address::toHexString).orElse(null);
-    this.value = Quantity.create(tx.getValue());
-    this.v = Quantity.create(tx.getV());
-    this.r = Quantity.create(tx.getR());
-    this.s = Quantity.create(tx.getS());
-    this.privateFrom = tx.getPrivateFrom().toBase64String();
-    this.restriction = new String(tx.getRestriction().getBytes().toArrayUnsafe(), UTF_8);
+  @JsonCreator
+  public PrivateTransactionGroupResponse(
+      @JsonProperty("from") final String from,
+      @JsonProperty("gas") final String gas,
+      @JsonProperty("gasPrice") final String gasPrice,
+      @JsonProperty("hash") final String hash,
+      @JsonProperty("input") final String input,
+      @JsonProperty("nonce") final String nonce,
+      @JsonProperty("to") final String to,
+      @JsonProperty("value") final String value,
+      @JsonProperty("v") final String v,
+      @JsonProperty("r") final String r,
+      @JsonProperty("s") final String s,
+      @JsonProperty("privateFrom") final String privateFrom,
+      @JsonProperty("restriction") final String restriction,
+      @JsonProperty("privacyGroupId") final String privacyGroupId) {
+    this.from = from;
+    this.gas = gas;
+    this.gasPrice = gasPrice;
+    this.hash = hash;
+    this.input = input;
+    this.nonce = nonce;
+    this.to = to;
+    this.value = value;
+    this.v = v;
+    this.r = r;
+    this.s = s;
+    this.privateFrom = privateFrom;
+    this.restriction = restriction;
+    this.privacyGroupId = privacyGroupId;
   }
 
-  @JsonGetter(value = "from")
   public String getFrom() {
     return from;
   }
 
-  @JsonGetter(value = "gas")
   public String getGas() {
     return gas;
   }
 
-  @JsonGetter(value = "gasPrice")
   public String getGasPrice() {
     return gasPrice;
   }
 
-  @JsonGetter(value = "hash")
   public String getHash() {
     return hash;
   }
 
-  @JsonGetter(value = "input")
   public String getInput() {
     return input;
   }
 
-  @JsonGetter(value = "nonce")
   public String getNonce() {
     return nonce;
   }
 
-  @JsonGetter(value = "to")
   public String getTo() {
     return to;
   }
 
-  @JsonGetter(value = "value")
   public String getValue() {
     return value;
   }
 
-  @JsonGetter(value = "v")
   public String getV() {
     return v;
   }
 
-  @JsonGetter(value = "r")
   public String getR() {
     return r;
   }
 
-  @JsonGetter(value = "s")
   public String getS() {
     return s;
   }
 
-  @JsonGetter(value = "privateFrom")
   public String getPrivateFrom() {
     return privateFrom;
   }
 
-  @JsonGetter(value = "restriction")
   public String getRestriction() {
     return restriction;
+  }
+
+  public String getPrivacyGroupId() {
+    return privacyGroupId;
   }
 }

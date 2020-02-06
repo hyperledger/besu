@@ -21,7 +21,6 @@ import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyTransactions;
 
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 public class PrivConditions {
 
@@ -31,18 +30,18 @@ public class PrivConditions {
     this.transactions = transactions;
   }
 
-  public Condition privGetPrivacyPrecompileAddressSuccess(final Address precompileAddress) {
+  public Condition getPrivacyPrecompileAddress(final Address precompileAddress) {
     return new PrivGetPrivacyPrecompileAddressSuccess(
         transactions.getPrivacyPrecompileAddress(), precompileAddress);
   }
 
-  public Condition privGetPrivateTransactionSuccess(
+  public Condition getPrivateTransaction(
       final Hash transactionHash, final PrivateTransaction privateTransaction) {
     return new PrivGetPrivateTransactionSuccess(
         transactions.getPrivateTransaction(transactionHash), privateTransaction);
   }
 
-  public Condition privCreatePrivacyGroupSuccess(
+  public Condition createPrivacyGroup(
       final List<String> addresses,
       final String groupName,
       final String groupDescription,
@@ -51,47 +50,43 @@ public class PrivConditions {
         transactions.createPrivacyGroup(addresses, groupName, groupDescription), groupId);
   }
 
-  public Condition privDeletePrivacyGroupSuccess(final String groupId) {
+  public Condition deletePrivacyGroup(final String groupId) {
     return new PrivDeletePrivacyGroupSuccess(transactions.deletePrivacyGroup(groupId), groupId);
   }
 
-  public Condition privFindPrivacyGroupSuccess(final int numGroups, final String... groupMembers) {
+  public Condition findPrivacyGroup(final int numGroups, final String... groupMembers) {
     return new PrivFindPrivacyGroupSuccess(transactions.findPrivacyGroup(groupMembers), numGroups);
   }
 
-  public Condition eeaSendRawTransactionSuccess(
-      final String transaction, final CompletableFuture<Hash> completableFuture) {
-    return new EeaSendRawTransactionSuccess(
-        transactions.sendRawTransaction(transaction), completableFuture);
+  public Condition eeaSendRawTransaction(final String transaction) {
+    return new EeaSendRawTransactionSuccess(transactions.sendRawTransaction(transaction));
   }
 
-  public Condition privDistributeRawTransaction(
+  public Condition distributeRawTransaction(
       final String transactionRLP, final String enclaveResponseKey) {
     return new PrivDistributeRawTransactionSuccess(
         transactions.distributeRawTransaction(transactionRLP), enclaveResponseKey);
   }
 
-  public Condition privGetTransactionCountSuccess(
-      final String transactionCountSender,
-      final String transactionCountPrivacyGroupId,
+  public Condition getTransactionCount(
+      final String accountAddress,
+      final String privacyGroupId,
       final int expectedTransactionCount) {
     return new PrivGetTransactionCountSuccess(
-        transactions.getTransactionCount(transactionCountSender, transactionCountPrivacyGroupId),
-        expectedTransactionCount);
+        transactions.getTransactionCount(accountAddress, privacyGroupId), expectedTransactionCount);
   }
 
-  public Condition privGetEeaTransactionCountSuccess(
-      final String transactionCountSender,
-      final String transactionCountSenderBase64,
-      final String[] addresses,
+  public Condition getEeaTransactionCount(
+      final String accountAddress,
+      final String privateFrom,
+      final String[] privateFor,
       final int expectedTransactionCount) {
     return new PrivGetEeaTransactionCountSuccess(
-        transactions.getEeaTransactionCount(
-            transactionCountSender, transactionCountSenderBase64, addresses),
+        transactions.getEeaTransactionCount(accountAddress, privateFrom, privateFor),
         expectedTransactionCount);
   }
 
-  public Condition getTransactionReceiptSuccess(final Hash transactionHash) {
+  public Condition getTransactionReceipt(final Hash transactionHash) {
     return new PrivGetTransactionReceiptSuccess(
         transactions.getTransactionReceipt(transactionHash));
   }

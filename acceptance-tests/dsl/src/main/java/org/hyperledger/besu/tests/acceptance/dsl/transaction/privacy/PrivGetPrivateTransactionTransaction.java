@@ -16,15 +16,15 @@ package org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.privacy.PrivateTransactionGroupResult;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivateTransactionGroupResponse;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.NodeRequests;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
 
 import java.io.IOException;
 
 public class PrivGetPrivateTransactionTransaction
-    implements Transaction<PrivateTransactionGroupResult> {
+    implements Transaction<PrivateTransactionGroupResponse> {
 
   private final Hash transactionHash;
 
@@ -33,7 +33,7 @@ public class PrivGetPrivateTransactionTransaction
   }
 
   @Override
-  public PrivateTransactionGroupResult execute(final NodeRequests node) {
+  public PrivateTransactionGroupResponse execute(final NodeRequests node) {
     try {
       final PrivacyRequestFactory.GetPrivateTransactionResponse result =
           node.privacy().privGetPrivateTransaction(transactionHash).send();

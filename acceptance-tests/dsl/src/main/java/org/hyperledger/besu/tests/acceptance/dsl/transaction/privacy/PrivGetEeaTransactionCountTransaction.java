@@ -26,10 +26,8 @@ public class PrivGetEeaTransactionCountTransaction implements Transaction<Intege
   private final Object[] params;
 
   public PrivGetEeaTransactionCountTransaction(
-      final String transactionCountSender,
-      final String transactionCountSenderBase64,
-      final String[] addresses) {
-    this.params = new Object[] {transactionCountSender, transactionCountSenderBase64, addresses};
+      final String accountAddress, final String privateFrom, final String[] privateFor) {
+    this.params = new Object[] {accountAddress, privateFrom, privateFor};
   }
 
   @Override

@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.privacy.Privat
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivateTransactionGroupResponse;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivGetPrivateTransactionTransaction;
 
 public class PrivGetPrivateTransactionSuccess implements Condition {
@@ -36,7 +37,7 @@ public class PrivGetPrivateTransactionSuccess implements Condition {
 
   @Override
   public void verify(final Node node) {
-    final PrivateTransactionGroupResult result = node.execute(transaction);
+    final PrivateTransactionGroupResponse result = node.execute(transaction);
     assertThat(result).isEqualToComparingFieldByField(privateTransaction);
   }
 }

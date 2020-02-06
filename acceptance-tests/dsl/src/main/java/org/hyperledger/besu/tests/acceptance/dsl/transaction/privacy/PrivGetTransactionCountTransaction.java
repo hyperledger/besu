@@ -26,8 +26,8 @@ public class PrivGetTransactionCountTransaction implements Transaction<Integer> 
   private final Object[] params;
 
   public PrivGetTransactionCountTransaction(
-      final String transactionCountSender, final String transactionCountPrivacyGroupId) {
-    this.params = new String[] {transactionCountSender, transactionCountPrivacyGroupId};
+      final String accountAddress, final String privacyGroupId) {
+    this.params = new String[] {accountAddress, privacyGroupId};
   }
 
   @Override

@@ -21,25 +21,18 @@ import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.EeaSendRawTransactionTransaction;
 
-import java.util.concurrent.CompletableFuture;
-
 public class EeaSendRawTransactionSuccess implements Condition {
 
   private final EeaSendRawTransactionTransaction sendRawTransactionTransaction;
-  private final CompletableFuture<Hash> completeableFuture;
 
   public EeaSendRawTransactionSuccess(
-      final EeaSendRawTransactionTransaction sendRawTransactionTransaction,
-      final CompletableFuture<Hash> completableFuture) {
+      final EeaSendRawTransactionTransaction sendRawTransactionTransaction) {
     this.sendRawTransactionTransaction = sendRawTransactionTransaction;
-    this.completeableFuture = completableFuture;
   }
 
   @Override
   public void verify(final Node node) {
     final Hash transactionHash = node.execute(sendRawTransactionTransaction);
     assertThat(transactionHash).isNotNull();
-    assertThat(transactionHash).isInstanceOf(Hash.class);
-    completeableFuture.complete(transactionHash);
   }
 }

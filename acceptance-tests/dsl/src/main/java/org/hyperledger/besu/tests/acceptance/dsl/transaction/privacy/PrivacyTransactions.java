@@ -50,17 +50,13 @@ public class PrivacyTransactions {
   }
 
   public PrivGetTransactionCountTransaction getTransactionCount(
-      final String transactionCountSender, final String transactionCountPrivacyGroupId) {
-    return new PrivGetTransactionCountTransaction(
-        transactionCountSender, transactionCountPrivacyGroupId);
+      final String accountAddress, final String privacyGroupId) {
+    return new PrivGetTransactionCountTransaction(accountAddress, privacyGroupId);
   }
 
   public PrivGetEeaTransactionCountTransaction getEeaTransactionCount(
-      final String transactionCountSender,
-      final String transactionCountSenderBase64,
-      final String[] addresses) {
-    return new PrivGetEeaTransactionCountTransaction(
-        transactionCountSender, transactionCountSenderBase64, addresses);
+      final String accountAddress, final String privateFrom, final String[] privateFor) {
+    return new PrivGetEeaTransactionCountTransaction(accountAddress, privateFrom, privateFor);
   }
 
   public PrivGetTransactionReceiptTransaction getTransactionReceipt(final Hash transactionHash) {
