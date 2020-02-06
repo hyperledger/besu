@@ -76,7 +76,18 @@ public class PrivConditions {
       final String transactionCountPrivacyGroupId,
       final int expectedTransactionCount) {
     return new PrivGetTransactionCountSuccess(
-        transactions.privTransactionCount(transactionCountSender, transactionCountPrivacyGroupId),
+        transactions.getTransactionCount(transactionCountSender, transactionCountPrivacyGroupId),
+        expectedTransactionCount);
+  }
+
+  public Condition privGetEeaTransactionCountSuccess(
+      final String transactionCountSender,
+      final String transactionCountSenderBase64,
+      final String[] addresses,
+      final int expectedTransactionCount) {
+    return new PrivGetEeaTransactionCountSuccess(
+        transactions.getEeaTransactionCount(
+            transactionCountSender, transactionCountSenderBase64, addresses),
         expectedTransactionCount);
   }
 

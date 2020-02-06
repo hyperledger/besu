@@ -131,9 +131,9 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
       throws JsonProcessingException {
     final List<PrivacyGroup> groupMembership =
         List.of(
-            testPrivacyGroup(emptyList()),
-            testPrivacyGroup(emptyList()),
-            testPrivacyGroup(emptyList()));
+            testPrivacyGroup(emptyList(), PrivacyGroup.Type.BESU),
+            testPrivacyGroup(emptyList(), PrivacyGroup.Type.BESU),
+            testPrivacyGroup(emptyList(), PrivacyGroup.Type.BESU));
 
     findPrivacyGroupEnclaveStub(groupMembership);
 
@@ -216,6 +216,32 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
     node.verify(priv.getTransactionReceiptSuccess(transactionReceipt));
   }
 
+  @Test
+  public void privGetEeaTransactionCountSuccessShouldReturnExpectedTransactionCount()
+      throws JsonProcessingException {
+    final PrivateTransaction validSignedPrivateTransaction =
+        getValidSignedPrivateTransaction(senderAddress);
+    final String senderAddress = validSignedPrivateTransaction.getSender().toHexString();
+    final String senderAddressBase64 = Base64.encode(Bytes.wrap(senderAddress.getBytes(UTF_8)));
+    final BytesValueRLPOutput rlpOutput = getRLPOutput(validSignedPrivateTransaction);
+    final List<PrivacyGroup> groupMembership =
+        List.of(testPrivacyGroup(emptyList(), PrivacyGroup.Type.LEGACY));
+
+    retrievePrivacyGroupEnclaveStub();
+    sendEnclaveStub("testKey");
+    receiveEnclaveStub(rlpOutput);
+    findPrivacyGroupEnclaveStub(groupMembership);
+
+    node.verify(priv.privGetTransactionCountSuccess(senderAddress, PRIVACY_GROUP_ID, 0));
+    final Hash transactionHash =
+        node.execute(privacyTransactions.sendRawTransaction(rlpOutput.encoded().toHexString()));
+
+    node.verify(priv.getTransactionReceiptSuccess(transactionHash));
+
+    final String[] addresses = {senderAddressBase64};
+    node.verify(priv.privGetEeaTransactionCountSuccess(senderAddress, ENCLAVE_KEY, addresses, 1));
+  }
+
   private void findPrivacyGroupEnclaveStub(final List<PrivacyGroup> groupMembership)
       throws JsonProcessingException {
     final String findGroupResponse = mapper.writeValueAsString(groupMembership);
@@ -223,7 +249,8 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
   }
 
   private void createPrivacyGroupEnclaveStub() throws JsonProcessingException {
-    final String createGroupResponse = mapper.writeValueAsString(testPrivacyGroup(emptyList()));
+    final String createGroupResponse =
+        mapper.writeValueAsString(testPrivacyGroup(emptyList(), PrivacyGroup.Type.BESU));
     stubFor(post("/createPrivacyGroup").willReturn(ok(createGroupResponse)));
   }
 
@@ -234,7 +261,7 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
 
   private void retrievePrivacyGroupEnclaveStub() throws JsonProcessingException {
     final String retrieveGroupResponse =
-        mapper.writeValueAsString(testPrivacyGroup(List.of(ENCLAVE_KEY)));
+        mapper.writeValueAsString(testPrivacyGroup(List.of(ENCLAVE_KEY), PrivacyGroup.Type.BESU));
     stubFor(post("/retrievePrivacyGroup").willReturn(ok(retrieveGroupResponse)));
   }
 
@@ -259,9 +286,9 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
     return bvrlpo;
   }
 
-  private PrivacyGroup testPrivacyGroup(final List<String> groupMembers) {
-    return new PrivacyGroup(
-        PRIVACY_GROUP_ID, PrivacyGroup.Type.BESU, "test", "testGroup", groupMembers);
+  private PrivacyGroup testPrivacyGroup(
+      final List<String> groupMembers, final PrivacyGroup.Type groupType) {
+    return new PrivacyGroup(PRIVACY_GROUP_ID, groupType, "test", "testGroup", groupMembers);
   }
 
   private static PrivateTransaction getValidSignedPrivateTransaction(final Address senderAddress) {

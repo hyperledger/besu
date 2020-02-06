@@ -159,4 +159,12 @@ public class PrivacyRequestFactory {
         web3jService,
         GetTransactionCountResponse.class);
   }
+
+  public Request<?, GetTransactionCountResponse> privGetEeaTransactionCount(final Object[] params) {
+    return new Request<>(
+        "priv_getEeaTransactionCount",
+        List.of(params),
+        web3jService,
+        GetTransactionCountResponse.class);
+  }
 }

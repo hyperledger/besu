@@ -49,10 +49,18 @@ public class PrivacyTransactions {
     return new PrivDistributeRawTransactionTransaction(transaction);
   }
 
-  public PrivGetTransactionCountTransaction privTransactionCount(
+  public PrivGetTransactionCountTransaction getTransactionCount(
       final String transactionCountSender, final String transactionCountPrivacyGroupId) {
     return new PrivGetTransactionCountTransaction(
         transactionCountSender, transactionCountPrivacyGroupId);
+  }
+
+  public PrivGetEeaTransactionCountTransaction getEeaTransactionCount(
+      final String transactionCountSender,
+      final String transactionCountSenderBase64,
+      final String[] addresses) {
+    return new PrivGetEeaTransactionCountTransaction(
+        transactionCountSender, transactionCountSenderBase64, addresses);
   }
 
   public PrivGetTransactionReceiptTransaction getTransactionReceipt(final Hash transactionHash) {
