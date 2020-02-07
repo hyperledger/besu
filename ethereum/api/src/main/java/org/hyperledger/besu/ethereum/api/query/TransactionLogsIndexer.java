@@ -28,9 +28,11 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
@@ -46,6 +48,7 @@ public class TransactionLogsIndexer {
 
   public static final int BLOCKS_PER_BLOOM_CACHE = 100_000;
   private static final int BLOOM_BITS_LENGTH = 256;
+  private static final int CACHE_FILE_SIZE = BLOCKS_PER_BLOOM_CACHE * BLOOM_BITS_LENGTH;
   public static final String PENDING = "pending";
 
   private final Lock submissionLock = new ReentrantLock();
@@ -134,6 +137,7 @@ public class TransactionLogsIndexer {
   public void cacheLogsBloomForBlockHeader(final BlockHeader blockHeader) {
     final long blockNumber = blockHeader.getNumber();
     LOG.info("Caching logs bloom for block {}.", "0x" + Long.toHexString(blockNumber));
+    ensurePreviousSegmentsArePresent(blockNumber);
     final File cacheFile = calculateCacheFileName(blockNumber, cacheDir);
     try (RandomAccessFile writer = new RandomAccessFile(cacheFile, "rw")) {
       final long offset = (blockNumber / BLOCKS_PER_BLOOM_CACHE) * BLOOM_BITS_LENGTH;
@@ -142,6 +146,31 @@ public class TransactionLogsIndexer {
     } catch (IOException e) {
       LOG.error("Unhandled indexing exception.", e);
     }
+  }
+
+  private void ensurePreviousSegmentsArePresent(final long blockNumber) {
+    scheduler.scheduleFutureTask(
+        () -> {
+          long currentSegment = (blockNumber / BLOCKS_PER_BLOOM_CACHE) - 1;
+          while (currentSegment > 0) {
+            try {
+              if (!isCachePresentForSegment(currentSegment)) {
+                final long startBlock = currentSegment * BLOCKS_PER_BLOOM_CACHE;
+                generateLogBloomCache(startBlock, startBlock + BLOCKS_PER_BLOOM_CACHE);
+              }
+            } catch (IOException e) {
+              LOG.error("Unhandled indexing exception.", e);
+            } finally {
+              currentSegment--;
+            }
+          }
+        },
+        Duration.ofSeconds(1));
+  }
+
+  private boolean isCachePresentForSegment(final long segment) throws IOException {
+    final File cacheFile = calculateCacheFileName(Long.toString(segment), cacheDir);
+    return cacheFile.exists() && FileChannel.open(cacheFile.toPath()).size() == CACHE_FILE_SIZE;
   }
 
   private void fillCacheFileWithBlock(final BlockHeader blockHeader, final FileOutputStream fos)
