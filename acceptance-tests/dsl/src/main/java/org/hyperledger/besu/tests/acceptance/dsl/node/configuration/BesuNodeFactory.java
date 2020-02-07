@@ -22,7 +22,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.core.InMemoryPrivacyStorageProvider;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MiningParametersTestBuilder;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 import org.hyperledger.besu.tests.acceptance.dsl.node.RunnableNode;
@@ -141,7 +144,7 @@ public class BesuNodeFactory {
         new BesuNodeConfigurationBuilder()
             .name(name)
             .jsonRpcEnabled()
-            .jsonRpcAuthenticationEnabled(authFile)
+            .jsonRpcAuthenticationConfiguration(authFile)
             .webSocketEnabled()
             .webSocketAuthenticationEnabled()
             .build());
@@ -168,12 +171,11 @@ public class BesuNodeFactory {
             .build());
   }
 
-  public BesuNode createNodeWithMultiTenancy(
+  public BesuNode createNodeWithMultiTenantedPrivacy(
       final String name,
       final String enclaveUrl,
       final String authFile,
-      final String authPubKeyFile,
-      final String authPrivateKeyPath)
+      final String privTransactionSigningKey)
       throws IOException, URISyntaxException {
     final PrivacyParameters.Builder privacyParametersBuilder = new PrivacyParameters.Builder();
     final PrivacyParameters privacyParameters =
@@ -183,21 +185,21 @@ public class BesuNodeFactory {
             .setStorageProvider(new InMemoryPrivacyStorageProvider())
             .setEnclaveFactory(new EnclaveFactory(Vertx.vertx()))
             .setEnclaveUrl(URI.create(enclaveUrl))
-            .setEnclavePublicKeyUsingFile(
-                Paths.get(ClassLoader.getSystemResource(authPubKeyFile).toURI())
-                    .toAbsolutePath()
-                    .toFile())
-            .setPrivateKeyPath(Paths.get(ClassLoader.getSystemResource(authPrivateKeyPath).toURI()))
+            .setPrivateKeyPath(
+                Paths.get(ClassLoader.getSystemResource(privTransactionSigningKey).toURI()))
             .build();
+
+    final MiningParameters miningParameters =
+        new MiningParametersTestBuilder().minTransactionGasPrice(Wei.ZERO).enabled(true).build();
 
     return create(
         new BesuNodeConfigurationBuilder()
             .name(name)
             .jsonRpcEnabled()
-            .jsonRpcAuthenticationEnabled(authFile)
+            .jsonRpcAuthenticationConfiguration(authFile)
             .enablePrivateTransactions()
-            .privacyParameters(Optional.of(privacyParameters))
-            .miningEnabled()
+            .privacyParameters(privacyParameters)
+            .miningConfiguration(miningParameters)
             .build());
   }
 

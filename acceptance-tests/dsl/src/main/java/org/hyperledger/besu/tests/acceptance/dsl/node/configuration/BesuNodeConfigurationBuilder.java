@@ -74,6 +74,12 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
+  public BesuNodeConfigurationBuilder miningConfiguration(final MiningParameters miningParameters) {
+    this.miningParameters = miningParameters;
+    this.jsonRpcConfiguration.addRpcApi(RpcApis.MINER);
+    return this;
+  }
+
   public BesuNodeConfigurationBuilder jsonRpcConfiguration(
       final JsonRpcConfiguration jsonRpcConfiguration) {
     this.jsonRpcConfiguration = jsonRpcConfiguration;
@@ -105,7 +111,7 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
-  public BesuNodeConfigurationBuilder jsonRpcAuthenticationEnabled(final String authFile)
+  public BesuNodeConfigurationBuilder jsonRpcAuthenticationConfiguration(final String authFile)
       throws URISyntaxException {
     final String authTomlPath =
         Paths.get(ClassLoader.getSystemResource(authFile).toURI()).toAbsolutePath().toString();
@@ -235,9 +241,8 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
-  public BesuNodeConfigurationBuilder privacyParameters(
-      final Optional<PrivacyParameters> privacyParameters) {
-    this.privacyParameters = privacyParameters;
+  public BesuNodeConfigurationBuilder privacyParameters(final PrivacyParameters privacyParameters) {
+    this.privacyParameters = Optional.ofNullable(privacyParameters);
     return this;
   }
 

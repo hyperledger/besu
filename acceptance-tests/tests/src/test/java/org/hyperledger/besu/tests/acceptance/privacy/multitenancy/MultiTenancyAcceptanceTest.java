@@ -73,11 +73,10 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
         new ClusterConfigurationBuilder().awaitPeerDiscovery(false).build();
     multiTenancyCluster = new Cluster(clusterConfiguration, net);
     node =
-        besu.createNodeWithMultiTenancy(
+        besu.createNodeWithMultiTenantedPrivacy(
             "node1",
             "http://127.0.0.1:" + ENCLAVE_PORT,
             "authentication/auth_priv.toml",
-            "authentication/auth_pub_key",
             "authentication/auth_priv_key");
     multiTenancyCluster.start(node);
     final String token =
