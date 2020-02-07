@@ -118,7 +118,9 @@ public class VmTraceGenerator {
 
   private void handleDepthIncreased(final VmOperation op, final VmOperationExecutionReport report) {
     // check if next frame depth has increased i.e the current operation is a call
-    if (currentTraceFrame.depthHasIncreased() || "STATICCALL".equals(currentOperation)) {
+    if (currentTraceFrame.depthHasIncreased()
+        || "STATICCALL".equals(currentOperation)
+        || "CALL".equals(currentOperation)) {
       findLastFrameInCall(currentTraceFrame, currentIndex)
           .ifPresent(
               lastFrameInCall -> {
