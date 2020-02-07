@@ -1,4 +1,9 @@
 # Changelog
+## 1.3.9
+
+### Technical Improvements
+
+- ETC Aztlan fork support [366](https://github.com/hyperledger/besu/pull/366) and [371](https://github.com/hyperledger/besu/pull/371)
 
 ## 1.3.8 
 
