@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
+import org.hyperledger.besu.ethereum.eth.ethstats.EthStatsService;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -38,6 +39,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -55,6 +57,7 @@ public class BesuController<C> implements java.io.Closeable {
   private final KeyPair keyPair;
   private final Synchronizer synchronizer;
   private final JsonRpcMethods additionalJsonRpcMethodsFactory;
+  private final Optional<EthStatsService> ethStatsService;
 
   private final TransactionPool transactionPool;
   private final MiningCoordinator miningCoordinator;
@@ -79,7 +82,8 @@ public class BesuController<C> implements java.io.Closeable {
       final JsonRpcMethods additionalJsonRpcMethodsFactory,
       final KeyPair keyPair,
       final List<Closeable> closeables,
-      final PluginServiceFactory additionalPluginServices) {
+      final PluginServiceFactory additionalPluginServices,
+      final Optional<EthStatsService> ethStatsService) {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethProtocolManager = ethProtocolManager;
@@ -95,6 +99,7 @@ public class BesuController<C> implements java.io.Closeable {
     this.closeables = closeables;
     this.miningParameters = miningParameters;
     this.additionalPluginServices = additionalPluginServices;
+    this.ethStatsService = ethStatsService;
   }
 
   public ProtocolContext<C> getProtocolContext() {
@@ -131,6 +136,10 @@ public class BesuController<C> implements java.io.Closeable {
 
   public MiningCoordinator getMiningCoordinator() {
     return miningCoordinator;
+  }
+
+  public Optional<EthStatsService> getEthStatsService() {
+    return ethStatsService;
   }
 
   @Override

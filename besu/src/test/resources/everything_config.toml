@@ -13,6 +13,9 @@ data-path="~/besudata"
 logging="INFO"
 node-private-key-file="./path/to/privateKey"
 
+# eth-netstats url
+ethstats="nodename:secret@host:port"
+
 # P2P network
 identity="PegaSysEng"
 p2p-enabled=true

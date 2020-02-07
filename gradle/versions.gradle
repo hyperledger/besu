@@ -71,6 +71,7 @@ dependencyManagement {
     dependency 'org.apache.tuweni:tuweni-toml:0.10.0'
     dependency 'org.apache.tuweni:tuweni-units:0.10.0'
     dependency 'org.apache.tuweni:tuweni-net:0.10.0'
+    dependency 'org.apache.tuweni:tuweni-ethstats:1.0.0-SNAPSHOT'
 
     dependency 'org.assertj:assertj-core:3.14.0'
 
@@ -83,6 +84,9 @@ dependencyManagement {
 
     dependency 'org.jupnp:org.jupnp.support:2.5.2'
     dependency 'org.jupnp:org.jupnp:2.5.2'
+
+    dependency 'org.logl:logl-logl:0.3.1'
+    dependency 'org.logl:logl-log4j2:0.3.1'
 
     dependency 'org.mockito:mockito-core:3.2.4'
 

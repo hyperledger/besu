@@ -79,6 +79,7 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.eth.ethstats.EthStatsParameters;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
@@ -800,6 +801,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Map<String, String> genesisConfigOverrides =
       new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
+  @Option(
+      names = "--ethstats",
+      paramLabel = "<nodename:secret@host:port>",
+      description = "Reporting URL of a ethstats service",
+      arity = "1")
+  private final Optional<String> ethStats = Optional.empty();
+
   private EthNetworkConfig ethNetworkConfig;
   private JsonRpcConfiguration jsonRpcConfiguration;
   private GraphQLConfiguration graphQLConfiguration;
@@ -1043,8 +1051,22 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     validateP2PInterface(p2pInterface);
     validateMiningParams();
+    validateEthStatsParams();
 
     return this;
+  }
+
+  private void validateEthStatsParams() {
+    ethStats
+        .map(EthStatsParameters::new)
+        .ifPresent(
+            param -> {
+              if (!param.isValid()) {
+                throw new ParameterException(
+                    this.commandLine,
+                    "Invalid ethstats string (must match nodename:secret@host:port), was " + param);
+              }
+            });
   }
 
   @SuppressWarnings("ConstantConditions")

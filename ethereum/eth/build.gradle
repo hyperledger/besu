@@ -43,7 +43,10 @@ dependencies {
   implementation 'com.google.guava:guava'
   implementation 'io.vertx:vertx-core'
   implementation 'org.apache.tuweni:tuweni-bytes'
+  implementation 'org.apache.tuweni:tuweni-ethstats'
   implementation 'org.apache.tuweni:tuweni-units'
+  implementation 'org.logl:logl-logl'
+  implementation 'org.logl:logl-log4j2'
 
   testImplementation project(':config')
   testImplementation project(path: ':config', configuration: 'testSupportArtifacts')

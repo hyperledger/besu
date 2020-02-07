@@ -31,6 +31,8 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
+import org.hyperledger.besu.ethereum.eth.ethstats.EthStatsParameters;
+import org.hyperledger.besu.ethereum.eth.ethstats.EthStatsService;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.peervalidation.ClassicForkPeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.DaoForkPeerValidator;
@@ -89,6 +91,7 @@ public abstract class BesuControllerBuilder<C> {
   private PrunerConfiguration prunerConfiguration;
   Map<String, String> genesisConfigOverrides;
   private Map<Long, Hash> requiredBlocks = Collections.emptyMap();
+  private EthStatsParameters ethStatsParameters;
 
   public BesuControllerBuilder<C> storageProvider(final StorageProvider storageProvider) {
     this.storageProvider = storageProvider;
@@ -188,6 +191,11 @@ public abstract class BesuControllerBuilder<C> {
 
   public BesuControllerBuilder<C> requiredBlocks(final Map<Long, Hash> requiredBlocks) {
     this.requiredBlocks = requiredBlocks;
+    return this;
+  }
+
+  public BesuControllerBuilder<C> ethStats(final String ethStatsInfo) {
+    this.ethStatsParameters = new EthStatsParameters(ethStatsInfo);
     return this;
   }
 
@@ -295,6 +303,14 @@ public abstract class BesuControllerBuilder<C> {
       closeables.add(privacyParameters.getPrivateStorageProvider());
     }
 
+    Optional<EthStatsService> ethStatsService = Optional.empty();
+    if (ethStatsParameters != null && ethStatsParameters.isValid()) {
+      ethStatsService =
+          Optional.of(
+              new EthStatsService(
+                  ethStatsParameters, networkId, ethProtocolManager.getSupportedProtocol()));
+    }
+
     return new BesuController<>(
         protocolSchedule,
         protocolContext,
@@ -310,7 +326,8 @@ public abstract class BesuControllerBuilder<C> {
         additionalJsonRpcMethodFactory,
         nodeKeys,
         closeables,
-        additionalPluginServices);
+        additionalPluginServices,
+        ethStatsService);
   }
 
   protected void prepForBuild() {}

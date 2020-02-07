@@ -100,6 +100,7 @@ public class Runner implements AutoCloseable {
       graphQLHttp.ifPresent(service -> waitForServiceToStart("graphQLHttp", service.start()));
       websocketRpc.ifPresent(service -> waitForServiceToStop("websocketRpc", service.start()));
       metrics.ifPresent(service -> waitForServiceToStart("metrics", service.start()));
+      besuController.getEthStatsService().ifPresent(service -> service.start(vertx));
       LOG.info("Ethereum main loop is up.");
       writeBesuPortsToFile();
       writeBesuNetworksToFile();
@@ -114,7 +115,7 @@ public class Runner implements AutoCloseable {
     graphQLHttp.ifPresent(service -> waitForServiceToStop("graphQLHttp", service.stop()));
     websocketRpc.ifPresent(service -> waitForServiceToStop("websocketRpc", service.stop()));
     metrics.ifPresent(service -> waitForServiceToStop("metrics", service.stop()));
-
+    besuController.getEthStatsService().ifPresent(service -> service.stop());
     besuController.getMiningCoordinator().stop();
     waitForServiceToStop("Mining Coordinator", besuController.getMiningCoordinator()::awaitStop);
     stratumServer.ifPresent(server -> waitForServiceToStop("Stratum", server::stop));
