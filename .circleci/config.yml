@@ -217,6 +217,7 @@ workflows:
               only:
                 - master
                 - /^release-.*/
+                - 1.3.x
           requires:
             - integrationTests
             - unitTests
@@ -228,6 +229,7 @@ workflows:
             branches:
               only:
                 - master
+                - 1.3.x
                 - /^release-.*/
           requires:
             - integrationTests
