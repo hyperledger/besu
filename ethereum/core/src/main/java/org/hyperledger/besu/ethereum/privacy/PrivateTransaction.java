@@ -466,7 +466,7 @@ public class PrivateTransaction {
       return getPrivacyGroupId().get().toBase64String();
     } else {
       final List<Bytes> privateFor = getPrivateFor().orElse(Lists.newArrayList());
-      return PrivacyGroupUtil.generateEeaPrivacyGroupId(getPrivateFrom(), privateFor);
+      return PrivacyGroupUtil.calculateEeaPrivacyGroupId(getPrivateFrom(), privateFor);
     }
   }
 

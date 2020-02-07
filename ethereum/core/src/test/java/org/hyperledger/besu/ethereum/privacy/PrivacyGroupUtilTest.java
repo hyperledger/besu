@@ -34,13 +34,13 @@ public class PrivacyGroupUtilTest {
       "/xzRjCLioUBkm5LYuzll61GXyrD5x7bvXzQk/ovJA/4=";
 
   @Test
-  public void generatesPrivacyGroupIdWithPrivateFromAndEmptyPrivateFor() {
+  public void calculatesPrivacyGroupIdWithPrivateFromAndEmptyPrivateFor() {
     final String expected = "kAbelwaVW7okoEn1+okO+AbA4Hhz/7DaCOWVQz9nx5M=";
     assertThat(privacyGroupId(ENCLAVE_PUBLIC_KEY_1)).isEqualTo(expected);
   }
 
   @Test
-  public void generatesSamePrivacyGroupIdForDuplicateValues() {
+  public void calculatesSamePrivacyGroupIdForDuplicateValues() {
     assertThat(
             privacyGroupId(
                 ENCLAVE_PUBLIC_KEY_2,
@@ -60,7 +60,7 @@ public class PrivacyGroupUtilTest {
   }
 
   @Test
-  public void generatesSamePrivacyGroupIdForPrivateForInDifferentOrders() {
+  public void calculatesSamePrivacyGroupIdForPrivateForInDifferentOrders() {
     final String expectedPrivacyGroupId = "/xzRjCLioUBkm5LYuzll61GXyrD5x7bvXzQk/ovJA/4=";
     assertThat(privacyGroupId(ENCLAVE_PUBLIC_KEY_1, ENCLAVE_PUBLIC_KEY_2, ENCLAVE_PUBLIC_KEY_3))
         .isEqualTo(expectedPrivacyGroupId);
@@ -77,7 +77,7 @@ public class PrivacyGroupUtilTest {
   }
 
   private String privacyGroupId(final String privateFrom, final String... privateFor) {
-    return PrivacyGroupUtil.generateEeaPrivacyGroupId(
+    return PrivacyGroupUtil.calculateEeaPrivacyGroupId(
         Bytes.fromBase64String(privateFrom),
         Arrays.stream(privateFor).map(Bytes::fromBase64String).collect(Collectors.toList()));
   }
