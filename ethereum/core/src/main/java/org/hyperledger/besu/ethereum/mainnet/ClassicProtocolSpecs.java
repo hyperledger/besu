@@ -143,11 +143,25 @@ public class ClassicProtocolSpecs {
     return atlantisDefinition(
             chainId, configContractSizeLimit, configStackSizeLimit, enableRevertReason)
         .evmBuilder(MainnetEvmRegistries::constantinople)
-        .evmBuilder(
-            gasCalculator ->
-                MainnetEvmRegistries.istanbul(gasCalculator, chainId.orElse(BigInteger.ZERO)))
+        .gasCalculator(ConstantinopleFixGasCalculator::new)
+        .evmBuilder(gasCalculator -> MainnetEvmRegistries.constantinople(gasCalculator))
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::istanbul)
         .name("Agharta");
+  }
+
+  public static ProtocolSpecBuilder<Void> aztlanDefinition(
+      final Optional<BigInteger> chainId,
+      final OptionalInt configContractSizeLimit,
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason) {
+    return aghartaDefinition(
+            chainId, configContractSizeLimit, configStackSizeLimit, enableRevertReason)
+        .gasCalculator(AztlanGasCalculator::new)
+        .evmBuilder(
+            gasCalculator ->
+                MainnetEvmRegistries.aztlan(gasCalculator, chainId.orElse(BigInteger.ZERO)))
+        .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::istanbul)
+        .name("Aztlan");
   }
 
   private static TransactionReceipt byzantiumTransactionReceiptFactory(

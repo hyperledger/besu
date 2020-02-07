@@ -40,6 +40,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private final OptionalLong defuseDifficultyBombBlockNumber = OptionalLong.empty();
   private final OptionalLong atlantisBlockNumber = OptionalLong.empty();
   private final OptionalLong aghartaBlockNumber = OptionalLong.empty();
+  private final OptionalLong aztlanBlockNumber = OptionalLong.empty();
   private Optional<BigInteger> chainId = Optional.empty();
   private OptionalInt contractSizeLimit = OptionalInt.empty();
   private OptionalInt stackSizeLimit = OptionalInt.empty();
@@ -167,6 +168,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public OptionalLong getAghartaBlockNumber() {
     return aghartaBlockNumber;
+  }
+
+  @Override
+  public OptionalLong getAztlanBlockNumber() {
+    return aztlanBlockNumber;
   }
 
   @Override

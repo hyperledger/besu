@@ -37,7 +37,7 @@ dependencyManagement {
 
     dependency 'commons-cli:commons-cli:1.4'
 
-    dependency 'info.picocli:picocli:3.9.6'
+    dependency 'info.picocli:picocli:4.1.4'
 
     dependency 'io.pkts:pkts-core:3.0.5'
 

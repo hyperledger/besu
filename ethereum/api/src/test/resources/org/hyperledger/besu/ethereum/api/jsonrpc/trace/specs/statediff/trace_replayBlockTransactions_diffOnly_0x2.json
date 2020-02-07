@@ -42,8 +42,8 @@
           "0x627306090abab3a6e1400e9345bc60c78a8bef57": {
             "balance": {
               "*": {
-                "from": "0xf0000000000000000000000",
-                "to": "0xeffffffffffffffffb36a87"
+                "from": "0xf000000000000000000000000",
+                "to": "0xeffffffffffffffffffb36a87"
               }
             },
             "code": "=",
