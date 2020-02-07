@@ -39,7 +39,6 @@ public class MStore8Operation extends AbstractOperation {
   public void execute(final MessageFrame frame) {
     final UInt256 location = UInt256.fromBytes(frame.popStackItem());
     final Bytes32 value = frame.popStackItem();
-
-    frame.writeMemory(location, value.get(Bytes32.SIZE - 1));
+    frame.writeMemory(location, value.get(Bytes32.SIZE - 1), true);
   }
 }

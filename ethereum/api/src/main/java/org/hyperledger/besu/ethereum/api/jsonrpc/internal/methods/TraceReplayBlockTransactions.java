@@ -16,20 +16,22 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceTypeParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceTypeParameter.TraceType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.TraceFormatter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.TraceWriter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.diff.StateDiffGenerator;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTraceGenerator;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.vm.VmTraceGenerator;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
+import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor.Result;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 
 import java.util.Arrays;
@@ -37,23 +39,23 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import com.google.common.base.Suppliers;
 
 public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
-  private static final Logger LOG = LogManager.getLogger();
-
-  private final BlockTracer blockTracer;
+  private final Supplier<BlockTracer> blockTracerSupplier;
+  private final Supplier<StateDiffGenerator> stateDiffGenerator =
+      Suppliers.memoize(StateDiffGenerator::new);
 
   public TraceReplayBlockTransactions(
-      final BlockTracer blockTracer, final BlockchainQueries queries) {
+      final Supplier<BlockTracer> blockTracerSupplier, final BlockchainQueries queries) {
     super(queries);
-    this.blockTracer = blockTracer;
+    this.blockTracerSupplier = blockTracerSupplier;
   }
 
   @Override
@@ -71,13 +73,6 @@ public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
       final JsonRpcRequestContext request, final long blockNumber) {
     final TraceTypeParameter traceTypeParameter =
         request.getRequiredParameter(1, TraceTypeParameter.class);
-
-    // TODO : method returns an error if any option other than “trace” is supplied.
-    // remove when others options are implemented
-    if (traceTypeParameter.getTraceTypes().contains(TraceTypeParameter.TraceType.STATE_DIFF)) {
-      LOG.warn("Unsupported trace option");
-      throw new InvalidJsonRpcParameters("Invalid trace types supplied.");
-    }
 
     if (blockNumber == BlockHeader.GENESIS_BLOCK_NUMBER) {
       // Nothing to trace for the genesis block
@@ -98,7 +93,8 @@ public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
     // TODO: generate options based on traceTypeParameter
     final TraceOptions traceOptions = TraceOptions.DEFAULT;
 
-    return blockTracer
+    return blockTracerSupplier
+        .get()
         .trace(block, new DebugOperationTracer(traceOptions))
         .map(BlockTrace::getTransactionTraces)
         .map((traces) -> generateTracesFromTransactionTrace(traces, traceTypeParameter))
@@ -125,10 +121,18 @@ public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
       final ArrayNode resultArrayNode,
       final AtomicInteger traceCounter) {
     final ObjectNode resultNode = mapper.createObjectNode();
-    resultNode.put("transactionHash", transactionTrace.getTransaction().getHash().toHexString());
-    resultNode.put("output", transactionTrace.getResult().getOutput().toString());
-    setEmptyArrayIfNotPresent(resultNode, "trace");
-    setNullNodesIfNotPresent(resultNode, "vmTrace", "stateDiff");
+
+    Result result = transactionTrace.getResult();
+    resultNode.put("output", result.getRevertReason().orElse(result.getOutput()).toString());
+
+    if (traceTypes.contains(TraceType.STATE_DIFF)) {
+      generateTracesFromTransactionTrace(
+          trace -> resultNode.putPOJO("stateDiff", trace),
+          transactionTrace,
+          (txTrace, ignored) -> stateDiffGenerator.get().generateStateDiff(txTrace),
+          traceCounter);
+    }
+    setNullNodesIfNotPresent(resultNode, "stateDiff");
     if (traceTypes.contains(TraceTypeParameter.TraceType.TRACE)) {
       generateTracesFromTransactionTrace(
           resultNode.putArray("trace")::addPOJO,
@@ -136,6 +140,8 @@ public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
           FlatTraceGenerator::generateFromTransactionTrace,
           traceCounter);
     }
+    setEmptyArrayIfNotPresent(resultNode, "trace");
+    resultNode.put("transactionHash", transactionTrace.getTransaction().getHash().toHexString());
     if (traceTypes.contains(TraceTypeParameter.TraceType.VM_TRACE)) {
       generateTracesFromTransactionTrace(
           trace -> resultNode.putPOJO("vmTrace", trace),
@@ -143,6 +149,7 @@ public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
           (__, ignored) -> new VmTraceGenerator(transactionTrace).generateTraceStream(),
           traceCounter);
     }
+    setNullNodesIfNotPresent(resultNode, "vmTrace");
     resultArrayNode.add(resultNode);
   }
 

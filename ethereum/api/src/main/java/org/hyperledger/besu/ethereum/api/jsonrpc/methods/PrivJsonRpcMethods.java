@@ -32,7 +32,6 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransactionSimulator;
 
 import java.util.Map;
 
@@ -69,13 +68,6 @@ public class PrivJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
         new PrivGetPrivateTransaction(
             getBlockchainQueries(), privacyController, enclavePublicKeyProvider),
         new PrivDistributeRawTransaction(privacyController, enclavePublicKeyProvider),
-        new PrivCall(
-            getBlockchainQueries(),
-            enclavePublicKeyProvider,
-            new PrivateTransactionSimulator(
-                getBlockchainQueries().getBlockchain(),
-                getBlockchainQueries().getWorldStateArchive(),
-                getProtocolSchedule(),
-                getPrivacyParameters())));
+        new PrivCall(getBlockchainQueries(), privacyController, enclavePublicKeyProvider));
   }
 }

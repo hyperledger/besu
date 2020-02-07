@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.mainnet.AbstractMessageProcessor;
+import org.hyperledger.besu.ethereum.vm.internal.MemoryEntry;
 
 import java.util.ArrayList;
 import java.util.Deque;
@@ -40,6 +41,7 @@ import java.util.function.Consumer;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.bytes.MutableBytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /**
@@ -232,6 +234,7 @@ public class MessageFrame {
       EnumSet.noneOf(ExceptionalHaltReason.class);
   private Operation currentOperation;
   private final Consumer<MessageFrame> completer;
+  private Optional<MemoryEntry> maybeUpdatedMemory = Optional.empty();
 
   public static Builder builder() {
     return new Builder();
@@ -533,7 +536,24 @@ public class MessageFrame {
    * @return The bytes in the specified range
    */
   public Bytes readMemory(final UInt256 offset, final UInt256 length) {
-    return memory.getBytes(offset, length);
+    return readMemory(offset, length, false);
+  }
+
+  /**
+   * Read bytes in memory.
+   *
+   * @param offset The offset in memory
+   * @param length The length of the bytes to read
+   * @param explicitMemoryRead true if triggered by a memory opcode, false otherwise
+   * @return The bytes in the specified range
+   */
+  public Bytes readMemory(
+      final UInt256 offset, final UInt256 length, final boolean explicitMemoryRead) {
+    final Bytes value = memory.getBytes(offset, length);
+    if (explicitMemoryRead) {
+      setUpdatedMemory(offset, value);
+    }
+    return value;
   }
 
   /**
@@ -543,7 +563,22 @@ public class MessageFrame {
    * @param value The value to set in memory
    */
   public void writeMemory(final UInt256 offset, final byte value) {
+    writeMemory(offset, value, false);
+  }
+
+  /**
+   * Write byte to memory
+   *
+   * @param offset The offset in memory
+   * @param value The value to set in memory
+   * @param explicitMemoryUpdate true if triggered by a memory opcode, false otherwise
+   */
+  public void writeMemory(
+      final UInt256 offset, final byte value, final boolean explicitMemoryUpdate) {
     memory.setByte(offset, value);
+    if (explicitMemoryUpdate) {
+      setUpdatedMemory(offset, Bytes.of(value));
+    }
   }
 
   /**
@@ -554,7 +589,26 @@ public class MessageFrame {
    * @param value The value to write
    */
   public void writeMemory(final UInt256 offset, final UInt256 length, final Bytes value) {
+    writeMemory(offset, length, value, false);
+  }
+
+  /**
+   * Write bytes to memory
+   *
+   * @param offset The offset in memory
+   * @param length The length of the bytes to write
+   * @param value The value to write
+   * @param explicitMemoryUpdate true if triggered by a memory opcode, false otherwise
+   */
+  public void writeMemory(
+      final UInt256 offset,
+      final UInt256 length,
+      final Bytes value,
+      final boolean explicitMemoryUpdate) {
     memory.setBytes(offset, length, value);
+    if (explicitMemoryUpdate) {
+      setUpdatedMemory(offset, UInt256.ZERO, length, value);
+    }
   }
 
   /**
@@ -567,7 +621,51 @@ public class MessageFrame {
    */
   public void writeMemory(
       final UInt256 offset, final UInt256 sourceOffset, final UInt256 length, final Bytes value) {
+    writeMemory(offset, sourceOffset, length, value, false);
+  }
+
+  /**
+   * Write bytes to memory
+   *
+   * @param offset The offset in memory to start the write
+   * @param sourceOffset The offset in the source value to start the write
+   * @param length The length of the bytes to write
+   * @param value The value to write
+   * @param explicitMemoryUpdate true if triggered by a memory opcode, false otherwise
+   */
+  public void writeMemory(
+      final UInt256 offset,
+      final UInt256 sourceOffset,
+      final UInt256 length,
+      final Bytes value,
+      final boolean explicitMemoryUpdate) {
     memory.setBytes(offset, sourceOffset, length, value);
+    if (explicitMemoryUpdate && length.toLong() > 0) {
+      setUpdatedMemory(offset, sourceOffset, length, value);
+    }
+  }
+
+  private void setUpdatedMemory(
+      final UInt256 offset, final UInt256 sourceOffset, final UInt256 length, final Bytes value) {
+    final int srcOff = sourceOffset.fitsInt() ? sourceOffset.intValue() : Integer.MAX_VALUE;
+    final int len = length.fitsInt() ? length.intValue() : Integer.MAX_VALUE;
+    final int endIndex = srcOff + len;
+    if (srcOff >= 0 && endIndex > 0) {
+      int srcSize = value.size();
+      if (endIndex > srcSize) {
+        final MutableBytes paddedAnswer = MutableBytes.create(len);
+        if (srcOff < srcSize) {
+          value.slice(srcOff, srcSize - srcOff).copyTo(paddedAnswer, 0);
+        }
+        setUpdatedMemory(offset, paddedAnswer.copy());
+      } else {
+        setUpdatedMemory(offset, value.slice(srcOff, len).copy());
+      }
+    }
+  }
+
+  private void setUpdatedMemory(final UInt256 offset, final Bytes value) {
+    maybeUpdatedMemory = Optional.of(new MemoryEntry(offset, value));
   }
 
   /**
@@ -874,6 +972,14 @@ public class MessageFrame {
 
   public int getContractAccountVersion() {
     return contractAccountVersion;
+  }
+
+  Optional<MemoryEntry> getMaybeUpdatedMemory() {
+    return maybeUpdatedMemory;
+  }
+
+  public void reset() {
+    maybeUpdatedMemory = Optional.empty();
   }
 
   public static class Builder {

@@ -13,6 +13,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+
+import groovy.transform.Memoized
 import net.ltgt.gradle.errorprone.CheckSeverity
 
 import java.text.SimpleDateFormat
@@ -49,7 +51,7 @@ gradle.startParameter.taskNames.each {
 }
 gradle.startParameter.taskNames = expandedTaskList.flatten()
 
-// Gets a integer command argument, passed with -Pname=x, or the defaut if not provided.
+// Gets an integer command argument, passed with -Pname=x, or the default if not provided.
 def _intCmdArg(name, defaultValue) {
   return project.hasProperty(name) ? project.property(name) as int : defaultValue
 }
@@ -637,6 +639,7 @@ def buildTime() {
 
 // Takes the version, and if -SNAPSHOT is part of it replaces SNAPSHOT
 // with the git commit version.
+@Memoized
 def calculateVersion() {
   String version = rootProject.version
   if (version.endsWith("-SNAPSHOT")) {
@@ -646,25 +649,31 @@ def calculateVersion() {
 }
 
 def getCheckedOutGitCommitHash() {
-  def gitFolder = "$projectDir/.git/"
-  if (!file(gitFolder).isDirectory()) {
-    // We are in a submodule.  The file's contents are `gitdir: <gitFolder>\n`.
-    // Read the file, cut off the front, and trim the whitespace.
-    gitFolder = file(gitFolder).text.substring(8).trim() + "/"
+  try {
+    def gitFolder = "$projectDir/.git/"
+    if (!file(gitFolder).isDirectory()) {
+      // We are in a submodule.  The file's contents are `gitdir: <gitFolder>\n`.
+      // Read the file, cut off the front, and trim the whitespace.
+      gitFolder = file(gitFolder).text.substring(8).trim() + "/"
+    }
+    def takeFromHash = 8
+    /*
+     * '.git/HEAD' contains either
+     *      in case of detached head: the currently checked out commit hash
+     *      otherwise: a reference to a file containing the current commit hash
+     */
+    def head = new File(gitFolder + "HEAD").text.split(":") // .git/HEAD
+    def isCommit = head.length == 1 // e5a7c79edabbf7dd39888442df081b1c9d8e88fd
+
+    if (isCommit) return head[0].trim().take(takeFromHash) // e5a7c79edabb
+
+    def refHead = new File(gitFolder + head[1].trim()) // .git/refs/heads/master
+    refHead.text.trim().take takeFromHash
+  } catch (Exception e) {
+    logger.warn('Could not calculate git commit, using "xxxxxxxx" (run with --info for stacktrace)')
+    logger.info('Error retrieving git commit', e)
+    return "xxxxxxxx"
   }
-  def takeFromHash = 8
-  /*
-   * '.git/HEAD' contains either
-   *      in case of detached head: the currently checked out commit hash
-   *      otherwise: a reference to a file containing the current commit hash
-   */
-  def head = new File(gitFolder + "HEAD").text.split(":") // .git/HEAD
-  def isCommit = head.length == 1 // e5a7c79edabbf7dd39888442df081b1c9d8e88fd
-
-  if (isCommit) return head[0].trim().take(takeFromHash) // e5a7c79edabb
-
-  def refHead = new File(gitFolder + head[1].trim()) // .git/refs/heads/master
-  refHead.text.trim().take takeFromHash
 }
 
 tasks.register("verifyDistributions") {

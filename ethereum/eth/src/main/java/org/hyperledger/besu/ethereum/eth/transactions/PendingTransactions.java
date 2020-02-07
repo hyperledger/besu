@@ -34,12 +34,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
-import java.util.SortedMap;
 import java.util.SortedSet;
-import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -62,8 +61,7 @@ public class PendingTransactions {
           comparing(TransactionInfo::isReceivedFromLocalSource)
               .thenComparing(TransactionInfo::getSequence)
               .reversed());
-  private final Map<Address, SortedMap<Long, TransactionInfo>> transactionsBySender =
-      new HashMap<>();
+  private final Map<Address, TransactionsForSenderInfo> transactionsBySender = new HashMap<>();
 
   private final Subscribers<PendingTransactionListener> pendingTransactionSubscribers =
       Subscribers.create();
@@ -206,7 +204,8 @@ public class PendingTransactions {
 
   private AccountTransactionOrder createSenderTransactionOrder(final Address address) {
     return new AccountTransactionOrder(
-        transactionsBySender.get(address).values().stream().map(TransactionInfo::getTransaction));
+        transactionsBySender.get(address).getTransactionsInfos().values().stream()
+            .map(TransactionInfo::getTransaction));
   }
 
   private boolean addTransaction(final TransactionInfo transactionInfo) {
@@ -247,27 +246,30 @@ public class PendingTransactions {
   }
 
   private void trackTransactionBySenderAndNonce(final TransactionInfo transactionInfo) {
-    final Map<Long, TransactionInfo> transactionsForSender =
-        transactionsBySender.computeIfAbsent(transactionInfo.getSender(), key -> new TreeMap<>());
-    transactionsForSender.put(transactionInfo.getNonce(), transactionInfo);
+    final TransactionsForSenderInfo transactionsForSenderInfo =
+        transactionsBySender.computeIfAbsent(
+            transactionInfo.getSender(), key -> new TransactionsForSenderInfo());
+    transactionsForSenderInfo.addTransactionToTrack(transactionInfo.getNonce(), transactionInfo);
   }
 
   private void removeTransactionTrackedBySenderAndNonce(final Transaction transaction) {
     Optional.ofNullable(transactionsBySender.get(transaction.getSender()))
         .ifPresent(
             transactionsForSender -> {
-              transactionsForSender.remove(transaction.getNonce());
-              if (transactionsForSender.isEmpty()) {
+              transactionsForSender.getTransactionsInfos().remove(transaction.getNonce());
+              if (transactionsForSender.getTransactionsInfos().isEmpty()) {
                 transactionsBySender.remove(transaction.getSender());
+                transactionsForSender.updateGaps();
               }
             });
   }
 
   private TransactionInfo getTrackedTransactionBySenderAndNonce(
       final TransactionInfo transactionInfo) {
-    final Map<Long, TransactionInfo> transactionsForSender =
-        transactionsBySender.computeIfAbsent(transactionInfo.getSender(), key -> new TreeMap<>());
-    return transactionsForSender.get(transactionInfo.getNonce());
+    final TransactionsForSenderInfo transactionsForSenderInfo =
+        transactionsBySender.computeIfAbsent(
+            transactionInfo.getSender(), key -> new TransactionsForSenderInfo());
+    return transactionsForSenderInfo.getTransactionsInfos().get(transactionInfo.getNonce());
   }
 
   private boolean shouldReplace(
@@ -326,12 +328,15 @@ public class PendingTransactions {
 
   public OptionalLong getNextNonceForSender(final Address sender) {
     synchronized (pendingTransactions) {
-      final SortedMap<Long, TransactionInfo> transactionsForSender =
-          transactionsBySender.get(sender);
-      if (transactionsForSender == null) {
+      final TransactionsForSenderInfo transactionsForSenderInfo = transactionsBySender.get(sender);
+      if (transactionsForSenderInfo == null
+          || transactionsForSenderInfo.getTransactionsInfos().isEmpty()) {
         return OptionalLong.empty();
+      } else if (!transactionsForSenderInfo.getGaps().isEmpty()) {
+        return OptionalLong.of(Objects.requireNonNull(transactionsForSenderInfo.getGaps().poll()));
+      } else {
+        return OptionalLong.of(transactionsForSenderInfo.getTransactionsInfos().lastKey() + 1);
       }
-      return OptionalLong.of(transactionsForSender.lastKey() + 1);
     }
   }
 

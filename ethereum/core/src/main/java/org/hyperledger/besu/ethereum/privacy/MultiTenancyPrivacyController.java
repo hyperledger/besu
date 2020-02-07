@@ -21,8 +21,10 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.transaction.CallParameter;
 
 import java.util.List;
+import java.util.Optional;
 
 public class MultiTenancyPrivacyController implements PrivacyController {
 
@@ -112,6 +114,17 @@ public class MultiTenancyPrivacyController implements PrivacyController {
       final Address sender, final String privacyGroupId, final String enclavePublicKey) {
     verifyPrivacyGroupContainsEnclavePublicKey(privacyGroupId, enclavePublicKey);
     return privacyController.determineBesuNonce(sender, privacyGroupId, enclavePublicKey);
+  }
+
+  @Override
+  public Optional<PrivateTransactionProcessor.Result> simulatePrivateTransaction(
+      final String privacyGroupId,
+      final String enclavePublicKey,
+      final CallParameter callParams,
+      final long blockNumber) {
+    verifyPrivacyGroupContainsEnclavePublicKey(privacyGroupId, enclavePublicKey);
+    return privacyController.simulatePrivateTransaction(
+        privacyGroupId, enclavePublicKey, callParams, blockNumber);
   }
 
   private void verifyPrivateFromMatchesEnclavePublicKey(

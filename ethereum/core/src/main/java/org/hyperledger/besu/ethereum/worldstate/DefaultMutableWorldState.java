@@ -37,7 +37,6 @@ import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.stream.Stream;
 
@@ -358,8 +357,13 @@ public class DefaultMutableWorldState implements MutableWorldState {
     }
 
     @Override
-    public Collection<Account> getTouchedAccounts() {
+    public Collection<UpdateTrackingAccount<? extends Account>> getTouchedAccounts() {
       return new ArrayList<>(updatedAccounts());
+    }
+
+    @Override
+    public Collection<Address> getDeletedAccountAddresses() {
+      return new ArrayList<>(deletedAccounts());
     }
 
     @Override
@@ -394,7 +398,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
         if (freshState) {
           wrapped.updatedStorageTries.remove(updated.getAddress());
         }
-        final SortedMap<UInt256, UInt256> updatedStorage = updated.getUpdatedStorage();
+        final Map<UInt256, UInt256> updatedStorage = updated.getUpdatedStorage();
         if (!updatedStorage.isEmpty()) {
           // Apply any storage updates
           final MerklePatriciaTrie<Bytes32, Bytes> storageTrie =

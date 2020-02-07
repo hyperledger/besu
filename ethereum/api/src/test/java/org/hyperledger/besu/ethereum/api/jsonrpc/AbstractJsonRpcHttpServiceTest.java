@@ -37,7 +37,6 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
-import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
@@ -73,7 +72,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
   protected static String CLIENT_VERSION = "TestClientVersion/0.1.0";
   protected static final BigInteger NETWORK_ID = BigInteger.valueOf(123);
   protected static final Collection<RpcApi> JSON_RPC_APIS =
-      Arrays.asList(RpcApis.ETH, RpcApis.NET, RpcApis.WEB3, RpcApis.DEBUG);
+      Arrays.asList(RpcApis.ETH, RpcApis.NET, RpcApis.WEB3, RpcApis.DEBUG, RpcApis.TRACE);
 
   protected final Vertx vertx = Vertx.vertx();
   protected JsonRpcHttpService service;
@@ -150,7 +149,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
             peerDiscoveryMock,
             blockchainQueries,
             synchronizerMock,
-            MainnetProtocolSchedule.create(),
+            blockchainSetupUtil.getProtocolSchedule(),
             filterManager,
             transactionPoolMock,
             miningCoordinatorMock,

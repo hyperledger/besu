@@ -17,8 +17,10 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat;
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonInclude(NON_NULL)
+@JsonPropertyOrder({"address", "code", "gasUsed", "output"})
 public class Result {
   private final String gasUsed;
   private final String output;
@@ -76,6 +78,10 @@ public class Result {
       this.code = code;
       this.output = null;
       return this;
+    }
+
+    public String getCode() {
+      return code;
     }
 
     public Builder address(final String address) {
