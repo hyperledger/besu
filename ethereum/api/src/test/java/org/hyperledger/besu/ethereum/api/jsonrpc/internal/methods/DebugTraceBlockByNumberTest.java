@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTran
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
@@ -74,6 +75,7 @@ public class DebugTraceBlockByNumberTest {
             2,
             EnumSet.noneOf(ExceptionalHaltReason.class),
             null,
+            Wei.ZERO,
             Bytes.EMPTY,
             Bytes.EMPTY,
             Optional.empty(),

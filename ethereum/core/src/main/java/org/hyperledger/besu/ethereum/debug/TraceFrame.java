@@ -40,6 +40,7 @@ public class TraceFrame {
   private final int depth;
   private final EnumSet<ExceptionalHaltReason> exceptionalHaltReasons;
   private final Address recipient;
+  private final Wei value;
   private final Bytes inputData;
   private final Bytes outputData;
   private final Optional<Bytes32[]> stack;
@@ -67,6 +68,7 @@ public class TraceFrame {
       final int depth,
       final EnumSet<ExceptionalHaltReason> exceptionalHaltReasons,
       final Address recipient,
+      final Wei value,
       final Bytes inputData,
       final Bytes outputData,
       final Optional<Bytes32[]> stack,
@@ -89,6 +91,7 @@ public class TraceFrame {
     this.depth = depth;
     this.exceptionalHaltReasons = exceptionalHaltReasons;
     this.recipient = recipient;
+    this.value = value;
     this.inputData = inputData;
     this.outputData = outputData;
     this.stack = stack;
@@ -133,6 +136,10 @@ public class TraceFrame {
 
   public Address getRecipient() {
     return recipient;
+  }
+
+  public Wei getValue() {
+    return value;
   }
 
   public Bytes getInputData() {

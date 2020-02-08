@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor.Result;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
@@ -86,6 +87,7 @@ public class DebugTraceTransactionTest {
             2,
             EnumSet.noneOf(ExceptionalHaltReason.class),
             null,
+            Wei.ZERO,
             Bytes.EMPTY,
             Bytes.EMPTY,
             Optional.empty(),
@@ -142,6 +144,7 @@ public class DebugTraceTransactionTest {
             2,
             EnumSet.noneOf(ExceptionalHaltReason.class),
             null,
+            Wei.ZERO,
             Bytes.EMPTY,
             Bytes.EMPTY,
             Optional.empty(),

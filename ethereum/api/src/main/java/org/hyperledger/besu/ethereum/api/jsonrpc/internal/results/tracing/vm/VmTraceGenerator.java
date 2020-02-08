@@ -120,6 +120,8 @@ public class VmTraceGenerator {
     // check if next frame depth has increased i.e the current operation is a call
     if (currentTraceFrame.depthHasIncreased()
         || "STATICCALL".equals(currentOperation)
+        || "DELEGATECALL".equals(currentOperation)
+        || "CALLCODE".equals(currentOperation)
         || "CALL".equals(currentOperation)) {
       findLastFrameInCall(currentTraceFrame, currentIndex)
           .ifPresent(
@@ -131,21 +133,15 @@ public class VmTraceGenerator {
                     .map(stack -> stack[stack.length - 1])
                     .map(last -> Quantity.create(UInt256.fromHexString(last.toHexString())))
                     .ifPresent(report::singlePush);
-                switch (currentTraceFrame.getOpcode()) {
-                  case "DELEGATECALL":
-                  case "CREATE":
-                  case "CREATE2":
-                    break;
-                  default:
-                    lastFrameInCall
-                        .getMaybeUpdatedMemory()
-                        .map(
-                            mem ->
-                                new Mem(mem.getValue().toHexString(), mem.getOffset().intValue()))
-                        .ifPresent(report::setMem);
+                if (!currentOperation.startsWith("CREATE")) {
+                  lastFrameInCall
+                      .getMaybeUpdatedMemory()
+                      .map(mem -> new Mem(mem.getValue().toHexString(), mem.getOffset().intValue()))
+                      .ifPresent(report::setMem);
                 }
               });
-      if (currentTraceFrame.depthHasIncreased()) {
+      if (currentTraceFrame.depthHasIncreased()
+          && currentTraceFrame.getMaybeCode().map(Code::getSize).orElse(0) > 0) {
         op.setCost(currentTraceFrame.getGasRemainingPostExecution().toLong() + op.getCost());
         final VmTrace newSubTrace = new VmTrace();
         parentTraces.addLast(newSubTrace);
@@ -238,8 +234,10 @@ public class VmTraceGenerator {
     this.currentOperation = frame.getOpcode();
     currentTrace = parentTraces.getLast();
     // set smart contract code
-    currentTrace.setCode(
-        currentTraceFrame.getMaybeCode().orElse(new Code()).getBytes().toHexString());
+    if ("0x".equals(currentTrace.getCode())) {
+      currentTrace.setCode(
+          currentTraceFrame.getMaybeCode().orElse(new Code()).getBytes().toHexString());
+    }
   }
 
   /**
