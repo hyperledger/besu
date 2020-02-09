@@ -292,7 +292,7 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
   private static PrivateTransaction getValidSignedPrivateTransaction(final Address senderAddress) {
     return PrivateTransaction.builder()
         .nonce(0)
-        .gasPrice(Wei.of(1000))
+        .gasPrice(Wei.ZERO)
         .gasLimit(3000000)
         .to(null)
         .value(Wei.ZERO)
