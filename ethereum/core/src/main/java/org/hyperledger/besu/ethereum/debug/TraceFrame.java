@@ -37,6 +37,7 @@ public class TraceFrame {
   private final String opcode;
   private final Gas gasRemaining;
   private final Optional<Gas> gasCost;
+  private final Gas gasRefund;
   private final int depth;
   private final EnumSet<ExceptionalHaltReason> exceptionalHaltReasons;
   private final Address recipient;
@@ -52,19 +53,20 @@ public class TraceFrame {
   private final Optional<Code> maybeCode;
   private final int stackItemsProduced;
   private final Optional<Bytes32[]> stackPostExecution;
-  private final Optional<Bytes[]> memoryPostExecution;
   private Optional<Integer> maybeNextDepth;
 
   private Gas gasRemainingPostExecution;
-  private final Optional<Map<UInt256, UInt256>> storagePreExecution;
   private final boolean virtualOperation;
   private final Optional<MemoryEntry> maybeUpdatedMemory;
+  private final Optional<MemoryEntry> maybeUpdatedStorage;
+  private Optional<Gas> precompiledGasCost;
 
   public TraceFrame(
       final int pc,
       final String opcode,
       final Gas gasRemaining,
       final Optional<Gas> gasCost,
+      final Gas gasRefund,
       final int depth,
       final EnumSet<ExceptionalHaltReason> exceptionalHaltReasons,
       final Address recipient,
@@ -80,14 +82,14 @@ public class TraceFrame {
       final Optional<Code> maybeCode,
       final int stackItemsProduced,
       final Optional<Bytes32[]> stackPostExecution,
-      final Optional<Bytes[]> memoryPostExecution,
-      final Optional<Map<UInt256, UInt256>> storagePreExecution,
       final boolean virtualOperation,
-      final Optional<MemoryEntry> maybeUpdatedMemory) {
+      final Optional<MemoryEntry> maybeUpdatedMemory,
+      final Optional<MemoryEntry> maybeUpdatedStorage) {
     this.pc = pc;
     this.opcode = opcode;
     this.gasRemaining = gasRemaining;
     this.gasCost = gasCost;
+    this.gasRefund = gasRefund;
     this.depth = depth;
     this.exceptionalHaltReasons = exceptionalHaltReasons;
     this.recipient = recipient;
@@ -103,11 +105,11 @@ public class TraceFrame {
     this.maybeCode = maybeCode;
     this.stackItemsProduced = stackItemsProduced;
     this.stackPostExecution = stackPostExecution;
-    this.memoryPostExecution = memoryPostExecution;
     this.maybeNextDepth = Optional.empty();
-    this.storagePreExecution = storagePreExecution;
     this.virtualOperation = virtualOperation;
     this.maybeUpdatedMemory = maybeUpdatedMemory;
+    this.maybeUpdatedStorage = maybeUpdatedStorage;
+    precompiledGasCost = Optional.empty();
   }
 
   public int getPc() {
@@ -124,6 +126,10 @@ public class TraceFrame {
 
   public Optional<Gas> getGasCost() {
     return gasCost;
+  }
+
+  public Gas getGasRefund() {
+    return gasRefund;
   }
 
   public int getDepth() {
@@ -201,10 +207,6 @@ public class TraceFrame {
     return stackPostExecution;
   }
 
-  public Optional<Bytes[]> getMemoryPostExecution() {
-    return memoryPostExecution;
-  }
-
   public boolean depthHasIncreased() {
     return maybeNextDepth.map(next -> next > depth).orElse(false);
   }
@@ -213,20 +215,12 @@ public class TraceFrame {
     return maybeNextDepth.map(next -> next < depth).orElse(false);
   }
 
-  public Optional<Integer> getMaybeNextDepth() {
-    return maybeNextDepth;
-  }
-
   public void setMaybeNextDepth(final Optional<Integer> maybeNextDepth) {
     this.maybeNextDepth = maybeNextDepth;
   }
 
   public Gas getGasRemainingPostExecution() {
     return gasRemainingPostExecution;
-  }
-
-  public Optional<Map<UInt256, UInt256>> getStoragePreExecution() {
-    return storagePreExecution;
   }
 
   public void setGasRemainingPostExecution(final Gas gasRemainingPostExecution) {
@@ -239,5 +233,17 @@ public class TraceFrame {
 
   public Optional<MemoryEntry> getMaybeUpdatedMemory() {
     return maybeUpdatedMemory;
+  }
+
+  public Optional<MemoryEntry> getMaybeUpdatedStorage() {
+    return maybeUpdatedStorage;
+  }
+
+  public Optional<Gas> getPrecompiledGasCost() {
+    return precompiledGasCost;
+  }
+
+  public void setPrecompiledGasCost(final Optional<Gas> precompiledGasCost) {
+    this.precompiledGasCost = precompiledGasCost;
   }
 }

@@ -61,17 +61,14 @@ public class DebugOperationTracer implements OperationTracer {
         EnumSet.copyOf(frame.getExceptionalHaltReasons());
     final Bytes inputData = frame.getInputData();
     final Optional<Bytes32[]> stack = captureStack(frame);
-    final Optional<Map<UInt256, UInt256>> storagePreExecution = captureStorage(frame);
     final WorldUpdater worldUpdater = frame.getWorldState();
     final Optional<Bytes32[]> stackPostExecution;
-    final Optional<Bytes[]> memoryPostExecution;
     try {
       executeOperation.execute();
     } finally {
       final Bytes outputData = frame.getOutputData();
       final Optional<Bytes[]> memory = captureMemory(frame);
       stackPostExecution = captureStack(frame);
-      memoryPostExecution = captureMemory(frame);
       if (lastFrame != null) {
         lastFrame.setMaybeNextDepth(Optional.of(depth));
         lastFrame.setGasRemainingPostExecution(gasRemaining);
@@ -85,10 +82,11 @@ public class DebugOperationTracer implements OperationTracer {
               opcode,
               gasRemaining,
               currentGasCost,
+              frame.getGasRefund(),
               depth,
               exceptionalHaltReasons,
               frame.getRecipientAddress(),
-              frame.getValue(),
+              frame.getApparentValue(),
               inputData,
               outputData,
               stack,
@@ -100,13 +98,18 @@ public class DebugOperationTracer implements OperationTracer {
               Optional.ofNullable(frame.getMessageFrameStack().peek().getCode()),
               frame.getCurrentOperation().getStackItemsProduced(),
               stackPostExecution,
-              memoryPostExecution,
-              storagePreExecution,
               currentOperation.isVirtualOperation(),
-              frame.getMaybeUpdatedMemory());
+              frame.getMaybeUpdatedMemory(),
+              frame.getMaybeUpdatedStorage());
       traceFrames.add(lastFrame);
     }
     frame.reset();
+  }
+
+  @Override
+  public void tracePrecompileCall(
+      final MessageFrame frame, final Gas gasRequirement, final Bytes output) {
+    traceFrames.get(traceFrames.size() - 1).setPrecompiledGasCost(Optional.of(gasRequirement));
   }
 
   private Optional<Map<UInt256, UInt256>> captureStorage(final MessageFrame frame) {

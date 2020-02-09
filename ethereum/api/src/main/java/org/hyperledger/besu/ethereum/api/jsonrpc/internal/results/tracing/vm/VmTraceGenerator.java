@@ -24,14 +24,10 @@ import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import com.google.common.collect.MapDifference;
-import com.google.common.collect.Maps;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
@@ -147,6 +143,9 @@ public class VmTraceGenerator {
         parentTraces.addLast(newSubTrace);
         op.setSub(newSubTrace);
       } else {
+        if (currentTraceFrame.getPrecompiledGasCost().isPresent()) {
+          op.setCost(op.getCost() + currentTraceFrame.getPrecompiledGasCost().get().toLong());
+        }
         op.setSub(new VmTrace());
       }
     }
@@ -164,6 +163,7 @@ public class VmTraceGenerator {
     // set gas cost and program counter
     op.setCost(currentTraceFrame.getGasCost().orElse(Gas.ZERO).toLong());
     op.setPc(currentTraceFrame.getPc());
+     op.setOperation(currentOperation);
     return op;
   }
 
@@ -216,12 +216,14 @@ public class VmTraceGenerator {
 
   private void generateTracingStorage(final VmOperationExecutionReport report) {
     // set storage if updated
-    updatedStorage(currentTraceFrame.getStoragePreExecution(), currentTraceFrame.getStorage())
-        .map(
-            storageEntry ->
-                new Store(
-                    storageEntry.key.toShortHexString(), storageEntry.value.toShortHexString()))
-        .ifPresent(report::setStore);
+    currentTraceFrame
+        .getMaybeUpdatedStorage()
+        .ifPresent(
+            entry ->
+                report.setStore(
+                    new Store(
+                        entry.getOffset().toShortHexString(),
+                        entry.getValue().toShortHexString())));
   }
 
   /**
@@ -238,35 +240,6 @@ public class VmTraceGenerator {
       currentTrace.setCode(
           currentTraceFrame.getMaybeCode().orElse(new Code()).getBytes().toHexString());
     }
-  }
-
-  /**
-   * Find updated storage from 2 storage captures.
-   *
-   * @param firstCapture The first storage capture.
-   * @param secondCapture The second storage capture.
-   * @return an {@link Optional} wrapping the diff.
-   */
-  private Optional<StorageEntry> updatedStorage(
-      final Optional<Map<UInt256, UInt256>> firstCapture,
-      final Optional<Map<UInt256, UInt256>> secondCapture) {
-    final Map<UInt256, UInt256> first = firstCapture.orElse(new HashMap<>());
-    final Map<UInt256, UInt256> second = secondCapture.orElse(new HashMap<>());
-    final MapDifference<UInt256, UInt256> diff = Maps.difference(first, second);
-    final Map<UInt256, MapDifference.ValueDifference<UInt256>> entriesDiffering =
-        diff.entriesDiffering();
-    if (entriesDiffering.size() > 0) {
-      final UInt256 firstDiffKey = entriesDiffering.keySet().iterator().next();
-      final MapDifference.ValueDifference<UInt256> firstDiff = entriesDiffering.get(firstDiffKey);
-      return Optional.of(new StorageEntry(firstDiffKey, firstDiff.rightValue()));
-    }
-    final Map<UInt256, UInt256> onlyOnRight = diff.entriesOnlyOnRight();
-    if (onlyOnRight.size() > 0) {
-      final UInt256 firstOnlyOnRightKey = onlyOnRight.keySet().iterator().next();
-      return Optional.of(
-          new StorageEntry(firstOnlyOnRightKey, onlyOnRight.get(firstOnlyOnRightKey)));
-    }
-    return Optional.empty();
   }
 
   /**
@@ -287,15 +260,5 @@ public class VmTraceGenerator {
       }
     }
     return Optional.empty();
-  }
-
-  static class StorageEntry {
-    private final UInt256 key;
-    private final UInt256 value;
-
-    StorageEntry(final UInt256 key, final UInt256 value) {
-      this.key = key;
-      this.value = value;
-    }
   }
 }
