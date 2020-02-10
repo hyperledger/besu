@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -31,7 +32,6 @@ import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
-import org.hyperledger.besu.ethereum.privacy.SendTransactionResponse;
 
 import java.util.Base64;
 
@@ -74,9 +74,8 @@ public class PrivDistributeRawTransactionTest {
   public void validTransactionHashReturnedAfterDistribute() {
     final String enclavePublicKey = "93Ky7lXwFkMc7+ckoFgUMku5bpr9tz4zhmWmk9RlNng=";
     when(privacyController.sendTransaction(any(PrivateTransaction.class), any()))
-        .thenReturn(new SendTransactionResponse(enclavePublicKey, ""));
-    when(privacyController.validatePrivateTransaction(
-            any(PrivateTransaction.class), any(String.class), any()))
+        .thenReturn(enclavePublicKey);
+    when(privacyController.validatePrivateTransaction(any(PrivateTransaction.class), anyString()))
         .thenReturn(ValidationResult.valid());
 
     final JsonRpcRequestContext request =
@@ -98,14 +97,15 @@ public class PrivDistributeRawTransactionTest {
     verify(privacyController)
         .sendTransaction(any(PrivateTransaction.class), eq(ENCLAVE_PUBLIC_KEY));
     verify(privacyController)
-        .validatePrivateTransaction(
-            any(PrivateTransaction.class), any(String.class), eq(ENCLAVE_PUBLIC_KEY));
+        .validatePrivateTransaction(any(PrivateTransaction.class), eq(ENCLAVE_PUBLIC_KEY));
   }
 
   @Test
   public void invalidTransactionFailingWithMultiTenancyValidationErrorReturnsUnauthorizedError() {
     when(privacyController.sendTransaction(any(PrivateTransaction.class), any()))
         .thenThrow(new MultiTenancyValidationException("validation failed"));
+    when(privacyController.validatePrivateTransaction(any(PrivateTransaction.class), anyString()))
+        .thenReturn(ValidationResult.valid());
 
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(

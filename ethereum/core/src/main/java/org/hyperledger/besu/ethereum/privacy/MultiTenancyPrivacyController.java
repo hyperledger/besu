@@ -38,7 +38,7 @@ public class MultiTenancyPrivacyController implements PrivacyController {
   }
 
   @Override
-  public SendTransactionResponse sendTransaction(
+  public String sendTransaction(
       final PrivateTransaction privateTransaction, final String enclavePublicKey) {
     verifyPrivateFromMatchesEnclavePublicKey(
         privateTransaction.getPrivateFrom().toBase64String(), enclavePublicKey);
@@ -92,11 +92,8 @@ public class MultiTenancyPrivacyController implements PrivacyController {
 
   @Override
   public ValidationResult<TransactionInvalidReason> validatePrivateTransaction(
-      final PrivateTransaction privateTransaction,
-      final String privacyGroupId,
-      final String enclavePublicKey) {
-    return privacyController.validatePrivateTransaction(
-        privateTransaction, privacyGroupId, enclavePublicKey);
+      final PrivateTransaction privateTransaction, final String enclavePublicKey) {
+    return privacyController.validatePrivateTransaction(privateTransaction, enclavePublicKey);
   }
 
   @Override
