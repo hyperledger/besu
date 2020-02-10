@@ -19,6 +19,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.ChainHead;
+import org.hyperledger.besu.ethereum.chain.ChainReorgObserver;
 import org.hyperledger.besu.ethereum.chain.TransactionLocation;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -147,6 +148,16 @@ public class TestBlockchain implements Blockchain {
   @Override
   public boolean removeObserver(final long observerId) {
     throw new NonDeterministicOperationException("Listening for new blocks is not deterministic");
+  }
+
+  @Override
+  public long observeChainReorg(final ChainReorgObserver observer) {
+    throw new NonDeterministicOperationException("Listening for chain reorg is not deterministic");
+  }
+
+  @Override
+  public boolean removeChainReorgObserver(final long observerId) {
+    throw new NonDeterministicOperationException("Listening for chain reorg is not deterministic");
   }
 
   public static class NonDeterministicOperationException extends RuntimeException {

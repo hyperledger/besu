@@ -116,7 +116,7 @@ public interface TransactionProcessor {
    * @param transaction The transaction to process
    * @param miningBeneficiary The address which is to receive the transaction fee
    * @param blockHashLookup The {@link BlockHashLookup} to use for BLOCKHASH operations
-   * @param isPersistingState Whether the state will be modified by this process
+   * @param isPersistingPrivateState Whether the resulting private state will be persisted
    * @param transactionValidationParams Validation parameters that will be used by the {@link
    *     TransactionValidator}
    * @return the transaction result
@@ -130,7 +130,7 @@ public interface TransactionProcessor {
       final Transaction transaction,
       final Address miningBeneficiary,
       final BlockHashLookup blockHashLookup,
-      final Boolean isPersistingState,
+      final Boolean isPersistingPrivateState,
       final TransactionValidationParams transactionValidationParams) {
     return processTransaction(
         blockchain,
@@ -140,7 +140,7 @@ public interface TransactionProcessor {
         miningBeneficiary,
         OperationTracer.NO_TRACING,
         blockHashLookup,
-        isPersistingState,
+        isPersistingPrivateState,
         transactionValidationParams);
   }
 
@@ -154,7 +154,7 @@ public interface TransactionProcessor {
    * @param operationTracer The tracer to record results of each EVM operation
    * @param miningBeneficiary The address which is to receive the transaction fee
    * @param blockHashLookup The {@link BlockHashLookup} to use for BLOCKHASH operations
-   * @param isPersistingState Whether the state will be modified by this process
+   * @param isPersistingPrivateState Whether the resulting private state will be persisted
    * @return the transaction result
    */
   default Result processTransaction(
@@ -165,7 +165,7 @@ public interface TransactionProcessor {
       final Address miningBeneficiary,
       final OperationTracer operationTracer,
       final BlockHashLookup blockHashLookup,
-      final Boolean isPersistingState) {
+      final Boolean isPersistingPrivateState) {
     return processTransaction(
         blockchain,
         worldState,
@@ -174,7 +174,7 @@ public interface TransactionProcessor {
         miningBeneficiary,
         operationTracer,
         blockHashLookup,
-        isPersistingState,
+        isPersistingPrivateState,
         new TransactionValidationParams.Builder().build());
   }
 
@@ -186,6 +186,6 @@ public interface TransactionProcessor {
       Address miningBeneficiary,
       OperationTracer operationTracer,
       BlockHashLookup blockHashLookup,
-      Boolean isPersistingState,
+      Boolean isPersistingPrivateState,
       TransactionValidationParams transactionValidationParams);
 }

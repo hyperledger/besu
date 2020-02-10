@@ -28,7 +28,8 @@ import com.sun.source.tree.MethodInvocationTree;
 @BugPattern(
     name = "DoNotInvokeMessageDigestDirectly",
     summary = "Do not invoke MessageDigest.getInstance directly.",
-    severity = WARNING)
+    severity = WARNING,
+    linkType = BugPattern.LinkType.NONE)
 public class DoNotInvokeMessageDigestDirectly extends BugChecker
     implements MethodInvocationTreeMatcher {
 

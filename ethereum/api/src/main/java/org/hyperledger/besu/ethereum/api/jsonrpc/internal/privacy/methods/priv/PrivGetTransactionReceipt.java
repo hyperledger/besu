@@ -34,16 +34,14 @@ import org.hyperledger.besu.ethereum.chain.TransactionLocation;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
+import org.hyperledger.besu.ethereum.privacy.PrivateTransactionReceipt;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 
 import org.apache.logging.log4j.Logger;
@@ -78,18 +76,19 @@ public class PrivGetTransactionReceipt implements JsonRpcMethod {
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     LOG.trace("Executing {}", RpcMethod.PRIV_GET_TRANSACTION_RECEIPT.getMethodName());
-    final Hash transactionHash = requestContext.getRequiredParameter(0, Hash.class);
+    final Hash pmtTransactionHash = requestContext.getRequiredParameter(0, Hash.class);
     final Optional<TransactionLocation> maybeLocation =
-        blockchain.getBlockchain().getTransactionLocation(transactionHash);
+        blockchain.getBlockchain().getTransactionLocation(pmtTransactionHash);
     if (maybeLocation.isEmpty()) {
       return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), null);
     }
-    final TransactionLocation location = maybeLocation.get();
+    final TransactionLocation pmtLocation = maybeLocation.get();
     final BlockBody blockBody =
-        blockchain.getBlockchain().getBlockBody(location.getBlockHash()).get();
-    final Transaction transaction = blockBody.getTransactions().get(location.getTransactionIndex());
+        blockchain.getBlockchain().getBlockBody(pmtLocation.getBlockHash()).get();
+    final Transaction pmtTransaction =
+        blockBody.getTransactions().get(pmtLocation.getTransactionIndex());
 
-    final Hash blockhash = location.getBlockHash();
+    final Hash blockhash = pmtLocation.getBlockHash();
     final long blockNumber = blockchain.getBlockchain().getBlockHeader(blockhash).get().getNumber();
 
     final PrivateTransaction privateTransaction;
@@ -97,9 +96,9 @@ public class PrivGetTransactionReceipt implements JsonRpcMethod {
     try {
       final ReceiveResponse receiveResponse =
           privacyController.retrieveTransaction(
-              transaction.getPayload().toBase64String(),
+              pmtTransaction.getPayload().toBase64String(),
               enclavePublicKeyProvider.getEnclaveKey(requestContext.getUser()));
-      LOG.trace("Received transaction information");
+      LOG.trace("Received private transaction information");
 
       final BytesValueRLPInput input =
           new BytesValueRLPInput(
@@ -124,52 +123,35 @@ public class PrivGetTransactionReceipt implements JsonRpcMethod {
 
     final Bytes rlpEncoded = RLP.encode(privateTransaction::writeTo);
     final Bytes32 txHash = org.hyperledger.besu.crypto.Hash.keccak256(rlpEncoded);
-
     LOG.trace("Calculated private transaction hash: {}", txHash);
 
-    final List<Log> transactionLogs =
+    final PrivateTransactionReceipt privateTransactioReceipt =
         privacyParameters
             .getPrivateStateStorage()
-            .getTransactionLogs(txHash)
-            .orElse(Collections.emptyList());
+            .getTransactionReceipt(blockhash, txHash)
+            .orElse(PrivateTransactionReceipt.EMPTY);
 
-    LOG.trace("Processed private transaction events");
-
-    final Bytes transactionOutput =
-        privacyParameters.getPrivateStateStorage().getTransactionOutput(txHash).orElse(Bytes.EMPTY);
-
-    final Bytes revertReason =
-        privacyParameters.getPrivateStateStorage().getRevertReason(txHash).orElse(null);
-
-    final String transactionStatus =
-        Quantity.create(
-            privacyParameters
-                .getPrivateStateStorage()
-                .getStatus(txHash)
-                .orElse(Bytes.EMPTY)
-                .toUnsignedBigInteger());
-
-    LOG.trace("Processed private transaction output");
+    LOG.trace("Processed private transaction receipt");
 
     final PrivateTransactionReceiptResult result =
         new PrivateTransactionReceiptResult(
             contractAddress,
             privateTransaction.getSender().toString(),
             privateTransaction.getTo().map(Address::toString).orElse(null),
-            transactionLogs,
-            transactionOutput,
+            privateTransactioReceipt.getLogs(),
+            privateTransactioReceipt.getOutput(),
             blockhash,
             blockNumber,
-            location.getTransactionIndex(),
-            transaction.getHash(),
-            privateTransaction.hash(),
+            pmtLocation.getTransactionIndex(),
+            pmtTransaction.getHash(),
+            privateTransaction.getHash(),
             privateTransaction.getPrivateFrom(),
             privateTransaction.getPrivateFor().orElse(null),
             privateTransaction.getPrivacyGroupId().orElse(null),
-            revertReason,
-            transactionStatus);
+            privateTransactioReceipt.getRevertReason().orElse(null),
+            Quantity.create(privateTransactioReceipt.getStatus()));
 
-    LOG.trace("Created Private Transaction from given Transaction Hash");
+    LOG.trace("Created Private Transaction Receipt Result from given Transaction Hash");
 
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), result);
   }

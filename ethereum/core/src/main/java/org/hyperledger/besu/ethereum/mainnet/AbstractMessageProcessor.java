@@ -42,7 +42,7 @@ import java.util.stream.Collectors;
  * </tr>
  * <tr>
  * <td>{@link MessageFrame.State#NOT_STARTED}</td>
- * <td>{@link AbstractMessageProcessor#start(MessageFrame)}</td>
+ * <td>{@link AbstractMessageProcessor#start(MessageFrame, OperationTracer)}</td>
  * </tr>
  * <tr>
  * <td>{@link MessageFrame.State#CODE_EXECUTING}</td>
@@ -74,7 +74,7 @@ public abstract class AbstractMessageProcessor {
     this.forceDeleteAccountsWhenEmpty = forceDeleteAccountsWhenEmpty;
   }
 
-  protected abstract void start(MessageFrame frame);
+  protected abstract void start(MessageFrame frame, final OperationTracer operationTracer);
 
   /**
    * Gets called when the message frame code executes successfully.
@@ -163,7 +163,7 @@ public abstract class AbstractMessageProcessor {
 
   public void process(final MessageFrame frame, final OperationTracer operationTracer) {
     if (frame.getState() == MessageFrame.State.NOT_STARTED) {
-      start(frame);
+      start(frame, operationTracer);
     }
 
     if (frame.getState() == MessageFrame.State.CODE_EXECUTING) {

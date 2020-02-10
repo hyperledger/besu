@@ -15,9 +15,11 @@ dependencies {
   testImplementation project(':acceptance-tests:dsl')
   testImplementation project(':besu')
   testImplementation project(':consensus:clique')
+  implementation project(':crypto')
   testImplementation project(':enclave')
   testImplementation project(':ethereum:api')
   testImplementation project(':ethereum:core')
+  testImplementation project(':ethereum:rlp')
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
   testImplementation project(':ethereum:permissioning')
   testImplementation project(':plugin-api')
@@ -33,6 +35,8 @@ dependencies {
   testImplementation 'org.web3j:besu'
   testImplementation 'tech.pegasys.ethsigner.internal:core'
   testImplementation 'tech.pegasys.ethsigner.internal:file-based'
+
+  testCompile "com.github.tomakehurst:wiremock-jre8-standalone:2.25.1"
 }
 
 test.enabled = false

@@ -49,7 +49,7 @@ public class ReturnDataCopyOperation extends AbstractOperation {
     final UInt256 sourceOffset = UInt256.fromBytes(frame.popStackItem());
     final UInt256 numBytes = UInt256.fromBytes(frame.popStackItem());
 
-    frame.writeMemory(memOffset, sourceOffset, numBytes, returnData);
+    frame.writeMemory(memOffset, sourceOffset, numBytes, returnData, true);
   }
 
   @Override

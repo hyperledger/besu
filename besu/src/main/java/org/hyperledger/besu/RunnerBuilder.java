@@ -91,6 +91,10 @@ import org.hyperledger.besu.metrics.prometheus.MetricsService;
 import org.hyperledger.besu.nat.NatMethod;
 import org.hyperledger.besu.nat.NatService;
 import org.hyperledger.besu.nat.core.NatManager;
+import org.hyperledger.besu.nat.docker.DockerDetector;
+import org.hyperledger.besu.nat.docker.DockerNatManager;
+import org.hyperledger.besu.nat.kubernetes.KubernetesDetector;
+import org.hyperledger.besu.nat.kubernetes.KubernetesNatManager;
 import org.hyperledger.besu.nat.manual.ManualNatManager;
 import org.hyperledger.besu.nat.upnp.UpnpNatManager;
 import org.hyperledger.besu.plugin.BesuPlugin;
@@ -112,9 +116,13 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import graphql.GraphQL;
 import io.vertx.core.Vertx;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 
 public class RunnerBuilder {
+
+  protected static final Logger LOG = LogManager.getLogger();
 
   private Vertx vertx;
   private BesuController<?> besuController;
@@ -142,6 +150,7 @@ public class RunnerBuilder {
   private Collection<EnodeURL> staticNodes = Collections.emptyList();
   private Optional<String> identityString = Optional.empty();
   private BesuPluginContextImpl besuPluginContext;
+  private boolean autoLogBloomCaching = true;
 
   public RunnerBuilder vertx(final Vertx vertx) {
     this.vertx = vertx;
@@ -268,6 +277,11 @@ public class RunnerBuilder {
     return this;
   }
 
+  public RunnerBuilder autoLogBloomCaching(final boolean autoLogBloomCaching) {
+    this.autoLogBloomCaching = autoLogBloomCaching;
+    return this;
+  }
+
   public Runner build() {
 
     Preconditions.checkNotNull(besuController);
@@ -338,8 +352,8 @@ public class RunnerBuilder {
             .map(nodePerms -> PeerPermissions.combine(nodePerms, bannedNodes))
             .orElse(bannedNodes);
 
+    LOG.info("Detecting NAT service.");
     final NatService natService = new NatService(buildNatManager(natMethod));
-
     final NetworkBuilder inactiveNetwork = (caps) -> new NoopP2PNetwork();
     final NetworkBuilder activeNetwork =
         (caps) ->
@@ -526,7 +540,9 @@ public class RunnerBuilder {
         stratumServer,
         metricsService,
         besuController,
-        dataDir);
+        dataDir,
+        autoLogBloomCaching ? blockchainQueries.getTransactionLogBloomCacher() : Optional.empty(),
+        context.getBlockchain());
   }
 
   private Optional<NodePermissioningController> buildNodePermissioningController(
@@ -581,13 +597,18 @@ public class RunnerBuilder {
     final NatMethod detectedNatMethod =
         Optional.of(natMethod)
             .filter(not(isEqual(NatMethod.AUTO)))
-            .orElse(NatService.autoDetectNatMethod());
+            .orElse(NatService.autoDetectNatMethod(new KubernetesDetector(), new DockerDetector()));
     switch (detectedNatMethod) {
       case UPNP:
         return Optional.of(new UpnpNatManager());
       case MANUAL:
         return Optional.of(
             new ManualNatManager(p2pAdvertisedHost, p2pListenPort, jsonRpcConfiguration.getPort()));
+      case DOCKER:
+        return Optional.of(
+            new DockerNatManager(p2pAdvertisedHost, p2pListenPort, jsonRpcConfiguration.getPort()));
+      case KUBERNETES:
+        return Optional.of(new KubernetesNatManager());
       case NONE:
       default:
         return Optional.empty();
