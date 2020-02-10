@@ -89,8 +89,8 @@ public class VmTraceGenerator {
       generateTracingStorage(report);
       handleDepthIncreased(op, report);
       completeStep(op, report);
+      lastDepth = frame.getDepth();
     }
-    lastDepth = frame.getDepth();
   }
 
   private boolean mustIgnore(final TraceFrame frame) {
@@ -172,7 +172,7 @@ public class VmTraceGenerator {
     // set gas cost and program counter
     op.setCost(currentTraceFrame.getGasCost().orElse(Gas.ZERO).toLong());
     op.setPc(currentTraceFrame.getPc());
-    // op.setOperation(currentOperation);
+    //op.setOperation(currentOperation);
     return op;
   }
 
