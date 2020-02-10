@@ -134,9 +134,9 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
       throws JsonProcessingException {
     final List<PrivacyGroup> groupMembership =
         List.of(
-            testPrivacyGroup(emptyList(), PrivacyGroup.Type.BESU),
-            testPrivacyGroup(emptyList(), PrivacyGroup.Type.BESU),
-            testPrivacyGroup(emptyList(), PrivacyGroup.Type.BESU));
+            testPrivacyGroup(emptyList(), PrivacyGroup.Type.PANTHEON),
+            testPrivacyGroup(emptyList(), PrivacyGroup.Type.PANTHEON),
+            testPrivacyGroup(emptyList(), PrivacyGroup.Type.PANTHEON));
 
     findPrivacyGroupEnclaveStub(groupMembership);
 
@@ -248,7 +248,7 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
 
   private void createPrivacyGroupEnclaveStub() throws JsonProcessingException {
     final String createGroupResponse =
-        mapper.writeValueAsString(testPrivacyGroup(emptyList(), PrivacyGroup.Type.BESU));
+        mapper.writeValueAsString(testPrivacyGroup(emptyList(), PrivacyGroup.Type.PANTHEON));
     stubFor(post("/createPrivacyGroup").willReturn(ok(createGroupResponse)));
   }
 
@@ -259,7 +259,8 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
 
   private void retrievePrivacyGroupEnclaveStub() throws JsonProcessingException {
     final String retrieveGroupResponse =
-        mapper.writeValueAsString(testPrivacyGroup(List.of(ENCLAVE_KEY), PrivacyGroup.Type.BESU));
+        mapper.writeValueAsString(
+            testPrivacyGroup(List.of(ENCLAVE_KEY), PrivacyGroup.Type.PANTHEON));
     stubFor(post("/retrievePrivacyGroup").willReturn(ok(retrieveGroupResponse)));
   }
 
