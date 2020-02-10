@@ -143,9 +143,7 @@ public class VmTraceGenerator {
                         .ifPresent(report::setMem);
                   }
                 });
-        if (
-        /*(currentTraceFrame.getDepth() > lastDepth)
-        && */ currentTraceFrame.getMaybeCode().map(Code::getSize).orElse(0) > 0) {
+        if (currentTraceFrame.getMaybeCode().map(Code::getSize).orElse(0) > 0) {
           op.setCost(currentTraceFrame.getGasRemainingPostExecution().toLong() + op.getCost());
           final VmTrace newSubTrace = new VmTrace();
           parentTraces.addLast(newSubTrace);
@@ -174,7 +172,7 @@ public class VmTraceGenerator {
     // set gas cost and program counter
     op.setCost(currentTraceFrame.getGasCost().orElse(Gas.ZERO).toLong());
     op.setPc(currentTraceFrame.getPc());
-    //op.setOperation(currentOperation);
+    // op.setOperation(currentOperation);
     return op;
   }
 
