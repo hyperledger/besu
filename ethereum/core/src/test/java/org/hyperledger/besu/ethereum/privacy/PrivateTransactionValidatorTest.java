@@ -18,12 +18,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason.INCORRECT_PRIVATE_NONCE;
 import static org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason.INVALID_SIGNATURE;
 import static org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason.PRIVATE_NONCE_TOO_LOW;
+import static org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason.PRIVATE_UNIMPLEMENTED_TRANSACTION_TYPE;
+import static org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason.PRIVATE_VALUE_NOT_ZERO;
 import static org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason.REPLAY_PROTECTED_SIGNATURES_NOT_SUPPORTED;
 import static org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason.WRONG_CHAIN_ID;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.core.PrivateTransactionTestFixture;
+import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 
@@ -103,18 +106,60 @@ public class PrivateTransactionValidatorTest {
     assertThat(validationResult).isEqualTo(ValidationResult.invalid(INVALID_SIGNATURE));
   }
 
+  @Test
+  public void transactionWithNonZeroValueShouldReturnValueNotZeroError() {
+    validator = new PrivateTransactionValidator(Optional.of(BigInteger.ONE));
+
+    ValidationResult<TransactionInvalidReason> validationResult =
+        validator.validate(privateTransactionWithValue(1L), 0L);
+
+    assertThat(validationResult).isEqualTo(ValidationResult.invalid(PRIVATE_VALUE_NOT_ZERO));
+  }
+
+  @Test
+  public void
+      transactionWithUnrestrictedTransactionTypeShouldReturnUnimplementedTransactionTypeError() {
+    validator = new PrivateTransactionValidator(Optional.of(BigInteger.ONE));
+
+    ValidationResult<TransactionInvalidReason> validationResult =
+        validator.validate(privateTransactionWithRestriction(Restriction.UNRESTRICTED), 0L);
+
+    assertThat(validationResult)
+        .isEqualTo(ValidationResult.invalid(PRIVATE_UNIMPLEMENTED_TRANSACTION_TYPE));
+  }
+
+  @Test
+  public void
+      transactionWithUnsupportedTransactionTypeShouldReturnUnimplementedTransactionTypeError() {
+    validator = new PrivateTransactionValidator(Optional.of(BigInteger.ONE));
+
+    ValidationResult<TransactionInvalidReason> validationResult =
+        validator.validate(privateTransactionWithRestriction(Restriction.UNSUPPORTED), 0L);
+
+    assertThat(validationResult)
+        .isEqualTo(ValidationResult.invalid(PRIVATE_UNIMPLEMENTED_TRANSACTION_TYPE));
+  }
+
   private PrivateTransaction privateTransactionWithNonce(final long nonce) {
-    PrivateTransactionTestFixture privateTransactionTestFixture =
-        new PrivateTransactionTestFixture();
-    privateTransactionTestFixture.nonce(nonce);
-    privateTransactionTestFixture.chainId(Optional.empty());
-    return privateTransactionTestFixture.createTransaction(senderKeys);
+    return new PrivateTransactionTestFixture()
+        .nonce(nonce)
+        .chainId(Optional.empty())
+        .createTransaction(senderKeys);
   }
 
   private PrivateTransaction privateTransactionWithChainId(final int chainId) {
-    PrivateTransactionTestFixture privateTransactionTestFixture =
-        new PrivateTransactionTestFixture();
-    privateTransactionTestFixture.chainId(Optional.of(BigInteger.valueOf(chainId)));
-    return privateTransactionTestFixture.createTransaction(senderKeys);
+    return new PrivateTransactionTestFixture()
+        .chainId(Optional.of(BigInteger.valueOf(chainId)))
+        .createTransaction(senderKeys);
+  }
+
+  private PrivateTransaction privateTransactionWithValue(final long value) {
+    return new PrivateTransactionTestFixture().value(Wei.of(value)).createTransaction(senderKeys);
+  }
+
+  private PrivateTransaction privateTransactionWithRestriction(final Restriction restriction) {
+    return new PrivateTransactionTestFixture()
+        .restriction(restriction)
+        .createTransaction(senderKeys);
   }
 }
