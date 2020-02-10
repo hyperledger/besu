@@ -206,9 +206,9 @@ public abstract class AbstractCallOperation extends AbstractOperation {
 
     if (outputSizeAsInt > outputData.size()) {
       frame.expandMemory(outputOffset.toLong(), outputSizeAsInt);
-      frame.writeMemory(outputOffset, UInt256.valueOf(outputData.size()), outputData);
+      frame.writeMemory(outputOffset, UInt256.valueOf(outputData.size()), outputData, true);
     } else {
-      frame.writeMemory(outputOffset, outputSize, outputData);
+      frame.writeMemory(outputOffset, outputSize, outputData, true);
     }
 
     frame.setReturnData(outputData);
