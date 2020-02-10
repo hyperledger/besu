@@ -13,10 +13,22 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package org.hyperledger.besu.nat.core;
+package org.hyperledger.besu.nat.docker;
 
-@FunctionalInterface
-public interface NatMethodAutoDetection {
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.Optional;
 
-  AutoDetectionResult shouldBeThisNatMethod();
+public class HostBasedIpDetector implements IpDetector {
+
+  private static final String HOSTNAME = "HOST_IP";
+
+  @Override
+  public Optional<String> detectExternalIp() {
+    try {
+      return Optional.of(InetAddress.getByName(HOSTNAME).getHostAddress());
+    } catch (final UnknownHostException e) {
+      return Optional.empty();
+    }
+  }
 }
