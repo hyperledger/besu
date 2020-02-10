@@ -233,7 +233,7 @@ public class FlatTraceGenerator {
       final List<FlatTrace.Builder> flatTraces,
       final Deque<FlatTrace.Context> tracesContexts) {
     final Bytes32[] stack = traceFrame.getStack().orElseThrow();
-    final Address refundAddress = toAddress(stack[0]);
+    final Address refundAddress = toAddress(stack[stack.length - 1]);
     final FlatTrace.Builder subTraceBuilder =
         FlatTrace.builder()
             .type("suicide")
