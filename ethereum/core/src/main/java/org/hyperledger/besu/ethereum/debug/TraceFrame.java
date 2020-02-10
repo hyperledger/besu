@@ -53,7 +53,6 @@ public class TraceFrame {
   private final Optional<Code> maybeCode;
   private final int stackItemsProduced;
   private final Optional<Bytes32[]> stackPostExecution;
-  private Optional<Integer> maybeNextDepth;
 
   private Gas gasRemainingPostExecution;
   private final boolean virtualOperation;
@@ -105,7 +104,6 @@ public class TraceFrame {
     this.maybeCode = maybeCode;
     this.stackItemsProduced = stackItemsProduced;
     this.stackPostExecution = stackPostExecution;
-    this.maybeNextDepth = Optional.empty();
     this.virtualOperation = virtualOperation;
     this.maybeUpdatedMemory = maybeUpdatedMemory;
     this.maybeUpdatedStorage = maybeUpdatedStorage;
@@ -205,18 +203,6 @@ public class TraceFrame {
 
   public Optional<Bytes32[]> getStackPostExecution() {
     return stackPostExecution;
-  }
-
-  public boolean depthHasIncreased() {
-    return maybeNextDepth.map(next -> next > depth).orElse(false);
-  }
-
-  public boolean depthHasDecreased() {
-    return maybeNextDepth.map(next -> next < depth).orElse(false);
-  }
-
-  public void setMaybeNextDepth(final Optional<Integer> maybeNextDepth) {
-    this.maybeNextDepth = maybeNextDepth;
   }
 
   public Gas getGasRemainingPostExecution() {

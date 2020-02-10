@@ -40,6 +40,7 @@ public class VmTraceGenerator {
   private final TransactionTrace transactionTrace;
   private final VmTrace rootVmTrace = new VmTrace();
   private final Deque<VmTrace> parentTraces = new ArrayDeque<>();
+  int lastDepth = 0;
 
   public VmTraceGenerator(final TransactionTrace transactionTrace) {
     this.transactionTrace = transactionTrace;
@@ -78,18 +79,18 @@ public class VmTraceGenerator {
    * @param frame the current trace frame
    */
   private void addFrame(final TraceFrame frame) {
-    if (mustIgnore(frame)) {
-      return;
+    handleDepthDecreased(frame);
+    if (!mustIgnore(frame)) {
+      initStep(frame);
+      final VmOperation op = buildVmOperation();
+      final VmOperationExecutionReport report = generateExecutionReport();
+      generateTracingMemory(report);
+      generateTracingPush(report);
+      generateTracingStorage(report);
+      handleDepthIncreased(op, report);
+      completeStep(op, report);
     }
-    initStep(frame);
-    final VmOperation op = buildVmOperation();
-    final VmOperationExecutionReport report = generateExecutionReport();
-    generateTracingMemory(report);
-    generateTracingPush(report);
-    generateTracingStorage(report);
-    handleDepthIncreased(op, report);
-    handleDepthDecreased();
-    completeStep(op, report);
+    lastDepth = frame.getDepth();
   }
 
   private boolean mustIgnore(final TraceFrame frame) {
@@ -108,52 +109,62 @@ public class VmTraceGenerator {
   private void completeStep(final VmOperation op, final VmOperationExecutionReport report) {
     // add the operation representation to the list of traces
     op.setVmOperationExecutionReport(report);
-    currentTrace.add(op);
+    if (currentTrace != null) {
+      currentTrace.add(op);
+    }
     currentIndex++;
   }
 
   private void handleDepthIncreased(final VmOperation op, final VmOperationExecutionReport report) {
     // check if next frame depth has increased i.e the current operation is a call
-    if (currentTraceFrame.depthHasIncreased()
-        || "STATICCALL".equals(currentOperation)
-        || "DELEGATECALL".equals(currentOperation)
-        || "CALLCODE".equals(currentOperation)
-        || "CALL".equals(currentOperation)) {
-      findLastFrameInCall(currentTraceFrame, currentIndex)
-          .ifPresent(
-              lastFrameInCall -> {
-                report.setUsed(lastFrameInCall.getGasRemaining().toLong());
-                lastFrameInCall
-                    .getStack()
-                    .filter(stack -> stack.length > 0)
-                    .map(stack -> stack[stack.length - 1])
-                    .map(last -> Quantity.create(UInt256.fromHexString(last.toHexString())))
-                    .ifPresent(report::singlePush);
-                if (!currentOperation.startsWith("CREATE")) {
+    switch (currentOperation) {
+      case "STATICCALL":
+      case "DELEGATECALL":
+      case "CALLCODE":
+      case "CALL":
+      case "CREATE":
+      case "CREATE2":
+        findLastFrameInCall(currentTraceFrame, currentIndex)
+            .ifPresent(
+                lastFrameInCall -> {
+                  report.setUsed(lastFrameInCall.getGasRemaining().toLong());
                   lastFrameInCall
-                      .getMaybeUpdatedMemory()
-                      .map(mem -> new Mem(mem.getValue().toHexString(), mem.getOffset().intValue()))
-                      .ifPresent(report::setMem);
-                }
-              });
-      if (currentTraceFrame.depthHasIncreased()
-          && currentTraceFrame.getMaybeCode().map(Code::getSize).orElse(0) > 0) {
-        op.setCost(currentTraceFrame.getGasRemainingPostExecution().toLong() + op.getCost());
-        final VmTrace newSubTrace = new VmTrace();
-        parentTraces.addLast(newSubTrace);
-        op.setSub(newSubTrace);
-      } else {
-        if (currentTraceFrame.getPrecompiledGasCost().isPresent()) {
-          op.setCost(op.getCost() + currentTraceFrame.getPrecompiledGasCost().get().toLong());
+                      .getStack()
+                      .filter(stack -> stack.length > 0)
+                      .map(stack -> stack[stack.length - 1])
+                      .map(last -> Quantity.create(UInt256.fromHexString(last.toHexString())))
+                      .ifPresent(report::singlePush);
+                  if (!currentOperation.startsWith("CREATE")) {
+                    lastFrameInCall
+                        .getMaybeUpdatedMemory()
+                        .map(
+                            mem ->
+                                new Mem(mem.getValue().toHexString(), mem.getOffset().intValue()))
+                        .ifPresent(report::setMem);
+                  }
+                });
+        if (
+        /*(currentTraceFrame.getDepth() > lastDepth)
+        && */ currentTraceFrame.getMaybeCode().map(Code::getSize).orElse(0) > 0) {
+          op.setCost(currentTraceFrame.getGasRemainingPostExecution().toLong() + op.getCost());
+          final VmTrace newSubTrace = new VmTrace();
+          parentTraces.addLast(newSubTrace);
+          op.setSub(newSubTrace);
+        } else {
+          if (currentTraceFrame.getPrecompiledGasCost().isPresent()) {
+            op.setCost(op.getCost() + currentTraceFrame.getPrecompiledGasCost().get().toLong());
+          }
+          op.setSub(new VmTrace());
         }
-        op.setSub(new VmTrace());
-      }
+        break;
+      default:
+        break;
     }
   }
 
-  private void handleDepthDecreased() {
+  private void handleDepthDecreased(final TraceFrame frame) {
     // check if next frame depth has decreased i.e the current operation closes the parent trace
-    if (currentTraceFrame.depthHasDecreased()) {
+    if (currentTraceFrame != null && frame.getDepth() < lastDepth) {
       currentTrace = parentTraces.removeLast();
     }
   }
@@ -163,6 +174,7 @@ public class VmTraceGenerator {
     // set gas cost and program counter
     op.setCost(currentTraceFrame.getGasCost().orElse(Gas.ZERO).toLong());
     op.setPc(currentTraceFrame.getPc());
+    //op.setOperation(currentOperation);
     return op;
   }
 
@@ -233,9 +245,9 @@ public class VmTraceGenerator {
   private void initStep(final TraceFrame frame) {
     this.currentTraceFrame = frame;
     this.currentOperation = frame.getOpcode();
-    currentTrace = parentTraces.getLast();
+    currentTrace = parentTraces.peekLast();
     // set smart contract code
-    if ("0x".equals(currentTrace.getCode())) {
+    if (currentTrace != null && "0x".equals(currentTrace.getCode())) {
       currentTrace.setCode(
           currentTraceFrame.getMaybeCode().orElse(new Code()).getBytes().toHexString());
     }

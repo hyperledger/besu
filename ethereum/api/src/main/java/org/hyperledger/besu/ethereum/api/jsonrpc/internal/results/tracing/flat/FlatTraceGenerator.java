@@ -95,13 +95,11 @@ public class FlatTraceGenerator {
     FlatTrace.Context currentContext = new FlatTrace.Context(firstFlatTraceBuilder);
     tracesContexts.addLast(currentContext);
     flatTraces.add(currentContext.getBuilder());
-    final FlatTrace.Context firstContext = currentContext;
     // declare the first transactionTrace context as the previous transactionTrace context
     long cumulativeGasCost = 0;
 
     int traceFrameIndex = 0;
     final List<TraceFrame> traceFrames = transactionTrace.getTraceFrames();
-    long refundCounter = traceFrames.get(traceFrames.size() - 1).getGasRefund().toLong();
     for (final TraceFrame traceFrame : traceFrames) {
       cumulativeGasCost +=
           traceFrame.getGasCost().orElse(Gas.ZERO).toLong()
@@ -130,7 +128,6 @@ public class FlatTraceGenerator {
         }
       } else if ("SELFDESTRUCT".equals(opcodeString)) {
         currentContext.incGasUsed(cumulativeGasCost);
-        refundCounter += 24000;
         currentContext = handleSelfDestruct(traceFrame, flatTraces, tracesContexts);
       } else if ("CREATE".equals(opcodeString) || "CREATE2".equals(opcodeString)) {
         currentContext =
@@ -154,11 +151,6 @@ public class FlatTraceGenerator {
       traceFrameIndex++;
     }
 
-    final TraceFrame lastTraceFrame = traceFrames.get(traceFrames.size() - 1);
-    firstContext.incGasUsed(
-        Math.min(
-            refundCounter,
-            (transactionTrace.getGasLimit() - lastTraceFrame.getGasRemaining().toLong()) / 2));
     return flatTraces.stream().map(FlatTrace.Builder::build);
   }
 

@@ -70,7 +70,6 @@ public class DebugOperationTracer implements OperationTracer {
       final Optional<Bytes[]> memory = captureMemory(frame);
       stackPostExecution = captureStack(frame);
       if (lastFrame != null) {
-        lastFrame.setMaybeNextDepth(Optional.of(depth));
         lastFrame.setGasRemainingPostExecution(gasRemaining);
       }
       final Optional<Map<UInt256, UInt256>> storage = captureStorage(frame);
