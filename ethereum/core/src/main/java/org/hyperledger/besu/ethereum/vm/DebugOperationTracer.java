@@ -29,7 +29,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
-import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -61,9 +60,7 @@ public class DebugOperationTracer implements OperationTracer {
     final EnumSet<ExceptionalHaltReason> exceptionalHaltReasons =
         EnumSet.copyOf(frame.getExceptionalHaltReasons());
     final Bytes inputData = frame.getInputData();
-    final Supplier<Bytes> outputData = frame::getOutputData;
     final Optional<Bytes32[]> stack = captureStack(frame);
-    final Optional<Bytes[]> memory = captureMemory(frame);
     final Optional<Map<UInt256, UInt256>> storagePreExecution = captureStorage(frame);
     final WorldUpdater worldUpdater = frame.getWorldState();
     final Optional<Bytes32[]> stackPostExecution;
@@ -71,6 +68,8 @@ public class DebugOperationTracer implements OperationTracer {
     try {
       executeOperation.execute();
     } finally {
+      final Bytes outputData = frame.getOutputData();
+      final Optional<Bytes[]> memory = captureMemory(frame);
       stackPostExecution = captureStack(frame);
       memoryPostExecution = captureMemory(frame);
       if (lastFrame != null) {

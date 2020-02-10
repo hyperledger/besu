@@ -70,7 +70,7 @@ public class DebugTraceBlockByHashTest {
             EnumSet.noneOf(ExceptionalHaltReason.class),
             null,
             Bytes.EMPTY,
-            () -> Bytes.EMPTY,
+            Bytes.EMPTY,
             Optional.empty(),
             Optional.empty(),
             Optional.empty(),

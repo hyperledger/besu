@@ -1533,6 +1533,37 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void privacyTlsOptionsRequiresTlsToBeEnabled() {
+    when(storageService.getByName("rocksdb-privacy"))
+        .thenReturn(Optional.of(rocksDBSPrivacyStorageFactory));
+    final URL configFile = this.getClass().getResource("/orion_publickey.pub");
+
+    parseCommand(
+        "--privacy-enabled",
+        "--privacy-url",
+        ENCLAVE_URI,
+        "--privacy-public-key-file",
+        configFile.getPath(),
+        "--privacy-tls-keystore-file",
+        "/Users/me/key");
+
+    verifyOptionsConstraintLoggerCall("--privacy-tls-enabled", "--privacy-tls-keystore-file");
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void privacyTlsOptionsRequiresPrivacyToBeEnabled() {
+    parseCommand("--privacy-tls-enabled", "--privacy-tls-keystore-file", "/Users/me/key");
+
+    verifyOptionsConstraintLoggerCall("--privacy-enabled", "--privacy-tls-enabled");
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
   public void fastSyncOptionsRequiresFastSyncModeToBeSet() {
     parseCommand("--fast-sync-min-peers", "5");
 

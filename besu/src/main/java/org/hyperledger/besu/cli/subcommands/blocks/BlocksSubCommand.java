@@ -40,6 +40,9 @@ import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.Optional;
 
 import io.vertx.core.Vertx;
@@ -122,11 +125,17 @@ public class BlocksSubCommand implements Runnable {
 
     @Option(
         names = "--format",
-        hidden = true,
         description =
             "The type of data to be imported, possible values are: ${COMPLETION-CANDIDATES} (default: ${DEFAULT-VALUE}).",
         arity = "1..1")
     private final BlockImportFormat format = BlockImportFormat.RLP;
+
+    @Option(
+        names = "--start-time",
+        description =
+            "The timestamp in seconds of the first block for JSON imports. Subsequent blocks will be 1 second later. (default: current time)",
+        arity = "1..1")
+    private final Long startTime = System.currentTimeMillis() / 1000;
 
     @SuppressWarnings("unused")
     @Spec
@@ -141,7 +150,7 @@ public class BlocksSubCommand implements Runnable {
       checkNotNull(parentCommand.rlpBlockImporter);
       checkNotNull(parentCommand.jsonBlockImporterFactory);
 
-      Optional<MetricsService> metricsService = initMetrics(parentCommand);
+      final Optional<MetricsService> metricsService = initMetrics(parentCommand);
 
       try {
         // As blocksImportFile even if initialized as null is injected by PicoCLI and param is
@@ -182,6 +191,8 @@ public class BlocksSubCommand implements Runnable {
         return parentCommand
             .parentCommand
             .getControllerBuilder()
+            // set to mainnet genesis block so validation rules won't reject it.
+            .clock(Clock.fixed(Instant.ofEpochSecond(startTime), ZoneOffset.UTC))
             .miningParameters(getMiningParameters())
             .build();
       } catch (final Exception e) {
@@ -200,7 +211,7 @@ public class BlocksSubCommand implements Runnable {
     private <T> void importJsonBlocks(final BesuController<T> controller, final Path path)
         throws IOException {
 
-      JsonBlockImporter<T> importer = parentCommand.jsonBlockImporterFactory.get(controller);
+      final JsonBlockImporter<T> importer = parentCommand.jsonBlockImporterFactory.get(controller);
       final String jsonData = Files.readString(path);
       importer.importChain(jsonData);
     }
@@ -270,15 +281,13 @@ public class BlocksSubCommand implements Runnable {
 
       final BesuController<?> controller = createBesuController();
       try {
-        switch (format) {
-          case RLP:
-            exportRlpFormat(controller);
-            break;
-          default:
-            throw new ParameterException(
-                spec.commandLine(), "Unsupported format: " + format.toString());
+        if (format == BlockExportFormat.RLP) {
+          exportRlpFormat(controller);
+        } else {
+          throw new ParameterException(
+              spec.commandLine(), "Unsupported format: " + format.toString());
         }
-      } catch (IOException e) {
+      } catch (final IOException e) {
         throw new ExecutionException(
             spec.commandLine(), "An error occurred while exporting blocks.", e);
       } finally {
@@ -292,7 +301,7 @@ public class BlocksSubCommand implements Runnable {
 
     private void exportRlpFormat(final BesuController<?> controller) throws IOException {
       final ProtocolContext<?> context = controller.getProtocolContext();
-      RlpBlockExporter exporter =
+      final RlpBlockExporter exporter =
           parentCommand.rlpBlockExporterFactory.get(context.getBlockchain());
       exporter.exportBlocks(blocksExportFile, getStartBlock(), getEndBlock());
     }
@@ -339,11 +348,11 @@ public class BlocksSubCommand implements Runnable {
       }
 
       // Error if data directory is empty
-      Path databasePath =
+      final Path databasePath =
           Paths.get(
               parentCommand.parentCommand.dataDir().toAbsolutePath().toString(),
               BesuController.DATABASE_PATH);
-      File databaseDirectory = new File(databasePath.toString());
+      final File databaseDirectory = new File(databasePath.toString());
       if (!databaseDirectory.isDirectory() || databaseDirectory.list().length == 0) {
         // Empty data directory, nothing to export
         throw new CommandLine.ParameterException(

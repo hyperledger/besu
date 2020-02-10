@@ -202,7 +202,11 @@ public class TraceTransactionIntegrationTest {
         frame,
         "0000000000000000000000000000000000000000000000000000000000000080",
         "0000000000000000000000000000000000000000000000000000000000000040");
-    assertMemoryContainsExactly(frame);
+    assertMemoryContainsExactly(
+        frame,
+        "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "0x0000000000000000000000000000000000000000000000000000000000000080");
     assertStorageContainsExactly(frame);
     // Reference implementation actually records the memory after expansion but before the store.
     //    assertMemoryContainsExactly(frame,

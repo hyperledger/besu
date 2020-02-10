@@ -27,8 +27,7 @@ import java.util.Optional;
 
 public interface PrivacyController {
 
-  SendTransactionResponse sendTransaction(
-      PrivateTransaction privateTransaction, String enclavePublicKey);
+  String sendTransaction(PrivateTransaction privateTransaction, String enclavePublicKey);
 
   ReceiveResponse retrieveTransaction(String enclaveKey, String enclavePublicKey);
 
@@ -43,7 +42,7 @@ public interface PrivacyController {
       String transactionEnclaveKey, PrivateTransaction privateTransaction);
 
   ValidationResult<TransactionInvalidReason> validatePrivateTransaction(
-      PrivateTransaction privateTransaction, String privacyGroupId, String enclavePublicKey);
+      PrivateTransaction privateTransaction, String enclavePublicKey);
 
   long determineEeaNonce(
       String privateFrom, String[] privateFor, Address address, String enclavePublicKey);
