@@ -55,6 +55,7 @@ public class TransactionLogsIndexer {
 
   private final EthScheduler scheduler;
   private final Blockchain blockchain;
+
   private final Path cacheDir;
 
   private final IndexingStatus indexingStatus = new IndexingStatus();
@@ -135,14 +136,19 @@ public class TransactionLogsIndexer {
   }
 
   public void cacheLogsBloomForBlockHeader(final BlockHeader blockHeader) {
-    final long blockNumber = blockHeader.getNumber();
-    LOG.info("Caching logs bloom for block {}.", "0x" + Long.toHexString(blockNumber));
-    ensurePreviousSegmentsArePresent(blockNumber);
-    final File cacheFile = calculateCacheFileName(blockNumber, cacheDir);
-    try (RandomAccessFile writer = new RandomAccessFile(cacheFile, "rw")) {
-      final long offset = (blockNumber / BLOCKS_PER_BLOOM_CACHE) * BLOOM_BITS_LENGTH;
-      writer.seek(offset);
-      writer.write(ensureBloomBitsAreCorrectLength(blockHeader.getLogsBloom().toArray()));
+    try {
+      final long blockNumber = blockHeader.getNumber();
+      LOG.info("Caching logs bloom for block {}.", "0x" + Long.toHexString(blockNumber));
+      ensurePreviousSegmentsArePresent(blockNumber);
+      final File cacheFile = calculateCacheFileName(blockNumber, cacheDir);
+      if (!cacheFile.exists()) {
+        Files.createFile(cacheFile.toPath());
+      }
+      try (RandomAccessFile writer = new RandomAccessFile(cacheFile, "rw")) {
+        final long offset = (blockNumber / BLOCKS_PER_BLOOM_CACHE) * BLOOM_BITS_LENGTH;
+        writer.seek(offset);
+        writer.write(ensureBloomBitsAreCorrectLength(blockHeader.getLogsBloom().toArray()));
+      }
     } catch (IOException e) {
       LOG.error("Unhandled indexing exception.", e);
     }
@@ -211,6 +217,10 @@ public class TransactionLogsIndexer {
 
   public EthScheduler getScheduler() {
     return scheduler;
+  }
+
+  Path getCacheDir() {
+    return cacheDir;
   }
 
   public static final class IndexingStatus {

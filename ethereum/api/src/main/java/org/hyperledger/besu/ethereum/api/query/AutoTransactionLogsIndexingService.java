@@ -16,6 +16,9 @@ package org.hyperledger.besu.ethereum.api.query;
 
 import org.hyperledger.besu.ethereum.eth.sync.BlockBroadcaster;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.OptionalLong;
 
@@ -36,15 +39,23 @@ public class AutoTransactionLogsIndexingService {
   }
 
   public void start() {
-    LOG.info("Starting Auto transaction logs indexing service.");
-    subscriptionId =
-        OptionalLong.of(
-            blockBroadcaster.subscribePropagateNewBlocks(
-                (block, __) ->
-                    transactionLogsIndexer.cacheLogsBloomForBlockHeader(block.getHeader())));
-    transactionLogsIndexer
-        .getScheduler()
-        .scheduleFutureTask(transactionLogsIndexer::indexAll, Duration.ofMinutes(1));
+    try {
+      LOG.info("Starting Auto transaction logs indexing service.");
+      final Path cacheDir = transactionLogsIndexer.getCacheDir();
+      if (!cacheDir.toFile().exists() || !cacheDir.toFile().isDirectory()) {
+        Files.createDirectory(cacheDir);
+      }
+      subscriptionId =
+          OptionalLong.of(
+              blockBroadcaster.subscribePropagateNewBlocks(
+                  (block, __) ->
+                      transactionLogsIndexer.cacheLogsBloomForBlockHeader(block.getHeader())));
+      transactionLogsIndexer
+          .getScheduler()
+          .scheduleFutureTask(transactionLogsIndexer::indexAll, Duration.ofMinutes(1));
+    } catch (IOException e) {
+      LOG.error("Unhandled indexing exception.", e);
+    }
   }
 
   public void stop() {
