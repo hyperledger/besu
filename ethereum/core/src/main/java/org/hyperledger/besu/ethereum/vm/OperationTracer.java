@@ -19,6 +19,8 @@ import org.hyperledger.besu.ethereum.vm.ehalt.ExceptionalHaltException;
 
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
+
 public interface OperationTracer {
 
   OperationTracer NO_TRACING =
@@ -27,6 +29,9 @@ public interface OperationTracer {
   void traceExecution(
       MessageFrame frame, Optional<Gas> currentGasCost, ExecuteOperation executeOperation)
       throws ExceptionalHaltException;
+
+  default void tracePrecompileCall(
+      final MessageFrame frame, final Gas gasRequirement, final Bytes output) {};
 
   interface ExecuteOperation {
 
