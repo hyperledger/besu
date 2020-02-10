@@ -25,9 +25,10 @@ v1.4 will not start.
 After the migration starts, logs display the progress.  When the migration is complete, Besu continues 
 starting up as usual. 
 
-## Expected time to perform migration 
+## During migration  
 
-TBA 
+Do not stop the migration running once it has started. If the migration is stopped, you will need to restore
+your Besu database from backup and restart the migration process. 
 
 ## Migration support 
 
