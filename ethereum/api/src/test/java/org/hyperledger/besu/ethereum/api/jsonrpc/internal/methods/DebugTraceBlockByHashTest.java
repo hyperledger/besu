@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionT
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
@@ -66,9 +67,11 @@ public class DebugTraceBlockByHashTest {
             "NONE",
             Gas.of(45),
             Optional.of(Gas.of(56)),
+            Gas.ZERO,
             2,
             EnumSet.noneOf(ExceptionalHaltReason.class),
             null,
+            Wei.ZERO,
             Bytes.EMPTY,
             Bytes.EMPTY,
             Optional.empty(),
@@ -80,9 +83,8 @@ public class DebugTraceBlockByHashTest {
             Optional.empty(),
             0,
             Optional.empty(),
-            Optional.empty(),
-            Optional.empty(),
             false,
+            Optional.empty(),
             Optional.empty());
 
     final TransactionProcessor.Result transaction1Result = mock(TransactionProcessor.Result.class);

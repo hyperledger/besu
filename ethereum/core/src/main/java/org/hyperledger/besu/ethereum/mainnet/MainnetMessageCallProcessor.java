@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
+import org.hyperledger.besu.ethereum.vm.OperationTracer;
 
 import java.util.Collection;
 
@@ -48,7 +49,7 @@ public class MainnetMessageCallProcessor extends AbstractMessageProcessor {
   }
 
   @Override
-  public void start(final MessageFrame frame) {
+  public void start(final MessageFrame frame, final OperationTracer operationTracer) {
     LOG.trace("Executing message-call");
     try {
       transferValue(frame);
@@ -57,7 +58,7 @@ public class MainnetMessageCallProcessor extends AbstractMessageProcessor {
       final PrecompiledContract precompile =
           precompiles.get(frame.getContractAddress(), frame.getContractAccountVersion());
       if (precompile != null) {
-        executePrecompile(precompile, frame);
+        executePrecompile(precompile, frame, operationTracer);
       } else {
         frame.setState(MessageFrame.State.CODE_EXECUTING);
       }
@@ -114,7 +115,10 @@ public class MainnetMessageCallProcessor extends AbstractMessageProcessor {
    *
    * @param contract The contract this is a message call to.
    */
-  private void executePrecompile(final PrecompiledContract contract, final MessageFrame frame) {
+  private void executePrecompile(
+      final PrecompiledContract contract,
+      final MessageFrame frame,
+      final OperationTracer operationTracer) {
     final Gas gasRequirement = contract.gasRequirement(frame.getInputData());
     if (frame.getRemainingGas().compareTo(gasRequirement) < 0) {
       LOG.trace(
@@ -127,6 +131,7 @@ public class MainnetMessageCallProcessor extends AbstractMessageProcessor {
     } else {
       frame.decrementRemainingGas(gasRequirement);
       final Bytes output = contract.compute(frame.getInputData(), frame);
+      operationTracer.tracePrecompileCall(frame, gasRequirement, output);
       if (output != null) {
         if (contract.getName().equals("Privacy")) {
           // do not decrement the gas requirement for a privacy pre-compile contract call -> leads
