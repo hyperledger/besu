@@ -94,7 +94,7 @@ public class DebugOperationTracer implements OperationTracer {
               worldUpdater,
               frame.getRevertReason(),
               maybeRefunds,
-              Optional.ofNullable(frame.getMessageFrameStack().peek().getCode()),
+              Optional.ofNullable(frame.getMessageFrameStack().peek()).map(MessageFrame::getCode),
               frame.getCurrentOperation().getStackItemsProduced(),
               stackPostExecution,
               currentOperation.isVirtualOperation(),
