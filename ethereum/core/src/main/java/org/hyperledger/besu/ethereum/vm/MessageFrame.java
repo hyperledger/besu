@@ -239,6 +239,7 @@ public class MessageFrame {
   private Operation currentOperation;
   private final Consumer<MessageFrame> completer;
   private Optional<MemoryEntry> maybeUpdatedMemory = Optional.empty();
+  private Optional<MemoryEntry> maybeUpdatedStorage = Optional.empty();
 
   public static Builder builder() {
     return new Builder();
@@ -567,16 +568,6 @@ public class MessageFrame {
    *
    * @param offset The offset in memory
    * @param value The value to set in memory
-   */
-  public void writeMemory(final UInt256 offset, final byte value) {
-    writeMemory(offset, value, false);
-  }
-
-  /**
-   * Write byte to memory
-   *
-   * @param offset The offset in memory
-   * @param value The value to set in memory
    * @param explicitMemoryUpdate true if triggered by a memory opcode, false otherwise
    */
   public void writeMemory(
@@ -674,6 +665,9 @@ public class MessageFrame {
     maybeUpdatedMemory = Optional.of(new MemoryEntry(offset, value));
   }
 
+  public void storageWasUpdated(final UInt256 storageAddress, final Bytes value) {
+    maybeUpdatedStorage = Optional.of(new MemoryEntry(storageAddress, value));
+  }
   /**
    * Accumulate a log.
    *
@@ -993,8 +987,13 @@ public class MessageFrame {
     return maybeUpdatedMemory;
   }
 
+  public Optional<MemoryEntry> getMaybeUpdatedStorage() {
+    return maybeUpdatedStorage;
+  }
+
   public void reset() {
     maybeUpdatedMemory = Optional.empty();
+    maybeUpdatedStorage = Optional.empty();
   }
 
   public static class Builder {

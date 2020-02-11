@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Gas;
+import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
@@ -84,9 +85,11 @@ public class DebugTraceBlockTest {
             "NONE",
             Gas.of(45),
             Optional.of(Gas.of(56)),
+            Gas.ZERO,
             2,
             EnumSet.noneOf(ExceptionalHaltReason.class),
             null,
+            Wei.ZERO,
             Bytes.EMPTY,
             Bytes.EMPTY,
             Optional.empty(),
@@ -98,9 +101,8 @@ public class DebugTraceBlockTest {
             Optional.empty(),
             0,
             Optional.empty(),
-            Optional.empty(),
-            Optional.empty(),
             false,
+            Optional.empty(),
             Optional.empty());
 
     final TransactionProcessor.Result transaction1Result = mock(TransactionProcessor.Result.class);
