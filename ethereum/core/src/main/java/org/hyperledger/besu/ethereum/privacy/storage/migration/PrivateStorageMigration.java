@@ -22,6 +22,7 @@ import static org.hyperledger.besu.ethereum.privacy.storage.LegacyPrivateStateKe
 import static org.hyperledger.besu.ethereum.privacy.storage.LegacyPrivateStateKeyValueStorage.STATUS_KEY_SUFFIX;
 
 import org.hyperledger.besu.enclave.Enclave;
+import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -150,6 +151,12 @@ public class PrivateStorageMigration {
       receiveResponse =
           enclave.receive(pmt.getPayload().toBase64String(), enclaveKey.toBase64String());
       return Optional.of(receiveResponse);
+    } catch (final EnclaveClientException e) {
+      if (e.getStatusCode() == 404) {
+        return Optional.empty();
+      } else {
+        throw new PrivateStorageMigrationException(e);
+      }
     } catch (final Exception e) {
       throw new PrivateStorageMigrationException(e);
     }

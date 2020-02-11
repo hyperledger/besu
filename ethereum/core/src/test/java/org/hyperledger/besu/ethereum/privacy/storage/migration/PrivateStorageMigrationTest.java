@@ -16,15 +16,19 @@ package org.hyperledger.besu.ethereum.privacy.storage.migration;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.hyperledger.besu.ethereum.privacy.storage.migration.PrivateTransactionDataFixture.privacyMarkerTransaction;
 import static org.hyperledger.besu.ethereum.privacy.storage.migration.PrivateTransactionDataFixture.privateTransaction;
 import static org.hyperledger.besu.ethereum.privacy.storage.migration.PrivateTransactionDataFixture.successfulPrivateTxProcessingResult;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.enclave.Enclave;
+import org.hyperledger.besu.enclave.EnclaveClientException;
+import org.hyperledger.besu.enclave.EnclaveServerException;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -221,6 +225,42 @@ public class PrivateStorageMigrationTest {
 
     assertThat(actualTransactionReceipt).isEqualTo(expectedPrivateTransactionReceipt);
     assertThatLegacyTransactionResultDataWasDeleted(privateTransaction);
+  }
+
+  @Test
+  public void migrationShouldFailWhenEnclaveFailsWithServerException() {
+    createPrivacyMarkerTransaction();
+
+    when(enclave.receive(any(), any())).thenThrow(new EnclaveServerException(500, "foo"));
+
+    final Throwable throwable = catchThrowable(() -> migration.migratePrivateStorage());
+
+    assertThat(throwable).isInstanceOf(PrivateStorageMigrationException.class);
+  }
+
+  @Test
+  public void migrationShouldFailWhenEnclaveFailsWithClientExceptionDifferentFromNotFound() {
+    createPrivacyMarkerTransaction();
+
+    when(enclave.receive(any(), any())).thenThrow(new EnclaveClientException(400, "foo"));
+
+    final Throwable throwable = catchThrowable(() -> migration.migratePrivateStorage());
+
+    assertThat(throwable).isInstanceOf(PrivateStorageMigrationException.class);
+  }
+
+  @Test
+  public void migrationShouldNotFailWhenEnclaveFailsWithNotFound() {
+    final Transaction privacyMarkerTransaction = createPrivacyMarkerTransaction();
+    final String transactionKey = privacyMarkerTransaction.getData().orElseThrow().toBase64String();
+    final String enclaveKey = ENCLAVE_KEY.toBase64String();
+
+    when(enclave.receive(eq(transactionKey), eq(enclaveKey)))
+        .thenThrow(new EnclaveClientException(404, "EnclavePayloadNotFound"));
+
+    migration.migratePrivateStorage();
+
+    verify(enclave).receive(eq(transactionKey), eq(enclaveKey));
   }
 
   private void createLegacyTransactionResultData(
