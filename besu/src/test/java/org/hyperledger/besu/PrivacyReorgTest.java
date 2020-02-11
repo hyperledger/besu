@@ -181,14 +181,13 @@ public class PrivacyReorgTest {
     final DefaultBlockchain blockchain = (DefaultBlockchain) protocolContext.getBlockchain();
     final PrivateStateStorage privateStateStorage = privacyParameters.getPrivateStateStorage();
 
-    final String firstBlockStateRoot =
-        "0x16979b290f429e06d86a43584c7d8689d4292ade9a602e5c78e2867c6ebd904e";
+    final Transaction privacyMarkerTransaction = buildMarkerTransaction(getEnclaveKey(enclave.clientUrl()));
     final Block firstBlock =
         gen.block(
-            getBlockOptionsNoTransaction(
+            getBlockOptionsWithTransaction(
                 blockchain.getGenesisBlock(),
-                generateMarker(getEnclaveKey(enclave.clientUrl())),
-                firstBlockStateRoot));
+                privacyMarkerTransaction,
+                FIRST_BLOCK_WITH_SINGLE_TRANSACTION_STATE_ROOT));
 
     appendBlock(besuController, blockchain, protocolContext, firstBlock);
 
@@ -222,14 +221,12 @@ public class PrivacyReorgTest {
     final ProtocolContext<?> protocolContext = besuController.getProtocolContext();
     final DefaultBlockchain blockchain = (DefaultBlockchain) protocolContext.getBlockchain();
 
-    final String firstBlockStateRoot =
-        "0x16979b290f429e06d86a43584c7d8689d4292ade9a602e5c78e2867c6ebd904e";
     final Block firstBlock =
         gen.block(
-            getBlockOptionsNoTransaction(
+            getBlockOptionsWithTransaction(
                 blockchain.getGenesisBlock(),
-                generateMarker(getEnclaveKey(enclave.clientUrl())),
-                firstBlockStateRoot));
+                buildMarkerTransaction(getEnclaveKey(enclave.clientUrl())),
+                FIRST_BLOCK_WITH_SINGLE_TRANSACTION_STATE_ROOT));
 
     appendBlock(besuController, blockchain, protocolContext, firstBlock);
 
@@ -266,9 +263,9 @@ public class PrivacyReorgTest {
         "0x35c315ee7d272e5b612d454ee87c948657310ab33208b57122f8d0525e91f35e";
     final Block secondBlock =
         gen.block(
-            getBlockOptionsNoTransaction(
+            getBlockOptionsWithTransaction(
                 firstBlock,
-                generateMarker(getEnclaveKey(enclave.clientUrl())),
+                buildMarkerTransaction(getEnclaveKey(enclave.clientUrl())),
                 secondBlockStateRoot));
 
     appendBlock(besuController, blockchain, protocolContext, firstBlock);
@@ -314,9 +311,9 @@ public class PrivacyReorgTest {
 
     final Block firstBlock =
         gen.block(
-            getBlockOptionsNoTransaction(
+            getBlockOptionsWithTransaction(
                 blockchain.getGenesisBlock(),
-                generateMarker(getEnclaveKey(enclave.clientUrl())),
+                buildMarkerTransaction(getEnclaveKey(enclave.clientUrl())),
                 FIRST_BLOCK_WITH_SINGLE_TRANSACTION_STATE_ROOT));
 
     appendBlock(besuController, blockchain, protocolContext, firstBlock);
@@ -363,7 +360,7 @@ public class PrivacyReorgTest {
         gen.block(
             getBlockOptionsWithTransactionAndDifficulty(
                 secondForkBlock,
-                generateMarker(getEnclaveKey(enclave.clientUrl())),
+                buildMarkerTransaction(getEnclaveKey(enclave.clientUrl())),
                 secondForkBlock.getHeader().getDifficulty().plus(10L),
                 thirdForkBlockStateRoot));
 
@@ -449,7 +446,7 @@ public class PrivacyReorgTest {
     }
   }
 
-  private Transaction generateMarker(final Bytes payload) {
+  private Transaction buildMarkerTransaction(final Bytes payload) {
     return Transaction.builder()
         .chainId(BigInteger.valueOf(2018))
         .gasLimit(60000)
@@ -491,11 +488,11 @@ public class PrivacyReorgTest {
         parentBlock);
   }
 
-  private BlockDataGenerator.BlockOptions getBlockOptionsNoTransaction(
-      final Block parentBlock, final Transaction markerTransaction, final String stateRoot) {
+  private BlockDataGenerator.BlockOptions getBlockOptionsWithTransaction(
+      final Block parentBlock, final Transaction transaction, final String stateRoot) {
     return getBlockOptions(
         new BlockDataGenerator.BlockOptions()
-            .addTransaction(markerTransaction)
+            .addTransaction(transaction)
             .setReceiptsRoot(Hash.fromHexString(BLOCK_WITH_SINGLE_TRANSACTION_RECEIPTS_ROOT))
             .setGasUsed(23176)
             .setStateRoot(Hash.fromHexString(stateRoot)),
@@ -516,12 +513,12 @@ public class PrivacyReorgTest {
 
   private BlockDataGenerator.BlockOptions getBlockOptionsWithTransactionAndDifficulty(
       final Block parentBlock,
-      final Transaction markerTransaction,
+      final Transaction transaction,
       final Difficulty difficulty,
       final String stateRoot) {
     return getBlockOptions(
         new BlockDataGenerator.BlockOptions()
-            .addTransaction(markerTransaction)
+            .addTransaction(transaction)
             .setDifficulty(difficulty)
             .setReceiptsRoot(Hash.fromHexString(BLOCK_WITH_SINGLE_TRANSACTION_RECEIPTS_ROOT))
             .setGasUsed(23176)
