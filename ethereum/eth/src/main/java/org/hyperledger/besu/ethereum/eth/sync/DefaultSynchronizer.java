@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastDownloaderFactory;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncDownloader;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncException;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.fullsync.FullSyncDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.state.PendingBlocks;
@@ -157,13 +156,11 @@ public class DefaultSynchronizer<C> implements Synchronizer {
       // We've been shutdown which will have triggered the fast sync future to complete
       return;
     }
-    final Throwable rootCause = ExceptionUtils.rootCause(error);
-    if (rootCause instanceof FastSyncException) {
-      LOG.error(
-          "Fast sync failed ({}), switching to full sync.",
-          ((FastSyncException) rootCause).getError());
-    } else if (error != null) {
-      LOG.error("Fast sync failed, switching to full sync.", error);
+    if (error != null) {
+      final Throwable rootCause = ExceptionUtils.rootCause(error);
+      LOG.error("Fast sync failed.", rootCause);
+      stop();
+      return;
     } else {
       LOG.info(
           "Fast sync completed successfully with pivot block {}",
