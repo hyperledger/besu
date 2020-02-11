@@ -1,8 +1,12 @@
 # Changelog
 
-## 1.4 RC 
+## 1.4 RC
 
-### Additions and Improvements 
+### Breaking Changes
+
+- Fast sync is now enabled by default for named networks such as Mainnet, Ropsten, Mordor, etc.
+
+### Additions and Improvements
 
 - New`trace_replayBlockTransactions` JSON-RPC API
 
