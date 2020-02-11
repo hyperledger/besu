@@ -16,18 +16,17 @@ package org.hyperledger.besu.ethereum.privacy.storage.migration;
 
 public class PrivateStorageMigrationException extends RuntimeException {
 
+  private static final String MIGRATION_ERROR_MSG = "Unexpected error during private database migration. Please re-sync your node to avoid data corruption.";
+
   public PrivateStorageMigrationException(final String message) {
     super(message);
   }
 
   public PrivateStorageMigrationException() {
-    super(
-        "Unexpected error during private database migration. Please re-sync your node to avoid data corruption.");
+    super(MIGRATION_ERROR_MSG);
   }
 
   public PrivateStorageMigrationException(final Throwable th) {
-    super(
-        "Unexpected error during private database migration. Please re-sync your node to avoid data corruption.",
-        th);
+    super(MIGRATION_ERROR_MSG, th);
   }
 }

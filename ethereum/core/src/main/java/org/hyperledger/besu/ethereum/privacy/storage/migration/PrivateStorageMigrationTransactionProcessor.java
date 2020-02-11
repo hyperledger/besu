@@ -24,7 +24,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransactionSimulatorResult;
+import org.hyperledger.besu.ethereum.privacy.PrivateStorageMigrationTransactionProcessorResult;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -55,7 +55,7 @@ public class PrivateStorageMigrationTransactionProcessor {
     this.privateStateRootResolver = privateStateRootResolver;
   }
 
-  public Optional<PrivateTransactionSimulatorResult> process(
+  public Optional<PrivateStorageMigrationTransactionProcessorResult> process(
       final String privacyGroupId,
       final PrivateTransaction privateTransaction,
       final BlockHeader header) {
@@ -96,9 +96,9 @@ public class PrivateStorageMigrationTransactionProcessor {
             new BlockHashLookup(header, blockchain),
             privacyGroupIdBytes);
 
-    final PrivateTransactionSimulatorResult txSimulatorResult =
-        new PrivateTransactionSimulatorResult(
-            privateTransaction, result, Optional.of(disposablePrivateState.rootHash()));
+    final PrivateStorageMigrationTransactionProcessorResult txSimulatorResult =
+        new PrivateStorageMigrationTransactionProcessorResult(
+            result, Optional.of(disposablePrivateState.rootHash()));
 
     if (result.isSuccessful()) {
       disposablePrivateState.persist();

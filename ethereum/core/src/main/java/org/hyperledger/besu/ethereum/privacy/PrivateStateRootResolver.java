@@ -14,15 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.privacy;
 
+import java.util.Optional;
+import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateBlockMetadata;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
-
-import java.util.Optional;
-
-import org.apache.tuweni.bytes.Bytes32;
 
 public class PrivateStateRootResolver {
   public static final Hash EMPTY_ROOT_HASH = Hash.wrap(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
@@ -38,13 +36,16 @@ public class PrivateStateRootResolver {
         privateStateStorage.getPrivateBlockMetadata(blockHash, privacyGroupId);
     if (privateBlockMetadataOptional.isPresent()) {
       // Check if block already has meta data for the privacy group
-      return privateBlockMetadataOptional.get().getLatestStateRoot();
+      return privateBlockMetadataOptional.get().getLatestStateRoot().orElse(EMPTY_ROOT_HASH);
     }
-    final PrivacyGroupHeadBlockMap privacyGroupHeadBlockMap =
-        privateStateStorage
-            .getPrivacyGroupHeadBlockMap(blockHash)
-            .orElse(PrivacyGroupHeadBlockMap.EMPTY);
-    return resolveLastStateRoot(privacyGroupId, privacyGroupHeadBlockMap);
+
+    final Optional<PrivacyGroupHeadBlockMap> maybePrivacyGroupHeadBlockMap = privateStateStorage
+        .getPrivacyGroupHeadBlockMap(blockHash);
+    if (maybePrivacyGroupHeadBlockMap.isPresent()) {
+      return resolveLastStateRoot(privacyGroupId, maybePrivacyGroupHeadBlockMap.get());
+    } else {
+      return EMPTY_ROOT_HASH;
+    }
   }
 
   private Hash resolveLastStateRoot(
@@ -53,11 +54,9 @@ public class PrivateStateRootResolver {
     if (privacyGroupHeadBlockMap.containsKey(privacyGroupId)) {
       // Check this PG head block is being tracked
       final Hash blockHashForLastBlockWithTx = privacyGroupHeadBlockMap.get(privacyGroupId);
-      lastRootHash =
-          privateStateStorage
-              .getPrivateBlockMetadata(blockHashForLastBlockWithTx, privacyGroupId)
-              .get()
-              .getLatestStateRoot();
+      lastRootHash = privateStateStorage
+          .getPrivateBlockMetadata(blockHashForLastBlockWithTx, privacyGroupId)
+          .flatMap(PrivateBlockMetadata::getLatestStateRoot).orElse(EMPTY_ROOT_HASH);
     } else {
       // First transaction for this PG
       lastRootHash = EMPTY_ROOT_HASH;

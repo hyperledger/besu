@@ -18,7 +18,7 @@ import org.hyperledger.besu.cli.BesuCommand;
 import org.hyperledger.besu.controller.BesuController;
 
 /**
- * All PreSynchronizationTask insatnces execute after the {@link BesuController} instance in {@link
+ * All PreSynchronizationTask instances execute after the {@link BesuController} instance in {@link
  * BesuCommand} is ready and before {@link BesuCommand#startSynchronization()} is called
  */
 public interface PreSynchronizationTask {

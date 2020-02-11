@@ -31,7 +31,7 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionReceipt;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransactionSimulatorResult;
+import org.hyperledger.besu.ethereum.privacy.PrivateStorageMigrationTransactionProcessorResult;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateBlockMetadata;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
@@ -61,7 +61,7 @@ public class PrivateStorageMigration {
   private final Blockchain blockchain;
   private final Enclave enclave;
   private final Bytes enclaveKey;
-  private final Address privacyAddress;
+  private final Address privacyPrecompileAddress;
   private final PrivateStorageMigrationTransactionProcessor transactionProcessor;
 
   private final List<String> migratedPrivacyGroups = new ArrayList<>();
@@ -72,18 +72,18 @@ public class PrivateStorageMigration {
       final Blockchain blockchain,
       final Enclave enclave,
       final Bytes enclaveKey,
-      final Address privacyAddress,
+      final Address privacyPrecompileAddress,
       final PrivateStorageMigrationTransactionProcessor transactionProcessor) {
     this.privateStateStorage = privateStateStorage;
     this.blockchain = blockchain;
     this.enclave = enclave;
     this.enclaveKey = enclaveKey;
-    this.privacyAddress = privacyAddress;
+    this.privacyPrecompileAddress = privacyPrecompileAddress;
     this.transactionProcessor = transactionProcessor;
   }
 
   public void migratePrivateStorage() {
-    long migrationStartTimestamp = System.currentTimeMillis();
+    final long migrationStartTimestamp = System.currentTimeMillis();
     final AtomicLong numOfPrivateTxs = new AtomicLong();
     final long chainHeadBlockNumber = blockchain.getChainHeadBlockNumber();
 
@@ -114,7 +114,7 @@ public class PrivateStorageMigration {
                       parsePrivateTransaction(receiveResponse);
                   final Updater updater = privateStateStorage.updater();
 
-                  final PrivateTransactionSimulatorResult result =
+                  final PrivateStorageMigrationTransactionProcessorResult result =
                       migratePrivateTransaction(
                           blockHeader, privacyGroupId, pmt, privateTransaction, updater);
 
@@ -136,7 +136,7 @@ public class PrivateStorageMigration {
 
     deleteLegacyData();
 
-    long migrationDuration = System.currentTimeMillis() - migrationStartTimestamp;
+    final long migrationDuration = System.currentTimeMillis() - migrationStartTimestamp;
     LOG.info(
         "Migration took {} seconds to process {} blocks and migrate {} private transactions",
         migrationDuration / 1000.0,
@@ -150,8 +150,8 @@ public class PrivateStorageMigration {
       receiveResponse =
           enclave.receive(pmt.getPayload().toBase64String(), enclaveKey.toBase64String());
       return Optional.of(receiveResponse);
-    } catch (Exception e) {
-      return Optional.empty();
+    } catch (final Exception e) {
+      throw new PrivateStorageMigrationException(e);
     }
   }
 
@@ -182,7 +182,7 @@ public class PrivateStorageMigration {
     return privateTransaction;
   }
 
-  private PrivateTransactionSimulatorResult migratePrivateTransaction(
+  private PrivateStorageMigrationTransactionProcessorResult migratePrivateTransaction(
       final BlockHeader blockHeader,
       final String privacyGroupId,
       final Transaction privacyMarkerTransaction,
@@ -190,14 +190,18 @@ public class PrivateStorageMigration {
       final Updater updater) {
     final Hash blockHash = blockHeader.getHash();
 
-    final PrivateTransactionSimulatorResult txResult =
-        simulatePrivateTransaction(blockHeader, privacyGroupId, privateTransaction);
+    final PrivateStorageMigrationTransactionProcessorResult txResult = transactionProcessor
+            .process(privacyGroupId, privateTransaction, blockHeader)
+            .orElseThrow(PrivateStorageMigrationException::new);
+
+    LOG.trace("Executed private transaction {} (result = {}}", privateTransaction.getHash(),
+        txResult.getResult().getStatus());
 
     if (txResult.isSuccessful()) {
       createPrivateBlockMetadata(
           blockHeader, privacyGroupId, privacyMarkerTransaction.getHash(), txResult, updater);
 
-      createTransactionReceipt(blockHash, txResult, updater);
+      createTransactionReceipt(blockHash, privateTransaction, txResult, updater);
 
       if (!migratedTransactions.containsKey(blockHash)) {
         migratedTransactions.put(blockHash, new ArrayList<>());
@@ -208,29 +212,11 @@ public class PrivateStorageMigration {
     return txResult;
   }
 
-  private PrivateTransactionSimulatorResult simulatePrivateTransaction(
-      final BlockHeader blockHeader,
-      final String privacyGroupId,
-      final PrivateTransaction privateTransaction) {
-
-    final PrivateTransactionSimulatorResult simulatorResult =
-        transactionProcessor
-            .process(privacyGroupId, privateTransaction, blockHeader)
-            .orElseThrow(PrivateStorageMigrationException::new);
-
-    LOG.trace(
-        "Executed private transaction {} (result = {}}",
-        privateTransaction.getHash(),
-        simulatorResult.getResult().getStatus());
-
-    return simulatorResult;
-  }
-
   private void createPrivateBlockMetadata(
       final BlockHeader blockHeader,
       final String privacyGroupId,
       final Hash privacyMarkerTxHash,
-      final PrivateTransactionSimulatorResult txResult,
+      final PrivateStorageMigrationTransactionProcessorResult txResult,
       final Updater updater) {
     final Bytes32 privacyGroupIdBytes = Bytes32.wrap(Bytes.fromBase64String(privacyGroupId));
     final PrivateBlockMetadata privateBlockMetadata =
@@ -255,17 +241,18 @@ public class PrivateStorageMigration {
 
   private void createTransactionReceipt(
       final Hash blockHash,
-      final PrivateTransactionSimulatorResult txResult,
+      final PrivateTransaction privateTransaction,
+      final PrivateStorageMigrationTransactionProcessorResult txResult,
       final Updater updater) {
     final PrivateTransactionReceipt privateTransactionReceipt =
         new PrivateTransactionReceipt(txResult.getResult());
     updater.putTransactionReceipt(
-        blockHash, txResult.getTransactionHash(), privateTransactionReceipt);
+        blockHash, privateTransaction.getHash(), privateTransactionReceipt);
 
     LOG.trace(
         "Created transaction receipt for block {}, private transaction {}",
         blockHash,
-        txResult.getTransactionHash());
+        privateTransaction.getHash());
   }
 
   private void updatePrivacyGroupHeadBlockMap(
@@ -283,7 +270,7 @@ public class PrivateStorageMigration {
 
   private List<Transaction> findPMTsInBlock(final Block block) {
     return block.getBody().getTransactions().stream()
-        .filter(tx -> tx.getTo().isPresent() && tx.getTo().get().equals(privacyAddress))
+        .filter(tx -> tx.getTo().isPresent() && tx.getTo().get().equals(privacyPrecompileAddress))
         .collect(Collectors.toList());
   }
 

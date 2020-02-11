@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.privacy.storage;
 
+import java.util.Optional;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
@@ -54,13 +55,13 @@ public class PrivateBlockMetadata {
     return new PrivateBlockMetadata(privateTransactionMetadataList);
   }
 
-  public Hash getLatestStateRoot() {
+  public Optional<Hash> getLatestStateRoot() {
     if (privateTransactionMetadataList.size() > 0) {
-      return privateTransactionMetadataList
+      return Optional.ofNullable(privateTransactionMetadataList
           .get(privateTransactionMetadataList.size() - 1)
-          .getStateRoot();
+          .getStateRoot());
     } else {
-      return null;
+      return Optional.empty();
     }
   }
 }

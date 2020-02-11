@@ -23,18 +23,16 @@ import java.util.Objects;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor.Result;
 
-public class PrivateTransactionSimulatorResult {
+public class PrivateStorageMigrationTransactionProcessorResult {
 
-  private final PrivateTransaction transaction;
   private final PrivateTransactionProcessor.Result result;
   private final Optional<Hash> resultingRootHash;
 
-  public PrivateTransactionSimulatorResult(
-      final PrivateTransaction transaction,
-      final PrivateTransactionProcessor.Result result,
+  public PrivateStorageMigrationTransactionProcessorResult(
+      final Result result,
       final Optional<Hash> resultingRootHash) {
-    this.transaction = transaction;
     this.result = result;
     this.resultingRootHash = resultingRootHash;
   }
@@ -55,10 +53,6 @@ public class PrivateTransactionSimulatorResult {
     return result;
   }
 
-  public Hash getTransactionHash() {
-    return transaction.getHash();
-  }
-
   public Optional<Hash> getResultingRootHash() {
     return resultingRootHash;
   }
@@ -71,14 +65,13 @@ public class PrivateTransactionSimulatorResult {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    final PrivateTransactionSimulatorResult that = (PrivateTransactionSimulatorResult) o;
-    return transaction.equals(that.transaction)
-        && result.equals(that.result)
+    final PrivateStorageMigrationTransactionProcessorResult that = (PrivateStorageMigrationTransactionProcessorResult) o;
+    return result.equals(that.result)
         && resultingRootHash.equals(that.resultingRootHash);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(transaction, result, resultingRootHash);
+    return Objects.hash(result, resultingRootHash);
   }
 }

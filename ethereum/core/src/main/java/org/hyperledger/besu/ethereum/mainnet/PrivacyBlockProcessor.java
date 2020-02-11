@@ -40,14 +40,14 @@ public class PrivacyBlockProcessor implements BlockProcessor {
       final BlockHeader blockHeader,
       final List<Transaction> transactions,
       final List<BlockHeader> ommers) {
-    final PrivacyGroupHeadBlockMap privacyGroupHeadBlockHash =
+    final PrivacyGroupHeadBlockMap privacyGroupHeadBlockMap =
         new PrivacyGroupHeadBlockMap(
             privateStateStorage
                 .getPrivacyGroupHeadBlockMap(blockHeader.getParentHash())
                 .orElse(PrivacyGroupHeadBlockMap.EMPTY));
     privateStateStorage
         .updater()
-        .putPrivacyGroupHeadBlockMap(blockHeader.getHash(), privacyGroupHeadBlockHash)
+        .putPrivacyGroupHeadBlockMap(blockHeader.getHash(), privacyGroupHeadBlockMap)
         .commit();
     return blockProcessor.processBlock(blockchain, worldState, blockHeader, transactions, ommers);
   }

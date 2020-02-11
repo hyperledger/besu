@@ -16,26 +16,23 @@ package org.hyperledger.besu.ethereum.privacy.storage;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+import java.util.Arrays;
+import java.util.Optional;
+import java.util.function.Predicate;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionReceipt;
-import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage.Updater;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
-
-import java.util.Arrays;
-import java.util.Optional;
-import java.util.function.Predicate;
-
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
 public class PrivateStateKeyValueStorage implements PrivateStateStorage {
 
   public static final int SCHEMA_VERSION_1_0_x = 1;
   public static final int SCHEMA_VERSION_1_4_x = 2;
 
-  private static final Bytes DB_VERSION_SUFFIX = Bytes.of("DBVERSION".getBytes(UTF_8));
+  private static final Bytes DB_VERSION_KEY = Bytes.of("DBVERSION".getBytes(UTF_8));
   private static final Bytes TX_RECEIPT_SUFFIX = Bytes.of("RECEIPT".getBytes(UTF_8));
   private static final Bytes METADATA_KEY_SUFFIX = Bytes.of("METADATA".getBytes(UTF_8));
   private static final Bytes PRIVACY_GROUP_HEAD_BLOCK_MAP_SUFFIX =
@@ -71,7 +68,7 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
 
   @Override
   public int getSchemaVersion() {
-    return get(Bytes.EMPTY, DB_VERSION_SUFFIX).map(Bytes::toInt).orElse(SCHEMA_VERSION_1_0_x);
+    return get(Bytes.EMPTY, DB_VERSION_KEY).map(Bytes::toInt).orElse(SCHEMA_VERSION_1_0_x);
   }
 
   @Override
@@ -121,7 +118,7 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
     }
 
     @Override
-    public Updater putPrivateBlockMetadata(
+    public PrivateStateStorage.Updater putPrivateBlockMetadata(
         final Bytes32 blockHash,
         final Bytes32 privacyGroupId,
         final PrivateBlockMetadata metadata) {
@@ -141,7 +138,7 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
 
     @Override
     public PrivateStateStorage.Updater putDatabaseVersion(final int version) {
-      set(Bytes.EMPTY, DB_VERSION_SUFFIX, Bytes.ofUnsignedInt(version));
+      set(Bytes.EMPTY, DB_VERSION_KEY, Bytes.ofUnsignedInt(version));
       return this;
     }
 

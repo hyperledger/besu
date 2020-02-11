@@ -60,8 +60,8 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
     this.transactionPool = transactionPool;
     this.privacyParameters = privacyParameters;
 
-    final PrivateStateRootResolver privateStateRootResolver =
-        new PrivateStateRootResolver(privacyParameters.getPrivateStateStorage());
+    final PrivateStateRootResolver privateStateRootResolver = new PrivateStateRootResolver(
+        privacyParameters.getPrivateStateStorage());
     this.privateNonceProvider =
         new ChainHeadPrivateNonceProvider(
             blockchainQueries.getBlockchain(),
@@ -83,10 +83,6 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
 
   public PrivacyParameters getPrivacyParameters() {
     return privacyParameters;
-  }
-
-  public PrivateNonceProvider getPrivateNonceProvider() {
-    return privateNonceProvider;
   }
 
   @Override

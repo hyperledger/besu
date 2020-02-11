@@ -99,9 +99,9 @@ public class DefaultPrivacyControllerTest {
           .signAndBuild(KEY_PAIR);
 
   private Enclave mockEnclave() {
-    Enclave mockEnclave = mock(Enclave.class);
-    SendResponse response = new SendResponse(TRANSACTION_KEY);
-    ReceiveResponse receiveResponse = new ReceiveResponse(new byte[0], PRIVACY_GROUP_ID, null);
+    final Enclave mockEnclave = mock(Enclave.class);
+    final SendResponse response = new SendResponse(TRANSACTION_KEY);
+    final ReceiveResponse receiveResponse = new ReceiveResponse(new byte[0], PRIVACY_GROUP_ID, null);
     when(mockEnclave.send(anyString(), anyString(), anyList())).thenReturn(response);
     when(mockEnclave.send(anyString(), anyString(), anyString())).thenReturn(response);
     when(mockEnclave.receive(any(), any())).thenReturn(receiveResponse);
@@ -161,7 +161,6 @@ public class DefaultPrivacyControllerTest {
 
   @Test
   public void sendsValidLegacyTransaction() {
-
     final PrivateTransaction transaction = buildLegacyPrivateTransaction(1);
 
     final SendTransactionResponse sendTransactionResponse =
@@ -187,7 +186,6 @@ public class DefaultPrivacyControllerTest {
 
   @Test
   public void sendValidBesuTransaction() {
-
     final PrivateTransaction transaction = buildBesuPrivateTransaction(1);
 
     final SendTransactionResponse sendTransactionResponse =

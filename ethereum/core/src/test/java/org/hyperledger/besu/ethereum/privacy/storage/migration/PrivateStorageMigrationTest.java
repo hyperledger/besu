@@ -37,7 +37,7 @@ import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor.Result;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionReceipt;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransactionSimulatorResult;
+import org.hyperledger.besu.ethereum.privacy.PrivateStorageMigrationTransactionProcessorResult;
 import org.hyperledger.besu.ethereum.privacy.storage.LegacyPrivateStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.privacy.storage.LegacyPrivateStateStorage;
 import org.hyperledger.besu.ethereum.privacy.storage.LegacyPrivateStateStorage.Updater;
@@ -139,7 +139,8 @@ public class PrivateStorageMigrationTest {
 
     final PrivateBlockMetadata privateBlockMetadata =
         fetchPrivateBlockMetadataAtChainHead(privacyGroupId);
-    assertThat(privateBlockMetadata.getLatestStateRoot()).isEqualTo(expectedStateRoot);
+    assertThat(privateBlockMetadata.getLatestStateRoot()).isPresent()
+        .hasValue(expectedStateRoot);
     assertThat((privateBlockMetadata.getPrivateTransactionMetadataList())).hasSize(1);
 
     final PrivateTransactionMetadata privateTransactionMetadata =
@@ -303,7 +304,7 @@ public class PrivateStorageMigrationTest {
       final PrivateTransaction privateTransaction) {
 
     final Bytes encodedPrivateTransaction = RLP.encode(privateTransaction::writeTo);
-    byte[] payload =
+    final byte[] payload =
         Base64.getEncoder().encodeToString(encodedPrivateTransaction.toArray()).getBytes(UTF_8);
 
     when(enclave.receive(eq(transactionKey), eq(ENCLAVE_KEY.toBase64String())))
@@ -317,9 +318,9 @@ public class PrivateStorageMigrationTest {
     final PrivateTransactionProcessor.Result privateTransactionExecutionResult =
         successfulPrivateTxProcessingResult();
 
-    final PrivateTransactionSimulatorResult txSimulatorResult =
-        new PrivateTransactionSimulatorResult(
-            privateTransaction, privateTransactionExecutionResult, Optional.of(expectedStateRoot));
+    final PrivateStorageMigrationTransactionProcessorResult txSimulatorResult =
+        new PrivateStorageMigrationTransactionProcessorResult(
+            privateTransactionExecutionResult, Optional.of(expectedStateRoot));
 
     when(migrationTransactionProcessor.process(anyString(), any(PrivateTransaction.class), any()))
         .thenReturn(Optional.of(txSimulatorResult));
