@@ -534,8 +534,8 @@ public class RunnerBuilder {
         metricsService,
         besuController,
         dataDir,
-        besuController.getProtocolManager().getBlockBroadcaster(),
-        autoLogsBloomIndexing ? blockchainQueries.getTransactionLogsIndexer() : Optional.empty());
+        autoLogsBloomIndexing ? blockchainQueries.getTransactionLogsIndexer() : Optional.empty(),
+        context.getBlockchain());
   }
 
   private Optional<NodePermissioningController> buildNodePermissioningController(

@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.query;
 
-import org.hyperledger.besu.ethereum.eth.sync.BlockBroadcaster;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -27,14 +27,13 @@ import org.apache.logging.log4j.Logger;
 
 public class AutoTransactionLogsIndexingService {
   protected static final Logger LOG = LogManager.getLogger();
-  private final BlockBroadcaster blockBroadcaster;
+  private final Blockchain blockchain;
   private final TransactionLogsIndexer transactionLogsIndexer;
   private OptionalLong subscriptionId = OptionalLong.empty();
 
   public AutoTransactionLogsIndexingService(
-      final BlockBroadcaster blockBroadcaster,
-      final TransactionLogsIndexer transactionLogsIndexer) {
-    this.blockBroadcaster = blockBroadcaster;
+      final Blockchain blockchain, final TransactionLogsIndexer transactionLogsIndexer) {
+    this.blockchain = blockchain;
     this.transactionLogsIndexer = transactionLogsIndexer;
   }
 
@@ -47,9 +46,14 @@ public class AutoTransactionLogsIndexingService {
       }
       subscriptionId =
           OptionalLong.of(
-              blockBroadcaster.subscribePropagateNewBlocks(
-                  (block, __) ->
-                      transactionLogsIndexer.cacheLogsBloomForBlockHeader(block.getHeader())));
+              blockchain.observeBlockAdded(
+                  (event, __) -> {
+                    if (event.isNewCanonicalHead()) {
+                      transactionLogsIndexer.cacheLogsBloomForBlockHeader(
+                          event.getBlock().getHeader());
+                    }
+                  }));
+
       transactionLogsIndexer
           .getScheduler()
           .scheduleFutureTask(transactionLogsIndexer::indexAll, Duration.ofMinutes(1));
@@ -60,6 +64,6 @@ public class AutoTransactionLogsIndexingService {
 
   public void stop() {
     LOG.info("Shutting down Auto transaction logs indexing service.");
-    subscriptionId.ifPresent(blockBroadcaster::unsubscribePropagateNewBlocks);
+    subscriptionId.ifPresent(blockchain::removeObserver);
   }
 }

@@ -20,7 +20,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcHttpService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketService;
 import org.hyperledger.besu.ethereum.api.query.AutoTransactionLogsIndexingService;
 import org.hyperledger.besu.ethereum.api.query.TransactionLogsIndexer;
-import org.hyperledger.besu.ethereum.eth.sync.BlockBroadcaster;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.p2p.network.NetworkRunner;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.stratum.StratumServer;
@@ -74,8 +74,8 @@ public class Runner implements AutoCloseable {
       final Optional<MetricsService> metrics,
       final BesuController<?> besuController,
       final Path dataDir,
-      final BlockBroadcaster blockBroadcaster,
-      final Optional<TransactionLogsIndexer> transactionLogsIndexer) {
+      final Optional<TransactionLogsIndexer> transactionLogsIndexer,
+      final Blockchain blockchain) {
     this.vertx = vertx;
     this.networkRunner = networkRunner;
     this.natService = natService;
@@ -88,7 +88,7 @@ public class Runner implements AutoCloseable {
     this.stratumServer = stratumServer;
     this.autoTransactionLogsIndexingService =
         transactionLogsIndexer.map(
-            indexer -> new AutoTransactionLogsIndexingService(blockBroadcaster, indexer));
+            indexer -> new AutoTransactionLogsIndexingService(blockchain, indexer));
   }
 
   public void start() {
