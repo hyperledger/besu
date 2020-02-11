@@ -174,7 +174,7 @@ public class FlatTraceGenerator {
             .resultBuilder(Result.builder());
     final Action.Builder subTraceActionBuilder =
         Action.builder()
-            .from(smartContractAddress.orElse(callingAddress))
+            .from(callingAddress)
             .to(contractCallAddress.toString())
             .input(
                 nextTraceFrame.map(TraceFrame::getInputData).map(Bytes::toHexString).orElse(null))

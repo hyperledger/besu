@@ -160,12 +160,13 @@ public class VmTraceGenerator {
                   }
                 });
         if (currentTraceFrame.getMaybeCode().map(Code::getSize).orElse(0) > 0) {
-          op.setCost(currentTraceFrame.getGasRemainingPostExecution().toLong() + op.getCost());
           if (nextTraceFrame.map(TraceFrame::getDepth).orElse(0) > currentTraceFrame.getDepth()) {
+            op.setCost(currentTraceFrame.getGasRemainingPostExecution().toLong() + op.getCost());
             final VmTrace newSubTrace = new VmTrace();
             parentTraces.addLast(newSubTrace);
             op.setSub(newSubTrace);
           } else {
+            op.setCost(op.getCost());
             op.setSub(null);
           }
         } else {
