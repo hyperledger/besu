@@ -15,7 +15,6 @@
 package org.hyperledger.besu.cli;
 
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
 import org.hyperledger.besu.nat.NatMethod;
 
@@ -63,7 +62,6 @@ public interface DefaultCommandValues {
   String PERMISSIONING_CONFIG_LOCATION = "permissions_config.toml";
   String MANDATORY_HOST_FORMAT_HELP = "<HOST>";
   String MANDATORY_PORT_FORMAT_HELP = "<PORT>";
-  SyncMode DEFAULT_SYNC_MODE = SyncMode.FULL;
   NatMethod DEFAULT_NAT_METHOD = NatMethod.AUTO;
   int FAST_SYNC_MIN_PEER_COUNT = 5;
   int DEFAULT_MAX_PEERS = 25;
