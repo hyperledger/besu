@@ -34,7 +34,8 @@ import com.sun.source.tree.VariableTree;
 @BugPattern(
     name = "MethodInputParametersMustBeFinal",
     summary = "Method input parameters must be final.",
-    severity = WARNING)
+    severity = WARNING,
+    linkType = BugPattern.LinkType.NONE)
 public class MethodInputParametersMustBeFinal extends BugChecker
     implements MethodTreeMatcher, ClassTreeMatcher {
 
