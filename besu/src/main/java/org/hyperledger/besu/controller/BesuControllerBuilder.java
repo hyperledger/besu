@@ -303,12 +303,20 @@ public abstract class BesuControllerBuilder<C> {
       closeables.add(privacyParameters.getPrivateStorageProvider());
     }
 
-    Optional<EthStatsService> ethStatsService = Optional.empty();
+    Optional<EthStatsService<C>> ethStatsService = Optional.empty();
     if (ethStatsParameters != null && ethStatsParameters.isValid()) {
       ethStatsService =
           Optional.of(
-              new EthStatsService(
-                  ethStatsParameters, networkId, ethProtocolManager.getSupportedProtocol()));
+              new EthStatsService<>(
+                  ethStatsParameters,
+                  networkId,
+                  ethProtocolManager.getSupportedProtocol(),
+                  ethProtocolManager.getBlockBroadcaster(),
+                  protocolContext,
+                  ethProtocolManager.ethContext().getEthPeers(),
+                  syncState,
+                  miningParameters.isMiningEnabled(),
+                  transactionPool));
     }
 
     return new BesuController<>(

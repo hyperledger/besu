@@ -57,7 +57,7 @@ public class BesuController<C> implements java.io.Closeable {
   private final KeyPair keyPair;
   private final Synchronizer synchronizer;
   private final JsonRpcMethods additionalJsonRpcMethodsFactory;
-  private final Optional<EthStatsService> ethStatsService;
+  private final Optional<EthStatsService<C>> ethStatsService;
 
   private final TransactionPool transactionPool;
   private final MiningCoordinator miningCoordinator;
@@ -83,7 +83,7 @@ public class BesuController<C> implements java.io.Closeable {
       final KeyPair keyPair,
       final List<Closeable> closeables,
       final PluginServiceFactory additionalPluginServices,
-      final Optional<EthStatsService> ethStatsService) {
+      final Optional<EthStatsService<C>> ethStatsService) {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethProtocolManager = ethProtocolManager;
@@ -138,7 +138,7 @@ public class BesuController<C> implements java.io.Closeable {
     return miningCoordinator;
   }
 
-  public Optional<EthStatsService> getEthStatsService() {
+  public Optional<EthStatsService<C>> getEthStatsService() {
     return ethStatsService;
   }
 
