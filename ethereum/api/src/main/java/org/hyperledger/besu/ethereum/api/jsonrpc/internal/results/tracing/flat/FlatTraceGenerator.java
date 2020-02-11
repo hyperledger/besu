@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionT
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.Trace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.TracingUtils;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTrace.Context;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -100,7 +101,9 @@ public class FlatTraceGenerator {
     int traceFrameIndex = 0;
     final List<TraceFrame> traceFrames = transactionTrace.getTraceFrames();
     for (final TraceFrame traceFrame : traceFrames) {
-      cumulativeGasCost += traceFrame.getGasCost().orElse(Gas.ZERO).toLong();
+      cumulativeGasCost +=
+          traceFrame.getGasCost().orElse(Gas.ZERO).toLong()
+              + traceFrame.getPrecompiledGasCost().orElse(Gas.ZERO).toLong();
       final String opcodeString = traceFrame.getOpcode();
       if ("CALL".equals(opcodeString)
           || "CALLCODE".equals(opcodeString)
@@ -129,7 +132,6 @@ public class FlatTraceGenerator {
       } else if ("CREATE".equals(opcodeString) || "CREATE2".equals(opcodeString)) {
         currentContext =
             handleCreateOperation(
-                transactionTrace,
                 smartContractAddress,
                 flatTraces,
                 tracesContexts,
@@ -137,7 +139,7 @@ public class FlatTraceGenerator {
                 traceFrameIndex,
                 traceFrames);
       } else if ("REVERT".equals(opcodeString)) {
-        currentContext.getBuilder().error(Optional.of("Reverted"));
+        currentContext = handleRevert(tracesContexts, currentContext);
       } else if (!traceFrame.getExceptionalHaltReasons().isEmpty()) {
         currentContext
             .getBuilder()
@@ -148,6 +150,7 @@ public class FlatTraceGenerator {
       }
       traceFrameIndex++;
     }
+
     return flatTraces.stream().map(FlatTrace.Builder::build);
   }
 
@@ -207,6 +210,7 @@ public class FlatTraceGenerator {
     final FlatTrace.Builder traceFrameBuilder = currentContext.getBuilder();
     final Result.Builder resultBuilder = traceFrameBuilder.getResultBuilder();
     final Action.Builder actionBuilder = traceFrameBuilder.getActionBuilder();
+    actionBuilder.value(Quantity.create(traceFrame.getValue()));
     final Bytes outputData = traceFrame.getOutputData();
     if (resultBuilder.getCode() == null) {
       resultBuilder.output(outputData.toHexString());
@@ -233,7 +237,7 @@ public class FlatTraceGenerator {
       final List<FlatTrace.Builder> flatTraces,
       final Deque<FlatTrace.Context> tracesContexts) {
     final Bytes32[] stack = traceFrame.getStack().orElseThrow();
-    final Address refundAddress = toAddress(stack[0]);
+    final Address refundAddress = toAddress(stack[stack.length - 1]);
     final FlatTrace.Builder subTraceBuilder =
         FlatTrace.builder()
             .type("suicide")
@@ -267,7 +271,6 @@ public class FlatTraceGenerator {
   }
 
   private static FlatTrace.Context handleCreateOperation(
-      final TransactionTrace transactionTrace,
       final Optional<String> smartContractAddress,
       final List<FlatTrace.Builder> flatTraces,
       final Deque<FlatTrace.Context> tracesContexts,
@@ -287,7 +290,7 @@ public class FlatTraceGenerator {
         Action.builder()
             .from(smartContractAddress.orElse(callingAddress))
             .gas(nextTraceFrame.getGasRemaining().toHexString())
-            .value(Quantity.create(transactionTrace.getTransaction().getValue()));
+            .value(Quantity.create(nextTraceFrame.getValue()));
 
     final FlatTrace.Context currentContext =
         new FlatTrace.Context(subTraceBuilder.actionBuilder(subTraceActionBuilder));
@@ -296,6 +299,17 @@ public class FlatTraceGenerator {
     tracesContexts.addLast(currentContext);
     flatTraces.add(currentContext.getBuilder());
     return currentContext;
+  }
+
+  private static Context handleRevert(
+      final Deque<Context> tracesContexts, final FlatTrace.Context currentContext) {
+    currentContext.getBuilder().error(Optional.of("Reverted"));
+    tracesContexts.removeLast();
+    final FlatTrace.Context nextContext = tracesContexts.peekLast();
+    if (nextContext != null) {
+      nextContext.getBuilder().incSubTraces();
+    }
+    return nextContext;
   }
 
   private static String calculateCallingAddress(final FlatTrace.Context lastContext) {

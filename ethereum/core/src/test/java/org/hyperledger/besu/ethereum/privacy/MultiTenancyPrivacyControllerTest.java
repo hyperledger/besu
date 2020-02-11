@@ -70,12 +70,11 @@ public class MultiTenancyPrivacyControllerTest {
             .build();
 
     when(privacyController.sendTransaction(transaction, ENCLAVE_PUBLIC_KEY1))
-        .thenReturn(new SendTransactionResponse(ENCLAVE_KEY, PRIVACY_GROUP_ID));
+        .thenReturn(ENCLAVE_KEY);
 
-    final SendTransactionResponse response =
+    final String enclaveKey =
         multiTenancyPrivacyController.sendTransaction(transaction, ENCLAVE_PUBLIC_KEY1);
-    assertThat(response.getEnclaveKey()).isEqualTo(ENCLAVE_KEY);
-    assertThat(response.getPrivacyGroupId()).isEqualTo(PRIVACY_GROUP_ID);
+    assertThat(enclaveKey).isEqualTo(ENCLAVE_KEY);
     verify(privacyController).sendTransaction(transaction, ENCLAVE_PUBLIC_KEY1);
   }
 
@@ -89,7 +88,7 @@ public class MultiTenancyPrivacyControllerTest {
             .build();
 
     when(privacyController.sendTransaction(transaction, ENCLAVE_PUBLIC_KEY1))
-        .thenReturn(new SendTransactionResponse(ENCLAVE_KEY, PRIVACY_GROUP_ID));
+        .thenReturn(ENCLAVE_KEY);
     final PrivacyGroup privacyGroupWithEnclavePublicKey =
         new PrivacyGroup(
             PRIVACY_GROUP_ID,
@@ -100,10 +99,9 @@ public class MultiTenancyPrivacyControllerTest {
     when(enclave.retrievePrivacyGroup(PRIVACY_GROUP_ID))
         .thenReturn(privacyGroupWithEnclavePublicKey);
 
-    final SendTransactionResponse response =
+    final String response =
         multiTenancyPrivacyController.sendTransaction(transaction, ENCLAVE_PUBLIC_KEY1);
-    assertThat(response.getEnclaveKey()).isEqualTo(ENCLAVE_KEY);
-    assertThat(response.getPrivacyGroupId()).isEqualTo(PRIVACY_GROUP_ID);
+    assertThat(response).isEqualTo(ENCLAVE_KEY);
     verify(privacyController).sendTransaction(transaction, ENCLAVE_PUBLIC_KEY1);
     verify(enclave).retrievePrivacyGroup(PRIVACY_GROUP_ID);
   }

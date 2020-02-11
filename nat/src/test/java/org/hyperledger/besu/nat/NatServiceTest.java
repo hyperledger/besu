@@ -20,7 +20,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.nat.core.AutoDetectionResult;
 import org.hyperledger.besu.nat.core.NatManager;
 import org.hyperledger.besu.nat.core.domain.NatPortMapping;
 import org.hyperledger.besu.nat.core.domain.NatServiceType;
@@ -150,23 +149,13 @@ public class NatServiceTest {
 
   @Test
   public void givenOneAutoDetectionWorksWhenAutoDetectThenReturnCorrectNatMethod() {
-    final NatMethod natMethod =
-        NatService.autoDetectNatMethod(NatServiceTest::alwaysTrueShouldBeUpnpMethod);
+    final NatMethod natMethod = NatService.autoDetectNatMethod(() -> Optional.of(NatMethod.UPNP));
     assertThat(natMethod).isEqualTo(NatMethod.UPNP);
   }
 
   @Test
   public void givenNoAutoDetectionWorksWhenAutoDetectThenReturnEmptyNatMethod() {
-    final NatMethod natMethod =
-        NatService.autoDetectNatMethod(NatServiceTest::alwaysFalseShouldBeUpnpMethod);
+    final NatMethod natMethod = NatService.autoDetectNatMethod(Optional::empty);
     assertThat(natMethod).isEqualTo(NatMethod.NONE);
-  }
-
-  private static AutoDetectionResult alwaysTrueShouldBeUpnpMethod() {
-    return new AutoDetectionResult(NatMethod.UPNP, true);
-  }
-
-  private static AutoDetectionResult alwaysFalseShouldBeUpnpMethod() {
-    return new AutoDetectionResult(NatMethod.UPNP, false);
   }
 }

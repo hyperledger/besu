@@ -19,6 +19,7 @@ import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.google.common.base.MoreObjects;
 
 @JsonPropertyOrder({"jsonrpc", "id", "error"})
 public class JsonRpcErrorResponse implements JsonRpcResponse {
@@ -62,5 +63,10 @@ public class JsonRpcErrorResponse implements JsonRpcResponse {
   @Override
   public int hashCode() {
     return Objects.hash(id, error);
+  }
+
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this).add("id", id).add("error", error).toString();
   }
 }
