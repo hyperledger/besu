@@ -181,7 +181,8 @@ public class PrivacyReorgTest {
     final DefaultBlockchain blockchain = (DefaultBlockchain) protocolContext.getBlockchain();
     final PrivateStateStorage privateStateStorage = privacyParameters.getPrivateStateStorage();
 
-    final Transaction privacyMarkerTransaction = buildMarkerTransaction(getEnclaveKey(enclave.clientUrl()));
+    final Transaction privacyMarkerTransaction =
+        buildMarkerTransaction(getEnclaveKey(enclave.clientUrl()));
     final Block firstBlock =
         gen.block(
             getBlockOptionsWithTransaction(

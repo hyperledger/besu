@@ -101,7 +101,8 @@ public class DefaultPrivacyControllerTest {
   private Enclave mockEnclave() {
     final Enclave mockEnclave = mock(Enclave.class);
     final SendResponse response = new SendResponse(TRANSACTION_KEY);
-    final ReceiveResponse receiveResponse = new ReceiveResponse(new byte[0], PRIVACY_GROUP_ID, null);
+    final ReceiveResponse receiveResponse =
+        new ReceiveResponse(new byte[0], PRIVACY_GROUP_ID, null);
     when(mockEnclave.send(anyString(), anyString(), anyList())).thenReturn(response);
     when(mockEnclave.send(anyString(), anyString(), anyString())).thenReturn(response);
     when(mockEnclave.receive(any(), any())).thenReturn(receiveResponse);

@@ -29,9 +29,9 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.privacy.PrivateStorageMigrationTransactionProcessorResult;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionReceipt;
-import org.hyperledger.besu.ethereum.privacy.PrivateStorageMigrationTransactionProcessorResult;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateBlockMetadata;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
@@ -190,11 +190,14 @@ public class PrivateStorageMigration {
       final Updater updater) {
     final Hash blockHash = blockHeader.getHash();
 
-    final PrivateStorageMigrationTransactionProcessorResult txResult = transactionProcessor
+    final PrivateStorageMigrationTransactionProcessorResult txResult =
+        transactionProcessor
             .process(privacyGroupId, privateTransaction, blockHeader)
             .orElseThrow(PrivateStorageMigrationException::new);
 
-    LOG.trace("Executed private transaction {} (result = {}}", privateTransaction.getHash(),
+    LOG.trace(
+        "Executed private transaction {} (result = {}}",
+        privateTransaction.getHash(),
         txResult.getResult().getStatus());
 
     if (txResult.isSuccessful()) {

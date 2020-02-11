@@ -33,11 +33,11 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
+import org.hyperledger.besu.ethereum.privacy.PrivateStorageMigrationTransactionProcessorResult;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor.Result;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionReceipt;
-import org.hyperledger.besu.ethereum.privacy.PrivateStorageMigrationTransactionProcessorResult;
 import org.hyperledger.besu.ethereum.privacy.storage.LegacyPrivateStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.privacy.storage.LegacyPrivateStateStorage;
 import org.hyperledger.besu.ethereum.privacy.storage.LegacyPrivateStateStorage.Updater;
@@ -139,8 +139,7 @@ public class PrivateStorageMigrationTest {
 
     final PrivateBlockMetadata privateBlockMetadata =
         fetchPrivateBlockMetadataAtChainHead(privacyGroupId);
-    assertThat(privateBlockMetadata.getLatestStateRoot()).isPresent()
-        .hasValue(expectedStateRoot);
+    assertThat(privateBlockMetadata.getLatestStateRoot()).isPresent().hasValue(expectedStateRoot);
     assertThat((privateBlockMetadata.getPrivateTransactionMetadataList())).hasSize(1);
 
     final PrivateTransactionMetadata privateTransactionMetadata =

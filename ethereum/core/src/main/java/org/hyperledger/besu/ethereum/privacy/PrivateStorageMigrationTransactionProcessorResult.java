@@ -18,12 +18,12 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor.Result;
 
 import java.util.Objects;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor.Result;
 
 public class PrivateStorageMigrationTransactionProcessorResult {
 
@@ -31,8 +31,7 @@ public class PrivateStorageMigrationTransactionProcessorResult {
   private final Optional<Hash> resultingRootHash;
 
   public PrivateStorageMigrationTransactionProcessorResult(
-      final Result result,
-      final Optional<Hash> resultingRootHash) {
+      final Result result, final Optional<Hash> resultingRootHash) {
     this.result = result;
     this.resultingRootHash = resultingRootHash;
   }
@@ -65,9 +64,9 @@ public class PrivateStorageMigrationTransactionProcessorResult {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    final PrivateStorageMigrationTransactionProcessorResult that = (PrivateStorageMigrationTransactionProcessorResult) o;
-    return result.equals(that.result)
-        && resultingRootHash.equals(that.resultingRootHash);
+    final PrivateStorageMigrationTransactionProcessorResult that =
+        (PrivateStorageMigrationTransactionProcessorResult) o;
+    return result.equals(that.result) && resultingRootHash.equals(that.resultingRootHash);
   }
 
   @Override
