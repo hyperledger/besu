@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
+import org.hyperledger.besu.ethereum.vm.OperationTracer;
 
 import java.util.Collection;
 import java.util.List;
@@ -102,7 +103,7 @@ public class MainnetContractCreationProcessor extends AbstractMessageProcessor {
   }
 
   @Override
-  public void start(final MessageFrame frame) {
+  public void start(final MessageFrame frame, final OperationTracer operationTracer) {
     if (LOG.isTraceEnabled()) {
       LOG.trace("Executing contract-creation");
     }
