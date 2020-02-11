@@ -18,7 +18,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionT
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.Trace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.TracingUtils;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTrace.Builder;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -299,7 +298,7 @@ public class FlatTraceGenerator {
       final Deque<FlatTrace.Context> tracesContexts,
       final FlatTrace.Context currentContext,
       final TraceFrame traceFrame) {
-    final Builder traceFrameBuilder = currentContext.getBuilder();
+    final FlatTrace.Builder traceFrameBuilder = currentContext.getBuilder();
     traceFrameBuilder.error(
         traceFrame.getExceptionalHaltReasons().stream()
             .map(ExceptionalHaltReason::getDescription)
@@ -317,7 +316,7 @@ public class FlatTraceGenerator {
 
   private static FlatTrace.Context handleRevert(
       final Deque<FlatTrace.Context> tracesContexts, final FlatTrace.Context currentContext) {
-    final Builder traceFrameBuilder = currentContext.getBuilder();
+    final FlatTrace.Builder traceFrameBuilder = currentContext.getBuilder();
     traceFrameBuilder.error(Optional.of("Reverted"));
     if (tracesContexts.size() > 1) {
       traceFrameBuilder.getActionBuilder().value("0x0");
