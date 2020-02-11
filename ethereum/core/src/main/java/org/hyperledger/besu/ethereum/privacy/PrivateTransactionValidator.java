@@ -36,13 +36,13 @@ public class PrivateTransactionValidator {
 
   public ValidationResult<TransactionValidator.TransactionInvalidReason> validate(
       final PrivateTransaction transaction, final Long accountNonce) {
-    LOG.debug("Validating private transaction fields of {}", transaction.hash());
+    LOG.debug("Validating private transaction fields of {}", transaction.getHash());
     final ValidationResult<TransactionInvalidReason> privateFieldsValidationResult =
         validatePrivateTransactionFields(transaction);
     if (!privateFieldsValidationResult.isValid()) {
       LOG.debug(
           "Private Transaction fields are invalid {}, {}",
-          transaction.hash(),
+          transaction.getHash(),
           privateFieldsValidationResult.getErrorMessage());
       return privateFieldsValidationResult;
     }

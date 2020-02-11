@@ -189,10 +189,7 @@ public class DefaultPrivacyControllerTest {
     final String enclaveKey = privacyController.sendTransaction(transaction, ENCLAVE_PUBLIC_KEY);
 
     final ValidationResult<TransactionInvalidReason> validationResult =
-        privacyController.validatePrivateTransaction(
-            transaction,
-            transaction.getPrivacyGroupId().get().toBase64String(),
-            ENCLAVE_PUBLIC_KEY);
+        privacyController.validatePrivateTransaction(transaction, ENCLAVE_PUBLIC_KEY);
 
     final Transaction markerTransaction =
         privacyController.createPrivacyMarkerTransaction(enclaveKey, transaction);
