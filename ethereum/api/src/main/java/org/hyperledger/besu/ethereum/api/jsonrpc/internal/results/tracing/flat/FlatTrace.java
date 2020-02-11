@@ -187,6 +187,10 @@ public class FlatTrace implements Trace {
       return this;
     }
 
+    public String getType() {
+      return type;
+    }
+
     public Builder error(final Optional<String> error) {
       this.error = error;
       return this;
