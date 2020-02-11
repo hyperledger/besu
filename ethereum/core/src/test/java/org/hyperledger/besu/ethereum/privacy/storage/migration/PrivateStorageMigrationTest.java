@@ -100,10 +100,7 @@ public class PrivateStorageMigrationTest {
   public void migrationShouldGenerateExpectedStateRoot() {
     final Bytes privacyGroupId = Bytes.fromBase64String(PRIVACY_GROUP_ID);
     final Hash expectedStateRoot = createLegacyStateRootEntry(privacyGroupId);
-    final Transaction privacyMarkerTransaction = createPrivacyMarkerTransaction();
-    final PrivateTransaction privateTransaction =
-        createPrivateTransaction(privacyGroupId, privacyMarkerTransaction);
-    createPrivateTransactionExecutionResult(privateTransaction, expectedStateRoot);
+    createPrivateTransactionExecutionResult(expectedStateRoot);
 
     migration.migratePrivateStorage();
 
@@ -130,7 +127,7 @@ public class PrivateStorageMigrationTest {
     final Transaction privacyMarkerTransaction = createPrivacyMarkerTransaction();
     final PrivateTransaction privateTransaction =
         createPrivateTransaction(privacyGroupId, privacyMarkerTransaction);
-    createPrivateTransactionExecutionResult(privateTransaction, expectedStateRoot);
+    createPrivateTransactionExecutionResult(expectedStateRoot);
 
     createLegacyTransactionMetadata(
         privacyMarkerTransaction, privateTransaction, expectedStateRoot);
@@ -184,10 +181,7 @@ public class PrivateStorageMigrationTest {
   public void migrationShouldGenerateExpectedPrivacyGroupBlockHeadMapping() {
     final Bytes privacyGroupId = Bytes.fromBase64String(PRIVACY_GROUP_ID);
     final Hash expectedStateRoot = createLegacyStateRootEntry(privacyGroupId);
-    final Transaction privacyMarkerTransaction = createPrivacyMarkerTransaction();
-    final PrivateTransaction privateTransaction =
-        createPrivateTransaction(privacyGroupId, privacyMarkerTransaction);
-    createPrivateTransactionExecutionResult(privateTransaction, expectedStateRoot);
+    createPrivateTransactionExecutionResult(expectedStateRoot);
 
     migration.migratePrivateStorage();
 
@@ -207,7 +201,7 @@ public class PrivateStorageMigrationTest {
     final PrivateTransaction privateTransaction =
         createPrivateTransaction(privacyGroupId, privacyMarkerTransaction);
     final Result privateTransactionExecutionResult =
-        createPrivateTransactionExecutionResult(privateTransaction, expectedStateRoot);
+        createPrivateTransactionExecutionResult(expectedStateRoot);
 
     createLegacyTransactionResultData(privateTransaction, privateTransactionExecutionResult);
 
@@ -312,8 +306,7 @@ public class PrivateStorageMigrationTest {
                 payload, privacyGroupId.toBase64String(), ENCLAVE_KEY.toBase64String()));
   }
 
-  private Result createPrivateTransactionExecutionResult(
-      final PrivateTransaction privateTransaction, final Hash expectedStateRoot) {
+  private Result createPrivateTransactionExecutionResult(final Hash expectedStateRoot) {
     final PrivateTransactionProcessor.Result privateTransactionExecutionResult =
         successfulPrivateTxProcessingResult();
 
