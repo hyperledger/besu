@@ -8,6 +8,10 @@
 
 This can be enabled using the `--rpc-http-api TRACE` CLI flag.  There are some philosophical differences between Besu and other implementations that are outlined in the `[trace_rpc_apis.md](./docs/trace_rpc_apis.md)` documentation.
 
+### Bug Fixes
+
+- [BESU-25](https://jira.hyperledger.org/browse/BESU-25) Use v5 Devp2p when pinging [\#392](https://github.com/hyperledger/besu/pull/392)
+
 ## 1.4 Beta 3 
 
 ### Additions and Improvements 
