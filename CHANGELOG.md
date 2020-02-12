@@ -12,6 +12,8 @@ This can be enabled using the `--rpc-http-api TRACE` CLI flag.  There are some p
 
 - Added TLS support for communication with Orion
 
+- Privacy transactions are now validated before sent to the enclave [\#356](https://github.com/hyperledger/besu/pull/356)
+
 - Upgraded PicoCLI to 4.1.4
 
 ## 1.4 Beta 3 
