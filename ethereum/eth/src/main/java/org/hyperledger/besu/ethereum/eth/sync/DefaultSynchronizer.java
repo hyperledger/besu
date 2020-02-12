@@ -158,9 +158,8 @@ public class DefaultSynchronizer<C> implements Synchronizer {
     }
     if (error != null) {
       final Throwable rootCause = ExceptionUtils.rootCause(error);
-      LOG.error("Fast sync failed.", rootCause);
       stop();
-      return;
+      throw new RuntimeException("Fast sync failed.", rootCause);
     } else {
       LOG.info(
           "Fast sync completed successfully with pivot block {}",
