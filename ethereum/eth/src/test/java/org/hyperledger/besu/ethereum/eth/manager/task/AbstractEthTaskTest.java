@@ -19,6 +19,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
+import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
 import java.util.Arrays;
@@ -102,6 +105,32 @@ public class AbstractEthTaskTest {
     task.run();
     verify(mockOperationTimer).startTimer();
     verify(mockTimingContext).stopTimer();
+  }
+
+  @Test
+  public void shouldHaveSpecificMetricsLabels() {
+    final String[] lastLabelNames = new String[1];
+    final MetricsSystem instrumentedLabeler =
+        new NoOpMetricsSystem() {
+          @Override
+          public LabelledMetric<OperationTimer> createLabelledTimer(
+              final MetricCategory category,
+              final String name,
+              final String help,
+              final String... labelNames) {
+            return names -> {
+              lastLabelNames[0] = names[0];
+              return null;
+            };
+          }
+        };
+    final AbstractEthTask<?> task = new AbstractEthTask<>(instrumentedLabeler) {
+      @Override
+      protected void executeTask() {
+        // no-op
+      }
+    };
+    assertThat(lastLabelNames[0]).isNotEqualTo("AbstractEthTask");
   }
 
   private class EthTaskWithMultipleSubtasks extends AbstractEthTask<Void> {
