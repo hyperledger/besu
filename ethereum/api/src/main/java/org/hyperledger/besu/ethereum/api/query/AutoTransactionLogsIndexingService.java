@@ -29,7 +29,8 @@ public class AutoTransactionLogsIndexingService {
   protected static final Logger LOG = LogManager.getLogger();
   private final Blockchain blockchain;
   private final TransactionLogsIndexer transactionLogsIndexer;
-  private OptionalLong subscriptionId = OptionalLong.empty();
+  private OptionalLong blockAddedSubscriptionId = OptionalLong.empty();
+  private OptionalLong chainReorgSubscriptionId = OptionalLong.empty();
 
   public AutoTransactionLogsIndexingService(
       final Blockchain blockchain, final TransactionLogsIndexer transactionLogsIndexer) {
@@ -44,7 +45,7 @@ public class AutoTransactionLogsIndexingService {
       if (!cacheDir.toFile().exists() || !cacheDir.toFile().isDirectory()) {
         Files.createDirectory(cacheDir);
       }
-      subscriptionId =
+      blockAddedSubscriptionId =
           OptionalLong.of(
               blockchain.observeBlockAdded(
                   (event, __) -> {
@@ -53,6 +54,10 @@ public class AutoTransactionLogsIndexingService {
                           event.getBlock().getHeader());
                     }
                   }));
+      chainReorgSubscriptionId =
+          OptionalLong.of(
+              blockchain.observeChainReorg(
+                  (header, __) -> transactionLogsIndexer.cacheLogsBloomForBlockHeader(header)));
 
       transactionLogsIndexer
           .getScheduler()
@@ -64,6 +69,7 @@ public class AutoTransactionLogsIndexingService {
 
   public void stop() {
     LOG.info("Shutting down Auto transaction logs indexing service.");
-    subscriptionId.ifPresent(blockchain::removeObserver);
+    blockAddedSubscriptionId.ifPresent(blockchain::removeObserver);
+    chainReorgSubscriptionId.ifPresent(blockchain::removeChainReorgObserver);
   }
 }
