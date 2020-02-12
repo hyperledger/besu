@@ -48,8 +48,8 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -96,7 +96,8 @@ public class PrivacyNode implements AutoCloseable {
             besuConfig.isRevertReasonEnabled(),
             besuConfig.getPlugins(),
             besuConfig.getExtraCLIOptions(),
-            new ArrayList<>());
+            Collections.emptyList(),
+            besuConfig.getPrivacyParameters());
   }
 
   public void testOrionConnection(final List<PrivacyNode> otherNodes) {
