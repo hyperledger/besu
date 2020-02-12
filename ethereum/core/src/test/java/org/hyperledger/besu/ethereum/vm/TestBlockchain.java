@@ -14,8 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.vm;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-
+import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.ChainHead;
@@ -34,7 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import org.apache.tuweni.bytes.Bytes;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * A blockchain mock for the Ethereum reference tests.
@@ -151,12 +150,12 @@ public class TestBlockchain implements Blockchain {
   }
 
   @Override
-  public long observeChainReorg(ChainReorgObserver observer) {
+  public long observeChainReorg(final ChainReorgObserver observer) {
     throw new NonDeterministicOperationException("Listening for chain reorg is not deterministic");
   }
 
   @Override
-  public boolean removeChainReorgObserver(long observerId) {
+  public boolean removeChainReorgObserver(final long observerId) {
     throw new NonDeterministicOperationException("Listening for chain reorg is not deterministic");
   }
 
