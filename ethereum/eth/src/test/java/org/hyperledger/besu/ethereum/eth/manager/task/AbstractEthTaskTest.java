@@ -109,7 +109,8 @@ public class AbstractEthTaskTest {
 
   @Test
   public void shouldHaveSpecificMetricsLabels() {
-    final String[] lastLabelNames = new String[1];
+    // seed with a failing value so that a no-op also trips the failure.
+    final String[] lastLabelNames = {"AbstractEthTask"};
     final MetricsSystem instrumentedLabeler =
         new NoOpMetricsSystem() {
           @Override
@@ -124,13 +125,12 @@ public class AbstractEthTaskTest {
             };
           }
         };
-    final AbstractEthTask<?> task =
-        new AbstractEthTask<>(instrumentedLabeler) {
-          @Override
-          protected void executeTask() {
-            // no-op
-          }
-        };
+    new AbstractEthTask<>(instrumentedLabeler) {
+      @Override
+      protected void executeTask() {
+        // no-op
+      }
+    };
     assertThat(lastLabelNames[0]).isNotEqualTo("AbstractEthTask");
   }
 
