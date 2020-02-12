@@ -6,7 +6,7 @@
 
 - New`trace_replayBlockTransactions` JSON-RPC API
 
-This can be enabled via the `--rpc-http-api TRACE` CLI flag.  There are some philosophical differences between Besu and other implementations that are outlined in the `[trace_rpc_apis.md](./docs/trace_rpc_apis.md)` documentation.
+This can be enabled using the `--rpc-http-api TRACE` CLI flag.  There are some philosophical differences between Besu and other implementations that are outlined in the `[trace_rpc_apis.md](./docs/trace_rpc_apis.md)` documentation.
 
 ## 1.4 Beta 3 
 
