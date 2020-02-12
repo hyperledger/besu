@@ -15,8 +15,12 @@
 
 package org.hyperledger.besu.nat.core;
 
-@FunctionalInterface
-public interface NatMethodAutoDetection {
+import org.hyperledger.besu.nat.NatMethod;
 
-  AutoDetectionResult shouldBeThisNatMethod();
+import java.util.Optional;
+
+@FunctionalInterface
+public interface NatMethodDetector {
+
+  Optional<NatMethod> detect();
 }

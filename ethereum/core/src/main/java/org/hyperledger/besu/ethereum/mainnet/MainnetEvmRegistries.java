@@ -144,6 +144,14 @@ abstract class MainnetEvmRegistries {
     return new EVM(registry, gasCalculator);
   }
 
+  static EVM aztlan(final GasCalculator gasCalculator, final BigInteger chainId) {
+    final OperationRegistry registry = new OperationRegistry();
+
+    registerAztlanOpcodes(registry, gasCalculator, Account.DEFAULT_VERSION, chainId);
+
+    return new EVM(registry, gasCalculator);
+  }
+
   private static void registerFrontierOpcodes(
       final OperationRegistry registry,
       final GasCalculator gasCalculator,
@@ -274,6 +282,20 @@ abstract class MainnetEvmRegistries {
         new ChainIdOperation(gasCalculator, Bytes32.leftPad(Bytes.of(chainId.toByteArray()))),
         Account.DEFAULT_VERSION);
     registry.put(new SelfBalanceOperation(gasCalculator), Account.DEFAULT_VERSION);
+    registry.put(
+        new SStoreOperation(gasCalculator, SStoreOperation.EIP_1706_MINIMUM),
+        Account.DEFAULT_VERSION);
+  }
+
+  private static void registerAztlanOpcodes(
+      final OperationRegistry registry,
+      final GasCalculator gasCalculator,
+      final int accountVersion,
+      final BigInteger chainId) {
+    registerConstantinopleOpcodes(registry, gasCalculator, accountVersion);
+    registry.put(
+        new ChainIdOperation(gasCalculator, Bytes32.leftPad(Bytes.of(chainId.toByteArray()))),
+        Account.DEFAULT_VERSION);
     registry.put(
         new SStoreOperation(gasCalculator, SStoreOperation.EIP_1706_MINIMUM),
         Account.DEFAULT_VERSION);

@@ -36,7 +36,7 @@ public class PrivateTransactionTestFixture {
   private Optional<Address> to = Optional.empty();
   private Address sender = Address.fromHexString(String.format("%020x", 1));
 
-  private Wei value = Wei.of(4);
+  private Wei value = Wei.of(0);
 
   private Bytes payload = Bytes.EMPTY;
 
@@ -52,7 +52,7 @@ public class PrivateTransactionTestFixture {
 
   private Optional<Bytes> privacyGroupId = Optional.empty();
 
-  private final Restriction restriction = Restriction.RESTRICTED;
+  private Restriction restriction = Restriction.RESTRICTED;
 
   public PrivateTransaction createTransaction(final KeyPair keys) {
     final PrivateTransaction.Builder builder = PrivateTransaction.builder();
@@ -135,6 +135,11 @@ public class PrivateTransactionTestFixture {
 
   public PrivateTransactionTestFixture privacyGroupId(final Bytes privacyGroupId) {
     this.privacyGroupId = Optional.of(privacyGroupId);
+    return this;
+  }
+
+  public PrivateTransactionTestFixture restriction(final Restriction restriction) {
+    this.restriction = restriction;
     return this;
   }
 }

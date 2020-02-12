@@ -61,7 +61,7 @@ public class TransactionLogsIndexer {
   }
 
   private static File calculateCacheFileName(final String name, final Path cacheDir) {
-    return cacheDir.resolve("logBloom-" + name + ".index").toFile();
+    return cacheDir.resolve("logBloom-" + name + ".cache").toFile();
   }
 
   private static File calculateCacheFileName(final long blockNumber, final Path cacheDir) {

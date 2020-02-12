@@ -35,7 +35,8 @@ import com.sun.source.tree.MethodInvocationTree;
 @BugPattern(
     name = "BannedMethod",
     summary = "Some methods should not be used, make sure that doesn't happen.",
-    severity = WARNING)
+    severity = WARNING,
+    linkType = BugPattern.LinkType.NONE)
 public class BannedMethod extends BugChecker implements MethodInvocationTreeMatcher {
 
   private static final ImmutableMap<Matcher<ExpressionTree>, String> BANNED_METHOD_LIST =

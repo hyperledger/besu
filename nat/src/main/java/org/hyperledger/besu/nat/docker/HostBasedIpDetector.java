@@ -12,22 +12,23 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.privacy;
 
-public class SendTransactionResponse {
-  private final String enclaveKey;
-  private final String privacyGroupId;
+package org.hyperledger.besu.nat.docker;
 
-  public SendTransactionResponse(final String enclaveKey, final String privacyGroupId) {
-    this.enclaveKey = enclaveKey;
-    this.privacyGroupId = privacyGroupId;
-  }
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.Optional;
 
-  public String getEnclaveKey() {
-    return enclaveKey;
-  }
+public class HostBasedIpDetector implements IpDetector {
 
-  public String getPrivacyGroupId() {
-    return privacyGroupId;
+  private static final String HOSTNAME = "HOST_IP";
+
+  @Override
+  public Optional<String> detectExternalIp() {
+    try {
+      return Optional.of(InetAddress.getByName(HOSTNAME).getHostAddress());
+    } catch (final UnknownHostException e) {
+      return Optional.empty();
+    }
   }
 }

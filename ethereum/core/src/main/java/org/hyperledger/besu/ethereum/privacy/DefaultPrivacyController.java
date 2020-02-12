@@ -83,21 +83,13 @@ public class DefaultPrivacyController implements PrivacyController {
   }
 
   @Override
-  public SendTransactionResponse sendTransaction(
+  public String sendTransaction(
       final PrivateTransaction privateTransaction, final String enclavePublicKey) {
     try {
       LOG.trace("Storing private transaction in enclave");
       final SendResponse sendResponse = sendRequest(privateTransaction, enclavePublicKey);
-      final String enclaveKey = sendResponse.getKey();
-      if (privateTransaction.getPrivacyGroupId().isPresent()) {
-        final String privacyGroupId = privateTransaction.getPrivacyGroupId().get().toBase64String();
-        return new SendTransactionResponse(enclaveKey, privacyGroupId);
-      } else {
-        final String privateFrom = privateTransaction.getPrivateFrom().toBase64String();
-        final String privacyGroupId = getPrivacyGroupId(enclaveKey, privateFrom);
-        return new SendTransactionResponse(enclaveKey, privacyGroupId);
-      }
-    } catch (final Exception e) {
+      return sendResponse.getKey();
+    } catch (Exception e) {
       LOG.error("Failed to store private transaction in enclave", e);
       throw e;
     }
@@ -137,9 +129,8 @@ public class DefaultPrivacyController implements PrivacyController {
 
   @Override
   public ValidationResult<TransactionValidator.TransactionInvalidReason> validatePrivateTransaction(
-      final PrivateTransaction privateTransaction,
-      final String privacyGroupId,
-      final String enclavePublicKey) {
+      final PrivateTransaction privateTransaction, final String enclavePublicKey) {
+    final String privacyGroupId = privateTransaction.determinePrivacyGroupId();
     return privateTransactionValidator.validate(
         privateTransaction,
         determineBesuNonce(privateTransaction.getSender(), privacyGroupId, enclavePublicKey));
@@ -232,16 +223,6 @@ public class DefaultPrivacyController implements PrivacyController {
       }
       return enclave.send(
           payload, privateTransaction.getPrivateFrom().toBase64String(), privateFor);
-    }
-  }
-
-  private String getPrivacyGroupId(final String key, final String privateFrom) {
-    LOG.debug("Getting privacy group for key {} and privateFrom {}", key, privateFrom);
-    try {
-      return enclave.receive(key, privateFrom).getPrivacyGroupId();
-    } catch (final RuntimeException e) {
-      LOG.error("Failed to retrieve private transaction in enclave", e);
-      throw e;
     }
   }
 }
