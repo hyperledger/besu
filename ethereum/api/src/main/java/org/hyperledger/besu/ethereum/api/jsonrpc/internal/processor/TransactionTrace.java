@@ -41,6 +41,10 @@ public class TransactionTrace {
     return transaction.getGasLimit() - result.getGasRemaining();
   }
 
+  public long getGasLimit() {
+    return transaction.getGasLimit();
+  }
+
   public Result getResult() {
     return result;
   }

@@ -13,25 +13,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package org.hyperledger.besu.nat.core;
+package org.hyperledger.besu.nat.docker;
 
-import org.hyperledger.besu.nat.NatMethod;
+import java.util.Optional;
 
-public class AutoDetectionResult {
+public interface IpDetector {
 
-  private final NatMethod natMethod;
-  private final boolean isDetectedNatMethod;
-
-  public AutoDetectionResult(final NatMethod natMethod, final boolean isDetectedNatMethod) {
-    this.natMethod = natMethod;
-    this.isDetectedNatMethod = isDetectedNatMethod;
-  }
-
-  public NatMethod getNatMethod() {
-    return natMethod;
-  }
-
-  public boolean isDetectedNatMethod() {
-    return isDetectedNatMethod;
-  }
+  Optional<String> detectExternalIp();
 }
