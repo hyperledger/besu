@@ -5,6 +5,7 @@
 ### Additions and Improvements 
 
 - New`trace_replayBlockTransactions` JSON-RPC API
+- Ability to automatically detect Docker NAT settings from inside the conainter.
 
 This can be enabled using the `--rpc-http-api TRACE` CLI flag.  There are some philosophical differences between Besu and other implementations that are outlined in the `[trace_rpc_apis.md](./docs/trace_rpc_apis.md)` documentation.
 
