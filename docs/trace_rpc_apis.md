@@ -1,4 +1,4 @@
-# Trace RPC API nodes
+# Trace RPC API Notes
 
 This document outlines major differences for `trace_replayBlockTransactions` 
 compared to other implementations.
@@ -27,10 +27,13 @@ reserved output space for the call operations.  Note two major differences:
    reported.  Other implementations will include pre-existing memory data or 
    trim the returned data.
 
-### Precompiled contracts calls
+### Precompiled Contracts Calls
 
 Besu reports only the actual cost of the precompiled contract call in the 
 `cost` field. 
 
+### Out of Gas 
 
-
+Besu reports the operation that causes out fo gas exceptions, including 
+calculated gas cost.  The operation is not executed so no `ex` values are 
+reported.
