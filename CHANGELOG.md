@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.4 RC 
+
+### Known Bugs 
+
+- Onchain permissioning nodes can't peer when using a non-validator bootnode [\#BESU-181](https://jira.hyperledger.org/browse/BESU-181)
+
+Workaround -> When using onchain permissioning, ensure bootnodes are also validators. 
+
+
 ## 1.4 Beta 3 
 
 ### Additions and Improvements 
