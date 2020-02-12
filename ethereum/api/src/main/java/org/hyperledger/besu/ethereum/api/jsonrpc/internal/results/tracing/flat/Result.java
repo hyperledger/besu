@@ -89,6 +89,10 @@ public class Result {
       return this;
     }
 
+    public String getAddress() {
+      return address;
+    }
+
     public static Builder of(final Result result) {
       final Builder builder = new Builder();
       if (result != null) {
