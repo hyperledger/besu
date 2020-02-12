@@ -14,7 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.vm;
 
-import org.apache.tuweni.bytes.Bytes;
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.ChainHead;
@@ -33,7 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
+import org.apache.tuweni.bytes.Bytes;
 
 /**
  * A blockchain mock for the Ethereum reference tests.
