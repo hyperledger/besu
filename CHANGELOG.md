@@ -14,7 +14,7 @@ This can be enabled using the `--rpc-http-api TRACE` CLI flag.  There are some p
 
 ### Bug Fixes
 
-- Privacy transactions are now validated before sent to the enclave [\#356](https://github.com/hyperledger/besu/pull/356)
+- Private transactions are now validated before sent to the enclave [\#356](https://github.com/hyperledger/besu/pull/356)
 
 ## 1.4 Beta 3 
 
