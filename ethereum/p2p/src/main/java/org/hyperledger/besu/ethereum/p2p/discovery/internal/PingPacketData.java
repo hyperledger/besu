@@ -22,8 +22,8 @@ import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 public class PingPacketData implements PacketData {
 
-  /* Fixed value that represents we're using v4 of the P2P discovery protocol. */
-  private static final int VERSION = 4;
+  /* Fixed value that represents we're using v5 of the P2P discovery protocol. */
+  private static final int VERSION = 5;
 
   /* Source. */
   private final Endpoint from;
