@@ -18,7 +18,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionT
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.Trace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.TracingUtils;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTrace.Context;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -30,6 +29,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Deque;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -98,9 +98,12 @@ public class FlatTraceGenerator {
     // declare the first transactionTrace context as the previous transactionTrace context
     long cumulativeGasCost = 0;
 
-    int traceFrameIndex = 0;
-    final List<TraceFrame> traceFrames = transactionTrace.getTraceFrames();
-    for (final TraceFrame traceFrame : traceFrames) {
+    final Iterator<TraceFrame> iter = transactionTrace.getTraceFrames().iterator();
+    Optional<TraceFrame> nextTraceFrame =
+        iter.hasNext() ? Optional.of(iter.next()) : Optional.empty();
+    while (nextTraceFrame.isPresent()) {
+      final TraceFrame traceFrame = nextTraceFrame.get();
+      nextTraceFrame = iter.hasNext() ? Optional.of(iter.next()) : Optional.empty();
       cumulativeGasCost +=
           traceFrame.getGasCost().orElse(Gas.ZERO).toLong()
               + traceFrame.getPrecompiledGasCost().orElse(Gas.ZERO).toLong();
@@ -113,12 +116,10 @@ public class FlatTraceGenerator {
             handleCall(
                 transactionTrace,
                 traceFrame,
-                smartContractAddress,
+                nextTraceFrame,
                 flatTraces,
                 cumulativeGasCost,
                 tracesContexts,
-                traceFrameIndex,
-                traceFrames,
                 opcodeString.toLowerCase(Locale.US));
       } else if ("RETURN".equals(opcodeString) || "STOP".equals(opcodeString)) {
         if (currentContext != null) {
@@ -136,19 +137,12 @@ public class FlatTraceGenerator {
                 flatTraces,
                 tracesContexts,
                 cumulativeGasCost,
-                traceFrameIndex,
-                traceFrames);
+                nextTraceFrame);
       } else if ("REVERT".equals(opcodeString)) {
         currentContext = handleRevert(tracesContexts, currentContext);
       } else if (!traceFrame.getExceptionalHaltReasons().isEmpty()) {
-        currentContext
-            .getBuilder()
-            .error(
-                traceFrame.getExceptionalHaltReasons().stream()
-                    .map(ExceptionalHaltReason::getDescription)
-                    .reduce((a, b) -> a + ", " + b));
+        currentContext = handleHalt(tracesContexts, currentContext, traceFrame);
       }
-      traceFrameIndex++;
     }
 
     return flatTraces.stream().map(FlatTrace.Builder::build);
@@ -157,21 +151,18 @@ public class FlatTraceGenerator {
   private static FlatTrace.Context handleCall(
       final TransactionTrace transactionTrace,
       final TraceFrame traceFrame,
-      final Optional<String> smartContractAddress,
+      final Optional<TraceFrame> nextTraceFrame,
       final List<FlatTrace.Builder> flatTraces,
       final long cumulativeGasCost,
       final Deque<FlatTrace.Context> tracesContexts,
-      final int traceFrameIndex,
-      final List<TraceFrame> traceFrames,
       final String opcodeString) {
-    final TraceFrame nextTraceFrame = traceFrames.get(traceFrameIndex + 1);
     final Bytes32[] stack = traceFrame.getStack().orElseThrow();
     final Address contractCallAddress = toAddress(stack[stack.length - 2]);
     final FlatTrace.Context lastContext = tracesContexts.peekLast();
     final String callingAddress = calculateCallingAddress(lastContext);
 
-    if (contractCallAddress.numberOfLeadingZeroBytes() >= 19) {
-      // don't log calls to precompiles
+    if (traceFrame.getDepth() >= nextTraceFrame.map(TraceFrame::getDepth).orElse(0)) {
+      // don't log calls to calls that don't execute, such as insufficient value and precompiles
       return tracesContexts.peekLast();
     }
 
@@ -181,13 +172,11 @@ public class FlatTraceGenerator {
             .resultBuilder(Result.builder());
     final Action.Builder subTraceActionBuilder =
         Action.builder()
-            .from(smartContractAddress.orElse(callingAddress))
+            .from(callingAddress)
             .to(contractCallAddress.toString())
             .input(
-                Optional.ofNullable(nextTraceFrame.getInputData())
-                    .map(Bytes::toHexString)
-                    .orElse(null))
-            .gas(nextTraceFrame.getGasRemaining().toHexString())
+                nextTraceFrame.map(TraceFrame::getInputData).map(Bytes::toHexString).orElse(null))
+            .gas(nextTraceFrame.map(TraceFrame::getGasRemaining).orElse(Gas.ZERO).toHexString())
             .callType(opcodeString.toLowerCase(Locale.US))
             .value(Quantity.create(transactionTrace.getTransaction().getValue()));
 
@@ -218,7 +207,7 @@ public class FlatTraceGenerator {
     // set value for contract creation TXes, CREATE, and CREATE2
     if (actionBuilder.getCallType() == null && traceFrame.getMaybeCode().isPresent()) {
       actionBuilder.init(traceFrame.getMaybeCode().get().getBytes().toHexString());
-      resultBuilder.code(outputData.toHexString()).address(traceFrame.getRecipient().toHexString());
+      resultBuilder.code(outputData.toHexString());
       if (currentContext.isCreateOp()) {
         // this is from a CREATE/CREATE2, so add code deposit cost.
         currentContext.incGasUsed(outputData.size() * 200L);
@@ -275,9 +264,7 @@ public class FlatTraceGenerator {
       final List<FlatTrace.Builder> flatTraces,
       final Deque<FlatTrace.Context> tracesContexts,
       final long cumulativeGasCost,
-      final int traceFrameIndex,
-      final List<TraceFrame> traceFrames) {
-    final TraceFrame nextTraceFrame = traceFrames.get(traceFrameIndex + 1);
+      final Optional<TraceFrame> nextTraceFrame) {
     final FlatTrace.Context lastContext = tracesContexts.peekLast();
     final String callingAddress = calculateCallingAddress(lastContext);
 
@@ -289,11 +276,15 @@ public class FlatTraceGenerator {
     final Action.Builder subTraceActionBuilder =
         Action.builder()
             .from(smartContractAddress.orElse(callingAddress))
-            .gas(nextTraceFrame.getGasRemaining().toHexString())
-            .value(Quantity.create(nextTraceFrame.getValue()));
+            .gas(nextTraceFrame.map(TraceFrame::getGasRemaining).orElse(Gas.ZERO).toHexString())
+            .value(Quantity.create(nextTraceFrame.map(TraceFrame::getValue).orElse(Wei.ZERO)));
 
     final FlatTrace.Context currentContext =
         new FlatTrace.Context(subTraceBuilder.actionBuilder(subTraceActionBuilder));
+    currentContext
+        .getBuilder()
+        .getResultBuilder()
+        .address(nextTraceFrame.map(TraceFrame::getRecipient).orElse(Address.ZERO).toHexString());
     currentContext.setCreateOp(true);
     currentContext.decGasUsed(cumulativeGasCost);
     tracesContexts.addLast(currentContext);
@@ -301,9 +292,33 @@ public class FlatTraceGenerator {
     return currentContext;
   }
 
-  private static Context handleRevert(
-      final Deque<Context> tracesContexts, final FlatTrace.Context currentContext) {
-    currentContext.getBuilder().error(Optional.of("Reverted"));
+  private static FlatTrace.Context handleHalt(
+      final Deque<FlatTrace.Context> tracesContexts,
+      final FlatTrace.Context currentContext,
+      final TraceFrame traceFrame) {
+    final FlatTrace.Builder traceFrameBuilder = currentContext.getBuilder();
+    traceFrameBuilder.error(
+        traceFrame.getExceptionalHaltReasons().stream()
+            .map(ExceptionalHaltReason::getDescription)
+            .reduce((a, b) -> a + ", " + b));
+    if (tracesContexts.size() > 1) {
+      traceFrameBuilder.getActionBuilder().value("0x0");
+    }
+    tracesContexts.removeLast();
+    final FlatTrace.Context nextContext = tracesContexts.peekLast();
+    if (nextContext != null) {
+      nextContext.getBuilder().incSubTraces();
+    }
+    return nextContext;
+  }
+
+  private static FlatTrace.Context handleRevert(
+      final Deque<FlatTrace.Context> tracesContexts, final FlatTrace.Context currentContext) {
+    final FlatTrace.Builder traceFrameBuilder = currentContext.getBuilder();
+    traceFrameBuilder.error(Optional.of("Reverted"));
+    if (tracesContexts.size() > 1) {
+      traceFrameBuilder.getActionBuilder().value("0x0");
+    }
     tracesContexts.removeLast();
     final FlatTrace.Context nextContext = tracesContexts.peekLast();
     if (nextContext != null) {
@@ -313,16 +328,25 @@ public class FlatTraceGenerator {
   }
 
   private static String calculateCallingAddress(final FlatTrace.Context lastContext) {
-    if (lastContext.getBuilder().getActionBuilder().getCallType() == null) {
-      return ZERO_ADDRESS_STRING;
+    final FlatTrace.Builder lastContextBuilder = lastContext.getBuilder();
+    final Action.Builder lastActionBuilder = lastContextBuilder.getActionBuilder();
+    if (lastActionBuilder.getCallType() == null) {
+      if ("create".equals(lastContextBuilder.getType())) {
+        return lastContextBuilder.getResultBuilder().getAddress();
+      } else {
+        return ZERO_ADDRESS_STRING;
+      }
     }
-    switch (lastContext.getBuilder().getActionBuilder().getCallType()) {
+    switch (lastActionBuilder.getCallType()) {
       case "call":
       case "staticcall":
-        return lastContext.getBuilder().getActionBuilder().getTo();
+        return lastActionBuilder.getTo();
       case "delegatecall":
       case "callcode":
-        return lastContext.getBuilder().getActionBuilder().getFrom();
+        return lastActionBuilder.getFrom();
+      case "create":
+      case "create2":
+        return lastContextBuilder.getResultBuilder().getAddress();
       default:
         return ZERO_ADDRESS_STRING;
     }

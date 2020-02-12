@@ -701,6 +701,7 @@ bintray {
   filesSpec {
     from distTar.destinationDirectory
     from distZip.destinationDirectory
+    from file("plugin-api/build/libs/plugin-api-$version-javadoc.jar")
     into '.'
   }
 
@@ -715,3 +716,4 @@ build.dependsOn verifyDistributions
 bintrayUpload.dependsOn verifyDistributions
 bintrayUpload.mustRunAfter(distTar)
 bintrayUpload.mustRunAfter(distZip)
+bintrayUpload.mustRunAfter(javadocJar)
