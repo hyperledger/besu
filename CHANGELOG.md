@@ -10,6 +10,10 @@ This can be enabled using the `--rpc-http-api TRACE` CLI flag.  There are some p
 
 - Added [Multi-tenancy](https://besu.hyperledger.org/en/latest/Concepts/Privacy/Multi-Tenancy/) support which allows multiple participants to use the same Besu node for private transactions.
 
+- Added TLS support for communication with Orion
+
+- Upgraded PicoCLI to 4.1.4
+
 ## 1.4 Beta 3 
 
 ### Additions and Improvements 
