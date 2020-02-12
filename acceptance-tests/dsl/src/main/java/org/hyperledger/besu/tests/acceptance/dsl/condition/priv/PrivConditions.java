@@ -58,6 +58,10 @@ public class PrivConditions {
     return new PrivFindPrivacyGroupSuccess(transactions.findPrivacyGroup(groupMembers), numGroups);
   }
 
+  public Condition findPrivacyGroupFailNoEnclave(final String... groupMembers) {
+    return new PrivFindPrivacyGroupFailNoEnclave(transactions.findPrivacyGroup(groupMembers));
+  }
+
   public Condition eeaSendRawTransaction(final String transaction) {
     return new EeaSendRawTransactionSuccess(transactions.sendRawTransaction(transaction));
   }
@@ -68,12 +72,34 @@ public class PrivConditions {
         transactions.distributeRawTransaction(transactionRLP), enclaveResponseKey);
   }
 
+  public Condition distributeRawTransactionFailNoEnclave(final String transactionRLP) {
+    return new PrivDistributeRawTransactionFailNoEnclave(
+        transactions.distributeRawTransaction(transactionRLP));
+  }
+
+  public Condition distributeRawTransactionFailInvalidTransaction(final String transactionRLP) {
+    return new PrivDistributeRawTransactionFailInvalidTransaction(
+        transactions.distributeRawTransaction(transactionRLP));
+  }
+
   public Condition getTransactionCount(
       final String accountAddress,
       final String privacyGroupId,
       final int expectedTransactionCount) {
     return new PrivGetTransactionCountSuccess(
         transactions.getTransactionCount(accountAddress, privacyGroupId), expectedTransactionCount);
+  }
+
+  public Condition getTransactionCountFailNoEnclave(
+      final String accountAddress, final String privacyGroupId) {
+    return new PrivGetTransactionCountFailNoEnclave(
+        transactions.getTransactionCount(accountAddress, privacyGroupId));
+  }
+
+  public Condition getTransactionCountFailInvalidParams(
+      final String accountAddress, final String privacyGroupId) {
+    return new PrivGetTransactionCountFailInvalidParams(
+        transactions.getTransactionCount(accountAddress, privacyGroupId));
   }
 
   public Condition getEeaTransactionCount(
@@ -86,8 +112,25 @@ public class PrivConditions {
         expectedTransactionCount);
   }
 
+  public Condition getEeaTransactionCountFailNoEnclave(
+      final String accountAddress, final String privateFrom, final String[] privateFor) {
+    return new PrivGetEeaTransactionCountFailNoEnclave(
+        transactions.getEeaTransactionCount(accountAddress, privateFrom, privateFor));
+  }
+
+  public Condition getEeaTransactionCountFailInvalidParams(
+      final String accountAddress, final String privateFrom, final String[] privateFor) {
+    return new PrivGetEeaTransactionCountFailInvalidParams(
+        transactions.getEeaTransactionCount(accountAddress, privateFrom, privateFor));
+  }
+
   public Condition getTransactionReceipt(final Hash transactionHash) {
     return new PrivGetTransactionReceiptSuccess(
+        transactions.getTransactionReceipt(transactionHash));
+  }
+
+  public Condition getTransactionReceiptNoResult(final Hash transactionHash) {
+    return new PrivGetTransactionReceiptNoResult(
         transactions.getTransactionReceipt(transactionHash));
   }
 }

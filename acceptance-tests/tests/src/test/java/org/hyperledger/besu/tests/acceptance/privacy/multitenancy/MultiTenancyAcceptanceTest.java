@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.tests.acceptance.privacy.multitenancy;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.ok;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
@@ -43,6 +44,7 @@ import java.util.List;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.tomakehurst.wiremock.http.Fault;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.io.Base64;
@@ -144,6 +146,12 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
+  public void privFindPrivacyGroupShouldFailWithoutEnclave() {
+    findPrivacyGroupErrorStub();
+    node.verify(priv.findPrivacyGroupFailNoEnclave(ENCLAVE_KEY));
+  }
+
+  @Test
   public void eeaSendRawTransactionSuccessShouldReturnPrivateTransactionHash()
       throws JsonProcessingException {
     final PrivateTransaction validSignedPrivateTransaction =
@@ -179,6 +187,19 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
+  public void privGetTransactionCountShouldFailWithoutEnclave() {
+    retrievePrivacyGroupErrorStub();
+    final String accountAddress = Address.EMPTY.toString();
+    node.verify(priv.getTransactionCountFailNoEnclave(accountAddress, PRIVACY_GROUP_ID));
+  }
+
+  @Test
+  public void privGetTransactionCountShouldFailWithInvalidParams() {
+    final String accountAddress = "invalid";
+    node.verify(priv.getTransactionCountFailInvalidParams(accountAddress, PRIVACY_GROUP_ID));
+  }
+
+  @Test
   public void privDistributeRawTransactionSuccessShouldReturnEnclaveKey()
       throws JsonProcessingException {
     final String enclaveResponseKey = "TestKey";
@@ -197,6 +218,19 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
+  public void privDistributeRawTransactionShouldFailWithoutEnclave() {
+    retrievePrivacyGroupErrorStub();
+    node.verify(
+        priv.distributeRawTransactionFailNoEnclave(
+            getRLPOutput(getValidSignedPrivateTransaction(senderAddress)).encoded().toHexString()));
+  }
+
+  @Test
+  public void privDistributeRawTransactionShouldFailWithInvalidTransaction() {
+    node.verify(priv.distributeRawTransactionFailInvalidTransaction("garbageTransaction"));
+  }
+
+  @Test
   public void privGetTransactionReceiptSuccessShouldReturnTransactionReceiptAfterMined()
       throws JsonProcessingException {
     final PrivateTransaction validSignedPrivateTransaction =
@@ -211,6 +245,12 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
         node.execute(privacyTransactions.sendRawTransaction(rlpOutput.encoded().toHexString()));
 
     node.verify(priv.getTransactionReceipt(transactionReceipt));
+  }
+
+  @Test
+  public void privGetTransactionReceiptSuccessShouldReturnNullIfReceiptNotFound() {
+    final Hash transactionReceipt = Hash.EMPTY;
+    node.verify(priv.getTransactionReceiptNoResult(transactionReceipt));
   }
 
   @Test
@@ -240,10 +280,34 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
     node.verify(priv.getEeaTransactionCount(accountAddress, privateFrom, privateFor, 1));
   }
 
+  @Test
+  public void privGetEeaTransactionCountShouldFailWithoutEnclave() {
+    stubFor(post("/findPrivacyGroup").willReturn(aResponse().withFault(Fault.EMPTY_RESPONSE)));
+
+    final String fakeAddress = DEFAULT_PRIVACY.toHexString();
+    final String fakeAddressBase64 = Base64.encode(Bytes.wrap(fakeAddress.getBytes(UTF_8)));
+    final String[] privateFor = {fakeAddressBase64};
+    node.verify(
+        priv.getEeaTransactionCountFailNoEnclave(fakeAddress, fakeAddressBase64, privateFor));
+  }
+
+  @Test
+  public void privGetEeaTransactionCountShouldFailWithInvalidParams() {
+    final String fakeAddress = "fake";
+    final String fakeAddressBase64 = Base64.encode(Bytes.wrap(fakeAddress.getBytes(UTF_8)));
+    final String[] privateFor = {fakeAddressBase64};
+    node.verify(
+        priv.getEeaTransactionCountFailInvalidParams(fakeAddress, fakeAddressBase64, privateFor));
+  }
+
   private void findPrivacyGroupEnclaveStub(final List<PrivacyGroup> groupMembership)
       throws JsonProcessingException {
     final String findGroupResponse = mapper.writeValueAsString(groupMembership);
     stubFor(post("/findPrivacyGroup").willReturn(ok(findGroupResponse)));
+  }
+
+  private void findPrivacyGroupErrorStub() {
+    stubFor(post("/findPrivacyGroup").willReturn(aResponse().withFault(Fault.EMPTY_RESPONSE)));
   }
 
   private void createPrivacyGroupEnclaveStub() throws JsonProcessingException {
@@ -262,6 +326,10 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
         mapper.writeValueAsString(
             testPrivacyGroup(List.of(ENCLAVE_KEY), PrivacyGroup.Type.PANTHEON));
     stubFor(post("/retrievePrivacyGroup").willReturn(ok(retrieveGroupResponse)));
+  }
+
+  private void retrievePrivacyGroupErrorStub() {
+    stubFor(post("/retrievePrivacyGroup").willReturn(aResponse().withFault(Fault.EMPTY_RESPONSE)));
   }
 
   private void sendEnclaveStub(final String testKey) throws JsonProcessingException {

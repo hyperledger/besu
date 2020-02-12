@@ -14,28 +14,34 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.condition.priv;
 
+import static org.assertj.core.api.AssertionsForClassTypes.failBecauseExceptionWasNotThrown;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.FIND_PRIVACY_GROUP_ERROR;
 
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
-import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivGetPrivacyPrecompileAddressTransaction;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivFindPrivacyGroupTransaction;
 
-public class PrivGetPrivacyPrecompileAddressSuccess implements Condition {
+import org.web3j.protocol.exceptions.ClientConnectionException;
 
-  private final PrivGetPrivacyPrecompileAddressTransaction transaction;
-  private final Address precompileAddress;
+public class PrivFindPrivacyGroupFailNoEnclave implements Condition {
 
-  public PrivGetPrivacyPrecompileAddressSuccess(
-      final PrivGetPrivacyPrecompileAddressTransaction transaction,
-      final Address precompileAddress) {
+  private final PrivFindPrivacyGroupTransaction transaction;
+
+  public PrivFindPrivacyGroupFailNoEnclave(final PrivFindPrivacyGroupTransaction transaction) {
     this.transaction = transaction;
-    this.precompileAddress = precompileAddress;
   }
 
   @Override
   public void verify(final Node node) {
-    final Address result = node.execute(transaction);
-    assertThat(result).isEqualTo(precompileAddress);
+    try {
+      node.execute(transaction);
+      failBecauseExceptionWasNotThrown(ClientConnectionException.class);
+    } catch (final Exception e) {
+      assertThat(e)
+          .isInstanceOf(ClientConnectionException.class)
+          .hasMessageContaining("400")
+          .hasMessageContaining(FIND_PRIVACY_GROUP_ERROR.getMessage());
+    }
   }
 }
