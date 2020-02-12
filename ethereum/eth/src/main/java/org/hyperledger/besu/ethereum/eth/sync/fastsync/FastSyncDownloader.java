@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
-import static org.hyperledger.besu.util.FutureUtils.completedExceptionally;
 import static org.hyperledger.besu.util.FutureUtils.exceptionallyCompose;
 
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
@@ -90,7 +89,7 @@ public class FastSyncDownloader<C> {
           "Fast sync was unable to download the world state. Retrying with a new pivot block.");
       return start(FastSyncState.EMPTY_SYNC_STATE);
     } else {
-      return completedExceptionally(error);
+      return CompletableFuture.failedFuture(error);
     }
   }
 
@@ -139,7 +138,7 @@ public class FastSyncDownloader<C> {
     // after the stop method had called cancel.
     synchronized (this) {
       if (!running.get()) {
-        return completedExceptionally(new CancellationException("FastSyncDownloader stopped"));
+        return CompletableFuture.failedFuture(new CancellationException("FastSyncDownloader stopped"));
       }
       final CompletableFuture<Void> worldStateFuture =
           worldStateDownloader.run(currentState.getPivotBlockHeader().get());
