@@ -50,7 +50,7 @@ public abstract class AbstractEthTask<T> implements EthTask<T> {
   }
 
   private static OperationTimer buildOperationTimer(
-      final MetricsSystem metricsSystem, String taskName) {
+      final MetricsSystem metricsSystem, final String taskName) {
     final LabelledMetric<OperationTimer> ethTasksTimer =
         metricsSystem.createLabelledTimer(
             BesuMetricCategory.SYNCHRONIZER, "task", "Internal processing tasks", "taskName");
