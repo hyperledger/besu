@@ -124,12 +124,13 @@ public class AbstractEthTaskTest {
             };
           }
         };
-    final AbstractEthTask<?> task = new AbstractEthTask<>(instrumentedLabeler) {
-      @Override
-      protected void executeTask() {
-        // no-op
-      }
-    };
+    final AbstractEthTask<?> task =
+        new AbstractEthTask<>(instrumentedLabeler) {
+          @Override
+          protected void executeTask() {
+            // no-op
+          }
+        };
     assertThat(lastLabelNames[0]).isNotEqualTo("AbstractEthTask");
   }
 
