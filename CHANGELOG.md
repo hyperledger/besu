@@ -8,6 +8,8 @@
 
 This can be enabled using the `--rpc-http-api TRACE` CLI flag.  There are some philosophical differences between Besu and other implementations that are outlined in the `[trace_rpc_apis.md](./docs/trace_rpc_apis.md)` documentation.
 
+- Added [Multi-tenancy](https://besu.hyperledger.org/en/latest/Concepts/Privacy/Multi-Tenancy/) support which allows multiple participants to use the same Besu node for private transactions.
+
 ## 1.4 Beta 3 
 
 ### Additions and Improvements 
