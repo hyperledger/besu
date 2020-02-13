@@ -8,6 +8,14 @@
 
 This can be enabled using the `--rpc-http-api TRACE` CLI flag.  There are some philosophical differences between Besu and other implementations that are outlined in [trace_rpc_apis](docs/trace_rpc_apis.md).
 
+- Added [Multi-tenancy](https://besu.hyperledger.org/en/latest/Concepts/Privacy/Multi-Tenancy/) support which allows multiple participants to use the same Besu node for private transactions.
+
+- Added TLS support for communication with privacy enclave
+
+### Bug Fixes
+
+- Private transactions are now validated before sent to the enclave [\#356](https://github.com/hyperledger/besu/pull/356)
+
 ## 1.4 Beta 3 
 
 ### Additions and Improvements 
