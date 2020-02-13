@@ -296,7 +296,7 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
 
     waitForFile(dataDir, "besu.ports");
     waitForFile(dataDir, "besu.networks");
-    
+
     ThreadContext.remove("node");
   }
 
@@ -315,10 +315,10 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
         line = in.readLine();
       }
     } catch (final IOException e) {
-      if (besuProcesses.containsKey(nodeName)) {
-        LOG.error("Failed to read output from process for node " + nodeName, e);
+      if (besuProcesses.containsKey(node.getName())) {
+        LOG.error("Failed to read output from process for node " + node.getName(), e);
       } else {
-        LOG.debug("Stdout from process {} closed", nodeName);
+        LOG.debug("Stdout from process {} closed", node.getName());
       }
     }
   }

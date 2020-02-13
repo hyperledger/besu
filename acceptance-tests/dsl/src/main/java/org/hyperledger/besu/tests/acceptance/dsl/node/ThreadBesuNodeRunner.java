@@ -107,6 +107,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
   public void startNode(final BesuNode node) {
     if (nodeExecutor == null || nodeExecutor.isShutdown()) {
       nodeExecutor = Executors.newCachedThreadPool();
+    }
 
     if (ThreadContext.containsKey("node")) {
       LOG.error("ThreadContext node is already set to {}", ThreadContext.get("node"));
