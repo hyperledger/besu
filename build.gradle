@@ -248,7 +248,8 @@ allprojects {
       'test.ethereum.include',
       'test.ethereum.state.eip',
       'root.log.level',
-      'evm.log.level'
+      'evm.log.level',
+      'acctests.keepLogs'
     ]
     for (String name : toImport) {
       if (System.getProperty(name) != null) {

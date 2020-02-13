@@ -41,6 +41,8 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.perm.PermissioningT
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.web3.Web3Transactions;
 
+import java.io.File;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
@@ -136,6 +138,22 @@ public class AcceptanceTestBase {
           LOG.error(
               "==========================================================================================");
           LOG.error("Test failed. Reported Throwable at the point of failure:", e);
+        }
+
+        @Override
+        protected void succeeded(final Description description) {
+          // if so configured, delete logs of successful tests
+          if (!Boolean.getBoolean("acctests.keepLogs")) {
+            String pathname =
+                "build/acceptanceTestLogs/"
+                    + description.getClassName()
+                    + "."
+                    + description.getMethodName()
+                    + ".log";
+            LOG.info("Test successful, deleting log at {}", pathname);
+            File file = new File(pathname);
+            file.delete();
+          }
         }
       };
 
