@@ -5,18 +5,49 @@
   </Properties>
   <Appenders>
     <Console name="Console" target="SYSTEM_OUT">
-      <PatternLayout pattern="%d{HH:mm:ss.SSS} | %t | %-5level | %c{1} | %msg%n" />
+      <PatternLayout pattern="%X{test} | %d{HH:mm:ss.SSS} | %t | %-5level | %c{1} | %msg%n" />
     </Console>
     <Console name="SubProcessConsole" target="SYSTEM_OUT">
-      <PatternLayout pattern="Process %msg%n" />
+      <PatternLayout pattern="%X{test} | %X{node} | %msg%n" />
     </Console>
+    <Routing name="PerTestFile">
+      <Routes pattern="${ctx:class}-${ctx:test}">
+        <Route>
+          <File
+                  name="Test-${ctx:class}-${ctx:test}"
+                  filename="build/acceptanceTestLogs/${ctx:class}.${ctx:test}.log"
+                  append="false"
+                  createOnDemand="true"
+          >
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} | %t | %-5level | %c{1} | %msg%n" />
+          </File>
+        </Route>
+      </Routes>
+    </Routing>
+    <Routing name="PerTestSubprocessFile">
+      <Routes pattern="${ctx:class}-${ctx:test}">
+        <Route>
+          <File
+                  name="TestSubprocess-${ctx:class}-${ctx:test}"
+                  filename="build/acceptanceTestLogs/${ctx:class}.${ctx:test}.log"
+                  append="true"
+                  createOnDemand="true"
+          >
+            <PatternLayout pattern="%X{node} | %msg%n" />
+          </File>
+        </Route>
+      </Routes>
+    </Routing>
+
   </Appenders>
   <Loggers>
     <Logger name="org.hyperledger.besu.SubProcessLog" level="INFO" additivity="false">
       <AppenderRef ref="SubProcessConsole" />
+      <AppenderRef ref="PerTestSubprocessFile" />
     </Logger>
     <Root level="${sys:root.log.level}">
       <AppenderRef ref="Console" />
+      <AppenderRef ref="PerTestFile" />
     </Root>
   </Loggers>
 </Configuration>

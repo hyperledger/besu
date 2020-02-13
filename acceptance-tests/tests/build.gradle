@@ -57,4 +57,12 @@ task acceptanceTest(type: Test) {
   mustRunAfter rootProject.subprojects*.test
   description = 'Runs Besu acceptance tests.'
   group = 'verification'
+
+  testLogging {
+    exceptionFormat = 'full'
+    showStackTraces = true
+    showStandardStreams = 'true'.equalsIgnoreCase(System.getProperty('acctests.showStandardStreams'));
+    showExceptions = true
+    showCauses = true
+  }
 }

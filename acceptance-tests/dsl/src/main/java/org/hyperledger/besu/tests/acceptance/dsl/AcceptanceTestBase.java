@@ -44,6 +44,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.web3.Web3Transactio
 import org.junit.After;
 
 public class AcceptanceTestBase {
+  protected final Logger LOG = LogManager.getLogger();
 
   protected final Accounts accounts;
   protected final AccountTransactions accountTransactions;
@@ -98,6 +99,38 @@ public class AcceptanceTestBase {
     permissionedNodeBuilder = new PermissionedNodeBuilder();
   }
 
+  static {
+    System.setProperty("log4j2.isThreadContextMapInheritable", "true");
+  }
+
+  @Rule public final TestName name = new TestName();
+
+  @Rule
+  public TestWatcher log_eraser =
+      new TestWatcher() {
+
+        @Override
+        protected void starting(final Description description) {
+          ThreadContext.put("test", description.getMethodName());
+          ThreadContext.put("class", description.getClassName());
+          Thread.currentThread()
+              .setUncaughtExceptionHandler(
+                  (thread, error) ->
+                      LOG.error(
+                          "Uncaught exception in thread \"" + thread.getName() + "\"", error));
+          Thread.setDefaultUncaughtExceptionHandler(
+              (thread, error) ->
+                  LOG.error("Uncaught exception in thread \"" + thread.getName() + "\"", error));
+        }
+
+        @Override
+        protected void failed(final Throwable e, final Description description) {
+          // add the result at the end of the log so it is self-sufficient
+          LOG.error(
+              "==========================================================================================");
+          LOG.error("Test failed. Reported Throwable at the point of failure:", e);
+        }
+      };
   @After
   public void tearDownAcceptanceTestBase() {
     cluster.close();
