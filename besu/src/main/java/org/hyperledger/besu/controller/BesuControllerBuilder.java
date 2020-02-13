@@ -240,7 +240,7 @@ public abstract class BesuControllerBuilder<C> {
       }
     }
 
-    final boolean fastSyncEnabled = syncConfig.getSyncMode().equals(SyncMode.FAST);
+    final boolean fastSyncEnabled = SyncMode.FAST.equals(syncConfig.getSyncMode());
     final EthProtocolManager ethProtocolManager =
         createEthProtocolManager(
             protocolContext, fastSyncEnabled, createPeerValidators(protocolSchedule));
