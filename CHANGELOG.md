@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.4 RC 
+## 1.4.0 RC-1 
 
 ### Additions and Improvements 
 
