@@ -206,4 +206,22 @@ public interface Blockchain {
    * @return {@code true} if the observer was removed; otherwise {@code false}
    */
   boolean removeObserver(long observerId);
+
+  /**
+   * Adds an observer that will get called when a new block is added after reorg.
+   *
+   * <p><i>No guarantees are made about the order in which observers are invoked.</i>
+   *
+   * @param observer the observer to call
+   * @return the observer ID that can be used to remove it later.
+   */
+  long observeChainReorg(ChainReorgObserver observer);
+
+  /**
+   * Removes a previously added {@link ChainReorgObserver}.
+   *
+   * @param observerId the ID of the observer to remove
+   * @return {@code true} if the observer was removed; otherwise {@code false}
+   */
+  boolean removeChainReorgObserver(long observerId);
 }
