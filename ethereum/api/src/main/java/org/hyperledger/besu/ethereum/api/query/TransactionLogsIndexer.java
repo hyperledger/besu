@@ -27,10 +27,14 @@ import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.time.Duration;
+import java.util.Map;
 import java.util.Optional;
+import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -44,11 +48,15 @@ public class TransactionLogsIndexer {
   private static final Logger LOG = LogManager.getLogger();
 
   public static final int BLOCKS_PER_BLOOM_CACHE = 100_000;
+  private static final int BLOOM_BITS_LENGTH = 256;
   public static final String PENDING = "pending";
+  private final Map<Long, Boolean> cachedSegments;
 
   private final Lock submissionLock = new ReentrantLock();
+
   private final EthScheduler scheduler;
   private final Blockchain blockchain;
+
   private final Path cacheDir;
 
   private final IndexingStatus indexingStatus = new IndexingStatus();
@@ -58,6 +66,11 @@ public class TransactionLogsIndexer {
     this.blockchain = blockchain;
     this.cacheDir = cacheDir;
     this.scheduler = scheduler;
+    this.cachedSegments = new TreeMap<>();
+  }
+
+  public void indexAll() {
+    ensurePreviousSegmentsArePresent(blockchain.getChainHeadBlockNumber());
   }
 
   private static File calculateCacheFileName(final String name, final Path cacheDir) {
@@ -117,14 +130,62 @@ public class TransactionLogsIndexer {
       if (maybeHeader.isEmpty()) {
         break;
       }
-      final byte[] logs = maybeHeader.get().getLogsBloom().toArray();
-      checkNotNull(logs);
-      checkState(logs.length == 256, "BloomBits are not the correct length");
-      fos.write(logs);
+      fillCacheFileWithBlock(maybeHeader.get(), fos);
       indexingStatus.currentBlock = blockNum;
       blockNum++;
     }
     return blockNum - startBlock;
+  }
+
+  public void cacheLogsBloomForBlockHeader(final BlockHeader blockHeader) {
+    try {
+      final long blockNumber = blockHeader.getNumber();
+      LOG.debug("Caching logs bloom for block {}.", "0x" + Long.toHexString(blockNumber));
+      ensurePreviousSegmentsArePresent(blockNumber);
+      final File cacheFile = calculateCacheFileName(blockNumber, cacheDir);
+      if (!cacheFile.exists()) {
+        Files.createFile(cacheFile.toPath());
+      }
+      try (RandomAccessFile writer = new RandomAccessFile(cacheFile, "rw")) {
+        final long offset = (blockNumber / BLOCKS_PER_BLOOM_CACHE) * BLOOM_BITS_LENGTH;
+        writer.seek(offset);
+        writer.write(ensureBloomBitsAreCorrectLength(blockHeader.getLogsBloom().toArray()));
+      }
+    } catch (IOException e) {
+      LOG.error("Unhandled indexing exception.", e);
+    }
+  }
+
+  private void ensurePreviousSegmentsArePresent(final long blockNumber) {
+    if (!indexingStatus.isIndexing()) {
+      scheduler.scheduleFutureTask(
+          () -> {
+            long currentSegment = (blockNumber / BLOCKS_PER_BLOOM_CACHE) - 1;
+            while (currentSegment > 0) {
+              try {
+                if (!cachedSegments.getOrDefault(currentSegment, false)) {
+                  final long startBlock = currentSegment * BLOCKS_PER_BLOOM_CACHE;
+                  generateLogBloomCache(startBlock, startBlock + BLOCKS_PER_BLOOM_CACHE);
+                  cachedSegments.put(currentSegment, true);
+                }
+              } finally {
+                currentSegment--;
+              }
+            }
+          },
+          Duration.ofSeconds(1));
+    }
+  }
+
+  private void fillCacheFileWithBlock(final BlockHeader blockHeader, final FileOutputStream fos)
+      throws IOException {
+    fos.write(ensureBloomBitsAreCorrectLength(blockHeader.getLogsBloom().toArray()));
+  }
+
+  private byte[] ensureBloomBitsAreCorrectLength(final byte[] logs) {
+    checkNotNull(logs);
+    checkState(logs.length == BLOOM_BITS_LENGTH, "BloomBits are not the correct length");
+    return logs;
   }
 
   public IndexingStatus requestIndexing(final long fromBlock, final long toBlock) {
@@ -150,6 +211,14 @@ public class TransactionLogsIndexer {
     }
     indexingStatus.requestAccepted = requestAccepted;
     return indexingStatus;
+  }
+
+  public EthScheduler getScheduler() {
+    return scheduler;
+  }
+
+  Path getCacheDir() {
+    return cacheDir;
   }
 
   public static final class IndexingStatus {
