@@ -2,6 +2,20 @@
 
 ## 1.4 RC 
 
+### Additions and Improvements 
+
+- New`trace_replayBlockTransactions` JSON-RPC API
+
+This can be enabled using the `--rpc-http-api TRACE` CLI flag.  There are some philosophical differences between Besu and other implementations that are outlined in the `[trace_rpc_apis.md](./docs/trace_rpc_apis.md)` documentation.
+
+- Added [Multi-tenancy](https://besu.hyperledger.org/en/latest/Concepts/Privacy/Multi-Tenancy/) support which allows multiple participants to use the same Besu node for private transactions.
+
+- Added TLS support for communication with privacy enclave
+
+### Bug Fixes
+
+- Private transactions are now validated before sent to the enclave [\#356](https://github.com/hyperledger/besu/pull/356)
+
 ### Known Bugs 
 
 - Error syncing with mainnet on Besu 1.3.7 node - MerkleTrieException [\#BESU-160](https://jira.hyperledger.org/browse/BESU-160)
