@@ -14,15 +14,12 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.condition.priv;
 
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
-import org.hyperledger.besu.tests.acceptance.dsl.condition.priv.fail.EeaSendRawTransactionFailPrivateFromNotMatchEnclaveKey;
-import org.hyperledger.besu.tests.acceptance.dsl.condition.priv.fail.PrivDeletePrivacyGroupFailEnclaveKeyNotInGroup;
-import org.hyperledger.besu.tests.acceptance.dsl.condition.priv.fail.PrivFindPrivacyGroupFailEnclaveKeyNotInGroup;
-import org.hyperledger.besu.tests.acceptance.dsl.condition.priv.fail.PrivGetEeaTransactionCountFailPrivateFromNotMatchEnclaveKey;
-import org.hyperledger.besu.tests.acceptance.dsl.condition.priv.fail.PrivGetTransactionCountFailEnclaveKeyNotInGroup;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyTransactions;
 
 import java.util.List;
@@ -59,26 +56,12 @@ public class PrivConditions {
     return new PrivDeletePrivacyGroupSuccess(transactions.deletePrivacyGroup(groupId), groupId);
   }
 
-  public Condition deletePrivacyGroupFailEnclaveKeyNotInGroup(final String groupId) {
-    return new PrivDeletePrivacyGroupFailEnclaveKeyNotInGroup(
-        transactions.deletePrivacyGroup(groupId));
-  }
-
   public Condition findPrivacyGroup(final int numGroups, final String... groupMembers) {
     return new PrivFindPrivacyGroupSuccess(transactions.findPrivacyGroup(groupMembers), numGroups);
   }
 
-  public Condition findPrivacyGroupFailEnclaveKeyNotInGroup(final String... groupMembers) {
-    return new PrivFindPrivacyGroupFailEnclaveKeyNotInGroup(
-        transactions.findPrivacyGroup(groupMembers));
-  }
-
   public Condition eeaSendRawTransaction(final String transaction) {
     return new EeaSendRawTransactionSuccess(transactions.sendRawTransaction(transaction));
-  }
-
-  public Condition eeaSendRawTransactionPrivateFromNotMatchEnclaveKey(final String transaction) {
-    return new EeaSendRawTransactionFailPrivateFromNotMatchEnclaveKey(transactions.sendRawTransaction(transaction));
   }
 
   public Condition distributeRawTransaction(
@@ -95,12 +78,6 @@ public class PrivConditions {
         transactions.getTransactionCount(accountAddress, privacyGroupId), expectedTransactionCount);
   }
 
-  public Condition getTransactionCountFailWhenEnclaveKeyNotInPrivacyGroup(
-      final String accountAddress, final String privacyGroupId) {
-    return new PrivGetTransactionCountFailEnclaveKeyNotInGroup(
-        transactions.getTransactionCount(accountAddress, privacyGroupId));
-  }
-
   public Condition getEeaTransactionCount(
       final String accountAddress,
       final String privateFrom,
@@ -111,14 +88,13 @@ public class PrivConditions {
         expectedTransactionCount);
   }
 
-  public Condition getEeaTransactionCountFailPrivateFromNotMatchEnclaveKey(
-      final String accountAddress, final String privateFrom, final String[] privateFor) {
-    return new PrivGetEeaTransactionCountFailPrivateFromNotMatchEnclaveKey(
-        transactions.getEeaTransactionCount(accountAddress, privateFrom, privateFor));
-  }
-
   public Condition getTransactionReceipt(final Hash transactionHash) {
     return new PrivGetTransactionReceiptSuccess(
         transactions.getTransactionReceipt(transactionHash));
+  }
+
+  public Condition multiTenancyValidationFail(
+      final Transaction<?> transaction, final JsonRpcError error) {
+    return new MultiTenancyValidationFail(transaction, error);
   }
 }

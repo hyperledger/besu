@@ -21,6 +21,7 @@ import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options
 
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
@@ -31,6 +32,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.Cluster;
 import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.ClusterConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.ClusterConfigurationBuilder;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -44,7 +46,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
-public class MultiTenancyFailAcceptanceTest extends AcceptanceTestBase {
+public class MultiTenancyValidationFailAcceptanceTest extends AcceptanceTestBase {
   private BesuNode node;
   private final ObjectMapper mapper = new ObjectMapper();
   private Cluster multiTenancyCluster;
@@ -87,31 +89,39 @@ public class MultiTenancyFailAcceptanceTest extends AcceptanceTestBase {
     final PrivateTransaction validSignedPrivateTransaction =
         getValidSignedPrivateTransaction(senderAddress, OTHER_ENCLAVE_KEY);
     retrievePrivacyGroupEnclaveStub();
-    node.verify(
-        priv.eeaSendRawTransactionPrivateFromNotMatchEnclaveKey(
-            getRLPOutput(validSignedPrivateTransaction).encoded().toHexString()));
+    final Transaction transaction =
+        privacyTransactions.sendRawTransaction(
+            getRLPOutput(validSignedPrivateTransaction).encoded().toHexString());
+    node.verify(priv.multiTenancyValidationFail(transaction, JsonRpcError.ENCLAVE_ERROR));
   }
 
-    @Test
-    public void sendTransactionShouldFailWhenPrivacyGroupDoesNotContainEnclaveKey() throws JsonProcessingException {
-      final PrivateTransaction validSignedPrivateTransaction =
-              getValidSignedPrivateTransaction(senderAddress, ENCLAVE_KEY);
-      retrievePrivacyGroupEnclaveStub();
-      node.verify(
-              priv.eeaSendRawTransactionPrivateFromNotMatchEnclaveKey(
-                      getRLPOutput(validSignedPrivateTransaction).encoded().toHexString()));
-    }
+  @Test
+  public void sendTransactionShouldFailWhenPrivacyGroupDoesNotContainEnclaveKey()
+      throws JsonProcessingException {
+    final PrivateTransaction validSignedPrivateTransaction =
+        getValidSignedPrivateTransaction(senderAddress, ENCLAVE_KEY);
+    retrievePrivacyGroupEnclaveStub();
+    final Transaction transaction =
+        privacyTransactions.sendRawTransaction(
+            getRLPOutput(validSignedPrivateTransaction).encoded().toHexString());
+    node.verify(priv.multiTenancyValidationFail(transaction, JsonRpcError.ENCLAVE_ERROR));
+  }
 
   @Test
   public void deletePrivacyGroupShouldFailWhenEnclaveKeyNotInPrivacyGroup()
       throws JsonProcessingException {
     retrievePrivacyGroupEnclaveStub();
-    node.verify(priv.deletePrivacyGroupFailEnclaveKeyNotInGroup(PRIVACY_GROUP_ID));
+    final Transaction transaction = privacyTransactions.deletePrivacyGroup(PRIVACY_GROUP_ID);
+    node.verify(
+        priv.multiTenancyValidationFail(transaction, JsonRpcError.DELETE_PRIVACY_GROUP_ERROR));
   }
 
   @Test
   public void findPrivacyGroupShouldFailWhenEnclaveKeyNotInPrivacyGroup() {
-    node.verify(priv.findPrivacyGroupFailEnclaveKeyNotInGroup(OTHER_ENCLAVE_KEY));
+    final Transaction transaction =
+        privacyTransactions.findPrivacyGroup(new String[] {OTHER_ENCLAVE_KEY});
+    node.verify(
+        priv.multiTenancyValidationFail(transaction, JsonRpcError.FIND_PRIVACY_GROUP_ERROR));
   }
 
   @Test
@@ -119,9 +129,11 @@ public class MultiTenancyFailAcceptanceTest extends AcceptanceTestBase {
     final String accountAddress = Address.ZERO.toHexString();
     final String senderAddressBase64 = Bytes.fromHexString(accountAddress).toBase64String();
     final String[] privateFor = {senderAddressBase64};
+    final Transaction transaction =
+        privacyTransactions.getEeaTransactionCount(accountAddress, OTHER_ENCLAVE_KEY, privateFor);
     node.verify(
-        priv.getEeaTransactionCountFailPrivateFromNotMatchEnclaveKey(
-            accountAddress, OTHER_ENCLAVE_KEY, privateFor));
+        priv.multiTenancyValidationFail(
+            transaction, JsonRpcError.GET_PRIVATE_TRANSACTION_NONCE_ERROR));
   }
 
   @Test
@@ -129,9 +141,11 @@ public class MultiTenancyFailAcceptanceTest extends AcceptanceTestBase {
       throws JsonProcessingException {
     retrievePrivacyGroupEnclaveStub();
     final String accountAddress = Address.ZERO.toHexString();
+    final Transaction transaction =
+        privacyTransactions.getTransactionCount(accountAddress, PRIVACY_GROUP_ID);
     node.verify(
-        priv.getTransactionCountFailWhenEnclaveKeyNotInPrivacyGroup(
-            accountAddress, PRIVACY_GROUP_ID));
+        priv.multiTenancyValidationFail(
+            transaction, JsonRpcError.GET_PRIVATE_TRANSACTION_NONCE_ERROR));
   }
 
   private void retrievePrivacyGroupEnclaveStub() throws JsonProcessingException {

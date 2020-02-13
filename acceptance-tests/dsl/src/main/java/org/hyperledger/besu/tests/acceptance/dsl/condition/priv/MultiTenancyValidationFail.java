@@ -12,31 +12,38 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.tests.acceptance.dsl.condition.priv.fail;
+package org.hyperledger.besu.tests.acceptance.dsl.condition.priv;
 
-import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+import static org.assertj.core.api.Assertions.failBecauseExceptionWasNotThrown;
 
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
-import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivGetTransactionCountTransaction;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
 
+import org.assertj.core.api.Assertions;
 import org.web3j.protocol.exceptions.ClientConnectionException;
 
-public class PrivGetTransactionCountFailEnclaveKeyNotInGroup implements Condition {
+public class MultiTenancyValidationFail implements Condition {
 
-  private final PrivGetTransactionCountTransaction privGetTransactionCountTransaction;
+  private final Transaction<?> transaction;
+  private final JsonRpcError error;
 
-  public PrivGetTransactionCountFailEnclaveKeyNotInGroup(
-      final PrivGetTransactionCountTransaction privGetTransactionCountTransaction) {
-    this.privGetTransactionCountTransaction = privGetTransactionCountTransaction;
+  public MultiTenancyValidationFail(final Transaction<?> transaction, final JsonRpcError error) {
+    this.transaction = transaction;
+    this.error = error;
   }
 
   @Override
   public void verify(final Node node) {
     try {
-      node.execute(privGetTransactionCountTransaction);
+      node.execute(transaction);
+      failBecauseExceptionWasNotThrown(ClientConnectionException.class);
     } catch (final Exception e) {
-      assertThat(e).isInstanceOf(ClientConnectionException.class);
+      Assertions.assertThat(e)
+          .isInstanceOf(ClientConnectionException.class)
+          .hasMessageContaining("400")
+          .hasMessageContaining(error.getMessage());
     }
   }
 }
