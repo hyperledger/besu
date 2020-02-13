@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.4.1
+
+### Bug Fixes
+
+- [BESU-25](https://jira.hyperledger.org/browse/BESU-25) Use v5 Devp2p when pinging [\#392](https://github.com/hyperledger/besu/pull/392)
+
+
 ## 1.4.0 RC-1 
 
 ### Additions and Improvements 
