@@ -20,6 +20,16 @@ The default NAT method (AUTO) can detect this so no user intervention is require
 
 - Private transactions are now validated before sent to the enclave [\#356](https://github.com/hyperledger/besu/pull/356)
 
+### Known Bugs 
+
+- Error syncing with mainnet on Besu 1.3.7 node - MerkleTrieException [\#BESU-160](https://jira.hyperledger.org/browse/BESU-160)
+
+Workaround -> Don't enable pruning when syncing to mainnet. 
+
+- Onchain permissioning nodes can't peer when using a non-validator bootnode [\#BESU-181](https://jira.hyperledger.org/browse/BESU-181)
+
+Workaround -> When using onchain permissioning, ensure bootnodes are also validators. 
+
 ## 1.4 Beta 3 
 
 ### Additions and Improvements 
