@@ -8,6 +8,10 @@
 
 This can be enabled using the `--rpc-http-api TRACE` CLI flag.  There are some philosophical differences between Besu and other implementations that are outlined in [trace_rpc_apis](docs/trace_rpc_apis.md).
 
+- Ability to automatically detect Docker NAT settings from inside the conainter.
+
+The default NAT method (AUTO) can detect this so no user intervention is required to enable this.
+
 - Added [Multi-tenancy](https://besu.hyperledger.org/en/latest/Concepts/Privacy/Multi-Tenancy/) support which allows multiple participants to use the same Besu node for private transactions.
 
 - Added TLS support for communication with privacy enclave
