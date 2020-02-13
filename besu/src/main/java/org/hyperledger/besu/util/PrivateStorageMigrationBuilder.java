@@ -18,19 +18,9 @@ import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.privacy.storage.migration.PrivateStorageMigration;
-import org.hyperledger.besu.ethereum.privacy.storage.migration.PrivateStorageMigrationTransactionProcessor;
-import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
-import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
-
-import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.ethereum.privacy.storage.migration.PrivateStorageMigrationV2;
 
 public class PrivateStorageMigrationBuilder {
 
@@ -46,37 +36,43 @@ public class PrivateStorageMigrationBuilder {
   public PrivateStorageMigration build() {
     final PrivateStateStorage privateStateStorage = privacyParameters.getPrivateStateStorage();
     final Blockchain blockchain = besuController.getProtocolContext().getBlockchain();
-    final WorldStateArchive worldStateArchive =
-        besuController.getProtocolContext().getWorldStateArchive();
-    final ProtocolSchedule<?> protocolSchedule = besuController.getProtocolSchedule();
+    //    final WorldStateArchive worldStateArchive =
+    //        besuController.getProtocolContext().getWorldStateArchive();
+    //    final ProtocolSchedule<?> protocolSchedule = besuController.getProtocolSchedule();
 
-    final WorldStateArchive inMemoryPrivateWorldStateArchive =
-        createInMemoryPrivateWorldStateArchive();
-    final PrivateStateRootResolver privateStateRootResolver =
-        new PrivateStateRootResolver(privateStateStorage);
+    //    final WorldStateArchive inMemoryPrivateWorldStateArchive =
+    //        createInMemoryPrivateWorldStateArchive();
+    //    final PrivateStateRootResolver privateStateRootResolver =
+    //        new PrivateStateRootResolver(privateStateStorage);
 
-    final PrivateStorageMigrationTransactionProcessor migrationTransactionProcessor =
-        new PrivateStorageMigrationTransactionProcessor(
-            blockchain,
-            protocolSchedule,
-            worldStateArchive,
-            inMemoryPrivateWorldStateArchive,
-            privateStateRootResolver);
+    //    final PrivateStorageMigrationTransactionProcessor migrationTransactionProcessor =
+    //        new PrivateStorageMigrationTransactionProcessor(
+    //            blockchain,
+    //            protocolSchedule,
+    //            worldStateArchive,
+    //            inMemoryPrivateWorldStateArchive,
+    //            privateStateRootResolver);
+    //    return new PrivateStorageMigrationV1(
+    //        privateStateStorage,
+    //        blockchain,
+    //        privacyParameters.getEnclave(),
+    //        Bytes.fromBase64String(privacyParameters.getEnclavePublicKey()),
+    //        Address.privacyPrecompiled(privacyParameters.getPrivacyAddress()),
+    //        migrationTransactionProcessor);
 
-    return new PrivateStorageMigration(
+    return new PrivateStorageMigrationV2(
         privateStateStorage,
         blockchain,
-        privacyParameters.getEnclave(),
-        Bytes.fromBase64String(privacyParameters.getEnclavePublicKey()),
         Address.privacyPrecompiled(privacyParameters.getPrivacyAddress()),
-        migrationTransactionProcessor);
+        besuController.getProtocolSchedule(),
+        besuController.getProtocolContext().getWorldStateArchive());
   }
 
-  private WorldStateArchive createInMemoryPrivateWorldStateArchive() {
-    final WorldStateStorage privateWorldStateStorage =
-        new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
-    final WorldStatePreimageStorage privatePreimageStorage =
-        new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage());
-    return new WorldStateArchive(privateWorldStateStorage, privatePreimageStorage);
-  }
+  //  private WorldStateArchive createInMemoryPrivateWorldStateArchive() {
+  //    final WorldStateStorage privateWorldStateStorage =
+  //        new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
+  //    final WorldStatePreimageStorage privatePreimageStorage =
+  //        new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage());
+  //    return new WorldStateArchive(privateWorldStateStorage, privatePreimageStorage);
+  //  }
 }

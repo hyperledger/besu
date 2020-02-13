@@ -91,7 +91,7 @@ public class PrivateStorageMigrationTest {
     privateStateRootResolver = new PrivateStateRootResolver(privateStateStorage);
 
     migration =
-        new PrivateStorageMigration(
+        new PrivateStorageMigrationV1(
             privateStateStorage,
             blockchain,
             enclave,
