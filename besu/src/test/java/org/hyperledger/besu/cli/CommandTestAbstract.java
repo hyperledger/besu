@@ -220,7 +220,7 @@ public abstract class CommandTestAbstract {
     when(mockRunnerBuilder.staticNodes(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.identityString(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.besuPluginContext(any())).thenReturn(mockRunnerBuilder);
-    when(mockRunnerBuilder.autoLogsBloomIndexing(anyBoolean())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.autoLogBloomCaching(anyBoolean())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.build()).thenReturn(mockRunner);
 
     when(storageService.getByName("rocksdb")).thenReturn(Optional.of(rocksDBStorageFactory));

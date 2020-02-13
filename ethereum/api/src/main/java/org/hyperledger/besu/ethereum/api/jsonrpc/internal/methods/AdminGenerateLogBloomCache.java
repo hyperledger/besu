@@ -73,8 +73,8 @@ public class AdminGenerateLogBloomCache implements JsonRpcMethod {
     return new JsonRpcSuccessResponse(
         requestContext.getRequest().getId(),
         blockchainQueries
-            .getTransactionLogsIndexer()
-            .map(indexer -> indexer.requestIndexing(startBlock, stopBlock))
+            .getTransactionLogBloomCacher()
+            .map(cacher -> cacher.requestCaching(startBlock, stopBlock))
             .orElse(null));
   }
 }
