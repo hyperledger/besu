@@ -95,6 +95,6 @@ public class PrivConditions {
 
   public Condition multiTenancyValidationFail(
       final Transaction<?> transaction, final JsonRpcError error) {
-    return new MultiTenancyValidationFail(transaction, error);
+    return new ExpectJsonRpcError(transaction, error);
   }
 }

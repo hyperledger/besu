@@ -24,12 +24,12 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
 import org.assertj.core.api.Assertions;
 import org.web3j.protocol.exceptions.ClientConnectionException;
 
-public class MultiTenancyValidationFail implements Condition {
+public class ExpectJsonRpcError implements Condition {
 
   private final Transaction<?> transaction;
   private final JsonRpcError error;
 
-  public MultiTenancyValidationFail(final Transaction<?> transaction, final JsonRpcError error) {
+  public ExpectJsonRpcError(final Transaction<?> transaction, final JsonRpcError error) {
     this.transaction = transaction;
     this.error = error;
   }

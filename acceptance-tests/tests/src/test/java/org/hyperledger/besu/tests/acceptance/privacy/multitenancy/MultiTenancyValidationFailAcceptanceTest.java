@@ -23,6 +23,7 @@ import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.Restriction;
@@ -51,14 +52,14 @@ public class MultiTenancyValidationFailAcceptanceTest extends AcceptanceTestBase
   private final ObjectMapper mapper = new ObjectMapper();
   private Cluster multiTenancyCluster;
 
-  private static final int ENCLAVE_PORT = 1080;
   private static final String PRIVACY_GROUP_ID = "Z3JvdXBJZA==";
-  private static final String ENCLAVE_KEY = "B1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
-  private static final String OTHER_ENCLAVE_KEY = "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
+  private static final String ENCLAVE_PUBLIC_KEY = "B1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
+  private static final String OTHER_ENCLAVE_PUBLIC_KEY =
+      "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
   private final Address senderAddress =
       Address.wrap(Bytes.fromHexString(accounts.getPrimaryBenefactor().getAddress()));
 
-  @Rule public WireMockRule wireMockRule = new WireMockRule(options().port(ENCLAVE_PORT));
+  @Rule public WireMockRule wireMockRule = new WireMockRule(options().dynamicPort());
 
   @Before
   public void setUp() throws Exception {
@@ -68,7 +69,7 @@ public class MultiTenancyValidationFailAcceptanceTest extends AcceptanceTestBase
     node =
         besu.createNodeWithMultiTenantedPrivacy(
             "node1",
-            "http://127.0.0.1:" + ENCLAVE_PORT,
+            "http://127.0.0.1:" + wireMockRule.port(),
             "authentication/auth_priv.toml",
             "authentication/auth_priv_key");
     multiTenancyCluster.start(node);
@@ -87,9 +88,9 @@ public class MultiTenancyValidationFailAcceptanceTest extends AcceptanceTestBase
   public void sendTransactionShouldFailWhenPrivateFromNotMatchEnclaveKey()
       throws JsonProcessingException {
     final PrivateTransaction validSignedPrivateTransaction =
-        getValidSignedPrivateTransaction(senderAddress, OTHER_ENCLAVE_KEY);
+        getValidSignedPrivateTransaction(senderAddress, OTHER_ENCLAVE_PUBLIC_KEY);
     retrievePrivacyGroupEnclaveStub();
-    final Transaction transaction =
+    final Transaction<Hash> transaction =
         privacyTransactions.sendRawTransaction(
             getRLPOutput(validSignedPrivateTransaction).encoded().toHexString());
     node.verify(priv.multiTenancyValidationFail(transaction, JsonRpcError.ENCLAVE_ERROR));
@@ -99,9 +100,9 @@ public class MultiTenancyValidationFailAcceptanceTest extends AcceptanceTestBase
   public void sendTransactionShouldFailWhenPrivacyGroupDoesNotContainEnclaveKey()
       throws JsonProcessingException {
     final PrivateTransaction validSignedPrivateTransaction =
-        getValidSignedPrivateTransaction(senderAddress, ENCLAVE_KEY);
+        getValidSignedPrivateTransaction(senderAddress, ENCLAVE_PUBLIC_KEY);
     retrievePrivacyGroupEnclaveStub();
-    final Transaction transaction =
+    final Transaction<Hash> transaction =
         privacyTransactions.sendRawTransaction(
             getRLPOutput(validSignedPrivateTransaction).encoded().toHexString());
     node.verify(priv.multiTenancyValidationFail(transaction, JsonRpcError.ENCLAVE_ERROR));
@@ -111,15 +112,16 @@ public class MultiTenancyValidationFailAcceptanceTest extends AcceptanceTestBase
   public void deletePrivacyGroupShouldFailWhenEnclaveKeyNotInPrivacyGroup()
       throws JsonProcessingException {
     retrievePrivacyGroupEnclaveStub();
-    final Transaction transaction = privacyTransactions.deletePrivacyGroup(PRIVACY_GROUP_ID);
+    final Transaction<String> transaction =
+        privacyTransactions.deletePrivacyGroup(PRIVACY_GROUP_ID);
     node.verify(
         priv.multiTenancyValidationFail(transaction, JsonRpcError.DELETE_PRIVACY_GROUP_ERROR));
   }
 
   @Test
   public void findPrivacyGroupShouldFailWhenEnclaveKeyNotInPrivacyGroup() {
-    final Transaction transaction =
-        privacyTransactions.findPrivacyGroup(new String[] {OTHER_ENCLAVE_KEY});
+    final Transaction<PrivacyGroup[]> transaction =
+        privacyTransactions.findPrivacyGroup(new String[] {OTHER_ENCLAVE_PUBLIC_KEY});
     node.verify(
         priv.multiTenancyValidationFail(transaction, JsonRpcError.FIND_PRIVACY_GROUP_ERROR));
   }
@@ -129,8 +131,9 @@ public class MultiTenancyValidationFailAcceptanceTest extends AcceptanceTestBase
     final String accountAddress = Address.ZERO.toHexString();
     final String senderAddressBase64 = Bytes.fromHexString(accountAddress).toBase64String();
     final String[] privateFor = {senderAddressBase64};
-    final Transaction transaction =
-        privacyTransactions.getEeaTransactionCount(accountAddress, OTHER_ENCLAVE_KEY, privateFor);
+    final Transaction<Integer> transaction =
+        privacyTransactions.getEeaTransactionCount(
+            accountAddress, OTHER_ENCLAVE_PUBLIC_KEY, privateFor);
     node.verify(
         priv.multiTenancyValidationFail(
             transaction, JsonRpcError.GET_PRIVATE_TRANSACTION_NONCE_ERROR));
@@ -141,7 +144,7 @@ public class MultiTenancyValidationFailAcceptanceTest extends AcceptanceTestBase
       throws JsonProcessingException {
     retrievePrivacyGroupEnclaveStub();
     final String accountAddress = Address.ZERO.toHexString();
-    final Transaction transaction =
+    final Transaction<Integer> transaction =
         privacyTransactions.getTransactionCount(accountAddress, PRIVACY_GROUP_ID);
     node.verify(
         priv.multiTenancyValidationFail(
@@ -151,7 +154,7 @@ public class MultiTenancyValidationFailAcceptanceTest extends AcceptanceTestBase
   private void retrievePrivacyGroupEnclaveStub() throws JsonProcessingException {
     final String retrieveGroupResponse =
         mapper.writeValueAsString(
-            testPrivacyGroup(List.of(OTHER_ENCLAVE_KEY), PrivacyGroup.Type.PANTHEON));
+            testPrivacyGroup(List.of(OTHER_ENCLAVE_PUBLIC_KEY), PrivacyGroup.Type.PANTHEON));
     stubFor(post("/retrievePrivacyGroup").willReturn(ok(retrieveGroupResponse)));
   }
 
