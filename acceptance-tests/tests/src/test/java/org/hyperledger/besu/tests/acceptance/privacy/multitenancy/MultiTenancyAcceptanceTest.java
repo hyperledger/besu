@@ -56,7 +56,6 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
   private final ObjectMapper mapper = new ObjectMapper();
   private Cluster multiTenancyCluster;
 
-  private static final int ENCLAVE_PORT = 1080;
   private static final String PRIVACY_GROUP_ID = "Z3JvdXBJZA==";
   private static final String ENCLAVE_KEY = "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
   private static final String KEY1 = "sgFkVOyFndZe/5SAZJO5UYbrl7pezHetveriBBWWnE8=";
@@ -65,7 +64,7 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
   private final Address senderAddress =
       Address.wrap(Bytes.fromHexString(accounts.getPrimaryBenefactor().getAddress()));
 
-  @Rule public WireMockRule wireMockRule = new WireMockRule(options().port(ENCLAVE_PORT));
+  @Rule public WireMockRule wireMockRule = new WireMockRule(options().dynamicPort());
 
   @Before
   public void setUp() throws Exception {
@@ -75,7 +74,7 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
     node =
         besu.createNodeWithMultiTenantedPrivacy(
             "node1",
-            "http://127.0.0.1:" + ENCLAVE_PORT,
+            "http://127.0.0.1:" + wireMockRule.port(),
             "authentication/auth_priv.toml",
             "authentication/auth_priv_key");
     multiTenancyCluster.start(node);
