@@ -14,46 +14,45 @@
  */
 package org.hyperledger.besu.ethereum.privacy.storage.migration;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver.EMPTY_ROOT_HASH;
+import static org.hyperledger.besu.ethereum.privacy.storage.PrivateStateKeyValueStorage.SCHEMA_VERSION_1_0_x;
+import static org.hyperledger.besu.ethereum.privacy.storage.PrivateStateKeyValueStorage.SCHEMA_VERSION_1_4_x;
 import static org.hyperledger.besu.ethereum.privacy.storage.migration.PrivateTransactionDataFixture.privacyMarkerTransaction;
-import static org.hyperledger.besu.ethereum.privacy.storage.migration.PrivateTransactionDataFixture.privateTransaction;
-import static org.hyperledger.besu.ethereum.privacy.storage.migration.PrivateTransactionDataFixture.successfulPrivateTxProcessingResult;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.enclave.Enclave;
-import org.hyperledger.besu.enclave.EnclaveClientException;
-import org.hyperledger.besu.enclave.EnclaveServerException;
-import org.hyperledger.besu.enclave.types.ReceiveResponse;
+import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor.TransactionReceiptFactory;
+import org.hyperledger.besu.ethereum.mainnet.MiningBeneficiaryCalculator;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
-import org.hyperledger.besu.ethereum.privacy.PrivateStorageMigrationTransactionProcessorResult;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor.Result;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransactionReceipt;
-import org.hyperledger.besu.ethereum.privacy.storage.LegacyPrivateStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.privacy.storage.LegacyPrivateStateStorage;
-import org.hyperledger.besu.ethereum.privacy.storage.LegacyPrivateStateStorage.Updater;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
-import org.hyperledger.besu.ethereum.privacy.storage.PrivateBlockMetadata;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.privacy.storage.PrivateTransactionMetadata;
-import org.hyperledger.besu.ethereum.rlp.RLP;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
-import java.util.Base64;
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -62,22 +61,31 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
+@SuppressWarnings("unchecked")
 public class PrivateStorageMigrationTest {
 
   private static final String PRIVACY_GROUP_ID = "tJw12cPM6EZRF5zfHv2zLePL0cqlaDjLn0x1T/V0yzE=";
-  private static final String TRANSACTION_KEY = "93Ky7lXwFkMc7+ckoFgUMku5bpr9tz4zhmWmk9RlNng=";
-  private static final Bytes ENCLAVE_KEY = Bytes.EMPTY;
+  public static final Bytes32 PRIVACY_GROUP_BYTES =
+      Bytes32.wrap(Bytes.fromBase64String(PRIVACY_GROUP_ID));
   private static final Address PRIVACY_ADDRESS = Address.DEFAULT_PRIVACY;
+  private static final String TRANSACTION_KEY = "93Ky7lXwFkMc7+ckoFgUMku5bpr9tz4zhmWmk9RlNng=";
 
   @Mock private Blockchain blockchain;
-  @Mock private Enclave enclave;
-  @Mock private PrivateStorageMigrationTransactionProcessor migrationTransactionProcessor;
+  @Mock private ProtocolSchedule<?> protocolSchedule;
+  @Mock private ProtocolSpec protocolSpec;
+  @Mock private WorldStateArchive publicWorldStateArchive;
+  @Mock private MutableWorldState publicMutableWorldState;
+  @Mock private LegacyPrivateStateStorage legacyPrivateStateStorage;
+  @Mock private TransactionProcessor transactionProcessor;
+  @Mock private TransactionReceiptFactory transactionReceiptFactory;
+  @Mock private MiningBeneficiaryCalculator miningBeneficiaryCalculator;
+  @Mock private PrivateMigrationBlockProcessor privateMigrationBlockProcessor;
 
-  private LegacyPrivateStateStorage legacyPrivateStateStorage;
   private PrivateStateKeyValueStorage privateStateStorage;
   private PrivateStateRootResolver privateStateRootResolver;
   private PrivateStorageMigration migration;
@@ -86,220 +94,141 @@ public class PrivateStorageMigrationTest {
   public void setUp() {
     final KeyValueStorage kvStorage = new InMemoryKeyValueStorage();
 
-    legacyPrivateStateStorage = new LegacyPrivateStateKeyValueStorage(kvStorage);
     privateStateStorage = new PrivateStateKeyValueStorage(kvStorage);
     privateStateRootResolver = new PrivateStateRootResolver(privateStateStorage);
 
+    lenient().when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(protocolSpec);
+    lenient().when(protocolSpec.getTransactionProcessor()).thenReturn(transactionProcessor);
+    lenient()
+        .when(protocolSpec.getTransactionReceiptFactory())
+        .thenReturn(transactionReceiptFactory);
+    lenient().when(protocolSpec.getBlockReward()).thenReturn(Wei.ZERO);
+    lenient()
+        .when(protocolSpec.getMiningBeneficiaryCalculator())
+        .thenReturn(miningBeneficiaryCalculator);
+    lenient().when(protocolSpec.isSkipZeroBlockRewards()).thenReturn(false);
+
     migration =
-        new PrivateStorageMigrationV1(
-            privateStateStorage,
+        new PrivateStorageMigration(
             blockchain,
-            enclave,
-            ENCLAVE_KEY,
             PRIVACY_ADDRESS,
-            migrationTransactionProcessor);
+            protocolSchedule,
+            publicWorldStateArchive,
+            privateStateStorage,
+            privateStateRootResolver,
+            legacyPrivateStateStorage,
+            (protocolSpec) -> privateMigrationBlockProcessor);
   }
 
   @Test
-  public void migrationShouldGenerateExpectedStateRoot() {
-    final Bytes privacyGroupId = Bytes.fromBase64String(PRIVACY_GROUP_ID);
-    final Hash expectedStateRoot = createLegacyStateRootEntry(privacyGroupId);
-    final Transaction privacyMarkerTransaction = createPrivacyMarkerTransaction();
-    createPrivateTransaction(privacyGroupId, privacyMarkerTransaction);
-    createPrivateTransactionExecutionResult(expectedStateRoot);
+  public void privateGroupHeadBlocKMapIsCopiedFromPreviousBlocks() {
+    mockBlockchainWithZeroTransactions();
+
+    // create existing map at block hash 'zero' (pre-genesis)
+    final PrivacyGroupHeadBlockMap existingPgHeadMap =
+        createPrivacyGroupHeadBlockInitialMap(PRIVACY_GROUP_BYTES);
 
     migration.migratePrivateStorage();
 
-    assertThatLegacyStateRootEntryWasDeleted(privacyGroupId);
-    assertThatStateRootResolverReturnsExpectedHashForChainHead(privacyGroupId, expectedStateRoot);
-  }
+    // check that for every block we have the existing mapping
+    for (long i = 0; i <= blockchain.getChainHeadBlockNumber(); i++) {
+      final Optional<PrivacyGroupHeadBlockMap> pgHeadMapAfterMigration =
+          privateStateStorage.getPrivacyGroupHeadBlockMap(
+              blockchain.getBlockByNumber(i).get().getHash());
 
-  private void assertThatLegacyStateRootEntryWasDeleted(final Bytes privacyGroupId) {
-    assertThat(legacyPrivateStateStorage.getLatestStateRoot(privacyGroupId)).isEmpty();
-  }
-
-  private void assertThatStateRootResolverReturnsExpectedHashForChainHead(
-      final Bytes privacyGroupId, final Hash expectedStateRoot) {
-    assertThat(
-            privateStateRootResolver.resolveLastStateRoot(
-                Bytes32.wrap(privacyGroupId), blockchain.getChainHeadHash()))
-        .isEqualTo(expectedStateRoot);
+      assertThat(pgHeadMapAfterMigration).isPresent().hasValue(existingPgHeadMap);
+    }
   }
 
   @Test
-  public void migrationShouldGenerateExpectedPrivateBlockAndTransactionMetadata() {
-    final Bytes privacyGroupId = Bytes.fromBase64String(PRIVACY_GROUP_ID);
-    final Hash expectedStateRoot = createLegacyStateRootEntry(privacyGroupId);
+  public void successfulMigrationBumpsSchemaVersion() {
     final Transaction privacyMarkerTransaction = createPrivacyMarkerTransaction();
-    final PrivateTransaction privateTransaction =
-        createPrivateTransaction(privacyGroupId, privacyMarkerTransaction);
-    createPrivateTransactionExecutionResult(expectedStateRoot);
-
-    createLegacyTransactionMetadata(
-        privacyMarkerTransaction, privateTransaction, expectedStateRoot);
+    mockBlockchainWithPrivacyMarkerTransaction(privacyMarkerTransaction);
+    assertThat(privateStateStorage.getSchemaVersion()).isEqualTo(SCHEMA_VERSION_1_0_x);
 
     migration.migratePrivateStorage();
 
-    final PrivateBlockMetadata privateBlockMetadata =
-        fetchPrivateBlockMetadataAtChainHead(privacyGroupId);
-    assertThat(privateBlockMetadata.getLatestStateRoot()).isPresent().hasValue(expectedStateRoot);
-    assertThat((privateBlockMetadata.getPrivateTransactionMetadataList())).hasSize(1);
-
-    final PrivateTransactionMetadata privateTransactionMetadata =
-        privateBlockMetadata.getPrivateTransactionMetadataList().get(0);
-    assertThat(privateTransactionMetadata.getPrivacyMarkerTransactionHash())
-        .isEqualTo(privacyMarkerTransaction.getHash());
-    assertThat(privateTransactionMetadata.getStateRoot()).isEqualTo(expectedStateRoot);
-
-    assertThatLegacyTransactionMetadataWasDeleted(privateTransaction);
+    assertThat(privateStateStorage.getSchemaVersion()).isEqualTo(SCHEMA_VERSION_1_4_x);
   }
 
-  private PrivateBlockMetadata fetchPrivateBlockMetadataAtChainHead(final Bytes privacyGroupId) {
-    return privateStateStorage
-        .getPrivateBlockMetadata(blockchain.getChainHeadHash(), Bytes32.wrap(privacyGroupId))
-        .orElseThrow();
+  @Test
+  public void failedMigrationThrowsErrorAndDoesNotBumpSchemaVersion() {
+    final Transaction privacyMarkerTransaction = createPrivacyMarkerTransaction();
+    mockBlockchainWithPrivacyMarkerTransaction(privacyMarkerTransaction);
+    createPrivacyGroupHeadBlockInitialMap(PRIVACY_GROUP_BYTES);
+
+    // final state root won't match the legacy state root
+    when(legacyPrivateStateStorage.getLatestStateRoot(any())).thenReturn(Optional.of(Hash.ZERO));
+
+    assertThat(privateStateStorage.getSchemaVersion()).isEqualTo(SCHEMA_VERSION_1_0_x);
+
+    assertThatThrownBy(() -> migration.migratePrivateStorage())
+        .isInstanceOf(PrivateStorageMigrationException.class)
+        .hasMessageContaining("Inconsistent state root");
+
+    assertThat(privateStateStorage.getSchemaVersion()).isEqualTo(SCHEMA_VERSION_1_0_x);
   }
 
-  private void createLegacyTransactionMetadata(
-      final Transaction privacyMarkerTransaction,
-      final PrivateTransaction privateTransaction,
-      final Hash expectedStateRoot) {
-    final PrivateTransactionMetadata previousTransactionMetadata =
-        new PrivateTransactionMetadata(privacyMarkerTransaction.getHash(), expectedStateRoot);
-    legacyPrivateStateStorage
+  @Test
+  public void migrationInBlockchainWithZeroPMTsDoesNotReprocessAnyBlocks() {
+    mockBlockchainWithZeroTransactions();
+
+    migration.migratePrivateStorage();
+
+    verifyNoInteractions(privateMigrationBlockProcessor);
+  }
+
+  @Test
+  public void migrationReprocessBlocksWithPMT() {
+    final Transaction privacyMarkerTransaction = createPrivacyMarkerTransaction();
+    mockBlockchainWithPrivacyMarkerTransaction(privacyMarkerTransaction);
+    final Block blockWithPMT = blockchain.getBlockByNumber(1L).orElseThrow();
+
+    migration.migratePrivateStorage();
+
+    verify(privateMigrationBlockProcessor)
+        .processBlock(
+            any(),
+            any(),
+            eq(blockWithPMT.getHeader()),
+            eq(blockWithPMT.getBody().getTransactions()),
+            eq(blockWithPMT.getBody().getOmmers()));
+  }
+
+  /*
+   When processing a block, we only need to process up to the last PTM in the block.
+  */
+  @SuppressWarnings("rawtypes")
+  @Test
+  public void migrationOnlyProcessRequiredTransactions() {
+    final List<Transaction> transactions = new ArrayList<>();
+    transactions.add(publicTransaction());
+    transactions.add(createPrivacyMarkerTransaction());
+    transactions.add(publicTransaction());
+
+    mockBlockchainWithTransactionsInABlock(transactions);
+
+    migration.migratePrivateStorage();
+
+    final ArgumentCaptor<List> txsCaptor = ArgumentCaptor.forClass(List.class);
+
+    verify(privateMigrationBlockProcessor)
+        .processBlock(any(), any(), any(), txsCaptor.capture(), any());
+
+    // won't process transaction after PMT, that's why we only process 2 txs
+    final List<Transaction> processedTxs = txsCaptor.getValue();
+    assertThat(processedTxs).hasSize(2);
+  }
+
+  private PrivacyGroupHeadBlockMap createPrivacyGroupHeadBlockInitialMap(
+      final Bytes32 privacyGroupBytes) {
+    final PrivacyGroupHeadBlockMap existingPgHeadMap =
+        new PrivacyGroupHeadBlockMap(Map.of(privacyGroupBytes, Hash.ZERO));
+    privateStateStorage
         .updater()
-        .putTransactionMetadata(
-            blockchain.getChainHeadHash(),
-            privateTransaction.getHash(),
-            previousTransactionMetadata)
+        .putPrivacyGroupHeadBlockMap(Hash.ZERO, existingPgHeadMap)
         .commit();
-  }
-
-  private void assertThatLegacyTransactionMetadataWasDeleted(
-      final PrivateTransaction privateTransaction) {
-    assertThat(
-            legacyPrivateStateStorage.getTransactionMetadata(
-                blockchain.getChainHeadHash(), privateTransaction.getHash()))
-        .isEmpty();
-  }
-
-  @Test
-  public void migrationShouldGenerateExpectedPrivacyGroupBlockHeadMapping() {
-    final Bytes privacyGroupId = Bytes.fromBase64String(PRIVACY_GROUP_ID);
-    final Hash expectedStateRoot = createLegacyStateRootEntry(privacyGroupId);
-    final Transaction privacyMarkerTransaction = createPrivacyMarkerTransaction();
-    createPrivateTransaction(privacyGroupId, privacyMarkerTransaction);
-    createPrivateTransactionExecutionResult(expectedStateRoot);
-
-    migration.migratePrivateStorage();
-
-    final PrivacyGroupHeadBlockMap expectedPrivacyGroupHeadBlockMap =
-        new PrivacyGroupHeadBlockMap(
-            Map.of(Bytes32.wrap(privacyGroupId), blockchain.getChainHeadHash()));
-    assertThat(privateStateStorage.getPrivacyGroupHeadBlockMap(blockchain.getChainHeadHash()))
-        .isPresent()
-        .hasValue(expectedPrivacyGroupHeadBlockMap);
-  }
-
-  @Test
-  public void migrationShouldGenerateExpectedPrivateTransactionReceipt() {
-    final Bytes privacyGroupId = Bytes.fromBase64String(PRIVACY_GROUP_ID);
-    final Hash expectedStateRoot = createLegacyStateRootEntry(privacyGroupId);
-    final Transaction privacyMarkerTransaction = createPrivacyMarkerTransaction();
-    final PrivateTransaction privateTransaction =
-        createPrivateTransaction(privacyGroupId, privacyMarkerTransaction);
-    final Result privateTransactionExecutionResult =
-        createPrivateTransactionExecutionResult(expectedStateRoot);
-
-    createLegacyTransactionResultData(privateTransaction, privateTransactionExecutionResult);
-
-    migration.migratePrivateStorage();
-
-    final PrivateTransactionReceipt expectedPrivateTransactionReceipt =
-        new PrivateTransactionReceipt(privateTransactionExecutionResult);
-
-    final PrivateTransactionReceipt actualTransactionReceipt =
-        privateStateStorage
-            .getTransactionReceipt(blockchain.getChainHeadHash(), privateTransaction.getHash())
-            .orElseThrow();
-
-    assertThat(actualTransactionReceipt).isEqualTo(expectedPrivateTransactionReceipt);
-    assertThatLegacyTransactionResultDataWasDeleted(privateTransaction);
-  }
-
-  @Test
-  public void migrationShouldFailWhenEnclaveFailsWithServerException() {
-    createPrivacyMarkerTransaction();
-
-    when(enclave.receive(any(), any())).thenThrow(new EnclaveServerException(500, "foo"));
-
-    final Throwable throwable = catchThrowable(() -> migration.migratePrivateStorage());
-
-    assertThat(throwable).isInstanceOf(PrivateStorageMigrationException.class);
-  }
-
-  @Test
-  public void migrationShouldFailWhenEnclaveFailsWithClientExceptionDifferentFromNotFound() {
-    createPrivacyMarkerTransaction();
-
-    when(enclave.receive(any(), any())).thenThrow(new EnclaveClientException(400, "foo"));
-
-    final Throwable throwable = catchThrowable(() -> migration.migratePrivateStorage());
-
-    assertThat(throwable).isInstanceOf(PrivateStorageMigrationException.class);
-  }
-
-  @Test
-  public void migrationShouldNotFailWhenEnclaveFailsWithNotFound() {
-    final Transaction privacyMarkerTransaction = createPrivacyMarkerTransaction();
-    final String transactionKey = privacyMarkerTransaction.getData().orElseThrow().toBase64String();
-    final String enclaveKey = ENCLAVE_KEY.toBase64String();
-
-    when(enclave.receive(eq(transactionKey), eq(enclaveKey)))
-        .thenThrow(new EnclaveClientException(404, "EnclavePayloadNotFound"));
-
-    migration.migratePrivateStorage();
-
-    verify(enclave).receive(eq(transactionKey), eq(enclaveKey));
-  }
-
-  private void createLegacyTransactionResultData(
-      final PrivateTransaction privateTransaction, final Result privateTransactionExecutionResult) {
-    final Updater updater = legacyPrivateStateStorage.updater();
-    updater.putTransactionLogs(
-        privateTransaction.getHash(), privateTransactionExecutionResult.getLogs());
-    updater.putTransactionResult(
-        privateTransaction.getHash(), privateTransactionExecutionResult.getOutput());
-    updater.putTransactionRevertReason(
-        privateTransaction.getHash(),
-        privateTransactionExecutionResult.getRevertReason().orElse(Bytes.EMPTY));
-    updater.putTransactionStatus(
-        privateTransaction.getHash(),
-        Bytes.of(
-            privateTransactionExecutionResult.getStatus() == Result.Status.SUCCESSFUL ? 1 : 0));
-    updater.commit();
-  }
-
-  private void assertThatLegacyTransactionResultDataWasDeleted(
-      final PrivateTransaction privateTransaction) {
-    assertThat(legacyPrivateStateStorage.getTransactionLogs(privateTransaction.getHash()))
-        .isEmpty();
-    assertThat(legacyPrivateStateStorage.getTransactionOutput(privateTransaction.getHash()))
-        .isEmpty();
-    assertThat(legacyPrivateStateStorage.getRevertReason(privateTransaction.getHash())).isEmpty();
-    assertThat(legacyPrivateStateStorage.getStatus(privateTransaction.getHash())).isEmpty();
-  }
-
-  private Hash createLegacyStateRootEntry(final Bytes privacyGroupId) {
-    final Hash stateRootHash = Hash.hash(Bytes.random(32));
-
-    legacyPrivateStateStorage.updater().putLatestStateRoot(privacyGroupId, stateRootHash).commit();
-
-    assertThat(legacyPrivateStateStorage.getLatestStateRoot(privacyGroupId))
-        .isPresent()
-        .hasValue(stateRootHash);
-
-    return stateRootHash;
+    return existingPgHeadMap;
   }
 
   private Transaction createPrivacyMarkerTransaction() {
@@ -308,59 +237,80 @@ public class PrivateStorageMigrationTest {
     return privacyMarkerTransaction;
   }
 
+  private void mockBlockchainWithZeroTransactions() {
+    final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
+
+    final Block genesis = blockDataGenerator.genesisBlock();
+    mockBlockInBlockchain(genesis);
+
+    final BlockDataGenerator.BlockOptions options =
+        BlockDataGenerator.BlockOptions.create()
+            .setParentHash(genesis.getHash())
+            .setBlockNumber(1)
+            .hasTransactions(false);
+    final Block block = blockDataGenerator.block(options);
+    mockBlockInBlockchain(block);
+    mockChainHeadInBlockchain(block);
+
+    when(legacyPrivateStateStorage.getLatestStateRoot(any()))
+        .thenReturn(Optional.of(EMPTY_ROOT_HASH));
+  }
+
   private void mockBlockchainWithPrivacyMarkerTransaction(final Transaction transaction) {
     final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
+
     final Block genesis = blockDataGenerator.genesisBlock();
-    final BlockDataGenerator.BlockOptions options = BlockDataGenerator.BlockOptions.create();
-    options.setParentHash(genesis.getHash());
-    options.setBlockNumber(1);
-    options.addTransaction(transaction);
+    mockBlockInBlockchain(genesis);
+
+    final BlockDataGenerator.BlockOptions options =
+        BlockDataGenerator.BlockOptions.create()
+            .setParentHash(genesis.getHash())
+            .setBlockNumber(1)
+            .addTransaction(transaction);
     final Block block = blockDataGenerator.block(options);
+    mockBlockInBlockchain(block);
+    mockChainHeadInBlockchain(block);
+  }
 
-    when(blockchain.getChainHeadBlockNumber()).thenReturn(1L);
+  private void mockBlockchainWithTransactionsInABlock(final List<Transaction> transactions) {
+    final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
+
+    final Block genesis = blockDataGenerator.genesisBlock();
+    mockBlockInBlockchain(genesis);
+
+    final Block block =
+        blockDataGenerator.block(
+            BlockDataGenerator.BlockOptions.create()
+                .setParentHash(genesis.getHash())
+                .setBlockNumber(1)
+                .addTransaction(transactions));
+    mockBlockInBlockchain(block);
+    mockChainHeadInBlockchain(block);
+  }
+
+  private void mockBlockInBlockchain(final Block block) {
+    when(blockchain.getBlockByNumber(block.getHeader().getNumber())).thenReturn(Optional.of(block));
+    when(blockchain.getBlockHeader(block.getHash())).thenReturn(Optional.of(block.getHeader()));
+    when(blockchain.getBlockBody(block.getHash())).thenReturn(Optional.of(block.getBody()));
+
+    when(publicWorldStateArchive.getMutable(block.getHeader().getStateRoot()))
+        .thenReturn(Optional.of(publicMutableWorldState));
+  }
+
+  private void mockChainHeadInBlockchain(final Block block) {
+    when(blockchain.getChainHeadBlockNumber()).thenReturn(block.getHeader().getNumber());
     when(blockchain.getChainHeadHash()).thenReturn(block.getHash());
-    when(blockchain.getBlockByNumber(0L)).thenReturn(Optional.of(genesis));
-    when(blockchain.getBlockByNumber(1L)).thenReturn(Optional.of(block));
   }
 
-  private PrivateTransaction createPrivateTransaction(
-      final Bytes privacyGroupId, final Transaction privacyMarkerTransaction) {
-    final String transactionKey = privacyMarkerTransaction.getData().orElseThrow().toBase64String();
-
-    final PrivateTransaction privateTransaction =
-        privateTransaction(privacyGroupId.toBase64String());
-
-    mockEnclaveWithPrivateTransaction(privacyGroupId, transactionKey, privateTransaction);
-
-    return privateTransaction;
-  }
-
-  private void mockEnclaveWithPrivateTransaction(
-      final Bytes privacyGroupId,
-      final String transactionKey,
-      final PrivateTransaction privateTransaction) {
-
-    final Bytes encodedPrivateTransaction = RLP.encode(privateTransaction::writeTo);
-    final byte[] payload =
-        Base64.getEncoder().encodeToString(encodedPrivateTransaction.toArray()).getBytes(UTF_8);
-
-    when(enclave.receive(eq(transactionKey), eq(ENCLAVE_KEY.toBase64String())))
-        .thenReturn(
-            new ReceiveResponse(
-                payload, privacyGroupId.toBase64String(), ENCLAVE_KEY.toBase64String()));
-  }
-
-  private Result createPrivateTransactionExecutionResult(final Hash expectedStateRoot) {
-    final PrivateTransactionProcessor.Result privateTransactionExecutionResult =
-        successfulPrivateTxProcessingResult();
-
-    final PrivateStorageMigrationTransactionProcessorResult txSimulatorResult =
-        new PrivateStorageMigrationTransactionProcessorResult(
-            privateTransactionExecutionResult, Optional.of(expectedStateRoot));
-
-    when(migrationTransactionProcessor.process(anyString(), any(PrivateTransaction.class), any()))
-        .thenReturn(Optional.of(txSimulatorResult));
-
-    return privateTransactionExecutionResult;
+  private Transaction publicTransaction() {
+    return Transaction.builder()
+        .nonce(0)
+        .gasPrice(Wei.of(1000))
+        .gasLimit(3000000)
+        .value(Wei.ZERO)
+        .payload(Bytes.EMPTY)
+        .sender(Address.fromHexString("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"))
+        .chainId(BigInteger.valueOf(2018))
+        .signAndBuild(KeyPair.generate());
   }
 }

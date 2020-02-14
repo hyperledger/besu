@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MiningBeneficiaryCalculator;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
@@ -60,6 +61,15 @@ public class PrivateMigrationBlockProcessor {
     this.blockReward = blockReward;
     this.miningBeneficiaryCalculator = miningBeneficiaryCalculator;
     this.skipZeroBlockRewards = skipZeroBlockRewards;
+  }
+
+  public PrivateMigrationBlockProcessor(final ProtocolSpec<?> protocolSpec) {
+    this(
+        protocolSpec.getTransactionProcessor(),
+        protocolSpec.getTransactionReceiptFactory(),
+        protocolSpec.getBlockReward(),
+        protocolSpec.getMiningBeneficiaryCalculator(),
+        protocolSpec.isSkipZeroBlockRewards());
   }
 
   public AbstractBlockProcessor.Result processBlock(
