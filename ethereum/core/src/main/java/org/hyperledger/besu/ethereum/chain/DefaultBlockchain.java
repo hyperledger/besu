@@ -53,6 +53,7 @@ public class DefaultBlockchain implements MutableBlockchain {
   protected final BlockchainStorage blockchainStorage;
 
   private final Subscribers<BlockAddedObserver> blockAddedObservers = Subscribers.create();
+  private final Subscribers<ChainReorgObserver> blockReorgObservers = Subscribers.create();
 
   private volatile BlockHeader chainHeader;
   private volatile Difficulty totalDifficulty;
@@ -344,7 +345,7 @@ public class DefaultBlockchain implements MutableBlockchain {
       newTransactions.put(
           blockHash, currentNewChainWithReceipts.getBlock().getBody().getTransactions());
       addAddedLogsWithMetadata(addedLogsWithMetadata, currentNewChainWithReceipts);
-
+      notifyChainReorgBlockAdded(currentNewChainWithReceipts.getHeader());
       currentNewChainWithReceipts = getParentBlockWithReceipts(currentNewChainWithReceipts);
     }
 
@@ -547,6 +548,17 @@ public class DefaultBlockchain implements MutableBlockchain {
     return blockAddedObservers.unsubscribe(observerId);
   }
 
+  @Override
+  public long observeChainReorg(final ChainReorgObserver observer) {
+    checkNotNull(observer);
+    return blockReorgObservers.subscribe(observer);
+  }
+
+  @Override
+  public boolean removeChainReorgObserver(final long observerId) {
+    return blockReorgObservers.unsubscribe(observerId);
+  }
+
   @VisibleForTesting
   int observerCount() {
     return blockAddedObservers.getSubscriberCount();
@@ -554,5 +566,9 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   private void notifyBlockAdded(final BlockAddedEvent event) {
     blockAddedObservers.forEach(observer -> observer.onBlockAdded(event, this));
+  }
+
+  private void notifyChainReorgBlockAdded(final BlockHeader blockHeader) {
+    blockReorgObservers.forEach(observer -> observer.onBlockAdded(blockHeader, this));
   }
 }
