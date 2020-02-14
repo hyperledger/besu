@@ -55,13 +55,13 @@ public class NewBlockHeadersSubscriptionService implements BlockAddedObserver {
 
   private void onReorgBlockAdded(
       final Block reorgBlock, final Block block, final Blockchain blockchain) {
-    Block reorgBlockCopy = reorgBlock;
-    while (!reorgBlockCopy.getHash().equals(block.getHash())) {
-      notifySubscribers(reorgBlockCopy.getHash());
+    Block blockPtr = block;
+    while (!blockPtr.getHash().equals(reorgBlock.getHash())) {
+      notifySubscribers(blockPtr.getHash());
 
-      reorgBlockCopy =
+      blockPtr =
           blockchain
-              .getBlockByHash(reorgBlockCopy.getHeader().getParentHash())
+              .getBlockByHash(blockPtr.getHeader().getParentHash())
               .orElseThrow(() -> new IllegalStateException("The block was on a orphaned chain."));
     }
   }
