@@ -28,6 +28,7 @@ public class BlockAddedEvent {
   private final List<Transaction> removedTransactions;
   private final EventType eventType;
   private final List<LogWithMetadata> logsWithMetadata;
+  private final Block reorgBlock;
 
   public enum EventType {
     HEAD_ADVANCED,
@@ -40,12 +41,14 @@ public class BlockAddedEvent {
       final Block block,
       final List<Transaction> addedTransactions,
       final List<Transaction> removedTransactions,
-      final List<LogWithMetadata> logsWithMetadata) {
+      final List<LogWithMetadata> logsWithMetadata,
+      final Block reorgBlock) {
     this.eventType = eventType;
     this.block = block;
     this.addedTransactions = addedTransactions;
     this.removedTransactions = removedTransactions;
     this.logsWithMetadata = logsWithMetadata;
+    this.reorgBlock = reorgBlock;
   }
 
   public static BlockAddedEvent createForHeadAdvancement(
@@ -55,16 +58,23 @@ public class BlockAddedEvent {
         block,
         block.getBody().getTransactions(),
         Collections.emptyList(),
-        logsWithMetadata);
+        logsWithMetadata,
+        null);
   }
 
   public static BlockAddedEvent createForChainReorg(
       final Block block,
       final List<Transaction> addedTransactions,
       final List<Transaction> removedTransactions,
-      final List<LogWithMetadata> logsWithMetadata) {
+      final List<LogWithMetadata> logsWithMetadata,
+      final Block reorgBlock) {
     return new BlockAddedEvent(
-        EventType.CHAIN_REORG, block, addedTransactions, removedTransactions, logsWithMetadata);
+        EventType.CHAIN_REORG,
+        block,
+        addedTransactions,
+        removedTransactions,
+        logsWithMetadata,
+        reorgBlock);
   }
 
   public static BlockAddedEvent createForFork(final Block block) {
@@ -73,7 +83,8 @@ public class BlockAddedEvent {
         block,
         Collections.emptyList(),
         Collections.emptyList(),
-        Collections.emptyList());
+        Collections.emptyList(),
+        null);
   }
 
   public Block getBlock() {
@@ -98,5 +109,9 @@ public class BlockAddedEvent {
 
   public List<LogWithMetadata> getLogsWithMetadata() {
     return logsWithMetadata;
+  }
+
+  public Block getReorgBlock() {
+    return reorgBlock;
   }
 }

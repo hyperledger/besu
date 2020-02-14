@@ -20,8 +20,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.Subscrip
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.SubscriptionType;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
+import org.hyperledger.besu.ethereum.chain.BlockAddedEvent.EventType;
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
 
 import java.util.function.Supplier;
@@ -43,26 +45,45 @@ public class NewBlockHeadersSubscriptionService implements BlockAddedObserver {
   @Override
   public void onBlockAdded(final BlockAddedEvent event, final Blockchain blockchain) {
     if (event.isNewCanonicalHead()) {
-      subscriptionManager.notifySubscribersOnWorkerThread(
-          SubscriptionType.NEW_BLOCK_HEADERS,
-          NewBlockHeadersSubscription.class,
-          subscribers -> {
-            final Hash newBlockHash = event.getBlock().getHash();
-
-            // memoize
-            final Supplier<BlockResult> blockWithTx =
-                Suppliers.memoize(() -> blockWithCompleteTransaction(newBlockHash));
-            final Supplier<BlockResult> blockWithoutTx =
-                Suppliers.memoize(() -> blockWithTransactionHash(newBlockHash));
-
-            for (final NewBlockHeadersSubscription subscription : subscribers) {
-              final BlockResult newBlock =
-                  subscription.getIncludeTransactions() ? blockWithTx.get() : blockWithoutTx.get();
-
-              subscriptionManager.sendMessage(subscription.getSubscriptionId(), newBlock);
-            }
-          });
+      if (EventType.CHAIN_REORG.equals(event.getEventType())) {
+        onReorgBlockAdded(event.getReorgBlock(), event.getBlock(), blockchain);
+      } else {
+        notifySubscribers(event.getBlock().getHash());
+      }
     }
+  }
+
+  private void onReorgBlockAdded(
+      final Block reorgBlock, final Block block, final Blockchain blockchain) {
+    Block reorgBlockCopy = reorgBlock;
+    while (!reorgBlockCopy.getHash().equals(block.getHash())) {
+      notifySubscribers(reorgBlockCopy.getHash());
+
+      reorgBlockCopy =
+          blockchain
+              .getBlockByHash(reorgBlockCopy.getHeader().getParentHash())
+              .orElseThrow(() -> new IllegalStateException("The block was on a orphaned chain."));
+    }
+  }
+
+  private void notifySubscribers(final Hash newBlockHash) {
+    subscriptionManager.notifySubscribersOnWorkerThread(
+        SubscriptionType.NEW_BLOCK_HEADERS,
+        NewBlockHeadersSubscription.class,
+        subscribers -> {
+          // memoize
+          final Supplier<BlockResult> blockWithTx =
+              Suppliers.memoize(() -> blockWithCompleteTransaction(newBlockHash));
+          final Supplier<BlockResult> blockWithoutTx =
+              Suppliers.memoize(() -> blockWithTransactionHash(newBlockHash));
+
+          for (final NewBlockHeadersSubscription subscription : subscribers) {
+            final BlockResult newBlock =
+                subscription.getIncludeTransactions() ? blockWithTx.get() : blockWithoutTx.get();
+
+            subscriptionManager.sendMessage(subscription.getSubscriptionId(), newBlock);
+          }
+        });
   }
 
   private BlockResult blockWithCompleteTransaction(final Hash hash) {

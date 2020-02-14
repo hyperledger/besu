@@ -401,7 +401,8 @@ public class DefaultBlockchain implements MutableBlockchain {
         newTransactions.values().stream().flatMap(Collection::stream).collect(toList()),
         removedTransactions,
         Stream.concat(removedLogsWithMetadata.stream(), addedLogsWithMetadata.stream())
-            .collect(Collectors.toUnmodifiableList()));
+            .collect(Collectors.toUnmodifiableList()),
+        currentNewChainWithReceipts.getBlock());
   }
 
   @Override
