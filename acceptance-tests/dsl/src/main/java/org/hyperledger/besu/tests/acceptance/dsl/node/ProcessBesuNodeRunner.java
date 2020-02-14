@@ -257,7 +257,7 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     params.add("--key-value-storage");
     params.add("rocksdb");
 
-    params.add("--auto-logs-bloom-indexing-enabled");
+    params.add("--auto-log-bloom-caching-enabled");
     params.add("false");
 
     LOG.info("Creating besu process with params {}", params);

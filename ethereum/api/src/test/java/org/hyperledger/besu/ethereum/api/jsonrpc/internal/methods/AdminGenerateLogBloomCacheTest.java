@@ -23,8 +23,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.api.query.TransactionLogsIndexer;
-import org.hyperledger.besu.ethereum.api.query.TransactionLogsIndexer.IndexingStatus;
+import org.hyperledger.besu.ethereum.api.query.TransactionLogBloomCacher;
+import org.hyperledger.besu.ethereum.api.query.TransactionLogBloomCacher.CachingStatus;
 
 import java.util.List;
 import java.util.Optional;
@@ -41,7 +41,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class AdminGenerateLogBloomCacheTest {
 
   @Mock private BlockchainQueries blockchainQueries;
-  @Mock private TransactionLogsIndexer transactionLogsIndexer;
+  @Mock private TransactionLogBloomCacher transactionLogBloomCacher;
   @Captor private ArgumentCaptor<Long> fromBlock;
   @Captor private ArgumentCaptor<Long> toBlock;
 
@@ -53,12 +53,12 @@ public class AdminGenerateLogBloomCacheTest {
   }
 
   @Test
-  public void requestWithZeroParameters_NoIndexer_returnsNull() {
+  public void requestWithZeroParameters_NoCacher_returnsNull() {
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
             new JsonRpcRequest("2.0", "admin_generateLogBloomCache", new String[] {}));
 
-    when(blockchainQueries.getTransactionLogsIndexer()).thenReturn(Optional.empty());
+    when(blockchainQueries.getTransactionLogBloomCacher()).thenReturn(Optional.empty());
 
     final JsonRpcResponse actualResponse = method.response(request);
 
@@ -109,11 +109,11 @@ public class AdminGenerateLogBloomCacheTest {
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", "admin_generateLogBloomCache", args));
 
-    final IndexingStatus expectedStatus = new IndexingStatus();
+    final CachingStatus expectedStatus = new CachingStatus();
 
-    when(blockchainQueries.getTransactionLogsIndexer())
-        .thenReturn(Optional.of(transactionLogsIndexer));
-    when(transactionLogsIndexer.requestIndexing(fromBlock.capture(), toBlock.capture()))
+    when(blockchainQueries.getTransactionLogBloomCacher())
+        .thenReturn(Optional.of(transactionLogBloomCacher));
+    when(transactionLogBloomCacher.requestCaching(fromBlock.capture(), toBlock.capture()))
         .thenReturn(expectedStatus);
 
     final JsonRpcResponse actualResponse = method.response(request);
