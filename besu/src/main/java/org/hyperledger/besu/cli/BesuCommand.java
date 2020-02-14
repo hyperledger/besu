@@ -525,6 +525,31 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Boolean isRpcWsAuthenticationEnabled = false;
 
   @Option(
+      names = {"--privacy-tls-enabled"},
+      paramLabel = MANDATORY_FILE_FORMAT_HELP,
+      description = "Enable TLS for connecting to privacy enclave (default: ${DEFAULT-VALUE})")
+  private final Boolean isPrivacyTlsEnabled = false;
+
+  @Option(
+      names = "--privacy-tls-keystore-file",
+      paramLabel = MANDATORY_FILE_FORMAT_HELP,
+      description =
+          "Path to a PKCS#12 formatted keystore; used to enable TLS on inbound connections.")
+  private final Path privacyKeyStoreFile = null;
+
+  @Option(
+      names = "--privacy-tls-keystore-password-file",
+      paramLabel = MANDATORY_FILE_FORMAT_HELP,
+      description = "Path to a file containing the password used to decrypt the keystore.")
+  private final Path privacyKeyStorePasswordFile = null;
+
+  @Option(
+      names = "--privacy-tls-known-enclave-file",
+      paramLabel = MANDATORY_FILE_FORMAT_HELP,
+      description = "Path to a file containing the fingerprints of the authorized privacy enclave.")
+  private final Path privacyTlsKnownEnclaveFile = null;
+
+  @Option(
       names = {"--metrics-enabled"},
       description = "Set to start the metrics exporter (default: ${DEFAULT-VALUE})")
   private final Boolean isMetricsEnabled = false;
@@ -764,6 +789,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Identity for the key-value storage to be used.",
       arity = "1")
   private String keyValueStorageName = DEFAULT_KEY_VALUE_STORAGE_NAME;
+
+  @Option(
+      names = {"--auto-log-bloom-caching-enabled"},
+      description = "Enable automatic log bloom caching (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private final Boolean autoLogBloomCachingEnabled = true;
 
   @Option(
       names = {"--override-genesis-config"},
@@ -1265,6 +1296,18 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         asList("--rpc-http-tls-known-clients-file", "--rpc-http-tls-ca-clients-enabled"));
   }
 
+  private void checkPrivacyTlsOptionsDependencies() {
+    CommandLineUtils.checkOptionDependencies(
+        logger,
+        commandLine,
+        "--privacy-tls-enabled",
+        !isPrivacyTlsEnabled,
+        asList(
+            "--privacy-tls-keystore-file",
+            "--privacy-tls-keystore-password-file",
+            "--privacy-tls-known-enclave-file"));
+  }
+
   private Optional<TlsConfiguration> rpcHttpTlsConfiguration() {
     if (!isRpcTlsConfigurationRequired()) {
       return Optional.empty();
@@ -1492,7 +1535,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--privacy-url",
             "--privacy-public-key-file",
             "--privacy-precompiled-address",
-            "--privacy-multi-tenancy-enabled"));
+            "--privacy-multi-tenancy-enabled",
+            "--privacy-tls-enabled"));
+
+    checkPrivacyTlsOptionsDependencies();
 
     final PrivacyParameters.Builder privacyParametersBuilder = new PrivacyParameters.Builder();
     if (isPrivacyEnabled) {
@@ -1538,6 +1584,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       privacyParametersBuilder.setPrivateKeyPath(privacyMarkerTransactionSigningKeyPath);
       privacyParametersBuilder.setStorageProvider(
           privacyKeyStorageProvider(keyValueStorageName + "-privacy"));
+      if (isPrivacyTlsEnabled) {
+        privacyParametersBuilder.setPrivacyKeyStoreFile(privacyKeyStoreFile);
+        privacyParametersBuilder.setPrivacyKeyStorePasswordFile(privacyKeyStorePasswordFile);
+        privacyParametersBuilder.setPrivacyTlsKnownEnclaveFile(privacyTlsKnownEnclaveFile);
+      }
       privacyParametersBuilder.setEnclaveFactory(new EnclaveFactory(vertx));
     } else {
       if (anyPrivacyApiEnabled()) {
@@ -1650,6 +1701,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .staticNodes(staticNodes)
             .identityString(identityString)
             .besuPluginContext(besuPluginContext)
+            .autoLogBloomCaching(autoLogBloomCachingEnabled)
             .build();
 
     addShutdownHook(runner);

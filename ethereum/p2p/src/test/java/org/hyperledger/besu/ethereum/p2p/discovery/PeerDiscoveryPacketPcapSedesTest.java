@@ -90,7 +90,8 @@ public class PeerDiscoveryPacketPcapSedesTest {
         ping.getTo().getTcpPort().ifPresent(p -> assertThat(p).isPositive());
         ping.getFrom().getTcpPort().ifPresent(p -> assertThat(p).isPositive());
         assertThat(ping.getExpiration()).isPositive();
-        break;
+        // because of the version upgrade the ping packet won't re-serialize, so we're done
+        return;
 
       case PONG:
         assertThat(packet.getPacketData(PongPacketData.class)).isPresent();

@@ -51,7 +51,7 @@ gradle.startParameter.taskNames.each {
 }
 gradle.startParameter.taskNames = expandedTaskList.flatten()
 
-// Gets a integer command argument, passed with -Pname=x, or the defaut if not provided.
+// Gets an integer command argument, passed with -Pname=x, or the default if not provided.
 def _intCmdArg(name, defaultValue) {
   return project.hasProperty(name) ? project.property(name) as int : defaultValue
 }
@@ -701,6 +701,7 @@ bintray {
   filesSpec {
     from distTar.destinationDirectory
     from distZip.destinationDirectory
+    from file("plugin-api/build/libs/plugin-api-$version-javadoc.jar")
     into '.'
   }
 
@@ -715,3 +716,4 @@ build.dependsOn verifyDistributions
 bintrayUpload.dependsOn verifyDistributions
 bintrayUpload.mustRunAfter(distTar)
 bintrayUpload.mustRunAfter(distZip)
+bintrayUpload.mustRunAfter(javadocJar)

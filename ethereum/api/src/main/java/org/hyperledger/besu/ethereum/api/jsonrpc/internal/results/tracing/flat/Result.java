@@ -80,9 +80,17 @@ public class Result {
       return this;
     }
 
+    public String getCode() {
+      return code;
+    }
+
     public Builder address(final String address) {
       this.address = address;
       return this;
+    }
+
+    public String getAddress() {
+      return address;
     }
 
     public static Builder of(final Result result) {

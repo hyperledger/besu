@@ -17,6 +17,7 @@ package org.hyperledger.besu.tests.acceptance.dsl.node.configuration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
@@ -44,6 +45,7 @@ public class BesuNodeConfiguration {
   private final List<String> plugins;
   private final List<String> extraCLIOptions;
   private final List<String> staticNodes;
+  private final Optional<PrivacyParameters> privacyParameters;
 
   public BesuNodeConfiguration(
       final String name,
@@ -62,7 +64,8 @@ public class BesuNodeConfiguration {
       final boolean revertReasonEnabled,
       final List<String> plugins,
       final List<String> extraCLIOptions,
-      final List<String> staticNodes) {
+      final List<String> staticNodes,
+      final Optional<PrivacyParameters> privacyParameters) {
     this.name = name;
     this.miningParameters = miningParameters;
     this.jsonRpcConfiguration = jsonRpcConfiguration;
@@ -80,6 +83,7 @@ public class BesuNodeConfiguration {
     this.plugins = plugins;
     this.extraCLIOptions = extraCLIOptions;
     this.staticNodes = staticNodes;
+    this.privacyParameters = privacyParameters;
   }
 
   public String getName() {
@@ -148,5 +152,9 @@ public class BesuNodeConfiguration {
 
   public List<String> getStaticNodes() {
     return staticNodes;
+  }
+
+  public Optional<PrivacyParameters> getPrivacyParameters() {
+    return privacyParameters;
   }
 }

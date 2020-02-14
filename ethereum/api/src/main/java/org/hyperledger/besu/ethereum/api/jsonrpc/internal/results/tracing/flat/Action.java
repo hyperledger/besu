@@ -18,16 +18,8 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.debug.TraceFrame;
-
-import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import org.apache.tuweni.bytes.Bytes;
 
 @JsonInclude(NON_NULL)
 public class Action {
@@ -68,31 +60,6 @@ public class Action {
 
   public static Builder builder() {
     return new Builder();
-  }
-
-  static Builder createCallAction(
-      final Transaction transaction,
-      final String lastContractAddress,
-      final Address contractCallAddress,
-      final TraceFrame traceFrame,
-      final Gas gasRemaining,
-      final Optional<Bytes> inputBytes,
-      final String callType) {
-    return builder()
-        .from(lastContractAddress)
-        .to(contractCallAddress.toString())
-        .input(inputBytes.map(Bytes::toHexString).orElse(null))
-        .gas(gasRemaining.toHexString())
-        .callType(callType)
-        .value(Quantity.create(transaction.getValue()));
-  }
-
-  static Builder createSelfDestructAction(
-      final String lastContractAddress, final Address contractCallAddress, final Wei balance) {
-    return builder()
-        .address(lastContractAddress)
-        .refundAddress(contractCallAddress.toString())
-        .balance(balance.toShortHexString());
   }
 
   public String getCallType() {
@@ -176,9 +143,17 @@ public class Action {
       return this;
     }
 
+    public String getCallType() {
+      return callType;
+    }
+
     public Builder from(final String from) {
       this.from = from;
       return this;
+    }
+
+    public String getFrom() {
+      return from;
     }
 
     public Builder gas(final String gas) {
@@ -194,6 +169,10 @@ public class Action {
     public Builder to(final String to) {
       this.to = to;
       return this;
+    }
+
+    public String getTo() {
+      return to;
     }
 
     public Builder init(final String init) {
@@ -216,7 +195,7 @@ public class Action {
       return this;
     }
 
-    public Builder refundAddress(final String refundAddress) {
+    Builder refundAddress(final String refundAddress) {
       this.refundAddress = refundAddress;
       return this;
     }
