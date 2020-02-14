@@ -791,10 +791,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private String keyValueStorageName = DEFAULT_KEY_VALUE_STORAGE_NAME;
 
   @Option(
-      names = {"--auto-logs-bloom-indexing-enabled"},
-      description = "Enable Automatic logs bloom indexing (default: ${DEFAULT-VALUE})",
+      names = {"--auto-log-bloom-caching-enabled"},
+      description = "Enable automatic log bloom caching (default: ${DEFAULT-VALUE})",
       arity = "1")
-  private final Boolean autoLogsBloomIndexingEnabled = true;
+  private final Boolean autoLogBloomCachingEnabled = true;
 
   @Option(
       names = {"--override-genesis-config"},
@@ -1701,7 +1701,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .staticNodes(staticNodes)
             .identityString(identityString)
             .besuPluginContext(besuPluginContext)
-            .autoLogsBloomIndexing(autoLogsBloomIndexingEnabled)
+            .autoLogBloomCaching(autoLogBloomCachingEnabled)
             .build();
 
     addShutdownHook(runner);
