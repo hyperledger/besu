@@ -24,11 +24,11 @@ import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import java.util.List;
 
 public class PrivacyBlockProcessor implements BlockProcessor {
-  private final AbstractBlockProcessor blockProcessor;
+  private final BlockProcessor blockProcessor;
   private final PrivateStateStorage privateStateStorage;
 
   public PrivacyBlockProcessor(
-      final AbstractBlockProcessor blockProcessor, final PrivateStateStorage privateStateStorage) {
+      final BlockProcessor blockProcessor, final PrivateStateStorage privateStateStorage) {
     this.blockProcessor = blockProcessor;
     this.privateStateStorage = privateStateStorage;
   }

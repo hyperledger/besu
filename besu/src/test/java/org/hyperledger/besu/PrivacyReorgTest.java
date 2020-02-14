@@ -151,7 +151,7 @@ public class PrivacyReorgTest {
             .setEnclaveUrl(enclave.clientUrl())
             .setEnclaveFactory(new EnclaveFactory(Vertx.vertx()))
             .build();
-    privacyParameters.setEnclavePublicKey("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=");
+    privacyParameters.setEnclavePublicKey(ENCLAVE_PUBLIC_KEY.toBase64String());
 
     privateStateRootResolver =
         new PrivateStateRootResolver(privacyParameters.getPrivateStateStorage());
@@ -407,7 +407,7 @@ public class PrivacyReorgTest {
   private Bytes getEnclaveKey(final URI enclaveURI) {
     final Enclave enclave = new EnclaveFactory(Vertx.vertx()).createVertxEnclave(enclaveURI);
     final SendResponse sendResponse =
-        sendRequest(enclave, PRIVATE_TRANSACTION, "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=");
+        sendRequest(enclave, PRIVATE_TRANSACTION, ENCLAVE_PUBLIC_KEY.toBase64String());
     final Bytes payload = Bytes.fromBase64String(sendResponse.getKey());
 
     // If the key has 0 bytes generate a new key.

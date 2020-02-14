@@ -312,14 +312,8 @@ public class ProtocolSpecBuilder<T> {
           (PrivacyPrecompiledContract)
               precompileContractRegistry.get(address, Account.DEFAULT_VERSION);
       privacyPrecompiledContract.setPrivateTransactionProcessor(privateTransactionProcessor);
-      if (AbstractBlockProcessor.class.isAssignableFrom(blockProcessor.getClass())) {
-        blockProcessor =
-            new PrivacyBlockProcessor(
-                (AbstractBlockProcessor) blockProcessor,
-                privacyParameters.getPrivateStateStorage());
-      } else {
-        throw new IllegalStateException("Unexpected error instantiating PrivacyBlockProcessor");
-      }
+      blockProcessor =
+          new PrivacyBlockProcessor(blockProcessor, privacyParameters.getPrivateStateStorage());
     }
 
     final BlockValidator<T> blockValidator =
