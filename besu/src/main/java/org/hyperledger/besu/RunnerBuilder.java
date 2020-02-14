@@ -144,7 +144,7 @@ public class RunnerBuilder {
   private Collection<EnodeURL> staticNodes = Collections.emptyList();
   private Optional<String> identityString = Optional.empty();
   private BesuPluginContextImpl besuPluginContext;
-  private boolean autoLogsBloomIndexing = true;
+  private boolean autoLogBloomCaching = true;
 
   public RunnerBuilder vertx(final Vertx vertx) {
     this.vertx = vertx;
@@ -271,8 +271,8 @@ public class RunnerBuilder {
     return this;
   }
 
-  public RunnerBuilder autoLogsBloomIndexing(final boolean autoLogsBloomIndexing) {
-    this.autoLogsBloomIndexing = autoLogsBloomIndexing;
+  public RunnerBuilder autoLogBloomCaching(final boolean autoLogBloomCaching) {
+    this.autoLogBloomCaching = autoLogBloomCaching;
     return this;
   }
 
@@ -534,7 +534,7 @@ public class RunnerBuilder {
         metricsService,
         besuController,
         dataDir,
-        autoLogsBloomIndexing ? blockchainQueries.getTransactionLogsIndexer() : Optional.empty(),
+        autoLogBloomCaching ? blockchainQueries.getTransactionLogBloomCacher() : Optional.empty(),
         context.getBlockchain());
   }
 
