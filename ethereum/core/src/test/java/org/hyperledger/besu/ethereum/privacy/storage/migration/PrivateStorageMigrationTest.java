@@ -17,8 +17,8 @@ package org.hyperledger.besu.ethereum.privacy.storage.migration;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver.EMPTY_ROOT_HASH;
-import static org.hyperledger.besu.ethereum.privacy.storage.PrivateStateKeyValueStorage.SCHEMA_VERSION_1_0_x;
-import static org.hyperledger.besu.ethereum.privacy.storage.PrivateStateKeyValueStorage.SCHEMA_VERSION_1_4_x;
+import static org.hyperledger.besu.ethereum.privacy.storage.PrivateStateKeyValueStorage.SCHEMA_VERSION_1_0_0;
+import static org.hyperledger.besu.ethereum.privacy.storage.PrivateStateKeyValueStorage.SCHEMA_VERSION_1_4_0;
 import static org.hyperledger.besu.ethereum.privacy.storage.migration.PrivateTransactionDataFixture.privacyMarkerTransaction;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -144,11 +144,11 @@ public class PrivateStorageMigrationTest {
   public void successfulMigrationBumpsSchemaVersion() {
     final Transaction privacyMarkerTransaction = createPrivacyMarkerTransaction();
     mockBlockchainWithPrivacyMarkerTransaction(privacyMarkerTransaction);
-    assertThat(privateStateStorage.getSchemaVersion()).isEqualTo(SCHEMA_VERSION_1_0_x);
+    assertThat(privateStateStorage.getSchemaVersion()).isEqualTo(SCHEMA_VERSION_1_0_0);
 
     migration.migratePrivateStorage();
 
-    assertThat(privateStateStorage.getSchemaVersion()).isEqualTo(SCHEMA_VERSION_1_4_x);
+    assertThat(privateStateStorage.getSchemaVersion()).isEqualTo(SCHEMA_VERSION_1_4_0);
   }
 
   @Test
@@ -160,13 +160,13 @@ public class PrivateStorageMigrationTest {
     // final state root won't match the legacy state root
     when(legacyPrivateStateStorage.getLatestStateRoot(any())).thenReturn(Optional.of(Hash.ZERO));
 
-    assertThat(privateStateStorage.getSchemaVersion()).isEqualTo(SCHEMA_VERSION_1_0_x);
+    assertThat(privateStateStorage.getSchemaVersion()).isEqualTo(SCHEMA_VERSION_1_0_0);
 
     assertThatThrownBy(() -> migration.migratePrivateStorage())
         .isInstanceOf(PrivateStorageMigrationException.class)
         .hasMessageContaining("Inconsistent state root");
 
-    assertThat(privateStateStorage.getSchemaVersion()).isEqualTo(SCHEMA_VERSION_1_0_x);
+    assertThat(privateStateStorage.getSchemaVersion()).isEqualTo(SCHEMA_VERSION_1_0_0);
   }
 
   @Test

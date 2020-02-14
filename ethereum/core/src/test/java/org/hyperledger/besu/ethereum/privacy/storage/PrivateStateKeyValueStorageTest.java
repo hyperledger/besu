@@ -15,8 +15,8 @@
 package org.hyperledger.besu.ethereum.privacy.storage;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.privacy.storage.PrivateStateKeyValueStorage.SCHEMA_VERSION_1_0_x;
-import static org.hyperledger.besu.ethereum.privacy.storage.PrivateStateKeyValueStorage.SCHEMA_VERSION_1_4_x;
+import static org.hyperledger.besu.ethereum.privacy.storage.PrivateStateKeyValueStorage.SCHEMA_VERSION_1_0_0;
+import static org.hyperledger.besu.ethereum.privacy.storage.PrivateStateKeyValueStorage.SCHEMA_VERSION_1_4_0;
 
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
@@ -34,7 +34,7 @@ public class PrivateStateKeyValueStorageTest {
 
   @Test
   public void databaseWithoutVersionShouldReturn1_0_x() {
-    assertThat(storage.getSchemaVersion()).isEqualTo(SCHEMA_VERSION_1_0_x);
+    assertThat(storage.getSchemaVersion()).isEqualTo(SCHEMA_VERSION_1_0_0);
   }
 
   @Test
@@ -45,11 +45,11 @@ public class PrivateStateKeyValueStorageTest {
 
   @Test
   public void schemaVersion1_0_xHasCorrectValue() {
-    assertThat(SCHEMA_VERSION_1_0_x).isEqualTo(1);
+    assertThat(SCHEMA_VERSION_1_0_0).isEqualTo(1);
   }
 
   @Test
   public void schemaVersion1_4_xHasCorrectValue() {
-    assertThat(SCHEMA_VERSION_1_4_x).isEqualTo(2);
+    assertThat(SCHEMA_VERSION_1_4_0).isEqualTo(2);
   }
 }

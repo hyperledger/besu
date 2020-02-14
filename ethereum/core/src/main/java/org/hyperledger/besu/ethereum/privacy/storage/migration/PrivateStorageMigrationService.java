@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.privacy.storage.migration;
 
-import static org.hyperledger.besu.ethereum.privacy.storage.PrivateStateKeyValueStorage.SCHEMA_VERSION_1_0_x;
-import static org.hyperledger.besu.ethereum.privacy.storage.PrivateStateKeyValueStorage.SCHEMA_VERSION_1_4_x;
+import static org.hyperledger.besu.ethereum.privacy.storage.PrivateStateKeyValueStorage.SCHEMA_VERSION_1_0_0;
+import static org.hyperledger.besu.ethereum.privacy.storage.PrivateStateKeyValueStorage.SCHEMA_VERSION_1_4_0;
 
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 
@@ -48,7 +48,7 @@ public class PrivateStorageMigrationService {
   public void runMigrationIfRequired() {
     final int schemaVersion = privateStateStorage.getSchemaVersion();
 
-    if (schemaVersion >= SCHEMA_VERSION_1_4_x) {
+    if (schemaVersion >= SCHEMA_VERSION_1_4_0) {
       LOG.debug("Private database metadata does not require migration.");
       return;
     }
@@ -57,19 +57,19 @@ public class PrivateStorageMigrationService {
      If this is a new database, we need to set the version and no migration is required
     */
     if (privateStateStorage.isEmpty()) {
-      privateStateStorage.updater().putDatabaseVersion(SCHEMA_VERSION_1_4_x).commit();
+      privateStateStorage.updater().putDatabaseVersion(SCHEMA_VERSION_1_4_0).commit();
       LOG.debug("Private database metadata does not require migration.");
       return;
     }
 
-    if (schemaVersion == SCHEMA_VERSION_1_0_x && !migrationFlag) {
+    if (schemaVersion == SCHEMA_VERSION_1_0_0 && !migrationFlag) {
       final String message =
           "Private database metadata requires migration. For more information check the 1.4 changelog.";
       LOG.warn(message);
       throw new PrivateStorageMigrationException(message);
     }
 
-    if (schemaVersion == SCHEMA_VERSION_1_0_x && migrationFlag) {
+    if (schemaVersion == SCHEMA_VERSION_1_0_0 && migrationFlag) {
       LOG.info(
           "Private database metadata requires migration and `privacy-enable-database-migration` was set. Starting migration!");
       migrationBuilder.get().migratePrivateStorage();

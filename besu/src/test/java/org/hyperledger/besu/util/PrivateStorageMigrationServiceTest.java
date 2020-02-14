@@ -16,8 +16,8 @@ package org.hyperledger.besu.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
-import static org.hyperledger.besu.ethereum.privacy.storage.PrivateStateKeyValueStorage.SCHEMA_VERSION_1_0_x;
-import static org.hyperledger.besu.ethereum.privacy.storage.PrivateStateKeyValueStorage.SCHEMA_VERSION_1_4_x;
+import static org.hyperledger.besu.ethereum.privacy.storage.PrivateStateKeyValueStorage.SCHEMA_VERSION_1_0_0;
+import static org.hyperledger.besu.ethereum.privacy.storage.PrivateStateKeyValueStorage.SCHEMA_VERSION_1_4_0;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -46,7 +46,7 @@ public class PrivateStorageMigrationServiceTest {
 
   @Test
   public void migrationShouldNotRunIfDatabaseIsFreshAndVersionShouldBeSet() {
-    when(privateStateStorage.getSchemaVersion()).thenReturn(SCHEMA_VERSION_1_0_x);
+    when(privateStateStorage.getSchemaVersion()).thenReturn(SCHEMA_VERSION_1_0_0);
     when(privateStateStorage.isEmpty()).thenReturn(true);
     final Updater privateStateStorageUpdater = mock(Updater.class);
     when(privateStateStorage.updater()).thenReturn(privateStateStorageUpdater);
@@ -58,13 +58,13 @@ public class PrivateStorageMigrationServiceTest {
 
     migrationService.runMigrationIfRequired();
 
-    verify(privateStateStorageUpdater).putDatabaseVersion(eq(SCHEMA_VERSION_1_4_x));
+    verify(privateStateStorageUpdater).putDatabaseVersion(eq(SCHEMA_VERSION_1_4_0));
     verifyNoInteractions(migration);
   }
 
   @Test
   public void migrationShouldNotRunIfSchemaVersionIsGreaterThanOne() {
-    when(privateStateStorage.getSchemaVersion()).thenReturn(SCHEMA_VERSION_1_4_x);
+    when(privateStateStorage.getSchemaVersion()).thenReturn(SCHEMA_VERSION_1_4_0);
 
     migrationService =
         new PrivateStorageMigrationService(privateStateStorage, true, () -> migration);
@@ -76,7 +76,7 @@ public class PrivateStorageMigrationServiceTest {
 
   @Test
   public void migrationShouldNotRunIfFlagIsNotSetEvenIfVersionRequiresMigration() {
-    when(privateStateStorage.getSchemaVersion()).thenReturn(SCHEMA_VERSION_1_0_x);
+    when(privateStateStorage.getSchemaVersion()).thenReturn(SCHEMA_VERSION_1_0_0);
     when(privateStateStorage.isEmpty()).thenReturn(false);
 
     migrationService =
@@ -92,7 +92,7 @@ public class PrivateStorageMigrationServiceTest {
 
   @Test
   public void migrationShouldRunIfVersionIsOneAndFlagIsSet() {
-    when(privateStateStorage.getSchemaVersion()).thenReturn(SCHEMA_VERSION_1_0_x);
+    when(privateStateStorage.getSchemaVersion()).thenReturn(SCHEMA_VERSION_1_0_0);
     when(privateStateStorage.isEmpty()).thenReturn(false);
 
     migrationService =

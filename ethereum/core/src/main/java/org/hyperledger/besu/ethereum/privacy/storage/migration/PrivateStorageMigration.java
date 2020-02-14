@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.privacy.storage.migration;
 
-import static org.hyperledger.besu.ethereum.privacy.storage.PrivateStateKeyValueStorage.SCHEMA_VERSION_1_4_x;
+import static org.hyperledger.besu.ethereum.privacy.storage.PrivateStateKeyValueStorage.SCHEMA_VERSION_1_4_0;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -114,7 +114,7 @@ public class PrivateStorageMigration {
     }
 
     if (isResultingPrivateStateRootAtHeadValid()) {
-      privateStateStorage.updater().putDatabaseVersion(SCHEMA_VERSION_1_4_x).commit();
+      privateStateStorage.updater().putDatabaseVersion(SCHEMA_VERSION_1_4_0).commit();
     } else {
       throw new PrivateStorageMigrationException("Inconsistent state root. Please re-sync.");
     }

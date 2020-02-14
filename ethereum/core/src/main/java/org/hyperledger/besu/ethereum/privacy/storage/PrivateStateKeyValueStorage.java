@@ -31,8 +31,8 @@ import org.apache.tuweni.bytes.Bytes32;
 
 public class PrivateStateKeyValueStorage implements PrivateStateStorage {
 
-  public static final int SCHEMA_VERSION_1_0_x = 1;
-  public static final int SCHEMA_VERSION_1_4_x = 2;
+  public static final int SCHEMA_VERSION_1_0_0 = 1;
+  public static final int SCHEMA_VERSION_1_4_0 = 2;
 
   private static final Bytes DB_VERSION_KEY = Bytes.of("DBVERSION".getBytes(UTF_8));
   private static final Bytes TX_RECEIPT_SUFFIX = Bytes.of("RECEIPT".getBytes(UTF_8));
@@ -70,7 +70,7 @@ public class PrivateStateKeyValueStorage implements PrivateStateStorage {
 
   @Override
   public int getSchemaVersion() {
-    return get(Bytes.EMPTY, DB_VERSION_KEY).map(Bytes::toInt).orElse(SCHEMA_VERSION_1_0_x);
+    return get(Bytes.EMPTY, DB_VERSION_KEY).map(Bytes::toInt).orElse(SCHEMA_VERSION_1_0_0);
   }
 
   @Override
