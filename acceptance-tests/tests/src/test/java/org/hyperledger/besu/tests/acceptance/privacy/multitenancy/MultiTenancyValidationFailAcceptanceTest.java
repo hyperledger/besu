@@ -116,7 +116,7 @@ public class MultiTenancyValidationFailAcceptanceTest extends AcceptanceTestBase
     final Address senderAddress =
         Address.wrap(Bytes.fromHexString(accounts.getPrimaryBenefactor().getAddress()));
 
-    final Transaction transaction =
+    final Transaction<String> transaction =
         privacyTransactions.distributeRawTransaction(
             getRLPOutput(getValidSignedPrivateTransaction(senderAddress, OTHER_ENCLAVE_PUBLIC_KEY))
                 .encoded()
@@ -132,7 +132,7 @@ public class MultiTenancyValidationFailAcceptanceTest extends AcceptanceTestBase
 
     retrievePrivacyGroupEnclaveStub();
 
-    final Transaction transaction =
+    final Transaction<String> transaction =
         privacyTransactions.distributeRawTransaction(
             getRLPOutput(getValidSignedPrivateTransaction(senderAddress, ENCLAVE_PUBLIC_KEY))
                 .encoded()
