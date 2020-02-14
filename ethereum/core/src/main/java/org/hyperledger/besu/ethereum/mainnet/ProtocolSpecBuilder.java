@@ -317,6 +317,8 @@ public class ProtocolSpecBuilder<T> {
             new PrivacyBlockProcessor(
                 (AbstractBlockProcessor) blockProcessor,
                 privacyParameters.getPrivateStateStorage());
+      } else {
+        throw new IllegalStateException("Unexpected error instantiating PrivacyBlockProcessor");
       }
     }
 

@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.4.0 RC-2 
+
+### Private State Migration 
+Hyperledger Besu v1.4 implements a new data structure for private state storage that is not backwards compatible. 
+A migration will be performed when starting v1.4 for the first time to reprocess existing private transactions 
+and re-create the private state data in the v1.4 format. 
+If you have existing private transactions, see [migration details](docs/Private-Txns-Migration.md).
+
 ## 1.4.0 RC-1 
 
 ### Additions and Improvements 
