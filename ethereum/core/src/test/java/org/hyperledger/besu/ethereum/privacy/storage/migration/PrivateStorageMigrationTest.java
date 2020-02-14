@@ -66,7 +66,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-@SuppressWarnings("unchecked")
+@SuppressWarnings({"unchecked", "rawtypes"})
 public class PrivateStorageMigrationTest {
 
   private static final String PRIVACY_GROUP_ID = "tJw12cPM6EZRF5zfHv2zLePL0cqlaDjLn0x1T/V0yzE=";
@@ -198,7 +198,6 @@ public class PrivateStorageMigrationTest {
   /*
    When processing a block, we only need to process up to the last PTM in the block.
   */
-  @SuppressWarnings("rawtypes")
   @Test
   public void migrationOnlyProcessRequiredTransactions() {
     final List<Transaction> transactions = new ArrayList<>();
