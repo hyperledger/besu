@@ -25,23 +25,23 @@ import java.util.OptionalLong;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class AutoTransactionLogsIndexingService {
+public class AutoTransactionLogBloomCachingService {
   protected static final Logger LOG = LogManager.getLogger();
   private final Blockchain blockchain;
-  private final TransactionLogsIndexer transactionLogsIndexer;
+  private final TransactionLogBloomCacher transactionLogBloomCacher;
   private OptionalLong blockAddedSubscriptionId = OptionalLong.empty();
   private OptionalLong chainReorgSubscriptionId = OptionalLong.empty();
 
-  public AutoTransactionLogsIndexingService(
-      final Blockchain blockchain, final TransactionLogsIndexer transactionLogsIndexer) {
+  public AutoTransactionLogBloomCachingService(
+      final Blockchain blockchain, final TransactionLogBloomCacher transactionLogBloomCacher) {
     this.blockchain = blockchain;
-    this.transactionLogsIndexer = transactionLogsIndexer;
+    this.transactionLogBloomCacher = transactionLogBloomCacher;
   }
 
   public void start() {
     try {
-      LOG.info("Starting Auto transaction logs indexing service.");
-      final Path cacheDir = transactionLogsIndexer.getCacheDir();
+      LOG.info("Starting auto transaction log bloom caching service.");
+      final Path cacheDir = transactionLogBloomCacher.getCacheDir();
       if (!cacheDir.toFile().exists() || !cacheDir.toFile().isDirectory()) {
         Files.createDirectory(cacheDir);
       }
@@ -50,25 +50,25 @@ public class AutoTransactionLogsIndexingService {
               blockchain.observeBlockAdded(
                   (event, __) -> {
                     if (event.isNewCanonicalHead()) {
-                      transactionLogsIndexer.cacheLogsBloomForBlockHeader(
+                      transactionLogBloomCacher.cacheLogsBloomForBlockHeader(
                           event.getBlock().getHeader());
                     }
                   }));
       chainReorgSubscriptionId =
           OptionalLong.of(
               blockchain.observeChainReorg(
-                  (header, __) -> transactionLogsIndexer.cacheLogsBloomForBlockHeader(header)));
+                  (header, __) -> transactionLogBloomCacher.cacheLogsBloomForBlockHeader(header)));
 
-      transactionLogsIndexer
+      transactionLogBloomCacher
           .getScheduler()
-          .scheduleFutureTask(transactionLogsIndexer::indexAll, Duration.ofMinutes(1));
+          .scheduleFutureTask(transactionLogBloomCacher::cacheAll, Duration.ofMinutes(1));
     } catch (IOException e) {
-      LOG.error("Unhandled indexing exception.", e);
+      LOG.error("Unhandled caching exception.", e);
     }
   }
 
   public void stop() {
-    LOG.info("Shutting down Auto transaction logs indexing service.");
+    LOG.info("Shutting down Auto transaction logs caching service.");
     blockAddedSubscriptionId.ifPresent(blockchain::removeObserver);
     chainReorgSubscriptionId.ifPresent(blockchain::removeChainReorgObserver);
   }

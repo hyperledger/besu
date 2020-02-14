@@ -137,4 +137,5 @@ key-value-storage="rocksdb"
 # Gas limit
 target-gas-limit=8000000
 
-auto-logs-bloom-indexing-enabled=true
+# transaction log bloom filter caching
+auto-log-bloom-caching-enabled=true
