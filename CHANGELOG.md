@@ -6,6 +6,13 @@
 
 - [BESU-25](https://jira.hyperledger.org/browse/BESU-25) Use v5 Devp2p when pinging [\#392](https://github.com/hyperledger/besu/pull/392)
 
+## 1.4.0 RC-2 
+
+### Private State Migration 
+Hyperledger Besu v1.4 implements a new data structure for private state storage that is not backwards compatible. 
+A migration will be performed when starting v1.4 for the first time to reprocess existing private transactions 
+and re-create the private state data in the v1.4 format. 
+If you have existing private transactions, see [migration details](docs/Private-Txns-Migration.md).
 
 ## 1.4.0 RC-1 
 
