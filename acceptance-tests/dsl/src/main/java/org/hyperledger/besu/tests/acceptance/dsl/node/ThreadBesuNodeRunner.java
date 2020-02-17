@@ -195,6 +195,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
                     .map(EnodeURL::fromString)
                     .collect(Collectors.toList()))
             .besuPluginContext(new BesuPluginContextImpl())
+            .autoLogBloomCaching(false)
             .build();
 
     runner.start();
