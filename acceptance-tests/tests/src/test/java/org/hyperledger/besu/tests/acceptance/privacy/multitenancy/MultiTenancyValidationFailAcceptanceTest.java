@@ -55,7 +55,7 @@ public class MultiTenancyValidationFailAcceptanceTest extends AcceptanceTestBase
   private final ObjectMapper mapper = new ObjectMapper();
   private Cluster multiTenancyCluster;
 
-  private static final String PRIVACY_GROUP_ID = "Z3JvdXBJZA==";
+  private static final String PRIVACY_GROUP_ID = "B1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
   private static final String ENCLAVE_PUBLIC_KEY = "B1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
   private static final String OTHER_ENCLAVE_PUBLIC_KEY =
       "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
