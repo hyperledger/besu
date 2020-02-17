@@ -30,7 +30,6 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.util.Map;
 import java.util.Optional;
@@ -49,7 +48,6 @@ public class TransactionLogBloomCacher {
 
   public static final int BLOCKS_PER_BLOOM_CACHE = 100_000;
   private static final int BLOOM_BITS_LENGTH = 256;
-  public static final String PENDING = "pending";
   private final Map<Long, Boolean> cachedSegments;
 
   private final Lock submissionLock = new ReentrantLock();
@@ -95,22 +93,16 @@ public class TransactionLogBloomCacher {
         LOG.error("Cache directory '{}' does not exist and could not be made.", cacheDir);
         return cachingStatus;
       }
-
-      final File pendingFile = calculateCacheFileName(PENDING, cacheDir);
       for (long blockNum = start; blockNum < stop; blockNum += BLOCKS_PER_BLOOM_CACHE) {
         LOG.info("Caching segment at {}", blockNum);
-        try (final FileOutputStream fos = new FileOutputStream(pendingFile)) {
-          final long blockCount = fillCacheFile(blockNum, blockNum + BLOCKS_PER_BLOOM_CACHE, fos);
-          if (blockCount == BLOCKS_PER_BLOOM_CACHE) {
-            Files.move(
-                pendingFile.toPath(),
-                calculateCacheFileName(blockNum, cacheDir).toPath(),
-                StandardCopyOption.REPLACE_EXISTING,
-                StandardCopyOption.ATOMIC_MOVE);
-          } else {
-            LOG.info("Partial segment at {}, only {} blocks cached", blockNum, blockCount);
-            break;
-          }
+        final File cacheFile = calculateCacheFileName(blockNum, cacheDir);
+        blockchain
+            .getBlockHeader(blockNum)
+            .ifPresent(
+                blockHeader ->
+                    cacheLogsBloomForBlockHeader(blockHeader, Optional.of(cacheFile), false));
+        try (final FileOutputStream fos = new FileOutputStream(cacheFile)) {
+          fillCacheFile(blockNum, blockNum + BLOCKS_PER_BLOOM_CACHE, fos);
         }
       }
     } catch (final Exception e) {
@@ -122,7 +114,7 @@ public class TransactionLogBloomCacher {
     return cachingStatus;
   }
 
-  private long fillCacheFile(
+  private void fillCacheFile(
       final long startBlock, final long stopBlock, final FileOutputStream fos) throws IOException {
     long blockNum = startBlock;
     while (blockNum < stopBlock) {
@@ -134,15 +126,19 @@ public class TransactionLogBloomCacher {
       cachingStatus.currentBlock = blockNum;
       blockNum++;
     }
-    return blockNum - startBlock;
   }
 
-  public void cacheLogsBloomForBlockHeader(final BlockHeader blockHeader) {
+  public void cacheLogsBloomForBlockHeader(
+      final BlockHeader blockHeader,
+      final Optional<File> reusedCacheFile,
+      final boolean ensureChecks) {
     try {
       final long blockNumber = blockHeader.getNumber();
       LOG.debug("Caching logs bloom for block {}.", "0x" + Long.toHexString(blockNumber));
-      ensurePreviousSegmentsArePresent(blockNumber);
-      final File cacheFile = calculateCacheFileName(blockNumber, cacheDir);
+      if (ensureChecks) {
+        ensurePreviousSegmentsArePresent(blockNumber);
+      }
+      final File cacheFile = reusedCacheFile.orElse(calculateCacheFileName(blockNumber, cacheDir));
       if (!cacheFile.exists()) {
         Files.createFile(cacheFile.toPath());
       }
