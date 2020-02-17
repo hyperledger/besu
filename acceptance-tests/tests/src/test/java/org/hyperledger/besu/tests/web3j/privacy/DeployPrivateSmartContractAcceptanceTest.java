@@ -21,8 +21,6 @@ import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.IOException;
-
 public class DeployPrivateSmartContractAcceptanceTest extends PrivacyAcceptanceTestBase {
 
   private static final long POW_CHAIN_ID = 2018;

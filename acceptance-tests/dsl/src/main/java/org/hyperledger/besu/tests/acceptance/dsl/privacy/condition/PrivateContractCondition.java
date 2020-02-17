@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.privacy.condition;
 
-import org.web3j.tx.Contract;
-
 import java.io.IOException;
+
+import org.web3j.tx.Contract;
 
 public interface PrivateContractCondition {
   void verify(final Contract contract) throws IOException;

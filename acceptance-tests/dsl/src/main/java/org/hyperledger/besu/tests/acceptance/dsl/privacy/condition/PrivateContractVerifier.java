@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.privacy.condition;
 
-import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
-
 public class PrivateContractVerifier {
 
   public PrivateContractVerifier() {}
