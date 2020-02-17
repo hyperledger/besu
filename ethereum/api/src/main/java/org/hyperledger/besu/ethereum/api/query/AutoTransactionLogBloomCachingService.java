@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.Optional;
 import java.util.OptionalLong;
 
 import org.apache.logging.log4j.LogManager;
@@ -51,13 +52,15 @@ public class AutoTransactionLogBloomCachingService {
                   (event, __) -> {
                     if (event.isNewCanonicalHead()) {
                       transactionLogBloomCacher.cacheLogsBloomForBlockHeader(
-                          event.getBlock().getHeader());
+                          event.getBlock().getHeader(), Optional.empty(), true);
                     }
                   }));
       chainReorgSubscriptionId =
           OptionalLong.of(
               blockchain.observeChainReorg(
-                  (header, __) -> transactionLogBloomCacher.cacheLogsBloomForBlockHeader(header)));
+                  (header, __) ->
+                      transactionLogBloomCacher.cacheLogsBloomForBlockHeader(
+                          header, Optional.empty(), true)));
 
       transactionLogBloomCacher
           .getScheduler()
