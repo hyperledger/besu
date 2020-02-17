@@ -806,7 +806,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void nodekeyOptionMustBeUsed() throws Exception {
-    final File file = new File("./specific/key");
+    final File file = new File("./specific/enclavePrivateKey");
     file.deleteOnExit();
 
     parseCommand("--node-private-key-file", file.getPath());
@@ -827,13 +827,12 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assumeFalse(isFullInstantiation());
 
-    final File file = new File("./specific/key");
+    final File file = new File("./specific/enclavePrivateKey");
     file.deleteOnExit();
 
     parseCommand("--node-private-key-file", file.getPath());
-
     assertThat(commandErrorOutput.toString())
-        .startsWith("Unknown options: '--node-private-key-file', './specific/key'");
+        .startsWith("Unknown options: '--node-private-key-file', './specific/enclavePrivateKey'");
     assertThat(commandOutput.toString()).isEmpty();
   }
 
@@ -2876,8 +2875,6 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void mustUseEnclaveUriAndOptions() {
-    when(storageService.getByName("rocksdb-privacy"))
-        .thenReturn(Optional.of(rocksDBSPrivacyStorageFactory));
     final URL configFile = this.getClass().getResource("/orion_publickey.pub");
 
     parseCommand(
@@ -2904,7 +2901,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void privacyOptionsRequiresServiceToBeEnabled() {
 
-    final File file = new File("./specific/public_key");
+    final File file = new File("./specific/enclavePublicKey");
     file.deleteOnExit();
 
     parseCommand(
@@ -2950,9 +2947,6 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void privacyMultiTenancyIsConfiguredWhenConfiguredWithNecessaryOptions() {
-    when(storageService.getByName("rocksdb-privacy"))
-        .thenReturn(Optional.of(rocksDBSPrivacyStorageFactory));
-
     parseCommand(
         "--privacy-enabled",
         "--rpc-http-authentication-enabled",
@@ -3063,9 +3057,9 @@ public class BesuCommandTest extends CommandTestAbstract {
     assumeFalse(isFullInstantiation());
 
     final Path path = Paths.get(".");
-    parseCommand("--privacy-public-key-file", path.toString());
+    parseCommand("--privacy-public-enclavePrivateKey-file", path.toString());
     assertThat(commandErrorOutput.toString())
-        .startsWith("Unknown options: '--privacy-public-key-file', '.'");
+        .startsWith("Unknown options: '--privacy-public-enclavePrivateKey-file', '.'");
     assertThat(commandOutput.toString()).isEmpty();
   }
 
