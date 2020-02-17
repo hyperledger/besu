@@ -14,18 +14,16 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.privacy.condition;
 
-import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
+import static org.assertj.core.api.Assertions.assertThat;
 
-public class PrivateContractVerifier {
+import java.io.IOException;
 
-  public PrivateContractVerifier() {}
+import org.web3j.tx.Contract;
 
-  public ExpectValidPrivateContractDeployedReceipt validPrivateContractDeployed(
-      final String contractAddress, final String senderAddress) {
-    return new ExpectValidPrivateContractDeployedReceipt(contractAddress, senderAddress);
-  }
-
-  public ExpectValidContractCode validContractCodeProvided() {
-    return new ExpectValidContractCode();
-  }
+public class ExpectValidContractCode implements PrivateContractCondition {
+    @Override
+    public void verify(final Contract contract) throws IOException {
+        assertThat(contract).isNotNull();
+        assertThat(contract.isValid()).isEqualTo(true);
+    }
 }
