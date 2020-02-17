@@ -19,10 +19,10 @@ package org.hyperledger.besu.cli.subcommands.operator;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static org.hyperledger.besu.cli.DefaultCommandValues.MANDATORY_LONG_FORMAT_HELP;
-import static org.hyperledger.besu.ethereum.api.query.TransactionLogsIndexer.BLOCKS_PER_BLOOM_CACHE;
+import static org.hyperledger.besu.ethereum.api.query.TransactionLogBloomCacher.BLOCKS_PER_BLOOM_CACHE;
 
 import org.hyperledger.besu.controller.BesuController;
-import org.hyperledger.besu.ethereum.api.query.TransactionLogsIndexer;
+import org.hyperledger.besu.ethereum.api.query.TransactionLogBloomCacher;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -43,7 +43,7 @@ public class GenerateLogBloomCache implements Runnable {
       names = "--start-block",
       paramLabel = MANDATORY_LONG_FORMAT_HELP,
       description =
-          "The block to start generating indexes.  Must be an increment of "
+          "The block to start generating the cache.  Must be an increment of "
               + BLOCKS_PER_BLOOM_CACHE
               + " (default: ${DEFAULT-VALUE})",
       arity = "1..1")
@@ -52,7 +52,7 @@ public class GenerateLogBloomCache implements Runnable {
   @Option(
       names = "--end-block",
       paramLabel = MANDATORY_LONG_FORMAT_HELP,
-      description = "The block to stop generating indexes (default is last block of the chain).",
+      description = "The block to stop generating the cache (default is last block of the chain).",
       arity = "1..1")
   private final Long endBlock = Long.MAX_VALUE;
 
@@ -69,9 +69,9 @@ public class GenerateLogBloomCache implements Runnable {
     final EthScheduler scheduler = new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem());
     try {
       final long finalBlock = Math.min(blockchain.getChainHeadBlockNumber(), endBlock);
-      final TransactionLogsIndexer indexer =
-          new TransactionLogsIndexer(blockchain, cacheDir, scheduler);
-      indexer.generateLogBloomCache(startBlock, finalBlock);
+      final TransactionLogBloomCacher cacher =
+          new TransactionLogBloomCacher(blockchain, cacheDir, scheduler);
+      cacher.generateLogBloomCache(startBlock, finalBlock);
     } finally {
       scheduler.stop();
       try {
