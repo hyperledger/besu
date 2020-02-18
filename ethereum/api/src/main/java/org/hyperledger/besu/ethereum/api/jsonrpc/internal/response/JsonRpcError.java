@@ -150,7 +150,10 @@ public enum JsonRpcError {
   ENCLAVE_PRIVACY_GROUP_MISSING(-50200, "PrivacyGroupNotFound"),
   ENCLAVE_PRIVACY_QUERY_ERROR(-50200, "PrivacyGroupQueryError"),
   ENCLAVE_KEYS_CANNOT_DECRYPT_PAYLOAD(-50200, "EnclaveKeysCannotDecryptPayload"),
-  METHOD_UNIMPLEMENTED(-50200, "MethodUnimplemented");
+  METHOD_UNIMPLEMENTED(-50200, "MethodUnimplemented"),
+
+  /** Plugins error */
+  PLUGIN_NOT_FOUND(-60000, "Plugin not found");
 
   private final int code;
   private final String message;
