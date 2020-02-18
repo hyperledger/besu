@@ -1,5 +1,49 @@
 # Changelog
 
+## 1.4.1
+
+### Bug Fixes
+
+- [BESU-25](https://jira.hyperledger.org/browse/BESU-25) Use v5 Devp2p when pinging [\#392](https://github.com/hyperledger/besu/pull/392)
+
+## 1.4.0 RC-2 
+
+### Private State Migration 
+Hyperledger Besu v1.4 implements a new data structure for private state storage that is not backwards compatible. 
+A migration will be performed when starting v1.4 for the first time to reprocess existing private transactions 
+and re-create the private state data in the v1.4 format. 
+If you have existing private transactions, see [migration details](docs/Private-Txns-Migration.md).
+
+## 1.4.0 RC-1 
+
+### Additions and Improvements 
+
+- New`trace_replayBlockTransactions` JSON-RPC API
+
+This can be enabled using the `--rpc-http-api TRACE` CLI flag.  There are some philosophical differences between Besu and other implementations that are outlined in [trace_rpc_apis](docs/trace_rpc_apis.md).
+
+- Ability to automatically detect Docker NAT settings from inside the conainter.
+
+The default NAT method (AUTO) can detect this so no user intervention is required to enable this.
+
+- Added [Multi-tenancy](https://besu.hyperledger.org/en/latest/Concepts/Privacy/Multi-Tenancy/) support which allows multiple participants to use the same Besu node for private transactions.
+
+- Added TLS support for communication with privacy enclave
+
+### Bug Fixes
+
+- Private transactions are now validated before sent to the enclave [\#356](https://github.com/hyperledger/besu/pull/356)
+
+### Known Bugs 
+
+- Error syncing with mainnet on Besu 1.3.7 node - MerkleTrieException [\#BESU-160](https://jira.hyperledger.org/browse/BESU-160)
+
+Workaround -> Don't enable pruning when syncing to mainnet. 
+
+- Onchain permissioning nodes can't peer when using a non-validator bootnode [\#BESU-181](https://jira.hyperledger.org/browse/BESU-181)
+
+Workaround -> When using onchain permissioning, ensure bootnodes are also validators. 
+
 ## 1.4 Beta 3 
 
 ### Additions and Improvements 

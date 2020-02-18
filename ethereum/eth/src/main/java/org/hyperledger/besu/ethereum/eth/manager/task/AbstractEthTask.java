@@ -40,14 +40,15 @@ public abstract class AbstractEthTask<T> implements EthTask<T> {
   private final Collection<CompletableFuture<?>> subTaskFutures = new ConcurrentLinkedDeque<>();
 
   protected AbstractEthTask(final MetricsSystem metricsSystem) {
-    this(buildOperationTimer(metricsSystem));
+    this.taskTimer = buildOperationTimer(metricsSystem, getClass().getSimpleName());
   }
 
   protected AbstractEthTask(final OperationTimer taskTimer) {
     this.taskTimer = taskTimer;
   }
 
-  private static OperationTimer buildOperationTimer(final MetricsSystem metricsSystem) {
+  private static OperationTimer buildOperationTimer(
+      final MetricsSystem metricsSystem, final String taskName) {
     final LabelledMetric<OperationTimer> ethTasksTimer =
         metricsSystem.createLabelledTimer(
             BesuMetricCategory.SYNCHRONIZER, "task", "Internal processing tasks", "taskName");
@@ -62,7 +63,7 @@ public abstract class AbstractEthTask<T> implements EthTask<T> {
             }
           };
     } else {
-      return ethTasksTimer.labels(AbstractEthTask.class.getSimpleName());
+      return ethTasksTimer.labels(taskName);
     }
   }
 

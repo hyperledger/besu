@@ -89,6 +89,15 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
   private final MiningBeneficiaryCalculator miningBeneficiaryCalculator;
 
+  public AbstractBlockProcessor(final AbstractBlockProcessor blockProcessor) {
+    this(
+        blockProcessor.transactionProcessor,
+        blockProcessor.transactionReceiptFactory,
+        blockProcessor.blockReward,
+        blockProcessor.miningBeneficiaryCalculator,
+        blockProcessor.skipZeroBlockRewards);
+  }
+
   public AbstractBlockProcessor(
       final TransactionProcessor transactionProcessor,
       final MainnetBlockProcessor.TransactionReceiptFactory transactionReceiptFactory,

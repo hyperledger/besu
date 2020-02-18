@@ -27,10 +27,13 @@ import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
+import java.time.Duration;
+import java.util.Map;
 import java.util.Optional;
+import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -39,25 +42,33 @@ import com.fasterxml.jackson.annotation.JsonGetter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class TransactionLogsIndexer {
+public class TransactionLogBloomCacher {
 
   private static final Logger LOG = LogManager.getLogger();
 
   public static final int BLOCKS_PER_BLOOM_CACHE = 100_000;
-  public static final String PENDING = "pending";
+  private static final int BLOOM_BITS_LENGTH = 256;
+  private final Map<Long, Boolean> cachedSegments;
 
   private final Lock submissionLock = new ReentrantLock();
+
   private final EthScheduler scheduler;
   private final Blockchain blockchain;
+
   private final Path cacheDir;
 
-  private final IndexingStatus indexingStatus = new IndexingStatus();
+  private final CachingStatus cachingStatus = new CachingStatus();
 
-  public TransactionLogsIndexer(
+  public TransactionLogBloomCacher(
       final Blockchain blockchain, final Path cacheDir, final EthScheduler scheduler) {
     this.blockchain = blockchain;
     this.cacheDir = cacheDir;
     this.scheduler = scheduler;
+    this.cachedSegments = new TreeMap<>();
+  }
+
+  public void cacheAll() {
+    ensurePreviousSegmentsArePresent(blockchain.getChainHeadBlockNumber());
   }
 
   private static File calculateCacheFileName(final String name, final Path cacheDir) {
@@ -68,48 +79,42 @@ public class TransactionLogsIndexer {
     return calculateCacheFileName(Long.toString(blockNumber / BLOCKS_PER_BLOOM_CACHE), cacheDir);
   }
 
-  public IndexingStatus generateLogBloomCache(final long start, final long stop) {
+  public CachingStatus generateLogBloomCache(final long start, final long stop) {
     checkArgument(
         start % BLOCKS_PER_BLOOM_CACHE == 0, "Start block must be at the beginning of a file");
     try {
-      indexingStatus.indexing = true;
+      cachingStatus.caching = true;
       LOG.info(
-          "Generating transaction log indexes from block {} to block {} in {}",
+          "Generating transaction log bloom cache from block {} to block {} in {}",
           start,
           stop,
           cacheDir);
       if (!Files.isDirectory(cacheDir) && !cacheDir.toFile().mkdirs()) {
         LOG.error("Cache directory '{}' does not exist and could not be made.", cacheDir);
-        return indexingStatus;
+        return cachingStatus;
       }
-
-      final File pendingFile = calculateCacheFileName(PENDING, cacheDir);
       for (long blockNum = start; blockNum < stop; blockNum += BLOCKS_PER_BLOOM_CACHE) {
-        LOG.info("Indexing segment at {}", blockNum);
-        try (final FileOutputStream fos = new FileOutputStream(pendingFile)) {
-          final long blockCount = fillCacheFile(blockNum, blockNum + BLOCKS_PER_BLOOM_CACHE, fos);
-          if (blockCount == BLOCKS_PER_BLOOM_CACHE) {
-            Files.move(
-                pendingFile.toPath(),
-                calculateCacheFileName(blockNum, cacheDir).toPath(),
-                StandardCopyOption.REPLACE_EXISTING,
-                StandardCopyOption.ATOMIC_MOVE);
-          } else {
-            LOG.info("Partial segment at {}, only {} blocks cached", blockNum, blockCount);
-            break;
-          }
+        LOG.info("Caching segment at {}", blockNum);
+        final File cacheFile = calculateCacheFileName(blockNum, cacheDir);
+        blockchain
+            .getBlockHeader(blockNum)
+            .ifPresent(
+                blockHeader ->
+                    cacheLogsBloomForBlockHeader(blockHeader, Optional.of(cacheFile), false));
+        try (final FileOutputStream fos = new FileOutputStream(cacheFile)) {
+          fillCacheFile(blockNum, blockNum + BLOCKS_PER_BLOOM_CACHE, fos);
         }
       }
     } catch (final Exception e) {
-      LOG.error("Unhandled indexing exception", e);
+      LOG.error("Unhandled caching exception", e);
     } finally {
-      indexingStatus.indexing = false;
-      LOG.info("Indexing request complete");
+      cachingStatus.caching = false;
+      LOG.info("Caching request complete");
     }
-    return indexingStatus;
+    return cachingStatus;
   }
 
-  private long fillCacheFile(
+  private void fillCacheFile(
       final long startBlock, final long stopBlock, final FileOutputStream fos) throws IOException {
     long blockNum = startBlock;
     while (blockNum < stopBlock) {
@@ -117,25 +122,77 @@ public class TransactionLogsIndexer {
       if (maybeHeader.isEmpty()) {
         break;
       }
-      final byte[] logs = maybeHeader.get().getLogsBloom().toArray();
-      checkNotNull(logs);
-      checkState(logs.length == 256, "BloomBits are not the correct length");
-      fos.write(logs);
-      indexingStatus.currentBlock = blockNum;
+      fillCacheFileWithBlock(maybeHeader.get(), fos);
+      cachingStatus.currentBlock = blockNum;
       blockNum++;
     }
-    return blockNum - startBlock;
   }
 
-  public IndexingStatus requestIndexing(final long fromBlock, final long toBlock) {
+  public void cacheLogsBloomForBlockHeader(
+      final BlockHeader blockHeader,
+      final Optional<File> reusedCacheFile,
+      final boolean ensureChecks) {
+    try {
+      final long blockNumber = blockHeader.getNumber();
+      LOG.debug("Caching logs bloom for block {}.", "0x" + Long.toHexString(blockNumber));
+      if (ensureChecks) {
+        ensurePreviousSegmentsArePresent(blockNumber);
+      }
+      final File cacheFile = reusedCacheFile.orElse(calculateCacheFileName(blockNumber, cacheDir));
+      if (!cacheFile.exists()) {
+        Files.createFile(cacheFile.toPath());
+      }
+      try (RandomAccessFile writer = new RandomAccessFile(cacheFile, "rw")) {
+        final long offset = (blockNumber / BLOCKS_PER_BLOOM_CACHE) * BLOOM_BITS_LENGTH;
+        writer.seek(offset);
+        writer.write(ensureBloomBitsAreCorrectLength(blockHeader.getLogsBloom().toArray()));
+      }
+    } catch (IOException e) {
+      LOG.error("Unhandled caching exception.", e);
+    }
+  }
+
+  private void ensurePreviousSegmentsArePresent(final long blockNumber) {
+    if (!cachingStatus.isCaching()) {
+      scheduler.scheduleFutureTask(
+          () -> {
+            long currentSegment = (blockNumber / BLOCKS_PER_BLOOM_CACHE) - 1;
+            while (currentSegment > 0) {
+              try {
+                if (!cachedSegments.getOrDefault(currentSegment, false)) {
+                  final long startBlock = currentSegment * BLOCKS_PER_BLOOM_CACHE;
+                  generateLogBloomCache(startBlock, startBlock + BLOCKS_PER_BLOOM_CACHE);
+                  cachedSegments.put(currentSegment, true);
+                }
+              } finally {
+                currentSegment--;
+              }
+            }
+          },
+          Duration.ofSeconds(1));
+    }
+  }
+
+  private void fillCacheFileWithBlock(final BlockHeader blockHeader, final FileOutputStream fos)
+      throws IOException {
+    fos.write(ensureBloomBitsAreCorrectLength(blockHeader.getLogsBloom().toArray()));
+  }
+
+  private byte[] ensureBloomBitsAreCorrectLength(final byte[] logs) {
+    checkNotNull(logs);
+    checkState(logs.length == BLOOM_BITS_LENGTH, "BloomBits are not the correct length");
+    return logs;
+  }
+
+  public CachingStatus requestCaching(final long fromBlock, final long toBlock) {
     boolean requestAccepted = false;
     try {
       if ((fromBlock < toBlock) && submissionLock.tryLock(100, TimeUnit.MILLISECONDS)) {
         try {
-          if (!indexingStatus.indexing) {
+          if (!cachingStatus.caching) {
             requestAccepted = true;
-            indexingStatus.startBlock = fromBlock;
-            indexingStatus.endBlock = toBlock;
+            cachingStatus.startBlock = fromBlock;
+            cachingStatus.endBlock = toBlock;
             scheduler.scheduleComputationTask(
                 () ->
                     generateLogBloomCache(
@@ -148,15 +205,23 @@ public class TransactionLogsIndexer {
     } catch (final InterruptedException e) {
       // ignore
     }
-    indexingStatus.requestAccepted = requestAccepted;
-    return indexingStatus;
+    cachingStatus.requestAccepted = requestAccepted;
+    return cachingStatus;
   }
 
-  public static final class IndexingStatus {
+  public EthScheduler getScheduler() {
+    return scheduler;
+  }
+
+  Path getCacheDir() {
+    return cacheDir;
+  }
+
+  public static final class CachingStatus {
     long startBlock;
     long endBlock;
     volatile long currentBlock;
-    volatile boolean indexing;
+    volatile boolean caching;
     boolean requestAccepted;
 
     @JsonGetter
@@ -175,8 +240,8 @@ public class TransactionLogsIndexer {
     }
 
     @JsonGetter
-    public boolean isIndexing() {
-      return indexing;
+    public boolean isCaching() {
+      return caching;
     }
 
     @JsonGetter
