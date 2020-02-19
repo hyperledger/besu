@@ -51,6 +51,7 @@ public class TransactionLogBloomCacher {
 
   public static final int BLOCKS_PER_BLOOM_CACHE = 100_000;
   private static final int BLOOM_BITS_LENGTH = 256;
+  private static final int EXPECTED_BLOOM_FILE_SIZE = BLOCKS_PER_BLOOM_CACHE * BLOOM_BITS_LENGTH;
   public static final String CURRENT = "current";
   private final Map<Long, Boolean> cachedSegments;
 
@@ -201,7 +202,10 @@ public class TransactionLogBloomCacher {
               try {
                 if (!cachedSegments.getOrDefault(currentSegment, false)) {
                   final long startBlock = currentSegment * BLOCKS_PER_BLOOM_CACHE;
-                  generateLogBloomCache(startBlock, startBlock + BLOCKS_PER_BLOOM_CACHE);
+                  final File cacheFile = calculateCacheFileName(startBlock, cacheDir);
+                  if (!cacheFile.isFile() || cacheFile.length() != EXPECTED_BLOOM_FILE_SIZE) {
+                    generateLogBloomCache(startBlock, startBlock + BLOCKS_PER_BLOOM_CACHE);
+                  }
                   cachedSegments.put(currentSegment, true);
                 }
               } finally {
