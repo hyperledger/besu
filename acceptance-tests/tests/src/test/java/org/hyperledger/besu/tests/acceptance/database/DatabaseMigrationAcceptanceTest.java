@@ -179,7 +179,7 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
 
   @Test
   public void shouldReturnCorrectAccountBalance() {
-    testAccount.balanceEquals(Amount.wei(expectedBalance)).verify(node);
+    testAccount.balanceEquals(Amount.wei(expectedBalance.toBigInteger())).verify(node);
   }
 
   private Path copyDataDir(final String path) {
