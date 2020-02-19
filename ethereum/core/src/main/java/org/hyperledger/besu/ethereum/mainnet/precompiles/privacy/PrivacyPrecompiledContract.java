@@ -97,7 +97,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
   public Bytes compute(final Bytes input, final MessageFrame messageFrame) {
     final ProcessableBlockHeader currentBlockHeader = messageFrame.getBlockHeader();
     if (!BlockHeader.class.isAssignableFrom(currentBlockHeader.getClass())) {
-      if (!messageFrame.isPersistingState()) {
+      if (!messageFrame.isPersistingPrivateState()) {
         // We get in here from block mining.
         return Bytes.EMPTY;
       } else {
@@ -168,7 +168,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
       return Bytes.EMPTY;
     }
 
-    if (messageFrame.isPersistingState()) {
+    if (messageFrame.isPersistingPrivateState()) {
       LOG.trace(
           "Persisting private state {} for privacyGroup {}",
           disposablePrivateState.rootHash(),
