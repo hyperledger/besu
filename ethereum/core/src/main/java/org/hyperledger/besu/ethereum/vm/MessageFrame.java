@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkState;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -226,8 +227,11 @@ public class MessageFrame {
   private final int depth;
   private final Deque<MessageFrame> messageFrameStack;
   private final Address miningBeneficiary;
-  private final Boolean isPersistingState;
+  private final Boolean isPersistingPrivateState;
   private Optional<Bytes> revertReason;
+
+  // Privacy Execution Environment fields.
+  private final Hash transactionHash;
 
   // Miscellaneous fields.
   private final EnumSet<ExceptionalHaltReason> exceptionalHaltReasons =
@@ -263,7 +267,8 @@ public class MessageFrame {
       final Consumer<MessageFrame> completer,
       final Address miningBeneficiary,
       final BlockHashLookup blockHashLookup,
-      final Boolean isPersistingState,
+      final Boolean isPersistingPrivateState,
+      final Hash transactionHash,
       final Optional<Bytes> revertReason,
       final int maxStackSize) {
     this.type = type;
@@ -298,7 +303,8 @@ public class MessageFrame {
     this.isStatic = isStatic;
     this.completer = completer;
     this.miningBeneficiary = miningBeneficiary;
-    this.isPersistingState = isPersistingState;
+    this.isPersistingPrivateState = isPersistingPrivateState;
+    this.transactionHash = transactionHash;
     this.revertReason = revertReason;
   }
 
@@ -956,8 +962,17 @@ public class MessageFrame {
    *
    * @return whether Message calls will be persisted
    */
-  public Boolean isPersistingState() {
-    return isPersistingState;
+  public Boolean isPersistingPrivateState() {
+    return isPersistingPrivateState;
+  }
+
+  /**
+   * Returns the transaction hash of the transaction being processed
+   *
+   * @return the transaction hash of the transaction being processed
+   */
+  public Hash getTransactionHash() {
+    return transactionHash;
   }
 
   public void setCurrentOperation(final Operation currentOperation) {
@@ -1005,7 +1020,8 @@ public class MessageFrame {
     private Consumer<MessageFrame> completer;
     private Address miningBeneficiary;
     private BlockHashLookup blockHashLookup;
-    private Boolean isPersistingState = false;
+    private Boolean isPersistingPrivateState = false;
+    private Hash transactionHash;
     private Optional<Bytes> reason = Optional.empty();
 
     public Builder type(final Type type) {
@@ -1119,8 +1135,13 @@ public class MessageFrame {
       return this;
     }
 
-    public Builder isPersistingState(final Boolean isPersistingState) {
-      this.isPersistingState = isPersistingState;
+    public Builder isPersistingPrivateState(final Boolean isPersistingPrivateState) {
+      this.isPersistingPrivateState = isPersistingPrivateState;
+      return this;
+    }
+
+    public Builder transactionHash(final Hash transactionHash) {
+      this.transactionHash = transactionHash;
       return this;
     }
 
@@ -1149,7 +1170,7 @@ public class MessageFrame {
       checkState(completer != null, "Missing message frame completer");
       checkState(miningBeneficiary != null, "Missing mining beneficiary");
       checkState(blockHashLookup != null, "Missing block hash lookup");
-      checkState(isPersistingState != null, "Missing isPersistingState");
+      checkState(isPersistingPrivateState != null, "Missing isPersistingPrivateState");
       checkState(contractAccountVersion != -1, "Missing contractAccountVersion");
     }
 
@@ -1178,7 +1199,8 @@ public class MessageFrame {
           completer,
           miningBeneficiary,
           blockHashLookup,
-          isPersistingState,
+          isPersistingPrivateState,
+          transactionHash,
           reason,
           maxStackSize);
     }

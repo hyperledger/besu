@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.AbstractBlockP
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -59,16 +58,6 @@ public class PrivCall extends AbstractBlockParameterMethod {
       final JsonRpcRequestContext request, final long blockNumber) {
     final CallParameter callParams = validateAndGetCallParams(request);
     final String privacyGroupId = request.getRequiredParameter(0, String.class);
-
-    // For now we do only support privCall on the head of the chain.
-    // TODO: Once we support privacy on PoW chains (mainnet) this can be removed and the
-    // blockchainQueries field can be made private again
-    if (blockNumber != blockchainQueries.get().headBlockNumber()) {
-      // TODO: Remove PRIV_CALL_ONLY_SUPPORTED_ON_CHAIN_HEAD in JsonRpcError when removing this
-      // code.
-      return new JsonRpcErrorResponse(
-          request.getRequest().getId(), JsonRpcError.PRIV_CALL_ONLY_SUPPORTED_ON_CHAIN_HEAD);
-    }
 
     final String enclavePublicKey = enclavePublicKeyProvider.getEnclaveKey(request.getUser());
 

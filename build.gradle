@@ -601,7 +601,7 @@ task checkSpdxHeader(type: CheckSpdxHeader) {
   rootPath = "${projectDir}"
   spdxHeader = "* SPDX-License-Identifier: Apache-2.0"
   filesRegex = "(.*.java)|(.*.groovy)"
-  excludeRegex = "(.*generalstate/GeneralStateRegressionReferenceTest.*)|(.*generalstate/GeneralStateReferenceTest.*)|(.*blockchain/BlockchainReferenceTest.*)|(.*.gradle/.*)"
+  excludeRegex = "(.*generalstate/GeneralStateRegressionReferenceTest.*)|(.*generalstate/GeneralStateReferenceTest.*)|(.*blockchain/BlockchainReferenceTest.*)|(.*.gradle/.*)|(.*.idea/.*)"
 }
 
 task jacocoRootReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
@@ -701,6 +701,7 @@ bintray {
   filesSpec {
     from distTar.destinationDirectory
     from distZip.destinationDirectory
+    from file("plugin-api/build/libs/plugin-api-$version-javadoc.jar")
     into '.'
   }
 
@@ -715,3 +716,4 @@ build.dependsOn verifyDistributions
 bintrayUpload.dependsOn verifyDistributions
 bintrayUpload.mustRunAfter(distTar)
 bintrayUpload.mustRunAfter(distZip)
+bintrayUpload.mustRunAfter(javadocJar)

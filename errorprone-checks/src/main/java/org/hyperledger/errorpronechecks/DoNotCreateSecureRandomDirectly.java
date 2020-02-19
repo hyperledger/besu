@@ -32,7 +32,8 @@ import com.sun.tools.javac.code.Symbol;
 @BugPattern(
     name = "DoNotCreateSecureRandomDirectly",
     summary = "Do not create SecureRandom directly.",
-    severity = WARNING)
+    severity = WARNING,
+    linkType = BugPattern.LinkType.NONE)
 public class DoNotCreateSecureRandomDirectly extends BugChecker
     implements MethodInvocationTreeMatcher, NewClassTreeMatcher {
 
