@@ -227,7 +227,7 @@ public class MessageFrame {
   private final int depth;
   private final Deque<MessageFrame> messageFrameStack;
   private final Address miningBeneficiary;
-  private final Boolean isPersistingState;
+  private final Boolean isPersistingPrivateState;
   private Optional<Bytes> revertReason;
 
   // Privacy Execution Environment fields.
@@ -267,7 +267,7 @@ public class MessageFrame {
       final Consumer<MessageFrame> completer,
       final Address miningBeneficiary,
       final BlockHashLookup blockHashLookup,
-      final Boolean isPersistingState,
+      final Boolean isPersistingPrivateState,
       final Hash transactionHash,
       final Optional<Bytes> revertReason,
       final int maxStackSize) {
@@ -303,7 +303,7 @@ public class MessageFrame {
     this.isStatic = isStatic;
     this.completer = completer;
     this.miningBeneficiary = miningBeneficiary;
-    this.isPersistingState = isPersistingState;
+    this.isPersistingPrivateState = isPersistingPrivateState;
     this.transactionHash = transactionHash;
     this.revertReason = revertReason;
   }
@@ -962,8 +962,8 @@ public class MessageFrame {
    *
    * @return whether Message calls will be persisted
    */
-  public Boolean isPersistingState() {
-    return isPersistingState;
+  public Boolean isPersistingPrivateState() {
+    return isPersistingPrivateState;
   }
 
   /**
@@ -1020,7 +1020,7 @@ public class MessageFrame {
     private Consumer<MessageFrame> completer;
     private Address miningBeneficiary;
     private BlockHashLookup blockHashLookup;
-    private Boolean isPersistingState = false;
+    private Boolean isPersistingPrivateState = false;
     private Hash transactionHash;
     private Optional<Bytes> reason = Optional.empty();
 
@@ -1135,8 +1135,8 @@ public class MessageFrame {
       return this;
     }
 
-    public Builder isPersistingState(final Boolean isPersistingState) {
-      this.isPersistingState = isPersistingState;
+    public Builder isPersistingPrivateState(final Boolean isPersistingPrivateState) {
+      this.isPersistingPrivateState = isPersistingPrivateState;
       return this;
     }
 
@@ -1170,7 +1170,7 @@ public class MessageFrame {
       checkState(completer != null, "Missing message frame completer");
       checkState(miningBeneficiary != null, "Missing mining beneficiary");
       checkState(blockHashLookup != null, "Missing block hash lookup");
-      checkState(isPersistingState != null, "Missing isPersistingState");
+      checkState(isPersistingPrivateState != null, "Missing isPersistingPrivateState");
       checkState(contractAccountVersion != -1, "Missing contractAccountVersion");
     }
 
@@ -1199,7 +1199,7 @@ public class MessageFrame {
           completer,
           miningBeneficiary,
           blockHashLookup,
-          isPersistingState,
+              isPersistingPrivateState,
           transactionHash,
           reason,
           maxStackSize);
