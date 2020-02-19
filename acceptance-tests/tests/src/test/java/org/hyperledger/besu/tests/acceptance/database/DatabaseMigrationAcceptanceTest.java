@@ -214,7 +214,7 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
     ls(path.toFile());
   }
 
-  private static void ls(final File file) throws Exception {
+  private static void ls(final File file) {
     for (File f : Objects.requireNonNull(file.listFiles())) {
       if (f.isDirectory()) {
         ls(f);
