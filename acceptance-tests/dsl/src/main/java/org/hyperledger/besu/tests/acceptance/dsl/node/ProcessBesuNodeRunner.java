@@ -50,8 +50,9 @@ import org.awaitility.Awaitility;
 
 public class ProcessBesuNodeRunner implements BesuNodeRunner {
 
-  private final Logger LOG = LogManager.getLogger();
-  private final Logger PROCESS_LOG = LogManager.getLogger("org.hyperledger.besu.SubProcessLog");
+  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger PROCESS_LOG =
+      LogManager.getLogger("org.hyperledger.besu.SubProcessLog");
 
   private final Map<String, Process> besuProcesses = new HashMap<>();
   private final ExecutorService outputProcessorExecutor = Executors.newCachedThreadPool();

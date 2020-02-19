@@ -67,7 +67,7 @@ import picocli.CommandLine.Model.CommandSpec;
 
 public class ThreadBesuNodeRunner implements BesuNodeRunner {
 
-  private final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LogManager.getLogger();
   private final Map<String, Runner> besuRunners = new HashMap<>();
   private ExecutorService nodeExecutor = Executors.newCachedThreadPool();
 
