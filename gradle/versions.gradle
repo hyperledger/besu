@@ -105,5 +105,7 @@ dependencyManagement {
     dependency 'tech.pegasys.ethsigner.internal:core:0.4.0'
     dependency 'tech.pegasys.ethsigner.internal:file-based:0.4.0'
     dependency 'tech.pegasys.ethsigner.internal:signing-api:0.4.0'
+    dependency 'com.github.docker-java:docker-java:3.1.5'
+    dependency 'javax.activation:activation:1.1.1'
   }
 }
