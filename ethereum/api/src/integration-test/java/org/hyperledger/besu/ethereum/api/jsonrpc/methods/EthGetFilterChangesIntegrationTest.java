@@ -24,11 +24,11 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterIdGenerator;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterRepository;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetFilterChanges;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -40,6 +40,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
@@ -55,13 +56,12 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfigurati
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.util.Lists;
 import org.junit.Before;
 import org.junit.Test;
@@ -89,7 +89,6 @@ public class EthGetFilterChangesIntegrationTest {
   private static final int MAX_TRANSACTIONS = 5;
   private static final KeyPair keyPair = KeyPair.generate();
   private final Transaction transaction = createTransaction(1);
-  private final JsonRpcParameter parameters = new JsonRpcParameter();
   private FilterManager filterManager;
   private EthGetFilterChanges method;
   private final SyncState syncState = mock(SyncState.class);
@@ -121,12 +120,12 @@ public class EthGetFilterChangesIntegrationTest {
     filterManager =
         new FilterManager(
             blockchainQueries, transactionPool, new FilterIdGenerator(), new FilterRepository());
-    method = new EthGetFilterChanges(filterManager, parameters);
+    method = new EthGetFilterChanges(filterManager);
   }
 
   @Test
   public void shouldReturnErrorResponseIfFilterNotFound() {
-    final JsonRpcRequest request = requestWithParams("0");
+    final JsonRpcRequestContext request = requestWithParams("0");
 
     final JsonRpcResponse expected = new JsonRpcErrorResponse(null, JsonRpcError.FILTER_NOT_FOUND);
     final JsonRpcResponse actual = method.response(request);
@@ -140,7 +139,7 @@ public class EthGetFilterChangesIntegrationTest {
 
     assertThatFilterExists(filterId);
 
-    final JsonRpcRequest request = requestWithParams(String.valueOf(filterId));
+    final JsonRpcRequestContext request = requestWithParams(String.valueOf(filterId));
     final JsonRpcSuccessResponse expected = new JsonRpcSuccessResponse(null, Lists.emptyList());
     final JsonRpcResponse actual = method.response(request);
 
@@ -157,7 +156,7 @@ public class EthGetFilterChangesIntegrationTest {
 
     assertThatFilterExists(filterId);
 
-    final JsonRpcRequest request = requestWithParams(String.valueOf(filterId));
+    final JsonRpcRequestContext request = requestWithParams(String.valueOf(filterId));
 
     // We haven't added any transactions, so the list of pending transactions should be empty.
     final JsonRpcSuccessResponse expected = new JsonRpcSuccessResponse(null, Lists.emptyList());
@@ -175,7 +174,7 @@ public class EthGetFilterChangesIntegrationTest {
 
     assertThatFilterExists(filterId);
 
-    final JsonRpcRequest request = requestWithParams(String.valueOf(filterId));
+    final JsonRpcRequestContext request = requestWithParams(String.valueOf(filterId));
 
     // We haven't added any blocks, so the list of new blocks should be empty.
     JsonRpcSuccessResponse expected = new JsonRpcSuccessResponse(null, Lists.emptyList());
@@ -205,7 +204,7 @@ public class EthGetFilterChangesIntegrationTest {
 
     assertThatFilterExists(filterId);
 
-    final JsonRpcRequest request = requestWithParams(String.valueOf(filterId));
+    final JsonRpcRequestContext request = requestWithParams(String.valueOf(filterId));
 
     // We haven't added any transactions, so the list of pending transactions should be empty.
     JsonRpcSuccessResponse expected = new JsonRpcSuccessResponse(null, Lists.emptyList());
@@ -257,7 +256,7 @@ public class EthGetFilterChangesIntegrationTest {
   }
 
   private Block appendBlock(final Transaction... transactionsToAdd) {
-    return appendBlock(UInt256.ONE, getHeaderForCurrentChainHead(), transactionsToAdd);
+    return appendBlock(Difficulty.ONE, getHeaderForCurrentChainHead(), transactionsToAdd);
   }
 
   private BlockHeader getHeaderForCurrentChainHead() {
@@ -265,7 +264,7 @@ public class EthGetFilterChangesIntegrationTest {
   }
 
   private Block appendBlock(
-      final UInt256 difficulty,
+      final Difficulty difficulty,
       final BlockHeader parentBlock,
       final Transaction... transactionsToAdd) {
     final List<Transaction> transactionList = asList(transactionsToAdd);
@@ -290,7 +289,7 @@ public class EthGetFilterChangesIntegrationTest {
         .gasLimit(100)
         .gasPrice(Wei.ZERO)
         .nonce(1)
-        .payload(BytesValue.EMPTY)
+        .payload(Bytes.EMPTY)
         .to(Address.ID)
         .value(Wei.of(transactionNumber))
         .sender(Address.ID)
@@ -298,7 +297,7 @@ public class EthGetFilterChangesIntegrationTest {
         .signAndBuild(keyPair);
   }
 
-  private JsonRpcRequest requestWithParams(final Object... params) {
-    return new JsonRpcRequest(JSON_RPC_VERSION, ETH_METHOD, params);
+  private JsonRpcRequestContext requestWithParams(final Object... params) {
+    return new JsonRpcRequestContext(new JsonRpcRequest(JSON_RPC_VERSION, ETH_METHOD, params));
   }
 }

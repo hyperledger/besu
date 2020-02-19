@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -37,11 +37,13 @@ public class NetPeerCount implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest req) {
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     try {
-      return new JsonRpcSuccessResponse(req.getId(), Quantity.create(p2pNetwork.getPeerCount()));
+      return new JsonRpcSuccessResponse(
+          requestContext.getRequest().getId(), Quantity.create(p2pNetwork.getPeerCount()));
     } catch (final P2PDisabledException e) {
-      return new JsonRpcErrorResponse(req.getId(), JsonRpcError.P2P_DISABLED);
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), JsonRpcError.P2P_DISABLED);
     }
   }
 }

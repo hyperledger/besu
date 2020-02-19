@@ -22,7 +22,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockReplay;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugStorageRangeAtResult;
@@ -34,12 +34,11 @@ import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.AccountStorageEntry;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -49,6 +48,8 @@ import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.TreeMap;
 
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
@@ -57,12 +58,11 @@ public class DebugStorageRangeAtTest {
 
   private static final int TRANSACTION_INDEX = 2;
   private static final Bytes32 START_KEY_HASH = Bytes32.fromHexString("0x22");
-  private final JsonRpcParameter parameters = new JsonRpcParameter();
   private final Blockchain blockchain = mock(Blockchain.class);
   private final BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
   private final BlockReplay blockReplay = mock(BlockReplay.class);
   private final DebugStorageRangeAt debugStorageRangeAt =
-      new DebugStorageRangeAt(parameters, blockchainQueries, blockReplay);
+      new DebugStorageRangeAt(blockchainQueries, blockReplay);
   private final MutableWorldState worldState = mock(MutableWorldState.class);
   private final Account account = mock(Account.class);
   private final TransactionProcessor transactionProcessor = mock(TransactionProcessor.class);
@@ -94,15 +94,20 @@ public class DebugStorageRangeAtTest {
             blockHeader,
             Collections.singletonList(transactionWithMetadata),
             Collections.emptyList(),
-            UInt256.ONE,
+            Difficulty.ONE,
             1);
-    final JsonRpcRequest request =
-        new JsonRpcRequest(
-            "2.0",
-            "debug_storageRangeAt",
-            new Object[] {
-              blockHash.toString(), TRANSACTION_INDEX, accountAddress, START_KEY_HASH.toString(), 10
-            });
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest(
+                "2.0",
+                "debug_storageRangeAt",
+                new Object[] {
+                  blockHash.toString(),
+                  TRANSACTION_INDEX,
+                  accountAddress,
+                  START_KEY_HASH.toString(),
+                  10
+                }));
 
     when(blockchainQueries.blockByHash(blockHash)).thenReturn(Optional.of(blockWithMetadata));
     when(blockchainQueries.transactionByBlockHashAndIndex(blockHash, TRANSACTION_INDEX))
@@ -112,11 +117,13 @@ public class DebugStorageRangeAtTest {
         .thenAnswer(this::callAction);
 
     final List<AccountStorageEntry> entries = new ArrayList<>();
-    entries.add(AccountStorageEntry.forKeyAndValue(UInt256.fromHexString("0x33"), UInt256.of(6)));
-    entries.add(AccountStorageEntry.forKeyAndValue(UInt256.fromHexString("0x44"), UInt256.of(7)));
+    entries.add(
+        AccountStorageEntry.forKeyAndValue(UInt256.fromHexString("0x33"), UInt256.valueOf(6)));
+    entries.add(
+        AccountStorageEntry.forKeyAndValue(UInt256.fromHexString("0x44"), UInt256.valueOf(7)));
     entries.add(
         AccountStorageEntry.create(
-            UInt256.of(7), Hash.hash(Bytes32.fromHexString("0x45")), Optional.empty()));
+            UInt256.valueOf(7), Hash.hash(Bytes32.fromHexString("0x45")), Optional.empty()));
     final NavigableMap<Bytes32, AccountStorageEntry> rawEntries = new TreeMap<>();
     entries.forEach(e -> rawEntries.put(e.getKeyHash(), e));
 

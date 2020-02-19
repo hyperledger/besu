@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.retesteth.methods;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.retesteth.RetestethContext;
@@ -26,6 +27,7 @@ import java.io.IOException;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import io.vertx.core.json.JsonObject;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -48,9 +50,10 @@ public class TestSetChainParamsTest {
             Charsets.UTF_8);
     final JsonObject chainParamsJson = new JsonObject(chainParamsJsonString);
 
-    final JsonRpcRequest request =
-        new JsonRpcRequest(
-            "2.0", TestSetChainParams.METHOD_NAME, new Object[] {chainParamsJson.getMap()});
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest(
+                "2.0", TestSetChainParams.METHOD_NAME, new Object[] {chainParamsJson.getMap()}));
 
     assertThat(test_setChainParams.response(request))
         .isEqualTo(new JsonRpcSuccessResponse(null, true));
@@ -62,8 +65,8 @@ public class TestSetChainParamsTest {
             "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
     assertThat(blockHeader.getCoinbase().toString())
         .isEqualTo("0x8888f1f195afa192cfee860698584c030f4c9db1");
-    assertThat(blockHeader.getDifficulty().toShortHexString()).isEqualTo("0x20000");
-    assertThat(blockHeader.getExtraData().toString()).isEqualTo("0x42");
+    assertThat(blockHeader.getDifficulty()).isEqualTo(UInt256.fromHexString("0x20000"));
+    assertThat(blockHeader.getExtraData().toHexString()).isEqualTo("0x42");
     assertThat(blockHeader.getGasLimit()).isEqualTo(3141592);
     assertThat(blockHeader.getGasUsed()).isEqualTo(0);
     assertThat(blockHeader.getMixHash().toString())

@@ -16,7 +16,6 @@ package org.hyperledger.besu.consensus.common;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.hyperledger.besu.ethereum.core.InMemoryStorageProvider.createInMemoryBlockchain;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
@@ -25,64 +24,18 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 
 import com.google.common.util.concurrent.UncheckedExecutionException;
-import org.assertj.core.util.Lists;
-import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
-public class VoteTallyCacheTest {
-
-  private final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
-
-  private Block createEmptyBlock(final long blockNumber, final Hash parentHash) {
-    headerBuilder.number(blockNumber).parentHash(parentHash).coinbase(AddressHelpers.ofValue(0));
-    return new Block(
-        headerBuilder.buildHeader(), new BlockBody(Lists.emptyList(), Lists.emptyList()));
-  }
-
-  private MutableBlockchain blockChain;
-  private Block genesisBlock;
-  private Block block_1;
-  private Block block_2;
-
-  private final List<Address> validators = Lists.newArrayList();
-
-  private final BlockInterface blockInterface = mock(BlockInterface.class);
-
-  @Before
-  public void constructThreeBlockChain() {
-    for (int i = 0; i < 3; i++) {
-      validators.add(AddressHelpers.ofValue(i));
-    }
-    headerBuilder.extraData(BytesValue.wrap(new byte[32]));
-
-    genesisBlock = createEmptyBlock(0, Hash.ZERO);
-
-    blockChain = createInMemoryBlockchain(genesisBlock);
-
-    block_1 = createEmptyBlock(1, genesisBlock.getHeader().getHash());
-    block_2 = createEmptyBlock(1, block_1.getHeader().getHash());
-
-    blockChain.appendBlock(block_1, Lists.emptyList());
-    blockChain.appendBlock(block_2, Lists.emptyList());
-
-    when(blockInterface.validatorsInBlock(any())).thenReturn(validators);
-  }
+public class VoteTallyCacheTest extends VoteTallyCacheTestBase {
 
   @Test
   public void parentBlockVoteTallysAreCachedWhenChildVoteTallyRequested() {

@@ -19,6 +19,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -91,7 +92,8 @@ public class PermReloadPermissionsFromFileTest {
     return new JsonRpcSuccessResponse(null);
   }
 
-  private JsonRpcRequest reloadRequest() {
-    return new JsonRpcRequest("2.0", "perm_reloadPermissionsFromFile", null);
+  private JsonRpcRequestContext reloadRequest() {
+    return new JsonRpcRequestContext(
+        new JsonRpcRequest("2.0", "perm_reloadPermissionsFromFile", null));
   }
 }

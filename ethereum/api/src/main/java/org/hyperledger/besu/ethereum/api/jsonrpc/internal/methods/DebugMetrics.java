@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
@@ -39,12 +39,12 @@ public class DebugMetrics implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest request) {
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     final Map<String, Object> observations = new HashMap<>();
     metricsSystem
         .streamObservations()
         .forEach(observation -> addObservation(observations, observation));
-    return new JsonRpcSuccessResponse(request.getId(), observations);
+    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), observations);
   }
 
   private void addObservation(

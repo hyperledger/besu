@@ -1,0 +1,79 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "trace_replayBlockTransactions",
+    "params": [
+      "0x6",
+      [
+        "stateDiff"
+      ]
+    ],
+    "id": 415
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "result": [
+      {
+        "output": "0x",
+        "stateDiff": {
+          "0x0000000000000000000000000000000000000000": {
+            "balance": {
+              "*": {
+                "from": "0x8ac723048cb13e66",
+                "to": "0x8ac723048d141c20"
+              }
+            },
+            "code": "=",
+            "nonce": "=",
+            "storage": {}
+          },
+          "0x0000000000000999000000000000000000000000": {
+            "balance": {
+              "+": "0x300"
+            },
+            "code": {
+              "+": "0x"
+            },
+            "nonce": {
+              "+": "0x0"
+            },
+            "storage": {}
+          },
+          "0x0020000000000000000000000000000000000000": {
+            "balance": {
+              "-": "0x300"
+            },
+            "code": {
+              "-": "0x600035ff"
+            },
+            "nonce": {
+              "-": "0x0"
+            },
+            "storage": {}
+          },
+          "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73": {
+            "balance": {
+              "*": {
+                "from": "0xffffffffffffffffffffffffffffffffffeed85ff",
+                "to": "0xffffffffffffffffffffffffffffffffffe8aa845"
+              }
+            },
+            "code": "=",
+            "nonce": {
+              "*": {
+                "from": "0x2",
+                "to": "0x3"
+              }
+            },
+            "storage": {}
+          }
+        },
+        "trace": [],
+        "transactionHash": "0x91eeabc671e2dd2b1c8ddebb46ba59e8cb3e7d189f80bcc868a9787728c6e59e",
+        "vmTrace": null
+      }
+    ],
+    "id": 415
+  },
+  "statusCode": 200
+}

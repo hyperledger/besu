@@ -18,13 +18,13 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionReceiptType;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
 import com.google.common.base.MoreObjects;
+import org.apache.tuweni.bytes.Bytes;
 
 /**
  * A transaction receipt, containing information pertaining a transaction execution.
@@ -47,7 +47,7 @@ public class TransactionReceipt {
   private final LogsBloomFilter bloomFilter;
   private final int status;
   private final TransactionReceiptType transactionReceiptType;
-  private final Optional<BytesValue> revertReason;
+  private final Optional<Bytes> revertReason;
 
   /**
    * Creates an instance of a state root-encoded transaction receipt.
@@ -61,13 +61,13 @@ public class TransactionReceipt {
       final Hash stateRoot,
       final long cumulativeGasUsed,
       final List<Log> logs,
-      final Optional<BytesValue> revertReason) {
+      final Optional<Bytes> revertReason) {
     this(
         stateRoot,
         NONEXISTENT,
         cumulativeGasUsed,
         logs,
-        LogsBloomFilter.compute(logs),
+        LogsBloomFilter.builder().insertLogs(logs).build(),
         revertReason);
   }
 
@@ -76,7 +76,7 @@ public class TransactionReceipt {
       final long cumulativeGasUsed,
       final List<Log> logs,
       final LogsBloomFilter bloomFilter,
-      final Optional<BytesValue> revertReason) {
+      final Optional<Bytes> revertReason) {
     this(stateRoot, NONEXISTENT, cumulativeGasUsed, logs, bloomFilter, revertReason);
   }
 
@@ -92,8 +92,14 @@ public class TransactionReceipt {
       final int status,
       final long cumulativeGasUsed,
       final List<Log> logs,
-      final Optional<BytesValue> revertReason) {
-    this(null, status, cumulativeGasUsed, logs, LogsBloomFilter.compute(logs), revertReason);
+      final Optional<Bytes> revertReason) {
+    this(
+        null,
+        status,
+        cumulativeGasUsed,
+        logs,
+        LogsBloomFilter.builder().insertLogs(logs).build(),
+        revertReason);
   }
 
   private TransactionReceipt(
@@ -101,7 +107,7 @@ public class TransactionReceipt {
       final long cumulativeGasUsed,
       final List<Log> logs,
       final LogsBloomFilter bloomFilter,
-      final Optional<BytesValue> revertReason) {
+      final Optional<Bytes> revertReason) {
     this(null, status, cumulativeGasUsed, logs, bloomFilter, revertReason);
   }
 
@@ -111,7 +117,7 @@ public class TransactionReceipt {
       final long cumulativeGasUsed,
       final List<Log> logs,
       final LogsBloomFilter bloomFilter,
-      final Optional<BytesValue> revertReason) {
+      final Optional<Bytes> revertReason) {
     this.stateRoot = stateRoot;
     this.cumulativeGasUsed = cumulativeGasUsed;
     this.status = status;
@@ -141,15 +147,15 @@ public class TransactionReceipt {
     // Determine whether it's a state root-encoded transaction receipt
     // or is a status code-encoded transaction receipt.
     if (stateRoot != null) {
-      out.writeBytesValue(stateRoot);
+      out.writeBytes(stateRoot);
     } else {
       out.writeLongScalar(status);
     }
     out.writeLongScalar(cumulativeGasUsed);
-    out.writeBytesValue(bloomFilter.getBytes());
+    out.writeBytes(bloomFilter);
     out.writeList(logs, Log::writeTo);
     if (withRevertReason && revertReason.isPresent()) {
-      out.writeBytesValue(revertReason.get());
+      out.writeBytes(revertReason.get());
     }
     out.endList();
   }
@@ -163,6 +169,7 @@ public class TransactionReceipt {
   public static TransactionReceipt readFrom(final RLPInput input) {
     return readFrom(input, true);
   }
+
   /**
    * Creates a transaction receipt for the given RLP
    *
@@ -183,14 +190,14 @@ public class TransactionReceipt {
       // TODO consider validating that the logs and bloom filter match.
       final LogsBloomFilter bloomFilter = LogsBloomFilter.readFrom(input);
       final List<Log> logs = input.readList(Log::readFrom);
-      final Optional<BytesValue> revertReason;
+      final Optional<Bytes> revertReason;
       if (input.isEndOfCurrentList()) {
         revertReason = Optional.empty();
       } else {
         if (!revertReasonAllowed) {
           throw new RLPException("Unexpected value at end of TransactionReceipt");
         }
-        revertReason = Optional.of(input.readBytesValue());
+        revertReason = Optional.of(input.readBytes());
       }
 
       // Status code-encoded transaction receipts have a single
@@ -256,7 +263,7 @@ public class TransactionReceipt {
     return transactionReceiptType;
   }
 
-  public Optional<BytesValue> getRevertReason() {
+  public Optional<Bytes> getRevertReason() {
     return revertReason;
   }
 

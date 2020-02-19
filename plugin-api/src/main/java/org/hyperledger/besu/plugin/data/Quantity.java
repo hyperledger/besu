@@ -14,14 +14,11 @@
  */
 package org.hyperledger.besu.plugin.data;
 
-import org.hyperledger.besu.plugin.Unstable;
-
 /**
- * An interface to mark the {@link BinaryData} that also represents a disceete quantity, such as an
- * unsigned integer value.
+ * An interface to mark objects that also represents a disceete quantity, such as an unsigned
+ * integer value.
  */
-@Unstable
-public interface Quantity extends BinaryData {
+public interface Quantity {
 
   /**
    * Returns the numeric value of the quantity.
@@ -34,4 +31,7 @@ public interface Quantity extends BinaryData {
    * @return The boxed or object based value of the quantity.
    */
   Number getValue();
+
+  /** @return This value represented as hexadecimal, starting with "0x". */
+  String toHexString();
 }

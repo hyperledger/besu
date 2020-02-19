@@ -24,6 +24,10 @@ import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Hash;
 
+import java.util.function.Supplier;
+
+import com.google.common.base.Suppliers;
+
 public class NewBlockHeadersSubscriptionService implements BlockAddedObserver {
 
   private final SubscriptionManager subscriptionManager;
@@ -45,11 +49,15 @@ public class NewBlockHeadersSubscriptionService implements BlockAddedObserver {
           subscribers -> {
             final Hash newBlockHash = event.getBlock().getHash();
 
+            // memoize
+            final Supplier<BlockResult> blockWithTx =
+                Suppliers.memoize(() -> blockWithCompleteTransaction(newBlockHash));
+            final Supplier<BlockResult> blockWithoutTx =
+                Suppliers.memoize(() -> blockWithTransactionHash(newBlockHash));
+
             for (final NewBlockHeadersSubscription subscription : subscribers) {
               final BlockResult newBlock =
-                  subscription.getIncludeTransactions()
-                      ? blockWithCompleteTransaction(newBlockHash)
-                      : blockWithTransactionHash(newBlockHash);
+                  subscription.getIncludeTransactions() ? blockWithTx.get() : blockWithoutTx.get();
 
               subscriptionManager.sendMessage(subscription.getSubscriptionId(), newBlock);
             }

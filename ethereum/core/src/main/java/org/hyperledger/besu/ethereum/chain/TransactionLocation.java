@@ -45,7 +45,7 @@ public class TransactionLocation {
   public void writeTo(final RLPOutput out) {
     out.startList();
 
-    out.writeBytesValue(blockHash);
+    out.writeBytes(blockHash);
     out.writeIntScalar(transactionIndex);
 
     out.endList();

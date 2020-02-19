@@ -22,8 +22,8 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -46,7 +46,7 @@ public class MinerSetCoinbaseTest {
 
   @Before
   public void before() {
-    this.method = new MinerSetCoinbase(miningCoordinator, new JsonRpcParameter());
+    this.method = new MinerSetCoinbase(miningCoordinator);
   }
 
   @Test
@@ -56,7 +56,7 @@ public class MinerSetCoinbaseTest {
 
   @Test
   public void shouldFailWhenMissingAddress() {
-    final JsonRpcRequest request = minerSetCoinbaseRequest(null);
+    final JsonRpcRequestContext request = minerSetCoinbaseRequest(null);
 
     final Throwable thrown = catchThrowable(() -> method.response(request));
 
@@ -67,7 +67,7 @@ public class MinerSetCoinbaseTest {
 
   @Test
   public void shouldFailWhenAddressIsInvalid() {
-    final JsonRpcRequest request = minerSetCoinbaseRequest("foo");
+    final JsonRpcRequestContext request = minerSetCoinbaseRequest("foo");
 
     final Throwable thrown = catchThrowable(() -> method.response(request));
 
@@ -76,7 +76,7 @@ public class MinerSetCoinbaseTest {
 
   @Test
   public void shouldSetCoinbaseWhenRequestHasAddress() {
-    final JsonRpcRequest request = minerSetCoinbaseRequest("0x0");
+    final JsonRpcRequestContext request = minerSetCoinbaseRequest("0x0");
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, true);
 
     final JsonRpcResponse response = method.response(request);
@@ -87,9 +87,9 @@ public class MinerSetCoinbaseTest {
 
   @Test
   public void shouldReturnAnInvalidRequestIfUnderlyingOperationThrowsUnsupportedOperation() {
-    final JsonRpcRequest request = minerSetCoinbaseRequest("0x0");
+    final JsonRpcRequestContext request = minerSetCoinbaseRequest("0x0");
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_REQUEST);
+        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_REQUEST);
 
     doAnswer(
             invocation -> {
@@ -102,11 +102,13 @@ public class MinerSetCoinbaseTest {
     assertThat(response).isEqualToComparingFieldByField(expectedResponse);
   }
 
-  private JsonRpcRequest minerSetCoinbaseRequest(final String hexString) {
+  private JsonRpcRequestContext minerSetCoinbaseRequest(final String hexString) {
     if (hexString != null) {
-      return new JsonRpcRequest("2.0", "miner_setCoinbase", new Object[] {hexString});
+      return new JsonRpcRequestContext(
+          new JsonRpcRequest("2.0", "miner_setCoinbase", new Object[] {hexString}));
     } else {
-      return new JsonRpcRequest("2.0", "miner_setCoinbase", new Object[] {});
+      return new JsonRpcRequestContext(
+          new JsonRpcRequest("2.0", "miner_setCoinbase", new Object[] {}));
     }
   }
 }

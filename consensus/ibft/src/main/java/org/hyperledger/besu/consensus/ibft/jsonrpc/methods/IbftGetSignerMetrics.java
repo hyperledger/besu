@@ -15,19 +15,19 @@
 package org.hyperledger.besu.consensus.ibft.jsonrpc.methods;
 
 import org.hyperledger.besu.consensus.common.BlockInterface;
+import org.hyperledger.besu.consensus.common.VoteTallyCache;
 import org.hyperledger.besu.consensus.common.jsonrpc.AbstractGetSignerMetricsMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 
 public class IbftGetSignerMetrics extends AbstractGetSignerMetricsMethod implements JsonRpcMethod {
 
   public IbftGetSignerMetrics(
+      final VoteTallyCache voteTallyCache,
       final BlockInterface blockInterface,
-      final BlockchainQueries blockchainQueries,
-      final JsonRpcParameter parameter) {
-    super(blockInterface, blockchainQueries, parameter);
+      final BlockchainQueries blockchainQueries) {
+    super(voteTallyCache, blockInterface, blockchainQueries);
   }
 
   @Override

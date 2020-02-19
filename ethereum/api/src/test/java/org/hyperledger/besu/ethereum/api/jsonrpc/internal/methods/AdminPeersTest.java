@@ -19,6 +19,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.MockPeerConnection;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -28,7 +29,6 @@ import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.network.exceptions.P2PDisabledException;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.PeerInfo;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.net.InetSocketAddress;
 import java.util.Collection;
@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
+import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
@@ -65,7 +66,7 @@ public class AdminPeersTest {
   public void shouldReturnEmptyPeersListWhenP2PNetworkDoesNotHavePeers() {
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(null, Collections.emptyList());
-    final JsonRpcRequest request = adminPeers();
+    final JsonRpcRequestContext request = adminPeers();
     when(p2pNetwork.getPeers()).thenReturn(Collections.emptyList());
 
     final JsonRpcResponse response = adminPeers.response(request);
@@ -79,7 +80,7 @@ public class AdminPeersTest {
     final List<PeerResult> expectedPeerResults =
         peerList.stream().map(PeerResult::new).collect(Collectors.toList());
 
-    final JsonRpcRequest request = adminPeers();
+    final JsonRpcRequestContext request = adminPeers();
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, expectedPeerResults);
 
     when(p2pNetwork.getPeers()).thenReturn(peerList);
@@ -93,17 +94,16 @@ public class AdminPeersTest {
   public void shouldFailIfP2pDisabled() {
     when(p2pNetwork.getPeers()).thenThrow(new P2PDisabledException("P2P disabled."));
 
-    final JsonRpcRequest request = adminPeers();
+    final JsonRpcRequestContext request = adminPeers();
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getId(), JsonRpcError.P2P_DISABLED);
+        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.P2P_DISABLED);
 
     Assertions.assertThat(adminPeers.response(request))
         .isEqualToComparingFieldByField(expectedResponse);
   }
 
   private Collection<PeerConnection> peerList() {
-    final PeerInfo peerInfo =
-        new PeerInfo(5, "0x0", Collections.emptyList(), 30303, BytesValue.EMPTY);
+    final PeerInfo peerInfo = new PeerInfo(5, "0x0", Collections.emptyList(), 30303, Bytes.EMPTY);
     final PeerConnection p =
         MockPeerConnection.create(
             peerInfo,
@@ -112,7 +112,7 @@ public class AdminPeersTest {
     return Lists.newArrayList(p);
   }
 
-  private JsonRpcRequest adminPeers() {
-    return new JsonRpcRequest("2.0", "admin_peers", new Object[] {});
+  private JsonRpcRequestContext adminPeers() {
+    return new JsonRpcRequestContext(new JsonRpcRequest("2.0", "admin_peers", new Object[] {}));
   }
 }

@@ -20,7 +20,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TransactionReceiptRootResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TransactionReceiptStatusResult;
@@ -34,12 +34,12 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
 public class EthGetTransactionReceiptTest {
@@ -59,7 +59,7 @@ public class EthGetTransactionReceiptTest {
           .nonce(1)
           .gasPrice(Wei.of(12))
           .gasLimit(43)
-          .payload(BytesValue.EMPTY)
+          .payload(Bytes.EMPTY)
           .value(Wei.ZERO)
           .signature(signature)
           .sender(sender)
@@ -78,6 +78,7 @@ public class EthGetTransactionReceiptTest {
   private final ProtocolSpec<Void> rootTransactionTypeSpec =
       new ProtocolSpec<>(
           "root",
+          null,
           null,
           null,
           null,
@@ -111,26 +112,25 @@ public class EthGetTransactionReceiptTest {
           null,
           null,
           null,
+          null,
           BlockHeader::getCoinbase,
           null,
           false,
           null);
-
-  private final JsonRpcParameter parameters = new JsonRpcParameter();
 
   @SuppressWarnings("unchecked")
   private final ProtocolSchedule<Void> protocolSchedule = mock(ProtocolSchedule.class);
 
   private final BlockchainQueries blockchain = mock(BlockchainQueries.class);
   private final EthGetTransactionReceipt ethGetTransactionReceipt =
-      new EthGetTransactionReceipt(blockchain, parameters);
+      new EthGetTransactionReceipt(blockchain);
   private final String receiptString =
       "0xcbef69eaf44af151aa66677ae4b8d8c343a09f667c873a3a6f4558fa4051fa5f";
   private final Hash receiptHash =
       Hash.fromHexString("cbef69eaf44af151aa66677ae4b8d8c343a09f667c873a3a6f4558fa4051fa5f");
   Object[] params = new Object[] {receiptString};
-  private final JsonRpcRequest request =
-      new JsonRpcRequest("1", "eth_getTransactionReceipt", params);
+  private final JsonRpcRequestContext request =
+      new JsonRpcRequestContext(new JsonRpcRequest("1", "eth_getTransactionReceipt", params));
 
   @Test
   public void shouldCreateAStatusTransactionReceiptWhenStatusTypeProtocol() {

@@ -14,10 +14,10 @@
  */
 package org.hyperledger.besu.plugin.data;
 
-import org.hyperledger.besu.plugin.Unstable;
-
 import java.math.BigInteger;
 import java.util.Optional;
+
+import org.apache.tuweni.bytes.Bytes;
 
 /**
  * A transaction is a single cryptographically-signed instruction constructed by an actor externally
@@ -29,7 +29,6 @@ import java.util.Optional;
  * creation’). Message call transactions will have an address present in the {@link #getTo} method
  * whereas contract creation transactions will not.
  */
-@Unstable
 public interface Transaction {
 
   /**
@@ -125,7 +124,7 @@ public interface Transaction {
    *
    * @return if present, the contract init code.
    */
-  Optional<? extends UnformattedData> getInit();
+  Optional<Bytes> getInit();
 
   /**
    * An unlimited size byte array specifying theinput data of the message call.
@@ -135,7 +134,7 @@ public interface Transaction {
    *
    * @return if present, the message call data
    */
-  Optional<? extends UnformattedData> getData();
+  Optional<Bytes> getData();
 
   /**
    * The data payload of this transaction.
@@ -147,5 +146,5 @@ public interface Transaction {
    *
    * @return the transaction payload
    */
-  UnformattedData getPayload();
+  Bytes getPayload();
 }

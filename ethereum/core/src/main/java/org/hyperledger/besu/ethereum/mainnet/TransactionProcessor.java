@@ -16,15 +16,17 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.LogSeries;
+import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
+import java.util.List;
 import java.util.Optional;
+
+import org.apache.tuweni.bytes.Bytes;
 
 /** Processes transactions. */
 public interface TransactionProcessor {
@@ -52,7 +54,7 @@ public interface TransactionProcessor {
      *
      * @return the logs produced by the transaction
      */
-    LogSeries getLogs();
+    List<Log> getLogs();
 
     /**
      * Returns the status of the transaction after being processed.
@@ -70,7 +72,7 @@ public interface TransactionProcessor {
      */
     long getGasRemaining();
 
-    BytesValue getOutput();
+    Bytes getOutput();
 
     /**
      * Returns whether or not the transaction was invalid.
@@ -102,7 +104,7 @@ public interface TransactionProcessor {
      *
      * @return the revert reason.
      */
-    Optional<BytesValue> getRevertReason();
+    Optional<Bytes> getRevertReason();
   }
 
   /**
@@ -114,7 +116,7 @@ public interface TransactionProcessor {
    * @param transaction The transaction to process
    * @param miningBeneficiary The address which is to receive the transaction fee
    * @param blockHashLookup The {@link BlockHashLookup} to use for BLOCKHASH operations
-   * @param isPersistingState Whether the state will be modified by this process
+   * @param isPersistingPrivateState Whether the resulting private state will be persisted
    * @param transactionValidationParams Validation parameters that will be used by the {@link
    *     TransactionValidator}
    * @return the transaction result
@@ -128,7 +130,7 @@ public interface TransactionProcessor {
       final Transaction transaction,
       final Address miningBeneficiary,
       final BlockHashLookup blockHashLookup,
-      final Boolean isPersistingState,
+      final Boolean isPersistingPrivateState,
       final TransactionValidationParams transactionValidationParams) {
     return processTransaction(
         blockchain,
@@ -138,7 +140,7 @@ public interface TransactionProcessor {
         miningBeneficiary,
         OperationTracer.NO_TRACING,
         blockHashLookup,
-        isPersistingState,
+        isPersistingPrivateState,
         transactionValidationParams);
   }
 
@@ -152,7 +154,7 @@ public interface TransactionProcessor {
    * @param operationTracer The tracer to record results of each EVM operation
    * @param miningBeneficiary The address which is to receive the transaction fee
    * @param blockHashLookup The {@link BlockHashLookup} to use for BLOCKHASH operations
-   * @param isPersistingState Whether the state will be modified by this process
+   * @param isPersistingPrivateState Whether the resulting private state will be persisted
    * @return the transaction result
    */
   default Result processTransaction(
@@ -163,7 +165,7 @@ public interface TransactionProcessor {
       final Address miningBeneficiary,
       final OperationTracer operationTracer,
       final BlockHashLookup blockHashLookup,
-      final Boolean isPersistingState) {
+      final Boolean isPersistingPrivateState) {
     return processTransaction(
         blockchain,
         worldState,
@@ -172,7 +174,7 @@ public interface TransactionProcessor {
         miningBeneficiary,
         operationTracer,
         blockHashLookup,
-        isPersistingState,
+        isPersistingPrivateState,
         new TransactionValidationParams.Builder().build());
   }
 
@@ -184,6 +186,6 @@ public interface TransactionProcessor {
       Address miningBeneficiary,
       OperationTracer operationTracer,
       BlockHashLookup blockHashLookup,
-      Boolean isPersistingState,
+      Boolean isPersistingPrivateState,
       TransactionValidationParams transactionValidationParams);
 }

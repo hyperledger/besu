@@ -17,8 +17,6 @@ package org.hyperledger.besu.ethereum.proof;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.Proof;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,18 +24,21 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.SortedMap;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
+
 public class WorldStateProof {
 
   private final StateTrieAccountValue stateTrieAccountValue;
 
-  private final Proof<BytesValue> accountProof;
+  private final Proof<Bytes> accountProof;
 
-  private final Map<UInt256, Proof<BytesValue>> storageProofs;
+  private final Map<UInt256, Proof<Bytes>> storageProofs;
 
   public WorldStateProof(
       final StateTrieAccountValue stateTrieAccountValue,
-      final Proof<BytesValue> accountProof,
-      final SortedMap<UInt256, Proof<BytesValue>> storageProofs) {
+      final Proof<Bytes> accountProof,
+      final SortedMap<UInt256, Proof<Bytes>> storageProofs) {
     this.stateTrieAccountValue = stateTrieAccountValue;
     this.accountProof = accountProof;
     this.storageProofs = storageProofs;
@@ -47,7 +48,7 @@ public class WorldStateProof {
     return stateTrieAccountValue;
   }
 
-  public List<BytesValue> getAccountProof() {
+  public List<Bytes> getAccountProof() {
     return accountProof.getProofRelatedNodes();
   }
 
@@ -56,7 +57,7 @@ public class WorldStateProof {
   }
 
   public UInt256 getStorageValue(final UInt256 key) {
-    Optional<BytesValue> value = storageProofs.get(key).getValue();
+    Optional<Bytes> value = storageProofs.get(key).getValue();
     if (value.isEmpty()) {
       return UInt256.ZERO;
     } else {
@@ -64,7 +65,7 @@ public class WorldStateProof {
     }
   }
 
-  public List<BytesValue> getStorageProof(final UInt256 key) {
+  public List<Bytes> getStorageProof(final UInt256 key) {
     return storageProofs.get(key).getProofRelatedNodes();
   }
 }

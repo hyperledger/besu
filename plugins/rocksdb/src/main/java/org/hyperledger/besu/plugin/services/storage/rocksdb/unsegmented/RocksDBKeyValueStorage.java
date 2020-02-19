@@ -20,6 +20,7 @@ import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetrics;
+import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbUtil;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBConfiguration;
 import org.hyperledger.besu.services.kvstore.KeyValueStorageTransactionTransitionValidatorDecorator;
@@ -57,7 +58,9 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
   private final RocksDBMetrics rocksDBMetrics;
 
   public RocksDBKeyValueStorage(
-      final RocksDBConfiguration configuration, final MetricsSystem metricsSystem) {
+      final RocksDBConfiguration configuration,
+      final MetricsSystem metricsSystem,
+      final RocksDBMetricsFactory rocksDBMetricsFactory) {
 
     try {
       final Statistics stats = new Statistics();
@@ -72,7 +75,7 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
 
       txOptions = new TransactionDBOptions();
       db = TransactionDB.open(options, txOptions, configuration.getDatabaseDir().toString());
-      rocksDBMetrics = RocksDBMetrics.of(metricsSystem, configuration, db, stats);
+      rocksDBMetrics = rocksDBMetricsFactory.create(metricsSystem, configuration, db, stats);
     } catch (final RocksDBException e) {
       throw new StorageException(e);
     }

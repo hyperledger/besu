@@ -95,10 +95,11 @@ import org.hyperledger.besu.ethereum.vm.operations.SubOperation;
 import org.hyperledger.besu.ethereum.vm.operations.SwapOperation;
 import org.hyperledger.besu.ethereum.vm.operations.TimestampOperation;
 import org.hyperledger.besu.ethereum.vm.operations.XorOperation;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.math.BigInteger;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 /** Provides EVMs supporting the appropriate operations for mainnet hard forks. */
 abstract class MainnetEvmRegistries {
@@ -139,6 +140,14 @@ abstract class MainnetEvmRegistries {
     final OperationRegistry registry = new OperationRegistry();
 
     registerIstanbulOpcodes(registry, gasCalculator, Account.DEFAULT_VERSION, chainId);
+
+    return new EVM(registry, gasCalculator);
+  }
+
+  static EVM aztlan(final GasCalculator gasCalculator, final BigInteger chainId) {
+    final OperationRegistry registry = new OperationRegistry();
+
+    registerAztlanOpcodes(registry, gasCalculator, Account.DEFAULT_VERSION, chainId);
 
     return new EVM(registry, gasCalculator);
   }
@@ -270,9 +279,23 @@ abstract class MainnetEvmRegistries {
       final BigInteger chainId) {
     registerConstantinopleOpcodes(registry, gasCalculator, accountVersion);
     registry.put(
-        new ChainIdOperation(gasCalculator, Bytes32.leftPad(BytesValue.of(chainId.toByteArray()))),
+        new ChainIdOperation(gasCalculator, Bytes32.leftPad(Bytes.of(chainId.toByteArray()))),
         Account.DEFAULT_VERSION);
     registry.put(new SelfBalanceOperation(gasCalculator), Account.DEFAULT_VERSION);
+    registry.put(
+        new SStoreOperation(gasCalculator, SStoreOperation.EIP_1706_MINIMUM),
+        Account.DEFAULT_VERSION);
+  }
+
+  private static void registerAztlanOpcodes(
+      final OperationRegistry registry,
+      final GasCalculator gasCalculator,
+      final int accountVersion,
+      final BigInteger chainId) {
+    registerConstantinopleOpcodes(registry, gasCalculator, accountVersion);
+    registry.put(
+        new ChainIdOperation(gasCalculator, Bytes32.leftPad(Bytes.of(chainId.toByteArray()))),
+        Account.DEFAULT_VERSION);
     registry.put(
         new SStoreOperation(gasCalculator, SStoreOperation.EIP_1706_MINIMUM),
         Account.DEFAULT_VERSION);

@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.LogSeries;
+import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.WorldState;
@@ -88,7 +88,7 @@ public class GeneralStateReferenceTestTools {
     // Gas integer value is too large to construct a valid transaction.
     params.blacklist("OverflowGasRequire");
     // Consumes a huge amount of memory
-    params.blacklist("static_Call1MB1024Calldepth-(Byzantium|Constantinople|ConstantinopleFix)");
+    params.blacklist("static_Call1MB1024Calldepth-\\w");
   }
 
   public static Collection<Object[]> generateTestParametersForConfig(final String[] filePath) {
@@ -132,14 +132,14 @@ public class GeneralStateReferenceTestTools {
     final Hash expectedRootHash = spec.expectedRootHash();
     assertThat(worldState.rootHash())
         .withFailMessage("Unexpected world state root hash; computed state: %s", worldState)
-        .isEqualByComparingTo(expectedRootHash);
+        .isEqualTo(expectedRootHash);
 
     // Check the logs.
     final Hash expectedLogsHash = spec.expectedLogsHash();
-    final LogSeries logs = result.getLogs();
-    assertThat(Hash.hash(RLP.encode(logs::writeTo)))
+    final List<Log> logs = result.getLogs();
+    assertThat(Hash.hash(RLP.encode(out -> out.writeList(logs, Log::writeTo))))
         .withFailMessage("Unmatched logs hash. Generated logs: %s", logs)
-        .isEqualByComparingTo(expectedLogsHash);
+        .isEqualTo(expectedLogsHash);
   }
 
   private static boolean shouldClearEmptyAccounts(final String eip) {

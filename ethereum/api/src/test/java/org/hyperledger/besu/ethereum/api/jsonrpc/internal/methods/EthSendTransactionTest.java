@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -40,11 +41,13 @@ public class EthSendTransactionTest {
 
   @Test
   public void requestIsMissingParameter() {
-    final JsonRpcRequest request =
-        new JsonRpcRequest("2.0", "eth_sendTransaction", new String[] {});
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest("2.0", "eth_sendTransaction", new String[] {}));
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getId(), JsonRpcError.ETH_SEND_TX_NOT_AVAILABLE);
+        new JsonRpcErrorResponse(
+            request.getRequest().getId(), JsonRpcError.ETH_SEND_TX_NOT_AVAILABLE);
 
     final JsonRpcResponse actualResponse = method.response(request);
 

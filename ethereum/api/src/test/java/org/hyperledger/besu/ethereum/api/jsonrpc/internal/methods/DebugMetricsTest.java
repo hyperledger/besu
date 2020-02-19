@@ -22,6 +22,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.Observation;
@@ -34,8 +35,8 @@ import org.junit.Test;
 
 public class DebugMetricsTest {
 
-  private static final JsonRpcRequest REQUEST =
-      new JsonRpcRequest("2.0", "debug_metrics", new Object[0]);
+  private static final JsonRpcRequestContext REQUEST =
+      new JsonRpcRequestContext(new JsonRpcRequest("2.0", "debug_metrics", new Object[0]));
   private final ObservableMetricsSystem metricsSystem = mock(ObservableMetricsSystem.class);
 
   private final DebugMetrics method = new DebugMetrics(metricsSystem);

@@ -16,12 +16,12 @@
 apply plugin: 'java-library'
 
 jar {
-  baseName 'besu-trie'
+  archiveBaseName = 'besu-trie'
   manifest {
     attributes(
-      'Specification-Title': baseName,
+      'Specification-Title': archiveBaseName,
       'Specification-Version': project.version,
-      'Implementation-Title': baseName,
+      'Implementation-Title': archiveBaseName,
       'Implementation-Version': calculateVersion()
       )
   }
@@ -33,13 +33,15 @@ dependencies {
   implementation project(':services:kvstore')
 
   implementation 'com.google.guava:guava'
+  implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.bouncycastle:bcprov-jdk15on'
 
-  testImplementation project(path: ':ethereum:referencetests', configuration: 'testOutput')
   testImplementation project(':testutil')
+  testImplementation project(path: ':ethereum:referencetests', configuration: 'testOutput')
 
   testImplementation 'com.fasterxml.jackson.core:jackson-databind'
   testImplementation 'junit:junit'
+  testImplementation 'org.apache.tuweni:tuweni-units'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.mockito:mockito-core'
 }

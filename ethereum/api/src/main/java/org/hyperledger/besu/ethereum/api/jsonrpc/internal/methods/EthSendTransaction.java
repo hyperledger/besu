@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -28,7 +28,8 @@ public class EthSendTransaction implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest request) {
-    return new JsonRpcErrorResponse(request.getId(), JsonRpcError.ETH_SEND_TX_NOT_AVAILABLE);
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
+    return new JsonRpcErrorResponse(
+        requestContext.getRequest().getId(), JsonRpcError.ETH_SEND_TX_NOT_AVAILABLE);
   }
 }

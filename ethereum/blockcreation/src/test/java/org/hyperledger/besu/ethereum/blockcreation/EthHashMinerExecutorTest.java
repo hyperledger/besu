@@ -54,7 +54,7 @@ public class EthHashMinerExecutorTest {
             Function.identity());
 
     assertThatExceptionOfType(CoinbaseNotSetException.class)
-        .isThrownBy(() -> executor.startAsyncMining(Subscribers.create(), null))
+        .isThrownBy(() -> executor.startAsyncMining(Subscribers.create(), Subscribers.none(), null))
         .withMessageContaining("Unable to start mining without a coinbase.");
   }
 

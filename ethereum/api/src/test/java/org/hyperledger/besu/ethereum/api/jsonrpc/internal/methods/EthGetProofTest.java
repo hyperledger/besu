@@ -21,8 +21,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -35,12 +35,12 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.proof.WorldStateProof;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.Collections;
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -56,8 +56,6 @@ public class EthGetProofTest {
 
   @Mock private BlockchainQueries blockchainQueries;
 
-  private final JsonRpcParameter parameters = new JsonRpcParameter();
-
   private EthGetProof method;
   private final String JSON_RPC_VERSION = "2.0";
   private final String ETH_METHOD = "eth_getProof";
@@ -70,7 +68,7 @@ public class EthGetProofTest {
 
   @Before
   public void setUp() {
-    method = new EthGetProof(blockchainQueries, parameters);
+    method = new EthGetProof(blockchainQueries);
   }
 
   @Test
@@ -80,7 +78,7 @@ public class EthGetProofTest {
 
   @Test
   public void errorWhenNoAddressAccountSupplied() {
-    final JsonRpcRequest request = requestWithParams(null, null, "latest");
+    final JsonRpcRequestContext request = requestWithParams(null, null, "latest");
 
     thrown.expect(InvalidJsonRpcParameters.class);
     thrown.expectMessage("Missing required json rpc parameter at index 0");
@@ -90,7 +88,7 @@ public class EthGetProofTest {
 
   @Test
   public void errorWhenNoStorageKeysSupplied() {
-    final JsonRpcRequest request = requestWithParams(address.toString(), null, "latest");
+    final JsonRpcRequestContext request = requestWithParams(address.toString(), null, "latest");
 
     thrown.expect(InvalidJsonRpcParameters.class);
     thrown.expectMessage("Missing required json rpc parameter at index 1");
@@ -100,7 +98,7 @@ public class EthGetProofTest {
 
   @Test
   public void errorWhenNoBlockNumberSupplied() {
-    final JsonRpcRequest request = requestWithParams(address.toString(), new String[] {});
+    final JsonRpcRequestContext request = requestWithParams(address.toString(), new String[] {});
 
     thrown.expect(InvalidJsonRpcParameters.class);
     thrown.expectMessage("Missing required json rpc parameter at index 2");
@@ -116,7 +114,7 @@ public class EthGetProofTest {
     final JsonRpcErrorResponse expectedResponse =
         new JsonRpcErrorResponse(null, JsonRpcError.NO_ACCOUNT_FOUND);
 
-    final JsonRpcRequest request =
+    final JsonRpcRequestContext request =
         requestWithParams(
             Address.fromHexString("0x0000000000000000000000000000000000000000"),
             new String[] {storageKey.toString()},
@@ -135,7 +133,7 @@ public class EthGetProofTest {
     final JsonRpcErrorResponse expectedResponse =
         new JsonRpcErrorResponse(null, JsonRpcError.WORLD_STATE_UNAVAILABLE);
 
-    final JsonRpcRequest request =
+    final JsonRpcRequestContext request =
         requestWithParams(
             Address.fromHexString("0x0000000000000000000000000000000000000000"),
             new String[] {storageKey.toString()},
@@ -151,7 +149,7 @@ public class EthGetProofTest {
 
     final GetProofResult expectedResponse = generateWorldState();
 
-    final JsonRpcRequest request =
+    final JsonRpcRequestContext request =
         requestWithParams(
             address.toString(), new String[] {storageKey.toString()}, String.valueOf(blockNumber));
 
@@ -160,8 +158,8 @@ public class EthGetProofTest {
     assertThat(response.getResult()).isEqualToComparingFieldByFieldRecursively(expectedResponse);
   }
 
-  private JsonRpcRequest requestWithParams(final Object... params) {
-    return new JsonRpcRequest(JSON_RPC_VERSION, ETH_METHOD, params);
+  private JsonRpcRequestContext requestWithParams(final Object... params) {
+    return new JsonRpcRequestContext(new JsonRpcRequest(JSON_RPC_VERSION, ETH_METHOD, params));
   }
 
   @SuppressWarnings("unchecked")
@@ -190,14 +188,14 @@ public class EthGetProofTest {
     when(worldStateProof.getAccountProof())
         .thenReturn(
             Collections.singletonList(
-                BytesValue.fromHexString(
+                Bytes.fromHexString(
                     "0x1111111111111111111111111111111111111111111111111111111111111111")));
     when(worldStateProof.getStateTrieAccountValue()).thenReturn(stateTrieAccountValue);
     when(worldStateProof.getStorageKeys()).thenReturn(Collections.singletonList(storageKey));
     when(worldStateProof.getStorageProof(storageKey))
         .thenReturn(
             Collections.singletonList(
-                BytesValue.fromHexString(
+                Bytes.fromHexString(
                     "0x2222222222222222222222222222222222222222222222222222222222222222")));
     when(worldStateProof.getStorageValue(storageKey)).thenReturn(UInt256.ZERO);
 

@@ -69,7 +69,7 @@ public class PrunerTest {
         new Pruner(
             markSweepPruner,
             blockchain,
-            new PruningConfiguration(0, 1),
+            new PrunerConfiguration(0, 1),
             mockExecutorServiceSupplier);
     pruner.start();
 
@@ -94,7 +94,7 @@ public class PrunerTest {
         new Pruner(
             markSweepPruner,
             blockchain,
-            new PruningConfiguration(1, 2),
+            new PrunerConfiguration(1, 2),
             mockExecutorServiceSupplier);
     pruner.start();
 
@@ -125,7 +125,7 @@ public class PrunerTest {
         new Pruner(
             markSweepPruner,
             blockchain,
-            new PruningConfiguration(0, 1),
+            new PrunerConfiguration(0, 1),
             mockExecutorServiceSupplier);
     pruner.start();
 
@@ -165,7 +165,7 @@ public class PrunerTest {
                 new Pruner(
                     markSweepPruner,
                     mockchain,
-                    new PruningConfiguration(-1, -2),
+                    new PrunerConfiguration(-1, -2),
                     mockExecutorServiceSupplier))
         .isInstanceOf(IllegalArgumentException.class);
     assertThatThrownBy(
@@ -173,7 +173,7 @@ public class PrunerTest {
                 new Pruner(
                     markSweepPruner,
                     mockchain,
-                    new PruningConfiguration(10, 8),
+                    new PrunerConfiguration(10, 8),
                     mockExecutorServiceSupplier))
         .isInstanceOf(IllegalArgumentException.class);
     assertThatThrownBy(
@@ -181,7 +181,7 @@ public class PrunerTest {
                 new Pruner(
                     markSweepPruner,
                     mockchain,
-                    new PruningConfiguration(10, 10),
+                    new PrunerConfiguration(10, 10),
                     mockExecutorServiceSupplier))
         .isInstanceOf(IllegalArgumentException.class);
   }
@@ -198,7 +198,7 @@ public class PrunerTest {
         new Pruner(
             markSweepPruner,
             blockchain,
-            new PruningConfiguration(0, 1),
+            new PrunerConfiguration(0, 1),
             mockExecutorServiceSupplier);
     pruner.start();
     pruner.stop();

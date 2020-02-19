@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.privacy;
 
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
+import org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 
 import java.math.BigInteger;
@@ -35,53 +36,86 @@ public class PrivateTransactionValidator {
 
   public ValidationResult<TransactionValidator.TransactionInvalidReason> validate(
       final PrivateTransaction transaction, final Long accountNonce) {
+    LOG.debug("Validating private transaction fields of {}", transaction.getHash());
+    final ValidationResult<TransactionInvalidReason> privateFieldsValidationResult =
+        validatePrivateTransactionFields(transaction);
+    if (!privateFieldsValidationResult.isValid()) {
+      LOG.debug(
+          "Private Transaction fields are invalid {}, {}",
+          transaction.getHash(),
+          privateFieldsValidationResult.getErrorMessage());
+      return privateFieldsValidationResult;
+    }
 
-    LOG.debug("Validating private transaction {} signature ", transaction.hash());
+    LOG.debug("Validating the signature of Private Transaction {} ", transaction.getHash());
 
-    ValidationResult<TransactionValidator.TransactionInvalidReason> signatureValidationResult =
-        validateTransactionSignature(transaction);
+    final ValidationResult<TransactionValidator.TransactionInvalidReason>
+        signatureValidationResult = validateTransactionSignature(transaction);
     if (!signatureValidationResult.isValid()) {
+      LOG.debug(
+          "Private Transaction {}, failed validation {}, {}",
+          transaction.getHash(),
+          signatureValidationResult.getInvalidReason(),
+          signatureValidationResult.getErrorMessage());
       return signatureValidationResult;
     }
 
     final long transactionNonce = transaction.getNonce();
 
-    LOG.debug("Validating actual nonce {} with expected nonce {}", transactionNonce, accountNonce);
+    LOG.debug("Validating actual nonce {}, with expected nonce {}", transactionNonce, accountNonce);
 
     if (accountNonce > transactionNonce) {
-      return ValidationResult.invalid(
-          TransactionValidator.TransactionInvalidReason.PRIVATE_NONCE_TOO_LOW,
+      final String errorMessage =
           String.format(
-              "private transaction nonce %s does not match sender account nonce %s.",
-              transactionNonce, accountNonce));
+              "Private Transaction nonce %s, is lower than sender account nonce %s.",
+              transactionNonce, accountNonce);
+      LOG.debug(errorMessage);
+      return ValidationResult.invalid(
+          TransactionValidator.TransactionInvalidReason.PRIVATE_NONCE_TOO_LOW, errorMessage);
     }
 
     if (accountNonce != transactionNonce) {
-      return ValidationResult.invalid(
-          TransactionValidator.TransactionInvalidReason.INCORRECT_PRIVATE_NONCE,
+      final String errorMessage =
           String.format(
-              "private transaction nonce %s does not match sender account nonce %s.",
-              transactionNonce, accountNonce));
+              "Private Transaction nonce %s, does not match sender account nonce %s.",
+              transactionNonce, accountNonce);
+      LOG.debug(errorMessage);
+      return ValidationResult.invalid(
+          TransactionValidator.TransactionInvalidReason.INCORRECT_PRIVATE_NONCE, errorMessage);
     }
 
     return ValidationResult.valid();
   }
 
-  public ValidationResult<TransactionValidator.TransactionInvalidReason>
+  private ValidationResult<TransactionValidator.TransactionInvalidReason>
+      validatePrivateTransactionFields(final PrivateTransaction privateTransaction) {
+    if (!privateTransaction.getValue().isZero()) {
+      return ValidationResult.invalid(
+          TransactionValidator.TransactionInvalidReason.PRIVATE_VALUE_NOT_ZERO);
+    }
+    if (!privateTransaction.getRestriction().equals(Restriction.RESTRICTED)) {
+      return ValidationResult.invalid(
+          TransactionValidator.TransactionInvalidReason.PRIVATE_UNIMPLEMENTED_TRANSACTION_TYPE);
+    }
+
+    return ValidationResult.valid();
+  }
+
+  private ValidationResult<TransactionValidator.TransactionInvalidReason>
       validateTransactionSignature(final PrivateTransaction transaction) {
     if (chainId.isPresent()
         && (transaction.getChainId().isPresent() && !transaction.getChainId().equals(chainId))) {
       return ValidationResult.invalid(
           TransactionValidator.TransactionInvalidReason.WRONG_CHAIN_ID,
           String.format(
-              "transaction was meant for chain id %s and not this chain id %s",
+              "Transaction was meant for chain id %s, not this chain id %s",
               transaction.getChainId().get(), chainId.get()));
     }
 
-    if (!chainId.isPresent() && transaction.getChainId().isPresent()) {
+    if (chainId.isEmpty() && transaction.getChainId().isPresent()) {
       return ValidationResult.invalid(
           TransactionValidator.TransactionInvalidReason.REPLAY_PROTECTED_SIGNATURES_NOT_SUPPORTED,
-          "replay protected signatures is not supported");
+          "Replay protection (chainId) is not supported");
     }
 
     // org.bouncycastle.math.ec.ECCurve.AbstractFp.decompressPoint throws an
@@ -91,7 +125,7 @@ public class PrivateTransactionValidator {
     } catch (final IllegalArgumentException e) {
       return ValidationResult.invalid(
           TransactionValidator.TransactionInvalidReason.INVALID_SIGNATURE,
-          "sender could not be extracted from transaction signature");
+          "Sender could not be extracted from transaction signature");
     }
 
     return ValidationResult.valid();

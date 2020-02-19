@@ -1,16 +1,27 @@
 dependencies {
+  api project(':util')
+  api project(':crypto')
+
   implementation 'com.fasterxml.jackson.core:jackson-databind'
-  implementation 'com.squareup.okhttp3:okhttp'
+  implementation 'io.vertx:vertx-core'
+  implementation 'org.apache.tuweni:tuweni-net'
   implementation 'org.apache.logging.log4j:log4j-api'
 
+  runtimeOnly('org.bouncycastle:bcpkix-jdk15on')
+
+
   // test dependencies.
-  testImplementation 'junit:junit'
   testImplementation project(':testutil')
 
-  // integration test dependencies.
-  integrationTestImplementation 'junit:junit'
-  integrationTestImplementation 'org.assertj:assertj-core'
-  integrationTestImplementation project(':testutil')
+  testImplementation 'junit:junit'
 
+  // integration test dependencies.
+  integrationTestImplementation project(':testutil')
+  integrationTestImplementation 'org.bouncycastle:bcpkix-jdk15on'
+
+
+
+  integrationTestImplementation 'junit:junit'
   integrationTestImplementation 'net.consensys:orion'
+  integrationTestImplementation 'org.assertj:assertj-core'
 }

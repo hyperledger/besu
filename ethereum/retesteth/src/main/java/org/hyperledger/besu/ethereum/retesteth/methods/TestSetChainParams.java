@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.retesteth.methods;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -48,11 +48,11 @@ public class TestSetChainParams implements JsonRpcMethod {
 
   @SuppressWarnings("unchecked")
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest request) {
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
 
     try {
       final JsonObject chainParamsAsJson =
-          new JsonObject((Map<String, Object>) request.getParams()[0]);
+          new JsonObject((Map<String, Object>) requestContext.getRequest().getParams()[0]);
       final String chainParamsAsString = chainParamsAsJson.encodePrettily();
       LOG.trace("ChainParams {}", chainParamsAsString);
       final String genesisFileAsString = modifyGenesisFile(chainParamsAsString);
@@ -63,10 +63,11 @@ public class TestSetChainParams implements JsonRpcMethod {
               chainParamsAsJson.getString("sealEngine", "NoProof"),
               Optional.empty());
 
-      return new JsonRpcSuccessResponse(request.getId(), result);
+      return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), result);
     } catch (final Exception e) {
       LOG.error("Unhandled error", e);
-      return new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
     }
   }
 
@@ -118,6 +119,7 @@ public class TestSetChainParams implements JsonRpcMethod {
     maybeMoveToNumber(params, "constantinopleForkBlock", config, "constantinopleBlock");
     maybeMoveToNumber(params, "constantinopleFixForkBlock", config, "constantinopleFixBlock");
     maybeMoveToNumber(params, "istanbulForkBlock", config, "istanbulBlock");
+    maybeMoveToNumber(params, "muirGlacierForkBlock", config, "muirGlacierBlock");
     maybeMoveToNumber(params, "chainID", config, "chainId", 1);
     maybeMove(genesis, "author", chainParamsJson, "coinbase");
     maybeMove(genesis, "difficulty", chainParamsJson, "difficulty");

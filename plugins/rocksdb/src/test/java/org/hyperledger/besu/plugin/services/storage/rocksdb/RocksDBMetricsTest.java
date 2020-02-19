@@ -74,7 +74,7 @@ public class RocksDBMetricsTest {
     final ArgumentCaptor<String> longGaugesMetricsNameArgs = ArgumentCaptor.forClass(String.class);
     final ArgumentCaptor<String> longGaugesHelpArgs = ArgumentCaptor.forClass(String.class);
 
-    RocksDBMetrics.of(metricsSystemMock, config(), db, stats);
+    RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS.create(metricsSystemMock, config(), db, stats);
 
     verify(metricsSystemMock, times(4))
         .createLabelledTimer(

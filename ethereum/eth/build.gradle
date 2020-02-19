@@ -16,32 +16,34 @@
 apply plugin: 'java-library'
 
 jar {
-  baseName 'besu-eth'
+  archiveBaseName = 'besu-eth'
   manifest {
     attributes(
-      'Specification-Title': baseName,
+      'Specification-Title': archiveBaseName,
       'Specification-Version': project.version,
-      'Implementation-Title': baseName,
+      'Implementation-Title': archiveBaseName,
       'Implementation-Version': calculateVersion()
       )
   }
 }
 
 dependencies {
+  annotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess'
+
   implementation project(':ethereum:core')
   implementation project(':ethereum:p2p')
+  implementation project(':ethereum:permissioning')
   implementation project(':ethereum:rlp')
   implementation project(':ethereum:trie')
-  implementation project(':ethereum:permissioning')
   implementation project(':metrics:core')
   implementation project(':services:kvstore')
   implementation project(':services:pipeline')
   implementation project(':services:tasks')
 
-  implementation 'io.vertx:vertx-core'
   implementation 'com.google.guava:guava'
-
-  compileOnly 'org.openjdk.jmh:jmh-generator-annprocess'
+  implementation 'io.vertx:vertx-core'
+  implementation 'org.apache.tuweni:tuweni-bytes'
+  implementation 'org.apache.tuweni:tuweni-units'
 
   testImplementation project(':config')
   testImplementation project(path: ':config', configuration: 'testSupportArtifacts')
@@ -58,8 +60,8 @@ dependencies {
   testImplementation 'org.mockito:mockito-core'
 
   jmhImplementation project(':besu')
-  jmhImplementation project(':plugins:rocksdb')
   jmhImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
+  jmhImplementation project(':plugins:rocksdb')
 
   integrationTestImplementation project(path: ':config', configuration: 'testSupportArtifacts')
 }

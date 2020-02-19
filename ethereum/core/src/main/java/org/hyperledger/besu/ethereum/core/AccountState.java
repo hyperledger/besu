@@ -14,11 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
-
 import java.util.NavigableMap;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 /**
  * An account state.
@@ -69,7 +69,7 @@ public interface AccountState {
    *
    * @return the account code (which can be empty).
    */
-  BytesValue getCode();
+  Bytes getCode();
 
   /**
    * The hash of the EVM bytecode associated with this account.

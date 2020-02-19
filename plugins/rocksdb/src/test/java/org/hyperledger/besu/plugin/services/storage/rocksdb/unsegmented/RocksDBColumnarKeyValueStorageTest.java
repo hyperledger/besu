@@ -20,6 +20,7 @@ import org.hyperledger.besu.kvstore.AbstractKeyValueStorageTest;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
+import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBConfigurationBuilder;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.segmented.RocksDBColumnarKeyValueStorage;
 import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorage;
@@ -147,7 +148,8 @@ public class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValueStorageT
     return new RocksDBColumnarKeyValueStorage(
         new RocksDBConfigurationBuilder().databaseDir(folder.newFolder().toPath()).build(),
         Arrays.asList(TestSegment.FOO, TestSegment.BAR),
-        new NoOpMetricsSystem());
+        new NoOpMetricsSystem(),
+        RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS);
   }
 
   @Override

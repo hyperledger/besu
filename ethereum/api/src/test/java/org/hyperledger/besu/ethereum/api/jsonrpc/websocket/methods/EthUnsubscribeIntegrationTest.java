@@ -26,7 +26,6 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import java.util.HashMap;
 
 import io.vertx.core.Vertx;
-import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.Json;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
@@ -63,8 +62,8 @@ public class EthUnsubscribeIntegrationTest {
     final Long subscriptionId = subscriptionManager.subscribe(subscribeRequest);
     assertThat(subscriptionManager.getSubscriptionById(subscriptionId)).isNotNull();
 
-    final JsonRpcRequest unsubscribeRequest =
-        createEthUnsubscribeRequest(subscriptionId, CONNECTION_ID);
+    final JsonRpcRequest unsubscribeRequestBody =
+        createEthUnsubscribeRequestBody(subscriptionId, CONNECTION_ID);
 
     vertx
         .eventBus()
@@ -76,8 +75,7 @@ public class EthUnsubscribeIntegrationTest {
             })
         .completionHandler(
             v ->
-                webSocketRequestHandler.handle(
-                    CONNECTION_ID, Buffer.buffer(Json.encode(unsubscribeRequest))));
+                webSocketRequestHandler.handle(CONNECTION_ID, Json.encode(unsubscribeRequestBody)));
 
     async.awaitSuccess(ASYNC_TIMEOUT);
   }
@@ -95,8 +93,8 @@ public class EthUnsubscribeIntegrationTest {
     assertThat(subscriptionManager.getSubscriptionById(subscriptionId1)).isNotNull();
     assertThat(subscriptionManager.getSubscriptionById(subscriptionId2)).isNotNull();
 
-    final JsonRpcRequest unsubscribeRequest =
-        createEthUnsubscribeRequest(subscriptionId2, CONNECTION_ID);
+    final JsonRpcRequest unsubscribeRequestBody =
+        createEthUnsubscribeRequestBody(subscriptionId2, CONNECTION_ID);
 
     vertx
         .eventBus()
@@ -109,13 +107,12 @@ public class EthUnsubscribeIntegrationTest {
             })
         .completionHandler(
             v ->
-                webSocketRequestHandler.handle(
-                    CONNECTION_ID, Buffer.buffer(Json.encode(unsubscribeRequest))));
+                webSocketRequestHandler.handle(CONNECTION_ID, Json.encode(unsubscribeRequestBody)));
 
     async.awaitSuccess(ASYNC_TIMEOUT);
   }
 
-  private WebSocketRpcRequest createEthUnsubscribeRequest(
+  private JsonRpcRequest createEthUnsubscribeRequestBody(
       final Long subscriptionId, final String connectionId) {
     return Json.decodeValue(
         "{\"id\": 1, \"method\": \"eth_unsubscribe\", \"params\": [\""

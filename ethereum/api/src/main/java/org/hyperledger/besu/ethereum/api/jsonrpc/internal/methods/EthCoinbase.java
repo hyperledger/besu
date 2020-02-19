@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -39,11 +39,13 @@ public class EthCoinbase implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest req) {
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     final Optional<Address> coinbase = miningCoordinator.getCoinbase();
     if (coinbase.isPresent()) {
-      return new JsonRpcSuccessResponse(req.getId(), coinbase.get().toString());
+      return new JsonRpcSuccessResponse(
+          requestContext.getRequest().getId(), coinbase.get().toString());
     }
-    return new JsonRpcErrorResponse(req.getId(), JsonRpcError.COINBASE_NOT_SPECIFIED);
+    return new JsonRpcErrorResponse(
+        requestContext.getRequest().getId(), JsonRpcError.COINBASE_NOT_SPECIFIED);
   }
 }

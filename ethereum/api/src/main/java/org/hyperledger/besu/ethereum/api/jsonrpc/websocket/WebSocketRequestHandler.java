@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.websocket;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationUtils;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -45,20 +46,20 @@ public class WebSocketRequestHandler {
     this.methods = methods;
   }
 
-  public void handle(final String id, final Buffer buffer) {
-    handle(Optional.empty(), id, buffer, Optional.empty());
+  public void handle(final String id, final String payload) {
+    handle(Optional.empty(), id, payload, Optional.empty());
   }
 
   public void handle(
       final Optional<AuthenticationService> authenticationService,
       final String id,
-      final Buffer buffer,
+      final String payload,
       final Optional<User> user) {
     vertx.executeBlocking(
         future -> {
           final WebSocketRpcRequest request;
           try {
-            request = buffer.toJsonObject().mapTo(WebSocketRpcRequest.class);
+            request = Json.decodeValue(payload, WebSocketRpcRequest.class);
           } catch (final IllegalArgumentException | DecodeException e) {
             LOG.debug("Error mapping json to WebSocketRpcRequest", e);
             future.complete(new JsonRpcErrorResponse(null, JsonRpcError.INVALID_REQUEST));
@@ -76,7 +77,8 @@ public class WebSocketRequestHandler {
             LOG.debug("WS-RPC request -> {}", request.getMethod());
             request.setConnectionId(id);
             if (AuthenticationUtils.isPermitted(authenticationService, user, method)) {
-              future.complete(method.response(request));
+              final JsonRpcRequestContext requestContext = new JsonRpcRequestContext(request, user);
+              future.complete(method.response(requestContext));
             } else {
               future.complete(
                   new JsonRpcUnauthorizedResponse(request.getId(), JsonRpcError.UNAUTHORIZED));
@@ -86,6 +88,7 @@ public class WebSocketRequestHandler {
             future.complete(new JsonRpcErrorResponse(request.getId(), JsonRpcError.INTERNAL_ERROR));
           }
         },
+        false,
         result -> {
           if (result.succeeded()) {
             replyToClient(id, Json.encodeToBuffer(result.result()));

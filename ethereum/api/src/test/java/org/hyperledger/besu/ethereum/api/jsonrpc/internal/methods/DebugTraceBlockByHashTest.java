@@ -21,31 +21,31 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
 public class DebugTraceBlockByHashTest {
 
-  private final JsonRpcParameter parameters = new JsonRpcParameter();
   private final BlockTracer blockTracer = mock(BlockTracer.class);
   private final DebugTraceBlockByHash debugTraceBlockByHash =
-      new DebugTraceBlockByHash(parameters, blockTracer);
+      new DebugTraceBlockByHash(() -> blockTracer);
 
   private final Hash blockHash =
       Hash.fromHexString("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
@@ -58,7 +58,8 @@ public class DebugTraceBlockByHashTest {
   @Test
   public void shouldReturnCorrectResponse() {
     final Object[] params = new Object[] {blockHash};
-    final JsonRpcRequest request = new JsonRpcRequest("2.0", "debug_traceBlockByHash", params);
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(new JsonRpcRequest("2.0", "debug_traceBlockByHash", params));
 
     final TraceFrame traceFrame =
         new TraceFrame(
@@ -66,9 +67,23 @@ public class DebugTraceBlockByHashTest {
             "NONE",
             Gas.of(45),
             Optional.of(Gas.of(56)),
+            Gas.ZERO,
             2,
             EnumSet.noneOf(ExceptionalHaltReason.class),
+            null,
+            Wei.ZERO,
+            Bytes.EMPTY,
+            Bytes.EMPTY,
             Optional.empty(),
+            Optional.empty(),
+            Optional.empty(),
+            null,
+            Optional.empty(),
+            Optional.empty(),
+            Optional.empty(),
+            0,
+            Optional.empty(),
+            false,
             Optional.empty(),
             Optional.empty());
 
@@ -84,8 +99,8 @@ public class DebugTraceBlockByHashTest {
     when(transaction2Trace.getTraceFrames()).thenReturn(Arrays.asList(traceFrame));
     when(transaction1Trace.getResult()).thenReturn(transaction1Result);
     when(transaction2Trace.getResult()).thenReturn(transaction2Result);
-    when(transaction1Result.getOutput()).thenReturn(BytesValue.fromHexString("1234"));
-    when(transaction2Result.getOutput()).thenReturn(BytesValue.fromHexString("1234"));
+    when(transaction1Result.getOutput()).thenReturn(Bytes.fromHexString("1234"));
+    when(transaction2Result.getOutput()).thenReturn(Bytes.fromHexString("1234"));
     when(blockTracer.trace(eq(blockHash), any())).thenReturn(Optional.of(blockTrace));
 
     final JsonRpcSuccessResponse response =

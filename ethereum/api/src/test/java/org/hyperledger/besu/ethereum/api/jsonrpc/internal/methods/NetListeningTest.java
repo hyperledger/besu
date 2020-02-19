@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
@@ -47,7 +48,7 @@ public class NetListeningTest {
   public void shouldReturnTrueWhenNetworkIsListening() {
     when(p2PNetwork.isListening()).thenReturn(true);
 
-    final JsonRpcRequest request = netListeningRequest();
+    final JsonRpcRequestContext request = netListeningRequest();
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, true);
 
     Assertions.assertThat(method.response(request))
@@ -58,7 +59,7 @@ public class NetListeningTest {
   public void shouldReturnFalseWhenNetworkIsNotListening() {
     when(p2PNetwork.isListening()).thenReturn(false);
 
-    final JsonRpcRequest request = netListeningRequest();
+    final JsonRpcRequestContext request = netListeningRequest();
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, false);
 
     Assertions.assertThat(method.response(request))
@@ -71,7 +72,7 @@ public class NetListeningTest {
     assertThat(permissions).containsExactlyInAnyOrder("net:*", "net:listening", "*:*");
   }
 
-  private JsonRpcRequest netListeningRequest() {
-    return new JsonRpcRequest("2.0", "net_listening", new Object[] {});
+  private JsonRpcRequestContext netListeningRequest() {
+    return new JsonRpcRequestContext(new JsonRpcRequest("2.0", "net_listening", new Object[] {}));
   }
 }

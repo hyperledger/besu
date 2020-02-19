@@ -16,12 +16,12 @@
 apply plugin: 'java-library'
 
 jar {
-  baseName 'besu-ibft'
+  archiveBaseName = 'besu-ibft'
   manifest {
     attributes(
-      'Specification-Title': baseName,
+      'Specification-Title': archiveBaseName,
       'Specification-Version': project.version,
-      'Implementation-Title': baseName,
+      'Implementation-Title': archiveBaseName,
       'Implementation-Version': calculateVersion()
       )
   }
@@ -31,31 +31,34 @@ dependencies {
   implementation project(':config')
   implementation project(':consensus:common')
   implementation project(':crypto')
+  implementation project(':ethereum:api')
   implementation project(':ethereum:blockcreation')
   implementation project(':ethereum:core')
   implementation project(':ethereum:eth')
-  implementation project(':ethereum:api')
-  implementation project(':ethereum:rlp')
   implementation project(':ethereum:p2p')
+  implementation project(':ethereum:rlp')
   implementation project(':services:kvstore')
 
-  implementation 'io.vertx:vertx-core'
   implementation 'com.google.guava:guava'
+  implementation 'io.vertx:vertx-core'
+  implementation 'org.apache.tuweni:tuweni-bytes'
+  implementation 'org.apache.tuweni:tuweni-units'
 
-  integrationTestImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
   integrationTestImplementation project(path: ':config:', configuration: 'testSupportArtifacts')
+  integrationTestImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
 
-  testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
   testImplementation project(path: ':config:', configuration: 'testSupportArtifacts')
   testImplementation project(path: ':consensus:common', configuration: 'testArtifacts')
-  testImplementation project(':testutil')
+  testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
   testImplementation project(':metrics:core')
+  testImplementation project(':testutil')
 
   integrationTestImplementation project(':metrics:core')
+  integrationTestImplementation project(':testutil')
+
   integrationTestImplementation 'junit:junit'
   integrationTestImplementation 'org.assertj:assertj-core'
   integrationTestImplementation 'org.mockito:mockito-core'
-  integrationTestImplementation project(':testutil')
 
   testImplementation 'junit:junit'
   testImplementation 'org.awaitility:awaitility'

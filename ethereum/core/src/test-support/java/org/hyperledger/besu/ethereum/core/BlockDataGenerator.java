@@ -19,11 +19,9 @@ import static java.util.stream.Collectors.toSet;
 
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.crypto.SecureRandomProvider;
+import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.math.BigInteger;
 import java.security.InvalidAlgorithmParameterException;
@@ -46,6 +44,10 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import com.google.common.base.Supplier;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPrivateKey;
 import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPublicKey;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
@@ -58,6 +60,7 @@ public class BlockDataGenerator {
 
   private final Random random;
   private final KeyPairGenerator keyPairGenerator;
+  private Supplier<BlockOptions> blockOptionsSupplier = BlockOptions::create;
 
   public BlockDataGenerator(final int seed) {
     this.random = new Random(seed);
@@ -66,6 +69,10 @@ public class BlockDataGenerator {
 
   public BlockDataGenerator() {
     this(1);
+  }
+
+  public void setBlockOptionsSupplier(final Supplier<BlockOptions> blockOptionsSupplier) {
+    this.blockOptionsSupplier = blockOptionsSupplier;
   }
 
   private KeyPairGenerator createKeyPairGenerator(final long seed) {
@@ -122,7 +129,8 @@ public class BlockDataGenerator {
         stateUpdater.commit();
       }
       final BlockOptions options =
-          new BlockOptions()
+          blockOptionsSupplier
+              .get()
               .setBlockNumber(nextBlockNumber)
               .setParentHash(parentHash)
               .setStateRoot(worldState.rootHash());
@@ -206,7 +214,7 @@ public class BlockDataGenerator {
   }
 
   public Block genesisBlock() {
-    return genesisBlock(new BlockOptions());
+    return genesisBlock(blockOptionsSupplier.get());
   }
 
   public Block genesisBlock(final BlockOptions options) {
@@ -219,9 +227,9 @@ public class BlockDataGenerator {
 
   public Block block(final BlockOptions options) {
     final long blockNumber = options.getBlockNumber(positiveLong());
-    final BlockHeader header = header(blockNumber, options);
     final BlockBody body =
         blockNumber == BlockHeader.GENESIS_BLOCK_NUMBER ? BlockBody.empty() : body(options);
+    final BlockHeader header = header(blockNumber, body, options);
     return new Block(header, body);
   }
 
@@ -230,7 +238,8 @@ public class BlockDataGenerator {
   }
 
   public BlockOptions nextBlockOptions(final Block afterBlock) {
-    return new BlockOptions()
+    return blockOptionsSupplier
+        .get()
         .setBlockNumber(afterBlock.getHeader().getNumber() + 1)
         .setParentHash(afterBlock.getHash());
   }
@@ -240,30 +249,34 @@ public class BlockDataGenerator {
     return block(options);
   }
 
+  public BlockHeader header(final long blockNumber, final BlockBody blockBody) {
+    return header(blockNumber, blockBody, new BlockOptions());
+  }
+
   public BlockHeader header(final long blockNumber) {
-    return header(blockNumber, new BlockOptions());
+    return header(blockNumber, body(), blockOptionsSupplier.get());
   }
 
   public BlockHeader header() {
-    return header(positiveLong(), new BlockOptions());
+    return header(positiveLong(), body(), blockOptionsSupplier.get());
   }
 
-  public BlockHeader header(final long number, final BlockOptions options) {
+  public BlockHeader header(final long number, final BlockBody body, final BlockOptions options) {
     final int gasLimit = random.nextInt() & Integer.MAX_VALUE;
     final int gasUsed = Math.max(0, gasLimit - 1);
     final long blockNonce = random.nextLong();
     return BlockHeaderBuilder.create()
         .parentHash(options.getParentHash(hash()))
-        .ommersHash(hash())
+        .ommersHash(BodyValidation.ommersHash(body.getOmmers()))
         .coinbase(address())
         .stateRoot(options.getStateRoot(hash()))
-        .transactionsRoot(hash())
-        .receiptsRoot(hash())
-        .logsBloom(logsBloom())
-        .difficulty(options.getDifficulty(uint256(4)))
+        .transactionsRoot(BodyValidation.transactionsRoot(body.getTransactions()))
+        .receiptsRoot(options.getReceiptsRoot(hash()))
+        .logsBloom(options.getLogsBloom(logsBloom()))
+        .difficulty(options.getDifficulty(Difficulty.of(uint256(4))))
         .number(number)
         .gasLimit(gasLimit)
-        .gasUsed(gasUsed)
+        .gasUsed(options.getGasUsed(gasUsed))
         .timestamp(Instant.now().truncatedTo(ChronoUnit.SECONDS).getEpochSecond())
         .extraData(options.getExtraData(bytes32()))
         .mixHash(hash())
@@ -273,42 +286,46 @@ public class BlockDataGenerator {
   }
 
   public BlockBody body() {
-    return body(new BlockOptions());
+    return body(blockOptionsSupplier.get());
   }
 
   public BlockBody body(final BlockOptions options) {
     final List<BlockHeader> ommers = new ArrayList<>();
-    final int ommerCount = random.nextInt(3);
-    for (int i = 0; i < ommerCount; i++) {
-      ommers.add(header());
+    if (options.hasOmmers()) {
+      final int ommerCount = random.nextInt(3);
+      for (int i = 0; i < ommerCount; i++) {
+        ommers.add(ommer());
+      }
     }
     final List<Transaction> defaultTxs = new ArrayList<>();
-    defaultTxs.add(transaction());
-    defaultTxs.add(transaction());
+    if (options.hasTransactions()) {
+      defaultTxs.add(transaction());
+      defaultTxs.add(transaction());
+    }
 
     return new BlockBody(options.getTransactions(defaultTxs), ommers);
   }
 
-  public Transaction transaction(final BytesValue payload) {
-    return Transaction.builder()
-        .nonce(positiveLong())
-        .gasPrice(Wei.wrap(bytes32()))
-        .gasLimit(positiveLong())
-        .to(address())
-        .value(Wei.wrap(bytes32()))
-        .payload(payload)
-        .chainId(BigInteger.ONE)
-        .signAndBuild(generateKeyPair());
+  private BlockHeader ommer() {
+    return header(positiveLong(), body(BlockOptions.create().hasOmmers(false)));
   }
 
   public Transaction transaction() {
+    return transaction(bytes32());
+  }
+
+  public Transaction transaction(final Bytes payload) {
+    return transaction(payload, address());
+  }
+
+  public Transaction transaction(final Bytes payload, final Address to) {
     return Transaction.builder()
         .nonce(positiveLong())
         .gasPrice(Wei.wrap(bytes32()))
         .gasLimit(positiveLong())
-        .to(address())
+        .to(to)
         .value(Wei.wrap(bytes32()))
-        .payload(bytes32())
+        .payload(payload)
         .chainId(BigInteger.ONE)
         .signAndBuild(generateKeyPair());
   }
@@ -346,7 +363,7 @@ public class BlockDataGenerator {
         hash(), cumulativeGasUsed, Arrays.asList(log(), log()), Optional.empty());
   }
 
-  public TransactionReceipt receipt(final BytesValue revertReason) {
+  public TransactionReceipt receipt(final Bytes revertReason) {
     return new TransactionReceipt(
         hash(), positiveLong(), Arrays.asList(log(), log()), Optional.of(revertReason));
   }
@@ -390,27 +407,27 @@ public class BlockDataGenerator {
   }
 
   private LogTopic logTopic() {
-    return LogTopic.create(bytesValue(LogTopic.SIZE));
+    return LogTopic.wrap(bytesValue(Bytes32.SIZE));
   }
 
   private Bytes32 bytes32() {
     return Bytes32.wrap(bytes(Bytes32.SIZE));
   }
 
-  public BytesValue bytesValue(final int size) {
-    return BytesValue.wrap(bytes(size));
+  public Bytes bytesValue(final int size) {
+    return Bytes.wrap(bytes(size));
   }
 
-  public BytesValue bytesValue() {
+  public Bytes bytesValue() {
     return bytesValue(1, 20);
   }
 
-  public BytesValue bytesValue(final int minSize, final int maxSize) {
+  public Bytes bytesValue(final int minSize, final int maxSize) {
     checkArgument(minSize >= 0);
     checkArgument(maxSize >= 0);
     checkArgument(maxSize > minSize);
     final int size = random.nextInt(maxSize - minSize) + minSize;
-    return BytesValue.wrap(bytes(size));
+    return Bytes.wrap(bytes(size));
   }
 
   /**
@@ -421,11 +438,11 @@ public class BlockDataGenerator {
    */
   private UInt256 uint256(final int maxByteSize) {
     assert maxByteSize <= 32;
-    return Bytes32.wrap(bytes(32, 32 - maxByteSize)).asUInt256();
+    return UInt256.fromBytes(Bytes32.wrap(bytes(32, 32 - maxByteSize)));
   }
 
   private UInt256 uint256() {
-    return bytes32().asUInt256();
+    return UInt256.fromBytes(bytes32());
   }
 
   private long positiveLong() {
@@ -442,7 +459,7 @@ public class BlockDataGenerator {
   }
 
   public LogsBloomFilter logsBloom() {
-    return new LogsBloomFilter(BytesValue.of(bytes(LogsBloomFilter.BYTE_SIZE)));
+    return new LogsBloomFilter(Bytes.of(bytes(LogsBloomFilter.BYTE_SIZE)));
   }
 
   private byte[] bytes(final int size) {
@@ -486,10 +503,16 @@ public class BlockDataGenerator {
     private OptionalLong blockNumber = OptionalLong.empty();
     private Optional<Hash> parentHash = Optional.empty();
     private Optional<Hash> stateRoot = Optional.empty();
-    private Optional<UInt256> difficulty = Optional.empty();
-    private List<Transaction> transactions = new ArrayList<>();
-    private Optional<BytesValue> extraData = Optional.empty();
+    private Optional<Difficulty> difficulty = Optional.empty();
+    private final List<Transaction> transactions = new ArrayList<>();
+    private final List<BlockHeader> ommers = new ArrayList<>();
+    private Optional<Bytes> extraData = Optional.empty();
     private Optional<BlockHeaderFunctions> blockHeaderFunctions = Optional.empty();
+    private Optional<Hash> receiptsRoot = Optional.empty();
+    private Optional<Long> gasUsed = Optional.empty();
+    private Optional<LogsBloomFilter> logsBloom = Optional.empty();
+    private boolean hasOmmers = true;
+    private boolean hasTransactions = true;
 
     public static BlockOptions create() {
       return new BlockOptions();
@@ -497,6 +520,10 @@ public class BlockDataGenerator {
 
     public List<Transaction> getTransactions(final List<Transaction> defaultValue) {
       return transactions.isEmpty() ? defaultValue : transactions;
+    }
+
+    public List<BlockHeader> getOmmers(final List<BlockHeader> defaultValue) {
+      return ommers.isEmpty() ? defaultValue : ommers;
     }
 
     public long getBlockNumber(final long defaultValue) {
@@ -511,11 +538,11 @@ public class BlockDataGenerator {
       return stateRoot.orElse(defaultValue);
     }
 
-    public UInt256 getDifficulty(final UInt256 defaultValue) {
+    public Difficulty getDifficulty(final Difficulty defaultValue) {
       return difficulty.orElse(defaultValue);
     }
 
-    public BytesValue getExtraData(final Bytes32 defaultValue) {
+    public Bytes getExtraData(final Bytes32 defaultValue) {
       return extraData.orElse(defaultValue);
     }
 
@@ -523,8 +550,33 @@ public class BlockDataGenerator {
       return blockHeaderFunctions.orElse(defaultValue);
     }
 
+    public Hash getReceiptsRoot(final Hash defaultValue) {
+      return receiptsRoot.orElse(defaultValue);
+    }
+
+    public long getGasUsed(final long defaultValue) {
+      return gasUsed.orElse(defaultValue);
+    }
+
+    public LogsBloomFilter getLogsBloom(final LogsBloomFilter defaultValue) {
+      return logsBloom.orElse(defaultValue);
+    }
+
+    public boolean hasTransactions() {
+      return hasTransactions;
+    }
+
+    public boolean hasOmmers() {
+      return hasOmmers;
+    }
+
     public BlockOptions addTransaction(final Transaction... tx) {
       transactions.addAll(Arrays.asList(tx));
+      return this;
+    }
+
+    public BlockOptions addOmmers(final BlockHeader... headers) {
+      ommers.addAll(Arrays.asList(headers));
       return this;
     }
 
@@ -547,18 +599,43 @@ public class BlockDataGenerator {
       return this;
     }
 
-    public BlockOptions setDifficulty(final UInt256 difficulty) {
+    public BlockOptions setDifficulty(final Difficulty difficulty) {
       this.difficulty = Optional.of(difficulty);
       return this;
     }
 
-    public BlockOptions setExtraData(final BytesValue extraData) {
+    public BlockOptions setExtraData(final Bytes extraData) {
       this.extraData = Optional.of(extraData);
       return this;
     }
 
     public BlockOptions setBlockHeaderFunctions(final BlockHeaderFunctions blockHeaderFunctions) {
       this.blockHeaderFunctions = Optional.of(blockHeaderFunctions);
+      return this;
+    }
+
+    public BlockOptions setReceiptsRoot(final Hash receiptsRoot) {
+      this.receiptsRoot = Optional.of(receiptsRoot);
+      return this;
+    }
+
+    public BlockOptions setGasUsed(final long gasUsed) {
+      this.gasUsed = Optional.of(gasUsed);
+      return this;
+    }
+
+    public BlockOptions setLogsBloom(final LogsBloomFilter logsBloom) {
+      this.logsBloom = Optional.of(logsBloom);
+      return this;
+    }
+
+    public BlockOptions hasTransactions(final boolean hasTransactions) {
+      this.hasTransactions = hasTransactions;
+      return this;
+    }
+
+    public BlockOptions hasOmmers(final boolean hasOmmers) {
+      this.hasOmmers = hasOmmers;
       return this;
     }
   }

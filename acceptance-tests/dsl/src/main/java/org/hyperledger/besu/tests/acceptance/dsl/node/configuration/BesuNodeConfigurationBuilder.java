@@ -22,11 +22,13 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.MiningParametersTestBuilder;
+import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationProvider;
 
+import java.io.File;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -49,13 +51,14 @@ public class BesuNodeConfigurationBuilder {
   private boolean devMode = true;
   private GenesisConfigurationProvider genesisConfigProvider = ignore -> Optional.empty();
   private Boolean p2pEnabled = true;
-  private NetworkingConfiguration networkingConfiguration = NetworkingConfiguration.create();
+  private final NetworkingConfiguration networkingConfiguration = NetworkingConfiguration.create();
   private boolean discoveryEnabled = true;
   private boolean bootnodeEligible = true;
   private boolean revertReasonEnabled = false;
-  private List<String> plugins = new ArrayList<>();
-  private List<String> extraCLIOptions = new ArrayList<>();
+  private final List<String> plugins = new ArrayList<>();
+  private final List<String> extraCLIOptions = new ArrayList<>();
   private List<String> staticNodes = new ArrayList<>();
+  private Optional<PrivacyParameters> privacyParameters = Optional.empty();
 
   public BesuNodeConfigurationBuilder() {
     // Check connections more frequently during acceptance tests to cut down on
@@ -76,6 +79,12 @@ public class BesuNodeConfigurationBuilder {
 
   public BesuNodeConfigurationBuilder miningEnabled() {
     this.miningParameters = new MiningParametersTestBuilder().enabled(true).build();
+    this.jsonRpcConfiguration.addRpcApi(RpcApis.MINER);
+    return this;
+  }
+
+  public BesuNodeConfigurationBuilder miningConfiguration(final MiningParameters miningParameters) {
+    this.miningParameters = miningParameters;
     this.jsonRpcConfiguration.addRpcApi(RpcApis.MINER);
     return this;
   }
@@ -111,14 +120,26 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
-  public BesuNodeConfigurationBuilder jsonRpcAuthenticationEnabled() throws URISyntaxException {
+  public BesuNodeConfigurationBuilder jsonRpcAuthenticationConfiguration(final String authFile)
+      throws URISyntaxException {
     final String authTomlPath =
-        Paths.get(ClassLoader.getSystemResource("authentication/auth.toml").toURI())
-            .toAbsolutePath()
-            .toString();
+        Paths.get(ClassLoader.getSystemResource(authFile).toURI()).toAbsolutePath().toString();
 
     this.jsonRpcConfiguration.setAuthenticationEnabled(true);
     this.jsonRpcConfiguration.setAuthenticationCredentialsFile(authTomlPath);
+
+    return this;
+  }
+
+  public BesuNodeConfigurationBuilder jsonRpcAuthenticationUsingPublicKeyEnabled()
+      throws URISyntaxException {
+    final File jwtPublicKey =
+        Paths.get(ClassLoader.getSystemResource("authentication/jwt_public_key").toURI())
+            .toAbsolutePath()
+            .toFile();
+
+    this.jsonRpcConfiguration.setAuthenticationEnabled(true);
+    this.jsonRpcConfiguration.setAuthenticationPublicKeyFile(jwtPublicKey);
 
     return this;
   }
@@ -139,7 +160,7 @@ public class BesuNodeConfigurationBuilder {
     final WebSocketConfiguration config = WebSocketConfiguration.createDefault();
     config.setEnabled(true);
     config.setPort(0);
-    config.setHostsWhitelist(Collections.singleton("*"));
+    config.setHostsWhitelist(Collections.singletonList("*"));
 
     this.webSocketConfiguration = config;
     return this;
@@ -158,6 +179,19 @@ public class BesuNodeConfigurationBuilder {
 
     this.webSocketConfiguration.setAuthenticationEnabled(true);
     this.webSocketConfiguration.setAuthenticationCredentialsFile(authTomlPath);
+
+    return this;
+  }
+
+  public BesuNodeConfigurationBuilder webSocketAuthenticationUsingPublicKeyEnabled()
+      throws URISyntaxException {
+    final File jwtPublicKey =
+        Paths.get(ClassLoader.getSystemResource("authentication/jwt_public_key").toURI())
+            .toAbsolutePath()
+            .toFile();
+
+    this.webSocketConfiguration.setAuthenticationEnabled(true);
+    this.webSocketConfiguration.setAuthenticationPublicKeyFile(jwtPublicKey);
 
     return this;
   }
@@ -216,6 +250,11 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
+  public BesuNodeConfigurationBuilder privacyParameters(final PrivacyParameters privacyParameters) {
+    this.privacyParameters = Optional.ofNullable(privacyParameters);
+    return this;
+  }
+
   public BesuNodeConfiguration build() {
     return new BesuNodeConfiguration(
         name,
@@ -235,6 +274,7 @@ public class BesuNodeConfigurationBuilder {
         revertReasonEnabled,
         plugins,
         extraCLIOptions,
-        staticNodes);
+        staticNodes,
+        privacyParameters);
   }
 }

@@ -28,7 +28,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetTransact
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthSendRawTransaction;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Web3ClientVersion;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.retesteth.methods.TestGetLogHash;
 import org.hyperledger.besu.ethereum.retesteth.methods.TestImportRawBlock;
@@ -37,6 +36,7 @@ import org.hyperledger.besu.ethereum.retesteth.methods.TestModifyTimestamp;
 import org.hyperledger.besu.ethereum.retesteth.methods.TestRewindToBlock;
 import org.hyperledger.besu.ethereum.retesteth.methods.TestSetChainParams;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.nat.NatService;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -59,34 +59,30 @@ public class RetestethService {
     vertx = Vertx.vertx();
     retestethContext = new RetestethContext();
 
-    final JsonRpcParameter parameters = new JsonRpcParameter();
     final BlockResultFactory blockResult = new BlockResultFactory();
+    final NatService natService = new NatService(Optional.empty());
+
     final Map<String, JsonRpcMethod> jsonRpcMethods =
         mapOf(
             new Web3ClientVersion(clientVersion),
             new TestSetChainParams(retestethContext),
-            new TestImportRawBlock(retestethContext, parameters),
+            new TestImportRawBlock(retestethContext),
             new EthBlockNumber(retestethContext::getBlockchainQueries, true),
-            new EthGetBlockByNumber(
-                retestethContext::getBlockchainQueries, blockResult, parameters, true),
-            new DebugAccountRange(parameters, retestethContext::getBlockchainQueries),
-            new EthGetBalance(retestethContext::getBlockchainQueries, parameters),
-            new EthGetCode(retestethContext::getBlockchainQueries, parameters),
+            new EthGetBlockByNumber(retestethContext::getBlockchainQueries, blockResult, true),
+            new DebugAccountRange(retestethContext::getBlockchainQueries),
+            new EthGetBalance(retestethContext::getBlockchainQueries),
+            new EthGetCode(retestethContext::getBlockchainQueries),
             new EthGetTransactionCount(
                 retestethContext::getBlockchainQueries,
                 retestethContext::getPendingTransactions,
-                parameters,
                 true),
             new DebugStorageRangeAt(
-                parameters,
-                retestethContext::getBlockchainQueries,
-                retestethContext::getBlockReplay,
-                true),
-            new TestModifyTimestamp(retestethContext, parameters),
-            new EthSendRawTransaction(retestethContext::getTransactionPool, parameters, true),
-            new TestMineBlocks(retestethContext, parameters),
-            new TestGetLogHash(retestethContext, parameters),
-            new TestRewindToBlock(retestethContext, parameters));
+                retestethContext::getBlockchainQueries, retestethContext::getBlockReplay, true),
+            new TestModifyTimestamp(retestethContext),
+            new EthSendRawTransaction(retestethContext::getTransactionPool, true),
+            new TestMineBlocks(retestethContext),
+            new TestGetLogHash(retestethContext),
+            new TestRewindToBlock(retestethContext));
 
     jsonRpcHttpService =
         new JsonRpcHttpService(
@@ -94,7 +90,7 @@ public class RetestethService {
             retestethConfiguration.getDataPath(),
             jsonRpcConfiguration,
             new NoOpMetricsSystem(),
-            Optional.empty(),
+            natService,
             jsonRpcMethods,
             new HealthService(new LivenessCheck()),
             HealthService.ALWAYS_HEALTHY);
@@ -110,6 +106,7 @@ public class RetestethService {
 
   public void stop() {
     jsonRpcHttpService.stop();
+    vertx.close();
   }
 
   private static Map<String, JsonRpcMethod> mapOf(final JsonRpcMethod... rpcMethods) {

@@ -22,9 +22,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.common.BlockInterface;
+import org.hyperledger.besu.consensus.common.VoteTally;
+import org.hyperledger.besu.consensus.common.VoteTallyCache;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.SignerMetricResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -33,6 +35,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -46,14 +49,14 @@ import org.junit.rules.ExpectedException;
 public class CliqueGetSignerMetricsTest {
 
   private static final Address[] VALIDATORS = {
-    Address.fromHexString("0x1"), Address.fromHexString("0x2"), Address.fromHexString("0x3"),
+    Address.fromHexString("0x1"), Address.fromHexString("0x2"), Address.fromHexString("0x3")
   };
 
-  private final JsonRpcParameter jsonRpcParameter = new JsonRpcParameter();
   private final String CLIQUE_METHOD = "clique_getSignerMetrics";
   private final String JSON_RPC_VERSION = "2.0";
   private CliqueGetSignerMetrics method;
 
+  private VoteTallyCache voteTallyCache;
   private BlockchainQueries blockchainQueries;
   private BlockInterface blockInterface;
 
@@ -61,9 +64,10 @@ public class CliqueGetSignerMetricsTest {
 
   @Before
   public void setup() {
+    voteTallyCache = mock(VoteTallyCache.class);
     blockchainQueries = mock(BlockchainQueries.class);
     blockInterface = mock(BlockInterface.class);
-    method = new CliqueGetSignerMetrics(blockInterface, blockchainQueries, jsonRpcParameter);
+    method = new CliqueGetSignerMetrics(voteTallyCache, blockInterface, blockchainQueries);
   }
 
   @Test
@@ -73,7 +77,7 @@ public class CliqueGetSignerMetricsTest {
 
   @Test
   public void exceptionWhenInvalidStartBlockSupplied() {
-    final JsonRpcRequest request = requestWithParams("INVALID");
+    final JsonRpcRequestContext request = requestWithParams("INVALID");
 
     expectedException.expect(InvalidJsonRpcParameters.class);
     expectedException.expectMessage("Invalid json rpc parameter at index 0");
@@ -83,7 +87,7 @@ public class CliqueGetSignerMetricsTest {
 
   @Test
   public void exceptionWhenInvalidEndBlockSupplied() {
-    final JsonRpcRequest request = requestWithParams("1", "INVALID");
+    final JsonRpcRequestContext request = requestWithParams("1", "INVALID");
 
     expectedException.expect(InvalidJsonRpcParameters.class);
     expectedException.expectMessage("Invalid json rpc parameter at index 1");
@@ -105,7 +109,9 @@ public class CliqueGetSignerMetricsTest {
     LongStream.range(startBlock, endBlock)
         .forEach(value -> signerMetricResultList.add(generateBlock(value)));
 
-    final JsonRpcRequest request = requestWithParams();
+    signerMetricResultList.add(new SignerMetricResult(VALIDATORS[0])); // missing validator
+
+    final JsonRpcRequestContext request = requestWithParams();
 
     final JsonRpcSuccessResponse response = (JsonRpcSuccessResponse) method.response(request);
 
@@ -138,7 +144,7 @@ public class CliqueGetSignerMetricsTest {
     signerMetricResultFirstKeyPairs.setLastProposedBlockNumber(startBlock + 3);
     signerMetricResultFirstKeyPairs.incrementeNbBlock();
 
-    final JsonRpcRequest request = requestWithParams();
+    final JsonRpcRequestContext request = requestWithParams();
 
     final JsonRpcSuccessResponse response = (JsonRpcSuccessResponse) method.response(request);
 
@@ -159,7 +165,9 @@ public class CliqueGetSignerMetricsTest {
     LongStream.range(startBlock, headBlock)
         .forEach(value -> signerMetricResultList.add(generateBlock(value)));
 
-    final JsonRpcRequest request = requestWithParams();
+    signerMetricResultList.add(new SignerMetricResult(VALIDATORS[2])); // missing validator
+
+    final JsonRpcRequestContext request = requestWithParams();
 
     final JsonRpcSuccessResponse response = (JsonRpcSuccessResponse) method.response(request);
 
@@ -184,7 +192,9 @@ public class CliqueGetSignerMetricsTest {
     LongStream.range(startBlock, endBlock)
         .forEach(value -> signerMetricResultList.add(generateBlock(value)));
 
-    final JsonRpcRequest request = requestWithParams(String.valueOf(startBlock), "latest");
+    signerMetricResultList.add(new SignerMetricResult(VALIDATORS[0])); // missing validator
+
+    final JsonRpcRequestContext request = requestWithParams(String.valueOf(startBlock), "latest");
 
     final JsonRpcSuccessResponse response = (JsonRpcSuccessResponse) method.response(request);
 
@@ -206,7 +216,9 @@ public class CliqueGetSignerMetricsTest {
     LongStream.range(startBlock, endBlock)
         .forEach(value -> signerMetricResultList.add(generateBlock(value)));
 
-    final JsonRpcRequest request = requestWithParams(String.valueOf(startBlock), "pending");
+    signerMetricResultList.add(new SignerMetricResult(VALIDATORS[0])); // missing validator
+
+    final JsonRpcRequestContext request = requestWithParams(String.valueOf(startBlock), "pending");
 
     final JsonRpcSuccessResponse response = (JsonRpcSuccessResponse) method.response(request);
 
@@ -223,10 +235,12 @@ public class CliqueGetSignerMetricsTest {
 
     final List<SignerMetricResult> signerMetricResultList = new ArrayList<>();
 
+    when(blockchainQueries.headBlockNumber()).thenReturn(endBlock);
+
     LongStream.range(startBlock, endBlock)
         .forEach(value -> signerMetricResultList.add(generateBlock(value)));
 
-    final JsonRpcRequest request = requestWithParams("earliest", String.valueOf(endBlock));
+    final JsonRpcRequestContext request = requestWithParams("earliest", String.valueOf(endBlock));
 
     final JsonRpcSuccessResponse response = (JsonRpcSuccessResponse) method.response(request);
 
@@ -234,8 +248,8 @@ public class CliqueGetSignerMetricsTest {
         .containsExactlyInAnyOrderElementsOf(signerMetricResultList);
   }
 
-  private JsonRpcRequest requestWithParams(final Object... params) {
-    return new JsonRpcRequest(JSON_RPC_VERSION, CLIQUE_METHOD, params);
+  private JsonRpcRequestContext requestWithParams(final Object... params) {
+    return new JsonRpcRequestContext(new JsonRpcRequest(JSON_RPC_VERSION, CLIQUE_METHOD, params));
   }
 
   private SignerMetricResult generateBlock(final long number) {
@@ -246,6 +260,9 @@ public class CliqueGetSignerMetricsTest {
 
     when(blockchainQueries.getBlockHeaderByNumber(number)).thenReturn(Optional.of(header));
     when(blockInterface.getProposerOfBlock(header)).thenReturn(proposerAddressBlock);
+
+    when(voteTallyCache.getVoteTallyAfterBlock(header))
+        .thenReturn(new VoteTally(Arrays.asList(VALIDATORS)));
 
     final SignerMetricResult signerMetricResult = new SignerMetricResult(proposerAddressBlock);
     signerMetricResult.incrementeNbBlock();

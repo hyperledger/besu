@@ -16,18 +16,20 @@
 apply plugin: 'java-library'
 
 jar {
-  baseName 'besu-core'
+  archiveBaseName = 'besu-core'
   manifest {
     attributes(
-      'Specification-Title': baseName,
+      'Specification-Title': archiveBaseName,
       'Specification-Version': project.version,
-      'Implementation-Title': baseName,
+      'Implementation-Title': archiveBaseName,
       'Implementation-Version': calculateVersion()
       )
   }
 }
 
 dependencies {
+  annotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess'
+
   implementation project(':config')
   implementation project(':crypto')
   implementation project(':enclave')
@@ -41,33 +43,38 @@ dependencies {
   implementation 'com.google.guava:guava'
   implementation 'io.vertx:vertx-core'
   implementation 'org.apache.logging.log4j:log4j-api'
+  implementation 'org.apache.tuweni:tuweni-bytes'
+  implementation 'org.apache.tuweni:tuweni-units'
 
-  runtime 'org.apache.logging.log4j:log4j-core'
+  runtimeOnly 'org.apache.logging.log4j:log4j-core'
 
   testImplementation project(path: ':config', configuration: 'testSupportArtifacts')
   testImplementation project(path:':ethereum:referencetests', configuration: 'testOutput')
   testImplementation project(':testutil')
 
   testImplementation 'junit:junit'
+  testImplementation 'org.apache.logging.log4j:log4j-core'
+  testImplementation 'org.apache.tuweni:tuweni-bytes'
+  testImplementation 'org.apache.tuweni:tuweni-io'
+  testImplementation 'org.apache.tuweni:tuweni-units'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.mockito:mockito-core'
 
   integrationTestImplementation project(path: ':config', configuration: 'testSupportArtifacts')
+  integrationTestImplementation project(':testutil')
 
   integrationTestImplementation 'junit:junit'
+  integrationTestImplementation 'net.consensys:orion'
   integrationTestImplementation 'org.assertj:assertj-core'
   integrationTestImplementation 'org.mockito:mockito-core'
-  integrationTestImplementation project(':testutil')
-  integrationTestImplementation 'net.consensys:orion'
 
   testSupportImplementation project(path: ':config', configuration: 'testSupportArtifacts')
+  testSupportImplementation project(':ethereum:eth')
   testSupportImplementation project(':testutil')
 
   testSupportImplementation 'junit:junit'
   testSupportImplementation 'org.assertj:assertj-core'
   testSupportImplementation 'org.mockito:mockito-core'
-
-  compileOnly 'org.openjdk.jmh:jmh-generator-annprocess'
 
   jmhImplementation project(path: ':config', configuration: 'testSupportArtifacts')
   jmhImplementation project(':crypto')
@@ -75,9 +82,9 @@ dependencies {
   jmhImplementation project(':ethereum:rlp')
   jmhImplementation project(':ethereum:trie')
   jmhImplementation project(':metrics:core')
-  jmhImplementation project(':services:kvstore')
   jmhImplementation project(':plugin-api')
   jmhImplementation project(':plugins:rocksdb')
+  jmhImplementation project(':services:kvstore')
   jmhImplementation project(':util')
 
   jmhImplementation 'com.google.guava:guava'
@@ -85,15 +92,16 @@ dependencies {
 
 configurations { testArtifacts }
 task testJar (type: Jar) {
-  baseName = "${project.name}-test"
+  archiveBaseName = "${project.name}-test"
   from sourceSets.test.output
 }
 
 test {
+  exclude 'org/hyperledger/besu/ethereum/mainnet/DifficultyCalculatorTests.class'
+  exclude 'org/hyperledger/besu/ethereum/core/TransactionTest.class'
   exclude 'org/hyperledger/besu/ethereum/vm/**ReferenceTest.class'
   exclude 'org/hyperledger/besu/ethereum/vm/blockchain/**.class'
   exclude 'org/hyperledger/besu/ethereum/vm/generalstate/**.class'
-  exclude 'org/hyperledger/besu/ethereum/core/TransactionTest.class'
 }
 
 def generateTestFiles(FileTree jsonPath, File templateFile, String pathstrip, String destination, String namePrefix) {
@@ -108,7 +116,9 @@ def generateTestFiles(FileTree jsonPath, File templateFile, String pathstrip, St
       if (!testJsonFile.getName().toString().startsWith(".")) {
         String parentDirectory = testJsonFile.getParentFile().getName()
         String testFile = testJsonFile.getName()
-        if(testJsonFile.getParentFile().getParentFile().getName() != pathstrip) {
+        if(testJsonFile.getParentFile().getName() == pathstrip) {
+          paths << pathstrip + "/" + testFile
+        } else if(testJsonFile.getParentFile().getParentFile().getName() != pathstrip) {
           paths << pathstrip + "/" + testJsonFile.getParentFile().getParentFile().getName() + "/" + parentDirectory + "/" + testFile
         } else {
           paths << pathstrip + "/" + parentDirectory + "/" + testFile
@@ -183,10 +193,11 @@ task referenceTests(type: Test, dependsOn: [
   }
   scanForTestClasses = false
   enableAssertions = true
+  include 'org/hyperledger/besu/ethereum/core/TransactionTest.class'
+  include 'org/hyperledger/besu/ethereum/mainnet/DifficultyCalculatorTests.class'
   include 'org/hyperledger/besu/ethereum/vm/**ReferenceTest.class'
   include 'org/hyperledger/besu/ethereum/vm/blockchain/**.class'
   include 'org/hyperledger/besu/ethereum/vm/generalstate/**.class'
-  include 'org/hyperledger/besu/ethereum/core/TransactionTest.class'
 }
 
 artifacts {

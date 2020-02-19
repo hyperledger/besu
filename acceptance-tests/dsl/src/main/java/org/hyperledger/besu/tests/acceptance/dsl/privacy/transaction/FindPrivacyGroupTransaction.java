@@ -21,12 +21,12 @@ import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.web3j.protocol.pantheon.Pantheon;
-import org.web3j.protocol.pantheon.response.privacy.PrivacyGroup;
+import org.web3j.protocol.besu.Besu;
+import org.web3j.protocol.besu.response.privacy.PrivacyGroup;
 import org.web3j.utils.Base64String;
 
 public class FindPrivacyGroupTransaction implements Transaction<List<PrivacyGroup>> {
-  private List<Base64String> nodes;
+  private final List<Base64String> nodes;
 
   public FindPrivacyGroupTransaction(final List<String> nodeEnclaveKeys) {
 
@@ -35,7 +35,7 @@ public class FindPrivacyGroupTransaction implements Transaction<List<PrivacyGrou
 
   @Override
   public List<PrivacyGroup> execute(final NodeRequests node) {
-    final Pantheon besu = node.privacy().getBesuClient();
+    final Besu besu = node.privacy().getBesuClient();
     try {
       return besu.privFindPrivacyGroup(nodes).send().getGroups();
     } catch (IOException e) {

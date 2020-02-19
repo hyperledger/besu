@@ -21,6 +21,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -65,9 +66,10 @@ public class PermGetNodesWhitelistTest {
 
   @Test
   public void shouldReturnSuccessResponseWhenListPopulated() {
-    final JsonRpcRequest request = buildRequest();
+    final JsonRpcRequestContext request = buildRequest();
     final JsonRpcResponse expected =
-        new JsonRpcSuccessResponse(request.getId(), Lists.newArrayList(enode1, enode2, enode3));
+        new JsonRpcSuccessResponse(
+            request.getRequest().getId(), Lists.newArrayList(enode1, enode2, enode3));
 
     when(nodeLocalConfigPermissioningController.getNodesWhitelist())
         .thenReturn(buildNodesList(enode1, enode2, enode3));
@@ -82,8 +84,9 @@ public class PermGetNodesWhitelistTest {
 
   @Test
   public void shouldReturnSuccessResponseWhenListSetAndEmpty() {
-    final JsonRpcRequest request = buildRequest();
-    final JsonRpcResponse expected = new JsonRpcSuccessResponse(request.getId(), Lists.emptyList());
+    final JsonRpcRequestContext request = buildRequest();
+    final JsonRpcResponse expected =
+        new JsonRpcSuccessResponse(request.getRequest().getId(), Lists.emptyList());
 
     when(nodeLocalConfigPermissioningController.getNodesWhitelist()).thenReturn(buildNodesList());
 
@@ -99,16 +102,17 @@ public class PermGetNodesWhitelistTest {
   public void shouldFailWhenP2pDisabled() {
     method = new PermGetNodesWhitelist(Optional.empty());
 
-    final JsonRpcRequest request = buildRequest();
+    final JsonRpcRequestContext request = buildRequest();
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getId(), JsonRpcError.NODE_WHITELIST_NOT_ENABLED);
+        new JsonRpcErrorResponse(
+            request.getRequest().getId(), JsonRpcError.NODE_WHITELIST_NOT_ENABLED);
 
     Assertions.assertThat(method.response(request))
         .isEqualToComparingFieldByField(expectedResponse);
   }
 
-  private JsonRpcRequest buildRequest() {
-    return new JsonRpcRequest("2.0", METHOD_NAME, new Object[] {});
+  private JsonRpcRequestContext buildRequest() {
+    return new JsonRpcRequestContext(new JsonRpcRequest("2.0", METHOD_NAME, new Object[] {}));
   }
 
   private List<String> buildNodesList(final String... enodes) {

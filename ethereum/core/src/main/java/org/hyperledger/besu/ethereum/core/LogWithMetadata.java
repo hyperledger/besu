@@ -16,23 +16,21 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import org.hyperledger.besu.util.bytes.BytesValue;
-
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.google.common.base.MoreObjects;
+import org.apache.tuweni.bytes.Bytes;
 
-public class LogWithMetadata extends Log {
+public class LogWithMetadata extends Log
+    implements org.hyperledger.besu.plugin.data.LogWithMetadata {
 
   private final int logIndex;
   private final long blockNumber;
   private final Hash blockHash;
   private final Hash transactionHash;
   private final int transactionIndex;
-  private final Address address;
-  private final BytesValue data;
-  private final List<LogTopic> topics;
   private final boolean removed;
 
   public LogWithMetadata(
@@ -42,7 +40,7 @@ public class LogWithMetadata extends Log {
       final Hash transactionHash,
       final int transactionIndex,
       final Address address,
-      final BytesValue data,
+      final Bytes data,
       final List<LogTopic> topics,
       final boolean removed) {
     super(address, data, topics);
@@ -51,9 +49,6 @@ public class LogWithMetadata extends Log {
     this.blockHash = blockHash;
     this.transactionHash = transactionHash;
     this.transactionIndex = transactionIndex;
-    this.address = address;
-    this.data = data;
-    this.topics = topics;
     this.removed = removed;
   }
 
@@ -101,41 +96,32 @@ public class LogWithMetadata extends Log {
 
   // The index of this log within the entire ordered list of logs associated with the block this log
   // belongs to.
+  @Override
   public int getLogIndex() {
     return logIndex;
   }
 
+  @Override
   public long getBlockNumber() {
     return blockNumber;
   }
 
+  @Override
   public Hash getBlockHash() {
     return blockHash;
   }
 
+  @Override
   public Hash getTransactionHash() {
     return transactionHash;
   }
 
+  @Override
   public int getTransactionIndex() {
     return transactionIndex;
   }
 
   @Override
-  public Address getLogger() {
-    return address;
-  }
-
-  @Override
-  public BytesValue getData() {
-    return data;
-  }
-
-  @Override
-  public List<LogTopic> getTopics() {
-    return topics;
-  }
-
   public boolean isRemoved() {
     return removed;
   }
@@ -148,10 +134,24 @@ public class LogWithMetadata extends Log {
         .add("blockHash", blockHash)
         .add("transactionHash", transactionHash)
         .add("transactionIndex", transactionIndex)
-        .add("address", address)
-        .add("data", data)
-        .add("topics", topics)
+        .add("address", getLogger())
+        .add("data", getData())
+        .add("topics", getTopics())
         .add("removed", removed)
         .toString();
+  }
+
+  public static LogWithMetadata fromPlugin(
+      final org.hyperledger.besu.plugin.data.LogWithMetadata pluginObject) {
+    return new LogWithMetadata(
+        pluginObject.getLogIndex(),
+        pluginObject.getBlockNumber(),
+        Hash.fromPlugin(pluginObject.getBlockHash()),
+        Hash.fromPlugin(pluginObject.getTransactionHash()),
+        pluginObject.getTransactionIndex(),
+        Address.fromPlugin(pluginObject.getLogger()),
+        pluginObject.getData(),
+        pluginObject.getTopics().stream().map(LogTopic::create).collect(Collectors.toList()),
+        pluginObject.isRemoved());
   }
 }

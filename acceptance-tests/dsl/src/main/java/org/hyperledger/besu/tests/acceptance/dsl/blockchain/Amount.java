@@ -17,8 +17,6 @@ package org.hyperledger.besu.tests.acceptance.dsl.blockchain;
 import static org.web3j.utils.Convert.Unit.ETHER;
 import static org.web3j.utils.Convert.Unit.WEI;
 
-import org.hyperledger.besu.ethereum.core.Wei;
-
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
@@ -27,8 +25,8 @@ import org.web3j.utils.Convert.Unit;
 
 public class Amount {
 
-  private BigDecimal value;
-  private Unit unit;
+  private final BigDecimal value;
+  private final Unit unit;
 
   private Amount(final BigDecimal value, final Unit unit) {
     this.value = value;
@@ -41,10 +39,6 @@ public class Amount {
 
   public static Amount wei(final BigInteger value) {
     return new Amount(new BigDecimal(value), WEI);
-  }
-
-  public static Amount wei(final Wei wei) {
-    return wei(new BigInteger(wei.toUnprefixedHexString(), 16));
   }
 
   public BigDecimal getValue() {

@@ -14,23 +14,10 @@
  */
 package org.hyperledger.besu.plugin.services.storage.rocksdb;
 
-import org.hyperledger.besu.metrics.BesuMetricCategory;
-import org.hyperledger.besu.metrics.prometheus.PrometheusMetricsSystem;
-import org.hyperledger.besu.metrics.rocksdb.RocksDBStats;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
-import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBConfiguration;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.rocksdb.RocksDBException;
-import org.rocksdb.Statistics;
-import org.rocksdb.TransactionDB;
 
 public class RocksDBMetrics {
-
-  private static final Logger LOG = LogManager.getLogger();
 
   private final OperationTimer readLatency;
   private final OperationTimer removeLatency;
@@ -38,7 +25,7 @@ public class RocksDBMetrics {
   private final OperationTimer commitLatency;
   private final Counter rollbackCount;
 
-  private RocksDBMetrics(
+  public RocksDBMetrics(
       final OperationTimer readLatency,
       final OperationTimer removeLatency,
       final OperationTimer writeLatency,
@@ -49,87 +36,6 @@ public class RocksDBMetrics {
     this.writeLatency = writeLatency;
     this.commitLatency = commitLatency;
     this.rollbackCount = rollbackCount;
-  }
-
-  public static RocksDBMetrics of(
-      final MetricsSystem metricsSystem,
-      final RocksDBConfiguration rocksDbConfiguration,
-      final TransactionDB db,
-      final Statistics stats) {
-    final OperationTimer readLatency =
-        metricsSystem
-            .createLabelledTimer(
-                BesuMetricCategory.KVSTORE_ROCKSDB,
-                "read_latency_seconds",
-                "Latency for read from RocksDB.",
-                "database")
-            .labels(rocksDbConfiguration.getLabel());
-    final OperationTimer removeLatency =
-        metricsSystem
-            .createLabelledTimer(
-                BesuMetricCategory.KVSTORE_ROCKSDB,
-                "remove_latency_seconds",
-                "Latency of remove requests from RocksDB.",
-                "database")
-            .labels(rocksDbConfiguration.getLabel());
-    final OperationTimer writeLatency =
-        metricsSystem
-            .createLabelledTimer(
-                BesuMetricCategory.KVSTORE_ROCKSDB,
-                "write_latency_seconds",
-                "Latency for write to RocksDB.",
-                "database")
-            .labels(rocksDbConfiguration.getLabel());
-    final OperationTimer commitLatency =
-        metricsSystem
-            .createLabelledTimer(
-                BesuMetricCategory.KVSTORE_ROCKSDB,
-                "commit_latency_seconds",
-                "Latency for commits to RocksDB.",
-                "database")
-            .labels(rocksDbConfiguration.getLabel());
-
-    if (metricsSystem instanceof PrometheusMetricsSystem) {
-      RocksDBStats.registerRocksDBMetrics(stats, (PrometheusMetricsSystem) metricsSystem);
-    }
-
-    metricsSystem.createLongGauge(
-        BesuMetricCategory.KVSTORE_ROCKSDB,
-        "rocks_db_table_readers_memory_bytes",
-        "Estimated memory used for RocksDB index and filter blocks in bytes",
-        () -> {
-          try {
-            return db.getLongProperty("rocksdb.estimate-table-readers-mem");
-          } catch (final RocksDBException e) {
-            LOG.debug("Failed to get RocksDB metric", e);
-            return 0L;
-          }
-        });
-
-    metricsSystem.createLongGauge(
-        BesuMetricCategory.KVSTORE_ROCKSDB,
-        "rocks_db_files_size_bytes",
-        "Estimated database size in bytes",
-        () -> {
-          try {
-            return db.getLongProperty("rocksdb.live-sst-files-size");
-          } catch (final RocksDBException e) {
-            LOG.debug("Failed to get RocksDB metric", e);
-            return 0L;
-          }
-        });
-
-    final Counter rollbackCount =
-        metricsSystem
-            .createLabelledCounter(
-                BesuMetricCategory.KVSTORE_ROCKSDB,
-                "rollback_count",
-                "Number of RocksDB transactions rolled back.",
-                "database")
-            .labels(rocksDbConfiguration.getLabel());
-
-    return new RocksDBMetrics(
-        readLatency, removeLatency, writeLatency, commitLatency, rollbackCount);
   }
 
   public OperationTimer getReadLatency() {

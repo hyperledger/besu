@@ -24,12 +24,12 @@ import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.account.ExpectAccountBalance;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.account.ExpectAccountBalanceNotChanging;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.eth.EthTransactions;
-import org.hyperledger.besu.util.bytes.Bytes32;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes32;
 import org.web3j.crypto.Credentials;
 import org.web3j.utils.Convert.Unit;
 

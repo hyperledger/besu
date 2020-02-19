@@ -27,11 +27,16 @@ import picocli.CommandLine.ParameterException;
 @RunWith(MockitoJUnitRunner.StrictStubs.class)
 public class RpcAuthFileValidatorTest {
 
-  private static final String CORRECT_TOML = "/auth_correct.toml";
-  private static final String DUPLICATE_USER_TOML = "/auth_duplicate_user.toml";
-  private static final String INVALID_TOML = "/auth_invalid.toml";
-  private static final String INVALID_VALUE_TOML = "/auth_invalid_value.toml";
-  private static final String NO_PASSWORD_TOML = "/auth_no_password.toml";
+  private static final String CORRECT_TOML = "/rpcauth/auth_correct.toml";
+  private static final String DUPLICATE_USER_TOML = "/rpcauth/auth_duplicate_user.toml";
+  private static final String INVALID_TOML = "/rpcauth/auth_invalid.toml";
+  private static final String INVALID_GROUPS_VALUE_TOML = "/rpcauth/auth_invalid_groups_value.toml";
+  private static final String INVALID_PERMISSIONS_VALUE_TOML =
+      "/rpcauth/auth_invalid_permissions_value.toml";
+  private static final String INVALID_PRIVACY_PUBLIC_KEY_VALUE_TOML =
+      "/rpcauth/auth_invalid_privacy_public_key_value.toml";
+  private static final String NO_PASSWORD_TOML = "/rpcauth/auth_no_password.toml";
+
   @Mock CommandLine commandLine;
 
   @Test
@@ -67,10 +72,31 @@ public class RpcAuthFileValidatorTest {
   }
 
   @Test
-  public void shouldFailWhenInvalidKeyValue() {
+  public void shouldFailWhenInvalidGroupsKeyValue() {
     assertThatThrownBy(
             () ->
-                RpcAuthFileValidator.validate(commandLine, getFilePath(INVALID_VALUE_TOML), "HTTP"))
+                RpcAuthFileValidator.validate(
+                    commandLine, getFilePath(INVALID_GROUPS_VALUE_TOML), "HTTP"))
+        .isInstanceOf(ParameterException.class)
+        .hasMessage("RPC authentication configuration file contains invalid values.");
+  }
+
+  @Test
+  public void shouldFailWhenInvalidPermissionsKeyValue() {
+    assertThatThrownBy(
+            () ->
+                RpcAuthFileValidator.validate(
+                    commandLine, getFilePath(INVALID_PERMISSIONS_VALUE_TOML), "HTTP"))
+        .isInstanceOf(ParameterException.class)
+        .hasMessage("RPC authentication configuration file contains invalid values.");
+  }
+
+  @Test
+  public void shouldFailWhenInvalidEmptyPrivacyPublicKeyValue() {
+    assertThatThrownBy(
+            () ->
+                RpcAuthFileValidator.validate(
+                    commandLine, getFilePath(INVALID_PRIVACY_PUBLIC_KEY_VALUE_TOML), "HTTP"))
         .isInstanceOf(ParameterException.class)
         .hasMessage("RPC authentication configuration file contains invalid values.");
   }

@@ -15,9 +15,8 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -34,11 +33,6 @@ import org.apache.logging.log4j.core.config.Configurator;
 public class AdminChangeLogLevel implements JsonRpcMethod {
 
   private static final Logger LOG = LogManager.getLogger();
-  private final JsonRpcParameter parameters;
-
-  public AdminChangeLogLevel(final JsonRpcParameter parameters) {
-    this.parameters = parameters;
-  }
 
   @Override
   public String getName() {
@@ -46,18 +40,19 @@ public class AdminChangeLogLevel implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest request) {
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     try {
-      final Level logLevel = parameters.required(request.getParams(), 0, Level.class);
+      final Level logLevel = requestContext.getRequiredParameter(0, Level.class);
       final Optional<String[]> optionalLogFilters =
-          parameters.optional(request.getParams(), 1, String[].class);
+          requestContext.getOptionalParameter(1, String[].class);
       optionalLogFilters.ifPresentOrElse(
           logFilters ->
               Arrays.stream(logFilters).forEach(logFilter -> setLogLevel(logFilter, logLevel)),
           () -> setLogLevel("", logLevel));
-      return new JsonRpcSuccessResponse(request.getId());
+      return new JsonRpcSuccessResponse(requestContext.getRequest().getId());
     } catch (InvalidJsonRpcParameters invalidJsonRpcParameters) {
-      return new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
     }
   }
 

@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation;
 
+import org.hyperledger.besu.ethereum.chain.EthHashObserver;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -21,10 +22,11 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolution;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.List;
 import java.util.Optional;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public interface MiningCoordinator {
 
@@ -52,7 +54,7 @@ public interface MiningCoordinator {
 
   Wei getMinTransactionGasPrice();
 
-  void setExtraData(BytesValue extraData);
+  void setExtraData(Bytes extraData);
 
   default void setCoinbase(final Address coinbase) {
     throw new UnsupportedOperationException(
@@ -87,4 +89,6 @@ public interface MiningCoordinator {
       final BlockHeader parentHeader,
       final List<Transaction> transactions,
       final List<BlockHeader> ommers);
+
+  default void addEthHashObserver(final EthHashObserver observer) {}
 }

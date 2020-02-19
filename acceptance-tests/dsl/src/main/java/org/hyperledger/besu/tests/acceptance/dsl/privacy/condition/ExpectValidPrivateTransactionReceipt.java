@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.transaction.PrivacyTransactions;
 
-import org.web3j.protocol.pantheon.response.privacy.PrivateTransactionReceipt;
+import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
 
 public class ExpectValidPrivateTransactionReceipt implements PrivateCondition {
   private final PrivacyTransactions transactions;
@@ -39,6 +39,6 @@ public class ExpectValidPrivateTransactionReceipt implements PrivateCondition {
   @Override
   public void verify(final PrivacyNode node) {
     assertThat(node.execute(transactions.getPrivateTransactionReceipt(transactionHash)))
-        .isEqualTo(receipt);
+        .isEqualToIgnoringGivenFields(receipt, "commitmentHash");
   }
 }

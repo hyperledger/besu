@@ -19,7 +19,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
+import org.hyperledger.besu.ethereum.core.BlockDataGenerator.BlockOptions;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -27,9 +29,10 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
+import org.hyperledger.besu.metrics.prometheus.PrometheusMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -129,6 +132,39 @@ public class DefaultBlockchainTest {
 
     // Create read only chain
     final Blockchain blockchain = createBlockchain(kvStore);
+
+    for (int i = 0; i < blocks.size(); i++) {
+      assertBlockDataIsStored(blockchain, blocks.get(i), blockReceipts.get(i));
+    }
+    final Block lastBlock = blocks.get(blocks.size() - 1);
+    assertBlockIsHead(blockchain, lastBlock);
+    assertTotalDifficultiesAreConsistent(blockchain, lastBlock);
+  }
+
+  @Test
+  public void initializeReadOnly_withGiantDifficultyAndLiveMetrics() {
+    final BlockDataGenerator gen = new BlockDataGenerator();
+    gen.setBlockOptionsSupplier(
+        () -> BlockOptions.create().setDifficulty(Difficulty.of(Long.MAX_VALUE)));
+    final KeyValueStorage kvStore = new InMemoryKeyValueStorage();
+    final List<Block> blocks = gen.blockSequence(10);
+    final List<List<TransactionReceipt>> blockReceipts = new ArrayList<>(blocks.size());
+    blockReceipts.add(Collections.emptyList());
+
+    // Write small chain to storage
+    final MutableBlockchain mutableBlockchain = createMutableBlockchain(kvStore, blocks.get(0));
+    for (int i = 1; i < blocks.size(); i++) {
+      final Block block = blocks.get(i);
+      final List<TransactionReceipt> receipts = gen.receipts(block);
+      blockReceipts.add(receipts);
+      mutableBlockchain.appendBlock(block, receipts);
+    }
+
+    // Create read only chain
+    final Blockchain blockchain =
+        DefaultBlockchain.create(
+            createStorage(kvStore),
+            PrometheusMetricsSystem.init(MetricsConfiguration.builder().enabled(true).build()));
 
     for (int i = 0; i < blocks.size(); i++) {
       assertBlockDataIsStored(blockchain, blocks.get(i), blockReceipts.get(i));
@@ -265,7 +301,7 @@ public class DefaultBlockchainTest {
         new BlockDataGenerator.BlockOptions()
             .setParentHash(chain.get(commonAncestor).getHash())
             .setBlockNumber(forkBlock)
-            .setDifficulty(chain.get(forkBlock).getHeader().getDifficulty().plus(10L));
+            .setDifficulty(chain.get(forkBlock).getHeader().getDifficulty().add(10L));
     final Block fork = gen.block(options);
     final List<TransactionReceipt> forkReceipts = gen.receipts(fork);
     final List<Block> reorgedChain = new ArrayList<>(chain.subList(0, forkBlock));
@@ -341,20 +377,20 @@ public class DefaultBlockchainTest {
         new BlockDataGenerator.BlockOptions()
             .setParentHash(chain.get(commonAncestor).getHash())
             .setBlockNumber(forkStart)
-            .setDifficulty(chain.get(forkStart).getHeader().getDifficulty().minus(5L));
+            .setDifficulty(chain.get(forkStart).getHeader().getDifficulty().subtract(5L));
     forkBlocks.add(gen.block(options));
     // Generate second block
-    final UInt256 remainingDifficultyToOutpace =
+    final Difficulty remainingDifficultyToOutpace =
         chain
             .get(forkStart + 1)
             .getHeader()
             .getDifficulty()
-            .plus(chain.get(forkStart + 2).getHeader().getDifficulty());
+            .add(chain.get(forkStart + 2).getHeader().getDifficulty());
     options =
         new BlockDataGenerator.BlockOptions()
             .setParentHash(forkBlocks.get(0).getHash())
             .setBlockNumber(forkStart + 1)
-            .setDifficulty(remainingDifficultyToOutpace.plus(10L));
+            .setDifficulty(remainingDifficultyToOutpace.add(10L));
     forkBlocks.add(gen.block(options));
     // Generate corresponding receipts
     final List<List<TransactionReceipt>> forkReceipts =
@@ -461,14 +497,14 @@ public class DefaultBlockchainTest {
         new BlockDataGenerator.BlockOptions()
             .setParentHash(chain.get(commonAncestor).getHash())
             .setBlockNumber(forkStart)
-            .setDifficulty(chain.get(forkStart).getHeader().getDifficulty().minus(5L));
+            .setDifficulty(chain.get(forkStart).getHeader().getDifficulty().subtract(5L));
     forkBlocks.add(gen.block(options));
     // Generate second block
     options =
         new BlockDataGenerator.BlockOptions()
             .setParentHash(forkBlocks.get(0).getHash())
             .setBlockNumber(forkStart + 1)
-            .setDifficulty(UInt256.of(10L));
+            .setDifficulty(Difficulty.of(10L));
     forkBlocks.add(gen.block(options));
     // Generate corresponding receipts
     final List<List<TransactionReceipt>> forkReceipts =
@@ -570,7 +606,7 @@ public class DefaultBlockchainTest {
         new BlockDataGenerator.BlockOptions()
             .setParentHash(chain.get(commonAncestor).getHash())
             .setBlockNumber(forkBlock)
-            .setDifficulty(chain.get(forkBlock).getHeader().getDifficulty().plus(10L))
+            .setDifficulty(chain.get(forkBlock).getHeader().getDifficulty().add(10L))
             .addTransaction(overlappingTx)
             .addTransaction(gen.transaction());
     final Block fork = gen.block(options);
@@ -683,14 +719,14 @@ public class DefaultBlockchainTest {
         new BlockDataGenerator.BlockOptions()
             .setParentHash(chain.get(commonAncestor).getHash())
             .setBlockNumber(forkStart)
-            .setDifficulty(chain.get(forkStart).getHeader().getDifficulty().minus(5L));
+            .setDifficulty(chain.get(forkStart).getHeader().getDifficulty().subtract(5L));
     forkBlocks.add(gen.block(options));
     // Generate second block
     options =
         new BlockDataGenerator.BlockOptions()
             .setParentHash(forkBlocks.get(0).getHash())
             .setBlockNumber(forkStart + 1)
-            .setDifficulty(chain.get(forkStart + 1).getHeader().getDifficulty().minus(5L));
+            .setDifficulty(chain.get(forkStart + 1).getHeader().getDifficulty().subtract(5L));
     forkBlocks.add(gen.block(options));
     // Generate corresponding receipts
     final List<List<TransactionReceipt>> forkReceipts =
@@ -724,7 +760,7 @@ public class DefaultBlockchainTest {
         new BlockDataGenerator.BlockOptions()
             .setParentHash(chain.get(commonAncestor).getHash())
             .setBlockNumber(forkStart)
-            .setDifficulty(chain.get(forkStart).getHeader().getDifficulty().minus(5L));
+            .setDifficulty(chain.get(forkStart).getHeader().getDifficulty().subtract(5L));
     final Block secondFork = gen.block(options);
     blockchain.appendBlock(secondFork, gen.receipts(secondFork));
 
@@ -894,11 +930,11 @@ public class DefaultBlockchainTest {
   private void assertTotalDifficultiesAreConsistent(final Blockchain blockchain, final Block head) {
     // Check that total difficulties are summed correctly
     long num = BlockHeader.GENESIS_BLOCK_NUMBER;
-    UInt256 td = UInt256.of(0);
+    Difficulty td = Difficulty.ZERO;
     while (num <= head.getHeader().getNumber()) {
       final Hash curHash = blockchain.getBlockHashByNumber(num).get();
       final BlockHeader curHead = blockchain.getBlockHeader(curHash).get();
-      td = td.plus(curHead.getDifficulty());
+      td = td.add(curHead.getDifficulty());
       assertThat(blockchain.getTotalDifficultyByHash(curHash).get()).isEqualTo(td);
 
       num += 1;

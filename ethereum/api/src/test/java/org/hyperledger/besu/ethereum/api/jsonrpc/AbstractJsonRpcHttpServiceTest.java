@@ -37,19 +37,20 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
-import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
+import org.hyperledger.besu.nat.NatService;
 import org.hyperledger.besu.testutil.BlockTestUtil.ChainResources;
 
 import java.math.BigInteger;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
@@ -71,7 +72,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
   protected static String CLIENT_VERSION = "TestClientVersion/0.1.0";
   protected static final BigInteger NETWORK_ID = BigInteger.valueOf(123);
   protected static final Collection<RpcApi> JSON_RPC_APIS =
-      Arrays.asList(RpcApis.ETH, RpcApis.NET, RpcApis.WEB3, RpcApis.DEBUG);
+      Arrays.asList(RpcApis.ETH, RpcApis.NET, RpcApis.WEB3, RpcApis.DEBUG, RpcApis.TRACE);
 
   protected final Vertx vertx = Vertx.vertx();
   protected JsonRpcHttpService service;
@@ -138,6 +139,8 @@ public abstract class AbstractJsonRpcHttpServiceTest {
     supportedCapabilities.add(EthProtocol.ETH62);
     supportedCapabilities.add(EthProtocol.ETH63);
 
+    final NatService natService = new NatService(Optional.empty());
+
     return new JsonRpcMethodsFactory()
         .methods(
             CLIENT_VERSION,
@@ -146,7 +149,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
             peerDiscoveryMock,
             blockchainQueries,
             synchronizerMock,
-            MainnetProtocolSchedule.create(),
+            blockchainSetupUtil.getProtocolSchedule(),
             filterManager,
             transactionPoolMock,
             miningCoordinatorMock,
@@ -158,7 +161,9 @@ public abstract class AbstractJsonRpcHttpServiceTest {
             privacyParameters,
             config,
             mock(WebSocketConfiguration.class),
-            mock(MetricsConfiguration.class));
+            mock(MetricsConfiguration.class),
+            natService,
+            new HashMap<>());
   }
 
   protected void startService() throws Exception {
@@ -169,6 +174,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
 
     final JsonRpcConfiguration config = JsonRpcConfiguration.createDefault();
     final Map<String, JsonRpcMethod> methods = getRpcMethods(config, blockchainSetupUtil);
+    final NatService natService = new NatService(Optional.empty());
 
     config.setPort(0);
     service =
@@ -177,7 +183,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
             folder.newFolder().toPath(),
             config,
             new NoOpMetricsSystem(),
-            Optional.empty(),
+            natService,
             methods,
             HealthService.ALWAYS_HEALTHY,
             HealthService.ALWAYS_HEALTHY);

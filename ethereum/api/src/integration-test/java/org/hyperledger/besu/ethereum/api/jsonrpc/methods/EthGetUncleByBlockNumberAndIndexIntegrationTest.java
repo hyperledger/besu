@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseUtils;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcTestMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -92,15 +93,16 @@ public class EthGetUncleByBlockNumberAndIndexIntegrationTest {
         JsonRpcResponseKey.TRANSACTION_ROOT,
         "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421");
     final JsonRpcResponse expected = responseUtils.response(out);
-    final JsonRpcRequest request = getUncleByBlockNumberAndIndex();
+    final JsonRpcRequestContext request = getUncleByBlockNumberAndIndex();
 
     final JsonRpcSuccessResponse actual = (JsonRpcSuccessResponse) method.response(request);
 
     assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
   }
 
-  private JsonRpcRequest getUncleByBlockNumberAndIndex() {
-    return new JsonRpcRequest(
-        "2.0", "eth_getUncleByBlockNumberAndIndex", new Object[] {"0x4", "0x0"});
+  private JsonRpcRequestContext getUncleByBlockNumberAndIndex() {
+    return new JsonRpcRequestContext(
+        new JsonRpcRequest(
+            "2.0", "eth_getUncleByBlockNumberAndIndex", new Object[] {"0x4", "0x0"}));
   }
 }

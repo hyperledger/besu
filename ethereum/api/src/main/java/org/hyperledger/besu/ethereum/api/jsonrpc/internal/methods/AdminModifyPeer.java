@@ -14,9 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -25,34 +24,37 @@ import org.hyperledger.besu.ethereum.p2p.network.exceptions.P2PDisabledException
 
 public abstract class AdminModifyPeer implements JsonRpcMethod {
 
-  protected final JsonRpcParameter parameters;
   protected final P2PNetwork peerNetwork;
 
-  public AdminModifyPeer(final P2PNetwork peerNetwork, final JsonRpcParameter parameters) {
+  public AdminModifyPeer(final P2PNetwork peerNetwork) {
     this.peerNetwork = peerNetwork;
-    this.parameters = parameters;
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest req) {
-    if (req.getParamLength() != 1) {
-      return new JsonRpcErrorResponse(req.getId(), JsonRpcError.INVALID_PARAMS);
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
+    if (requestContext.getRequest().getParamLength() != 1) {
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
     }
     try {
-      final String enodeString = parameters.required(req.getParams(), 0, String.class);
-      return performOperation(req.getId(), enodeString);
+      final String enodeString = requestContext.getRequiredParameter(0, String.class);
+      return performOperation(requestContext.getRequest().getId(), enodeString);
     } catch (final InvalidJsonRpcParameters e) {
-      return new JsonRpcErrorResponse(req.getId(), JsonRpcError.INVALID_PARAMS);
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
     } catch (final IllegalArgumentException e) {
       if (e.getMessage()
           .endsWith(
               "Invalid node ID: node ID must have exactly 128 hexadecimal characters and should not include any '0x' hex prefix.")) {
-        return new JsonRpcErrorResponse(req.getId(), JsonRpcError.ENODE_ID_INVALID);
+        return new JsonRpcErrorResponse(
+            requestContext.getRequest().getId(), JsonRpcError.ENODE_ID_INVALID);
       } else {
-        return new JsonRpcErrorResponse(req.getId(), JsonRpcError.PARSE_ERROR);
+        return new JsonRpcErrorResponse(
+            requestContext.getRequest().getId(), JsonRpcError.PARSE_ERROR);
       }
     } catch (final P2PDisabledException e) {
-      return new JsonRpcErrorResponse(req.getId(), JsonRpcError.P2P_DISABLED);
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), JsonRpcError.P2P_DISABLED);
     }
   }
 

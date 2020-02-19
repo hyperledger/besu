@@ -14,12 +14,10 @@
  */
 package org.hyperledger.besu.plugin.data;
 
-import org.hyperledger.besu.plugin.Unstable;
+import org.apache.tuweni.bytes.Bytes32;
 
 /**
- * A marker interface indicating that this {@link UnformattedData} represents a hash of some sort.
- * The particular algorithm depends on the source, it may be ripemd, keccak, or some other
- * algorithm.
+ * A marker interface indicating that this {@link Bytes32} represents a hash of some sort. The
+ * particular algorithm depends on the source, it may be ripemd, keccak, or some other algorithm.
  */
-@Unstable
-public interface Hash extends UnformattedData {}
+public interface Hash extends Bytes32 {}

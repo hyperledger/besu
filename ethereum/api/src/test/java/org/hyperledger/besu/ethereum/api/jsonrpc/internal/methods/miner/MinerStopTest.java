@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
@@ -48,7 +49,7 @@ public class MinerStopTest {
   @Test
   public void shouldReturnTrueWhenMiningStopsSuccessfully() {
     when(miningCoordinator.disable()).thenReturn(true);
-    final JsonRpcRequest request = minerStop();
+    final JsonRpcRequestContext request = minerStop();
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, true);
 
     final JsonRpcResponse actualResponse = method.response(request);
@@ -59,7 +60,7 @@ public class MinerStopTest {
   @Test
   public void shouldReturnFalseWhenMiningDoesNotStopSuccessfully() {
     when(miningCoordinator.disable()).thenReturn(false);
-    final JsonRpcRequest request = minerStop();
+    final JsonRpcRequestContext request = minerStop();
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, false);
 
     final JsonRpcResponse actualResponse = method.response(request);
@@ -67,7 +68,7 @@ public class MinerStopTest {
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
   }
 
-  private JsonRpcRequest minerStop() {
-    return new JsonRpcRequest("2.0", "miner_stop", null);
+  private JsonRpcRequestContext minerStop() {
+    return new JsonRpcRequestContext(new JsonRpcRequest("2.0", "miner_stop", null));
   }
 }

@@ -34,7 +34,7 @@ public class RoundChangeMessageValidatorTest {
   private final MessageFactory messageFactory = new MessageFactory(keyPair);
   private final ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(1, 1);
 
-  private ProposalBlockConsistencyValidator proposalBlockConsistencyValidator =
+  private final ProposalBlockConsistencyValidator proposalBlockConsistencyValidator =
       mock(ProposalBlockConsistencyValidator.class);
 
   private final RoundChangeMessageValidator validator =

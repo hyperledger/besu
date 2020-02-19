@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.DefaultEvmAccount;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
@@ -37,8 +38,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -50,12 +49,13 @@ import java.util.function.Function;
 import com.google.common.collect.Lists;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 public abstract class AbstractBlockCreator<C> implements AsyncBlockCreator {
 
   public interface ExtraDataCalculator {
 
-    BytesValue get(final BlockHeader parent);
+    Bytes get(final BlockHeader parent);
   }
 
   private static final Logger LOG = LogManager.getLogger();
@@ -256,7 +256,7 @@ public abstract class AbstractBlockCreator<C> implements AsyncBlockCreator {
     return BlockHeaderBuilder.create()
         .parentHash(parentHeader.getHash())
         .coinbase(coinbase)
-        .difficulty(UInt256.of(difficulty))
+        .difficulty(Difficulty.of(difficulty))
         .number(newBlockNumber)
         .gasLimit(gasLimit)
         .timestamp(timestamp)
@@ -285,14 +285,14 @@ public abstract class AbstractBlockCreator<C> implements AsyncBlockCreator {
       final ProcessableBlockHeader header,
       final List<BlockHeader> ommers,
       final Wei blockReward,
-      boolean skipZeroBlockRewards) {
+      final boolean skipZeroBlockRewards) {
 
     // TODO(tmm): Added to make this work, should come from blockProcessor.
     final int MAX_GENERATION = 6;
     if (skipZeroBlockRewards && blockReward.isZero()) {
       return true;
     }
-    final Wei coinbaseReward = blockReward.plus(blockReward.times(ommers.size()).dividedBy(32));
+    final Wei coinbaseReward = blockReward.add(blockReward.multiply(ommers.size()).divide(32));
     final WorldUpdater updater = worldState.updater();
     final DefaultEvmAccount beneficiary = updater.getOrCreate(miningBeneficiary);
 
@@ -309,7 +309,7 @@ public abstract class AbstractBlockCreator<C> implements AsyncBlockCreator {
 
       final DefaultEvmAccount ommerCoinbase = updater.getOrCreate(ommerHeader.getCoinbase());
       final long distance = header.getNumber() - ommerHeader.getNumber();
-      final Wei ommerReward = blockReward.minus(blockReward.times(distance).dividedBy(8));
+      final Wei ommerReward = blockReward.subtract(blockReward.multiply(distance).divide(8));
       ommerCoinbase.getMutable().incrementBalance(ommerReward);
     }
 

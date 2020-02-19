@@ -15,9 +15,8 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.UnsignedIntParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.UncleBlockResult;
@@ -25,9 +24,8 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 
 public class EthGetUncleByBlockNumberAndIndex extends AbstractBlockParameterMethod {
 
-  public EthGetUncleByBlockNumberAndIndex(
-      final BlockchainQueries blockchain, final JsonRpcParameter parameters) {
-    super(blockchain, parameters);
+  public EthGetUncleByBlockNumberAndIndex(final BlockchainQueries blockchain) {
+    super(blockchain);
   }
 
   @Override
@@ -36,14 +34,14 @@ public class EthGetUncleByBlockNumberAndIndex extends AbstractBlockParameterMeth
   }
 
   @Override
-  protected BlockParameter blockParameter(final JsonRpcRequest request) {
-    return getParameters().required(request.getParams(), 0, BlockParameter.class);
+  protected BlockParameter blockParameter(final JsonRpcRequestContext request) {
+    return request.getRequiredParameter(0, BlockParameter.class);
   }
 
   @Override
-  protected BlockResult resultByBlockNumber(final JsonRpcRequest request, final long blockNumber) {
-    final int index =
-        getParameters().required(request.getParams(), 1, UnsignedIntParameter.class).getValue();
+  protected BlockResult resultByBlockNumber(
+      final JsonRpcRequestContext request, final long blockNumber) {
+    final int index = request.getRequiredParameter(1, UnsignedIntParameter.class).getValue();
     return getBlockchainQueries()
         .getOmmer(blockNumber, index)
         .map(UncleBlockResult::build)

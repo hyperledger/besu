@@ -24,8 +24,8 @@ import org.hyperledger.besu.consensus.clique.CliqueBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.VoteTally;
 import org.hyperledger.besu.consensus.common.VoteTallyCache;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -36,11 +36,11 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.Before;
@@ -67,7 +67,7 @@ public class CliqueGetSignersAtHashTest {
 
   @Before
   public void setup() {
-    method = new CliqueGetSignersAtHash(blockchainQueries, voteTallyCache, new JsonRpcParameter());
+    method = new CliqueGetSignersAtHash(blockchainQueries, voteTallyCache);
 
     final byte[] genesisBlockExtraData =
         Hex.decode(
@@ -76,7 +76,7 @@ public class CliqueGetSignersAtHashTest {
     blockHeader =
         new BlockHeaderTestFixture()
             .blockHeaderFunctions(new CliqueBlockHeaderFunctions())
-            .extraData(BytesValue.wrap(genesisBlockExtraData))
+            .extraData(Bytes.wrap(genesisBlockExtraData))
             .buildHeader();
 
     validators =
@@ -95,8 +95,9 @@ public class CliqueGetSignersAtHashTest {
   @Test
   @SuppressWarnings("unchecked")
   public void failsWhenNoParam() {
-    final JsonRpcRequest request =
-        new JsonRpcRequest("2.0", "clique_getSignersAtHash", new Object[] {});
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest("2.0", "clique_getSignersAtHash", new Object[] {}));
 
     final Throwable thrown = AssertionsForClassTypes.catchThrowable(() -> method.response(request));
 
@@ -108,8 +109,9 @@ public class CliqueGetSignersAtHashTest {
   @Test
   @SuppressWarnings("unchecked")
   public void returnsValidatorsForBlockHash() {
-    final JsonRpcRequest request =
-        new JsonRpcRequest("2.0", "clique_getSignersAtHash", new Object[] {BLOCK_HASH});
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest("2.0", "clique_getSignersAtHash", new Object[] {BLOCK_HASH}));
 
     when(blockchainQueries.blockByHash(Hash.fromHexString(BLOCK_HASH)))
         .thenReturn(Optional.of(blockWithMetadata));
@@ -123,8 +125,9 @@ public class CliqueGetSignersAtHashTest {
 
   @Test
   public void failsOnInvalidBlockHash() {
-    final JsonRpcRequest request =
-        new JsonRpcRequest("2.0", "clique_getSigners", new Object[] {BLOCK_HASH});
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest("2.0", "clique_getSigners", new Object[] {BLOCK_HASH}));
 
     when(blockchainQueries.blockByHash(Hash.fromHexString(BLOCK_HASH)))
         .thenReturn(Optional.empty());

@@ -1,0 +1,68 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "trace_replayBlockTransactions",
+    "params": [
+      "0x6",
+      [
+        "vmTrace"
+      ]
+    ],
+    "id": 415
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "result": [
+      {
+        "output": "0x",
+        "stateDiff": null,
+        "trace": [],
+        "transactionHash": "0x91eeabc671e2dd2b1c8ddebb46ba59e8cb3e7d189f80bcc868a9787728c6e59e",
+        "vmTrace": {
+          "code": "0x600035ff",
+          "ops": [
+            {
+              "cost": 3,
+              "ex": {
+                "mem": null,
+                "push": [
+                  "0x0"
+                ],
+                "store": null,
+                "used": 16756095
+              },
+              "pc": 0,
+              "sub": null
+            },
+            {
+              "cost": 3,
+              "ex": {
+                "mem": null,
+                "push": [
+                  "0x999000000000000000000000000"
+                ],
+                "store": null,
+                "used": 16756092
+              },
+              "pc": 2,
+              "sub": null
+            },
+            {
+              "cost": 30000,
+              "ex": {
+                "mem": null,
+                "push": [],
+                "store": null,
+                "used": 16726092
+              },
+              "pc": 3,
+              "sub": null
+            }
+          ]
+        }
+      }
+    ],
+    "id": 415
+  },
+  "statusCode": 200
+}

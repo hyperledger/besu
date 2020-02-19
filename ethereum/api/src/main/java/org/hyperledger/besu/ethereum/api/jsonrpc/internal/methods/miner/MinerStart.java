@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.miner;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -38,14 +38,15 @@ public class MinerStart implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest req) {
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     final boolean enabled;
     try {
       enabled = miningCoordinator.enable();
     } catch (final CoinbaseNotSetException e) {
-      return new JsonRpcErrorResponse(req.getId(), JsonRpcError.COINBASE_NOT_SET);
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), JsonRpcError.COINBASE_NOT_SET);
     }
 
-    return new JsonRpcSuccessResponse(req.getId(), enabled);
+    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), enabled);
   }
 }

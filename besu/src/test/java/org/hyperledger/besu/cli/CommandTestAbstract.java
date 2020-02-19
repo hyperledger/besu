@@ -19,6 +19,7 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyFloat;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
@@ -32,6 +33,7 @@ import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.options.EthProtocolOptions;
 import org.hyperledger.besu.cli.options.MetricsCLIOptions;
 import org.hyperledger.besu.cli.options.NetworkingOptions;
+import org.hyperledger.besu.cli.options.PrunerOptions;
 import org.hyperledger.besu.cli.options.SynchronizerOptions;
 import org.hyperledger.besu.cli.options.TransactionPoolOptions;
 import org.hyperledger.besu.cli.subcommands.PublicKeySubCommand;
@@ -54,10 +56,12 @@ import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
+import org.hyperledger.besu.plugin.services.StorageService;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageFactory;
+import org.hyperledger.besu.plugin.services.storage.PrivacyKeyValueStorageFactory;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
-import org.hyperledger.besu.util.bytes.BytesValue;
+import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -65,13 +69,21 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
+import io.vertx.core.Vertx;
+import io.vertx.core.VertxOptions;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
+import org.awaitility.Awaitility;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -98,6 +110,8 @@ public abstract class CommandTestAbstract {
   private final PrintStream errPrintStream = new PrintStream(commandErrorOutput);
   private final HashMap<String, String> environment = new HashMap<>();
 
+  private final List<TestBesuCommand> besuCommands = new ArrayList<>();
+
   @Mock protected RunnerBuilder mockRunnerBuilder;
   @Mock protected Runner mockRunner;
 
@@ -115,13 +129,13 @@ public abstract class CommandTestAbstract {
   @Mock protected StorageServiceImpl storageService;
   @Mock protected BesuConfiguration commonPluginConfiguration;
   @Mock protected KeyValueStorageFactory rocksDBStorageFactory;
-  @Mock protected KeyValueStorageFactory rocksDBSPrivacyStorageFactory;
+  @Mock protected PrivacyKeyValueStorageFactory rocksDBSPrivacyStorageFactory;
   @Mock protected PicoCLIOptions cliOptions;
 
   @Mock protected Logger mockLogger;
   @Mock protected BesuPluginContextImpl mockBesuPluginContext;
 
-  @Captor protected ArgumentCaptor<Collection<BytesValue>> bytesValueCollectionCollector;
+  @Captor protected ArgumentCaptor<Collection<Bytes>> bytesCollectionCollector;
   @Captor protected ArgumentCaptor<Path> pathArgumentCaptor;
   @Captor protected ArgumentCaptor<File> fileArgumentCaptor;
   @Captor protected ArgumentCaptor<String> stringArgumentCaptor;
@@ -208,12 +222,26 @@ public abstract class CommandTestAbstract {
     when(mockRunnerBuilder.metricsConfiguration(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.staticNodes(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.identityString(any())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.besuPluginContext(any())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.autoLogBloomCaching(anyBoolean())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.build()).thenReturn(mockRunner);
 
-    when(storageService.getByName("rocksdb")).thenReturn(Optional.of(rocksDBStorageFactory));
+    lenient()
+        .when(storageService.getByName(eq("rocksdb")))
+        .thenReturn(Optional.of(rocksDBStorageFactory));
+    lenient()
+        .when(storageService.getByName(eq("rocksdb-privacy")))
+        .thenReturn(Optional.of(rocksDBSPrivacyStorageFactory));
+    lenient()
+        .when(rocksDBSPrivacyStorageFactory.create(any(), any(), any()))
+        .thenReturn(new InMemoryKeyValueStorage());
 
-    when(mockBesuPluginContext.getService(PicoCLIOptions.class))
+    lenient()
+        .when(mockBesuPluginContext.getService(PicoCLIOptions.class))
         .thenReturn(Optional.of(cliOptions));
+    lenient()
+        .when(mockBesuPluginContext.getService(StorageService.class))
+        .thenReturn(Optional.of(storageService));
   }
 
   // Display outputs for debug purpose
@@ -227,6 +255,7 @@ public abstract class CommandTestAbstract {
 
     errPrintStream.close();
     commandErrorOutput.close();
+    besuCommands.forEach(TestBesuCommand::close);
   }
 
   protected void setEnvironemntVariable(final String name, final String value) {
@@ -268,6 +297,7 @@ public abstract class CommandTestAbstract {
             mockBesuPluginContext,
             environment,
             storageService);
+    besuCommands.add(besuCommand);
 
     besuCommand.setBesuConfiguration(commonPluginConfiguration);
 
@@ -285,6 +315,7 @@ public abstract class CommandTestAbstract {
 
     @CommandLine.Spec CommandLine.Model.CommandSpec spec;
     private final PublicKeySubCommand.KeyLoader keyLoader;
+    private Vertx vertx;
 
     @Override
     protected PublicKeySubCommand.KeyLoader getKeyLoader() {
@@ -320,6 +351,12 @@ public abstract class CommandTestAbstract {
       // For testing, don't actually query for networking interfaces to validate this option
     }
 
+    @Override
+    protected Vertx createVertx(final VertxOptions vertxOptions) {
+      vertx = super.createVertx(vertxOptions);
+      return vertx;
+    }
+
     public CommandSpec getSpec() {
       return spec;
     }
@@ -332,6 +369,10 @@ public abstract class CommandTestAbstract {
       return synchronizerOptions;
     }
 
+    public PrunerOptions getPrunerOptions() {
+      return prunerOptions;
+    }
+
     public EthProtocolOptions getEthProtocolOptions() {
       return ethProtocolOptions;
     }
@@ -342,6 +383,14 @@ public abstract class CommandTestAbstract {
 
     public MetricsCLIOptions getMetricsCLIOptions() {
       return metricsCLIOptions;
+    }
+
+    public void close() {
+      if (vertx != null) {
+        final AtomicBoolean closed = new AtomicBoolean(false);
+        vertx.close(event -> closed.set(true));
+        Awaitility.waitAtMost(30, TimeUnit.SECONDS).until(closed::get);
+      }
     }
   }
 }

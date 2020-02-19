@@ -17,8 +17,8 @@ package org.hyperledger.besu.ethereum.permissioning;
 import java.util.Optional;
 
 public class PermissioningConfiguration {
-  private Optional<LocalPermissioningConfiguration> localConfig;
-  private Optional<SmartContractPermissioningConfiguration> smartContractConfig;
+  private final Optional<LocalPermissioningConfiguration> localConfig;
+  private final Optional<SmartContractPermissioningConfiguration> smartContractConfig;
 
   public PermissioningConfiguration(
       final Optional<LocalPermissioningConfiguration> localConfig,

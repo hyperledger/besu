@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -39,16 +39,19 @@ public class EthSubscribe extends AbstractSubscriptionMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest request) {
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     try {
-      final SubscribeRequest subscribeRequest = getMapper().mapSubscribeRequest(request);
+      final SubscribeRequest subscribeRequest = getMapper().mapSubscribeRequest(requestContext);
       final Long subscriptionId = subscriptionManager().subscribe(subscribeRequest);
 
-      return new JsonRpcSuccessResponse(request.getId(), Quantity.create(subscriptionId));
+      return new JsonRpcSuccessResponse(
+          requestContext.getRequest().getId(), Quantity.create(subscriptionId));
     } catch (final InvalidSubscriptionRequestException isEx) {
-      return new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_REQUEST);
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), JsonRpcError.INVALID_REQUEST);
     } catch (final Exception e) {
-      return new JsonRpcErrorResponse(request.getId(), JsonRpcError.INTERNAL_ERROR);
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), JsonRpcError.INTERNAL_ERROR);
     }
   }
 }

@@ -107,13 +107,15 @@ public enum JsonRpcError {
   // Private transaction errors
   ENCLAVE_ERROR(-50100, "Error communicating with enclave"),
   UNIMPLEMENTED_PRIVATE_TRANSACTION_TYPE(-50100, "Unimplemented private transaction type"),
-  PRIVACY_NOT_ENABLED(-50100, "Privacy is not enabled to get the precompiled address"),
+  PRIVACY_NOT_ENABLED(-50100, "Privacy is not enabled"),
   CREATE_PRIVACY_GROUP_ERROR(-50100, "Error creating privacy group"),
   DELETE_PRIVACY_GROUP_ERROR(-50100, "Error deleting privacy group"),
   FIND_PRIVACY_GROUP_ERROR(-50100, "Error finding privacy group"),
   VALUE_NOT_ZERO(-50100, "We cannot transfer ether in private transaction yet."),
   DECODE_ERROR(-50100, "Unable to decode the private signed raw transaction"),
   GET_PRIVATE_TRANSACTION_NONCE_ERROR(-50100, "Unable to determine nonce for account in group."),
+  PRIV_CALL_ONLY_SUPPORTED_ON_CHAIN_HEAD(-50100, "priv_call is only supported on chain head."),
+  PRIVACY_GROUP_DOES_NOT_EXIST(-50100, "Privacy group does not exist."),
 
   CANT_CONNECT_TO_LOCAL_PEER(-32100, "Cannot add local node as peer."),
 
@@ -147,7 +149,12 @@ public enum JsonRpcError {
   ENCLAVE_UNABLE_PUSH_DELETE_PRIVACY_GROUP(-50200, "PrivacyGroupNotPushed"),
   ENCLAVE_PRIVACY_GROUP_MISSING(-50200, "PrivacyGroupNotFound"),
   ENCLAVE_PRIVACY_QUERY_ERROR(-50200, "PrivacyGroupQueryError"),
-  METHOD_UNIMPLEMENTED(-50200, "MethodUnimplemented");
+  ENCLAVE_KEYS_CANNOT_DECRYPT_PAYLOAD(-50200, "EnclaveKeysCannotDecryptPayload"),
+  METHOD_UNIMPLEMENTED(-50200, "MethodUnimplemented"),
+
+  /** Plugins error */
+  PLUGIN_NOT_FOUND(-60000, "Plugin not found");
+
   private final int code;
   private final String message;
 

@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.blockcreation;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.EthHashObserver;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -23,7 +24,6 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.util.Subscribers;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
@@ -35,6 +35,7 @@ import java.util.function.Function;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 public abstract class AbstractMinerExecutor<
     C, M extends BlockMiner<C, ? extends AbstractBlockCreator<C>>> {
@@ -48,7 +49,7 @@ public abstract class AbstractMinerExecutor<
   protected final AbstractBlockScheduler blockScheduler;
   protected final Function<Long, Long> gasLimitCalculator;
 
-  protected volatile BytesValue extraData;
+  protected volatile Bytes extraData;
   protected volatile Wei minTransactionGasPrice;
 
   private final AtomicBoolean stopped = new AtomicBoolean(false);
@@ -70,9 +71,11 @@ public abstract class AbstractMinerExecutor<
   }
 
   public Optional<M> startAsyncMining(
-      final Subscribers<MinedBlockObserver> observers, final BlockHeader parentHeader) {
+      final Subscribers<MinedBlockObserver> observers,
+      final Subscribers<EthHashObserver> ethHashObservers,
+      final BlockHeader parentHeader) {
     try {
-      final M currentRunningMiner = createMiner(observers, parentHeader);
+      final M currentRunningMiner = createMiner(observers, ethHashObservers, parentHeader);
       executorService.execute(currentRunningMiner);
       return Optional.of(currentRunningMiner);
     } catch (RejectedExecutionException e) {
@@ -94,14 +97,16 @@ public abstract class AbstractMinerExecutor<
   }
 
   public abstract M createMiner(
-      final Subscribers<MinedBlockObserver> subscribers, final BlockHeader parentHeader);
+      final Subscribers<MinedBlockObserver> subscribers,
+      final Subscribers<EthHashObserver> ethHashObservers,
+      final BlockHeader parentHeader);
 
-  public void setExtraData(final BytesValue extraData) {
+  public void setExtraData(final Bytes extraData) {
     this.extraData = extraData.copy();
   }
 
   public void setMinTransactionGasPrice(final Wei minTransactionGasPrice) {
-    this.minTransactionGasPrice = minTransactionGasPrice.copy();
+    this.minTransactionGasPrice = minTransactionGasPrice;
   }
 
   public Wei getMinTransactionGasPrice() {

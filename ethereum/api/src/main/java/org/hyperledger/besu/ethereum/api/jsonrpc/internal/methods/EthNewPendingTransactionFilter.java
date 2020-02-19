@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -34,7 +34,8 @@ public class EthNewPendingTransactionFilter implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest req) {
-    return new JsonRpcSuccessResponse(req.getId(), filterManager.installPendingTransactionFilter());
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
+    return new JsonRpcSuccessResponse(
+        requestContext.getRequest().getId(), filterManager.installPendingTransactionFilter());
   }
 }

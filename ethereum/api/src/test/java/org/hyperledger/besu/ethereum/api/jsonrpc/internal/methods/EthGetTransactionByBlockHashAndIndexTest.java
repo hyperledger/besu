@@ -19,13 +19,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.crypto.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -38,16 +38,17 @@ public class EthGetTransactionByBlockHashAndIndexTest {
 
   @Test
   public void shouldReturnNullWhenBlockHashDoesNotExist() {
-    method = new EthGetTransactionByBlockHashAndIndex(blockchain, new JsonRpcParameter());
-    Bytes32 hash = Hash.keccak256(BytesValue.wrap("horse".getBytes(UTF_8)));
+    method = new EthGetTransactionByBlockHashAndIndex(blockchain);
+    Bytes32 hash = Hash.keccak256(Bytes.wrap("horse".getBytes(UTF_8)));
     JsonRpcSuccessResponse response = (JsonRpcSuccessResponse) method.response(request(hash, 1));
     assertThat(response.getResult()).isEqualTo(null);
   }
 
-  private JsonRpcRequest request(final Bytes32 hash, final long index) {
-    return new JsonRpcRequest(
-        "2.0",
-        "eth_getTransactionByBlockHashAndIndex",
-        new Object[] {String.valueOf(hash), Quantity.create(index)});
+  private JsonRpcRequestContext request(final Bytes32 hash, final long index) {
+    return new JsonRpcRequestContext(
+        new JsonRpcRequest(
+            "2.0",
+            "eth_getTransactionByBlockHashAndIndex",
+            new Object[] {String.valueOf(hash), Quantity.create(index)}));
   }
 }

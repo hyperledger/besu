@@ -28,8 +28,8 @@ import java.util.Collections;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.web3j.protocol.pantheon.response.privacy.PrivacyGroup;
-import org.web3j.protocol.pantheon.response.privacy.PrivateTransactionReceipt;
+import org.web3j.protocol.besu.response.privacy.PrivacyGroup;
+import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
 import org.web3j.utils.Base64String;
 
 public class EthSignerAcceptanceTest extends PrivacyAcceptanceTestBase {
@@ -57,12 +57,11 @@ public class EthSignerAcceptanceTest extends PrivacyAcceptanceTestBase {
   }
 
   @Test
-  @Ignore
   public void privateSmartContractMustDeploy() throws IOException {
     final String transactionHash =
         ethSignerClient.eeaSendTransaction(
             null,
-            BigInteger.valueOf(63992),
+            BigInteger.valueOf(23176),
             BigInteger.valueOf(1000),
             EventEmitter.BINARY,
             BigInteger.valueOf(0),
@@ -77,13 +76,15 @@ public class EthSignerAcceptanceTest extends PrivacyAcceptanceTestBase {
         privateTransactionVerifier.validPrivateTransactionReceipt(transactionHash, receipt));
   }
 
+  // requires ethsigner jar > 0.3.0
+  // https://bintray.com/consensys/pegasys-repo/ethsigner
   @Test
   @Ignore
   public void privateSmartContractMustDeployNoNonce() throws IOException {
     final String transactionHash =
         ethSignerClient.eeaSendTransaction(
             null,
-            BigInteger.valueOf(63992),
+            BigInteger.valueOf(23176),
             BigInteger.valueOf(1000),
             EventEmitter.BINARY,
             minerNode.getEnclaveKey(),
@@ -107,14 +108,14 @@ public class EthSignerAcceptanceTest extends PrivacyAcceptanceTestBase {
             new PrivacyGroup(
                 privacyGroupId,
                 PrivacyGroup.Type.PANTHEON,
-                "Default Name",
-                "Default Description",
+                "",
+                "",
                 Base64String.wrapList(minerNode.getEnclaveKey()))));
 
     final String transactionHash =
         ethSignerClient.eeaSendTransaction(
             null,
-            BigInteger.valueOf(63992),
+            BigInteger.valueOf(23176),
             BigInteger.valueOf(1000),
             EventEmitter.BINARY,
             BigInteger.valueOf(0),
@@ -130,7 +131,6 @@ public class EthSignerAcceptanceTest extends PrivacyAcceptanceTestBase {
   }
 
   @Test
-  @Ignore
   public void privateSmartContractMustDeployWithPrivacyGroupNoNonce() throws IOException {
     final String privacyGroupId =
         minerNode.execute(privacyTransactions.createPrivacyGroup(null, null, minerNode));
@@ -140,14 +140,14 @@ public class EthSignerAcceptanceTest extends PrivacyAcceptanceTestBase {
             new PrivacyGroup(
                 privacyGroupId,
                 PrivacyGroup.Type.PANTHEON,
-                "Default Name",
-                "Default Description",
+                "",
+                "",
                 Base64String.wrapList(minerNode.getEnclaveKey()))));
 
     final String transactionHash =
         ethSignerClient.eeaSendTransaction(
             null,
-            BigInteger.valueOf(63992),
+            BigInteger.valueOf(23176),
             BigInteger.valueOf(1000),
             EventEmitter.BINARY,
             minerNode.getEnclaveKey(),

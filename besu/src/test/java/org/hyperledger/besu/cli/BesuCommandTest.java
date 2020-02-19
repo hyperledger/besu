@@ -17,9 +17,12 @@ package org.hyperledger.besu.cli;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.cli.config.NetworkName.CLASSIC;
 import static org.hyperledger.besu.cli.config.NetworkName.DEV;
 import static org.hyperledger.besu.cli.config.NetworkName.GOERLI;
+import static org.hyperledger.besu.cli.config.NetworkName.KOTTI;
 import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
+import static org.hyperledger.besu.cli.config.NetworkName.MORDOR;
 import static org.hyperledger.besu.cli.config.NetworkName.RINKEBY;
 import static org.hyperledger.besu.cli.config.NetworkName.ROPSTEN;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ETH;
@@ -34,6 +37,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNotNull;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.BesuInfo;
@@ -43,6 +47,7 @@ import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
+import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
@@ -54,11 +59,10 @@ import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.SmartContractPermissioningConfiguration;
-import org.hyperledger.besu.ethereum.worldstate.PruningConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.PrunerConfiguration;
 import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatMethod;
-import org.hyperledger.besu.util.bytes.BytesValue;
 import org.hyperledger.besu.util.number.Fraction;
 import org.hyperledger.besu.util.number.Percentage;
 
@@ -83,6 +87,7 @@ import com.google.common.collect.Lists;
 import com.google.common.io.Resources;
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.text.StringEscapeUtils;
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.toml.Toml;
 import org.apache.tuweni.toml.TomlParseResult;
 import org.junit.Rule;
@@ -109,6 +114,8 @@ public class BesuCommandTest extends CommandTestAbstract {
           .put("config", (new JsonObject()).put("chainId", GENESIS_CONFIG_TEST_CHAINID));
   private static final JsonObject GENESIS_INVALID_DATA =
       (new JsonObject()).put("config", new JsonObject());
+  private static final String ENCLAVE_PUBLIC_KEY_PATH =
+      BesuCommand.class.getResource("/orion_publickey.pub").getPath();
 
   private final String[] validENodeStrings = {
     "enode://" + VALID_NODE_ID + "@192.168.0.1:4567",
@@ -168,6 +175,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).webSocketConfiguration(eq(DEFAULT_WEB_SOCKET_CONFIGURATION));
     verify(mockRunnerBuilder).metricsConfiguration(eq(DEFAULT_METRICS_CONFIGURATION));
     verify(mockRunnerBuilder).ethNetworkConfig(ethNetworkArg.capture());
+    verify(mockRunnerBuilder).autoLogBloomCaching(eq(true));
     verify(mockRunnerBuilder).build();
 
     verify(mockControllerBuilderFactory).fromEthNetworkConfig(ethNetworkArg.capture(), any());
@@ -186,7 +194,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString()).isEmpty();
     assertThat(miningArg.getValue().getCoinbase()).isEqualTo(Optional.empty());
     assertThat(miningArg.getValue().getMinTransactionGasPrice()).isEqualTo(Wei.of(1000));
-    assertThat(miningArg.getValue().getExtraData()).isEqualTo(BytesValue.EMPTY);
+    assertThat(miningArg.getValue().getExtraData()).isEqualTo(Bytes.EMPTY);
     assertThat(ethNetworkArg.getValue().getNetworkId()).isEqualTo(1);
     assertThat(ethNetworkArg.getValue().getBootNodes()).isEqualTo(MAINNET_BOOTSTRAP_NODES);
   }
@@ -793,13 +801,13 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     final Path path = Paths.get(".");
     parseCommand("--config", path.toString());
-    assertThat(commandErrorOutput.toString()).startsWith("Unknown options: --config, .");
+    assertThat(commandErrorOutput.toString()).startsWith("Unknown options: '--config', '.'");
     assertThat(commandOutput.toString()).isEmpty();
   }
 
   @Test
   public void nodekeyOptionMustBeUsed() throws Exception {
-    final File file = new File("./specific/key");
+    final File file = new File("./specific/enclavePrivateKey");
     file.deleteOnExit();
 
     parseCommand("--node-private-key-file", file.getPath());
@@ -820,13 +828,12 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assumeFalse(isFullInstantiation());
 
-    final File file = new File("./specific/key");
+    final File file = new File("./specific/enclavePrivateKey");
     file.deleteOnExit();
 
     parseCommand("--node-private-key-file", file.getPath());
-
     assertThat(commandErrorOutput.toString())
-        .startsWith("Unknown options: --node-private-key-file, .");
+        .startsWith("Unknown options: '--node-private-key-file', './specific/enclavePrivateKey'");
     assertThat(commandOutput.toString()).isEmpty();
   }
 
@@ -870,7 +877,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     final Path path = Paths.get(".");
 
     parseCommand("--data-path", path.toString());
-    assertThat(commandErrorOutput.toString()).startsWith("Unknown options: --data-path, .");
+    assertThat(commandErrorOutput.toString()).startsWith("Unknown options: '--data-path', '.'");
     assertThat(commandOutput.toString()).isEmpty();
   }
 
@@ -991,7 +998,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     final Path path = Paths.get(".");
 
     parseCommand("--genesis", path.toString());
-    assertThat(commandErrorOutput.toString()).startsWith("Unknown options: --genesis, .");
+    assertThat(commandErrorOutput.toString()).startsWith("Unknown options: '--genesis', '.'");
     assertThat(commandOutput.toString()).isEmpty();
   }
 
@@ -1153,23 +1160,23 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void bannedNodeIdsOptionMustBeUsed() {
-    final BytesValue[] nodes = {
-      BytesValue.fromHexString(
+    final Bytes[] nodes = {
+      Bytes.fromHexString(
           "6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0"),
-      BytesValue.fromHexString(
+      Bytes.fromHexString(
           "7f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0"),
-      BytesValue.fromHexString(
+      Bytes.fromHexString(
           "0x8f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0")
     };
 
     final String nodeIdsArg =
-        Arrays.stream(nodes).map(BytesValue::toUnprefixedString).collect(Collectors.joining(","));
+        Arrays.stream(nodes).map(Bytes::toShortHexString).collect(Collectors.joining(","));
     parseCommand("--banned-node-ids", nodeIdsArg);
 
-    verify(mockRunnerBuilder).bannedNodeIds(bytesValueCollectionCollector.capture());
+    verify(mockRunnerBuilder).bannedNodeIds(bytesCollectionCollector.capture());
     verify(mockRunnerBuilder).build();
 
-    assertThat(bytesValueCollectionCollector.getValue().toArray()).isEqualTo(nodes);
+    assertThat(bytesCollectionCollector.getValue().toArray()).isEqualTo(nodes);
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
@@ -1382,6 +1389,12 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand("--nat-method", "UPNP");
     verify(mockRunnerBuilder).natMethod(eq(NatMethod.UPNP));
 
+    parseCommand("--nat-method", "AUTO");
+    verify(mockRunnerBuilder).natMethod(eq(NatMethod.AUTO));
+
+    parseCommand("--nat-method", "DOCKER");
+    verify(mockRunnerBuilder).natMethod(eq(NatMethod.DOCKER));
+
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
   }
@@ -1394,7 +1407,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString())
         .contains(
-            "Invalid value for option '--nat-method': expected one of [UPNP, NONE] (case-insensitive) but was 'invalid'");
+            "Invalid value for option '--nat-method': expected one of [UPNP, MANUAL, DOCKER, AUTO, NONE] (case-insensitive) but was 'invalid'");
   }
 
   @Test
@@ -1408,10 +1421,10 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void natMethodPropertyDefaultIsNone() {
+  public void natMethodPropertyDefaultIsAuto() {
     parseCommand();
 
-    verify(mockRunnerBuilder).natMethod(eq(NatMethod.NONE));
+    verify(mockRunnerBuilder).natMethod(eq(NatMethod.AUTO));
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
@@ -1523,6 +1536,37 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void privacyTlsOptionsRequiresTlsToBeEnabled() {
+    when(storageService.getByName("rocksdb-privacy"))
+        .thenReturn(Optional.of(rocksDBSPrivacyStorageFactory));
+    final URL configFile = this.getClass().getResource("/orion_publickey.pub");
+
+    parseCommand(
+        "--privacy-enabled",
+        "--privacy-url",
+        ENCLAVE_URI,
+        "--privacy-public-key-file",
+        configFile.getPath(),
+        "--privacy-tls-keystore-file",
+        "/Users/me/key");
+
+    verifyOptionsConstraintLoggerCall("--privacy-tls-enabled", "--privacy-tls-keystore-file");
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void privacyTlsOptionsRequiresPrivacyToBeEnabled() {
+    parseCommand("--privacy-tls-enabled", "--privacy-tls-keystore-file", "/Users/me/key");
+
+    verifyOptionsConstraintLoggerCall("--privacy-enabled", "--privacy-tls-enabled");
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
   public void fastSyncOptionsRequiresFastSyncModeToBeSet() {
     parseCommand("--fast-sync-min-peers", "5");
 
@@ -1587,6 +1631,227 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).build();
 
     assertThat(jsonRpcConfigArgumentCaptor.getValue().getHost()).isEqualTo(host);
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void rpcHttpTlsRequiresRpcHttpEnabled() {
+    parseCommand("--rpc-http-tls-enabled");
+
+    verifyOptionsConstraintLoggerCall("--rpc-http-enabled", "--rpc-http-tls-enabled");
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void rpcHttpTlsWithoutKeystoreReportsError() {
+    parseCommand("--rpc-http-enabled", "--rpc-http-tls-enabled");
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString())
+        .contains("Keystore file is required when TLS is enabled for JSON-RPC HTTP endpoint");
+  }
+
+  @Test
+  public void rpcHttpTlsWithoutPasswordfileReportsError() {
+    parseCommand(
+        "--rpc-http-enabled",
+        "--rpc-http-tls-enabled",
+        "--rpc-http-tls-keystore-file",
+        "/tmp/test.p12");
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString())
+        .contains(
+            "File containing password to unlock keystore is required when TLS is enabled for JSON-RPC HTTP endpoint");
+  }
+
+  @Test
+  public void rpcHttpTlsKeystoreAndPasswordMustBeUsed() {
+    final String host = "1.2.3.4";
+    final int port = 1234;
+    final String keystoreFile = "/tmp/test.p12";
+    final String keystorePasswordFile = "/tmp/test.txt";
+    parseCommand(
+        "--rpc-http-enabled",
+        "--rpc-http-host",
+        host,
+        "--rpc-http-port",
+        String.valueOf(port),
+        "--rpc-http-tls-enabled",
+        "--rpc-http-tls-keystore-file",
+        keystoreFile,
+        "--rpc-http-tls-keystore-password-file",
+        keystorePasswordFile);
+
+    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHost()).isEqualTo(host);
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getPort()).isEqualTo(port);
+    final Optional<TlsConfiguration> tlsConfiguration =
+        jsonRpcConfigArgumentCaptor.getValue().getTlsConfiguration();
+    assertThat(tlsConfiguration.isPresent()).isTrue();
+    assertThat(tlsConfiguration.get().getKeyStorePath()).isEqualTo(Path.of(keystoreFile));
+    assertThat(tlsConfiguration.get().getClientAuthConfiguration().isEmpty()).isTrue();
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void rpcHttpTlsClientAuthWithoutKnownFileReportsError() {
+    final String host = "1.2.3.4";
+    final int port = 1234;
+    final String keystoreFile = "/tmp/test.p12";
+    final String keystorePasswordFile = "/tmp/test.txt";
+    parseCommand(
+        "--rpc-http-enabled",
+        "--rpc-http-host",
+        host,
+        "--rpc-http-port",
+        String.valueOf(port),
+        "--rpc-http-tls-enabled",
+        "--rpc-http-tls-keystore-file",
+        keystoreFile,
+        "--rpc-http-tls-keystore-password-file",
+        keystorePasswordFile,
+        "--rpc-http-tls-client-auth-enabled");
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString())
+        .contains(
+            "Known-clients file must be specified or CA clients must be enabled when TLS client authentication is enabled for JSON-RPC HTTP endpoint");
+  }
+
+  @Test
+  public void rpcHttpTlsClientAuthWithKnownClientFile() {
+    final String host = "1.2.3.4";
+    final int port = 1234;
+    final String keystoreFile = "/tmp/test.p12";
+    final String keystorePasswordFile = "/tmp/test.txt";
+    final String knownClientFile = "/tmp/knownClientFile";
+    parseCommand(
+        "--rpc-http-enabled",
+        "--rpc-http-host",
+        host,
+        "--rpc-http-port",
+        String.valueOf(port),
+        "--rpc-http-tls-enabled",
+        "--rpc-http-tls-keystore-file",
+        keystoreFile,
+        "--rpc-http-tls-keystore-password-file",
+        keystorePasswordFile,
+        "--rpc-http-tls-client-auth-enabled",
+        "--rpc-http-tls-known-clients-file",
+        knownClientFile);
+
+    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHost()).isEqualTo(host);
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getPort()).isEqualTo(port);
+    final Optional<TlsConfiguration> tlsConfiguration =
+        jsonRpcConfigArgumentCaptor.getValue().getTlsConfiguration();
+    assertThat(tlsConfiguration.isPresent()).isTrue();
+    assertThat(tlsConfiguration.get().getKeyStorePath()).isEqualTo(Path.of(keystoreFile));
+    assertThat(tlsConfiguration.get().getClientAuthConfiguration().isPresent()).isTrue();
+    assertThat(
+            tlsConfiguration.get().getClientAuthConfiguration().get().getKnownClientsFile().get())
+        .isEqualTo(Path.of(knownClientFile));
+    assertThat(tlsConfiguration.get().getClientAuthConfiguration().get().isCaClientsEnabled())
+        .isFalse();
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void rpcHttpTlsClientAuthWithCAClient() {
+    final String host = "1.2.3.4";
+    final int port = 1234;
+    final String keystoreFile = "/tmp/test.p12";
+    final String keystorePasswordFile = "/tmp/test.txt";
+    parseCommand(
+        "--rpc-http-enabled",
+        "--rpc-http-host",
+        host,
+        "--rpc-http-port",
+        String.valueOf(port),
+        "--rpc-http-tls-enabled",
+        "--rpc-http-tls-keystore-file",
+        keystoreFile,
+        "--rpc-http-tls-keystore-password-file",
+        keystorePasswordFile,
+        "--rpc-http-tls-client-auth-enabled",
+        "--rpc-http-tls-ca-clients-enabled");
+
+    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHost()).isEqualTo(host);
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getPort()).isEqualTo(port);
+    final Optional<TlsConfiguration> tlsConfiguration =
+        jsonRpcConfigArgumentCaptor.getValue().getTlsConfiguration();
+    assertThat(tlsConfiguration.isPresent()).isTrue();
+    assertThat(tlsConfiguration.get().getKeyStorePath()).isEqualTo(Path.of(keystoreFile));
+    assertThat(tlsConfiguration.get().getClientAuthConfiguration().isPresent()).isTrue();
+    assertThat(
+            tlsConfiguration
+                .get()
+                .getClientAuthConfiguration()
+                .get()
+                .getKnownClientsFile()
+                .isEmpty())
+        .isTrue();
+    assertThat(tlsConfiguration.get().getClientAuthConfiguration().get().isCaClientsEnabled())
+        .isTrue();
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void rpcHttpTlsClientAuthWithCAClientAndKnownClientFile() {
+    final String host = "1.2.3.4";
+    final int port = 1234;
+    final String keystoreFile = "/tmp/test.p12";
+    final String keystorePasswordFile = "/tmp/test.txt";
+    final String knownClientFile = "/tmp/knownClientFile";
+    parseCommand(
+        "--rpc-http-enabled",
+        "--rpc-http-host",
+        host,
+        "--rpc-http-port",
+        String.valueOf(port),
+        "--rpc-http-tls-enabled",
+        "--rpc-http-tls-keystore-file",
+        keystoreFile,
+        "--rpc-http-tls-keystore-password-file",
+        keystorePasswordFile,
+        "--rpc-http-tls-client-auth-enabled",
+        "--rpc-http-tls-ca-clients-enabled",
+        "--rpc-http-tls-known-clients-file",
+        knownClientFile);
+
+    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHost()).isEqualTo(host);
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getPort()).isEqualTo(port);
+    final Optional<TlsConfiguration> tlsConfiguration =
+        jsonRpcConfigArgumentCaptor.getValue().getTlsConfiguration();
+    assertThat(tlsConfiguration.isPresent()).isTrue();
+    assertThat(tlsConfiguration.get().getKeyStorePath()).isEqualTo(Path.of(keystoreFile));
+    assertThat(tlsConfiguration.get().getClientAuthConfiguration().isPresent()).isTrue();
+    assertThat(
+            tlsConfiguration.get().getClientAuthConfiguration().get().getKnownClientsFile().get())
+        .isEqualTo(Path.of(knownClientFile));
+    assertThat(tlsConfiguration.get().getClientAuthConfiguration().get().isCaClientsEnabled())
+        .isTrue();
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
@@ -2283,6 +2548,25 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void stratumMiningIsEnabledWhenSpecified() throws Exception {
+    final String coinbaseStr = String.format("%040x", 1);
+    parseCommand("--miner-enabled", "--miner-coinbase=" + coinbaseStr, "--miner-stratum-enabled");
+
+    final ArgumentCaptor<MiningParameters> miningArg =
+        ArgumentCaptor.forClass(MiningParameters.class);
+
+    verify(mockControllerBuilder).miningParameters(miningArg.capture());
+    verify(mockControllerBuilder).build();
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(miningArg.getValue().isMiningEnabled()).isTrue();
+    assertThat(miningArg.getValue().getCoinbase())
+        .isEqualTo(Optional.of(Address.fromHexString(coinbaseStr)));
+    assertThat(miningArg.getValue().isStratumMiningEnabled()).isTrue();
+  }
+
+  @Test
   public void miningOptionsRequiresServiceToBeEnabled() {
 
     final Address requestedCoinbase = Address.fromHexString("0000011111222223333344444");
@@ -2292,13 +2576,20 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--min-gas-price",
         "42",
         "--miner-extra-data",
-        "0x1122334455667788990011223344556677889900112233445566778899001122");
+        "0x1122334455667788990011223344556677889900112233445566778899001122",
+        "--miner-stratum-enabled");
 
     verifyOptionsConstraintLoggerCall(
-        "--miner-enabled", "--miner-coinbase", "--min-gas-price", "--miner-extra-data");
+        "--miner-enabled",
+        "--miner-coinbase",
+        "--min-gas-price",
+        "--miner-extra-data",
+        "--miner-stratum-enabled");
 
     assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString())
+        .startsWith(
+            "Unable to mine with Stratum if mining is disabled. Either disable Stratum mining (remove --miner-stratum-enabled)or specify mining is enabled (--miner-enabled)");
   }
 
   @Test
@@ -2322,8 +2613,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString()).isEmpty();
     assertThat(miningArg.getValue().getCoinbase()).isEqualTo(Optional.of(requestedCoinbase));
     assertThat(miningArg.getValue().getMinTransactionGasPrice()).isEqualTo(Wei.of(15));
-    assertThat(miningArg.getValue().getExtraData())
-        .isEqualTo(BytesValue.fromHexString(extraDataString));
+    assertThat(miningArg.getValue().getExtraData()).isEqualTo(Bytes.fromHexString(extraDataString));
   }
 
   @Test
@@ -2350,7 +2640,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void pruningEnabledExplicitly() {
-    parseCommand("--pruning-enabled");
+    parseCommand("--pruning-enabled", "--sync-mode=FULL");
 
     verify(mockControllerBuilder).isPruningEnabled(true);
     verify(mockControllerBuilder).build();
@@ -2361,7 +2651,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void pruningDisabledExplicitly() {
-    parseCommand("--pruning-enabled=false");
+    parseCommand("--pruning-enabled=false", "--sync-mode=FAST");
 
     verify(mockControllerBuilder).isPruningEnabled(false);
     verify(mockControllerBuilder).build();
@@ -2371,24 +2661,12 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void pruningOptionsRequiresServiceToBeEnabled() {
-
-    parseCommand("--pruning-blocks-retained", "4", "--pruning-block-confirmations", "1");
-
-    verifyOptionsConstraintLoggerCall(
-        "--pruning-enabled", "--pruning-blocks-retained", "--pruning-block-confirmations");
-
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
-  }
-
-  @Test
   public void pruningParametersAreCaptured() throws Exception {
     parseCommand(
-        "--pruning-enabled", "--pruning-blocks-retained=15", "--pruning-block-confirmations=4");
+        "--pruning-enabled", "--Xpruning-blocks-retained=15", "--Xpruning-block-confirmations=4");
 
-    final ArgumentCaptor<PruningConfiguration> pruningArg =
-        ArgumentCaptor.forClass(PruningConfiguration.class);
+    final ArgumentCaptor<PrunerConfiguration> pruningArg =
+        ArgumentCaptor.forClass(PrunerConfiguration.class);
 
     verify(mockControllerBuilder).pruningConfiguration(pruningArg.capture());
     verify(mockControllerBuilder).build();
@@ -2464,6 +2742,54 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void classicValuesAreUsed() throws Exception {
+    parseCommand("--network", "classic");
+
+    final ArgumentCaptor<EthNetworkConfig> networkArg =
+        ArgumentCaptor.forClass(EthNetworkConfig.class);
+
+    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
+    verify(mockControllerBuilder).build();
+
+    assertThat(networkArg.getValue()).isEqualTo(EthNetworkConfig.getNetworkConfig(CLASSIC));
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void kottiValuesAreUsed() throws Exception {
+    parseCommand("--network", "kotti");
+
+    final ArgumentCaptor<EthNetworkConfig> networkArg =
+        ArgumentCaptor.forClass(EthNetworkConfig.class);
+
+    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
+    verify(mockControllerBuilder).build();
+
+    assertThat(networkArg.getValue()).isEqualTo(EthNetworkConfig.getNetworkConfig(KOTTI));
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void mordorValuesAreUsed() throws Exception {
+    parseCommand("--network", "mordor");
+
+    final ArgumentCaptor<EthNetworkConfig> networkArg =
+        ArgumentCaptor.forClass(EthNetworkConfig.class);
+
+    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
+    verify(mockControllerBuilder).build();
+
+    assertThat(networkArg.getValue()).isEqualTo(EthNetworkConfig.getNetworkConfig(MORDOR));
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
   public void rinkebyValuesCanBeOverridden() throws Exception {
     networkValuesCanBeOverridden("rinkeby");
   }
@@ -2481,6 +2807,21 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void devValuesCanBeOverridden() throws Exception {
     networkValuesCanBeOverridden("dev");
+  }
+
+  @Test
+  public void classicValuesCanBeOverridden() throws Exception {
+    networkValuesCanBeOverridden("classic");
+  }
+
+  @Test
+  public void kottiValuesCanBeOverridden() throws Exception {
+    networkValuesCanBeOverridden("kotti");
+  }
+
+  @Test
+  public void mordorValuesCanBeOverridden() throws Exception {
+    networkValuesCanBeOverridden("mordor");
   }
 
   private void networkValuesCanBeOverridden(final String network) throws Exception {
@@ -2535,8 +2876,6 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void mustUseEnclaveUriAndOptions() {
-    when(storageService.getByName("rocksdb-privacy"))
-        .thenReturn(Optional.of(rocksDBSPrivacyStorageFactory));
     final URL configFile = this.getClass().getResource("/orion_publickey.pub");
 
     parseCommand(
@@ -2563,7 +2902,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void privacyOptionsRequiresServiceToBeEnabled() {
 
-    final File file = new File("./specific/public_key");
+    final File file = new File("./specific/enclavePublicKey");
     file.deleteOnExit();
 
     parseCommand(
@@ -2585,6 +2924,14 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void privacyWithoutPrivacyPublicKeyFails() {
+    parseCommand("--privacy-enabled", "--privacy-url", ENCLAVE_URI);
+
+    assertThat(commandErrorOutput.toString())
+        .startsWith("Please specify Enclave public key file path to enable privacy");
+  }
+
+  @Test
   public void mustVerifyPrivacyIsDisabled() {
     parseCommand();
 
@@ -2597,6 +2944,52 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
     assertThat(enclaveArg.getValue().isEnabled()).isEqualTo(false);
+  }
+
+  @Test
+  public void privacyMultiTenancyIsConfiguredWhenConfiguredWithNecessaryOptions() {
+    parseCommand(
+        "--privacy-enabled",
+        "--rpc-http-authentication-enabled",
+        "--privacy-multi-tenancy-enabled",
+        "--rpc-http-authentication-jwt-public-key-file",
+        "/non/existent/file");
+
+    final ArgumentCaptor<PrivacyParameters> privacyParametersArgumentCaptor =
+        ArgumentCaptor.forClass(PrivacyParameters.class);
+
+    verify(mockControllerBuilder).privacyParameters(privacyParametersArgumentCaptor.capture());
+    verify(mockControllerBuilder).build();
+
+    assertThat(privacyParametersArgumentCaptor.getValue().isMultiTenancyEnabled()).isTrue();
+  }
+
+  @Test
+  public void privacyMultiTenancyWithoutAuthenticationFails() {
+    parseCommand(
+        "--privacy-enabled",
+        "--privacy-multi-tenancy-enabled",
+        "--rpc-http-authentication-jwt-public-key-file",
+        "/non/existent/file");
+
+    assertThat(commandErrorOutput.toString())
+        .startsWith(
+            "Privacy multi-tenancy requires either http authentication to be enabled or WebSocket authentication to be enabled");
+  }
+
+  @Test
+  public void privacyMultiTenancyWithPrivacyPublicKeyFileFails() {
+    parseCommand(
+        "--privacy-enabled",
+        "--rpc-http-authentication-enabled",
+        "--privacy-multi-tenancy-enabled",
+        "--rpc-http-authentication-jwt-public-key-file",
+        "/non/existent/file",
+        "--privacy-public-key-file",
+        ENCLAVE_PUBLIC_KEY_PATH);
+
+    assertThat(commandErrorOutput.toString())
+        .startsWith("Privacy multi-tenancy and privacy public key cannot be used together");
   }
 
   private Path createFakeGenesisFile(final JsonObject jsonGenesis) throws IOException {
@@ -2665,9 +3058,25 @@ public class BesuCommandTest extends CommandTestAbstract {
     assumeFalse(isFullInstantiation());
 
     final Path path = Paths.get(".");
-    parseCommand("--privacy-public-key-file", path.toString());
+    parseCommand("--privacy-public-enclavePrivateKey-file", path.toString());
     assertThat(commandErrorOutput.toString())
-        .startsWith("Unknown options: --privacy-public-key-file, .");
+        .startsWith("Unknown options: '--privacy-public-enclavePrivateKey-file', '.'");
+    assertThat(commandOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void privacyWithFastSyncMustError() {
+    parseCommand("--sync-mode=FAST", "--privacy-enabled");
+
+    assertThat(commandErrorOutput.toString()).contains("Fast sync cannot be enabled with privacy.");
+    assertThat(commandOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void privacyWithPruningMustError() {
+    parseCommand("--pruning-enabled", "--privacy-enabled");
+
+    assertThat(commandErrorOutput.toString()).contains("Pruning cannot be enabled with privacy.");
     assertThat(commandOutput.toString()).isEmpty();
   }
 
@@ -2680,7 +3089,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     final Path path = Paths.get(".");
     parseCommand("--rpc-http-authentication-credentials-file", path.toString());
     assertThat(commandErrorOutput.toString())
-        .startsWith("Unknown options: --rpc-http-authentication-credentials-file, .");
+        .startsWith("Unknown options: '--rpc-http-authentication-credentials-file', '.'");
     assertThat(commandOutput.toString()).isEmpty();
   }
 
@@ -2693,7 +3102,33 @@ public class BesuCommandTest extends CommandTestAbstract {
     final Path path = Paths.get(".");
     parseCommand("--rpc-ws-authentication-credentials-file", path.toString());
     assertThat(commandErrorOutput.toString())
-        .startsWith("Unknown options: --rpc-ws-authentication-credentials-file, .");
+        .startsWith("Unknown options: '--rpc-ws-authentication-credentials-file', '.'");
+    assertThat(commandOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void rpcHttpAuthPublicKeyFileOptionDisabledUnderDocker() {
+    System.setProperty("besu.docker", "true");
+
+    assumeFalse(isFullInstantiation());
+
+    final Path path = Paths.get(".");
+    parseCommand("--rpc-http-authentication-public-key-file", path.toString());
+    assertThat(commandErrorOutput.toString())
+        .startsWith("Unknown options: '--rpc-http-authentication-public-key-file', '.'");
+    assertThat(commandOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void rpcWsAuthPublicKeyFileOptionDisabledUnderDocker() {
+    System.setProperty("besu.docker", "true");
+
+    assumeFalse(isFullInstantiation());
+
+    final Path path = Paths.get(".");
+    parseCommand("--rpc-ws-authentication-public-key-file", path.toString());
+    assertThat(commandErrorOutput.toString())
+        .startsWith("Unknown options: '--rpc-ws-authentication-public-key-file', '.'");
     assertThat(commandOutput.toString()).isEmpty();
   }
 
@@ -2706,7 +3141,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     final Path path = Paths.get(".");
     parseCommand("--permissions-config-file", path.toString());
     assertThat(commandErrorOutput.toString())
-        .startsWith("Unknown options: --permissions-config-file, .");
+        .startsWith("Unknown options: '--permissions-config-file', '.'");
     assertThat(commandOutput.toString()).isEmpty();
   }
 
@@ -2920,5 +3355,130 @@ public class BesuCommandTest extends CommandTestAbstract {
         .containsEntry(block1, Hash.fromHexStringLenient(hash1));
     assertThat(requiredBlocksArg.getValue())
         .containsEntry(block2, Hash.fromHexStringLenient(hash2));
+  }
+
+  @Test
+  public void httpAuthenticationPublicKeyIsConfigured() throws IOException {
+    final Path publicKey = Files.createTempFile("public_key", "");
+    parseCommand("--rpc-http-authentication-jwt-public-key-file", publicKey.toString());
+
+    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getAuthenticationPublicKeyFile().getPath())
+        .isEqualTo(publicKey.toString());
+  }
+
+  @Test
+  public void httpAuthenticationWithoutRequiredConfiguredOptionsMustFail() {
+    parseCommand("--rpc-http-enabled", "--rpc-http-authentication-enabled");
+
+    verifyNoInteractions(mockRunnerBuilder);
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString())
+        .contains(
+            "Unable to authenticate JSON-RPC HTTP endpoint without a supplied credentials file or authentication public key file");
+  }
+
+  @Test
+  public void wsAuthenticationPublicKeyIsConfigured() throws IOException {
+    final Path publicKey = Files.createTempFile("public_key", "");
+    parseCommand("--rpc-ws-authentication-jwt-public-key-file", publicKey.toString());
+
+    verify(mockRunnerBuilder).webSocketConfiguration(wsRpcConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(wsRpcConfigArgumentCaptor.getValue().getAuthenticationPublicKeyFile().getPath())
+        .isEqualTo(publicKey.toString());
+  }
+
+  @Test
+  public void wsAuthenticationWithoutRequiredConfiguredOptionsMustFail() {
+    parseCommand("--rpc-ws-enabled", "--rpc-ws-authentication-enabled");
+
+    verifyNoInteractions(mockRunnerBuilder);
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString())
+        .contains(
+            "Unable to authenticate JSON-RPC WebSocket endpoint without a supplied credentials file or authentication public key file");
+  }
+
+  @Test
+  public void privHttpApisWithPrivacyDisabledLogsWarning() {
+    parseCommand("--privacy-enabled=false", "--rpc-http-api", "PRIV", "--rpc-http-enabled");
+
+    verify(mockRunnerBuilder).build();
+    verify(mockLogger)
+        .warn("Privacy is disabled. Cannot use EEA/PRIV API methods when not using Privacy.");
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void privWsApisWithPrivacyDisabledLogsWarning() {
+    parseCommand("--privacy-enabled=false", "--rpc-ws-api", "PRIV", "--rpc-ws-enabled");
+
+    verify(mockRunnerBuilder).build();
+    verify(mockLogger)
+        .warn("Privacy is disabled. Cannot use EEA/PRIV API methods when not using Privacy.");
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void eeaHttpApisWithPrivacyDisabledLogsWarning() {
+    parseCommand("--privacy-enabled=false", "--rpc-http-api", "EEA", "--rpc-http-enabled");
+
+    verify(mockRunnerBuilder).build();
+    verify(mockLogger)
+        .warn("Privacy is disabled. Cannot use EEA/PRIV API methods when not using Privacy.");
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void eeaWsApisWithPrivacyDisabledLogsWarning() {
+    parseCommand("--privacy-enabled=false", "--rpc-ws-api", "EEA", "--rpc-ws-enabled");
+
+    verify(mockRunnerBuilder).build();
+    verify(mockLogger)
+        .warn("Privacy is disabled. Cannot use EEA/PRIV API methods when not using Privacy.");
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void privEnclaveKeyFileDoesNotExist() {
+    parseCommand("--privacy-enabled=true", "--privacy-public-key-file", "/non/existent/file");
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).startsWith("Problem with privacy-public-key-file");
+    assertThat(commandErrorOutput.toString()).contains("No such file");
+  }
+
+  @Test
+  public void privEnclaveKeyFileInvalidContentTooShort() throws IOException {
+    final Path file = createTempFile("privacy.key", "lkjashdfiluhwelrk");
+    parseCommand("--privacy-enabled=true", "--privacy-public-key-file", file.toString());
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString())
+        .startsWith("Contents of privacy-public-key-file invalid");
+    assertThat(commandErrorOutput.toString()).contains("needs to be 44 characters long");
+  }
+
+  @Test
+  public void privEnclaveKeyFileInvalidContentNotValidBase64() throws IOException {
+    final Path file = createTempFile("privacy.key", "l*jashdfillk9ashdfillkjashdfillkjashdfilrtg=");
+    parseCommand("--privacy-enabled=true", "--privacy-public-key-file", file.toString());
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString())
+        .startsWith("Contents of privacy-public-key-file invalid");
+    assertThat(commandErrorOutput.toString()).contains("Illegal base64 character");
   }
 }

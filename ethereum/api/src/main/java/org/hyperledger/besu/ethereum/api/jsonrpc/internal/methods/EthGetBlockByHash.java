@@ -15,8 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResult;
@@ -28,15 +27,11 @@ public class EthGetBlockByHash implements JsonRpcMethod {
 
   private final BlockResultFactory blockResult;
   private final BlockchainQueries blockchain;
-  private final JsonRpcParameter parameters;
 
   public EthGetBlockByHash(
-      final BlockchainQueries blockchain,
-      final BlockResultFactory blockResult,
-      final JsonRpcParameter parameters) {
+      final BlockchainQueries blockchain, final BlockResultFactory blockResult) {
     this.blockchain = blockchain;
     this.blockResult = blockResult;
-    this.parameters = parameters;
   }
 
   @Override
@@ -45,12 +40,13 @@ public class EthGetBlockByHash implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest request) {
-    return new JsonRpcSuccessResponse(request.getId(), blockResult(request));
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
+    return new JsonRpcSuccessResponse(
+        requestContext.getRequest().getId(), blockResult(requestContext));
   }
 
-  private BlockResult blockResult(final JsonRpcRequest request) {
-    final Hash hash = parameters.required(request.getParams(), 0, Hash.class);
+  private BlockResult blockResult(final JsonRpcRequestContext request) {
+    final Hash hash = request.getRequiredParameter(0, Hash.class);
 
     if (isCompleteTransactions(request)) {
       return transactionComplete(hash);
@@ -70,7 +66,7 @@ public class EthGetBlockByHash implements JsonRpcMethod {
         .orElse(null);
   }
 
-  private boolean isCompleteTransactions(final JsonRpcRequest request) {
-    return parameters.required(request.getParams(), 1, Boolean.class);
+  private boolean isCompleteTransactions(final JsonRpcRequestContext requestContext) {
+    return requestContext.getRequiredParameter(1, Boolean.class);
   }
 }

@@ -17,13 +17,15 @@ package org.hyperledger.besu.ethereum.chain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 /** An interface for reading data from the blockchain. */
 public interface Blockchain {
@@ -157,7 +159,7 @@ public interface Blockchain {
    * @param blockHeaderHash The hash of the block header being queried.
    * @return The total difficulty of the corresponding block.
    */
-  Optional<UInt256> getTotalDifficultyByHash(Hash blockHeaderHash);
+  Optional<Difficulty> getTotalDifficultyByHash(Hash blockHeaderHash);
 
   /**
    * Given a transaction hash, returns the location (block number and transaction index) of the
@@ -185,10 +187,41 @@ public interface Blockchain {
   long observeBlockAdded(BlockAddedObserver observer);
 
   /**
+   * Adds an observer that will get called on for every added and removed log when a new block is
+   * added.
+   *
+   * <p><i>No guarantees are made about the order in which the observers are invoked.</i>
+   *
+   * @param logObserver the observer to call
+   * @return the observer ID that can be used to remove it later.
+   */
+  default long observeLogs(final Consumer<LogWithMetadata> logObserver) {
+    return observeBlockAdded(((event, __) -> event.getLogsWithMetadata().forEach(logObserver)));
+  }
+
+  /**
    * Removes an previously added observer of any type.
    *
    * @param observerId the ID of the observer to remove
    * @return {@code true} if the observer was removed; otherwise {@code false}
    */
   boolean removeObserver(long observerId);
+
+  /**
+   * Adds an observer that will get called when a new block is added after reorg.
+   *
+   * <p><i>No guarantees are made about the order in which observers are invoked.</i>
+   *
+   * @param observer the observer to call
+   * @return the observer ID that can be used to remove it later.
+   */
+  long observeChainReorg(ChainReorgObserver observer);
+
+  /**
+   * Removes a previously added {@link ChainReorgObserver}.
+   *
+   * @param observerId the ID of the observer to remove
+   * @return {@code true} if the observer was removed; otherwise {@code false}
+   */
+  boolean removeChainReorgObserver(long observerId);
 }

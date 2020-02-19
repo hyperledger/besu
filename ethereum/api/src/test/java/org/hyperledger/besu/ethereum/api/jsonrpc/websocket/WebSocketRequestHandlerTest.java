@@ -20,6 +20,7 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -31,7 +32,6 @@ import java.util.Map;
 import java.util.UUID;
 
 import io.vertx.core.Vertx;
-import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
@@ -74,9 +74,12 @@ public class WebSocketRequestHandlerTest {
     final Async async = context.async();
 
     final JsonObject requestJson = new JsonObject().put("id", 1).put("method", "eth_x");
-    final JsonRpcRequest expectedRequest = requestJson.mapTo(WebSocketRpcRequest.class);
+    final JsonRpcRequest requestBody = requestJson.mapTo(WebSocketRpcRequest.class);
+    final JsonRpcRequestContext expectedRequest = new JsonRpcRequestContext(requestBody);
+
     final JsonRpcSuccessResponse expectedResponse =
-        new JsonRpcSuccessResponse(expectedRequest.getId(), null);
+        new JsonRpcSuccessResponse(requestBody.getId(), null);
+
     when(jsonRpcMethodMock.response(eq(expectedRequest))).thenReturn(expectedResponse);
 
     final String websocketId = UUID.randomUUID().toString();
@@ -89,7 +92,7 @@ public class WebSocketRequestHandlerTest {
               context.assertEquals(Json.encode(expectedResponse), msg.body());
               async.complete();
             })
-        .completionHandler(v -> handler.handle(websocketId, Buffer.buffer(requestJson.toString())));
+        .completionHandler(v -> handler.handle(websocketId, requestJson.toString()));
 
     async.awaitSuccess(WebSocketRequestHandlerTest.VERTX_AWAIT_TIMEOUT_MILLIS);
   }
@@ -112,7 +115,7 @@ public class WebSocketRequestHandlerTest {
               verifyZeroInteractions(jsonRpcMethodMock);
               async.complete();
             })
-        .completionHandler(v -> handler.handle(websocketId, Buffer.buffer("")));
+        .completionHandler(v -> handler.handle(websocketId, ""));
 
     async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
   }
@@ -135,7 +138,7 @@ public class WebSocketRequestHandlerTest {
               verifyZeroInteractions(jsonRpcMethodMock);
               async.complete();
             })
-        .completionHandler(v -> handler.handle(websocketId, Buffer.buffer("{}")));
+        .completionHandler(v -> handler.handle(websocketId, "{}"));
 
     async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
   }
@@ -159,7 +162,7 @@ public class WebSocketRequestHandlerTest {
               context.assertEquals(Json.encode(expectedResponse), msg.body());
               async.complete();
             })
-        .completionHandler(v -> handler.handle(websocketId, Buffer.buffer(requestJson.toString())));
+        .completionHandler(v -> handler.handle(websocketId, requestJson.toString()));
 
     async.awaitSuccess(WebSocketRequestHandlerTest.VERTX_AWAIT_TIMEOUT_MILLIS);
   }
@@ -169,7 +172,8 @@ public class WebSocketRequestHandlerTest {
     final Async async = context.async();
 
     final JsonObject requestJson = new JsonObject().put("id", 1).put("method", "eth_x");
-    final JsonRpcRequest expectedRequest = requestJson.mapTo(WebSocketRpcRequest.class);
+    final JsonRpcRequestContext expectedRequest =
+        new JsonRpcRequestContext(requestJson.mapTo(WebSocketRpcRequest.class));
     when(jsonRpcMethodMock.response(eq(expectedRequest))).thenThrow(new RuntimeException());
     final JsonRpcErrorResponse expectedResponse =
         new JsonRpcErrorResponse(1, JsonRpcError.INTERNAL_ERROR);
@@ -184,7 +188,7 @@ public class WebSocketRequestHandlerTest {
               context.assertEquals(Json.encode(expectedResponse), msg.body());
               async.complete();
             })
-        .completionHandler(v -> handler.handle(websocketId, Buffer.buffer(requestJson.toString())));
+        .completionHandler(v -> handler.handle(websocketId, requestJson.toString()));
 
     async.awaitSuccess(WebSocketRequestHandlerTest.VERTX_AWAIT_TIMEOUT_MILLIS);
   }

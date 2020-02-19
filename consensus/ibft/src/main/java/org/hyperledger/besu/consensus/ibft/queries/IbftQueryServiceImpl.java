@@ -18,20 +18,23 @@ import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.PoaQueryServiceImpl;
 import org.hyperledger.besu.consensus.ibft.IbftBlockHashing;
 import org.hyperledger.besu.consensus.ibft.IbftExtraData;
+import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.plugin.data.Address;
 import org.hyperledger.besu.plugin.services.query.IbftQueryService;
-import org.hyperledger.besu.util.bytes.Bytes32;
 
 import java.util.Collection;
 import java.util.Collections;
 
+import org.apache.tuweni.bytes.Bytes32;
+
 public class IbftQueryServiceImpl extends PoaQueryServiceImpl implements IbftQueryService {
 
-  public IbftQueryServiceImpl(final BlockInterface blockInterface, final Blockchain blockchain) {
-    super(blockInterface, blockchain);
+  public IbftQueryServiceImpl(
+      final BlockInterface blockInterface, final Blockchain blockchain, final KeyPair keyPair) {
+    super(blockInterface, blockchain, keyPair);
   }
 
   @Override
@@ -57,7 +60,7 @@ public class IbftQueryServiceImpl extends PoaQueryServiceImpl implements IbftQue
       return (BlockHeader) header;
     }
 
-    final Hash blockHash = Hash.wrap(Bytes32.wrap(header.getBlockHash().getByteArray()));
+    final Hash blockHash = Hash.wrap(Bytes32.wrap(header.getBlockHash().toArray()));
     return getBlockchain().getBlockHeader(blockHash).orElseThrow();
   }
 }

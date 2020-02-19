@@ -24,8 +24,8 @@ import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.junit.internal.matchers.ThrowableMessageMatcher.hasMessage;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods.WebSocketRpcRequest;
 import org.hyperledger.besu.ethereum.api.query.LogsQuery;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -50,7 +50,7 @@ public class SubscriptionRequestMapperTest {
 
   @Before
   public void before() {
-    mapper = new SubscriptionRequestMapper(new JsonRpcParameter());
+    mapper = new SubscriptionRequestMapper();
   }
 
   @Test
@@ -60,7 +60,8 @@ public class SubscriptionRequestMapperTest {
             "{\"id\": 1, \"method\": \"eth_unsubscribe\", \"params\": [\"0x1\"]}");
     final UnsubscribeRequest expectedUnsubscribeRequest = new UnsubscribeRequest(1L, CONNECTION_ID);
 
-    final UnsubscribeRequest unsubscribeRequest = mapper.mapUnsubscribeRequest(jsonRpcRequest);
+    final UnsubscribeRequest unsubscribeRequest =
+        mapper.mapUnsubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest));
 
     assertThat(unsubscribeRequest).isEqualTo(expectedUnsubscribeRequest);
   }
@@ -72,7 +73,8 @@ public class SubscriptionRequestMapperTest {
             "{\"id\": 1, \"method\": \"eth_unsubscribe\", \"params\": [\"0x1\", {\"foo\": \"bar\"}]}");
     final UnsubscribeRequest expectedUnsubscribeRequest = new UnsubscribeRequest(1L, CONNECTION_ID);
 
-    final UnsubscribeRequest unsubscribeRequest = mapper.mapUnsubscribeRequest(jsonRpcRequest);
+    final UnsubscribeRequest unsubscribeRequest =
+        mapper.mapUnsubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest));
 
     assertThat(unsubscribeRequest).isEqualTo(expectedUnsubscribeRequest);
   }
@@ -87,7 +89,7 @@ public class SubscriptionRequestMapperTest {
         both(hasMessage(equalTo("Missing required json rpc parameter at index 0")))
             .and(instanceOf(InvalidJsonRpcParameters.class)));
 
-    mapper.mapUnsubscribeRequest(jsonRpcRequest);
+    mapper.mapSubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest));
   }
 
   @Test
@@ -98,7 +100,8 @@ public class SubscriptionRequestMapperTest {
     final SubscribeRequest expectedSubscribeRequest =
         new SubscribeRequest(SubscriptionType.NEW_BLOCK_HEADERS, null, true, CONNECTION_ID);
 
-    final SubscribeRequest subscribeRequest = mapper.mapSubscribeRequest(jsonRpcRequest);
+    final SubscribeRequest subscribeRequest =
+        mapper.mapSubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest));
 
     assertThat(subscribeRequest).isEqualTo(expectedSubscribeRequest);
   }
@@ -111,7 +114,8 @@ public class SubscriptionRequestMapperTest {
     final SubscribeRequest expectedSubscribeRequest =
         new SubscribeRequest(SubscriptionType.NEW_BLOCK_HEADERS, null, false, CONNECTION_ID);
 
-    final SubscribeRequest subscribeRequest = mapper.mapSubscribeRequest(jsonRpcRequest);
+    final SubscribeRequest subscribeRequest =
+        mapper.mapSubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest));
 
     assertThat(subscribeRequest).isEqualTo(expectedSubscribeRequest);
   }
@@ -124,7 +128,8 @@ public class SubscriptionRequestMapperTest {
     final SubscribeRequest expectedSubscribeRequest =
         new SubscribeRequest(SubscriptionType.NEW_BLOCK_HEADERS, null, false, CONNECTION_ID);
 
-    final SubscribeRequest subscribeRequest = mapper.mapSubscribeRequest(jsonRpcRequest);
+    final SubscribeRequest subscribeRequest =
+        mapper.mapSubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest));
 
     assertThat(subscribeRequest).isEqualTo(expectedSubscribeRequest);
   }
@@ -140,7 +145,7 @@ public class SubscriptionRequestMapperTest {
         both(hasMessage(equalTo("Invalid json rpc parameter at index 1")))
             .and(instanceOf(InvalidJsonRpcParameters.class)));
 
-    mapper.mapSubscribeRequest(jsonRpcRequest);
+    mapper.mapSubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest));
   }
 
   @Test
@@ -151,7 +156,8 @@ public class SubscriptionRequestMapperTest {
     final SubscribeRequest expectedSubscribeRequest =
         new SubscribeRequest(SubscriptionType.NEW_BLOCK_HEADERS, null, true, CONNECTION_ID);
 
-    final SubscribeRequest subscribeRequest = mapper.mapSubscribeRequest(jsonRpcRequest);
+    final SubscribeRequest subscribeRequest =
+        mapper.mapSubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest));
 
     assertThat(subscribeRequest).isEqualTo(expectedSubscribeRequest);
   }
@@ -171,7 +177,8 @@ public class SubscriptionRequestMapperTest {
             null,
             null);
 
-    final SubscribeRequest subscribeRequest = mapper.mapSubscribeRequest(jsonRpcRequest);
+    final SubscribeRequest subscribeRequest =
+        mapper.mapSubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest));
 
     assertThat(subscribeRequest)
         .isEqualToComparingFieldByFieldRecursively(expectedSubscribeRequest);
@@ -199,7 +206,8 @@ public class SubscriptionRequestMapperTest {
             null,
             null);
 
-    final SubscribeRequest subscribeRequest = mapper.mapSubscribeRequest(jsonRpcRequest);
+    final SubscribeRequest subscribeRequest =
+        mapper.mapSubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest));
 
     assertThat(subscribeRequest)
         .isEqualToComparingFieldByFieldRecursively(expectedSubscribeRequest);
@@ -226,7 +234,8 @@ public class SubscriptionRequestMapperTest {
             null,
             null);
 
-    final SubscribeRequest subscribeRequest = mapper.mapSubscribeRequest(jsonRpcRequest);
+    final SubscribeRequest subscribeRequest =
+        mapper.mapSubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest));
 
     assertThat(subscribeRequest)
         .isEqualToComparingFieldByFieldRecursively(expectedSubscribeRequest);
@@ -247,7 +256,8 @@ public class SubscriptionRequestMapperTest {
             null,
             null);
 
-    final SubscribeRequest subscribeRequest = mapper.mapSubscribeRequest(jsonRpcRequest);
+    final SubscribeRequest subscribeRequest =
+        mapper.mapSubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest));
 
     assertThat(subscribeRequest)
         .isEqualToComparingFieldByFieldRecursively(expectedSubscribeRequest);
@@ -264,7 +274,7 @@ public class SubscriptionRequestMapperTest {
         both(hasMessage(equalTo("Invalid json rpc parameter at index 1")))
             .and(instanceOf(InvalidJsonRpcParameters.class)));
 
-    mapper.mapSubscribeRequest(jsonRpcRequest);
+    mapper.mapSubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest));
   }
 
   @Test
@@ -278,7 +288,7 @@ public class SubscriptionRequestMapperTest {
         both(hasMessage(equalTo("Invalid json rpc parameter at index 1")))
             .and(instanceOf(InvalidJsonRpcParameters.class)));
 
-    mapper.mapSubscribeRequest(jsonRpcRequest);
+    mapper.mapSubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest));
   }
 
   @Test
@@ -289,7 +299,8 @@ public class SubscriptionRequestMapperTest {
     final SubscribeRequest expectedSubscribeRequest =
         new SubscribeRequest(SubscriptionType.NEW_PENDING_TRANSACTIONS, null, false, CONNECTION_ID);
 
-    final SubscribeRequest subscribeRequest = mapper.mapSubscribeRequest(jsonRpcRequest);
+    final SubscribeRequest subscribeRequest =
+        mapper.mapSubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest));
 
     assertThat(subscribeRequest).isEqualTo(expectedSubscribeRequest);
   }
@@ -302,7 +313,8 @@ public class SubscriptionRequestMapperTest {
     final SubscribeRequest expectedSubscribeRequest =
         new SubscribeRequest(SubscriptionType.NEW_PENDING_TRANSACTIONS, null, false, CONNECTION_ID);
 
-    final SubscribeRequest subscribeRequest = mapper.mapSubscribeRequest(jsonRpcRequest);
+    final SubscribeRequest subscribeRequest =
+        mapper.mapSubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest));
 
     assertThat(subscribeRequest).isEqualTo(expectedSubscribeRequest);
   }
@@ -315,7 +327,8 @@ public class SubscriptionRequestMapperTest {
     final SubscribeRequest expectedSubscribeRequest =
         new SubscribeRequest(SubscriptionType.SYNCING, null, false, CONNECTION_ID);
 
-    final SubscribeRequest subscribeRequest = mapper.mapSubscribeRequest(jsonRpcRequest);
+    final SubscribeRequest subscribeRequest =
+        mapper.mapSubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest));
 
     assertThat(subscribeRequest).isEqualTo(expectedSubscribeRequest);
   }
@@ -328,7 +341,8 @@ public class SubscriptionRequestMapperTest {
     final SubscribeRequest expectedSubscribeRequest =
         new SubscribeRequest(SubscriptionType.SYNCING, null, true, CONNECTION_ID);
 
-    final SubscribeRequest subscribeRequest = mapper.mapSubscribeRequest(jsonRpcRequest);
+    final SubscribeRequest subscribeRequest =
+        mapper.mapSubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest));
 
     assertThat(subscribeRequest).isEqualTo(expectedSubscribeRequest);
   }
@@ -344,7 +358,7 @@ public class SubscriptionRequestMapperTest {
         both(hasMessage(equalTo("Invalid json rpc parameter at index 0")))
             .and(instanceOf(InvalidJsonRpcParameters.class)));
 
-    mapper.mapSubscribeRequest(jsonRpcRequest);
+    mapper.mapSubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest));
   }
 
   private WebSocketRpcRequest parseWebSocketRpcRequest(final String json) {

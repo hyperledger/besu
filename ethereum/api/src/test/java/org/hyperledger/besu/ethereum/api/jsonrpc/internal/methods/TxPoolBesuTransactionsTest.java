@@ -19,6 +19,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.PendingTransactionsResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TransactionInfoResult;
@@ -58,8 +59,10 @@ public class TxPoolBesuTransactionsTest {
   @Test
   public void shouldReturnPendingTransactions() {
     Instant addedAt = Instant.ofEpochMilli(10_000_000);
-    final JsonRpcRequest request =
-        new JsonRpcRequest(JSON_RPC_VERSION, TXPOOL_PENDING_TRANSACTIONS_METHOD, new Object[] {});
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest(
+                JSON_RPC_VERSION, TXPOOL_PENDING_TRANSACTIONS_METHOD, new Object[] {}));
 
     TransactionInfo transactionInfo = mock(TransactionInfo.class);
     when(transactionInfo.getHash()).thenReturn(Hash.fromHexString(TRANSACTION_HASH));

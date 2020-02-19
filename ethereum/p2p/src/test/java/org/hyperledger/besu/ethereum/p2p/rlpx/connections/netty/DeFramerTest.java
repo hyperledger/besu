@@ -49,7 +49,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.PingMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.WireMessageCodes;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -70,6 +69,7 @@ import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoop;
 import io.netty.handler.codec.DecoderException;
 import io.netty.util.concurrent.ScheduledFuture;
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -172,7 +172,7 @@ public class DeFramerTest {
     final PeerInfo remotePeerInfo = createPeerInfo(peer);
 
     HelloMessage helloMessage = HelloMessage.create(remotePeerInfo);
-    ByteBuf data = Unpooled.wrappedBuffer(helloMessage.getData().extractArray());
+    ByteBuf data = Unpooled.wrappedBuffer(helloMessage.getData().toArray());
     when(framer.deframe(eq(data)))
         .thenReturn(new RawMessage(helloMessage.getCode(), helloMessage.getData()))
         .thenReturn(null);
@@ -198,7 +198,7 @@ public class DeFramerTest {
 
     // Next message should be pushed out
     PingMessage nextMessage = PingMessage.get();
-    ByteBuf nextData = Unpooled.wrappedBuffer(nextMessage.getData().extractArray());
+    ByteBuf nextData = Unpooled.wrappedBuffer(nextMessage.getData().toArray());
     when(framer.deframe(eq(nextData)))
         .thenReturn(new RawMessage(nextMessage.getCode(), nextMessage.getData()))
         .thenReturn(null);
@@ -219,7 +219,7 @@ public class DeFramerTest {
     final DeFramer deFramer = createDeFramer(null);
 
     HelloMessage helloMessage = HelloMessage.create(remotePeerInfo);
-    ByteBuf data = Unpooled.wrappedBuffer(helloMessage.getData().extractArray());
+    ByteBuf data = Unpooled.wrappedBuffer(helloMessage.getData().toArray());
     when(framer.deframe(eq(data)))
         .thenReturn(new RawMessage(helloMessage.getCode(), helloMessage.getData()))
         .thenReturn(null);
@@ -248,7 +248,7 @@ public class DeFramerTest {
 
     // Next message should be pushed out
     PingMessage nextMessage = PingMessage.get();
-    ByteBuf nextData = Unpooled.wrappedBuffer(nextMessage.getData().extractArray());
+    ByteBuf nextData = Unpooled.wrappedBuffer(nextMessage.getData().toArray());
     when(framer.deframe(eq(nextData)))
         .thenReturn(new RawMessage(nextMessage.getCode(), nextMessage.getData()))
         .thenReturn(null);
@@ -263,7 +263,7 @@ public class DeFramerTest {
     when(channel.closeFuture()).thenReturn(future);
 
     final Peer peer = createRemotePeer();
-    final BytesValue mismatchedId = Peer.randomId();
+    final Bytes mismatchedId = Peer.randomId();
     final PeerInfo remotePeerInfo =
         new PeerInfo(
             p2pVersion,
@@ -274,7 +274,7 @@ public class DeFramerTest {
     final DeFramer deFramer = createDeFramer(peer);
 
     HelloMessage helloMessage = HelloMessage.create(remotePeerInfo);
-    ByteBuf data = Unpooled.wrappedBuffer(helloMessage.getData().extractArray());
+    ByteBuf data = Unpooled.wrappedBuffer(helloMessage.getData().toArray());
     when(framer.deframe(eq(data)))
         .thenReturn(new RawMessage(helloMessage.getCode(), helloMessage.getData()))
         .thenReturn(null);
@@ -306,7 +306,7 @@ public class DeFramerTest {
             30303,
             Peer.randomId());
     HelloMessage helloMessage = HelloMessage.create(remotePeerInfo);
-    ByteBuf data = Unpooled.wrappedBuffer(helloMessage.getData().extractArray());
+    ByteBuf data = Unpooled.wrappedBuffer(helloMessage.getData().toArray());
     when(framer.deframe(eq(data)))
         .thenReturn(new RawMessage(helloMessage.getCode(), helloMessage.getData()))
         .thenReturn(null);
@@ -325,7 +325,7 @@ public class DeFramerTest {
   @Test
   public void decode_shouldHandleImmediateDisconnectMessage() {
     DisconnectMessage disconnectMessage = DisconnectMessage.create(DisconnectReason.TOO_MANY_PEERS);
-    ByteBuf disconnectData = Unpooled.wrappedBuffer(disconnectMessage.getData().extractArray());
+    ByteBuf disconnectData = Unpooled.wrappedBuffer(disconnectMessage.getData().toArray());
     when(framer.deframe(eq(disconnectData)))
         .thenReturn(new RawMessage(disconnectMessage.getCode(), disconnectMessage.getData()))
         .thenReturn(null);
@@ -343,7 +343,7 @@ public class DeFramerTest {
   @Test
   public void decode_shouldHandleInvalidMessage() {
     MessageData messageData = PingMessage.get();
-    ByteBuf data = Unpooled.wrappedBuffer(messageData.getData().extractArray());
+    ByteBuf data = Unpooled.wrappedBuffer(messageData.getData().toArray());
     when(framer.deframe(eq(data)))
         .thenReturn(new RawMessage(messageData.getCode(), messageData.getData()))
         .thenReturn(null);

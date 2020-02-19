@@ -23,10 +23,10 @@ import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolution;
-import org.hyperledger.besu.util.bytes.Bytes32;
 
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -63,7 +63,7 @@ public class EthHashMiningCoordinatorTest {
 
     when(miner.getHashesPerSecond()).thenReturn(hashRate1, hashRate2, hashRate3);
 
-    when(executor.startAsyncMining(any(), any())).thenReturn(Optional.of(miner));
+    when(executor.startAsyncMining(any(), any(), any())).thenReturn(Optional.of(miner));
 
     final EthHashMiningCoordinator miningCoordinator =
         new EthHashMiningCoordinator(executionContext.getBlockchain(), executor, syncState);

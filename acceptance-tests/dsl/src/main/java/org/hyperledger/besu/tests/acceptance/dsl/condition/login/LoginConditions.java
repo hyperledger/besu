@@ -27,6 +27,10 @@ public class LoginConditions {
     return new ExpectLoginUnauthorized(username, password);
   }
 
+  public Condition disabled() {
+    return new ExpectLoginDisabled();
+  }
+
   public Condition awaitResponse(final String username, final String password) {
     return new AwaitLoginResponse<>(new LoginTransaction(username, password));
   }

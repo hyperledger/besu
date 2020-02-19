@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.vm.ehalt.ExceptionalHaltManager;
 import org.hyperledger.besu.ethereum.vm.operations.InvalidOperation;
 import org.hyperledger.besu.ethereum.vm.operations.StopOperation;
 import org.hyperledger.besu.ethereum.vm.operations.VirtualOperation;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.EnumSet;
 import java.util.Optional;
@@ -31,6 +30,7 @@ import java.util.function.BiConsumer;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 public class EVM {
   private static final Logger LOG = getLogger();
@@ -116,7 +116,7 @@ public class EVM {
     if (!exceptionalHaltReasons.isEmpty()) {
       LOG.trace("MessageFrame evaluation halted because of {}", exceptionalHaltReasons);
       frame.setState(State.EXCEPTIONAL_HALT);
-      frame.setOutputData(BytesValue.EMPTY);
+      frame.setOutputData(Bytes.EMPTY);
       throw new ExceptionalHaltException(exceptionalHaltReasons);
     }
   }
@@ -149,7 +149,7 @@ public class EVM {
 
   @VisibleForTesting
   Operation operationAtOffset(final Code code, final int contractAccountVersion, final int offset) {
-    final BytesValue bytecode = code.getBytes();
+    final Bytes bytecode = code.getBytes();
     // If the length of the program code is shorter than the required offset, halt execution.
     if (offset >= bytecode.size()) {
       return endOfScriptStop;

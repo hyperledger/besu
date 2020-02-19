@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.authentication;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import io.vertx.core.AsyncResult;
@@ -32,6 +33,7 @@ import org.springframework.security.crypto.bcrypt.BCrypt;
 
 public class TomlAuth implements AuthProvider {
 
+  public static final String PRIVACY_PUBLIC_KEY = "privacyPublicKey";
   private final Vertx vertx;
   private final TomlAuthOptions options;
 
@@ -124,8 +126,11 @@ public class TomlAuth implements AuthProvider {
         userData.getArrayOrEmpty("roles").toList().stream()
             .map(Object::toString)
             .collect(Collectors.toList());
+    final Optional<String> privacyPublicKey =
+        Optional.ofNullable(userData.getString(PRIVACY_PUBLIC_KEY));
 
-    return new TomlUser(username, saltedAndHashedPassword, groups, permissions, roles);
+    return new TomlUser(
+        username, saltedAndHashedPassword, groups, permissions, roles, privacyPublicKey);
   }
 
   private void checkPasswordHash(

@@ -20,6 +20,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.SyncingResult;
@@ -55,8 +56,9 @@ public class EthSyncingTest {
 
   @Test
   public void shouldReturnFalseWhenSyncStatusIsEmpty() {
-    final JsonRpcRequest request = requestWithParams();
-    final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(request.getId(), false);
+    final JsonRpcRequestContext request = requestWithParams();
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcSuccessResponse(request.getRequest().getId(), false);
     final Optional<SyncStatus> optionalSyncStatus = Optional.empty();
     when(synchronizer.getSyncStatus()).thenReturn(optionalSyncStatus);
 
@@ -68,10 +70,11 @@ public class EthSyncingTest {
 
   @Test
   public void shouldReturnExpectedValueWhenSyncStatusIsNotEmpty() {
-    final JsonRpcRequest request = requestWithParams();
+    final JsonRpcRequestContext request = requestWithParams();
     final SyncStatus expectedSyncStatus = new DefaultSyncStatus(0, 1, 2);
     final JsonRpcResponse expectedResponse =
-        new JsonRpcSuccessResponse(request.getId(), new SyncingResult(expectedSyncStatus));
+        new JsonRpcSuccessResponse(
+            request.getRequest().getId(), new SyncingResult(expectedSyncStatus));
     final Optional<SyncStatus> optionalSyncStatus = Optional.of(expectedSyncStatus);
     when(synchronizer.getSyncStatus()).thenReturn(optionalSyncStatus);
 
@@ -81,7 +84,7 @@ public class EthSyncingTest {
     verifyNoMoreInteractions(synchronizer);
   }
 
-  private JsonRpcRequest requestWithParams(final Object... params) {
-    return new JsonRpcRequest(JSON_RPC_VERSION, ETH_METHOD, params);
+  private JsonRpcRequestContext requestWithParams(final Object... params) {
+    return new JsonRpcRequestContext(new JsonRpcRequest(JSON_RPC_VERSION, ETH_METHOD, params));
   }
 }

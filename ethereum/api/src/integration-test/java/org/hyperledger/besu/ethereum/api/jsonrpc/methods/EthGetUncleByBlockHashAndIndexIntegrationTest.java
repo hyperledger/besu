@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseUtils;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcTestMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -59,13 +60,14 @@ public class EthGetUncleByBlockHashAndIndexIntegrationTest {
 
   @Test
   public void shouldGetExpectedBlockResult() {
-    final JsonRpcRequest request =
-        new JsonRpcRequest(
-            "2.0",
-            "eth_getUncleByBlockHashAndIndex",
-            new Object[] {
-              "0x4e9a67b663f9abe03e7e9fd5452c9497998337077122f44ee78a466f6a7358de", "0x0"
-            });
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest(
+                "2.0",
+                "eth_getUncleByBlockHashAndIndex",
+                new Object[] {
+                  "0x4e9a67b663f9abe03e7e9fd5452c9497998337077122f44ee78a466f6a7358de", "0x0"
+                }));
 
     final Map<JsonRpcResponseKey, String> out = new EnumMap<>(JsonRpcResponseKey.class);
     out.put(JsonRpcResponseKey.COINBASE, "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b");

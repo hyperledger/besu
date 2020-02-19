@@ -21,7 +21,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -33,10 +33,10 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor.Result;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.Collections;
 import java.util.EnumSet;
@@ -45,15 +45,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
 public class DebugTraceTransactionTest {
 
-  private final JsonRpcParameter parameters = new JsonRpcParameter();
   private final BlockchainQueries blockchain = mock(BlockchainQueries.class);
   private final TransactionTracer transactionTracer = mock(TransactionTracer.class);
   private final DebugTraceTransaction debugTraceTransaction =
-      new DebugTraceTransaction(blockchain, transactionTracer, parameters);
+      new DebugTraceTransaction(blockchain, transactionTracer);
   private final Transaction transaction = mock(Transaction.class);
 
   private final BlockHeader blockHeader = mock(BlockHeader.class);
@@ -74,7 +74,8 @@ public class DebugTraceTransactionTest {
     final Map<String, Boolean> map = new HashMap<>();
     map.put("disableStorage", true);
     final Object[] params = new Object[] {transactionHash, map};
-    final JsonRpcRequest request = new JsonRpcRequest("2.0", "debug_traceTransaction", params);
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(new JsonRpcRequest("2.0", "debug_traceTransaction", params));
     final Result result = mock(Result.class);
 
     final TraceFrame traceFrame =
@@ -83,18 +84,31 @@ public class DebugTraceTransactionTest {
             "NONE",
             Gas.of(45),
             Optional.of(Gas.of(56)),
+            Gas.ZERO,
             2,
             EnumSet.noneOf(ExceptionalHaltReason.class),
+            null,
+            Wei.ZERO,
+            Bytes.EMPTY,
+            Bytes.EMPTY,
             Optional.empty(),
             Optional.empty(),
             Optional.empty(),
-            Optional.of(BytesValue.fromHexString("0x1122334455667788")));
+            null,
+            Optional.of(Bytes.fromHexString("0x1122334455667788")),
+            Optional.empty(),
+            Optional.empty(),
+            0,
+            Optional.empty(),
+            false,
+            Optional.empty(),
+            Optional.empty());
     final List<TraceFrame> traceFrames = Collections.singletonList(traceFrame);
     final TransactionTrace transactionTrace =
         new TransactionTrace(transaction, result, traceFrames);
     when(transaction.getGasLimit()).thenReturn(100L);
     when(result.getGasRemaining()).thenReturn(27L);
-    when(result.getOutput()).thenReturn(BytesValue.fromHexString("1234"));
+    when(result.getOutput()).thenReturn(Bytes.fromHexString("1234"));
     when(blockHeader.getNumber()).thenReturn(12L);
     when(blockchain.headBlockNumber()).thenReturn(12L);
     when(blockchain.transactionByHash(transactionHash))
@@ -117,7 +131,8 @@ public class DebugTraceTransactionTest {
     final Map<String, Boolean> map = new HashMap<>();
     map.put("disableStorage", true);
     final Object[] params = new Object[] {transactionHash, map};
-    final JsonRpcRequest request = new JsonRpcRequest("2.0", "debug_traceTransaction", params);
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(new JsonRpcRequest("2.0", "debug_traceTransaction", params));
     final Result result = mock(Result.class);
 
     final TraceFrame traceFrame =
@@ -126,18 +141,31 @@ public class DebugTraceTransactionTest {
             "NONE",
             Gas.of(45),
             Optional.of(Gas.of(56)),
+            Gas.ZERO,
             2,
             EnumSet.noneOf(ExceptionalHaltReason.class),
+            null,
+            Wei.ZERO,
+            Bytes.EMPTY,
+            Bytes.EMPTY,
             Optional.empty(),
             Optional.empty(),
             Optional.empty(),
-            Optional.of(BytesValue.fromHexString("0x1122334455667788")));
+            null,
+            Optional.of(Bytes.fromHexString("0x1122334455667788")),
+            Optional.empty(),
+            Optional.empty(),
+            0,
+            Optional.empty(),
+            false,
+            Optional.empty(),
+            Optional.empty());
     final List<TraceFrame> traceFrames = Collections.singletonList(traceFrame);
     final TransactionTrace transactionTrace =
         new TransactionTrace(transaction, result, traceFrames);
     when(transaction.getGasLimit()).thenReturn(100L);
     when(result.getGasRemaining()).thenReturn(27L);
-    when(result.getOutput()).thenReturn(BytesValue.fromHexString("1234"));
+    when(result.getOutput()).thenReturn(Bytes.fromHexString("1234"));
     when(blockHeader.getNumber()).thenReturn(12L);
     when(blockchain.headBlockNumber()).thenReturn(12L);
     when(blockchain.transactionByHash(transactionHash)).thenReturn(Optional.empty());

@@ -23,6 +23,7 @@ public enum RpcMethod {
   ADMIN_PEERS("admin_peers"),
   ADMIN_REMOVE_PEER("admin_removePeer"),
   ADMIN_CHANGE_LOG_LEVEL("admin_changeLogLevel"),
+  ADMIN_GENERATE_LOG_BLOOM_CACHE("admin_generateLogBloomCache"),
   CLIQUE_DISCARD("clique_discard"),
   CLIQUE_GET_SIGNERS("clique_getSigners"),
   CLIQUE_GET_SIGNERS_AT_HASH("clique_getSignersAtHash"),
@@ -35,6 +36,7 @@ public enum RpcMethod {
   DEBUG_TRACE_BLOCK_BY_HASH("debug_traceBlockByHash"),
   DEBUG_TRACE_BLOCK_BY_NUMBER("debug_traceBlockByNumber"),
   DEBUG_TRACE_TRANSACTION("debug_traceTransaction"),
+  PRIV_CALL("priv_call"),
   PRIV_GET_PRIVATE_TRANSACTION("priv_getPrivateTransaction"),
   PRIV_GET_TRANSACTION_COUNT("priv_getTransactionCount"),
   PRIV_GET_PRIVACY_PRECOMPILE_ADDRESS("priv_getPrivacyPrecompileAddress"),
@@ -81,6 +83,7 @@ public enum RpcMethod {
   ETH_PROTOCOL_VERSION("eth_protocolVersion"),
   ETH_SEND_RAW_TRANSACTION("eth_sendRawTransaction"),
   ETH_SEND_TRANSACTION("eth_sendTransaction"),
+  ETH_SUBMIT_WORK("eth_submitWork"),
   ETH_SUBSCRIBE("eth_subscribe"),
   ETH_SYNCING("eth_syncing"),
   ETH_UNINSTALL_FILTER("eth_uninstallFilter"),
@@ -112,11 +115,12 @@ public enum RpcMethod {
   TX_POOL_BESU_STATISTICS("txpool_besuStatistics"),
   TX_POOL_BESU_TRANSACTIONS("txpool_besuTransactions"),
   WEB3_CLIENT_VERSION("web3_clientVersion"),
-  WEB3_SHA3("web3_sha3");
+  WEB3_SHA3("web3_sha3"),
+  PLUGINS_RELOAD_CONFIG("plugins_reloadPluginConfig");
 
   private final String methodName;
 
-  private static Collection<String> allMethodNames;
+  private static final Collection<String> allMethodNames;
 
   public String getMethodName() {
     return methodName;

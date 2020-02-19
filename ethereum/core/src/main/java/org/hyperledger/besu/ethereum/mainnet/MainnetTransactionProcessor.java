@@ -19,7 +19,7 @@ import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.DefaultEvmAccount;
 import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.core.LogSeries;
+import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -30,14 +30,16 @@ import org.hyperledger.besu.ethereum.vm.Code;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
+import java.util.List;
 import java.util.Optional;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 public class MainnetTransactionProcessor implements TransactionProcessor {
 
@@ -61,41 +63,36 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
 
     private final long gasRemaining;
 
-    private final LogSeries logs;
+    private final List<Log> logs;
 
-    private final BytesValue output;
+    private final Bytes output;
 
     private final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult;
-    private final Optional<BytesValue> revertReason;
+    private final Optional<Bytes> revertReason;
 
     public static Result invalid(
         final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult) {
       return new Result(
-          Status.INVALID,
-          LogSeries.empty(),
-          -1,
-          BytesValue.EMPTY,
-          validationResult,
-          Optional.empty());
+          Status.INVALID, new ArrayList<>(), -1, Bytes.EMPTY, validationResult, Optional.empty());
     }
 
     public static Result failed(
         final long gasRemaining,
         final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult,
-        final Optional<BytesValue> revertReason) {
+        final Optional<Bytes> revertReason) {
       return new Result(
           Status.FAILED,
-          LogSeries.empty(),
+          new ArrayList<>(),
           gasRemaining,
-          BytesValue.EMPTY,
+          Bytes.EMPTY,
           validationResult,
           revertReason);
     }
 
     public static Result successful(
-        final LogSeries logs,
+        final List<Log> logs,
         final long gasRemaining,
-        final BytesValue output,
+        final Bytes output,
         final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult) {
       return new Result(
           Status.SUCCESSFUL, logs, gasRemaining, output, validationResult, Optional.empty());
@@ -103,11 +100,11 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
 
     Result(
         final Status status,
-        final LogSeries logs,
+        final List<Log> logs,
         final long gasRemaining,
-        final BytesValue output,
+        final Bytes output,
         final ValidationResult<TransactionValidator.TransactionInvalidReason> validationResult,
-        final Optional<BytesValue> revertReason) {
+        final Optional<Bytes> revertReason) {
       this.status = status;
       this.logs = logs;
       this.gasRemaining = gasRemaining;
@@ -117,7 +114,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
     }
 
     @Override
-    public LogSeries getLogs() {
+    public List<Log> getLogs() {
       return logs;
     }
 
@@ -132,7 +129,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
     }
 
     @Override
-    public BytesValue getOutput() {
+    public Bytes getOutput() {
       return output;
     }
 
@@ -142,7 +139,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
     }
 
     @Override
-    public Optional<BytesValue> getRevertReason() {
+    public Optional<Bytes> getRevertReason() {
       return revertReason;
     }
   }
@@ -175,7 +172,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
       final Address miningBeneficiary,
       final OperationTracer operationTracer,
       final BlockHashLookup blockHashLookup,
-      final Boolean isPersistingState,
+      final Boolean isPersistingPrivateState,
       final TransactionValidationParams transactionValidationParams) {
     LOG.trace("Starting execution of {}", transaction);
 
@@ -239,7 +236,7 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
               .contract(contractAddress)
               .contractAccountVersion(createContractAccountVersion)
               .gasPrice(transaction.getGasPrice())
-              .inputData(BytesValue.EMPTY)
+              .inputData(Bytes.EMPTY)
               .sender(senderAddress)
               .value(transaction.getValue())
               .apparentValue(transaction.getValue())
@@ -249,8 +246,9 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
               .completer(c -> {})
               .miningBeneficiary(miningBeneficiary)
               .blockHashLookup(blockHashLookup)
-              .isPersistingState(isPersistingState)
+              .isPersistingPrivateState(isPersistingPrivateState)
               .maxStackSize(maxStackSize)
+              .transactionHash(transaction.getHash())
               .build();
 
     } else {
@@ -274,14 +272,15 @@ public class MainnetTransactionProcessor implements TransactionProcessor {
               .sender(senderAddress)
               .value(transaction.getValue())
               .apparentValue(transaction.getValue())
-              .code(new Code(contract != null ? contract.getCode() : BytesValue.EMPTY))
+              .code(new Code(contract != null ? contract.getCode() : Bytes.EMPTY))
               .blockHeader(blockHeader)
               .depth(0)
               .completer(c -> {})
               .miningBeneficiary(miningBeneficiary)
               .blockHashLookup(blockHashLookup)
               .maxStackSize(maxStackSize)
-              .isPersistingState(isPersistingState)
+              .isPersistingPrivateState(isPersistingPrivateState)
+              .transactionHash(transaction.getHash())
               .build();
     }
 

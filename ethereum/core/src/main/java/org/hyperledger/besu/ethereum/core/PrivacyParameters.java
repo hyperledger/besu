@@ -16,10 +16,12 @@ package org.hyperledger.besu.ethereum.core;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+import org.hyperledger.besu.crypto.KeyPairUtil;
 import org.hyperledger.besu.crypto.SECP256K1;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.enclave.Enclave;
+import org.hyperledger.besu.enclave.EnclaveFactory;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivacyStorageProvider;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
-import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
@@ -28,6 +30,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
+import java.util.Base64;
 import java.util.Optional;
 
 import com.google.common.io.Files;
@@ -43,10 +46,12 @@ public class PrivacyParameters {
   private String enclavePublicKey;
   private File enclavePublicKeyFile;
   private Optional<SECP256K1.KeyPair> signingKeyPair = Optional.empty();
+  private Enclave enclave;
 
+  private PrivacyStorageProvider privateStorageProvider;
   private WorldStateArchive privateWorldStateArchive;
-  private StorageProvider privateStorageProvider;
   private PrivateStateStorage privateStateStorage;
+  private boolean multiTenancyEnabled;
 
   public Integer getPrivacyAddress() {
     return privacyAddress;
@@ -104,11 +109,11 @@ public class PrivacyParameters {
     this.privateWorldStateArchive = privateWorldStateArchive;
   }
 
-  public StorageProvider getPrivateStorageProvider() {
+  public PrivacyStorageProvider getPrivateStorageProvider() {
     return privateStorageProvider;
   }
 
-  public void setPrivateStorageProvider(final StorageProvider privateStorageProvider) {
+  public void setPrivateStorageProvider(final PrivacyStorageProvider privateStorageProvider) {
     this.privateStorageProvider = privateStorageProvider;
   }
 
@@ -120,9 +125,33 @@ public class PrivacyParameters {
     this.privateStateStorage = privateStateStorage;
   }
 
+  public Enclave getEnclave() {
+    return enclave;
+  }
+
+  public void setEnclave(final Enclave enclave) {
+    this.enclave = enclave;
+  }
+
+  private void setMultiTenancyEnabled(final boolean multiTenancyEnabled) {
+    this.multiTenancyEnabled = multiTenancyEnabled;
+  }
+
+  public boolean isMultiTenancyEnabled() {
+    return multiTenancyEnabled;
+  }
+
   @Override
   public String toString() {
-    return "PrivacyParameters{" + "enabled=" + enabled + ", enclaveUri='" + enclaveUri + '\'' + '}';
+    return "PrivacyParameters{"
+        + "enabled="
+        + enabled
+        + ", multiTenancyEnabled = "
+        + multiTenancyEnabled
+        + ", enclaveUri='"
+        + enclaveUri
+        + '\''
+        + '}';
   }
 
   public static class Builder {
@@ -133,7 +162,12 @@ public class PrivacyParameters {
     private File enclavePublicKeyFile;
     private String enclavePublicKey;
     private Path privateKeyPath;
-    private StorageProvider storageProvider;
+    private PrivacyStorageProvider storageProvider;
+    private EnclaveFactory enclaveFactory;
+    private boolean multiTenancyEnabled;
+    private Path privacyKeyStoreFile;
+    private Path privacyKeyStorePasswordFile;
+    private Path privacyTlsKnownEnclaveFile;
 
     public Builder setPrivacyAddress(final Integer privacyAddress) {
       this.privacyAddress = privacyAddress;
@@ -150,7 +184,7 @@ public class PrivacyParameters {
       return this;
     }
 
-    public Builder setStorageProvider(final StorageProvider privateStorageProvider) {
+    public Builder setStorageProvider(final PrivacyStorageProvider privateStorageProvider) {
       this.storageProvider = privateStorageProvider;
       return this;
     }
@@ -160,7 +194,32 @@ public class PrivacyParameters {
       return this;
     }
 
-    public PrivacyParameters build() throws IOException {
+    public Builder setEnclaveFactory(final EnclaveFactory enclaveFactory) {
+      this.enclaveFactory = enclaveFactory;
+      return this;
+    }
+
+    public Builder setMultiTenancyEnabled(final boolean multiTenancyEnabled) {
+      this.multiTenancyEnabled = multiTenancyEnabled;
+      return this;
+    }
+
+    public Builder setPrivacyKeyStoreFile(final Path privacyKeyStoreFile) {
+      this.privacyKeyStoreFile = privacyKeyStoreFile;
+      return this;
+    }
+
+    public Builder setPrivacyKeyStorePasswordFile(final Path privacyKeyStorePasswordFile) {
+      this.privacyKeyStorePasswordFile = privacyKeyStorePasswordFile;
+      return this;
+    }
+
+    public Builder setPrivacyTlsKnownEnclaveFile(final Path privacyTlsKnownEnclaveFile) {
+      this.privacyTlsKnownEnclaveFile = privacyTlsKnownEnclaveFile;
+      return this;
+    }
+
+    public PrivacyParameters build() {
       final PrivacyParameters config = new PrivacyParameters();
       if (enabled) {
         final WorldStateStorage privateWorldStateStorage =
@@ -177,21 +236,43 @@ public class PrivacyParameters {
         config.setEnclavePublicKeyFile(enclavePublicKeyFile);
         config.setPrivateStorageProvider(storageProvider);
         config.setPrivateStateStorage(privateStateStorage);
+        // pass TLS options to enclave factory if they are set
+        if (privacyKeyStoreFile != null) {
+          config.setEnclave(
+              enclaveFactory.createVertxEnclave(
+                  enclaveUrl,
+                  privacyKeyStoreFile,
+                  privacyKeyStorePasswordFile,
+                  privacyTlsKnownEnclaveFile));
+        } else {
+          config.setEnclave(enclaveFactory.createVertxEnclave(enclaveUrl));
+        }
 
         if (privateKeyPath != null) {
-          config.setSigningKeyPair(KeyPair.load(privateKeyPath.toFile()));
+          config.setSigningKeyPair(KeyPairUtil.load(privateKeyPath.toFile()));
         }
       }
       config.setEnabled(enabled);
       config.setEnclaveUri(enclaveUrl);
       config.setPrivacyAddress(privacyAddress);
+      config.setMultiTenancyEnabled(multiTenancyEnabled);
       return config;
     }
 
     public Builder setEnclavePublicKeyUsingFile(final File publicKeyFile) throws IOException {
       this.enclavePublicKeyFile = publicKeyFile;
       this.enclavePublicKey = Files.asCharSource(publicKeyFile, UTF_8).read();
+      validatePublicKey(publicKeyFile);
       return this;
+    }
+
+    private void validatePublicKey(final File publicKeyFile) {
+      if (publicKeyFile.length() != 44) {
+        throw new IllegalArgumentException(
+            "Contents of enclave public key file needs to be 44 characters long to decode to a valid 32 byte public key.");
+      }
+      // throws exception if invalid base 64
+      Base64.getDecoder().decode(this.enclavePublicKey);
     }
   }
 }

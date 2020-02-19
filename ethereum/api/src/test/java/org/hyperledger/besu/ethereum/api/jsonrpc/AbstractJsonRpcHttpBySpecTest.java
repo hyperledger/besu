@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc;
 
+import static com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT;
 import static com.google.common.base.Preconditions.checkState;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -27,9 +28,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Stream;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
@@ -43,10 +48,10 @@ import org.junit.runners.Parameterized;
 @RunWith(Parameterized.class)
 public abstract class AbstractJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpServiceTest {
 
-  private static ObjectMapper objectMapper = new ObjectMapper();
+  private static final ObjectMapper objectMapper = new ObjectMapper();
   private final URL specURL;
 
-  public AbstractJsonRpcHttpBySpecTest(final String specName, final URL specURL) {
+  AbstractJsonRpcHttpBySpecTest(final String specName, final URL specURL) {
     this.specURL = specURL;
   }
 
@@ -63,7 +68,7 @@ public abstract class AbstractJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpS
    * @return Parameters for this test which will contain the name of the test and the url of the
    *     spec file to run.
    */
-  public static Object[][] findSpecFiles(final String... subDirectoryPaths) {
+  static Object[][] findSpecFiles(final String... subDirectoryPaths) {
     final List<Object[]> specFiles = new ArrayList<>();
     for (final String path : subDirectoryPaths) {
       final URL url = AbstractJsonRpcHttpBySpecTest.class.getResource(path);
@@ -77,6 +82,7 @@ public abstract class AbstractJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpS
       try (final Stream<Path> s = Files.walk(dir, 1)) {
         s.map(Path::toFile)
             .filter(f -> f.getPath().endsWith(".json"))
+            .filter(f -> !f.getPath().contains("genesis"))
             .map(AbstractJsonRpcHttpBySpecTest::fileToParams)
             .forEach(specFiles::add);
       } catch (final IOException e) {
@@ -95,7 +101,7 @@ public abstract class AbstractJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpS
       final String fileName = file.toPath().getFileName().toString();
       final URL fileURL = file.toURI().toURL();
       return new Object[] {fileName, fileURL};
-    } catch (MalformedURLException e) {
+    } catch (final MalformedURLException e) {
       throw new RuntimeException("Problem reading spec file " + file.getAbsolutePath(), e);
     }
   }
@@ -111,41 +117,66 @@ public abstract class AbstractJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpS
       final int expectedStatusCode = specNode.get("statusCode").asInt();
       assertThat(resp.code()).isEqualTo(expectedStatusCode);
 
-      final ObjectNode responseBody;
-      try {
-        responseBody = (ObjectNode) objectMapper.readTree(resp.body().string());
-      } catch (Exception e) {
-        throw new RuntimeException("Unable to parse response as json object", e);
+      final JsonNode expectedResponse = specNode.get("response");
+      if (expectedResponse.isObject()) {
+        try {
+          final ObjectNode responseBody =
+              (ObjectNode) objectMapper.readTree(Objects.requireNonNull(resp.body()).string());
+          checkResponse(responseBody, (ObjectNode) expectedResponse);
+        } catch (final Exception e) {
+          throw new RuntimeException("Unable to parse response as json object", e);
+        }
+      } else if (expectedResponse.isArray()) {
+        final ArrayNode responseBody;
+        try {
+          responseBody =
+              (ArrayNode) objectMapper.readTree(Objects.requireNonNull(resp.body()).string());
+        } catch (final Exception e) {
+          throw new RuntimeException("Unable to parse response as json Array", e);
+        }
+        for (int i = 0; i < ((ArrayNode) expectedResponse).size(); i++) {
+          checkResponse(
+              (ObjectNode) responseBody.get(i), (ObjectNode) ((ArrayNode) expectedResponse).get(i));
+        }
       }
+    }
+  }
 
-      final ObjectNode expectedResponse = (ObjectNode) specNode.get("response");
+  private void checkResponse(final ObjectNode responseBody, final ObjectNode expectedResponse)
+      throws JsonProcessingException {
+    // Check id
+    final String actualId = responseBody.get("id").toString();
+    final String expectedId = expectedResponse.get("id").toString();
+    assertThat(actualId).isEqualTo(expectedId);
 
-      // Check id
-      final String actualId = responseBody.get("id").toString();
-      final String expectedId = expectedResponse.get("id").toString();
-      assertThat(actualId).isEqualTo(expectedId);
+    // Check version
+    final String actualVersion = responseBody.get("jsonrpc").toString();
+    final String expectedVersion = expectedResponse.get("jsonrpc").toString();
+    assertThat(actualVersion).isEqualTo(expectedVersion);
 
-      // Check version
-      final String actualVersion = responseBody.get("jsonrpc").toString();
-      final String expectedVersion = expectedResponse.get("jsonrpc").toString();
-      assertThat(actualVersion).isEqualTo(expectedVersion);
+    // Check result
+    if (expectedResponse.has("result")) {
+      assertThat(responseBody.has("result")).isTrue();
+      final String expectedResult = expectedResponse.get("result").toString();
+      final String actualResult = responseBody.get("result").toString();
+      final ObjectMapper mapper = new ObjectMapper();
+      mapper.configure(INDENT_OUTPUT, true);
+      assertThat(
+              mapper
+                  .writerWithDefaultPrettyPrinter()
+                  .writeValueAsString(mapper.readTree(actualResult)))
+          .isEqualTo(
+              mapper
+                  .writerWithDefaultPrettyPrinter()
+                  .writeValueAsString(mapper.readTree(expectedResult)));
+    }
 
-      // Check result
-      if (expectedResponse.has("result")) {
-        assertThat(responseBody.has("result")).isTrue();
-        final String expectedResult = expectedResponse.get("result").toString();
-        final String actualResult = responseBody.get("result").toString();
-        final ObjectMapper mapper = new ObjectMapper();
-        assertThat(mapper.readTree(actualResult)).isEqualTo(mapper.readTree(expectedResult));
-      }
-
-      // Check error
-      if (expectedResponse.has("error")) {
-        assertThat(responseBody.has("error")).isTrue();
-        final String expectedError = expectedResponse.get("error").toString();
-        final String actualError = responseBody.get("error").toString();
-        assertThat(actualError).isEqualToIgnoringWhitespace(expectedError);
-      }
+    // Check error
+    if (expectedResponse.has("error")) {
+      assertThat(responseBody.has("error")).isTrue();
+      final String expectedError = expectedResponse.get("error").toString();
+      final String actualError = responseBody.get("error").toString();
+      assertThat(actualError).isEqualToIgnoringWhitespace(expectedError);
     }
   }
 }

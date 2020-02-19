@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioningController;
@@ -35,8 +36,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class PermGetAccountsWhitelistTest {
 
-  private static final JsonRpcRequest request =
-      new JsonRpcRequest("2.0", "perm_getAccountsWhitelist", null);
+  private static final JsonRpcRequestContext request =
+      new JsonRpcRequestContext(new JsonRpcRequest("2.0", "perm_getAccountsWhitelist", null));
 
   @Mock private AccountLocalConfigPermissioningController accountWhitelist;
   private PermGetAccountsWhitelist method;

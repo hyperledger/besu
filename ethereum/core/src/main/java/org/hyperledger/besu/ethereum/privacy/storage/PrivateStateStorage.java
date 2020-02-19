@@ -14,47 +14,43 @@
  */
 package org.hyperledger.besu.ethereum.privacy.storage;
 
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.Log;
-import org.hyperledger.besu.ethereum.core.LogSeries;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
+import org.hyperledger.besu.ethereum.privacy.PrivateTransactionReceipt;
 
-import java.util.List;
 import java.util.Optional;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 public interface PrivateStateStorage {
 
-  @Deprecated
-  Optional<Hash> getLatestStateRoot(BytesValue privacyId);
+  Optional<PrivateTransactionReceipt> getTransactionReceipt(Bytes32 blockHash, Bytes32 txHash);
 
-  Optional<List<Log>> getTransactionLogs(Bytes32 transactionHash);
+  Optional<PrivateBlockMetadata> getPrivateBlockMetadata(Bytes32 blockHash, Bytes32 privacyGroupId);
 
-  Optional<BytesValue> getTransactionOutput(Bytes32 transactionHash);
+  Optional<PrivacyGroupHeadBlockMap> getPrivacyGroupHeadBlockMap(Bytes32 blockHash);
 
-  Optional<PrivateTransactionMetadata> getTransactionMetadata(
-      Bytes32 blockHash, Bytes32 transactionHash);
+  int getSchemaVersion();
 
-  boolean isPrivateStateAvailable(Bytes32 transactionHash);
-
-  boolean isWorldStateAvailable(Bytes32 rootHash);
+  boolean isEmpty();
 
   Updater updater();
 
   interface Updater {
 
-    @Deprecated
-    Updater putLatestStateRoot(BytesValue privacyId, Hash privateStateHash);
+    Updater putTransactionReceipt(
+        Bytes32 blockHash, Bytes32 transactionHash, PrivateTransactionReceipt receipt);
 
-    Updater putTransactionLogs(Bytes32 transactionHash, LogSeries logs);
+    Updater putPrivateBlockMetadata(
+        Bytes32 blockHash, Bytes32 privacyGroupId, PrivateBlockMetadata metadata);
 
-    Updater putTransactionResult(Bytes32 transactionHash, BytesValue events);
+    Updater putPrivacyGroupHeadBlockMap(Bytes32 blockHash, PrivacyGroupHeadBlockMap map);
 
-    Updater putTransactionMetadata(
-        Bytes32 blockHash, Bytes32 transactionHash, PrivateTransactionMetadata metadata);
+    Updater putDatabaseVersion(int version);
 
     void commit();
 
     void rollback();
+
+    void remove(final Bytes key, final Bytes keySuffix);
   }
 }

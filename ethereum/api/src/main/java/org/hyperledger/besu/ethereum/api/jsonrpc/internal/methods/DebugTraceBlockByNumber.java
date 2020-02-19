@@ -15,9 +15,8 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TransactionTraceParams;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
@@ -28,17 +27,16 @@ import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 
 import java.util.Optional;
+import java.util.function.Supplier;
 
 public class DebugTraceBlockByNumber extends AbstractBlockParameterMethod {
 
-  private final BlockTracer blockTracer;
+  private final Supplier<BlockTracer> blockTracerSupplier;
 
   public DebugTraceBlockByNumber(
-      final JsonRpcParameter parameters,
-      final BlockTracer blockTracer,
-      final BlockchainQueries blockchain) {
-    super(blockchain, parameters);
-    this.blockTracer = blockTracer;
+      final Supplier<BlockTracer> blockTracerSupplier, final BlockchainQueries blockchain) {
+    super(blockchain);
+    this.blockTracerSupplier = blockTracerSupplier;
   }
 
   @Override
@@ -47,23 +45,25 @@ public class DebugTraceBlockByNumber extends AbstractBlockParameterMethod {
   }
 
   @Override
-  protected BlockParameter blockParameter(final JsonRpcRequest request) {
-    return getParameters().required(request.getParams(), 0, BlockParameter.class);
+  protected BlockParameter blockParameter(final JsonRpcRequestContext request) {
+    return request.getRequiredParameter(0, BlockParameter.class);
   }
 
   @Override
-  protected Object resultByBlockNumber(final JsonRpcRequest request, final long blockNumber) {
+  protected Object resultByBlockNumber(
+      final JsonRpcRequestContext request, final long blockNumber) {
     final Optional<Hash> blockHash = getBlockchainQueries().getBlockHashByNumber(blockNumber);
     final TraceOptions traceOptions =
-        getParameters()
-            .optional(request.getParams(), 1, TransactionTraceParams.class)
+        request
+            .getOptionalParameter(1, TransactionTraceParams.class)
             .map(TransactionTraceParams::traceOptions)
             .orElse(TraceOptions.DEFAULT);
 
     return blockHash
         .flatMap(
             hash ->
-                blockTracer
+                blockTracerSupplier
+                    .get()
                     .trace(hash, new DebugOperationTracer(traceOptions))
                     .map(BlockTrace::getTransactionTraces)
                     .map(DebugTraceTransactionResult::of))

@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -32,12 +31,13 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.function.Function;
 
+import org.apache.tuweni.bytes.Bytes;
+
 public final class RawBlockIterator implements Iterator<Block>, Closeable {
   private static final int DEFAULT_INIT_BUFFER_CAPACITY = 1 << 16;
 
   private final FileChannel fileChannel;
   private final Function<RLPInput, BlockHeader> headerReader;
-
   private ByteBuffer readBuffer;
 
   private Block next;
@@ -86,7 +86,7 @@ public final class RawBlockIterator implements Iterator<Block>, Closeable {
     fillReadBuffer();
     int initial = readBuffer.position();
     if (initial > 0) {
-      final int length = RLP.calculateSize(BytesValue.wrapBuffer(readBuffer));
+      final int length = RLP.calculateSize(Bytes.wrapByteBuffer(readBuffer));
       if (length > readBuffer.capacity()) {
         readBuffer.flip();
         final ByteBuffer newBuffer = ByteBuffer.allocate(2 * length);
@@ -96,7 +96,7 @@ public final class RawBlockIterator implements Iterator<Block>, Closeable {
         initial = readBuffer.position();
       }
 
-      final BytesValue rlpBytes = BytesValue.wrapBuffer(readBuffer, 0, length).copy();
+      final Bytes rlpBytes = Bytes.wrap(Bytes.wrapByteBuffer(readBuffer, 0, length).toArray());
       final RLPInput rlp = new BytesValueRLPInput(rlpBytes, false);
       rlp.enterList();
       final BlockHeader header = headerReader.apply(rlp);

@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.permissioning.
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.permissioning.PermReloadPermissionsFromFile;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.permissioning.PermRemoveAccountsFromWhitelist;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.permissioning.PermRemoveNodesFromWhitelist;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioningController;
 import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningController;
 
@@ -33,7 +32,6 @@ import java.util.Optional;
 
 public class PermJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
-  private final JsonRpcParameter parameter = new JsonRpcParameter();
   private final Optional<AccountLocalConfigPermissioningController> accountsWhitelistController;
   private final Optional<NodeLocalConfigPermissioningController> nodeWhitelistController;
 
@@ -52,12 +50,12 @@ public class PermJsonRpcMethods extends ApiGroupJsonRpcMethods {
   @Override
   protected Map<String, JsonRpcMethod> create() {
     return mapOf(
-        new PermAddNodesToWhitelist(nodeWhitelistController, parameter),
-        new PermRemoveNodesFromWhitelist(nodeWhitelistController, parameter),
+        new PermAddNodesToWhitelist(nodeWhitelistController),
+        new PermRemoveNodesFromWhitelist(nodeWhitelistController),
         new PermGetNodesWhitelist(nodeWhitelistController),
         new PermGetAccountsWhitelist(accountsWhitelistController),
-        new PermAddAccountsToWhitelist(accountsWhitelistController, parameter),
-        new PermRemoveAccountsFromWhitelist(accountsWhitelistController, parameter),
+        new PermAddAccountsToWhitelist(accountsWhitelistController),
+        new PermRemoveAccountsFromWhitelist(accountsWhitelistController),
         new PermReloadPermissionsFromFile(accountsWhitelistController, nodeWhitelistController));
   }
 }

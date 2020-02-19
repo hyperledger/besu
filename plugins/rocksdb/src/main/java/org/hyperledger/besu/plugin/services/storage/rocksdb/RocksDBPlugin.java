@@ -100,8 +100,10 @@ public class RocksDBPlugin implements BesuPlugin {
 
     final Supplier<RocksDBFactoryConfiguration> configuration =
         Suppliers.memoize(options::toDomainObject);
-    factory = new RocksDBKeyValueStorageFactory(configuration, segments);
-    privacyFactory = new RocksDBKeyValuePrivacyStorageFactory(configuration, segments);
+    factory =
+        new RocksDBKeyValueStorageFactory(
+            configuration, segments, RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS);
+    privacyFactory = new RocksDBKeyValuePrivacyStorageFactory(factory);
 
     service.registerKeyValueStorage(factory);
     service.registerKeyValueStorage(privacyFactory);

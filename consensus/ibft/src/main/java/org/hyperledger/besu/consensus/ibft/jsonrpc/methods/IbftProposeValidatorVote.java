@@ -17,9 +17,8 @@ package org.hyperledger.besu.consensus.ibft.jsonrpc.methods;
 import org.hyperledger.besu.consensus.common.VoteProposer;
 import org.hyperledger.besu.consensus.common.VoteType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -30,12 +29,9 @@ import org.apache.logging.log4j.Logger;
 public class IbftProposeValidatorVote implements JsonRpcMethod {
   private static final Logger LOG = LogManager.getLogger();
   private final VoteProposer voteProposer;
-  private final JsonRpcParameter parameters;
 
-  public IbftProposeValidatorVote(
-      final VoteProposer voteProposer, final JsonRpcParameter parameters) {
+  public IbftProposeValidatorVote(final VoteProposer voteProposer) {
     this.voteProposer = voteProposer;
-    this.parameters = parameters;
   }
 
   @Override
@@ -44,10 +40,10 @@ public class IbftProposeValidatorVote implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest req) {
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
 
-    final Address validatorAddress = parameters.required(req.getParams(), 0, Address.class);
-    final Boolean add = parameters.required(req.getParams(), 1, Boolean.class);
+    final Address validatorAddress = requestContext.getRequiredParameter(0, Address.class);
+    final Boolean add = requestContext.getRequiredParameter(1, Boolean.class);
     LOG.trace(
         "Received RPC rpcName={} voteType={} address={}",
         getName(),
@@ -60,6 +56,6 @@ public class IbftProposeValidatorVote implements JsonRpcMethod {
       voteProposer.drop(validatorAddress);
     }
 
-    return new JsonRpcSuccessResponse(req.getId(), true);
+    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), true);
   }
 }

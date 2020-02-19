@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -39,24 +39,26 @@ public class NetEnode implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest req) {
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     if (!p2pNetwork.isP2pEnabled()) {
-      return p2pDisabledResponse(req);
+      return p2pDisabledResponse(requestContext);
     }
 
     final Optional<EnodeURL> enodeURL = p2pNetwork.getLocalEnode();
     if (!enodeURL.isPresent()) {
-      return enodeUrlNotAvailable(req);
+      return enodeUrlNotAvailable(requestContext);
     }
 
-    return new JsonRpcSuccessResponse(req.getId(), enodeURL.get().toString());
+    return new JsonRpcSuccessResponse(
+        requestContext.getRequest().getId(), enodeURL.get().toString());
   }
 
-  private JsonRpcErrorResponse p2pDisabledResponse(final JsonRpcRequest req) {
-    return new JsonRpcErrorResponse(req.getId(), JsonRpcError.P2P_DISABLED);
+  private JsonRpcErrorResponse p2pDisabledResponse(final JsonRpcRequestContext requestContext) {
+    return new JsonRpcErrorResponse(requestContext.getRequest().getId(), JsonRpcError.P2P_DISABLED);
   }
 
-  private JsonRpcErrorResponse enodeUrlNotAvailable(final JsonRpcRequest req) {
-    return new JsonRpcErrorResponse(req.getId(), JsonRpcError.P2P_NETWORK_NOT_RUNNING);
+  private JsonRpcErrorResponse enodeUrlNotAvailable(final JsonRpcRequestContext requestContext) {
+    return new JsonRpcErrorResponse(
+        requestContext.getRequest().getId(), JsonRpcError.P2P_NETWORK_NOT_RUNNING);
   }
 }

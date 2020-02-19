@@ -16,7 +16,8 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.util.bytes.BytesValue;
+
+import org.apache.tuweni.bytes.Bytes;
 
 /**
  * A pre-compiled contract.
@@ -40,7 +41,7 @@ public interface PrecompiledContract {
    *     not depend).
    * @return the gas requirement (cost) for the pre-compiled contract.
    */
-  Gas gasRequirement(BytesValue input);
+  Gas gasRequirement(Bytes input);
 
   /**
    * Executes the pre-compiled contract.
@@ -49,5 +50,5 @@ public interface PrecompiledContract {
    * @param messageFrame context for this message
    * @return the output of the pre-compiled contract.
    */
-  BytesValue compute(BytesValue input, MessageFrame messageFrame);
+  Bytes compute(Bytes input, MessageFrame messageFrame);
 }

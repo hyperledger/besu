@@ -14,17 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.vm;
 
-import static org.hyperledger.besu.util.uint.UInt256.U_32;
-
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.ModificationNotAllowedException;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.vm.ehalt.ExceptionalHaltException;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -33,10 +30,17 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
+
 public class DebugOperationTracer implements OperationTracer {
 
+  private static final UInt256 UINT256_32 = UInt256.valueOf(32);
+
   private final TraceOptions options;
-  private final List<TraceFrame> traceFrames = new ArrayList<>();
+  private List<TraceFrame> traceFrames = new ArrayList<>();
+  private TraceFrame lastFrame;
 
   public DebugOperationTracer(final TraceOptions options) {
     this.options = options;
@@ -48,35 +52,63 @@ public class DebugOperationTracer implements OperationTracer {
       final Optional<Gas> currentGasCost,
       final ExecuteOperation executeOperation)
       throws ExceptionalHaltException {
+    final Operation currentOperation = frame.getCurrentOperation();
     final int depth = frame.getMessageStackDepth();
-    final String opcode = frame.getCurrentOperation().getName();
+    final String opcode = currentOperation.getName();
     final int pc = frame.getPC();
     final Gas gasRemaining = frame.getRemainingGas();
     final EnumSet<ExceptionalHaltReason> exceptionalHaltReasons =
         EnumSet.copyOf(frame.getExceptionalHaltReasons());
+    final Bytes inputData = frame.getInputData();
     final Optional<Bytes32[]> stack = captureStack(frame);
-    final Optional<Bytes32[]> memory = captureMemory(frame);
-
+    final WorldUpdater worldUpdater = frame.getWorldState();
+    final Optional<Bytes32[]> stackPostExecution;
     try {
       executeOperation.execute();
     } finally {
+      final Bytes outputData = frame.getOutputData();
+      final Optional<Bytes[]> memory = captureMemory(frame);
+      stackPostExecution = captureStack(frame);
+      if (lastFrame != null) {
+        lastFrame.setGasRemainingPostExecution(gasRemaining);
+      }
       final Optional<Map<UInt256, UInt256>> storage = captureStorage(frame);
       final Optional<Map<Address, Wei>> maybeRefunds =
           frame.getRefunds().isEmpty() ? Optional.empty() : Optional.of(frame.getRefunds());
-      traceFrames.add(
+      lastFrame =
           new TraceFrame(
               pc,
               opcode,
               gasRemaining,
               currentGasCost,
+              frame.getGasRefund(),
               depth,
               exceptionalHaltReasons,
+              frame.getRecipientAddress(),
+              frame.getApparentValue(),
+              inputData,
+              outputData,
               stack,
               memory,
               storage,
+              worldUpdater,
               frame.getRevertReason(),
-              maybeRefunds));
+              maybeRefunds,
+              Optional.ofNullable(frame.getMessageFrameStack().peek()).map(MessageFrame::getCode),
+              frame.getCurrentOperation().getStackItemsProduced(),
+              stackPostExecution,
+              currentOperation.isVirtualOperation(),
+              frame.getMaybeUpdatedMemory(),
+              frame.getMaybeUpdatedStorage());
+      traceFrames.add(lastFrame);
     }
+    frame.reset();
+  }
+
+  @Override
+  public void tracePrecompileCall(
+      final MessageFrame frame, final Gas gasRequirement, final Bytes output) {
+    traceFrames.get(traceFrames.size() - 1).setPrecompiledGasCost(Optional.of(gasRequirement));
   }
 
   private Optional<Map<UInt256, UInt256>> captureStorage(final MessageFrame frame) {
@@ -92,18 +124,18 @@ public class DebugOperationTracer implements OperationTracer {
                   .getMutable()
                   .getUpdatedStorage());
       return Optional.of(storageContents);
-    } catch (ModificationNotAllowedException e) {
+    } catch (final ModificationNotAllowedException e) {
       return Optional.of(new TreeMap<>());
     }
   }
 
-  private Optional<Bytes32[]> captureMemory(final MessageFrame frame) {
+  private Optional<Bytes[]> captureMemory(final MessageFrame frame) {
     if (!options.isMemoryEnabled()) {
       return Optional.empty();
     }
-    final Bytes32[] memoryContents = new Bytes32[frame.memoryWordSize().toInt()];
+    final Bytes[] memoryContents = new Bytes32[frame.memoryWordSize().intValue()];
     for (int i = 0; i < memoryContents.length; i++) {
-      memoryContents[i] = Bytes32.wrap(frame.readMemory(UInt256.of(i).times(U_32), U_32), 0);
+      memoryContents[i] = frame.readMemory(UInt256.valueOf(i * 32L), UINT256_32);
     }
     return Optional.of(memoryContents);
   }
@@ -122,5 +154,14 @@ public class DebugOperationTracer implements OperationTracer {
 
   public List<TraceFrame> getTraceFrames() {
     return traceFrames;
+  }
+
+  public void reset() {
+    traceFrames = new ArrayList<>();
+    lastFrame = null;
+  }
+
+  public List<TraceFrame> copyTraceFrames() {
+    return new ArrayList<>(traceFrames);
   }
 }

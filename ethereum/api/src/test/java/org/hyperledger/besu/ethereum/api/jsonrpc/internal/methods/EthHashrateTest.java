@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
@@ -50,8 +51,9 @@ public class EthHashrateTest {
 
   @Test
   public void shouldReturnValueFromMiningCoordinator() {
-    final JsonRpcRequest request = requestWithParams();
-    final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(request.getId(), "0xc");
+    final JsonRpcRequestContext request = requestWithParams();
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcSuccessResponse(request.getRequest().getId(), "0xc");
     when(miningCoordinator.hashesPerSecond()).thenReturn(Optional.of(12L));
 
     final JsonRpcResponse actualResponse = method.response(request);
@@ -60,15 +62,17 @@ public class EthHashrateTest {
 
   @Test
   public void shouldReturnZeroWhenMiningCoordinatorDoesNotHaveHashes() {
-    final JsonRpcRequest request = requestWithParams();
-    final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(request.getId(), "0x0");
+    final JsonRpcRequestContext request = requestWithParams();
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcSuccessResponse(request.getRequest().getId(), "0x0");
     when(miningCoordinator.hashesPerSecond()).thenReturn(Optional.empty());
 
     final JsonRpcResponse actualResponse = method.response(request);
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
   }
 
-  private JsonRpcRequest requestWithParams() {
-    return new JsonRpcRequest(JSON_RPC_VERSION, ETH_METHOD, new Object[] {});
+  private JsonRpcRequestContext requestWithParams() {
+    return new JsonRpcRequestContext(
+        new JsonRpcRequest(JSON_RPC_VERSION, ETH_METHOD, new Object[] {}));
   }
 }

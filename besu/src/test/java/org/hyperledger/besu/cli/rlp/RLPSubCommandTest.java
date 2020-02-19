@@ -51,13 +51,13 @@ public class RLPSubCommandTest extends CommandTestAbstract {
           + System.lineSeparator()
           + "      --from=<FILE>   File containing JSON object to encode"
           + System.lineSeparator()
+          + "  -h, --help          Show this help message and exit."
+          + System.lineSeparator()
           + "      --to=<FILE>     File to write encoded RLP string to."
           + System.lineSeparator()
           + "      --type=<type>   Type of the RLP data to encode, possible values are"
           + System.lineSeparator()
           + "                        IBFT_EXTRA_DATA. (default: IBFT_EXTRA_DATA)"
-          + System.lineSeparator()
-          + "  -h, --help          Show this help message and exit."
           + System.lineSeparator()
           + "  -V, --version       Print version information and exit.";
 

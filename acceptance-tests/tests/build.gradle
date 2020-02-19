@@ -12,14 +12,6 @@
  */
 
 dependencies {
-
-  testImplementation 'junit:junit'
-  testImplementation 'net.consensys:orion'
-  testImplementation 'org.apache.tuweni:tuweni-crypto'
-  testImplementation 'org.assertj:assertj-core'
-  testImplementation 'org.web3j:abi'
-  testImplementation 'org.web3j:pantheon'
-  testImplementation project(':ethereum:api')
   testImplementation project(':acceptance-tests:dsl')
   testImplementation project(':enclave')
   testImplementation 'org.awaitility:awaitility'
@@ -29,14 +21,32 @@ dependencies {
   testImplementation project(':util')
   testImplementation project(':plugin-api')
   testImplementation project(':besu')
+  testImplementation project(':consensus:clique')
+  implementation project(':crypto')
+  testImplementation project(':enclave')
+  testImplementation project(':ethereum:api')
   testImplementation project(':ethereum:core')
+  testImplementation project(':ethereum:rlp')
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
+  testImplementation project(':ethereum:permissioning')
+  testImplementation project(':plugin-api')
   testImplementation project(':testutil')
+  testImplementation project(':util')
+
+  testImplementation 'junit:junit'
+  testImplementation 'net.consensys:orion'
+  testImplementation 'org.apache.tuweni:tuweni-crypto'
+  testImplementation 'org.assertj:assertj-core'
+  testImplementation 'org.awaitility:awaitility'
+  testImplementation 'org.web3j:abi'
+  testImplementation 'org.web3j:besu'
   testImplementation 'tech.pegasys.ethsigner.internal:core'
   testImplementation 'tech.pegasys.ethsigner.internal:file-based'
   compile('javax.activation:activation'){
     force = true
   }
+
+  testCompile "com.github.tomakehurst:wiremock-jre8-standalone:2.25.1"
 }
 
 test.enabled = false

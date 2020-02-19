@@ -16,20 +16,21 @@ package org.hyperledger.besu.ethereum.core;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.Optional;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import javax.annotation.Nullable;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 /**
  * An abstract implementation of a {@link WorldUpdater} that buffers update over the {@link
@@ -132,6 +133,15 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
     return world;
   }
 
+  @Override
+  public Optional<WorldUpdater> parentUpdater() {
+    if (world instanceof WorldUpdater) {
+      return Optional.of((WorldUpdater) world);
+    } else {
+      return Optional.empty();
+    }
+  }
+
   /**
    * The accounts modified in this updater.
    *
@@ -168,13 +178,14 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
     private Wei balance;
     private int version;
 
-    @Nullable private BytesValue updatedCode; // Null if the underlying code has not been updated.
+    @Nullable private Bytes updatedCode; // Null if the underlying code has not been updated.
     @Nullable private Hash updatedCodeHash;
 
     // Only contains updated storage entries, but may contains entry with a value of 0 to signify
     // deletion.
     private final SortedMap<UInt256, UInt256> updatedStorage;
     private boolean storageWasCleared = false;
+    private boolean transactionBoundary = false;
 
     UpdateTrackingAccount(final Address address) {
       checkNotNull(address);
@@ -185,7 +196,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
       this.balance = Wei.ZERO;
       this.version = Account.DEFAULT_VERSION;
 
-      this.updatedCode = BytesValue.EMPTY;
+      this.updatedCode = Bytes.EMPTY;
       this.updatedStorage = new TreeMap<>();
     }
 
@@ -228,7 +239,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
      *     with a value of 0 to signify deletion.
      */
     @Override
-    public SortedMap<UInt256, UInt256> getUpdatedStorage() {
+    public Map<UInt256, UInt256> getUpdatedStorage() {
       return updatedStorage;
     }
 
@@ -263,7 +274,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
     }
 
     @Override
-    public BytesValue getCode() {
+    public Bytes getCode() {
       // Note that we set code for new account, so it's only null if account isn't.
       return updatedCode == null ? account.getCode() : updatedCode;
     }
@@ -290,7 +301,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
     }
 
     @Override
-    public void setCode(final BytesValue code) {
+    public void setCode(final Bytes code) {
       this.updatedCode = code;
     }
 
@@ -302,6 +313,10 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
     @Override
     public int getVersion() {
       return version;
+    }
+
+    void markTransactionBoundary() {
+      this.transactionBoundary = true;
     }
 
     @Override
@@ -321,9 +336,13 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
 
     @Override
     public UInt256 getOriginalStorageValue(final UInt256 key) {
-      return storageWasCleared || account == null
-          ? UInt256.ZERO
-          : account.getOriginalStorageValue(key);
+      if (transactionBoundary) {
+        return getStorageValue(key);
+      } else if (storageWasCleared || account == null) {
+        return UInt256.ZERO;
+      } else {
+        return account.getOriginalStorageValue(key);
+      }
     }
 
     @Override
@@ -373,7 +392,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
     }
   }
 
-  static class StackedUpdater<W extends WorldView, A extends Account>
+  public static class StackedUpdater<W extends WorldView, A extends Account>
       extends AbstractWorldUpdater<AbstractWorldUpdater<W, A>, UpdateTrackingAccount<A>> {
 
     StackedUpdater(final AbstractWorldUpdater<W, A> world) {
@@ -399,8 +418,13 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
     }
 
     @Override
-    public Collection<Account> getTouchedAccounts() {
+    public Collection<UpdateTrackingAccount<? extends Account>> getTouchedAccounts() {
       return new ArrayList<>(updatedAccounts());
+    }
+
+    @Override
+    public Collection<Address> getDeletedAccountAddresses() {
+      return new ArrayList<>(deletedAccounts());
     }
 
     @Override
@@ -444,6 +468,10 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
         }
         update.getUpdatedStorage().forEach(existing::setStorageValue);
       }
+    }
+
+    public void markTransactionBoundary() {
+      updatedAccounts().forEach(UpdateTrackingAccount::markTransactionBoundary);
     }
   }
 }

@@ -1,12 +1,12 @@
 apply plugin: 'java-library'
 
 jar {
-  baseName 'besu-ibftlegacy'
+  archiveBaseName = 'besu-ibftlegacy'
   manifest {
     attributes(
-      'Specification-Title': baseName,
+      'Specification-Title': archiveBaseName,
       'Specification-Version': project.version,
-      'Implementation-Title': baseName,
+      'Implementation-Title': archiveBaseName,
       'Implementation-Version': calculateVersion()
       )
   }
@@ -17,22 +17,24 @@ dependencies {
   implementation project(':consensus:common')
   implementation project(':consensus:ibft')
   implementation project(':crypto')
+  implementation project(':ethereum:api')
   implementation project(':ethereum:blockcreation')
   implementation project(':ethereum:core')
   implementation project(':ethereum:eth')
-  implementation project(':ethereum:api')
-  implementation project(':ethereum:rlp')
   implementation project(':ethereum:p2p')
+  implementation project(':ethereum:rlp')
   implementation project(':metrics:core')
   implementation project(':services:kvstore')
 
   implementation 'com.google.guava:guava'
   implementation 'io.vertx:vertx-core'
+  implementation 'org.apache.tuweni:tuweni-bytes'
+  implementation 'org.apache.tuweni:tuweni-units'
 
-  testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
   testImplementation project(path: ':consensus:ibft', configuration: 'testSupportArtifacts')
-  testImplementation project(':testutil')
+  testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
   testImplementation project(':metrics:core')
+  testImplementation project(':testutil')
 
   testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'

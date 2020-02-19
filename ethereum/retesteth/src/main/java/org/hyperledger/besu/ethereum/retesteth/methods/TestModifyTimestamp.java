@@ -14,9 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.retesteth.methods;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.retesteth.RetestethContext;
@@ -24,11 +23,9 @@ import org.hyperledger.besu.ethereum.retesteth.RetestethContext;
 public class TestModifyTimestamp implements JsonRpcMethod {
 
   private final RetestethContext context;
-  private final JsonRpcParameter parameters;
 
-  public TestModifyTimestamp(final RetestethContext context, final JsonRpcParameter parameters) {
+  public TestModifyTimestamp(final RetestethContext context) {
     this.context = context;
-    this.parameters = parameters;
   }
 
   @Override
@@ -37,9 +34,9 @@ public class TestModifyTimestamp implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest request) {
-    final long epochSeconds = parameters.required(request.getParams(), 0, Long.class);
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
+    final long epochSeconds = requestContext.getRequiredParameter(0, Long.class);
     context.getRetestethClock().resetTime(epochSeconds);
-    return new JsonRpcSuccessResponse(request.getId(), true);
+    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), true);
   }
 }

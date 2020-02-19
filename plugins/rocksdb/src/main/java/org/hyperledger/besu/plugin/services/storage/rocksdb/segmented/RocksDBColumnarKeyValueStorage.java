@@ -21,11 +21,11 @@ import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetrics;
+import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbUtil;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBConfiguration;
 import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorage;
 import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorageTransactionTransitionValidatorDecorator;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.io.Closeable;
 import java.nio.charset.StandardCharsets;
@@ -42,6 +42,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 import org.rocksdb.BlockBasedTableConfig;
 import org.rocksdb.ColumnFamilyDescriptor;
 import org.rocksdb.ColumnFamilyHandle;
@@ -76,7 +77,8 @@ public class RocksDBColumnarKeyValueStorage
   public RocksDBColumnarKeyValueStorage(
       final RocksDBConfiguration configuration,
       final List<SegmentIdentifier> segments,
-      final MetricsSystem metricsSystem)
+      final MetricsSystem metricsSystem,
+      final RocksDBMetricsFactory rocksDBMetricsFactory)
       throws StorageException {
 
     try {
@@ -110,19 +112,19 @@ public class RocksDBColumnarKeyValueStorage
               configuration.getDatabaseDir().toString(),
               columnDescriptors,
               columnHandles);
-      metrics = RocksDBMetrics.of(metricsSystem, configuration, db, stats);
-      final Map<BytesValue, String> segmentsById =
+      metrics = rocksDBMetricsFactory.create(metricsSystem, configuration, db, stats);
+      final Map<Bytes, String> segmentsById =
           segments.stream()
               .collect(
                   Collectors.toMap(
-                      segment -> BytesValue.wrap(segment.getId()), SegmentIdentifier::getName));
+                      segment -> Bytes.wrap(segment.getId()), SegmentIdentifier::getName));
 
       final ImmutableMap.Builder<String, ColumnFamilyHandle> builder = ImmutableMap.builder();
 
       for (ColumnFamilyHandle columnHandle : columnHandles) {
         final String segmentName =
             requireNonNullElse(
-                segmentsById.get(BytesValue.wrap(columnHandle.getName())), DEFAULT_COLUMN);
+                segmentsById.get(Bytes.wrap(columnHandle.getName())), DEFAULT_COLUMN);
         builder.put(segmentName, columnHandle);
       }
       columnHandlesByName = builder.build();

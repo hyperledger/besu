@@ -38,8 +38,8 @@ public class OrionTestHarnessFactory {
       final String privKeyPath,
       final List<String> othernodes)
       throws IOException {
-    Path key1pub = copyResource(pubKeyPath, tempDir.resolve(pubKeyPath));
-    Path key1key = copyResource(privKeyPath, tempDir.resolve(privKeyPath));
+    final Path key1pub = copyResource(pubKeyPath, tempDir.resolve(pubKeyPath));
+    final Path key1key = copyResource(privKeyPath, tempDir.resolve(privKeyPath));
 
     return create(tempDir, key1pub, key1key, othernodes);
   }

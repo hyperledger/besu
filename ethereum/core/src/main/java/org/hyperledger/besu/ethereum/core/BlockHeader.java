@@ -16,13 +16,12 @@ package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.util.Objects;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
+import org.apache.tuweni.bytes.Bytes;
 
 /** A mined Ethereum block header. */
 public class BlockHeader extends SealableBlockHeader
@@ -48,12 +47,12 @@ public class BlockHeader extends SealableBlockHeader
       final Hash transactionsRoot,
       final Hash receiptsRoot,
       final LogsBloomFilter logsBloom,
-      final UInt256 difficulty,
+      final Difficulty difficulty,
       final long number,
       final long gasLimit,
       final long gasUsed,
       final long timestamp,
-      final BytesValue extraData,
+      final Bytes extraData,
       final Hash mixHash,
       final long nonce,
       final BlockHeaderFunctions blockHeaderFunctions) {
@@ -96,6 +95,7 @@ public class BlockHeader extends SealableBlockHeader
   public long getNonce() {
     return nonce;
   }
+
   /**
    * Returns the block extra data field, as parsed by the {@link BlockHeaderFunctions}.
    *
@@ -127,20 +127,20 @@ public class BlockHeader extends SealableBlockHeader
   public void writeTo(final RLPOutput out) {
     out.startList();
 
-    out.writeBytesValue(parentHash);
-    out.writeBytesValue(ommersHash);
-    out.writeBytesValue(coinbase);
-    out.writeBytesValue(stateRoot);
-    out.writeBytesValue(transactionsRoot);
-    out.writeBytesValue(receiptsRoot);
-    out.writeBytesValue(logsBloom.getBytes());
+    out.writeBytes(parentHash);
+    out.writeBytes(ommersHash);
+    out.writeBytes(coinbase);
+    out.writeBytes(stateRoot);
+    out.writeBytes(transactionsRoot);
+    out.writeBytes(receiptsRoot);
+    out.writeBytes(logsBloom);
     out.writeUInt256Scalar(difficulty);
     out.writeLongScalar(number);
     out.writeLongScalar(gasLimit);
     out.writeLongScalar(gasUsed);
     out.writeLongScalar(timestamp);
-    out.writeBytesValue(extraData);
-    out.writeBytesValue(mixHash);
+    out.writeBytes(extraData);
+    out.writeBytes(mixHash);
     out.writeLong(nonce);
 
     out.endList();
@@ -158,12 +158,12 @@ public class BlockHeader extends SealableBlockHeader
             Hash.wrap(input.readBytes32()),
             Hash.wrap(input.readBytes32()),
             LogsBloomFilter.readFrom(input),
-            input.readUInt256Scalar(),
+            Difficulty.of(input.readUInt256Scalar()),
             input.readLongScalar(),
             input.readLongScalar(),
             input.readLongScalar(),
             input.readLongScalar(),
-            input.readBytesValue(),
+            input.readBytes(),
             Hash.wrap(input.readBytes32()),
             input.readLong(),
             blockHeaderFunctions);
@@ -215,21 +215,21 @@ public class BlockHeader extends SealableBlockHeader
       final org.hyperledger.besu.plugin.data.BlockHeader pluginBlockHeader,
       final BlockHeaderFunctions blockHeaderFunctions) {
     return new org.hyperledger.besu.ethereum.core.BlockHeader(
-        Hash.fromHexString(pluginBlockHeader.getParentHash().getHexString()),
-        Hash.fromHexString(pluginBlockHeader.getOmmersHash().getHexString()),
+        Hash.fromHexString(pluginBlockHeader.getParentHash().toHexString()),
+        Hash.fromHexString(pluginBlockHeader.getOmmersHash().toHexString()),
         org.hyperledger.besu.ethereum.core.Address.fromHexString(
-            pluginBlockHeader.getCoinbase().getHexString()),
-        Hash.fromHexString(pluginBlockHeader.getStateRoot().getHexString()),
-        Hash.fromHexString(pluginBlockHeader.getTransactionsRoot().getHexString()),
-        Hash.fromHexString(pluginBlockHeader.getReceiptsRoot().getHexString()),
-        LogsBloomFilter.fromHexString(pluginBlockHeader.getLogsBloom().getHexString()),
-        UInt256.fromHexString(pluginBlockHeader.getDifficulty().getHexString()),
+            pluginBlockHeader.getCoinbase().toHexString()),
+        Hash.fromHexString(pluginBlockHeader.getStateRoot().toHexString()),
+        Hash.fromHexString(pluginBlockHeader.getTransactionsRoot().toHexString()),
+        Hash.fromHexString(pluginBlockHeader.getReceiptsRoot().toHexString()),
+        LogsBloomFilter.fromHexString(pluginBlockHeader.getLogsBloom().toHexString()),
+        Difficulty.fromHexString(pluginBlockHeader.getDifficulty().toHexString()),
         pluginBlockHeader.getNumber(),
         pluginBlockHeader.getGasLimit(),
         pluginBlockHeader.getGasUsed(),
         pluginBlockHeader.getTimestamp(),
-        BytesValue.wrap(pluginBlockHeader.getExtraData().getByteArray()),
-        Hash.fromHexString(pluginBlockHeader.getMixHash().getHexString()),
+        pluginBlockHeader.getExtraData(),
+        Hash.fromHexString(pluginBlockHeader.getMixHash().toHexString()),
         pluginBlockHeader.getNonce(),
         blockHeaderFunctions);
   }

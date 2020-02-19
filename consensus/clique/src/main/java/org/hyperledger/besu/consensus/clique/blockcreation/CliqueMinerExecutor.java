@@ -23,6 +23,7 @@ import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockScheduler;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractMinerExecutor;
+import org.hyperledger.besu.ethereum.chain.EthHashObserver;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -31,7 +32,6 @@ import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.util.Subscribers;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.List;
 import java.util.Optional;
@@ -39,6 +39,7 @@ import java.util.function.Function;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
+import org.apache.tuweni.bytes.Bytes;
 
 public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueContext, CliqueBlockMiner> {
 
@@ -69,7 +70,9 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueContext, Cl
 
   @Override
   public CliqueBlockMiner createMiner(
-      final Subscribers<MinedBlockObserver> observers, final BlockHeader parentHeader) {
+      final Subscribers<MinedBlockObserver> observers,
+      final Subscribers<EthHashObserver> ethHashObservers,
+      final BlockHeader parentHeader) {
     final Function<BlockHeader, CliqueBlockCreator> blockCreator =
         (header) ->
             new CliqueBlockCreator(
@@ -100,10 +103,10 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueContext, Cl
   }
 
   @VisibleForTesting
-  BytesValue calculateExtraData(final BlockHeader parentHeader) {
+  Bytes calculateExtraData(final BlockHeader parentHeader) {
     final List<Address> validators = Lists.newArrayList();
 
-    final BytesValue vanityDataToInsert =
+    final Bytes vanityDataToInsert =
         ConsensusHelpers.zeroLeftPad(extraData, CliqueExtraData.EXTRA_VANITY_LENGTH);
     // Building ON TOP of canonical head, if the next block is epoch, include validators.
     if (epochManager.isEpochBlock(parentHeader.getNumber() + 1)) {

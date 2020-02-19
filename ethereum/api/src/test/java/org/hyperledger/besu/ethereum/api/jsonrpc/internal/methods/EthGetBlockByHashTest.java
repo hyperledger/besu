@@ -18,8 +18,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Hash;
@@ -39,7 +39,6 @@ public class EthGetBlockByHashTest {
 
   @Mock private BlockchainQueries blockchainQueries;
   private final BlockResultFactory blockResult = new BlockResultFactory();
-  private final JsonRpcParameter parameters = new JsonRpcParameter();
   private EthGetBlockByHash method;
   private final String JSON_RPC_VERSION = "2.0";
   private final String ETH_METHOD = "eth_getBlockByHash";
@@ -47,7 +46,7 @@ public class EthGetBlockByHashTest {
 
   @Before
   public void setUp() {
-    method = new EthGetBlockByHash(blockchainQueries, blockResult, parameters);
+    method = new EthGetBlockByHash(blockchainQueries, blockResult);
   }
 
   @Test
@@ -57,7 +56,7 @@ public class EthGetBlockByHashTest {
 
   @Test
   public void exceptionWhenNoParamsSupplied() {
-    final JsonRpcRequest request = requestWithParams();
+    final JsonRpcRequestContext request = requestWithParams();
 
     thrown.expect(InvalidJsonRpcParameters.class);
     thrown.expectMessage("Missing required json rpc parameter at index 0");
@@ -69,7 +68,7 @@ public class EthGetBlockByHashTest {
 
   @Test
   public void exceptionWhenNoHashSupplied() {
-    final JsonRpcRequest request = requestWithParams("false");
+    final JsonRpcRequestContext request = requestWithParams("false");
 
     thrown.expect(InvalidJsonRpcParameters.class);
     thrown.expectMessage("Invalid json rpc parameter at index 0");
@@ -81,7 +80,7 @@ public class EthGetBlockByHashTest {
 
   @Test
   public void exceptionWhenNoBoolSupplied() {
-    final JsonRpcRequest request = requestWithParams(ZERO_HASH);
+    final JsonRpcRequestContext request = requestWithParams(ZERO_HASH);
 
     thrown.expect(InvalidJsonRpcParameters.class);
     thrown.expectMessage("Missing required json rpc parameter at index 1");
@@ -93,7 +92,7 @@ public class EthGetBlockByHashTest {
 
   @Test
   public void exceptionWhenHashParamInvalid() {
-    final JsonRpcRequest request = requestWithParams("hash", "true");
+    final JsonRpcRequestContext request = requestWithParams("hash", "true");
 
     thrown.expect(InvalidJsonRpcParameters.class);
     thrown.expectMessage("Invalid json rpc parameter at index 0");
@@ -105,7 +104,7 @@ public class EthGetBlockByHashTest {
 
   @Test
   public void exceptionWhenBoolParamInvalid() {
-    final JsonRpcRequest request = requestWithParams(ZERO_HASH, "maybe");
+    final JsonRpcRequestContext request = requestWithParams(ZERO_HASH, "maybe");
 
     thrown.expect(InvalidJsonRpcParameters.class);
     thrown.expectMessage("Invalid json rpc parameter at index 1");
@@ -115,7 +114,7 @@ public class EthGetBlockByHashTest {
     verifyNoMoreInteractions(blockchainQueries);
   }
 
-  private JsonRpcRequest requestWithParams(final Object... params) {
-    return new JsonRpcRequest(JSON_RPC_VERSION, ETH_METHOD, params);
+  private JsonRpcRequestContext requestWithParams(final Object... params) {
+    return new JsonRpcRequestContext(new JsonRpcRequest(JSON_RPC_VERSION, ETH_METHOD, params));
   }
 }

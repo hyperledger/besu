@@ -15,9 +15,9 @@
 package org.hyperledger.besu.consensus.common.jsonrpc;
 
 import org.hyperledger.besu.consensus.common.BlockInterface;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.consensus.common.VoteTallyCache;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -37,31 +37,32 @@ public abstract class AbstractGetSignerMetricsMethod {
 
   private static final long DEFAULT_RANGE_BLOCK = 100;
 
+  private final VoteTallyCache voteTallyCache;
   private final BlockInterface blockInterface;
   private final BlockchainQueries blockchainQueries;
-  private final JsonRpcParameter parameters;
 
   public AbstractGetSignerMetricsMethod(
+      final VoteTallyCache voteTallyCache,
       final BlockInterface blockInterface,
-      final BlockchainQueries blockchainQueries,
-      final JsonRpcParameter parameter) {
+      final BlockchainQueries blockchainQueries) {
+    this.voteTallyCache = voteTallyCache;
     this.blockInterface = blockInterface;
     this.blockchainQueries = blockchainQueries;
-    this.parameters = parameter;
   }
 
-  public JsonRpcResponse response(final JsonRpcRequest request) {
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
 
     final Optional<BlockParameter> startBlockParameter =
-        parameters.optional(request.getParams(), 0, BlockParameter.class);
+        requestContext.getOptionalParameter(0, BlockParameter.class);
     final Optional<BlockParameter> endBlockParameter =
-        parameters.optional(request.getParams(), 1, BlockParameter.class);
+        requestContext.getOptionalParameter(1, BlockParameter.class);
 
     final long fromBlockNumber = getFromBlockNumber(startBlockParameter);
     final long toBlockNumber = getEndBlockNumber(endBlockParameter);
 
     if (!isValidParameters(fromBlockNumber, toBlockNumber)) {
-      return new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
     }
 
     final Map<Address, SignerMetricResult> proposersMap = new HashMap<>();
@@ -87,17 +88,18 @@ public abstract class AbstractGetSignerMetricsMethod {
                     // Get All validators present in the last block of the range even
                     // if they didn't propose a block
                     if (currentIndex == lastBlockIndex) {
-                      blockInterface
-                          .validatorsInBlock(header)
+                      voteTallyCache
+                          .getVoteTallyAfterBlock(header)
+                          .getValidators()
                           .forEach(
                               address ->
-                                  proposersMap.computeIfAbsent(
-                                      proposerAddress, SignerMetricResult::new));
+                                  proposersMap.computeIfAbsent(address, SignerMetricResult::new));
                     }
                   });
             });
 
-    return new JsonRpcSuccessResponse(request.getId(), new ArrayList<>(proposersMap.values()));
+    return new JsonRpcSuccessResponse(
+        requestContext.getRequest().getId(), new ArrayList<>(proposersMap.values()));
   }
 
   private long getFromBlockNumber(final Optional<BlockParameter> startBlockParameter) {
@@ -107,9 +109,11 @@ public abstract class AbstractGetSignerMetricsMethod {
   }
 
   private long getEndBlockNumber(final Optional<BlockParameter> endBlockParameter) {
+    final long headBlockNumber = blockchainQueries.headBlockNumber();
     return endBlockParameter
         .map(this::resolveBlockNumber)
-        .orElseGet(blockchainQueries::headBlockNumber);
+        .filter(blockNumber -> blockNumber <= headBlockNumber)
+        .orElse(headBlockNumber);
   }
 
   private boolean isValidParameters(final long startBlock, final long endBlock) {

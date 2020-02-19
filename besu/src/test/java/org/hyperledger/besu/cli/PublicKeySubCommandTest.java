@@ -42,7 +42,7 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
           + System.lineSeparator()
           + "                    standard output."
           + System.lineSeparator()
-          + "  export-address  This command outputs the node's public key address. Default"
+          + "  export-address  This command outputs the node's account address. Default"
           + System.lineSeparator()
           + "                    output is standard output."
           + System.lineSeparator();
@@ -52,9 +52,9 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
           + System.lineSeparator()
           + "This command outputs the node public key. Default output is standard output."
           + System.lineSeparator()
-          + "      --to=<FILE>   File to write public key to instead of standard output"
-          + System.lineSeparator()
           + "  -h, --help        Show this help message and exit."
+          + System.lineSeparator()
+          + "      --to=<FILE>   File to write public key to instead of standard output"
           + System.lineSeparator()
           + "  -V, --version     Print version information and exit."
           + System.lineSeparator();
@@ -62,13 +62,13 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
   private static final String EXPECTED_PUBLIC_KEY_EXPORT_ADDRESS_USAGE =
       "Usage: besu public-key export-address [-hV] [--to=<FILE>]"
           + System.lineSeparator()
-          + "This command outputs the node's public key address. Default output is standard"
+          + "This command outputs the node's account address. Default output is standard"
           + System.lineSeparator()
           + "output."
           + System.lineSeparator()
-          + "      --to=<FILE>   File to write address to instead of standard output"
-          + System.lineSeparator()
           + "  -h, --help        Show this help message and exit."
+          + System.lineSeparator()
+          + "      --to=<FILE>   File to write address to instead of standard output"
           + System.lineSeparator()
           + "  -V, --version     Print version information and exit."
           + System.lineSeparator();

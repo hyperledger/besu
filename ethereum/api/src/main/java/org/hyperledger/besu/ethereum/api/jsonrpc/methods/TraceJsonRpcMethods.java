@@ -15,9 +15,9 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
+import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.TraceReplayBlockTransactions;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockReplay;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -27,11 +27,10 @@ import java.util.Map;
 
 public class TraceJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
-  private final JsonRpcParameter parameter = new JsonRpcParameter();
   private final BlockchainQueries blockchainQueries;
   private final ProtocolSchedule<?> protocolSchedule;
 
-  public TraceJsonRpcMethods(
+  TraceJsonRpcMethods(
       final BlockchainQueries blockchainQueries, final ProtocolSchedule<?> protocolSchedule) {
     this.blockchainQueries = blockchainQueries;
     this.protocolSchedule = protocolSchedule;
@@ -40,21 +39,17 @@ public class TraceJsonRpcMethods extends ApiGroupJsonRpcMethods {
   @Override
   protected RpcApi getApiGroup() {
     // Disable TRACE functionality while under development
-    //    return RpcApis.TRACE;
-    return null;
+    return RpcApis.TRACE;
   }
 
   @Override
   protected Map<String, JsonRpcMethod> create() {
+    final BlockReplay blockReplay =
+        new BlockReplay(
+            protocolSchedule,
+            blockchainQueries.getBlockchain(),
+            blockchainQueries.getWorldStateArchive());
     return mapOf(
-        new TraceReplayBlockTransactions(
-            parameter,
-            new BlockTracer(
-                new BlockReplay(
-                    protocolSchedule,
-                    blockchainQueries.getBlockchain(),
-                    blockchainQueries.getWorldStateArchive())),
-            blockchainQueries,
-            protocolSchedule));
+        new TraceReplayBlockTransactions(() -> new BlockTracer(blockReplay), blockchainQueries));
   }
 }

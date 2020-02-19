@@ -15,8 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TransactionTraceParams;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
@@ -28,15 +27,14 @@ import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 
 import java.util.Collection;
+import java.util.function.Supplier;
 
 public class DebugTraceBlockByHash implements JsonRpcMethod {
 
-  private final JsonRpcParameter parameters;
-  private final BlockTracer blockTracer;
+  private final Supplier<BlockTracer> blockTracerSupplier;
 
-  public DebugTraceBlockByHash(final JsonRpcParameter parameters, final BlockTracer blockTracer) {
-    this.parameters = parameters;
-    this.blockTracer = blockTracer;
+  public DebugTraceBlockByHash(final Supplier<BlockTracer> blockTracerSupplier) {
+    this.blockTracerSupplier = blockTracerSupplier;
   }
 
   @Override
@@ -45,20 +43,21 @@ public class DebugTraceBlockByHash implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest request) {
-    final Hash blockHash = parameters.required(request.getParams(), 0, Hash.class);
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
+    final Hash blockHash = requestContext.getRequiredParameter(0, Hash.class);
     final TraceOptions traceOptions =
-        parameters
-            .optional(request.getParams(), 1, TransactionTraceParams.class)
+        requestContext
+            .getOptionalParameter(1, TransactionTraceParams.class)
             .map(TransactionTraceParams::traceOptions)
             .orElse(TraceOptions.DEFAULT);
 
     final Collection<DebugTraceTransactionResult> results =
-        blockTracer
+        blockTracerSupplier
+            .get()
             .trace(blockHash, new DebugOperationTracer(traceOptions))
             .map(BlockTrace::getTransactionTraces)
             .map(DebugTraceTransactionResult::of)
             .orElse(null);
-    return new JsonRpcSuccessResponse(request.getId(), results);
+    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), results);
   }
 }

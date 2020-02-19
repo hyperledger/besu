@@ -20,17 +20,16 @@ import org.hyperledger.besu.crypto.Hash;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.NodeRequests;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.BytesValues;
 
 import java.io.IOException;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.web3j.protocol.core.DefaultBlockParameterName;
 
 public class AccountSmartContractPermissioningIsAllowedTransaction implements Transaction<Boolean> {
 
-  private static final BytesValue IS_ACCOUNT_ALLOWED_SIGNATURE =
-      Hash.keccak256(BytesValue.of("whitelistContains(address)".getBytes(UTF_8))).slice(0, 4);
+  private static final Bytes IS_ACCOUNT_ALLOWED_SIGNATURE =
+      Hash.keccak256(Bytes.of("whitelistContains(address)".getBytes(UTF_8))).slice(0, 4);
 
   private final Address contractAddress;
   private final Address account;
@@ -46,7 +45,7 @@ public class AccountSmartContractPermissioningIsAllowedTransaction implements Tr
     try {
       final String value =
           node.eth().ethCall(payload(), DefaultBlockParameterName.LATEST).send().getValue();
-      return checkTransactionResult(BytesValue.fromHexString(value));
+      return checkTransactionResult(Bytes.fromHexString(value));
     } catch (final IOException e) {
       throw new RuntimeException(e);
     }
@@ -54,23 +53,21 @@ public class AccountSmartContractPermissioningIsAllowedTransaction implements Tr
 
   // Checks the returned bytes from the permissioning contract call to see if it's a value we
   // understand
-  static Boolean checkTransactionResult(final BytesValue result) {
+  static Boolean checkTransactionResult(final Bytes result) {
     // booleans are padded to 32 bytes
     if (result.size() != 32) {
       throw new IllegalArgumentException("Unexpected result size");
     }
 
     // 0 is false
-    if (result.compareTo(
-            BytesValue.fromHexString(
-                "0x0000000000000000000000000000000000000000000000000000000000000000"))
-        == 0) {
+    if (result.equals(
+        Bytes.fromHexString(
+            "0x0000000000000000000000000000000000000000000000000000000000000000"))) {
       return false;
       // 1 filled to 32 bytes is true
-    } else if (result.compareTo(
-            BytesValue.fromHexString(
-                "0x0000000000000000000000000000000000000000000000000000000000000001"))
-        == 0) {
+    } else if (result.equals(
+        Bytes.fromHexString(
+            "0x0000000000000000000000000000000000000000000000000000000000000001"))) {
       return true;
       // Anything else is wrong
     } else {
@@ -79,10 +76,10 @@ public class AccountSmartContractPermissioningIsAllowedTransaction implements Tr
   }
 
   private org.web3j.protocol.core.methods.request.Transaction payload() {
-    final BytesValue payload =
-        BytesValues.concatenate(
+    final Bytes payload =
+        Bytes.concatenate(
             IS_ACCOUNT_ALLOWED_SIGNATURE,
-            BytesValue.fromHexString("0x000000000000000000000000"),
+            Bytes.fromHexString("0x000000000000000000000000"),
             account);
 
     return org.web3j.protocol.core.methods.request.Transaction.createFunctionCallTransaction(

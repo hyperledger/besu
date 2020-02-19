@@ -16,15 +16,16 @@ package org.hyperledger.besu.ethereum.eth.messages;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
+import org.hyperledger.besu.ethereum.eth.manager.ForkIdManager;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.uint.UInt256;
 
 import java.math.BigInteger;
 import java.util.Random;
 
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Test;
 
 public class StatusMessageTest {
@@ -33,7 +34,7 @@ public class StatusMessageTest {
   public void getters() {
     final int version = EthProtocol.EthVersion.V62;
     final BigInteger networkId = BigInteger.ONE;
-    final UInt256 td = UInt256.of(1000L);
+    final Difficulty td = Difficulty.of(1000L);
     final Hash bestHash = randHash(1L);
     final Hash genesisHash = randHash(2L);
 
@@ -50,7 +51,7 @@ public class StatusMessageTest {
   public void serializeDeserialize() {
     final int version = EthProtocol.EthVersion.V62;
     final BigInteger networkId = BigInteger.ONE;
-    final UInt256 td = UInt256.of(1000L);
+    final Difficulty td = Difficulty.of(1000L);
     final Hash bestHash = randHash(1L);
     final Hash genesisHash = randHash(2L);
 
@@ -64,6 +65,28 @@ public class StatusMessageTest {
     assertThat(copy.totalDifficulty()).isEqualTo(td);
     assertThat(copy.bestHash()).isEqualTo(bestHash);
     assertThat(copy.genesisHash()).isEqualTo(genesisHash);
+  }
+
+  @Test
+  public void serializeDeserializeWithForkId() {
+    final int version = EthProtocol.EthVersion.V64;
+    final BigInteger networkId = BigInteger.ONE;
+    final Difficulty td = Difficulty.of(1000L);
+    final Hash bestHash = randHash(1L);
+    final Hash genesisHash = randHash(2L);
+    final ForkIdManager.ForkId forkId = ForkIdManager.createIdEntry("0xa00bc334", 0L);
+
+    final MessageData msg =
+        StatusMessage.create(version, networkId, td, bestHash, genesisHash, forkId);
+
+    final StatusMessage copy = new StatusMessage(msg.getData());
+
+    assertThat(copy.protocolVersion()).isEqualTo(version);
+    assertThat(copy.networkId()).isEqualTo(networkId);
+    assertThat(copy.totalDifficulty()).isEqualTo(td);
+    assertThat(copy.bestHash()).isEqualTo(bestHash);
+    assertThat(copy.genesisHash()).isEqualTo(genesisHash);
+    assertThat(copy.forkId()).isEqualTo(forkId);
   }
 
   private Hash randHash(final long seed) {

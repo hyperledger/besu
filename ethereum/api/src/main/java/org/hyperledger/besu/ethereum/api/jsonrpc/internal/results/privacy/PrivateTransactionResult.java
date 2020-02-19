@@ -14,10 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.privacy;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
+import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
-import org.hyperledger.besu.util.bytes.BytesValue;
-import org.hyperledger.besu.util.bytes.BytesValues;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 
@@ -40,16 +41,16 @@ public abstract class PrivateTransactionResult {
     this.from = tx.getSender().toString();
     this.gas = Quantity.create(tx.getGasLimit());
     this.gasPrice = Quantity.create(tx.getGasPrice());
-    this.hash = tx.hash().toString();
+    this.hash = tx.getHash().toString();
     this.input = tx.getPayload().toString();
     this.nonce = Quantity.create(tx.getNonce());
-    this.to = tx.getTo().map(BytesValue::toString).orElse(null);
+    this.to = tx.getTo().map(Address::toHexString).orElse(null);
     this.value = Quantity.create(tx.getValue());
     this.v = Quantity.create(tx.getV());
     this.r = Quantity.create(tx.getR());
     this.s = Quantity.create(tx.getS());
-    this.privateFrom = BytesValues.asBase64String(tx.getPrivateFrom());
-    this.restriction = BytesValues.asString(tx.getRestriction().getBytes());
+    this.privateFrom = tx.getPrivateFrom().toBase64String();
+    this.restriction = new String(tx.getRestriction().getBytes().toArrayUnsafe(), UTF_8);
   }
 
   @JsonGetter(value = "from")

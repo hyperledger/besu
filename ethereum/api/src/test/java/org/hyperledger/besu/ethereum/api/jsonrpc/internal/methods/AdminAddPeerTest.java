@@ -19,7 +19,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -37,7 +37,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class AdminAddPeerTest {
 
   @Mock private P2PNetwork p2pNetwork;
-  private final JsonRpcParameter parameter = new JsonRpcParameter();
 
   private AdminAddPeer method;
 
@@ -49,19 +48,21 @@ public class AdminAddPeerTest {
           + "00000000000000000000000000000000"
           + "@127.0.0.1:30303";
 
-  final JsonRpcRequest validRequest =
-      new JsonRpcRequest("2.0", "admin_addPeer", new String[] {validEnode});
+  final JsonRpcRequestContext validRequest =
+      new JsonRpcRequestContext(
+          new JsonRpcRequest("2.0", "admin_addPeer", new String[] {validEnode}));
 
   @Before
   public void setup() {
-    method = new AdminAddPeer(p2pNetwork, parameter);
+    method = new AdminAddPeer(p2pNetwork);
   }
 
   @Test
   public void requestIsMissingParameter() {
-    final JsonRpcRequest request = new JsonRpcRequest("2.0", "admin_addPeer", new String[] {});
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(new JsonRpcRequest("2.0", "admin_addPeer", new String[] {}));
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
+        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
 
     final JsonRpcResponse actualResponse = method.response(request);
 
@@ -70,9 +71,10 @@ public class AdminAddPeerTest {
 
   @Test
   public void requestHasNullObjectParameter() {
-    final JsonRpcRequest request = new JsonRpcRequest("2.0", "admin_addPeer", null);
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(new JsonRpcRequest("2.0", "admin_addPeer", null));
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
+        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
 
     final JsonRpcResponse actualResponse = method.response(request);
 
@@ -81,9 +83,10 @@ public class AdminAddPeerTest {
 
   @Test
   public void requestHasNullArrayParameter() {
-    final JsonRpcRequest request = new JsonRpcRequest("2.0", "admin_addPeer", new String[] {null});
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(new JsonRpcRequest("2.0", "admin_addPeer", new String[] {null}));
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
+        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
 
     final JsonRpcResponse actualResponse = method.response(request);
 
@@ -92,10 +95,11 @@ public class AdminAddPeerTest {
 
   @Test
   public void requestHasInvalidEnode() {
-    final JsonRpcRequest request =
-        new JsonRpcRequest("2.0", "admin_addPeer", new String[] {"asdf"});
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest("2.0", "admin_addPeer", new String[] {"asdf"}));
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getId(), JsonRpcError.PARSE_ERROR);
+        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.PARSE_ERROR);
 
     final JsonRpcResponse actualResponse = method.response(request);
 
@@ -111,10 +115,11 @@ public class AdminAddPeerTest {
             + "00000000000000000000000000000000"
             + "00000000000000000000000000000000"
             + "@127.0.0.1:30303";
-    final JsonRpcRequest request =
-        new JsonRpcRequest("2.0", "admin_addPeer", new String[] {invalidLengthEnode});
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest("2.0", "admin_addPeer", new String[] {invalidLengthEnode}));
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getId(), JsonRpcError.ENODE_ID_INVALID);
+        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.ENODE_ID_INVALID);
 
     final JsonRpcResponse actualResponse = method.response(request);
 
@@ -125,7 +130,8 @@ public class AdminAddPeerTest {
   public void requestAddsValidEnode() {
     when(p2pNetwork.addMaintainConnectionPeer(any())).thenReturn(true);
 
-    final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(validRequest.getId(), true);
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcSuccessResponse(validRequest.getRequest().getId(), true);
 
     final JsonRpcResponse actualResponse = method.response(validRequest);
 
@@ -134,11 +140,12 @@ public class AdminAddPeerTest {
 
   @Test
   public void requestRefusesListOfNodes() {
-    final JsonRpcRequest request =
-        new JsonRpcRequest("2.0", "admin_addPeer", new String[] {validEnode, validEnode});
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest("2.0", "admin_addPeer", new String[] {validEnode, validEnode}));
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getId(), JsonRpcError.INVALID_PARAMS);
+        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
 
     final JsonRpcResponse actualResponse = method.response(request);
 
@@ -150,7 +157,7 @@ public class AdminAddPeerTest {
     when(p2pNetwork.addMaintainConnectionPeer(any())).thenReturn(false);
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcSuccessResponse(validRequest.getId(), false);
+        new JsonRpcSuccessResponse(validRequest.getRequest().getId(), false);
 
     final JsonRpcResponse actualResponse = method.response(validRequest);
 
@@ -164,7 +171,7 @@ public class AdminAddPeerTest {
             new P2PDisabledException("P2P networking disabled.  Unable to connect to add peer."));
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(validRequest.getId(), JsonRpcError.P2P_DISABLED);
+        new JsonRpcErrorResponse(validRequest.getRequest().getId(), JsonRpcError.P2P_DISABLED);
 
     final JsonRpcResponse actualResponse = method.response(validRequest);
 

@@ -113,11 +113,11 @@ public class WebSocketService {
 
       LOG.debug("Websocket Connected ({})", socketAddressAsString(socketAddress));
 
-      websocket.handler(
-          buffer -> {
+      websocket.textMessageHandler(
+          payload -> {
             LOG.debug(
                 "Received Websocket request {} ({})",
-                buffer.toString(),
+                payload,
                 socketAddressAsString(socketAddress));
 
             AuthenticationUtils.getUser(
@@ -125,7 +125,7 @@ public class WebSocketService {
                 token,
                 user ->
                     websocketRequestHandler.handle(
-                        authenticationService, connectionId, buffer, user));
+                        authenticationService, connectionId, payload, user));
           });
 
       websocket.closeHandler(

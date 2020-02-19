@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
@@ -29,8 +28,8 @@ public class AdminRemovePeer extends AdminModifyPeer {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  public AdminRemovePeer(final P2PNetwork peerNetwork, final JsonRpcParameter parameters) {
-    super(peerNetwork, parameters);
+  public AdminRemovePeer(final P2PNetwork peerNetwork) {
+    super(peerNetwork);
   }
 
   @Override

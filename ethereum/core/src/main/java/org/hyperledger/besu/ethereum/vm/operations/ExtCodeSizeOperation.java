@@ -21,8 +21,9 @@ import org.hyperledger.besu.ethereum.vm.AbstractOperation;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.Words;
-import org.hyperledger.besu.util.bytes.Bytes32;
-import org.hyperledger.besu.util.uint.UInt256Bytes;
+
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class ExtCodeSizeOperation extends AbstractOperation {
 
@@ -39,6 +40,7 @@ public class ExtCodeSizeOperation extends AbstractOperation {
   public void execute(final MessageFrame frame) {
     final Address address = Words.toAddress(frame.popStackItem());
     final Account account = frame.getWorldState().get(address);
-    frame.pushStackItem(account == null ? Bytes32.ZERO : UInt256Bytes.of(account.getCode().size()));
+    frame.pushStackItem(
+        account == null ? Bytes32.ZERO : UInt256.valueOf(account.getCode().size()).toBytes());
   }
 }

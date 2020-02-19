@@ -66,12 +66,26 @@ class StandaloneCommand implements DefaultCommandValues {
   String rpcHttpAuthenticationCredentialsFile = null;
 
   @CommandLine.Option(
+      names = {"--rpc-http-authentication-jwt-public-key-file"},
+      paramLabel = MANDATORY_FILE_FORMAT_HELP,
+      description = "JWT public key file for JSON-RPC HTTP authentication",
+      arity = "1")
+  final File rpcHttpAuthenticationPublicKeyFile = null;
+
+  @CommandLine.Option(
       names = {"--rpc-ws-authentication-credentials-file"},
       paramLabel = MANDATORY_FILE_FORMAT_HELP,
       description =
           "Storage file for JSON-RPC WebSocket authentication credentials (default: ${DEFAULT-VALUE})",
       arity = "1")
   String rpcWsAuthenticationCredentialsFile = null;
+
+  @CommandLine.Option(
+      names = {"--rpc-ws-authentication-jwt-public-key-file"},
+      paramLabel = MANDATORY_FILE_FORMAT_HELP,
+      description = "JWT public key file for JSON-RPC WebSocket authentication",
+      arity = "1")
+  final File rpcWsAuthenticationPublicKeyFile = null;
 
   @CommandLine.Option(
       names = {"--privacy-public-key-file"},

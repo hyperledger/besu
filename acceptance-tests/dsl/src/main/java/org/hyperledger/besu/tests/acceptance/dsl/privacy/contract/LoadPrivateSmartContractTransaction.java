@@ -27,13 +27,13 @@ import org.web3j.tx.Contract;
 import org.web3j.tx.LegacyPrivateTransactionManager;
 import org.web3j.tx.PrivateTransactionManager;
 import org.web3j.tx.TransactionManager;
+import org.web3j.tx.gas.BesuPrivacyGasProvider;
 import org.web3j.tx.gas.ContractGasProvider;
-import org.web3j.tx.gas.PantheonPrivacyGasProvider;
 import org.web3j.utils.Base64String;
 
 public class LoadPrivateSmartContractTransaction<T extends Contract> implements Transaction<T> {
-  private static final PantheonPrivacyGasProvider GAS_PROVIDER =
-      new PantheonPrivacyGasProvider(BigInteger.valueOf(1000));
+  private static final BesuPrivacyGasProvider GAS_PROVIDER =
+      new BesuPrivacyGasProvider(BigInteger.valueOf(1000));
   private static final Object METHOD_IS_STATIC = null;
 
   private final Class<T> clazz;
@@ -41,7 +41,7 @@ public class LoadPrivateSmartContractTransaction<T extends Contract> implements 
   private final long chainId;
   private final Base64String privateFrom;
   private final List<Base64String> privateFor;
-  private String contractAddress;
+  private final String contractAddress;
 
   public LoadPrivateSmartContractTransaction(
       final String contractAddress,

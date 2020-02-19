@@ -1,26 +1,27 @@
 {
-    "config": {
-        "homesteadBlock": 0,
-        "daoForkBlock": 0,
-        "eip150Block": 0,
-        "eip155Block": 0,
-        "eip158Block": 0,
-        "eip160Block": 0,
-        "byzantiumBlock": 0,
-        "constantinopleBlock": 0,
-        "constantinopleFixBlock": 0,
-        "ethash": {
-            "fixeddifficulty": 15
-        },
-        "chainID": 1982,
-        "networkID": 1982
+  "config": {
+    "homesteadBlock": 0,
+    "daoForkBlock": 0,
+    "eip150Block": 0,
+    "eip155Block": 0,
+    "eip158Block": 0,
+    "eip160Block": 0,
+    "byzantiumBlock": 0,
+    "constantinopleBlock": 0,
+    "constantinopleFixBlock": 0,
+    "istanbulBlock": 0,
+    "ethash": {
+      "fixeddifficulty": 15
     },
-    "nonce": "0x0000000000000042",
-    "gasLimit": "0x100000000000",
-    "difficulty": "0xf",
-    "mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
-    "coinbase": "0x0000000000000000000000000000000000000000",
-    "alloc": {
+    "chainID": 1982,
+    "networkID": 1982
+  },
+  "nonce": "0x0000000000000042",
+  "gasLimit": "0x100000000000",
+  "difficulty": "0xf",
+  "mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "coinbase": "0x0000000000000000000000000000000000000000",
+  "alloc": {
     "0010000000000000000000000000000000000000": {
       "comment": "Add smart contract that will simply set 2 key-value pairs.  Parses tx input into 4 32 byte values: [key1, val1, key2, val2]. Can be used to test constantinople fix.",
       "code": "0x6020356000355560603560403555",
@@ -42,15 +43,104 @@
       "code": "0x60206000602036038060206000376000346000355AF160206000F3",
       "balance": "0x0"
     },
+    "0050000000000000000000000000000000000000": {
+      "comment": "Proxy a call to the address in the first 32 bytes, sending the rest of the input data to this address. Return 32 bytes from sub-call.",
+      "comment": "0x outSize 6020 outOffset 6000 inputSize 60203603 inputToMem(dupSize 80)6020600037 inOffset 6000 val 34 to 600035 gas 5A CALLCODE F2 Return 60206000F3",
+      "code": "0x60206000602036038060206000376000346000355AF260206000F3",
+      "balance": "0x0"
+    },
+    "0060000000000000000000000000000000000000": {
+      "comment": "Proxy a call to the address in the first 32 bytes, sending the rest of the input data to this address. Return 32 bytes from sub-call.",
+      "comment": "0x outSize 6020 outOffset 6000 inputSize 60203603 inputToMem(dupSize 80)6020600037 inOffset 6000 to 600035 gas 5A DELEGATECALL F4 Return 60206000F3",
+      "code": "0x602060006020360380602060003760006000355AF460206000F3",
+      "balance": "0x0"
+    },
+    "0070000000000000000000000000000000000000": {
+      "comment": "Sequential memory modifications with MSTORE8.",
+      "comment": "MSTORE8 0x1=0x2, MSTORE8 0x3=0x4, MSTORE8 0x1=0x5.",
+      "code": "0x600160025360036004536001600553",
+      "balance": "0x0"
+    },
+    "0080000000000000000000000000000000000000": {
+      "comment": "Sequential memory modifications with MSTORE.",
+      "comment": "MSTORE 32 bytes.",
+      "code": "0x7F3940be4289e4c3587d88c1856cc95352461992db0a584c281226faefe560b3017F14c4d2c102bdeb2354bfc3dc96a95e4512cf3a8461e0560e2272dbf884ef390552",
+      "balance": "0x0"
+    },
+    "0090000000000000000000000000000000000000": {
+      "comment": "Increases storage 0x00 by one.  Return the new value",
+      "code": "0x6000546001018060005360005560016000F3",
+      "balance": "0x0"
+    },
+    "00A0000000000000000000000000000000000000": {
+      "comment": "Append log record with 1 topic using LOG1 OPCODE.",
+      "code": "0x608B60045360FF60016004A1",
+      "balance": "0x0"
+    },
+    "00B0000000000000000000000000000000000000": {
+      "comment": "Append log record with 2 topics using LOG2 OPCODE.",
+      "code": "0x608B60045360AA60FF60016004A2",
+      "balance": "0x0"
+    },
+    "00C0000000000000000000000000000000000000": {
+      "comment": "INVALID_OPERATION (0x1F).",
+      "code": "0x60011F",
+      "balance": "0x0"
+    },
+    "00D0000000000000000000000000000000000000": {
+      "comment": "INSUFFICIENT_STACK_ITEMS",
+      "code": "0x600120",
+      "balance": "0x0"
+    },
+    "00E0000000000000000000000000000000000000": {
+      "comment": "INVALID_JUMP_DESTINATION",
+      "code": "0x60FF5660016002",
+      "balance": "0x0"
+    },
+    "00F0000000000000000000000000000000000000": {
+      "comment": "pushes 1, 2, 3, then SWAP2 and SWAP1",
+      "code": "0x6001600260039190",
+      "balance": "0x0"
+    },
+    "0100000000000000000000000000000000000000": {
+      "comment": "Sequential memory modifications with MSTORE then read with MLOAD.",
+      "code": "0x7F3940be4289e4c3587d88c1856cc95352461992db0a584c281226faefe560b3016000527F14c4d2c102bdeb2354bfc3dc96a95e4512cf3a8461e0560e2272dbf884ef3905601052600851",
+      "balance": "0x0"
+    },
+    "0110000000000000000000000000000000000000": {
+      "comment": "Sequential memory modifications with MSTORE then REVERT",
+      "code": "0x7F3940be4289e4c3587d88c1856cc95352461992db0a584c281226faefe560b3016000527F14c4d2c102bdeb2354bfc3dc96a95e4512cf3a8461e0560e2272dbf884ef390560105260086008fd",
+      "balance": "0x0"
+    },
+    "0120000000000000000000000000000000000000": {
+      "comment": "Proxy a call to the address in the first 32 bytes, sending the rest of the input data to this address. Return 32 bytes from sub-call.",
+      "comment": "0x outSize 6020 outOffset 6000 inputSize 60203603 inputToMem(dupSize 80)6020600037 inOffset 6000 val 34 to 600035 gas 5A STATICCALL F4 Return 60206000F3",
+      "code": "0x60206000602036038060206000376000346000355AFA60206000F3",
+      "balance": "0x0"
+    },
+    "0130000000000000000000000000000000000000": {
+      "comment": "derived from rom create2initfilter",
+      "comment": "{ (SSTORE 1 1) (SSTORE 2 (SLOAD 1)) (?) } - init code",
+      "comment": "{ (MSTORE 0 0x600160015560015460025561ffFF6000526002601eF3 ) (SSTORE 0 (CREATE2 0 11 31 0)) }",
+      "code": "0x75600160015560015460025561ffFF6000526002601eF36000526016600a6000f060005500",
+      "balance": "0x0"
+    },
+    "0140000000000000000000000000000000000000": {
+      "comment": "From create2initfilter",
+      "comment": "{ (SSTORE 1 1) (SSTORE 2 (SLOAD 1)) (?) } - init code",
+      "comment": "{ (MSTORE 0 0x600160015560015460025560FF60005360016000F3 ) (SSTORE 0 (CREATE2 0 11 31 0)) }",
+      "code": "0x74600160015560015460025560FF60005360016000F360005260006015600b6000f560005500",
+      "balance": "0x0"
+    },
     "fe3b557e8fb62b89f4916b721be55ceb828dbd73": {
       "secretKey": "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63",
       "comment": "private key and this comment are ignored.  In a real chain, the private key should NOT be stored",
-      "balance": "0xf0000000000000000000000000000000000000000"
+      "balance": "0xfffffffffffffffffffffffffffffffffffffffff"
     },
     "627306090abaB3A6e1400e9345bC60c78a8BEf57": {
       "secretKey": "c87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3",
       "comment": "private key and this comment are ignored.  In a real chain, the private key should NOT be stored",
-      "balance": "0xf0000000000000000000000"
+      "balance": "0xf000000000000000000000000"
     },
     "f17f52151EbEF6C7334FAD080c5704D77216b732": {
       "secretKey": "ae6ae8e5ccbfb04590405997ee2d52d2b330726137b875053c36d94e974d162f",

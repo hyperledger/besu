@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 
@@ -37,10 +38,12 @@ public class Web3ClientVersionTest {
 
   @Test
   public void shouldReturnCorrectResult() {
-    final JsonRpcRequest request =
-        new JsonRpcRequest(JSON_RPC_VERSION, ETH_METHOD, new Object[] {});
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest(JSON_RPC_VERSION, ETH_METHOD, new Object[] {}));
 
-    final JsonRpcResponse expected = new JsonRpcSuccessResponse(request.getId(), CLIENT_VERSION);
+    final JsonRpcResponse expected =
+        new JsonRpcSuccessResponse(request.getRequest().getId(), CLIENT_VERSION);
     final JsonRpcResponse actual = method.response(request);
 
     assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);

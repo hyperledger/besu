@@ -17,27 +17,44 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.privacy;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TransactionReceiptLogResult;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Log;
-import org.hyperledger.besu.util.bytes.BytesValue;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import org.apache.tuweni.bytes.Bytes;
 
 @JsonPropertyOrder({
   "contractAddress",
   "from",
   "to",
   "output",
+  "commitmentHash",
+  "transactionHash",
+  "privateFrom",
+  "privateFor",
+  "privacyGroupId",
+  "status",
+  "revertReason",
   "logs",
 })
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class PrivateTransactionReceiptResult {
 
   private final String contractAddress;
   private final String from;
   private final String to;
   private final String output;
+  private final String commitmentHash;
+  private final String transactionHash;
+  private final String privateFrom;
+  private final List<String> privateFor;
+  private final String privacyGroupId;
+  private final String revertReason;
+  private final String status;
   private final List<TransactionReceiptLogResult> logs;
 
   public PrivateTransactionReceiptResult(
@@ -45,16 +62,32 @@ public class PrivateTransactionReceiptResult {
       final String from,
       final String to,
       final List<Log> logs,
-      final BytesValue output,
+      final Bytes output,
       final Hash blockHash,
-      final Hash hash,
       final long blockNumber,
-      final int txIndex) {
+      final int txIndex,
+      final Hash commitmentHash,
+      final Hash transactionHash,
+      final Bytes privateFrom,
+      final List<Bytes> privateFor,
+      final Bytes privacyGroupId,
+      final Bytes revertReason,
+      final String status) {
     this.contractAddress = contractAddress;
     this.from = from;
     this.to = to;
     this.output = output.toString();
-    this.logs = logReceipts(logs, blockNumber, hash, blockHash, txIndex);
+    this.commitmentHash = commitmentHash.toString();
+    this.transactionHash = transactionHash.toString();
+    this.privateFrom = privateFrom != null ? privateFrom.toBase64String() : null;
+    this.privateFor =
+        privateFor != null
+            ? privateFor.stream().map(Bytes::toBase64String).collect(Collectors.toList())
+            : null;
+    this.privacyGroupId = privacyGroupId != null ? privacyGroupId.toBase64String() : null;
+    this.revertReason = revertReason != null ? revertReason.toString() : null;
+    this.status = status;
+    this.logs = logReceipts(logs, blockNumber, commitmentHash, blockHash, txIndex);
   }
 
   @JsonGetter(value = "contractAddress")
@@ -80,6 +113,41 @@ public class PrivateTransactionReceiptResult {
   @JsonGetter(value = "logs")
   public List<TransactionReceiptLogResult> getLogs() {
     return logs;
+  }
+
+  @JsonGetter("commitmentHash")
+  public String getCommitmentHash() {
+    return commitmentHash;
+  }
+
+  @JsonGetter("transactionHash")
+  public String getTransactionHash() {
+    return transactionHash;
+  }
+
+  @JsonGetter("privateFrom")
+  public String getPrivateFrom() {
+    return privateFrom;
+  }
+
+  @JsonGetter("privateFor")
+  public List<String> getPrivateFor() {
+    return privateFor;
+  }
+
+  @JsonGetter("privacyGroupId")
+  public String getPrivacyGroupId() {
+    return privacyGroupId;
+  }
+
+  @JsonGetter("revertReason")
+  public String getRevertReason() {
+    return revertReason;
+  }
+
+  @JsonGetter("status")
+  public String getStatus() {
+    return status;
   }
 
   private List<TransactionReceiptLogResult> logReceipts(

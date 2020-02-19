@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -25,14 +25,19 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.ChainHead;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
-import org.hyperledger.besu.util.bytes.BytesValue;
+import org.hyperledger.besu.nat.NatService;
+import org.hyperledger.besu.nat.core.domain.NatPortMapping;
+import org.hyperledger.besu.nat.core.domain.NatServiceType;
+import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
 
 import java.math.BigInteger;
+import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
 import com.google.common.collect.ImmutableMap;
+import org.apache.tuweni.bytes.Bytes;
 
 public class AdminNodeInfo implements JsonRpcMethod {
 
@@ -41,18 +46,21 @@ public class AdminNodeInfo implements JsonRpcMethod {
   private final GenesisConfigOptions genesisConfigOptions;
   private final P2PNetwork peerNetwork;
   private final BlockchainQueries blockchainQueries;
+  private final NatService natService;
 
   public AdminNodeInfo(
       final String clientVersion,
       final BigInteger networkId,
       final GenesisConfigOptions genesisConfigOptions,
       final P2PNetwork peerNetwork,
-      final BlockchainQueries blockchainQueries) {
+      final BlockchainQueries blockchainQueries,
+      final NatService natService) {
     this.peerNetwork = peerNetwork;
     this.clientVersion = clientVersion;
     this.genesisConfigOptions = genesisConfigOptions;
     this.blockchainQueries = blockchainQueries;
     this.networkId = networkId;
+    this.natService = natService;
   }
 
   @Override
@@ -61,33 +69,43 @@ public class AdminNodeInfo implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequest req) {
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     final Map<String, Object> response = new HashMap<>();
     final Map<String, Integer> ports = new HashMap<>();
 
     if (!peerNetwork.isP2pEnabled()) {
-      return new JsonRpcErrorResponse(req.getId(), JsonRpcError.P2P_DISABLED);
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), JsonRpcError.P2P_DISABLED);
     }
     final Optional<EnodeURL> maybeEnode = peerNetwork.getLocalEnode();
     if (maybeEnode.isEmpty()) {
-      return new JsonRpcErrorResponse(req.getId(), JsonRpcError.P2P_NETWORK_NOT_RUNNING);
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), JsonRpcError.P2P_NETWORK_NOT_RUNNING);
     }
     final EnodeURL enode = maybeEnode.get();
 
-    final BytesValue nodeId = enode.getNodeId();
     response.put("enode", enode.toString());
     response.put("ip", enode.getIpAsString());
+    final Bytes nodeId = enode.getNodeId();
+
+    final String ip = getIp(enode);
+    final int listeningPort = getListeningPort(enode);
+    final int discoveryPort = getDiscoveryPort(enode);
+
+    response.put("enode", getNodeAsString(enode, ip, listeningPort, discoveryPort));
+    response.put("ip", ip);
+
     if (enode.isListening()) {
-      response.put("listenAddr", enode.getIpAsString() + ":" + enode.getListeningPort().getAsInt());
+      response.put("listenAddr", String.format("%s:%d", ip, listeningPort));
     }
-    response.put("id", nodeId.toUnprefixedString());
+    response.put("id", nodeId.toUnprefixedHexString());
     response.put("name", clientVersion);
 
     if (enode.isRunningDiscovery()) {
-      ports.put("discovery", enode.getDiscoveryPortOrZero());
+      ports.put("discovery", discoveryPort);
     }
     if (enode.isListening()) {
-      ports.put("listener", enode.getListeningPort().getAsInt());
+      ports.put("listener", listeningPort);
     }
     response.put("ports", ports);
 
@@ -100,7 +118,7 @@ public class AdminNodeInfo implements JsonRpcMethod {
                 "config",
                 genesisConfigOptions.asMap(),
                 "difficulty",
-                chainHead.getTotalDifficulty().toLong(),
+                chainHead.getTotalDifficulty().toBigInteger(),
                 "genesis",
                 blockchainQueries.getBlockHashByNumber(0).get().toString(),
                 "head",
@@ -108,6 +126,36 @@ public class AdminNodeInfo implements JsonRpcMethod {
                 "network",
                 networkId)));
 
-    return new JsonRpcSuccessResponse(req.getId(), response);
+    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), response);
+  }
+
+  private String getNodeAsString(
+      final EnodeURL enodeURL, final String ip, final int listeningPort, final int discoveryPort) {
+    final String uri =
+        String.format(
+            "enode://%s@%s:%d", enodeURL.getNodeId().toUnprefixedHexString(), ip, listeningPort);
+    if (listeningPort != discoveryPort) {
+      return URI.create(uri + String.format("?discport=%d", discoveryPort)).toString();
+    } else {
+      return URI.create(uri).toString();
+    }
+  }
+
+  private String getIp(final EnodeURL enode) {
+    return natService.queryExternalIPAddress().orElseGet(enode::getIpAsString);
+  }
+
+  private int getDiscoveryPort(final EnodeURL enode) {
+    return natService
+        .getPortMapping(NatServiceType.DISCOVERY, NetworkProtocol.UDP)
+        .map(NatPortMapping::getExternalPort)
+        .orElseGet(enode::getDiscoveryPortOrZero);
+  }
+
+  private int getListeningPort(final EnodeURL enode) {
+    return natService
+        .getPortMapping(NatServiceType.RLPX, NetworkProtocol.TCP)
+        .map(NatPortMapping::getExternalPort)
+        .orElseGet(enode::getListeningPortOrZero);
   }
 }

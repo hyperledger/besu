@@ -53,14 +53,16 @@ public class LogsQuery {
     this.addresses = addresses != null ? addresses : emptyList();
     this.topics = topics != null ? topics : emptyList();
     this.addressBlooms =
-        this.addresses.stream().map(LogsBloomFilter::computeBytes).collect(toUnmodifiableList());
+        this.addresses.stream()
+            .map(address -> LogsBloomFilter.builder().insertBytes(address).build())
+            .collect(toUnmodifiableList());
     this.topicsBlooms =
         this.topics.stream()
             .map(
                 subTopics ->
                     subTopics.stream()
                         .filter(Objects::nonNull)
-                        .map(LogsBloomFilter::computeBytes)
+                        .map(logTopic -> LogsBloomFilter.builder().insertBytes(logTopic).build())
                         .collect(Collectors.toList()))
             .collect(toUnmodifiableList());
   }
