@@ -246,6 +246,8 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
       } catch (final Exception e) {
         throw new RuntimeException("Error shutting down node " + name, e);
       }
+    } else {
+      LOG.error("There was a request to kill an unknown node: {}", name);
     }
   }
 }

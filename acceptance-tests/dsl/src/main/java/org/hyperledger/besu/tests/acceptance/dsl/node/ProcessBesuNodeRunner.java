@@ -361,17 +361,25 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
   private void killBesuProcess(final String name, final Process process) {
     LOG.info("Killing " + name + " process");
 
-    Awaitility.waitAtMost(30, TimeUnit.SECONDS)
-        .until(
-            () -> {
-              if (process.isAlive()) {
-                process.destroy();
-                besuProcesses.remove(name);
-                return false;
-              } else {
-                besuProcesses.remove(name);
-                return true;
-              }
-            });
+    Process p = besuProcesses.remove(name);
+    if (p == null) {
+      LOG.error("Process {} wasn't in our list", name);
+    }
+
+    process.destroy();
+    try {
+      process.waitFor(2, TimeUnit.SECONDS);
+    } catch (InterruptedException e) {
+      LOG.warn("Wait for death of process " + name + " was interrupted", e);
+    }
+    if (process.isAlive()) {
+      LOG.warn("Process {} still alive, destroying forcibly now", name);
+      try {
+        process.destroyForcibly().waitFor(2, TimeUnit.SECONDS);
+      } catch (Exception e) {
+        // just die already
+      }
+      LOG.info("Process exited with code {}", process.exitValue());
+    }
   }
 }
