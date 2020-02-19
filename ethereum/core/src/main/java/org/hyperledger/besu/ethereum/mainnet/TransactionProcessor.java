@@ -116,7 +116,7 @@ public interface TransactionProcessor {
    * @param transaction The transaction to process
    * @param miningBeneficiary The address which is to receive the transaction fee
    * @param blockHashLookup The {@link BlockHashLookup} to use for BLOCKHASH operations
-   * @param isPersistingPrivateState Whether the state will be modified by this process
+   * @param isPersistingPrivateState Whether the resulting private state will be persisted
    * @param transactionValidationParams Validation parameters that will be used by the {@link
    *     TransactionValidator}
    * @return the transaction result
@@ -154,7 +154,7 @@ public interface TransactionProcessor {
    * @param operationTracer The tracer to record results of each EVM operation
    * @param miningBeneficiary The address which is to receive the transaction fee
    * @param blockHashLookup The {@link BlockHashLookup} to use for BLOCKHASH operations
-   * @param isPersistingPrivateState Whether the state will be modified by this process
+   * @param isPersistingPrivateState Whether the resulting private state will be persisted
    * @return the transaction result
    */
   default Result processTransaction(
