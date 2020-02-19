@@ -102,6 +102,8 @@ dependencyManagement {
 
     dependency 'org.xerial.snappy:snappy-java:1.1.7.3'
 
+    dependency 'io.kubernetes:client-java:5.0.0'
+
     dependency 'tech.pegasys.ethsigner.internal:core:0.4.0'
     dependency 'tech.pegasys.ethsigner.internal:file-based:0.4.0'
     dependency 'tech.pegasys.ethsigner.internal:signing-api:0.4.0'
