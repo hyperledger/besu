@@ -15,19 +15,15 @@
 
 package org.hyperledger.besu.tests.acceptance.database;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.model.Bind;
-import com.github.dockerjava.api.model.Frame;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientBuilder;
-import com.github.dockerjava.core.command.LogContainerResultCallback;
 import com.github.dockerjava.core.command.PullImageResultCallback;
-import com.github.dockerjava.core.command.WaitContainerResultCallback;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -69,20 +65,28 @@ class DockerBesu {
             .exec();
     LOG.info("Starting container command.");
     dockerClient.startContainerCmd(container.getId()).exec();
-    showLog(container.getId());
-    final WaitContainerResultCallback callback =
-        dockerClient.waitContainerCmd(container.getId()).exec(new WaitContainerResultCallback());
-    callback.awaitCompletion(1, TimeUnit.MINUTES);
+    // showLog(container.getId());
+    // final WaitContainerResultCallback callback =
+    // dockerClient.waitContainerCmd(container.getId()).exec(new WaitContainerResultCallback());
+    // callback.awaitCompletion(1, TimeUnit.MINUTES);
     // callback.awaitCompletion().close();
-    try {
+    /*try {
       dockerClient.stopContainerCmd(container.getId()).exec();
       dockerClient.removeContainerCmd(container.getId()).exec();
     } catch (Exception e) {
       LOG.warn("Cannot stop and remove container: {}", e.getClass().getName());
-    }
+    }*/
+    Executors.newSingleThreadScheduledExecutor()
+        .schedule(
+            () -> {
+              dockerClient.stopContainerCmd(container.getId()).exec();
+              dockerClient.removeContainerCmd(container.getId()).exec();
+            },
+            10,
+            TimeUnit.SECONDS);
   }
 
-  private void showLog(final String containerId) {
+  /*private void showLog(final String containerId) {
     dockerClient
         .logContainerCmd(containerId)
         .withStdOut(true)
@@ -96,5 +100,5 @@ class DockerBesu {
                 System.out.println(new String(item.getPayload(), UTF_8));
               }
             });
-  }
+  }*/
 }

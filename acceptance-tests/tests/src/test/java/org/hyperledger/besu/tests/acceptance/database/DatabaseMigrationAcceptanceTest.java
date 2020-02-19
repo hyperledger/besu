@@ -108,7 +108,7 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
         "version0",
         0xA,
         Address.fromHexString("0xd1aeb42885a43b72b518182ef893125814811048"),
-        Wei.fromHexString("0x2b5e3af16b1880000")
+        Wei.fromHexString("0x270801D946C940000")
       },
       new Object[] {
         "After versioning was enabled ",
@@ -117,7 +117,7 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
         "version1",
         0xA,
         Address.fromHexString("0xd1aeb42885a43b72b518182ef893125814811048"),
-        Wei.fromHexString("0x2b5e3af16b1880000")
+        Wei.fromHexString("0x270801D946C940000")
       }
     };
   }
@@ -125,6 +125,7 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
   @Before
   public void setUp() throws Exception {
     generateDatabaseFromDocker();
+    Thread.sleep(15000);
     node = besu.createNode(dataPath, this::configureNode);
     cluster.start(node);
   }
@@ -145,6 +146,7 @@ public class DatabaseMigrationAcceptanceTest extends AcceptanceTestBase {
     docker.runBesu(
         dockerImage,
         hostDataPathForBind,
+        "--logging=debug",
         "--data-path=/home/besu",
         String.format("--genesis-file=%s/genesis.json", DockerBesu.containerDataPath),
         "blocks",
