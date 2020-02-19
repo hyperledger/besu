@@ -1199,7 +1199,7 @@ public class MessageFrame {
           completer,
           miningBeneficiary,
           blockHashLookup,
-              isPersistingPrivateState,
+          isPersistingPrivateState,
           transactionHash,
           reason,
           maxStackSize);
