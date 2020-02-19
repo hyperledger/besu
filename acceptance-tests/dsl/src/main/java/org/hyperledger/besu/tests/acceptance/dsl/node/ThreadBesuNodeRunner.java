@@ -59,11 +59,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import io.vertx.core.Vertx;
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
-import org.apache.logging.log4j.core.config.Configurator;
 import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
 
@@ -204,11 +202,6 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
                     .collect(Collectors.toList()))
             .besuPluginContext(new BesuPluginContextImpl())
             .build();
-
-    // in testing, we don't mind logging on success, but we want max info on failures
-    // log level is normally set in BesuCommand, which is bypassed here. So let's just set it.
-    // This still leaves out the vertx system properties set in Besu.main().
-    Configurator.setAllLevels("", Level.DEBUG);
 
     runner.start();
 

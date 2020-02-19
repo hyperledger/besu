@@ -53,7 +53,11 @@ import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
 
 public class AcceptanceTestBase {
-  protected final Logger LOG = LogManager.getLogger();
+  static {
+    System.setProperty("log4j2.isThreadContextMapInheritable", "true");
+  }
+
+  private static final Logger LOG = LogManager.getLogger();
 
   protected final Accounts accounts;
   protected final AccountTransactions accountTransactions;
@@ -108,10 +112,6 @@ public class AcceptanceTestBase {
     permissionedNodeBuilder = new PermissionedNodeBuilder();
   }
 
-  static {
-    System.setProperty("log4j2.isThreadContextMapInheritable", "true");
-  }
-
   @Rule public final TestName name = new TestName();
 
   @Rule
@@ -122,14 +122,13 @@ public class AcceptanceTestBase {
         protected void starting(final Description description) {
           ThreadContext.put("test", description.getMethodName());
           ThreadContext.put("class", description.getClassName());
+
+          final String errorMessage = "Uncaught exception in thread \"{}\"";
           Thread.currentThread()
               .setUncaughtExceptionHandler(
-                  (thread, error) ->
-                      LOG.error(
-                          "Uncaught exception in thread \"" + thread.getName() + "\"", error));
+                  (thread, error) -> LOG.error(errorMessage, thread.getName(), error));
           Thread.setDefaultUncaughtExceptionHandler(
-              (thread, error) ->
-                  LOG.error("Uncaught exception in thread \"" + thread.getName() + "\"", error));
+              (thread, error) -> LOG.error(errorMessage, thread.getName(), error));
         }
 
         @Override
@@ -143,7 +142,7 @@ public class AcceptanceTestBase {
         @Override
         protected void succeeded(final Description description) {
           // if so configured, delete logs of successful tests
-          if (!Boolean.getBoolean("acctests.keepLogs")) {
+          if (!Boolean.getBoolean("acctests.keepAllLogs")) {
             String pathname =
                 "build/acceptanceTestLogs/"
                     + description.getClassName()

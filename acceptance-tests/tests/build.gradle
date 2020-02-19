@@ -52,6 +52,8 @@ sourceSets {
 processTestResources.dependsOn(':besu:testJar')
 
 task acceptanceTest(type: Test) {
+  inputs.property "integration.date", LocalTime.now() // so it runs at every invocation
+
   dependsOn(rootProject.installDist)
   setSystemProperties(test.getSystemProperties())
   systemProperty 'acctests.runBesuAsProcess', 'true'
@@ -62,7 +64,7 @@ task acceptanceTest(type: Test) {
   testLogging {
     exceptionFormat = 'full'
     showStackTraces = true
-    showStandardStreams = 'true'.equalsIgnoreCase(System.getProperty('acctests.showStandardStreams'));
+    showStandardStreams = Boolean.getBoolean('acctests.showStandardStreams')
     showExceptions = true
     showCauses = true
   }
